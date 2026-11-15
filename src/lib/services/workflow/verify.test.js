@@ -12,7 +12,7 @@ import { getEntryRelativeAssets } from '$lib/services/contents/entry/assets';
 import { buildTargetChanges } from '$lib/services/contents/entry/cascade';
 import { planCascadeDelete } from '$lib/services/contents/entry/relations/cascade/delete';
 import { collectRenameTargets } from '$lib/services/contents/entry/relations/cascade/update';
-import { unpublishedEntries } from '$lib/services/workflow';
+import { allUnpublishedEntries } from '$lib/services/workflow';
 import {
   checkReviewedHead,
   findUnexpectedChanges,
@@ -540,7 +540,7 @@ describe('workflow/verify', () => {
         e.workflow.pullRequest.description = '<!-- sveltia-cms:deletion-group=group-1 -->';
       });
       other.workflow.pullRequest.description = '<!-- sveltia-cms:deletion-group=group-2 -->';
-      unpublishedEntries.current = [entry, sibling, other, pending, lone];
+      allUnpublishedEntries.current = [entry, sibling, other, pending, lone];
       vi.mocked(planCascadeDelete).mockReturnValueOnce(
         /** @type {any} */ ({ targets: [{ entry: home }, { entry: team }], blockers: [] }),
       );
@@ -565,7 +565,7 @@ describe('workflow/verify', () => {
         targets: [{ entry: home }, { entry: team }],
       });
       expect(collectRenameTargets).not.toHaveBeenCalled();
-      unpublishedEntries.current = [];
+      allUnpublishedEntries.current = [];
     });
 
     test('allows the rewrite of the entries referencing a renamed entry, as written', async () => {

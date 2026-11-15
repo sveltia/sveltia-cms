@@ -35,7 +35,11 @@ import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
 import { buildCascadeChanges } from '$lib/services/contents/entry/relations/cascade/update';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { compareWithLatest } from '$lib/services/contents/fields/relation/quick-add';
-import { getUnpublishedEntryByDraft, isWorkflowDraft } from '$lib/services/workflow';
+import {
+  getUnpublishedEntryByDraft,
+  isOrphanedForkDraft,
+  isWorkflowDraft,
+} from '$lib/services/workflow';
 import { detectWorkflowConflict } from '$lib/services/workflow/conflict';
 import { saveWorkflowChanges } from '$lib/services/workflow/save';
 
@@ -214,8 +218,8 @@ const checkPendingEntryConflicts = async (draft, { remoteChecked }) => {
  * @param {boolean} args.publish Whether the entry is published along with the save, in which case
  * its required fields have to be filled in, even if it’s a workflow draft.
  * @returns {Promise<EntryConflict | undefined>} Conflict found, if any, which the save overwrites.
- * @throws {Error} When the entry is read-only, could not be validated, or would overwrite someone
- * else’s change.
+ * @throws {Error} When the entry is read-only, comes from a contributor’s pull request that is no
+ * longer open, could not be validated, or would overwrite someone else’s change.
  */
 const checkSavable = async ({ draft, useWorkflow, overwrite, publish }) => {
   // The editor offers no way to save a read-only entry, but make sure nothing is written anyway
@@ -225,6 +229,10 @@ const checkSavable = async ({ draft, useWorkflow, overwrite, publish }) => {
     throw new Error('saving_failed', {
       cause: new Error(getReadonlyMessage('entry', { collection, collectionFile })),
     });
+  }
+
+  if (isOrphanedForkDraft(draft)) {
+    throw new Error('saving_failed', { cause: new Error(_('workflow.fork_entry_gone')) });
   }
 
   // Wait for what was just typed to reach the draft first. Otherwise a save right after typing

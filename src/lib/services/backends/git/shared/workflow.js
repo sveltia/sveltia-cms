@@ -504,7 +504,9 @@ export const findOwnApprovals = (reviews) =>
  * @param {RepositoryPath} repository Repository holding the pull request.
  * @param {WorkflowPullRequest} pullRequest Pull request.
  * @param {object} service Service-specific values.
- * @param {(branch: string) => Promise<void>} service.deleteBranch Function to delete the branch.
+ * @param {(branch: string) => Promise<void>} [service.deleteBranch] Function to delete the branch.
+ * Left out to keep it, as for a pull request a contributor has opened from their fork, whose branch
+ * is theirs to delete.
  * @param {number[]} [service.closedStatuses] HTTP status codes a refusal to close the pull request
  * comes with when there’s nothing left to close, in which case the branch is still deleted.
  * @see https://docs.github.com/en/rest/pulls/pulls#update-a-pull-request
@@ -528,7 +530,7 @@ export const discardPullRequest = async (
     }
   }
 
-  await deleteBranch(pullRequest.branch);
+  await deleteBranch?.(pullRequest.branch);
 };
 
 /**

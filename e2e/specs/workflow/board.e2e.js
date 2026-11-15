@@ -1,36 +1,12 @@
 import { openEntryPullRequest, post, WORKFLOW_CONFIG } from '../../fixtures/configs/workflow.js';
 import { expect, test } from '../../fixtures/test.js';
-import { getEditor, getEntryRows, openCollection } from '../../fixtures/ui.js';
-
-/**
- * @import { Locator, Page } from '@playwright/test';
- */
+import { getCard, getEditor, getEntryRows, openBoard, openCollection } from '../../fixtures/ui.js';
 
 test.use({ config: WORKFLOW_CONFIG });
 
 test.beforeEach(async ({ github }) => {
   github.commit({ 'content/posts/first-post.md': post('First Post', 'Hello, world!') });
 });
-
-/**
- * Open the Editorial Workflow page.
- * @param {Page} page Page.
- * @returns {Promise<Locator>} Board.
- */
-const openBoard = async (page) => {
-  await page.getByRole('radio', { name: 'Editorial Workflow' }).click();
-
-  return page.getByRole('group', { name: 'Editorial Workflow' });
-};
-
-/**
- * Get the card of an entry on the board.
- * @param {Locator} board Board.
- * @param {string} title Entry title.
- * @returns {Locator} Card.
- */
-const getCard = (board, title) =>
-  board.getByRole('listitem').filter({ has: board.page().getByRole('button', { name: title }) });
 
 test('moves an entry to another stage by dragging its card', async ({ cms, github, page }) => {
   const pullRequest = openEntryPullRequest(github, {

@@ -2508,6 +2508,12 @@ workflow:
   # Error notification when an entry can’t be published because its branch has been committed to
   # since the entry was opened, so what would be published isn’t what was reviewed
   publish_refused_entry_changed: The entry has been changed since you opened it. Reload the page to review the latest version before publishing it.
+  review_on_x: Review on {$service}
+  from_fork: From a fork
+  fork_entry_editable: This entry comes from a contributor’s pull request opened from “{$fork}”. Your changes are saved to their branch. Review and merge the pull request on the Git service.
+  fork_entry_locked: This entry comes from a contributor’s pull request opened from “{$fork}”. The contributor doesn’t allow maintainers to edit it, so it can only be viewed here.
+  fork_not_editable: The contributor doesn’t allow maintainers to edit this pull request.
+  fork_entry_gone: The contributor’s pull request is no longer open, so the changes can’t be saved to it.
   # Error shown in the save error dialog when an entry can’t be saved for review, because a request
   # the CMS doesn’t show is already open from the branch the entry would be saved to. `{$number}` is
   # the request number, e.g. `#12` on GitHub or `!12` on GitLab. Keep the wording free of Git jargon

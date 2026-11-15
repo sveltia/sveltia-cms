@@ -11,7 +11,7 @@ import {
   MAX_COMMIT_PAYLOAD_SIZE,
   MIN_COMMIT_PAYLOAD_SIZE,
 } from '$lib/services/backends/git/github/commits';
-import { getWorkflowRepository } from '$lib/services/backends/git/github/fork';
+import { getBranchRepository, getWorkflowRepository } from '$lib/services/backends/git/github/fork';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { signOffCommitMessage } from '$lib/services/backends/git/shared/commits';
@@ -59,6 +59,10 @@ describe('GitHub commits service', () => {
     forkedRepository.current = undefined;
     repositoryHead.current = '';
     vi.mocked(getWorkflowRepository).mockReturnValue({ owner: 'test-owner', repo: 'test-repo' });
+    vi.mocked(getBranchRepository).mockImplementation((branch) => ({
+      ...getWorkflowRepository(),
+      branch,
+    }));
   });
 
   describe('fetchLastCommit', () => {
@@ -1501,6 +1505,59 @@ describe('GitHub commits service', () => {
       expect(result).toHaveLength(60);
     });
   });
+  describe('pull request from a fork', () => {
+    beforeEach(() => {
+      vi.mocked(getBranchRepository).mockReturnValue({
+        owner: 'contributor',
+        repo: 'website',
+        branch: 'cms/posts/hello',
+      });
+    });
+
+    test('commits to the contributor’s branch in their fork', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({
+        createCommitOnBranch: { commit: { oid: 'sha', committedDate: '2026-01-01T00:00:00Z' } },
+      });
+
+      await commitChanges([{ action: 'update', path: 'content/posts/hello.md', data: 'x' }], {
+        commitType: 'update',
+        branch: 'contributor/website:cms/posts/hello',
+        headOid: 'abc',
+      });
+
+      expect(getBranchRepository).toHaveBeenCalledWith('contributor/website:cms/posts/hello');
+      expect(fetchGraphQL).toHaveBeenCalledWith(
+        expect.stringContaining('createCommitOnBranch'),
+        expect.objectContaining({
+          input: expect.objectContaining({
+            branch: {
+              repositoryNameWithOwner: 'contributor/website',
+              branchName: 'cms/posts/hello',
+            },
+            expectedHeadOid: 'abc',
+          }),
+        }),
+        { retryable: true },
+      );
+    });
+
+    test('looks up the last commit on the contributor’s branch in their fork', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({
+        repository: {
+          ref: { target: { history: { nodes: [{ oid: 'abc', message: 'm' }] } } },
+        },
+      });
+
+      await fetchLastCommit('contributor/website:cms/posts/hello');
+
+      expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('query'), {
+        owner: 'contributor',
+        repo: 'website',
+        branch: 'cms/posts/hello',
+      });
+    });
+  });
+
   describe('Open Authoring', () => {
     beforeEach(() => {
       forkedRepository.current = { owner: 'contributor', repo: 'test-repo' };

@@ -1570,6 +1570,22 @@ describe('contents/fields/file/helpers', () => {
       expect(result).toEqual([]);
     });
 
+    it('should leave out the assets of a contributor’s pull request', () => {
+      allAssets.current = [
+        { ...makeAsset('own.jpg'), workflow: { branch: 'cms/posts/hello' } },
+        { ...makeAsset('fork.jpg'), workflow: { branch: 'alice/website:cms/posts/hello' } },
+      ];
+
+      const result = listAssets({
+        kind: undefined,
+        folder,
+        folderPath: 'content/posts/images',
+        unsavedAssets: [],
+      });
+
+      expect(result.map(({ name }) => name)).toEqual(['own.jpg']);
+    });
+
     it('should include matching assets from the allAssets store', () => {
       allAssets.current = [makeAsset('photo.jpg')];
 

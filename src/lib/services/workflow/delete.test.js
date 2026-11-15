@@ -9,6 +9,9 @@ vi.mock('$lib/services/contents/collection/data/delete', () => ({ deleteEntries:
 vi.mock('$lib/services/contents/draft/backup', () => ({
   cancelBackup: vi.fn(),
   deleteBackup: vi.fn(),
+  // The key a backup is stored under, as `getBackupSlug()` makes it for an entry from the
+  // maintainers’ own pull request
+  getBackupSlug: vi.fn(({ fileName, originalEntry }) => fileName ?? originalEntry?.subPath),
 }));
 vi.mock('$lib/services/workflow/save', () => ({
   deleteWorkflowEntries: vi.fn(),

@@ -3,6 +3,7 @@ import { _ } from '@sveltia/i18n';
 import { lockedBranch } from '$lib/services/backends/branch-access';
 import { cmsConfig } from '$lib/services/config/state';
 import { getPublishMode, isWorkflowMode } from '$lib/services/workflow/config';
+import { isLockedForkEntry } from '$lib/services/workflow/forks';
 
 /**
  * @import { AssetFolderInfo, EntryDraft, InternalCmsConfig } from '$lib/types/private';
@@ -58,12 +59,16 @@ export const isDraftConfigReadonly = (draft) =>
 
 /**
  * Check whether an entry draft is read-only, which is when its collection or collection file is,
- * or the whole CMS is (see {@link isDraftConfigReadonly}), or while the user is being asked whether
- * to restore a backup of it. The draft can be viewed but not changed or saved.
+ * or the whole CMS is (see {@link isDraftConfigReadonly}), while the user is being asked whether to
+ * restore a backup of it, or when it comes from a contributor’s pull request that doesn’t let
+ * maintainers push to its branch. The draft can be viewed but not changed or saved.
  * @param {EntryDraft | null | undefined} draft Entry draft.
  * @returns {boolean} Result.
  */
-export const isDraftReadonly = (draft) => !!draft?.restorePending || isDraftConfigReadonly(draft);
+export const isDraftReadonly = (draft) =>
+  !!draft?.restorePending ||
+  isDraftConfigReadonly(draft) ||
+  isLockedForkEntry(draft?.originalEntry);
 
 /**
  * Get the message that says something is read-only. The whole CMS being read-only is what users

@@ -15,7 +15,7 @@ import {
   parseFileMetadata,
 } from '$lib/services/backends/git/github/files';
 import {
-  getWorkflowRepository,
+  getContentRepository,
   initOpenAuthoring,
   isOpenAuthoringConfigured,
 } from '$lib/services/backends/git/github/fork';
@@ -65,7 +65,7 @@ describe('GitHub files service', () => {
       branch: 'main',
     });
     vi.mocked(isOpenAuthoringConfigured).mockReturnValue(false);
-    vi.mocked(getWorkflowRepository).mockReturnValue({ owner: 'test-owner', repo: 'test-repo' });
+    vi.mocked(getContentRepository).mockReturnValue({ owner: 'test-owner', repo: 'test-repo' });
   });
 
   describe('fetchFileList', () => {
@@ -774,7 +774,7 @@ describe('GitHub files service', () => {
     });
 
     test('reads an unpublished asset from the workflow repository', async () => {
-      vi.mocked(getWorkflowRepository).mockReturnValue({ owner: 'contributor', repo: 'test-repo' });
+      vi.mocked(getContentRepository).mockReturnValue({ owner: 'contributor', repo: 'test-repo' });
 
       const asset = /** @type {any} */ ({
         sha: 'test-sha',

@@ -7,6 +7,8 @@ import {
   fetchForkByName,
   fetchForkFromNetwork,
   fetchOpenAuthoringAccess,
+  getBranchRepository,
+  getContentRepository,
   getWorkflowRepository,
   hasPendingInvitation,
   initOpenAuthoring,
@@ -107,6 +109,40 @@ describe('GitHub fork service', () => {
     test('is the fork once one is set', () => {
       forkedRepository.current = { owner: 'contributor', repo: 'repo' };
       expect(getWorkflowRepository()).toEqual({ owner: 'contributor', repo: 'repo' });
+    });
+  });
+
+  describe('getBranchRepository', () => {
+    test('is the workflow repository for a branch of its own', () => {
+      expect(getBranchRepository('cms/posts/hello')).toEqual({
+        owner: 'owner',
+        repo: 'repo',
+        branch: 'cms/posts/hello',
+      });
+
+      forkedRepository.current = { owner: 'contributor', repo: 'repo' };
+      expect(getBranchRepository('cms/posts/hello')).toEqual({
+        owner: 'contributor',
+        repo: 'repo',
+        branch: 'cms/posts/hello',
+      });
+    });
+
+    test('is the contributor’s fork for the branch of a pull request from it', () => {
+      expect(getBranchRepository('alice/website:cms/posts/hello')).toEqual({
+        owner: 'alice',
+        repo: 'website',
+        branch: 'cms/posts/hello',
+      });
+    });
+  });
+
+  describe('getContentRepository', () => {
+    test('is the workflow repository, which serves the pull requests from forks too', () => {
+      expect(getContentRepository()).toEqual({ owner: 'owner', repo: 'repo' });
+
+      forkedRepository.current = { owner: 'contributor', repo: 'repo' };
+      expect(getContentRepository()).toEqual({ owner: 'contributor', repo: 'repo' });
     });
   });
 

@@ -24,8 +24,8 @@ import { decodeMagicLinkData } from '$lib/services/user/magic-link';
 import { prefs } from '$lib/services/user/prefs.svelte';
 import { createRawState, requestAnswer } from '$lib/services/utils/state.svelte';
 import {
+  allUnpublishedEntries,
   publishingBranches,
-  unpublishedEntries,
   unpublishedEntriesLoaded,
 } from '$lib/services/workflow';
 import { resetDeployingEntries } from '$lib/services/workflow/deploy';
@@ -558,7 +558,7 @@ export const signOut = async () => {
   repositoryHead.current = '';
   lockedBranch.current = undefined;
   mergeLockedBranch.current = undefined;
-  unpublishedEntries.current = [];
+  allUnpublishedEntries.current = [];
   unpublishedEntriesLoaded.current = false;
   publishingBranches.current = [];
   // A magic link still waiting for an answer would sign the user back in

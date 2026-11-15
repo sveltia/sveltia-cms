@@ -34,6 +34,7 @@ import {
   unpublishedEntries,
 } from '$lib/services/workflow';
 import { saveWorkflowChanges } from '$lib/services/workflow/save';
+import { createMockForkPullRequest } from '$lib/test/factories';
 
 import { saveEntry as _saveEntry } from '.';
 
@@ -228,6 +229,22 @@ describe('draft/save/index', () => {
 
       await expect(saveEntry()).rejects.toThrow('saving_failed');
       expect(validateEntry).not.toHaveBeenCalled();
+      expect(saveChanges).not.toHaveBeenCalled();
+      expect(saveWorkflowChanges).not.toHaveBeenCalled();
+    });
+
+    it('should refuse to save an entry from a contributor’s pull request that has gone', async () => {
+      // The pull request was merged or closed since the editor was opened, so the store no longer
+      // has the entry. Saving to the configured branch instead would publish the contributor’s
+      // changes without anyone meaning to
+      mockDraft.originalEntry = {
+        slug: 'hello',
+        subPath: 'hello',
+        locales: {},
+        workflow: { pullRequest: createMockForkPullRequest() },
+      };
+
+      await expect(saveEntry()).rejects.toThrow('saving_failed');
       expect(saveChanges).not.toHaveBeenCalled();
       expect(saveWorkflowChanges).not.toHaveBeenCalled();
     });

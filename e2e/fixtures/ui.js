@@ -234,3 +234,23 @@ export const openFolder = async (page, name) => {
   await option.click();
   await expect(option).toHaveAttribute('aria-selected', 'true');
 };
+
+/**
+ * Open the Editorial Workflow board.
+ * @param {Page} page Page.
+ * @returns {Promise<Locator>} Board.
+ */
+export const openBoard = async (page) => {
+  await page.getByRole('radio', { name: 'Editorial Workflow' }).click();
+
+  return page.getByRole('group', { name: 'Editorial Workflow' });
+};
+
+/**
+ * Get the card of an entry on the Editorial Workflow board.
+ * @param {Locator} board Board, or one of its columns.
+ * @param {string} title Entry title.
+ * @returns {Locator} Card.
+ */
+export const getCard = (board, title) =>
+  board.getByRole('listitem').filter({ has: board.page().getByRole('button', { name: title }) });

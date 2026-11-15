@@ -810,6 +810,15 @@ describe('discardPullRequest()', () => {
     expect(deleteBranch).toHaveBeenCalledWith('b');
   });
 
+  test('keeps the branch without a function to delete it', async () => {
+    vi.mocked(fetchAPI).mockResolvedValue({});
+
+    await expect(
+      discardPullRequest(repository, { number: 1, branch: 'b' }, {}),
+    ).resolves.toBeUndefined();
+    expect(fetchAPI).toHaveBeenCalledOnce();
+  });
+
   test('carries on when the refusal comes with one of the given statuses', async () => {
     const deleteBranch = vi.fn();
 

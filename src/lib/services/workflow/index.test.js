@@ -7,6 +7,7 @@ import { allEntries } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import { createDerivedState } from '$lib/services/utils/state.svelte';
 import {
+  allUnpublishedEntries,
   canMergePullRequest,
   canSkipReviewAlong,
   checkPublishedVersion,
@@ -15,6 +16,8 @@ import {
   getDeletionSelection,
   getEditedCompanionEntries,
   getEditedCompanionPaths,
+  getForkUnpublishedEntry,
+  getPublishAction,
   getPublishedVersion,
   getPullRequestEntries,
   getUnpublishedEntriesByCollection,
@@ -26,6 +29,7 @@ import {
   hasPublishedVersion,
   isDirectPublishAllowed,
   isDiscardableDraft,
+  isOrphanedForkDraft,
   isPendingDeletion,
   isPublishAllowed,
   isWorkflowDraft,
@@ -38,6 +42,7 @@ import {
   workflowEnabled,
 } from '$lib/services/workflow';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
+import { createMockForkPullRequest } from '$lib/test/factories';
 
 vi.mock('$lib/services/contents/collection', async (importOriginal) => {
   const actual = /** @type {any} */ (await importOriginal());
@@ -94,7 +99,7 @@ const createEntry = ({ collectionName, subPath }) => ({
 
 describe('workflow/index', () => {
   beforeEach(() => {
-    unpublishedEntries.current = [];
+    allUnpublishedEntries.current = [];
     unpublishedEntriesLoaded.current = false;
     allEntries.current = [];
     cmsConfig.current = undefined;
@@ -242,7 +247,7 @@ describe('workflow/index', () => {
       // the unreviewed changes
       const entry = createEntry({ collectionName: 'posts', subPath: 'a' });
 
-      unpublishedEntries.current = [entry];
+      allUnpublishedEntries.current = [entry];
 
       expect(
         isWorkflowDraft({ collection: optedOut, collectionName: 'posts', originalEntry: entry }),
@@ -272,9 +277,106 @@ describe('workflow/index', () => {
     });
   });
 
+  describe('entries from contributors’ forks', () => {
+    /**
+     * Create an unpublished entry from the pull request a contributor opened from their fork.
+     * @param {object} args Arguments.
+     * @param {string} args.collectionName Collection name.
+     * @param {string} args.subPath Entry sub path.
+     * @param {number} args.number Pull request number.
+     * @returns {any} Unpublished entry.
+     */
+    const createForkEntry = ({ collectionName, subPath, number }) => {
+      const entry = createEntry({ collectionName, subPath });
+
+      entry.id = `fork-${number}`;
+      entry.workflow.pullRequest = /** @type {any} */ (
+        createMockForkPullRequest({ number, collectionName, slug: subPath })
+      );
+
+      return entry;
+    };
+
+    test('leave the list as it is when there are none', () => {
+      const own = createEntry({ collectionName: 'posts', subPath: 'a' });
+
+      allUnpublishedEntries.current = [own];
+
+      // The same array, so nothing downstream recomputes for nothing
+      expect(unpublishedEntries.current).toBe(allUnpublishedEntries.current);
+    });
+
+    test('are left out of the entries the rest of the CMS shows', () => {
+      const own = createEntry({ collectionName: 'posts', subPath: 'a' });
+      const fork = createForkEntry({ collectionName: 'posts', subPath: 'a', number: 7 });
+
+      allUnpublishedEntries.current = [fork, own];
+
+      expect(unpublishedEntries.current).toEqual([own]);
+      expect(getUnpublishedEntriesByCollection('posts')).toEqual([own]);
+      expect(getUnpublishedEntry({ collectionName: 'posts', subPath: 'a' })).toBe(own);
+
+      allUnpublishedEntries.current = [fork];
+
+      // Opening the published entry never lands in the contributor’s pull request
+      expect(getUnpublishedEntry({ collectionName: 'posts', subPath: 'a' })).toBeUndefined();
+      expect(
+        getUnpublishedEntryBySlug({
+          collectionName: 'posts',
+          slug: 'a',
+          entry: /** @type {any} */ (fork),
+        }),
+      ).toBeUndefined();
+    });
+
+    test('tell a draft whose pull request has gone from one still open', () => {
+      const fork = createForkEntry({ collectionName: 'posts', subPath: 'a', number: 7 });
+      const draft = /** @type {any} */ ({ collectionName: 'posts', originalEntry: fork });
+
+      allUnpublishedEntries.current = [fork];
+      expect(isOrphanedForkDraft(draft)).toBe(false);
+
+      allUnpublishedEntries.current = [];
+      expect(isOrphanedForkDraft(draft)).toBe(true);
+      // Nothing is gone from the maintainers’ own entries, nor from a missing draft
+      expect(
+        isOrphanedForkDraft(
+          /** @type {any} */ ({
+            collectionName: 'posts',
+            originalEntry: createEntry({ collectionName: 'posts', subPath: 'a' }),
+          }),
+        ),
+      ).toBe(false);
+      expect(isOrphanedForkDraft(undefined)).toBe(false);
+    });
+
+    test('are found by the number of their pull request', () => {
+      const own = createEntry({ collectionName: 'posts', subPath: 'a' });
+      const fork7 = createForkEntry({ collectionName: 'posts', subPath: 'a', number: 7 });
+      const fork8 = createForkEntry({ collectionName: 'posts', subPath: 'a', number: 8 });
+
+      allUnpublishedEntries.current = [own, fork7, fork8];
+
+      expect(getForkUnpublishedEntry({ collectionName: 'posts', subPath: 'a', number: 8 })).toBe(
+        fork8,
+      );
+      expect(
+        getForkUnpublishedEntry({ collectionName: 'posts', subPath: 'b', number: 8 }),
+      ).toBeUndefined();
+      expect(
+        getForkUnpublishedEntry({ collectionName: 'posts', subPath: 'a', number: 9 }),
+      ).toBeUndefined();
+      // The maintainers’ own pull request isn’t one, whatever its number
+      own.workflow.pullRequest = /** @type {any} */ ({ number: 1, branch: 'cms/posts/a' });
+      expect(
+        getForkUnpublishedEntry({ collectionName: 'posts', subPath: 'a', number: 1 }),
+      ).toBeUndefined();
+    });
+  });
+
   describe('getUnpublishedEntriesByCollection', () => {
     test('filters the entries by collection', () => {
-      unpublishedEntries.current = [
+      allUnpublishedEntries.current = [
         createEntry({ collectionName: 'posts', subPath: 'a' }),
         createEntry({ collectionName: 'pages', subPath: 'b' }),
       ];
@@ -285,7 +387,7 @@ describe('workflow/index', () => {
     });
 
     test('returns an empty array without a collection name', () => {
-      unpublishedEntries.current = [createEntry({ collectionName: 'posts', subPath: 'a' })];
+      allUnpublishedEntries.current = [createEntry({ collectionName: 'posts', subPath: 'a' })];
       expect(getUnpublishedEntriesByCollection(undefined)).toEqual([]);
     });
   });
@@ -306,7 +408,7 @@ describe('workflow/index', () => {
     });
 
     test('collects the entries of the collection from every pull request', () => {
-      unpublishedEntries.current = [
+      allUnpublishedEntries.current = [
         createHost([
           { collectionName: 'sections', entry: guides },
           { collectionName: 'authors', entry: jane },
@@ -322,7 +424,7 @@ describe('workflow/index', () => {
     test('looks in the given entries only', () => {
       const host = createHost([{ collectionName: 'sections', entry: help }]);
 
-      unpublishedEntries.current = [createHost([{ collectionName: 'sections', entry: guides }])];
+      allUnpublishedEntries.current = [createHost([{ collectionName: 'sections', entry: guides }])];
 
       expect(getCompanionEntries('sections', [host])).toEqual([help]);
     });
@@ -336,7 +438,7 @@ describe('workflow/index', () => {
         { collectionName: 'authors', entry: ada, edited: true },
       ]);
 
-      unpublishedEntries.current = [
+      allUnpublishedEntries.current = [
         host,
         createHost(),
         createHost([{ collectionName: 'authors', entry: alan, edited: true }]),
@@ -436,7 +538,7 @@ describe('workflow/index', () => {
       const lone = createDeletion('f', {}, {});
       const later = createDeletion('g', {}, recordGroup('group-2'));
 
-      unpublishedEntries.current = [other, entry, draft, elsewhere, file, lone, later];
+      allUnpublishedEntries.current = [other, entry, draft, elsewhere, file, lone, later];
 
       expect(getDeletionSelection(entry)).toEqual([entry, other]);
       expect(getDeletionSelection(file)).toEqual([file]);
@@ -452,7 +554,7 @@ describe('workflow/index', () => {
       const entry = createDeletion('a', {}, {});
       const other = createDeletion('b', {}, {});
 
-      unpublishedEntries.current = [other, entry];
+      allUnpublishedEntries.current = [other, entry];
 
       expect(getDeletionSelection(entry)).toEqual([entry]);
     });
@@ -471,7 +573,7 @@ describe('workflow/index', () => {
         },
       };
 
-      unpublishedEntries.current = [host, section];
+      allUnpublishedEntries.current = [host, section];
 
       expect(getPullRequestEntries('sections')).toEqual([section, guides]);
       expect(getPullRequestEntries('tags')).toEqual([]);
@@ -480,7 +582,7 @@ describe('workflow/index', () => {
 
   describe('getUnpublishedEntry', () => {
     test('finds the entry by collection name and sub path', () => {
-      unpublishedEntries.current = [
+      allUnpublishedEntries.current = [
         createEntry({ collectionName: 'posts', subPath: 'a' }),
         createEntry({ collectionName: 'posts', subPath: 'b' }),
       ];
@@ -494,7 +596,7 @@ describe('workflow/index', () => {
       const entry = createEntry({ collectionName: 'settings', subPath: 'data/site.yml' });
 
       entry.workflow.fileName = 'site';
-      unpublishedEntries.current = [entry];
+      allUnpublishedEntries.current = [entry];
 
       // The URL carries the file name, while the entry’s `subPath` is the whole file path
       expect(getUnpublishedEntry({ collectionName: 'settings', subPath: 'site' })).toBe(entry);
@@ -520,7 +622,7 @@ describe('workflow/index', () => {
       // The branch keeps the slug the entry had when the pull request was opened
       entry.slug = 'renamed';
       entry.subPath = 'renamed';
-      unpublishedEntries.current = [entry];
+      allUnpublishedEntries.current = [entry];
 
       expect(
         getUnpublishedEntryBySlug({ collectionName: 'posts', slug: 'hello', entry: published }),
@@ -538,7 +640,7 @@ describe('workflow/index', () => {
       const legacy = createEntry({ collectionName: 'pages', subPath: 'about/team' });
 
       encoded.workflow.pullRequest.branch = 'cms/pages/about%2Fethos';
-      unpublishedEntries.current = [encoded, legacy];
+      allUnpublishedEntries.current = [encoded, legacy];
 
       expect(
         getUnpublishedEntryBySlug({
@@ -569,7 +671,7 @@ describe('workflow/index', () => {
       const squatter = createEntry({ collectionName: 'posts', subPath: 'zzz' });
 
       squatter.workflow.pullRequest.branch = 'cms/posts/hello';
-      unpublishedEntries.current = [squatter];
+      allUnpublishedEntries.current = [squatter];
 
       expect(
         getUnpublishedEntryBySlug({
@@ -601,7 +703,7 @@ describe('workflow/index', () => {
     test('finds the entry by its branch name as is', () => {
       const entry = createEntry({ collectionName: 'posts', subPath: 'hello' });
 
-      unpublishedEntries.current = [entry];
+      allUnpublishedEntries.current = [entry];
 
       expect(getUnpublishedEntryByBranch('cms/posts/hello')).toBe(entry);
       expect(getUnpublishedEntryByBranch('cms/posts/hello-2')).toBeUndefined();
@@ -612,7 +714,7 @@ describe('workflow/index', () => {
     test('finds the current entry in the store by its ID', () => {
       const entry = createEntry({ collectionName: 'posts', subPath: 'hello' });
 
-      unpublishedEntries.current = [entry];
+      allUnpublishedEntries.current = [entry];
 
       // A copy held since an action started resolves to the entry in the store now
       expect(getUnpublishedEntryById(/** @type {any} */ ({ ...entry }).id)).toBe(entry);
@@ -624,7 +726,7 @@ describe('workflow/index', () => {
 
   describe('getUnpublishedEntryByDraft', () => {
     test('returns nothing for a new entry', () => {
-      unpublishedEntries.current = [createEntry({ collectionName: 'posts', subPath: 'hello' })];
+      allUnpublishedEntries.current = [createEntry({ collectionName: 'posts', subPath: 'hello' })];
 
       expect(getUnpublishedEntryByDraft({ collectionName: 'posts' })).toBeUndefined();
     });
@@ -636,7 +738,7 @@ describe('workflow/index', () => {
       // slug while the entry has the new one
       entry.slug = 'renamed';
       entry.subPath = 'renamed';
-      unpublishedEntries.current = [entry];
+      allUnpublishedEntries.current = [entry];
 
       expect(getUnpublishedEntryByDraft({ collectionName: 'posts', originalEntry: entry })).toBe(
         entry,
@@ -647,7 +749,7 @@ describe('workflow/index', () => {
       const entry = createEntry({ collectionName: 'posts', subPath: 'hello' });
       const updated = { ...entry, workflow: { ...entry.workflow, status: 'pending_review' } };
 
-      unpublishedEntries.current = [updated];
+      allUnpublishedEntries.current = [updated];
 
       expect(getUnpublishedEntryByDraft({ collectionName: 'posts', originalEntry: entry })).toBe(
         updated,
@@ -658,7 +760,7 @@ describe('workflow/index', () => {
       const entry = createEntry({ collectionName: 'posts', subPath: 'hello' });
       const { workflow, ...publishedEntry } = entry;
 
-      unpublishedEntries.current = [entry];
+      allUnpublishedEntries.current = [entry];
 
       expect(workflow).toBeDefined();
       // The editor opened the published version, e.g. before the pull request was found
@@ -676,7 +778,7 @@ describe('workflow/index', () => {
 
       entry.workflow.fileName = 'site';
       entry.workflow.pullRequest.branch = 'cms/settings/site';
-      unpublishedEntries.current = [entry];
+      allUnpublishedEntries.current = [entry];
 
       expect(workflow).toBeDefined();
       expect(
@@ -691,7 +793,7 @@ describe('workflow/index', () => {
     test('returns nothing once the pull request is gone', () => {
       const entry = createEntry({ collectionName: 'posts', subPath: 'hello' });
 
-      unpublishedEntries.current = [];
+      allUnpublishedEntries.current = [];
 
       expect(
         getUnpublishedEntryByDraft({ collectionName: 'posts', originalEntry: entry }),
@@ -1028,6 +1130,16 @@ describe('Test canMergePullRequest()', () => {
     expect(canMergePullRequest({ ...pullRequest, canMerge: false })).toBe(false);
   });
 
+  test('refuses a pull request from a contributor’s fork', () => {
+    expect(
+      canMergePullRequest({
+        ...pullRequest,
+        canMerge: true,
+        fork: { owner: 'alice', repo: 'website', editable: true },
+      }),
+    ).toBe(false);
+  });
+
   test('refuses every pull request when the user can’t merge into the branch', () => {
     mergeLockedBranch.current = 'main';
 
@@ -1138,6 +1250,48 @@ describe('Test isPublishAllowed()', () => {
 
     ready.workflow.status = 'pending_publish';
     expect(isPublishAllowed(ready, directPublish)).toBe(true);
+  });
+});
+
+describe('Test getPublishAction()', () => {
+  const collection = /** @type {any} */ ({ name: 'posts' });
+  const fork = { owner: 'alice', repo: 'website', editable: true };
+
+  /**
+   * Create an unpublished entry at the given status.
+   * @param {string} status Workflow status.
+   * @param {object} [overrides] Pull request overrides.
+   * @returns {any} Entry.
+   */
+  const createWorkflowEntry = (status, overrides = {}) => ({
+    workflow: {
+      status,
+      pullRequest: { number: 7, url: 'https://github.com/owner/repo/pull/7', fork, ...overrides },
+    },
+  });
+
+  test('offers the Publish button for the maintainers’ own pull request once it’s ready', () => {
+    expect(
+      getPublishAction(createWorkflowEntry('pending_publish', { fork: undefined }), collection),
+    ).toBe('publish');
+  });
+
+  test('offers the link where a pull request from a fork could otherwise be published', () => {
+    expect(getPublishAction(createWorkflowEntry('pending_publish'), collection)).toBe('review');
+    expect(getPublishAction(createWorkflowEntry('pending_deletion'), collection)).toBe('review');
+  });
+
+  test('offers nothing before the last stage, or when publishing is hidden', () => {
+    expect(getPublishAction(createWorkflowEntry('pending_review'), collection)).toBeUndefined();
+    expect(
+      getPublishAction(createWorkflowEntry('pending_publish'), { ...collection, publish: false }),
+    ).toBeUndefined();
+  });
+
+  test('offers nothing for a pull request from a fork without a URL', () => {
+    expect(
+      getPublishAction(createWorkflowEntry('pending_publish', { url: undefined }), collection),
+    ).toBeUndefined();
   });
 });
 

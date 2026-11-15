@@ -28,12 +28,12 @@ import { refreshProductionSHA } from '$lib/services/deployments/resolve';
 import { user } from '$lib/services/user/account.svelte';
 import { shareInFlight } from '$lib/services/utils/cache';
 import {
+  allUnpublishedEntries,
   getDeletionSelection,
   getEditedCompanionPaths,
   getUnpublishedEntryByBranch,
   getUnpublishedEntryBySlug,
   publishingBranches,
-  unpublishedEntries,
 } from '$lib/services/workflow';
 import {
   getUsedAssetPaths,
@@ -45,6 +45,7 @@ import {
 import { getBranchName } from '$lib/services/workflow/branch';
 import { trackDeployingEntry } from '$lib/services/workflow/deploy';
 import { createUnpublishedEntryProps } from '$lib/services/workflow/entries';
+import { isForkEntry, parseForkBranchName } from '$lib/services/workflow/forks';
 import { isEntryAlreadyPublished, openAuthoring } from '$lib/services/workflow/open-authoring';
 import { checkReviewedHead, verifyMergeState } from '$lib/services/workflow/verify';
 
@@ -132,14 +133,22 @@ const getCompanionHookArgs = (entry) =>
  * @param {Entry} [args.entry] Entry being saved or deleted, as it stands before the changes.
  * @returns {{ existingEntry: UnpublishedEntry | undefined, branch: string }} Unpublished entry the
  * changes belong to, if the entry is already under review, and the branch to commit them to.
+ * @throws {Error} When the entry comes from a contributor’s pull request that is no longer open.
  */
 const resolveWorkflowBranch = ({ collectionName, slug, entry }) => {
   const currentBranch = /** @type {UnpublishedEntry | undefined} */ (entry)?.workflow?.pullRequest
     .branch;
 
-  const existingEntry =
-    (currentBranch ? getUnpublishedEntryByBranch(currentBranch) : undefined) ??
-    getUnpublishedEntryBySlug({ collectionName, slug, entry });
+  const currentEntry = currentBranch ? getUnpublishedEntryByBranch(currentBranch) : undefined;
+
+  // A contributor’s pull request that has been merged or closed since the editor was opened leaves
+  // nothing to save to. Their changes must not go into a pull request of the maintainers’ own, nor
+  // straight to the configured branch, without anyone meaning to put them there
+  if (currentBranch && !currentEntry && parseForkBranchName(currentBranch)) {
+    throw createLocalizedError('The pull request is no longer open.', 'workflow.fork_entry_gone');
+  }
+
+  const existingEntry = currentEntry ?? getUnpublishedEntryBySlug({ collectionName, slug, entry });
 
   const branch =
     existingEntry?.workflow.pullRequest.branch ?? getBranchName({ collectionName, slug });
@@ -206,17 +215,17 @@ const applyCommitToFiles = (files, changes, commit) => {
 };
 
 /**
- * Replace or append the given unpublished entry in the {@link unpublishedEntries} store, keyed by
- * the workflow branch name. An existing entry is replaced in place, so a status change doesn’t make
- * the entry jump to the end of the list on the Editorial Workflow page.
+ * Replace or append the given unpublished entry in the {@link allUnpublishedEntries} store, keyed
+ * by the workflow branch name. An existing entry is replaced in place, so a status change doesn’t
+ * make the entry jump to the end of the list on the Editorial Workflow page.
  * @param {UnpublishedEntry} entry Unpublished entry.
  */
 export const upsertUnpublishedEntry = (entry) => {
   const { branch } = entry.workflow.pullRequest;
-  const entries = unpublishedEntries.current;
+  const entries = allUnpublishedEntries.current;
   const index = entries.findIndex((e) => e.workflow.pullRequest.branch === branch);
 
-  unpublishedEntries.current = index === -1 ? [...entries, entry] : entries.with(index, entry);
+  allUnpublishedEntries.current = index === -1 ? [...entries, entry] : entries.with(index, entry);
 };
 
 /**
@@ -224,14 +233,14 @@ export const upsertUnpublishedEntry = (entry) => {
  * @param {string} branch Branch name.
  */
 export const removeUnpublishedEntry = (branch) => {
-  unpublishedEntries.current = unpublishedEntries.current.filter(
+  allUnpublishedEntries.current = allUnpublishedEntries.current.filter(
     (e) => e.workflow.pullRequest.branch !== branch,
   );
 };
 
 /**
  * Attach the given pull request to the entry, and add the resulting unpublished entry to the
- * {@link unpublishedEntries} store or replace the one already there.
+ * {@link allUnpublishedEntries} store or replace the one already there.
  * @param {Entry} entry Entry the pull request holds.
  * @param {object} args Arguments.
  * @param {WorkflowPullRequest} args.pullRequest Pull request.
@@ -263,8 +272,9 @@ const storeUnpublishedEntry = (
 };
 
 /**
- * Remove the entry of the given merged or closed pull request from the {@link unpublishedEntries}
- * store, settle the assets committed to its branch, and forget the deployments of its head commit.
+ * Remove the entry of the given merged or closed pull request from the
+ * {@link allUnpublishedEntries} store, settle the assets committed to its branch, and forget the
+ * deployments of its head commit.
  * @param {WorkflowPullRequest} pullRequest Pull request.
  * @param {(branch: string) => void} settleAssets Function to publish or remove the assets committed
  * to the branch: {@link publishWorkflowAssets} or {@link removeWorkflowAssets}.
@@ -596,9 +606,11 @@ export const saveWorkflowChanges = async ({
  * on the Git service too, where a branch protection rule may require one before the pull request
  * can be merged; moving it back withdraws the approval, so it can’t be merged there on the strength
  * of it. The Git services don’t let anyone approve their own pull request, and an Open Authoring
- * contributor’s approval doesn’t count, so neither is attempted. The review is a bonus on top of
- * the status change, which has already been made, so a failure is only logged: the user may not be
- * allowed to review, or to dismiss a review on GitHub.
+ * contributor’s approval doesn’t count, so neither is attempted. Nor is a pull request a
+ * contributor opened from their fork approved: the CMS has only shown the entry, not whatever else
+ * their branch holds, so the approval is left to the review on the Git service. The review is a
+ * bonus on top of the status change, which has already been made, so a failure is only logged: the
+ * user may not be allowed to review, or to dismiss a review on GitHub.
  * @param {WorkflowPullRequest} pullRequest Pull request.
  * @param {boolean} approved Whether to approve the pull request rather than withdraw the approval.
  */
@@ -607,6 +619,7 @@ const reviewPullRequest = async (pullRequest, approved) => {
 
   if (
     openAuthoring.current ||
+    pullRequest.fork ||
     number === undefined ||
     (!!author?.login && author.login === user.account?.login)
   ) {
@@ -942,6 +955,7 @@ const getOtherFileRevertChanges = async ({ unpublishedEntry, slug, handledPaths 
  * @throws {Error} When the user has cancelled the commit when asked for a commit message.
  * @throws {Error} When removing the references would leave another entry invalid. The dialogs
  * report this before the deletion is confirmed, so this is only a safeguard.
+ * @throws {Error} When the entry comes from a contributor’s pull request.
  * @see https://github.com/sveltia/sveltia-cms/issues/770
  */
 export const deleteWorkflowEntry = async (
@@ -969,6 +983,13 @@ export const deleteWorkflowEntry = async (
   const collectionName = collection.name;
   const { slug } = entry;
   const { existingEntry, branch } = resolveWorkflowBranch({ collectionName, slug, entry });
+
+  // A contributor’s pull request is theirs: a maintainer can close it, but not turn it into the
+  // removal of the published entry. The editor doesn’t offer it, so this is only a safeguard
+  if (isForkEntry(existingEntry)) {
+    throw new Error('Cannot delete an entry through a pull request from a fork');
+  }
+
   // Remove the files as they stand on the branch. A pull request that renamed the entry has already
   // staged the deletion of the old paths there, so removing the new ones leaves nothing behind once
   // the merge lands

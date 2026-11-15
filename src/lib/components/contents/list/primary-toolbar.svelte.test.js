@@ -13,7 +13,7 @@ import {
   setReorderMode,
 } from '$lib/services/contents/collection/view';
 import { env } from '$lib/services/user/env.svelte';
-import { unpublishedEntries } from '$lib/services/workflow';
+import { allUnpublishedEntries } from '$lib/services/workflow';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import { createMockEntry, initTestConfig, setEntries } from '$lib/test/config';
 
@@ -424,7 +424,7 @@ describe('PrimaryToolbar', () => {
 
     try {
       // The entry list shows the drafts rather than its empty state with a Create button
-      unpublishedEntries.current = [
+      allUnpublishedEntries.current = [
         /** @type {any} */ ({
           ...createMockEntry({ slug: 'draft', content: { _default: { title: 'Draft' } } }),
           workflow: {
@@ -439,7 +439,7 @@ describe('PrimaryToolbar', () => {
 
       await expect.element(page.getByRole('button', { name: 'Create New Entry' })).toBeVisible();
     } finally {
-      unpublishedEntries.current = [];
+      allUnpublishedEntries.current = [];
     }
   });
 

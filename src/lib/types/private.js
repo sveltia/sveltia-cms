@@ -480,7 +480,20 @@
  * @property {string} [description] Pull request description, an empty string if it has none. It
  * carries the record of the deletion group the pull request belongs to, if any: see
  * `getDeletionGroup` in `$lib/services/backends/git/shared/pull-requests`. `undefined` for an Open
- * Authoring draft, which has no pull request yet.
+ * Authoring draft, which has no pull request yet. Always empty for a pull request from a fork,
+ * whose description is the contributor’s and can’t be trusted to say which entries it deletes.
+ * @property {ForkHead} [fork] Fork the pull request comes from, when a contributor opened it with
+ * Open Authoring and the signed-in user is a maintainer reviewing it. Its `branch` is then
+ * qualified with the fork: see `getForkBranchName` in `$lib/services/workflow/forks`.
+ */
+
+/**
+ * Fork a pull request reviewed by a maintainer comes from.
+ * @typedef {object} ForkHead
+ * @property {string} owner Owner of the fork.
+ * @property {string} repo Name of the fork.
+ * @property {boolean} editable Whether the contributor lets maintainers push to the pull request’s
+ * branch. Without that, the entry can only be viewed in the CMS.
  */
 
 /**

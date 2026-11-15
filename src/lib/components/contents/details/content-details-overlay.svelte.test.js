@@ -17,7 +17,14 @@ import { entryEditorSettings } from '$lib/services/contents/editor/settings';
 import { sidebarSheetPanel } from '$lib/services/contents/editor/sidebar';
 import { env } from '$lib/services/user/env.svelte';
 import { prefs } from '$lib/services/user/prefs.svelte';
-import { createMockEntry, initTestConfig, setEntries } from '$lib/test/config';
+import { allUnpublishedEntries } from '$lib/services/workflow';
+import {
+  createMockEntry,
+  createMockForkPullRequest,
+  createMockWorkflowEntry,
+  initTestConfig,
+  setEntries,
+} from '$lib/test/config';
 import { createMockDraft } from '$lib/test/draft';
 import { waitForToastsToHide } from '$lib/test/toast';
 
@@ -131,6 +138,7 @@ describe('ContentDetailsOverlay', () => {
     selectedCollection.current = getCollection('posts');
     prefs.devModeEnabled = false;
     lockedBranch.current = undefined;
+    allUnpublishedEntries.current = [];
     window.history.replaceState(null, '');
   });
 
@@ -349,6 +357,58 @@ describe('ContentDetailsOverlay', () => {
     expect(page.getByRole('button', { name: 'Save' }).elements()).toHaveLength(0);
     // The message is given once, in place of the editor
     expect(page.getByRole('status').elements()).toHaveLength(0);
+  });
+
+  test.each([
+    [true, /Your changes are saved to their branch/],
+    [false, /The contributor doesn’t allow maintainers to edit it/],
+  ])(
+    'says where an entry from a contributor’s pull request is saved (editable: %s)',
+    async (editable, message) => {
+      const entry = createMockWorkflowEntry({
+        status: 'pending_review',
+        pullRequest: createMockForkPullRequest({ editable }),
+      });
+
+      // The pull request is still open, so the board has its entry
+      allUnpublishedEntries.current = [entry];
+
+      await renderOverlay(
+        createMockDraft({
+          fields,
+          values: { _default: { title: 'Hello', body: '', 'author.name': 'Melvin' } },
+          draft: { isNew: false, originalEntry: entry },
+        }),
+      );
+
+      await expect.element(page.getByRole('status')).toMatchTextContent(message);
+      await expect
+        .element(page.getByRole('textbox', { name: 'Title' }))
+        .toHaveAttribute('aria-readonly', String(!editable));
+    },
+  );
+
+  test('says an entry from a contributor’s pull request that has gone can’t be saved', async () => {
+    // The pull request was merged or closed since the editor was opened, so it’s off the store
+    allUnpublishedEntries.current = [];
+
+    await renderOverlay(
+      createMockDraft({
+        fields,
+        values: { _default: { title: 'Hello', body: '', 'author.name': 'Melvin' } },
+        draft: {
+          isNew: false,
+          originalEntry: createMockWorkflowEntry({
+            status: 'pending_review',
+            pullRequest: createMockForkPullRequest(),
+          }),
+        },
+      }),
+    );
+
+    await expect
+      .element(page.getByRole('status'))
+      .toMatchTextContent(/pull request is no longer open/);
   });
 
   test('shows an existing entry of a read-only collection for reference', async () => {

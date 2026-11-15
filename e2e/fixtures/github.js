@@ -19,6 +19,8 @@ import { MockGitRepository } from './git.js';
  * @property {boolean} draft Whether the pull request is a draft.
  * @property {string[]} labels Label names.
  * @property {MockUser} author Author.
+ * @property {boolean} maintainerCanModify Whether the author of a pull request from a fork lets
+ * the repository’s maintainers push to its branch.
  * @property {Date} createdAt Creation date.
  * @property {Date} updatedAt Last update date.
  * @property {string} [mergeCommit] SHA of the commit that merged the pull request.
@@ -297,6 +299,8 @@ export class MockGitHub extends MockGitRepository {
    * @param {string} [args.body] Description.
    * @param {string[]} [args.labels] Labels.
    * @param {MockUser} [args.author] Author, the colleague by default.
+   * @param {boolean} [args.maintainerCanModify] Whether the author of a pull request from a fork
+   * lets the repository’s maintainers push to its branch.
    * @returns {MockPullRequest} Pull request.
    */
   openPullRequest({
@@ -307,6 +311,7 @@ export class MockGitHub extends MockGitRepository {
     body = '',
     labels = [],
     author = this.colleague,
+    maintainerCanModify = true,
   }) {
     const now = new Date();
 
@@ -322,6 +327,7 @@ export class MockGitHub extends MockGitRepository {
       draft,
       labels,
       author,
+      maintainerCanModify,
       createdAt: now,
       updatedAt: now,
     };
@@ -993,7 +999,14 @@ export class MockGitHub extends MockGitRepository {
    * @returns {MockResponse} Response.
    * @see https://docs.github.com/en/rest/pulls/pulls#create-a-pull-request
    */
-  handleCreatePullRequest({ title, head, base, draft = false, body = '' }) {
+  handleCreatePullRequest({
+    title,
+    head,
+    base,
+    draft = false,
+    body = '',
+    maintainer_can_modify: maintainerCanModify = false,
+  }) {
     /**
      * Create a validation error response.
      * @param {string} message Error message.
@@ -1025,6 +1038,7 @@ export class MockGitHub extends MockGitRepository {
       draft,
       body,
       author: this.user,
+      maintainerCanModify,
     });
 
     return { status: 201, json: this.toRestPullRequest(pullRequest) };
@@ -1235,6 +1249,12 @@ export class MockGitHub extends MockGitRepository {
       headRefName,
       baseRefName: pullRequest.base,
       headRepositoryOwner: { login: headOwner ?? this.owner },
+      // The signed-in user’s fork can have a name of its own; anyone else’s keeps the repository’s
+      headRepository: {
+        name: headOwner && headOwner === this.fork?.owner ? this.fork.repo : this.repo,
+        owner: { login: headOwner ?? this.owner },
+      },
+      maintainerCanModify: pullRequest.maintainerCanModify,
       headRefOid: this.getPullRequestHead(pullRequest).oid,
       author: {
         login: author.login,
@@ -1437,8 +1457,18 @@ export class MockGitHub extends MockGitRepository {
     }
 
     if (query.includes('pullRequests(')) {
+      // The board asks for the pull requests from forks under an alias of their own
+      const forkArgs = query.match(/forkPullRequests:\s*pullRequests\(([^)]*)\)/)?.[1];
+
       return {
-        data: { repository: { pullRequests: { nodes: this.findPullRequests(query, variables) } } },
+        data: {
+          repository: {
+            pullRequests: { nodes: this.findPullRequests(query, variables) },
+            ...(forkArgs
+              ? { forkPullRequests: { nodes: this.filterPullRequests(forkArgs, variables) } }
+              : {}),
+          },
+        },
       };
     }
 
@@ -1577,9 +1607,22 @@ export class MockGitHub extends MockGitRepository {
    */
   findPullRequests(query, variables) {
     const [, args] = /** @type {RegExpMatchArray} */ (query.match(/pullRequests\(([^)]*)\)/));
+
+    return this.filterPullRequests(args, variables);
+  }
+
+  /**
+   * Filter the pull requests by the arguments of a `pullRequests` connection: their state, status
+   * labels, head branch or base branch.
+   * @param {string} args Arguments of the connection.
+   * @param {Record<string, any>} variables Variables.
+   * @returns {Record<string, any>[]} Pull request nodes, the most recently updated first.
+   */
+  filterPullRequests(args, variables) {
     const states = args.match(/states:\s*(\w+)/)?.[1];
     const labels = args.match(/labels:\s*(\[[^\]]*\])/)?.[1];
     const headRefName = /headRefName:\s*\$branch/.test(args) ? variables.branch : undefined;
+    const baseRefName = args.match(new RegExp(`baseRefName:\\s*${STRING}`))?.[1];
 
     return this.pullRequests
       .filter(
@@ -1589,7 +1632,8 @@ export class MockGitHub extends MockGitRepository {
             JSON.parse(labels).some((/** @type {string} */ label) =>
               pullRequest.labels.includes(label),
             )) &&
-          (!headRefName || splitBranchKey(pullRequest.head).name === headRefName),
+          (!headRefName || splitBranchKey(pullRequest.head).name === headRefName) &&
+          (!baseRefName || pullRequest.base === JSON.parse(baseRefName)),
       )
       .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
       .map((pullRequest) => this.toPullRequestNode(pullRequest));

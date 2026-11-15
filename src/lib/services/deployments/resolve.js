@@ -5,7 +5,7 @@ import { deployments, productionSHA } from '$lib/services/deployments';
 import { DEPLOY_TTL } from '$lib/services/deployments/constants';
 import { prefs } from '$lib/services/user/prefs.svelte';
 import { createDerivedState } from '$lib/services/utils/state.svelte';
-import { unpublishedEntries } from '$lib/services/workflow';
+import { allUnpublishedEntries } from '$lib/services/workflow';
 
 /**
  * @import { BackendService, DeployStatus, DeployTarget } from '$lib/types/private';
@@ -69,7 +69,7 @@ export const getDeployTargets = () => {
     seen.add(prodSHA);
   }
 
-  unpublishedEntries.current.forEach(({ workflow: { pullRequest } }) => {
+  allUnpublishedEntries.current.forEach(({ workflow: { pullRequest } }) => {
     const { number, headSHA, branch: prBranch } = pullRequest;
 
     // An Open Authoring draft with no number is a branch in the contributor’s fork that nothing

@@ -2,6 +2,10 @@ import { getRootDir } from '$lib/services/backends/root-dir';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 /**
+ * @import { RepositoryPath } from '$lib/types/private';
+ */
+
+/**
  * Prefix for Editorial Workflow branch names. Branches are named
  * `cms/[COLLECTION_NAME]/[SLUG]`, which is compatible with Netlify/Decap CMS.
  * @see https://decapcms.org/docs/editorial-workflows/
@@ -42,15 +46,32 @@ const segmenter = new Intl.Segmenter();
 /**
  * Join the segments of an Editorial Workflow branch name prefix.
  * @param {string} rootDir Root directory, or an empty string to leave it out.
+ * @param {RepositoryPath | null} [fork] Fork whose path goes in the prefix, or `null` for none.
+ * Default: the signed-in contributor’s fork with Open Authoring.
  * @returns {string} Prefix, including the trailing slash.
  */
-const joinPrefix = (rootDir) => {
-  const fork = forkedRepository.current;
-
-  return [WORKFLOW_BRANCH_PREFIX, fork?.owner, fork?.repo, rootDir]
+const joinPrefix = (rootDir, fork = forkedRepository.current) =>
+  [WORKFLOW_BRANCH_PREFIX, fork?.owner, fork?.repo, rootDir]
     .filter(Boolean)
     .map((segment) => `${segment}/`)
     .join('');
+
+/**
+ * Get the name a branch of an Open Authoring contributor’s fork would have in the configured
+ * repository, which is how the collection and the entry are read from it: the fork’s path, which
+ * {@link getBranchPrefix} inserts in the contributor’s session, is taken off, so
+ * `cms/alice/website/posts/hello` becomes `cms/posts/hello`. A branch named without the path is
+ * taken as it is. The fork is matched regardless of case, like GitHub user and repository names.
+ * @param {string} branch Branch name in the fork.
+ * @param {RepositoryPath} fork Fork the branch is in.
+ * @returns {string} Branch name.
+ */
+export const toUpstreamBranchName = (branch, fork) => {
+  const forkPrefix = joinPrefix('', fork);
+
+  return branch.toLowerCase().startsWith(forkPrefix.toLowerCase())
+    ? `${joinPrefix('', null)}${branch.slice(forkPrefix.length)}`
+    : branch;
 };
 
 /**

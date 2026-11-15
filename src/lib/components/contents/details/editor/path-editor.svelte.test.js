@@ -2,7 +2,7 @@ import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { getCollection } from '$lib/services/contents/collection';
-import { unpublishedEntries } from '$lib/services/workflow';
+import { allUnpublishedEntries } from '$lib/services/workflow';
 import { createMockEntry, initTestConfig, setEntries } from '$lib/test/config';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 
@@ -129,7 +129,7 @@ describe('PathEditor', () => {
   });
 
   beforeEach(() => {
-    unpublishedEntries.current = [];
+    allUnpublishedEntries.current = [];
   });
 
   test('offers the folders in a tree, opened down to the current one', async () => {
@@ -200,7 +200,7 @@ describe('PathEditor', () => {
   });
 
   test('counts the unpublished entries in', async () => {
-    unpublishedEntries.current = [
+    allUnpublishedEntries.current = [
       /** @type {any} */ ({
         ...createMockEntry({
           slug: 'blog/index',

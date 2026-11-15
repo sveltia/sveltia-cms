@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { getCollection } from '$lib/services/contents/collection';
-import { unpublishedEntries } from '$lib/services/workflow';
+import { allUnpublishedEntries } from '$lib/services/workflow';
 import { createMockEntry, initTestConfig, setEntries } from '$lib/test/config';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 
@@ -38,7 +38,7 @@ const renderInfobar = async (draftProps = {}) => {
  * @param {any} entry Entry the pull request changes.
  */
 const addPostPullRequest = (entry) => {
-  unpublishedEntries.current = [
+  allUnpublishedEntries.current = [
     /** @type {any} */ ({
       ...createMockEntry({ slug: 'hello', content: { _default: { title: 'Hello World' } } }),
       workflow: {
@@ -54,7 +54,7 @@ const addPostPullRequest = (entry) => {
 describe('PendingEditInfobar', () => {
   beforeEach(async () => {
     await initTestConfig({ collections: [postsCollection, authorsCollection] });
-    unpublishedEntries.current = [];
+    allUnpublishedEntries.current = [];
     setEntries([adaEntry]);
   });
 

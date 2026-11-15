@@ -6,9 +6,10 @@
   import { _ } from '@sveltia/i18n';
   import { Alert, Button, ConfirmationDialog, Toast } from '@sveltia/ui';
 
+  import ExternalReviewButton from '$lib/components/workflow/external-review-button.svelte';
   import { getCollection } from '$lib/services/contents/collection';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { isPublishAllowed, publishingBranches } from '$lib/services/workflow';
+  import { getPublishAction, publishingBranches } from '$lib/services/workflow';
   import { getPublishDialogStrings } from '$lib/services/workflow/dialogs';
   import { runWorkflowEditorAction } from '$lib/services/workflow/editor';
   import { publishReviewedEntry } from '$lib/services/workflow/save';
@@ -46,8 +47,11 @@
   const publishing = $derived(
     publishingBranches.current.includes(entry.workflow.pullRequest.branch),
   );
-  // Only a user who can merge the pull request gets the control, once the entry is ready
-  const visible = $derived(isPublishAllowed(entry, getCollection(entry.workflow.collectionName)));
+  // Only a user who can merge the pull request gets the control, once the entry is ready. A pull
+  // request a contributor has opened from their fork is merged on the Git service instead
+  const publishAction = $derived(
+    getPublishAction(entry, getCollection(entry.workflow.collectionName)),
+  );
 
   /**
    * Publish the entry by merging the pull request, then go back to the entry list.
@@ -75,7 +79,7 @@
   };
 </script>
 
-{#if visible}
+{#if publishAction === 'publish'}
   <Button
     variant="primary"
     label={publishing && !deletion ? _('publishing') : dialogStrings.label}
@@ -85,6 +89,8 @@
       showPublishDialog = true;
     }}
   />
+{:else if publishAction === 'review'}
+  <ExternalReviewButton {entry} {disabled} />
 {/if}
 
 <ConfirmationDialog

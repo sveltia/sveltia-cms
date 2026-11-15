@@ -1,5 +1,9 @@
 import { fetchBlobText } from '$lib/services/backends/git/github/files';
-import { getWorkflowRepository } from '$lib/services/backends/git/github/fork';
+import {
+  getBranchRepository,
+  getContentRepository,
+  getWorkflowRepository,
+} from '$lib/services/backends/git/github/fork';
 import { fetchAliasedBatch } from '$lib/services/backends/git/github/graphql';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
@@ -15,6 +19,7 @@ import {
 } from '$lib/services/backends/git/shared/repository';
 import { deleteRemoteBranch } from '$lib/services/backends/git/shared/workflow';
 import { encodePathSegments } from '$lib/services/utils/url';
+import { parseForkBranchName } from '$lib/services/workflow/forks';
 import { getStatusLabel, replaceStatusLabel } from '$lib/services/workflow/labels';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
@@ -109,9 +114,7 @@ export const fetchPullRequestFiles = async (pullRequests) => {
     return;
   }
 
-  // A workflow branch lives in the contributor’s fork with Open Authoring, so that’s where the
-  // blobs have to be read from
-  const workflowRepository = getWorkflowRepository();
+  const workflowRepository = getContentRepository();
 
   const blobs = await fetchAliasedBatch({
     items: targets,
@@ -181,17 +184,17 @@ const FETCH_BRANCH_HEAD_QUERY = `
  * Fetch the commit the given workflow branch points at. Two editors working on the same entry
  * share its branch, so this is how a save finds out that someone else has committed to it since
  * the draft was opened. The branch is looked up in the repository it lives in, which is the
- * contributor’s fork with Open Authoring.
+ * contributor’s fork with Open Authoring, or when a maintainer edits a contributor’s pull request.
  * @param {string} branch Branch name.
  * @returns {Promise<string | undefined>} Git object ID, or `undefined` if the branch is gone,
  * which is what a merged or closed pull request leaves behind.
  * @see https://docs.github.com/en/graphql/reference/objects#ref
  */
 export const fetchBranchHead = async (branch) => {
-  const { owner, repo } = getWorkflowRepository();
+  const { owner, repo, branch: name } = getBranchRepository(branch);
 
   const { repository: result } = /** @type {{ repository: Record<string, any> }} */ (
-    await fetchGraphQL(FETCH_BRANCH_HEAD_QUERY, { owner, repo, branch: `refs/heads/${branch}` })
+    await fetchGraphQL(FETCH_BRANCH_HEAD_QUERY, { owner, repo, branch: `refs/heads/${name}` })
   );
 
   return result?.branchHead?.target?.oid;
@@ -201,9 +204,15 @@ export const fetchBranchHead = async (branch) => {
  * Delete the given branch. Failures are ignored, as the branch may already have been deleted by the
  * repository’s automatic head branch deletion setting.
  * @param {string} branch Branch name.
+ * @throws {Error} When the branch is in a contributor’s fork.
  * @see https://docs.github.com/en/rest/git/refs#delete-a-reference
  */
 export const deleteBranch = async (branch) => {
+  // A contributor’s branch is theirs to delete: a maintainer only closes the pull request from it
+  if (parseForkBranchName(branch)) {
+    throw new Error('A branch in a contributor’s fork cannot be deleted.');
+  }
+
   const repoPath = getRepositoryPath(getWorkflowRepository());
 
   await deleteRemoteBranch({
@@ -295,19 +304,47 @@ export const createPullRequest = async ({ branch, title, status, description }) 
   const repoPath = getRepositoryPath(repository);
   const fork = forkedRepository.current;
 
-  const result = /** @type {Record<string, any>} */ (
-    await fetchAPI(`${repoPath}/pulls`, {
-      method: 'POST',
-      body: {
-        title,
-        // A cross-repository pull request identifies its head branch by the fork’s owner
-        head: fork ? `${fork.owner}:${branch}` : branch,
-        base: baseBranch,
-        draft: status === 'draft',
-        body: description,
-      },
-    })
-  );
+  /**
+   * Open the pull request.
+   * @param {boolean} [maintainerCanModify] Whether to let the maintainers push to its branch.
+   * @returns {Promise<Record<string, any>>} Pull request.
+   */
+  const open = async (maintainerCanModify) =>
+    /** @type {Record<string, any>} */ (
+      await fetchAPI(`${repoPath}/pulls`, {
+        method: 'POST',
+        body: {
+          title,
+          // A cross-repository pull request identifies its head branch by the fork’s owner
+          head: fork ? `${fork.owner}:${branch}` : branch,
+          base: baseBranch,
+          draft: status === 'draft',
+          body: description,
+          ...(maintainerCanModify ? { maintainer_can_modify: true } : {}),
+        },
+      })
+    );
+
+  /**
+   * Open a contributor’s pull request, letting the maintainers push to its branch, as GitHub’s own
+   * form does by default, so they can edit the entry in the CMS while reviewing it rather than only
+   * view it. GitHub refuses that for a fork owned by an organization, which gets the pull request
+   * without it instead.
+   * @returns {Promise<Record<string, any>>} Pull request.
+   */
+  const openFromFork = async () => {
+    try {
+      return await open(true);
+    } catch (/** @type {any} */ ex) {
+      if (ex.cause?.status !== 422) {
+        throw ex;
+      }
+
+      return open();
+    }
+  };
+
+  const result = await (fork ? openFromFork() : open());
 
   const pullRequest = parseRestPullRequest(result, {
     nodeId: result.node_id,

@@ -1,10 +1,6 @@
 import { openEntryPullRequest, WORKFLOW_CONFIG } from '../../fixtures/configs/workflow.js';
 import { expect, test } from '../../fixtures/test.js';
-import { openEntry } from '../../fixtures/ui.js';
-
-/**
- * @import { Locator, Page } from '@playwright/test';
- */
+import { getCard, openBoard, openEntry } from '../../fixtures/ui.js';
 
 /**
  * Blog on Editorial Workflow whose posts refer to an author, who can be edited on the fly from a
@@ -62,26 +58,6 @@ const post = (title) => `---\ntitle: ${title}\nauthor: ada\n---\n`;
  * @returns {string} File content.
  */
 const author = (bio) => `---\nname: Ada\nbio: ${bio}\n---\n`;
-
-/**
- * Open the Editorial Workflow page.
- * @param {Page} page Page.
- * @returns {Promise<Locator>} Board.
- */
-const openBoard = async (page) => {
-  await page.getByRole('radio', { name: 'Editorial Workflow' }).click();
-
-  return page.getByRole('group', { name: 'Editorial Workflow' });
-};
-
-/**
- * Get the card of an entry on the board.
- * @param {Locator} board Board.
- * @param {string} title Entry title.
- * @returns {Locator} Card.
- */
-const getCard = (board, title) =>
-  board.getByRole('listitem').filter({ has: board.page().getByRole('button', { name: title }) });
 
 test.beforeEach(({ github }) => {
   github.commit({

@@ -5,7 +5,7 @@ import { backendName } from '$lib/services/backends';
 import { getCollection } from '$lib/services/contents/collection';
 import { reloadDraft } from '$lib/services/contents/draft/reload';
 import { formatDate } from '$lib/services/utils/date';
-import { unpublishedEntries } from '$lib/services/workflow';
+import { allUnpublishedEntries } from '$lib/services/workflow';
 import { createMockEntry, initTestConfig, setEntries } from '$lib/test/config';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 
@@ -50,7 +50,7 @@ describe('RemoteChangeInfobar', () => {
   beforeEach(async () => {
     await initTestConfig({ collections: [postsCollection] });
     backendName.current = undefined;
-    unpublishedEntries.current = [];
+    allUnpublishedEntries.current = [];
     setEntries([helloEntry]);
   });
 

@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cmsConfigVersion } from '$lib/services/config';
 import { isDraftModified } from '$lib/services/contents/draft';
 import { createState } from '$lib/services/utils/state.svelte';
+import { createMockForkPullRequest } from '$lib/test/factories';
 
 vi.mock('@sveltia/utils/storage');
 vi.mock('@sveltia/utils/file', () => ({
@@ -2221,6 +2222,35 @@ describe('draft/backup', () => {
       await _deleteBackup('posts', 'my-post');
 
       expect(mockBackupDB.delete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getBackupSlug()', () => {
+    it('keys the backup of an entry from a contributor’s pull request apart', async () => {
+      const { getBackupSlug } = await import('./backup');
+      const collection = /** @type {any} */ ({ name: 'posts' });
+
+      /**
+       * Create an entry with the given pull request.
+       * @param {any} [pullRequest] Pull request.
+       * @returns {any} Entry.
+       */
+      const entry = (pullRequest) => ({
+        subPath: '2024/hello',
+        ...(pullRequest ? { workflow: { pullRequest } } : {}),
+      });
+
+      expect(getBackupSlug({ collection, originalEntry: entry() })).toBe('2024/hello');
+      expect(
+        getBackupSlug({ collection, originalEntry: entry({ branch: 'cms/posts/2024%2Fhello' }) }),
+      ).toBe('2024/hello');
+      expect(
+        getBackupSlug({
+          collection,
+          originalEntry: entry(createMockForkPullRequest({ slug: '2024%2Fhello' })),
+        }),
+      ).toBe('2024/hello?_pr=7');
+      expect(getBackupSlug({ collection, fileName: 'site' })).toBe('site');
     });
   });
 });

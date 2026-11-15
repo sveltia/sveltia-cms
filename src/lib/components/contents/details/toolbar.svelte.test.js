@@ -23,7 +23,7 @@ import { recheckDeployments } from '$lib/services/deployments/poll';
 import { env } from '$lib/services/user/env.svelte';
 import { prefs } from '$lib/services/user/prefs.svelte';
 import { formatDate } from '$lib/services/utils/date';
-import { unpublishedEntries } from '$lib/services/workflow';
+import { allUnpublishedEntries } from '$lib/services/workflow';
 import {
   deleteWorkflowEntries,
   discardWorkflowEntries,
@@ -34,6 +34,7 @@ import {
 import {
   createMockAsset,
   createMockEntry,
+  createMockForkPullRequest,
   initTestConfig,
   setAssets,
   setEntries,
@@ -149,7 +150,7 @@ describe('Toolbar', () => {
     prefs.closeOnSave = true;
     entryEditorSettings.current = { showPreview: true, showSecondPane: true, syncScrolling: true };
     sidebarSheetPanel.current = null;
-    unpublishedEntries.current = [];
+    allUnpublishedEntries.current = [];
     deployPollTimedOut.current = false;
     contentUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE };
     copyFromLocaleToast.current = { ...copyFromLocaleToast.current, show: false };
@@ -1309,7 +1310,7 @@ describe('Toolbar', () => {
         collections: [{ ...postsCollection, preview_path: 'posts/{{slug}}' }],
       });
       backendName.current = 'github';
-      unpublishedEntries.current = [unpublishedEntry];
+      allUnpublishedEntries.current = [unpublishedEntry];
       vi.mocked(saveEntry).mockResolvedValue(unpublishedEntry);
       vi.mocked(updateWorkflowStatus).mockResolvedValue(unpublishedEntry);
     });
@@ -1373,6 +1374,31 @@ describe('Toolbar', () => {
       // Nothing is left to hand over for review
       expect(page.getByRole('alertdialog').elements()).toHaveLength(0);
       await expect.poll(() => window.location.hash).toBe('#/collections/posts');
+    });
+
+    test('doesn’t offer to publish an entry whose contributor’s pull request has gone', async () => {
+      await initTestConfig({
+        backend: { name: 'github', repo: 'me/site' },
+        publish_mode: { type: 'editorial_workflow', direct_publish: true },
+        collections: [postsCollection],
+      });
+
+      // The pull request was merged or closed since the editor was opened, so it’s off the store
+      allUnpublishedEntries.current = [];
+      await renderExisting({
+        originalEntry: {
+          ...helloEntry,
+          workflow: { ...unpublishedEntry.workflow, pullRequest: createMockForkPullRequest() },
+        },
+      });
+
+      await expect
+        .element(
+          page.getByRole('toolbar', { name: 'Primary' }).getByRole('button', { name: 'Save' }),
+        )
+        .toBeInTheDocument();
+      // The Save button comes without the popup that offers Save and Publish
+      expect(page.getByRole('button', { name: 'More Options' }).elements()).toHaveLength(0);
     });
 
     test('refuses to save and publish along with an entry that has to be reviewed', async () => {
@@ -1496,8 +1522,29 @@ describe('Toolbar', () => {
       ]);
     });
 
+    test('links a contributor’s locked pull request to the Git service, with nothing to save', async () => {
+      /** @type {any} */
+      const forkEntry = {
+        ...unpublishedEntry,
+        workflow: {
+          ...unpublishedEntry.workflow,
+          status: 'pending_publish',
+          pullRequest: createMockForkPullRequest({ editable: false }),
+        },
+      };
+
+      allUnpublishedEntries.current = [forkEntry];
+      await renderExisting({ originalEntry: forkEntry });
+
+      const toolbar = page.getByRole('toolbar', { name: 'Primary' });
+
+      await expect.element(toolbar.getByRole('button', { name: /^Review on/ })).toBeInTheDocument();
+      expect(toolbar.getByRole('button', { name: 'Save' }).elements()).toHaveLength(0);
+      expect(toolbar.getByRole('button', { name: 'Publish Entry' }).elements()).toHaveLength(0);
+    });
+
     test('offers to publish an entry that is ready', async () => {
-      unpublishedEntries.current = [
+      allUnpublishedEntries.current = [
         {
           ...unpublishedEntry,
           workflow: { ...unpublishedEntry.workflow, status: 'pending_publish' },
@@ -1522,7 +1569,7 @@ describe('Toolbar', () => {
         workflow: { ...unpublishedEntry.workflow, status: 'pending_publish' },
       };
 
-      unpublishedEntries.current = [renamedEntry];
+      allUnpublishedEntries.current = [renamedEntry];
 
       await renderExisting({ originalEntry: renamedEntry });
 
@@ -1673,7 +1720,7 @@ describe('Toolbar', () => {
         travelTag,
         createMockEntry({ slug: 'a', content: { _default: { title: 'A', tag: 'travel' } } }),
       ]);
-      unpublishedEntries.current = [renamedTag];
+      allUnpublishedEntries.current = [renamedTag];
       vi.mocked(deleteWorkflowEntries).mockResolvedValue(undefined);
       window.location.hash = '#/collections/tags/entries/trips';
 
@@ -1712,7 +1759,7 @@ describe('Toolbar', () => {
 
     test('offers to cancel a pending deletion, and nothing else', async () => {
       setEntries([helloEntry]);
-      unpublishedEntries.current = [
+      allUnpublishedEntries.current = [
         {
           ...unpublishedEntry,
           workflow: { ...unpublishedEntry.workflow, status: 'pending_deletion' },
@@ -1743,7 +1790,7 @@ describe('Toolbar', () => {
 
     test('offers no workflow action for a read-only entry', async () => {
       setEntries([helloEntry]);
-      unpublishedEntries.current = [
+      allUnpublishedEntries.current = [
         {
           ...unpublishedEntry,
           workflow: { ...unpublishedEntry.workflow, status: 'pending_publish' },

@@ -1,6 +1,10 @@
 import { mergeRefusedPullRequest } from '$lib/services/backends/git/github/auto-merge';
 import { commitChanges } from '$lib/services/backends/git/github/commits';
-import { getWorkflowRepository } from '$lib/services/backends/git/github/fork';
+import {
+  getBranchRepository,
+  getWorkflowRepository,
+  isOpenAuthoringConfigured,
+} from '$lib/services/backends/git/github/fork';
 import { fetchAliasedBatch } from '$lib/services/backends/git/github/graphql';
 import {
   createPullRequest,
@@ -42,6 +46,8 @@ import {
   updatePullRequestDescription,
 } from '$lib/services/backends/git/shared/workflow';
 import { encodePathSegments } from '$lib/services/utils/url';
+import { parseBranchName } from '$lib/services/workflow/branch';
+import { getForkBranchName, getUpstreamBranchName } from '$lib/services/workflow/forks';
 import { getAllStatusLabels, getStatusFromLabels } from '$lib/services/workflow/labels';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
@@ -98,15 +104,46 @@ const getPullRequestFields = () => `
 `;
 
 /**
+ * Build the selection to fetch the open pull requests to the configured branch that may come from
+ * Open Authoring contributors. A contributor can’t label a pull request on the configured
+ * repository, so these are matched by base branch rather than by label, and the ones from forks
+ * picked out by {@link parseForkPullRequest}. The repository’s own pull requests share the item
+ * cap, so a busy repository can crowd the oldest contributions out.
+ * @returns {string} Field selection on the `Repository` type.
+ */
+const getForkPullRequestsSelection = () => `
+  forkPullRequests: pullRequests(
+    states: OPEN
+    baseRefName: ${JSON.stringify(repository.branch)}
+    first: ${MAX_ITEMS.pullRequests}
+    orderBy: { field: UPDATED_AT, direction: DESC }
+  ) {
+    nodes {
+      ${getPullRequestFields()}
+      maintainerCanModify
+      headRepository {
+        name
+        owner {
+          login
+        }
+      }
+    }
+  }
+`;
+
+/**
  * Build the query to fetch the open pull requests along with their labels and changed file paths.
  * The status labels are matched by the API rather than by {@link parsePullRequest}, so the item cap
  * applies to the CMS’s own pull requests instead of the repository’s most recently updated ones,
  * which could otherwise push the unpublished entries out of the result. The filter matches a pull
  * request carrying any of the labels, not all of them.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.withForks] Whether to also fetch the pull requests to the configured
+ * branch that may come from Open Authoring contributors.
  * @returns {string} GraphQL query.
  * @see https://docs.github.com/en/graphql/reference/objects#pullrequest
  */
-const getFetchPullRequestsQuery = () => `
+const getFetchPullRequestsQuery = ({ withForks = false } = {}) => `
   query($owner: String!, $repo: String!) {
     repository(owner: $owner, name: $repo) {
       pullRequests(
@@ -119,6 +156,7 @@ const getFetchPullRequestsQuery = () => `
           ${getPullRequestFields()}
         }
       }
+      ${withForks ? getForkPullRequestsSelection() : ''}
     }
   }
 `;
@@ -145,15 +183,25 @@ const toPullRequest = (node, status) => ({
 });
 
 /**
+ * Get the status the CMS label on a pull request node returned by the GraphQL API gives it.
+ * @param {Record<string, any>} node Pull request node.
+ * @returns {WorkflowStatus | undefined} Status, or `undefined` if the pull request has no CMS
+ * label.
+ */
+const getLabelledStatus = (node) =>
+  getStatusFromLabels(node.labels.nodes.map((/** @type {any} */ l) => l.name));
+
+/**
  * Parse a pull request node returned by the GraphQL API.
  * @param {Record<string, any>} node Pull request node.
  * @returns {WorkflowPullRequest | undefined} Parsed pull request, or `undefined` if the pull
  * request is not managed by the CMS.
  */
 export const parsePullRequest = (node) => {
-  // A pull request from a fork belongs to an Open Authoring contributor, whose branch lives in a
-  // repository this flow can’t read. Labelling one by hand would otherwise put a card on the board
-  // with every file reported as deleted, because the branch isn’t on the configured repository
+  // A pull request from a fork belongs to an Open Authoring contributor. It’s left to
+  // {@link parseForkPullRequest}, which treats it as untrusted: taken here because a maintainer
+  // labelled it, it would pass for one of the CMS’s own, with a branch name that could be mistaken
+  // for one in the configured repository, and could be published from the CMS
   if (node.isCrossRepository) {
     return undefined;
   }
@@ -166,7 +214,7 @@ export const parsePullRequest = (node) => {
     return undefined;
   }
 
-  const status = getStatusFromLabels(node.labels.nodes.map((/** @type {any} */ l) => l.name));
+  const status = getLabelledStatus(node);
 
   if (!status) {
     return undefined;
@@ -176,18 +224,79 @@ export const parsePullRequest = (node) => {
 };
 
 /**
+ * Get the status of a pull request a contributor opened from their fork. The contributor marks it
+ * ready or takes it back to the drafting stage with the pull request’s draft state, as they can’t
+ * label it, while a maintainer moving it between the review and ready stages labels it. The draft
+ * state wins, so a label left over from before the contributor marked it ready doesn’t keep it in
+ * the drafting stage, and one a maintainer added doesn’t take it out of there. Only the review and
+ * ready labels are taken: a removal is told by what the pull request holds, not by a label anyone
+ * with access can put on it.
+ * @param {Record<string, any>} node Pull request node.
+ * @returns {WorkflowStatus} Status.
+ */
+const getForkPullRequestStatus = (node) => {
+  if (node.isDraft) {
+    return 'draft';
+  }
+
+  const status = getLabelledStatus(node);
+
+  return status === 'pending_publish' ? status : 'pending_review';
+};
+
+/**
+ * Parse a pull request node returned by {@link getForkPullRequestsSelection}, for a maintainer to
+ * review. Only a pull request from a fork whose head branch is named like the CMS names its
+ * branches is taken: anything else is a code change the CMS has no business showing. The name
+ * proves nothing about the content, which anyone can put on a branch of a public fork, so the pull
+ * request is treated as untrusted throughout: it can’t be published from the CMS, which the `fork`
+ * property alone is enough for, its description is ignored, and its branch is known by a name
+ * qualified with the fork, which can’t be mistaken for a branch of the configured repository: see
+ * {@link getForkBranchName}.
+ * @param {Record<string, any>} node Pull request node.
+ * @returns {WorkflowPullRequest | undefined} Parsed pull request, or `undefined` if it isn’t one a
+ * contributor opened from their fork for an entry.
+ */
+export const parseForkPullRequest = (node) => {
+  const { owner, name: repo } = node.headRepository ?? {};
+
+  // A pull request whose fork has been deleted has no branch left to read or push to
+  if (!node.isCrossRepository || node.baseRefName !== repository.branch || !owner?.login || !repo) {
+    return undefined;
+  }
+
+  const branch = getForkBranchName({ owner: owner.login, repo, branch: node.headRefName });
+
+  if (!parseBranchName(getUpstreamBranchName(branch))) {
+    return undefined;
+  }
+
+  return {
+    ...toPullRequest(node, getForkPullRequestStatus(node)),
+    branch,
+    description: '',
+    fork: { owner: owner.login, repo, editable: !!node.maintainerCanModify },
+  };
+};
+
+/**
  * Fetch all the open pull requests on the configured repository that carry a CMS status label,
  * along with the changed files. This is the regular flow, used by anyone who can write to the
- * repository; see {@link fetchForkPullRequests} for the Open Authoring one.
+ * repository; see {@link fetchForkPullRequests} for the Open Authoring one. With Open Authoring
+ * turned on, the pull requests contributors have opened from their forks are listed as well, for
+ * the maintainers to review.
  * @returns {Promise<WorkflowPullRequest[]>} Pull requests.
  */
 const fetchLabelledPullRequests = async () => {
   const { repository: result } = /** @type {{ repository: Record<string, any> }} */ (
-    await fetchGraphQL(getFetchPullRequestsQuery())
+    await fetchGraphQL(getFetchPullRequestsQuery({ withForks: isOpenAuthoringConfigured() }))
   );
 
   const pullRequests = /** @type {WorkflowPullRequest[]} */ (
-    (result?.pullRequests?.nodes ?? []).map(parsePullRequest).filter(Boolean)
+    [
+      ...(result?.pullRequests?.nodes ?? []).map(parsePullRequest),
+      ...(result?.forkPullRequests?.nodes ?? []).map(parseForkPullRequest),
+    ].filter(Boolean)
   );
 
   // Only a pull request with a renamed file needs the heavier REST request, which is the sole
@@ -531,9 +640,17 @@ const commitToNewBranch = async (changes, options) => {
  * @param {CommitOptions} options Commit options, with the workflow branch.
  * @param {WorkflowPullRequest} pullRequest Pull request.
  * @returns {Promise<CommitResults>} Commit results.
+ * @throws {Error} When the pull request comes from a fork whose contributor doesn’t let maintainers
+ * push to it, or the commit fails.
  */
 const commitToExistingBranch = async (changes, options, pullRequest) => {
   const { branch = '' } = options;
+
+  // GitHub would refuse the commit anyway, but with a message about permissions that says nothing
+  // of the contributor’s choice behind it
+  if (pullRequest.fork && !pullRequest.fork.editable) {
+    throw createLocalizedError('Failed to save the changes.', 'workflow.fork_not_editable');
+  }
 
   try {
     return await commitChanges(changes, { ...options, headOid: pullRequest.headSHA });
@@ -546,7 +663,9 @@ const commitToExistingBranch = async (changes, options, pullRequest) => {
     );
 
     if (branchGone) {
-      throw createBranchGoneError(branch, getWorkflowRepository());
+      const { branch: name, ...headRepository } = getBranchRepository(branch);
+
+      throw createBranchGoneError(name, headRepository);
     }
 
     throw ex;
@@ -738,12 +857,19 @@ export const fetchUnchangedPaths = async ({ headSHA, paths }) => {
  * after a push, so the pull request is read again until that settles, and merged or set to
  * auto-merge then. See {@link mergeRefusedPullRequest} for that part.
  * @param {WorkflowPullRequest} pullRequest Pull request.
+ * @throws {Error} When the pull request comes from a fork, or the merge fails.
  * @see https://docs.github.com/en/rest/pulls/pulls#merge-a-pull-request
  * @see https://docs.github.com/en/graphql/reference/mutations#enablepullrequestautomerge
  * @see https://github.com/sveltia/sveltia-cms/issues/1094
  */
 export const publish = async (pullRequest) => {
   checkPublishAllowed();
+
+  // A contributor’s pull request is merged on GitHub, where the whole of it can be reviewed. The
+  // CMS only shows the entry, and the merge check refuses a pull request from a fork anyway
+  if (pullRequest.fork) {
+    throw new Error('A pull request from a fork cannot be published from the CMS.');
+  }
 
   const { number, title, headSHA } = pullRequest;
   const squash = isSquashMergeEnabled();
@@ -774,12 +900,16 @@ export const publish = async (pullRequest) => {
 };
 
 /**
- * Close the pull request without merging it, and delete the workflow branch.
+ * Close the pull request without merging it, and delete the workflow branch. A contributor’s
+ * branch is left in their fork, where they can still use it, as the maintainer can only close the
+ * pull request from it.
  * @param {WorkflowPullRequest} pullRequest Pull request.
  * @returns {Promise<void>}
  */
 export const discard = (pullRequest) =>
-  discardPullRequest(repository, pullRequest, { deleteBranch });
+  discardPullRequest(repository, pullRequest, {
+    deleteBranch: pullRequest.fork ? undefined : deleteBranch,
+  });
 
 /**
  * GitHub’s Editorial Workflow implementation.

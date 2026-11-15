@@ -1,3 +1,5 @@
+import { generateUUID } from '@sveltia/utils/crypto';
+
 import { parseAssetFileInfo } from '$lib/services/backends/git/shared/parse-files';
 import { toFileListItem } from '$lib/services/backends/git/shared/tree';
 import { createFileList } from '$lib/services/backends/process';
@@ -16,6 +18,7 @@ import { prepareEntries } from '$lib/services/contents/file/process';
 import { getEntryFoldersByPath } from '$lib/services/contents/folders';
 import { usesMultiFileStructure } from '$lib/services/contents/i18n/config';
 import { parseBranchName } from '$lib/services/workflow/branch';
+import { getUpstreamBranchName } from '$lib/services/workflow/forks';
 
 /**
  * @import {
@@ -377,14 +380,13 @@ export const createUnpublishedEntryProps = ({
 });
 
 /**
- * Convert the files in the given pull request to entries and assets in the canonical format, so
- * they can be displayed and edited with the regular entry list and editor components.
+ * Parse the files in the given pull request. See {@link convertPullRequest}.
  * @param {WorkflowPullRequest} pullRequest Pull request.
- * @returns {Promise<PullRequestContents>} Entries and assets. There’s usually a single entry, but a
- * pull request can technically contain multiple entries.
+ * @returns {Promise<PullRequestContents>} Entries and assets.
  */
-export const convertPullRequest = async (pullRequest) => {
-  const parsed = parseBranchName(pullRequest.branch);
+const parsePullRequestContents = async (pullRequest) => {
+  // A contributor’s branch is named like the CMS’s own, once the fork is taken off its name
+  const parsed = parseBranchName(getUpstreamBranchName(pullRequest.branch));
 
   // A branch named without the root directory belongs to the site only if all its files are in the
   // directory; otherwise it’s another site’s in the monorepo, or a change the CMS can’t show
@@ -558,6 +560,29 @@ export const convertPullRequest = async (pullRequest) => {
       }),
     })),
     assets,
+  };
+};
+
+/**
+ * Convert the files in the given pull request to entries and assets in the canonical format, so
+ * they can be displayed and edited with the regular entry list and editor components.
+ * @param {WorkflowPullRequest} pullRequest Pull request.
+ * @returns {Promise<PullRequestContents>} Entries and assets. There’s usually a single entry, but a
+ * pull request can technically contain multiple entries.
+ */
+export const convertPullRequest = async (pullRequest) => {
+  const contents = await parsePullRequestContents(pullRequest);
+
+  if (!pullRequest.fork) {
+    return contents;
+  }
+
+  // A removal reuses the published entry, ID included, which is fine as long as one pull request
+  // at most stands for an entry. A contributor’s pull request can stand for the same entry as the
+  // maintainers’ own, or as another contributor’s, so its entries get IDs of their own
+  return {
+    ...contents,
+    entries: contents.entries.map((entry) => ({ ...entry, id: generateUUID() })),
   };
 };
 

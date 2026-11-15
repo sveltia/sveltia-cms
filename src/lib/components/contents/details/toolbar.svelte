@@ -64,11 +64,13 @@
     getUnpublishedEntryByDraft,
     isDirectPublishAllowed,
     isDiscardableDraft,
+    isOrphanedForkDraft,
     isPendingDeletion,
     isWorkflowEnabled,
     workflowEnabled,
   } from '$lib/services/workflow';
   import { getDiscardDialogStrings } from '$lib/services/workflow/dialogs';
+  import { getForkHead } from '$lib/services/workflow/forks';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
   /**
@@ -198,26 +200,32 @@
   const publishedVersionExists = $derived(checkPublishedVersion(unpublishedEntry));
   const pendingDeletion = $derived(isPendingDeletion(unpublishedEntry));
   const readonly = $derived(isDraftReadonly(entryDraft.current));
-  const { useWorkflow, discardsDraft, locked, canDuplicate, removalMenuItems } = $derived(
-    getEntryToolbarState({
-      collection,
-      collectionFile,
-      isIndexFile,
-      hasPullRequest: !!unpublishedEntry,
-      workflowEnabled: isWorkflowEnabled(collection),
-      publishedVersionExists,
-      // Deleting an entry that was never published just throws the draft away; anything else takes
-      // an entry off the site
-      discardsDraft: isDiscardableDraft(unpublishedEntry),
-      pendingDeletion,
-      readonly,
-      openAuthoring: openAuthoring.current,
-      creationDisabled: collectionState.current.creationDisabled,
-    }),
-  );
+  const { useWorkflow, discardsDraft, locked, canDuplicate, removalMenuItems, showPublishControl } =
+    $derived(
+      getEntryToolbarState({
+        collection,
+        collectionFile,
+        isIndexFile,
+        hasPullRequest: !!unpublishedEntry,
+        workflowEnabled: isWorkflowEnabled(collection),
+        publishedVersionExists,
+        // Deleting an entry that was never published just throws the draft away; anything else
+        // takes an entry off the site
+        discardsDraft: isDiscardableDraft(unpublishedEntry),
+        pendingDeletion,
+        readonly,
+        openAuthoring: openAuthoring.current,
+        fork: getForkHead(unpublishedEntry),
+        creationDisabled: collectionState.current.creationDisabled,
+      }),
+    );
   // A workflow draft can also be saved and published in one go, if the publish mode allows it
+  // An entry from a contributor’s pull request that has been merged or closed since has nothing
+  // left to publish, nor to save, which the save refuses
   const directPublish = $derived(
-    useWorkflow && isDirectPublishAllowed(collection, unpublishedEntry),
+    useWorkflow &&
+      !isOrphanedForkDraft(entryDraft.current) &&
+      isDirectPublishAllowed(collection, unpublishedEntry),
   );
   // The entries created or edited from the Relation fields would be published along with it, and
   // one in a collection whose review can’t be skipped would miss its review
@@ -468,7 +476,7 @@
       }}
     />
   {/if}
-  {#if unpublishedEntry && !readonly}
+  {#if unpublishedEntry && showPublishControl}
     <PublishEntryButton entry={unpublishedEntry} disabled={controlsDisabled} {modified} />
   {/if}
   <MenuButton

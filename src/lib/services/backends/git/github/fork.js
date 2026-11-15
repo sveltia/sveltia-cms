@@ -24,6 +24,7 @@ import {
   toRepositoryPath,
 } from '$lib/services/backends/git/shared/repository';
 import { user } from '$lib/services/user/account.svelte';
+import { parseForkBranchName } from '$lib/services/workflow/forks';
 
 /**
  * @import { RepositoryPath } from '$lib/types/private';
@@ -43,6 +44,29 @@ export const isOpenAuthoringConfigured = () => isOpenAuthoringConfiguredFor('git
  * @returns {RepositoryPath} Repository owner and name.
  */
 export const getWorkflowRepository = () => resolveWorkflowRepository(repository);
+
+/**
+ * Get the repository a workflow branch lives in, and its name there. That’s the repository given
+ * by {@link getWorkflowRepository}, except for the branch of a pull request a contributor opened
+ * from their fork, which a maintainer reviewing it pushes to in that fork. See `getForkBranchName`
+ * in `$lib/services/workflow/forks`.
+ * @param {string} branch Branch name as the CMS knows it.
+ * @returns {RepositoryPath & { branch: string }} Repository owner and name, and the branch name.
+ */
+export const getBranchRepository = (branch) =>
+  parseForkBranchName(branch) ?? { ...getWorkflowRepository(), branch };
+
+/**
+ * Get the repository to read the files of the workflow branches from, by commit or blob ID.
+ * That’s the repository given by {@link getWorkflowRepository}: the contributor’s fork with Open
+ * Authoring, and the configured repository otherwise. The configured repository also serves the
+ * commits of the pull requests contributors have opened from their forks, as GitHub keeps them
+ * there under `refs/pull/{number}/head`, so a maintainer reads those from it too, rather than from
+ * a fork they may not be able to see, e.g. a private one, or one deleted since. Writes and branch
+ * lookups go to the fork itself: see {@link getBranchRepository}.
+ * @returns {RepositoryPath} Repository owner and name.
+ */
+export const getContentRepository = () => getWorkflowRepository();
 
 /**
  * Check whether the signed-in user has an invitation to the configured repository that they haven’t

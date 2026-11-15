@@ -8,6 +8,7 @@ import {
   getSlugByteLength,
   isEntryBranch,
   parseBranchName,
+  toUpstreamBranchName,
   truncateSlugBytes,
 } from '$lib/services/workflow/branch';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
@@ -75,6 +76,31 @@ describe('workflow/branch', () => {
       expect(getBranchName({ collectionName: 'posts', slug: 'hello-world' })).toBe(
         'cms/contributor/repo/apps/site/posts/hello-world',
       );
+    });
+  });
+
+  describe('toUpstreamBranchName', () => {
+    const fork = { owner: 'alice', repo: 'website' };
+
+    test('takes the fork’s path off a branch named in the contributor’s session', () => {
+      expect(toUpstreamBranchName('cms/alice/website/posts/hello', fork)).toBe('cms/posts/hello');
+      expect(toUpstreamBranchName('cms/Alice/Website/posts/hello', fork)).toBe('cms/posts/hello');
+      // The root directory stays, as it’s in the maintainers’ branch names too
+      expect(toUpstreamBranchName('cms/alice/website/apps/blog/posts/hello', fork)).toBe(
+        'cms/apps/blog/posts/hello',
+      );
+    });
+
+    test('leaves a branch named without the fork’s path as it is', () => {
+      expect(toUpstreamBranchName('cms/posts/hello', fork)).toBe('cms/posts/hello');
+      expect(toUpstreamBranchName('cms/bob/website/posts/hello', fork)).toBe(
+        'cms/bob/website/posts/hello',
+      );
+    });
+
+    test('doesn’t depend on the signed-in user’s own fork', () => {
+      forkedRepository.current = { owner: 'mona', repo: 'website' };
+      expect(toUpstreamBranchName('cms/alice/website/posts/hello', fork)).toBe('cms/posts/hello');
     });
   });
 

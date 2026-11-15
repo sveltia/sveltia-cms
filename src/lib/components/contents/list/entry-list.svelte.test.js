@@ -8,7 +8,7 @@ import { getCollection, selectedCollection } from '$lib/services/contents/collec
 import { setBulkEditMode, setReorderMode } from '$lib/services/contents/collection/view';
 import { currentView, entryListSettings } from '$lib/services/contents/collection/view/settings';
 import { env } from '$lib/services/user/env.svelte';
-import { unpublishedEntries } from '$lib/services/workflow';
+import { allUnpublishedEntries } from '$lib/services/workflow';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import { createMockEntry, initTestConfig, setEntries, TEST_IMAGE_URL } from '$lib/test/config';
 
@@ -86,7 +86,7 @@ describe('EntryList', () => {
     env.isLargeScreen = true;
     forkedRepository.current = undefined;
     selectedCollection.current = undefined;
-    unpublishedEntries.current = [];
+    allUnpublishedEntries.current = [];
     setReorderMode(false);
     setBulkEditMode(false);
     window.location.hash = '#/collections/posts';
@@ -368,7 +368,7 @@ describe('EntryList', () => {
 
   test('lists the unpublished entries ahead of the published ones', async () => {
     setEntries([createMockEntry({ slug: 'hello', content: { _default: { title: 'Hello' } } })]);
-    unpublishedEntries.current = [
+    allUnpublishedEntries.current = [
       /** @type {any} */ ({
         ...createMockEntry({
           slug: 'draft',

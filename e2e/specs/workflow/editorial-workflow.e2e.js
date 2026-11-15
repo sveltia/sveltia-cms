@@ -1,7 +1,7 @@
 import { openEntryPullRequest, post, WORKFLOW_CONFIG } from '../../fixtures/configs/workflow.js';
 import { createPNG } from '../../fixtures/files.js';
 import { expect, test } from '../../fixtures/test.js';
-import { getEditor, getEntryRows, openEntry } from '../../fixtures/ui.js';
+import { getCard, getEditor, getEntryRows, openBoard, openEntry } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -528,22 +528,11 @@ test.describe('on the Editorial Workflow page', () => {
     });
   });
 
-  /**
-   * Get the card of an entry on the board.
-   * @param {Page} page Page.
-   * @param {string} title Entry title.
-   * @returns {Locator} Card.
-   */
-  const getCard = (page, title) =>
-    page
-      .getByRole('group', { name: 'Editorial Workflow' })
-      .getByRole('listitem')
-      .filter({ has: page.getByRole('button', { name: title }) });
-
   test('carries out a pending deletion', async ({ cms, github, page }) => {
     await cms.open();
-    await page.getByRole('radio', { name: 'Editorial Workflow' }).click();
-    await getCard(page, 'First Post').getByRole('button', { name: 'Delete Entry' }).click();
+    await getCard(await openBoard(page), 'First Post')
+      .getByRole('button', { name: 'Delete Entry' })
+      .click();
     await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
 
     await expect.poll(() => github.pullRequests[0].state).toBe('merged');
@@ -554,8 +543,9 @@ test.describe('on the Editorial Workflow page', () => {
 
   test('cancels a pending deletion', async ({ cms, github, page }) => {
     await cms.open();
-    await page.getByRole('radio', { name: 'Editorial Workflow' }).click();
-    await getCard(page, 'First Post').getByRole('button', { name: 'Cancel Deletion' }).click();
+    await getCard(await openBoard(page), 'First Post')
+      .getByRole('button', { name: 'Cancel Deletion' })
+      .click();
     await page
       .getByRole('alertdialog', { name: 'Cancel Deletion' })
       .getByRole('button', { name: 'Cancel Deletion' })

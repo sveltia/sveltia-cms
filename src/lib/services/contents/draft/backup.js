@@ -19,6 +19,7 @@ import { updateObject } from '$lib/services/contents/draft/update/list';
 import { hasChildKeys, indexContent } from '$lib/services/contents/entry/content-index';
 import { prefs } from '$lib/services/user/prefs.svelte';
 import { createDeepState, createRootEffect, getSnapshot } from '$lib/services/utils/state.svelte';
+import { isForkEntry } from '$lib/services/workflow/forks';
 
 /**
  * @import {
@@ -26,6 +27,7 @@ import { createDeepState, createRootEffect, getSnapshot } from '$lib/services/ut
  * EntryDraft,
  * EntryDraftBackup,
  * EntryDraftValues,
+ * UnpublishedEntry,
  * } from '$lib/types/private';
  */
 
@@ -109,16 +111,30 @@ export const getBackup = async (collectionName, slug = '') => {
  * `2023/hello` and `2024/hello` do, and a backup stored under the slug would be offered to,
  * restored to, or deleted with the other entry. The `subPath` is the same as the slug for the
  * common `{{slug}}` path, so the backups stored before the change are still found there.
- * @param {EntryDraft} draft Draft.
+ * @param {object} draft Draft, or the parts of it the key is made of.
+ * @param {EntryDraft['collection']} draft.collection Collection.
+ * @param {string} [draft.fileName] Collection file name, if the entry is a collection file.
+ * @param {boolean} [draft.isIndexFile] Whether the draft is for a new index file.
+ * @param {Entry} [draft.originalEntry] Entry being edited. `undefined` for a new entry.
  * @returns {string} The file name for a collection file, or the entry’s `subPath` for an existing
  * entry. The index file name, e.g. `_index`, for a new index file, which has fields of its own, so
  * its backup mustn’t be offered to a new entry or the other way round. An empty string for any
- * other new entry.
+ * other new entry. An entry from a contributor’s pull request has the pull request number appended,
+ * e.g. `hello?_pr=12`, as its backup holds the contributor’s changes and mustn’t be offered to the
+ * entry opened from anywhere else, nor be deleted with it.
  */
-export const getBackupSlug = ({ collection, fileName, isIndexFile, originalEntry }) =>
-  fileName ??
-  originalEntry?.subPath ??
-  (isIndexFile ? /** @type {string} */ (getIndexFileName(collection)) : '');
+export const getBackupSlug = ({ collection, fileName, isIndexFile, originalEntry }) => {
+  const slug =
+    fileName ??
+    originalEntry?.subPath ??
+    (isIndexFile ? /** @type {string} */ (getIndexFileName(collection)) : '');
+
+  const number = isForkEntry(originalEntry)
+    ? /** @type {UnpublishedEntry} */ (originalEntry).workflow.pullRequest.number
+    : undefined;
+
+  return number === undefined ? slug : `${slug}?_pr=${number}`;
+};
 
 /**
  * Get the backup of the given draft, if there is one. A backup made from another entry than the one

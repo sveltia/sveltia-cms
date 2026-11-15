@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { getOptions, getRefEntries } from '$lib/services/contents/fields/relation/helpers';
-import { unpublishedEntries } from '$lib/services/workflow';
+import { allUnpublishedEntries } from '$lib/services/workflow';
 import { createMockDraft } from '$lib/test/draft';
 import { renderFieldPreview } from '$lib/test/field.svelte';
 
@@ -50,7 +50,7 @@ const renderPreview = async (
 
 describe('RelationPreview', () => {
   beforeEach(() => {
-    unpublishedEntries.current = [];
+    allUnpublishedEntries.current = [];
     vi.mocked(getRefEntries).mockReturnValue(refEntries);
     vi.mocked(getOptions).mockReturnValue([
       { label: 'Melvin Lucas', value: 'melvin-lucas', searchValue: 'Melvin Lucas' },
@@ -141,7 +141,7 @@ describe('RelationPreview', () => {
       values: ['old-team'],
     };
 
-    unpublishedEntries.current = [
+    allUnpublishedEntries.current = [
       /** @type {any} */ ({
         id: 'hello',
         workflow: { pullRequest: { branch: 'cms/posts/hello' }, companions },

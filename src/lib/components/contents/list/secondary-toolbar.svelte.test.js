@@ -7,7 +7,7 @@ import { getCollection, selectedCollection } from '$lib/services/contents/collec
 import { setBulkEditMode, setReorderMode } from '$lib/services/contents/collection/view';
 import { currentView } from '$lib/services/contents/collection/view/settings';
 import { env } from '$lib/services/user/env.svelte';
-import { unpublishedEntries } from '$lib/services/workflow';
+import { allUnpublishedEntries } from '$lib/services/workflow';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import { createMockEntry, initTestConfig, setEntries } from '$lib/test/config';
 
@@ -93,7 +93,7 @@ describe('SecondaryToolbar', () => {
     setEntries([
       createMockEntry({ slug: 'a', content: { _default: { title: 'A', draft: false } } }),
     ]);
-    unpublishedEntries.current = [
+    allUnpublishedEntries.current = [
       /** @type {any} */ ({
         ...createMockEntry({ slug: 'new', content: { _default: { title: 'New', draft: false } } }),
         workflow: {
@@ -118,7 +118,7 @@ describe('SecondaryToolbar', () => {
       await expect.element(toolbar.getByRole('button', { name: 'Filter' })).toBeEnabled();
       await expect.element(toolbar.getByRole('button', { name: 'Sort' })).toBeEnabled();
     } finally {
-      unpublishedEntries.current = [];
+      allUnpublishedEntries.current = [];
     }
   });
 

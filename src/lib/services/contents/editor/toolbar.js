@@ -1,5 +1,7 @@
+import { isLockedFork } from '$lib/services/workflow/forks';
+
 /**
- * @import { InternalCollection, InternalCollectionFile } from '$lib/types/private';
+ * @import { ForkHead, InternalCollection, InternalCollectionFile } from '$lib/types/private';
  * @import { EntryConflict } from '$lib/services/contents/draft/save/conflict';
  */
 
@@ -101,11 +103,15 @@ export const getSaveFailure = (ex) => {
  * @param {boolean} args.pendingDeletion Whether the entry is awaiting deletion.
  * @param {boolean} args.readonly Whether the entry is read-only.
  * @param {boolean} args.openAuthoring Whether the user is an Open Authoring contributor.
+ * @param {ForkHead} [args.fork] Fork the entry’s pull request comes from, if a contributor opened
+ * it from their fork.
  * @param {boolean} args.creationDisabled Whether creating new entries is currently disabled.
  * @returns {{ useWorkflow: boolean, discardsDraft: boolean, locked: boolean,
- * canDuplicate: boolean, removalMenuItems: { discard: boolean, delete: boolean } }} Whether the
- * entry is saved to a pull request, whether deleting it just throws the draft away, whether its
- * content can’t be changed, whether it can be duplicated, and which removal menu items are offered.
+ * canDuplicate: boolean, removalMenuItems: { discard: boolean, delete: boolean },
+ * showPublishControl: boolean }} Whether the entry is saved to a pull request, whether deleting it
+ * just throws the draft away, whether its content can’t be changed, whether it can be duplicated,
+ * which removal menu items are offered, and whether the control to publish the entry, or to review
+ * its pull request on the Git service, has a place in the toolbar.
  */
 export const getEntryToolbarState = ({
   collection,
@@ -118,6 +124,7 @@ export const getEntryToolbarState = ({
   pendingDeletion,
   readonly,
   openAuthoring,
+  fork = undefined,
   creationDisabled,
 }) => {
   // A collection can opt in or out of Editorial Workflow with its own `publish_mode` option, but an
@@ -127,8 +134,9 @@ export const getEntryToolbarState = ({
   // the published version untouched, so it stays available even when deletion is disabled
   const canDelete = !(collection?._type === 'entry' && collection.delete === false);
   // Taking a published entry off the site is a maintainer’s call. An Open Authoring contributor can
-  // discard their own draft, but not propose the removal of something already live
-  const canDeleteEntry = canDelete && (discardsDraft || !openAuthoring);
+  // discard their own draft, but not propose the removal of something already live. Nor does a
+  // maintainer propose it in a contributor’s pull request, which they can only close
+  const canDeleteEntry = canDelete && (discardsDraft || (!openAuthoring && !fork));
   // An entry awaiting deletion is read-only: there’s nothing to save or move through the stages,
   // only the deletion itself to carry out or call off. An entry in a read-only collection, or a
   // read-only collection file, can only be viewed: there’s nothing to save, move through the
@@ -154,5 +162,9 @@ export const getEntryToolbarState = ({
       readonly,
       locked,
     }),
+    // A read-only entry has nothing to publish, except one from a contributor’s pull request that
+    // maintainers can’t push to: it still gets the link to review the pull request on the Git
+    // service, the only place it can be dealt with
+    showPublishControl: hasPullRequest && (!readonly || isLockedFork(fork)),
   };
 };

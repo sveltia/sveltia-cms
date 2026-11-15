@@ -12,13 +12,14 @@
   import PreviewLinkButton from '$lib/components/contents/details/preview-link-button.svelte';
   import EntryThumbnail from '$lib/components/contents/shared/entry-thumbnail.svelte';
   import DeployStatusBadge from '$lib/components/workflow/deploy-status-badge.svelte';
+  import ExternalReviewButton from '$lib/components/workflow/external-review-button.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { isReadonly } from '$lib/services/config/readonly';
   import { getCollection, getCollectionLabel } from '$lib/services/contents/collection';
   import { getCollectionFile } from '$lib/services/contents/collection/files';
-  import { getEntryEditorPath } from '$lib/services/contents/editor/route';
+  import { getUnpublishedEntryEditorPath } from '$lib/services/contents/editor/route';
   import { deployments, productionSHA } from '$lib/services/deployments';
-  import { checkPublishedVersion, isPublishAllowed } from '$lib/services/workflow';
+  import { checkPublishedVersion, getPublishAction } from '$lib/services/workflow';
   import { getCompanionNotes, getUnpublishedEntryLabel } from '$lib/services/workflow/board';
   import { getWorkflowStages } from '$lib/services/workflow/stages';
 
@@ -83,8 +84,12 @@
   const collectionLabel = $derived(
     appLocale.current && collection ? getCollectionLabel(collection, { useSingular: true }) : '',
   );
-  // The entry can only be published from the last column, and only by a user who can merge it
-  const canPublish = $derived(!deploying && !readonly && isPublishAllowed(entry, collection));
+  // The entry can only be published from the last column, and only by a user who can merge it. A
+  // pull request a contributor has opened from their fork is reviewed and merged on the Git service
+  // instead, so the card links to it from the same place
+  const publishAction = $derived(
+    !deploying && !readonly ? getPublishAction(entry, collection) : undefined,
+  );
   // Deleting an entry that has a published version only throws away the pending changes.
   // The entry can be published from another view, so the check depends on `allEntries`
   const publishedVersionExists = $derived(checkPublishedVersion(entry));
@@ -132,10 +137,7 @@ a merged or read-only one, or one with no other stage to move to -->
     aria-label={summary}
     disabled={gone}
     onclick={() => {
-      // A collection file is addressed by its name, while its `subPath` is the whole file path
-      goto(getEntryEditorPath(collectionName, fileName ?? entry.subPath), {
-        transitionType: 'forwards',
-      });
+      goto(getUnpublishedEntryEditorPath(entry), { transitionType: 'forwards' });
     }}
   >
     {#if collection?._type === 'entry'}
@@ -160,6 +162,9 @@ a merged or read-only one, or one with no other stage to move to -->
           day: 'numeric',
         })}
       </span>
+      {#if pullRequest.fork}
+        <span role="none" class="note">{_('workflow.from_fork')}</span>
+      {/if}
       {#if gone}
         <span role="none" class="note">{_('workflow.deploying_deletion')}</span>
       {/if}
@@ -198,7 +203,7 @@ a merged or read-only one, or one with no other stage to move to -->
           {/snippet}
         </Button>
       {/if}
-      {#if canPublish}
+      {#if publishAction === 'publish'}
         <Button
           variant="primary"
           size="small"
@@ -215,6 +220,8 @@ a merged or read-only one, or one with no other stage to move to -->
             <Icon name={deletion ? 'delete' : 'publish'} />
           {/snippet}
         </Button>
+      {:else if publishAction === 'review'}
+        <ExternalReviewButton {entry} size="small" iconic disabled={busy} />
       {/if}
     </div>
   </footer>

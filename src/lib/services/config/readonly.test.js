@@ -150,6 +150,27 @@ describe('Test isDraftReadonly()', () => {
     expect(isDraftReadonly({ collection: {} })).toBe(true);
   });
 
+  test('locks a draft from a fork whose contributor doesn’t let maintainers push', () => {
+    cmsConfig.current = {};
+
+    /**
+     * Create a draft of an entry from a fork.
+     * @param {boolean} editable Whether maintainers can push to the branch.
+     * @returns {any} Draft.
+     */
+    const draft = (editable) => ({
+      collection: {},
+      originalEntry: {
+        workflow: { pullRequest: { fork: { owner: 'alice', repo: 'website', editable } } },
+      },
+    });
+
+    expect(isDraftReadonly(draft(false))).toBe(true);
+    expect(isDraftReadonly(draft(true))).toBe(false);
+    // The editor shows its own notice for it, rather than the configuration’s
+    expect(isDraftConfigReadonly(draft(false))).toBe(false);
+  });
+
   test('locks the draft while the user is asked whether to restore its backup', () => {
     // @see https://github.com/sveltia/sveltia-cms/issues/566
     cmsConfig.current = {};

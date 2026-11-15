@@ -2406,6 +2406,12 @@ workflow:
   # Error notification when an entry can’t be published because its branch has been committed to
   # since the entry was opened, so what would be published isn’t what was reviewed
   publish_refused_entry_changed: エントリーを開いた後に変更が加えられました。ページを再読み込みして最新の内容を確認してから公開してください。
+  review_on_x: '{$service} でレビュー'
+  from_fork: フォークから
+  fork_entry_editable: このエントリーは「{$fork}」から作成された貢献者のプルリクエストに含まれています。変更は貢献者のブランチに保存されます。プルリクエストのレビューとマージは Git サービス上で行ってください。
+  fork_entry_locked: このエントリーは「{$fork}」から作成された貢献者のプルリクエストに含まれています。貢献者がメンテナーによる編集を許可していないため、ここでは閲覧のみ可能です。
+  fork_not_editable: 貢献者がこのプルリクエストのメンテナーによる編集を許可していません。
+  fork_entry_gone: 貢献者のプルリクエストがすでに閉じられているため、変更を保存できません。
   # Error shown in the save error dialog when an entry can’t be saved for review, because a request
   # the CMS doesn’t show is already open from the branch the entry would be saved to. `{$number}` is
   # the request number, e.g. `#12` on GitHub or `!12` on GitLab. Keep the wording free of Git jargon

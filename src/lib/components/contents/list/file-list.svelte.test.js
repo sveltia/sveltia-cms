@@ -3,7 +3,7 @@ import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
 import { getCollection, selectedCollection } from '$lib/services/contents/collection';
-import { unpublishedEntries } from '$lib/services/workflow';
+import { allUnpublishedEntries } from '$lib/services/workflow';
 import { createMockEntry, initTestConfig, setEntries } from '$lib/test/config';
 
 import FileList from './file-list.svelte';
@@ -60,7 +60,7 @@ describe('FileList', () => {
 
   beforeEach(() => {
     setEntries([]);
-    unpublishedEntries.current = [];
+    allUnpublishedEntries.current = [];
     window.location.hash = '#/collections/settings';
   });
 
@@ -86,7 +86,7 @@ describe('FileList', () => {
 
   test('shows the workflow status of an unpublished file', async () => {
     selectedCollection.current = getCollection('settings');
-    unpublishedEntries.current = /** @type {any} */ ([
+    allUnpublishedEntries.current = /** @type {any} */ ([
       { id: 'x', workflow: { collectionName: 'settings', fileName: 'general', status: 'draft' } },
     ]);
 

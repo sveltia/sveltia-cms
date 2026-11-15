@@ -58,6 +58,8 @@
   import { prefs } from '$lib/services/user/prefs.svelte';
   import { createLatestGuard } from '$lib/services/utils/scheduling';
   import { watch } from '$lib/services/utils/state.svelte';
+  import { isOrphanedForkDraft } from '$lib/services/workflow';
+  import { getForkEntryNotice } from '$lib/services/workflow/forks';
 
   /**
    * @import { EntryDraftState } from '$lib/services/contents/draft/state.svelte';
@@ -132,6 +134,14 @@
   // The entry can be viewed but not changed, which the editor says up front. It’s also read-only
   // while the user is asked whether to restore a backup, which the dialog says itself
   const readonly = $derived(isDraftConfigReadonly(entryDraft.current));
+  // An entry from a contributor’s pull request is edited in their branch, or only viewed if they
+  // don’t let maintainers push to it, which the editor says up front as well. Once the pull request
+  // is no longer open, there’s nowhere left to save it, which the editor says instead
+  const forkNotice = $derived(
+    isOrphanedForkDraft(entryDraft.current)
+      ? _('workflow.fork_entry_gone')
+      : getForkEntryNotice(entryDraft.current?.originalEntry),
+  );
   const [firstPaneSize, secondPaneSize, minPaneSize] = $derived(
     getPaneSizes({ firstPane: editorFirstPane.current, secondPane: editorSecondPane.current }),
   );
@@ -473,6 +483,14 @@
         --sui-infobar-message-justify-content="center"
       >
         {getReadonlyMessage('entry', { collection, collectionFile })}
+      </Infobar>
+    {:else if forkNotice && !loading}
+      <Infobar
+        dismissible={false}
+        --sui-infobar-border-width="0 0 1px"
+        --sui-infobar-message-justify-content="center"
+      >
+        {forkNotice}
       </Infobar>
     {/if}
     <Toolbar disabled={loading || (isNew && creationDisabled)} />

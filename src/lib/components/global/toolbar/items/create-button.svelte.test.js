@@ -6,7 +6,7 @@ import { showUploadAssetsDialog } from '$lib/services/assets/view';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
 import { collectionCacheMap } from '$lib/services/contents/collection';
-import { unpublishedEntries } from '$lib/services/workflow';
+import { allUnpublishedEntries } from '$lib/services/workflow';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import { createMockEntry, initTestConfig, setEntries } from '$lib/test/config';
 
@@ -22,7 +22,7 @@ describe('CreateButton', () => {
     showUploadAssetsDialog.current = false;
     forkedRepository.current = undefined;
     allEntries.current = [];
-    unpublishedEntries.current = [];
+    allUnpublishedEntries.current = [];
     cmsConfig.current = /** @type {any} */ ({
       collections: [
         { name: 'posts', label: 'Posts', label_singular: 'Post', folder: 'posts', fields: [] },
@@ -181,7 +181,7 @@ describe('CreateButton', () => {
       ],
     });
     setEntries([]);
-    unpublishedEntries.current = [
+    allUnpublishedEntries.current = [
       /** @type {any} */ (
         createMockEntry({
           slug: 'hello',

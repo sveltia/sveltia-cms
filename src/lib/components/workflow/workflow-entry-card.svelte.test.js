@@ -4,9 +4,11 @@ import { render } from 'vitest-browser-svelte';
 
 import { mergeLockedBranch } from '$lib/services/backends/branch-access';
 import { deployments, productionSHA } from '$lib/services/deployments';
+import { openNewTab } from '$lib/services/utils/window';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import {
   createMockEntry,
+  createMockForkPullRequest,
   createMockWorkflowEntry,
   initTestConfig,
   setEntries,
@@ -14,6 +16,8 @@ import {
 } from '$lib/test/config';
 
 import WorkflowEntryCard from './workflow-entry-card.svelte';
+
+vi.mock('$lib/services/utils/window', () => ({ openNewTab: vi.fn() }));
 
 const fields = [{ name: 'title', widget: 'string' }];
 
@@ -89,6 +93,28 @@ describe('WorkflowEntryCard', () => {
 
     await card.getByRole('button', { name: 'Hello' }).click();
     await expect.poll(() => window.location.hash).toBe('#/collections/posts/entries/hello');
+  });
+
+  test('stands for a contributor’s pull request, linked from the card', async () => {
+    const entry = createMockWorkflowEntry({
+      status: 'pending_publish',
+      content: { _default: { title: 'Hello' } },
+      pullRequest: createMockForkPullRequest({
+        pullRequest: { updatedDate: new Date('2024-01-15T10:00:00Z') },
+      }),
+    });
+
+    const { container } = await render(WorkflowEntryCard, { entry });
+    const card = page.getByRole('listitem');
+
+    expect(container.querySelector('.note')).toHaveTextContent('From a fork');
+    // It’s reviewed and merged on the Git service, rather than published here
+    expect(card.getByRole('button', { name: 'Publish Entry' }).elements()).toHaveLength(0);
+    await card.getByRole('button', { name: /^Review on/ }).click();
+    expect(openNewTab).toHaveBeenCalledWith('https://github.com/owner/repo/pull/7');
+    // The editor is told which pull request to open the entry from
+    await card.getByRole('button', { name: 'Hello' }).click();
+    await expect.poll(() => window.location.hash).toBe('#/collections/posts/entries/hello?_pr=7');
   });
 
   test('lists the entries riding along in the pull request', async () => {

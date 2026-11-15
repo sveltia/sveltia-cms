@@ -1,6 +1,6 @@
 import { fetchLastCommit } from '$lib/services/backends/git/github/commits';
 import {
-  getWorkflowRepository,
+  getContentRepository,
   initOpenAuthoring,
   isOpenAuthoringConfigured,
 } from '$lib/services/backends/git/github/fork';
@@ -377,9 +377,9 @@ export const fetchFiles = async ({ lastCommit } = {}) => {
  * @returns {Promise<Blob>} Blob data.
  */
 export const fetchBlob = async (asset) => {
-  // An asset attached to an unpublished entry is committed to a workflow branch, which lives in the
-  // contributor’s fork with Open Authoring, so the blob has to be read from there
-  const { owner, repo } = asset.workflow ? getWorkflowRepository() : repository;
+  // An asset attached to an unpublished entry is committed to a workflow branch, whose blobs are
+  // read from the repository that serves the workflow branches’ files
+  const { owner, repo } = asset.workflow ? getContentRepository() : repository;
   const { sha } = asset;
 
   const response = /** @type {Response} */ (

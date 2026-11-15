@@ -79,7 +79,7 @@ vi.mock('$lib/services/user/prefs.svelte', () => ({
 }));
 
 vi.mock('$lib/services/workflow', () => ({
-  unpublishedEntries: mockUnpublishedEntries,
+  allUnpublishedEntries: mockUnpublishedEntries,
   unpublishedEntriesLoaded: mockUnpublishedEntriesLoaded,
   publishingBranches: mockPublishingBranches,
 }));

@@ -11,6 +11,7 @@ import { getCollectionFileEntry } from '$lib/services/contents/collection/files'
 import { prepareEntries } from '$lib/services/contents/file/process';
 import { getEntryFoldersByPath } from '$lib/services/contents/folders';
 import { convertPullRequest, convertPullRequests } from '$lib/services/workflow/entries';
+import { createMockForkPullRequest } from '$lib/test/factories';
 
 vi.mock('$lib/services/backends/process');
 vi.mock('$lib/services/backends/git/shared/parse-files', () => ({
@@ -1582,6 +1583,38 @@ describe('workflow/entries', () => {
       );
 
       expect(entries).toEqual([]);
+    });
+  });
+
+  describe('pull request from a fork', () => {
+    test('reads the collection from the branch name without the fork, and gives new IDs', async () => {
+      vi.mocked(createFileList).mockReturnValue(
+        /** @type {any} */ ({
+          entryFiles: [
+            { path: 'content/posts/hello.md', text: '#', folder: { collectionName: 'posts' } },
+          ],
+          assetFiles: [],
+        }),
+      );
+
+      vi.mocked(prepareEntries).mockResolvedValue({
+        entries: [/** @type {any} */ ({ id: 'x', slug: 'hello', subPath: 'hello', locales: {} })],
+        errors: [],
+      });
+
+      const pullRequest = createMockForkPullRequest({
+        pullRequest: {
+          files: [{ path: 'content/posts/hello.md', sha: 'a', size: 1, text: '#', deleted: false }],
+        },
+      });
+
+      const { entries } = await convertPullRequest(pullRequest);
+
+      expect(entries).toHaveLength(1);
+      expect(entries[0].workflow.collectionName).toBe('posts');
+      // Another pull request can stand for the same entry, so the ID is the entry’s own
+      expect(entries[0].id).not.toBe('x');
+      expect(entries[0].workflow.pullRequest).toBe(pullRequest);
     });
   });
 

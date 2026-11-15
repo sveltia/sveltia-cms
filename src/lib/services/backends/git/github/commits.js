@@ -1,7 +1,7 @@
 import { encodeBase64 } from '@sveltia/utils/file';
 
 import { clearSaveProgress, reportCommits } from '$lib/services/backends/commit-progress';
-import { getWorkflowRepository } from '$lib/services/backends/git/github/fork';
+import { getBranchRepository } from '$lib/services/backends/git/github/fork';
 import { fetchAliasedBatch } from '$lib/services/backends/git/github/graphql';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchGraphQL } from '$lib/services/backends/git/shared/api';
@@ -62,14 +62,14 @@ const FETCH_LAST_COMMIT_QUERY = `
  * Fetch the last commit on the repository.
  * @param {string} [branchName] Branch to look at. Default: the branch configured in the site
  * configuration. An Editorial Workflow branch can be passed here, in which case the commit is
- * looked up in the repository that holds the workflow branches — the contributor’s fork with Open
- * Authoring, and the configured repository otherwise.
+ * looked up in the repository that holds the branch: see {@link getBranchRepository}.
  * @returns {Promise<{ hash: string, message: string }>} Commit’s SHA-1 hash and message.
  * @throws {Error} When the branch could not be found.
  */
 export const fetchLastCommit = async (branchName) => {
-  const { owner, repo } = branchName ? getWorkflowRepository() : repository;
-  const branch = branchName ?? repository.branch;
+  const { owner, repo, branch } = branchName
+    ? getBranchRepository(branchName)
+    : { ...repository, branch: repository.branch };
 
   const result = /** @type {LastCommitResponse} */ (
     await fetchGraphQL(FETCH_LAST_COMMIT_QUERY, { owner, repo, ...(branchName ? { branch } : {}) })
@@ -272,10 +272,12 @@ const createCommit = async ({
 export const commitChanges = async (changes, options) => {
   checkDirectCommitAllowed(options);
 
-  // A workflow branch lives in the contributor’s fork with Open Authoring, while the configured
-  // branch is only ever committed to by someone who can write to the configured repository
-  const { owner, repo } = options.branch ? getWorkflowRepository() : repository;
-  const branch = /** @type {string} */ (options.branch ?? repository.branch);
+  // A workflow branch lives in the contributor’s fork with Open Authoring, or in the fork of the
+  // contributor whose pull request a maintainer is editing, while the configured branch is only
+  // ever committed to by someone who can write to the configured repository
+  const { owner, repo, branch } = options.branch
+    ? getBranchRepository(options.branch)
+    : { ...repository, branch: /** @type {string} */ (repository.branch) };
 
   /** @type {FileAddition[]} */
   const additions = await Promise.all(

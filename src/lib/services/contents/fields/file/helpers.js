@@ -15,6 +15,7 @@ import { isAcceptedFile } from '$lib/services/integrations/media-libraries/defau
 import { getOrCreate } from '$lib/services/utils/cache';
 import { createPath, getDirName } from '$lib/services/utils/file';
 import { decodeURISafely } from '$lib/services/utils/url';
+import { parseForkBranchName } from '$lib/services/workflow/forks';
 
 /**
  * @import {
@@ -408,7 +409,11 @@ export const listAssets = ({
   const isInSelectedFolder = (asset) => isAssetInSelectedFolder({ asset, folder, folderPath });
 
   const resolved = resolveUnsavedAssetPaths({
-    savedAssets: allAssets.current.filter(isInSelectedFolder),
+    // An asset from a contributor’s pull request is theirs to show with their entry, not one to
+    // offer for any other: it isn’t on the configured branch, and it may shadow a published file
+    savedAssets: allAssets.current.filter(
+      (asset) => isInSelectedFolder(asset) && !parseForkBranchName(asset.workflow?.branch ?? ''),
+    ),
     unsavedAssets: unsavedAssets.filter(isInSelectedFolder),
     slugificationEnabled,
   });

@@ -11,7 +11,7 @@ import { showContentOverlay } from '$lib/services/contents/editor';
 import { entryEditorSettings } from '$lib/services/contents/editor/settings';
 import { searchMode, searchTerms } from '$lib/services/search';
 import { env } from '$lib/services/user/env.svelte';
-import { unpublishedEntries, unpublishedEntriesLoaded } from '$lib/services/workflow';
+import { allUnpublishedEntries, unpublishedEntriesLoaded } from '$lib/services/workflow';
 import { createMockEntry, initTestConfig, setEntries } from '$lib/test/config';
 import { waitForToastsToHide } from '$lib/test/toast';
 
@@ -101,7 +101,7 @@ describe('ContentsPage', () => {
 
   test('shows the entry list toolbar for a collection holding only drafts', async () => {
     setEntries([]);
-    unpublishedEntries.current = [
+    allUnpublishedEntries.current = [
       /** @type {any} */ ({
         ...createMockEntry({ slug: 'draft', content: { _default: { title: 'Draft' } } }),
         workflow: {
@@ -121,7 +121,7 @@ describe('ContentsPage', () => {
       await expect.element(area.getByRole('row', { name: 'Draft' })).toBeVisible();
       await expect.element(area.getByRole('toolbar', { name: 'Entry List' })).toBeInTheDocument();
     } finally {
-      unpublishedEntries.current = [];
+      allUnpublishedEntries.current = [];
     }
   });
 
@@ -138,7 +138,7 @@ describe('ContentsPage', () => {
       ],
     });
     setEntries([]);
-    unpublishedEntries.current = [
+    allUnpublishedEntries.current = [
       /** @type {any} */ ({
         ...createMockEntry({ slug: 'draft', content: { _default: { title: 'Draft' } } }),
         workflow: {
@@ -162,7 +162,7 @@ describe('ContentsPage', () => {
       await expect.element(area.getByRole('toolbar', { name: 'Entry List' })).toBeInTheDocument();
       expect(area.getByRole('row', { name: 'Draft' }).elements()).toHaveLength(0);
     } finally {
-      unpublishedEntries.current = [];
+      allUnpublishedEntries.current = [];
     }
   });
 
@@ -235,7 +235,7 @@ describe('ContentsPage', () => {
     });
     setEntries([createMockEntry({ slug: 'hello', content: { _default: { title: 'Hello' } } })]);
     backendName.current = 'github';
-    unpublishedEntries.current = [];
+    allUnpublishedEntries.current = [];
     unpublishedEntriesLoaded.current = false;
     window.location.hash = '#/collections/posts/entries/hello';
 

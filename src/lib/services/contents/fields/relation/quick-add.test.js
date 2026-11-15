@@ -173,7 +173,7 @@ beforeEach(() => {
   vi.mocked(getUnpublishedEntry).mockReturnValue(undefined);
   vi.mocked(getUnpublishedEntryByBranch).mockReturnValue(undefined);
   vi.mocked(getUnpublishedEntryByDraft).mockReturnValue(undefined);
-  unpublishedEntries.current = [];
+  /** @type {{ current: any[] }} */ (unpublishedEntries).current = [];
 });
 
 /** @type {RelationField} */
@@ -430,7 +430,7 @@ describe('getNestedQuickAddHost', () => {
 describe('hasCreationRoom', () => {
   beforeEach(() => {
     vi.mocked(getEntriesByCollection).mockReturnValue([]);
-    unpublishedEntries.current = [];
+    /** @type {{ current: any[] }} */ (unpublishedEntries).current = [];
   });
 
   it('does not count the existing entries edited from the draft', () => {
@@ -488,7 +488,7 @@ describe('hasCreationRoom', () => {
     });
 
     vi.mocked(getEntriesByCollection).mockReturnValue([entry('a')]);
-    unpublishedEntries.current = [
+    /** @type {{ current: any[] }} */ (unpublishedEntries).current = [
       entry('b', { collectionName: 'tags' }),
       entry('c', { collectionName: 'posts' }),
     ];
@@ -498,7 +498,7 @@ describe('hasCreationRoom', () => {
 
   it('counts a new entry riding along in another entry’s pull request against the limit', () => {
     vi.mocked(getEntriesByCollection).mockReturnValue(/** @type {any} */ ([{}]));
-    unpublishedEntries.current = [createHostEntry('svelte')];
+    /** @type {{ current: any[] }} */ (unpublishedEntries).current = [createHostEntry('svelte')];
 
     expect(
       hasCreationRoom({ collection: { ...tagCollection, limit: 2 }, draft: createParentDraft() }),
@@ -511,7 +511,7 @@ describe('hasCreationRoom', () => {
   it('counts a pending entry once after it has been saved to the pull request', () => {
     // The editor may stay open on the draft after the save, which still holds the entry
     vi.mocked(getEntriesByCollection).mockReturnValue(/** @type {any} */ ([{}]));
-    unpublishedEntries.current = [createHostEntry('svelte')];
+    /** @type {{ current: any[] }} */ (unpublishedEntries).current = [createHostEntry('svelte')];
 
     expect(
       hasCreationRoom({
@@ -761,7 +761,7 @@ describe('getPendingEntrySlugs', () => {
       canonicalSlug: undefined,
     });
     vi.mocked(getCanonicalSlug).mockReturnValue(undefined);
-    unpublishedEntries.current = [createHostEntry('svelte')];
+    /** @type {{ current: any[] }} */ (unpublishedEntries).current = [createHostEntry('svelte')];
 
     expect(getPendingEntrySlugs({ draft, pendingEntries: [] }).defaultLocaleSlug).toBe('svelte-1');
   });
