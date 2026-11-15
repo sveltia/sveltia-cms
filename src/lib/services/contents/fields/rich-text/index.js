@@ -63,6 +63,7 @@ export const BLOCK_BUTTONS = [
   'heading-six',
   'bulleted-list',
   'numbered-list',
+  'task-list',
   'quote',
   'align',
 ];
@@ -75,11 +76,18 @@ export const BLOCK_BUTTONS = [
 export const HTML_ONLY_BUTTONS = ['underline', 'align'];
 
 /**
- * The default `buttons` property options: all the buttons but the HTML-only ones.
+ * Buttons not enabled by default: the HTML-only ones, and `task-list`, as task lists are a GitHub
+ * Flavored Markdown extension that not every Markdown renderer supports.
+ * @type {RichTextEditorButtonName[]}
+ */
+export const OPTIONAL_BUTTONS = [...HTML_ONLY_BUTTONS, 'task-list'];
+
+/**
+ * The default `buttons` property options: all the buttons but the optional ones.
  * @type {RichTextEditorButtonName[]}
  */
 export const DEFAULT_BUTTONS = [...INLINE_BUTTONS, ...BLOCK_BUTTONS].filter(
-  (name) => !HTML_ONLY_BUTTONS.includes(name),
+  (name) => !OPTIONAL_BUTTONS.includes(name),
 );
 
 /**
@@ -102,6 +110,7 @@ export const BUTTON_NAME_MAP = {
   'heading-six': 'heading-6',
   'bulleted-list': 'bulleted-list',
   'numbered-list': 'numbered-list',
+  'task-list': 'task-list',
   quote: 'blockquote',
   align: 'align',
   'code-block': 'code-block',

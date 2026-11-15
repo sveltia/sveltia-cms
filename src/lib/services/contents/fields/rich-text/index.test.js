@@ -8,6 +8,7 @@ import {
   getValueFormat,
   HTML_ONLY_BUTTONS,
   INLINE_BUTTONS,
+  OPTIONAL_BUTTONS,
   stripComponentNamePrefix,
 } from '.';
 
@@ -65,10 +66,12 @@ describe('Test stripComponentNamePrefix()', () => {
 });
 
 describe('Test DEFAULT_BUTTONS', () => {
-  test('includes the inline and block buttons but the HTML-only ones', () => {
+  test('includes the inline and block buttons but the optional ones', () => {
     expect(INLINE_BUTTONS).toContain('underline');
     expect(BLOCK_BUTTONS).toContain('align');
+    expect(BLOCK_BUTTONS).toContain('task-list');
     expect(HTML_ONLY_BUTTONS).toEqual(['underline', 'align']);
+    expect(OPTIONAL_BUTTONS).toEqual(['underline', 'align', 'task-list']);
     expect(DEFAULT_BUTTONS).toEqual([
       'bold',
       'italic',

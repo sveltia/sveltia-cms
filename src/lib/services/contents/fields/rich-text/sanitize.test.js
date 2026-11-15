@@ -414,6 +414,29 @@ describe('SANITIZE_OPTIONS UI redress prevention', () => {
     },
   );
 
+  it.each(['text', 'password', 'submit', 'image', 'hidden', ''])(
+    'should remove an `<input>` element of the `%s` type',
+    (type) => {
+      expect(sanitizeRichTextHTML(`<p>Hello <input type="${type}" value="x"></p>`)).toBe(
+        '<p>Hello </p>',
+      );
+    },
+  );
+
+  it('should keep the check box of a task list, disabled and without other attributes', () => {
+    expect(
+      sanitizeRichTextHTML(
+        '<ul><li><input checked="" disabled="" type="checkbox"> Done</li>' +
+          '<li><input type=" CheckBox " name="t" form="sign-in" id="x" autofocus ' +
+          'formaction="https://evil.example/" onclick="alert(1)" style="position: fixed"> To do' +
+          '</li></ul>',
+      ),
+    ).toBe(
+      '<ul><li><input checked="" disabled="" type="checkbox"> Done</li>' +
+        '<li><input type="checkbox" disabled=""> To do</li></ul>',
+    );
+  });
+
   it('should remove a stylesheet that would restyle the whole app', () => {
     const sanitized = sanitizeRichTextHTML('<p>Hello <style>body { display: none }</style></p>');
 

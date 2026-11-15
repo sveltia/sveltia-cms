@@ -86,11 +86,12 @@ describe('getToolbarButtons()', () => {
     expect(getToolbarButtons(['heading-one'], ['linked-image'])).toEqual(['heading-1']);
   });
 
-  test('maps the `underline` and `align` buttons', () => {
-    expect(getToolbarButtons(['bold', 'underline', 'align'], [])).toEqual([
+  test('maps the `underline`, `align` and `task-list` buttons', () => {
+    expect(getToolbarButtons(['bold', 'underline', 'align', 'task-list'], [])).toEqual([
       'bold',
       'underline',
       'align',
+      'task-list',
     ]);
   });
 

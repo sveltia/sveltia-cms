@@ -61,3 +61,13 @@ export const moveCaretToEnd = async (target) => {
     });
   });
 };
+
+/**
+ * Check or uncheck a task list item in a rich text editor. The check box is drawn at the start of
+ * the item by its `::before` pseudo-element, which the editor tells from the text by the position
+ * of the click, so the item is clicked there rather than in the middle.
+ * @param {Locator} item Task list item, with the `checkbox` role.
+ */
+export const toggleTaskListItem = async (item) => {
+  await item.click({ position: { x: 4, y: 8 } });
+};

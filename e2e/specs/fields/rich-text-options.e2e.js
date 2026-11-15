@@ -1,4 +1,4 @@
-import { moveCaretToEnd, selectText } from '../../fixtures/rich-text.js';
+import { moveCaretToEnd, selectText, toggleTaskListItem } from '../../fixtures/rich-text.js';
 import { expect, test } from '../../fixtures/test.js';
 import { getEditor } from '../../fixtures/ui.js';
 
@@ -439,6 +439,92 @@ test.describe('underline', () => {
 
       await expect(field.getByRole('button', { name: 'Bold' })).toBeVisible();
       await expect(field.getByRole('button', { name: 'Underline' })).toHaveCount(0);
+    });
+  });
+});
+
+test.describe('task lists', () => {
+  test.describe('Markdown', () => {
+    test.use({ config: noteConfig({ buttons: ['bold', 'bulleted-list', 'task-list'] }) });
+
+    test('toggles an item with a click, and shows check boxes in the preview', async ({
+      cms,
+      page,
+    }) => {
+      const { editor, body } = await openNote({ cms, page, body: '- [ ] Hat\n- [x] Sunscreen' });
+      const preview = editor.getByRole('document', { name: 'Content Preview' });
+      const items = body.getByRole('checkbox');
+
+      await expect(items).toHaveCount(2);
+      await expect(items.first()).toHaveAttribute('aria-checked', 'false');
+      await expect(preview.getByRole('checkbox')).toHaveCount(2);
+      await expect(preview.getByRole('checkbox').first()).not.toBeChecked();
+      await expect(preview.getByRole('checkbox').first()).toBeDisabled();
+
+      await toggleTaskListItem(items.first());
+      await expect(items.first()).toHaveAttribute('aria-checked', 'true');
+      await expect(preview.getByRole('checkbox').first()).toBeChecked();
+
+      await saveAndExpect({ cms, editor, body: '- [x] Hat\n- [x] Sunscreen' });
+    });
+
+    test('turns a paragraph into a task list item from the text style menu', async ({
+      cms,
+      page,
+    }) => {
+      const { editor, field, body } = await openNote({ cms, page, body: 'Water bottle' });
+
+      await body.getByText('Water bottle').click();
+      await cms.chooseMenuItem(
+        field.getByRole('button', { name: 'Show Text Style Options' }),
+        page.getByRole('menuitemcheckbox', { name: 'Task List' }),
+      );
+      await expect(body.getByRole('checkbox')).toHaveCount(1);
+
+      await saveAndExpect({ cms, editor, body: '- [ ] Water bottle' });
+    });
+  });
+
+  test.describe('HTML', () => {
+    test.use({ config: noteConfig({ format: 'html', buttons: ['bold', 'task-list'] }) });
+
+    test('saves a task list the way GitHub renders it', async ({ cms, page }) => {
+      const { editor, body } = await openNote({
+        cms,
+        page,
+        body:
+          '<ul class="contains-task-list">' +
+          '<li class="task-list-item"><input type="checkbox" disabled=""> Hat</li></ul>',
+      });
+
+      await toggleTaskListItem(body.getByRole('checkbox'));
+      await saveAndExpect({
+        cms,
+        editor,
+        body:
+          '<ul class="contains-task-list">' +
+          '<li class="task-list-item"><input type="checkbox" disabled="" checked=""> Hat</li>' +
+          '</ul>',
+      });
+    });
+  });
+
+  test.describe('default', () => {
+    test.use({ config: noteConfig({}) });
+
+    test('offers no task list, keeping the items as text', async ({ cms, page }) => {
+      const { editor, field, body } = await openNote({ cms, page, body: '- [ ] Hat' });
+
+      await field.getByRole('button', { name: 'Show Text Style Options' }).click();
+      await expect(page.getByRole('menuitemcheckbox', { name: 'Bulleted List' })).toBeVisible();
+      await expect(page.getByRole('menuitemcheckbox', { name: 'Task List' })).toHaveCount(0);
+      await page.keyboard.press('Escape');
+      await expect(body.getByRole('checkbox')).toHaveCount(0);
+      await expect(body.getByRole('listitem')).toHaveText('[ ] Hat');
+
+      await moveCaretToEnd(body);
+      await page.keyboard.type('s');
+      await saveAndExpect({ cms, editor, body: '- [ ] Hats' });
     });
   });
 });

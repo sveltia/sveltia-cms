@@ -41,7 +41,16 @@ describe('parseRichTextFieldConfig with `multiline: false`', () => {
       name: 'title',
       widget: 'markdown',
       multiline: false,
-      buttons: ['bold', 'underline', 'heading-one', 'quote', 'link', 'align', 'unknown'],
+      buttons: [
+        'bold',
+        'underline',
+        'heading-one',
+        'quote',
+        'task-list',
+        'link',
+        'align',
+        'unknown',
+      ],
       editor_components: ['image', 'code-block', 'table', 'hr', 'unknown'],
     };
 
@@ -50,6 +59,7 @@ describe('parseRichTextFieldConfig with `multiline: false`', () => {
     expect(getReported()).toEqual([
       'buttons:heading-one',
       'buttons:quote',
+      'buttons:task-list',
       'buttons:align',
       'editor_components:code-block',
       'editor_components:table',
