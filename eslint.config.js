@@ -23,8 +23,9 @@ export default [
     ],
   },
 
-  // Register @stylistic and import-x plugins for all files (including .svelte)
-  (({ files: _f, ...c }) => c)(airbnbPlugins.stylistic),
+  // Register @stylistic and import-x plugins for all files (including .svelte). Use our own
+  // @stylistic instead of the older version bundled with Airbnb, which can't be registered twice
+  { name: airbnbPlugins.stylistic.name, plugins: { '@stylistic': stylistic } },
   (({ files: _f, ...c }) => c)(airbnbPlugins.importX),
 
   // Airbnb extended base rules, applied to all files (strip the `files` restriction
@@ -74,7 +75,6 @@ export default [
       },
     },
     plugins: {
-      '@stylistic': stylistic,
       'unused-imports': unusedImportsPlugin,
       jsdoc: jsdocPlugin,
     },
