@@ -28,6 +28,7 @@
     countInvalidFields,
     validateAndRevealErrors,
   } from '$lib/services/contents/draft/validate/reveal';
+  import { setFieldEditorContext } from '$lib/services/contents/editor/field-context';
   import { needsSlugInput } from '$lib/services/contents/editor/slug';
   import {
     addPendingEntries,
@@ -41,8 +42,14 @@
   import { createRawState } from '$lib/services/utils/state.svelte';
 
   /**
-   * @import { Entry, EntryDraft, EntryEditorPane, InternalEntryCollection, PendingEntry }
-   * from '$lib/types/private';
+   * @import {
+   * Entry,
+   * EntryDraft,
+   * EntryEditorPane,
+   * FieldEditorContext,
+   * InternalEntryCollection,
+   * PendingEntry,
+   * } from '$lib/types/private';
    * @import { RelationField } from '$lib/types/public';
    */
 
@@ -66,6 +73,11 @@
   // draft is provided to the field editors below in its place, so they edit the new entry
   const parentDraft = getEntryDraftContext();
   const entryDraft = setEntryDraftContext(new EntryDraftState());
+
+  // The fields of the entry are rendered at the top level of its draft, like in the entry editor,
+  // not as the subfields of the Relation field, which may be in a rich text editor component whose
+  // values are stored in `extraValues` instead of `currentValues`
+  setFieldEditorContext(/** @type {FieldEditorContext} */ ({}));
 
   /**
    * Locale being edited. The dialog has a single pane, so the locale switcher is the only way to

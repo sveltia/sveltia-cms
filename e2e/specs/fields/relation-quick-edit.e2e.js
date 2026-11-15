@@ -130,3 +130,73 @@ test('changes an author added from the field before the post is saved', async ({
     'content/authors/ada-lovelace.md': "---\nname: Ada Lovelace\nbio: ''\n---\n",
   });
 });
+
+test.describe('in a rich text editor component', () => {
+  test.use({
+    config: {
+      ...CONFIG,
+      collections: [
+        {
+          ...CONFIG.collections[0],
+          fields: [
+            { name: 'title', label: 'Title' },
+            { name: 'body', label: 'Body', widget: 'markdown', editor_components: ['byline'] },
+          ],
+        },
+        CONFIG.collections[1],
+      ],
+    },
+  });
+
+  test.beforeEach(async ({ page }) => {
+    // The editor reads the components when it’s opened
+    await page.evaluate(`
+      CMS.registerEditorComponent({
+        id: 'byline',
+        label: 'Byline',
+        fields: [
+          {
+            name: 'author',
+            label: 'Author',
+            widget: 'relation',
+            collection: 'authors',
+            value_field: '{{slug}}',
+            search_fields: ['name'],
+            display_fields: ['name'],
+          },
+        ],
+        pattern: /^{{< byline "([^"]*)" >}}$/,
+        fromBlock: (match) => ({ author: match[1] }),
+        toBlock: ({ author }) => '{{< byline "' + author + '" >}}',
+      });
+    `);
+  });
+
+  test('opens the selected author with its values', async ({ cms, page }) => {
+    const post = '---\ntitle: Hello\n---\n\n{{< byline "ada" >}}\n';
+
+    await cms.seed({
+      'content/posts/hello.md': post,
+      'content/authors/ada.md': '---\nname: Ada\nbio: Mathematician\n---\n',
+    });
+    await cms.signIn();
+    await page.getByRole('row').filter({ hasText: 'Hello' }).click();
+    await getEditor(page)
+      .getByRole('button', { name: /Edit.*Ada/ })
+      .click();
+
+    const dialog = page.getByRole('dialog', { name: /Editing.*Author/ });
+
+    // The fields of the author aren’t taken for those of the component, which are stored apart
+    await expect(dialog.getByRole('textbox', { name: 'Name' })).toHaveValue('Ada');
+    await dialog.getByRole('textbox', { name: 'Bio' }).fill('Mathematician and writer');
+    await dialog.getByRole('button', { name: 'Update' }).click();
+    await expect(dialog).toBeHidden();
+    await getEditor(page).getByRole('button', { name: 'Save' }).click();
+
+    await expect
+      .poll(async () => (await cms.readRepo())['content/authors/ada.md'])
+      .toBe('---\nname: Ada\nbio: Mathematician and writer\n---\n');
+    expect((await cms.readRepo())['content/posts/hello.md']).toBe(post);
+  });
+});

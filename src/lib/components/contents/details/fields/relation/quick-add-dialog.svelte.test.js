@@ -79,6 +79,8 @@ const createSource = (values) => ({
  * @param {QuickAddHost} [options.quickAddHost] Host entry of the parent draft, when that’s the
  * draft of another quick-add dialog.
  * @param {Entry} [options.entry] Entry to edit.
+ * @param {Record<string, any>} [options.context] Additional component context, e.g. that of a rich
+ * text editor component the Relation field is in.
  * @returns {Promise<{ draft: any, props: any, onAdd: any }>} Parent draft, props and the `onAdd`
  * callback.
  */
@@ -87,6 +89,7 @@ const renderDialog = async ({
   pendingEntries = [],
   quickAddHost = undefined,
   entry = undefined,
+  context = {},
 } = {}) => {
   const draft = createMockDraft({
     fields: [fieldConfig],
@@ -105,7 +108,7 @@ const renderDialog = async ({
 
   // Wait for the dialog of the previous test to be gone, so the locators don’t pick it up
   await expect.poll(() => document.querySelector('[role="dialog"]')).toBeNull();
-  await renderWithDraft(QuickAddDialog, { draft, props });
+  await renderWithDraft(QuickAddDialog, { draft, props, context });
   // The dialog moves the focus to its first input shortly after opening
   await expect.element(page.getByRole('dialog').getByRole('textbox').first()).toHaveFocus();
 
@@ -221,6 +224,37 @@ describe('QuickAddDialog', () => {
     expect(restoreBackup).not.toHaveBeenCalled();
     expect(draft.pendingEntries).toEqual([pendingEntry]);
     expect(onAdd).toHaveBeenCalledWith(pendingEntry, entry);
+  });
+
+  test('edits an existing entry from a Relation field in a rich text editor component', async () => {
+    const entry = createTag('react', 'React');
+
+    // The component stores the values of its fields in `extraValues`, which the dialog’s fields
+    // must not follow, as they edit the entry itself
+    const context = {
+      'field-editor': { valueStoreKey: 'extraValues', parentComponentNames: ['booking'] },
+    };
+
+    const { props } = await renderDialog({ entry, context });
+    const dialog = page.getByRole('dialog', { name: /Editing.*Tag/ });
+
+    vi.mocked(createPendingEntry).mockResolvedValue({
+      ...createPending('tags', 'react'),
+      baseEntry: entry,
+    });
+
+    await expect.element(dialog.getByRole('textbox', { name: 'Title' })).toHaveValue('React');
+    await dialog.getByRole('textbox', { name: 'Title' }).fill('React 19');
+    await dialog.getByRole('button', { name: 'Update' }).click();
+
+    await expect.poll(() => props.open).toBe(false);
+    expect(createPendingEntry).toHaveBeenCalledWith(
+      expect.objectContaining({
+        draft: expect.objectContaining({
+          currentValues: { _default: { title: 'React 19', description: '' } },
+        }),
+      }),
+    );
   });
 
   test('closes without adding an existing entry left as it was', async () => {
