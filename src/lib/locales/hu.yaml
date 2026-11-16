@@ -113,7 +113,7 @@ clipboard_error: Nem sikerült a vágólapra másolni.
 # Welcome and branding
 # Screen reader announcement when the sign-in page loads
 # {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
-welcome_message: Üdvözöl a(z) {$name}
+welcome_message: '{$name} – üdvözlet!'
 # Footer text with CMS branding
 # {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
 powered_by: 'Működteti: {$name}'
@@ -136,7 +136,7 @@ sign_in_using_access_token_description: Add meg alább a tokenedet. Olvasási é
 sign_in_using_access_token_workflow_note: Mivel a szerkesztői munkafolyamat be van kapcsolva, a pull requestekhez is olvasási és írási hozzáféréssel kell rendelkeznie.
 # Inline link text with embedded HTML anchor tag
 # {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
-sign_in_using_access_token_link: Tokent a(z) <a>{$service} felhasználói beállítások oldalán</a> hozhatsz létre.
+sign_in_using_access_token_link: 'Tokent itt hozhatsz létre: <a>{$service} – felhasználói beállítások</a>.'
 # Input field label for personal access token
 personal_access_token: Személyes hozzáférési token
 
@@ -148,7 +148,7 @@ signing_in: Bejelentkezés…
 # Button label and description for working with a local Git repository
 work_with_local_repo: Munka helyi tárolóval
 # {$repo} is the configured repository name shown when it is available
-work_with_local_repo_description: Amikor a rendszer kéri, válaszd ki a(z) „{$repo}” tároló gyökérkönyvtárát.
+work_with_local_repo_description: 'Amikor a rendszer kéri, válaszd ki a következő tároló gyökérkönyvtárát: „{$repo}”.'
 work_with_local_repo_description_no_repo: Amikor a rendszer kéri, válaszd ki a Git-tárolód gyökérkönyvtárát.
 # Button label for demo/test repository
 work_with_test_repo: Munka teszttárolóval
@@ -178,17 +178,17 @@ sign_in_error:
 # Backend and repository validation errors
 # Shown when the configured backend or repository is invalid or inaccessible
 # {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
-backend_unsupported_version: A(z) {$name} háttérrendszerhez {$name} {$version} vagy újabb verzió szükséges.
+backend_unsupported_version: A háttérrendszer ({$name}) használatához {$name} {$version} vagy újabb verzió szükséges.
 # {$repo} is the repository identifier, typically in owner/repo format
-repository_no_access: Nincs hozzáférésed a(z) „{$repo}” tárolóhoz.
+repository_no_access: 'Nincs hozzáférésed a következő tárolóhoz: „{$repo}”.'
 # {$repo} is the repository identifier, typically in owner/repo format
-repository_no_write_access: Nincs írási hozzáférésed a(z) „{$repo}” tárolóhoz.
-repository_not_found: A(z) „{$repo}” tároló nem létezik.
-repository_empty: A(z) „{$repo}” tárolóban nincs egyetlen ág sem.
+repository_no_write_access: 'Nincs írási hozzáférésed a következő tárolóhoz: „{$repo}”.'
+repository_not_found: 'A következő tároló nem létezik: „{$repo}”.'
+repository_empty: 'A következő tárolóban nincs egyetlen ág sem: „{$repo}”.'
 # {$repo} is the repository identifier, and {$branch} is the configured branch name
-branch_not_found: A(z) „{$repo}” tárolóban nincs „{$branch}” nevű ág.
+branch_not_found: A tárolóban („{$repo}”) nincs „{$branch}” nevű ág.
 # {$repo} is the repository identifier, and {$dir} is the configured root directory
-root_dir_not_found: A(z) „{$dir}” gyökérkönyvtár nem létezik a(z) „{$repo}” tárolóban.
+root_dir_not_found: 'A gyökérkönyvtár („{$dir}”) nem létezik a következő tárolóban: „{$repo}”.'
 
 # General errors
 # Fallback error dialog title for unexpected errors
@@ -234,7 +234,7 @@ sign_in_with_mobile_instruction: A jelszó nélküli bejelentkezéshez olvasd be
 # Confirmation dialog shown when the CMS is opened with a sign-in link from the mobile sign-in
 # QR code. {$account} is the account name, {$service} is the Git service name, e.g. GitHub
 sign_in_with_link: Bejelentkezés hivatkozással
-sign_in_with_link_confirmation: Ez a hivatkozás {$account} néven jelentkeztet be a(z) {$service} szolgáltatásba, és átmásolja a beállításokat arról az eszközről, amelyen létrehozták. Csak akkor folytasd, ha a hivatkozást te magad hoztad létre.
+sign_in_with_link_confirmation: Ez a hivatkozás {$account} néven jelentkeztet be a szolgáltatásba ({$service}), és átmásolja a beállításokat arról az eszközről, amelyen létrehozták. Csak akkor folytasd, ha a hivatkozást te magad hoztad létre.
 
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
@@ -585,7 +585,7 @@ readonly_cms: A CMS csak olvasható módban van. Megtekintheted a tartalmat és 
 readonly_collection: Ez a gyűjtemény csak olvasható. Megtekintheted a tartalmát, de nem módosíthatsz semmit.
 readonly_entry: Ez a bejegyzés csak olvasható. Megtekintheted, de nem módosíthatsz semmit.
 readonly_asset_folder: Ez a mappa csak olvasható. Megtekintheted a médiafájljait, de nem módosíthatsz semmit.
-readonly_branch: Nincs jogosultságod a(z) „{$branch}” ágra pusholni. Megtekintheted ezt a tartalmat, de nem módosíthatsz semmit.
+readonly_branch: 'Nincs jogosultságod pusholni a következő ágra: „{$branch}”. Megtekintheted ezt a tartalmat, de nem módosíthatsz semmit.'
 readonly_reference: A bejegyzés csak olvasható, ezért a hivatkozás nem távolítható el.
 # {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
 cannot_rename_referenced_entry: 'Ez a bejegyzés nem nevezhető át, mert a következő csak olvasható bejegyzések a jelenlegi nevével hivatkoznak rá: {$entries}.'
@@ -694,8 +694,8 @@ confirm_deleting_folder: |
   .input {$count :integer}
   .match $count
     0   {{ Biztosan törlöd az üres „{$name}” mappát? }}
-    one {{ Biztosan törlöd a(z) „{$name}” mappát és a benne lévő médiafájlt? }}
-    *   {{ Biztosan törlöd a(z) „{$name}” mappát és a benne lévő {$count} médiafájlt? }}
+    one {{ Biztosan törlöd ezt a mappát („{$name}”) és a benne lévő médiafájlt? }}
+    *   {{ Biztosan törlöd ezt a mappát („{$name}”) és a benne lévő {$count} médiafájlt? }}
 # Progress and error messages while the folder is being renamed or deleted
 renaming_folder: Mappa átnevezése…
 renaming_folder_failed: Nem sikerült átnevezni a mappát.
@@ -790,8 +790,8 @@ change_file_extension: Fájlkiterjesztés módosítása
 # {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
 confirm_file_extension_change:
   change: Biztosan módosítod a kiterjesztést („.{$oldExtension}” → „.{$newExtension}”)?
-  add: Biztosan hozzáadod a(z) „.{$newExtension}” kiterjesztést?
-  remove: Biztosan eltávolítod a(z) „.{$oldExtension}” kiterjesztést?
+  add: 'Biztosan hozzáadod a következő kiterjesztést: „.{$newExtension}”?'
+  remove: 'Biztosan eltávolítod a következő kiterjesztést: „.{$oldExtension}”?'
 file_extension_change_warning: Ha a kiterjesztés nem egyezik a fájl tényleges formátumával, előfordulhat, hogy a fájl nem jelenik meg, vagy nem kezelhető megfelelően.
 
 # Replace asset: menu item and dialog title
@@ -1038,8 +1038,8 @@ confirm_replacing_file: '„{$name}” helyére ez a fájl kerül:'
 confirm_uploading_files: |
   .input {$count :integer}
   .match $count
-    one {{ Ez a fájl a(z) „{$folder}” mappába kerül: }}
-    *   {{ Ez a(z) {$count} fájl a(z) „{$folder}” mappába kerül: }}
+    one {{ Ez a fájl ebbe a mappába kerül („{$folder}”): }}
+    *   {{ A következő {$count} fájl ebbe a mappába kerül („{$folder}”): }}
 
 # File size validation
 # Warning section for files exceeding size limits
@@ -1082,8 +1082,8 @@ mismatched_files: Eltérő formátumú fájlok
 warning_mismatched_files: |
   .input {$count :integer}
   .match $count
-    one {{ Ez a fájl nem cserélheti le a(z) „{$name}” fájlt, mert eltérő a formátuma. Alakítsd át a fájlt ugyanarra a formátumra, és próbáld újra. }}
-    *   {{ Ezek a fájlok nem cserélhetik le a(z) „{$name}” fájlt, mert eltérő a formátumuk. Alakítsd át a fájlokat ugyanarra a formátumra, és próbáld újra. }}
+    one {{ Ez a fájl nem cserélheti le a meglévő fájlt („{$name}”), mert eltérő a formátuma. Alakítsd át a fájlt ugyanarra a formátumra, és próbáld újra. }}
+    *   {{ Ezek a fájlok nem cserélhetik le a meglévő fájlt („{$name}”), mert eltérő a formátumuk. Alakítsd át a fájlokat ugyanarra a formátumra, és próbáld újra. }}
 
 # File name conflict resolution
 # {$count} is the number of conflicting file names in the target folder
@@ -1266,14 +1266,14 @@ cancel_editing: Szerkesztés megszakítása
 # {$name} is the singular label of the collection being created in
 create_entry_title: 'Létrehozás: {$name}'
 # {$collection} is the collection label
-create_entry_announcement: Most egy új bejegyzést hozol létre a(z) „{$collection}” gyűjteményben.
+create_entry_announcement: 'Most egy új bejegyzést hozol létre a következő gyűjteményben: „{$collection}”.'
 # Editing an existing entry
 # {$entry} is the current entry label and {$collection} is the collection label
-edit_entry_announcement: Most a(z) „{$entry}” bejegyzést szerkeszted a(z) „{$collection}” gyűjteményben.
+edit_entry_announcement: 'Most a következő bejegyzést szerkeszted: „{$entry}” („{$collection}” gyűjtemény).'
 # {$file} is the file name and {$collection} is the collection label
-edit_file_announcement: Most a(z) „{$file}” fájlt szerkeszted a(z) „{$collection}” gyűjteményben.
+edit_file_announcement: 'Most a következő fájlt szerkeszted: „{$file}” („{$collection}” gyűjtemény).'
 # {$file} is the singleton file name
-edit_singleton_announcement: Most a(z) „{$file}” fájlt szerkeszted.
+edit_singleton_announcement: 'Most a következő fájlt szerkeszted: „{$file}”.'
 
 # Save button variants
 # Shown when CI skip is enabled/disabled
@@ -1345,8 +1345,8 @@ disable_x_locale: 'Nyelv letiltása: {$locale}'
 
 # Locale status messages
 # {$locale} is the localized language name affected by the status change, e.g., English
-locale_x_has_been_disabled: A(z) {$locale} nyelvű tartalom letiltva.
-locale_x_now_disabled: A(z) {$locale} nyelvű tartalom most le van tiltva. A bejegyzés mentésekor törlődni fog.
+locale_x_has_been_disabled: A tartalom {$locale} nyelvű változata letiltva.
+locale_x_now_disabled: A tartalom {$locale} nyelvű változata most le van tiltva. A bejegyzés mentésekor törlődni fog.
 
 # Repository and site links
 view_in_repository: Megtekintés a tárolóban
@@ -1406,11 +1406,11 @@ restore_default: Alapértelmezés visszaállítása
 clear_all: Összes kiürítése
 confirm_reverting_changes: Biztosan visszavonod a bejegyzésen végzett összes módosítást?
 # {$locale} is a locale name, e.g. French
-confirm_reverting_changes_x_locale: Biztosan visszavonod a(z) {$locale} nyelvű tartalmon végzett összes módosítást?
+confirm_reverting_changes_x_locale: Biztosan visszavonod a tartalom {$locale} nyelvű változatán végzett összes módosítást?
 confirm_restoring_defaults: Biztosan visszaállítod a bejegyzés összes mezőjének alapértelmezett értékét? A módosításaid elvesznek.
-confirm_restoring_defaults_x_locale: Biztosan visszaállítod a(z) {$locale} nyelvű tartalom összes mezőjének alapértelmezett értékét? A módosításaid elvesznek.
+confirm_restoring_defaults_x_locale: Biztosan visszaállítod az összes mező alapértelmezett értékét a tartalom {$locale} nyelvű változatában? A módosításaid elvesznek.
 confirm_clearing_fields: Biztosan kiüríted a bejegyzés összes mezőjét? A módosításaid elvesznek.
-confirm_clearing_fields_x_locale: Biztosan kiüríted a(z) {$locale} nyelvű tartalom összes mezőjét? A módosításaid elvesznek.
+confirm_clearing_fields_x_locale: Biztosan kiüríted az összes mezőt a tartalom {$locale} nyelvű változatában? A módosításaid elvesznek.
 
 # Slug editing
 edit_slug: URL-azonosító szerkesztése
@@ -1426,7 +1426,7 @@ new_parent_folder: Új mappa
 new_parent_folder_create: Létrehozás
 new_parent_folder_name: Mappa neve
 # {$folder} is the name of the folder the new one will be created in
-new_parent_folder_description: Az új mappa a(z) „{$folder}” mappában jön létre.
+new_parent_folder_description: 'Az új mappa a következő mappában jön létre: „{$folder}”.'
 new_parent_folder_error:
   empty: A mappa neve nem lehet üres.
   invalid: A mappa neve nem tartalmazhat perjelet, nem kezdődhet ponttal, és betűt vagy számot kell tartalmaznia.
@@ -1613,7 +1613,7 @@ save_conflict:
   # which someone else has changed or moved since it was loaded
   array_item_changed: Egy ugyanabban a fájlban tárolt bejegyzést valaki más módosított. Próbáld újra.
   # {$path} is the file path
-  array_file_invalid: A(z) {$path} fájl nem frissíthető, mert nem tartalmaz érvényes bejegyzéslistát.
+  array_file_invalid: A fájl ({$path}) nem frissíthető, mert nem tartalmaz érvényes bejegyzéslistát.
 
 # Notice shown in the entry editor when someone else has changed or deleted the entry in the
 # repository while the user has it open. The change itself is described with the `save_conflict`
@@ -1630,7 +1630,7 @@ remote_change:
 
 # Asset details announcement
 # {$name} is the selected asset name
-viewing_x_asset_details: A(z) „{$name}” médiafájl részleteit látod.
+viewing_x_asset_details: 'A következő médiafájl részleteit látod: „{$name}”.'
 
 # Asset editor container aria-label
 asset_editor: Médiafájl-szerkesztő
@@ -1788,16 +1788,16 @@ relation_field:
   move_unsupported: Ezek a módosítások másik helyre helyeznék át az elemet ({$name}), ami csak az elem önálló szerkesztésével lehetséges.
   # Error shown when saving, if someone else has changed an entry edited from the field since. {$name}
   # is the summary of that entry
-  edit_conflict: A(z) „{$name}” bejegyzést valaki más módosította, mióta szerkesztetted. Nyisd meg újra a mezőből, és vesd össze a módosításaidat a legújabb verzióval.
+  edit_conflict: A bejegyzést („{$name}”) valaki más módosította, mióta szerkesztetted. Nyisd meg újra a mezőből, és vesd össze a módosításaidat a legújabb verzióval.
   # Error shown when saving, if someone else has deleted an entry edited from the field since.
   # {$name} is the summary of that entry
-  edit_deleted: A(z) „{$name}” bejegyzést valaki más törölte, mióta szerkesztetted. A bejegyzés mentéséhez távolítsd el a mezőből.
+  edit_deleted: A bejegyzést („{$name}”) valaki más törölte, mióta szerkesztetted. A bejegyzés mentéséhez távolítsd el a mezőből.
   # Accessible label of the menu listing the selected entries that can be edited
   select_entry_to_edit: Szerkesztendő bejegyzés kiválasztása
   # Warning shown in the editor of an entry that has been edited from a Relation field of another
   # entry, while the changes wait in that entry’s pull request. {$name} is the summary of that
   # entry
-  edited_with_entry: A bejegyzés módosításai a(z) „{$name}” bejegyzéssel együtt várnak közzétételre. Ha most mented, a két módosításcsomagot összevonjuk, amikor azt a bejegyzést közzéteszed, ami átfedés esetén sikertelen lehet.
+  edited_with_entry: A bejegyzés módosításai egy másik bejegyzéssel („{$name}”) együtt várnak közzétételre. Ha most mented, a két módosításcsomagot összevonjuk, amikor azt a bejegyzést közzéteszed, ami átfedés esetén sikertelen lehet.
   # Warning shown in the dialog when an entry edited from the field has been changed by someone else
   # since. {$name} is the singular label of the collection
   changed_since_edit: Ezt az elemet ({$name}) valaki más módosította, mióta szerkesztetted. A módosításaid a legújabb verzióra alkalmazva jelennek meg. Frissítés előtt nézd át őket.
@@ -1952,13 +1952,13 @@ cloud_storage:
     api_key:
       key_label: API-kulcs
       # {$key} is the credential label, e.g., API Key, and {$service} is the cloud service name
-      initial: 'Add meg a(z) {$service} szolgáltatáshoz tartozó adatot: {$key}.'
+      initial: 'Add meg a szolgáltatáshoz ({$service}) tartozó adatot: {$key}.'
       requested: Ellenőrzés…
       # {$key} is the credential label the user entered, e.g., API Key
       error: 'A megadott adat érvénytelen: {$key}. Ellenőrizd, és próbáld újra.'
     password:
       # {$service} is the cloud service name
-      initial: Add meg a(z) {$service} szolgáltatáshoz tartozó jelszavadat.
+      initial: Add meg a szolgáltatáshoz ({$service}) tartozó jelszavadat.
       requested: Bejelentkezés…
       error: A felhasználónév vagy a jelszó helytelen. Ellenőrizd, és próbáld újra.
 
@@ -2033,7 +2033,7 @@ config:
     missing_backend: A háttérrendszer nincs megadva.
     missing_backend_name: A háttérrendszer neve nincs megadva.
     # {$name} is the backend name from the CMS configuration
-    unsupported_known_backend: A(z) {$name} háttérrendszert a Sveltia CMS <a>nem támogatja</a>.
+    unsupported_known_backend: A háttérrendszert ({$name}) a Sveltia CMS <a>nem támogatja</a>.
     # {$name} is the backend name from the CMS configuration
     unsupported_deprecated_backend: Az elavult {$name} háttérrendszert a Sveltia CMS <a>nem támogatja</a>.
     unsupported_custom_backend: Az egyéni háttérrendszereket a Sveltia CMS <a>nem támogatja</a>.
@@ -2044,7 +2044,7 @@ config:
     missing_api_root: Az `api_root` beállítás nincs megadva. A Forgejo háttérrendszerhez kötelező.
     invalid_root_dir: A gyökérkönyvtár érvénytelen. A tárolón belüli elérési útnak kell lennie, „..” nélkül.
     invalid_root_dir_branch: A gyökérkönyvtár nem használható az `editorial_workflow` és a `preview` közzétételi mód ágneveiben. Az elérési út egyik része sem kezdődhet ponttal, nem végződhet „.lock” karaktersorra, és nem tartalmazhat szóközt vagy különleges karaktert, például kettőspontot vagy csillagot.
-    path_outside_root_dir: A(z) „{$path}” elérési út a gyökérkönyvtáron kívülre vezet, ahol a CMS nem tudja listázni a fájlokat.
+    path_outside_root_dir: Az elérési út („{$path}”) a gyökérkönyvtáron kívülre vezet, ahol a CMS nem tudja listázni a fájlokat.
     oauth_implicit_flow: A beállított hitelesítési módszert (implicit folyamat) a Sveltia CMS nem támogatja. Használj helyette egy másik <a>hitelesítési módszert</a>.
     github_pkce_unsupported: A PKCE-hitelesítés a GitHub korlátai miatt még nem támogatott. Használj helyette egy másik <a>hitelesítési módszert</a>.
     oauth_no_app_id: Az OAuth-alkalmazásazonosító nincs megadva.
@@ -2058,13 +2058,13 @@ config:
     public_folder_relative_path: A megadott nyilvános mappa érvénytelen. „/” karakterrel kezdődő abszolút elérési útnak kell lennie.
     public_folder_absolute_url: A Sveltia CMS nem támogatja abszolút URL megadását a nyilvános mappa beállításában.
     # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
-    unsupported_folder_template_tag: A `{$option}` beállítás tartalmazza a(z) `{$tag}` sabloncímkét, amely ott nem támogatott. Csak az URL-azonosító sabloncímkéi, például a `\{\{slug\}\}` és a `\{\{year\}\}`, valamint a `\{\{dirname\}\}`, `\{\{filename\}\}`, `\{\{extension\}\}`, `\{\{media_folder\}\}` és `\{\{public_folder\}\}` címkék használhatók.
+    unsupported_folder_template_tag: A beállítás (`{$option}`) olyan sabloncímkét (`{$tag}`) tartalmaz, amely ott nem támogatott. Csak az URL-azonosító sabloncímkéi, például a `\{\{slug\}\}` és a `\{\{year\}\}`, valamint a `\{\{dirname\}\}`, `\{\{filename\}\}`, `\{\{extension\}\}`, `\{\{media_folder\}\}` és `\{\{public_folder\}\}` címkék használhatók.
     # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
-    global_folder_template_tag: A `{$option}` beállítás tartalmazza a(z) `{$tag}` sabloncímkét, amely csak gyűjtemény, gyűjteményfájl vagy mező beállításában használható, ahol van bejegyzés, amellyel kitölthető.
+    global_folder_template_tag: A beállítás (`{$option}`) olyan sabloncímkét (`{$tag}`) tartalmaz, amely csak gyűjtemény, gyűjteményfájl vagy mező beállításában használható, ahol van bejegyzés, amellyel kitölthető.
     # {$replacement} is the configured replacement string; Don’t localize `sanitize_replacement`
     invalid_sanitize_replacement: A `sanitize_replacement` beállítás értéke `{$replacement}`, de olyan karaktert tartalmaz, amely nem használható URL-azonosítóban, így nem szolgálhat helyettesítő karakterként.
     # {$option} is the option name (`site_url` or `display_url`) and {$url} is the configured value
-    invalid_url_option: A `{$option}` beállítás értéke `{$url}`, de `https://` vagy `http://` előtaggal kezdődő abszolút URL-nek kell lennie.
+    invalid_url_option: A beállítás (`{$option}`) értéke `{$url}`, de `https://` vagy `http://` előtaggal kezdődő abszolút URL-nek kell lennie.
     # Don’t localize `publish_mode`, `stages`, `draft`, `pending_review` and `pending_publish`
     invalid_publish_mode_stages: A `publish_mode` `stages` beállításának a `draft` szakasszal kell kezdődnie, és a szakaszokat `draft`, `pending_review`, `pending_publish` sorrendben kell felsorolnia, ismétlés nélkül.
     # Don’t localize `i18n` and `locales`
@@ -2072,97 +2072,97 @@ config:
     # {$locale} is the locale code from the configuration; Don’t localize `default_locale` and `locales`
     i18n_invalid_default_locale: A `default_locale` beállítás értéke `{$locale}`, de ez nem szerepel a `locales` listában.
     # {$locale} is the locale code from the configuration; Don’t localize `initial_locales` and `locales`
-    i18n_invalid_initial_locale: Az `initial_locales` beállítás tartalmazza a(z) `{$locale}` értéket, de ez nem szerepel a `locales` listában.
+    i18n_invalid_initial_locale: Az `initial_locales` beállítás olyan értéket tartalmaz (`{$locale}`), amely nem szerepel a `locales` listában.
     # Don’t localize `i18n`
     i18n_no_collections: 'Az `i18n` beállítás a legfelső szinten meg van adva, de egyik gyűjtemény vagy egyedi oldal sem rendelkezik `i18n` beállítással, így semmilyen tartalom nem fordítható. Add hozzá az `i18n: true` beállítást a lefordítandó gyűjteményekhez és egyedi oldalakhoz.'
     # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
     invalid_transformation_key: A `transformations` beállítás nem támogatott `{$key}` kulcsot tartalmaz. A kulcsnak `raster_image`, `svg` vagy egy támogatott rasztergrafikus képformátum nevének kell lennie.
     # {$key} is the transformation key; Don’t localize `quality`
-    invalid_transformation_quality: A(z) `{$key}` átalakítás `quality` beállítása érvénytelen. 0 és 100 közötti egész számnak kell lennie.
+    invalid_transformation_quality: 'Érvénytelen `quality` beállítás a következő átalakításnál: `{$key}`. 0 és 100 közötti egész számnak kell lennie.'
     # {$prop} is either `width` or `height`; {$key} is the transformation key
-    invalid_transformation_size: A(z) `{$key}` átalakítás `{$prop}` beállítása érvénytelen. Pozitív egész számnak kell lennie.
+    invalid_transformation_size: 'Érvénytelen `{$prop}` beállítás a következő átalakításnál: `{$key}`. Pozitív egész számnak kell lennie.'
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
-    missing_asset_collection_name: A(z) {$count}. médiagyűjteménynek nem üres karakterláncként megadott `name` beállítással kell rendelkeznie.
+    missing_asset_collection_name: A sorban {$count}. médiagyűjteménynek nem üres karakterláncként megadott `name` beállítással kell rendelkeznie.
     # {$name} is the invalid or duplicate asset collection name
-    invalid_asset_collection_name: A(z) `{$name}` médiagyűjteménynév érvénytelen. Nem tartalmazhat különleges karaktereket.
+    invalid_asset_collection_name: 'Érvénytelen médiagyűjteménynév: `{$name}`. Nem tartalmazhat különleges karaktereket.'
     # {$name} is the duplicate asset collection name
-    duplicate_asset_collection_name: A médiagyűjtemények nevének egyedinek kell lennie, de a(z) `{$name}` név többször is szerepel.
+    duplicate_asset_collection_name: 'A médiagyűjtemények nevének egyedinek kell lennie, de a következő név többször is szerepel: `{$name}`.'
     # Don’t localize `folder`, `file`, `files`, and `divider`
     invalid_collection_no_options: A gyűjteménynek rendelkeznie kell a `folder`, `file`, `files` vagy `divider` beállítások egyikével.
     # Don’t localize `folder`, `file`, `files`, and `divider`
     invalid_collection_multiple_options: A gyűjtemény a `folder`, `file`, `files` és `divider` beállítások közül legfeljebb eggyel rendelkezhet.
     # {$extension} is the file extension and {$format} is the configured content format
-    file_format_mismatch: A(z) `{$extension}` kiterjesztés nem egyezik a(z) `{$format}` formátummal.
+    file_format_mismatch: A kiterjesztés (`{$extension}`) nem egyezik a formátummal (`{$format}`).
     # {$name} is the field name from the configuration and {$widget} is its field type
-    front_matter_body_field_not_text: A(z) `{$name}` mező a front matter alatti törzsként mentjük, amely csak szöveget tartalmazhat, nem számot, logikai értéket, listát vagy objektumot, mint egy `{$widget}` típusú mező. Használj szöveget tároló mezőtípust, vagy nevezd át a mezőt.
+    front_matter_body_field_not_text: A mezőt (`{$name}`) a front matter alatti törzsként mentjük, amely csak szöveget tartalmazhat, nem számot, logikai értéket, listát vagy objektumot, mint egy `{$widget}` típusú mező. Használj szöveget tároló mezőtípust, vagy nevezd át a mezőt.
     # {$file} is the file path from the configuration; Don’t localize `file` and `locale`. The curly
     # brackets are escaped with backslashes for MessageFormat 2
     invalid_collection_data_file: A `file` beállítás értéke (`{$file}`) érvénytelen. JSON-fájl elérési útjának kell lennie, a `\{\{locale\}\}` helyőrző nélkül.
     # {$prop} is the option name; Don’t localize `file`
-    unsupported_collection_data_file_option: A(z) `{$prop}` beállítás nem támogatott a `file` beállítással rendelkező gyűjteményekben.
+    unsupported_collection_data_file_option: A beállítás (`{$prop}`) nem támogatott a `file` beállítással rendelkező gyűjteményekben.
     # Don’t localize `file`, `publish_mode` and `simple`
     collection_data_file_workflow: A szerkesztői és az előnézeti munkafolyamat, beleértve az Open Authoring funkciót is, nem támogatott a `file` beállítással rendelkező gyűjteményekben. Állítsd a gyűjtemény `publish_mode` beállítását `simple` értékre.
     # {$prop} is the option name; Don’t localize `file` and `slug`. The curly brackets are escaped
     # with backslashes for MessageFormat 2
-    collection_data_file_slug_tag: A(z) `{$prop}` beállítás nem tartalmazhatja a `\{\{slug\}\}` címkét a `file` beállítással rendelkező gyűjteményekben, mivel ott a bejegyzés URL-azonosítója a pozíciója, amely a bejegyzések átrendezésekor vagy törlésekor megváltozik. Használj helyette egyedi értékű mezőt.
+    collection_data_file_slug_tag: A beállítás (`{$prop}`) nem tartalmazhatja a `\{\{slug\}\}` címkét a `file` beállítással rendelkező gyűjteményekben, mivel ott a bejegyzés URL-azonosítója a pozíciója, amely a bejegyzések átrendezésekor vagy törlésekor megváltozik. Használj helyette egyedi értékű mezőt.
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
-    invalid_slug_slash: A(z) `{$slug}` URL-azonosító-sablon érvénytelen, mert nem tartalmazhat perjelet. Ha almappákba szeretnéd rendezni a bejegyzéseket, a `slug` helyett használd a `path` beállítást.
+    invalid_slug_slash: 'Érvénytelen URL-azonosító-sablon: `{$slug}`. Nem tartalmazhat perjelet. Ha almappákba szeretnéd rendezni a bejegyzéseket, a `slug` helyett használd a `path` beállítást.'
     # {$name} is the field name from the configuration; Don’t localize `identifier_field`
-    invalid_identifier_field: Az `identifier_field` beállítás a(z) `{$name}` mezőre hivatkozik, de ilyen mező nincs megadva a gyűjteményben.
+    invalid_identifier_field: Az `identifier_field` beállítás olyan mezőre hivatkozik (`{$name}`), amely nincs megadva a gyűjteményben.
     # {$name} is the field name from the configuration; Don’t localize `filter`
-    invalid_filter_field: A `filter` beállítás a(z) `{$name}` mezőre hivatkozik, de ilyen mező nincs megadva a gyűjteményben.
+    invalid_filter_field: A `filter` beállítás olyan mezőre hivatkozik (`{$name}`), amely nincs megadva a gyűjteményben.
     # Don’t localize `filter`, `value` and `pattern`
     invalid_filter_no_condition: A `filter` beállításnak tartalmaznia kell a `value` vagy a `pattern` beállítást, amelyhez a bejegyzéseket illeszteni lehet.
     # {$option} is an option name such as `slug` or `summary` and {$name} is the field name or template tag from the configuration
-    option_field_not_found: A(z) `{$option}` beállítás a(z) `{$name}` mezőre hivatkozik, de ilyen mező nincs megadva.
+    option_field_not_found: A beállítás (`{$option}`) olyan mezőre hivatkozik (`{$name}`), amely nincs megadva.
     # {$name} is the field name from the configuration and {$widget} is its field type; Don’t localize `thumbnail`
-    thumbnail_field_not_media: A `thumbnail` beállítás a(z) `{$name}` mezőre hivatkozik, de ennek Image vagy File típusú mezőnek kell lennie, nem `{$widget}` típusúnak.
+    thumbnail_field_not_media: A `thumbnail` beállítás egy mezőre hivatkozik (`{$name}`), de ennek Image vagy File típusú mezőnek kell lennie, nem `{$widget}` típusúnak.
     # Don’t localize `inline` or `multiple`
     invalid_inline_component_fields: Az `inline` módhoz egyetlen Boolean, Color, DateTime, Number, Relation, Select vagy String típusú mező szükséges. Relation vagy Select típusú mezőnél nem lehet engedélyezve a `multiple` beállítás.
     # {$option} is an option name such as `pattern` or `filter` and {$pattern} is the configured pattern
-    invalid_regex: A(z) `{$option}` beállítás érvénytelen reguláris kifejezést tartalmaz (`{$pattern}`), ezért figyelmen kívül marad.
+    invalid_regex: A beállítás (`{$option}`) érvénytelen reguláris kifejezést tartalmaz (`{$pattern}`), ezért figyelmen kívül marad.
     # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
-    invalid_reorder_group: A `reorder` beállítás a(z) `{$name}` nevű nézetcsoportra hivatkozik, de ilyen csoport nincs megadva a `view_groups` beállításban.
+    invalid_reorder_group: A `reorder` beállítás olyan nézetcsoportra hivatkozik (`{$name}`), amely nincs megadva a `view_groups` beállításban.
     # {$name} is the field name from the configuration; Don’t localize `bulk_edit` and `fields`
-    invalid_bulk_edit_field: A `bulk_edit` beállítás `fields` listája a(z) `{$name}` nevű mezőre hivatkozik, de ilyen legfelső szintű mező nincs megadva a gyűjteményben.
+    invalid_bulk_edit_field: A `bulk_edit` beállítás `fields` listája olyan mezőre hivatkozik (`{$name}`), amely nincs megadva legfelső szintű mezőként a gyűjteményben.
     # {$name} is the field name from the configuration; Don’t localize `bulk_edit`, `fields` and `multiple`
     unsupported_bulk_edit_field: A `bulk_edit` beállítás `fields` listájában szereplő `{$name}` mező nem szerkeszthető tömegesen. Csak olyan Boolean, Color, DateTime, Number, Relation, Select vagy String típusú mező támogatott, amely nem írásvédett, nincs engedélyezve a `multiple` beállítása, és nem mentéskor kap automatikusan értéket.
     # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
-    invalid_sortable_field: A `sortable_fields` beállítás a(z) `{$name}` nevű mezőre hivatkozik, de ilyen mező nincs megadva a gyűjteményben.
+    invalid_sortable_field: A `sortable_fields` beállítás olyan mezőre hivatkozik (`{$name}`), amely nincs megadva a gyűjteményben.
     # Don’t localize `sortable_fields` and `default_sort`
     multiple_sortable_field_defaults: A `sortable_fields` beállításban csak egy elem rendelkezhet `default_sort` beállítással.
     # {$option} is `table_columns` or `summary_fields`, and {$name} is the field name from the configuration
-    invalid_table_column_field: A `{$option}` beállítás a(z) `{$name}` nevű mezőre hivatkozik, de ilyen mező nincs megadva a gyűjteményben.
+    invalid_table_column_field: A beállítás (`{$option}`) olyan mezőre hivatkozik (`{$name}`), amely nincs megadva a gyűjteményben.
     # {$name} is the field name from the configuration; Don’t localize `view_groups`
-    invalid_view_group_field: A `view_groups` beállítás a(z) `{$name}` nevű mezőre hivatkozik, de ilyen mező nincs megadva a gyűjteményben.
+    invalid_view_group_field: A `view_groups` beállítás olyan mezőre hivatkozik (`{$name}`), amely nincs megadva a gyűjteményben.
     # {$name} is the field name from the configuration; Don’t localize `view_filters`
-    invalid_view_filter_field: A `view_filters` beállítás a(z) `{$name}` nevű mezőre hivatkozik, de ilyen mező nincs megadva a gyűjteményben.
+    invalid_view_filter_field: A `view_filters` beállítás olyan mezőre hivatkozik (`{$name}`), amely nincs megadva a gyűjteményben.
     # {$count} is the 1-based view group index in the configuration array; Don’t localize `name`
-    missing_view_group_name: A(z) {$count}. nézetcsoportnak nem üres karakterláncként megadott `name` beállítással kell rendelkeznie.
+    missing_view_group_name: A sorban {$count}. nézetcsoportnak nem üres karakterláncként megadott `name` beállítással kell rendelkeznie.
     # {$name} is the invalid or duplicate view group name
-    invalid_view_group_name: A(z) `{$name}` nézetcsoportnév érvénytelen. Nem tartalmazhat különleges karaktereket.
-    duplicate_view_group_name: A nézetcsoportok nevének egyedinek kell lennie, de a(z) `{$name}` név többször is szerepel.
+    invalid_view_group_name: 'Érvénytelen nézetcsoportnév: `{$name}`. Nem tartalmazhat különleges karaktereket.'
+    duplicate_view_group_name: 'A nézetcsoportok nevének egyedinek kell lennie, de a következő név többször is szerepel: `{$name}`.'
     # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
-    missing_view_filter_name: A(z) {$count}. nézetszűrőnek nem üres karakterláncként megadott `name` beállítással kell rendelkeznie.
+    missing_view_filter_name: A sorban {$count}. nézetszűrőnek nem üres karakterláncként megadott `name` beállítással kell rendelkeznie.
     # {$count} is the 1-based view filter index in the configuration array; Don’t localize `pattern`, `eq` and `gte`
-    invalid_view_filter_no_condition: A(z) {$count}. nézetszűrőnek rendelkeznie kell a `pattern` beállítással vagy egy összehasonlító beállítással, például `eq` vagy `gte`, amelyhez a bejegyzéseket illeszteni lehet.
+    invalid_view_filter_no_condition: A sorban {$count}. nézetszűrőnek rendelkeznie kell a `pattern` beállítással vagy egy összehasonlító beállítással, például `eq` vagy `gte`, amelyhez a bejegyzéseket illeszteni lehet.
     # {$name} is the invalid or duplicate view filter name
-    invalid_view_filter_name: A(z) `{$name}` nézetszűrőnév érvénytelen. Nem tartalmazhat különleges karaktereket.
-    duplicate_view_filter_name: A nézetszűrők nevének egyedinek kell lennie, de a(z) `{$name}` név többször is szerepel.
+    invalid_view_filter_name: 'Érvénytelen nézetszűrőnév: `{$name}`. Nem tartalmazhat különleges karaktereket.'
+    duplicate_view_filter_name: 'A nézetszűrők nevének egyedinek kell lennie, de a következő név többször is szerepel: `{$name}`.'
     # {$name} is the default view group name from the configuration; Don’t localize `default` and `view_groups`
     invalid_view_group_default: A `view_groups` `default` beállításának értéke `{$name}`, de nincs ilyen nevű nézetcsoport.
     # {$name} is the default view filter name from the configuration; Don’t localize `default` and `view_filters`
     invalid_view_filter_default: A `view_filters` `default` beállításának értéke `{$name}`, de nincs ilyen nevű nézetszűrő.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
-    missing_collection_name: A(z) {$count}. gyűjteménynek nem üres karakterláncként megadott `name` beállítással kell rendelkeznie.
+    missing_collection_name: A sorban {$count}. gyűjteménynek nem üres karakterláncként megadott `name` beállítással kell rendelkeznie.
     # {$name} is the invalid or duplicate collection name
-    invalid_collection_name: A(z) `{$name}` gyűjteménynév érvénytelen. Nem tartalmazhat különleges karaktereket.
-    duplicate_collection_name: A gyűjtemények nevének egyedinek kell lennie, de a(z) `{$name}` név többször is szerepel.
+    invalid_collection_name: 'Érvénytelen gyűjteménynév: `{$name}`. Nem tartalmazhat különleges karaktereket.'
+    duplicate_collection_name: 'A gyűjtemények nevének egyedinek kell lennie, de a következő név többször is szerepel: `{$name}`.'
     # {$count} is the 1-based file index inside a file collection; Don’t localize `name`
-    missing_collection_file_name: A(z) {$count}. gyűjteményfájlnak nem üres karakterláncként megadott `name` beállítással kell rendelkeznie.
+    missing_collection_file_name: A sorban {$count}. gyűjteményfájlnak nem üres karakterláncként megadott `name` beállítással kell rendelkeznie.
     # {$name} is the invalid or duplicate collection file name
-    invalid_collection_file_name: A(z) `{$name}` gyűjteményfájlnév érvénytelen. Nem tartalmazhat különleges karaktereket.
-    duplicate_collection_file_name: A gyűjteményfájlok nevének egyedinek kell lennie, de a(z) `{$name}` név többször is szerepel.
+    invalid_collection_file_name: 'Érvénytelen gyűjteményfájlnév: `{$name}`. Nem tartalmazhat különleges karaktereket.'
+    duplicate_collection_file_name: 'A gyűjteményfájlok nevének egyedinek kell lennie, de a következő név többször is szerepel: `{$name}`.'
     # Don’t localize `fields`
     collection_no_fields: A gyűjteménynek rendelkeznie kell legalább egy mezőt tartalmazó `fields` beállítással.
     # Don’t localize `fields`
@@ -2181,22 +2181,22 @@ config:
     # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
     collection_file_i18n_no_fields: 'A gyűjteményfájl rendelkezik `i18n` beállítással, de egyik mezője sem rendelkezik `i18n` beállítással, így egyetlen mező sem fordítható. Add hozzá az `i18n: true` vagy az `i18n: duplicate` beállítást a lefordítandó mezőkhöz.'
     # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
-    missing_field_name: A(z) {$count}. mezőnek nem üres karakterláncként megadott `name` beállítással kell rendelkeznie.
+    missing_field_name: A sorban {$count}. mezőnek nem üres karakterláncként megadott `name` beállítással kell rendelkeznie.
     # {$name} is the invalid or duplicate field name
-    invalid_field_name: A(z) `{$name}` mezőnév érvénytelen. Nem tartalmazhat különleges karaktereket. Ha mezőket szeretnél egymásba ágyazni, <a>pontjelölés helyett használj Object típusú mezőket</a>.
-    duplicate_field_name: A mezők nevének egyedinek kell lennie, de a(z) `{$name}` név többször is szerepel.
+    invalid_field_name: 'Érvénytelen mezőnév: `{$name}`. Nem tartalmazhat különleges karaktereket. Ha mezőket szeretnél egymásba ágyazni, <a>pontjelölés helyett használj Object típusú mezőket</a>.'
+    duplicate_field_name: 'A mezők nevének egyedinek kell lennie, de a következő név többször is szerepel: `{$name}`.'
     # {$count} is the 1-based variable type index in the current types array
-    missing_variable_type: A(z) {$count}. változótípusnak nem üres karakterláncként megadott `name` beállítással kell rendelkeznie.
+    missing_variable_type: A sorban {$count}. változótípusnak nem üres karakterláncként megadott `name` beállítással kell rendelkeznie.
     # {$name} is the invalid or duplicate variable type name
-    invalid_variable_type: A(z) `{$name}` változótípusnév érvénytelen. Nem tartalmazhat különleges karaktereket.
-    duplicate_variable_type: A változótípusok nevének egyedinek kell lennie, de a(z) `{$name}` név többször is szerepel.
+    invalid_variable_type: 'Érvénytelen változótípusnév: `{$name}`. Nem tartalmazhat különleges karaktereket.'
+    duplicate_variable_type: 'A változótípusok nevének egyedinek kell lennie, de a következő név többször is szerepel: `{$name}`.'
     date_field_type: 'Az elavult Date mezőtípust a Sveltia CMS nem támogatja. Használd helyette a DateTime mezőtípust a `type: date` beállítással.'
     # curly brackets in the placeholder are escaped with backslashes for MessageFormat 2
     hidden_field_locale_without_i18n: Egy Hidden típusú mező `default` beállítása a `\{\{locale\}\}` helyőrzőt használja, de a gyűjteményben nincs engedélyezve az i18n, így a tartalomnak nincs nyelve, amellyel kitölthetné.
     # {$timeZone} is the invalid IANA timezone identifier from the configuration
     invalid_timezone: 'Érvénytelen időzóna: {$timeZone}. Érvényes IANA-időzóna-azonosítónak kell lennie, például `America/New_York` vagy `Asia/Tokyo`.'
     # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
-    unsupported_deprecated_option: Az elavult `{$prop}` beállítást a Sveltia CMS nem támogatja. Használd helyette a(z) `{$newProp}` beállítást.
+    unsupported_deprecated_option: 'Az elavult `{$prop}` beállítást a Sveltia CMS nem támogatja. Használd helyette a következő beállítást: `{$newProp}`.'
     # Don’t localize `allow_multiple`, `multiple`, and `false`
     allow_multiple: Az `allow_multiple` beállítást a Sveltia CMS nem támogatja. Használd helyette a `multiple` beállítást, amelynek alapértéke `false`.
     # Don’t localize `field`, `fields`, and `types`
@@ -2206,13 +2206,13 @@ config:
     # Don’t localize `fields`, and `types`
     invalid_object_field: Az Object típusú mező nem használhatja együtt a `fields` és a `types` beállítást.
     # {$min} and {$max} are option names such as `min` and `max` or `minlength` and `maxlength`
-    invalid_range_options: A `{$min}` beállítás nem lehet nagyobb a `{$max}` beállításnál.
+    invalid_range_options: A minimumot megadó beállítás (`{$min}`) nem lehet nagyobb a maximumot megadó beállításnál (`{$max}`).
     # {$step} is the configured value; Don’t localize `step`
     invalid_step: A `step` beállítás értéke `{$step}`, de nullánál nagyobbnak kell lennie, vagy `-1`-nek a léptetés kikapcsolásához.
     # Don’t localize `options`
     select_field_no_options: A Select típusú mező `options` beállításának legalább egy elemet kell tartalmaznia.
     # {$value} is the option value from the configuration; Don’t localize `options`
-    select_field_duplicate_option: A Select típusú mező `options` értékeinek egyedinek kell lenniük, de a(z) `{$value}` többször is szerepel.
+    select_field_duplicate_option: 'A Select típusú mező `options` értékeinek egyedinek kell lenniük, de a következő érték többször is szerepel: `{$value}`.'
     # {$value} is the default value from the configuration; Don’t localize `default` and `options`
     select_field_invalid_default: A Select típusú mező `default` beállításának értéke `{$value}`, de ez nem szerepel az `options` között.
     # Don’t localize `fields` and `types`
@@ -2220,44 +2220,44 @@ config:
     # Don’t localize `default`, `fields` and `types`
     list_field_invalid_default_object: A List típusú mező `default` beállítása objektumot tartalmaz, de minden elemnek egyszerű értéknek kell lennie, mert a mezőnek nincs `fields` vagy `types` beállítása.
     # {$value} is the default item from the configuration; Don’t localize `default`, `fields` and `types`
-    list_field_invalid_default_item: A List típusú mező `default` beállítása tartalmazza a(z) `{$value}` értéket, de minden elemnek objektumnak kell lennie, mert a mező rendelkezik `fields` vagy `types` beállítással.
+    list_field_invalid_default_item: A List típusú mező `default` beállítása tartalmaz egy értéket (`{$value}`), de minden elemnek objektumnak kell lennie, mert a mező rendelkezik `fields` vagy `types` beállítással.
     # {$key} is a property name of the default item from the configuration; Don’t localize `default`
     list_field_invalid_default_key: A List típusú mező `default` beállítása olyan elemet tartalmaz, amelynek van `{$key}` tulajdonsága, de nincs ilyen nevű almező.
     # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
-    list_field_default_missing_type: A List típusú mező `default` beállítása olyan elemet tartalmaz, amelyből hiányzik a(z) `{$typeKey}` tulajdonság, amely a `types` valamelyikét azonosítja.
+    list_field_default_missing_type: A List típusú mező `default` beállítása olyan elemet tartalmaz, amelyből hiányzik a `types` valamelyikét azonosító tulajdonság (`{$typeKey}`).
     # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default item; Don’t localize `default` and `types`
     list_field_invalid_default_type: A List típusú mező `default` beállítása olyan elemet tartalmaz, amelynek `{$typeKey}` tulajdonsága `{$value}`, de ez nem szerepel a `types` között.
     # Don’t localize `map_key_field`, `fields` and `types`
     list_field_map_key_no_subfields: A List típusú mező `map_key_field` beállításához szükség van a `fields` vagy a `types` beállításra, mivel minden kulcs egy almezőből származik.
     # {$name} is the subfield name; Don’t localize `map_key_field`
-    list_field_map_key_not_found: A List típusú mező `map_key_field` beállítása a(z) `{$name}` almezőre hivatkozik, de nincs ilyen nevű almező.
+    list_field_map_key_not_found: A List típusú mező `map_key_field` beállítása egy almezőre hivatkozik (`{$name}`), de nincs ilyen nevű almező.
     # {$name} is the subfield name, and {$type} is the variable type name; Don’t localize `map_key_field`
-    list_field_map_key_missing_in_type: A List típusú mező `map_key_field` beállítása a(z) `{$name}` almezőre hivatkozik, de a(z) `{$type}` típusnak nincs ilyen nevű almezője.
+    list_field_map_key_missing_in_type: A List típusú mező `map_key_field` beállítása egy almezőre hivatkozik (`{$name}`), de a típusnak (`{$type}`) nincs ilyen nevű almezője.
     # {$name} is the subfield name, and {$widget} is its field type; Don’t localize `map_key_field`
-    list_field_map_key_invalid_type: A List típusú mező `map_key_field` beállítása a(z) `{$name}` almezőre hivatkozik, de ennek String, Relation vagy Select típusú mezőnek kell lennie, nem `{$widget}` típusúnak.
+    list_field_map_key_invalid_type: A List típusú mező `map_key_field` beállítása egy almezőre hivatkozik (`{$name}`), de ennek String, Relation vagy Select típusú mezőnek kell lennie, nem `{$widget}` típusúnak.
     # {$name} is the subfield name; Don’t localize `map_key_field` and `multiple`
-    list_field_map_key_multiple: A List típusú mező `map_key_field` beállítása a(z) `{$name}` almezőre hivatkozik, de az almező nem fogadhat el több értéket, mivel minden elemnek egyetlen kulcsra van szüksége. Távolítsd el a `multiple` beállítását.
+    list_field_map_key_multiple: A List típusú mező `map_key_field` beállítása egy almezőre hivatkozik (`{$name}`), de az almező nem fogadhat el több értéket, mivel minden elemnek egyetlen kulcsra van szüksége. Távolítsd el a `multiple` beállítását.
     # {$name} is the subfield name; Don’t localize `map_key_field`
-    list_field_map_key_option_not_string: A List típusú mező `map_key_field` beállítása a(z) `{$name}` almezőre hivatkozik, de az almező opcióinak karakterlánc-értékekkel kell rendelkezniük, mivel minden kulcs karakterláncként tárolódik.
+    list_field_map_key_option_not_string: A List típusú mező `map_key_field` beállítása egy almezőre hivatkozik (`{$name}`), de az almező opcióinak karakterlánc-értékekkel kell rendelkezniük, mivel minden kulcs karakterláncként tárolódik.
     # {$name} is the subfield name; Don’t localize `map_key_field` and `required`
-    list_field_map_key_not_required: A List típusú mező `map_key_field` beállítása a(z) `{$name}` almezőre hivatkozik, de az almezőnek kötelezőnek kell lennie, mivel minden elemnek kulcsra van szüksége. Távolítsd el a `required` beállítását.
+    list_field_map_key_not_required: A List típusú mező `map_key_field` beállítása egy almezőre hivatkozik (`{$name}`), de az almezőnek kötelezőnek kell lennie, mivel minden elemnek kulcsra van szüksége. Távolítsd el a `required` beállítását.
     # {$name} is the subfield name; Don’t localize `map_key_field`, `i18n: false` and `i18n: duplicate`
-    list_field_map_key_not_localized: 'A List típusú mező `map_key_field` beállítása a(z) `{$name}` almezőre hivatkozik, de az almezőnél nem lehet `i18n: false`, mivel az elemeknek minden nyelven kulcsra van szükségük. Használd az `i18n: duplicate` beállítást, vagy távolítsd el a beállítást.'
+    list_field_map_key_not_localized: 'A List típusú mező `map_key_field` beállítása egy almezőre hivatkozik (`{$name}`), de az almezőnél nem lehet `i18n: false`, mivel az elemeknek minden nyelven kulcsra van szükségük. Használd az `i18n: duplicate` beállítást, vagy távolítsd el a beállítást.'
     # Don’t localize `i18n`, `duplicate_if_empty`, `multiple` and `true`
     duplicate_if_empty_multiple: 'Az `i18n: duplicate_if_empty` beállítás nem támogatott a `multiple` beállítással rendelkező mezőknél, ezért a mező úgy működik, mintha `i18n: true` lenne beállítva.'
     # Don’t localize `default` and `multiple`
     invalid_default_multiple: A `default` beállításnak tömbnek kell lennie, mert a `multiple` beállítás értéke `true`.
     invalid_default_single: A `default` beállításnak egyetlen értéknek kell lennie, nem tömbnek, mert a `multiple` beállítás értéke nem `true`.
     # {$key} is a property name of the default object from the configuration; Don’t localize `default`
-    object_field_invalid_default_key: Az Object típusú mező `default` beállítása tartalmazza a(z) `{$key}` tulajdonságot, de nincs ilyen nevű almező.
+    object_field_invalid_default_key: Az Object típusú mező `default` beállítása tartalmaz egy tulajdonságot (`{$key}`), de nincs ilyen nevű almező.
     # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
-    object_field_default_missing_type: Az Object típusú mező `default` beállításából hiányzik a(z) `{$typeKey}` tulajdonság, amely a `types` valamelyikét azonosítja.
+    object_field_default_missing_type: Az Object típusú mező `default` beállításából hiányzik a `types` valamelyikét azonosító tulajdonság (`{$typeKey}`).
     # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default object; Don’t localize `default` and `types`
     object_field_invalid_default_type: Az Object típusú mező `default` beállításának `{$typeKey}` tulajdonsága `{$value}`, de ez nem szerepel a `types` között.
     # Don’t localize `default` and `output_code_only`
     code_field_invalid_default_object: A Code típusú mező `default` beállításának karakterláncnak kell lennie, mert az `output_code_only` beállítás értéke `true`.
     # {$key} is a property name of the default object, {$code} and {$lang} are the configured property names; Don’t localize `default` and `keys`
-    code_field_invalid_default_key: A Code típusú mező `default` beállítása tartalmazza a(z) `{$key}` tulajdonságot, de a `keys` beállítás csak a(z) `{$code}` és a(z) `{$lang}` tulajdonságot engedélyezi.
+    code_field_invalid_default_key: 'A Code típusú mező `default` beállítása tartalmaz egy tulajdonságot (`{$key}`), de a `keys` beállítás csak a következő tulajdonságokat engedélyezi: `{$code}` és `{$lang}`.'
     # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
     compute_field_invalid_expression: A Compute típusú mező `value` beállításának érvényes aritmetikai kifejezésnek kell lennie, például `\{\{fields.price\}\} * \{\{fields.quantity\}\}`, mert a `value_type` beállítás értéke `{$valueType}`.
     # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
@@ -2275,9 +2275,9 @@ config:
     relation_field_invalid_value_field: A hivatkozott `{$field}` értékmező érvénytelen vagy nincs megadva.
     # {$collection} is the referenced collection name; Don’t localize `file`, `value_field` and `slug`.
     # The curly brackets are escaped with backslashes for MessageFormat 2
-    relation_field_array_file_slug: A(z) `{$collection}` gyűjteményre mutató kapcsolat nem tárolhatja a `\{\{slug\}\}` értéket, mivel a `file` beállítással rendelkező gyűjteményekben a bejegyzés URL-azonosítója a pozíciója, amely a bejegyzések átrendezésekor vagy törlésekor megváltozik. Állítsd inkább a `value_field` beállítást egy egyedi értékű mezőre.
+    relation_field_array_file_slug: A gyűjteményre (`{$collection}`) mutató kapcsolat nem tárolhatja a `\{\{slug\}\}` értéket, mivel a `file` beállítással rendelkező gyűjteményekben a bejegyzés URL-azonosítója a pozíciója, amely a bejegyzések átrendezésekor vagy törlésekor megváltozik. Állítsd inkább a `value_field` beállítást egy egyedi értékű mezőre.
     # {$collection} is the referenced collection name; Don’t localize `file`
-    relation_field_array_file_workflow: A `file` beállítással rendelkező gyűjtemény nem tartalmazhat kapcsolatot a(z) `{$collection}` gyűjteményre, amely szerkesztői vagy előnézeti munkafolyamatot használ, mivel az ott átnevezett vagy törölt bejegyzésekre mutató hivatkozások nem frissíthetők a fájlban.
+    relation_field_array_file_workflow: A `file` beállítással rendelkező gyűjtemény nem tartalmazhat kapcsolatot olyan gyűjteményre (`{$collection}`), amely szerkesztői vagy előnézeti munkafolyamatot használ, mivel az ott átnevezett vagy törölt bejegyzésekre mutató hivatkozások nem frissíthetők a fájlban.
     relation_field_invalid_display_field: A hivatkozott `{$field}` megjelenítési mező érvénytelen vagy nincs megadva.
     relation_field_invalid_search_field: A hivatkozott `{$field}` keresési mező érvénytelen vagy nincs megadva.
     relation_field_invalid_filter_field: A hivatkozott `{$field}` szűrőmező érvénytelen vagy nincs megadva.
@@ -2290,16 +2290,16 @@ config:
     # schema. In all of these, {$option} is a configuration option path such as `backend.name` or
     # `view_filters[0].pattern`, relative to the collection, file or field named before it.
     # {$type} is a value type name from `schema_value_type` below
-    schema_invalid_type: A(z) `{$option}` beállításnak {$type} kell lennie.
+    schema_invalid_type: A beállításnak (`{$option}`) {$type} kell lennie.
     # {$values} is a list of the values the option accepts
-    schema_invalid_enum: 'A(z) `{$option}` beállítás értéke a következők egyike lehet: {$values}.'
+    schema_invalid_enum: 'A beállítás (`{$option}`) értéke a következők egyike lehet: {$values}.'
     # {$value} is the only value the option accepts
-    schema_invalid_const: A(z) `{$option}` beállítás értéke csak `{$value}` lehet.
-    schema_invalid_empty_value: A(z) `{$option}` beállításnak üres karakterláncnak kell lennie.
+    schema_invalid_const: A beállítás (`{$option}`) értéke csak `{$value}` lehet.
+    schema_invalid_empty_value: A beállításnak (`{$option}`) üres karakterláncnak kell lennie.
     # {$count} is the exact number of items the option must have
-    schema_invalid_item_count: A(z) `{$option}` beállításnak {$count} elemből álló tömbnek kell lennie.
-    schema_invalid_value: A(z) `{$option}` beállítás értéke érvénytelen.
-    schema_missing_option: A(z) `{$option}` beállítás megadása kötelező.
+    schema_invalid_item_count: A beállításnak (`{$option}`) {$count} elemből álló tömbnek kell lennie.
+    schema_invalid_value: A beállítás (`{$option}`) értéke érvénytelen.
+    schema_missing_option: 'Hiányzó kötelező beállítás: `{$option}`.'
     # {$options} is a list of options, one of which must be defined
     schema_missing_one_of: 'Az alábbi beállítások egyikének megadása kötelező: {$options}.'
     # Value type names used in `schema_invalid_type`, each completing the sentence “The option must
@@ -2319,7 +2319,7 @@ config:
     # Don’t localize `prefix`
     site_library_prefix_template: Egy médiatár `prefix` beállítása sabloncímkéket tartalmaz, amelyek azonban csak mezőszinten támogatottak, mert legfelső szinten nincs bejegyzés, amellyel kitölthetők lennének.
     # {$prop} is the unsupported option name that will be ignored
-    unsupported_ignored_option: A(z) `{$prop}` beállítást a Sveltia CMS nem támogatja. Figyelmen kívül marad.
+    unsupported_ignored_option: A beállítást (`{$prop}`) a Sveltia CMS nem támogatja. Figyelmen kívül marad.
     # Don’t localize `stages`, `publish_mode`, `editorial_workflow` and {$type}, which is `preview` or `simple`
     publish_mode_stages_ignored: A `publish_mode` `stages` beállítása csak az `editorial_workflow` közzétételi módra vonatkozik, ezért `{$type}` mód esetén figyelmen kívül marad.
     # Don’t localize `pattern`, `m` and `s`
@@ -2331,11 +2331,11 @@ config:
     # Don’t localize `localize_format` and `format`
     localize_format_without_format: A `localize_format` beállításnak nincs hatása, mert a mezőnek nincs `format` beállítása, és az értéke ISO 8601 formátumban tárolódik.
     # {$name} is a template tag like `fields.lines.*.price`; Don’t localize `value`, `*` and `sum()`
-    compute_field_wildcard_without_item: A Compute típusú mező `value` beállítása a(z) `{$name}` címkére hivatkozik, de a mező nem a `*` által jelölt lista egy elemében található, így semmire sem oldódik fel. A lista összes elemét csak összesítő függvény, például a `sum()` használhatja.
+    compute_field_wildcard_without_item: A Compute típusú mező `value` beállítása egy címkére hivatkozik (`{$name}`), de a mező nem a `*` által jelölt lista egy elemében található, így semmire sem oldódik fel. A lista összes elemét csak összesítő függvény, például a `sum()` használhatja.
     # {$name} is a template tag like `fields.lines.*.amount`; Don’t localize `value`
     compute_field_self_reference: A Compute típusú mező `value` beállítása `{$name}` formában önmagára hivatkozik, így az értéke minden számításkor megváltozik, és sosem állandósul.
     # {$name} is a template tag like `fields.total`; Don’t localize `value`
-    compute_field_reference_cycle: A Compute típusú mező `value` beállítása a(z) `{$name}` mezőre hivatkozik, amely egy másik Compute típusú mező, és közvetlenül vagy más mezőkön keresztül visszahivatkozik erre a mezőre, így az értékeik sosem állandósulnak.
+    compute_field_reference_cycle: A Compute típusú mező `value` beállítása egy mezőre hivatkozik (`{$name}`), amely egy másik Compute típusú mező, és közvetlenül vagy más mezőkön keresztül visszahivatkozik erre a mezőre, így az értékeik sosem állandósulnak.
     # Don’t localize `localize_format`, `true` and `de`
     localize_format_without_i18n: A `localize_format` beállítás értéke `true`, de a gyűjteményben nincs engedélyezve az i18n, így az érték angol formátumban íródik ki. Állítsd inkább a beállítást egy nyelvkódra, például `de`.
     # {$locale} is the locale code from the configuration; Don’t localize `localize_format`
@@ -2343,9 +2343,9 @@ config:
     # Don’t localize `preview_path`
     preview_path_no_date_field: A `preview_path` beállítás dátum- és időcímkéket használ, de a gyűjteményben nincs DateTime típusú mező, amelyből kiolvashatók lennének, így az előnézeti hivatkozás nem jelenik meg.
     # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
-    preview_path_date_field_not_found: A `preview_path_date_field` beállítás a(z) `{$name}` nevű mezőre hivatkozik, de nincs ilyen nevű DateTime típusú mező megadva, így az előnézeti hivatkozás nem jelenik meg.
+    preview_path_date_field_not_found: A `preview_path_date_field` beállítás olyan mezőnévre hivatkozik (`{$name}`), amelyhez nincs megadva DateTime típusú mező, így az előnézeti hivatkozás nem jelenik meg.
     # {$name} is the template tag from the configuration; Don’t localize `preview_path`
-    preview_path_field_not_found: A `preview_path` beállítás a(z) `{$name}` mezőre hivatkozik, de ilyen mező nincs megadva a gyűjteményben, így az előnézeti hivatkozás nem jelenik meg.
+    preview_path_field_not_found: A `preview_path` beállítás olyan mezőre hivatkozik (`{$name}`), amely nincs megadva a gyűjteményben, így az előnézeti hivatkozás nem jelenik meg.
     # {$name} is the default identifier field name; Don’t localize `identifier_field` and `slug`
     missing_identifier_field: A gyűjteményben nincs `{$name}` mező, amellyel az új bejegyzések elnevezhetők, ezért minden új bejegyzés véletlenszerű URL-azonosítót kap. Adj hozzá egy `{$name}` mezőt, vagy állítsd be az `identifier_field` vagy a `slug` beállítást.
     # Don’t localize `slug`, `i18n`, `multiple_files`, `multiple_folders` and `multiple_root_folders`
@@ -2361,17 +2361,17 @@ config:
     # Don’t localize `public_folder` and `media_folder`
     empty_public_folder: A `public_folder` beállítás üres karakterlánc, ezért a bejegyzésekben mentett médiafájl-elérési utakhoz helyette a `media_folder` elérési útját használjuk. Távolítsd el a beállítást, vagy állítsd a használni kívánt elérési útra, például `/images`.
     # {$option} is an option path from the configuration, such as `filter.Regulation`
-    schema_unknown_option: A(z) `{$option}` beállítás nincs definiálva a Sveltia CMS konfigurációs sémájában. Figyelmen kívül marad. Ellenőrizd, nincs-e benne elírás vagy szintaktikai hiba.
+    schema_unknown_option: A beállítás (`{$option}`) nincs definiálva a Sveltia CMS konfigurációs sémájában. Figyelmen kívül marad. Ellenőrizd, nincs-e benne elírás vagy szintaktikai hiba.
     # Don’t localize `default_localized`, `default` and `i18n`
     default_localized_without_i18n: A `default_localized` beállításnak nincs hatása, mert a gyűjteményben nincs engedélyezve az i18n. Használd helyette a `default` beállítást.
     # {$locale} is a locale code from the configuration; Don’t localize `default_localized`
-    default_localized_unknown_locale: A `default_localized` beállítás tartalmaz értéket a(z) `{$locale}` nyelvhez, amely nem tartozik a gyűjtemény nyelvei közé, így ez az érték sosem érvényesül.
+    default_localized_unknown_locale: A `default_localized` beállítás értéket tartalmaz egy nyelvhez (`{$locale}`), amely nem tartozik a gyűjtemény nyelvei közé, így ez az érték sosem érvényesül.
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'A részletekért lásd a kompatibilitási megjegyzéseket: {$link}'
 
   # Console tip shown after config load
-  schema_tip: A jobb fejlesztői élmény érdekében a konfigurációs fájlt ellenőrizheted a Sveltia CMS JSON-sémájával. A részleteket a(z) {$link} oldalon találod.
+  schema_tip: 'A jobb fejlesztői élmény érdekében a konfigurációs fájlt ellenőrizheted a Sveltia CMS JSON-sémájával. A részleteket itt találod: {$link}.'
 
 # ==============================================================================
 # Local Workflow
@@ -2534,10 +2534,10 @@ workflow:
   # Error notification when an entry can’t be published because its branch has been committed to
   # since the entry was opened, so what would be published isn’t what was reviewed
   publish_refused_entry_changed: A bejegyzés megváltozott, mióta megnyitottad. Töltsd újra az oldalt, és nézd át a legfrissebb verziót a közzététel előtt.
-  review_on_x: Áttekintés a(z) {$service} oldalán
+  review_on_x: 'Áttekintés itt: {$service}'
   from_fork: Forkból
-  fork_entry_editable: Ez a bejegyzés egy közreműködő pull requestjéből származik, amelyet a(z) „{$fork}” forkból nyitott. A módosításaidat az ő ágára mentjük. A pull requestet a Git-szolgáltatásban nézheted át és olvaszthatod be.
-  fork_entry_locked: Ez a bejegyzés egy közreműködő pull requestjéből származik, amelyet a(z) „{$fork}” forkból nyitott. A közreműködő nem engedélyezi, hogy a karbantartók szerkesszék, ezért itt csak megtekinthető.
+  fork_entry_editable: 'Ez a bejegyzés egy közreműködő pull requestjéből származik, amelyet a következő forkból nyitott: „{$fork}”. A módosításaidat az ő ágára mentjük. A pull requestet a Git-szolgáltatásban nézheted át és olvaszthatod be.'
+  fork_entry_locked: 'Ez a bejegyzés egy közreműködő pull requestjéből származik, amelyet a következő forkból nyitott: „{$fork}”. A közreműködő nem engedélyezi, hogy a karbantartók szerkesszék, ezért itt csak megtekinthető.'
   fork_not_editable: A közreműködő nem engedélyezi, hogy a karbantartók szerkesszék ezt a pull requestet.
   fork_entry_gone: A közreműködő pull requestje már nincs nyitva, ezért a módosítások nem menthetők bele.
   # Error shown in the save error dialog when an entry can’t be saved for review, because a request
@@ -2584,27 +2584,27 @@ open_authoring:
   # label on its OK button. {$repo} is the repository identifier in owner/repo format
   fork_repository: Tároló forkolása
   fork: Forkolás
-  confirm_forking_repository: Ahhoz, hogy módosításokat javasolj a(z) „{$repo}” tárolóhoz, létre kell hozni a tároló egy forkját a fiókodban. A módosításaid ebbe a forkba kerülnek, és egy karbantartó átnézi őket, mielőtt élővé válnak.
+  confirm_forking_repository: Ahhoz, hogy módosításokat javasolj a tárolóhoz („{$repo}”), létre kell hozni a tároló egy forkját a fiókodban. A módosításaid ebbe a forkba kerülnek, és egy karbantartó átnézi őket, mielőtt élővé válnak.
   # Error shown when the user declined the dialog above
   fork_declined: A módosítások javasolásához a tároló egy forkjára van szükség a fiókodban.
   # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
-  fork_failed: Nem sikerült létrehozni a(z) „{$repo}” tároló forkját a fiókodban.
+  fork_failed: 'Nem sikerült létrehozni a következő tároló forkját a fiókodban: „{$repo}”.'
   # Error shown when the user’s fork doesn’t have the branch the CMS is configured with, so there’s
   # nothing to start their changes from. {$fork} and {$repo} are repository identifiers in
   # owner/repo format, {$branch} is the branch name
-  fork_branch_missing: A(z) „{$fork}” forkodban nincs „{$branch}” ág. Frissítsd a forkot a(z) „{$repo}” tárolóból, majd jelentkezz be újra.
+  fork_branch_missing: A forkodban („{$fork}”) nincs „{$branch}” ág. Frissítsd a forkot a forrástárolóból („{$repo}”), majd jelentkezz be újra.
   # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
   # because the API rate limit is exhausted. {$repo} is the repository identifier
-  permission_check_failed: Nem sikerült ellenőrizni a hozzáférésedet a(z) „{$repo}” tárolóhoz. Próbáld újra egy kis idő múlva.
+  permission_check_failed: 'Nem sikerült ellenőrizni a hozzáférésedet a következő tárolóhoz: „{$repo}”. Próbáld újra egy kis idő múlva.'
   # Error shown when the repository can’t be forked, which is the default for a private
   # repository. {$repo} is the repository identifier
-  forking_disabled: A(z) „{$repo}” tároló nem engedélyezi a forkolást. Kérj meg egy karbantartót, hogy engedélyezze.
+  forking_disabled: 'A következő tároló nem engedélyezi a forkolást: „{$repo}”. Kérj meg egy karbantartót, hogy engedélyezze.'
   # Error shown when the user was invited to the repository but hasn’t accepted yet, so they still
   # have no access. {$repo} is the repository identifier
-  invitation_pending: Függőben lévő meghívásod van a(z) „{$repo}” tárolóhoz. Fogadd el a GitHubon, majd jelentkezz be újra.
+  invitation_pending: 'Függőben lévő meghívásod van a következő tárolóhoz: „{$repo}”. Fogadd el a GitHubon, majd jelentkezz be újra.'
   # Error shown when the repository is private but the sign-in doesn’t cover private repositories.
   # {$repo} is the repository identifier
-  private_repo_scope_required: A bejelentkezésed nem biztosít hozzáférést a privát tárolókhoz, ezért a(z) „{$repo}” tároló nem olvasható. Kérj meg egy karbantartót, hogy ellenőrizze a CMS hitelesítési beállításait.
+  private_repo_scope_required: 'A bejelentkezésed nem biztosít hozzáférést a privát tárolókhoz, ezért a következő tároló nem olvasható: „{$repo}”. Kérj meg egy karbantartót, hogy ellenőrizze a CMS hitelesítési beállításait.'
   # Error shown when a contributor tries to publish an entry, which only a maintainer can do
   publish_unsupported: Ezen a webhelyen csak karbantartó tehet közzé módosításokat. Helyette állítsd a bejegyzésedet „Ellenőrzés alatt” állapotúra, és valaki átnézi.
   # Error shown when a contributor changes the status of an entry whose request a maintainer has
@@ -2686,7 +2686,7 @@ prefs:
       field_label: '{$service}-kulcs'
       # Description with embedded links
       # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
-      description: Regisztrálj a(z) <a {$homeHref}>{$service}</a> szolgáltatásra, és add meg itt <a {$apiKeyHref}>az API-kulcsodat</a> a szövegmezők gyors fordításához.
+      description: Regisztrálj a szolgáltatásra (<a {$homeHref}>{$service}</a>), és add meg itt <a {$apiKeyHref}>az API-kulcsodat</a> a szövegmezők gyors fordításához.
 
   # Media panel
   media:
@@ -2700,7 +2700,7 @@ prefs:
       field_label: '{$service} API-kulcs'
       # Description with embedded links
       # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
-      description: Regisztrálj a(z) <a {$homeHref}>{$service} API</a> használatára, és add meg itt <a {$apiKeyHref}>az API-kulcsodat</a>, hogy ingyenes stockfotókat illeszthess be a képmezőkbe.
+      description: Regisztrálj a szolgáltatásra (<a {$homeHref}>{$service} API</a>), és add meg itt <a {$apiKeyHref}>az API-kulcsodat</a>, hogy ingyenes stockfotókat illeszthess be a képmezőkbe.
       # Photo credit attribution
       # {$service} is the stock photo service name
       credit: 'Fotók forrása: {$service}'
@@ -2761,7 +2761,7 @@ prefs:
       switch_label: Módosítások commitolása a Gitbe
       checking: Tároló ellenőrzése…
       # {$branch} is the branch name, {$name} and {$email} are the commit author’s name and email address
-      ready: A CMS a módosításokat {$name} ({$email}) nevében commitolja a(z) {$branch} ágra.
+      ready: 'A CMS a módosításokat {$name} ({$email}) nevében commitolja a következő ágra: {$branch}.'
       # {$reason} is one of the `local_git_skip_reasons` strings
       not_ready: A módosítások most nem commitolhatók. {$reason}
     deploy_hook:
