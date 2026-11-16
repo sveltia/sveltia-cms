@@ -689,11 +689,21 @@ describe('QuickAddDialog', () => {
     const dialog = page.getByRole('dialog', { name: /Creating.*Category/ });
     const title = dialog.getByRole('textbox', { name: 'Title' });
 
+    /**
+     * Get the locale the fields are marked with, which a rich text editor component, mounted
+     * outside the component tree, reads through the DOM.
+     * @returns {string | undefined} Locale.
+     */
+    const getFieldsLocale = () =>
+      /** @type {HTMLElement | null} */ (title.element().closest('[data-locale]'))?.dataset.locale;
+
     await title.fill('Travel');
+    expect(getFieldsLocale()).toBe('en');
     // The dialog has nowhere to show a preview
     expect(dialog.getByRole('radio', { name: 'Preview' }).elements()).toHaveLength(0);
     await dialog.getByRole('radio', { name: 'French' }).click();
     await expect.element(title).toHaveValue('');
+    expect(getFieldsLocale()).toBe('fr');
     await title.fill('Voyage');
 
     vi.mocked(createPendingEntry).mockResolvedValue(createPending('categories', 'travel'));

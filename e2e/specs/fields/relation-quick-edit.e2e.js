@@ -200,3 +200,71 @@ test.describe('in a rich text editor component', () => {
     expect((await cms.readRepo())['content/posts/hello.md']).toBe(post);
   });
 });
+
+test.describe('with a rich text editor component in the selected author', () => {
+  test.use({
+    config: {
+      ...CONFIG,
+      collections: [
+        CONFIG.collections[0],
+        {
+          ...CONFIG.collections[1],
+          fields: [
+            { name: 'name', label: 'Name' },
+            { name: 'body', label: 'Body', widget: 'markdown', editor_components: ['note'] },
+          ],
+        },
+      ],
+    },
+  });
+
+  test.beforeEach(async ({ page }) => {
+    // The editor reads the components when it’s opened
+    await page.evaluate(`
+      CMS.registerEditorComponent({
+        id: 'note',
+        label: 'Note',
+        fields: [{ name: 'text', label: 'Note Text', widget: 'markdown' }],
+        pattern: /^<aside>\\n([\\s\\S]*?)\\n<\\/aside>$/,
+        fromBlock: (match) => ({ text: match[1] }),
+        toBlock: ({ text }) => '<aside>\\n' + text + '\\n</aside>',
+      });
+    `);
+  });
+
+  test('edits the fields of the component', async ({ cms, page }) => {
+    const post = '---\ntitle: Hello\nauthor: ada\n---\n';
+
+    await cms.seed({
+      'content/posts/hello.md': post,
+      'content/authors/ada.md':
+        '---\nname: Ada\n---\n\nIntro\n\n<aside>\nMathematician\n</aside>\n',
+    });
+    await cms.signIn();
+    await page.getByRole('row').filter({ hasText: 'Hello' }).click();
+    await getEditor(page)
+      .getByRole('button', { name: /Edit.*Ada/ })
+      .click();
+
+    const dialog = page.getByRole('dialog', { name: /Editing.*Author/ });
+    const noteText = dialog.getByRole('textbox', { name: 'Note Text' });
+
+    // The component finds the locale it’s edited in, so its fields are rendered
+    await expect(noteText).toHaveText('Mathematician');
+    await noteText.click();
+    await expect(noteText).toBeFocused();
+    await page.keyboard.press('ControlOrMeta+A');
+    await page.keyboard.type('Mathematician and writer');
+    await expect(noteText).toHaveText('Mathematician and writer');
+    // The text reaches the body through the debounced updates of both rich text editors
+    await page.waitForTimeout(1000);
+    await dialog.getByRole('button', { name: 'Update' }).click();
+    await expect(dialog).toBeHidden();
+    await getEditor(page).getByRole('button', { name: 'Save' }).click();
+
+    await expect
+      .poll(async () => (await cms.readRepo())['content/authors/ada.md'])
+      .toBe('---\nname: Ada\n---\n\nIntro\n\n<aside>\nMathematician and writer\n</aside>\n');
+    expect((await cms.readRepo())['content/posts/hello.md']).toBe(post);
+  });
+});

@@ -282,7 +282,9 @@
     {/if}
     {#if entryDraft.current && pane.current}
       {@const { locale } = pane.current}
-      <div role="none" id="{componentId}-body" class="fields">
+      <!-- A rich text editor component, mounted outside the component tree, reads the locale from
+        `data-locale` through the DOM, like in the entry editor’s pane -->
+      <div role="none" id="{componentId}-body" class="fields" data-locale={locale}>
         <!-- There’s no sidebar with the Slug panel in the dialog, so a slug that has to be typed
           in is edited here. Otherwise, the slug template fills it -->
         {#if needsSlugInput(entryDraft.current) && entryDraft.current.slugEditor[locale]}
