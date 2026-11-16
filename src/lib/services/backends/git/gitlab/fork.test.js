@@ -7,6 +7,7 @@ import {
   fetchForkFromNetwork,
   fetchProjectDetails,
   fetchRepositoryAccess,
+  getBranchRepository,
   getWorkflowRepository,
   initOpenAuthoring,
   isOpenAuthoringConfigured,
@@ -112,6 +113,21 @@ describe('GitLab Open Authoring service', () => {
 
       cmsConfig.current = undefined;
       expect(isOpenAuthoringConfigured()).toBe(false);
+    });
+  });
+
+  describe('getBranchRepository', () => {
+    test('is the project a branch lives in', () => {
+      expect(getBranchRepository('cms/posts/hello')).toEqual({
+        owner: 'group/sub',
+        repo: 'project',
+        branch: 'cms/posts/hello',
+      });
+      expect(getBranchRepository('alice/website:cms/alice/website/posts/hello')).toEqual({
+        owner: 'alice',
+        repo: 'website',
+        branch: 'cms/alice/website/posts/hello',
+      });
     });
   });
 

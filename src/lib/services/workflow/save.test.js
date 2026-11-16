@@ -1414,6 +1414,21 @@ describe('workflow/save', () => {
       expect(publishingBranches.current).toEqual([]);
     });
 
+    test('refuses to merge a pull request from a contributor’s fork', async () => {
+      const entry = createEntry('alice/repo:cms/alice/repo/posts/hello', 'pending_publish');
+
+      entry.workflow.pullRequest.fork = { owner: 'alice', repo: 'repo', editable: true };
+      upsertUnpublishedEntry(entry);
+
+      await expect(publishWorkflowEntry(entry)).rejects.toThrow(
+        'A pull request from a fork cannot be published from the CMS.',
+      );
+
+      expect(workflowService.fetchMergeState).not.toHaveBeenCalled();
+      expect(workflowService.publish).not.toHaveBeenCalled();
+      expect(allUnpublishedEntries.current).toEqual([entry]);
+    });
+
     test('records the entry as being published while the merge is in flight', async () => {
       const entry = createEntry('cms/posts/hello', 'pending_publish');
 

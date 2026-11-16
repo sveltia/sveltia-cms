@@ -47,9 +47,18 @@ vi.mock('$lib/services/backends/git/shared/head', () => ({
   repositoryHead: { current: '' },
 }));
 
-vi.mock('$lib/services/backends/git/gitea/fork', () => ({
-  getWorkflowRepository: vi.fn(() => ({ owner: 'test-owner', repo: 'test-repo' })),
-}));
+vi.mock('$lib/services/backends/git/gitea/fork', async () => {
+  const { parseForkBranchName } = await import('$lib/services/workflow/forks');
+  const getRepository = vi.fn(() => ({ owner: 'test-owner', repo: 'test-repo' }));
+
+  return {
+    getWorkflowRepository: getRepository,
+    // Resolve the repository a workflow branch lives in, as the real module does
+    getBranchRepository: vi.fn(
+      (branch) => parseForkBranchName(branch) ?? { ...getRepository(), branch },
+    ),
+  };
+});
 
 vi.mock('$lib/services/user/account.svelte', () => ({
   user: { account: { name: 'John Doe', email: 'john.doe@example.com' } },
@@ -794,6 +803,34 @@ describe('Gitea Commits Service', () => {
 
       expect(fetchAPIMock).toHaveBeenCalledWith('/repos/me/fork/contents', expect.anything());
       forkedRepository.current = undefined;
+    });
+
+    test('should commit to a contributor’s branch in their fork, for a maintainer', async () => {
+      fetchAPIMock.mockResolvedValueOnce({ sha: 'fork-sha' }).mockResolvedValueOnce({
+        commit: { sha: 'workflow-sha', created: '2023-01-15T16:00:00Z' },
+        files: [{ path: 'file1.md', sha: 'sha1' }],
+      });
+
+      await commitChanges(
+        [{ action: /** @type {CommitAction} */ ('update'), path: 'file1.md', data: 'a' }],
+        {
+          commitType: /** @type {CommitType} */ ('update'),
+          branch: 'alice/website:cms/alice/website/posts/hello',
+        },
+      );
+
+      // A missing SHA is looked up on the branch in the fork, where the commit lands too
+      expect(fetchAPIMock).toHaveBeenNthCalledWith(
+        1,
+        '/repos/alice/website/contents/file1.md?ref=cms%2Falice%2Fwebsite%2Fposts%2Fhello',
+      );
+      expect(fetchAPIMock).toHaveBeenNthCalledWith(
+        2,
+        '/repos/alice/website/contents',
+        expect.objectContaining({
+          body: expect.objectContaining({ branch: 'cms/alice/website/posts/hello' }),
+        }),
+      );
     });
 
     test('should look a missing SHA up on the workflow branch in the fork', async () => {

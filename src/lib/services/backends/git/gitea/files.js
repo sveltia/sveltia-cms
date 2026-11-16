@@ -5,6 +5,7 @@ import { decodeBase64, getPathInfo } from '@sveltia/utils/file';
 import { getApiSettings } from '$lib/services/backends/git/gitea/api';
 import { fetchLastCommit } from '$lib/services/backends/git/gitea/commits';
 import {
+  getBranchRepository,
   getWorkflowRepository,
   initOpenAuthoring,
   isOpenAuthoringConfigured,
@@ -33,6 +34,7 @@ import { encodePathSegments } from '$lib/services/utils/url';
  * Asset,
  * BaseFileListItem,
  * BaseFileListItemProps,
+ * RepositoryPath,
  * RepositoryContentsMap,
  * } from '$lib/types/private';
  */
@@ -238,14 +240,17 @@ const requestRawFile = async ({ owner, repo, path, ref }) =>
  * @param {string} [ref] Workflow branch to read the file from. Default: the branch configured in
  * the site configuration. A workflow branch lives in the contributor’s fork with Open Authoring,
  * so that’s where a file on one is read from.
+ * @param {RepositoryPath} [repoPath] Repository to read a file on a workflow branch from, if it
+ * isn’t the one the workflow branches live in, such as the fork of a contributor whose pull request
+ * a maintainer reviews.
  * @returns {Promise<string>} File content.
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetRawFile
  * @see https://github.com/go-gitea/gitea/issues/14432
  */
-export const fetchRawFile = async (path, ref) => {
+export const fetchRawFile = async (path, ref, repoPath = getWorkflowRepository()) => {
   // A workflow branch lives in the contributor’s fork with Open Authoring, so that’s where a file
   // on one is read from
-  const { owner, repo } = ref ? getWorkflowRepository() : repository;
+  const { owner, repo } = ref ? repoPath : repository;
   const { branch = '' } = repository;
 
   return requestRawFile({ owner, repo, path, ref: ref ?? branch });
@@ -442,9 +447,11 @@ export const fetchFiles = async ({ lastCommit } = {}) => {
 export const fetchBlob = async (asset) => {
   const { path } = asset;
   // An asset attached to an unpublished entry only exists on the workflow branch, so that’s where
-  // it has to be read from — in the contributor’s fork with Open Authoring
-  const repoPath = getRepositoryPath(asset.workflow ? getWorkflowRepository() : repository);
-  const ref = asset.workflow?.branch ?? repository.branch;
+  // it has to be read from — in the contributor’s fork with Open Authoring, or when a maintainer
+  // reviews a contributor’s pull request
+  const target = asset.workflow ? getBranchRepository(asset.workflow.branch) : undefined;
+  const repoPath = getRepositoryPath(target ?? repository);
+  const ref = target?.branch ?? repository.branch;
   const refAndPath = `${encodePathSegments(String(ref))}/${encodePathSegments(path)}`;
 
   return /** @type {Promise<Blob>} */ (

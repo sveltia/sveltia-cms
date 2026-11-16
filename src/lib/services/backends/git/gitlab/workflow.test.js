@@ -231,6 +231,47 @@ describe('GitLab Editorial Workflow service', () => {
         expect(result.pullRequest).toBe(pullRequest);
       });
 
+      test('commits onto a contributor’s branch in their fork', async () => {
+        const branch = 'alice/website:cms/alice/website/posts/hello';
+
+        vi.mocked(fetchAPI).mockResolvedValueOnce(branchResponse('mr-head'));
+        vi.mocked(commitChanges).mockResolvedValue({ sha: 'def', files: {} });
+
+        await savePullRequest({
+          ...args,
+          branch,
+          pullRequest: {
+            ...pullRequest,
+            branch,
+            fork: { owner: 'alice', repo: 'website', editable: true },
+          },
+        });
+
+        // The branch head is read in the fork, by the branch’s own name there
+        expect(fetchAPI).toHaveBeenCalledWith(
+          `/projects/alice%2Fwebsite/repository/branches/${encodeURIComponent('cms/alice/website/posts/hello')}`,
+        );
+        expect(commitChanges).toHaveBeenCalledWith([], {
+          commitType: 'create',
+          branch,
+          headOid: 'mr-head',
+        });
+      });
+
+      test('refuses to commit to a contributor’s branch they don’t let maintainers edit', async () => {
+        await expect(
+          savePullRequest({
+            ...args,
+            pullRequest: {
+              ...pullRequest,
+              fork: { owner: 'alice', repo: 'website', editable: false },
+            },
+          }),
+        ).rejects.toThrow('Failed to save the changes.');
+        expect(fetchAPI).not.toHaveBeenCalled();
+        expect(commitChanges).not.toHaveBeenCalled();
+      });
+
       test('refuses to commit when the branch has moved', async () => {
         vi.mocked(fetchAPI).mockResolvedValueOnce(branchResponse('someone-elses-sha'));
 
@@ -1171,6 +1212,22 @@ describe('GitLab Editorial Workflow service', () => {
   });
 
   describe('discard', () => {
+    test('closes a merge request from a fork without deleting the contributor’s branch', async () => {
+      await discard(
+        /** @type {any} */ ({
+          number: 7,
+          branch: 'alice/website:cms/alice/website/posts/hello',
+          fork: { owner: 'alice', repo: 'website', editable: true },
+        }),
+      );
+
+      expect(fetchAPI).toHaveBeenCalledTimes(1);
+      expect(fetchAPI).toHaveBeenCalledWith(`/projects/${PROJECT_ID}/merge_requests/7`, {
+        method: 'PUT',
+        body: { state_event: 'close' },
+      });
+    });
+
     test('closes the merge request and deletes the branch', async () => {
       await discard(/** @type {any} */ ({ number: 1, branch: 'cms/posts/hello' }));
 

@@ -46,6 +46,14 @@ describe('workflow/forks', () => {
       });
     });
 
+    test('reads a namespace with subgroups as the owner', () => {
+      expect(parseForkBranchName('acme/docs/website:cms/posts/hello')).toEqual({
+        owner: 'acme/docs',
+        repo: 'website',
+        branch: 'cms/posts/hello',
+      });
+    });
+
     test('takes everything after the first separator as the branch', () => {
       expect(parseForkBranchName('alice/website:cms/posts/a:b')?.branch).toBe('cms/posts/a:b');
     });
@@ -58,7 +66,7 @@ describe('workflow/forks', () => {
       ['no owner', '/website:cms/posts/hello'],
       ['no repository', 'alice:cms/posts/hello'],
       ['an empty repository', 'alice/:cms/posts/hello'],
-      ['a nested repository path', 'alice/website/extra:cms/posts/hello'],
+      ['an empty namespace segment', 'acme//website:cms/posts/hello'],
       ['no branch', 'alice/website:'],
     ])('returns undefined for a name with %s', (_label, name) => {
       expect(parseForkBranchName(name)).toBeUndefined();

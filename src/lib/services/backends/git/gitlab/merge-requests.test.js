@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { isOpenAuthoringConfigured } from '$lib/services/backends/git/gitlab/fork';
 import {
   createPullRequest,
   deleteBranch,
@@ -11,12 +12,14 @@ import {
   fetchPullRequests,
   getMergeRequestPath,
   parseDiff,
+  parseForkMergeRequest,
   parseMergeRequest,
   toMergeRequest,
   updateDescription,
 } from '$lib/services/backends/git/gitlab/merge-requests';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { cmsConfig } from '$lib/services/config';
+import { parseForkBranchName } from '$lib/services/workflow/forks';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 vi.mock('@sveltia/utils/misc', () => ({ sleep: vi.fn() }));
@@ -27,6 +30,17 @@ vi.mock('$lib/services/backends/git/gitlab/fork', () => ({
    * @returns {any} Fork, or the configured project.
    */
   getWorkflowRepository: () => forkedRepository.current ?? { owner: 'group/sub', repo: 'project' },
+  /**
+   * Resolve the project a workflow branch lives in, as the real module does.
+   * @param {string} branch Branch name.
+   * @returns {any} Project and branch.
+   */
+  getBranchRepository: (branch) =>
+    parseForkBranchName(branch) ?? {
+      ...(forkedRepository.current ?? { owner: 'group/sub', repo: 'project' }),
+      branch,
+    },
+  isOpenAuthoringConfigured: vi.fn(() => false),
   projectIds: { base: 42 },
 }));
 vi.mock('$lib/services/backends/git/gitlab/repository', async (importOriginal) => {
@@ -240,13 +254,39 @@ describe('GitLab merge requests', () => {
   });
 
   describe('fetchMergeRequestFileList', () => {
+    test('goes by the merge request for a contributor’s branch that has moved on', async () => {
+      // A commit the fork has gained since the merge request was refreshed isn’t on the configured
+      // project, so there’s nothing to compare it with there
+      vi.mocked(fetchAPI).mockImplementation(async (path) =>
+        path.includes('/diffs')
+          ? [{ new_path: 'content/posts/hello.md', old_path: 'content/posts/hello.md' }]
+          : { commit: { id: 'fork-head' } },
+      );
+
+      const mergeRequest = /** @type {any} */ ({
+        number: 7,
+        branch: 'alice/website:cms/alice/website/posts/hello',
+        headSHA: 'mr-head',
+        fork: { owner: 'alice', repo: 'website', editable: true },
+        files: [],
+      });
+
+      await fetchMergeRequestFileList(mergeRequest);
+
+      expect(fetchAPI).not.toHaveBeenCalledWith(expect.stringContaining('/compare'));
+      expect(mergeRequest.headSHA).toBe('mr-head');
+      expect(mergeRequest.files.map((/** @type {any} */ { path }) => path)).toEqual([
+        'content/posts/hello.md',
+      ]);
+    });
+
     test('maps the diffs to workflow files', async () => {
       vi.mocked(fetchAPI).mockResolvedValue([
         { new_path: 'content/posts/hello.md', old_path: 'content/posts/hello.md' },
         { new_path: 'content/posts/old.md', old_path: 'content/posts/old.md', deleted_file: true },
       ]);
 
-      const mergeRequest = /** @type {any} */ ({ number: 1, files: [] });
+      const mergeRequest = /** @type {any} */ ({ number: 1, branch: 'cms/posts/hello', files: [] });
 
       await fetchMergeRequestFileList(mergeRequest);
 
@@ -281,7 +321,7 @@ describe('GitLab merge requests', () => {
         },
       ]);
 
-      const mergeRequest = /** @type {any} */ ({ number: 1, files: [] });
+      const mergeRequest = /** @type {any} */ ({ number: 1, branch: 'cms/posts/hello', files: [] });
 
       await fetchMergeRequestFileList(mergeRequest);
 
@@ -759,6 +799,159 @@ describe('GitLab merge requests', () => {
       await expect(deleteBranch('cms/posts/hello')).resolves.toBeUndefined();
       expect(warn).not.toHaveBeenCalled();
       warn.mockRestore();
+    });
+  });
+
+  describe('merge requests from forks', () => {
+    /**
+     * Create a raw merge request a contributor opened from their fork.
+     * @param {object} [overrides] Properties to override.
+     * @returns {any} Merge request.
+     */
+    const createForkItem = (overrides = {}) =>
+      createItem({
+        iid: 7,
+        title: 'Create Post “hello”',
+        source_project_id: 2,
+        target_project_id: 1,
+        source_branch: 'cms/alice/website/posts/hello',
+        labels: [],
+        draft: false,
+        description: '<!-- sveltia-cms:deletion-group=group-1 -->',
+        ...overrides,
+      });
+
+    const source = { fullPath: 'alice/website', allowCollaboration: true };
+
+    describe('parseForkMergeRequest', () => {
+      test('qualifies the branch with the fork and leaves the description out', () => {
+        expect(parseForkMergeRequest(createForkItem(), source)).toMatchObject({
+          number: 7,
+          branch: 'alice/website:cms/alice/website/posts/hello',
+          status: 'pending_review',
+          description: '',
+          fork: { owner: 'alice', repo: 'website', editable: true },
+        });
+      });
+
+      test('reads a fork in a group with subgroups', () => {
+        expect(
+          parseForkMergeRequest(createForkItem({ source_branch: 'cms/posts/hello' }), {
+            fullPath: 'acme/docs/website',
+            allowCollaboration: false,
+          }),
+        ).toMatchObject({
+          branch: 'acme/docs/website:cms/posts/hello',
+          fork: { owner: 'acme/docs', repo: 'website', editable: false },
+        });
+      });
+
+      test('reads the stage from the draft state and the label names', () => {
+        /**
+         * Get the status of a merge request from a fork with the given properties.
+         * @param {object} overrides Properties to override.
+         * @returns {string | undefined} Status.
+         */
+        const status = (overrides) =>
+          parseForkMergeRequest(createForkItem(overrides), source)?.status;
+
+        // The rule itself is tested with `toForkPullRequest`; this covers what GitLab returns
+        expect(status({ draft: true })).toBe('draft');
+        expect(status({ labels: ['sveltia-cms/pending_publish'] })).toBe('pending_publish');
+        expect(status({ labels: undefined })).toBe('pending_review');
+      });
+
+      test.each([
+        ['from the configured project', { source_project_id: 1 }, source],
+        ['to another branch', { target_branch: 'develop' }, source],
+        ['from a branch the CMS didn’t name', { source_branch: 'fix-typo' }, source],
+        ['from a fork whose path is unknown', {}, undefined],
+        ['from a fork without a namespace', {}, { fullPath: 'website' }],
+      ])('ignores a merge request %s', (_label, overrides, forkSource) => {
+        expect(parseForkMergeRequest(createForkItem(overrides), forkSource)).toBeUndefined();
+      });
+    });
+
+    describe('fetchPullRequests', () => {
+      test('lists the merge requests from forks along with the labelled ones', async () => {
+        vi.mocked(isOpenAuthoringConfigured).mockReturnValue(true);
+        vi.mocked(fetchAPI).mockImplementation(async (path) => {
+          if (path.includes('/diffs')) {
+            return [{ new_path: 'content/posts/hello.md' }];
+          }
+
+          if (path.includes('target_branch=')) {
+            // The configured project’s own merge request is the labelled list’s to take
+            return [
+              createForkItem(),
+              createItem({ iid: 8, source_project_id: 1, target_project_id: 1 }),
+            ];
+          }
+
+          return path.includes('labels=sveltia-cms%2Fdraft') ? [createItem()] : [];
+        });
+        vi.mocked(fetchGraphQL).mockImplementation(async (query) =>
+          query.includes('allowCollaboration')
+            ? {
+                project: {
+                  mergeRequests: {
+                    nodes: [{ iid: '7', allowCollaboration: true, sourceProject: source }],
+                  },
+                },
+              }
+            : { project: { repository: { blobs: { nodes: [] } } } },
+        );
+
+        const result = await fetchPullRequests();
+
+        expect(fetchAPI).toHaveBeenCalledWith(
+          `/projects/${PROJECT_ID}/merge_requests?state=opened&order_by=updated_at&per_page=100` +
+            '&target_branch=main',
+        );
+        expect(result.map(({ branch }) => branch).sort()).toEqual([
+          'alice/website:cms/alice/website/posts/hello',
+          'cms/posts/hello',
+        ]);
+      });
+
+      test('asks nothing more when no merge request comes from a fork', async () => {
+        vi.mocked(isOpenAuthoringConfigured).mockReturnValue(true);
+        vi.mocked(fetchAPI).mockResolvedValue([]);
+
+        await expect(fetchPullRequests()).resolves.toEqual([]);
+        expect(fetchGraphQL).not.toHaveBeenCalledWith(
+          expect.stringContaining('allowCollaboration'),
+          expect.anything(),
+        );
+      });
+
+      test('leaves out a merge request whose source the API doesn’t report', async () => {
+        vi.mocked(isOpenAuthoringConfigured).mockReturnValue(true);
+        vi.mocked(fetchAPI).mockImplementation(async (path) =>
+          path.includes('target_branch=') ? [createForkItem()] : [],
+        );
+        vi.mocked(fetchGraphQL).mockResolvedValue({});
+
+        await expect(fetchPullRequests()).resolves.toEqual([]);
+      });
+    });
+
+    test('reads the branch of a merge request from a fork in that fork', async () => {
+      vi.mocked(fetchAPI).mockResolvedValue({ commit: { id: 'abc123' } });
+
+      await expect(fetchBranchHead('alice/website:cms/alice/website/posts/hello')).resolves.toBe(
+        'abc123',
+      );
+      expect(fetchAPI).toHaveBeenCalledWith(
+        `/projects/alice%2Fwebsite/repository/branches/${encodeURIComponent('cms/alice/website/posts/hello')}`,
+      );
+    });
+
+    test('refuses to delete a branch in a contributor’s fork', async () => {
+      await expect(deleteBranch('alice/website:cms/alice/website/posts/hello')).rejects.toThrow(
+        'A branch in a contributor’s fork cannot be deleted.',
+      );
+      expect(fetchAPI).not.toHaveBeenCalled();
     });
   });
 

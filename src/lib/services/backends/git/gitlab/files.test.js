@@ -21,6 +21,7 @@ import {
   TREE_CONCURRENCY,
 } from '$lib/services/backends/git/gitlab/files';
 import {
+  getBranchRepository,
   getWorkflowRepository,
   initOpenAuthoring,
   isOpenAuthoringConfigured,
@@ -37,6 +38,7 @@ import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
 import { getManagedPaths } from '$lib/services/backends/git/shared/managed-paths';
 import { startSimulatedProgress } from '$lib/services/backends/git/shared/progress';
 import { listTrees } from '$lib/services/backends/git/shared/tree-cache';
+import { parseForkBranchName } from '$lib/services/workflow/forks';
 import { forkedRepository, openAuthoringInitialized } from '$lib/services/workflow/open-authoring';
 
 // The function returned by `startSimulatedProgress()`, so the tests can verify it’s called
@@ -80,6 +82,10 @@ describe('GitLab files service', () => {
       encodeURIComponent(`${owner}/${repo}`),
     );
     vi.mocked(getWorkflowRepository).mockReturnValue({ owner: 'test-owner', repo: 'test-repo' });
+    // Resolve the project a workflow branch lives in, as the real module does
+    vi.mocked(getBranchRepository).mockImplementation(
+      (branch) => parseForkBranchName(branch) ?? { ...getWorkflowRepository(), branch },
+    );
     forkedRepository.current = undefined;
     openAuthoringInitialized.current = false;
   });
@@ -1241,6 +1247,23 @@ describe('GitLab files service', () => {
       expect(fetchAPI).toHaveBeenCalledWith(
         '/projects/contributor%2Ftest-repo/repository/files' +
           '/images%2Fhero.png/raw?lfs=true&ref=cms%2Fcontributor%2Ftest-repo%2Fposts%2Fhello',
+        { responseType: 'blob' },
+      );
+    });
+
+    test('reads an asset of a contributor’s merge request from their fork', async () => {
+      const asset = /** @type {any} */ ({
+        path: 'images/hero.png',
+        workflow: { branch: 'alice/website:cms/alice/website/posts/hello' },
+      });
+
+      vi.mocked(fetchAPI).mockResolvedValue(new Blob(['image data']));
+
+      await fetchBlob(asset);
+
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/projects/alice%2Fwebsite/repository/files' +
+          '/images%2Fhero.png/raw?lfs=true&ref=cms%2Falice%2Fwebsite%2Fposts%2Fhello',
         { responseType: 'blob' },
       );
     });

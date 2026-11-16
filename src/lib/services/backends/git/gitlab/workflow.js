@@ -1,6 +1,6 @@
 import { commitChanges } from '$lib/services/backends/git/gitlab/commits';
 import { FETCH_BLOB_IDS_QUERY, fetchBlobNodes } from '$lib/services/backends/git/gitlab/files';
-import { getWorkflowRepository } from '$lib/services/backends/git/gitlab/fork';
+import { getBranchRepository } from '$lib/services/backends/git/gitlab/fork';
 import {
   createPullRequest,
   deleteBranch,
@@ -24,6 +24,7 @@ import { pollUntil, SETTLE_POLL } from '$lib/services/backends/git/shared/poll';
 import {
   assertBranchAtHead,
   commitToNewWorkflowBranch,
+  discardPullRequest,
   getMovedHeadMergeState,
   isSquashMergeEnabled,
   saveWorkflowBranch,
@@ -143,7 +144,7 @@ const commitToExistingBranch = async (changes, options, pullRequest) => {
     branch,
     headSHA: pullRequest.headSHA,
     fetchBranchHead,
-    getWorkflowRepository,
+    getBranchRepository,
   });
 
   try {
@@ -579,21 +580,23 @@ export const publish = async (pullRequest) => {
 };
 
 /**
- * Close the merge request without merging it, and delete the workflow branch.
+ * Close the merge request without merging it, and delete the workflow branch: see
+ * {@link discardPullRequest}.
  * @param {WorkflowPullRequest} pullRequest Merge request.
+ * @returns {Promise<void>}
  * @see https://docs.gitlab.com/api/merge_requests/#edit-merge-request
  */
-export const discard = async (pullRequest) => {
-  // An Open Authoring draft has no merge request yet, so deleting the branch is all there is to do
-  if (pullRequest.number !== undefined) {
-    await fetchAPI(getMergeRequestPath(pullRequest.number), {
-      method: 'PUT',
-      body: { state_event: 'close' },
-    });
-  }
-
-  await deleteBranch(pullRequest.branch);
-};
+export const discard = (pullRequest) =>
+  discardPullRequest(repository, pullRequest, {
+    deleteBranch,
+    /**
+     * Close the merge request, which GitLab takes as an event rather than a new state.
+     * @param {number} number Merge request number.
+     * @returns {Promise<unknown>} Response.
+     */
+    closeRequest: (number) =>
+      fetchAPI(getMergeRequestPath(number), { method: 'PUT', body: { state_event: 'close' } }),
+  });
 
 /**
  * GitLab’s Editorial Workflow implementation.

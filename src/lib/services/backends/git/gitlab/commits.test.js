@@ -18,13 +18,26 @@ import {
 } from '$lib/services/backends/git/shared/commits';
 import { repositoryHead } from '$lib/services/backends/git/shared/head';
 import { getGitHash } from '$lib/services/utils/file';
+import { parseForkBranchName } from '$lib/services/workflow/forks';
 import { forkedRepository, openAuthoring } from '$lib/services/workflow/open-authoring';
 
 // Mock dependencies
 vi.mock('@sveltia/i18n', async () =>
   (await import('$lib/test/i18n')).createI18nMock({ locale: 'en', exports: { dictionary: {} } }),
 );
-vi.mock('$lib/services/backends/git/gitlab/fork', () => ({ projectIds: { base: 42 } }));
+vi.mock('$lib/services/backends/git/gitlab/fork', () => ({
+  /**
+   * Resolve the project a workflow branch lives in, as the real module does.
+   * @param {string} branch Branch name.
+   * @returns {any} Project and branch.
+   */
+  getBranchRepository: (branch) =>
+    parseForkBranchName(branch) ?? {
+      ...(forkedRepository.current ?? { owner: 'test-owner', repo: 'test-repo' }),
+      branch,
+    },
+  projectIds: { base: 42 },
+}));
 vi.mock('$lib/services/backends/git/gitlab/repository', () => {
   const mockRepository = { repo: 'test-repo', branch: 'main', owner: 'test-owner' };
 
@@ -227,6 +240,29 @@ describe('GitLab commits service', () => {
           '/projects/test-owner%2Ftest-repo/repository/commits',
           expect.objectContaining({
             body: expect.not.objectContaining({ start_project: expect.anything() }),
+          }),
+        );
+      });
+
+      test('commits to a contributor’s branch in their fork, for a maintainer', async () => {
+        signInAs(undefined);
+        vi.mocked(createCommitMessage).mockReturnValue('Update post');
+        vi.mocked(fetchAPI).mockResolvedValue({ id: 'c1', committed_date: '2023-01-01T12:00:00Z' });
+        vi.mocked(getGitHash).mockResolvedValue('file123');
+
+        await commitChanges(
+          /** @type {any} */ ([{ action: 'update', path: 'test.md', data: 'x' }]),
+          /** @type {any} */ ({
+            commitType: 'update',
+            branch: 'acme/docs/website:cms/acme/docs/website/posts/hello',
+            headOid: 'head1',
+          }),
+        );
+
+        expect(fetchAPI).toHaveBeenCalledWith(
+          '/projects/acme%2Fdocs%2Fwebsite/repository/commits',
+          expect.objectContaining({
+            body: expect.objectContaining({ branch: 'cms/acme/docs/website/posts/hello' }),
           }),
         );
       });

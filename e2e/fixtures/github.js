@@ -290,6 +290,31 @@ export class MockGitHub extends MockGitRepository {
   }
 
   /**
+   * Open a pull request for a post from the colleague’s fork, the way the CMS does for an Open
+   * Authoring contributor who sends their entry for review: without a label, which the contributor
+   * can’t add. The fork becomes the colleague’s rather than the signed-in user’s. See
+   * {@link commitContributorPost}.
+   * @param {object} args Arguments.
+   * @param {string} args.slug Entry slug.
+   * @param {Record<string, string | null>} args.files Files to commit to the branch.
+   * @param {boolean} [args.editable] Whether the contributor lets maintainers push to the branch.
+   * @returns {MockPullRequest} Pull request, whose `head` is the branch key, e.g.
+   * `alex:cms/alex/e2e-site/posts/{slug}`.
+   */
+  openContributorRequest({ slug, files, editable = true }) {
+    this.fork = { owner: this.colleague.login, repo: this.repo };
+
+    const { branchKey, title } = this.commitContributorPost({ slug, files });
+
+    return this.openPullRequest({
+      title,
+      head: branchKey,
+      author: this.colleague,
+      maintainerCanModify: editable,
+    });
+  }
+
+  /**
    * Open a pull request.
    * @param {object} args Arguments.
    * @param {string} args.title Title.

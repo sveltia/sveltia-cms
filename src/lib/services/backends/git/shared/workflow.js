@@ -11,6 +11,7 @@ import {
 import { getPullRequestPath } from '$lib/services/backends/git/shared/repository';
 import { cmsConfig } from '$lib/services/config';
 import { user } from '$lib/services/user/account.svelte';
+import { parseForkBranchName } from '$lib/services/workflow/forks';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
 /**
@@ -59,8 +60,14 @@ export const isSquashMergeEnabled = () => {
  * @param {string} args.branch Branch name.
  * @param {string} args.path REST API path to send the `DELETE` request to.
  * @param {number[]} args.goneStatuses HTTP status codes meaning the branch is already gone.
+ * @throws {Error} When the branch is in a contributor’s fork, which is theirs to delete: a
+ * maintainer only closes the pull request from it.
  */
 export const deleteRemoteBranch = async ({ branch, path, goneStatuses }) => {
+  if (parseForkBranchName(branch)) {
+    throw new Error('A branch in a contributor’s fork cannot be deleted.');
+  }
+
   try {
     await fetchAPI(path, { method: 'DELETE', responseType: 'text' });
   } catch (/** @type {any} */ ex) {
@@ -128,11 +135,19 @@ export const openWorkflowPullRequest = async ({
  * existing pull request, which records the deletion group.
  * @returns {Promise<{ commit: CommitResults, pullRequest: WorkflowPullRequest }>} Commit results
  * and the new or updated pull request.
+ * @throws {Error} When the pull request comes from a fork whose contributor doesn’t let maintainers
+ * push to it.
  */
 export const saveWorkflowBranch = async (
   { changes, options, branch, title, status, pullRequest, deletionGroup },
   { commitToNewBranch, commitToExistingBranch, createPullRequest, updateDescription },
 ) => {
+  // The Git service would refuse the commit anyway, but with a message about permissions that says
+  // nothing of the contributor’s choice behind it
+  if (pullRequest?.fork && !pullRequest.fork.editable) {
+    throw createLocalizedError('Failed to save the changes.', 'workflow.fork_not_editable');
+  }
+
   if (pullRequest) {
     // A reused pull request may be deleted along with other entries, or carry the record of an
     // earlier deletion it no longer belongs to. The record is brought in line before the commit, so
@@ -255,8 +270,9 @@ export const createBranchGoneError = (branch, repository) =>
  * @param {string | undefined} args.headSHA Head commit on record.
  * @param {(branch: string) => Promise<string | undefined>} args.fetchBranchHead Function to fetch
  * the commit the branch points at, or `undefined` if the branch is gone.
- * @param {() => RepositoryPath} args.getWorkflowRepository Function to get the repository the
- * branch lives in.
+ * @param {(branch: string) => RepositoryPath & { branch: string }} args.getBranchRepository
+ * Function to get the repository the branch lives in, and its name there, which for a contributor’s
+ * branch is the fork and not the name the CMS knows it by.
  * @returns {Promise<string>} Head commit on record.
  * @throws {Error} When the branch is gone, or points at another commit than the one on record.
  */
@@ -264,12 +280,14 @@ export const assertBranchAtHead = async ({
   branch,
   headSHA,
   fetchBranchHead,
-  getWorkflowRepository,
+  getBranchRepository,
 }) => {
   const head = await fetchBranchHead(branch);
 
   if (head === undefined) {
-    throw createBranchGoneError(branch, getWorkflowRepository());
+    const { branch: name, ...repository } = getBranchRepository(branch);
+
+    throw createBranchGoneError(name, repository);
   }
 
   // Trying again reloads the entry first, which takes the other commit into account
@@ -498,31 +516,34 @@ export const findOwnApprovals = (reviews) =>
   );
 
 /**
- * Close a pull request without merging it, on GitHub or Gitea/Forgejo, whose REST APIs share the
- * endpoint, and delete its branch. An Open Authoring draft has no pull request yet, so deleting the
- * branch is all there is to do for it.
+ * Close a pull request without merging it, and delete its branch. An Open Authoring draft has no
+ * pull request yet, so deleting the branch is all there is to do for it.
  * @param {RepositoryPath} repository Repository holding the pull request.
  * @param {WorkflowPullRequest} pullRequest Pull request.
  * @param {object} service Service-specific values.
- * @param {(branch: string) => Promise<void>} [service.deleteBranch] Function to delete the branch.
- * Left out to keep it, as for a pull request a contributor has opened from their fork, whose branch
- * is theirs to delete.
+ * @param {(branch: string) => Promise<void>} service.deleteBranch Function to delete the branch. A
+ * contributor’s branch is left in their fork, where they can still use it, as the maintainer can
+ * only close the pull request from it.
  * @param {number[]} [service.closedStatuses] HTTP status codes a refusal to close the pull request
  * comes with when there’s nothing left to close, in which case the branch is still deleted.
+ * @param {(number: number) => Promise<unknown>} [service.closeRequest] Function to close the pull
+ * request. Default: the request GitHub and Gitea/Forgejo take, whose REST APIs share the endpoint.
  * @see https://docs.github.com/en/rest/pulls/pulls#update-a-pull-request
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoEditPullRequest
  */
 export const discardPullRequest = async (
   repository,
   pullRequest,
-  { deleteBranch, closedStatuses = [] },
+  { deleteBranch, closedStatuses = [], closeRequest },
 ) => {
   if (pullRequest.number !== undefined) {
     try {
-      await fetchAPI(getPullRequestPath(repository, pullRequest.number), {
-        method: 'PATCH',
-        body: { state: 'closed' },
-      });
+      await (closeRequest
+        ? closeRequest(pullRequest.number)
+        : fetchAPI(getPullRequestPath(repository, pullRequest.number), {
+            method: 'PATCH',
+            body: { state: 'closed' },
+          }));
     } catch (/** @type {any} */ ex) {
       if (!closedStatuses.includes(ex.cause?.status)) {
         throw ex;
@@ -530,7 +551,9 @@ export const discardPullRequest = async (
     }
   }
 
-  await deleteBranch?.(pullRequest.branch);
+  if (!pullRequest.fork) {
+    await deleteBranch(pullRequest.branch);
+  }
 };
 
 /**

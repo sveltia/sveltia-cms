@@ -13,6 +13,7 @@ import {
   fetchForkByNameFor,
   isOpenAuthoringConfiguredFor,
   pollForFork,
+  resolveBranchRepository,
   resolveWorkflowRepository,
   runOpenAuthoringSetUp,
   setUpForkFor,
@@ -24,7 +25,6 @@ import {
   toRepositoryPath,
 } from '$lib/services/backends/git/shared/repository';
 import { user } from '$lib/services/user/account.svelte';
-import { parseForkBranchName } from '$lib/services/workflow/forks';
 
 /**
  * @import { RepositoryPath } from '$lib/types/private';
@@ -46,15 +46,12 @@ export const isOpenAuthoringConfigured = () => isOpenAuthoringConfiguredFor('git
 export const getWorkflowRepository = () => resolveWorkflowRepository(repository);
 
 /**
- * Get the repository a workflow branch lives in, and its name there. That’s the repository given
- * by {@link getWorkflowRepository}, except for the branch of a pull request a contributor opened
- * from their fork, which a maintainer reviewing it pushes to in that fork. See `getForkBranchName`
- * in `$lib/services/workflow/forks`.
+ * Get the repository a workflow branch lives in, and its name there: see
+ * {@link resolveBranchRepository}.
  * @param {string} branch Branch name as the CMS knows it.
  * @returns {RepositoryPath & { branch: string }} Repository owner and name, and the branch name.
  */
-export const getBranchRepository = (branch) =>
-  parseForkBranchName(branch) ?? { ...getWorkflowRepository(), branch };
+export const getBranchRepository = (branch) => resolveBranchRepository(repository, branch);
 
 /**
  * Get the repository to read the files of the workflow branches from, by commit or blob ID.

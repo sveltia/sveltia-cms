@@ -30,7 +30,9 @@ export const getForkBranchName = ({ owner, repo, branch }) =>
   `${owner}/${repo}${SEPARATOR}${branch}`;
 
 /**
- * Parse a name given by {@link getForkBranchName}.
+ * Parse a name given by {@link getForkBranchName}. The owner can be a namespace of its own, like a
+ * GitLab group with subgroups, e.g. `acme/docs/website:cms/posts/hello`, so the fork’s name is
+ * whatever follows its last slash.
  * @param {string} name Branch name.
  * @returns {{ owner: string, repo: string, branch: string } | undefined} Fork and branch, or
  * `undefined` if the name is that of a branch in the repository holding the workflow branches.
@@ -42,10 +44,13 @@ export const parseForkBranchName = (name) => {
     return undefined;
   }
 
-  const [owner, repo, ...rest] = name.slice(0, index).split('/');
+  const path = name.slice(0, index);
+  const slash = path.lastIndexOf('/');
+  const owner = path.slice(0, slash);
+  const repo = path.slice(slash + 1);
   const branch = name.slice(index + 1);
 
-  if (!owner || !repo || rest.length || !branch) {
+  if (slash < 0 || !repo || !branch || owner.split('/').some((segment) => !segment)) {
     return undefined;
   }
 

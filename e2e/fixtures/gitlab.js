@@ -15,6 +15,8 @@ import { getBlobSHA, MockGitRepository } from './git.js';
  * so a branch in a fork reads `owner:branch`.
  * @property {number} sourceProjectId ID of the project the source branch lives in, which is the
  * fork’s for a merge request an Open Authoring contributor opened.
+ * @property {boolean} allowCollaboration Whether the author of a merge request from a fork lets
+ * the members who can merge push to its branch.
  * @property {string} targetBranch Branch the changes go to.
  * @property {string[]} labels Label names.
  * @property {'opened' | 'closed' | 'merged'} state State.
@@ -157,7 +159,7 @@ export class MockGitLab extends MockGitRepository {
    * @type {string}
    */
   get forkPath() {
-    return `/projects/${encodeURIComponent(`${this.user.login}/${this.fork?.repo ?? this.repo}`)}`;
+    return `/projects/${encodeURIComponent(`${this.forkOwner}/${this.fork?.repo ?? this.repo}`)}`;
   }
 
   /**
@@ -194,7 +196,7 @@ export class MockGitLab extends MockGitRepository {
    * @returns {Record<string, any>} Project.
    */
   toProjectItem({ isFork }) {
-    const owner = isFork ? this.user.login : this.owner;
+    const owner = isFork ? this.forkOwner : this.owner;
     const repo = isFork ? /** @type {{ repo: string }} */ (this.fork).repo : this.repo;
 
     return {
@@ -226,6 +228,31 @@ export class MockGitLab extends MockGitRepository {
   }
 
   /**
+   * Open a merge request for a post from the colleague’s fork, the way the CMS does for an Open
+   * Authoring contributor who sends their entry for review: without a label, which the contributor
+   * can’t add. The fork becomes the colleague’s rather than the signed-in user’s. See
+   * {@link commitContributorPost}.
+   * @param {object} args Arguments.
+   * @param {string} args.slug Entry slug.
+   * @param {Record<string, string | null>} args.files Files to commit to the branch.
+   * @param {boolean} [args.editable] Whether the contributor lets maintainers push to the branch.
+   * @returns {MockMergeRequest} Merge request.
+   */
+  openContributorRequest({ slug, files, editable = true }) {
+    this.fork = { owner: this.colleague.login, repo: this.repo };
+
+    const { branchKey, title } = this.commitContributorPost({ slug, files });
+
+    return this.openMergeRequest({
+      title,
+      sourceBranch: branchKey,
+      sourceProjectId: this.forkProjectId,
+      author: this.colleague,
+      allowCollaboration: editable,
+    });
+  }
+
+  /**
    * Open a merge request, as the CMS or a colleague does.
    * @param {object} args Arguments.
    * @param {string} args.title Title, with a `Draft: ` prefix for a draft.
@@ -236,6 +263,8 @@ export class MockGitLab extends MockGitRepository {
    * @param {MockUser} [args.author] Author, the colleague by default.
    * @param {number} [args.sourceProjectId] ID of the project the source branch lives in, the
    * configured project’s by default.
+   * @param {boolean} [args.allowCollaboration] Whether the author of a merge request from a fork
+   * lets the members who can merge push to its branch.
    * @returns {MockMergeRequest} Merge request.
    */
   openMergeRequest({
@@ -246,6 +275,7 @@ export class MockGitLab extends MockGitRepository {
     labels = [],
     author = this.colleague,
     sourceProjectId = this.projectId,
+    allowCollaboration = false,
   }) {
     const now = new Date();
 
@@ -257,6 +287,7 @@ export class MockGitLab extends MockGitRepository {
       description,
       sourceBranch,
       sourceProjectId,
+      allowCollaboration,
       targetBranch,
       labels: [...labels],
       state: 'opened',
@@ -386,6 +417,7 @@ export class MockGitLab extends MockGitRepository {
       target_branch: targetBranch,
       source_project_id: sourceProjectId,
       target_project_id: this.projectId,
+      allow_collaboration: mergeRequest.allowCollaboration,
       author: { id: author.id, username: author.login, name: author.name },
       sha: head ? head.oid : mergeRequest.lastHead,
       web_url: `https://gitlab.com/${this.owner}/${this.repo}/-/merge_requests/${iid}`,
@@ -420,6 +452,7 @@ export class MockGitLab extends MockGitRepository {
         const state = searchParams.get('state');
         const labels = searchParams.get('labels')?.split(',') ?? [];
         const sourceBranch = searchParams.get('source_branch');
+        const targetBranch = searchParams.get('target_branch');
         const authorId = searchParams.get('author_id');
         // The Open Authoring flow asks for the newest first by creation; everything else by update
         const byCreation = searchParams.get('order_by') === 'created_at';
@@ -434,6 +467,7 @@ export class MockGitLab extends MockGitRepository {
                 (!sourceBranch ||
                   mr.sourceBranch === sourceBranch ||
                   mr.sourceBranch.endsWith(`:${sourceBranch}`)) &&
+                (!targetBranch || mr.targetBranch === targetBranch) &&
                 (!authorId || mr.author.id === Number(authorId)),
             )
             .sort((a, b) =>
@@ -453,6 +487,7 @@ export class MockGitLab extends MockGitRepository {
           source_branch: sourceBranch,
           target_branch: targetBranch,
           labels = '',
+          allow_collaboration: allowCollaboration = false,
         } = body ?? {};
 
         // A merge request opened on the fork targets the configured project by ID, and its source
@@ -472,6 +507,7 @@ export class MockGitLab extends MockGitRepository {
           description,
           sourceBranch: branchKey,
           sourceProjectId: fromFork ? this.forkProjectId : this.projectId,
+          allowCollaboration,
           targetBranch,
           labels: labels ? String(labels).split(',') : [],
           author: this.user,
@@ -1050,7 +1086,7 @@ export class MockGitLab extends MockGitRepository {
   handleGraphQL(query, variables) {
     // The blobs of a workflow branch are read from the fork with Open Authoring, so the query names
     // the fork’s path and its branches have to be resolved there
-    const onFork = !!this.fork && variables.fullPath === `${this.user.login}/${this.fork.repo}`;
+    const onFork = !!this.fork && variables.fullPath === `${this.forkOwner}/${this.fork.repo}`;
 
     if (!onFork && variables.fullPath !== `${this.owner}/${this.repo}`) {
       return { data: { project: null } };
@@ -1065,10 +1101,21 @@ export class MockGitLab extends MockGitRepository {
         data: {
           project: {
             mergeRequests: {
-              nodes: /** @type {string[]} */ (variables.iids).map((iid) => ({
-                iid,
-                userPermissions: { canMerge: true },
-              })),
+              nodes: /** @type {string[]} */ (variables.iids).map((iid) => {
+                const mergeRequest = this.mergeRequests.find((mr) => String(mr.iid) === iid);
+                const fromFork = mergeRequest?.sourceProjectId === this.forkProjectId;
+
+                return {
+                  iid,
+                  userPermissions: { canMerge: true },
+                  allowCollaboration: !!mergeRequest?.allowCollaboration,
+                  sourceProject: {
+                    fullPath: fromFork
+                      ? `${this.forkOwner}/${this.fork?.repo ?? this.repo}`
+                      : `${this.owner}/${this.repo}`,
+                  },
+                };
+              }),
             },
           },
         },

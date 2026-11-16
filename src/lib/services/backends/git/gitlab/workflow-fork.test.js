@@ -14,10 +14,16 @@ import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { user } from '$lib/services/user/account.svelte';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
-vi.mock('$lib/services/backends/git/gitlab/fork', () => ({
-  getWorkflowRepository: vi.fn(),
-  projectIds: { base: 42, fork: 77 },
-}));
+vi.mock('$lib/services/backends/git/gitlab/fork', () => {
+  const getFork = vi.fn();
+
+  return {
+    getWorkflowRepository: getFork,
+    // A contributor’s own branches are always in their fork
+    getBranchRepository: vi.fn((branch) => ({ ...getFork(), branch })),
+    projectIds: { base: 42, fork: 77 },
+  };
+});
 vi.mock('$lib/services/backends/git/gitlab/repository', async (importOriginal) => {
   const { fetchProjectBranchHead } = /** @type {any} */ (await importOriginal());
   const mockRepository = { owner: 'group/sub', repo: 'project', branch: 'main' };

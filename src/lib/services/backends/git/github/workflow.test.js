@@ -1403,7 +1403,7 @@ describe('GitHub Editorial Workflow service', () => {
         ).toBe(false);
       });
 
-      test('takes the stage from the draft state, then from the ready label', () => {
+      test('reads the stage from the draft state and the label names', () => {
         /**
          * Get the status of a pull request from a fork with the given properties.
          * @param {object} overrides Properties to override.
@@ -1411,19 +1411,10 @@ describe('GitHub Editorial Workflow service', () => {
          */
         const status = (overrides) => parseForkPullRequest(createForkNode(overrides))?.status;
 
-        expect(
-          status({ isDraft: true, labels: { nodes: [{ name: 'sveltia-cms/pending_publish' }] } }),
-        ).toBe('draft');
+        // The rule itself is tested with `toForkPullRequest`; this covers what GraphQL returns
+        expect(status({ isDraft: true })).toBe('draft');
         expect(status({ labels: { nodes: [{ name: 'sveltia-cms/pending_publish' }] } })).toBe(
           'pending_publish',
-        );
-        // A label left over from the drafting stage doesn’t hold the pull request back there, and
-        // a removal is told by what the pull request holds rather than by a label
-        expect(status({ labels: { nodes: [{ name: 'sveltia-cms/draft' }] } })).toBe(
-          'pending_review',
-        );
-        expect(status({ labels: { nodes: [{ name: 'sveltia-cms/pending_deletion' }] } })).toBe(
-          'pending_review',
         );
       });
 
@@ -1525,14 +1516,6 @@ describe('GitHub Editorial Workflow service', () => {
           branch: 'refs/heads/cms/alice/website/posts/hello',
         });
       });
-    });
-
-    test('refuses to publish a pull request from a fork', async () => {
-      await expect(publish(forkPullRequest)).rejects.toThrow(
-        'A pull request from a fork cannot be published from the CMS.',
-      );
-
-      expect(fetchAPI).not.toHaveBeenCalled();
     });
 
     test('closes a pull request from a fork without deleting the contributor’s branch', async () => {

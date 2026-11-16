@@ -187,6 +187,83 @@ describe('Gitea Editorial Workflow service', () => {
       await expect(fetchLabelledPullRequests()).resolves.toEqual([]);
     });
 
+    describe('pull requests from forks', () => {
+      /** A pull request a contributor opened from their fork, as the instance returns it. */
+      const forkItem = createItem({
+        number: 7,
+        title: 'Create Post “hello”',
+        labels: [],
+        allow_maintainer_edit: true,
+        head: {
+          ref: 'cms/alice/website/posts/hello',
+          sha: 'abc123',
+          repo_id: 2,
+          repo: { full_name: 'alice/website', name: 'website', owner: { login: 'alice' } },
+        },
+      });
+
+      test('lists them along with the labelled ones with Open Authoring', async () => {
+        cmsConfig.current = /** @type {any} */ ({
+          backend: { name: 'gitea', open_authoring: true },
+        });
+        vi.mocked(fetchAPI).mockImplementation(async (path) => {
+          if (path === '/settings/api') {
+            return { max_response_items: 50 };
+          }
+
+          if (path.includes('/labels?')) {
+            return LABELS;
+          }
+
+          if (path.includes('/pulls?') && path.includes('base_branch=')) {
+            // The configured repository’s own one is the labelled list’s to take, one to another
+            // branch slipped through an instance that ignores the filter, and one is a code change
+            return [
+              { number: 7, head: forkItem.head, base: forkItem.base },
+              { number: 8, head: { ...forkItem.head, ref: 'feature/x' }, base: forkItem.base },
+              { number: 1, head: createItem().head, base: createItem().base },
+              { number: 9, head: forkItem.head, base: { ref: 'develop', repo_id: 1 } },
+            ];
+          }
+
+          if (path.includes('/pulls?')) {
+            return [{ number: 1 }];
+          }
+
+          if (path.includes('/files?') || path.includes('/contents/')) {
+            return path.includes('/files?') ? [] : {};
+          }
+
+          const [, number] = path.match(/\/pulls\/(\d+)$/) ?? [];
+
+          return { 1: createItem(), 7: forkItem }[Number(number)];
+        });
+
+        const result = await fetchLabelledPullRequests();
+
+        expect(fetchAPI).toHaveBeenCalledWith(
+          `${REPO_PATH}/pulls?state=open&sort=recentupdate&base_branch=main&page=1&limit=50`,
+        );
+        expect(result.map(({ branch }) => branch).sort()).toEqual([
+          'alice/website:cms/alice/website/posts/hello',
+          'cms/posts/hello',
+        ]);
+        // Only the ones for an entry are read again on their own
+        expect(fetchAPI).not.toHaveBeenCalledWith(`${REPO_PATH}/pulls/8`);
+        expect(fetchAPI).not.toHaveBeenCalledWith(`${REPO_PATH}/pulls/9`);
+      });
+
+      test('leaves a labelled one out without Open Authoring', async () => {
+        mockList({
+          list: [{ number: 7 }],
+          pulls: { 7: { ...forkItem, labels: [{ name: 'sveltia-cms/draft' }] } },
+        });
+
+        await expect(fetchLabelledPullRequests()).resolves.toEqual([]);
+        expect(fetchAPI).not.toHaveBeenCalledWith(expect.stringContaining('base_branch='));
+      });
+    });
+
     test('sorts the pull requests by the last update, newest first', async () => {
       mockList({
         list: [{ number: 1 }, { number: 2 }],
@@ -322,6 +399,50 @@ describe('Gitea Editorial Workflow service', () => {
           { commitType: 'create', branch: 'cms/posts/hello' },
         );
         expect(result.pullRequest).toBe(pullRequest);
+      });
+
+      test('commits onto a contributor’s branch in their fork', async () => {
+        const branch = 'alice/website:cms/alice/website/posts/hello';
+
+        mockBranch('head1');
+        vi.mocked(commitChanges).mockResolvedValue({ sha: 'def', files: {} });
+
+        await savePullRequest({
+          ...args,
+          branch,
+          pullRequest: {
+            ...pullRequest,
+            branch,
+            fork: { owner: 'alice', repo: 'website', editable: true },
+          },
+          changes: [{ action: 'update', path: 'content/posts/hello.md', previousSha: 'stale' }],
+        });
+
+        // The branch and the files are read in the fork, by the branch’s own name there
+        expect(fetchAPI).toHaveBeenCalledWith(
+          '/repos/alice/website/branches/cms/alice/website/posts/hello',
+        );
+        expect(fetchAPI).toHaveBeenCalledWith(
+          '/repos/alice/website/contents/content/posts/hello.md?ref=head1',
+        );
+        expect(commitChanges).toHaveBeenCalledWith(
+          [{ action: 'update', path: 'content/posts/hello.md', previousSha: 'head-sha' }],
+          { commitType: 'create', branch },
+        );
+      });
+
+      test('refuses to commit to a contributor’s branch they don’t let maintainers edit', async () => {
+        await expect(
+          savePullRequest({
+            ...args,
+            pullRequest: {
+              ...pullRequest,
+              fork: { owner: 'alice', repo: 'website', editable: false },
+            },
+          }),
+        ).rejects.toThrow('Failed to save the changes.');
+        expect(fetchAPI).not.toHaveBeenCalled();
+        expect(commitChanges).not.toHaveBeenCalled();
       });
 
       test('records the deletion group in the pull request', async () => {
@@ -1059,6 +1180,24 @@ describe('Gitea Editorial Workflow service', () => {
   });
 
   describe('discard', () => {
+    test('closes a pull request from a fork without deleting the contributor’s branch', async () => {
+      vi.mocked(fetchAPI).mockResolvedValue({});
+
+      await discard(
+        /** @type {any} */ ({
+          number: 7,
+          branch: 'alice/website:cms/alice/website/posts/hello',
+          fork: { owner: 'alice', repo: 'website', editable: true },
+        }),
+      );
+
+      expect(fetchAPI).toHaveBeenCalledTimes(1);
+      expect(fetchAPI).toHaveBeenCalledWith(`${REPO_PATH}/pulls/7`, {
+        method: 'PATCH',
+        body: { state: 'closed' },
+      });
+    });
+
     test('carries on when the pull request was merged since the board was loaded', async () => {
       vi.mocked(fetchAPI).mockImplementation(async (path, options) => {
         if (options?.method === 'PATCH') {

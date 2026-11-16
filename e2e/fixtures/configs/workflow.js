@@ -71,36 +71,3 @@ export const saveForkDraft = (github, { slug, files }) => {
 
   return branch;
 };
-
-/**
- * Open a pull request for a post from a contributor’s fork, the way the CMS does for an Open
- * Authoring contributor who sends their entry for review: on a `cms/{owner}/{repo}/posts/{slug}`
- * branch in the fork, without a label, which the contributor can’t add. It’s what a maintainer
- * reviews.
- * @param {MockGitHub} github GitHub mock.
- * @param {object} args Arguments.
- * @param {string} args.slug Entry slug.
- * @param {Record<string, string | null>} args.files Files to commit to the branch.
- * @param {boolean} [args.maintainerCanModify] Whether the contributor lets maintainers push to the
- * branch.
- * @returns {MockPullRequest} Pull request, whose `head` is the branch key in the mock, e.g.
- * `alex:cms/alex/e2e-site/posts/{slug}`.
- */
-export const openContributorPullRequest = (github, { slug, files, maintainerCanModify = true }) => {
-  const { login } = github.colleague;
-  const head = `${login}:cms/${login}/${github.repo}/posts/${slug}`;
-
-  github.createBranch(head, github.head.oid);
-  github.commit(files, {
-    branch: head,
-    author: github.colleague,
-    message: `Create Post “${slug}”`,
-  });
-
-  return github.openPullRequest({
-    title: `Create Post “${slug}”`,
-    head,
-    author: github.colleague,
-    maintainerCanModify,
-  });
-};

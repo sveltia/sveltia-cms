@@ -11,6 +11,7 @@ import {
   fetchForkByNameFor,
   isOpenAuthoringConfiguredFor,
   requestForkWithFallbackName,
+  resolveBranchRepository,
   resolveWorkflowRepository,
   runOpenAuthoringSetUp,
   setUpForkFor,
@@ -52,6 +53,14 @@ export const isOpenAuthoringConfigured = () =>
  * @returns {RepositoryPath} Repository owner and name.
  */
 export const getWorkflowRepository = () => resolveWorkflowRepository(repository);
+
+/**
+ * Get the repository a workflow branch lives in, and its name there: see
+ * {@link resolveBranchRepository}.
+ * @param {string} branch Branch name as the CMS knows it.
+ * @returns {RepositoryPath & { branch: string }} Repository owner and name, and the branch name.
+ */
+export const getBranchRepository = (branch) => resolveBranchRepository(repository, branch);
 
 /**
  * Look for the fork at the name the instance gives it by default: see {@link fetchForkByNameFor}.

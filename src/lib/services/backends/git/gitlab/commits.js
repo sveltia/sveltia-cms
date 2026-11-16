@@ -1,7 +1,7 @@
 import { encodeBase64 } from '@sveltia/utils/file';
 
 import { clearSaveProgress, reportCommits } from '$lib/services/backends/commit-progress';
-import { projectIds } from '$lib/services/backends/git/gitlab/fork';
+import { getBranchRepository, projectIds } from '$lib/services/backends/git/gitlab/fork';
 import {
   fetchProjectBranchHead,
   getProjectId,
@@ -151,10 +151,12 @@ const isBinary = (data) => data !== undefined && typeof data !== 'string';
 export const commitChanges = async (changes, options) => {
   checkDirectCommitAllowed(options);
 
-  // A workflow branch lives in the contributor’s fork with Open Authoring, while the configured
-  // branch is only ever committed to by someone who can write to the configured project
+  // A workflow branch lives in the contributor’s fork with Open Authoring, or in the fork of the
+  // contributor whose merge request a maintainer is editing, while the configured branch is only
+  // ever committed to by someone who can write to the configured project
   const fork = options.branch ? forkedRepository.current : undefined;
-  const branch = /** @type {string} */ (options.branch ?? repository.branch);
+  const target = options.branch ? getBranchRepository(options.branch) : undefined;
+  const branch = /** @type {string} */ (target?.branch ?? repository.branch);
   // The commit the branch is expected to point at: on the configured branch, the one the loaded
   // site data reflects, which the caller has just brought up to date; on a workflow branch, the
   // merge request’s head, which the caller has just compared the branch with. GitLab has no
@@ -259,7 +261,7 @@ export const commitChanges = async (changes, options) => {
     })),
   ];
 
-  const endpoint = `/projects/${getProjectId(fork)}/repository/commits`;
+  const endpoint = `/projects/${getProjectId(target)}/repository/commits`;
   const commitMessage = signOffCommitMessage(createCommitMessage(changes, options));
   const { startBranch } = options;
   // With Open Authoring the branch is created in the contributor’s fork, but starts from the head
@@ -322,7 +324,7 @@ export const commitChanges = async (changes, options) => {
           group.length > 1 &&
           isUploadFailure(ex) &&
           // eslint-disable-next-line no-await-in-loop
-          (await fetchProjectBranchHead(branch, fork).catch(() => null)) === previousHead
+          (await fetchProjectBranchHead(branch, target).catch(() => null)) === previousHead
         ) {
           queue.unshift(...group);
           payloadSize = Math.floor(groupSize / 2);

@@ -708,6 +708,7 @@ const pendingPublishes = new Map();
  * entry list to the regular entry list once it has.
  * @param {UnpublishedEntry} entry Unpublished entry.
  * @returns {Promise<void>}
+ * @throws {Error} When the pull request comes from a contributor’s fork.
  */
 const mergeWorkflowEntry = async (entry) => {
   const workflow = getWorkflowService();
@@ -723,6 +724,12 @@ const mergeWorkflowEntry = async (entry) => {
   const [preType, postType] = deletion
     ? /** @type {const} */ (['preUnpublish', 'postUnpublish'])
     : /** @type {const} */ (['prePublish', 'postPublish']);
+
+  // A contributor’s pull request is merged on the Git service, where the maintainer can review the
+  // whole of it, including any changes the CMS doesn’t show; see `getPublishAction()`
+  if (pullRequest.fork) {
+    throw new Error('A pull request from a fork cannot be published from the CMS.');
+  }
 
   // The board shows the entry, but the merge takes the whole pull request as its branch stands. So
   // the pull request is read afresh and checked against what has been shown before anything else

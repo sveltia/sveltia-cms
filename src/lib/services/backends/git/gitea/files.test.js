@@ -51,11 +51,20 @@ vi.mock('$lib/services/backends/git/gitea/commits', () => ({
   fetchLastCommit: vi.fn(),
 }));
 
-vi.mock('$lib/services/backends/git/gitea/fork', () => ({
-  getWorkflowRepository: vi.fn(() => ({ owner: 'test-owner', repo: 'test-repo' })),
-  initOpenAuthoring: vi.fn(),
-  isOpenAuthoringConfigured: vi.fn(() => false),
-}));
+vi.mock('$lib/services/backends/git/gitea/fork', async () => {
+  const { parseForkBranchName } = await import('$lib/services/workflow/forks');
+  const getRepository = vi.fn(() => ({ owner: 'test-owner', repo: 'test-repo' }));
+
+  return {
+    getWorkflowRepository: getRepository,
+    // Resolve the repository a workflow branch lives in, as the real module does
+    getBranchRepository: vi.fn(
+      (branch) => parseForkBranchName(branch) ?? { ...getRepository(), branch },
+    ),
+    initOpenAuthoring: vi.fn(),
+    isOpenAuthoringConfigured: vi.fn(() => false),
+  };
+});
 
 vi.mock('$lib/services/backends/git/gitea/instance', () => ({
   checkInstanceVersion: vi.fn(),
@@ -1275,6 +1284,23 @@ describe('Gitea Files Service', () => {
 
       expect(fetchAPI).toHaveBeenCalledWith(
         '/repos/me/fork/media/cms/me/fork/posts/hello/images/photo.jpg',
+        { responseType: 'blob' },
+      );
+    });
+
+    test('should read the asset of a contributor’s pull request from their fork', async () => {
+      vi.mocked(fetchAPI).mockResolvedValue(new Blob(['binary data']));
+
+      await fetchBlob(
+        /** @type {any} */ ({
+          path: 'images/photo.jpg',
+          workflow: { branch: 'alice/website:cms/alice/website/posts/hello' },
+        }),
+      );
+
+      // The branch goes by its own name in the fork
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/repos/alice/website/media/cms/alice/website/posts/hello/images/photo.jpg',
         { responseType: 'blob' },
       );
     });

@@ -26,7 +26,7 @@ import {
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
-import { checkPublishAllowed } from '$lib/services/backends/git/shared/fork';
+import { checkPublishAllowed, toForkPullRequest } from '$lib/services/backends/git/shared/fork';
 import {
   getPullRequestPath,
   getRepositoryPath,
@@ -46,8 +46,6 @@ import {
   updatePullRequestDescription,
 } from '$lib/services/backends/git/shared/workflow';
 import { encodePathSegments } from '$lib/services/utils/url';
-import { parseBranchName } from '$lib/services/workflow/branch';
-import { getForkBranchName, getUpstreamBranchName } from '$lib/services/workflow/forks';
 import { getAllStatusLabels, getStatusFromLabels } from '$lib/services/workflow/labels';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
@@ -183,13 +181,11 @@ const toPullRequest = (node, status) => ({
 });
 
 /**
- * Get the status the CMS label on a pull request node returned by the GraphQL API gives it.
+ * Get the names of the labels on a pull request node returned by the GraphQL API.
  * @param {Record<string, any>} node Pull request node.
- * @returns {WorkflowStatus | undefined} Status, or `undefined` if the pull request has no CMS
- * label.
+ * @returns {string[]} Label names.
  */
-const getLabelledStatus = (node) =>
-  getStatusFromLabels(node.labels.nodes.map((/** @type {any} */ l) => l.name));
+const getLabelNames = (node) => node.labels.nodes.map((/** @type {any} */ l) => l.name);
 
 /**
  * Parse a pull request node returned by the GraphQL API.
@@ -214,7 +210,7 @@ export const parsePullRequest = (node) => {
     return undefined;
   }
 
-  const status = getLabelledStatus(node);
+  const status = getStatusFromLabels(getLabelNames(node));
 
   if (!status) {
     return undefined;
@@ -224,35 +220,8 @@ export const parsePullRequest = (node) => {
 };
 
 /**
- * Get the status of a pull request a contributor opened from their fork. The contributor marks it
- * ready or takes it back to the drafting stage with the pull request’s draft state, as they can’t
- * label it, while a maintainer moving it between the review and ready stages labels it. The draft
- * state wins, so a label left over from before the contributor marked it ready doesn’t keep it in
- * the drafting stage, and one a maintainer added doesn’t take it out of there. Only the review and
- * ready labels are taken: a removal is told by what the pull request holds, not by a label anyone
- * with access can put on it.
- * @param {Record<string, any>} node Pull request node.
- * @returns {WorkflowStatus} Status.
- */
-const getForkPullRequestStatus = (node) => {
-  if (node.isDraft) {
-    return 'draft';
-  }
-
-  const status = getLabelledStatus(node);
-
-  return status === 'pending_publish' ? status : 'pending_review';
-};
-
-/**
  * Parse a pull request node returned by {@link getForkPullRequestsSelection}, for a maintainer to
- * review. Only a pull request from a fork whose head branch is named like the CMS names its
- * branches is taken: anything else is a code change the CMS has no business showing. The name
- * proves nothing about the content, which anyone can put on a branch of a public fork, so the pull
- * request is treated as untrusted throughout: it can’t be published from the CMS, which the `fork`
- * property alone is enough for, its description is ignored, and its branch is known by a name
- * qualified with the fork, which can’t be mistaken for a branch of the configured repository: see
- * {@link getForkBranchName}.
+ * review. See {@link toForkPullRequest}.
  * @param {Record<string, any>} node Pull request node.
  * @returns {WorkflowPullRequest | undefined} Parsed pull request, or `undefined` if it isn’t one a
  * contributor opened from their fork for an entry.
@@ -265,18 +234,17 @@ export const parseForkPullRequest = (node) => {
     return undefined;
   }
 
-  const branch = getForkBranchName({ owner: owner.login, repo, branch: node.headRefName });
-
-  if (!parseBranchName(getUpstreamBranchName(branch))) {
-    return undefined;
-  }
-
-  return {
-    ...toPullRequest(node, getForkPullRequestStatus(node)),
-    branch,
-    description: '',
-    fork: { owner: owner.login, repo, editable: !!node.maintainerCanModify },
-  };
+  return toForkPullRequest(
+    {
+      owner: owner.login,
+      repo,
+      headBranch: node.headRefName,
+      editable: !!node.maintainerCanModify,
+      draft: !!node.isDraft,
+      labels: getLabelNames(node),
+    },
+    ({ status }) => toPullRequest(node, status),
+  );
 };
 
 /**
@@ -646,12 +614,6 @@ const commitToNewBranch = async (changes, options) => {
 const commitToExistingBranch = async (changes, options, pullRequest) => {
   const { branch = '' } = options;
 
-  // GitHub would refuse the commit anyway, but with a message about permissions that says nothing
-  // of the contributor’s choice behind it
-  if (pullRequest.fork && !pullRequest.fork.editable) {
-    throw createLocalizedError('Failed to save the changes.', 'workflow.fork_not_editable');
-  }
-
   try {
     return await commitChanges(changes, { ...options, headOid: pullRequest.headSHA });
   } catch (ex) {
@@ -857,19 +819,12 @@ export const fetchUnchangedPaths = async ({ headSHA, paths }) => {
  * after a push, so the pull request is read again until that settles, and merged or set to
  * auto-merge then. See {@link mergeRefusedPullRequest} for that part.
  * @param {WorkflowPullRequest} pullRequest Pull request.
- * @throws {Error} When the pull request comes from a fork, or the merge fails.
  * @see https://docs.github.com/en/rest/pulls/pulls#merge-a-pull-request
  * @see https://docs.github.com/en/graphql/reference/mutations#enablepullrequestautomerge
  * @see https://github.com/sveltia/sveltia-cms/issues/1094
  */
 export const publish = async (pullRequest) => {
   checkPublishAllowed();
-
-  // A contributor’s pull request is merged on GitHub, where the whole of it can be reviewed. The
-  // CMS only shows the entry, and the merge check refuses a pull request from a fork anyway
-  if (pullRequest.fork) {
-    throw new Error('A pull request from a fork cannot be published from the CMS.');
-  }
 
   const { number, title, headSHA } = pullRequest;
   const squash = isSquashMergeEnabled();
@@ -907,9 +862,7 @@ export const publish = async (pullRequest) => {
  * @returns {Promise<void>}
  */
 export const discard = (pullRequest) =>
-  discardPullRequest(repository, pullRequest, {
-    deleteBranch: pullRequest.fork ? undefined : deleteBranch,
-  });
+  discardPullRequest(repository, pullRequest, { deleteBranch });
 
 /**
  * GitHub’s Editorial Workflow implementation.

@@ -14,6 +14,7 @@ import {
   isOpenAuthoringConfiguredFor,
   pollForFork,
   requestForkWithFallbackName,
+  resolveBranchRepository,
   resolveWorkflowRepository,
   runOpenAuthoringSetUp,
   setUpForkFor,
@@ -57,6 +58,14 @@ export const isOpenAuthoringConfigured = () => isOpenAuthoringConfiguredFor('git
  * @returns {RepositoryPath} Project namespace and name.
  */
 export const getWorkflowRepository = () => resolveWorkflowRepository(repository);
+
+/**
+ * Get the project a workflow branch lives in, and its name there: see
+ * {@link resolveBranchRepository}.
+ * @param {string} branch Branch name as the CMS knows it.
+ * @returns {RepositoryPath & { branch: string }} Project owner and name, and the branch name.
+ */
+export const getBranchRepository = (branch) => resolveBranchRepository(repository, branch);
 
 /**
  * Fetch whether the signed-in user can commit to the configured project. The permission query

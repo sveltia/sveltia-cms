@@ -76,6 +76,13 @@ describe('deleteRemoteBranch()', () => {
     goneStatuses: [404],
   };
 
+  test('refuses to delete a branch in a contributor’s fork', async () => {
+    await expect(
+      deleteRemoteBranch({ ...args, branch: 'alice/website:cms/alice/website/posts/hello' }),
+    ).rejects.toThrow('A branch in a contributor’s fork cannot be deleted.');
+    expect(fetchAPI).not.toHaveBeenCalled();
+  });
+
   test('sends a DELETE request to the given path', async () => {
     vi.mocked(fetchAPI).mockResolvedValue('');
     await expect(deleteRemoteBranch(args)).resolves.toBeUndefined();
@@ -224,6 +231,24 @@ describe('saveWorkflowBranch()', () => {
     expect(service.commitToNewBranch).not.toHaveBeenCalled();
     expect(service.createPullRequest).not.toHaveBeenCalled();
     expect(service.updateDescription).not.toHaveBeenCalled();
+  });
+
+  test('refuses to commit to a contributor’s branch they don’t let maintainers push to', async () => {
+    const service = createService();
+
+    const pullRequest = {
+      number: 1,
+      headSHA: 'head',
+      fork: { owner: 'alice', repo: 'repo', editable: false },
+    };
+
+    await expect(
+      saveWorkflowBranch(
+        { changes, options, branch: 'cms/a', title: 'A', status: 'draft', pullRequest },
+        service,
+      ),
+    ).rejects.toMatchObject({ message: 'Failed to save the changes.' });
+    expect(service.commitToExistingBranch).not.toHaveBeenCalled();
   });
 
   test('records the deletion group in an existing pull request before committing', async () => {
@@ -483,10 +508,11 @@ describe('commitToNewWorkflowBranch()', () => {
 
 describe('assertBranchAtHead()', () => {
   /**
-   * Get the repository the branch lives in.
-   * @returns {{ owner: string, repo: string }} Repository.
+   * Get the repository a branch lives in, as a backend does.
+   * @param {string} branch Branch name.
+   * @returns {{ owner: string, repo: string, branch: string }} Repository and branch name.
    */
-  const getWorkflowRepository = () => ({ owner: 'owner', repo: 'repo' });
+  const getBranchRepository = (branch) => ({ owner: 'owner', repo: 'repo', branch });
 
   test('returns the head on record when the branch points at it', async () => {
     const fetchBranchHead = vi.fn().mockResolvedValue('head');
@@ -496,7 +522,7 @@ describe('assertBranchAtHead()', () => {
         branch: 'cms/a',
         headSHA: 'head',
         fetchBranchHead,
-        getWorkflowRepository,
+        getBranchRepository,
       }),
     ).resolves.toBe('head');
     expect(fetchBranchHead).toHaveBeenCalledWith('cms/a');
@@ -507,7 +533,7 @@ describe('assertBranchAtHead()', () => {
       branch: 'cms/a',
       headSHA: 'head',
       fetchBranchHead: vi.fn().mockResolvedValue(undefined),
-      getWorkflowRepository,
+      getBranchRepository,
     });
 
     await expect(promise).rejects.toThrow('Failed to save the changes.');
@@ -516,12 +542,32 @@ describe('assertBranchAtHead()', () => {
     });
   });
 
+  test('names a contributor’s branch that is gone by its name in their fork', async () => {
+    const promise = assertBranchAtHead({
+      branch: 'alice/website:cms/alice/website/posts/a',
+      headSHA: 'head',
+      fetchBranchHead: vi.fn().mockResolvedValue(undefined),
+      getBranchRepository: vi.fn(() => ({
+        owner: 'alice',
+        repo: 'website',
+        branch: 'cms/alice/website/posts/a',
+      })),
+    });
+
+    await expect(promise).rejects.toThrow('Failed to save the changes.');
+    await promise.catch((ex) => {
+      expect(ex.cause.message).toBe(
+        'branch_not_found:{"repo":"website","branch":"cms/alice/website/posts/a"}',
+      );
+    });
+  });
+
   test('refuses a branch that has moved', async () => {
     const promise = assertBranchAtHead({
       branch: 'cms/a',
       headSHA: 'head',
       fetchBranchHead: vi.fn().mockResolvedValue('other'),
-      getWorkflowRepository,
+      getBranchRepository,
     });
 
     await expect(promise).rejects.toThrow(
@@ -538,7 +584,7 @@ describe('assertBranchAtHead()', () => {
         branch: 'cms/a',
         headSHA: undefined,
         fetchBranchHead: vi.fn().mockResolvedValue('head'),
-        getWorkflowRepository,
+        getBranchRepository,
       }),
     ).rejects.toThrow('The workflow branch has moved since the entry was loaded.');
   });
@@ -810,13 +856,22 @@ describe('discardPullRequest()', () => {
     expect(deleteBranch).toHaveBeenCalledWith('b');
   });
 
-  test('keeps the branch without a function to delete it', async () => {
-    vi.mocked(fetchAPI).mockResolvedValue({});
+  test('keeps the branch of a pull request from a contributor’s fork', async () => {
+    const deleteBranch = vi.fn();
 
-    await expect(
-      discardPullRequest(repository, { number: 1, branch: 'b' }, {}),
-    ).resolves.toBeUndefined();
+    vi.mocked(fetchAPI).mockResolvedValue({});
+    await discardPullRequest(
+      repository,
+      {
+        number: 1,
+        branch: 'alice/repo:cms/alice/repo/posts/b',
+        fork: { owner: 'alice', repo: 'repo', editable: true },
+      },
+      { deleteBranch },
+    );
+
     expect(fetchAPI).toHaveBeenCalledOnce();
+    expect(deleteBranch).not.toHaveBeenCalled();
   });
 
   test('carries on when the refusal comes with one of the given statuses', async () => {

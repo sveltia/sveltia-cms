@@ -156,7 +156,40 @@ export class MockGitRepository {
    * @returns {string} Key, e.g. `mona:main`.
    */
   forkBranch(branch) {
-    return `${this.user.login}:${branch}`;
+    return `${this.forkOwner}:${branch}`;
+  }
+
+  /**
+   * Commit a post to a branch in the colleague’s fork, the way the CMS does for an Open Authoring
+   * contributor: on a `cms/{owner}/{repo}/posts/{slug}` branch. It’s what a maintainer reviews once
+   * the contributor opens a request for it, which each service’s mock does with a method of its
+   * own.
+   * @param {object} args Arguments.
+   * @param {string} args.slug Entry slug.
+   * @param {Record<string, string | null>} args.files Files to commit to the branch.
+   * @returns {{ headBranch: string, branchKey: string, title: string }} Branch name in the fork,
+   * its key in {@link refs}, e.g. `alex:cms/alex/e2e-site/posts/{slug}`, and the title the request
+   * is opened with.
+   */
+  commitContributorPost({ slug, files }) {
+    const { login } = this.colleague;
+    const headBranch = `cms/${login}/${this.repo}/posts/${slug}`;
+    const branchKey = `${login}:${headBranch}`;
+    const title = `Create Post “${slug}”`;
+
+    this.createBranch(branchKey, this.head.oid);
+    this.commit(files, { branch: branchKey, author: this.colleague, message: title });
+
+    return { headBranch, branchKey, title };
+  }
+
+  /**
+   * The owner of {@link fork}: the signed-in user’s, unless a test has given the fork to someone
+   * else, such as a contributor whose pull request a maintainer reviews.
+   * @type {string}
+   */
+  get forkOwner() {
+    return this.fork?.owner ?? this.user.login;
   }
 
   /**

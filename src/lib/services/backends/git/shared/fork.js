@@ -11,6 +11,13 @@ import {
 } from '$lib/services/backends/git/shared/repository';
 import { cmsConfig } from '$lib/services/config';
 import { user } from '$lib/services/user/account.svelte';
+import { parseBranchName } from '$lib/services/workflow/branch';
+import {
+  getForkBranchName,
+  getUpstreamBranchName,
+  parseForkBranchName,
+} from '$lib/services/workflow/forks';
+import { getStatusFromLabels } from '$lib/services/workflow/labels';
 import {
   ENTRY_ALREADY_PUBLISHED,
   forkedRepository,
@@ -73,6 +80,73 @@ export const isOpenAuthoringConfiguredFor = (name) => {
  */
 export const resolveWorkflowRepository = ({ owner, repo }) =>
   forkedRepository.current ?? { owner, repo };
+
+/**
+ * Get the status of a pull request a contributor opened from their fork, as a maintainer’s session
+ * reads it. The contributor marks it ready or takes it back to the drafting stage with its draft
+ * state, as they can’t label it, while a maintainer moving it between the review and ready stages
+ * labels it. The draft state wins, so a label left over from before the contributor marked it ready
+ * doesn’t keep it in the drafting stage, and one a maintainer added doesn’t take it out of there.
+ * Only the ready label is taken: a removal is told by what the pull request holds, not by a label
+ * anyone with access can put on it.
+ * @param {object} args Arguments.
+ * @param {boolean} args.draft Whether the pull request is a draft, or a work in progress.
+ * @param {string[]} args.labels Names of the labels on the pull request.
+ * @returns {WorkflowStatus} Status.
+ */
+const getForkRequestStatus = ({ draft, labels }) => {
+  if (draft) {
+    return 'draft';
+  }
+
+  return getStatusFromLabels(labels) === 'pending_publish' ? 'pending_publish' : 'pending_review';
+};
+
+/**
+ * Build the pull request a contributor opened from their fork, for a maintainer to review, once the
+ * backend has checked it comes from a fork and targets the configured branch. Only one from a
+ * branch named like the CMS names its branches is taken: anything else is a code change the CMS has
+ * no business showing. The name proves nothing about the content, which anyone can put on a branch
+ * of a public fork, so the pull request is treated as untrusted throughout: it can’t be published
+ * from the CMS, which the `fork` property alone is enough for, its description is ignored, and its
+ * branch is known by a name qualified with the fork, which can’t be mistaken for a branch of the
+ * configured repository. See `getForkBranchName` in `$lib/services/workflow/forks`.
+ * @param {object} args Arguments.
+ * @param {string} args.owner Owner of the fork, which can be a namespace with subgroups on GitLab.
+ * @param {string} args.repo Name of the fork.
+ * @param {string} args.headBranch Head branch name in the fork.
+ * @param {boolean} args.editable Whether the contributor lets maintainers push to the branch.
+ * @param {boolean} args.draft Whether the pull request is a draft, or a work in progress.
+ * @param {string[]} args.labels Names of the labels on the pull request.
+ * @param {(fields: Pick<WorkflowPullRequest, 'status' | 'branch' | 'description'>) =>
+ * WorkflowPullRequest} parse Function to parse the rest of the pull request, given the fields
+ * worked out here.
+ * @returns {WorkflowPullRequest | undefined} Pull request, or `undefined` if its branch isn’t named
+ * like a workflow branch.
+ */
+export const toForkPullRequest = ({ owner, repo, headBranch, editable, draft, labels }, parse) => {
+  const branch = getForkBranchName({ owner, repo, branch: headBranch });
+
+  if (!parseBranchName(getUpstreamBranchName(branch))) {
+    return undefined;
+  }
+
+  const fields = { status: getForkRequestStatus({ draft, labels }), branch, description: '' };
+
+  return { ...parse(fields), ...fields, fork: { owner, repo, editable } };
+};
+
+/**
+ * Get the repository a workflow branch lives in, and its name there. That’s the repository given
+ * by {@link resolveWorkflowRepository}, except for the branch of a pull request a contributor
+ * opened from their fork, which a maintainer reviewing it pushes to in that fork. See
+ * `getForkBranchName` in `$lib/services/workflow/forks`.
+ * @param {RepositoryInfo} repository Configured repository.
+ * @param {string} branch Branch name as the CMS knows it.
+ * @returns {RepositoryPath & { branch: string }} Repository owner and name, and the branch name.
+ */
+export const resolveBranchRepository = (repository, branch) =>
+  parseForkBranchName(branch) ?? { ...resolveWorkflowRepository(repository), branch };
 
 /**
  * Make sure a fork can be created, which takes both the service allowing it and the user agreeing

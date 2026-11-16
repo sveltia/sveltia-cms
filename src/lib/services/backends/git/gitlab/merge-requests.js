@@ -1,5 +1,10 @@
 import { fetchBlobs, fetchTruncatedBlobs } from '$lib/services/backends/git/gitlab/files';
-import { getWorkflowRepository, projectIds } from '$lib/services/backends/git/gitlab/fork';
+import {
+  getBranchRepository,
+  getWorkflowRepository,
+  isOpenAuthoringConfigured,
+  projectIds,
+} from '$lib/services/backends/git/gitlab/fork';
 import {
   fetchProjectBranchHead,
   getBranchPath,
@@ -8,6 +13,7 @@ import {
 } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
+import { toForkPullRequest } from '$lib/services/backends/git/shared/fork';
 import {
   createDraftTitleCodec,
   toCommitAuthor,
@@ -159,13 +165,17 @@ export const parseDiff = (diff) => ({
  * Fetch the commit the given workflow branch points at. Two editors working on the same entry
  * share its branch, so this is how a save finds out that someone else has committed to it since
  * the draft was opened. The branch is looked up in the project it lives in, which is the
- * contributor’s fork with Open Authoring.
+ * contributor’s fork with Open Authoring, or when a maintainer edits a contributor’s merge request.
  * @param {string} branch Branch name.
  * @returns {Promise<string | undefined>} Git object ID, or `undefined` if the branch is gone,
  * which is what a merged or closed merge request leaves behind.
  * @see https://docs.gitlab.com/api/branches/#get-single-repository-branch
  */
-export const fetchBranchHead = (branch) => fetchProjectBranchHead(branch, getWorkflowRepository());
+export const fetchBranchHead = (branch) => {
+  const { branch: name, ...repoPath } = getBranchRepository(branch);
+
+  return fetchProjectBranchHead(name, repoPath);
+};
 
 /**
  * Fetch the list of files changed in the given merge request. GitLab refreshes a merge request in
@@ -189,8 +199,10 @@ export const fetchMergeRequestFileList = async (mergeRequest) => {
     ),
   ]);
 
-  // A branch that’s gone leaves nothing to compare, so the merge request is all there is to go by
-  if (!branchHead || branchHead === headSHA) {
+  // A branch that’s gone leaves nothing to compare, so the merge request is all there is to go by.
+  // So does a contributor’s branch in their fork: a commit it has gained since the merge request
+  // was refreshed is only in the fork, which the comparison on the configured project can’t reach
+  if (!branchHead || branchHead === headSHA || mergeRequest.fork) {
     mergeRequest.files = diffs.map(parseDiff);
 
     return;
@@ -326,6 +338,99 @@ export const fetchMergeRequestFileContents = async (mergeRequest) => {
 };
 
 /**
+ * Parse a merge request a contributor opened from their fork, for a maintainer to review. See
+ * `toForkPullRequest` in `$lib/services/backends/git/shared/fork`.
+ * @param {Record<string, any>} item Merge request returned by the REST API.
+ * @param {{ fullPath?: string, allowCollaboration?: boolean } | undefined} source Path of the fork,
+ * e.g. `alice/website` or `acme/docs/website`, and whether the contributor lets the maintainers
+ * push to its branch, as the GraphQL API reports them. The REST API gives neither.
+ * @returns {WorkflowPullRequest | undefined} Parsed merge request, or `undefined` if it isn’t one a
+ * contributor opened from their fork for an entry.
+ */
+export const parseForkMergeRequest = (item, source) => {
+  const fullPath = source?.fullPath ?? '';
+  const slash = fullPath.lastIndexOf('/');
+
+  // A merge request whose fork has been deleted has no branch left to read or push to
+  if (
+    item.source_project_id === item.target_project_id ||
+    item.target_branch !== repository.branch ||
+    slash < 1
+  ) {
+    return undefined;
+  }
+
+  return toForkPullRequest(
+    {
+      owner: fullPath.slice(0, slash),
+      repo: fullPath.slice(slash + 1),
+      headBranch: item.source_branch,
+      editable: !!source?.allowCollaboration,
+      draft: !!item.draft,
+      labels: item.labels ?? [],
+    },
+    ({ status }) => toMergeRequest(item, status),
+  );
+};
+
+const FETCH_FORK_SOURCES_QUERY = `
+  query($fullPath: ID!, $iids: [String!]) {
+    project(fullPath: $fullPath) {
+      mergeRequests(iids: $iids, first: 100) {
+        nodes {
+          iid
+          allowCollaboration
+          sourceProject {
+            fullPath
+          }
+        }
+      }
+    }
+  }
+`;
+
+/**
+ * Fetch the open merge requests to the configured branch that contributors have opened from their
+ * forks with Open Authoring, for the maintainers to review. A contributor can’t label a merge
+ * request on the configured project, so these are matched by target branch rather than by label,
+ * and the ones from forks picked out by {@link parseForkMergeRequest}. The project’s own merge
+ * requests share the item cap, so a busy project can crowd the oldest contributions out.
+ * @returns {Promise<WorkflowPullRequest[]>} Merge requests.
+ * @see https://docs.gitlab.com/api/merge_requests/#list-project-merge-requests
+ * @see https://docs.gitlab.com/api/graphql/reference/#mergerequest
+ */
+const fetchForkMergeRequests = async () => {
+  const items = /** @type {Record<string, any>[]} */ (
+    await fetchAPI(
+      `/projects/${getProjectId()}/merge_requests` +
+        `?state=opened&order_by=updated_at&per_page=${MAX_ITEMS.mergeRequests}` +
+        `&target_branch=${encodeURIComponent(/** @type {string} */ (repository.branch))}`,
+    )
+  ).filter((item) => item.source_project_id !== item.target_project_id);
+
+  if (!items.length) {
+    return [];
+  }
+
+  const result = /** @type {{ project?: { mergeRequests?: { nodes: Record<string, any>[] } } }} */ (
+    await fetchGraphQL(FETCH_FORK_SOURCES_QUERY, { iids: items.map(({ iid }) => String(iid)) })
+  );
+
+  const sources = new Map(
+    (result.project?.mergeRequests?.nodes ?? []).map(
+      ({ iid, allowCollaboration, sourceProject }) => [
+        String(iid),
+        { fullPath: sourceProject?.fullPath, allowCollaboration },
+      ],
+    ),
+  );
+
+  return /** @type {WorkflowPullRequest[]} */ (
+    items.map((item) => parseForkMergeRequest(item, sources.get(String(item.iid)))).filter(Boolean)
+  );
+};
+
+/**
  * Fetch all the open merge requests managed by the CMS, along with the changed files.
  * @returns {Promise<WorkflowPullRequest[]>} Merge requests.
  * @see https://docs.gitlab.com/api/merge_requests/#list-project-merge-requests
@@ -339,24 +444,33 @@ export const fetchPullRequests = async () => {
   // ones, which could otherwise push the unpublished entries out of the result. Unlike GitHub’s,
   // GitLab’s label filter matches a merge request carrying all of the given labels, so each label
   // needs its own request and the results are merged here
-  await runConcurrently(getAllStatusLabels(), async (label) => {
-    const items = /** @type {Record<string, any>[]} */ (
-      await fetchAPI(
-        `/projects/${getProjectId()}/merge_requests` +
-          `?state=opened&order_by=updated_at&per_page=${MAX_ITEMS.mergeRequests}` +
-          `&labels=${encodeURIComponent(label)}`,
-      )
-    );
+  const [forkMergeRequests] = await Promise.all([
+    // With Open Authoring turned on, the merge requests contributors have opened from their forks
+    // are listed as well, for the maintainers to review
+    isOpenAuthoringConfigured() ? fetchForkMergeRequests() : [],
+    runConcurrently(getAllStatusLabels(), async (label) => {
+      const items = /** @type {Record<string, any>[]} */ (
+        await fetchAPI(
+          `/projects/${getProjectId()}/merge_requests` +
+            `?state=opened&order_by=updated_at&per_page=${MAX_ITEMS.mergeRequests}` +
+            `&labels=${encodeURIComponent(label)}`,
+        )
+      );
 
-    items.forEach((item) => {
-      const mergeRequest = parseMergeRequest(item);
+      items.forEach((item) => {
+        const mergeRequest = parseMergeRequest(item);
 
-      // A merge request can carry status labels with more than one prefix, so it can show up in
-      // several of these requests
-      if (mergeRequest) {
-        found.set(item.iid, mergeRequest);
-      }
-    });
+        // A merge request can carry status labels with more than one prefix, so it can show up in
+        // several of these requests
+        if (mergeRequest) {
+          found.set(item.iid, mergeRequest);
+        }
+      });
+    }),
+  ]);
+
+  forkMergeRequests.forEach((mergeRequest) => {
+    found.set(/** @type {number} */ (mergeRequest.number), mergeRequest);
   });
 
   const mergeRequests = [...found.values()].sort(
@@ -364,7 +478,8 @@ export const fetchPullRequests = async () => {
   );
 
   await Promise.all([
-    fetchMergePermissions(mergeRequests),
+    // A contributor’s merge request is never merged from the CMS, so its permissions don’t matter
+    fetchMergePermissions(mergeRequests.filter(({ fork }) => !fork)),
     runConcurrently(mergeRequests, async (mergeRequest) => {
       await fetchMergeRequestFileList(mergeRequest);
       await fetchMergeRequestFileContents(mergeRequest);

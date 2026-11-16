@@ -4,7 +4,7 @@ import { getPathInfo } from '@sveltia/utils/file';
 
 import { fetchLastCommit } from '$lib/services/backends/git/gitlab/commits';
 import {
-  getWorkflowRepository,
+  getBranchRepository,
   initOpenAuthoring,
   isOpenAuthoringConfigured,
 } from '$lib/services/backends/git/gitlab/fork';
@@ -599,9 +599,11 @@ export const fetchBlob = async (asset) => {
   const { path, workflow } = asset;
   // An asset attached to an unpublished entry is committed to a workflow branch only, so it has to
   // be read from there; on the configured branch the path is missing or holds the published
-  // version. That branch lives in the contributor’s fork with Open Authoring, so it’s read there
-  const ref = workflow?.branch ?? branch;
-  const projectId = getProjectId(workflow ? getWorkflowRepository() : undefined);
+  // version. That branch lives in the contributor’s fork with Open Authoring, or when a maintainer
+  // reviews a contributor’s merge request, so it’s read there
+  const target = workflow ? getBranchRepository(workflow.branch) : undefined;
+  const ref = target?.branch ?? branch;
+  const projectId = getProjectId(target);
 
   return /** @type {Promise<Blob>} */ (
     fetchAPI(getRawFilePath({ projectId, path, ref, lfs: true }), { responseType: 'blob' })

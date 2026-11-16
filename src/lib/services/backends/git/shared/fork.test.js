@@ -14,9 +14,11 @@ import {
   pollForFork,
   pruneForkBranches,
   requestForkWithFallbackName,
+  resolveBranchRepository,
   resolveWorkflowRepository,
   runOpenAuthoringSetUp,
   setUpForkFor,
+  toForkPullRequest,
   updateForkStatusWith,
   warnForkNotFastForwarded,
   warnForkSyncError,
@@ -71,6 +73,91 @@ describe('shared fork service', () => {
 
       cmsConfig.current = undefined;
       expect(isOpenAuthoringConfiguredFor('gitea')).toBe(false);
+    });
+  });
+
+  describe('toForkPullRequest', () => {
+    const args = {
+      owner: 'alice',
+      repo: 'website',
+      headBranch: 'cms/alice/website/posts/hello',
+      editable: true,
+      draft: false,
+      labels: ['sveltia-cms/pending_publish'],
+    };
+
+    test('qualifies the branch with the fork and ignores the description', () => {
+      const parse = vi.fn(
+        ({ status }) => /** @type {any} */ ({ number: 7, status, description: 'x' }),
+      );
+
+      expect(toForkPullRequest(args, parse)).toEqual({
+        number: 7,
+        status: 'pending_publish',
+        branch: 'alice/website:cms/alice/website/posts/hello',
+        description: '',
+        fork: { owner: 'alice', repo: 'website', editable: true },
+      });
+      expect(parse).toHaveBeenCalledWith({
+        status: 'pending_publish',
+        branch: 'alice/website:cms/alice/website/posts/hello',
+        description: '',
+      });
+    });
+
+    test('takes the stage from the draft state, then from the ready label', () => {
+      /**
+       * Get the status of a pull request with the given draft state and labels.
+       * @param {boolean} draft Whether it’s a draft.
+       * @param {string[]} labels Label names.
+       * @returns {string | undefined} Status.
+       */
+      const status = (draft, labels) =>
+        toForkPullRequest({ ...args, draft, labels }, (fields) => /** @type {any} */ (fields))
+          ?.status;
+
+      expect(status(true, ['sveltia-cms/pending_publish'])).toBe('draft');
+      expect(status(false, ['sveltia-cms/pending_publish'])).toBe('pending_publish');
+      // A label left over from the drafting stage doesn’t hold it back there, and a removal is told
+      // by what the pull request holds rather than by a label
+      expect(status(false, ['sveltia-cms/draft'])).toBe('pending_review');
+      expect(status(false, ['sveltia-cms/pending_deletion'])).toBe('pending_review');
+      expect(status(false, [])).toBe('pending_review');
+    });
+
+    test('skips a branch not named like a workflow branch', () => {
+      const parse = vi.fn();
+
+      expect(toForkPullRequest({ ...args, headBranch: 'feature/x' }, parse)).toBeUndefined();
+      expect(parse).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('resolveBranchRepository', () => {
+    /** @type {any} */
+    const repository = { owner: 'owner', repo: 'repo', branch: 'main' };
+
+    test('is the workflow repository for a branch of its own', () => {
+      expect(resolveBranchRepository(repository, 'cms/posts/hello')).toEqual({
+        owner: 'owner',
+        repo: 'repo',
+        branch: 'cms/posts/hello',
+      });
+
+      forkedRepository.current = { owner: 'contributor', repo: 'repo' };
+      expect(resolveBranchRepository(repository, 'cms/posts/hello')).toEqual({
+        owner: 'contributor',
+        repo: 'repo',
+        branch: 'cms/posts/hello',
+      });
+    });
+
+    test('is the contributor’s fork for the branch of a pull request from it', () => {
+      expect(resolveBranchRepository(repository, 'acme/docs/website:cms/posts/hello')).toEqual({
+        owner: 'acme/docs',
+        repo: 'website',
+        branch: 'cms/posts/hello',
+      });
     });
   });
 

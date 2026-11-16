@@ -19,7 +19,6 @@ import {
 } from '$lib/services/backends/git/shared/repository';
 import { deleteRemoteBranch } from '$lib/services/backends/git/shared/workflow';
 import { encodePathSegments } from '$lib/services/utils/url';
-import { parseForkBranchName } from '$lib/services/workflow/forks';
 import { getStatusLabel, replaceStatusLabel } from '$lib/services/workflow/labels';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
@@ -204,15 +203,9 @@ export const fetchBranchHead = async (branch) => {
  * Delete the given branch. Failures are ignored, as the branch may already have been deleted by the
  * repository’s automatic head branch deletion setting.
  * @param {string} branch Branch name.
- * @throws {Error} When the branch is in a contributor’s fork.
  * @see https://docs.github.com/en/rest/git/refs#delete-a-reference
  */
 export const deleteBranch = async (branch) => {
-  // A contributor’s branch is theirs to delete: a maintainer only closes the pull request from it
-  if (parseForkBranchName(branch)) {
-    throw new Error('A branch in a contributor’s fork cannot be deleted.');
-  }
-
   const repoPath = getRepositoryPath(getWorkflowRepository());
 
   await deleteRemoteBranch({

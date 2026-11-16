@@ -8,6 +8,7 @@ import {
   fetchForkByName,
   fetchForkBySearch,
   fetchForkingAllowed,
+  getBranchRepository,
   getWorkflowRepository,
   initOpenAuthoring,
   isOpenAuthoringConfigured,
@@ -114,6 +115,21 @@ describe('Gitea fork service', () => {
 
       forkedRepository.current = { owner: 'me', repo: 'repo' };
       expect(getWorkflowRepository()).toEqual({ owner: 'me', repo: 'repo' });
+    });
+  });
+
+  describe('getBranchRepository', () => {
+    test('returns the repository a branch lives in', () => {
+      expect(getBranchRepository('cms/posts/hello')).toEqual({
+        owner: 'owner',
+        repo: 'repo',
+        branch: 'cms/posts/hello',
+      });
+      expect(getBranchRepository('alice/website:cms/alice/website/posts/hello')).toEqual({
+        owner: 'alice',
+        repo: 'website',
+        branch: 'cms/alice/website/posts/hello',
+      });
     });
   });
 
