@@ -10,6 +10,13 @@
  * (`public.d.ts`) and JSON schema (`sveltia-cms.json`) during the build process (see
  * `scripts/vite/schema.js`), which are then distributed via npm. The outdated Netlify/Decap CMS
  * equivalents can be found below.
+ *
+ * Don’t use the `Omit`, `Pick` or `Exclude` utility types here: the JSON schema generator doesn’t
+ * support them properly (see vega/ts-json-schema-generator#993). To leave out some properties of a
+ * type, move the shared properties to a type of their own and intersect it with the rest instead.
+ * `Exclude<string, …>` doesn’t narrow the type in TypeScript anyway; add such a constraint to the
+ * schema in `scripts/vite/schema.js`.
+ * @see https://github.com/vega/ts-json-schema-generator/issues/993
  * @see https://github.com/decaporg/decap-cms/blob/main/packages/decap-cms-core/index.d.ts
  * @see https://www.schemastore.org/netlify.json
  */
@@ -367,9 +374,9 @@
  */
 
 /**
- * Unified media storage option that supports multiple storage providers. See the
- * [documentation](https://sveltiacms.app/en/docs/media#configuration) for details.
- * @typedef {object} MediaLibraries
+ * Options of the media storages in the `media_libraries` option that are the same at the global and
+ * field levels.
+ * @typedef {object} CommonMediaLibraries
  * @property {SharedMediaLibraryOptions} [all] Default options that apply to the default media
  * storage and to files uploaded to the cloud storage services, except for Cloudinary, which uses
  * its own widget. For the default media storage, these options can be overridden by the options in
@@ -381,37 +388,72 @@
  * Options for the Cloudinary media storage. Set to `false` to explicitly disable.
  * @property {(UploadcareMediaLibrary & MediaLibrarySelectionOptions) | false} [uploadcare]
  * Options for the Uploadcare media storage. Set to `false` to explicitly disable.
+ * @property {StockMediaLibrary | false} [stock_assets] Options for the unified stock photo/video
+ * media library. Set to `false` to explicitly disable.
+ */
+
+/**
+ * Options of the cloud storages in the global `media_libraries` option.
+ * @typedef {object} GlobalCloudMediaLibraries
  * @property {(S3MediaLibrary & MediaLibrarySelectionOptions) | false} [aws_s3] Options for the
  * Amazon S3 media storage. Set to `false` to explicitly disable.
  * @property {(AzureMediaLibrary & MediaLibrarySelectionOptions) | false} [azure_blob_storage]
  * Options for the Azure Blob Storage media storage. Set to `false` to explicitly disable.
  * @property {(S3MediaLibrary & MediaLibrarySelectionOptions) | false} [cloudflare_r2] Options for
  * the Cloudflare R2 media storage. Set to `false` to explicitly disable.
- * @property {(S3MediaLibrary & MediaLibrarySelectionOptions) | false} [digitalocean_spaces] Options
- * for the DigitalOcean Spaces media storage. Set to `false` to explicitly disable.
+ * @property {(S3MediaLibrary & MediaLibrarySelectionOptions) | false} [digitalocean_spaces]
+ * Options for the DigitalOcean Spaces media storage. Set to `false` to explicitly disable.
  * @property {(S3MediaLibrary & MediaLibrarySelectionOptions) | false} [backblaze_b2] Options for
  * the Backblaze B2 media storage. Set to `false` to explicitly disable.
  * @property {(S3MediaLibrary & MediaLibrarySelectionOptions) | false} [bunny_storage] Options for
  * the Bunny Storage media storage. Set to `false` to explicitly disable.
- * @property {(S3MediaLibrary & MediaLibrarySelectionOptions) | false} [neon_object_storage] Options
- * for the Neon Object Storage media storage. Set to `false` to explicitly disable.
+ * @property {(S3MediaLibrary & MediaLibrarySelectionOptions) | false} [neon_object_storage]
+ * Options for the Neon Object Storage media storage. Set to `false` to explicitly disable.
  * @property {(S3MediaLibrary & MediaLibrarySelectionOptions) | false} [scaleway_object_storage]
  * Options for the Scaleway Object Storage media storage. Set to `false` to explicitly disable.
  * @property {(S3MediaLibrary & MediaLibrarySelectionOptions) | false} [supabase_storage] Options
  * for the Supabase Storage media storage. Set to `false` to explicitly disable.
- * @property {StockMediaLibrary | false} [stock_assets] Options for the unified stock photo/video
- * media library. Set to `false` to explicitly disable.
+ */
+
+/**
+ * Options of the cloud storages in the field-level `media_libraries` option. Unlike the global
+ * ones, they’re all optional.
+ * @typedef {object} FieldCloudMediaLibraries
+ * @property {(Partial<S3MediaLibrary> & MediaLibrarySelectionOptions) | false} [aws_s3] Options
+ * for the Amazon S3 media storage. Set to `false` to explicitly disable.
+ * @property {(Partial<AzureMediaLibrary> & MediaLibrarySelectionOptions) | false}
+ * [azure_blob_storage] Options for the Azure Blob Storage media storage. Set to `false` to
+ * explicitly disable.
+ * @property {(Partial<S3MediaLibrary> & MediaLibrarySelectionOptions) | false} [cloudflare_r2]
+ * Options for the Cloudflare R2 media storage. Set to `false` to explicitly disable.
+ * @property {(Partial<S3MediaLibrary> & MediaLibrarySelectionOptions) | false}
+ * [digitalocean_spaces] Options for the DigitalOcean Spaces media storage. Set to `false` to
+ * explicitly disable.
+ * @property {(Partial<S3MediaLibrary> & MediaLibrarySelectionOptions) | false} [backblaze_b2]
+ * Options for the Backblaze B2 media storage. Set to `false` to explicitly disable.
+ * @property {(Partial<S3MediaLibrary> & MediaLibrarySelectionOptions) | false} [bunny_storage]
+ * Options for the Bunny Storage media storage. Set to `false` to explicitly disable.
+ * @property {(Partial<S3MediaLibrary> & MediaLibrarySelectionOptions) | false}
+ * [neon_object_storage] Options for the Neon Object Storage media storage. Set to `false` to
+ * explicitly disable.
+ * @property {(Partial<S3MediaLibrary> & MediaLibrarySelectionOptions) | false}
+ * [scaleway_object_storage] Options for the Scaleway Object Storage media storage. Set to `false`
+ * to explicitly disable.
+ * @property {(Partial<S3MediaLibrary> & MediaLibrarySelectionOptions) | false} [supabase_storage]
+ * Options for the Supabase Storage media storage. Set to `false` to explicitly disable.
+ */
+
+/**
+ * Unified media storage option that supports multiple storage providers. See the
+ * [documentation](https://sveltiacms.app/en/docs/media#configuration) for details.
+ * @typedef {CommonMediaLibraries & GlobalCloudMediaLibraries} MediaLibraries
  */
 
 /**
  * Field-level `media_libraries` option. The options of a storage are merged over the global options
  * of the same storage, so the options the storage requires, such as an S3 `bucket`, can be left to
  * the global ones.
- * @typedef {Omit<MediaLibraries, S3MediaLibraryName | 'azure_blob_storage'> &
- * { [K in S3MediaLibraryName]?: (Partial<S3MediaLibrary> & MediaLibrarySelectionOptions) | false }
- * &
- * { azure_blob_storage?: (Partial<AzureMediaLibrary> & MediaLibrarySelectionOptions) | false }}
- * FieldMediaLibraries
+ * @typedef {CommonMediaLibraries & FieldCloudMediaLibraries} FieldMediaLibraries
  */
 
 /**
@@ -1238,10 +1280,14 @@
  */
 
 /**
- * RichText field definition.
+ * RichText field options other than the field type.
  * @typedef {SimpleCommonFieldProps & VisibleFieldProps & FieldValidationProps &
- * RichTextFieldBaseProps & RichTextFieldFormatProps & RichTextFieldProps & UniqueValueProps}
- * RichTextField
+ * RichTextFieldBaseProps & RichTextFieldFormatProps & UniqueValueProps} RichTextFieldOptions
+ */
+
+/**
+ * RichText field definition.
+ * @typedef {RichTextFieldOptions & RichTextFieldProps} RichTextField
  */
 
 /**
@@ -1572,7 +1618,7 @@
 /**
  * Custom field properties.
  * @typedef {object} CustomFieldProps
- * @property {Exclude<string, BuiltInFieldType | ''>} widget Field type.
+ * @property {string} widget Field type. It can’t be empty or the name of a built-in field type.
  * @see https://decapcms.org/docs/custom-widgets/
  * @see https://sveltiacms.app/en/docs/api/field-types
  */
@@ -2447,11 +2493,9 @@
  */
 
 /**
- * Gitea/Forgejo backend properties.
+ * Gitea/Forgejo backend properties that differ from those of the Forgejo backend.
  * @typedef {object} GiteaBackendProps
  * @property {'gitea'} name Backend name.
- * @property {string} repo Repository identifier: organization/user name and repository name joined
- * by a slash, e.g. `owner/repo`.
  * @property {string} [api_root] REST API endpoint for the backend. Required when using a
  * self-hosted Gitea/Forgejo instance. Default: `https://gitea.com/api/v1`.
  * @property {string} [base_url] OAuth base URL, which is the URL of the Gitea/Forgejo instance,
@@ -2459,6 +2503,15 @@
  * without an OAuth client. It’s not inferred from `api_root`, so it’s required when using a
  * self-hosted instance or Codeberg.
  * Default: `https://gitea.com`.
+ * @see https://decapcms.org/docs/gitea-backend/
+ * @see https://sveltiacms.app/en/docs/backends/gitea-forgejo
+ */
+
+/**
+ * Properties shared by the Gitea/Forgejo and Forgejo backends.
+ * @typedef {object} GiteaForgejoBackendProps
+ * @property {string} repo Repository identifier: organization/user name and repository name joined
+ * by a slash, e.g. `owner/repo`.
  * @property {string} [auth_endpoint] OAuth base URL path. Default: `login/oauth/authorize`.
  * @property {string} [app_id] OAuth application ID. Required for OAuth sign-in; without one, users
  * can still sign in with a personal access token.
@@ -2484,7 +2537,7 @@
 
 /**
  * Gitea/Forgejo backend.
- * @typedef {GitBackendProps & GiteaBackendProps} GiteaBackend
+ * @typedef {GitBackendProps & GiteaBackendProps & GiteaForgejoBackendProps} GiteaBackend
  */
 
 /**
@@ -2503,8 +2556,7 @@
 /**
  * Forgejo backend, as named in Decap CMS. It’s the same as the Gitea/Forgejo backend, except that
  * the `api_root` option is required and the OAuth base URL is derived from it.
- * @typedef {GitBackendProps & Omit<GiteaBackendProps, 'name' | 'api_root' | 'base_url'> &
- * ForgejoBackendProps} ForgejoBackend
+ * @typedef {GitBackendProps & ForgejoBackendProps & GiteaForgejoBackendProps} ForgejoBackend
  */
 
 /**
@@ -2934,10 +2986,10 @@
 /**
  * Options for the `CMS.renderRichText()` API.
  * @typedef {object} RenderRichTextOptions
- * @property {Partial<Omit<RichTextField, 'widget'>>} [fieldConfig] RichText field options to be
- * applied to the preview, such as `editor_components` and `sanitize_preview`. Options not given
- * here fall back to the `field_defaults.richtext` option, except for `sanitize_preview`: the output
- * is sanitized unless it’s explicitly set to `false` here.
+ * @property {Partial<RichTextFieldOptions>} [fieldConfig] RichText field options other than
+ * `widget` to be applied to the preview, such as `editor_components` and `sanitize_preview`.
+ * Options not given here fall back to the `field_defaults.richtext` option, except for
+ * `sanitize_preview`: the output is sanitized unless it’s explicitly set to `false` here.
  * @see https://sveltiacms.app/en/docs/api/editor-components
  */
 
