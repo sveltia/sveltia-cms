@@ -14,6 +14,7 @@ import {
   createMockImageFile,
   initTestConfig,
 } from '$lib/test/config';
+import { createFileDropEvent } from '$lib/test/drop';
 import { waitForToastsToHide } from '$lib/test/toast';
 
 import ExternalAssetsPanel from './external-assets-panel.svelte';
@@ -643,31 +644,7 @@ describe('ExternalAssetsPanel', () => {
     await expect.element(page.getByRole('alert')).toHaveTextContent('No files found.');
 
     const file = await createMockImageFile({ name: 'dropped.png' });
-    const event = new Event('drop', { bubbles: true, cancelable: true });
-
-    Object.defineProperty(event, 'dataTransfer', {
-      value: {
-        dropEffect: '',
-        items: [
-          {
-            /**
-             * Get the entry.
-             * @returns {any} File entry.
-             */
-            webkitGetAsEntry: () => ({
-              name: file.name,
-              isFile: true,
-              /**
-               * Read the file.
-               * @param {(file: File) => void} callback Callback.
-               * @returns {void} Nothing.
-               */
-              file: (callback) => callback(file),
-            }),
-          },
-        ],
-      },
-    });
+    const event = createFileDropEvent([file]);
 
     /** @type {HTMLElement} */ (document.querySelector('.drop-target')).dispatchEvent(event);
     await vi.waitFor(() => expect(upload).toHaveBeenCalledWith([file], expect.anything()));

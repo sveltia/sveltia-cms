@@ -11,6 +11,7 @@ import {
   getDirName,
   getGitHash,
   isEquivalentFileExtension,
+  readBlobAsFile,
   renameIfNeeded,
   resolvePath,
   sanitizeFileName,
@@ -691,5 +692,16 @@ describe('Test createPathRegEx()', () => {
     const result = 'src/assets/images/666-test/photo.jpg'.replace(regex, '/@assets/images/$<slug>');
 
     expect(result).toBe('/@assets/images/666-test/photo.jpg');
+  });
+});
+
+describe('readBlobAsFile()', () => {
+  test('copies the bytes and type of a blob into a named file', async () => {
+    const file = await readBlobAsFile(new Blob(['png'], { type: 'image/png' }), 'a.png');
+
+    expect(file).toBeInstanceOf(File);
+    expect(file.name).toBe('a.png');
+    expect(file.type).toBe('image/png');
+    expect(await file.text()).toBe('png');
   });
 });

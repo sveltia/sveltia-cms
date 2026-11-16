@@ -699,23 +699,6 @@ enter_new_name_for_folder: |
     one {{ הזינו שם חדש למטה. קובץ המדיה שבתיקייה יועבר יחד איתה, וכל פריט שמשתמש בו יתעדכן. }}
     two {{ הזינו שם חדש למטה. שני קובצי המדיה שבתיקייה יועברו יחד איתה, וכל פריט שמשתמש בהם יתעדכן. }}
     *   {{ הזינו שם חדש למטה. {$count} קובצי המדיה שבתיקייה יועברו יחד איתה, וכל פריט שמשתמש בהם יתעדכן. }}
-# Rename Folder dialog body text for a cloud storage service, whose files are hotlinked from the
-# entries, so a move changes the URLs and the entries aren’t updated
-enter_new_name_for_external_folder: |
-  .input {$count :integer}
-  .match $count
-    0   {{ הזינו שם חדש למטה. }}
-    one {{ הזינו שם חדש למטה. הקובץ שבתיקייה יועבר יחד איתה וכתובתו תשתנה, לכן עדכנו כל פריט שמשתמש בו. }}
-    two {{ הזינו שם חדש למטה. שני הקבצים שבתיקייה יועברו יחד איתה וכתובותיהם ישתנו, לכן עדכנו כל פריט שמשתמש בהם. }}
-    *   {{ הזינו שם חדש למטה. {$count} הקבצים שבתיקייה יועברו יחד איתה וכתובותיהם ישתנו, לכן עדכנו כל פריט שמשתמש בהם. }}
-# Rename Folder dialog for a cloud storage service: warning shown when entries link to files in the
-# folder, which aren’t updated. {$count} is the number of entries
-renaming_external_folder_breaks_links: |
-  .input {$count :integer}
-  .match $count
-    one {{ פריט אחד מקשר לקובץ בתיקייה הזו. הפריט לא יתעדכן, ולכן הקישור יישבר לאחר שינוי שם התיקייה. }}
-    two {{ שני פריטים מקשרים לקבצים בתיקייה הזו. הפריטים לא יתעדכנו, ולכן הקישורים יישברו לאחר שינוי שם התיקייה. }}
-    *   {{ {$count} פריטים מקשרים לקבצים בתיקייה הזו. הפריטים לא יתעדכנו, ולכן הקישורים יישברו לאחר שינוי שם התיקייה. }}
 # Delete Folder confirmation
 # {$name} is the folder name and {$count} is the number of assets in the folder
 confirm_deleting_folder: |
@@ -760,14 +743,6 @@ enter_new_name_for_asset: |
     one {{ הזינו שם חדש למטה. גם פריט אחד שמשתמש בקובץ המדיה יתעדכן. }}
     two {{ הזינו שם חדש למטה. גם שני פריטים שמשתמשים בקובץ המדיה יתעדכנו. }}
     *   {{ הזינו שם חדש למטה. גם {$count} פריטים שמשתמשים בקובץ המדיה יתעדכנו. }}
-# Rename Asset dialog for a file on a cloud storage service: warning shown when entries link to the
-# file, which aren’t updated. {$count} is the number of entries
-renaming_external_asset_breaks_links: |
-  .input {$count :integer}
-  .match $count
-    one {{ פריט אחד מקשר לקובץ הזה. הפריט לא יתעדכן, ולכן הקישור יישבר לאחר שינוי שם הקובץ. }}
-    two {{ שני פריטים מקשרים לקובץ הזה. הפריטים לא יתעדכנו, ולכן הקישורים יישברו לאחר שינוי שם הקובץ. }}
-    *   {{ {$count} פריטים מקשרים לקובץ הזה. הפריטים לא יתעדכנו, ולכן הקישורים יישברו לאחר שינוי שם הקובץ. }}
 # Validation errors for asset renaming
 enter_new_name_for_asset_error:
   empty: שם הקובץ אינו יכול להיות ריק.

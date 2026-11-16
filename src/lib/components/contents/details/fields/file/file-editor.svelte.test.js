@@ -16,45 +16,13 @@ import {
   setAssets,
 } from '$lib/test/config';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
+import { createFileDropEvent } from '$lib/test/drop';
 
 import FileEditor from './file-editor.svelte';
 
 vi.mock('$lib/services/contents/fields/file/helpers', { spy: true });
 vi.mock('$lib/services/contents/fields/file/process', { spy: true });
 vi.mock('$lib/services/contents/fields/file/resources', { spy: true });
-
-/**
- * Build a drop event carrying the given files.
- * @param {File[]} files Files.
- * @returns {Event} Event.
- */
-const createDropEvent = (files) => {
-  const event = new Event('drop', { bubbles: true, cancelable: true });
-
-  Object.defineProperty(event, 'dataTransfer', {
-    value: {
-      dropEffect: '',
-      items: files.map((file) => ({
-        /**
-         * Get the entry.
-         * @returns {any} File entry.
-         */
-        webkitGetAsEntry: () => ({
-          name: file.name,
-          isFile: true,
-          /**
-           * Read the file.
-           * @param {(file: File) => void} callback Callback.
-           * @returns {void} Nothing.
-           */
-          file: (callback) => callback(file),
-        }),
-      })),
-    },
-  });
-
-  return event;
-};
 
 /**
  * Render the editor within a draft.
@@ -136,7 +104,7 @@ describe('FileEditor', () => {
     const file = await createMockImageFile({ name: 'new.png' });
 
     /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
-      createDropEvent([file]),
+      createFileDropEvent([file]),
     );
 
     // The file is held in the draft under a temporary URL until the entry is saved
@@ -299,7 +267,7 @@ describe('FileEditor', () => {
     const file = await createMockImageFile({ name: 'c.png' });
 
     /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
-      createDropEvent([file]),
+      createFileDropEvent([file]),
     );
     await expect.poll(() => draft.currentValues._default['images.2']).toMatch(/^blob:/);
 
@@ -436,7 +404,7 @@ describe('FileEditor', () => {
     const file = new File(['hello'], 'notes.txt', { type: 'text/plain' });
 
     /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
-      createDropEvent([file]),
+      createFileDropEvent([file]),
     );
 
     await expect.poll(() => props.currentValue).toMatch(/^blob:/);
@@ -456,7 +424,7 @@ describe('FileEditor', () => {
     const file = await createMockImageFile({ name: 'new.png' });
 
     /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
-      createDropEvent([file]),
+      createFileDropEvent([file]),
     );
 
     await expect.poll(() => draft.currentValues._default['images.0']).toMatch(/^blob:/);
@@ -536,7 +504,7 @@ describe('FileEditor', () => {
     // Only the first of the two dropped files fits. The files differ, as a file with the same
     // content as an earlier one would be stored only once
     dropTarget.dispatchEvent(
-      createDropEvent([
+      createFileDropEvent([
         await createMockImageFile({ name: 'b.png', width: 5 }),
         await createMockImageFile({ name: 'c.png', width: 6 }),
       ]),
@@ -554,7 +522,7 @@ describe('FileEditor', () => {
     const files = { ...draft.files };
 
     dropTarget.dispatchEvent(
-      createDropEvent([await createMockImageFile({ name: 'd.png', width: 7 })]),
+      createFileDropEvent([await createMockImageFile({ name: 'd.png', width: 7 })]),
     );
     await new Promise((resolve) => {
       setTimeout(resolve, 100);
@@ -567,7 +535,7 @@ describe('FileEditor', () => {
     const { props, container } = await renderEditor({}, '');
 
     /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
-      createDropEvent([new File(['x'], 'broken.png', { type: 'image/png' })]),
+      createFileDropEvent([new File(['x'], 'broken.png', { type: 'image/png' })]),
     );
 
     const dialog = page.getByRole('alertdialog');
@@ -685,7 +653,7 @@ describe('FileEditor', () => {
       );
 
       /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
-        createDropEvent([file]),
+        createFileDropEvent([file]),
       );
 
       // The dialog opens on the service to upload the files there
@@ -767,7 +735,7 @@ describe('FileEditor', () => {
     };
 
     /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
-      createDropEvent([await createMockImageFile({ name: 'kite.png' })]),
+      createFileDropEvent([await createMockImageFile({ name: 'kite.png' })]),
     );
     await expectRefused();
 
@@ -800,7 +768,7 @@ describe('FileEditor', () => {
 
     // A PNG image converted to WebP fits a field only taking WebP images
     /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
-      createDropEvent([await createMockImageFile({ name: 'kite.png' })]),
+      createFileDropEvent([await createMockImageFile({ name: 'kite.png' })]),
     );
 
     await expect.poll(() => props.currentValue).toMatch(/^blob:/);
@@ -827,7 +795,7 @@ describe('FileEditor', () => {
     const { container } = await renderEditor({}, '');
 
     /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
-      createDropEvent([await createMockImageFile({ name: 'big.png' })]),
+      createFileDropEvent([await createMockImageFile({ name: 'big.png' })]),
     );
 
     const dialog = page.getByRole('alertdialog', { name: 'Large File' });
@@ -853,7 +821,7 @@ describe('FileEditor', () => {
         }),
     );
     /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
-      createDropEvent([await createMockImageFile({ name: 'new.png' })]),
+      createFileDropEvent([await createMockImageFile({ name: 'new.png' })]),
     );
     await vi.waitFor(() => expect(processResources).toHaveBeenCalled());
 
@@ -871,7 +839,7 @@ describe('FileEditor', () => {
     const { props, container } = await renderEditor({}, '');
 
     /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
-      createDropEvent([await createMockImageFile({ name: 'photo.png' })]),
+      createFileDropEvent([await createMockImageFile({ name: 'photo.png' })]),
     );
 
     const dialog = page.getByRole('alertdialog');
@@ -916,7 +884,7 @@ describe('FileEditor', () => {
 
     // The assets listed for the duplicate check are read when a file is dropped
     /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
-      createDropEvent([await createMockImageFile({ name: 'new.png' })]),
+      createFileDropEvent([await createMockImageFile({ name: 'new.png' })]),
     );
 
     await vi.waitFor(() => expect(listAssets).toHaveBeenCalled());
@@ -1023,7 +991,7 @@ describe('FileEditor', () => {
 
     // A dropped file is added to the list instead of replacing the same item again
     /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
-      createDropEvent([await createMockImageFile({ name: 'c.png' })]),
+      createFileDropEvent([await createMockImageFile({ name: 'c.png' })]),
     );
     await expect.poll(() => draft.currentValues._default['images.2']).toMatch(/^blob:/);
     expect(draft.currentValues._default['images.1']).toBe('/static/uploads/photo.png');

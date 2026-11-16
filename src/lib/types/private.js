@@ -1752,6 +1752,8 @@
  * @typedef {object} MovingAsset
  * @property {Asset} asset Asset.
  * @property {string} path New file path.
+ * @property {AssetFolderInfo} [folder] Asset folder the file is moved to, when it’s another one
+ * than the asset’s own. Default: the asset’s folder.
  */
 
 /**
@@ -1819,6 +1821,35 @@
  * @typedef {object} AssetSubfolder
  * @property {string} name Folder name.
  * @property {string} path Folder path, relative to the project root directory.
+ */
+
+/**
+ * Properties shared by every directory an asset can be moved to.
+ * @typedef {object} AssetMoveDestinationBase
+ * @property {string} dirPath Directory path: relative to the project root directory in the
+ * repository, or to the configured prefix on a service, where an empty string is the root.
+ * @property {string} label Folder or service label for the root, or the subfolder name.
+ * @property {AssetMoveDestination[]} children Subfolders of the directory.
+ */
+
+/**
+ * Directory an asset can be moved to: the root of a repository asset folder or a subfolder below
+ * it, which has the `folder`, or the root of a cloud storage service or a folder on it, which has
+ * the `service`.
+ * @typedef {AssetMoveDestinationBase & (
+ * { folder: AssetFolderInfo, service?: undefined } |
+ * { service: MediaLibraryService, folder?: undefined }
+ * )} AssetMoveDestination
+ */
+
+/**
+ * Assets to be moved with the Move dialog: repository assets, or files on a cloud storage service.
+ * @typedef {object} AssetMoveRequest
+ * @property {Asset[]} [assets] Repository assets.
+ * @property {ExternalAsset[]} [externalAssets] Files on a cloud storage service.
+ * @property {MediaLibraryService} [service] Service the `externalAssets` are on.
+ * @property {string} [dirPath] Directory picked up front, by dropping the assets on a folder.
+ * @property {string} [serviceId] ID of the service the directory picked up front is on, if any.
  */
 
 /**

@@ -26,6 +26,7 @@ import {
   serveMediaFolderAtSiteRoot,
   setAssets,
 } from '$lib/test/config';
+import { createFileDropEvent } from '$lib/test/drop';
 import { waitForToastsToHide } from '$lib/test/toast';
 
 import SelectAssetsDialog from './select-assets-dialog.svelte';
@@ -84,36 +85,13 @@ const renderDialog = async (props = {}, service = {}) => {
 };
 
 /**
- * Drop the given files onto the dialog, the way a browser does when files are dropped from the
- * desktop: each item resolves to a file system entry.
+ * Drop the given files onto the drop target.
  * @param {File[]} files Files.
  */
 const dropFiles = (files) => {
-  const event = new Event('drop', { bubbles: true, cancelable: true });
-
-  Object.defineProperty(event, 'dataTransfer', {
-    value: {
-      dropEffect: '',
-      items: files.map((file) => ({
-        /**
-         * Get the entry.
-         * @returns {any} File entry.
-         */
-        webkitGetAsEntry: () => ({
-          name: file.name,
-          isFile: true,
-          /**
-           * Read the file.
-           * @param {(file: File) => void} callback Callback.
-           * @returns {void} Nothing.
-           */
-          file: (callback) => callback(file),
-        }),
-      })),
-    },
-  });
-
-  /** @type {HTMLElement} */ (document.querySelector('.drop-target')).dispatchEvent(event);
+  /** @type {HTMLElement} */ (document.querySelector('.drop-target')).dispatchEvent(
+    createFileDropEvent(files),
+  );
 };
 
 /**

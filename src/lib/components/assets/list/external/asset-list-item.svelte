@@ -2,6 +2,7 @@
   import AssetListItem from '$lib/components/assets/list/asset-list-item.svelte';
   import UnavailableBadge from '$lib/components/assets/list/external/unavailable-badge.svelte';
   import { goto } from '$lib/services/app/navigation';
+  import { createAssetDragSource } from '$lib/services/assets/drag';
   import {
     canPreviewExternalAsset,
     focusedExternalAsset,
@@ -18,6 +19,7 @@
     browsingExternalFolders,
     listedExternalAssetIndexMap,
   } from '$lib/services/assets/external/view';
+  import { canMoveExternalAssets, getDraggedExternalAssets } from '$lib/services/assets/movable';
   import { toggleListItem } from '$lib/services/utils/array';
 
   /**
@@ -42,6 +44,17 @@
     selectedCloudService.current?.serviceId === LINKED_FILES_SERVICE_ID,
   );
   const unavailable = $derived(externalAssetAvailability.current[asset.id] === false);
+  /** The service the file is on, which the list is only shown for. */
+  const service = $derived(selectedCloudService.current);
+  /**
+   * Attachment that lets the row be dragged onto a folder, when the file can be moved: not a file
+   * linked from an entry, which isn’t on a service the CMS manages.
+   */
+  const dragSource = $derived(
+    service && !isLinkedFile && canMoveExternalAssets(service, [asset])
+      ? createAssetDragSource(() => getDraggedExternalAssets(asset, service))
+      : undefined,
+  );
   /**
    * The name shown: the file name while the service is browsed folder by folder, or the path when
    * a search lists the matches from every folder at once, so they can be told apart.
@@ -56,8 +69,6 @@
    * Show the details of the asset.
    */
   const showDetails = () => {
-    const service = selectedCloudService.current;
-
     /* v8 ignore next 3 -- the list is only shown while a service is selected */
     if (service) {
       goto(getExternalAssetPath(service, asset), { transitionType: 'forwards' });
@@ -101,4 +112,5 @@
     showDetails();
   }}
   status={isLinkedFile ? status : undefined}
+  {dragSource}
 />

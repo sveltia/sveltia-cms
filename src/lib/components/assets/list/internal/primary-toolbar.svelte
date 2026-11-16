@@ -95,7 +95,7 @@
     <CopyAssetsButton assets={asset ? [asset] : []} />
     <DownloadAssetsButton {assets} getName={(a) => a.name} getBlob={getAssetBlob} />
     <DeleteAssetsButton {assets} listedCount={listedAssets.current.length} />
-    <EditOptionsButton {asset} />
+    <EditOptionsButton {asset} {assets} />
   {/snippet}
   {#snippet fab()}
     <!-- A folder-level action like Upload, so it sits with the Upload button on every screen size

@@ -22,7 +22,9 @@ import { waitForToastsToHide } from '$lib/test/toast';
 
 import RenameDialog from './rename-dialog.svelte';
 
-vi.mock('$lib/services/assets/data/move', () => ({
+vi.mock('$lib/services/assets/data/move', async (importOriginal) => ({
+  // The message is worked out by the real function, with the mocked read-only checks below
+  getMoveBlockedMessage: /** @type {any} */ (await importOriginal()).getMoveBlockedMessage,
   getDraftBaseProps: vi.fn(),
   addSavingEntryData: vi.fn(),
   collectEntryChanges: vi.fn(),

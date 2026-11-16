@@ -31,12 +31,12 @@ const renderDialog = async (overrides = {}) => {
 describe('NameInputDialog', () => {
   test('asks for a name, binding the value, and reports the note and the error', async () => {
     const oninput = vi.fn();
-    const props = await renderDialog({ warning: 'Links will break.', oninput });
+    const props = await renderDialog({ oninput });
     const dialog = page.getByRole('dialog', { name: 'Name' });
     const textbox = dialog.getByRole('textbox', { name: 'File Name' });
 
     await expect.element(dialog.getByText('Enter a name.')).toBeVisible();
-    await expect.element(dialog.getByRole('alert')).toHaveTextContent('Links will break.');
+    expect(dialog.getByRole('alert').elements()).toHaveLength(0);
     await expect.element(textbox).toHaveValue('a.png');
     await expect.element(textbox).toBeEnabled();
     await expect.element(textbox).not.toHaveAttribute('aria-invalid', 'true');
@@ -62,13 +62,12 @@ describe('NameInputDialog', () => {
   });
 
   test('shows why the name can’t be submitted in place of the description', async () => {
-    await renderDialog({ blockedMessage: 'The file is in use.', warning: 'Links will break.' });
+    await renderDialog({ blockedMessage: 'The file is in use.' });
 
     const dialog = page.getByRole('dialog', { name: 'Name' });
 
     await expect.element(dialog.getByRole('alert')).toHaveTextContent('The file is in use.');
     expect(dialog.getByText('Enter a name.').elements()).toHaveLength(0);
-    expect(dialog.getByText('Links will break.').elements()).toHaveLength(0);
     await expect.element(dialog.getByRole('textbox')).toBeDisabled();
   });
 });

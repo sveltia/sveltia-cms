@@ -1,5 +1,6 @@
 <!--
-  @component Edit options menu for a repository asset: Edit, Rename, Replace and links to the file.
+  @component
+  Edit options menu for a repository asset: Edit, Rename, Move, Replace and links to the file.
 -->
 <script>
   import { _ } from '@sveltia/i18n';
@@ -10,7 +11,13 @@
   import { createAssetDetailsState } from '$lib/services/assets/details-state.svelte';
   import { assetsLocked, hasReadonlyAsset } from '$lib/services/assets/folders';
   import { canEditAsset } from '$lib/services/assets/kinds';
-  import { editingAsset, renamingAsset, uploadingAssets } from '$lib/services/assets/state';
+  import { canMoveAssets } from '$lib/services/assets/movable';
+  import {
+    assetMoveRequest,
+    editingAsset,
+    renamingAsset,
+    uploadingAssets,
+  } from '$lib/services/assets/state';
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
   import { backend } from '$lib/services/backends';
   import { openNewTab } from '$lib/services/utils/window';
@@ -23,16 +30,20 @@
   /**
    * @typedef {object} Props
    * @property {Asset} [asset] Selected asset.
+   * @property {Asset[]} [assets] Assets the Move item applies to, as several can be selected in the
+   * list. Default: the selected asset.
    * @property {Snippet} [extraItems] Slot content.
    */
 
   /** @type {Props} */
-  let { asset, extraItems = undefined } = $props();
+  let { asset, assets = asset ? [asset] : [], extraItems = undefined } = $props();
 
   // The menu stays mounted while the focus moves from one asset to another
   const details = createAssetDetailsState(() => asset);
 
   const { publicURL, repoBlobURL } = $derived(details.current);
+  // A file in a read-only folder can’t be edited, renamed or replaced
+  const editable = $derived(!!asset && !hasReadonlyAsset([asset]));
 </script>
 
 <!--
@@ -41,15 +52,19 @@
   contributor or a user who can’t push to the branch, nor for a file in a read-only folder
 -->
 <EditOptionsMenu
-  readOnly={assetsLocked.current || (!!asset && hasReadonlyAsset([asset]))}
-  canEdit={!!asset && canEditAsset(asset)}
-  canRename={!!asset}
-  canReplace={!!asset}
+  readOnly={assetsLocked.current}
+  canEdit={editable && canEditAsset(/** @type {Asset} */ (asset))}
+  canRename={editable}
+  canReplace={editable}
+  canMove={canMoveAssets(assets)}
   onEdit={() => {
     editingAsset.current = asset;
   }}
   onRename={() => {
     renamingAsset.current = asset;
+  }}
+  onMove={() => {
+    assetMoveRequest.current = { assets: [...assets] };
   }}
   onReplace={() => {
     uploadingAssets.current = {

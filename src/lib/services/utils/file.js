@@ -271,3 +271,14 @@ export const getGitHash = (input) => {
   // A failure isn’t remembered, leaving room for a retry, e.g. once the file is readable again
   return getOrCreateAsync(gitHashCache, input, () => computeGitHash(input));
 };
+
+/**
+ * Read a blob into a new file of the given name, with its bytes read up front. A blob backed by the
+ * file system, like an asset in a local repository, points at a file that may be moved or deleted
+ * before the new file is read, e.g. to be written elsewhere or hashed, and can’t be read then.
+ * @param {Blob} blob Blob.
+ * @param {string} name File name.
+ * @returns {Promise<File>} File.
+ */
+export const readBlobAsFile = async (blob, name) =>
+  new File([await blob.arrayBuffer()], name, { type: blob.type });

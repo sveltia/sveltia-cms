@@ -5,6 +5,7 @@
 -->
 <script>
   import SubfolderListItem from '$lib/components/assets/list/subfolder-list-item.svelte';
+  import { createAssetDropTarget } from '$lib/services/assets/drag';
   import {
     browseExternalFolder,
     deletingExternalSubfolder,
@@ -54,6 +55,7 @@
         renamingExternalSubfolder.current = subfolder;
       }
     : undefined}
+  dropTarget={createAssetDropTarget({ service, dirPath: subfolder.path })}
   onDelete={canDelete
     ? () => {
         deletingExternalSubfolder.current = subfolder;

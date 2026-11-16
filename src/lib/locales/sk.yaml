@@ -628,15 +628,6 @@ enter_new_name_for_folder: |
     one {{ Nižšie zadajte nový názov. Médium v priečinku sa presunie spolu s ním a všetky položky, ktoré ho používajú, sa aktualizujú. }}
     few {{ Nižšie zadajte nový názov. {$count} médiá v priečinku sa presunú spolu s ním a všetky položky, ktoré ich používajú, sa aktualizujú. }}
     *   {{ Nižšie zadajte nový názov. {$count} médií v priečinku sa presunie spolu s ním a všetky položky, ktoré ich používajú, sa aktualizujú. }}
-# Rename Folder dialog body text for a cloud storage service, whose files are hotlinked from the
-# entries, so a move changes the URLs and the entries aren’t updated
-enter_new_name_for_external_folder: |
-  .input {$count :integer}
-  .match $count
-    0   {{ Nižšie zadajte nový názov. }}
-    one {{ Nižšie zadajte nový názov. Súbor v priečinku sa presunie spolu s ním a jeho URL sa zmení, preto aktualizujte všetky položky, ktoré ho používajú. }}
-    few {{ Nižšie zadajte nový názov. {$count} súbory v priečinku sa presunú spolu s ním a ich URL sa zmenia, preto aktualizujte všetky položky, ktoré ich používajú. }}
-    *   {{ Nižšie zadajte nový názov. {$count} súborov v priečinku sa presunie spolu s ním a ich URL sa zmenia, preto aktualizujte všetky položky, ktoré ich používajú. }}
 # Delete Folder confirmation
 # {$name} is the folder name and {$count} is the number of assets in the folder
 confirm_deleting_folder: |

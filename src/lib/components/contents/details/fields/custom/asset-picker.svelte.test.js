@@ -5,6 +5,7 @@ import { globalAssetFolder } from '$lib/services/assets/folders';
 import { showContentOverlay } from '$lib/services/contents/editor';
 import { createMockAsset, createMockImageFile, initTestConfig, setAssets } from '$lib/test/config';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
+import { createFileDropEvent } from '$lib/test/drop';
 
 import AssetPicker from './asset-picker.svelte';
 
@@ -27,35 +28,13 @@ const renderPicker = async () => {
 };
 
 /**
- * Drop the given files onto the dialog.
+ * Drop the given files onto the drop target.
  * @param {File[]} files Files.
  */
 const dropFiles = (files) => {
-  const event = new Event('drop', { bubbles: true, cancelable: true });
-
-  Object.defineProperty(event, 'dataTransfer', {
-    value: {
-      dropEffect: '',
-      items: files.map((file) => ({
-        /**
-         * Get the entry.
-         * @returns {any} File entry.
-         */
-        webkitGetAsEntry: () => ({
-          name: file.name,
-          isFile: true,
-          /**
-           * Read the file.
-           * @param {(file: File) => void} callback Callback.
-           * @returns {void} Nothing.
-           */
-          file: (callback) => callback(file),
-        }),
-      })),
-    },
-  });
-
-  /** @type {HTMLElement} */ (document.querySelector('.drop-target')).dispatchEvent(event);
+  /** @type {HTMLElement} */ (document.querySelector('.drop-target')).dispatchEvent(
+    createFileDropEvent(files),
+  );
 };
 
 describe('AssetPicker', () => {

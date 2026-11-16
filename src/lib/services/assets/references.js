@@ -605,6 +605,15 @@ export const findEntriesByAssets = (targets, { entries = allEntries.current } = 
 export const getEntriesByAssets = async (targets, options) => findEntriesByAssets(targets, options);
 
 /**
+ * Get the entries using any of the given targets, each listed once, however many of the targets it
+ * uses.
+ * @param {AssetReferenceTarget[]} targets Targets.
+ * @returns {Promise<Entry[]>} Entries.
+ */
+export const getEntriesUsingTargets = async (targets) =>
+  targets.length ? [...new Set((await getEntriesByAssets(targets)).flat())] : [];
+
+/**
  * Find every field holding any of the given targets in the given entries, in one pass over them.
  * @param {AssetReferenceTarget[]} targets Targets.
  * @param {object} [options] Options.

@@ -105,17 +105,6 @@ describe('RenameDialog', () => {
     await expect.element(dialog.getByRole('button', { name: 'Rename' })).toBeDisabled();
   });
 
-  test('shows a warning without keeping the asset from being renamed', async () => {
-    const { onRename } = await renderDialog({ warning: 'Links will break.' });
-    const dialog = page.getByRole('dialog');
-
-    await expect.element(dialog.getByRole('alert')).toHaveTextContent('Links will break.');
-    await expectFileNameSelected(dialog.getByRole('textbox'), 'photo.png');
-    await dialog.getByRole('textbox').fill('picture.png');
-    await dialog.getByRole('button', { name: 'Rename' }).click();
-    await vi.waitFor(() => expect(onRename).toHaveBeenCalledWith('picture.png'));
-  });
-
   test('validates the new name', async () => {
     await renderDialog();
 

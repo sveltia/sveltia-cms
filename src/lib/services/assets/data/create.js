@@ -11,7 +11,13 @@ import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-
 import { createPath } from '$lib/services/utils/file';
 
 /**
- * @import { Asset, CommitAction, CommitOptions, UploadingAssets } from '$lib/types/private';
+ * @import {
+ * Asset,
+ * CommitAction,
+ * CommitOptions,
+ * FileChange,
+ * UploadingAssets,
+ * } from '$lib/types/private';
  */
 
 /**
@@ -90,32 +96,37 @@ export const updateStores = ({ count, options }) => {
 };
 
 /**
+ * Prepare files to be saved to a repository folder, named as {@link createFileList} names them:
+ * the assets they become and the changes that commit them.
+ * @param {UploadingAssets} uploadingAssets Files to be saved.
+ * @returns {{ savingAssets: Asset[], changes: FileChange[] }} Assets and changes, in the same
+ * order as the files.
+ * @throws {Error} When a file would be saved in a folder the CMS is served from.
+ */
+export const prepareAssetChanges = (uploadingAssets) => {
+  const { folder } = uploadingAssets;
+  const fileList = createFileList(uploadingAssets);
+
+  assertOutsideCmsFolders(fileList.map(({ path }) => path));
+
+  return {
+    savingAssets: fileList.map(
+      ({ name, path, file }) =>
+        /** @type {Asset} */ ({ name, path, size: file.size, kind: getAssetKind(name), folder }),
+    ),
+    changes: fileList.map(({ action, path, file }) => ({ action, path, data: file })),
+  };
+};
+
+/**
  * Upload/save the given assets to the backend.
  * @param {UploadingAssets} uploadingAssets Assets to be uploaded.
  * @param {CommitOptions} options Options for the backend handler.
  */
 export const saveAssets = async (uploadingAssets, options) => {
-  const { files, folder } = uploadingAssets;
-  const savingFileList = createFileList(uploadingAssets);
+  const { savingAssets, changes } = prepareAssetChanges(uploadingAssets);
 
-  assertOutsideCmsFolders(savingFileList.map(({ path }) => path));
+  await saveChanges({ changes, savingAssets, options });
 
-  const savingAssets = savingFileList.map(
-    ({ name, path, file }) =>
-      /** @type {Asset} */ ({
-        name,
-        path,
-        size: file.size,
-        kind: getAssetKind(name),
-        folder,
-      }),
-  );
-
-  await saveChanges({
-    changes: savingFileList.map(({ action, path, file }) => ({ action, path, data: file })),
-    savingAssets,
-    options,
-  });
-
-  updateStores({ count: files.length, options });
+  updateStores({ count: uploadingAssets.files.length, options });
 };

@@ -87,6 +87,36 @@ export const getSelectedAssetFolderLabel = () =>
 export const getAssetFolderHistoryState = () => ({ folder: selectedAssetFolder.current });
 
 /**
+ * Update the URL silently once an asset has been renamed or moved, if it’s the asset shown in the
+ * details view, so a reload or a copied link finds it at its new path. The folder the asset was
+ * opened from, e.g. All Assets, is kept.
+ * @param {string} oldPath Asset’s previous path.
+ * @param {string} newPath Asset’s new path.
+ */
+export const replaceShownAssetPath = async (oldPath, newPath) => {
+  if (parseLocation().path === `/assets/${oldPath}`) {
+    await goto(encodePathSegments(`/assets/${newPath}`), {
+      replaceState: true,
+      notifyChange: false,
+      state: getAssetFolderHistoryState(),
+    });
+  }
+};
+
+/**
+ * Leave the details view of an asset that has been moved to another storage location, e.g. from
+ * the repository to a cloud storage service, where it has no details view at the same place. The
+ * list it’s been moved out of is shown instead.
+ * @param {string} shownPath Path of the asset’s details view, e.g. `/assets/static/uploads/a.png`.
+ * @param {string} listPath Path of the list to show, e.g. `/assets/static/uploads`.
+ */
+export const leaveMovedAsset = async (shownPath, listPath) => {
+  if (parseLocation().path === shownPath) {
+    await goto(encodePathSegments(listPath), { replaceState: true, transitionType: 'backwards' });
+  }
+};
+
+/**
  * Show the details of a repository asset in the overlay, within the selected asset folder.
  * @param {Asset} asset Asset.
  * @param {object} [options] Options.

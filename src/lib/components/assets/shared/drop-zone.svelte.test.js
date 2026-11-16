@@ -3,48 +3,15 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import { ASSET_DRAG_TYPE } from '$lib/services/assets/drag';
 import { env } from '$lib/services/user/env.svelte';
 import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
+import { createFileDropEvent } from '$lib/test/drop';
 
 import DropZone from './drop-zone.svelte';
 
 const image = new File(['x'], 'photo.png', { type: 'image/png' });
 const doc = new File(['x'], 'notes.txt', { type: 'text/plain' });
-
-/**
- * Build a drop event carrying the given files, the way a browser does when files are dropped from
- * the desktop: each item resolves to a file system entry.
- * @param {File[]} files Files.
- * @returns {Event} Event.
- */
-const createDropEvent = (files) => {
-  const event = new Event('drop', { bubbles: true, cancelable: true });
-
-  Object.defineProperty(event, 'dataTransfer', {
-    value: {
-      dropEffect: '',
-      items: files.map((file) => ({
-        kind: 'file',
-        /**
-         * Get the entry.
-         * @returns {any} File entry.
-         */
-        webkitGetAsEntry: () => ({
-          name: file.name,
-          isFile: true,
-          /**
-           * Read the file.
-           * @param {(file: File) => void} callback Callback.
-           * @returns {void} Nothing.
-           */
-          file: (callback) => callback(file),
-        }),
-      })),
-    },
-  });
-
-  return event;
-};
 
 /**
  * Get the drop target.
@@ -77,7 +44,7 @@ describe('DropZone', () => {
     // The drop indicator only appears when the event carries data
     expect(container.querySelector('.drop-indicator')).toBeNull();
 
-    target.dispatchEvent(createDropEvent([image, doc]));
+    target.dispatchEvent(createFileDropEvent([image, doc]));
     // The files are sorted by name
     await vi.waitFor(() =>
       expect(onDrop.mock.calls[0]?.[0].files.map((/** @type {File} */ f) => f.name)).toEqual([
@@ -91,7 +58,7 @@ describe('DropZone', () => {
     const onDrop = vi.fn();
     const { container } = await render(DropZone, { showFilePreview: true, onDrop });
 
-    getTarget(container).dispatchEvent(createDropEvent([image, doc]));
+    getTarget(container).dispatchEvent(createFileDropEvent([image, doc]));
 
     await vi.waitFor(() =>
       expect(onDrop.mock.calls[0]?.[0].files.map((/** @type {File} */ f) => f.name)).toEqual([
@@ -112,7 +79,7 @@ describe('DropZone', () => {
       onDrop,
     });
 
-    getTarget(container).dispatchEvent(createDropEvent([doc]));
+    getTarget(container).dispatchEvent(createFileDropEvent([doc]));
 
     await expect
       .element(page.getByRole('alert'))
@@ -135,7 +102,7 @@ describe('DropZone', () => {
     });
 
     expect(container).toHaveTextContent('Custom');
-    getTarget(container).dispatchEvent(createDropEvent([doc]));
+    getTarget(container).dispatchEvent(createFileDropEvent([doc]));
 
     const dialog = page.getByRole('alertdialog', { name: 'Unsupported File Type' });
 
@@ -153,11 +120,11 @@ describe('DropZone', () => {
       onDrop,
     });
 
-    getTarget(container).dispatchEvent(createDropEvent([doc]));
+    getTarget(container).dispatchEvent(createFileDropEvent([doc]));
     await vi.waitFor(() => expect(onDrop).toHaveBeenCalledWith({ files: [doc] }));
 
     // An empty drop is silently ignored
-    getTarget(container).dispatchEvent(createDropEvent([]));
+    getTarget(container).dispatchEvent(createFileDropEvent([]));
     await new Promise((resolve) => {
       setTimeout(resolve, 100);
     });
@@ -175,7 +142,7 @@ describe('DropZone', () => {
       new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer }),
     );
     // An empty folder holds no files either
-    getTarget(container).dispatchEvent(createDropEvent([]));
+    getTarget(container).dispatchEvent(createFileDropEvent([]));
 
     await new Promise((resolve) => {
       setTimeout(resolve, 100);
@@ -226,6 +193,45 @@ describe('DropZone', () => {
     await expect.poll(() => container.querySelector('.drop-indicator')).toBeNull();
   });
 
+  test('leaves the assets dragged from the list alone, as they’re moved rather than uploaded', async () => {
+    const onDrop = vi.fn();
+
+    const { container } = await render(DropZone, {
+      multiple: true,
+      showUploadButton: true,
+      onDrop,
+    });
+
+    const target = getTarget(container);
+
+    /**
+     * Dispatch a drag event carrying assets.
+     * @param {string} type Event type.
+     * @returns {DragEvent} Event.
+     */
+    const dispatch = (type) => {
+      const dataTransfer = new DataTransfer();
+
+      dataTransfer.setData(ASSET_DRAG_TYPE, '["static/uploads/a.png"]');
+
+      const event = new DragEvent(type, { bubbles: true, cancelable: true, dataTransfer });
+
+      target.dispatchEvent(event);
+
+      return event;
+    };
+
+    // The drop isn’t accepted, so the browser shows that it can’t be dropped here
+    expect(dispatch('dragover').defaultPrevented).toBe(false);
+    expect(dispatch('drop').defaultPrevented).toBe(false);
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, 100);
+    });
+    expect(container.querySelector('.drop-indicator')).toBeNull();
+    expect(onDrop).not.toHaveBeenCalled();
+  });
+
   test('asks for a single file when only one is accepted', async () => {
     const { container } = await render(DropZone, { showUploadButton: true });
 
@@ -268,7 +274,7 @@ describe('DropZone', () => {
       showUploadButton: true,
     });
 
-    getTarget(container).dispatchEvent(createDropEvent([doc]));
+    getTarget(container).dispatchEvent(createFileDropEvent([doc]));
 
     await expect
       .element(page.getByRole('alert'))
@@ -327,7 +333,7 @@ describe('DropZone', () => {
     const onDrop = vi.fn();
     const { container } = await render(DropZone, { disabled: true, onDrop });
 
-    getTarget(container).dispatchEvent(createDropEvent([image]));
+    getTarget(container).dispatchEvent(createFileDropEvent([image]));
     await new Promise((resolve) => {
       setTimeout(resolve, 100);
     });

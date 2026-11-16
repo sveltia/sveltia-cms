@@ -20,6 +20,7 @@ import {
 } from '$lib/services/integrations/media-libraries/cloud/cloudinary';
 import { prefs } from '$lib/services/user/prefs.svelte';
 import { createMockCloudService, createMockExternalAsset } from '$lib/test/config';
+import { createFileDropEvent } from '$lib/test/drop';
 
 import AssetList from './asset-list.svelte';
 
@@ -27,39 +28,6 @@ const assets = [
   createMockExternalAsset({ fileName: 'a.png' }),
   createMockExternalAsset({ fileName: 'b.png' }),
 ];
-
-/**
- * Build a drop event carrying the given files.
- * @param {File[]} files Files.
- * @returns {Event} Event.
- */
-const createDropEvent = (files) => {
-  const event = new Event('drop', { bubbles: true, cancelable: true });
-
-  Object.defineProperty(event, 'dataTransfer', {
-    value: {
-      dropEffect: '',
-      items: files.map((file) => ({
-        /**
-         * Get the entry.
-         * @returns {any} File entry.
-         */
-        webkitGetAsEntry: () => ({
-          name: file.name,
-          isFile: true,
-          /**
-           * Read the file.
-           * @param {(file: File) => void} callback Callback.
-           * @returns {void} Nothing.
-           */
-          file: (callback) => callback(file),
-        }),
-      })),
-    },
-  });
-
-  return event;
-};
 
 describe('AssetList', () => {
   beforeEach(() => {
@@ -132,7 +100,7 @@ describe('AssetList', () => {
     const file = new File(['x'], 'c.png', { type: 'image/png' });
 
     /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
-      createDropEvent([file]),
+      createFileDropEvent([file]),
     );
 
     await expect.poll(() => uploadingExternalAssets.current.files).toEqual([file]);

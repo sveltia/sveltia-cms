@@ -675,21 +675,6 @@ enter_new_name_for_folder: |
     0   {{ Enter a new name below. }}
     one {{ Enter a new name below. The asset in the folder will be moved along, and any entry using it will be updated. }}
     *   {{ Enter a new name below. The {$count} assets in the folder will be moved along, and any entries using them will be updated. }}
-# Rename Folder dialog body text for a cloud storage service, whose files are hotlinked from the
-# entries, so a move changes the URLs and the entries aren’t updated
-enter_new_name_for_external_folder: |
-  .input {$count :integer}
-  .match $count
-    0   {{ Enter a new name below. }}
-    one {{ Enter a new name below. The file in the folder will be moved along, and its URL will change, so update any entry using it. }}
-    *   {{ Enter a new name below. The {$count} files in the folder will be moved along, and their URLs will change, so update any entries using them. }}
-# Rename Folder dialog for a cloud storage service: warning shown when entries link to files in the
-# folder, which aren’t updated. {$count} is the number of entries
-renaming_external_folder_breaks_links: |
-  .input {$count :integer}
-  .match $count
-    one {{ An entry links to a file in this folder. The entry won’t be updated, so the link will break once the folder is renamed. }}
-    *   {{ {$count} entries link to files in this folder. The entries won’t be updated, so the links will break once the folder is renamed. }}
 # Delete Folder confirmation
 # {$name} is the folder name and {$count} is the number of assets in the folder
 confirm_deleting_folder: |
@@ -732,13 +717,6 @@ enter_new_name_for_asset: |
     0   {{ Enter a new name below. }}
     one {{ Enter a new name below. An entry using the asset will also be updated. }}
     *   {{ Enter a new name below. {$count} entries using the asset will also be updated. }}
-# Rename Asset dialog for a file on a cloud storage service: warning shown when entries link to the
-# file, which aren’t updated. {$count} is the number of entries
-renaming_external_asset_breaks_links: |
-  .input {$count :integer}
-  .match $count
-    one {{ An entry links to this file. The entry won’t be updated, so the link will break once the file is renamed. }}
-    *   {{ {$count} entries link to this file. The entries won’t be updated, so the links will break once the file is renamed. }}
 # Validation errors for asset renaming
 enter_new_name_for_asset_error:
   empty: File name cannot be empty.

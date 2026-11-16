@@ -10,6 +10,7 @@
   import EditAssetDialog from '$lib/components/assets/list/internal/edit-asset-dialog.svelte';
   import FolderInfoPanel from '$lib/components/assets/list/internal/folder-info-panel.svelte';
   import InfoPanel from '$lib/components/assets/list/internal/info-panel.svelte';
+  import MoveAssetsDialog from '$lib/components/assets/list/internal/move-dialog.svelte';
   import NewFolderDialog from '$lib/components/assets/list/internal/new-folder-dialog.svelte';
   import PrimaryToolbar from '$lib/components/assets/list/internal/primary-toolbar.svelte';
   import RenameAssetDialog from '$lib/components/assets/list/internal/rename-dialog.svelte';
@@ -163,6 +164,7 @@
 
 <EditAssetDialog />
 <RenameAssetDialog />
+<MoveAssetsDialog />
 <NewFolderDialog />
 <RenameFolderDialog />
 <DeleteFolderDialog />

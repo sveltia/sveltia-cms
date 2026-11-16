@@ -28,8 +28,6 @@
    * entry files, which the new name must not duplicate either.
    * @property {number} [usedEntryCount] Number of entries using the asset, mentioned in the dialog
    * body because they will be updated as well.
-   * @property {string} [warning] Warning shown below the dialog body, e.g. that entries linking to
-   * the asset will break, as they can’t be updated. The asset can still be renamed.
    * @property {string} [blockedMessage] Why the asset can’t be renamed, e.g. because a read-only
    * entry uses it. The message is shown in place of the input, and the Rename button is disabled.
    * @property {boolean} [slugificationEnabled] Whether the new name is slugified, according to the
@@ -48,7 +46,6 @@
     folderNames = [],
     fileNames = [],
     usedEntryCount = 0,
-    warning = undefined,
     blockedMessage = undefined,
     slugificationEnabled = false,
     onRename,
@@ -151,7 +148,6 @@
     selectFileName();
   }}
   description={_('enter_new_name_for_asset', { values: { count: usedEntryCount } })}
-  {warning}
   {blockedMessage}
   bind:value={newName}
   bind:element={inputElement}

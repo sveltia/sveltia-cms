@@ -8,6 +8,7 @@ import {
   getComparableAssetURL,
   getEntriesByAssets,
   getEntriesByAssetURL,
+  getEntriesUsingTargets,
   matchAssetURL,
 } from '$lib/services/assets/references';
 import { cmsConfig } from '$lib/services/config';
@@ -824,6 +825,21 @@ describe('getEntriesByAssets()', () => {
     expect(results).toEqual([[a, c], [a, b], []]);
     // Each value that can refer to a target is looked at once, however many targets there are
     expect(getField).toHaveBeenCalledTimes(4);
+  });
+
+  test('lists each entry using any of the targets once', async () => {
+    await setup();
+
+    const a = createEntry('a', { cover: '/uploads/1.jpg', thumb: '/uploads/2.jpg' });
+    const b = createEntry('b', { cover: '/uploads/2.jpg' });
+
+    allEntries.current = [a, b];
+
+    expect(
+      await getEntriesUsingTargets([{ url: '/uploads/1.jpg' }, { url: '/uploads/2.jpg' }]),
+    ).toEqual([a, b]);
+    expect(await getEntriesUsingTargets([])).toEqual([]);
+    allEntries.current = [];
   });
 
   test('stops searching an entry once every target has been found in it', async () => {

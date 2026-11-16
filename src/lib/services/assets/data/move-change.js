@@ -1,4 +1,5 @@
 import { getAssetBlob } from '$lib/services/assets/info';
+import { readBlobAsFile } from '$lib/services/utils/file';
 
 /**
  * @import { Asset, FileChange } from '$lib/types/private';
@@ -19,9 +20,7 @@ export const createAssetMoveChange = async (asset, path, name = asset.name) => {
     path,
     previousPath: asset.path,
     previousSha: asset.sha,
-    // Read the bytes up front. A blob backed by the file system points at the file about to be
-    // moved away, and reading it afterwards — to write the copy or to hash it — fails because
-    // there’s nothing at that path anymore
-    data: new File([await blob.arrayBuffer()], name, { type: blob.type }),
+    // The file about to be moved away can’t be read afterwards, to write the copy or to hash it
+    data: await readBlobAsFile(blob, name),
   };
 };

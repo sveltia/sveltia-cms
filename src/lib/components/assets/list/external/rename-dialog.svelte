@@ -1,12 +1,11 @@
 <!--
   @component
-  Rename Asset dialog for an asset on a cloud storage service. Unlike the dialog for repository
-  assets, the entries using the asset aren’t updated, as they hotlink its URL, so the dialog warns
-  that their links will break instead. The new name is checked against the other assets in the
-  same virtual folder on the service.
+  Rename Asset dialog for an asset on a cloud storage service. As with repository assets, the
+  entries linking to the asset are pointed at its new URL, and the dialog opens once they have been
+  found, so it can tell how many will be updated, or refuse the rename if they can’t be. The new
+  name is checked against the other assets in the same virtual folder on the service.
 -->
 <script>
-  import { _ } from '@sveltia/i18n';
   import { getPathInfo } from '@sveltia/utils/file';
 
   import RenameDialog from '$lib/components/assets/list/rename-dialog.svelte';
@@ -20,15 +19,18 @@
   } from '$lib/services/assets/external';
   import { renameExternalAsset } from '$lib/services/assets/external/data';
   import { getExternalAssetUsedEntries } from '$lib/services/assets/external/details';
-
-  /**
-   * @import { ExternalAsset } from '$lib/types/private';
-   */
+  import { getExternalChangeBlockedMessage } from '$lib/services/assets/external/move';
+  import { createUsedEntriesState } from '$lib/services/assets/used-entries.svelte';
 
   const asset = $derived(renamingExternalAsset.current);
-  // Open while there’s an asset to act on. Closing the dialog writes `open` back, and the asset is
-  // let go of once the dialog has closed
-  let open = $derived(!!asset);
+  /** Entries linking to the asset, which are updated along with the rename. */
+  const usedEntries = createUsedEntriesState(() =>
+    asset ? getExternalAssetUsedEntries(asset) : undefined,
+  );
+  // Open while there’s an asset to act on, once the entries using it have been found, so the rename
+  // can be refused up front. Closing the dialog writes `open` back, and the asset is let go of once
+  // the dialog has closed
+  let open = $derived(!!asset && !!usedEntries.entries);
   /* v8 ignore start -- the dialog is only shown for a listed asset */
   const { dirname } = $derived(getPathInfo(asset?.id ?? ''));
   const listedAssets = $derived(externalAssets.current ?? []);
@@ -40,31 +42,8 @@
       .map((a) => a.fileName),
   );
 
-  /** Number of entries linking to the asset, whose links the rename will break. */
-  let usedEntryCount = $state(0);
-
-  /**
-   * Count the entries linking to the given asset.
-   * @param {ExternalAsset | undefined} _asset Asset being renamed, if any.
-   */
-  const countUsedEntries = async (_asset) => {
-    usedEntryCount = 0;
-
-    if (!_asset) {
-      return;
-    }
-
-    const entries = await getExternalAssetUsedEntries(_asset);
-
-    // Another asset may have been picked in the meantime
-    if (asset === _asset) {
-      usedEntryCount = entries.length;
-    }
-  };
-
-  $effect(() => {
-    countUsedEntries(asset);
-  });
+  // The rename is refused up front if the entries can’t be updated
+  const blockedMessage = $derived(getExternalChangeBlockedMessage(usedEntries.entries ?? [], 1));
 
   /**
    * Rename the asset. Also, update the URL hash silently to reflect the new asset ID if the rename
@@ -96,9 +75,8 @@
   bind:open
   name={asset?.fileName ?? ''}
   {otherNames}
-  warning={usedEntryCount
-    ? _('renaming_external_asset_breaks_links', { values: { count: usedEntryCount } })
-    : undefined}
+  usedEntryCount={usedEntries.entries?.length}
+  {blockedMessage}
   onRename={renameAsset}
   onClose={() => {
     renamingExternalAsset.current = undefined;

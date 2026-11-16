@@ -688,21 +688,6 @@ enter_new_name_for_folder: |
     0   {{ Enter a new name below. }}
     one {{ Enter a new name below. The asset in the folder will be moved along, and any entry using it will be updated. }}
     *   {{ Enter a new name below. The {$count} assets in the folder will be moved along, and any entries using them will be updated. }}
-# Rename Folder dialog body text for a cloud storage service, whose files are hotlinked from the
-# entries, so a move changes the URLs and the entries aren’t updated
-enter_new_name_for_external_folder: |
-  .input {$count :integer}
-  .match $count
-    0   {{ Enter a new name below. }}
-    one {{ Enter a new name below. The file in the folder will be moved along, and its URL will change, so update any entry using it. }}
-    *   {{ Enter a new name below. The {$count} files in the folder will be moved along, and their URLs will change, so update any entries using them. }}
-# Rename Folder dialog for a cloud storage service: warning shown when entries link to files in the
-# folder, which aren’t updated. {$count} is the number of entries
-renaming_external_folder_breaks_links: |
-  .input {$count :integer}
-  .match $count
-    one {{ An entry links to a file in this folder. The entry won’t be updated, so the link will break once the folder is renamed. }}
-    *   {{ {$count} entries link to files in this folder. The entries won’t be updated, so the links will break once the folder is renamed. }}
 # Delete Folder confirmation
 # {$name} is the folder name and {$count} is the number of assets in the folder
 confirm_deleting_folder: |
@@ -733,6 +718,47 @@ edit_x: Edit {$name}
 # Asset text editor: switch for line wrapping
 wrap_long_lines: Wrap Long Lines
 
+# Move assets: dialog for moving assets to another folder in the repository
+move: Move
+move_asset: Move Asset
+# Dialog title. {$name} is the asset name when a single asset is moved, and {$count} is the number of
+# assets being moved
+move_assets_title: |
+  .input {$count :integer}
+  .match $count
+    one {{ Move {$name} }}
+    *   {{ Move {$count} Assets }}
+# Dialog body text. {$count} is the number of entries that currently use the assets
+select_asset_move_destination: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Select the folder to move to. }}
+    one {{ Select the folder to move to. An entry using the assets will also be updated. }}
+    *   {{ Select the folder to move to. {$count} entries using the assets will also be updated. }}
+# Accessible label of the folder tree in the Move dialog
+asset_move_destination: Destination Folder
+# Shown when the assets being moved are all in the selected folder already
+assets_already_in_folder: |
+  .input {$count :integer}
+  .match $count
+    one {{ The asset is already in this folder. }}
+    *   {{ The assets are already in this folder. }}
+# Shown when files with the same names exist in the selected folder. {$names} is a comma-separated
+# list of file names
+asset_move_conflict: 'The following files already exist in this folder: {$names}.'
+moving_assets: Moving the assets…
+moving_assets_failed: Couldn’t move the assets.
+# Warning shown when files have been moved off a cloud storage service, but the originals couldn’t
+# be deleted from it
+asset_move_cleanup_failed: The files have been moved, but the originals couldn’t be deleted from the storage service.
+# Shown when files on a cloud storage service can’t be renamed or moved, because the entries using
+# them can’t be updated, e.g. for an Open Authoring contributor. {$count} is the number of files
+cannot_change_used_external_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ This file can’t be renamed or moved, because the entries using it can’t be updated. }}
+    *   {{ These files can’t be renamed or moved, because the entries using them can’t be updated. }}
+
 # Rename asset: dialog and validation
 rename_asset: Rename Asset
 # {$name} is the current asset name
@@ -745,13 +771,6 @@ enter_new_name_for_asset: |
     0   {{ Enter a new name below. }}
     one {{ Enter a new name below. An entry using the asset will also be updated. }}
     *   {{ Enter a new name below. {$count} entries using the asset will also be updated. }}
-# Rename Asset dialog for a file on a cloud storage service: warning shown when entries link to the
-# file, which aren’t updated. {$count} is the number of entries
-renaming_external_asset_breaks_links: |
-  .input {$count :integer}
-  .match $count
-    one {{ An entry links to this file. The entry won’t be updated, so the link will break once the file is renamed. }}
-    *   {{ {$count} entries link to this file. The entries won’t be updated, so the links will break once the file is renamed. }}
 # Validation errors for asset renaming
 enter_new_name_for_asset_error:
   empty: File name cannot be empty.

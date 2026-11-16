@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { assetUpdatesToast } from '$lib/services/assets/data';
+import { saveReferenceChanges } from '$lib/services/assets/data/move';
 import {
   externalAssetCounts,
   externalAssets,
@@ -13,6 +14,7 @@ import {
   selectedExternalAssets,
   selectedExternalDirPath,
 } from '$lib/services/assets/external';
+import { planExternalReferenceRewrite } from '$lib/services/assets/external/move';
 import { processFile } from '$lib/services/assets/process';
 import { cmsConfig } from '$lib/services/config';
 
@@ -55,6 +57,22 @@ vi.mock('$lib/services/assets/external', async (importOriginal) => {
     selectedCloudService: { current: undefined },
     selectedExternalDirPath: { current: '' },
     getFetchOptions: vi.fn(() => ({ apiKey: 'secret' })),
+  };
+});
+
+// The references are found and rewritten for real, but nothing is committed
+vi.mock('$lib/services/assets/data/move', async (importOriginal) => ({
+  ...(await importOriginal()),
+  saveReferenceChanges: vi.fn(),
+}));
+
+vi.mock('$lib/services/assets/external/move', async (importOriginal) => {
+  /** @type {any} */
+  const original = await importOriginal();
+
+  return {
+    ...original,
+    planExternalReferenceRewrite: vi.fn(original.planExternalReferenceRewrite),
   };
 });
 
@@ -643,6 +661,24 @@ describe('assets/external/data', () => {
       expect(externalAssetsToast.current.message).toBe('renaming_folder_failed');
     });
 
+    it('should point the entries at the files’ new URLs, or move the files back', async () => {
+      vi.mocked(saveReferenceChanges).mockRejectedValueOnce(new Error('Commit failed'));
+
+      expect(await renameExternalFolder({ name: '2024', path: '2024' }, '2025')).toBe(false);
+
+      expect(planExternalReferenceRewrite).toHaveBeenCalledWith([spring, nested]);
+      expect(vi.mocked(saveReferenceChanges).mock.calls[0][0].newURLs).toHaveLength(2);
+      // Moved there and back, and the placeholders are left alone
+      expect(service.move).toHaveBeenNthCalledWith(
+        3,
+        expect.objectContaining({ id: '2025/spring.png' }),
+        '2024/spring.png',
+        fetchOptions,
+      );
+      expect(service.createFolder).not.toHaveBeenCalled();
+      expect(externalAssetsToast.current.message).toBe('renaming_folder_failed');
+    });
+
     it('should report a failure to rename a folder and reload the list', async () => {
       vi.mocked(service.move).mockRejectedValue(new Error('denied'));
 
@@ -836,6 +872,56 @@ describe('assets/external/data', () => {
       expect(assetUpdatesToast.current).toEqual(
         expect.objectContaining({ renamed: true, count: 1 }),
       );
+    });
+
+    it('should point the entries using the asset at its new URL', async () => {
+      const renamed = { ...createAsset('z.png'), downloadURL: 'https://cdn/z.png' };
+
+      service.rename.mockResolvedValue(renamed);
+
+      await renameExternalAsset(a, 'z.png');
+
+      expect(planExternalReferenceRewrite).toHaveBeenCalledWith([a]);
+      expect(saveReferenceChanges).toHaveBeenCalledWith({
+        plan: expect.objectContaining({ targets: [{ url: a.downloadURL }] }),
+        newURLs: ['https://cdn/z.png'],
+        commitType: 'uploadMedia',
+      });
+    });
+
+    it('should rename the asset back when the entries can’t be saved', async () => {
+      const renamed = createAsset('z.png');
+
+      service.rename.mockResolvedValueOnce(renamed);
+      vi.mocked(saveReferenceChanges).mockRejectedValueOnce(new Error('Commit failed'));
+
+      expect(await renameExternalAsset(a, 'z.png')).toBeUndefined();
+
+      expect(service.rename).toHaveBeenLastCalledWith(renamed, 'a.png', fetchOptions);
+      expect(externalAssets.current).toEqual([a, b]);
+      expect(externalAssetsToast.current.message).toBe('renaming_asset_failed');
+    });
+
+    it('should leave the asset renamed when it can’t be renamed back', async () => {
+      const renamed = createAsset('z.png');
+
+      service.rename.mockResolvedValueOnce(renamed).mockRejectedValueOnce(new Error('Gone'));
+      vi.mocked(saveReferenceChanges).mockRejectedValueOnce(new Error('Commit failed'));
+
+      expect(await renameExternalAsset(a, 'z.png')).toBeUndefined();
+
+      // eslint-disable-next-line no-console
+      expect(console.error).toHaveBeenCalledWith(new Error('Gone'));
+      expect(externalAssetsToast.current.message).toBe('renaming_asset_failed');
+    });
+
+    it('should refuse when the entries using the asset can’t be updated', async () => {
+      vi.mocked(planExternalReferenceRewrite).mockRejectedValueOnce(new Error('Read-only'));
+
+      expect(await renameExternalAsset(a, 'z.png')).toBeUndefined();
+
+      expect(service.rename).not.toHaveBeenCalled();
+      expect(externalAssetsToast.current.message).toBe('renaming_asset_failed');
     });
 
     it('should do nothing when the service cannot rename', async () => {

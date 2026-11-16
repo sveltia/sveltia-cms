@@ -661,20 +661,6 @@ enter_new_name_for_folder: |
     0   {{ 新しい名前を以下に入力してください。 }}
     1   {{ 新しい名前を以下に入力してください。フォルダー内のアセットも一緒に移動され、それを使用しているエントリーも更新されます。 }}
     *   {{ 新しい名前を以下に入力してください。フォルダー内の {$count} 個のアセットも一緒に移動され、それらを使用しているエントリーも更新されます。 }}
-# クラウドストレージサービスのフォルダー名変更ダイアログの本文。ファイルは直接リンクされているため、移動すると
-# URL が変わり、エントリーは更新されない
-enter_new_name_for_external_folder: |
-  .input {$count :integer}
-  .match $count
-    0   {{ 新しい名前を以下に入力してください。 }}
-    1   {{ 新しい名前を以下に入力してください。フォルダー内のファイルも一緒に移動され、URL が変わるため、それを使用しているエントリーは更新してください。 }}
-    *   {{ 新しい名前を以下に入力してください。フォルダー内の {$count} 個のファイルも一緒に移動され、URL が変わるため、それらを使用しているエントリーは更新してください。 }}
-# Rename Folder dialog for a cloud storage service: warning shown when entries link to files in the
-# folder, which aren’t updated. {$count} is the number of entries
-renaming_external_folder_breaks_links: |
-  .input {$count :integer}
-  .match $count
-    *   {{ {$count} 個のエントリーがこのフォルダー内のファイルにリンクしています。エントリーは更新されないため、フォルダー名を変更するとリンクが切れます。 }}
 # Delete Folder confirmation
 # {$name} is the folder name and {$count} is the number of assets in the folder
 confirm_deleting_folder: |
@@ -705,6 +691,44 @@ edit_x: '{$name} を編集'
 # Asset text editor: switch for line wrapping
 wrap_long_lines: 長い行を折り返す
 
+# Move assets: dialog for moving assets to another folder in the repository
+move: 移動
+move_asset: アセットを移動
+# Dialog title. {$name} is the asset name when a single asset is moved, and {$count} is the number of
+# assets being moved
+move_assets_title: |
+  .input {$count :integer}
+  .match $count
+    1   {{ {$name} を移動 }}
+    *   {{ {$count} 件のアセットを移動 }}
+# Dialog body text. {$count} is the number of entries that currently use the assets
+select_asset_move_destination: |
+  .input {$count :integer}
+  .match $count
+    0   {{ 移動先のフォルダーを選択してください。 }}
+    *   {{ 移動先のフォルダーを選択してください。アセットを使用している {$count} 件のエントリーも更新されます。 }}
+# Accessible label of the folder tree in the Move dialog
+asset_move_destination: 移動先フォルダー
+# Shown when the assets being moved are all in the selected folder already
+assets_already_in_folder: |
+  .input {$count :integer}
+  .match $count
+    *   {{ アセットは既にこのフォルダーにあります。 }}
+# Shown when files with the same names exist in the selected folder. {$names} is a comma-separated
+# list of file names
+asset_move_conflict: '次のファイルは既にこのフォルダーに存在します: {$names}'
+moving_assets: アセットを移動中…
+moving_assets_failed: アセットを移動できませんでした。
+# Warning shown when files have been moved off a cloud storage service, but the originals couldn’t
+# be deleted from it
+asset_move_cleanup_failed: ファイルは移動されましたが、ストレージサービスから元のファイルを削除できませんでした。
+# Shown when files on a cloud storage service can’t be renamed or moved, because the entries using
+# them can’t be updated, e.g. for an Open Authoring contributor. {$count} is the number of files
+cannot_change_used_external_files: |
+  .input {$count :integer}
+  .match $count
+    *   {{ 使用しているエントリーを更新できないため、ファイルの名前変更や移動はできません。 }}
+
 # Rename asset: dialog and validation
 rename_asset: アセットの名前を変更
 # {$name} is the current asset name
@@ -717,12 +741,6 @@ enter_new_name_for_asset: |
     0   {{ 新しい名前を以下に入力してください。 }}
     1   {{ 新しい名前を以下に入力してください。このアセットを使用している 1 個のエントリーも更新されます。 }}
     *   {{ 新しい名前を以下に入力してください。このアセットを使用している {$count} 個のエントリーも更新されます。 }}
-# Rename Asset dialog for a file on a cloud storage service: warning shown when entries link to the
-# file, which aren’t updated. {$count} is the number of entries
-renaming_external_asset_breaks_links: |
-  .input {$count :integer}
-  .match $count
-    *   {{ {$count} 個のエントリーがこのファイルにリンクしています。エントリーは更新されないため、ファイル名を変更するとリンクが切れます。 }}
 # Validation errors for asset renaming
 enter_new_name_for_asset_error:
   empty: ファイル名を空白にすることはできません。

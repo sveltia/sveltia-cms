@@ -67,8 +67,8 @@
         listedCount={listedExternalAssets.current.length}
       />
     {/if}
-    {#if service.rename || service.replace}
-      <EditOptionsButton {asset} />
+    {#if service.rename || service.replace || service.delete}
+      <EditOptionsButton {asset} {assets} />
     {/if}
   {/snippet}
   {#snippet fab()}

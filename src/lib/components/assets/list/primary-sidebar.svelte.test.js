@@ -1,14 +1,17 @@
-import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import { ASSET_DRAG_TYPE } from '$lib/services/assets/drag';
 import { externalAssetCounts, selectedCloudService } from '$lib/services/assets/external';
 import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
+import { assetMoveRequest, draggedFiles } from '$lib/services/assets/state';
 import { selectedSubfolderPath } from '$lib/services/assets/subfolders';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
 import { searchMode } from '$lib/services/search';
 import { env } from '$lib/services/user/env.svelte';
+import { prefs } from '$lib/services/user/prefs.svelte';
 import {
   createMockAsset,
   createMockEntry,
@@ -93,6 +96,11 @@ describe('PrimarySidebar', () => {
     selectedSubfolderPath.current = '';
     selectedCloudService.current = undefined;
     externalAssetCounts.current = {};
+  });
+
+  afterEach(() => {
+    assetMoveRequest.current = undefined;
+    draggedFiles.current = undefined;
   });
 
   test('lists the asset folders and external locations with their counts', async () => {
@@ -258,61 +266,105 @@ describe('PrimarySidebar', () => {
     await expect.poll(() => window.location.hash).toBe('#/search');
   });
 
-  test('highlights a folder that can take the dragged assets', async () => {
-    selectedAssetFolder.current = allAssetFolders.current.find(
-      ({ internalPath }) => internalPath === 'static/uploads',
+  test('highlights a folder that can take the dragged assets, and takes them', async () => {
+    const globalFolder = /** @type {AssetFolderInfo} */ (
+      allAssetFolders.current.find(({ internalPath }) => internalPath === 'static/uploads')
     );
+
+    const asset = createMockAsset({ name: 'a.png', asset: { folder: globalFolder } });
+
+    selectedAssetFolder.current = globalFolder;
+    draggedFiles.current = { assets: [asset] };
 
     await render(PrimarySidebar);
 
     /**
-     * Fire a drag event on the given option.
+     * Fire a drag event on the given option. The data transfer is a stand-in, as Chrome ignores a
+     * drop effect set on a real one outside a real drag.
      * @param {string} name Option name.
      * @param {string} type Event type.
-     * @returns {DataTransfer} Data transfer, holding the resulting drop effect.
+     * @param {object} [options] Options.
+     * @param {boolean} [options.assets] Whether the drag carries assets dragged from the list,
+     * rather than files from the desktop.
+     * @returns {{ event: Event, dataTransfer: { types: string[], dropEffect: string } }} Event and
+     * its data transfer, holding the resulting drop effect.
      */
-    const drag = (name, type) => {
-      const dataTransfer = new DataTransfer();
+    const drag = (name, type, { assets = true } = {}) => {
+      const dataTransfer = { types: [assets ? ASSET_DRAG_TYPE : 'Files'], dropEffect: '' };
+      const event = new Event(type, { bubbles: true, cancelable: true });
 
+      Object.defineProperty(event, 'dataTransfer', { value: dataTransfer });
       page
         .getByRole('option', { name: new RegExp(`^${name}`) })
         .element()
-        .dispatchEvent(new DragEvent(type, { bubbles: true, cancelable: true, dataTransfer }));
+        .dispatchEvent(event);
 
-      return dataTransfer;
+      return { event, dataTransfer };
     };
 
-    await expect.element(page.getByRole('option', { name: /^Docs/ })).toBeVisible();
+    await expect.element(page.getByRole('option', { name: /^Gallery/ })).toBeVisible();
 
     const posts = page.getByRole('option', { name: /^Posts/ });
 
     // Another folder can take the assets
-    drag('Posts', 'dragover');
+    expect(drag('Posts', 'dragover').dataTransfer.dropEffect).toBe('move');
     await expect.element(posts).toHaveClass('dragover');
     drag('Posts', 'dragleave');
     await expect.element(posts).not.toHaveClass('dragover');
     drag('Posts', 'dragover');
-    drag('Posts', 'dragend');
-    await expect.element(posts).not.toHaveClass('dragover');
-    drag('Posts', 'dragover');
     drag('Posts', 'drop');
     await expect.element(posts).not.toHaveClass('dragover');
+    expect(assetMoveRequest.current).toEqual({ assets: [asset], dirPath: 'static/posts' });
+    expect(draggedFiles.current).toBeUndefined();
 
-    // The virtual folder and the current folder can’t
-    drag('All Assets', 'dragover');
-    await expect
-      .element(page.getByRole('option', { name: /^All Assets/ }))
-      .not.toHaveClass('dragover');
-    drag('Global Assets', 'dragover');
+    assetMoveRequest.current = undefined;
+    draggedFiles.current = { assets: [asset] };
+
+    // The folder the assets are in already can’t
+    expect(drag('Global Assets', 'dragover').dataTransfer.dropEffect).toBe('none');
     await expect
       .element(page.getByRole('option', { name: /^Global Assets/ }))
       .not.toHaveClass('dragover');
+    drag('Global Assets', 'drop');
+    expect(assetMoveRequest.current).toBeUndefined();
+
+    draggedFiles.current = { assets: [asset] };
 
     // Neither can a folder with entry-relative paths
-    const docs = page.getByRole('option', { name: /^Docs/ });
+    expect(drag('Docs', 'dragover').dataTransfer.dropEffect).toBe('none');
+    await expect.element(page.getByRole('option', { name: /^Docs/ })).not.toHaveClass('dragover');
 
-    docs.element().classList.add('dragover');
-    ['dragover', 'dragleave', 'dragend', 'drop'].forEach((type) => drag('Docs', type));
-    await expect.element(docs).toHaveClass('dragover');
+    // The virtual All Assets folder isn’t a drop target at all
+    expect(drag('All Assets', 'dragover').event.defaultPrevented).toBe(false);
+    drag('All Assets', 'drop');
+    expect(assetMoveRequest.current).toBeUndefined();
+
+    // Files from the desktop are left to the upload drop zone
+    expect(drag('Posts', 'dragover', { assets: false }).event.defaultPrevented).toBe(false);
+    await expect.element(posts).not.toHaveClass('dragover');
+    expect(drag('Posts', 'drop', { assets: false }).event.defaultPrevented).toBe(false);
+    expect(assetMoveRequest.current).toBeUndefined();
+
+    const uploadcare = page.getByRole('option', { name: /^Uploadcare/ });
+    const { apiKeys } = prefs;
+
+    // A cloud storage service can’t take the assets until the credentials have been entered
+    prefs.apiKeys = {};
+    expect(drag('Uploadcare', 'dragover').dataTransfer.dropEffect).toBe('none');
+    await expect.element(uploadcare).not.toHaveClass('dragover');
+
+    try {
+      prefs.apiKeys = { uploadcare: 'secret' };
+      expect(drag('Uploadcare', 'dragover').dataTransfer.dropEffect).toBe('move');
+      await expect.element(uploadcare).toHaveClass('dragover');
+      drag('Uploadcare', 'drop');
+      expect(assetMoveRequest.current).toEqual({
+        assets: [asset],
+        dirPath: '',
+        serviceId: 'uploadcare',
+      });
+    } finally {
+      prefs.apiKeys = apiKeys;
+    }
   });
 });

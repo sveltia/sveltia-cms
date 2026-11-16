@@ -1,7 +1,7 @@
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { Asset, UploadingAssets } from '$lib/types/private';
+ * @import { Asset, AssetMoveRequest, UploadingAssets } from '$lib/types/private';
  */
 
 /**
@@ -79,3 +79,18 @@ export const editingAsset = createRawState();
  * @type {{ current: Asset | undefined }}
  */
 export const renamingAsset = createRawState();
+
+/**
+ * Assets to be moved to another folder with the Move dialog, which is open while this is set.
+ * @type {{ current: AssetMoveRequest | undefined }}
+ */
+export const assetMoveRequest = createRawState();
+
+/**
+ * Files being dragged from the asset list, repository assets or files on a cloud storage service,
+ * which a folder in the sidebar or a subfolder in the list can be dropped on. `undefined` while
+ * nothing is dragged. The drag data can’t be read until the drop, so this is what tells a folder
+ * whether it can take the drop while it’s dragged over.
+ * @type {{ current: AssetMoveRequest | undefined }}
+ */
+export const draggedFiles = createRawState();

@@ -138,4 +138,18 @@ describe('SubfolderListItem', () => {
     expect(page.getByRole('menuitem', { name: 'Delete Folder' }).elements()).toHaveLength(0);
     await userEvent.keyboard('{Escape}');
   });
+
+  test('attaches the drop target to the row, when given', async () => {
+    const dropTarget = vi.fn();
+
+    await render(SubfolderListItem, {
+      subfolder,
+      rowIndex: 0,
+      viewType: 'list',
+      onOpen: vi.fn(),
+      dropTarget,
+    });
+
+    expect(dropTarget).toHaveBeenCalledWith(page.getByRole('row', { name: '2024' }).element());
+  });
 });

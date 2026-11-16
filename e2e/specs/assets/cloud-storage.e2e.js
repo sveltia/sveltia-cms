@@ -234,10 +234,7 @@ test.describe('Amazon S3', () => {
       await expect(page.getByRole('row', { name: 'dusk.png' })).toBeVisible();
     });
 
-    test('warns that renaming a file breaks the links of the entries using it', async ({
-      cms,
-      page,
-    }) => {
+    test('renames a file and updates the entry using it', async ({ cms, page }) => {
       await page.getByRole('row', { name: 'trips' }).dblclick();
       await page.getByRole('row', { name: 'map.png' }).click();
       await page.getByRole('button', { name: 'Show Edit Options' }).click();
@@ -245,21 +242,17 @@ test.describe('Amazon S3', () => {
 
       const dialog = page.getByRole('dialog', { name: /Rename/ });
 
-      await expect(dialog.getByRole('alert')).toHaveText(
-        'An entry links to this file. The entry won’t be updated, so the link will break once ' +
-          'the file is renamed.',
-      );
-
-      // The file can still be renamed, leaving the entry as is
+      await expect(dialog).toContainText('An entry using the asset will also be updated.');
       await dialog.getByRole('textbox').fill('route.png');
       await dialog.getByRole('button', { name: 'Rename' }).click();
       await expect.poll(() => s3.objects.has('uploads/trips/route.png')).toBe(true);
-      expect((await cms.readRepo())['content/posts/hike.md']).toContain('trips/map.png');
+      expect(s3.objects.has('uploads/trips/map.png')).toBe(false);
+      await expect
+        .poll(async () => (await cms.readRepo())['content/posts/hike.md'])
+        .toBe(`---\ntitle: Hike\ncover: ${S3_URL}/uploads/trips/route.png\n---\n`);
     });
 
-    test('warns that renaming a folder breaks the links of the entries using its files', async ({
-      page,
-    }) => {
+    test('renames a folder and updates the entry using a file in it', async ({ cms, page }) => {
       await page
         .getByRole('row', { name: 'trips' })
         .getByRole('button', { name: 'Show Folder Options' })
@@ -268,13 +261,16 @@ test.describe('Amazon S3', () => {
 
       const dialog = page.getByRole('dialog', { name: /Rename/ });
 
-      await expect(dialog.getByRole('alert')).toHaveText(
-        'An entry links to a file in this folder. The entry won’t be updated, so the link will ' +
-          'break once the folder is renamed.',
+      await expect(dialog).toContainText(
+        'The asset in the folder will be moved along, and any entry using it will be updated.',
       );
-      await dialog.getByRole('button', { name: 'Cancel' }).click();
-      await expect(dialog).toHaveCount(0);
-      expect(s3.objects.has('uploads/trips/map.png')).toBe(true);
+      await dialog.getByRole('textbox').fill('travel');
+      await dialog.getByRole('button', { name: 'Rename' }).click();
+      await expect.poll(() => s3.objects.has('uploads/travel/map.png')).toBe(true);
+      expect(s3.objects.has('uploads/trips/map.png')).toBe(false);
+      await expect
+        .poll(async () => (await cms.readRepo())['content/posts/hike.md'])
+        .toBe(`---\ntitle: Hike\ncover: ${S3_URL}/uploads/travel/map.png\n---\n`);
     });
 
     test('creates a folder', async ({ page }) => {

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
@@ -10,6 +10,8 @@ import {
 } from '$lib/services/assets/external';
 import { getExternalAssetUsedEntries } from '$lib/services/assets/external/details';
 import { showAssetOverlay } from '$lib/services/assets/view';
+import { lockedBranch } from '$lib/services/backends/branch-access';
+import { isEntryReadonly } from '$lib/services/contents/entry/readonly';
 import { createMockCloudService, createMockExternalAsset } from '$lib/test/config';
 import { expectFileNameSelected } from '$lib/test/dialog';
 
@@ -18,6 +20,12 @@ import RenameDialog from './rename-dialog.svelte';
 vi.mock('$lib/services/assets/external/details', async (importOriginal) => ({
   .../** @type {any} */ (await importOriginal()),
   getExternalAssetUsedEntries: vi.fn(async () => []),
+}));
+
+// The blocked message is worked out by the real functions, with the mocked read-only checks below
+vi.mock('$lib/services/contents/entry/readonly', () => ({
+  isEntryReadonly: vi.fn(() => false),
+  getReadonlyEntryLabel: vi.fn((entry) => `Archive › ${entry.slug}`),
 }));
 
 const assets = [
@@ -42,6 +50,11 @@ describe('RenameDialog', () => {
     renamingExternalAsset.current = undefined;
     overlaidExternalAssetId.current = undefined;
     vi.mocked(getExternalAssetUsedEntries).mockResolvedValue([]);
+  });
+
+  afterEach(() => {
+    vi.mocked(isEntryReadonly).mockReturnValue(false);
+    lockedBranch.current = undefined;
   });
 
   test('opens for the asset being renamed and updates the list', async () => {
@@ -92,36 +105,100 @@ describe('RenameDialog', () => {
     await expect.poll(() => window.location.hash).toBe('#/assets/-/test_cloud/images/d.png');
   });
 
-  test('warns that the links of the entries using the asset will break', async () => {
-    const warning = page.getByRole('alert').filter({ hasText: 'link' });
-
+  test('says the entries using the asset will be updated as well', async () => {
     await render(RenameDialog);
 
-    // No warning for an asset no entry uses
+    // No entry uses the first asset
     renamingExternalAsset.current = firstAsset;
-    await expect.element(page.getByRole('dialog')).toBeInTheDocument();
+
+    let dialog = page.getByRole('dialog', { name: 'Rename \u2068a.png\u2069' });
+
     await vi.waitFor(() => expect(getExternalAssetUsedEntries).toHaveBeenCalledWith(firstAsset));
-    expect(warning.elements()).toHaveLength(0);
+    await expect.element(dialog).toMatchTextContent('Enter a new name below.');
+    expect(dialog.element().textContent).not.toContain('will also be updated');
     renamingExternalAsset.current = undefined;
     await expect.poll(() => page.getByRole('dialog').elements()).toHaveLength(0);
 
-    vi.mocked(getExternalAssetUsedEntries).mockResolvedValue(/** @type {any[]} */ ([{}, {}]));
+    vi.mocked(getExternalAssetUsedEntries).mockResolvedValue(
+      /** @type {any[]} */ ([{ slug: 'a' }, { slug: 'b' }]),
+    );
     renamingExternalAsset.current = secondAsset;
-
-    const dialog = page.getByRole('dialog', { name: 'Rename \u2068b.png\u2069' });
+    dialog = page.getByRole('dialog', { name: 'Rename \u2068b.png\u2069' });
 
     await expect
-      .element(dialog.getByRole('alert'))
-      .toHaveTextContent(
-        '2 entries link to this file. The entries won’t be updated, so the links will break once ' +
-          'the file is renamed.',
+      .element(dialog)
+      .toMatchTextContent(
+        'Enter a new name below. 2 entries using the asset will also be updated.',
       );
+    expect(dialog.getByRole('alert').elements()).toHaveLength(0);
 
-    // The asset can still be renamed
+    // The asset can be renamed
+    await expectFileNameSelected(dialog.getByRole('textbox'), 'b.png');
     await dialog.getByRole('textbox').fill('d.png');
     await dialog.getByRole('button', { name: 'Rename' }).click();
     await vi.waitFor(() =>
       expect(rename).toHaveBeenCalledWith(secondAsset, 'd.png', expect.anything()),
+    );
+  });
+
+  test('refuses to rename an asset a read-only entry uses', async () => {
+    const entry = /** @type {any} */ ({ id: 'old', slug: 'old-post' });
+
+    vi.mocked(getExternalAssetUsedEntries).mockResolvedValue([entry]);
+    vi.mocked(isEntryReadonly).mockReturnValue(true);
+
+    await render(RenameDialog);
+
+    renamingExternalAsset.current = firstAsset;
+
+    const dialog = page.getByRole('dialog', { name: 'Rename \u2068a.png\u2069' });
+
+    await expect
+      .element(dialog.getByRole('alert'))
+      .toHaveTextContent(
+        'This asset can’t be moved or renamed, because the following read-only entries use it: ' +
+          '\u2068Archive › old-post\u2069.',
+      );
+    await expect.element(dialog.getByRole('textbox')).toBeDisabled();
+    await expect.element(dialog.getByRole('button', { name: 'Rename' })).toBeDisabled();
+    expect(isEntryReadonly).toHaveBeenCalledWith(entry);
+  });
+
+  test('refuses to rename an asset entries use while the media library is locked', async () => {
+    lockedBranch.current = 'main';
+    vi.mocked(getExternalAssetUsedEntries).mockResolvedValue(/** @type {any[]} */ ([{}]));
+
+    await render(RenameDialog);
+
+    renamingExternalAsset.current = firstAsset;
+
+    const dialog = page.getByRole('dialog', { name: 'Rename \u2068a.png\u2069' });
+
+    await expect
+      .element(dialog.getByRole('alert'))
+      .toHaveTextContent(
+        'This file can’t be renamed or moved, because the entries using it can’t be updated.',
+      );
+    await expect.element(dialog.getByRole('textbox')).toBeDisabled();
+    await expect.element(dialog.getByRole('button', { name: 'Rename' })).toBeDisabled();
+  });
+
+  test('renames an asset no entry uses while the media library is locked', async () => {
+    lockedBranch.current = 'main';
+
+    await render(RenameDialog);
+
+    renamingExternalAsset.current = firstAsset;
+
+    const dialog = page.getByRole('dialog', { name: 'Rename \u2068a.png\u2069' });
+
+    await vi.waitFor(() => expect(getExternalAssetUsedEntries).toHaveBeenCalledWith(firstAsset));
+    await expectFileNameSelected(dialog.getByRole('textbox'), 'a.png');
+    expect(dialog.getByRole('alert').elements()).toHaveLength(0);
+    await dialog.getByRole('textbox').fill('d.png');
+    await dialog.getByRole('button', { name: 'Rename' }).click();
+    await vi.waitFor(() =>
+      expect(rename).toHaveBeenCalledWith(firstAsset, 'd.png', expect.anything()),
     );
   });
 
@@ -137,6 +214,8 @@ describe('RenameDialog', () => {
         resolve = r;
       }),
     );
+    // The entries found late would block the rename, if they were taken
+    vi.mocked(isEntryReadonly).mockReturnValue(true);
 
     await render(RenameDialog);
 
@@ -144,11 +223,16 @@ describe('RenameDialog', () => {
     await vi.waitFor(() => expect(getExternalAssetUsedEntries).toHaveBeenCalledWith(firstAsset));
     renamingExternalAsset.current = secondAsset;
     await vi.waitFor(() => expect(getExternalAssetUsedEntries).toHaveBeenCalledWith(secondAsset));
-    resolve([{}]);
+
+    const dialog = page.getByRole('dialog', { name: 'Rename \u2068b.png\u2069' });
+
+    await expect.element(dialog.getByRole('textbox')).toHaveValue('b.png');
+    resolve([{ slug: 'old-post' }]);
     await new Promise((r) => {
       setTimeout(r, 50);
     });
 
-    expect(page.getByRole('alert').elements()).toHaveLength(0);
+    expect(dialog.getByRole('alert').elements()).toHaveLength(0);
+    expect(dialog.element().textContent).not.toContain('will also be updated');
   });
 });

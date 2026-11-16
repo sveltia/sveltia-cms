@@ -1,8 +1,8 @@
 <!--
   @component
   Dialog asking for the name of a file or folder, shared by the Rename Asset dialog and the dialogs
-  naming a subfolder. It shows a description, an optional warning, the input field, an optional
-  note and the validation error, while the caller validates the name and acts on it.
+  naming a subfolder. It shows a description, the input field, an optional note and the validation
+  error, while the caller validates the name and acts on it.
 -->
 <script>
   import { Dialog, TextInput } from '@sveltia/ui';
@@ -17,9 +17,8 @@
    * @property {() => void} [onOpen] Called once the dialog is open.
    * @property {() => void} [onClose] Called once the dialog is closed.
    * @property {string} description Text shown above the input field.
-   * @property {string} [warning] Warning shown below the description.
    * @property {string} [blockedMessage] Why the name can’t be submitted, shown in place of the
-   * description and the warning. The input field is then disabled.
+   * description. The input field is then disabled.
    * @property {string} value Entered name.
    * @property {HTMLInputElement} [element] Input element.
    * @property {string} ariaLabel The `aria-label` attribute on the input field.
@@ -40,7 +39,6 @@
     onOpen = undefined,
     onClose = undefined,
     description,
-    warning = undefined,
     blockedMessage = undefined,
     value = $bindable(''),
     element = $bindable(),
@@ -58,9 +56,6 @@
     <p role="alert">{blockedMessage}</p>
   {:else}
     <p>{description}</p>
-    {#if warning}
-      <p role="alert" class="warning">{warning}</p>
-    {/if}
   {/if}
   <div role="none">
     <TextInput
@@ -94,10 +89,6 @@
     display: flex;
     align-items: center;
     gap: 4px;
-  }
-
-  .warning {
-    color: var(--sui-warning-foreground-color);
   }
 
   .note {

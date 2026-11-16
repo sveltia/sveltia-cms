@@ -688,21 +688,6 @@ enter_new_name_for_folder: |
     0   {{ Introduce un nuevo nombre a continuación. }}
     one {{ Introduce un nuevo nombre a continuación. El recurso de la carpeta se moverá con ella y se actualizará cualquier entrada que lo use. }}
     *   {{ Introduce un nuevo nombre a continuación. Los {$count} recursos de la carpeta se moverán con ella y se actualizarán las entradas que los usen. }}
-# Rename Folder dialog body text for a cloud storage service, whose files are hotlinked from the
-# entries, so a move changes the URLs and the entries aren’t updated
-enter_new_name_for_external_folder: |
-  .input {$count :integer}
-  .match $count
-    0   {{ Introduce un nuevo nombre a continuación. }}
-    one {{ Introduce un nuevo nombre a continuación. El archivo de la carpeta se moverá con ella y su URL cambiará, así que actualiza cualquier entrada que lo use. }}
-    *   {{ Introduce un nuevo nombre a continuación. {$count} archivos de la carpeta se moverán con ella y sus URL cambiarán, así que actualiza las entradas que los usen. }}
-# Rename Folder dialog for a cloud storage service: warning shown when entries link to files in the
-# folder, which aren’t updated. {$count} is the number of entries
-renaming_external_folder_breaks_links: |
-  .input {$count :integer}
-  .match $count
-    one {{ Una entrada enlaza a un archivo de esta carpeta. La entrada no se actualizará, así que el enlace dejará de funcionar cuando se cambie el nombre de la carpeta. }}
-    *   {{ {$count} entradas enlazan a archivos de esta carpeta. Las entradas no se actualizarán, así que los enlaces dejarán de funcionar cuando se cambie el nombre de la carpeta. }}
 # Delete Folder confirmation
 # {$name} is the folder name and {$count} is the number of assets in the folder
 confirm_deleting_folder: |
@@ -745,13 +730,6 @@ enter_new_name_for_asset: |
     0   {{ Introduce un nuevo nombre a continuación. }}
     one {{ Introduce un nuevo nombre a continuación. También se actualizará una entrada que usa el recurso. }}
     *   {{ Introduce un nuevo nombre a continuación. También se actualizarán {$count} entradas que usan el recurso. }}
-# Rename Asset dialog for a file on a cloud storage service: warning shown when entries link to the
-# file, which aren’t updated. {$count} is the number of entries
-renaming_external_asset_breaks_links: |
-  .input {$count :integer}
-  .match $count
-    one {{ Una entrada enlaza a este archivo. La entrada no se actualizará, así que el enlace dejará de funcionar cuando se cambie el nombre del archivo. }}
-    *   {{ {$count} entradas enlazan a este archivo. Las entradas no se actualizarán, así que los enlaces dejarán de funcionar cuando se cambie el nombre del archivo. }}
 # Validation errors for asset renaming
 enter_new_name_for_asset_error:
   empty: El nombre del archivo no puede estar vacío.

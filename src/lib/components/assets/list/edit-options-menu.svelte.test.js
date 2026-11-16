@@ -34,17 +34,38 @@ describe('EditOptionsMenu', () => {
     expect(onEdit).toHaveBeenCalledOnce();
   });
 
+  test('offers the Move item when it has a handler', async () => {
+    const onMove = vi.fn();
+
+    await render(EditOptionsMenu, { canRename: true, canMove: true, onRename: vi.fn(), onMove });
+    await openMenu();
+
+    const menu = page.getByRole('menu', { name: 'Edit Options' });
+
+    expect(
+      menu
+        .getByRole('menuitem')
+        .elements()
+        .map((el) => el.textContent?.trim()),
+    ).toEqual(['Rename', 'Move']);
+
+    await menu.getByRole('menuitem', { name: 'Move Asset' }).click();
+    expect(onMove).toHaveBeenCalledOnce();
+  });
+
   test('disables the actions that can’t be taken on the asset', async () => {
     await render(EditOptionsMenu, {
       canReplace: false,
       onEdit: vi.fn(),
       onRename: vi.fn(),
+      onMove: vi.fn(),
       onReplace: vi.fn(),
     });
     await openMenu();
 
     await expect.element(page.getByRole('menuitem', { name: 'Edit Asset' })).toBeDisabled();
     await expect.element(page.getByRole('menuitem', { name: 'Rename Asset' })).toBeDisabled();
+    await expect.element(page.getByRole('menuitem', { name: 'Move Asset' })).toBeDisabled();
     await expect.element(page.getByRole('menuitem', { name: 'Replace Asset' })).toBeDisabled();
   });
 
@@ -53,13 +74,16 @@ describe('EditOptionsMenu', () => {
       readOnly: true,
       canEdit: true,
       canRename: true,
+      canMove: true,
       canReplace: true,
       onEdit: vi.fn(),
       onRename: vi.fn(),
+      onMove: vi.fn(),
       onReplace: vi.fn(),
     });
     await openMenu();
 
+    expect(page.getByRole('menuitem').elements()).toHaveLength(4);
     expect(
       page
         .getByRole('menuitem')

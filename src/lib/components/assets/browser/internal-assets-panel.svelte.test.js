@@ -5,43 +5,11 @@ import { render } from 'vitest-browser-svelte';
 
 import { selectAssetsView } from '$lib/services/contents/editor';
 import { createMockAsset } from '$lib/test/config';
+import { createFileDropEvent } from '$lib/test/drop';
 
 import InternalAssetsPanel from './internal-assets-panel.svelte';
 
 const assets = [createMockAsset({ name: 'photo.png' }), createMockAsset({ name: 'logo.png' })];
-
-/**
- * Build a drop event carrying the given files.
- * @param {File[]} files Files.
- * @returns {Event} Event.
- */
-const createDropEvent = (files) => {
-  const event = new Event('drop', { bubbles: true, cancelable: true });
-
-  Object.defineProperty(event, 'dataTransfer', {
-    value: {
-      dropEffect: '',
-      items: files.map((file) => ({
-        /**
-         * Get the entry.
-         * @returns {any} File entry.
-         */
-        webkitGetAsEntry: () => ({
-          name: file.name,
-          isFile: true,
-          /**
-           * Read the file.
-           * @param {(file: File) => void} callback Callback.
-           * @returns {void} Nothing.
-           */
-          file: (callback) => callback(file),
-        }),
-      })),
-    },
-  });
-
-  return event;
-};
 
 describe('InternalAssetsPanel', () => {
   // Register a right-to-left locale, without strings, so it can be switched to
@@ -146,7 +114,7 @@ describe('InternalAssetsPanel', () => {
     const file = new File(['x'], 'new.png', { type: 'image/png' });
 
     /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
-      createDropEvent([file]),
+      createFileDropEvent([file]),
     );
 
     await vi.waitFor(() => expect(onDrop).toHaveBeenCalledWith({ files: [file] }));
@@ -165,7 +133,7 @@ describe('InternalAssetsPanel', () => {
     const file = new File(['x'], 'kite.png', { type: 'image/png' });
 
     /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
-      createDropEvent([file]),
+      createFileDropEvent([file]),
     );
 
     await vi.waitFor(() => expect(onDrop).toHaveBeenCalledWith({ files: [file] }));
@@ -192,7 +160,7 @@ describe('InternalAssetsPanel', () => {
         dataTransfer: new DataTransfer(),
       }),
     );
-    target.dispatchEvent(createDropEvent([new File(['x'], 'kite.png', { type: 'image/png' })]));
+    target.dispatchEvent(createFileDropEvent([new File(['x'], 'kite.png', { type: 'image/png' })]));
     await new Promise((resolve) => {
       setTimeout(resolve, 100);
     });
