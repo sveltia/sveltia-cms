@@ -72,7 +72,7 @@
     "htm": "^3.1.1",
     "immutable": "^5.2.1",
     "isomorphic-dompurify": "^4.7.0",
-    "isomorphic-git": "^1.44.13",
+    "isomorphic-git": "^1.44.14",
     "leaflet": "^1.9.4",
     "lexical": "^0.53.0",
     "marked": "^18.2.0",
