@@ -113,7 +113,7 @@ clipboard_error: Nem sikerült a vágólapra másolni.
 # Welcome and branding
 # Screen reader announcement when the sign-in page loads
 # {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
-welcome_message: '{$name} – üdvözlet!'
+welcome_message: 'Üdvözlet: {$name}'
 # Footer text with CMS branding
 # {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
 powered_by: 'Működteti: {$name}'
@@ -136,7 +136,7 @@ sign_in_using_access_token_description: Add meg alább a tokenedet. Olvasási é
 sign_in_using_access_token_workflow_note: Mivel a szerkesztői munkafolyamat be van kapcsolva, a pull requestekhez is olvasási és írási hozzáféréssel kell rendelkeznie.
 # Inline link text with embedded HTML anchor tag
 # {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
-sign_in_using_access_token_link: 'Tokent itt hozhatsz létre: <a>{$service} – felhasználói beállítások</a>.'
+sign_in_using_access_token_link: 'Tokent itt hozhatsz létre: <a>{$service}, felhasználói beállítások</a>.'
 # Input field label for personal access token
 personal_access_token: Személyes hozzáférési token
 
@@ -311,7 +311,7 @@ local_git_skip_reasons:
   detached_head: Nincs kiválasztott (checkout) ág.
   staged_changes: Más módosítások is commitra várnak (staged). Előbb commitold őket, vagy vond vissza a stage-elésüket.
   # {$path} is the file path
-  lfs: '{$path} – ezt a fájlt a Git LFS követi, ezért a CMS nem tudja commitolni.'
+  lfs: Ezt a fájlt ({$path}) a Git LFS követi, ezért a CMS nem tudja commitolni.
   # {$message} is the error message
   error: Váratlan hiba történt. {$message}
 
@@ -504,9 +504,9 @@ sort_keys:
 # Sort order labels used with field names
 # Example: “Name, A to Z” or “Updated on, new to old”
 # {$label} is the localized sort field label
-ascending: '{$label}, A–Z'
+ascending: '{$label}, növekvő'
 ascending_date: '{$label}, régebbitől az újabbig'
-descending: '{$label}, Z–A'
+descending: '{$label}, csökkenő'
 descending_date: '{$label}, újabbtól a régebbiig'
 ascending_number: '{$label}, növekvő'
 descending_number: '{$label}, csökkenő'
@@ -995,7 +995,7 @@ bulk_edit_entry: Bejegyzés
 bulk_edit_table: Tömeges szerkesztő
 
 # Bulk edit table: label of a cell input; {$field} is the field label, {$entry} is the entry title
-bulk_edit_cell: '{$entry} – {$field}'
+bulk_edit_cell: '{$entry}: {$field}'
 
 # Bulk edit status: number of changed fields
 bulk_edit_count: |
