@@ -60,7 +60,6 @@ const updateFolders = (config) => {
  * Initialize the CMS configuration state by loading the YAML file and optionally merge the object
  * with one specified with `CMS.init()`.
  * @param {CmsConfig} [manualConfig] Raw configuration specified with manual initialization.
- * @todo Normalize configuration object.
  */
 export const initCmsConfig = async (manualConfig) => {
   cmsConfig.current = undefined;

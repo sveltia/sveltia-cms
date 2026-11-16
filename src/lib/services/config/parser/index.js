@@ -47,7 +47,6 @@ const URL_OPTIONS = ['site_url'];
  * @param {ConfigParserCollectors} collectors Collectors.
  * @throws {Error} If there is an error in the config.
  * @see https://decapcms.org/docs/configuration-options/
- * @todo Add more validations.
  */
 export const parseCmsConfig = (cmsConfig, collectors) => {
   parseBackendConfig(cmsConfig, collectors);
