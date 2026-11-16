@@ -29,6 +29,7 @@
     validateAndRevealErrors,
   } from '$lib/services/contents/draft/validate/reveal';
   import { setFieldEditorContext } from '$lib/services/contents/editor/field-context';
+  import { awaitPendingFieldUpdates } from '$lib/services/contents/editor/pending';
   import { needsSlugInput } from '$lib/services/contents/editor/slug';
   import {
     addPendingEntries,
@@ -184,19 +185,30 @@
       return;
     }
 
-    // Nothing to save for an entry opened only to have a look
-    if (isEditUnchanged({ draft, parentDraft: parentDraft.current })) {
-      open = false;
-
-      return;
-    }
-
     adding = true;
 
     try {
-      // The entry is committed along with the parent, so it has to be complete. Wait for what was
-      // just typed and for custom validators to report, the same way a save does
-      if (!(await validateAndRevealErrors({ draft, enforceRequired: true }))) {
+      // Wait for what was just typed to reach the draft first, e.g. in a rich text editor, which
+      // converts its content with a short delay, or the change would be taken for no change at all
+      await awaitPendingFieldUpdates();
+
+      // The dialog can be closed with the Escape key in the meantime
+      if (!open || entryDraft.current !== draft) {
+        return;
+      }
+
+      // Nothing to save for an entry opened only to have a look
+      if (isEditUnchanged({ draft, parentDraft: parentDraft.current })) {
+        open = false;
+
+        return;
+      }
+
+      // The entry is committed along with the parent, so it has to be complete. Wait for custom
+      // validators to report, the same way a save does
+      if (
+        !(await validateAndRevealErrors({ draft, enforceRequired: true, awaitFieldUpdates: false }))
+      ) {
         errorCount = countInvalidFields(draft.validities);
         showValidationToast = true;
 

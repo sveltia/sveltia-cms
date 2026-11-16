@@ -1,9 +1,10 @@
-import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, onTestFinished, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
 import { allEntries } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import { restoreBackup } from '$lib/services/contents/draft/backup';
+import { trackPendingFieldUpdate } from '$lib/services/contents/editor/pending';
 import { entryEditorSettings } from '$lib/services/contents/editor/settings';
 import { createPendingEntry } from '$lib/services/contents/fields/relation/quick-add';
 import { initTestConfig } from '$lib/test/config';
@@ -255,6 +256,64 @@ describe('QuickAddDialog', () => {
         }),
       }),
     );
+  });
+
+  test('waits for a field update in flight before telling whether the entry has changed', async () => {
+    const entry = createTag('react', 'React');
+    const { props, onAdd } = await renderDialog({ entry });
+    const dialog = page.getByRole('dialog', { name: /Editing.*Tag/ });
+    const pendingEntry = { ...createPending('tags', 'react'), baseEntry: entry };
+    /** @type {PromiseWithResolvers<void>} */
+    const { promise, resolve } = Promise.withResolvers();
+
+    // Settle the update even if the test fails, so it doesn’t hold up the tests that follow
+    onTestFinished(() => resolve());
+
+    vi.mocked(createPendingEntry).mockResolvedValue(pendingEntry);
+
+    // A change still on its way to the draft, e.g. text typed in a rich text editor, which converts
+    // its content with a short delay
+    trackPendingFieldUpdate(promise);
+    await dialog.getByRole('button', { name: 'Update' }).click();
+    await dialog.getByRole('textbox', { name: 'Title' }).fill('React 19');
+    expect(props.open).toBe(true);
+    resolve();
+
+    await expect.poll(() => props.open).toBe(false);
+    expect(createPendingEntry).toHaveBeenCalledWith(
+      expect.objectContaining({
+        draft: expect.objectContaining({
+          currentValues: { _default: { title: 'React 19', description: '' } },
+        }),
+      }),
+    );
+    expect(onAdd).toHaveBeenCalledWith(pendingEntry, entry);
+  });
+
+  test('adds nothing once closed while waiting for a field update in flight', async () => {
+    const { draft, props, onAdd } = await renderDialog({ entry: createTag('react', 'React') });
+    const dialog = page.getByRole('dialog', { name: /Editing.*Tag/ });
+    /** @type {PromiseWithResolvers<void>} */
+    const { promise, resolve } = Promise.withResolvers();
+
+    // Settle the update even if the test fails, so it doesn’t hold up the tests that follow
+    onTestFinished(() => resolve());
+
+    // The button stays in the closed dialog, and is enabled again once the entry is dealt with
+    const updateButton = dialog.getByRole('button', { name: 'Update' }).element();
+
+    trackPendingFieldUpdate(promise);
+    await dialog.getByRole('textbox', { name: 'Title' }).fill('React 19');
+    await dialog.getByRole('button', { name: 'Update' }).click();
+    expect(updateButton.getAttribute('aria-disabled')).toBe('true');
+    await userEvent.keyboard('{Escape}');
+    await expect.poll(() => props.open).toBe(false);
+    resolve();
+    await expect.poll(() => updateButton.getAttribute('aria-disabled')).toBe('false');
+
+    expect(createPendingEntry).not.toHaveBeenCalled();
+    expect(draft.pendingEntries).toEqual([]);
+    expect(onAdd).not.toHaveBeenCalled();
   });
 
   test('closes without adding an existing entry left as it was', async () => {

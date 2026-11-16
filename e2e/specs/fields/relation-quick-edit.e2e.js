@@ -256,8 +256,7 @@ test.describe('with a rich text editor component in the selected author', () => 
     await page.keyboard.press('ControlOrMeta+A');
     await page.keyboard.type('Mathematician and writer');
     await expect(noteText).toHaveText('Mathematician and writer');
-    // The text reaches the body through the debounced updates of both rich text editors
-    await page.waitForTimeout(1000);
+    // Right away: the dialog waits for the text to reach the body through both rich text editors
     await dialog.getByRole('button', { name: 'Update' }).click();
     await expect(dialog).toBeHidden();
     await getEditor(page).getByRole('button', { name: 'Save' }).click();
