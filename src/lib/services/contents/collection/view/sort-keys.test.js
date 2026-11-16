@@ -9,6 +9,7 @@ import {
   getSortConfig,
   getSortKeyLabel,
   getSortKeyType,
+  resolveSortFieldKey,
   sortKeys,
   SPECIAL_SORT_KEY_TYPES,
   SPECIAL_SORT_KEYS,
@@ -1019,41 +1020,6 @@ describe('Test getSortConfig()', async () => {
     });
   });
 
-  test('carries over the custom label of the order field to _manual', () => {
-    expect(
-      getSortConfig({
-        collection: {
-          ...collectionBase,
-          reorder: true,
-          sortable_fields: [{ field: 'order', label: 'Position' }, { field: 'title' }],
-        },
-        isCommitAuthorAvailable: false,
-        isCommitDateAvailable: false,
-      }),
-    ).toStrictEqual({
-      keys: ['_manual', 'title'],
-      labels: { order: 'Position', _manual: 'Position' },
-      default: { key: '_manual', order: 'ascending' },
-    });
-  });
-
-  test('keeps a custom label given to _manual over that of the order field', () => {
-    expect(
-      getSortConfig({
-        collection: {
-          ...collectionBase,
-          reorder: true,
-          sortable_fields: [
-            { field: '_manual', label: 'Custom' },
-            { field: 'order', label: 'Position' },
-          ],
-        },
-        isCommitAuthorAvailable: false,
-        isCommitDateAvailable: false,
-      }).labels,
-    ).toStrictEqual({ _manual: 'Custom', order: 'Position' });
-  });
-
   test('does not duplicate _manual when it is already listed in sortable_fields', () => {
     expect(
       getSortConfig({
@@ -1204,6 +1170,40 @@ describe('Test getSortKeyType()', () => {
   });
 });
 
+describe('Test resolveSortFieldKey()', () => {
+  /** @type {any} */
+  const collection = { name: 'faq', _type: 'entry', reorder: { key: 'weight' } };
+
+  test('resolves _manual to a configured order field', async () => {
+    const { getField } = await import('$lib/services/contents/entry/fields');
+
+    vi.mocked(getField).mockReturnValueOnce({ name: 'weight', widget: 'number' });
+    expect(resolveSortFieldKey(collection, '_manual')).toBe('weight');
+    expect(getField).toHaveBeenCalledWith({ collectionName: 'faq', keyPath: 'weight' });
+  });
+
+  test('keeps _manual when the order field is not configured', async () => {
+    const { getField } = await import('$lib/services/contents/entry/fields');
+
+    vi.mocked(getField).mockReturnValueOnce(undefined);
+    expect(resolveSortFieldKey(collection, '_manual')).toBe('_manual');
+  });
+
+  test('keeps _manual when reordering is not enabled', async () => {
+    const { getField } = await import('$lib/services/contents/entry/fields');
+
+    expect(resolveSortFieldKey({ ...collection, reorder: undefined }, '_manual')).toBe('_manual');
+    expect(getField).not.toHaveBeenCalled();
+  });
+
+  test('keeps any other key', async () => {
+    const { getField } = await import('$lib/services/contents/entry/fields');
+
+    expect(resolveSortFieldKey(collection, 'title')).toBe('title');
+    expect(getField).not.toHaveBeenCalled();
+  });
+});
+
 describe('Test getSortKeyLabel()', () => {
   /** @type {any} */
   const mockCollection = {
@@ -1231,31 +1231,6 @@ describe('Test getSortKeyLabel()', () => {
     const nameLabel = getSortKeyLabel({ collection: mockCollection, key: 'name' });
 
     expect(typeof nameLabel).toBe('string');
-  });
-
-  test('returns the label of a configured order field for the _manual key', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const weightField = { name: 'weight', label: 'Weight', widget: 'number' };
-
-    /** @type {any} */
-    const collection = {
-      ...mockCollection,
-      reorder: { key: 'weight' },
-      fields: [...mockCollection.fields, weightField],
-    };
-
-    vi.mocked(getField).mockReturnValueOnce(weightField);
-    expect(getSortKeyLabel({ collection, key: '_manual' })).toBe('Weight');
-    expect(getField).toHaveBeenCalledWith({ collectionName: 'posts', keyPath: 'weight' });
-
-    // The order field isn’t configured
-    vi.mocked(getField).mockReturnValueOnce(undefined);
-    expect(getSortKeyLabel({ collection, key: '_manual' })).toBe('sort_keys._manual');
-
-    // Reordering isn’t enabled
-    expect(getSortKeyLabel({ collection: mockCollection, key: '_manual' })).toBe(
-      'sort_keys._manual',
-    );
   });
 
   test('returns field label for collection fields', () => {
@@ -1465,6 +1440,43 @@ describe('Test sortKeys state', () => {
       { key: '_manual', label: 'sort_keys._manual' },
       { key: 'title', label: 'Title' },
     ]);
+
+    // Clean up
+    selectedCollection.current = undefined;
+  });
+
+  test('labels the manual order with a custom label given in sortable_fields', async () => {
+    const { getField } = await import('$lib/services/contents/entry/fields');
+    /** @type {Record<string, any>} */
+    const fields = { weight: { name: 'weight', label: 'Weight', widget: 'number' } };
+
+    vi.mocked(getField).mockImplementation(({ keyPath }) => fields[keyPath]);
+
+    allEntries.current = [];
+
+    /** @type {any} */
+    const collection = {
+      name: 'faq',
+      _type: 'entry',
+      folder: 'content/faq',
+      reorder: { key: 'weight' },
+      sortable_fields: [{ field: 'weight', label: 'Position' }],
+      fields: Object.values(fields),
+      _i18n: { i18nEnabled: false },
+    };
+
+    selectedCollection.current = collection;
+    expect(sortKeys.current).toEqual([{ key: '_manual', label: 'Position', type: 'number' }]);
+
+    // A label given to `_manual` comes first
+    selectedCollection.current = {
+      ...collection,
+      sortable_fields: [
+        { field: '_manual', label: 'Custom' },
+        { field: 'weight', label: 'Position' },
+      ],
+    };
+    expect(sortKeys.current).toEqual([{ key: '_manual', label: 'Custom', type: 'number' }]);
 
     // Clean up
     selectedCollection.current = undefined;

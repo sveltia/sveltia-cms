@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'vitest';
 
-import { getOrderFieldKey, getReorderGroupName, isManuallyOrdered } from './config';
+import {
+  getOrderFieldKey,
+  getReorderGroupName,
+  isManuallyOrdered,
+  isManualOrderKey,
+} from './config';
 
 describe('isManuallyOrdered()', () => {
   test('returns true for an entry collection with the reorder option', () => {
@@ -41,6 +46,27 @@ describe('getOrderFieldKey()', () => {
 
   test('falls back to the default key when reorder.key is empty', () => {
     expect(getOrderFieldKey({ reorder: { key: '' } })).toBe('order');
+  });
+});
+
+describe('isManualOrderKey()', () => {
+  test('returns true for the _manual key', () => {
+    expect(isManualOrderKey({ reorder: true }, '_manual')).toBe(true);
+    expect(isManualOrderKey({ _type: 'entry', _file: { arrayFile: true } }, '_manual')).toBe(true);
+  });
+
+  test('returns true for the order field key', () => {
+    expect(isManualOrderKey({ reorder: true }, 'order')).toBe(true);
+    expect(isManualOrderKey({ reorder: { key: 'weight' } }, 'weight')).toBe(true);
+  });
+
+  test('returns false for any other key', () => {
+    expect(isManualOrderKey({ reorder: { key: 'weight' } }, 'order')).toBe(false);
+    expect(isManualOrderKey({ reorder: true }, 'title')).toBe(false);
+    expect(isManualOrderKey({}, 'order')).toBe(false);
+    // `getOrderFieldKey()` returns `undefined` for a collection without the reorder option
+    expect(isManualOrderKey({}, undefined)).toBe(false);
+    expect(isManualOrderKey({}, '')).toBe(false);
   });
 });
 

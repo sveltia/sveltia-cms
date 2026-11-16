@@ -41,6 +41,16 @@ export const getOrderFieldKey = (collection) => {
 };
 
 /**
+ * Check if the given sort key sorts entries by their manual order: the special `_manual` key, or
+ * the collection’s order field itself.
+ * @param {any} collection Collection (typically an entry collection).
+ * @param {string | undefined} key Sort key.
+ * @returns {boolean} Result. `false` for an empty key, even if the collection has no order field.
+ */
+export const isManualOrderKey = (collection, key) =>
+  !!key && (key === '_manual' || key === getOrderFieldKey(collection));
+
+/**
  * Get the name of the view group that entries should be grouped by while the given collection is in
  * reorder mode, as configured with `reorder: { group: '…' }`. The group is named explicitly rather
  * than reusing whatever grouping the user has active, because the order field is renumbered group

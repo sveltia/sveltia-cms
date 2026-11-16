@@ -109,7 +109,7 @@ export const getSortConfig = ({ collection, isCommitAuthorAvailable, isCommitDat
   // Copy the keys, which can be the configured `sortable_fields` array itself, before adding any
   let keys = [...parsed.keys];
   let { defaultKey, defaultOrder } = parsed;
-  let { labels } = parsed;
+  const { labels } = parsed;
 
   // Special handling for summary field: if the collection has a summary template defined, we add
   // `_summary` as a special sort key, which uses the generated summary value
@@ -160,11 +160,6 @@ export const getSortConfig = ({ collection, isCommitAuthorAvailable, isCommitDat
   if (orderKey || isArrayFileCollection(collection)) {
     keys = keys.filter((key) => key !== orderKey);
 
-    // Carry over a custom label given to the order field in `sortable_fields`
-    if (orderKey && labels?.[orderKey] && !labels._manual) {
-      labels = { ...labels, _manual: labels[orderKey] };
-    }
-
     if (!keys.includes('_manual')) {
       keys.unshift('_manual');
     }
@@ -213,6 +208,23 @@ export const getSortKeyType = ({ key, fieldConfig }) => {
 };
 
 /**
+ * Resolve the given sort key to the key of the field it sorts by. The `_manual` key stands for the
+ * order field when that is a configured field, e.g. a Number field named `weight`, so it’s labelled
+ * and typed like the field.
+ * @param {InternalEntryCollection} collection Collection.
+ * @param {string} key Sort key.
+ * @returns {string} Order field key for `_manual` backed by a configured field, otherwise `key`.
+ * @see https://github.com/sveltia/sveltia-cms/issues/1169
+ */
+export const resolveSortFieldKey = (collection, key) => {
+  const orderKey = key === '_manual' ? getOrderFieldKey(collection) : undefined;
+
+  return orderKey && getField({ collectionName: collection.name, keyPath: orderKey })
+    ? orderKey
+    : key;
+};
+
+/**
  * Get a field’s label by key.
  * @param {object} args Arguments.
  * @param {InternalEntryCollection} args.collection Collection.
@@ -221,16 +233,6 @@ export const getSortKeyType = ({ key, fieldConfig }) => {
  * @returns {string} Label. For a nested field, it would be something like `Name – English`.
  */
 export const getSortKeyLabel = ({ collection, key }) => {
-  if (key === '_manual') {
-    const orderKey = getOrderFieldKey(collection);
-
-    // Use the label of the order field if it’s a configured field, e.g. `weight`
-    // @see https://github.com/sveltia/sveltia-cms/issues/1169
-    if (orderKey && getField({ collectionName: collection.name, keyPath: orderKey })) {
-      return getSortKeyLabel({ collection, key: orderKey });
-    }
-  }
-
   if ([...SPECIAL_SORT_KEYS, 'name'].includes(key)) {
     return _(`sort_keys.${key}`);
   }
@@ -281,22 +283,17 @@ export const sortKeys = createDerivedState(() => {
     isCommitDateAvailable: _allEntries.some((entry) => !!entry.commitDate),
   });
 
-  const orderKey = getOrderFieldKey(collection);
-
   return keys.map((key) => {
-    // The manual order is worded like the order field if it’s a configured field, e.g. a Number
-    // field named `weight`
-    const orderField =
-      key === '_manual' && orderKey
-        ? getField({ collectionName: collection.name, keyPath: orderKey })
-        : undefined;
+    const fieldKey = resolveSortFieldKey(collection, key);
+    const fieldConfig = getField({ collectionName: collection.name, keyPath: fieldKey });
 
-    const typeKey = orderField ? /** @type {string} */ (orderKey) : key;
-    const fieldConfig = orderField ?? getField({ collectionName: collection.name, keyPath: key });
+    const label =
+      labels?.[key] ?? labels?.[fieldKey] ?? getSortKeyLabel({ collection, key: fieldKey });
+
     /** @type {SortKey} */
-    const sortKey = { key, label: labels?.[key] ?? getSortKeyLabel({ collection, key }) };
+    const sortKey = { key, label };
 
-    if (getSortKeyType({ key: typeKey, fieldConfig }) === Number) {
+    if (getSortKeyType({ key: fieldKey, fieldConfig }) === Number) {
       sortKey.type = 'number';
     }
 
