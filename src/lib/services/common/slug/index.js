@@ -101,8 +101,10 @@ export const getSlugTimeZone = () =>
  * @param {object} [options] Options.
  * @param {boolean} [options.fallback] Whether to return a fallback value if the slug is empty.
  * Defaults to `true`, which returns a part of a UUID.
- * @param {string} [options.locale] BCP 47 language tag passed to the transliterate library when
- * `clean_accents` is enabled.
+ * @param {string} [options.locale] Locale of the entry, as a BCP 47 language tag, passed to the
+ * transliterate library when `clean_accents` is enabled. The global `transliterate_locale` option
+ * stands in for it where there is none: a site without i18n support, a collection without it
+ * (`_default`), a slug shared by every locale (`_`), or an asset file name.
  * @param {number} [options.maxLength] Maximum length of the slug.
  * @returns {string} Slug.
  * @see https://decapcms.org/docs/configuration-options/#slug-type
@@ -116,6 +118,7 @@ export const slugify = (
     slug: {
       encoding = 'unicode',
       clean_accents: cleanAccents = false,
+      transliterate_locale: transliterateLocale = undefined,
       sanitize_replacement: sanitizeReplacement = '-',
       maxlength: maxLengthOption = undefined,
       trim: trimReplacement = true,
@@ -128,7 +131,10 @@ export const slugify = (
 
   if (cleanAccents) {
     // Remove any accented characters by transliterating them to their ASCII equivalents
-    slug = transliterateString(slug, locale);
+    slug = transliterateString(
+      slug,
+      locale && !locale.startsWith('_') ? locale : transliterateLocale,
+    );
   }
 
   // Turn every unsafe character into a space, which is then replaced below

@@ -2597,6 +2597,12 @@
  * @typedef {object} SlugOptions
  * @property {'unicode' | 'ascii'} [encoding] Encoding option. Default: `unicode`.
  * @property {boolean} [clean_accents] Whether to remove accents. Default: `false`.
+ * @property {string} [transliterate_locale] Locale whose transliteration rules are used with
+ * `clean_accents` where a slug has no locale of its own: on a site or in a collection without i18n
+ * support, for a slug shared by every locale, and for an uploaded file name slugified with
+ * `slugify_filename`. A locale code like `fi` or `de-CH`. An entry locale takes precedence.
+ * Default: none, which applies the library’s default rules. See
+ * https://github.com/sindresorhus/transliterate#supported-locales for supported locales.
  * @property {string} [sanitize_replacement] String to replace sanitized characters. Default: `-`.
  * @property {number} [maxlength] The maximum number of characters allowed for an entry slug.
  * Default: `Infinity`.

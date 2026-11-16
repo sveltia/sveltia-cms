@@ -268,6 +268,37 @@ describe('Test slugify()', () => {
     expect(slugify('Björk', { locale: 'sv' })).toBe('björk'); // No transliteration applied
   });
 
+  test('transliterate_locale option', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig.current = {
+      slug: {
+        encoding: 'ascii',
+        clean_accents: true,
+        transliterate_locale: 'sv',
+      },
+    };
+
+    // Used where there is no entry locale
+    expect(slugify('tärkeille')).toBe('tarkeille');
+    expect(slugify('tärkeille', { locale: undefined })).toBe('tarkeille');
+    expect(slugify('tärkeille', { locale: '' })).toBe('tarkeille');
+    expect(slugify('tärkeille', { locale: '_default' })).toBe('tarkeille');
+    expect(slugify('tärkeille', { locale: '_' })).toBe('tarkeille');
+
+    // An entry locale takes precedence, even one the library has no rules for
+    expect(slugify('Ærø', { locale: 'da' })).toBe('aeroe');
+    expect(slugify('tärkeille', { locale: 'de' })).toBe('taerkeille');
+    expect(slugify('tärkeille', { locale: 'en' })).toBe('taerkeille');
+
+    // No effect when clean_accents is false
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig.current = {
+      slug: { clean_accents: false, transliterate_locale: 'sv' },
+    };
+
+    expect(slugify('tärkeille')).toBe('tärkeille');
+  });
+
   test('custom sanitize replacement', async () => {
     // @ts-ignore
     (await import('$lib/services/config')).cmsConfig.current = {
