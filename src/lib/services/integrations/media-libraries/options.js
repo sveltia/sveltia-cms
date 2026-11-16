@@ -86,3 +86,46 @@ export const resolveLibraryOptions = (libraryName, fieldConfig) =>
       /** @type {any} */ (findLibraryOptions(libraryName, fieldConfig)),
     )
   );
+
+/**
+ * Get the names of the media libraries marked with the `default` option, which the Select Assets
+ * dialog opens on instead of the first repository folder: those marked at the field level first,
+ * then those marked at the site level, so the first one offered can be picked. A field can clear
+ * the mark of a site-level one with `default: false`. Only the `media_libraries` map is read, as
+ * the legacy `media_library` option configures a single library.
+ * @param {MediaField} [fieldConfig] Field configuration.
+ * @returns {(keyof MediaLibraries)[]} Library names.
+ */
+export const getPreferredLibraryNames = (fieldConfig) => {
+  const fieldLibraries = fieldConfig?.media_libraries ?? {};
+  const siteLibraries = cmsConfig.current?.media_libraries ?? {};
+  /**
+   * Get a library’s options in the given map, treating `null`, e.g. an empty YAML key, as not
+   * configured, like {@link findLibraryOptions} does.
+   * @param {Record<string, any>} libraries Library option map.
+   * @param {string} name Library name.
+   * @returns {any} Options.
+   */
+  const get = (libraries, name) => libraries[name] ?? undefined;
+
+  // A library marked in the field itself comes first, then the site’s libraries in their order. A
+  // library whose mark is inherited from the site is among the latter, even when the field
+  // configures it too.
+  const names = /** @type {(keyof MediaLibraries)[]} */ ([
+    ...new Set([
+      ...Object.keys(fieldLibraries).filter((name) => get(fieldLibraries, name)?.default === true),
+      ...Object.keys(siteLibraries),
+    ]),
+  ]);
+
+  return names.filter((name) => {
+    // `all` holds shared defaults, not the options of a library
+    if (name === 'all') {
+      return false;
+    }
+
+    const options = mergeLibraryOptions(get(siteLibraries, name), get(fieldLibraries, name));
+
+    return isObject(options) && options.default === true;
+  });
+};

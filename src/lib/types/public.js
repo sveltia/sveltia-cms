@@ -355,6 +355,18 @@
  */
 
 /**
+ * Options of a storage in the `media_libraries` option, on top of the storage’s own options. The
+ * legacy `media_library` option configures a single storage, so they’re not available there.
+ * @typedef {object} MediaLibrarySelectionOptions
+ * @property {boolean} [default] Whether the Select Assets dialog opens on the storage instead of
+ * the first repository folder, so files aren’t uploaded to the repository by mistake. Set it on one
+ * storage only; if more are marked, the first one offered wins. A storage marked at the field level
+ * takes precedence over one marked at the site level, and `false` clears the mark of a storage
+ * marked at the site level. Set it on the default storage in a field to open the repository folder
+ * again. Default: `false`.
+ */
+
+/**
  * Unified media storage option that supports multiple storage providers. See the
  * [documentation](https://sveltiacms.app/en/docs/media#configuration) for details.
  * @typedef {object} MediaLibraries
@@ -363,30 +375,30 @@
  * its own widget. For the default media storage, these options can be overridden by the options in
  * `default.config` at the same level. Field-level `all` options take precedence over global
  * `default.config` options.
- * @property {DefaultMediaLibrary | false} [default] Options for the default media storage. Set to
- * `false` to explicitly disable the default (internal) storage.
- * @property {CloudinaryMediaLibrary | false} [cloudinary] Options for the Cloudinary media storage.
- * Set to `false` to explicitly disable.
- * @property {UploadcareMediaLibrary | false} [uploadcare] Options for the Uploadcare media storage.
- * Set to `false` to explicitly disable.
- * @property {S3MediaLibrary | false} [aws_s3] Options for the Amazon S3 media storage. Set to
- * `false` to explicitly disable.
- * @property {AzureMediaLibrary | false} [azure_blob_storage] Options for the Azure Blob Storage
- * media storage. Set to `false` to explicitly disable.
- * @property {S3MediaLibrary | false} [cloudflare_r2] Options for the Cloudflare R2 media storage.
- * Set to `false` to explicitly disable.
- * @property {S3MediaLibrary | false} [digitalocean_spaces] Options for the DigitalOcean Spaces
- * media storage. Set to `false` to explicitly disable.
- * @property {S3MediaLibrary | false} [backblaze_b2] Options for the Backblaze B2 media storage. Set
- * to `false` to explicitly disable.
- * @property {S3MediaLibrary | false} [bunny_storage] Options for the Bunny Storage media storage.
- * Set to `false` to explicitly disable.
- * @property {S3MediaLibrary | false} [neon_object_storage] Options for the Neon Object Storage
- * media storage. Set to `false` to explicitly disable.
- * @property {S3MediaLibrary | false} [scaleway_object_storage] Options for the Scaleway Object
- * Storage media storage. Set to `false` to explicitly disable.
- * @property {S3MediaLibrary | false} [supabase_storage] Options for the Supabase Storage media
- * storage. Set to `false` to explicitly disable.
+ * @property {(DefaultMediaLibrary & MediaLibrarySelectionOptions) | false} [default] Options for
+ * the default media storage. Set to `false` to explicitly disable the default (internal) storage.
+ * @property {(CloudinaryMediaLibrary & MediaLibrarySelectionOptions) | false} [cloudinary]
+ * Options for the Cloudinary media storage. Set to `false` to explicitly disable.
+ * @property {(UploadcareMediaLibrary & MediaLibrarySelectionOptions) | false} [uploadcare]
+ * Options for the Uploadcare media storage. Set to `false` to explicitly disable.
+ * @property {(S3MediaLibrary & MediaLibrarySelectionOptions) | false} [aws_s3] Options for the
+ * Amazon S3 media storage. Set to `false` to explicitly disable.
+ * @property {(AzureMediaLibrary & MediaLibrarySelectionOptions) | false} [azure_blob_storage]
+ * Options for the Azure Blob Storage media storage. Set to `false` to explicitly disable.
+ * @property {(S3MediaLibrary & MediaLibrarySelectionOptions) | false} [cloudflare_r2] Options for
+ * the Cloudflare R2 media storage. Set to `false` to explicitly disable.
+ * @property {(S3MediaLibrary & MediaLibrarySelectionOptions) | false} [digitalocean_spaces] Options
+ * for the DigitalOcean Spaces media storage. Set to `false` to explicitly disable.
+ * @property {(S3MediaLibrary & MediaLibrarySelectionOptions) | false} [backblaze_b2] Options for
+ * the Backblaze B2 media storage. Set to `false` to explicitly disable.
+ * @property {(S3MediaLibrary & MediaLibrarySelectionOptions) | false} [bunny_storage] Options for
+ * the Bunny Storage media storage. Set to `false` to explicitly disable.
+ * @property {(S3MediaLibrary & MediaLibrarySelectionOptions) | false} [neon_object_storage] Options
+ * for the Neon Object Storage media storage. Set to `false` to explicitly disable.
+ * @property {(S3MediaLibrary & MediaLibrarySelectionOptions) | false} [scaleway_object_storage]
+ * Options for the Scaleway Object Storage media storage. Set to `false` to explicitly disable.
+ * @property {(S3MediaLibrary & MediaLibrarySelectionOptions) | false} [supabase_storage] Options
+ * for the Supabase Storage media storage. Set to `false` to explicitly disable.
  * @property {StockMediaLibrary | false} [stock_assets] Options for the unified stock photo/video
  * media library. Set to `false` to explicitly disable.
  */
@@ -396,8 +408,10 @@
  * of the same storage, so the options the storage requires, such as an S3 `bucket`, can be left to
  * the global ones.
  * @typedef {Omit<MediaLibraries, S3MediaLibraryName | 'azure_blob_storage'> &
- * { [K in S3MediaLibraryName]?: Partial<S3MediaLibrary> | false } &
- * { azure_blob_storage?: Partial<AzureMediaLibrary> | false }} FieldMediaLibraries
+ * { [K in S3MediaLibraryName]?: (Partial<S3MediaLibrary> & MediaLibrarySelectionOptions) | false }
+ * &
+ * { azure_blob_storage?: (Partial<AzureMediaLibrary> & MediaLibrarySelectionOptions) | false }}
+ * FieldMediaLibraries
  */
 
 /**

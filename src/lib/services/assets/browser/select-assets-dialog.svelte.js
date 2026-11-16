@@ -69,9 +69,10 @@ export const getFirstDefaultLibraryName = ({
 };
 
 /**
- * Get the name of the location selected when the dialog opens: the first repository folder
- * offered, or else the first cloud storage service if there are files to be uploaded to it, or else
- * the first external service.
+ * Get the name of the location selected when the dialog opens: the first location marked with the
+ * `default` option that’s offered, or else the first repository folder offered, or else
+ * the first cloud storage service if there are files to be uploaded to it, or else the first
+ * external service.
  * @param {object} args Arguments.
  * @param {AssetLibraryFolderMap} args.assetLibraryFolderMap Asset library folder map.
  * @param {boolean} args.isDefaultLibraryEnabled Whether the default media library is enabled.
@@ -81,6 +82,9 @@ export const getFirstDefaultLibraryName = ({
  * @param {[string, MediaLibraryService][]} args.cloudServiceEntries Cloud storage services offered.
  * @param {[string, MediaLibraryService][]} args.externalServiceEntries Cloud storage services and
  * stock asset providers offered, sorted by name.
+ * @param {string[]} [args.preferredLibraryNames] Names of the media libraries marked with the
+ * `default` option, in order of precedence. The default library, `default`, stands for the first
+ * repository folder offered.
  * @returns {string} Library name. Empty if no location is offered, which is the case when a folder
  * is to be selected but the field has no folder that can be browsed.
  */
@@ -91,12 +95,27 @@ export const getInitialLibraryName = ({
   hasPendingFiles,
   cloudServiceEntries,
   externalServiceEntries,
+  preferredLibraryNames = [],
 }) => {
   const firstDefaultLibraryName = getFirstDefaultLibraryName({
     assetLibraryFolderMap,
     isDefaultLibraryEnabled,
     selectFolder,
   });
+
+  // A cloud storage service isn’t offered when a folder is to be selected, or when it’s disabled
+  // for the field. Files waiting to be uploaded need a service that can take them.
+  const preferredName = preferredLibraryNames.find((name) =>
+    name === 'default'
+      ? !!firstDefaultLibraryName
+      : cloudServiceEntries.some(
+          ([serviceId, { upload }]) => serviceId === name && (!hasPendingFiles || !!upload),
+        ),
+  );
+
+  if (preferredName && preferredName !== 'default') {
+    return preferredName;
+  }
 
   if (firstDefaultLibraryName) {
     return firstDefaultLibraryName;

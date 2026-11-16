@@ -1243,6 +1243,29 @@ describe('SelectAssetsDialog', () => {
     }
   });
 
+  test('opens on the cloud storage service marked as the default', async () => {
+    const list = vi.fn().mockResolvedValue([createMockExternalAsset({ fileName: 'cloud.png' })]);
+
+    await renderDialog(
+      {
+        fieldConfig: {
+          name: 'image',
+          widget: 'image',
+          media_libraries: { test_cloud: { default: true } },
+        },
+      },
+      { list },
+    );
+
+    const dialog = page.getByRole('dialog');
+
+    await expect
+      .element(dialog.getByRole('option', { name: 'Test Cloud' }))
+      .toHaveAttribute('aria-selected', 'true');
+    await waitForGrid(1);
+    expect(list).toHaveBeenCalled();
+  });
+
   test('selects the first external service when no folder is available', async () => {
     await renderDialog({
       assetLibraryFolderMap: { global: { folder: globalAssetFolder.current, enabled: false } },

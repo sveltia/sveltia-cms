@@ -47,6 +47,7 @@
   import { convertFileItemToAsset } from '$lib/services/contents/fields/file/process';
   import { getMediaLibraryOptions } from '$lib/services/integrations/media-libraries';
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
+  import { getPreferredLibraryNames } from '$lib/services/integrations/media-libraries/options';
   import { allStockAssetProviders } from '$lib/services/integrations/media-libraries/stock';
   import { normalize } from '$lib/services/search/util';
   import { env } from '$lib/services/user/env.svelte';
@@ -174,8 +175,9 @@
     [...cloudServiceEntries, ...enabledStockAssetProviderEntries].sort(sortServicesByName),
   );
   /**
-   * Name of the selected location: the first one offered until the user picks another, and again
-   * whenever the locations offered change.
+   * Name of the selected location: the first location marked with the `default` option that’s
+   * offered, or else the first location offered, until the user picks another, and again whenever
+   * the locations offered change.
    */
   let libraryName = $derived(
     getInitialLibraryName({
@@ -186,6 +188,7 @@
       hasPendingFiles: untrack(() => !!pendingFiles.length),
       cloudServiceEntries,
       externalServiceEntries: enabledExternalServiceEntries,
+      preferredLibraryNames: getPreferredLibraryNames(fieldConfig),
     }),
   );
   const isDefaultLibrary = $derived(libraryName.startsWith('default-'));
