@@ -389,7 +389,8 @@ const copyWildcardField = (ctx, keyPath, field) => {
  * @param {string} [args.aliasesKey] Property name of the entry’s URL aliases. Placed right after
  * the permalink, ahead of all configured fields, when present in the value map.
  * @param {string} [args.orderKey] Property name of the entry order field. Placed right after the
- * aliases, ahead of all configured fields, when present in the value map.
+ * aliases, ahead of all configured fields, when present in the value map and not a configured field
+ * itself.
  * @param {boolean} [args.isIndexFile] Whether the corresponding entry is the collection’s special
  * index file used specifically in Hugo.
  * @param {boolean} [args.isTomlOutput] Whether the output it TOML format.
@@ -422,6 +423,7 @@ const finalizeContent = ({
   const copyArgs = { locale, unsortedMap, sortedMap, isTomlOutput, omitEmptyOptionalFields };
   /** @type {FinalizeContext} */
   const ctx = { locale, defaultLocale, getFieldArgs, unsortedMap, sortedMap, copyArgs };
+  const keyPathList = createKeyPathList(fields);
 
   // Add the properties managed by the CMS first, so they appear at the top of the output: the slug,
   // the permalink and the URL aliases, which relate to it, then the order field. The aliases
@@ -432,7 +434,9 @@ const finalizeContent = ({
     permalinkKey,
     aliasesKey,
     ...(aliasesKey ? getAliasKeyPaths(unsortedMap, aliasesKey) : []),
-    orderKey,
+    // A configured order field, e.g. `weight`, stays where it’s defined in the field list
+    // @see https://github.com/sveltia/sveltia-cms/issues/1169
+    orderKey && !keyPathList.includes(orderKey) ? orderKey : undefined,
   ].forEach((key) => {
     if (key && Object.hasOwn(unsortedMap, key)) {
       copyProperty({ ...copyArgs, key });
@@ -440,7 +444,7 @@ const finalizeContent = ({
   });
 
   // Move the listed properties to a new object
-  createKeyPathList(fields).forEach((keyPath) => {
+  keyPathList.forEach((keyPath) => {
     const field = getField({ ...getFieldArgs, keyPath });
 
     if (!copyField(ctx, keyPath, field)) {

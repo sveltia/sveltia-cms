@@ -1210,6 +1210,32 @@ describe('Test serializeContent()', () => {
     expect(result.priority).toBe(7);
   });
 
+  test('keeps a configured order field where it is defined in the field list', () => {
+    /** @type {any} */
+    const draft = {
+      collectionName: 'faq',
+      collection: {
+        reorder: { key: 'weight' },
+        _file: { format: 'json' },
+        _i18n: {
+          canonicalSlug: { key: 'translationKey' },
+        },
+      },
+      fields: [
+        { name: 'title', widget: 'string' },
+        { name: 'weight', widget: 'number' },
+      ],
+      isIndexFile: false,
+    };
+
+    const valueMap = { weight: 1, title: 'Test', translationKey: 'abc' };
+    const result = serializeContent({ draft, locale: 'en', valueMap });
+
+    // @see https://github.com/sveltia/sveltia-cms/issues/1169
+    expect(Object.keys(result)).toEqual(['translationKey', 'title', 'weight']);
+    expect(result.weight).toBe(1);
+  });
+
   test('serializes content with root list field', () => {
     /** @type {any} */
     const draft = {
