@@ -10,7 +10,9 @@ import {
   getBuiltInComponentDefs,
   getComponentDef,
   getCustomComponentName,
+  getImageComponentId,
   IMAGE_COMPONENT,
+  IMAGE_COMPONENT_IDS,
   LINKED_IMAGE_COMPONENT,
 } from './definitions.js';
 
@@ -533,13 +535,15 @@ describe('definitions', () => {
         'link',
         'caption',
       ]);
-      getBuiltInComponentDefs().forEach(({ fields }) => {
-        expect(fields.at(-1)).toEqual({
-          name: 'caption',
-          label: 'editor_components.caption',
-          required: false,
+      getBuiltInComponentDefs()
+        .filter(({ id }) => !id.startsWith('uncaptioned-'))
+        .forEach(({ fields }) => {
+          expect(fields.at(-1)).toEqual({
+            name: 'caption',
+            label: 'editor_components.caption',
+            required: false,
+          });
         });
-      });
     });
 
     it('should write an image with a caption as a figure', () => {
@@ -701,21 +705,83 @@ describe('definitions', () => {
     });
   });
 
+  describe('uncaptioned images', () => {
+    const getDef = (id) => getBuiltInComponentDefs().find((def) => def.id === id);
+    const FIGURE = '<figure><img src="a.png" alt=""><figcaption>Caption</figcaption></figure>';
+
+    const LINKED_FIGURE =
+      '<figure><a href="b.html"><img src="a.png" alt=""></a><figcaption>Caption</figcaption>' +
+      '</figure>';
+
+    it('should get the component IDs', () => {
+      expect(getImageComponentId({ linked: false, captioned: true })).toBe('image');
+      expect(getImageComponentId({ linked: true, captioned: true })).toBe('linked-image');
+      expect(getImageComponentId({ linked: false, captioned: false })).toBe('uncaptioned-image');
+      expect(getImageComponentId({ linked: true, captioned: false })).toBe(
+        'uncaptioned-linked-image',
+      );
+    });
+
+    it('should have no Caption field', () => {
+      expect(getDef('uncaptioned-image').fields.map(({ name }) => name)).toEqual([
+        'src',
+        'alt',
+        'title',
+      ]);
+      expect(getDef('uncaptioned-linked-image').fields.map(({ name }) => name)).toEqual([
+        'src',
+        'alt',
+        'title',
+        'link',
+      ]);
+    });
+
+    it('should leave a figure as it is in Markdown', () => {
+      const image = getDef('uncaptioned-image');
+      const linkedImage = getDef('uncaptioned-linked-image');
+
+      expect(FIGURE.match(image.pattern)).toBeNull();
+      expect(FIGURE.match(getDef('image').pattern)?.[0]).toBe(FIGURE);
+      expect(LINKED_FIGURE.match(linkedImage.pattern)).toBeNull();
+      expect(LINKED_FIGURE.match(getDef('linked-image').pattern)?.[0]).toBe(LINKED_FIGURE);
+      // Markdown images still match
+      expect('![a](b.png)'.match(image.pattern)?.[0]).toBe('![a](b.png)');
+      expect('[![a](b.png)](c.html)'.match(linkedImage.pattern)?.[0]).toBe('[![a](b.png)](c.html)');
+      expect(linkedImage.fromBlock('[![a](b.png)](c.html)'.match(linkedImage.pattern))).toEqual({
+        src: 'b.png',
+        alt: 'a',
+        title: '',
+        link: 'c.html',
+      });
+      expect(linkedImage.toBlock({ src: 'b.png', alt: 'a', link: 'c.html' })).toBe(
+        '[![a](b.png)](c.html)',
+      );
+    });
+
+    it('should leave a figure as it is in HTML', () => {
+      expect(getDef('uncaptioned-image').htmlSelector).toBe('img');
+      expect(getDef('uncaptioned-linked-image').htmlSelector).toBe('a:has(> img:only-child), img');
+      expect(getDef('image').htmlSelector).toBe('figure, img');
+      expect(getDef('linked-image').htmlSelector).toBe('figure, a:has(> img:only-child), img');
+    });
+  });
+
   describe('getBuiltInComponentDefs', () => {
     it('should return array of built-in component definitions', () => {
       const builtInDefs = getBuiltInComponentDefs();
 
       expect(Array.isArray(builtInDefs)).toBe(true);
-      expect(builtInDefs.length).toBe(2);
+      expect(builtInDefs.length).toBe(4);
     });
 
-    it('should include image and linked-image components', () => {
-      const builtInDefs = getBuiltInComponentDefs();
-      const imageComponent = builtInDefs.find((def) => def.id === 'image');
-      const linkedImageComponent = builtInDefs.find((def) => def.id === 'linked-image');
-
-      expect(imageComponent).toBeDefined();
-      expect(linkedImageComponent).toBeDefined();
+    it('should include the captioned and uncaptioned image and linked-image components', () => {
+      expect(getBuiltInComponentDefs().map(({ id }) => id)).toEqual(IMAGE_COMPONENT_IDS);
+      expect(IMAGE_COMPONENT_IDS).toEqual([
+        'uncaptioned-image',
+        'uncaptioned-linked-image',
+        'image',
+        'linked-image',
+      ]);
     });
 
     it('should insert an empty image in the plain text mode', () => {

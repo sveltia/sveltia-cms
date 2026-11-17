@@ -6,7 +6,10 @@ import {
   BUTTON_NAME_MAP,
   COMPONENT_NAME_PREFIX_REGEX,
 } from '$lib/services/contents/fields/rich-text';
-import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';
+import {
+  getComponentDef,
+  getImageComponentId,
+} from '$lib/services/contents/fields/rich-text/components/definitions';
 import { supportsHTML } from '$lib/services/contents/fields/rich-text/components/utils';
 
 /**
@@ -24,7 +27,8 @@ import { supportsHTML } from '$lib/services/contents/fields/rich-text/components
  * Get the names of the editor components enabled for the given RichText/Markdown field. The
  * `editor_components` option defaults to the field defaults, then all the built-in and custom
  * components. The `image` component is replaced with `linked-image` unless the `linked_images`
- * option is disabled.
+ * option is disabled, and with an uncaptioned variant if the `captioned_images` option is disabled,
+ * e.g. `uncaptioned-linked-image`.
  * @param {MarkdownField | RichTextField} fieldConfig Field configuration.
  * @returns {string[]} Component names.
  */
@@ -36,11 +40,12 @@ export const getEditorComponentNames = (fieldConfig) => {
       ...BUILTIN_COMPONENTS,
       ...customComponentRegistry.keys(),
     ],
-    linked_images: linkedImagesEnabled = defaultConfig.linked_images ?? true,
+    linked_images: linked = defaultConfig.linked_images ?? true,
+    captioned_images: captioned = defaultConfig.captioned_images ?? true,
   } = fieldConfig;
 
   return editorComponents.map((name) =>
-    name === 'image' && linkedImagesEnabled ? 'linked-image' : name,
+    name === 'image' ? getImageComponentId({ linked, captioned }) : name,
   );
 };
 

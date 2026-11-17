@@ -607,6 +607,61 @@ test.describe('linked images', () => {
   });
 });
 
+test.describe('captioned images', () => {
+  test.describe('default', () => {
+    test.use({ config: noteConfig({}) });
+
+    test('offers a caption for an image', async ({ cms, page }) => {
+      const { field } = await openNote({ cms, page, body: '![Dome](/uploads/dome.png)' });
+      const component = field.getByRole('group', { name: 'Image', exact: true });
+
+      await expect(component.getByRole('textbox', { name: 'Caption' })).toHaveCount(1);
+    });
+  });
+
+  test.describe('turned off', () => {
+    test.use({ config: noteConfig({ captioned_images: false }) });
+
+    test('offers no caption for an image', async ({ cms, page }) => {
+      const { editor, field } = await openNote({
+        cms,
+        page,
+        body: '[![Dome](/uploads/dome.png)](https://example.com/dome)',
+      });
+
+      const component = field.getByRole('group', { name: 'Image', exact: true });
+      const alt = component.getByRole('textbox', { name: 'Alt Text' });
+
+      await expect(alt).toHaveValue('Dome');
+      await expect(component.getByRole('textbox', { name: 'Link' })).toHaveValue(
+        'https://example.com/dome',
+      );
+      await expect(component.getByRole('textbox', { name: 'Caption' })).toHaveCount(0);
+      await alt.fill('The dome');
+
+      await saveAndExpect({
+        cms,
+        editor,
+        body: '[![The dome](/uploads/dome.png)](https://example.com/dome)',
+      });
+    });
+
+    test('leaves a figure as it is', async ({ cms, page }) => {
+      const figure =
+        '<figure><img src="/uploads/dome.png" alt="Dome"><figcaption>Photo</figcaption></figure>';
+
+      const { editor, field, body } = await openNote({ cms, page, body: `${figure}\n\nIntro.` });
+
+      await expect(field.getByRole('group', { name: 'Image', exact: true })).toHaveCount(0);
+      await expect(body.getByText('Intro.')).toBeVisible();
+      await moveCaretToEnd(body);
+      await page.keyboard.type(' More.');
+
+      await saveAndExpect({ cms, editor, body: `${figure}\n\nIntro. More.` });
+    });
+  });
+});
+
 test.describe('image captions in HTML', () => {
   test.use({ config: noteConfig({ format: 'html' }), viewport: { width: 1280, height: 2000 } });
 

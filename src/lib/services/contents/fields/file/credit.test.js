@@ -273,6 +273,11 @@ describe('getCreditCaptionKeyPath()', () => {
     expect(getKeyPath('image', 'body:c1:text:c2:src')).toBe('body:c1:text:c2:caption');
   });
 
+  test('returns nothing for an uncaptioned image component', () => {
+    expect(getKeyPath('uncaptioned-image', 'body:c12:src')).toBeUndefined();
+    expect(getKeyPath('uncaptioned-linked-image', 'body:c12:src')).toBeUndefined();
+  });
+
   test('returns the Caption field of a custom component', () => {
     registerComponent('figure', [
       { name: 'photo', widget: 'image' },

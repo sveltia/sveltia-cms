@@ -1,4 +1,5 @@
 import { getImmutable, immutableLoaded } from '$lib/services/api/immutable';
+import { IMAGE_COMPONENT_IDS } from '$lib/services/contents/fields/rich-text/components/definitions';
 import { findInlineMatches } from '$lib/services/contents/fields/rich-text/components/inline-pattern';
 import { supportsHTML } from '$lib/services/contents/fields/rich-text/components/utils';
 import { IMAGE_OR_LINKED_IMAGE_REGEX } from '$lib/services/contents/fields/rich-text/constants';
@@ -126,12 +127,6 @@ export const encodeImageSrc = (...args) => {
  * Global version of `IMAGE_OR_LINKED_IMAGE_REGEX`.
  */
 const GLOBAL_IMAGE_OR_LINKED_IMAGE_REGEX = new RegExp(IMAGE_OR_LINKED_IMAGE_REGEX, 'g');
-/**
- * IDs of the built-in image components, whose Markdown is left to Marked in the preview. Their
- * previews are `<img>` HTML, which would show as text within code, and start an HTML block that
- * leaves the following lines unparsed when the image is alone on a line, e.g. above a caption.
- */
-const MARKDOWN_IMAGE_COMPONENT_IDS = ['image', 'linked-image'];
 /**
  * Cache for global-flag versions of component definition patterns. Keyed by
  * `${pattern.source}|${pattern.flags}` so the same logical pattern always resolves to the same
@@ -620,7 +615,10 @@ export const buildMarkdownWithPreviews = (
   const { previewMap, assetMap } = context;
   const value = currentValue ?? '';
   const codeRanges = getCodeRanges(value);
-  const defs = componentDefs.filter(({ id }) => !MARKDOWN_IMAGE_COMPONENT_IDS.includes(id));
+  // The Markdown of the built-in image components is left to Marked. Their previews are `<img>`
+  // HTML, which would show as text within code, and start an HTML block that leaves the following
+  // lines unparsed when the image is alone on a line, e.g. above a caption.
+  const defs = componentDefs.filter(({ id }) => !IMAGE_COMPONENT_IDS.includes(id));
 
   let string = value.replace(GLOBAL_IMAGE_OR_LINKED_IMAGE_REGEX, (...args) =>
     // The offset comes before the whole string and the named groups

@@ -223,28 +223,53 @@ const getLinkedImageMatchProps = ({ groups }) => {
 };
 
 /**
- * Create the definition of a built-in image component. The linked image component, enabled with
- * the `linked_images` option, is the image component with a link around the image.
+ * Get the ID of a built-in image component.
  * @param {object} args Arguments.
  * @param {boolean} args.linked Whether the image can be wrapped in a link.
+ * @param {boolean} args.captioned Whether the image can have a caption.
+ * @returns {string} ID: `image`, `linked-image`, `uncaptioned-image` or `uncaptioned-linked-image`.
+ */
+export const getImageComponentId = ({ linked, captioned }) =>
+  `${captioned ? '' : 'uncaptioned-'}${linked ? 'linked-image' : 'image'}`;
+
+/**
+ * Variants of the built-in image components.
+ */
+const IMAGE_COMPONENT_VARIANTS = [false, true].flatMap((captioned) =>
+  [false, true].map((linked) => ({ linked, captioned })),
+);
+
+/**
+ * IDs of all the built-in image components.
+ */
+export const IMAGE_COMPONENT_IDS = IMAGE_COMPONENT_VARIANTS.map(getImageComponentId);
+
+/**
+ * Create the definition of a built-in image component. The linked image component, enabled with
+ * the `linked_images` option, is the image component with a link around the image. The uncaptioned
+ * components, enabled by disabling the `captioned_images` option, have no Caption field and leave
+ * an HTML `<figure>` element as it is.
+ * @param {object} args Arguments.
+ * @param {boolean} args.linked Whether the image can be wrapped in a link.
+ * @param {boolean} [args.captioned] Whether the image can have a caption.
  * @param {(key: string) => string} args.getLabel Function to get the label of the component or a
  * field, given its key in {@link IMAGE_COMPONENT_LABELS}.
  * @returns {EditorComponentDefinition} Definition.
  */
-const createImageComponentDef = ({ linked, getLabel }) => ({
+const createImageComponentDef = ({ linked, captioned = true, getLabel }) => ({
   /* eslint-disable jsdoc/require-jsdoc */
-  id: linked ? 'linked-image' : 'image',
+  id: getImageComponentId({ linked, captioned }),
   label: getLabel('image'),
   fields: [
     { name: 'src', label: getLabel('src'), widget: 'image' },
     { name: 'alt', label: getLabel('alt'), required: false },
     { name: 'title', label: getLabel('title'), required: false },
     ...(linked ? [{ name: 'link', label: getLabel('link'), required: false }] : []),
-    { name: 'caption', label: getLabel('caption'), required: false },
+    ...(captioned ? [{ name: 'caption', label: getLabel('caption'), required: false }] : []),
   ],
   pattern: new RegExp(
     [
-      getFigurePattern({ linked }),
+      ...(captioned ? [getFigurePattern({ linked })] : []),
       (linked ? IMAGE_OR_LINKED_IMAGE_REGEX : IMAGE_REGEX).source,
     ].join('|'),
   ),
@@ -272,7 +297,11 @@ const createImageComponentDef = ({ linked, getLabel }) => ({
     return link ? `<a href="${escapeAttr(link)}">${img}</a>` : img;
   },
   // An image with a caption, an image within a link that has nothing else, or a bare image
-  htmlSelector: linked ? 'figure, a:has(> img:only-child), img' : 'figure, img',
+  htmlSelector: [
+    ...(captioned ? ['figure'] : []),
+    ...(linked ? ['a:has(> img:only-child)'] : []),
+    'img',
+  ].join(', '),
   fromBlockHTML: (element) => {
     if (element.localName === 'figure') {
       return getFigureProps(element, { linked });
@@ -356,8 +385,8 @@ const getLocalizedImageLabel = (key) => _(`editor_components.${key}`);
  * @returns {EditorComponentDefinition[]} Array of built-in component definitions.
  */
 export const getBuiltInComponentDefs = () =>
-  [false, true].map((linked) => ({
-    ...createImageComponentDef({ linked, getLabel: getLocalizedImageLabel }),
+  IMAGE_COMPONENT_VARIANTS.map((variant) => ({
+    ...createImageComponentDef({ ...variant, getLabel: getLocalizedImageLabel }),
     icon: 'image',
     trigger: /** @type {'button'} */ ('button'),
     /**

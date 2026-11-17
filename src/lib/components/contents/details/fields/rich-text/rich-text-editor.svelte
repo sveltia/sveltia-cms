@@ -31,6 +31,7 @@
     getValueFormat,
     NODE_NAME_MAP,
   } from '$lib/services/contents/fields/rich-text';
+  import { IMAGE_COMPONENT_IDS } from '$lib/services/contents/fields/rich-text/components/definitions';
   import {
     getDroppedImages,
     getPastedImages,
@@ -144,9 +145,7 @@
       (def) => /** @type {import('@sveltia/ui').TextEditorComponent} */ (new EditorComponent(def)),
     ),
   );
-  const imageComponent = $derived(
-    components.find(({ id }) => id === 'image' || id === 'linked-image'),
-  );
+  const imageComponent = $derived(components.find(({ id }) => IMAGE_COMPONENT_IDS.includes(id)));
   const targetAssetFolder = $derived(
     getFieldAssetFolder({ collectionName, fileName, componentName, typedKeyPath, isIndexFile }),
   );

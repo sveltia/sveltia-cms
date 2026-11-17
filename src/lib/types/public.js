@@ -1248,6 +1248,13 @@
  * field for specifying a URL to wrap the image as a link. The resulting Markdown output will be in
  * the format `[![alt](src)](link)`, where clicking the image navigates to the provided link. This
  * feature can be disabled if it causes conflicts with certain frameworks.
+ * @property {boolean} [captioned_images] Whether to enable the image caption feature for the
+ * built-in `image` component. Default: `true`. When enabled, the image component provides an
+ * additional Caption field. Markdown has no syntax for a caption, so an image with a caption is
+ * written as an HTML `<figure>` element with a `<figcaption>`, which can contain links and text
+ * formatting. This feature can be disabled if your framework or theme doesn’t support such HTML,
+ * or you don’t want editors to write it. A `<figure>` element is then left as raw HTML in
+ * Markdown, and can only be edited in the raw mode with the `html` format.
  * @property {boolean} [use_emoji_autocomplete] Whether to enable emoji autocomplete in the rich
  * text editor. Default: `true`. When enabled, typing `:` followed by a few letters will show a list
  * of matching emojis that can be selected to insert into the text.
