@@ -1716,8 +1716,8 @@
  * @property {string} name Unique identifier for the file.
  * @property {string} [label] Label to be displayed in the editor UI. Default: `name` option value.
  * @property {string} [icon] Name of a [Material Symbols
- * icon](https://fonts.google.com/icons?icon.set=Material+Symbols) to be displayed in the collection
- * file list and other places. See the
+ * icon](https://fontsource.org/fonts/material-symbols-outlined/glyphs) to be displayed in the
+ * collection file list and other places. See the
  * [documentation](https://sveltiacms.app/en/docs/collections#icons) for details.
  * @property {string} [summary] Summary template displayed in the file list of a file collection in
  * place of the label, e.g. `Home Page ({{locales}})`. It can use the file’s fields and the same
@@ -2015,8 +2015,8 @@
  * @property {string} [label] Label to be displayed in the editor UI. Default: Index File or its
  * localized version.
  * @property {string} [icon] Name of a [Material Symbols
- * icon](https://fonts.google.com/icons?icon.set=Material+Symbols) to be displayed in the editor UI.
- * Default: `home`.
+ * icon](https://fontsource.org/fonts/material-symbols-outlined/glyphs) to be displayed in the
+ * editor UI. Default: `home`.
  * @property {string} [summary] Summary template displayed in place of the label in the entry list,
  * search results and other places where the collection’s `summary` option applies to the entries,
  * e.g. `{{title}} ({{locales}})`. It can use the index file’s fields and the same special tags and
@@ -2046,8 +2046,8 @@
  * @property {string} [label] Label of the collection to be displayed in the editor UI. Default:
  * `name` option value.
  * @property {string} [icon] Name of a [Material Symbols
- * icon](https://fonts.google.com/icons?icon.set=Material+Symbols) to be displayed in the collection
- * list.
+ * icon](https://fontsource.org/fonts/material-symbols-outlined/glyphs) to be displayed in the
+ * collection list.
  * @property {boolean} [readonly] Whether to make the collection read-only. Default: `false`. Its
  * entries or files can be viewed but not created, edited, duplicated, reordered, deleted or moved
  * through the Editorial Workflow stages, and assets can’t be uploaded to, changed or deleted from
@@ -2837,7 +2837,8 @@
  * @property {string} [label] Label of the component to be displayed in the editor UI. Default: the
  * `id` value.
  * @property {string} [icon] Name of a [Material Symbols
- * icon](https://fonts.google.com/icons?icon.set=Material+Symbols) to be displayed in the editor UI.
+ * icon](https://fontsource.org/fonts/material-symbols-outlined/glyphs) to be displayed in the
+ * editor UI.
  * @property {'menuitem' | 'button'} [trigger] Trigger UI of the component. Default: `menuitem`. A
  * menu item is placed under the Insert menu, while a button is placed directly on the toolbar.
  * @property {boolean} [collapsed] Whether to collapse the object by default (`block` mode only).
@@ -2942,7 +2943,8 @@
  * @property {string} [label] Label of the component to be displayed in the editor UI. Default: the
  * `id` value.
  * @property {string} [icon] Name of a [Material Symbols
- * icon](https://fonts.google.com/icons?icon.set=Material+Symbols) to be displayed in the editor UI.
+ * icon](https://fontsource.org/fonts/material-symbols-outlined/glyphs) to be displayed in the
+ * editor UI.
  * @property {'inline'} type Component type, which must be `inline`.
  * @property {RegExp} pattern Regular expression to find the component within a paragraph, e.g.
  * `/\[\[(?<page>[^\]]+)\]\]/` for a wikilink. A leading `^` is ignored, and so are the `g` and
@@ -3389,8 +3391,8 @@
  * @property {string} label Label of the page, displayed as the page title and the tooltip of the
  * page’s button.
  * @property {string} [icon] Name of a [Material Symbols
- * icon](https://fonts.google.com/icons?icon.set=Material+Symbols) to be displayed on the page’s
- * button. Default: `extension`.
+ * icon](https://fontsource.org/fonts/material-symbols-outlined/glyphs) to be displayed on the
+ * page’s button. Default: `extension`.
  * @see https://sveltiacms.app/en/docs/api/custom-pages
  */
 
