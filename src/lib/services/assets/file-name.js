@@ -1,7 +1,12 @@
 import { getPathInfo } from '@sveltia/utils/file';
 
 import { slugify } from '$lib/services/common/slug';
-import { renameIfNeeded, renameReservedFileName, sanitizeFileName } from '$lib/services/utils/file';
+import {
+  foldFileName,
+  renameIfNeeded,
+  renameReservedFileName,
+  sanitizeFileName,
+} from '$lib/services/utils/file';
 
 /**
  * Format the file name for uploading, ensuring it is sanitized and optionally slugified. A leading
@@ -43,8 +48,7 @@ export const formatFileName = (
  * @returns {boolean} Result.
  */
 export const isSameFileName = (name1, name2) =>
-  formatFileName(name1).normalize().toLowerCase() ===
-  formatFileName(name2).normalize().toLowerCase();
+  foldFileName(formatFileName(name1)) === foldFileName(formatFileName(name2));
 
 /**
  * Check whether an asset can be renamed to the given name.
@@ -84,13 +88,13 @@ export const validateAssetName = ({
 
   // Case-insensitive, since `Photo.jpg` and `photo.jpg` clash on a case-insensitive file system
   // like macOS’s or Windows’s, and Unicode-normalized, as a name can be typed either way
-  const normalizedName = fileName.normalize().toLowerCase();
+  const foldedName = foldFileName(fileName);
   /**
    * Check if the name is taken.
    * @param {string[]} names Names to check against.
    * @returns {boolean} Result.
    */
-  const isTaken = (names) => names.some((n) => n.normalize().toLowerCase() === normalizedName);
+  const isTaken = (names) => names.some((n) => foldFileName(n) === foldedName);
 
   if (isTaken(otherNames)) {
     return 'duplicate';

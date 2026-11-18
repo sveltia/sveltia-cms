@@ -8,6 +8,7 @@ import { getValidCollectionFiles } from '$lib/services/contents/collection/predi
 import { LOCALE_ROOT_FOLDER_STRUCTURES } from '$lib/services/contents/i18n/config/constants';
 import { mergeI18nConfigs } from '$lib/services/contents/i18n/config/merge';
 import { hasLocalePlaceholder } from '$lib/services/contents/i18n/placeholder';
+import { normalizeFolderPath, stripLeadingDotSlash } from '$lib/services/utils/file';
 
 /**
  * @import {
@@ -164,7 +165,7 @@ export const normalizeAssetFolder = ({
   // Normalize `./` prefix: `./images` → `images`, `./` → ``, `.` → ``
   // This must happen after publicFolder defaulting so that `publicPath` preserves the `./` prefix
   // needed to match stored values like `./images/photo.jpg`.
-  mediaFolder = mediaFolder.replace(/^\.(?:\/|$)/, '');
+  mediaFolder = stripLeadingDotSlash(mediaFolder);
 
   const entryRelative = !mediaFolder.startsWith('/');
 
@@ -178,7 +179,7 @@ export const normalizeAssetFolder = ({
       ? // A root collection folder can be written as `.`, `./` or `/`, and any other folder can
         // start with `./`. The configuration passed to the parser still holds the raw value, which
         // field-level folders are resolved against
-        stripSlashes(baseFolder ?? '').replace(/^\.(?:\/|$)/, '')
+        normalizeFolderPath(baseFolder ?? '')
       : stripSlashes(mediaFolder),
     internalSubPath: entryRelative ? stripSlashes(mediaFolder) : undefined,
     publicPath:
@@ -338,7 +339,7 @@ const addAssetCollections = (folders, { assetCollections, globalFolders }) => {
     addFolderIfNeeded(folders, {
       collectionName: `assets:${name}`,
       // The folder is always relative to the repository root, so a leading `./` changes nothing
-      mediaFolder: `/${stripSlashes(_mediaFolder).replace(/^\.(?:\/|$)/, '')}`,
+      mediaFolder: `/${normalizeFolderPath(_mediaFolder)}`,
       publicFolder: _publicFolder,
       globalFolders,
       label,
@@ -401,7 +402,7 @@ export const resolveGlobalFolders = (config) => {
 
   // Normalize the media folder: an empty string, `/`, `.` and `./` are all considered as the root
   // folder, and a leading `./` is removed from any other folder, e.g. `./static/images`
-  const globalMediaFolder = stripSlashes(_globalMediaFolder).replace(/^\.(?:\/|$)/, '');
+  const globalMediaFolder = normalizeFolderPath(_globalMediaFolder);
 
   // Some frameworks expect asset paths starting with `@`, like `@assets/images/...`. Remove an
   // extra leading slash in that case. A trailing slash should always be removed internally.

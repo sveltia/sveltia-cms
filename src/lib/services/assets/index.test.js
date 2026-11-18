@@ -8,7 +8,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   countAssetsInFolder,
-  fillInternalPathTemplate,
   getAssetByAbsolutePath,
   getAssetByInternalPath,
   getAssetByPath,
@@ -90,10 +89,13 @@ vi.mock('$lib/services/contents/entry/collections');
 vi.mock('$lib/services/utils/file', async (importOriginal) => {
   const actual = /** @type {Record<string, any>} */ (await importOriginal());
 
-  // Mock every function but the path prefix, directory name and file name helpers
+  // Mock every function but the path prefix, folder path, directory name and file name helpers
   return {
     ...Object.fromEntries(Object.keys(actual).map((key) => [key, vi.fn()])),
     stripPathPrefix: actual.stripPathPrefix,
+    foldFileName: actual.foldFileName,
+    normalizeFolderPath: actual.normalizeFolderPath,
+    stripLeadingDotSlash: actual.stripLeadingDotSlash,
     getBaseName: actual.getBaseName,
     getDirName: actual.getDirName,
     sanitizeFileName: actual.sanitizeFileName,
@@ -3003,26 +3005,6 @@ describe('assets/index', () => {
       ).toBe(enPhoto);
     });
 
-    it('should resolve a template in an internal path against the given locale’s entry file', async () => {
-      const { getCollection } = await import('$lib/services/contents/collection');
-      const { fillTemplate } = await import('$lib/services/common/template');
-
-      vi.mocked(getCollection).mockReturnValue(collection);
-      vi.mocked(fillTemplate).mockReturnValue('content/posts/fr/hello');
-
-      fillInternalPathTemplate({
-        internalPath: 'content/posts/{{slug}}',
-        collectionName: 'posts',
-        entry,
-        locale: 'fr',
-      });
-
-      expect(fillTemplate).toHaveBeenCalledWith(
-        'content/posts/{{slug}}',
-        expect.objectContaining({ entryFilePath: 'content/posts/fr/hello/index.md' }),
-      );
-    });
-
     it('should resolve a template in an absolute path’s folder against the given locale', async () => {
       const { getAssetFolder } = await import('$lib/services/assets/folders');
       const { getCollection } = await import('$lib/services/contents/collection');
@@ -3151,117 +3133,6 @@ describe('assets/index', () => {
       expect(find('/blog/hello/images/sub/nested.jpg')).toBe(nestedPhoto);
     });
 
-    it('should not find an asset beside another entry or outside the public path', () => {
-      expect(find('/blog/hello/images/other.jpg')).toBeUndefined();
-      expect(find('/blog/world/images/other.jpg')).toBeUndefined();
-      expect(find('/images/photo.jpg')).toBeUndefined();
-    });
-
-    it('should find an asset by the root public path', async () => {
-      await useFolder({ ...folder, publicPath: '/' });
-
-      expect(find('/photo.jpg')).toBe(photo);
-      expect(find('/sub/nested.jpg')).toBe(nestedPhoto);
-    });
-
-    it('should find an asset in the folder holding the entry without a subfolder', async () => {
-      const besideEntry = createAsset('content/posts/hello/beside.jpg');
-
-      allAssets.current = [besideEntry];
-      await useFolder({ ...folder, internalSubPath: undefined, publicPath: '/media' });
-
-      expect(find('/media/beside.jpg')).toBe(besideEntry);
-    });
-
-    it('should find an asset beside an entry file that doesn’t have a folder of its own', async () => {
-      const { getCollection } = await import('$lib/services/contents/collection');
-      const flatPhoto = createAsset('content/posts/images/flat.jpg');
-
-      vi.mocked(getCollection).mockReturnValue({ ...collection, _file: { subPath: undefined } });
-      allAssets.current = [flatPhoto];
-      await useFolder({ ...folder, publicPath: '/images' });
-
-      expect(
-        find('/images/flat.jpg', {
-          entry: { ...entry, locales: { en: { ...entry.locales.en, path: 'content/posts/a.md' } } },
-        }),
-      ).toBe(flatPhoto);
-    });
-
-    it('should find an asset stored beside the entry file before it had a folder', async () => {
-      const { getCollection } = await import('$lib/services/contents/collection');
-      const legacyPhoto = createAsset('content/posts/2025/images/legacy.jpg');
-
-      // The entry `content/posts/2025/hello.md` owns `content/posts/2025/hello`
-      vi.mocked(getCollection).mockReturnValue({
-        ...collection,
-        _file: { subPath: '{{year}}/{{slug}}' },
-      });
-      allAssets.current = [legacyPhoto];
-
-      expect(
-        find('/blog/hello/images/legacy.jpg', {
-          entry: {
-            ...entry,
-            locales: { en: { ...entry.locales.en, path: 'content/posts/2025/hello.md' } },
-          },
-        }),
-      ).toBe(legacyPhoto);
-    });
-
-    it('should fill the template tags in the subfolder', async () => {
-      const { getCollection } = await import('$lib/services/contents/collection');
-      const hexoPhoto = createAsset('content/posts/hello/hexo.jpg');
-
-      // Hexo’s post asset folder: `media_folder: '{{slug}}'` beside `content/posts/hello.md`
-      vi.mocked(getCollection).mockReturnValue({ ...collection, _file: { subPath: undefined } });
-      allAssets.current = [hexoPhoto];
-      await useFolder({ ...folder, internalSubPath: '{{slug}}', publicPath: '/assets' });
-
-      expect(
-        find('/assets/hexo.jpg', {
-          entry: { ...entry, locales: { en: { ...entry.locales.en, path: 'content/posts/a.md' } } },
-        }),
-      ).toBe(hexoPhoto);
-    });
-
-    it('should resolve a path against the collection folder without an entry', async () => {
-      const sharedPhoto = createAsset('content/posts/images/shared.jpg');
-
-      allAssets.current = [sharedPhoto];
-      await useFolder({ ...folder, publicPath: '/images' });
-
-      expect(find('/images/shared.jpg', { entry: undefined })).toBe(sharedPhoto);
-
-      // The template tags can’t be filled without an entry
-      await useFolder({ ...folder, internalSubPath: '{{slug}}', publicPath: '/images' });
-
-      expect(find('/images/shared.jpg', { entry: undefined })).toBeUndefined();
-
-      await useFolder(folder);
-
-      expect(find('/blog/hello/images/photo.jpg', { entry: undefined })).toBeUndefined();
-    });
-
-    it('should resolve a path against the collection folder if the collection is unknown', async () => {
-      const { getCollection } = await import('$lib/services/contents/collection');
-      const sharedPhoto = createAsset('content/posts/images/shared.jpg');
-
-      vi.mocked(getCollection).mockReturnValue(undefined);
-      allAssets.current = [sharedPhoto];
-      await useFolder({ ...folder, publicPath: '/images' });
-
-      expect(find('/images/shared.jpg')).toBe(sharedPhoto);
-    });
-
-    it('should normalize the public path the same way as a saved one', async () => {
-      // An empty segment, e.g. left by a tag filled with an empty string, and a `..` segment
-      await useFolder({ ...folder, publicPath: '/blog/{{slug}}//media/../images' });
-
-      expect(find('/blog/hello/images/photo.jpg')).toBe(photo);
-      expect(find('/blog/hello//media/../images/photo.jpg')).toBeUndefined();
-    });
-
     it('should not find an asset by an absolute path in a folder with a relative public path', async () => {
       const sharedPhoto = createAsset('content/posts/photo.jpg');
 
@@ -3290,10 +3161,9 @@ describe('assets/index', () => {
 
       const enPhoto = createAsset('content/posts/en/hello/images/photo.jpg');
       const frPhoto = createAsset('content/posts/fr/hello/images/photo.jpg');
-      const enOnlyPhoto = createAsset('content/posts/en/hello/images/cover.jpg');
 
       beforeEach(() => {
-        allAssets.current = [enPhoto, frPhoto, enOnlyPhoto];
+        allAssets.current = [enPhoto, frPhoto];
       });
 
       it('should find the asset beside the given locale’s entry file', () => {
@@ -3304,15 +3174,6 @@ describe('assets/index', () => {
           enPhoto,
         );
         expect(find('/blog/hello/images/photo.jpg', { entry: i18nEntry })).toBe(enPhoto);
-      });
-
-      it('should fall back to the default locale’s copy of a file only that locale has', () => {
-        expect(find('/blog/hello/images/cover.jpg', { entry: i18nEntry, locale: 'fr' })).toBe(
-          enOnlyPhoto,
-        );
-        expect(
-          find('/blog/hello/images/missing.jpg', { entry: i18nEntry, locale: 'fr' }),
-        ).toBeUndefined();
       });
     });
   });
@@ -5582,108 +5443,6 @@ describe('assets/index', () => {
       expect(result).toBeUndefined();
 
       /** @type {any} */ (globalAssetFolder).current = {};
-    });
-  });
-
-  describe('fillInternalPathTemplate', () => {
-    /** @type {any} */
-    const mockCollection = { name: 'posts', _i18n: { defaultLocale: 'en' } };
-
-    /** @type {any} */
-    const mockEntry = {
-      id: 'my-post',
-      slug: 'my-post',
-      locales: {
-        en: { path: 'content/posts/my-post.md', content: { title: 'My Post' } },
-      },
-    };
-
-    it('should return the path as is when it has no template tags', async () => {
-      const { fillTemplate } = await import('$lib/services/common/template');
-
-      expect(
-        fillInternalPathTemplate({
-          internalPath: 'static/uploads',
-          collectionName: 'posts',
-          entry: mockEntry,
-        }),
-      ).toBe('static/uploads');
-
-      expect(fillTemplate).not.toHaveBeenCalled();
-    });
-
-    it('should fill all the template tags using the collection and entry', async () => {
-      const { getCollection } = await import('$lib/services/contents/collection');
-      const { fillTemplate } = await import('$lib/services/common/template');
-
-      const { isCollectionIndexFile } =
-        await import('$lib/services/contents/collection/entries/index-file');
-
-      vi.mocked(getCollection).mockReturnValue(mockCollection);
-      vi.mocked(isCollectionIndexFile).mockReturnValue(false);
-      vi.mocked(fillTemplate).mockReturnValue('content/posts/2024/my-post/media');
-
-      const result = fillInternalPathTemplate({
-        internalPath: 'content/posts/{{year}}/{{slug}}/media',
-        collectionName: 'posts',
-        entry: mockEntry,
-      });
-
-      expect(result).toBe('content/posts/2024/my-post/media');
-      expect(fillTemplate).toHaveBeenCalledWith('content/posts/{{year}}/{{slug}}/media', {
-        type: 'media_folder',
-        collection: mockCollection,
-        content: { title: 'My Post' },
-        currentSlug: 'my-post',
-        entryFilePath: 'content/posts/my-post.md',
-        isIndexFile: false,
-      });
-    });
-
-    it('should fall back to the first available locale when the default locale is missing', async () => {
-      const { getCollection } = await import('$lib/services/contents/collection');
-      const { fillTemplate } = await import('$lib/services/common/template');
-
-      vi.mocked(getCollection).mockReturnValue(mockCollection);
-      vi.mocked(fillTemplate).mockReturnValue('content/posts/my-post/media');
-
-      fillInternalPathTemplate({
-        internalPath: 'content/posts/{{slug}}/media',
-        collectionName: 'posts',
-        entry: /** @type {any} */ ({
-          ...mockEntry,
-          locales: { fr: { path: 'content/posts/fr/my-post.md', content: {} } },
-        }),
-      });
-
-      expect(fillTemplate).toHaveBeenCalledWith(
-        'content/posts/{{slug}}/media',
-        expect.objectContaining({ entryFilePath: 'content/posts/fr/my-post.md' }),
-      );
-    });
-
-    it('should return undefined when the entry is not given', () => {
-      expect(
-        fillInternalPathTemplate({
-          internalPath: 'content/posts/{{slug}}/media',
-          collectionName: 'posts',
-          entry: undefined,
-        }),
-      ).toBeUndefined();
-    });
-
-    it('should return undefined when the collection cannot be determined', async () => {
-      const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
-
-      vi.mocked(getAssociatedCollections).mockReturnValue([]);
-
-      expect(
-        fillInternalPathTemplate({
-          internalPath: 'content/posts/{{slug}}/media',
-          collectionName: undefined,
-          entry: mockEntry,
-        }),
-      ).toBeUndefined();
     });
   });
 

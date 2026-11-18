@@ -5,7 +5,10 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { getAssetFolder } from '$lib/services/assets/folders';
 import { getAssetBlob } from '$lib/services/assets/info';
 import { allAssets } from '$lib/services/assets/state';
-import { buildEntryAssetMoveChanges } from '$lib/services/contents/draft/save/asset-move';
+import {
+  buildEntryAssetMoveChanges,
+  getPathInMovedFolder,
+} from '$lib/services/contents/draft/save/asset-move';
 
 vi.mock('$lib/services/assets', () => ({ allAssets: { current: undefined } }));
 
@@ -54,6 +57,24 @@ beforeEach(async () => {
   vi.mocked(getAssetFolder).mockReturnValue({ entryRelative: true });
   vi.mocked(getAssetBlob).mockImplementation(async ({ path }) => new Blob([path]));
   setAssets([]);
+});
+
+describe('getPathInMovedFolder()', () => {
+  test('should swap the folder for the new one', () => {
+    expect(getPathInMovedFolder('content/hello/photo.jpg', 'content/hello', 'content/bye')).toBe(
+      'content/bye/photo.jpg',
+    );
+    expect(
+      getPathInMovedFolder('content/hello/images/photo.jpg', 'content/hello', 'content/a/bye'),
+    ).toBe('content/a/bye/images/photo.jpg');
+  });
+
+  test('should return undefined for a file outside the folder', () => {
+    expect(getPathInMovedFolder('content/hello-world/photo.jpg', 'content/hello', 'x')).toBe(
+      undefined,
+    );
+    expect(getPathInMovedFolder('content/hello', 'content/hello', 'x')).toBe(undefined);
+  });
 });
 
 describe('buildEntryAssetMoveChanges()', () => {

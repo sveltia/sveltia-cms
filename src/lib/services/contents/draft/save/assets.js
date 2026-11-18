@@ -17,6 +17,7 @@ import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
 import {
   createPath,
   encodeFilePath,
+  foldFileName,
   getDirName,
   getGitHash,
   resolvePath,
@@ -286,7 +287,7 @@ export const getAssetSavingInfo = ({
    * Get the names of the assets stored in the given folder. A name is kept as it’s spelled in the
    * repository, which may be in another Unicode normalization form than a name typed in the
    * browser, e.g. a decomposed `café.jpg` saved on macOS, so a file replacing the asset is written
-   * to the same path rather than next to it. Names are compared regardless of the form.
+   * to the same path rather than next to it. Names are compared with `foldFileName()`.
    * @param {string} folderPath Folder path.
    * @returns {string[]} Asset names.
    */
@@ -379,15 +380,14 @@ export const replaceBlobURL = async ({
     const pendingFileName = getPendingFileName({ draft, item, defaultLocaleSlug });
     const namesInSave = savingAssetsInSameFolder.map((f) => f.name);
     const ownName = replace ? formatFileName(pendingFileName) : undefined;
-
     /**
-     * Check if the given name is in the given list, ignoring case.
+     * Check if the given name is in the given list, ignoring case and the Unicode normalization
+     * form.
      * @param {string[]} names Names.
      * @param {string} name Name.
      * @returns {boolean} Result.
      */
-    const hasName = (names, name) =>
-      names.some((n) => n.normalize().toLowerCase() === name.normalize().toLowerCase());
+    const hasName = (names, name) => names.some((n) => foldFileName(n) === foldFileName(name));
 
     // Only the first of the files with the same name in this save replaces the existing file;
     // another one gets a name of its own, or it would overwrite the first one. Nor can a file
@@ -407,13 +407,11 @@ export const replaceBlobURL = async ({
           ],
         });
 
-    // A replacing file overwrites the existing asset whose name only differs in case, e.g.
-    // `Photo.jpg` and `photo.jpg`, rather than being added next to it, as the two would clash on a
-    // case-insensitive file system
+    // A replacing file overwrites the existing asset whose name only differs in case or in the
+    // Unicode normalization form, e.g. `Photo.jpg` and `photo.jpg`, rather than being added next to
+    // it, as the two would clash on a case-insensitive file system
     const replacedName = replacing
-      ? assetNamesInSameFolder.find(
-          (name) => name.normalize().toLowerCase() === fileName.normalize().toLowerCase(),
-        )
+      ? assetNamesInSameFolder.find((name) => foldFileName(name) === foldFileName(fileName))
       : undefined;
 
     const update = !!replacedName;

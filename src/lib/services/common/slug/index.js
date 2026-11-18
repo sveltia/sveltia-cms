@@ -8,6 +8,7 @@ import {
 import { transliterateString } from '$lib/services/common/slug/transliterate';
 import { cmsConfig } from '$lib/services/config';
 import { getOrCreate } from '$lib/services/utils/cache';
+import { foldFileName } from '$lib/services/utils/file';
 
 /**
  * @import { InternalCmsConfig } from '$lib/types/private';
@@ -253,9 +254,7 @@ export const validateNewFolderName = ({
 
   // A repository is often checked out on a file system that ignores case, where `Docs` and `docs`
   // would be the same folder
-  const normalizedName = folderName.normalize().toLowerCase();
+  const foldedName = foldFileName(folderName);
 
-  return takenNames.some((taken) => taken.normalize().toLowerCase() === normalizedName)
-    ? 'duplicate'
-    : undefined;
+  return takenNames.some((taken) => foldFileName(taken) === foldedName) ? 'duplicate' : undefined;
 };

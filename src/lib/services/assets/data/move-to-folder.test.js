@@ -99,6 +99,22 @@ describe('assets/data/move-to-folder', () => {
       expect(getTakenNamesInDir).toHaveBeenCalledWith('static/projects');
     });
 
+    it('compares the names whatever their Unicode normalization form', () => {
+      // A name read from a macOS disk is in NFD, while one typed in the browser is in NFC
+      vi.mocked(getTakenNamesInDir).mockReturnValue(['cafe\u0301.png']);
+
+      const assets = [
+        createAsset('static/uploads/caf\u00e9.png', globalFolder),
+        createAsset('static/uploads/2024/re\u0301sume\u0301.png', globalFolder),
+        createAsset('static/uploads/2025/r\u00e9sum\u00e9.png', globalFolder),
+      ];
+
+      expect(getAssetMoveConflicts({ assets, dirPath: 'static/projects' })).toEqual([
+        'caf\u00e9.png',
+        'r\u00e9sum\u00e9.png',
+      ]);
+    });
+
     it('compares the names case-insensitively', () => {
       vi.mocked(getTakenNamesInDir).mockReturnValue(['photo.jpg']);
 

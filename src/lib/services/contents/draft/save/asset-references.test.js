@@ -20,7 +20,8 @@ vi.mock('$lib/services/assets/references', () => ({ getEntriesByAssets: vi.fn() 
 
 vi.mock('$lib/services/assets/state', () => ({ allAssets: { current: [] } }));
 
-vi.mock('$lib/services/contents/draft/save/asset-move', () => ({
+vi.mock('$lib/services/contents/draft/save/asset-move', async (importOriginal) => ({
+  ...(await importOriginal()),
   getMovedFolders: vi.fn(() => new Map([['content/posts/hello', 'content/posts/bye']])),
 }));
 

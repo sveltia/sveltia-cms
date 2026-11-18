@@ -30,7 +30,9 @@ vi.mock('$lib/services/contents/entry/fields', () => ({
 vi.mock('$lib/services/contents/entry/summary', () => ({
   getEntrySummaryFromContent: vi.fn(() => 'summary'),
 }));
-vi.mock('$lib/services/utils/file', () => ({
+vi.mock('$lib/services/utils/file', async (importOriginal) => ({
+  foldFileName: /** @type {typeof import('$lib/services/utils/file')} */ (await importOriginal())
+    .foldFileName,
   renameIfNeeded: vi.fn((slug) => slug),
 }));
 

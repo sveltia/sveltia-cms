@@ -20,7 +20,7 @@ import {
 vi.mock('@sveltia/utils/crypto');
 vi.mock('@sveltia/utils/file');
 vi.mock('fast-deep-equal');
-vi.mock('$lib/services/assets', () => ({
+vi.mock('$lib/services/assets/entry-relative', () => ({
   fillInternalPathTemplate: vi.fn(),
 }));
 
@@ -52,7 +52,7 @@ const { allAssetFolders } = await import('$lib/services/assets/folders');
 const { getHash } = await import('@sveltia/utils/crypto');
 const { getPathInfo, isValidFileType } = await import('@sveltia/utils/file');
 const { default: equal } = await import('fast-deep-equal');
-const { fillInternalPathTemplate } = await import('$lib/services/assets');
+const { fillInternalPathTemplate } = await import('$lib/services/assets/entry-relative');
 const { allAssets } = await import('$lib/services/assets/state');
 const { getSlugs } = await import('$lib/services/contents/draft/slugs');
 const { getPendingFileName } = await import('$lib/services/assets/name');

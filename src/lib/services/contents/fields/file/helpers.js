@@ -1,8 +1,8 @@
 import { isURL } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 
-import { fillInternalPathTemplate } from '$lib/services/assets';
 import { getExistingEntryAssetFolderPath } from '$lib/services/assets/entry-folder';
+import { fillInternalPathTemplate } from '$lib/services/assets/entry-relative';
 import { formatFileName } from '$lib/services/assets/file-name';
 import { allAssetFolders, getAssetFolder, globalAssetFolder } from '$lib/services/assets/folders';
 import { getPendingFileName } from '$lib/services/assets/name';

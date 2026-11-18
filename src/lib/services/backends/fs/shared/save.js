@@ -15,7 +15,7 @@ import {
   isNotFoundError,
 } from '$lib/services/backends/fs/shared/handles';
 import { env } from '$lib/services/user/env.svelte';
-import { getBlob, getDirName, getGitHash } from '$lib/services/utils/file';
+import { foldPath, getBlob, getDirName, getGitHash } from '$lib/services/utils/file';
 
 /**
  * @import {
@@ -81,12 +81,13 @@ export const writeFile = async (fileHandle, data) => {
 };
 
 /**
- * Fold a path the way a case-insensitive file system that ignores the Unicode normalization
- * compares names, to tell whether two paths can refer to the same file.
- * @param {string} path File path.
- * @returns {string} Folded path.
+ * Create a temporary file with a unique name in the given directory. Its name starts with
+ * `TEMP_FILE_PREFIX`, so it’s hidden, and a stale one is deleted when the files are scanned.
+ * @param {FileSystemDirectoryHandle} dirHandle Directory handle.
+ * @returns {Promise<FileSystemFileHandle>} Handle of the new, empty file.
  */
-const foldPath = (path) => stripSlashes(path).normalize('NFC').toLowerCase();
+const createTempFile = (dirHandle) =>
+  dirHandle.getFileHandle(`${TEMP_FILE_PREFIX}${crypto.randomUUID()}`, { create: true });
 
 /**
  * Move a file from a previous path to a new path within the file system. A file or folder whose
@@ -132,10 +133,7 @@ export const moveFile = async ({ rootDirHandle, previousPath, path }) => {
     return newFileHandle;
   }
 
-  const tempFileHandle = await newDirHandle.getFileHandle(
-    `${TEMP_FILE_PREFIX}${crypto.randomUUID()}`,
-    { create: true },
-  );
+  const tempFileHandle = await createTempFile(newDirHandle);
 
   await writeFile(tempFileHandle, await fileHandle.getFile());
   await oldDirHandle.removeEntry(fileHandle.name);
@@ -200,9 +198,7 @@ export const saveFile = async ({ rootDirHandle, fileHandle, path, data }) => {
       const { dirname, basename } = getPathInfo(stripSlashes(path));
       const dirHandle = await getDirectoryHandle(rootDirHandle, dirname);
 
-      fileHandle = await dirHandle.getFileHandle(`${TEMP_FILE_PREFIX}${crypto.randomUUID()}`, {
-        create: true,
-      });
+      fileHandle = await createTempFile(dirHandle);
       pendingRename = { dirHandle, basename };
     } else {
       fileHandle = await getFileHandle(rootDirHandle, path);

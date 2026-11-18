@@ -4,7 +4,10 @@ import { getAssetPublicURL } from '$lib/services/assets/info';
 import { getEntriesByAssets } from '$lib/services/assets/references';
 import { allAssets } from '$lib/services/assets/state';
 import { hasTemplateTags } from '$lib/services/common/template/tags';
-import { getMovedFolders } from '$lib/services/contents/draft/save/asset-move';
+import {
+  getMovedFolders,
+  getPathInMovedFolder,
+} from '$lib/services/contents/draft/save/asset-move';
 import { getBaseName } from '$lib/services/utils/file';
 import { getEntryAssetVersion } from '$lib/services/workflow/assets';
 
@@ -27,14 +30,12 @@ import { getEntryAssetVersion } from '$lib/services/workflow/assets';
  * @param {Map<string, string>} movedFolders Moved folders, from `getMovedFolders()`.
  * @returns {string} New path, or the same path if the asset stays where it is.
  */
-const getMovedAssetPath = (path, movedFolders) => {
-  const [oldFolderPath, newFolderPath] =
-    [...movedFolders].find(([folderPath]) => path.startsWith(`${folderPath}/`)) ?? [];
-
-  return oldFolderPath === undefined
-    ? path
-    : `${newFolderPath}${path.slice(/** @type {string} */ (oldFolderPath).length)}`;
-};
+const getMovedAssetPath = (path, movedFolders) =>
+  [...movedFolders]
+    .map(([oldFolderPath, newFolderPath]) =>
+      getPathInMovedFolder(path, oldFolderPath, newFolderPath),
+    )
+    .find((movedPath) => movedPath !== undefined) ?? path;
 
 /**
  * Get the targets rewriting the absolute references to an entry’s relative assets in a locale,

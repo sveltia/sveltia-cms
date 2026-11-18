@@ -40,6 +40,19 @@ export const getMovedFolders = ({ collection, originalEntry, savingEntry }) => {
 };
 
 /**
+ * Get the path a file goes to when the folder holding it moves, along with the entry that owns the
+ * folder.
+ * @param {string} path File path.
+ * @param {string} oldFolderPath Path of the folder being moved.
+ * @param {string} newFolderPath Path the folder is moved to.
+ * @returns {string | undefined} New path, or `undefined` if the file isn’t in the folder.
+ */
+export const getPathInMovedFolder = (path, oldFolderPath, newFolderPath) =>
+  path.startsWith(`${oldFolderPath}/`)
+    ? `${newFolderPath}${path.slice(oldFolderPath.length)}`
+    : undefined;
+
+/**
  * Build the file changes that take an entry’s relative assets along when the entry itself is filed
  * elsewhere. With a Hugo-style page bundle — a `path` option like `{{slug}}/_index` combined with a
  * relative `media_folder` — the assets are stored in the entry’s own folder, so moving the entry
@@ -98,23 +111,25 @@ export const buildEntryAssetMoveChanges = async ({
   await Promise.all(
     [...movedFolders].map(async ([oldFolderPath, newFolderPath]) =>
       Promise.all(
-        assets
-          .filter(({ path }) => path.startsWith(`${oldFolderPath}/`))
-          .map(async (asset) => {
-            const path = `${newFolderPath}${asset.path.slice(oldFolderPath.length)}`;
+        assets.map(async (asset) => {
+          const path = getPathInMovedFolder(asset.path, oldFolderPath, newFolderPath);
 
-            // The destination is already being written in this save, typically because the user
-            // replaced the file while moving the entry. Drop the stale copy rather than overwriting
-            // the new one with it
-            if (takenPaths.has(path)) {
-              moveChanges.push({ action: 'delete', path: asset.path, previousSha: asset.sha });
+          if (path === undefined) {
+            return;
+          }
 
-              return;
-            }
+          // The destination is already being written in this save, typically because the user
+          // replaced the file while moving the entry. Drop the stale copy rather than overwriting
+          // the new one with it
+          if (takenPaths.has(path)) {
+            moveChanges.push({ action: 'delete', path: asset.path, previousSha: asset.sha });
 
-            moveChanges.push(await createAssetMoveChange(asset, path));
-            savingAssets.push({ ...asset, path });
-          }),
+            return;
+          }
+
+          moveChanges.push(await createAssetMoveChange(asset, path));
+          savingAssets.push({ ...asset, path });
+        }),
       ),
     ),
   );

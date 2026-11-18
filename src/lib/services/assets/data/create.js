@@ -8,7 +8,7 @@ import { isPublishingCommit } from '$lib/services/backends/git/shared/integratio
 import { saveChanges } from '$lib/services/backends/save';
 import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/data';
 import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
-import { createPath } from '$lib/services/utils/file';
+import { createPath, foldFileName } from '$lib/services/utils/file';
 
 /**
  * @import {
@@ -49,12 +49,9 @@ export const createFileList = (uploadingAssets) => {
       originalAssets?.[index] ??
       (replaceDuplicates
         ? assetsInSameFolder.find((a) => {
-            const name = a.name.normalize().toLowerCase();
+            const name = foldFileName(a.name);
 
-            return (
-              name === file.name.normalize().toLowerCase() &&
-              !namesInBatch.some((n) => n.toLowerCase() === name)
-            );
+            return name === foldFileName(file.name) && !namesInBatch.includes(name);
           })
         : undefined);
 
@@ -66,7 +63,7 @@ export const createFileList = (uploadingAssets) => {
       assetNamesInSameFolder.push(fileName);
     }
 
-    namesInBatch.push(fileName.normalize());
+    namesInBatch.push(foldFileName(fileName));
 
     return {
       action: /** @type {CommitAction} */ (replacedAsset ? 'update' : 'create'),

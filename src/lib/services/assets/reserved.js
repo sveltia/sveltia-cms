@@ -2,6 +2,7 @@ import { stripSlashes } from '@sveltia/utils/string';
 
 import { hasTemplateTags } from '$lib/services/common/template/tags';
 import { cmsConfig } from '$lib/services/config/state';
+import { foldPath, normalizeFolderPath } from '$lib/services/utils/file';
 
 /**
  * Names of the folders the CMS itself is usually served from, e.g. `static/admin/index.html` along
@@ -18,19 +19,13 @@ const CMS_FOLDER_NAMES = ['admin', 'cms'];
  * Next.js.
  */
 const SITE_ROOT_FOLDERS = ['', 'static', 'public'];
-/**
- * Normalize the given path for a case-insensitive comparison.
- * @param {string} path Path.
- * @returns {string} Normalized path.
- */
-const normalizePath = (path) => stripSlashes(path).normalize().toLowerCase();
 
 /**
  * Check whether the given folder name is one the CMS itself is usually served from.
  * @param {string} name Folder name.
  * @returns {boolean} Result.
  */
-export const isCmsFolderName = (name) => CMS_FOLDER_NAMES.includes(normalizePath(name));
+export const isCmsFolderName = (name) => CMS_FOLDER_NAMES.includes(foldPath(name));
 
 /**
  * Get the folder the site is served from, as told by the global `media_folder` and
@@ -44,7 +39,7 @@ const getConfiguredSiteRootFolder = (mediaFolder, publicFolder) => {
     return undefined;
   }
 
-  const media = stripSlashes(mediaFolder).replace(/^\.(?:\/|$)/, '');
+  const media = normalizeFolderPath(mediaFolder);
   const pub = stripSlashes(publicFolder);
 
   // A relative or framework-specific public folder, like `../images` or `@assets/images`, isn’t a
@@ -113,7 +108,7 @@ const getCmsFolderPaths = () => {
 
     cmsFolderPathsCache = {
       key,
-      paths: roots.flatMap((root) => names.map((name) => normalizePath(`${root}/${name}`))),
+      paths: roots.flatMap((root) => names.map((name) => foldPath(`${root}/${name}`))),
     };
   }
 
@@ -126,7 +121,7 @@ const getCmsFolderPaths = () => {
  * @returns {boolean} Result.
  */
 export const isCmsFolderPath = (dirPath) => {
-  const path = normalizePath(dirPath);
+  const path = foldPath(dirPath);
 
   return getCmsFolderPaths().some((folder) => path === folder || path.startsWith(`${folder}/`));
 };
@@ -147,7 +142,7 @@ const CMS_FILE_NAME_REGEX = /^(?:index\.html|config\.(?:ya?ml|toml|json))$/;
  * @returns {boolean} Result.
  */
 const isCmsFile = (dirPath, fileName) => {
-  if (!CMS_FILE_NAME_REGEX.test(normalizePath(fileName))) {
+  if (!CMS_FILE_NAME_REGEX.test(foldPath(fileName))) {
     return false;
   }
 
@@ -155,10 +150,10 @@ const isCmsFile = (dirPath, fileName) => {
     ...CMS_FOLDER_NAMES,
     ...getAdminPageFolders(globalThis.location?.pathname ?? '')
       .slice(-1)
-      .map(normalizePath),
+      .map(foldPath),
   ];
 
-  return normalizePath(dirPath)
+  return foldPath(dirPath)
     .split('/')
     .some((segment) => names.includes(segment));
 };

@@ -24,6 +24,7 @@ import { normalizeConfigTemplates } from '$lib/services/config/templates';
 import { allEntryFolders } from '$lib/services/contents';
 import { loadDayjsLocales } from '$lib/services/contents/fields/date-time/locales';
 import { prefs } from '$lib/services/user/prefs.svelte';
+import { stripLeadingDotSlash } from '$lib/services/utils/file';
 
 /**
  * @import { InternalCmsConfig } from '$lib/types/private';
@@ -136,9 +137,9 @@ export const initCmsConfig = async (manualConfig) => {
     config.collections?.forEach((collection) => {
       // The JSON schema has checked that `folder` is a string
       if ('folder' in collection) {
-        collection.folder = /** @type {string} */ (collection.folder)
-          .replace(/^\.(?:\/|$)/, '')
-          .replace(/^\/$/, '');
+        const folder = stripLeadingDotSlash(/** @type {string} */ (collection.folder));
+
+        collection.folder = folder === '/' ? '' : folder;
       }
     });
 

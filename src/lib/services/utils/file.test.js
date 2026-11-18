@@ -5,18 +5,22 @@ import {
   createPath,
   createPathRegEx,
   encodeFilePath,
+  foldFileName,
+  foldPath,
   getBaseName,
   getBlob,
   getByteSize,
   getDirName,
   getGitHash,
   isEquivalentFileExtension,
+  normalizeFolderPath,
   readBlobAsFile,
   renameIfNeeded,
   renameReservedFileName,
   resolvePath,
   sanitizeFileName,
   sanitizePath,
+  stripLeadingDotSlash,
   stripPathPrefix,
 } from '$lib/services/utils/file';
 
@@ -78,6 +82,52 @@ describe('Test renameReservedFileName()', () => {
   });
 });
 
+describe('Test foldFileName()', () => {
+  test('should fold case and the Unicode normalization form', () => {
+    expect(foldFileName('Photo.JPG')).toEqual('photo.jpg');
+    expect(foldFileName('Cafe\u0301.png')).toEqual('caf\u00e9.png');
+    expect(foldFileName('CAF\u00c9.png')).toEqual(foldFileName('cafe\u0301.png'));
+  });
+});
+
+describe('Test foldPath()', () => {
+  test('should strip the slashes and fold the path', () => {
+    expect(foldPath('/Static/Cafe\u0301/')).toEqual('static/caf\u00e9');
+    expect(foldPath('static/Admin/config.yml')).toEqual('static/admin/config.yml');
+    expect(foldPath('')).toEqual('');
+  });
+});
+
+describe('Test stripLeadingDotSlash()', () => {
+  test('should remove a leading `./` or a lone `.`', () => {
+    expect(stripLeadingDotSlash('./images')).toEqual('images');
+    expect(stripLeadingDotSlash('./')).toEqual('');
+    expect(stripLeadingDotSlash('.')).toEqual('');
+    // Slashes are kept otherwise
+    expect(stripLeadingDotSlash('./images/')).toEqual('images/');
+    expect(stripLeadingDotSlash('/images')).toEqual('/images');
+  });
+
+  test('should leave a parent folder or a dot file alone', () => {
+    expect(stripLeadingDotSlash('../images')).toEqual('../images');
+    expect(stripLeadingDotSlash('.images')).toEqual('.images');
+    expect(stripLeadingDotSlash('..')).toEqual('..');
+    expect(stripLeadingDotSlash('')).toEqual('');
+  });
+});
+
+describe('Test normalizeFolderPath()', () => {
+  test('should strip the slashes, then a leading `./`', () => {
+    expect(normalizeFolderPath('')).toEqual('');
+    expect(normalizeFolderPath('/')).toEqual('');
+    expect(normalizeFolderPath('.')).toEqual('');
+    expect(normalizeFolderPath('./')).toEqual('');
+    expect(normalizeFolderPath('./static/images/')).toEqual('static/images');
+    expect(normalizeFolderPath('/static/images')).toEqual('static/images');
+    expect(normalizeFolderPath('../images')).toEqual('../images');
+  });
+});
+
 describe('Test renameIfNeeded()', () => {
   test('should take the highest number already used, whatever order the names come in', () => {
     expect(renameIfNeeded('photo.png', ['photo-1.png', 'photo.png', 'photo-0.png'])).toEqual(
@@ -114,6 +164,16 @@ describe('Test renameIfNeeded()', () => {
     // They clash on a case-insensitive file system like macOS’s or Windows’s
     expect(renameIfNeeded('Photo.jpg', ['photo.jpg'])).toEqual('Photo-1.jpg');
     expect(renameIfNeeded('photo.jpg', ['PHOTO.JPG', 'Photo-1.jpg'])).toEqual('photo-2.jpg');
+  });
+
+  test('should treat names that only differ in Unicode normalization form as taken', () => {
+    // A name read from a macOS disk is in NFD, while one typed in the browser is in NFC
+    expect(renameIfNeeded('caf\u00e9.jpg', ['cafe\u0301.jpg'])).toEqual('caf\u00e9-1.jpg');
+    expect(renameIfNeeded('cafe\u0301.jpg', ['Caf\u00c9.jpg'])).toEqual('cafe\u0301-1.jpg');
+    // The numbered variants count in either form too
+    expect(
+      renameIfNeeded('caf\u00e9.jpg', ['cafe\u0301.jpg', 'cafe\u0301-1.jpg', 'CAFE\u0301-2.JPG']),
+    ).toEqual('caf\u00e9-3.jpg');
   });
 
   test('should not be fooled by a dot in the base name', () => {

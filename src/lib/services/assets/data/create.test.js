@@ -38,7 +38,8 @@ vi.mock('$lib/services/integrations/media-libraries/default', () => ({
   }),
 }));
 
-vi.mock('$lib/services/utils/file', () => ({
+vi.mock('$lib/services/utils/file', async (importOriginal) => ({
+  ...(await importOriginal()),
   createPath: vi.fn((/** @type {string[]} */ segments) => segments.filter(Boolean).join('/')),
 }));
 
@@ -106,7 +107,8 @@ vi.mock('$lib/services/config', () => ({
   },
 }));
 
-vi.mock('$lib/services/utils/file', () => ({
+vi.mock('$lib/services/utils/file', async (importOriginal) => ({
+  ...(await importOriginal()),
   createPath: vi.fn((/** @type {string[]} */ segments) => segments.filter(Boolean).join('/')),
 }));
 
