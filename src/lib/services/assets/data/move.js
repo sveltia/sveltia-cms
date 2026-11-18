@@ -279,16 +279,22 @@ const getNewAssetReference = ({
 }) => {
   const newName = getBaseName(newPath);
 
+  // A rename of an entry-relative asset is applied to each reference as the entry holding it has
+  // it, which is the form it was saved in, e.g. `./photo.jpg` with `public_folder: ./`, or an
+  // encoded name with the `encode_file_path` option. The path `getAssetPublicURL()` gives such an
+  // asset is relative to its folder, regardless of the public folder, and isn’t encoded
+  if (
+    asset.folder.entryRelative &&
+    newPath.slice(0, -newName.length) === asset.path.slice(0, -asset.name.length)
+  ) {
+    return getRenamedReference(asset.name, newName);
+  }
+
   return (
     getAssetPublicURL(
       { ...asset, path: newPath, name: newName, folder },
       { pathOnly: true, allowSpecial: true },
-    ) ??
-    // A rename can be applied to a reference relative to the entry holding it
-    (asset.folder.entryRelative &&
-    newPath.slice(0, -newName.length) === asset.path.slice(0, -asset.name.length)
-      ? getRenamedReference(asset.name, newName)
-      : getFallbackURL({ _globalAssetFolder, newPath, asset }))
+    ) ?? getFallbackURL({ _globalAssetFolder, newPath, asset })
   );
 };
 

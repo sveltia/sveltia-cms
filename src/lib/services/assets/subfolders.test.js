@@ -562,6 +562,13 @@ describe('assets/subfolders', () => {
       expect(formatSubfolderName('a/b\\c:d')).toBe('abcd');
     });
 
+    it('should rename a name Windows reserves for a device', () => {
+      expect(formatSubfolderName('con')).toBe('con-1');
+      _config.slugify_filename = true;
+      // Slugifying can leave a reserved name
+      expect(formatSubfolderName('Aux!')).toBe('aux-1');
+    });
+
     it('should slugify the whole name when the option is enabled', () => {
       _config.slugify_filename = true;
       expect(formatSubfolderName('Summer Photos')).toBe('summer-photos');

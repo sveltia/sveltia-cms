@@ -83,14 +83,45 @@ export const renameIfNeeded = (name, otherNames, { hasExtension = true } = {}) =
 };
 
 /**
+ * Regular expression matching the start of a file or folder name that Windows reserves for a
+ * device, like `con` or `aux.png`: the reserved word followed by nothing or a dot, as Windows only
+ * looks at the part before the first dot. The list is the one `sanitize-filename` uses, including
+ * the superscript digits.
+ */
+const WINDOWS_RESERVED_NAME_REGEX =
+  /^(?:con|prn|aux|nul|com[0-9\u00B9\u00B2\u00B3]|lpt[0-9\u00B9\u00B2\u00B3])(?=\.|$)/i;
+
+/**
+ * Rename a file or folder name that Windows reserves for a device, like `aux.png`, by numbering it
+ * the way a duplicate name is numbered, as `aux-1.png`, so it can be checked out on Windows while
+ * keeping its extension. Any other name is returned as is.
+ * @param {string} name Name.
+ * @returns {string} Name that isn’t reserved.
+ */
+export const renameReservedFileName = (name) => name.replace(WINDOWS_RESERVED_NAME_REGEX, '$&-1');
+
+/**
  * Sanitize a file or folder name: normalize it to NFC (composed characters), replace every kind of
  * whitespace — non-breaking spaces, tabs, newlines and so on — with a regular space, collapsing
- * consecutive ones, then drop the characters a file system won’t take.
+ * consecutive ones, then drop the characters a file system won’t take. A name Windows reserves for
+ * a device is renamed with {@link renameReservedFileName}.
  * @param {string} name Name.
- * @returns {string} Sanitized name.
+ * @returns {string} Sanitized name. An empty string if nothing usable is left.
  */
-export const sanitizeFileName = (name) =>
-  sanitize(name.normalize().replace(/[\s\u00A0\u202F]+/g, ' '));
+export const sanitizeFileName = (name) => {
+  const normalizedName = name.normalize().replace(/[\s\u00A0\u202F]+/g, ' ');
+
+  // `sanitize-filename` reduces a reserved name to an empty string, extension included, so
+  // `aux.png` would leave nothing to name the file with. When nothing is left, sanitize the name
+  // again with a character in front, which keeps the package from seeing a reserved name: without
+  // that character, what comes back is the reserved name, if it is one, with the unsafe characters
+  // dropped, which can be what makes a name reserved, as in `aux?.png`. It’s then renamed, and
+  // sanitized once more to stay within the length limit
+  return (
+    sanitize(normalizedName) ||
+    sanitize(renameReservedFileName(sanitize(`_${normalizedName}`).slice(1)))
+  );
+};
 
 /**
  * Groups of file extensions that refer to the same file format, meaning that replacing one with

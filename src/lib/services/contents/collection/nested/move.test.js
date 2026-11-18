@@ -6,6 +6,7 @@ import { fillTemplate } from '$lib/services/common/template';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { buildNestedMoveChanges } from '$lib/services/contents/collection/nested/move';
 import { isEntryCollection } from '$lib/services/contents/collection/predicates';
+import { rewriteEntryAssetReferences } from '$lib/services/contents/draft/save/asset-references';
 import {
   buildSingleFileContent,
   getFieldComments,
@@ -27,6 +28,10 @@ vi.mock('$lib/services/contents/collection/predicates', () => ({
 
 vi.mock('$lib/services/contents/collection/entries', () => ({
   getEntriesByCollection: vi.fn(() => []),
+}));
+
+vi.mock('$lib/services/contents/draft/save/asset-references', () => ({
+  rewriteEntryAssetReferences: vi.fn(async ({ savingEntry }) => savingEntry),
 }));
 
 vi.mock('$lib/services/contents/draft/save/content', () => ({
@@ -274,6 +279,29 @@ describe('buildNestedMoveChanges()', () => {
       entry: expect.objectContaining({ subPath: 'guides/intro/_index' }),
     });
     expect(savingEntries[0].refreshed).toBe(true);
+  });
+
+  test('rewrites the references to the assets of every moved entry', async () => {
+    const intro = entry('2', 'docs/intro/_index');
+
+    vi.mocked(getEntriesByCollection).mockReturnValue([entry('1', 'docs/_index'), intro]);
+    vi.mocked(rewriteEntryAssetReferences).mockImplementationOnce(async ({ savingEntry }) => ({
+      ...savingEntry,
+      rewritten: true,
+    }));
+
+    const { savingEntries } = await buildNestedMoveChanges({
+      collection,
+      originalEntry: entry('1', 'docs/_index'),
+      savingEntry: entry('1', 'guides/_index'),
+    });
+
+    expect(rewriteEntryAssetReferences).toHaveBeenCalledExactlyOnceWith({
+      collection,
+      originalEntry: intro,
+      savingEntry: expect.objectContaining({ subPath: 'guides/intro/_index' }),
+    });
+    expect(savingEntries[0].rewritten).toBe(true);
   });
 
   test('moves the entries up to the collection folder', async () => {

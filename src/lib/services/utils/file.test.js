@@ -13,6 +13,7 @@ import {
   isEquivalentFileExtension,
   readBlobAsFile,
   renameIfNeeded,
+  renameReservedFileName,
   resolvePath,
   sanitizeFileName,
   sanitizePath,
@@ -42,6 +43,38 @@ describe('Test sanitizeFileName()', () => {
     expect(sanitizeFileName('cafe\u0301.jpg')).toEqual('café.jpg');
     expect(sanitizeFileName('a\u00A0b\t\n  c.jpg')).toEqual('a b c.jpg');
     expect(sanitizeFileName('a/b\\c:d?.jpg')).toEqual('abcd.jpg');
+  });
+
+  test('should rename a name Windows reserves instead of dropping it', () => {
+    expect(sanitizeFileName('aux.png')).toEqual('aux-1.png');
+    expect(sanitizeFileName('CON')).toEqual('CON-1');
+    expect(sanitizeFileName('nul.tar.gz')).toEqual('nul-1.tar.gz');
+    expect(sanitizeFileName('LPT¹.txt')).toEqual('LPT¹-1.txt');
+    // An unsafe character can be what makes the name reserved
+    expect(sanitizeFileName('aux?.png')).toEqual('aux-1.png');
+    expect(sanitizeFileName('com1 ')).toEqual('com1-1');
+    // The length limit still applies
+    expect(sanitizeFileName(`aux.${'a'.repeat(300)}`)).toEqual(`aux-1.${'a'.repeat(249)}`);
+    // A name with nothing usable is still dropped
+    expect(sanitizeFileName('?:*')).toEqual('');
+    expect(sanitizeFileName('..')).toEqual('');
+    // Names that only start like a reserved one are kept
+    expect(sanitizeFileName('auxiliary.png')).toEqual('auxiliary.png');
+    expect(sanitizeFileName('con-tent')).toEqual('con-tent');
+  });
+});
+
+describe('Test renameReservedFileName()', () => {
+  test('should number a name Windows reserves, before the first dot', () => {
+    expect(renameReservedFileName('aux.png')).toEqual('aux-1.png');
+    expect(renameReservedFileName('Prn')).toEqual('Prn-1');
+    expect(renameReservedFileName('com9.tar.gz')).toEqual('com9-1.tar.gz');
+  });
+
+  test('should leave any other name alone', () => {
+    expect(renameReservedFileName('photo.png')).toEqual('photo.png');
+    expect(renameReservedFileName('console.log')).toEqual('console.log');
+    expect(renameReservedFileName('my-aux.png')).toEqual('my-aux.png');
   });
 });
 

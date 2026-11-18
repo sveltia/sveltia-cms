@@ -298,6 +298,12 @@ const parseFrontMatterBlock = ({ collection, collectionFile, isIndexFile, format
     parsedHead !== undefined &&
     (typeof parsedHead !== 'object' || Array.isArray(parsedHead))
   ) {
+    // Forget what parsing the text remembered about the file as its front matter, e.g. a heading
+    // taken as a comment, which would otherwise be written in a new front matter block on a save
+    if (path !== undefined) {
+      updateFileState(path, { leadingComment: undefined, valueSources: undefined });
+    }
+
     return { content: { [bodyKey]: text }, hasFrontMatter: false };
   }
 

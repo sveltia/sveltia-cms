@@ -3054,6 +3054,269 @@ describe('assets/index', () => {
     });
   });
 
+  describe('entry-relative assets with an absolute public path', () => {
+    // `media_folder: images` with `public_folder: /blog/{{slug}}/images`: the files are saved
+    // beside the entry, and referenced with an absolute path
+    /** @type {any} */
+    const collection = {
+      name: 'posts',
+      folder: 'content/posts',
+      _type: 'entry',
+      _file: { subPath: '{{slug}}/index' },
+      _i18n: { defaultLocale: 'en' },
+    };
+
+    /** @type {any} */
+    const entry = {
+      id: 'hello',
+      slug: 'hello',
+      locales: { en: { slug: 'hello', path: 'content/posts/hello/index.md', content: {} } },
+    };
+
+    /** @type {any} */
+    const folder = {
+      collectionName: 'posts',
+      internalPath: 'content/posts',
+      internalSubPath: 'images',
+      publicPath: '/blog/{{slug}}/images',
+      entryRelative: true,
+      hasTemplateTags: false,
+    };
+
+    /**
+     * Create an asset in the entry-relative folder.
+     * @param {string} path
+     * @returns {any}
+     */
+    const createAsset = (path) => ({
+      path,
+      name: path.split('/').pop(),
+      sha: path,
+      size: 1,
+      kind: 'image',
+      folder,
+    });
+
+    const photo = createAsset('content/posts/hello/images/photo.jpg');
+    const nestedPhoto = createAsset('content/posts/hello/images/sub/nested.jpg');
+    const otherPhoto = createAsset('content/posts/world/images/other.jpg');
+
+    /**
+     * Look up an asset by the given value.
+     * @param {string} value
+     * @param {Record<string, any>} [options]
+     * @returns {any}
+     */
+    const find = (value, options = {}) =>
+      getAssetByPath({ value, entry, collectionName: 'posts', ...options });
+
+    /**
+     * Use the given asset folder for the collection.
+     * @param {any} _folder
+     */
+    const useFolder = async (_folder) => {
+      const { getAssetFolder } = await import('$lib/services/assets/folders');
+
+      vi.mocked(getAssetFolder).mockImplementation(({ collectionName, fileName, typedKeyPath }) =>
+        collectionName === 'posts' && !fileName && !typedKeyPath ? _folder : undefined,
+      );
+    };
+
+    beforeEach(async () => {
+      const fileUtils = await import('$lib/services/utils/file');
+      const { stripSlashes } = await import('@sveltia/utils/string');
+      const { fillTemplate } = await import('$lib/services/common/template');
+      const { getCollection } = await import('$lib/services/contents/collection');
+      const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
+
+      const actual = /** @type {Record<string, any>} */ (
+        await vi.importActual('$lib/services/utils/file')
+      );
+
+      vi.mocked(fileUtils.createPath).mockImplementation(actual.createPath);
+      vi.mocked(fileUtils.resolvePath).mockImplementation(actual.resolvePath);
+      vi.mocked(stripSlashes).mockImplementation((path) => path.replace(/^\/+|\/+$/g, ''));
+      // Fill the slug tag with the entry’s slug
+      vi.mocked(fillTemplate).mockImplementation((template, { currentSlug }) =>
+        template.replaceAll('{{slug}}', /** @type {string} */ (currentSlug)),
+      );
+      vi.mocked(getCollection).mockReturnValue(collection);
+      vi.mocked(getAssociatedCollections).mockReturnValue([collection]);
+      await useFolder(folder);
+      allAssets.current = [photo, nestedPhoto, otherPhoto];
+    });
+
+    it('should find an asset beside the entry by its absolute path', () => {
+      expect(find('/blog/hello/images/photo.jpg')).toBe(photo);
+      expect(find('/blog/hello/images/sub/nested.jpg')).toBe(nestedPhoto);
+    });
+
+    it('should not find an asset beside another entry or outside the public path', () => {
+      expect(find('/blog/hello/images/other.jpg')).toBeUndefined();
+      expect(find('/blog/world/images/other.jpg')).toBeUndefined();
+      expect(find('/images/photo.jpg')).toBeUndefined();
+    });
+
+    it('should find an asset by the root public path', async () => {
+      await useFolder({ ...folder, publicPath: '/' });
+
+      expect(find('/photo.jpg')).toBe(photo);
+      expect(find('/sub/nested.jpg')).toBe(nestedPhoto);
+    });
+
+    it('should find an asset in the folder holding the entry without a subfolder', async () => {
+      const besideEntry = createAsset('content/posts/hello/beside.jpg');
+
+      allAssets.current = [besideEntry];
+      await useFolder({ ...folder, internalSubPath: undefined, publicPath: '/media' });
+
+      expect(find('/media/beside.jpg')).toBe(besideEntry);
+    });
+
+    it('should find an asset beside an entry file that doesn’t have a folder of its own', async () => {
+      const { getCollection } = await import('$lib/services/contents/collection');
+      const flatPhoto = createAsset('content/posts/images/flat.jpg');
+
+      vi.mocked(getCollection).mockReturnValue({ ...collection, _file: { subPath: undefined } });
+      allAssets.current = [flatPhoto];
+      await useFolder({ ...folder, publicPath: '/images' });
+
+      expect(
+        find('/images/flat.jpg', {
+          entry: { ...entry, locales: { en: { ...entry.locales.en, path: 'content/posts/a.md' } } },
+        }),
+      ).toBe(flatPhoto);
+    });
+
+    it('should find an asset stored beside the entry file before it had a folder', async () => {
+      const { getCollection } = await import('$lib/services/contents/collection');
+      const legacyPhoto = createAsset('content/posts/2025/images/legacy.jpg');
+
+      // The entry `content/posts/2025/hello.md` owns `content/posts/2025/hello`
+      vi.mocked(getCollection).mockReturnValue({
+        ...collection,
+        _file: { subPath: '{{year}}/{{slug}}' },
+      });
+      allAssets.current = [legacyPhoto];
+
+      expect(
+        find('/blog/hello/images/legacy.jpg', {
+          entry: {
+            ...entry,
+            locales: { en: { ...entry.locales.en, path: 'content/posts/2025/hello.md' } },
+          },
+        }),
+      ).toBe(legacyPhoto);
+    });
+
+    it('should fill the template tags in the subfolder', async () => {
+      const { getCollection } = await import('$lib/services/contents/collection');
+      const hexoPhoto = createAsset('content/posts/hello/hexo.jpg');
+
+      // Hexo’s post asset folder: `media_folder: '{{slug}}'` beside `content/posts/hello.md`
+      vi.mocked(getCollection).mockReturnValue({ ...collection, _file: { subPath: undefined } });
+      allAssets.current = [hexoPhoto];
+      await useFolder({ ...folder, internalSubPath: '{{slug}}', publicPath: '/assets' });
+
+      expect(
+        find('/assets/hexo.jpg', {
+          entry: { ...entry, locales: { en: { ...entry.locales.en, path: 'content/posts/a.md' } } },
+        }),
+      ).toBe(hexoPhoto);
+    });
+
+    it('should resolve a path against the collection folder without an entry', async () => {
+      const sharedPhoto = createAsset('content/posts/images/shared.jpg');
+
+      allAssets.current = [sharedPhoto];
+      await useFolder({ ...folder, publicPath: '/images' });
+
+      expect(find('/images/shared.jpg', { entry: undefined })).toBe(sharedPhoto);
+
+      // The template tags can’t be filled without an entry
+      await useFolder({ ...folder, internalSubPath: '{{slug}}', publicPath: '/images' });
+
+      expect(find('/images/shared.jpg', { entry: undefined })).toBeUndefined();
+
+      await useFolder(folder);
+
+      expect(find('/blog/hello/images/photo.jpg', { entry: undefined })).toBeUndefined();
+    });
+
+    it('should resolve a path against the collection folder if the collection is unknown', async () => {
+      const { getCollection } = await import('$lib/services/contents/collection');
+      const sharedPhoto = createAsset('content/posts/images/shared.jpg');
+
+      vi.mocked(getCollection).mockReturnValue(undefined);
+      allAssets.current = [sharedPhoto];
+      await useFolder({ ...folder, publicPath: '/images' });
+
+      expect(find('/images/shared.jpg')).toBe(sharedPhoto);
+    });
+
+    it('should normalize the public path the same way as a saved one', async () => {
+      // An empty segment, e.g. left by a tag filled with an empty string, and a `..` segment
+      await useFolder({ ...folder, publicPath: '/blog/{{slug}}//media/../images' });
+
+      expect(find('/blog/hello/images/photo.jpg')).toBe(photo);
+      expect(find('/blog/hello//media/../images/photo.jpg')).toBeUndefined();
+    });
+
+    it('should not find an asset by an absolute path in a folder with a relative public path', async () => {
+      const sharedPhoto = createAsset('content/posts/photo.jpg');
+
+      allAssets.current = [photo, sharedPhoto];
+      await useFolder({ ...folder, publicPath: 'images' });
+
+      // The collection folder isn’t searched for the file name
+      expect(find('/images/photo.jpg')).toBeUndefined();
+      expect(find('/files/photo.jpg')).toBeUndefined();
+
+      // A framework-specific public path is looked up as before
+      await useFolder({ ...folder, publicPath: '@assets/images' });
+
+      expect(find('@assets/images/photo.jpg')).toBe(sharedPhoto);
+    });
+
+    describe('with a locale folder per locale', () => {
+      /** @type {any} */
+      const i18nEntry = {
+        ...entry,
+        locales: {
+          en: { slug: 'hello', path: 'content/posts/en/hello/index.md', content: {} },
+          fr: { slug: 'hello', path: 'content/posts/fr/hello/index.md', content: {} },
+        },
+      };
+
+      const enPhoto = createAsset('content/posts/en/hello/images/photo.jpg');
+      const frPhoto = createAsset('content/posts/fr/hello/images/photo.jpg');
+      const enOnlyPhoto = createAsset('content/posts/en/hello/images/cover.jpg');
+
+      beforeEach(() => {
+        allAssets.current = [enPhoto, frPhoto, enOnlyPhoto];
+      });
+
+      it('should find the asset beside the given locale’s entry file', () => {
+        expect(find('/blog/hello/images/photo.jpg', { entry: i18nEntry, locale: 'fr' })).toBe(
+          frPhoto,
+        );
+        expect(find('/blog/hello/images/photo.jpg', { entry: i18nEntry, locale: 'en' })).toBe(
+          enPhoto,
+        );
+        expect(find('/blog/hello/images/photo.jpg', { entry: i18nEntry })).toBe(enPhoto);
+      });
+
+      it('should fall back to the default locale’s copy of a file only that locale has', () => {
+        expect(find('/blog/hello/images/cover.jpg', { entry: i18nEntry, locale: 'fr' })).toBe(
+          enOnlyPhoto,
+        );
+        expect(
+          find('/blog/hello/images/missing.jpg', { entry: i18nEntry, locale: 'fr' }),
+        ).toBeUndefined();
+      });
+    });
+  });
+
   describe('getAssetByRelativePath', () => {
     it('should return undefined when no entry and no collectionName provided', () => {
       const result = getAssetByRelativePath({

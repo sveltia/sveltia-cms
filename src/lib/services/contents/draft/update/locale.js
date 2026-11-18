@@ -5,6 +5,7 @@ import { suspendAutoDuplication } from '$lib/services/contents/draft';
 import { createProxy, getListItemMatcher } from '$lib/services/contents/draft/create/proxy.svelte';
 import { getRenewedUniqueValue } from '$lib/services/contents/draft/create/unique-values';
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
+import { getAliasesKey, removeAliases } from '$lib/services/contents/entry/aliases';
 import { getDraftFieldArgs, getField } from '$lib/services/contents/entry/fields';
 import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
 import { TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
@@ -23,7 +24,13 @@ import { isDuplicatedField } from '$lib/services/contents/i18n/shared-values';
 
 /**
  * @import { EntryDraft, FlattenedEntryContent, InternalLocaleCode } from '$lib/types/private';
- * @import { Field, FieldKeyPath, HiddenField, UuidField } from '$lib/types/public';
+ * @import {
+ * Field,
+ * FieldKeyPath,
+ * HiddenField,
+ * ObjectFieldWithTypes,
+ * UuidField,
+ * } from '$lib/types/public';
  */
 
 /**
@@ -98,6 +105,36 @@ const hasTemplateDefault = (field) => {
 };
 
 /**
+ * Check whether the default locale holds the same Object field as the target locale under the
+ * given key path, so its values can be copied to the new object. The key path may resolve to
+ * another field there, through a list item or a parent object of another variable type, and the
+ * object itself may be of another type.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {FieldKeyPath} args.keyPath Key path of the Object field.
+ * @param {FlattenedEntryContent} args.defaultLocaleContent Content of the default locale.
+ * @param {FlattenedEntryContent} args.targetContent Content of the target locale, which already
+ * holds the type of the new object, if any.
+ * @returns {boolean} Result.
+ */
+const hasSameObject = ({ draft, keyPath, defaultLocaleContent, targetContent }) => {
+  const getFieldArgs = getDraftFieldArgs(draft, { keyPath, valueMap: targetContent });
+  const fieldConfig = getField(getFieldArgs);
+
+  if (
+    !fieldConfig ||
+    getField({ ...getFieldArgs, valueMap: defaultLocaleContent }) !== fieldConfig
+  ) {
+    return false;
+  }
+
+  const { types, typeKey = 'type' } = /** @type {ObjectFieldWithTypes} */ (fieldConfig);
+  const typeKeyPath = `${keyPath}.${typeKey}`;
+
+  return !types || defaultLocaleContent[typeKeyPath] === targetContent[typeKeyPath];
+};
+
+/**
  * Populate the given localized content with values from the default locale.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
@@ -107,14 +144,44 @@ const hasTemplateDefault = (field) => {
  * e.g. `blocks.0.image`. When specified, only the keys under that key path are returned, so
  * unrelated default locale fields — including list items that don’t exist in the target locale —
  * are not copied over. The whole default locale content is still used to look up field
- * configurations, which requires sibling keys such as a variable type key.
+ * configurations, which requires sibling keys such as a variable type key. Nothing is copied if the
+ * default locale holds another object under the key path, e.g. one of another type.
  * @returns {FlattenedEntryContent} Updated content.
  */
 export const copyDefaultLocaleValues = ({ draft, content, targetLanguage, keyPathPrefix }) => {
-  const { currentValues } = draft;
+  const { collection, fields, currentValues } = draft;
   const { defaultLocale } = getDraftI18nConfig(draft);
   /** @type {FlattenedEntryContent} */
   const defaultLocaleContent = toRaw(currentValues[defaultLocale]);
+
+  /**
+   * Pick the values under the key path of the Object field being populated.
+   * @param {FlattenedEntryContent} values Values.
+   * @returns {FlattenedEntryContent} Picked values.
+   */
+  const pickObjectValues = (values) =>
+    Object.fromEntries(
+      Object.entries(values).filter(([keyPath]) => keyPath.startsWith(`${keyPathPrefix}.`)),
+    );
+
+  // The default locale’s values under the key path may belong to another object, in which case the
+  // new one only gets its default values, just like in the default locale
+  if (
+    keyPathPrefix !== undefined &&
+    !hasSameObject({
+      draft,
+      keyPath: keyPathPrefix,
+      defaultLocaleContent,
+      targetContent: currentValues[targetLanguage] ?? {},
+    })
+  ) {
+    return pickObjectValues(content);
+  }
+
+  // URL aliases are redirects from the previous paths of each locale, added on save, so the default
+  // locale’s don’t apply to another locale
+  removeAliases(defaultLocaleContent, getAliasesKey({ collection, fields }));
+
   const newContent = { ...toRaw(content), ...defaultLocaleContent };
   const getFieldArgs = getDraftFieldArgs(draft, { valueMap: newContent });
   /** @type {string[]} */
@@ -218,13 +285,7 @@ export const copyDefaultLocaleValues = ({ draft, content, targetLanguage, keyPat
     );
   });
 
-  if (keyPathPrefix !== undefined) {
-    return Object.fromEntries(
-      Object.entries(newContent).filter(([keyPath]) => keyPath.startsWith(`${keyPathPrefix}.`)),
-    );
-  }
-
-  return newContent;
+  return keyPathPrefix !== undefined ? pickObjectValues(newContent) : newContent;
 };
 
 /**

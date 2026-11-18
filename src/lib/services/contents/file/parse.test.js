@@ -484,6 +484,28 @@ describe('Test parseFrontMatter()', () => {
     ).toEqual({ body: '--- x\ntitle: Test Post\n---\n' });
   });
 
+  test('reads text below whitespace and a delimiter line as a body, not front matter', async () => {
+    const { getFrontMatterDelimiters } = await import('$lib/services/contents/file/config');
+
+    /** @type {any} */ (getFrontMatterDelimiters).mockReturnValue(['---', '---']);
+
+    const text = '\n---\n# Heading\n\nOne\n\n---\n\nTwo';
+    const states = [...fileStates];
+
+    // Without a file path, nothing is remembered about the file
+    expect(
+      parseFrontMatter({
+        collection: /** @type {any} */ ({
+          name: 'test-collection',
+          _file: { format: 'frontmatter' },
+        }),
+        format: 'yaml-frontmatter',
+        text,
+      }),
+    ).toEqual({ body: text });
+    expect([...fileStates]).toEqual(states);
+  });
+
   test.each([
     ['yaml-frontmatter', ['---', '---'], '---\nfoo: bar\n---\nText'],
     ['toml-frontmatter', ['+++', '+++'], '+++\nfoo = 1\n+++\nText'],
@@ -1391,6 +1413,16 @@ describe('Test parseEntryFile()', () => {
     expect(await parseEntryFile({ ...entryBase, text: '\n---\n- One\n---\nTwo' })).toEqual({
       body: '\n---\n- One\n---\nTwo',
     });
+    // Nothing read from the text is remembered as if it were front matter: a heading isn’t a
+    // comment to write in a front matter block on a save, and a whole number float isn’t a value
+    expect(
+      await parseEntryFile({ ...entryBase, text: '\n---\n# Heading\n\nOne\n\n---\n\nTwo\n' }),
+    ).toEqual({ body: '\n---\n# Heading\n\nOne\n\n---\n\nTwo' });
+    expect(fileStates.get(entryBase.path)).toBeUndefined();
+    expect(await parseEntryFile({ ...entryBase, text: '\n---\n- 10.0\n---\nTwo' })).toEqual({
+      body: '\n---\n- 10.0\n---\nTwo',
+    });
+    expect(fileStates.get(entryBase.path)).toBeUndefined();
     // Without whitespace before it, the block is still front matter, though not a valid one
     expect(await parseEntryFile({ ...entryBase, text: '---\nOne\n---\nTwo' })).toEqual({
       body: 'Two',

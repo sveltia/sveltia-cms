@@ -87,7 +87,8 @@ const resolveInternalPath = ({ internalSubPath, assetFolderPath, fillSlugOptions
 /**
  * Resolve the public asset path for entry-relative assets, which is the path the field value is
  * built from. The assets sit in the folder holding the entry, so the value is relative to the entry
- * itself and needs nothing but the configured `public_folder`.
+ * itself and needs nothing but the configured `public_folder`, unless that starts with `/`, which
+ * makes the value an absolute path, e.g. `/blog/hello/images/photo.jpg`.
  * @param {object} args Arguments.
  * @param {string} args.publicPath Public path from folder config.
  * @param {FillTemplateOptions} args.fillSlugOptions Arguments for template filling.
@@ -100,7 +101,10 @@ const resolvePublicPath = ({ publicPath, fillSlugOptions }) => {
     return publicPath;
   }
 
-  return resolvePath(fillTemplateIfNeeded(publicPath, fillSlugOptions));
+  const resolvedPath = resolvePath(fillTemplateIfNeeded(publicPath, fillSlugOptions));
+
+  // `resolvePath()` removes the leading slash, which an absolute public path has to keep
+  return publicPath.startsWith('/') ? `/${resolvedPath}` : resolvedPath;
 };
 
 /**
@@ -279,11 +283,14 @@ export const getAssetSavingInfo = ({
     : undefined;
 
   /**
-   * Get the names of the assets stored in the given folder.
+   * Get the names of the assets stored in the given folder. A name is kept as it’s spelled in the
+   * repository, which may be in another Unicode normalization form than a name typed in the
+   * browser, e.g. a decomposed `café.jpg` saved on macOS, so a file replacing the asset is written
+   * to the same path rather than next to it. Names are compared regardless of the form.
    * @param {string} folderPath Folder path.
-   * @returns {string[]} Normalized asset names.
+   * @returns {string[]} Asset names.
    */
-  const getNames = (folderPath) => getAssetsByDirName(folderPath).map((a) => a.name.normalize());
+  const getNames = (folderPath) => getAssetsByDirName(folderPath).map((a) => a.name);
 
   return {
     assetFolderPaths,
@@ -370,15 +377,17 @@ export const replaceBlobURL = async ({
     // code below runs without awaiting anything, so concurrent calls can’t pick the same name
     const item = { file, folder, replace, nameTemplate };
     const pendingFileName = getPendingFileName({ draft, item, defaultLocaleSlug });
-    const namesInSave = savingAssetsInSameFolder.map((f) => f.name.normalize());
+    const namesInSave = savingAssetsInSameFolder.map((f) => f.name);
     const ownName = replace ? formatFileName(pendingFileName) : undefined;
+
     /**
      * Check if the given name is in the given list, ignoring case.
      * @param {string[]} names Names.
      * @param {string} name Name.
      * @returns {boolean} Result.
      */
-    const hasName = (names, name) => names.some((n) => n.toLowerCase() === name.toLowerCase());
+    const hasName = (names, name) =>
+      names.some((n) => n.normalize().toLowerCase() === name.normalize().toLowerCase());
 
     // Only the first of the files with the same name in this save replaces the existing file;
     // another one gets a name of its own, or it would overwrite the first one. Nor can a file
@@ -402,7 +411,9 @@ export const replaceBlobURL = async ({
     // `Photo.jpg` and `photo.jpg`, rather than being added next to it, as the two would clash on a
     // case-insensitive file system
     const replacedName = replacing
-      ? assetNamesInSameFolder.find((name) => name.toLowerCase() === fileName.toLowerCase())
+      ? assetNamesInSameFolder.find(
+          (name) => name.normalize().toLowerCase() === fileName.normalize().toLowerCase(),
+        )
       : undefined;
 
     const update = !!replacedName;

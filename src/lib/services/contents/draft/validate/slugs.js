@@ -33,16 +33,18 @@ import { getPullRequestEntries } from '$lib/services/workflow';
 
 /**
  * Get the other entries of the collection the draft belongs to: the published ones and the
- * unpublished ones, leaving out any version of the entry being edited. The published ones include
- * every entry stored in the collection folder, even those the collection’s `filter` option leaves
- * out: they can belong to another collection sharing the folder, and their files can’t be
- * overwritten either. With Editorial Workflow, a
- * draft that has already renamed the entry leaves the published version behind under the old slug,
- * so that version has to be recognized as the same entry — otherwise reverting the slug looks like
- * a conflict. The unpublished entries are concatenated rather than swapped over their published
- * versions, because a draft that renamed an entry leaves the published file behind, so both slugs
- * are still in use. The new entries riding along in the pull request of an entry of another
- * collection count too.
+ * unpublished ones, leaving out any version of the entry being edited, told apart by the draft’s
+ * ID as well as the original entry’s paths. A new entry has no original, yet it’s saved under the
+ * draft’s ID with Editorial Workflow, and once it is, the draft is validated again — to see whether
+ * the entry can be sent for review — while the saved entry already holds its slug and values. The
+ * published ones include every entry stored in the collection folder, even those the collection’s
+ * `filter` option leaves out: they can belong to another collection sharing the folder, and their
+ * files can’t be overwritten either. With Editorial Workflow, a draft that has already renamed the
+ * entry leaves the published version behind under the old slug, so that version has to be
+ * recognized as the same entry — otherwise reverting the slug looks like a conflict. The
+ * unpublished entries are concatenated rather than swapped over their published versions, because
+ * a draft that renamed an entry leaves the published file behind, so both slugs are still in use.
+ * The new entries riding along in the pull request of an entry of another collection count too.
  * @param {EntryDraft} draft Entry draft.
  * @param {object} [options] Options.
  * @param {boolean} [options.inFolder] Whether to include every published entry stored in the
@@ -52,7 +54,7 @@ import { getPullRequestEntries } from '$lib/services/workflow';
  */
 export const getOtherEntries = (draft, { inFolder = true } = {}) => {
   // An entry in the Editorial Workflow has previous paths
-  const { collectionName, originalEntry } =
+  const { id, collectionName, originalEntry } =
     /** @type {EntryDraft & { originalEntry?: UnpublishedEntry }} */ (draft);
 
   // Every file path this entry occupies
@@ -63,7 +65,10 @@ export const getOtherEntries = (draft, { inFolder = true } = {}) => {
   return [
     ...(inFolder ? getEntriesInCollectionFolder : getEntriesByCollection)(collectionName),
     ...getPullRequestEntries(collectionName),
-  ].filter((entry) => !Object.values(entry.locales).some(({ path }) => ownPaths.has(path)));
+  ].filter(
+    (entry) =>
+      entry.id !== id && !Object.values(entry.locales).some(({ path }) => ownPaths.has(path)),
+  );
 };
 
 /**

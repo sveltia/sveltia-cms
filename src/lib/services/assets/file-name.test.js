@@ -157,6 +157,19 @@ describe('Test formatFileName()', () => {
     );
   });
 
+  test('Names Windows reserves for a device', () => {
+    // The name is numbered rather than dropped, keeping the extension
+    expect(formatFileName('aux.png')).toEqual('aux-1.png');
+    expect(formatFileName('CON.JPG', { slugificationEnabled: true })).toEqual('con-1.jpg');
+    // Dropping a leading dot or slugifying can leave a reserved name
+    expect(formatFileName('.nul.txt')).toEqual('nul-1.txt');
+    expect(formatFileName('Aux!.png', { slugificationEnabled: true })).toEqual('aux-1.png');
+    // A numbered name already taken is numbered again
+    expect(formatFileName('aux.png', { assetNamesInSameFolder: ['aux-1.png'] })).toEqual(
+      'aux-1-1.png',
+    );
+  });
+
   test('Unicode and international characters', () => {
     // Test various unicode characters
     expect(formatFileName('测试文件.jpg')).toEqual('测试文件.jpg');

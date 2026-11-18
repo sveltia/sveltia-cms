@@ -96,6 +96,10 @@
    * Whether the editor has yet to write a change made by the user back to {@link inputValue}.
    */
   let pending = $state(false);
+  /**
+   * Number of dropped or pasted image batches being processed before they’re inserted.
+   */
+  let processingImages = $state(0);
 
   const {
     // Field type-specific options
@@ -175,36 +179,50 @@
 
     const draft = entryDraft.current;
     const folder = targetAssetFolder;
+    const _locale = locale;
 
-    // eslint-disable-next-line no-restricted-syntax
-    for (const { file, src: externalSrc, alt = '' } of images) {
-      let src = externalSrc;
+    processingImages += 1;
 
-      if (file) {
-        // eslint-disable-next-line no-await-in-loop
-        const { value } = await processResource({
-          draft,
-          resource: { file, folder },
-          libraryConfig,
-          locale,
+    try {
+      // eslint-disable-next-line no-restricted-syntax
+      for (const { file, src: externalSrc, alt = '' } of images) {
+        let src = externalSrc;
+
+        if (file) {
+          // eslint-disable-next-line no-await-in-loop
+          const { value } = await processResource({
+            draft,
+            resource: { file, folder },
+            libraryConfig,
+            locale: _locale,
+          });
+
+          // The editor is reused when the pane switches to another locale or another entry is
+          // opened, so the image would be inserted into the content it shows now, with a path
+          // resolved for the one it was dropped in
+          if (entryDraft.current !== draft || locale !== _locale) {
+            return;
+          }
+
+          src = value;
+        }
+
+        if (!src) {
+          // eslint-disable-next-line no-continue
+          continue;
+        }
+
+        const _src = src;
+
+        editor.update(() => {
+          const node = imageComponent.createNode({ src: _src, alt });
+
+          // Start a new paragraph after the image, unless the field holds a single one
+          insertNodes(multiline ? [node, createParagraphNode()] : [node]);
         });
-
-        src = value;
       }
-
-      if (!src) {
-        // eslint-disable-next-line no-continue
-        continue;
-      }
-
-      const _src = src;
-
-      editor.update(() => {
-        const node = imageComponent.createNode({ src: _src, alt });
-
-        // Start a new paragraph after the image, unless the field holds a single one
-        insertNodes(multiline ? [node, createParagraphNode()] : [node]);
-      });
+    } finally {
+      processingImages -= 1;
     }
   };
 
@@ -291,8 +309,10 @@
 
   // While the editor holds a change made by the user, register it as a pending update: the editor
   // converts the content to Markdown with a short delay, so a save right after a change would
-  // otherwise validate and write the previous value
-  trackPendingWhile(() => pending);
+  // otherwise validate and write the previous value. A dropped or pasted image is only inserted
+  // once it has been processed, which can take a while, e.g. converting a large HEIC photo, so a
+  // save or a locale switch has to wait for that as well
+  trackPendingWhile(() => pending || !!processingImages);
 </script>
 
 <div role="none" class="wrapper" bind:this={wrapper}>

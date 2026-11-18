@@ -5,12 +5,14 @@ import { customComponentRegistry } from '$lib/services/api/registries';
 import { globalAssetFolder } from '$lib/services/assets/folders';
 import { cmsConfig } from '$lib/services/config';
 import { trackPendingFieldUpdate } from '$lib/services/contents/editor/pending';
+import { processResource } from '$lib/services/contents/fields/file/process';
 import { createMockImageFile, initTestConfig } from '$lib/test/config';
 import { createMockDraft } from '$lib/test/draft';
 import { renderFieldEditor } from '$lib/test/field.svelte';
 
 import RichTextEditor from './rich-text-editor.svelte';
 
+vi.mock('$lib/services/contents/fields/file/process', { spy: true });
 vi.mock('$lib/services/contents/editor/pending', () => ({
   trackPendingFieldUpdate: vi.fn(),
   awaitPendingFieldUpdates: vi.fn(),
@@ -29,25 +31,44 @@ vi.mock('$lib/services/contents/editor/pending', () => ({
  * @param {string} [options.collectionName] Collection name.
  * @param {Record<string, any>} [options.context] Field editor context to override.
  * @param {Record<string, any>} [options.props] Props to override.
- * @returns {Promise<{ props: any, container: HTMLElement, draft: any }>} Props, container and
- * draft.
+ * @param {Record<string, string>} [options.otherValues] Values in other locales, keyed by locale,
+ * for an entry in multiple locales.
+ * @returns {Promise<{
+ * props: any,
+ * container: HTMLElement,
+ * draft: any,
+ * entryDraft: any,
+ * createDraft: (value: string) => any,
+ * }>} Props, container, draft, the draft state, whose `current` can be replaced to open another
+ * entry, and a function creating another draft for the field.
  */
 const renderEditor = async (
   currentValue,
   config = {},
-  { collectionName = 'posts', context = {}, props: extra = {} } = {},
+  { collectionName = 'posts', context = {}, props: extra = {}, otherValues = {} } = {},
 ) => {
   /** @type {RichTextField} */
   const fieldConfig = { name: 'body', widget: 'richtext', ...config };
 
-  const draft = createMockDraft({
-    collectionName,
-    fields: [fieldConfig],
-    i18n: { defaultLocale: 'en', allLocales: ['en'] },
-    values: { en: { body: currentValue } },
-  });
+  /**
+   * Create a draft holding the given value in the default locale.
+   * @param {string} value Markdown.
+   * @returns {any} Draft.
+   */
+  const createDraft = (value) =>
+    createMockDraft({
+      collectionName,
+      fields: [fieldConfig],
+      i18n: { defaultLocale: 'en', allLocales: ['en', ...Object.keys(otherValues)] },
+      values: {
+        en: { body: value },
+        ...Object.fromEntries(Object.entries(otherValues).map(([k, v]) => [k, { body: v }])),
+      },
+    });
 
-  const { props, container } = await renderFieldEditor(RichTextEditor, {
+  const draft = createDraft(currentValue);
+
+  const { props, container, entryDraft } = await renderFieldEditor(RichTextEditor, {
     fieldConfig,
     fieldLabel: 'Body',
     currentValue,
@@ -59,7 +80,7 @@ const renderEditor = async (
     },
   });
 
-  return { props, container, draft };
+  return { props, container, draft, entryDraft, createDraft };
 };
 
 describe('RichTextEditor', () => {
@@ -347,6 +368,102 @@ describe('RichTextEditor', () => {
       setTimeout(resolve, 300);
     });
     expect(Object.keys(draft.files)).toHaveLength(1);
+  });
+
+  /**
+   * Drop an image onto the editor, holding its processing until the returned function is called.
+   * @returns {Promise<(value: string) => void>} Function finishing the processing with the given
+   * value.
+   */
+  const dropImageHeldInProcessing = async () => {
+    /**
+     * Finish processing the dropped image.
+     * @type {(value: any) => void}
+     */
+    let resolve = () => undefined;
+
+    vi.mocked(processResource).mockImplementationOnce(
+      () =>
+        new Promise((_resolve) => {
+          resolve = _resolve;
+        }),
+    );
+
+    const dataTransfer = new DataTransfer();
+
+    dataTransfer.items.add(await createMockImageFile({ name: 'photo.png' }));
+    page
+      .getByRole('textbox')
+      .element()
+      .dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer }));
+    await vi.waitFor(() => expect(processResource).toHaveBeenCalledOnce());
+
+    return (value) => resolve({ value });
+  };
+
+  test('tracks a pending update while a dropped image is processed', async () => {
+    const { props } = await renderEditor('Hello');
+    const editor = page.getByRole('textbox');
+
+    await expect.poll(() => editor.element().textContent).toBe('Hello');
+
+    const finish = await dropImageHeldInProcessing();
+
+    // A save or a locale switch made while the image is processed waits for it to be inserted
+    await vi.waitFor(() => expect(trackPendingFieldUpdate).toHaveBeenCalledOnce());
+
+    let settled = false;
+
+    vi.mocked(trackPendingFieldUpdate).mock.calls[0][0].then(() => {
+      settled = true;
+    });
+    await new Promise((resolve) => {
+      setTimeout(resolve, 50);
+    });
+    expect(settled).toBe(false);
+    finish('blob:held');
+    await expect.poll(() => props.currentValue).toContain('![](blob:held)');
+    await Promise.all(vi.mocked(trackPendingFieldUpdate).mock.calls.map(([promise]) => promise));
+  });
+
+  test('inserts no image processed after the locale has changed', async () => {
+    const { props } = await renderEditor('Hello', {}, { otherValues: { fr: 'Bonjour' } });
+    const editor = page.getByRole('textbox');
+
+    await expect.poll(() => editor.element().textContent).toBe('Hello');
+
+    const finish = await dropImageHeldInProcessing();
+
+    expect(vi.mocked(processResource).mock.calls[0][0].locale).toBe('en');
+    // The editor is reused for another locale while the image is being processed
+    props.locale = 'fr';
+    props.currentValue = 'Bonjour';
+    await expect.poll(() => editor.element().textContent).toBe('Bonjour');
+    finish('blob:late');
+    await new Promise((resolve) => {
+      setTimeout(resolve, 300);
+    });
+    expect(props.currentValue).toBe('Bonjour');
+    expect(editor.element().querySelector('img')).toBeNull();
+  });
+
+  test('inserts no image processed after another entry has been opened', async () => {
+    const { props, entryDraft, createDraft } = await renderEditor('Hello');
+    const editor = page.getByRole('textbox');
+
+    await expect.poll(() => editor.element().textContent).toBe('Hello');
+
+    const finish = await dropImageHeldInProcessing();
+
+    entryDraft.current = createDraft('Other');
+    props.currentValue = 'Other';
+    await expect.poll(() => editor.element().textContent).toBe('Other');
+    finish('blob:late');
+    await new Promise((resolve) => {
+      setTimeout(resolve, 300);
+    });
+    expect(props.currentValue).toBe('Other');
+    expect(editor.element().querySelector('img')).toBeNull();
   });
 
   test('inserts a pasted image, and ignores other content', async () => {

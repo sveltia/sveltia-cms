@@ -566,6 +566,46 @@ describe('replaceTemplatePlaceholder()', () => {
     expect(replaceTemplatePlaceholder("draft | ternary('Yes', 'No')", context)).toBe('yes');
   });
 
+  describe('with the `ternary` transformation for a missing value', () => {
+    test('uses the falsy value in a slug', () => {
+      const context = createContext({ content: { b: 'Beta' } });
+
+      expect(replaceTemplatePlaceholder("draft | ternary('drafts', 'posts')", context)).toBe(
+        'posts',
+      );
+      expect(replaceTemplatePlaceholder("draft | ternary('{{a}}', '{{b}}')", context)).toBe('beta');
+      expect(replaceTemplatePlaceholder("draft | ternary('Yes', 'No') | upper", context)).toBe(
+        'no',
+      );
+    });
+
+    test('falls back to a random ID if the falsy value slugifies to nothing', () => {
+      expect(replaceTemplatePlaceholder("draft | ternary('drafts', '')", createContext())).toMatch(
+        SHORT_ID_REGEX,
+      );
+    });
+
+    test('uses the falsy value in a preview path, even if it is empty', () => {
+      const context = createContext({ type: 'preview_path', entryFilePath: 'content/posts/a.md' });
+
+      expect(replaceTemplatePlaceholder("draft | ternary('drafts', 'posts')", context)).toBe(
+        'posts',
+      );
+      expect(replaceTemplatePlaceholder("draft | ternary('drafts', '')", context)).toBe('');
+    });
+
+    test('uses the falsy value in a media library prefix', () => {
+      const context = createContext({ type: 'library_prefix' });
+
+      expect(replaceTemplatePlaceholder("draft | ternary('drafts', 'posts')", context)).toBe(
+        'posts',
+      );
+      expect(() => replaceTemplatePlaceholder("draft | ternary('drafts', '!!!')", context)).toThrow(
+        'Unresolvable template tag: draft',
+      );
+    });
+  });
+
   test('resolves every template in the `default` transformation', () => {
     const context = createContext({ content: { title: '', a: 'A', b: 'B' } });
 

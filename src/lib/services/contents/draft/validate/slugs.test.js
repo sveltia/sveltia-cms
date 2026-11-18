@@ -139,6 +139,20 @@ describe('draft/validate/slugs', () => {
 
       expect(getOtherEntries(mockEntryDraft, { inFolder: false })).toEqual([other]);
     });
+
+    it('should leave out a new entry already saved under the draft’s ID', () => {
+      // With Editorial Workflow, a new entry is saved under the draft’s ID, and the draft, which
+      // still has no original entry, is then validated again
+      const own = createEntry('draft-id', { en: 'test-post' });
+      const other = createEntry('b', { en: 'b' });
+
+      vi.mocked(getEntriesInCollectionFolder).mockReturnValue([other]);
+      vi.mocked(getUnpublishedEntriesByCollection).mockReturnValue([own]);
+      mockEntryDraft.id = 'draft-id';
+
+      expect(getOtherEntries(mockEntryDraft)).toEqual([other]);
+      expect(getTakenSlugs(mockEntryDraft)).toEqual({ en: ['b'] });
+    });
   });
 
   describe('validateSlugs', () => {

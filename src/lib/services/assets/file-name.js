@@ -1,12 +1,13 @@
 import { getPathInfo } from '@sveltia/utils/file';
 
 import { slugify } from '$lib/services/common/slug';
-import { renameIfNeeded, sanitizeFileName } from '$lib/services/utils/file';
+import { renameIfNeeded, renameReservedFileName, sanitizeFileName } from '$lib/services/utils/file';
 
 /**
  * Format the file name for uploading, ensuring it is sanitized and optionally slugified. A leading
  * dot is dropped like the characters a file system won’t take, as a dot file is hidden: the CMS
- * doesn’t list one, so the file would be lost from sight once uploaded.
+ * doesn’t list one, so the file would be lost from sight once uploaded. A name Windows reserves for
+ * a device, like `aux.png`, is numbered as `aux-1.png`.
  * @param {string} originalName The original file name.
  * @param {object} [options] Options.
  * @param {boolean} [options.slugificationEnabled] Whether to slugify the file name.
@@ -29,7 +30,9 @@ export const formatFileName = (
     fileName = `${slug}${extension ? `.${extension.toLowerCase()}` : ''}`;
   }
 
-  return renameIfNeeded(fileName, assetNamesInSameFolder);
+  // Dropping a leading dot or slugifying can leave a name Windows reserves for a device, like
+  // `aux.png` from `.aux.png` or `Aux!.png`, which `sanitizeFileName()` has renamed otherwise
+  return renameIfNeeded(renameReservedFileName(fileName), assetNamesInSameFolder);
 };
 
 /**

@@ -972,8 +972,9 @@
  * the entry folder. It will be set when `entryRelative` is `true`.
  * @property {string | undefined} publicPath Absolute folder path that will appear in the public
  * URL, starting with `/`. It can be empty if the collection’s `public_folder` property is a
- * relative path, because the complete path cannot be easily determined. It will be `undefined` for
- * the All Assets folder.
+ * relative path, because the complete path cannot be easily determined. For an entry-relative
+ * folder, it can also be relative to the entry, like `images` or `./images`, which a field value is
+ * then built from as it is. It will be `undefined` for the All Assets folder.
  * @property {boolean} entryRelative Whether the `internalPath` is a relative path from the asset’s
  * associated entry.
  * @property {boolean} hasTemplateTags Whether the `internalPath` contains template tags like

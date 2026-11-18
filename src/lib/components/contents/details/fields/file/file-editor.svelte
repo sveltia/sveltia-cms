@@ -28,6 +28,7 @@
     getFieldEditorContext,
     isInEditorComponent,
   } from '$lib/services/contents/editor/field-context';
+  import { trackPendingWhile } from '$lib/services/contents/editor/pending.svelte';
   import { checkDuplicates } from '$lib/services/contents/fields/file/duplicates.svelte';
   import { createFolderAssetListing } from '$lib/services/contents/fields/file/listing.svelte';
   import {
@@ -229,6 +230,10 @@
       return;
     }
 
+    // The editor is reused when the pane switches to another locale, so the value has to be written
+    // to the locale the files were picked in, not the one shown once they have been processed
+    const _locale = locale;
+    const _keyPath = keyPath;
     // Save the current value so it can be restored if all resources fail validation
     const previousValue = multiple ? undefined : currentValue;
 
@@ -243,7 +248,7 @@
         folder: targetFolder,
         libraryConfig,
         accept: acceptedTypes,
-        locale,
+        locale: _locale,
       });
 
       // Another entry may have been opened while the files were being processed, e.g. a large
@@ -263,15 +268,19 @@
       if (multiple) {
         addMultiValueItems({
           draft,
-          locale,
+          locale: _locale,
           valueStoreKey,
-          keyPath,
+          keyPath: _keyPath,
           newValues: values,
           replaceIndex: replaceMode ? replaceIndex : undefined,
           max,
         });
-      } else {
+      } else if (locale === _locale) {
         currentValue = value;
+      } else {
+        // `<FieldEditor>` would write the bound value to the locale now shown, so write it to the
+        // draft directly
+        draft[valueStoreKey][_locale][_keyPath] = value;
       }
 
       photoCredit = credit;
@@ -379,6 +388,13 @@
 
     moveMultiValueItem({ draft, locale, valueStoreKey, keyPath, from, to });
   };
+
+  // Register the processing of the selected files as a pending update: the previous value has been
+  // cleared, and processing, e.g. converting a large HEIC photo, can take a while, so a save or a
+  // locale switch has to wait for the new value to land rather than take the field as empty or
+  // write the value to another locale. The photo credit dialog that may follow isn’t covered, as
+  // the value has landed by then
+  trackPendingWhile(() => processing);
 
   const sorter = createDragSorter({
     /**

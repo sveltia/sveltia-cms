@@ -83,13 +83,42 @@ import { getCommitAuthorName } from '$lib/services/utils/commit-author';
  */
 
 /**
- * Regular expression to match an ATX heading line in Markdown, capturing its text. The body is
- * untrusted, so it’s written to match in linear time: the heading text runs to the end of the line
- * in one go, and the trailing spaces and a custom anchor are removed with string operations in
- * {@link getBodyHeader}, as a lazy capture followed by optional suffixes reads the rest of the line
- * again at every character.
+ * Regular expression to match each line of Markdown, so the lines can be read one by one until a
+ * heading is found.
  */
-const BODY_HEADER_REGEX = /^#+[^\S\n\r\u2028\u2029]+(.*)$/gm;
+const LINE_REGEX = /^.*$/gm;
+/**
+ * Regular expression to match the start of an ATX heading line in Markdown: up to three spaces of
+ * indentation, one to six `#` characters, then spaces or tabs or the end of the line. The body is
+ * untrusted, so the heading text is read with string operations rather than captured; see
+ * {@link getBodyHeader}.
+ * @see https://spec.commonmark.org/0.31.2/#atx-headings
+ */
+const ATX_HEADING_START_REGEX = /^ {0,3}#{1,6}(?:[ \t]+|$)/;
+/**
+ * Regular expression to match the start of a code fence line in Markdown: up to three spaces of
+ * indentation, then three or more backticks or tildes, which are captured.
+ * @see https://spec.commonmark.org/0.31.2/#fenced-code-blocks
+ */
+const CODE_FENCE_START_REGEX = /^ {0,3}(`{3,}|~{3,})/;
+
+/**
+ * Remove the optional closing sequence of `#` characters at the end of the given ATX heading text,
+ * which has to be preceded by a space or tab unless it’s all the heading has, like `Title` in
+ * `## Title ##`.
+ * @param {string} text Heading text without leading and trailing whitespace.
+ * @returns {string} Heading text without the closing sequence.
+ * @see https://spec.commonmark.org/0.31.2/#atx-headings
+ */
+const removeClosingSequence = (text) => {
+  let end = text.length;
+
+  while (end > 0 && text[end - 1] === '#') {
+    end -= 1;
+  }
+
+  return end === 0 || /[ \t]/.test(text[end - 1]) ? text.slice(0, end).trimEnd() : text;
+};
 
 /**
  * Remove a custom anchor like `{#my-anchor}` at the end of the given heading text.
@@ -117,16 +146,56 @@ const removeHeadingAnchor = (text) => {
 };
 
 /**
- * Find the first ATX heading with text in the given Markdown.
- * @param {string} markdown Markdown string.
- * @returns {string} Heading text without a custom anchor, or an empty string if there is no
- * heading.
+ * Get the text of the given line of Markdown if it’s an ATX heading.
+ * @param {string} line Line.
+ * @returns {string} Heading text without a closing sequence and a custom anchor, or an empty string
+ * if the line is not a heading or has no text.
  */
-const getBodyHeader = (markdown) =>
-  markdown
-    .matchAll(BODY_HEADER_REGEX)
-    .map(([, text]) => removeHeadingAnchor(text.trim()))
-    .find((header) => !!header) ?? '';
+const getHeadingText = (line) => {
+  const [prefix] = line.match(ATX_HEADING_START_REGEX) ?? [];
+
+  return prefix ? removeHeadingAnchor(removeClosingSequence(line.slice(prefix.length).trim())) : '';
+};
+
+/**
+ * Find the first ATX heading with text in the given Markdown, skipping fenced code blocks, where a
+ * line starting with `#` is often a comment, like a shell one.
+ * @param {string} markdown Markdown string.
+ * @returns {string} Heading text without a closing sequence and a custom anchor, or an empty string
+ * if there is no heading.
+ */
+const getBodyHeader = (markdown) => {
+  /** @type {string | undefined} */
+  let openingFence;
+
+  return (
+    markdown
+      .matchAll(LINE_REGEX)
+      .map(([line]) => {
+        const fence = line.match(CODE_FENCE_START_REGEX);
+
+        if (openingFence) {
+          // A closing fence is at least as long as the opening one, uses the same character, and
+          // is followed only by spaces or tabs. An unclosed code block runs to the end
+          if (fence?.[1].startsWith(openingFence) && /^[ \t]*$/.test(line.slice(fence[0].length))) {
+            openingFence = undefined;
+          }
+
+          return '';
+        }
+
+        // The info string of a backtick fence can’t contain a backtick, or it’s inline code
+        if (fence && (fence[1][0] === '~' || !line.includes('`', fence[0].length))) {
+          [, openingFence] = fence;
+
+          return '';
+        }
+
+        return getHeadingText(line);
+      })
+      .find((header) => !!header) ?? ''
+  );
+};
 
 /**
  * Character standing in for a `<` that doesn’t start one of the formatting tags a summary can

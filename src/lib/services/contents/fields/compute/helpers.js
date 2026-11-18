@@ -18,7 +18,7 @@ import {
 } from '$lib/services/contents/fields/number/helpers';
 import { getListFormatter } from '$lib/services/contents/i18n';
 import { getOrCreate } from '$lib/services/utils/cache';
-import { isNumeric, roundFloatError } from '$lib/services/utils/number';
+import { isNumeric, roundFloatError, toFixed } from '$lib/services/utils/number';
 
 /**
  * @import {
@@ -196,7 +196,9 @@ const getUuids = ({ valueTemplate, keyPath, valueMap }) => {
  * according to the field’s `value_type`. A result with a fraction is rounded to 15 significant
  * digits, so the error of binary floating-point arithmetic doesn’t end up in the file, e.g. `0.3`
  * rather than `0.30000000000000004` for `0.1 * 3`, while an integer is kept as is, as rounding
- * would change a large one. With an integer type, the result is rounded to the nearest integer.
+ * would change a large one. With an integer type, the result is then rounded to the nearest
+ * integer like the `round()` function of an expression does, with halves away from zero, e.g. `101`
+ * for `1.005 * 100`, which is `100.49999999999999`, and `-2` for `-1.5`.
  * @param {number | undefined} result Result of the expression. `undefined` if it can’t be computed.
  * @param {ComputeField} fieldConfig Field configuration.
  * @returns {string | number | null} Value to be stored. A result that can’t be computed, or an
@@ -211,7 +213,7 @@ export const getNumericValue = (result, fieldConfig) => {
 
   // Adding zero turns `-0` into `0`
   const number =
-    result === undefined ? undefined : (integer ? Math.round(result) : roundFloatError(result)) + 0;
+    result === undefined ? undefined : (integer ? toFixed(result, 0) : roundFloatError(result)) + 0;
 
   if (number === undefined || (integer && !Number.isSafeInteger(number))) {
     return stringOutput ? '' : null;

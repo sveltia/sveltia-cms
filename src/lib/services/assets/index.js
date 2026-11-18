@@ -96,6 +96,39 @@ const fillMediaFolderTemplate = (template, { collection, entry, localeFile }) =>
   });
 
 /**
+ * Get the collection and the locale file of an entry an asset folder’s path is resolved against.
+ * @param {object} args Arguments.
+ * @param {string} [args.collectionName] Collection name associated with the asset folder. It’s
+ * `undefined` for the global asset folder as well as field-level asset folders in custom editor
+ * components, which take the entry’s first collection.
+ * @param {Entry} [args.entry] Associated entry. Can be `undefined` when editing a new draft.
+ * @param {InternalLocaleCode} [args.locale] Locale whose entry file is used. Default: the
+ * collection’s default locale.
+ * @returns {{ collection: InternalCollection, entry: Entry, localeFile: LocalizedEntry } |
+ * undefined} Context, or `undefined` without an entry or a collection.
+ */
+const getEntryLocaleContext = ({ collectionName, entry, locale }) => {
+  const collection = collectionName
+    ? getCollection(collectionName)
+    : entry
+      ? getAssociatedCollections(entry)[0]
+      : undefined;
+
+  if (!entry || !collection) {
+    return undefined;
+  }
+
+  // An entry-relative asset referenced in a locale is stored beside that locale’s file. With the
+  // `multiple_folders` or `multiple_root_folders` i18n structure, each locale’s file is in a folder
+  // of its own
+  const localeFile = /** @type {LocalizedEntry} */ (
+    getEntryLocaleFile(entry, { locale, defaultLocale: collection._i18n.defaultLocale })
+  );
+
+  return { collection, entry, localeFile };
+};
+
+/**
  * Resolve template tags in an asset folder’s `internalPath`, such as `/assets/images/{{slug}}`,
  * using the given entry’s content.
  * @param {object} args Arguments.
@@ -115,25 +148,10 @@ export const fillInternalPathTemplate = ({ internalPath, collectionName, entry, 
     return internalPath;
   }
 
-  const collection = collectionName
-    ? getCollection(collectionName)
-    : entry
-      ? getAssociatedCollections(entry)[0]
-      : undefined;
+  const context = getEntryLocaleContext({ collectionName, entry, locale });
 
-  if (!entry || !collection) {
-    // Cannot resolve the path
-    return undefined;
-  }
-
-  // An entry-relative asset referenced in a locale is stored beside that locale’s file. With the
-  // `multiple_folders` or `multiple_root_folders` i18n structure, each locale’s file is in a folder
-  // of its own
-  const localeFile = /** @type {LocalizedEntry} */ (
-    getEntryLocaleFile(entry, { locale, defaultLocale: collection._i18n.defaultLocale })
-  );
-
-  return fillMediaFolderTemplate(internalPath, { collection, entry, localeFile });
+  // Cannot resolve the path without an entry
+  return context ? fillMediaFolderTemplate(internalPath, context) : undefined;
 };
 
 /**
@@ -156,6 +174,34 @@ const replaceGlobalFolderTags = (folder, options) => {
   const globalFolders = cmsConfig.current ? resolveGlobalFolders(cmsConfig.current) : undefined;
 
   return replaceFolderTags(folder, globalFolders, options) ?? folder;
+};
+
+/**
+ * Find an asset in the folders an entry’s relative assets can be stored in: the one they are saved
+ * to, which is the folder the entry occupies if it has one of its own, e.g.
+ * `content/posts/2025/06/hello` for `content/posts/2025/06/hello.md` with a
+ * `{{year}}/{{month}}/{{slug}}` path option, and otherwise the folder of the entry file, which is
+ * an empty string for an entry file at the repository root; then the folder of the entry file.
+ * @param {object} context Entry context, as given by {@link getEntryLocaleContext}.
+ * @param {InternalCollection} context.collection Collection the entry belongs to.
+ * @param {LocalizedEntry} context.localeFile Entry’s locale file.
+ * @param {(string | undefined)[]} segments Path segments below the folder, e.g. the subfolder and
+ * the file name.
+ * @returns {Asset | undefined} Asset, if found.
+ */
+const findInEntryBaseFolders = ({ collection, localeFile: { path: entryFilePath } }, segments) => {
+  const entryFileFolder = getDirName(entryFilePath);
+
+  // A set, as the two are the same unless the entry has a folder of its own
+  return new Set([
+    getEntryAssetFolderPath({ collection, entryFilePath, internalPath: entryFileFolder }),
+    // An asset stored beside the entry file before the entry had a folder of its own, or placed
+    // there by hand, is still found
+    entryFileFolder,
+  ])
+    .values()
+    .map((baseFolder) => getAssetPathMap().get(resolvePath(createPath([baseFolder, ...segments]))))
+    .find(Boolean);
 };
 
 /**
@@ -241,19 +287,6 @@ export const getAssetByRelativePathAndCollection = ({
     publicFolder = fillMediaFolderTemplate(publicFolder, { collection, entry, localeFile });
   }
 
-  // Folder an entry-relative path is resolved against: the one the entry’s relative assets are
-  // saved to, which is the folder the entry occupies if it has one of its own, e.g.
-  // `content/posts/2025/06/hello` for `content/posts/2025/06/hello.md` with a
-  // `{{year}}/{{month}}/{{slug}}` path option, and otherwise the folder of the entry file, which is
-  // an empty string for an entry file at the repository root
-  const entryFileFolder = getDirName(entryFilePath);
-
-  const entryFolder = getEntryAssetFolderPath({
-    collection,
-    entryFilePath,
-    internalPath: entryFileFolder,
-  });
-
   // Strip the `media_folder` prefix from the stored path before joining with `mediaFolder`, to
   // avoid duplication when the stored value already includes the media folder (e.g.
   // `images/photo.jpg`). Also normalize `./` prefix since `./images/photo.jpg` and
@@ -263,7 +296,6 @@ export const getAssetByRelativePathAndCollection = ({
   const normalizedPath = path.replace(/^\.\//, '');
   const normalizedMediaFolder = mediaFolder?.replace(/^\.\//, '').replace(/\/$/, '');
   let localPath = stripPathPrefix(normalizedPath, normalizedMediaFolder);
-  let resolvedPath;
 
   // When `media_folder` is absolute (starts with `/`) and `public_folder` is entry-relative (e.g.
   // starts with `.` or `..`), we need special handling for the Astro content collections pattern
@@ -282,23 +314,11 @@ export const getAssetByRelativePathAndCollection = ({
     }
 
     // Resolve against the absolute media_folder (strip leading `/` to make it repo-relative)
-    resolvedPath = resolvePath(createPath([mediaFolder.slice(1), localPath]));
-  } else {
-    // Original logic: concatenate entryFolder + mediaFolder + localPath for entry-relative folders
-    resolvedPath = resolvePath(createPath([entryFolder, mediaFolder, localPath]));
-
-    // An asset stored beside the entry file before the entry had a folder of its own, or placed
-    // there by hand, is still found
-    if (entryFolder !== entryFileFolder && !getAssetPathMap().has(resolvedPath)) {
-      const legacyPath = resolvePath(createPath([entryFileFolder, mediaFolder, localPath]));
-
-      if (getAssetPathMap().has(legacyPath)) {
-        resolvedPath = legacyPath;
-      }
-    }
+    return getAssetPathMap().get(resolvePath(createPath([mediaFolder.slice(1), localPath])));
   }
 
-  return getAssetPathMap().get(resolvedPath);
+  // Concatenate the folder holding the entry’s relative assets, `media_folder` and the local path
+  return findInEntryBaseFolders({ collection, localeFile }, [mediaFolder, localPath]);
 };
 
 /**
@@ -451,6 +471,70 @@ const getPublicPathRegex = (folder) =>
 export const isRelativePath = (path) => !/^[/@]/.test(path);
 
 /**
+ * Find an asset in an entry-relative folder by an absolute path stored as a field value. The
+ * folder’s absolute public path, e.g. `/blog/{{slug}}/images`, stands for its subfolder in the
+ * folder holding the entry’s relative assets, e.g. `content/blog/hello/images`, where the asset was
+ * saved by `resolveAssetFolderPaths()`.
+ * @param {object} args Arguments.
+ * @param {string} args.path Saved absolute path, e.g. `/blog/hello/images/photo.jpg`.
+ * @param {AssetFolderInfo} args.folder Entry-relative asset folder with an absolute public path.
+ * @param {Entry} [args.entry] Associated entry. Without it, the path is resolved against the
+ * collection folder, as a relative path is by {@link getAssetByRelativePath}.
+ * @param {InternalLocaleCode} [args.locale] Locale the path is referenced in, which tells which
+ * locale’s entry file the asset is stored beside. Default: the default locale.
+ * @returns {Asset | undefined} Asset, if found.
+ */
+const findInEntryRelativeFolder = ({ path, folder, entry, locale }) => {
+  const { collectionName, internalPath, internalSubPath = '' } = folder;
+
+  /**
+   * Look for the asset beside the given locale’s entry file.
+   * @param {InternalLocaleCode | undefined} _locale Locale.
+   * @returns {Asset | undefined} Asset, if found.
+   */
+  const find = (_locale) => {
+    const context = getEntryLocaleContext({ collectionName, entry, locale: _locale });
+
+    const [publicPath, subPath] = [/** @type {string} */ (folder.publicPath), internalSubPath].map(
+      (template) =>
+        !hasTemplateTags(template)
+          ? template
+          : context
+            ? fillMediaFolderTemplate(template, context)
+            : undefined,
+    );
+
+    if (publicPath === undefined || subPath === undefined) {
+      // Cannot resolve the template tags without an entry
+      return undefined;
+    }
+
+    // Normalized the same way as the path is when the asset is saved, so an empty segment left by
+    // a tag, e.g. `/blog//images`, or a `.` or `..` segment matches the saved value
+    const basePath = resolvePath(publicPath);
+    const prefix = basePath ? `/${basePath}/` : '/';
+
+    if (!path.startsWith(prefix)) {
+      return undefined;
+    }
+
+    const localPath = path.slice(prefix.length);
+
+    // Without an entry, the collection folder, which an entry-relative folder always has
+    return context
+      ? findInEntryBaseFolders(context, [subPath, localPath])
+      : getAssetPathMap().get(resolvePath(createPath([internalPath, subPath, localPath])));
+  };
+
+  return (
+    find(locale) ??
+    // A file in a duplicated or synced field is stored once, beside the default locale’s entry
+    // file, which the other locales then share
+    (locale ? find(undefined) : undefined)
+  );
+};
+
+/**
  * Get an asset by an absolute public path typically stored as an image field value.
  * @param {object} args Arguments.
  * @param {string} args.path Saved absolute path.
@@ -489,6 +573,20 @@ export const getAssetByAbsolutePath = ({
   const findInFolder = (folder) => {
     const { publicPath, collectionName: _collectionName } = folder;
     let { internalPath } = folder;
+
+    if (folder.entryRelative && publicPath) {
+      // An absolute public path of an entry-relative folder stands for the folder holding the
+      // entry’s relative assets, not the collection folder
+      if (publicPath.startsWith('/')) {
+        return findInEntryRelativeFolder({ path, folder, entry, locale });
+      }
+
+      // A relative one, like `images` or `./images`, gives a value relative to the entry, which an
+      // absolute path can’t stand for
+      if (isRelativePath(publicPath)) {
+        return undefined;
+      }
+    }
 
     if (internalPath !== undefined) {
       // Deal with template tags like `/assets/images/{{slug}}`

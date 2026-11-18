@@ -163,10 +163,17 @@ export const fetchOpenAuthoringAccess = async () => {
 export const fetchForkByName = () =>
   fetchForkByNameFor(repository, { headers: { Accept: 'application/json' } });
 
+// `affiliations` is the one that filters by the viewer, so `OWNER` keeps the forks the signed-in
+// user owns. `ownerAffiliations` is about the owner being viewed instead, and its default of
+// `[OWNER, COLLABORATOR]` is widened to every value, so it can’t leave the fork out
 const FETCH_USER_FORK_QUERY = `
   query($owner: String!, $repo: String!) {
     repository(owner: $owner, name: $repo) {
-      forks(ownerAffiliations: [OWNER], first: 1) {
+      forks(
+        affiliations: [OWNER]
+        ownerAffiliations: [OWNER, COLLABORATOR, ORGANIZATION_MEMBER]
+        first: 1
+      ) {
         nodes {
           nameWithOwner
           owner {

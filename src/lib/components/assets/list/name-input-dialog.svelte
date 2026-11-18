@@ -13,7 +13,8 @@
    * @property {string} title Dialog title.
    * @property {string} okLabel Label of the OK button.
    * @property {boolean} okDisabled Whether the OK button is disabled.
-   * @property {() => void} onOk Called when the OK button is clicked.
+   * @property {() => void} onOk Called when the OK button is clicked or the name is submitted with
+   * the Enter key.
    * @property {() => void} [onOpen] Called once the dialog is open.
    * @property {() => void} [onClose] Called once the dialog is closed.
    * @property {string} description Text shown above the input field.
@@ -49,9 +50,35 @@
   } = $props();
 
   const componentId = $props.id();
+  /**
+   * Whether the user has submitted the name with the Enter key. The dialog has no way to be closed
+   * as if its OK button were clicked, so `onOk` is called once it has closed, just before
+   * `onClose`, as the button would do.
+   */
+  let submitted = false;
 </script>
 
-<Dialog {title} bind:open {okLabel} {okDisabled} {onOk} {onOpen} {onClose}>
+<Dialog
+  {title}
+  bind:open
+  {okLabel}
+  {okDisabled}
+  {onOk}
+  onOpen={() => {
+    // A submission is only pending while the dialog is closing, so drop one left behind by a close
+    // that reopening the dialog has interrupted
+    submitted = false;
+    onOpen?.();
+  }}
+  onClose={() => {
+    if (submitted) {
+      submitted = false;
+      onOk();
+    }
+
+    onClose?.();
+  }}
+>
   {#if blockedMessage}
     <p role="alert">{blockedMessage}</p>
   {:else}
@@ -68,6 +95,14 @@
       invalid={!!error}
       aria-errormessage="{componentId}-error"
       {oninput}
+      onkeydown={(/** @type {KeyboardEvent} */ event) => {
+        // Submit with the Enter key like the OK button, unless it’s confirming an IME conversion
+        if (event.key === 'Enter' && !event.isComposing && !okDisabled) {
+          event.preventDefault();
+          submitted = true;
+          open = false;
+        }
+      }}
     />
   </div>
   {#if note}

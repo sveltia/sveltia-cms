@@ -215,6 +215,33 @@ describe('RenameDialog', () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
+  test('renames the asset or asks for confirmation with the Enter key, as the button does', async () => {
+    const { onRename, onClose } = await renderDialog();
+    const dialog = page.getByRole('dialog', { name: 'Rename \u2068photo.png\u2069' });
+    const textbox = dialog.getByRole('textbox');
+
+    await expectFileNameSelected(textbox, 'photo.png');
+    await textbox.fill('photo.webp');
+    await userEvent.keyboard('{Enter}');
+
+    // The extension change is confirmed first
+    const confirmation = page.getByRole('alertdialog');
+
+    await expect.element(confirmation).toBeInTheDocument();
+    expect(onRename).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+
+    // Going back keeps the entered name, which can then be changed and submitted again
+    await confirmation.getByRole('button', { name: 'Cancel' }).click();
+    await expectFileNameSelected(textbox, 'photo.webp');
+    await textbox.fill('picture.png');
+    await userEvent.keyboard('{Enter}');
+
+    await vi.waitFor(() => expect(onRename).toHaveBeenCalledWith('picture.png'));
+    expect(onRename).toHaveBeenCalledOnce();
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
   test('selects the file name without the extension when the dialog opens', async () => {
     await renderDialog();
 

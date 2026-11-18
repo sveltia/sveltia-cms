@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 
 import { cmsConfig } from '$lib/services/config';
 
@@ -868,6 +868,89 @@ describe('assets/data/move', () => {
       expect(newURL('./photo%20%281%29.png')).toBe('./photo%20%282%29.png');
       // A name encoded by hand is still matched
       expect(newURL('photo%20(1).png')).toBe('photo%20(2).png');
+    });
+
+    it('should keep the form of a reference to an asset renamed in a shared entry-relative folder', async () => {
+      const { getAssetPublicURL } = await import('$lib/services/assets/info');
+      const { getEntriesByAssets } = await import('$lib/services/assets/references');
+      const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
+      /** @type {typeof import('$lib/services/assets/info')} */
+      const actual = await vi.importActual('$lib/services/assets/info');
+      const entry = { id: 'entry1', locales: {} };
+
+      // The real function, which gives an asset directly in a shared entry-relative folder, as with
+      // entries that are files sharing the collection folder, a path relative to the folder
+      vi.mocked(getAssetPublicURL).mockImplementation(actual.getAssetPublicURL);
+      vi.mocked(getEntriesByAssets).mockResolvedValue([[entry]]);
+      cmsConfig.current = { output: { encode_file_path: true } };
+      onTestFinished(() => {
+        cmsConfig.current = undefined;
+      });
+
+      /**
+       * Rename an asset in the given folder and get the function rewriting a reference to it.
+       * @param {object} folder Asset folder.
+       * @param {string} oldName Current file name.
+       * @param {string} newName New file name.
+       * @returns {Promise<(src: string) => string | undefined>} Function.
+       */
+      const rename = async (folder, oldName, newName) => {
+        const dirPath = [folder.internalPath, folder.internalSubPath].filter(Boolean).join('/');
+        const asset = { path: `${dirPath}/${oldName}`, name: oldName, folder };
+
+        vi.mocked(getAssetFoldersByPath).mockReturnValue([folder]);
+
+        await collectEntryChangesFromAssets({
+          _globalAssetFolder: { internalPath: 'static/images', publicPath: '/images' },
+          movingAssets: [{ asset, path: `${dirPath}/${newName}` }],
+          updatingEntryMap: new Map(),
+        });
+
+        return vi.mocked(getEntriesByAssets).mock.lastCall[0][0].newURL;
+      };
+
+      const base = { collectionName: 'blog', entryRelative: true, hasTemplateTags: false };
+
+      // `media_folder: ''` with `public_folder: ./`
+      let newURL = await rename(
+        { ...base, internalPath: 'src/content/blog', internalSubPath: '', publicPath: '.' },
+        'photo.jpg',
+        'photo-new.jpg',
+      );
+
+      expect(newURL('./photo.jpg')).toBe('./photo-new.jpg');
+
+      // `media_folder: images` with `public_folder: ./images`
+      newURL = await rename(
+        {
+          ...base,
+          internalPath: 'src/content/blog',
+          internalSubPath: 'images',
+          publicPath: './images',
+        },
+        'photo.jpg',
+        'photo-new.jpg',
+      );
+
+      expect(newURL('./images/photo.jpg')).toBe('./images/photo-new.jpg');
+
+      // `media_folder: images` with `public_folder: ''`, which stores a bare file name
+      newURL = await rename(
+        { ...base, internalPath: 'src/content/blog', internalSubPath: 'images', publicPath: '' },
+        'x.jpg',
+        'x-new.jpg',
+      );
+
+      expect(newURL('x.jpg')).toBe('x-new.jpg');
+
+      // A name encoded with the `encode_file_path` option stays encoded
+      newURL = await rename(
+        { ...base, internalPath: 'src/content/blog', internalSubPath: 'images', publicPath: '' },
+        'my photo.jpg',
+        'new photo.jpg',
+      );
+
+      expect(newURL('my%20photo.jpg')).toBe('new%20photo.jpg');
     });
 
     it('should fall back to the folder paths when an entry-relative asset changes folders', async () => {

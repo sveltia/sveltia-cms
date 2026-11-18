@@ -113,6 +113,11 @@ test('publishes the rename of an author, along with the posts referring to it', 
   await panel.getByRole('textbox', { name: 'Slug' }).fill('ada-lovelace');
   await panel.getByRole('textbox', { name: 'Slug' }).press('Enter');
   await editor.getByRole('button', { name: 'Save' }).click();
+  // The entry is moved to the Ready stage below
+  await page
+    .getByRole('alertdialog', { name: 'Send for Review' })
+    .getByRole('button', { name: 'Later' })
+    .click();
 
   // The branch is named after the new slug
   await expect

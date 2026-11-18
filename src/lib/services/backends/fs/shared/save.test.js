@@ -533,7 +533,7 @@ describe('writeFile', () => {
     await expect(writeFile(fileHandle, 'test content')).resolves.toBeUndefined();
   });
 
-  test('should swallow close errors', async () => {
+  test('should propagate close errors, as the data is only committed on close', async () => {
     const fileHandle = createMockFileHandle('test.txt');
 
     const mockWritableStream = {
@@ -543,7 +543,21 @@ describe('writeFile', () => {
 
     fileHandle.createWritable = vi.fn().mockResolvedValue(mockWritableStream);
 
-    await expect(writeFile(fileHandle, 'data')).resolves.toBeUndefined();
+    await expect(writeFile(fileHandle, 'data')).rejects.toThrow('Close failed');
+  });
+
+  test('should propagate the write error rather than the close error', async () => {
+    const fileHandle = createMockFileHandle('test.txt');
+
+    const mockWritableStream = {
+      write: vi.fn().mockRejectedValue(new Error('Write failed')),
+      close: vi.fn().mockRejectedValue(new Error('Close failed')),
+    };
+
+    fileHandle.createWritable = vi.fn().mockResolvedValue(mockWritableStream);
+
+    await expect(writeFile(fileHandle, 'data')).rejects.toThrow('Write failed');
+    expect(mockWritableStream.close).toHaveBeenCalled();
   });
 
   test('should propagate write errors', async () => {
@@ -642,6 +656,120 @@ describe('moveFile', () => {
     expect(result).toBe(mockDestHandle);
     expect(mockSourceHandle.move).not.toHaveBeenCalled();
     expect(rootDirHandle.removeEntry).toHaveBeenCalledWith('oldfile.txt');
+  });
+
+  describe('renaming a file only in case or normalization without the `move` method', () => {
+    beforeEach(() => {
+      env.isBrave = true; // Force canMoveFile() to return false
+    });
+
+    afterEach(() => {
+      env.isBrave = false;
+    });
+
+    /**
+     * Make a memory directory case-insensitive and case-preserving, like the default file systems
+     * on macOS and Windows.
+     * @param {any} dirHandle Memory directory handle.
+     * @param {object} options Options.
+     * @param {boolean} options.comparesPaths Whether `isSameEntry()` compares the paths as given,
+     * as Chrome may, rather than tell that two spellings are the same file.
+     * @returns {any} The same handle.
+     */
+    const makeCaseInsensitive = (dirHandle, { comparesPaths }) => {
+      const { getFileHandle: getFile, getDirectoryHandle: getDir, removeEntry } = dirHandle;
+
+      /**
+       * Find the name an entry has in the directory.
+       * @param {string} name Name to look for.
+       * @returns {string} Existing name, or the given one.
+       */
+      const find = (name) =>
+        [...dirHandle.children.keys()].find((key) => key.toLowerCase() === name.toLowerCase()) ??
+        name;
+
+      dirHandle.getFileHandle = async (/** @type {string} */ name, /** @type {any} */ options) => {
+        const handle = await getFile(find(name), options);
+
+        return comparesPaths
+          ? { ...handle, name, isSameEntry: async (/** @type {any} */ other) => other === handle }
+          : handle;
+      };
+
+      dirHandle.getDirectoryHandle = async (
+        /** @type {string} */ name,
+        /** @type {any} */ options,
+      ) => makeCaseInsensitive(await getDir(find(name), options), { comparesPaths });
+
+      dirHandle.removeEntry = (/** @type {string} */ name, /** @type {any} */ options) =>
+        removeEntry(find(name), options);
+
+      return dirHandle;
+    };
+
+    test.each([
+      { title: 'tells that it’s the same file', comparesPaths: false },
+      { title: 'compares the paths', comparesPaths: true },
+    ])(
+      'should keep the file on a case-insensitive file system when the browser $title',
+      async ({ comparesPaths }) => {
+        const root = makeCaseInsensitive(createMemoryDirectoryHandle(), { comparesPaths });
+
+        await writeMemoryFile(root, 'images/Photo.jpg', 'JPEG');
+        await moveFile({
+          rootDirHandle: root,
+          previousPath: 'images/Photo.jpg',
+          path: 'images/photo.jpg',
+        });
+
+        // The file has the new spelling, and no temporary file is left behind
+        expect(await readMemoryFiles(root)).toEqual({ 'images/photo.jpg': 'JPEG' });
+      },
+    );
+
+    test('should keep a file renamed only in its Unicode normalization form', async () => {
+      // Names are compared byte for byte, but the file is found by its other spelling
+      const root = createMemoryDirectoryHandle();
+      const decomposed = 'cafe\u0301.jpg';
+      const composed = decomposed.normalize();
+
+      await writeMemoryFile(root, decomposed, 'JPEG');
+      await moveFile({ rootDirHandle: root, previousPath: decomposed, path: composed });
+
+      expect(await readMemoryFiles(root)).toEqual({ [composed]: 'JPEG' });
+    });
+
+    test('should keep the temporary file if the file cannot be written under the new name', async () => {
+      const root = makeCaseInsensitive(createMemoryDirectoryHandle(), { comparesPaths: false });
+      const error = new DOMException('Disk full', 'QuotaExceededError');
+
+      await writeMemoryFile(root, 'Photo.jpg', 'JPEG');
+
+      const { getFileHandle: getFile } = root;
+
+      root.getFileHandle = async (/** @type {string} */ name, /** @type {any} */ options) => {
+        const handle = await getFile(name, options);
+
+        // Only the file created under the new name, once the old one has been removed, fails
+        if (name === 'photo.jpg' && !root.children.has('Photo.jpg')) {
+          handle.createWritable = async () => ({
+            write: async () => {
+              throw error;
+            },
+            close: async () => {},
+          });
+        }
+
+        return handle;
+      };
+
+      await expect(
+        moveFile({ rootDirHandle: root, previousPath: 'Photo.jpg', path: 'photo.jpg' }),
+      ).rejects.toBe(error);
+
+      // The content is still on the disk
+      expect(Object.values(await readMemoryFiles(root))).toContain('JPEG');
+    });
   });
 });
 
@@ -876,7 +1004,7 @@ describe('saveFile', () => {
     ).rejects.toThrow('Write failed');
   });
 
-  test('should handle close errors gracefully', async () => {
+  test('should propagate close errors', async () => {
     const mockFileHandle = createMockFileHandle('test.txt');
 
     const mockWritableStream = {
@@ -886,17 +1014,48 @@ describe('saveFile', () => {
 
     mockFileHandle.createWritable = vi.fn().mockResolvedValue(mockWritableStream);
 
-    // Should not throw
-    const result = await saveFile({
-      rootDirHandle,
-      fileHandle: mockFileHandle,
-      path: 'test.txt',
-      data: 'test content',
-    });
+    await expect(
+      saveFile({
+        rootDirHandle,
+        fileHandle: mockFileHandle,
+        path: 'test.txt',
+        data: 'test content',
+      }),
+    ).rejects.toThrow('Close failed');
 
-    expect(result).toBeInstanceOf(File);
     // No rename when fileHandle is provided
     expect(mockFileHandle.move).not.toHaveBeenCalled();
+  });
+
+  test('should keep the existing file if the temp file cannot be closed', async () => {
+    const root = createMemoryDirectoryHandle();
+
+    await writeMemoryFile(root, 'post.md', 'Original');
+
+    const { getFileHandle: getMemoryFileHandle } = root;
+
+    // Chrome fails to close a stream when it can’t move its swap file into place, e.g. because an
+    // antivirus scanner has locked the file; the temp file is then left empty
+    root.getFileHandle = async (name, options) => {
+      const handle = /** @type {any} */ (await getMemoryFileHandle(name, options));
+      const { createWritable } = handle;
+
+      handle.createWritable = async (/** @type {any} */ writableOptions) => ({
+        ...(await createWritable(writableOptions)),
+        close: async () => {
+          throw new DOMException('Failed to move the swap file', 'InvalidStateError');
+        },
+      });
+
+      return handle;
+    };
+
+    await expect(saveFile({ rootDirHandle: root, path: 'post.md', data: 'New' })).rejects.toThrow(
+      'Failed to move the swap file',
+    );
+
+    // The file isn’t replaced with the empty temp file, which is removed
+    expect(await readMemoryFiles(root)).toEqual({ 'post.md': 'Original' });
   });
 
   test('should handle Safari without createWritable support', async () => {

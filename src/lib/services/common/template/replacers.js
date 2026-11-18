@@ -159,10 +159,11 @@ export const replaceTemplatePlaceholder = (placeholder, context) => {
     String(replaceTemplateTag(innerTag, replaceSubContext) ?? ''),
   );
 
-  // Fall back with a random ID unless the `default` transformation or a custom one is defined,
-  // which may give a value for a missing one
-  const hasDefaultTransformation = parsedTransformations.some(
-    (tf) => tf.args.defaultValue !== undefined,
+  // Fall back with a random ID unless the `default` or `ternary` transformation, or a custom one,
+  // is defined, which may give a value for a missing one. `ternary` always gives one of its values,
+  // so a missing value, e.g. of a Boolean field added after the entry was saved, gets the falsy one
+  const hasValueTransformation = parsedTransformations.some(
+    (tf) => tf.args.defaultValue !== undefined || tf.method === 'ternary',
   );
 
   const hasCustomTransformation = parsedTransformations.some((tf) =>
@@ -203,7 +204,7 @@ export const replaceTemplatePlaceholder = (placeholder, context) => {
     );
   };
 
-  if (isMissingValue && !hasDefaultTransformation && !hasCustomTransformation) {
+  if (isMissingValue && !hasValueTransformation && !hasCustomTransformation) {
     return getFallbackValue();
   }
 
@@ -217,8 +218,8 @@ export const replaceTemplatePlaceholder = (placeholder, context) => {
   }
 
   // A custom transformation may give nothing for a missing value after all. The result of `default`
-  // is kept as is, even if its nested template resolves to nothing
-  if (isMissingValue && !hasDefaultTransformation && value === '') {
+  // or `ternary` is kept as is, even if its nested template resolves to nothing
+  if (isMissingValue && !hasValueTransformation && value === '') {
     return getFallbackValue();
   }
 

@@ -183,10 +183,12 @@ export const normalizeAssetFolder = ({
     internalSubPath: entryRelative ? stripSlashes(mediaFolder) : undefined,
     publicPath:
       // Prefix the public path with `/` unless it’s empty or starting with `.` (entry-relative
-      // setting) or starting with `@` (framework-specific). A trailing slash is removed either way,
-      // like the global public folder’s, so a path can be joined with `/` and a file name; `./`
-      // becomes `.`, which stores the same `./photo.jpg` value
-      /^($|[.@])/.test(publicFolder)
+      // setting) or starting with `@` (framework-specific), or it’s the public path of an
+      // entry-relative folder that doesn’t start with `/`, like `images`, which is relative to the
+      // entry as well, so the value stored is `images/photo.jpg`. A trailing slash is removed
+      // either way, like the global public folder’s, so a path can be joined with `/` and a file
+      // name; `./` becomes `.`, which stores the same `./photo.jpg` value
+      /^($|[.@])/.test(publicFolder) || (entryRelative && !publicFolder.startsWith('/'))
         ? publicFolder.replace(/(?<=.)\/+$/, '')
         : `/${stripSlashes(publicFolder)}`,
     entryRelative,
@@ -335,7 +337,8 @@ const addAssetCollections = (folders, { assetCollections, globalFolders }) => {
 
     addFolderIfNeeded(folders, {
       collectionName: `assets:${name}`,
-      mediaFolder: `/${stripSlashes(_mediaFolder)}`,
+      // The folder is always relative to the repository root, so a leading `./` changes nothing
+      mediaFolder: `/${stripSlashes(_mediaFolder).replace(/^\.(?:\/|$)/, '')}`,
       publicFolder: _publicFolder,
       globalFolders,
       label,
@@ -396,8 +399,9 @@ export const resolveGlobalFolders = (config) => {
     return undefined;
   }
 
-  // Normalize the media folder: an empty string, `/` and `.` are all considered as the root folder
-  const globalMediaFolder = stripSlashes(_globalMediaFolder).replace(/^\.$/, '');
+  // Normalize the media folder: an empty string, `/`, `.` and `./` are all considered as the root
+  // folder, and a leading `./` is removed from any other folder, e.g. `./static/images`
+  const globalMediaFolder = stripSlashes(_globalMediaFolder).replace(/^\.(?:\/|$)/, '');
 
   // Some frameworks expect asset paths starting with `@`, like `@assets/images/...`. Remove an
   // extra leading slash in that case. A trailing slash should always be removed internally.

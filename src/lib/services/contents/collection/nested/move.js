@@ -8,6 +8,7 @@ import {
   isDescendantPath,
 } from '$lib/services/contents/collection/nested';
 import { hasLocalizedSlugs } from '$lib/services/contents/collection/slug';
+import { rewriteEntryAssetReferences } from '$lib/services/contents/draft/save/asset-references';
 import {
   buildEntryFileChanges,
   resolveCacheDB,
@@ -295,21 +296,31 @@ export const buildNestedMoveChanges = async ({
     ]),
   );
 
-  const movedEntries = descendants.flatMap((entry) => {
-    const movedEntry = moveEntry({ entry, dirMove, localeDirMoves });
+  const movedEntries = (
+    await Promise.all(
+      descendants.map(async (entry) => {
+        const movedEntry = moveEntry({ entry, dirMove, localeDirMoves });
 
-    return movedEntry
-      ? [
-          {
-            originalEntry: entry,
-            movedEntry: refreshPermalinks({
-              collection,
-              entry: updateCanonicalSlug({ collection, entry: movedEntry }),
-            }),
-          },
-        ]
-      : [];
-  });
+        return movedEntry
+          ? [
+              {
+                originalEntry: entry,
+                movedEntry: refreshPermalinks({
+                  collection,
+                  // The references to the entry’s own assets by an absolute path filled with its
+                  // slug, e.g. `/blog/{{slug}}/images/photo.jpg`, follow the entry
+                  entry: await rewriteEntryAssetReferences({
+                    collection,
+                    originalEntry: entry,
+                    savingEntry: updateCanonicalSlug({ collection, entry: movedEntry }),
+                  }),
+                }),
+              },
+            ]
+          : [];
+      }),
+    )
+  ).flat();
 
   // Nothing moves when the folder keeps its name in every locale
   if (!movedEntries.length) {

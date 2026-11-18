@@ -10,6 +10,7 @@ import { hasNestedEntries } from '$lib/services/contents/collection/nested';
 import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
 import { filterRealValues } from '$lib/services/contents/draft';
 import { addAlias } from '$lib/services/contents/draft/save/aliases';
+import { rewriteEntryAssetReferences } from '$lib/services/contents/draft/save/asset-references';
 import { replaceBlobURL } from '$lib/services/contents/draft/save/assets';
 import { createEntryPath } from '$lib/services/contents/draft/save/entry-path';
 import {
@@ -538,7 +539,7 @@ export const createSavingEntryData = async ({
   const nested = hasNestedEntries(collection);
 
   /** @type {Entry} */
-  const savingEntry = {
+  let savingEntry = {
     id,
     slug: nested ? subPath : defaultLocaleSlug,
     subPath,
@@ -563,6 +564,17 @@ export const createSavingEntryData = async ({
       ]),
     ),
   };
+
+  // The references to the entry’s own assets by an absolute path filled with its values, e.g.
+  // `/blog/{{slug}}/images/photo.jpg`, follow a renamed slug or a move of the entry. An entry
+  // someone else has deleted is written anew, from references the user has seen
+  savingEntry = await rewriteEntryAssetReferences({
+    collection,
+    collectionFile,
+    isIndexFile: draft.isIndexFile,
+    originalEntry: draft.isNew || recreate ? undefined : draft.originalEntry,
+    savingEntry,
+  });
 
   if (runPreSave) {
     await callEventHooks({

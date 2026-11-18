@@ -99,6 +99,21 @@ describe('assets/data/move-to-folder', () => {
       expect(getTakenNamesInDir).toHaveBeenCalledWith('static/projects');
     });
 
+    it('compares the names case-insensitively', () => {
+      vi.mocked(getTakenNamesInDir).mockReturnValue(['photo.jpg']);
+
+      const assets = [
+        createAsset('static/uploads/Photo.jpg', globalFolder),
+        createAsset('static/uploads/2024/Logo.PNG', globalFolder),
+        createAsset('static/uploads/2025/logo.png', globalFolder),
+      ];
+
+      expect(getAssetMoveConflicts({ assets, dirPath: 'static/projects' })).toEqual([
+        'Photo.jpg',
+        'logo.png',
+      ]);
+    });
+
     it('reports nothing when the names are free', () => {
       const assets = [createAsset('static/uploads/a.png', globalFolder)];
 

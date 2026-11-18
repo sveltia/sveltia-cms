@@ -161,6 +161,28 @@ export const keepsOriginalPath = ({ draft, locale, slug }) => {
 };
 
 /**
+ * Get the sub path of an existing entry’s file going by the given slug, for a locale of the entry
+ * whose own file can’t be kept, typically one enabled after the entry was created. Unless the entry
+ * is renamed, its files keep their slug, so the new file goes alongside them rather than where the
+ * collection’s `path` option would put a new entry: the template can have tags that aren’t filled
+ * the same way twice, like `{{year}}` without a date field, which takes the time of the save, or
+ * `{{uuid_short}}`, while the localized files of an entry are linked by their shared sub path when
+ * they’re read back. A renamed entry has no file going by the new slug, so the template is filled
+ * again for every locale.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {string} args.slug Entry slug in the locale.
+ * @param {RegExp} args.fullPathRegEx Regular expression matching the collection’s entry paths.
+ * @returns {string | undefined} Sub path without the locale and file extension, or `undefined` if
+ * no file of the entry has the slug.
+ */
+export const getKeptSubPath = ({ draft, slug, fullPathRegEx }) =>
+  Object.values(draft.originalEntry?.locales ?? {})
+    .filter((localizedEntry) => localizedEntry.slug === slug)
+    .map(({ path }) => path.match(fullPathRegEx)?.groups?.subPath)
+    .find((subPath) => !!subPath);
+
+/**
  * Determine the file path for the given entry draft depending on the collection type, i18n config
  * and entry collection’s subpath.
  * @param {object} args Arguments.
@@ -204,7 +226,7 @@ export const createEntryPath = ({ draft, locale, slug }) => {
   }
 
   // The index file can have an extension of its own
-  const { basePath, subPath, extension } = resolveFileConfig({
+  const { basePath, subPath, extension, fullPathRegEx } = resolveFileConfig({
     collection: entryCollection,
     isIndexFile,
   });
@@ -220,9 +242,12 @@ export const createEntryPath = ({ draft, locale, slug }) => {
     : useCustomPath
       ? buildCustomEntryPath({ draft, slug, indexFileName, locale })
       : subPath
-        ? // The template is filled with the default locale’s values, as the default locale, so
-          // that every locale, and every call for the same draft, e.g. for the entry file and for
-          // its entry-relative assets, gets the same random values for tags like `{{uuid_short}}`
+        ? // A locale enabled for an existing entry goes alongside the entry’s other files.
+          // Otherwise the template is filled with the default locale’s values, as the default
+          // locale, so that every locale, and every call for the same draft, e.g. for the entry
+          // file and for its entry-relative assets, gets the same random values for tags like
+          // `{{uuid_short}}`
+          (getKeptSubPath({ draft, slug, fullPathRegEx: /** @type {RegExp} */ (fullPathRegEx) }) ??
           fillTemplate(subPath, {
             collection: entryCollection,
             locale: defaultLocale,
@@ -230,7 +255,7 @@ export const createEntryPath = ({ draft, locale, slug }) => {
             currentSlug: slug,
             dateTimeParts: getEntryDateTimeParts(draft),
             randomValues: getRandomValues(draft),
-          })
+          }))
         : slug;
 
   // Remove extension from index file name if it already has one

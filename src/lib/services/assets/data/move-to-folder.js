@@ -27,14 +27,16 @@ export const getAssetsUsedEntries = async (assets) =>
  * @returns {string[]} File names, in the order of the assets.
  */
 export const getAssetMoveConflicts = ({ assets, dirPath }) => {
-  const takenNames = new Set(getTakenNamesInDir(dirPath));
+  // Case-insensitive, like an upload or a rename, since `Photo.jpg` and `photo.jpg` clash on a
+  // case-insensitive file system like macOS’s or Windows’s, and Unicode-normalized
+  const takenNames = new Set(getTakenNamesInDir(dirPath).map((name) => name.toLowerCase()));
   /** @type {Set<string>} */
   const movingNames = new Set();
   /** @type {Set<string>} */
   const conflicts = new Set();
 
   getMovableAssets({ assets, dirPath }).forEach(({ name }) => {
-    const normalizedName = name.normalize();
+    const normalizedName = name.normalize().toLowerCase();
 
     if (takenNames.has(normalizedName) || movingNames.has(normalizedName)) {
       conflicts.add(name);

@@ -36,8 +36,13 @@ vi.mock('$lib/services/workflow', () => ({
 
 // Import the module once the mocks above are in place. Importing it here rather than in each test
 // keeps the first, slow load of its module graph out of the test timeout
-const { buildCustomEntryPath, buildPathByStructure, createEntryPath, keepsOriginalPath } =
-  await import('./entry-path.js');
+const {
+  buildCustomEntryPath,
+  buildPathByStructure,
+  createEntryPath,
+  getKeptSubPath,
+  keepsOriginalPath,
+} = await import('./entry-path.js');
 
 describe('contents/draft/save/entry-path', () => {
   let mockFillTemplate;
@@ -869,6 +874,135 @@ describe('contents/draft/save/entry-path', () => {
       expect(result).toBe('en/my-post.md');
     });
   });
+
+  describe('createEntryPath for a locale enabled later', () => {
+    /**
+     * Create a draft of an existing entry stored with the `{{year}}/{{slug}}` path, whose English
+     * file was saved in 2023, while the template now fills the year with 2026.
+     * @param {object} args Arguments.
+     * @param {string} args.structure I18n structure.
+     * @param {boolean} [args.omitDefaultLocale] Whether to omit the default locale from the path.
+     * @param {string} args.enPath English file path.
+     * @param {RegExp} args.fullPathRegEx Regular expression matching the entry paths.
+     * @returns {any} Entry draft.
+     */
+    const createDraft = ({ structure, omitDefaultLocale = false, enPath, fullPathRegEx }) => ({
+      collection: {
+        _type: 'entry',
+        _i18n: {
+          defaultLocale: 'en',
+          structure,
+          omitDefaultLocaleFromFilePath: omitDefaultLocale,
+          omitDefaultLocaleFromPreviewPath: false,
+        },
+        _file: {
+          basePath: 'content/posts',
+          subPath: '{{year}}/{{slug}}',
+          extension: 'md',
+          fullPathRegEx,
+        },
+      },
+      collectionFile: undefined,
+      originalEntry: {
+        id: 'posts/2023/hello',
+        slug: 'hello',
+        subPath: '2023/hello',
+        locales: { en: { slug: 'hello', path: enPath, content: {} } },
+      },
+      currentValues: { en: {}, fr: {} },
+      isIndexFile: false,
+    });
+
+    beforeEach(() => {
+      mockFillTemplate.mockImplementation((template, { currentSlug }) =>
+        template.replace('{{year}}', '2026').replace('{{slug}}', currentSlug),
+      );
+    });
+
+    it('should put the file alongside the entry’s other files with `multiple_files`', () => {
+      const draft = createDraft({
+        structure: 'multiple_files',
+        enPath: 'content/posts/2023/hello.en.md',
+        fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?\/[^/]+?)\.(?<locale>en|fr)\.md$/,
+      });
+
+      expect(createEntryPath({ draft, locale: 'en', slug: 'hello' })).toBe(
+        'content/posts/2023/hello.en.md',
+      );
+      expect(createEntryPath({ draft, locale: 'fr', slug: 'hello' })).toBe(
+        'content/posts/2023/hello.fr.md',
+      );
+      expect(mockFillTemplate).not.toHaveBeenCalled();
+    });
+
+    it('should put the file alongside the entry’s other files with `multiple_folders`', () => {
+      const draft = createDraft({
+        structure: 'multiple_folders',
+        omitDefaultLocale: true,
+        enPath: 'content/posts/2023/hello.md',
+        fullPathRegEx: /^content\/posts\/(?:(?<locale>fr)\/)?(?<subPath>[^/]+?\/[^/]+?)\.md$/,
+      });
+
+      expect(createEntryPath({ draft, locale: 'fr', slug: 'hello' })).toBe(
+        'content/posts/fr/2023/hello.md',
+      );
+      expect(mockFillTemplate).not.toHaveBeenCalled();
+    });
+
+    it('should fill the template again for every locale of a renamed entry', () => {
+      const draft = createDraft({
+        structure: 'multiple_files',
+        enPath: 'content/posts/2023/hello.en.md',
+        fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?\/[^/]+?)\.(?<locale>en|fr)\.md$/,
+      });
+
+      expect(createEntryPath({ draft, locale: 'en', slug: 'world' })).toBe(
+        'content/posts/2026/world.en.md',
+      );
+      expect(createEntryPath({ draft, locale: 'fr', slug: 'world' })).toBe(
+        'content/posts/2026/world.fr.md',
+      );
+    });
+  });
+
+  describe('getKeptSubPath', () => {
+    const fullPathRegEx = /^posts\/(?<subPath>[^/]+?)\.(?<locale>en|fr)\.md$/;
+
+    it('should return the sub path of the entry’s file with the same slug', () => {
+      const draft = {
+        originalEntry: {
+          locales: {
+            en: { slug: 'hello', path: 'posts/hello.en.md' },
+            de: { slug: 'hallo', path: 'posts/hallo.de.md' },
+          },
+        },
+      };
+
+      expect(getKeptSubPath({ draft, slug: 'hello', fullPathRegEx })).toBe('hello');
+      expect(getKeptSubPath({ draft, slug: 'world', fullPathRegEx })).toBeUndefined();
+    });
+
+    it('should return `undefined` for a new entry', () => {
+      expect(
+        getKeptSubPath({ draft: { originalEntry: undefined }, slug: 'hello', fullPathRegEx }),
+      ).toBeUndefined();
+    });
+
+    it('should skip a file the collection’s entry paths don’t match', () => {
+      const draft = {
+        originalEntry: {
+          locales: {
+            en: { slug: 'hello', path: 'elsewhere/hello.en.md' },
+            fr: { slug: 'hello', path: 'posts/hello.fr.md' },
+          },
+        },
+      };
+
+      expect(getKeptSubPath({ draft, slug: 'hello', fullPathRegEx })).toBe('hello');
+      expect(getKeptSubPath({ draft, slug: 'hello', fullPathRegEx: /^posts\// })).toBeUndefined();
+    });
+  });
+
   describe('buildCustomEntryPath', () => {
     /** Collection whose slugs aren’t localized. */
     const collection = {

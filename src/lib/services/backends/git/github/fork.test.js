@@ -442,6 +442,18 @@ describe('GitHub fork service', () => {
       });
     });
 
+    test('asks for the forks the signed-in user owns', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({ repository: { forks: { nodes: [] } } });
+      await fetchForkFromNetwork();
+
+      const [query] = vi.mocked(fetchGraphQL).mock.calls[0];
+
+      // `affiliations` filters by the viewer, while `ownerAffiliations` is about the owner being
+      // viewed, so it mustn’t be narrowed down from its default
+      expect(query).toMatch(/\baffiliations: \[OWNER\]/);
+      expect(query).toContain('ownerAffiliations: [OWNER, COLLABORATOR, ORGANIZATION_MEMBER]');
+    });
+
     test('ignores a fork owned by someone else', async () => {
       // The owner is checked rather than the filter trusted, so a fork that isn’t theirs can’t be
       // committed to by mistake

@@ -2,6 +2,10 @@ import { afterEach, beforeEach, describe, expect, onTestFinished, test, vi } fro
 import { page, userEvent } from 'vitest/browser';
 
 import { globalAssetFolder } from '$lib/services/assets/folders';
+import {
+  awaitPendingFieldUpdates,
+  fieldUpdatePending,
+} from '$lib/services/contents/editor/pending';
 import { listAssets } from '$lib/services/contents/fields/file/helpers';
 import { getUnsavedAssets } from '$lib/services/contents/fields/file/process';
 import { processResources } from '$lib/services/contents/fields/file/resources';
@@ -32,6 +36,8 @@ vi.mock('$lib/services/contents/fields/file/resources', { spy: true });
  * @param {Record<string, any>} [props] Props to override.
  * @param {Record<string, any>} [context] Field editor context.
  * @param {any[]} [otherFields] Other fields of the entry.
+ * @param {Record<string, Record<string, any>>} [localizedValues] Flattened values in each locale,
+ * for an entry in multiple locales. Takes precedence over `values`.
  * @returns {Promise<{ draft: any, props: any, container: HTMLElement, entryDraft: any }>} Draft,
  * props, container and the draft state, whose `current` can be replaced to open another entry.
  */
@@ -42,12 +48,23 @@ const renderEditor = async (
   props = {},
   context = undefined,
   otherFields = [],
+  localizedValues = undefined,
 ) => {
   const fieldConfig = { name: 'image', widget: 'image', ...config };
 
   const draft = createMockDraft({
     fields: [fieldConfig, ...otherFields],
-    values: { _default: values },
+    values: localizedValues ?? { _default: values },
+    ...(localizedValues
+      ? {
+          i18n: {
+            i18nEnabled: true,
+            allLocales: Object.keys(localizedValues),
+            initialLocales: Object.keys(localizedValues),
+            defaultLocale: Object.keys(localizedValues)[0],
+          },
+        }
+      : {}),
   });
 
   const _props = $state({
@@ -806,10 +823,13 @@ describe('FileEditor', () => {
     await expect.poll(() => page.getByRole('alertdialog').elements().length).toBe(0);
   });
 
-  test('doesn’t take a file processed after another entry has been opened', async () => {
-    const { props, container, entryDraft } = await renderEditor({}, '');
+  /**
+   * Hold the processing of the next dropped files until the returned function is called.
+   * @returns {(value: any) => void} Function finishing the processing with the given results.
+   */
+  const holdProcessing = () => {
     /**
-     * Finish processing the dropped file.
+     * Finish processing the dropped files.
      * @type {(value: any) => void}
      */
     let resolve = () => undefined;
@@ -820,6 +840,14 @@ describe('FileEditor', () => {
           resolve = _resolve;
         }),
     );
+
+    return (value) => resolve(value);
+  };
+
+  test('doesn’t take a file processed after another entry has been opened', async () => {
+    const { props, container, entryDraft } = await renderEditor({}, '');
+    const finish = holdProcessing();
+
     /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
       createFileDropEvent([await createMockImageFile({ name: 'new.png' })]),
     );
@@ -829,10 +857,90 @@ describe('FileEditor', () => {
     const otherDraft = createMockDraft({ fields: [{ name: 'image', widget: 'image' }] });
 
     entryDraft.current = otherDraft;
-    resolve([{ value: 'blob:late' }]);
+    finish([{ value: 'blob:late' }]);
     // The field is no longer processing, but the value isn’t taken
     await expect.element(page.getByText(/Drop an image file here/)).toBeInTheDocument();
     expect(props.currentValue).toBe('');
+  });
+
+  test('registers the processing of a file as a pending field update', async () => {
+    const { props, container } = await renderEditor({}, '/static/uploads/photo.png');
+    const finish = holdProcessing();
+
+    /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
+      createFileDropEvent([await createMockImageFile({ name: 'new.png' })]),
+    );
+    await vi.waitFor(() => expect(processResources).toHaveBeenCalled());
+    // The previous file is cleared while the new one is being processed, so a save made meanwhile
+    // has to wait for the new file rather than write the field empty
+    expect(props.currentValue).toBe('');
+    await expect.poll(() => fieldUpdatePending.current).toBe(true);
+
+    let settled = false;
+
+    const waiting = awaitPendingFieldUpdates().then(() => {
+      settled = true;
+    });
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, 50);
+    });
+    expect(settled).toBe(false);
+    finish([{ value: 'blob:new' }]);
+    await waiting;
+    // The new file is there once the update has settled
+    expect(props.currentValue).toBe('blob:new');
+    expect(fieldUpdatePending.current).toBe(false);
+  });
+
+  test('writes a file processed after the locale has changed to the locale it was picked in', async () => {
+    const { draft, props, container } = await renderEditor(
+      {},
+      '/static/uploads/photo.png',
+      {},
+      { locale: 'en' },
+      undefined,
+      [],
+      { en: { image: '/static/uploads/photo.png' }, fr: { image: '' } },
+    );
+
+    const finish = holdProcessing();
+
+    /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
+      createFileDropEvent([await createMockImageFile({ name: 'new.png' })]),
+    );
+    await vi.waitFor(() => expect(processResources).toHaveBeenCalled());
+    expect(vi.mocked(processResources).mock.calls[0][0].locale).toBe('en');
+    // The editor is reused for another locale while the file is being processed
+    props.locale = 'fr';
+    props.currentValue = '';
+    finish([{ value: 'blob:new' }]);
+    await expect.poll(() => draft.currentValues.en.image).toBe('blob:new');
+    expect(draft.currentValues.fr.image).toBe('');
+    expect(props.currentValue).toBe('');
+  });
+
+  test('adds files processed after the locale has changed to the locale they were picked in', async () => {
+    const { draft, props, container } = await renderEditor(
+      { name: 'images', multiple: true },
+      [],
+      {},
+      { locale: 'en', keyPath: 'images', typedKeyPath: 'images', fieldId: 'images' },
+      undefined,
+      [],
+      { en: {}, fr: {} },
+    );
+
+    const finish = holdProcessing();
+
+    /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
+      createFileDropEvent([await createMockImageFile({ name: 'new.png' })]),
+    );
+    await vi.waitFor(() => expect(processResources).toHaveBeenCalled());
+    props.locale = 'fr';
+    finish([{ value: 'blob:new' }]);
+    await expect.poll(() => draft.currentValues.en['images.0']).toBe('blob:new');
+    expect(draft.currentValues.fr['images.0']).toBeUndefined();
   });
 
   test('asks what to do with a file that has the name of an existing asset', async () => {

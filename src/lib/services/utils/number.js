@@ -11,11 +11,13 @@ export const isNumeric = (value) => NUMERIC_VALUE_REGEX.test(value);
  * Drop the error of binary floating-point arithmetic from the given number by rounding a fraction
  * to 15 significant digits, e.g. `0.3` rather than `0.30000000000000004` for `0.1 * 3`. An integer
  * is exact, and may have more digits, so it’s returned as is, as rounding would change a large one.
+ * So is a number with 16 or more integer digits, as rounding would change its integer part, e.g.
+ * `1234567890123456.5` would become `1234567890123460`.
  * @param {number} number Finite number.
  * @returns {number} Number.
  */
 export const roundFloatError = (number) =>
-  Number.isInteger(number) ? number : Number(number.toPrecision(15));
+  Number.isInteger(number) || Math.abs(number) >= 1e15 ? number : Number(number.toPrecision(15));
 
 /**
  * Move the decimal point of the given number without a floating-point error, by changing the

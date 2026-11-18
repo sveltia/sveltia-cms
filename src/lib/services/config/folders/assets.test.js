@@ -571,7 +571,7 @@ describe('config/folders/assets', () => {
         // The file at the repository root
         ['pages', 'home', '', 'images', '/img'],
         // The file’s own `media_folder` comes with its own `public_folder`
-        ['pages', 'contact', 'content/contact', 'assets', '/assets'],
+        ['pages', 'contact', 'content/contact', 'assets', 'assets'],
         ['pages', 'about', 'content/pages', 'images', '/img'],
         // An absolute folder still belongs to the collection
         ['settings', undefined, 'static/settings', undefined, '/static/settings'],
@@ -1576,6 +1576,29 @@ describe('config/folders/assets', () => {
       });
     });
 
+    it('should remove a leading `./` from the media folder of an asset collection', () => {
+      vi.mocked(getValidCollections).mockReturnValue([]);
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        media_folder: './static/images',
+        collections: [],
+        asset_collections: [{ name: 'gallery', media_folder: './uploads/gallery' }],
+      };
+
+      // @ts-ignore - simplified config for testing
+      const result = getAllAssetFolders(config);
+
+      expect(result.find((f) => f.collectionName === undefined && f.internalPath)).toMatchObject({
+        internalPath: 'static/images',
+        publicPath: '/static/images',
+      });
+      expect(result.find((f) => f.collectionName === 'assets:gallery')).toMatchObject({
+        internalPath: 'uploads/gallery',
+        publicPath: '/uploads/gallery',
+      });
+    });
+
     it('should handle empty asset collections array', () => {
       vi.mocked(getValidCollections).mockReturnValue([]);
 
@@ -1796,7 +1819,7 @@ describe('config/folders/assets', () => {
         isIndexFile: false,
         internalPath: 'content/blog',
         internalSubPath: 'images',
-        publicPath: '/images',
+        publicPath: 'images',
         entryRelative: true,
         hasTemplateTags: false,
         label: undefined,
@@ -1960,7 +1983,7 @@ describe('config/folders/assets', () => {
         isIndexFile: false,
         internalPath: '',
         internalSubPath: 'images',
-        publicPath: '/images',
+        publicPath: 'images',
         entryRelative: true,
         hasTemplateTags: false,
         label: undefined,
@@ -2748,6 +2771,27 @@ describe('config/folders/assets', () => {
           /** @type {any} */ ({ media_folder: 'src/assets', public_folder: '@assets/' }),
         ),
       ).toEqual({ globalMediaFolder: 'src/assets', globalPublicFolder: '@assets' });
+    });
+
+    it('removes a leading `./` from the global media folder', () => {
+      expect(
+        resolveGlobalFolders(/** @type {any} */ ({ media_folder: './static/images' })),
+      ).toEqual({ globalMediaFolder: 'static/images', globalPublicFolder: '/static/images' });
+      expect(
+        resolveGlobalFolders(
+          /** @type {any} */ ({ media_folder: './static/images/', public_folder: '/images' }),
+        ),
+      ).toEqual({ globalMediaFolder: 'static/images', globalPublicFolder: '/images' });
+      expect(resolveGlobalFolders(/** @type {any} */ ({ media_folder: './' }))).toEqual({
+        globalMediaFolder: '',
+        globalPublicFolder: '/',
+      });
+      // A folder outside the repository root, as in a monorepo, is left as it is
+      expect(
+        resolveGlobalFolders(
+          /** @type {any} */ ({ media_folder: '../shared/images', public_folder: '/images' }),
+        ),
+      ).toEqual({ globalMediaFolder: '../shared/images', globalPublicFolder: '/images' });
     });
   });
 

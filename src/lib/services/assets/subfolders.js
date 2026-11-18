@@ -7,7 +7,13 @@ import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { slugify, validateNewFolderName } from '$lib/services/common/slug';
 import { allEntries } from '$lib/services/contents';
 import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
-import { createPath, getBaseName, getDirName, sanitizeFileName } from '$lib/services/utils/file';
+import {
+  createPath,
+  getBaseName,
+  getDirName,
+  renameReservedFileName,
+  sanitizeFileName,
+} from '$lib/services/utils/file';
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
 
 /**
@@ -339,7 +345,7 @@ export const getUploadDirPath = ({ folder, subfolderPath }) =>
 /**
  * Format a new subfolder name the way an uploaded file name is: sanitized, and slugified when the
  * `slugify_filename` option is enabled, so a folder created by hand is named like the files that
- * will be saved in it.
+ * will be saved in it. A name Windows reserves for a device, like `con`, is numbered as `con-1`.
  * @param {string} name Name as typed.
  * @returns {string} Folder name. An empty string if nothing usable is left.
  */
@@ -348,8 +354,11 @@ export const formatSubfolderName = (name) => {
   const folderName = sanitizeFileName(name.trim());
 
   // The whole name is slugified: unlike a file name, a folder name has no extension to keep, so a
-  // dot in it is just another character
-  return slugificationEnabled ? slugify(folderName, { fallback: false }) : folderName;
+  // dot in it is just another character. Slugifying can leave a name Windows reserves for a device,
+  // like `aux` from `Aux!`, which `sanitizeFileName()` has renamed otherwise
+  return slugificationEnabled
+    ? renameReservedFileName(slugify(folderName, { fallback: false }))
+    : folderName;
 };
 
 /**
