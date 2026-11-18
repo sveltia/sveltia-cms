@@ -562,17 +562,43 @@ export const approve = (pullRequest) => approvePullRequest(repository, pullReque
  * Message a review is dismissed with when the entry is moved back from the ready stage.
  */
 const WITHDRAWAL_MESSAGE = 'The entry is no longer ready to publish.';
+/**
+ * Number of reviews to fetch per page, the most the REST API allows.
+ */
+const REVIEWS_PER_PAGE = 100;
+/**
+ * Most pages of reviews to fetch, as a guard against a server that ignores the `page` parameter.
+ */
+const MAX_REVIEW_PAGES = 10;
+
+/**
+ * Fetch the reviews of a pull request, up to {@link MAX_REVIEW_PAGES} pages. They’re listed oldest
+ * first, so the signed-in user’s latest approval is on the last page of a pull request with many
+ * reviews.
+ * @param {string} path Path of the pull request’s reviews.
+ * @param {number} [page] Page to start from.
+ * @returns {Promise<Record<string, any>[]>} Reviews.
+ * @see https://docs.github.com/en/rest/pulls/reviews#list-reviews-for-a-pull-request
+ */
+const fetchReviews = async (path, page = 1) => {
+  const reviews = /** @type {Record<string, any>[]} */ (
+    await fetchAPI(`${path}?per_page=${REVIEWS_PER_PAGE}&page=${page}`)
+  );
+
+  return reviews.length < REVIEWS_PER_PAGE || page === MAX_REVIEW_PAGES
+    ? reviews
+    : [...reviews, ...(await fetchReviews(path, page + 1))];
+};
 
 /**
  * Withdraw the signed-in user’s approval of the pull request. A submitted review can’t be deleted
  * on GitHub, so it’s dismissed instead, which a branch protection rule may restrict to some users.
  * @param {WorkflowPullRequest} pullRequest Pull request.
- * @see https://docs.github.com/en/rest/pulls/reviews#list-reviews-for-a-pull-request
  * @see https://docs.github.com/en/rest/pulls/reviews#dismiss-a-review-for-a-pull-request
  */
 export const withdrawApproval = async (pullRequest) => {
   const path = `${getPullRequestPath(repository, pullRequest.number)}/reviews`;
-  const reviews = /** @type {Record<string, any>[]} */ (await fetchAPI(`${path}?per_page=100`));
+  const reviews = await fetchReviews(path);
 
   await Promise.all(
     findOwnApprovals(reviews).map(({ id }) =>

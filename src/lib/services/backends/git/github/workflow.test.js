@@ -1028,7 +1028,10 @@ describe('GitHub Editorial Workflow service', () => {
 
       await withdrawApproval(/** @type {any} */ ({ number: 1 }));
 
-      expect(fetchAPI).toHaveBeenNthCalledWith(1, '/repos/owner/repo/pulls/1/reviews?per_page=100');
+      expect(fetchAPI).toHaveBeenNthCalledWith(
+        1,
+        '/repos/owner/repo/pulls/1/reviews?per_page=100&page=1',
+      );
       expect(vi.mocked(fetchAPI).mock.calls.slice(1)).toEqual(
         [1, 3].map((id) => [
           `/repos/owner/repo/pulls/1/reviews/${id}/dismissals`,
@@ -1037,6 +1040,49 @@ describe('GitHub Editorial Workflow service', () => {
             body: { message: 'The entry is no longer ready to publish.', event: 'DISMISS' },
           },
         ]),
+      );
+    });
+
+    test('finds an approval past the first page of reviews', async () => {
+      vi.mocked(fetchAPI)
+        .mockResolvedValueOnce(
+          Array.from({ length: 100 }, (_, index) => ({
+            id: index + 1,
+            state: 'COMMENTED',
+            user: { login: 'alex' },
+          })),
+        )
+        .mockResolvedValueOnce([{ id: 101, state: 'APPROVED', user: { login: 'me' } }]);
+
+      await withdrawApproval(/** @type {any} */ ({ number: 1 }));
+
+      expect(vi.mocked(fetchAPI).mock.calls).toEqual([
+        ['/repos/owner/repo/pulls/1/reviews?per_page=100&page=1'],
+        ['/repos/owner/repo/pulls/1/reviews?per_page=100&page=2'],
+        [
+          '/repos/owner/repo/pulls/1/reviews/101/dismissals',
+          {
+            method: 'PUT',
+            body: { message: 'The entry is no longer ready to publish.', event: 'DISMISS' },
+          },
+        ],
+      ]);
+    });
+
+    test('stops after 10 pages of reviews', async () => {
+      vi.mocked(fetchAPI).mockResolvedValue(
+        Array.from({ length: 100 }, (_, index) => ({
+          id: index + 1,
+          state: 'COMMENTED',
+          user: { login: 'alex' },
+        })),
+      );
+
+      await withdrawApproval(/** @type {any} */ ({ number: 1 }));
+
+      expect(fetchAPI).toHaveBeenCalledTimes(10);
+      expect(fetchAPI).toHaveBeenLastCalledWith(
+        '/repos/owner/repo/pulls/1/reviews?per_page=100&page=10',
       );
     });
   });
