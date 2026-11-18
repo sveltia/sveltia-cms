@@ -45,6 +45,7 @@ import {
   updateLabelledStatus,
   updatePullRequestDescription,
 } from '$lib/services/backends/git/shared/workflow';
+import { readNumberedPages } from '$lib/services/utils/paging';
 import { encodePathSegments } from '$lib/services/utils/url';
 import { getAllStatusLabels, getStatusFromLabels } from '$lib/services/workflow/labels';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
@@ -576,19 +577,19 @@ const MAX_REVIEW_PAGES = 10;
  * first, so the signed-in user’s latest approval is on the last page of a pull request with many
  * reviews.
  * @param {string} path Path of the pull request’s reviews.
- * @param {number} [page] Page to start from.
  * @returns {Promise<Record<string, any>[]>} Reviews.
  * @see https://docs.github.com/en/rest/pulls/reviews#list-reviews-for-a-pull-request
  */
-const fetchReviews = async (path, page = 1) => {
-  const reviews = /** @type {Record<string, any>[]} */ (
-    await fetchAPI(`${path}?per_page=${REVIEWS_PER_PAGE}&page=${page}`)
-  );
-
-  return reviews.length < REVIEWS_PER_PAGE || page === MAX_REVIEW_PAGES
-    ? reviews
-    : [...reviews, ...(await fetchReviews(path, page + 1))];
-};
+const fetchReviews = async (path) =>
+  (
+    await readNumberedPages(
+      async (page) =>
+        /** @type {Record<string, any>[]} */ (
+          await fetchAPI(`${path}?per_page=${REVIEWS_PER_PAGE}&page=${page}`)
+        ),
+      { pageSize: REVIEWS_PER_PAGE, maxPages: MAX_REVIEW_PAGES, delay: 0 },
+    )
+  ).results;
 
 /**
  * Withdraw the signed-in user’s approval of the pull request. A submitted review can’t be deleted

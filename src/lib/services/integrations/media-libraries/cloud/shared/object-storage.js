@@ -11,9 +11,9 @@ import {
   getPrefix,
   getRelativeKey,
 } from '$lib/services/integrations/media-libraries/cloud/shared/keys';
-import { fetchPages } from '$lib/services/integrations/media-libraries/paging';
 import { getBaseName, getDirName } from '$lib/services/utils/file';
 import { isSecureURL } from '$lib/services/utils/networking';
+import { fetchPages } from '$lib/services/utils/paging';
 
 /**
  * @import {

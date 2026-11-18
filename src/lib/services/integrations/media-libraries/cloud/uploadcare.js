@@ -9,10 +9,10 @@ import {
   findLibraryOptions,
   resolveLibraryOptions,
 } from '$lib/services/integrations/media-libraries/options';
-import { fetchPages } from '$lib/services/integrations/media-libraries/paging';
 import { splitIntoChunks } from '$lib/services/utils/array';
 import { hmacSha256, toHex } from '$lib/services/utils/crypto';
 import { assertResponseOK } from '$lib/services/utils/networking';
+import { fetchPages } from '$lib/services/utils/paging';
 import { encodeRFC3986 } from '$lib/services/utils/url';
 
 /**

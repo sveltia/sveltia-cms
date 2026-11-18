@@ -1,7 +1,7 @@
 import { locale as appLocale } from '@sveltia/i18n';
 
-import { fetchPages } from '$lib/services/integrations/media-libraries/paging';
 import { getLanguageScript } from '$lib/services/utils/locale';
+import { fetchPages } from '$lib/services/utils/paging';
 
 /**
  * @import { ExternalAsset, MediaLibraryFetchOptions } from '$lib/types/private';
