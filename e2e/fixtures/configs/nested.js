@@ -17,7 +17,8 @@ export const NESTED_CONFIG = {
       folder: 'content/pages',
       create: true,
       nested: { depth: 4, summary: '{{title}}' },
-      meta: { path: { widget: 'string', label: 'Path', index_file: 'index' } },
+      // The `widget`, `label` and `required` options are written for Decap CMS and ignored
+      meta: { path: { widget: 'string', label: 'Path', required: false, index_file: 'index' } },
       summary: '{{title}} – {{description}}',
       thumbnail: 'cover',
       fields: [

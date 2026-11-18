@@ -1,4 +1,27 @@
+import { NESTED_CONFIG } from '../fixtures/configs/nested.js';
 import { BASE_CONFIG, expect, test } from '../fixtures/test.js';
+
+/**
+ * @import { Page } from '@playwright/test';
+ */
+
+/**
+ * Collect the warnings the page logs to the console from now on.
+ * @param {Page} page Page.
+ * @returns {string[]} Warnings, filled in as they are logged.
+ */
+const collectWarnings = (page) => {
+  /** @type {string[]} */
+  const warnings = [];
+
+  page.on('console', (message) => {
+    if (message.type() === 'warning') {
+      warnings.push(message.text());
+    }
+  });
+
+  return warnings;
+};
 
 test.describe('with a valid config', () => {
   test('shows the sign-in screen, then the collection', async ({ cms, page }) => {
@@ -88,14 +111,7 @@ test.describe('with the legacy `media_library` option', () => {
     });
 
     test('only warns about that option', async ({ cms, page }) => {
-      /** @type {string[]} */
-      const warnings = [];
-
-      page.on('console', (message) => {
-        if (message.type() === 'warning') {
-          warnings.push(message.text());
-        }
-      });
+      const warnings = collectWarnings(page);
 
       await cms.open();
       await cms.signIn();
@@ -187,5 +203,20 @@ test.describe('with the legacy `media_library` option', () => {
       await expect(page.getByText(/output_filename_only/)).toBeVisible();
       await expect(page.getByRole('button', { name: 'Work with Test Repository' })).toBeHidden();
     });
+  });
+});
+
+test.describe('with the Decap CMS options of the entry path editor', () => {
+  test.use({ config: NESTED_CONFIG });
+
+  test('accepts them without a warning', async ({ cms, page }) => {
+    const warnings = collectWarnings(page);
+
+    await cms.open();
+    await cms.signIn();
+    await expect(page.getByRole('main', { name: /Pages.*Collection/ })).toBeVisible();
+
+    // `widget`, `label` and `required` are ignored, as the editor is always a folder picker
+    expect(warnings.filter((warning) => warning.includes('meta.path'))).toEqual([]);
   });
 });

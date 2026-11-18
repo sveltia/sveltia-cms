@@ -1992,6 +1992,9 @@
  * Netlify/Decap CMS but ignored: the editor is always a folder picker.
  * @property {string} [label] Label for the path editor. Accepted for compatibility with
  * Netlify/Decap CMS but ignored: the picker has a built-in, localized label.
+ * @property {boolean} [required] Whether the path is required. Accepted for compatibility with
+ * Decap CMS but ignored: the picker always has a folder selected, the collection folder at the
+ * least, so it can’t be left blank.
  * @property {string} [index_file] File name, without an extension, shared by every entry in the
  * collection, e.g. `_index`. If omitted, each entry keeps its own file name.
  * @see https://decapcms.org/docs/collection-nested/
