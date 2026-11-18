@@ -775,7 +775,7 @@ describe('draft/slugs', () => {
       folder: 'content/pages',
       fields: [],
       nested: { depth: 5 },
-      meta: { path: { widget: 'string' } },
+      meta: { path: {} },
       _i18n: { defaultLocale: 'en', structureMap: {} },
     };
 
@@ -794,7 +794,7 @@ describe('draft/slugs', () => {
       // Every entry shares one file name, so the entry gets a folder of its own
       expect(
         getSlugDirPath({
-          collection: { ...collection, meta: { path: { widget: 'string', index_file: 'index' } } },
+          collection: { ...collection, meta: { path: { index_file: 'index' } } },
           isNew: true,
           currentPath: 'docs',
         }),

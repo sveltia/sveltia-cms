@@ -1851,7 +1851,7 @@ describe('fillTemplate() for a collection with nested entries', () => {
     _type: 'entry',
     _file: { basePath: 'content/pages' },
     nested: { depth: 100 },
-    meta: { path: { widget: 'string', index_file: '_index' } },
+    meta: { path: { index_file: '_index' } },
   };
 
   test('leaves the index file name out of the preview path', () => {

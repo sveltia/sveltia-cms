@@ -223,7 +223,7 @@ describe('Test resolveAssetFolderPaths()', () => {
       ...collectionBase,
       folder: 'src/dokument',
       nested: { depth: 10 },
-      meta: { path: { widget: 'string', index_file: '_index' } },
+      meta: { path: { index_file: '_index' } },
       _file: { ..._file, basePath: 'src/dokument', subPath: undefined },
     };
 

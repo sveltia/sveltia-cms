@@ -1988,13 +1988,6 @@
 /**
  * Collection meta data’s path options.
  * @typedef {object} CollectionMetaDataPath
- * @property {string} [widget] Field type for editing the path name. Accepted for compatibility with
- * Netlify/Decap CMS but ignored: the editor is always a folder picker.
- * @property {string} [label] Label for the path editor. Accepted for compatibility with
- * Netlify/Decap CMS but ignored: the picker has a built-in, localized label.
- * @property {boolean} [required] Whether the path is required. Accepted for compatibility with
- * Decap CMS but ignored: the picker always has a folder selected, the collection folder at the
- * least, so it can’t be left blank.
  * @property {string} [index_file] File name, without an extension, shared by every entry in the
  * collection, e.g. `_index`. If omitted, each entry keeps its own file name.
  * @see https://decapcms.org/docs/collection-nested/
@@ -2669,14 +2662,6 @@
  */
 
 /**
- * Issue reporting options. Accepted for compatibility with Decap CMS but ignored: the Report Issue
- * link in the Help menu always points to the Sveltia CMS issue tracker.
- * @typedef {object} IssueReports
- * @property {string} [url] URL of the issue reporting endpoint.
- * @see https://github.com/decaporg/decap-cms/pull/7734
- */
-
-/**
  * Default options for fields. These options will be applied to all fields of the specified type
  * unless they are overridden by field-specific options.
  * @typedef {object} FieldDefaults
@@ -2757,8 +2742,6 @@
  * @property {LogoOptions} [logo] Site logo options.
  * @property {string} [logout_redirect_url] URL to redirect users to after logging out. Default:
  * none, so users stay on the CMS sign-in page.
- * @property {IssueReports} [issue_reports] Issue reporting options. Accepted for compatibility with
- * Decap CMS but ignored.
  * @property {boolean} [show_preview_links] Whether to show links to entries on the live site and
  * on deploy previews. Default: `true`.
  * @property {SlugOptions} [slug] Slug options, which apply to entry slugs and to the names of entry

@@ -18,7 +18,7 @@ const pagesCollection = {
   label: 'Pages',
   folder: 'content/pages',
   nested: { depth: 4 },
-  meta: { path: { widget: 'string', index_file: 'index' } },
+  meta: { path: { index_file: 'index' } },
   fields: [{ name: 'title', widget: 'string' }],
 };
 
@@ -66,7 +66,7 @@ const localizedCollection = {
   folder: 'content/localized',
   nested: { depth: 3 },
   i18n: { structure: 'multiple_folders', locales: ['en', 'fr'], default_locale: 'en' },
-  meta: { path: { widget: 'string', index_file: 'index' } },
+  meta: { path: { index_file: 'index' } },
   fields: [{ name: 'title', widget: 'string' }],
 };
 
@@ -76,7 +76,7 @@ const docsCollection = {
   label: 'Docs',
   folder: 'content/docs',
   nested: { depth: 3, subfolders: false },
-  meta: { path: { widget: 'string' } },
+  meta: { path: {} },
   fields: [{ name: 'title', widget: 'string' }],
 };
 

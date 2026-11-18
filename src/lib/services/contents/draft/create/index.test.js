@@ -82,7 +82,7 @@ describe('contents/draft/create/index', () => {
       folder: 'content/pages',
       fields: [],
       nested: {},
-      meta: metaPath ? { path: { widget: 'string' } } : undefined,
+      meta: metaPath ? { path: {} } : undefined,
     });
 
     beforeEach(() => {

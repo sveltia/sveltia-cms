@@ -65,7 +65,7 @@ describe('SlugUpdateForm', () => {
           label: 'Pages',
           folder: 'content/pages',
           nested: { depth: 3 },
-          meta: { path: { widget: 'string', index_file: 'index' } },
+          meta: { path: { index_file: 'index' } },
           fields: [{ name: 'title', widget: 'string' }],
         },
         {
@@ -73,7 +73,7 @@ describe('SlugUpdateForm', () => {
           label: 'Guides',
           folder: 'content/guides',
           nested: { depth: 3 },
-          meta: { path: { widget: 'string', index_file: 'index' } },
+          meta: { path: { index_file: 'index' } },
           // The folder is named after the localized title
           slug: '{{title | localize}}',
           i18n: true,

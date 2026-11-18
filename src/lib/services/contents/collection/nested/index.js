@@ -23,9 +23,8 @@ import { isNonEmptyString } from '$lib/services/utils/string';
  */
 
 /**
- * Normalized options for the `meta.path` entry path editor. The `widget` and `label` options are
- * accepted for compatibility with Netlify/Decap CMS but ignored: the editor is always a folder
- * picker with a built-in label.
+ * Normalized options for the `meta.path` entry path editor. The editor is always a folder picker
+ * with a built-in label, so the `widget` and `label` options of Netlify/Decap CMS aren’t supported.
  * @typedef {object} MetaPathConfig
  * @property {string | undefined} indexFileName File name, without an extension, used for every
  * entry in the collection, e.g. `_index`. If `undefined`, the entry’s own file name is used.

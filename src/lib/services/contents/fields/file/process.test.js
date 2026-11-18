@@ -1189,7 +1189,7 @@ describe('Test processResource()', () => {
         _type: 'entry',
         folder: 'content/pages',
         nested: { depth: 10 },
-        meta: { path: { widget: 'string', index_file: '_index' } },
+        meta: { path: { index_file: '_index' } },
         _file: { subPath: undefined },
       },
     };

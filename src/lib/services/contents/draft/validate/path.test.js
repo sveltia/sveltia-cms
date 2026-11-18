@@ -61,7 +61,7 @@ const createCollection = ({ subfolders = true, metaPath = true, indexFile } = {}
   name: 'pages',
   folder: 'content/pages',
   nested: { subfolders },
-  meta: metaPath ? { path: { widget: 'string', index_file: indexFile } } : undefined,
+  meta: metaPath ? { path: { index_file: indexFile } } : undefined,
   _i18n: { defaultLocale: 'en', structureMap: {} },
 });
 

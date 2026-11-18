@@ -120,7 +120,7 @@ describe('getMetaPathConfig()', () => {
       getMetaPathConfig({
         name: 'pages',
         folder: 'content/pages',
-        meta: { path: { widget: 'string', index_file: '_index' } },
+        meta: { path: { index_file: '_index' } },
       }),
     ).toBeUndefined();
   });
@@ -245,7 +245,7 @@ describe('usesCustomEntryPath()', () => {
     name: 'pages',
     folder: 'content/pages',
     nested: {},
-    meta: { path: { widget: 'string', index_file: '_index' } },
+    meta: { path: { index_file: '_index' } },
   };
 
   test('returns false when the path editor is disabled', () => {

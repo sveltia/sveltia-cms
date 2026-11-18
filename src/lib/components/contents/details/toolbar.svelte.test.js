@@ -1075,7 +1075,7 @@ describe('Toolbar', () => {
           name: 'nested',
           folder: 'content/nested',
           nested: { depth: 3 },
-          meta: { path: { widget: 'string' } },
+          meta: { path: {} },
         },
       ],
     });

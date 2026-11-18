@@ -79,7 +79,7 @@ const collection = {
   name: 'pages',
   folder: 'content/pages',
   nested: {},
-  meta: { path: { widget: 'string', label: 'Path', index_file: '_index' } },
+  meta: { path: { index_file: '_index' } },
   _file: { extension: 'md' },
   _i18n: {
     i18nEnabled: false,
@@ -143,7 +143,7 @@ describe('buildNestedMoveChanges()', () => {
 
     expect(
       await buildNestedMoveChanges({
-        collection: { ...collection, meta: { path: { widget: 'string', label: 'Path' } } },
+        collection: { ...collection, meta: { path: {} } },
         originalEntry: entry('1', 'docs/intro'),
         savingEntry: entry('1', 'guides/intro'),
       }),

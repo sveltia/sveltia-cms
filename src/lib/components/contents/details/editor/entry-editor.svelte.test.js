@@ -60,7 +60,7 @@ describe('EntryEditor', () => {
           label: 'Pages',
           folder: 'content/pages',
           nested: { depth: 3 },
-          meta: { path: { widget: 'string', index_file: 'index' } },
+          meta: { path: { index_file: 'index' } },
           fields,
         },
       ],

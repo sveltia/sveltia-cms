@@ -375,7 +375,7 @@ describe('draft/validate/slugs', () => {
       mockEntryDraft.collection = {
         _type: 'entry',
         nested: { depth: 5, subfolders: false },
-        meta: { path: { widget: 'string' } },
+        meta: { path: {} },
         _i18n: { defaultLocale: 'en' },
       };
       mockEntryDraft.currentSlugs = { en: '', fr: '' };

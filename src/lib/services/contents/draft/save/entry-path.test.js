@@ -935,7 +935,7 @@ describe('contents/draft/save/entry-path', () => {
       name: 'pages',
       folder: 'content/pages',
       nested: {},
-      meta: { path: { widget: 'string', index_file: '_index' } },
+      meta: { path: { index_file: '_index' } },
       _i18n: {
         defaultLocale: 'en',
         structure: 'single_file',
@@ -1031,7 +1031,7 @@ describe('contents/draft/save/entry-path', () => {
       const collection = createCollection();
 
       // Without a shared file name, a blank folder hands the path back to the collection options
-      collection.meta = { path: { widget: 'string' } };
+      collection.meta = { path: {} };
       collection._file.subPath = '{{slug}}/_index';
 
       const draft = {
@@ -1053,7 +1053,7 @@ describe('contents/draft/save/entry-path', () => {
     it('should fall back to the slug when the folder is blank and no path is configured', async () => {
       const collection = createCollection();
 
-      collection.meta = { path: { widget: 'string' } };
+      collection.meta = { path: {} };
 
       const draft = {
         collection,
