@@ -1371,6 +1371,42 @@ describe('fillTemplate()', async () => {
     expect(result).toMatch(/^[0-9a-f]{12}$/);
   });
 
+  test('records a filled slug another entry uses, which has a number added', async () => {
+    await setupCmsConfig();
+
+    const { renameIfNeeded } = await import('$lib/services/utils/file');
+    /** @type {Map<string, string>} */
+    const numberedSlugs = new Map();
+
+    vi.mocked(renameIfNeeded).mockImplementationOnce((slug) => `${slug}-1`);
+    expect(
+      fillTemplate('{{title}}', {
+        collection,
+        content: { title: 'New Post' },
+        locale: 'fr',
+        numberedSlugs,
+      }),
+    ).toBe('new-post-1');
+    expect([...numberedSlugs]).toEqual([['fr', 'new-post']]);
+
+    // A free slug isn’t recorded, and neither is one without a map to record it in
+    numberedSlugs.clear();
+    expect(
+      fillTemplate('{{title}}', {
+        collection,
+        content: { title: 'Other Post' },
+        locale: 'fr',
+        numberedSlugs,
+      }),
+    ).toBe('other-post');
+    expect(numberedSlugs.size).toBe(0);
+
+    vi.mocked(renameIfNeeded).mockImplementationOnce((slug) => `${slug}-1`);
+    expect(fillTemplate('{{title}}', { collection, content: { title: 'New Post' } })).toBe(
+      'new-post-1',
+    );
+  });
+
   test('getExistingSlugs filters and maps slugs correctly', async () => {
     await setupCmsConfig();
 

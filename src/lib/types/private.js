@@ -2275,6 +2275,17 @@
  * @property {string} [dirPath] Folder within the collection folder a new entry goes to, as chosen
  * with the path editor of a collection with nested entries. A filled slug then only has to be
  * unique among the entries in that folder.
+ * @property {Map<InternalLocaleCode, string>} [numberedSlugs] Map to record a filled slug in, under
+ * the `locale`, when another entry uses it and a number is added to make it unique. It lets the
+ * user know why the slug ends with a number.
+ */
+
+/**
+ * Slug a new entry would be saved with if it was saved now, as shown while it’s being edited.
+ * @typedef {object} SlugPreview
+ * @property {string} slug Slug.
+ * @property {string} [takenSlug] Slug the template fills, when another entry uses it, so the slug
+ * has a number added to make it unique.
  */
 
 /**

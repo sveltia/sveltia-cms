@@ -8,7 +8,11 @@
   import SlugUpdateForm from '$lib/components/contents/details/sidebar/panels/slug-update-form.svelte';
   import { getSlugOptions, hasLocalizedSlugs } from '$lib/services/contents/collection/slug';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { canUpdateSlug, getSlugPreviews, hasEntrySlug } from '$lib/services/contents/editor/slug';
+  import {
+    canUpdateSlug,
+    getReadonlySlugs,
+    hasEntrySlug,
+  } from '$lib/services/contents/editor/slug';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
 
   const entryDraft = getEntryDraftContext();
@@ -33,18 +37,9 @@
       .map(([locale]) => locale),
   );
   /**
-   * Slugs to show read-only, in the enabled locales: the ones a new entry would be saved with if
-   * it was saved now, or an existing entry’s current slugs. A locale-agnostic slug is under the `_`
-   * key.
+   * Slugs to show read-only. See {@link getReadonlySlugs}.
    */
-  const readonlySlugs = $derived(
-    /** @type {[string, string][]} */ (
-      Object.entries(draft?.isNew ? getSlugPreviews(draft) : (draft?.currentSlugs ?? {})).filter(
-        ([locale, slug]) =>
-          slug !== undefined && (locale === '_' || !!draft?.currentLocales[locale]),
-      )
-    ),
-  );
+  const readonlySlugs = $derived(draft ? getReadonlySlugs(draft) : []);
   /* v8 ignore stop */
 
   /**
@@ -79,7 +74,7 @@
     {:else if canUpdate}
       <SlugUpdateForm />
     {:else}
-      {#each readonlySlugs as [locale, slug] (locale)}
+      {#each readonlySlugs as [locale, { slug, takenSlug }] (locale)}
         <PanelSection {...getSectionLabel(locale)}>
           {#snippet children(labelId)}
             <EditableText
@@ -88,6 +83,12 @@
               canEdit={false}
               ariaLabelledby={labelId}
             />
+            <!-- Kept in place so a screen reader announces the note when it appears -->
+            <div role="status">
+              {#if takenSlug}
+                <p class="taken">{_('slug_numbered', { values: { slug: takenSlug } })}</p>
+              {/if}
+            </div>
           {/snippet}
         </PanelSection>
       {/each}
@@ -113,6 +114,13 @@
   .hint {
     color: var(--sui-secondary-foreground-color);
     font-size: var(--sui-font-size-small);
+  }
+
+  .taken {
+    margin: 4px 0 0;
+    color: var(--sui-tertiary-foreground-color);
+    font-size: var(--sui-font-size-small);
+    line-height: var(--sui-line-height-compact);
   }
 
   .note {

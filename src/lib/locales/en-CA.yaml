@@ -1413,6 +1413,8 @@ edit_slug_error:
   empty: The slug cannot be empty.
   invalid: The slug cannot contain special characters, including slashes and spaces.
   duplicate: This slug is used for another entry.
+# {$slug} is the slug filled from the slug template, which a number is added to when another entry uses it
+slug_numbered: The slug “{$slug}” is used for another entry, so a number will be added to it.
 
 # Entry path editing for nested entries
 # Heading for the parent folder picker shown when the `meta.path` option is enabled

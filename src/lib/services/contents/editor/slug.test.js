@@ -10,7 +10,8 @@ import { getUnpublishedEntryByDraft } from '$lib/services/workflow';
 import {
   canUpdateSlug,
   getOwnFolderPaths,
-  getSlugPreviews,
+  getReadonlySlugs,
+  getSlugPreviewDetails,
   getTakenFolderNames,
   hasEntrySlug,
   needsSlugInput,
@@ -179,7 +180,7 @@ describe('contents/editor/slug', () => {
     });
   });
 
-  describe('getSlugPreviews', () => {
+  describe('getSlugPreviewDetails', () => {
     it('should return the slug shared by every locale', () => {
       vi.mocked(getSlugs).mockReturnValue({
         defaultLocaleSlug: 'hello',
@@ -187,27 +188,91 @@ describe('contents/editor/slug', () => {
         canonicalSlug: undefined,
       });
 
-      const draft = createDraft({ isNew: true });
+      const draft = createDraft({ isNew: true, collection: { _i18n: { defaultLocale: 'en' } } });
 
-      expect(getSlugPreviews(draft)).toEqual({ _: 'hello' });
-      expect(getSlugs).toHaveBeenCalledWith({ draft, templateOnly: false });
+      expect(getSlugPreviewDetails(draft)).toEqual({ _: { slug: 'hello' } });
+      expect(getSlugs).toHaveBeenCalledWith({
+        draft,
+        templateOnly: false,
+        numberedSlugs: expect.any(Map),
+      });
 
-      getSlugPreviews(draft, { templateOnly: true });
-      expect(getSlugs).toHaveBeenLastCalledWith({ draft, templateOnly: true });
+      getSlugPreviewDetails(draft, { templateOnly: true });
+      expect(getSlugs).toHaveBeenLastCalledWith({
+        draft,
+        templateOnly: true,
+        numberedSlugs: expect.any(Map),
+      });
     });
 
-    it('should return the localized slugs of the enabled locales', () => {
-      vi.mocked(getSlugs).mockReturnValue({
-        defaultLocaleSlug: 'hello',
-        localizedSlugs: { en: 'hello', fr: 'bonjour', de: 'hallo' },
-        canonicalSlug: 'hello',
+    it('should tell the slug the template fills when a number is added to it', () => {
+      vi.mocked(getSlugs).mockImplementationOnce(({ numberedSlugs }) => {
+        numberedSlugs.set('en', 'hello');
+
+        return {
+          defaultLocaleSlug: 'hello-1',
+          localizedSlugs: undefined,
+          canonicalSlug: undefined,
+        };
       });
 
       expect(
-        getSlugPreviews(
+        getSlugPreviewDetails(
+          createDraft({ isNew: true, collection: { _i18n: { defaultLocale: 'en' } } }),
+        ),
+      ).toEqual({ _: { slug: 'hello-1', takenSlug: 'hello' } });
+    });
+
+    it('should return the localized slugs of the enabled locales', () => {
+      vi.mocked(getSlugs).mockImplementationOnce(({ numberedSlugs }) => {
+        numberedSlugs.set('fr', 'bonjour');
+
+        return {
+          defaultLocaleSlug: 'hello',
+          localizedSlugs: { en: 'hello', fr: 'bonjour-1', de: 'hallo' },
+          canonicalSlug: 'hello',
+        };
+      });
+
+      expect(
+        getSlugPreviewDetails(
           createDraft({ isNew: true, currentLocales: { en: true, fr: true, de: false } }),
         ),
-      ).toEqual({ en: 'hello', fr: 'bonjour' });
+      ).toEqual({ en: { slug: 'hello' }, fr: { slug: 'bonjour-1', takenSlug: 'bonjour' } });
+    });
+  });
+
+  describe('getReadonlySlugs', () => {
+    it('should return the slugs a new entry would be saved with', () => {
+      vi.mocked(getSlugs).mockImplementationOnce(({ numberedSlugs }) => {
+        numberedSlugs.set('en', 'hello');
+
+        return {
+          defaultLocaleSlug: 'hello-1',
+          localizedSlugs: undefined,
+          canonicalSlug: undefined,
+        };
+      });
+
+      expect(
+        getReadonlySlugs(
+          createDraft({ isNew: true, collection: { _i18n: { defaultLocale: 'en' } } }),
+        ),
+      ).toEqual([['_', { slug: 'hello-1', takenSlug: 'hello' }]]);
+    });
+
+    it('should return an existing entry’s slugs in the enabled locales', () => {
+      expect(
+        getReadonlySlugs(
+          createDraft({
+            currentLocales: { en: true, fr: true, de: false },
+            currentSlugs: { en: 'hello', fr: undefined, de: 'hallo' },
+          }),
+        ),
+      ).toEqual([['en', { slug: 'hello' }]]);
+      expect(
+        getReadonlySlugs(createDraft({ currentLocales: {}, currentSlugs: { _: 'hello' } })),
+      ).toEqual([['_', { slug: 'hello' }]]);
     });
   });
 

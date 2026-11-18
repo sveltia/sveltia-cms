@@ -1349,6 +1349,8 @@ edit_slug_error:
   empty: スラッグは空白にはできません。
   invalid: スラッグにはスラッシュや空白を含む特殊文字を使用できません。
   duplicate: このスラッグは他のエントリーに使われています。
+# {$slug} is the slug filled from the slug template, which a number is added to when another entry uses it
+slug_numbered: スラッグ「{$slug}」は他のエントリーに使われているため、番号が追加されます。
 
 # Entry path editing for nested entries
 # Heading for the parent folder picker shown when the `meta.path` option is enabled

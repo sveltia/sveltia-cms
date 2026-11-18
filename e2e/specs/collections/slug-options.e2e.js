@@ -10,7 +10,7 @@ import {
 } from '../../fixtures/ui.js';
 
 /**
- * @import { Page } from '@playwright/test';
+ * @import { Locator, Page } from '@playwright/test';
  * @import { CMS } from '../../fixtures/test.js';
  */
 
@@ -50,6 +50,27 @@ const createPost = async (page, title) => {
 
   await editor.getByRole('textbox', { name: 'Title', exact: true }).fill(title);
   await saveEntry(editor);
+};
+
+/**
+ * Start a post with the given title, and open the Slug panel to see the slug it would be saved
+ * with.
+ * @param {Page} page Page.
+ * @param {string} title Title.
+ * @returns {Promise<{ editor: Locator, panel: Locator }>} Content editor and Slug panel.
+ */
+const startPostWithSlugPanel = async (page, title) => {
+  await page.getByRole('button', { name: 'Create New Entry' }).first().click();
+
+  const editor = getEditor(page);
+
+  await editor.getByRole('textbox', { name: 'Title', exact: true }).fill(title);
+  await page
+    .getByRole('radiogroup', { name: 'Sidebar Panels' })
+    .getByRole('radio', { name: 'Slug' })
+    .click();
+
+  return { editor, panel: page.getByRole('group', { name: 'Slug', exact: true }) };
 };
 
 /**
@@ -115,6 +136,25 @@ test.describe('default options', () => {
     ]);
     await expect(getEntryRows(page)).toHaveCount(4);
     await reopenPost(page, 'Hello, World!');
+  });
+
+  test('tells why a number is added to the slug of a post with the same title', async ({
+    cms,
+    page,
+  }) => {
+    await cms.start({ 'content/posts/hello-world.md': '---\ntitle: Hello World\n---\n' });
+
+    const { editor, panel } = await startPostWithSlugPanel(page, 'Hello World');
+
+    await expect(panel.getByRole('textbox', { name: 'Slug' })).toHaveText('hello-world-1');
+    await expect(panel.getByRole('status')).toHaveText(
+      'The slug “\u2068hello-world\u2069” is used for another entry, so a number will be added to it.',
+    );
+
+    // A free slug needs no number
+    await editor.getByRole('textbox', { name: 'Title', exact: true }).fill('Hello Again');
+    await expect(panel.getByRole('textbox', { name: 'Slug' })).toHaveText('hello-again');
+    await expect(panel.getByRole('status')).toBeHidden();
   });
 
   test('adds a number to the end of a duplicate slug containing a dot', async ({ cms, page }) => {
@@ -456,5 +496,29 @@ test.describe('entry date', () => {
       .poll(async () => (await cms.readRepo())['content/posts/2020/2020-01-01-old-news.md'])
       .toContain('publish_date: 2021-06-07T08:30:00+09:00');
     await expectPosts(cms, ['2020/2020-01-01-old-news.md', '2026/2026-05-10-fresh.md']);
+  });
+});
+
+test.describe('editable slug', () => {
+  test.use({ config: makeConfig(undefined, { slug: { template: '{{title}}', editable: true } }) });
+
+  test('tells why a number is added to the slug the template fills', async ({ cms, page }) => {
+    await cms.start({ 'content/posts/hello-world.md': '---\ntitle: Hello World\n---\n' });
+
+    const { editor, panel } = await startPostWithSlugPanel(page, 'Hello World');
+
+    await expect(panel.getByRole('textbox', { name: 'Slug' })).toHaveText('hello-world-1');
+    await expect(panel.getByRole('status')).toHaveText(
+      'The slug “\u2068hello-world\u2069” is used for another entry, so a number will be added to it.',
+    );
+
+    // Another slug can be given instead
+    await panel.getByRole('button', { name: 'Edit Slug' }).click();
+    await panel.getByRole('textbox', { name: 'Slug' }).fill('hello-world-again');
+    await panel.getByRole('button', { name: 'Done' }).click();
+    await expect(panel.getByRole('textbox', { name: 'Slug' })).toHaveText('hello-world-again');
+    await expect(panel.getByRole('status')).toBeHidden();
+    await saveEntry(editor);
+    await expectPosts(cms, ['hello-world-again.md', 'hello-world.md']);
   });
 });

@@ -303,6 +303,7 @@ export const getNextSlugNumber = ({ draft, pendingEntries = draft.pendingEntries
  * @param {string[]} args.localizingKeyPaths List of key paths that the value will be localized.
  * @param {string} args.defaultLocaleSlug Default locale’s entry slug, which a numbered slug shares.
  * @param {boolean} [args.templateOnly] See {@link getSlugTemplate}.
+ * @param {Map<InternalLocaleCode, string>} [args.numberedSlugs] See {@link getSlugs}.
  * @returns {string} Localized slug.
  */
 export const getLocalizedSlug = ({
@@ -311,6 +312,7 @@ export const getLocalizedSlug = ({
   localizingKeyPaths,
   defaultLocaleSlug,
   templateOnly = false,
+  numberedSlugs = undefined,
 }) => {
   const { isNew, originalLocales, currentValues, files } = draft;
   const _slug = getCurrentSlug(draft, locale);
@@ -333,6 +335,7 @@ export const getLocalizedSlug = ({
       ...options,
       locale,
       dirPath: getSlugDirPath(draft, locale),
+      numberedSlugs,
       content: {
         // Merge the default locale content and localized content. A field that isn’t localized
         // only exists in the default locale, so its value is kept from there
@@ -361,9 +364,15 @@ export const getLocalizedSlug = ({
  * @param {EntryDraft} args.draft Entry draft.
  * @param {string} args.defaultLocaleSlug Default locale’s entry slug.
  * @param {boolean} [args.templateOnly] See {@link getSlugTemplate}.
+ * @param {Map<InternalLocaleCode, string>} [args.numberedSlugs] See {@link getSlugs}.
  * @returns {LocaleSlugMap | undefined} Localized slug map.
  */
-export const getLocalizedSlugs = ({ draft, defaultLocaleSlug, templateOnly = false }) => {
+export const getLocalizedSlugs = ({
+  draft,
+  defaultLocaleSlug,
+  templateOnly = false,
+  numberedSlugs = undefined,
+}) => {
   const { collection, collectionFile, currentLocales } = draft;
 
   const {
@@ -393,6 +402,7 @@ export const getLocalizedSlugs = ({ draft, defaultLocaleSlug, templateOnly = fal
               localizingKeyPaths,
               defaultLocaleSlug,
               templateOnly,
+              numberedSlugs,
             });
 
       return [locale, slug];
@@ -445,9 +455,17 @@ export const getCanonicalSlug = ({ draft, defaultLocaleSlug, localizedSlugs, fil
  * the template fills for a new entry.
  * @param {PendingEntry[]} [args.pendingEntries] Entries that aren’t in the collection yet, which a
  * numbered slug comes after. Default: the draft’s own pending entries.
+ * @param {Map<InternalLocaleCode, string>} [args.numberedSlugs] Map to record the slug the
+ * template fills for a new entry in, for each locale where another entry uses it, so a number is
+ * added to make it unique.
  * @returns {EntrySlugVariants} Slugs.
  */
-export const getSlugs = ({ draft, templateOnly = false, pendingEntries = undefined }) => {
+export const getSlugs = ({
+  draft,
+  templateOnly = false,
+  pendingEntries = undefined,
+  numberedSlugs = undefined,
+}) => {
   const { isNew, collection, collectionFile, fileName, isIndexFile } = draft;
 
   if (isIndexFile) {
@@ -476,6 +494,7 @@ export const getSlugs = ({ draft, templateOnly = false, pendingEntries = undefin
     return fillTemplate(getSlugTemplate({ draft, locale: defaultLocale, templateOnly }), {
       ...fillSlugOptions,
       dirPath: getSlugDirPath(draft),
+      numberedSlugs,
     });
   };
 
@@ -483,7 +502,12 @@ export const getSlugs = ({ draft, templateOnly = false, pendingEntries = undefin
     fileName ??
     (isNew ? getNewEntrySlug() : /** @type {string} */ (getCurrentSlug(draft, defaultLocale)));
 
-  const localizedSlugs = getLocalizedSlugs({ draft, defaultLocaleSlug, templateOnly });
+  const localizedSlugs = getLocalizedSlugs({
+    draft,
+    defaultLocaleSlug,
+    templateOnly,
+    numberedSlugs,
+  });
 
   const canonicalSlug = getCanonicalSlug({
     draft,

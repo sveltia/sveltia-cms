@@ -18,7 +18,7 @@ import {
 
 /**
  * @import { ReplaceContext } from '$lib/services/common/template/replacers';
- * @import { FillTemplateOptions } from '$lib/types/private';
+ * @import { FillTemplateOptions, InternalLocaleCode } from '$lib/types/private';
  */
 
 /**
@@ -69,6 +69,7 @@ export const fillTemplate = (template, options) => {
     dateTimeParts,
     isIndexFile = false,
     dirPath,
+    numberedSlugs,
   } = options;
 
   const { _type, name: collectionName } = collection;
@@ -149,6 +150,7 @@ export const fillTemplate = (template, options) => {
    * @returns {string} Unique slug.
    */
   const rename = (str) => renameIfNeeded(str, existingSlugs, { hasExtension: false });
+  const filledSlug = slug;
   let uniqueSlug = rename(slug);
 
   // If the number pushes the slug over the cap, the slug in front of it gives way, so the number
@@ -158,6 +160,10 @@ export const fillTemplate = (template, options) => {
 
     slug = trimSlugEnd(truncateSlugBytes(slug, maxBytes - suffixBytes));
     uniqueSlug = rename(slug);
+  }
+
+  if (uniqueSlug !== filledSlug) {
+    numberedSlugs?.set(/** @type {InternalLocaleCode} */ (locale), filledSlug);
   }
 
   return uniqueSlug;
