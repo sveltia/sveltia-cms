@@ -93,8 +93,7 @@
     if (captionField) {
       insertCreditCaption({ draft, locale, keyPath: captionField, credit });
     } else {
-      // The button is only shown with either target. The value isn’t named `target` like the
-      // property: the Svelte compiler would turn the cast into an invalid shorthand property
+      // The button is only shown with either target
       insertCredit({
         draft,
         locale,

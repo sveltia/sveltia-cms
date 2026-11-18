@@ -321,12 +321,12 @@ export const confirmMagicLink = async (token) => {
     return undefined;
   }
 
-  // Copy the narrowed value rather than cast it in the object literal: esrap, which Svelte prints
-  // compiled code with, turns a cast property value named like its key, e.g.
-  // `{ a: /** @type {T} */ (a) }`, into invalid shorthand
-  const _account = account;
   // An earlier link still waiting for an answer is declined
-  const confirmed = await requestAnswer(magicLinkConfirmation, { account: _account }, false);
+  const confirmed = await requestAnswer(
+    magicLinkConfirmation,
+    { account: /** @type {User} */ (account) },
+    false,
+  );
 
   return confirmed ? account : undefined;
 };
