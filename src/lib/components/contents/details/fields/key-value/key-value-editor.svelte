@@ -80,8 +80,11 @@
   let tableBody = $state();
   /** @type {boolean[]} */
   let edited = $state([]);
-  /** @type {('empty' | 'duplicate' | undefined)[]} */
-  let validations = $state([]);
+  /**
+   * Validation results of the {@link rows}, one per row.
+   * @type {('empty' | 'duplicate' | undefined)[]}
+   */
+  const validations = $derived(validatePairs({ pairs: rows.values, edited }));
 
   // Removing the blank row offered for an empty field would just bring it back
   const isOnlyBlankRow = $derived(
@@ -216,8 +219,6 @@
    */
   const updateStore = () => {
     const draft = entryDraft.current;
-
-    validations = validatePairs({ pairs: rows.values, edited });
 
     /* v8 ignore next 3 -- the editor is only rendered while the draft is there */
     if (!draft) {

@@ -14,7 +14,7 @@
   import { _ } from '@sveltia/i18n';
   import { TextInput } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
-  import { tick } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import { flip } from 'svelte/animate';
 
   import RemoveButton from '$lib/components/common/remove-button.svelte';
@@ -22,6 +22,7 @@
   import AddItemButton from '$lib/components/contents/details/fields/object/add-item-button.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { updateNonPrimitiveValue } from '$lib/services/contents/draft/update';
+  import { deferDraftWrite } from '$lib/services/contents/draft/update/deferred';
   import { getFieldEditorContext } from '$lib/services/contents/editor/field-context';
   import { isSingleItemList } from '$lib/services/contents/fields/list/helpers';
   import { getDirection } from '$lib/services/contents/i18n';
@@ -65,6 +66,12 @@
    * @type {HTMLElement | undefined}
    */
   let itemList = $state();
+  /**
+   * Whether the editor has been unmounted, e.g. along with a removed list item, after which a
+   * deferred write must not put its value back into the draft. A plain variable, as it’s read
+   * outside of any reactive context.
+   */
+  let unmounted = false;
 
   const { i18n, max = Infinity } = $derived(fieldConfig);
   const canEdit = $derived(!readonly);
@@ -101,6 +108,9 @@
    * Write the rows to the draft, unless they already hold the stored value. Rewriting an unchanged
    * value isn’t harmless: it adds the placeholder of a non-empty list, which the loaded content
    * doesn’t have, so merely opening an entry would count as a change.
+   *
+   * This runs from an effect, so the write to the draft is deferred. The value and its location are
+   * worked out now, from the rows as they are.
    */
   const updateValue = () => {
     const draft = entryDraft.current;
@@ -111,9 +121,17 @@
       return;
     }
 
-    if (!equal(value, currentValue ?? [])) {
-      updateNonPrimitiveValue({ draft, valueStoreKey, locale, keyPath, i18n, value });
+    if (equal(value, currentValue ?? [])) {
+      return;
     }
+
+    const args = { draft, valueStoreKey, locale, keyPath, i18n, value };
+
+    deferDraftWrite(() => {
+      if (!unmounted) {
+        updateNonPrimitiveValue(args);
+      }
+    });
   };
 
   /**
@@ -172,6 +190,10 @@
      * @returns {string} Value.
      */
     getItemData: (index) => rows.values[index],
+  });
+
+  onMount(() => () => {
+    unmounted = true;
   });
 
   watch(

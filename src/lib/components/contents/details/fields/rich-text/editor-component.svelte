@@ -36,7 +36,7 @@
     getValuesByPrefix,
     reconcileComponentValues,
   } from '$lib/services/contents/fields/rich-text/components/values';
-  import { watch } from '$lib/services/utils/state.svelte';
+  import { createStableDerivedState, watch } from '$lib/services/utils/state.svelte';
 
   /**
    * @import { EntryDraftState } from '$lib/services/contents/draft/state.svelte';
@@ -265,14 +265,25 @@
    * back into the draft. A plain variable, as it’s read outside of any reactive context.
    */
   let unmounted = false;
+  /**
+   * Plain copies of the draft, locale and key path prefix, updated from an effect, which the
+   * teardown reads instead of the reactive state: reading a derived value in a teardown makes
+   * Svelte walk the graph below it, which costs exponentially more with each level of nesting.
+   * @type {{ draft?: EntryDraft | null, locale: InternalLocaleCode, keyPathPrefix: string }}
+   */
+  let teardownState = { locale: '', keyPathPrefix: '' };
 
   /**
    * Current values for the editor component. These values are stored in the {@link entryDraft}
    * under the `extraValues` key, with the key path prefixed with the parent field’s key path, e.g.
    * `body:c12:image`.
-   * @type {RawEntryContent | undefined}
+   *
+   * The values are picked out of a snapshot of all the `extraValues`, which changes whenever any
+   * component in the entry is edited. The prefixed key paths aren’t subtrees the value map keeps a
+   * version of, so the values are kept as long as they’re the same instead, and what depends on
+   * them only reacts to a change of this component’s own values.
    */
-  const currentValues = $derived.by(() => {
+  const _currentValues = createStableDerivedState(() => {
     if (!(entryDraft?.current && locale && keyPath)) {
       return undefined;
     }
@@ -282,6 +293,8 @@
       keyPathPrefix,
     );
   });
+  /** @type {RawEntryContent | undefined} */
+  const currentValues = $derived(_currentValues.current);
 
   /**
    * Attach the draft state to the element holding the fields in the dialog (dialog mode only). The
@@ -476,16 +489,31 @@
     });
 
     return () => {
-      const draft = entryDraft?.current;
+      // Read the plain copies: reading reactive state here would make Svelte walk the graph below
+      const { draft, locale: _locale, keyPathPrefix: _keyPathPrefix } = teardownState;
 
       unmounted = true;
       stopFollowingReadonly();
 
-      // Remove the values and validities from the draft when the component is unmounted
+      // Remove the values and validities from the draft when the component is unmounted. The
+      // deletion is deferred like a write, as an unmount can happen while an effect is running. The
+      // prefix carries the ID of this component instance, so nothing else, e.g. the component
+      // mounted again in its place, can have written values under it in the meantime
       if (draft) {
-        deleteKeysByPrefix(draft[valueStoreKey][locale], keyPathPrefix);
-        deleteKeysByPrefix(draft.validities[locale], keyPathPrefix);
+        deferDraftWrite(() => {
+          deleteKeysByPrefix(draft[valueStoreKey][_locale], _keyPathPrefix);
+          deleteKeysByPrefix(draft.validities[_locale], _keyPathPrefix);
+        });
       }
+    };
+  });
+
+  // Keep plain copies of what the teardown above needs
+  $effect(() => {
+    teardownState = {
+      draft: entryDraft?.current,
+      locale,
+      keyPathPrefix,
     };
   });
 

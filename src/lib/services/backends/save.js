@@ -111,6 +111,7 @@ export const updateCache = async ({ changes, commit }) => {
 export const updateStores = ({ changes, savedEntries, savedAssets, arrayFileEntries = [] }) => {
   const savedEntryIds = new Set([...savedEntries, ...arrayFileEntries].map((e) => e.id));
   const arrayFilePaths = new Set(arrayFileEntries.flatMap((e) => getEntryPaths(e)));
+  const arrayFileEntrySet = new Set(arrayFileEntries);
 
   allEntries.current = [
     ...allEntries.current.filter(
@@ -121,7 +122,7 @@ export const updateStores = ({ changes, savedEntries, savedAssets, arrayFileEntr
           Object.values(e.locales).some(({ path }) => arrayFilePaths.has(path))
         ),
     ),
-    ...savedEntries.filter((e) => !arrayFileEntries.includes(e)),
+    ...savedEntries.filter((e) => !arrayFileEntrySet.has(e)),
     ...arrayFileEntries,
   ];
 

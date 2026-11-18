@@ -154,9 +154,13 @@ const getEntryRelativePathRegEx = ({ internalPath, internalSubPath, localeFolder
  * call, rebuilt when the store is replaced.
  * `items`: non-entry-relative folders with both regex variants pre-compiled.
  * `entryRelative`: folders whose paths are relative to their parent entry.
+ * `matchesByDir`: the `items` folders matching a directory, keyed by whether subfolders are
+ * matched, then by the directory. Thousands of files share a few hundred directories, and every
+ * file is looked up on each load, so the regexes are only tested once per directory.
  * @type {() => {
  * items: Array<{ folder: AssetFolderInfo, regexSub: RegExp, regexExact: RegExp }>,
  * entryRelative: Array<{ folder: AssetFolderInfo, regex: RegExp }>,
+ * matchesByDir: { sub: Map<string, AssetFolderInfo[]>, exact: Map<string, AssetFolderInfo[]> },
  * }}
  */
 const getAssetFolderPathCache = memoizeOnSource(
@@ -190,7 +194,7 @@ const getAssetFolderPathCache = memoizeOnSource(
       }
     });
 
-    return { items, entryRelative };
+    return { items, entryRelative, matchesByDir: { sub: new Map(), exact: new Map() } };
   },
 );
 
@@ -211,16 +215,23 @@ export const getAssetFoldersByPath = (path, { matchSubFolders = true } = {}) => 
     return [];
   }
 
-  const { items, entryRelative } = getAssetFolderPathCache();
+  const { items, entryRelative, matchesByDir } = getAssetFolderPathCache();
   const dir = dirname ?? '';
+  const dirMatches = matchSubFolders ? matchesByDir.sub : matchesByDir.exact;
+  let itemMatches = dirMatches.get(dir);
+
+  if (!itemMatches) {
+    // Compare that the enclosing directory is exactly the same as the internal path, and ignore
+    // any subdirectories, unless the `matchSubFolders` option is specified.
+    itemMatches = items
+      .filter(({ regexSub, regexExact }) => (matchSubFolders ? regexSub : regexExact).test(dir))
+      .map(({ folder }) => folder);
+    dirMatches.set(dir, itemMatches);
+  }
 
   const results = [
     ...entryRelative.filter(({ regex }) => regex.test(path)).map(({ folder }) => folder),
-    // Compare that the enclosing directory is exactly the same as the internal path, and ignore
-    // any subdirectories, unless the `matchSubFolders` option is specified.
-    ...items
-      .filter(({ regexSub, regexExact }) => (matchSubFolders ? regexSub : regexExact).test(dir))
-      .map(({ folder }) => folder),
+    ...itemMatches,
   ];
 
   // `internalPath` is always a string for items in results (entry-relative items are filtered to

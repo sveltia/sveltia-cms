@@ -211,6 +211,7 @@ describe('assets/data/create', () => {
       expect(formatFileName).toHaveBeenCalledWith('index.md', {
         slugificationEnabled: false,
         assetNamesInSameFolder: ['index.md', 'images'],
+        foldedNamesInSameFolder: new Set(['index.md', 'images']),
       });
     });
 
@@ -381,6 +382,41 @@ describe('assets/data/create', () => {
       ]);
     });
 
+    it('should overwrite the first of the assets whose names only differ in case', async () => {
+      const { getAssetsByDirName } = await import('$lib/services/assets');
+
+      /** @type {any} */
+      const folder = createMockAssetFolder({
+        collectionName: 'assets',
+        internalPath: '/images',
+        publicPath: '/images',
+      });
+
+      // A case-sensitive repository can hold both
+      vi.mocked(getAssetsByDirName).mockReturnValue(
+        ['Ocean.png', 'ocean.png'].map((name) => ({
+          name,
+          path: `/images/${name}`,
+          sha: name,
+          size: 1,
+          kind: 'image',
+          folder,
+        })),
+      );
+
+      const result = createFileList({
+        files: [new File(['new'], 'OCEAN.png', { type: 'image/png' })],
+        folder,
+        replaceDuplicates: true,
+      });
+
+      expect(result[0]).toMatchObject({
+        action: 'update',
+        name: 'Ocean.png',
+        path: '/images/Ocean.png',
+      });
+    });
+
     it('should only overwrite a same-named asset with the first of the same-named files', async () => {
       const { getAssetsByDirName } = await import('$lib/services/assets');
       const { formatFileName } = await import('$lib/services/assets/file-name');
@@ -463,6 +499,7 @@ describe('assets/data/create', () => {
       expect(formatFileName).toHaveBeenCalledWith('existing.jpg', {
         slugificationEnabled: false,
         assetNamesInSameFolder: ['existing.jpg'],
+        foldedNamesInSameFolder: new Set(['existing.jpg']),
       });
       expect(result[0].action).toBe('create');
     });

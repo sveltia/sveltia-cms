@@ -1256,7 +1256,11 @@ describe('assets/index', () => {
   });
 
   describe('getTakenNamesInDir', () => {
-    it('should list the assets, the other files and the subfolders in the directory', () => {
+    it('should list the assets, the other files and the subfolders in the directory', async () => {
+      const { createPath } = await import('$lib/services/utils/file');
+
+      // The subfolders are indexed by path
+      vi.mocked(createPath).mockImplementation((paths) => paths.filter(Boolean).join('/'));
       allAssets.current = [
         createMockAsset({ name: 'photo.jpg', folderPath: 'content/posts/hello' }),
         createMockAsset({ name: 'icon.png', folderPath: 'content/posts/hello/images' }),

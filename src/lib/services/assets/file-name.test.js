@@ -109,6 +109,14 @@ describe('Test formatFileName()', () => {
     // Test with empty array
     expect(formatFileName('test.jpg', { assetNamesInSameFolder: [] })).toEqual('test.jpg');
 
+    // Test with the folded names passed along
+    expect(
+      formatFileName('Test.jpg', {
+        assetNamesInSameFolder: existingFiles,
+        foldedNamesInSameFolder: new Set(existingFiles),
+      }),
+    ).toEqual('Test-2.jpg');
+
     // Test when only base name exists (no numbered suffix) - should create test-1.jpg
     expect(formatFileName('test.jpg', { assetNamesInSameFolder: ['test.jpg'] })).toEqual(
       'test-1.jpg',

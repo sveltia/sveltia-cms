@@ -621,12 +621,21 @@ export const countAssetsInFolder = (folder) =>
   getAssetCountsByFolder().get(getAssetFolderMatchKey(folder)) ?? 0;
 
 /**
+ * Index of the assets, keyed by the path of the directory they’re in, rebuilt when the assets are
+ * replaced. Saving an entry looks up the directory of every file it adds.
+ * @type {() => Map<string, Asset[]>}
+ */
+const getAssetsByDir = memoizeOnSource(
+  () => allAssets.current,
+  (assets) => Map.groupBy(assets, (asset) => getDirName(asset.path)),
+);
+
+/**
  * Get a list of assets stored in the given internal directory.
  * @param {string} dirname Directory path. An empty string for the repository root.
  * @returns {Asset[]} Assets.
  */
-export const getAssetsByDirName = (dirname) =>
-  allAssets.current.filter((a) => getDirName(a.path) === dirname);
+export const getAssetsByDirName = (dirname) => [...(getAssetsByDir().get(dirname) ?? [])];
 
 /**
  * Get the names a new file saved in the given internal directory can’t take: those of the assets,

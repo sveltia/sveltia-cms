@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
@@ -22,8 +23,8 @@ vi.mock('$lib/services/user/env.svelte', async () => {
  * @param {object} [options] Options.
  * @param {Partial<SimpleListField>} [options.config] Field options.
  * @param {boolean} [options.readonly] Whether the field is read-only.
- * @returns {Promise<{ draft: any, props: any, container: HTMLElement }>} Draft, props and
- * container.
+ * @returns {Promise<{ draft: any, props: any, container: HTMLElement, unmount: () => void }>}
+ * Draft, props, container and a function to unmount the editor.
  */
 const renderEditor = async (value, { config = {}, readonly = false } = {}) => {
   /** @type {SimpleListField} */
@@ -34,7 +35,7 @@ const renderEditor = async (value, { config = {}, readonly = false } = {}) => {
     values: { _default: Object.fromEntries(value.map((item, index) => [`tags.${index}`, item])) },
   });
 
-  const { props, container } = await renderFieldEditor(ListEditorSimple, {
+  const { props, container, unmount } = await renderFieldEditor(ListEditorSimple, {
     fieldConfig,
     fieldLabel: 'Tags',
     locale: '_default',
@@ -43,7 +44,7 @@ const renderEditor = async (value, { config = {}, readonly = false } = {}) => {
     draft,
   });
 
-  return { draft, props, container };
+  return { draft, props, container, unmount };
 };
 
 /**
@@ -104,6 +105,21 @@ describe('ListEditorSimple', () => {
 
     await page.getByRole('textbox').nth(1).fill('c');
     await expect.poll(() => getStoredItems(draft)).toEqual(['a', 'c']);
+  });
+
+  test('doesn’t store the edited items once unmounted', async () => {
+    const { draft, unmount } = await renderEditor(['a', 'b']);
+    const input = /** @type {HTMLInputElement} */ (page.getByRole('textbox').nth(1).element());
+
+    // The edit is written to the draft in a microtask, by which time the editor is gone, e.g.
+    // along with a removed list item
+    input.value = 'c';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    flushSync();
+    unmount();
+    await Promise.resolve();
+
+    expect(draft.currentValues._default).toEqual({ 'tags.0': 'a', 'tags.1': 'b' });
   });
 
   test('adds an item with the button or the Enter key', async () => {

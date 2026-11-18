@@ -34,18 +34,19 @@ vi.mock('$lib/services/assets/state', () => ({
 
 // List the immediate subfolders off the asset paths, as the real function does
 vi.mock('$lib/services/assets/subfolders', () => ({
-  getSubfolders: vi.fn(
-    (/** @type {{ dirPath: string, assets: { path: string }[] }} */ { dirPath, assets }) => {
-      const names = new Set(
-        assets
-          .filter(({ path }) => path.startsWith(`${dirPath}/`))
-          .map(({ path }) => path.slice(dirPath.length + 1).split('/'))
-          .filter((segments) => segments.length > 1)
-          .map(([name]) => name),
-      );
+  getSubfolderTree: vi.fn(
+    (/** @type {{ assets: { path: string }[] }} */ { assets }) =>
+      (/** @type {string} */ dirPath) => {
+        const names = new Set(
+          assets
+            .filter(({ path }) => path.startsWith(`${dirPath}/`))
+            .map(({ path }) => path.slice(dirPath.length + 1).split('/'))
+            .filter((segments) => segments.length > 1)
+            .map(([name]) => name),
+        );
 
-      return [...names].sort().map((name) => ({ name, path: `${dirPath}/${name}` }));
-    },
+        return [...names].sort().map((name) => ({ name, path: `${dirPath}/${name}` }));
+      },
   ),
 }));
 

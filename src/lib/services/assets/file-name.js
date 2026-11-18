@@ -18,11 +18,13 @@ import {
  * @param {boolean} [options.slugificationEnabled] Whether to slugify the file name.
  * @param {string[]} [options.assetNamesInSameFolder] List of asset names in the same folder to
  * avoid name conflicts.
+ * @param {Set<string>} [options.foldedNamesInSameFolder] The same names folded with
+ * `foldFileName()`, passed by a caller naming many files in the same folder.
  * @returns {string} The formatted file name, sanitized and possibly slugified.
  */
 export const formatFileName = (
   originalName,
-  { slugificationEnabled = false, assetNamesInSameFolder = [] } = {},
+  { slugificationEnabled = false, assetNamesInSameFolder = [], foldedNamesInSameFolder } = {},
 ) => {
   let fileName = sanitizeFileName(originalName).replace(/^\.+/, '');
 
@@ -37,7 +39,9 @@ export const formatFileName = (
 
   // Dropping a leading dot or slugifying can leave a name Windows reserves for a device, like
   // `aux.png` from `.aux.png` or `Aux!.png`, which `sanitizeFileName()` has renamed otherwise
-  return renameIfNeeded(renameReservedFileName(fileName), assetNamesInSameFolder);
+  return renameIfNeeded(renameReservedFileName(fileName), assetNamesInSameFolder, {
+    foldedNames: foldedNamesInSameFolder,
+  });
 };
 
 /**

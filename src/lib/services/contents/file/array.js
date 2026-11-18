@@ -105,6 +105,9 @@ const groupArrayFileChanges = (changes) => {
 export const applyArrayFileChanges = ({ collection, path, items, changes }) => {
   /** @type {ArrayFileSlot[]} */
   const slots = items.map((item, index) => ({ item, from: index }));
+  // A reorder moves the slots around, but each keeps the position it came from, so an item can be
+  // found by that position without going through the slots for each change
+  const slotsByOrigin = new Map(slots.map((slot) => [slot.from, slot]));
   /** @type {Set<number>} */
   const removed = new Set();
 
@@ -162,9 +165,7 @@ export const applyArrayFileChanges = ({ collection, path, items, changes }) => {
     if (arrayItem) {
       // The position can have changed with a reorder made in the same commit. A removed item is
       // only left out at the end, so the item is always found
-      const slot = /** @type {ArrayFileSlot} */ (
-        slots.find(({ from }) => from === arrayItem.index)
-      );
+      const slot = /** @type {ArrayFileSlot} */ (slotsByOrigin.get(arrayItem.index));
 
       slot.item = item;
     } else {

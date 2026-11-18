@@ -6,6 +6,7 @@ import {
   getOrCreateAsync,
   getOrCreateBounded,
   memoizeOnSource,
+  memoizeOnSources,
   shareInFlight,
 } from './cache';
 
@@ -331,5 +332,34 @@ describe('Test memoizeOnSource()', () => {
     expect(getValue()).toBe('x');
     expect(getValue()).toBe('x');
     expect(build).toHaveBeenCalledOnce();
+  });
+});
+
+describe('Test memoizeOnSources()', () => {
+  test('builds the value once per set of sources, and again once any of them is replaced', () => {
+    let first = [1, 2];
+    let second = ['a'];
+
+    const build = vi.fn(
+      (/** @type {number[]} */ numbers, /** @type {string[]} */ letters) =>
+        numbers.length + letters.length,
+    );
+
+    const getValue = memoizeOnSources(() => [first, second], build);
+
+    expect(getValue()).toBe(3);
+    expect(getValue()).toBe(3);
+    expect(build).toHaveBeenCalledOnce();
+    expect(build).toHaveBeenCalledWith(first, second);
+
+    second = ['a', 'b'];
+
+    expect(getValue()).toBe(4);
+    expect(build).toHaveBeenCalledTimes(2);
+
+    first = [1];
+
+    expect(getValue()).toBe(3);
+    expect(build).toHaveBeenCalledTimes(3);
   });
 });

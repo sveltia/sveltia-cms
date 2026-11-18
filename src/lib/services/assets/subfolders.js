@@ -7,6 +7,7 @@ import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { slugify, validateNewFolderName } from '$lib/services/common/slug';
 import { allEntries } from '$lib/services/contents';
 import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
+import { getOrCreate, memoizeOnSource, memoizeOnSources } from '$lib/services/utils/cache';
 import {
   createPath,
   getBaseName,
@@ -223,6 +224,102 @@ export const getTakenNames = ({
 ];
 
 /**
+ * Index the folders below a directory, read off the paths of the files below it.
+ * @param {object} args Arguments.
+ * @param {string} args.dirPath Directory path. An empty string for the root.
+ * @param {string[]} args.paths Paths of the files below the directory, at any depth. Paths outside
+ * the directory are left alone.
+ * @returns {Map<string, Set<string>>} Names of the subfolders, keyed by the path of the directory
+ * they’re in.
+ */
+const buildFolderTree = ({ dirPath, paths }) => {
+  /** @type {Map<string, Set<string>>} */
+  const tree = new Map();
+  const prefix = dirPath ? `${dirPath}/` : '';
+
+  paths.forEach((path) => {
+    if (!path.startsWith(prefix)) {
+      return;
+    }
+
+    // Add each folder on the way down to the file to the one above it
+    let parentPath = dirPath;
+    let start = prefix.length;
+    let index = path.indexOf('/', start);
+
+    while (index > start) {
+      const name = path.slice(start, index);
+
+      getOrCreate(tree, parentPath, () => new Set()).add(name);
+      parentPath = createPath([parentPath, name]);
+      start = index + 1;
+      index = path.indexOf('/', start);
+    }
+  });
+
+  return tree;
+};
+
+/**
+ * List the immediate subfolders of a directory in a tree built with {@link buildFolderTree}.
+ * @param {Map<string, Set<string>>} tree Folder tree.
+ * @param {string} dirPath Directory path.
+ * @returns {AssetSubfolder[]} Subfolders, sorted by name.
+ */
+const listChildFolders = (tree, dirPath) =>
+  [...(tree.get(dirPath) ?? [])]
+    .sort(compare)
+    .map((name) => ({ name, path: createPath([dirPath, name]) }));
+
+/**
+ * Group file names by the directory they’re in.
+ * @param {string[]} paths File paths.
+ * @returns {Map<string, string[]>} Names, keyed by directory path.
+ */
+const groupNamesByDir = (paths) =>
+  new Map(
+    [...Map.groupBy(paths, getDirName)].map(([dirPath, filePaths]) => [
+      dirPath,
+      filePaths.map(getBaseName),
+    ]),
+  );
+
+/**
+ * Index of the folders in the repository, read off the paths of the assets and the Git config
+ * files, rebuilt when either is replaced. Saving an entry looks up the folder of every file it
+ * adds, so the paths are only gone through once rather than for each file.
+ * @type {() => Map<string, Set<string>>}
+ */
+const getRepositoryFolderTree = memoizeOnSources(
+  () => [allAssets.current, gitConfigFiles.current],
+  (assets, configFiles) =>
+    buildFolderTree({ dirPath: '', paths: [...assets, ...configFiles].map(({ path }) => path) }),
+);
+
+/**
+ * Index of the names of the entry files, keyed by directory path, rebuilt when the entries are
+ * replaced.
+ * @type {() => Map<string, string[]>}
+ */
+const getEntryFileNamesByDir = memoizeOnSource(
+  () => allEntries.current,
+  (entries) =>
+    groupNamesByDir(
+      entries.flatMap(({ locales }) => Object.values(locales).map(({ path }) => path)),
+    ),
+);
+
+/**
+ * Index of the names of the Git config files, keyed by directory path, rebuilt when the files are
+ * replaced.
+ * @type {() => Map<string, string[]>}
+ */
+const getConfigFileNamesByDir = memoizeOnSource(
+  () => gitConfigFiles.current,
+  (configFiles) => groupNamesByDir(configFiles.map(({ path }) => path)),
+);
+
+/**
  * Get the names of every folder right in a directory of the repository, which a file renamed in it
  * can’t take: the folders holding assets or Git config files, whichever asset folder they belong
  * to, and the ones leading to a configured asset folder nested in the directory.
@@ -231,10 +328,7 @@ export const getTakenNames = ({
  */
 export const getFolderNamesInDir = (dirPath) =>
   getTakenNames({
-    subfolders: listSubfolders({
-      dirPath,
-      paths: [...allAssets.current, ...gitConfigFiles.current].map(({ path }) => path),
-    }),
+    subfolders: listChildFolders(getRepositoryFolderTree(), dirPath),
     fileNames: [],
     dirPath,
   });
@@ -247,16 +341,10 @@ export const getFolderNamesInDir = (dirPath) =>
  * @returns {string[]} Names.
  */
 export const getNonAssetFileNamesInDir = (dirPath) => [
-  ...new Set(
-    [
-      ...allEntries.current.flatMap(({ locales }) =>
-        Object.values(locales).map(({ path }) => path),
-      ),
-      ...gitConfigFiles.current.map(({ path }) => path),
-    ]
-      .filter((path) => getDirName(path) === dirPath)
-      .map(getBaseName),
-  ),
+  ...new Set([
+    ...(getEntryFileNamesByDir().get(dirPath) ?? []),
+    ...(getConfigFileNamesByDir().get(dirPath) ?? []),
+  ]),
 ];
 
 /**
@@ -290,13 +378,49 @@ export const getFolderBreadcrumbItems = ({ rootLabel, subfolderNames, onBrowse }
 };
 
 /**
+ * Cache for {@link getOwnerFolderPath}, keyed by directory path, rebuilt when the asset folders
+ * are replaced. Every Git config file is looked up each time subfolders are listed, and each lookup
+ * goes through every folder.
+ * @type {() => Map<string, string | undefined>}
+ */
+const getOwnerFolderPathCache = memoizeOnSource(
+  () => allAssetFolders.current,
+  () => new Map(),
+);
+
+/**
  * Get the `internalPath` of the asset folder that a directory belongs to: the folder at that path,
  * or else the deepest one it sits below.
  * @param {string} dirPath Directory path.
  * @returns {string | undefined} Folder path, or `undefined` if the directory is outside every
  * folder.
  */
-const getOwnerFolderPath = (dirPath) => resolveAssetFolderPath(dirPath)?.folder.internalPath;
+const getOwnerFolderPath = (dirPath) =>
+  getOrCreate(
+    getOwnerFolderPathCache(),
+    dirPath,
+    () => resolveAssetFolderPath(dirPath)?.folder.internalPath,
+  );
+
+/**
+ * Get the paths that the subfolders of a directory are read off: the assets and the Git config
+ * files belonging to the same asset folder as the directory.
+ * @param {object} args Arguments.
+ * @param {string} args.dirPath Directory path. An empty string for the repository root.
+ * @param {Asset[]} args.assets Assets below the directory, at any depth.
+ * @returns {string[]} Paths.
+ */
+const getSubfolderSourcePaths = ({ dirPath, assets }) => {
+  // A Git config file counts the same way as an asset: only when it belongs to the same asset
+  // folder as the directory, so a nested asset folder isn’t listed for the `.gitkeep` it holds
+  const ownerFolderPath = getOwnerFolderPath(dirPath);
+
+  const configFiles = gitConfigFiles.current.filter(
+    ({ path }) => getOwnerFolderPath(getDirName(path)) === ownerFolderPath,
+  );
+
+  return [...assets, ...configFiles].map(({ path }) => path);
+};
 
 /**
  * List the immediate subfolders of a directory. A folder isn’t an object of its own in a Git
@@ -310,16 +434,24 @@ const getOwnerFolderPath = (dirPath) => resolveAssetFolderPath(dirPath)?.folder.
  * in it, as those are that folder’s to list.
  * @returns {AssetSubfolder[]} Subfolders, sorted by name.
  */
-export const getSubfolders = ({ dirPath, assets }) => {
-  // A Git config file counts the same way as an asset: only when it belongs to the same asset
-  // folder as the directory, so a nested asset folder isn’t listed for the `.gitkeep` it holds
-  const ownerFolderPath = getOwnerFolderPath(dirPath);
+export const getSubfolders = ({ dirPath, assets }) =>
+  listSubfolders({ dirPath, paths: getSubfolderSourcePaths({ dirPath, assets }) });
 
-  const configFiles = gitConfigFiles.current.filter(
-    ({ path }) => getOwnerFolderPath(getDirName(path)) === ownerFolderPath,
-  );
+/**
+ * Get a function listing the immediate subfolders of a directory or of any directory below it, as
+ * {@link getSubfolders} does, for walking the whole tree. The paths are read once, rather than once
+ * per directory, which adds up to directories × assets for a folder with many subfolders.
+ * @param {object} args Arguments.
+ * @param {string} args.dirPath Path of the top directory. An empty string for the repository root.
+ * @param {Asset[]} args.assets Assets below the directory, at any depth. These are the assets of
+ * the folder the directory belongs to, so no directory below it belongs to another asset folder.
+ * @returns {(dirPath: string) => AssetSubfolder[]} Function listing the subfolders of the top
+ * directory or a directory below it, sorted by name.
+ */
+export const getSubfolderTree = ({ dirPath, assets }) => {
+  const tree = buildFolderTree({ dirPath, paths: getSubfolderSourcePaths({ dirPath, assets }) });
 
-  return listSubfolders({ dirPath, paths: [...assets, ...configFiles].map(({ path }) => path) });
+  return (path) => listChildFolders(tree, path);
 };
 
 /**

@@ -85,15 +85,21 @@ export const normalizeFolderPath = (path) => stripLeadingDotSlash(stripSlashes(p
  * @param {boolean} [options.hasExtension] Whether the name ends with a file extension, which the
  * number goes before. Pass `false` for a slug, whose dot is part of the name, so `release-2.0` is
  * renamed `release-2.0-1` rather than `release-2-1.0`.
+ * @param {Set<string>} [options.foldedNames] `otherNames` folded with {@link foldFileName}, for a
+ * caller naming many files against the same list, which would otherwise be folded for each file.
  * @returns {string} Determined name.
  */
-export const renameIfNeeded = (name, otherNames, { hasExtension = true } = {}) => {
+export const renameIfNeeded = (name, otherNames, { hasExtension = true, foldedNames } = {}) => {
   const foldedName = foldFileName(name);
 
   // Case-insensitive and Unicode-normalized, since `Photo.jpg` and `photo.jpg` clash on a
   // case-insensitive file system like macOS’s or Windows’s, and a name read from disk may be
   // spelled in another normalization form than one typed in the browser
-  if (!otherNames.some((otherName) => foldFileName(otherName) === foldedName)) {
+  const taken = foldedNames
+    ? foldedNames.has(foldedName)
+    : otherNames.some((otherName) => foldFileName(otherName) === foldedName);
+
+  if (!taken) {
     return name;
   }
 

@@ -129,6 +129,18 @@ describe('Test normalizeFolderPath()', () => {
 });
 
 describe('Test renameIfNeeded()', () => {
+  test('uses the folded names given instead of folding the other names', () => {
+    const otherNames = ['Photo.png', 'photo-1.png'];
+    const foldedNames = new Set(otherNames.map((name) => name.toLowerCase()));
+
+    expect(renameIfNeeded('photo.png', otherNames, { foldedNames })).toEqual('photo-2.png');
+    expect(renameIfNeeded('new.png', otherNames, { foldedNames })).toEqual('new.png');
+    // Only the set tells whether the name is taken
+    expect(renameIfNeeded('photo.png', otherNames, { foldedNames: new Set() })).toEqual(
+      'photo.png',
+    );
+  });
+
   test('should take the highest number already used, whatever order the names come in', () => {
     expect(renameIfNeeded('photo.png', ['photo-1.png', 'photo.png', 'photo-0.png'])).toEqual(
       'photo-2.png',

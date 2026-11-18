@@ -2,7 +2,7 @@ import { isAssetInFolder } from '$lib/services/assets';
 import { canCreateAsset } from '$lib/services/assets/folders';
 import { isCmsFolderPath } from '$lib/services/assets/reserved';
 import { publishedAssets } from '$lib/services/assets/state';
-import { getSubfolders } from '$lib/services/assets/subfolders';
+import { getSubfolderTree } from '$lib/services/assets/subfolders';
 import { getFolderLabelByCollection } from '$lib/services/assets/view';
 import { getAssetFolderIcon, getListedAssetFolders } from '$lib/services/assets/view/folder-list';
 
@@ -43,6 +43,7 @@ export const getAssetMoveDestinations = () => {
     .map((folder) => {
       const rootPath = /** @type {string} */ (folder.internalPath);
       const assets = publishedAssets.current.filter((asset) => isAssetInFolder(asset, folder));
+      const getSubfolders = getSubfolderTree({ dirPath: rootPath, assets });
 
       /**
        * List the subfolders of a directory, each with its own subfolders.
@@ -50,7 +51,7 @@ export const getAssetMoveDestinations = () => {
        * @returns {AssetMoveDestination[]} Destinations.
        */
       const listChildren = (dirPath) =>
-        getSubfolders({ dirPath, assets })
+        getSubfolders(dirPath)
           .filter(({ path }) => !isCmsFolderPath(path))
           .map(({ name, path }) => ({
             folder,
