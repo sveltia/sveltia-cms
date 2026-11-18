@@ -527,6 +527,59 @@ export const test = base.extend({
 });
 
 /**
+ * Session cookie {@link recordCookies} sets, as a `Cookie` request header carries it.
+ */
+export const PROXY_COOKIE = 'proxy_session=e2e';
+
+/**
+ * Give the browser context a session cookie for a host, as a proxy in front of a self-hosted Git
+ * service would set, and record the cookies each request matching a filter carries, to check the
+ * `include_credentials` backend option.
+ * @param {Page} page Page.
+ * @param {object} args Arguments.
+ * @param {string} args.hostname Host the cookie is set for.
+ * @param {(url: URL) => boolean} args.filter Function telling whether a request is recorded.
+ * @returns {Promise<() => Promise<(string | undefined)[]>>} Function returning the `Cookie` header
+ * of each recorded request sent so far.
+ */
+export const recordCookies = async (page, { hostname, filter }) => {
+  /** @type {Promise<string | undefined | null>[]} */
+  const cookies = [];
+  const context = page.context();
+  const [name, value] = PROXY_COOKIE.split('=');
+
+  await context.addCookies([
+    {
+      name,
+      value,
+      domain: hostname,
+      path: '/',
+      secure: true,
+      // The CMS is served from another site, so the cookie has to allow cross-site requests
+      sameSite: 'None',
+    },
+  ]);
+
+  context.on('request', (request) => {
+    if (filter(new URL(request.url()))) {
+      cookies.push(
+        request.allHeaders().then(
+          ({ cookie }) => cookie,
+          // A request sent as the test ends, e.g. a scheduled check, can’t be read once the page
+          // has closed; it’s left out rather than failing the test after it’s over
+          () => null,
+        ),
+      );
+    }
+  });
+
+  return async () =>
+    /** @type {(string | undefined)[]} */ (
+      (await Promise.all(cookies)).filter((cookie) => cookie !== null)
+    );
+};
+
+/**
  * Add scripts to the admin page, the way a site extends the CMS: after the CMS `<script>`, and
  * optionally before it. A single route has to add both, as a later route would fetch the original
  * page again. The dev server’s admin page loads the CMS as a module, which runs once the page is

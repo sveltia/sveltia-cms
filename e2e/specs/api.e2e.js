@@ -1,7 +1,7 @@
 import { openEntryPullRequest, post, WORKFLOW_CONFIG } from '../fixtures/configs/workflow.js';
 import { createPNG } from '../fixtures/files.js';
 import { addScripts, BASE_CONFIG, expect, test } from '../fixtures/test.js';
-import { getEditor, getEntryRows } from '../fixtures/ui.js';
+import { getCard, getEditor, getEntryRows, openBoard } from '../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -910,6 +910,49 @@ test.describe('CMS.registerEventListener()', () => {
       await expect
         .poll(() => page.evaluate(() => /** @type {any} */ (window).events))
         .toEqual(['prePublish second-post', 'postPublish second-post']);
+    });
+
+    test('reports carrying out a deletion as unpublishing, not publishing', async ({
+      cms,
+      github,
+      page,
+    }) => {
+      github.commit({ 'content/posts/second-post.md': post('Second Post', 'Going away.') });
+      openEntryPullRequest(github, {
+        slug: 'second-post',
+        files: { 'content/posts/second-post.md': null },
+        status: 'pending_deletion',
+      });
+      // Tells the handlers whether the entry is still published at the time they run
+      await page.exposeFunction('isPublished', () =>
+        github.readFile('content/posts/second-post.md') !== undefined ? 'published' : 'deleted',
+      );
+      await addScripts(page, {
+        after: `
+          window.events = [];
+          ['prePublish', 'postPublish', 'preUnpublish', 'postUnpublish'].forEach((name) => {
+            CMS.registerEventListener({
+              name,
+              handler: async ({ entry }) => {
+                const state = await window.isPublished();
+
+                window.events.push(name + ' ' + entry.get('slug') + ' ' + state);
+              },
+            });
+          });
+        `,
+      });
+      await cms.open();
+      await getCard(await openBoard(page), 'Second Post')
+        .getByRole('button', { name: 'Delete Entry' })
+        .click();
+      await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
+
+      await expect.poll(() => github.pullRequests[0].state).toBe('merged');
+      await expect
+        .poll(() => page.evaluate(() => /** @type {any} */ (window).events))
+        // Before the merge takes the entry off the branch, and after
+        .toEqual(['preUnpublish second-post published', 'postUnpublish second-post deleted']);
     });
   });
 });
