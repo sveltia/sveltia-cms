@@ -1,6 +1,6 @@
 # Contributing to Sveltia CMS
 
-Sveltia CMS is an open-source project, and we welcome contributions from the community. Donations are most welcome, as they help us to ensure the project’s long-term sustainability. We also encourage users to report bugs, as this helps us to improve the product quality.
+Sveltia CMS is an open-source project, and we welcome contributions from the community. Donations are most welcome, as they help us to ensure the project’s long-term sustainability. We also encourage users to report bugs, as this helps us to improve the product quality. Everyone taking part in the project is expected to follow our [Code of Conduct](https://github.com/sveltia/sveltia-cms/blob/main/CODE_OF_CONDUCT.md).
 
 ## Donations
 
