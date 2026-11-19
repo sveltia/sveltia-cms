@@ -1045,8 +1045,6 @@ deploy_preview:
   view: Vorschau ansehen
   # Shown while the site is still being built, with or without a URL to open yet
   building: Die Vorschau wird noch erstellt.
-  # Shown when the build failed, so no preview is available
-  failed: Die Vorschau konnte nicht erstellt werden.
   # Shown briefly while the CI/CD provider is being queried
   checking: Vorschau wird gesucht…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up

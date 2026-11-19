@@ -971,8 +971,6 @@ deploy_preview:
   view: 미리 보기 열기
   # Shown while the site is still being built, with or without a URL to open yet
   building: 미리 보기를 아직 빌드하고 있습니다.
-  # Shown when the build failed, so no preview is available
-  failed: 미리 보기를 빌드하지 못했습니다.
   # Shown briefly while the CI/CD provider is being queried
   checking: 미리 보기 확인 중…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up

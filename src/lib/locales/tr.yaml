@@ -1017,8 +1017,6 @@ deploy_preview:
   view: Önizlemeyi Görüntüle
   # Shown while the site is still being built, with or without a URL to open yet
   building: Önizleme hâlâ oluşturuluyor.
-  # Shown when the build failed, so no preview is available
-  failed: Önizleme oluşturulamadı.
   # Shown briefly while the CI/CD provider is being queried
   checking: Önizleme kontrol ediliyor…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up

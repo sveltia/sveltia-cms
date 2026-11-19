@@ -996,8 +996,6 @@ deploy_preview:
   view: 檢視預覽
   # Shown while the site is still being built, with or without a URL to open yet
   building: 預覽仍在建置中。
-  # Shown when the build failed, so no preview is available
-  failed: 無法建置預覽。
   # Shown briefly while the CI/CD provider is being queried
   checking: 正在檢查預覽……
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up

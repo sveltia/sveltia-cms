@@ -1321,8 +1321,6 @@ deploy_preview:
   view: Ver la vista previa
   # Shown while the site is still being built, with or without a URL to open yet
   building: La vista previa aún se está generando.
-  # Shown when the build failed, so no preview is available
-  failed: No se ha podido generar la vista previa.
   # Shown briefly while the CI/CD provider is being queried
   checking: Buscando una vista previa…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up

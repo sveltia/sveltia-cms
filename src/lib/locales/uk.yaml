@@ -1115,8 +1115,6 @@ deploy_preview:
   view: Відкрити попередній перегляд
   # Shown while the site is still being built, with or without a URL to open yet
   building: Попередній перегляд ще збирається.
-  # Shown when the build failed, so no preview is available
-  failed: Не вдалося зібрати попередній перегляд.
   # Shown briefly while the CI/CD provider is being queried
   checking: Перевірка наявності попереднього перегляду…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up

@@ -1045,8 +1045,6 @@ deploy_preview:
   view: Mostra la previsualització
   # Shown while the site is still being built, with or without a URL to open yet
   building: La previsualització encara s’està generant.
-  # Shown when the build failed, so no preview is available
-  failed: No s’ha pogut generar la previsualització.
   # Shown briefly while the CI/CD provider is being queried
   checking: S’està cercant una previsualització…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up

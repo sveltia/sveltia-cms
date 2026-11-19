@@ -1045,8 +1045,6 @@ deploy_preview:
   view: Vis forhåndsvisning
   # Shown while the site is still being built, with or without a URL to open yet
   building: Forhåndsvisningen bygges stadig.
-  # Shown when the build failed, so no preview is available
-  failed: Forhåndsvisningen kunne ikke bygges.
   # Shown briefly while the CI/CD provider is being queried
   checking: Søger efter forhåndsvisning…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up

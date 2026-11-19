@@ -1045,8 +1045,6 @@ deploy_preview:
   view: Näytä esikatselu
   # Shown while the site is still being built, with or without a URL to open yet
   building: Esikatselua rakennetaan vielä.
-  # Shown when the build failed, so no preview is available
-  failed: Esikatselua ei voitu rakentaa.
   # Shown briefly while the CI/CD provider is being queried
   checking: Tarkistetaan esikatselua…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up

@@ -133,7 +133,10 @@ describe('PreviewLinkButton', () => {
     await expect.element(button).toBeDisabled();
     await expect
       .element(button)
-      .toHaveAttribute('aria-description', 'The preview couldn’t be built.');
+      .toHaveAttribute(
+        'aria-description',
+        'The preview couldn’t be built. This isn’t necessarily caused by your changes. If the problem persists, contact your site administrator.',
+      );
   });
 
   test('checks whether the page is served', async () => {

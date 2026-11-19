@@ -1045,8 +1045,6 @@ deploy_preview:
   view: Преглед
   # Shown while the site is still being built, with or without a URL to open yet
   building: Прегледът все още се изгражда.
-  # Shown when the build failed, so no preview is available
-  failed: Прегледът не можа да бъде изграден.
   # Shown briefly while the CI/CD provider is being queried
   checking: Проверка за преглед…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up

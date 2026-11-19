@@ -1357,8 +1357,9 @@ deploy_preview:
   view: View Preview
   # Shown while the site is still being built, with or without a URL to open yet
   building: The preview is still being built.
-  # Shown when the build failed, so no preview is available
-  failed: The preview couldn’t be built.
+  # Shown when the build failed, so no preview is available. The failure may lie in the site’s own
+  # code rather than the entry, so the editor is told not to assume it’s theirs, and who to ask
+  build_failed: The preview couldn’t be built. This isn’t necessarily caused by your changes. If the problem persists, contact your site administrator.
   # Shown briefly while the CI/CD provider is being queried
   checking: Checking for a preview…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up

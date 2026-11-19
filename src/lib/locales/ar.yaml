@@ -1218,8 +1218,6 @@ deploy_preview:
   view: عرض المعاينة
   # Shown while the site is still being built, with or without a URL to open yet
   building: ما زالت المعاينة قيد الإنشاء.
-  # Shown when the build failed, so no preview is available
-  failed: تعذر إنشاء المعاينة.
   # Shown briefly while the CI/CD provider is being queried
   checking: جارٍ التحقق من وجود معاينة…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up

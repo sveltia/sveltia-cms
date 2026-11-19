@@ -1299,8 +1299,9 @@ deploy_preview:
   view: プレビューを見る
   # Shown while the site is still being built, with or without a URL to open yet
   building: プレビューをビルド中です。
-  # Shown when the build failed, so no preview is available
-  failed: プレビューをビルドできませんでした。
+  # Shown when the build failed, so no preview is available. The failure may lie in the site’s own
+  # code rather than the entry, so the editor is told not to assume it’s theirs, and who to ask
+  build_failed: プレビューをビルドできませんでした。変更内容が原因とは限りません。問題が解決しない場合は、サイト管理者にお問い合わせください。
   # Shown briefly while the CI/CD provider is being queried
   checking: プレビューを確認中…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up

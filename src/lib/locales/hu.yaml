@@ -1362,8 +1362,6 @@ deploy_preview:
   view: Előnézet megtekintése
   # Shown while the site is still being built, with or without a URL to open yet
   building: Az előnézet még készül.
-  # Shown when the build failed, so no preview is available
-  failed: Nem sikerült elkészíteni az előnézetet.
   # Shown briefly while the CI/CD provider is being queried
   checking: Előnézet keresése…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up

@@ -1078,8 +1078,6 @@ deploy_preview:
   view: Zobrazit náhled
   # Shown while the site is still being built, with or without a URL to open yet
   building: Náhled se stále sestavuje.
-  # Shown when the build failed, so no preview is available
-  failed: Náhled se nepodařilo sestavit.
   # Shown briefly while the CI/CD provider is being queried
   checking: Kontrola náhledu…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up

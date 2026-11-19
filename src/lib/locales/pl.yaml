@@ -1113,8 +1113,6 @@ deploy_preview:
   view: Zobacz podgląd
   # Shown while the site is still being built, with or without a URL to open yet
   building: Podgląd jest wciąż budowany.
-  # Shown when the build failed, so no preview is available
-  failed: Nie udało się zbudować podglądu.
   # Shown briefly while the CI/CD provider is being queried
   checking: Sprawdzanie podglądu…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up

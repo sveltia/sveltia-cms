@@ -1038,8 +1038,6 @@ deploy_preview:
   view: مشاهده پیش‌نمایش
   # Shown while the site is still being built, with or without a URL to open yet
   building: پیش‌نمایش هنوز در حال ساخت است.
-  # Shown when the build failed, so no preview is available
-  failed: ساخت پیش‌نمایش امکان‌پذیر نبود.
   # Shown briefly while the CI/CD provider is being queried
   checking: در حال بررسی پیش‌نمایش…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up

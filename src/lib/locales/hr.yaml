@@ -1086,8 +1086,6 @@ deploy_preview:
   view: Prikaži pretpregled
   # Shown while the site is still being built, with or without a URL to open yet
   building: Pretpregled se još izgrađuje.
-  # Shown when the build failed, so no preview is available
-  failed: Pretpregled nije moguće izgraditi.
   # Shown briefly while the CI/CD provider is being queried
   checking: Provjera pretpregleda…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up

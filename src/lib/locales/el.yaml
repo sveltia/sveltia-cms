@@ -1045,8 +1045,6 @@ deploy_preview:
   view: Προβολή προεπισκόπησης
   # Shown while the site is still being built, with or without a URL to open yet
   building: Η προεπισκόπηση δημιουργείται ακόμη.
-  # Shown when the build failed, so no preview is available
-  failed: Δεν ήταν δυνατή η δημιουργία της προεπισκόπησης.
   # Shown briefly while the CI/CD provider is being queried
   checking: Έλεγχος για προεπισκόπηση…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up

@@ -1,4 +1,8 @@
 /**
+ * @import { DeployState } from '$lib/types/private';
+ */
+
+/**
  * How long to wait between re-checks while a build is pending, in milliseconds. The interval is
  * fixed rather than widening: a build finishing is what the editor is waiting on, so noticing it
  * late is worse than the cost of asking, and one request per check keeps that cost small.
@@ -28,3 +32,14 @@ export const DEPLOY_TTL = 30000;
 
 /** How long a page liveness result is cached per URL, in milliseconds. */
 export const PING_TTL = 30000;
+
+/**
+ * Map of deploy states to the i18n string keys of the sentences describing them, for the states an
+ * editor needs explained. A finished build needs no words, and an unknown state has nothing to say.
+ * @type {Partial<Record<DeployState, string>>}
+ */
+export const DEPLOY_STATE_MESSAGES = {
+  checking: 'deploy_preview.checking',
+  pending: 'deploy_preview.building',
+  error: 'deploy_preview.build_failed',
+};

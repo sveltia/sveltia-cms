@@ -1214,8 +1214,6 @@ deploy_preview:
   view: Zobraziť náhľad
   # Shown while the site is still being built, with or without a URL to open yet
   building: Náhľad sa ešte pripravuje.
-  # Shown when the build failed, so no preview is available
-  failed: Náhľad sa nepodarilo pripraviť.
   # Shown briefly while the CI/CD provider is being queried
   checking: Hľadá sa náhľad…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
