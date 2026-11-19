@@ -1,18 +1,7 @@
-# cSpell:ignore gcqx vjpf minimatch picomatch
-
 allowBuilds:
   unrs-resolver: false
 
 engineStrict: true
-
-auditConfig:
-  ignoreGhsas:
-    # minimatch: Only used by some dev dependencies; no patch available for older versions
-    # https://github.com/advisories/GHSA-g3hv-75wg-m249
-    - GHSA-g3hv-75wg-m249
-    # picomatch: Only used by dev dependencies; no patch available yet
-    # https://github.com/advisories/GHSA-fc5q-39xc-vjpf
-    - GHSA-fc5q-39xc-vjpf
 
 minimumReleaseAge: 1440
 
