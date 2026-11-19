@@ -17,7 +17,7 @@ import {
   setAssets,
   setEntries,
 } from '$lib/test/config';
-import { waitForToastsToHide } from '$lib/test/toast';
+import { getShownToastAlert, getShownToastText, waitForToastsToHide } from '$lib/test/toast';
 
 import DetailsOverlay from './details-overlay.svelte';
 
@@ -318,14 +318,7 @@ describe('DetailsOverlay', () => {
       await page.getByRole('button', { name: 'Delete Asset' }).click();
       await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
       await vi.waitFor(() => expect(deleteAssets).toHaveBeenCalledWith([textAsset]));
-      await expect
-        .poll(() =>
-          document
-            .querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error')
-            ?.textContent?.replace(/\s+/g, ' ')
-            .trim(),
-        )
-        .toBe('error Error Delete failed.');
+      await expect.poll(() => getShownToastText('error')).toBe('error Error Delete failed.');
       expect(error).toHaveBeenCalledWith(new Error('offline'));
       // The asset hasn’t been deleted, so the overlay isn’t left
       expect(window.location.hash).toBe('#/assets/static/uploads/notes.txt');
@@ -347,9 +340,7 @@ describe('DetailsOverlay', () => {
       await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
       await vi.waitFor(() => expect(deleteAssets).toHaveBeenCalledWith([textAsset]));
       await expect.element(page.getByRole('alertdialog')).not.toBeInTheDocument();
-      expect(
-        document.querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error'),
-      ).toBeNull();
+      expect(getShownToastAlert('error')).toBeNull();
       expect(error).not.toHaveBeenCalled();
       expect(window.location.hash).toBe('#/assets/static/uploads/notes.txt');
     } finally {

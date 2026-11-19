@@ -18,7 +18,7 @@ import {
   setEntries,
 } from '$lib/test/config';
 import { expectFileNameSelected } from '$lib/test/dialog';
-import { waitForToastsToHide } from '$lib/test/toast';
+import { getShownToastAlert, getShownToastText, waitForToastsToHide } from '$lib/test/toast';
 
 import RenameDialog from './rename-dialog.svelte';
 
@@ -306,14 +306,7 @@ describe('RenameDialog', () => {
       await dialog.getByRole('button', { name: 'Rename' }).click();
 
       await vi.waitFor(() => expect(moveAssets).toHaveBeenCalledOnce());
-      await expect
-        .poll(() =>
-          document
-            .querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error')
-            ?.textContent?.replace(/\s+/g, ' ')
-            .trim(),
-        )
-        .toBe('error Error Rename failed.');
+      await expect.poll(() => getShownToastText('error')).toBe('error Error Rename failed.');
       expect(error).toHaveBeenCalledWith(new Error('offline'));
       // The asset keeps its name, so the URL isn’t updated
       expect(window.location.hash).toBe('#/assets/static/uploads/a.png');
@@ -345,9 +338,7 @@ describe('RenameDialog', () => {
       await new Promise((resolve) => {
         setTimeout(resolve, 100);
       });
-      expect(
-        document.querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error'),
-      ).toBeNull();
+      expect(getShownToastAlert('error')).toBeNull();
       expect(error).not.toHaveBeenCalled();
       expect(window.location.hash).toBe('#/assets/static/uploads/a.png');
     } finally {

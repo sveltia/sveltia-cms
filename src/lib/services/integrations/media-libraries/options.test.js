@@ -4,7 +4,9 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { cmsConfig } from '$lib/services/config/state';
 import {
   findLibraryOptions,
+  findPreferredLibraryName,
   getPreferredLibraryNames,
+  getUploadableServiceEntries,
   mergeLibraryOptions,
   resolveLibraryOptions,
 } from '$lib/services/integrations/media-libraries/options';
@@ -354,5 +356,60 @@ describe('getPreferredLibraryNames()', () => {
         media_library: { name: 'aws_s3', default: false },
       }),
     ).toEqual(['aws_s3']);
+  });
+});
+
+describe('getUploadableServiceEntries()', () => {
+  test('leaves out the services that can’t upload files', () => {
+    const upload = vi.fn();
+
+    expect(
+      getUploadableServiceEntries([
+        ['cloudinary', {}],
+        ['aws_s3', { upload }],
+      ]),
+    ).toEqual([['aws_s3', { upload }]]);
+  });
+});
+
+describe('findPreferredLibraryName()', () => {
+  const cloudServiceEntries = [
+    ['cloudinary', {}],
+    ['aws_s3', { upload: vi.fn() }],
+  ];
+
+  test('returns the first marked library that’s offered', () => {
+    expect(
+      findPreferredLibraryName({
+        preferredLibraryNames: ['gcs', 'default', 'aws_s3'],
+        repositoryAvailable: true,
+        cloudServiceEntries,
+      }),
+    ).toBe('default');
+    expect(
+      findPreferredLibraryName({
+        preferredLibraryNames: ['default', 'cloudinary'],
+        repositoryAvailable: false,
+        cloudServiceEntries,
+      }),
+    ).toBe('cloudinary');
+    expect(
+      findPreferredLibraryName({
+        preferredLibraryNames: [],
+        repositoryAvailable: true,
+        cloudServiceEntries,
+      }),
+    ).toBeUndefined();
+  });
+
+  test('skips a service that can’t upload when files are to be uploaded', () => {
+    expect(
+      findPreferredLibraryName({
+        preferredLibraryNames: ['cloudinary', 'aws_s3'],
+        repositoryAvailable: false,
+        cloudServiceEntries,
+        uploadRequired: true,
+      }),
+    ).toBe('aws_s3');
   });
 });

@@ -40,7 +40,7 @@ import {
   setEntries,
 } from '$lib/test/config';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
-import { waitForToastsToHide } from '$lib/test/toast';
+import { getShownToastText, waitForToastsToHide } from '$lib/test/toast';
 
 import Toolbar from './toolbar.svelte';
 
@@ -116,16 +116,6 @@ const renderToolbar = async (draftProps = {}, props = {}) => {
  */
 const renderExisting = (draftProps = {}) =>
   renderToolbar({ isNew: false, originalEntry: helloEntry, ...draftProps });
-
-/**
- * Get the text of the toast being shown, if any.
- * @returns {string | undefined} Text.
- */
-const getShownToastText = () =>
-  document
-    .querySelector('.sui.toast:not([aria-hidden="true"])')
-    ?.textContent?.replace(/\s+/g, ' ')
-    .trim();
 
 /**
  * Open the editor options menu.
@@ -288,7 +278,7 @@ describe('Toolbar', () => {
     await page.getByRole('button', { name: 'Show Errors' }).click();
     expect(entryEditorSettings.current?.sidebarPanel).toBe('validation');
     expect(sidebarSheetPanel.current).toBeNull();
-    await expect.poll(getShownToastText).toBeUndefined();
+    await expect.poll(() => getShownToastText()).toBeUndefined();
   });
 
   test('puts the validation error toast away by itself', async () => {
@@ -1151,7 +1141,7 @@ describe('Toolbar', () => {
     await renderExisting();
 
     listItemClipboardToast.current = { id: 1, show: true, status: 'success', message: 'Copied.' };
-    await expect.poll(getShownToastText).toBe('check_circle Success Copied.');
+    await expect.poll(() => getShownToastText()).toBe('check_circle Success Copied.');
     await waitForToastsToHide();
     expect(listItemClipboardToast.current.show).toBe(false);
   });
@@ -1167,7 +1157,7 @@ describe('Toolbar', () => {
       count: 1,
       sourceLanguage: undefined,
     };
-    await expect.poll(getShownToastText).toBe('error Error Nothing to copy.');
+    await expect.poll(() => getShownToastText()).toBe('error Error Nothing to copy.');
 
     // An unknown language is named by its code
     copyFromLocaleToast.current = {
@@ -1179,7 +1169,7 @@ describe('Toolbar', () => {
       sourceLanguage: 'xx',
     };
     await expect
-      .poll(getShownToastText)
+      .poll(() => getShownToastText())
       .toBe('check_circle Success Field copied from \u2068xx\u2069.');
     await waitForToastsToHide();
     expect(copyFromLocaleToast.current.show).toBe(false);

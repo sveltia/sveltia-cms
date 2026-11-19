@@ -22,7 +22,7 @@ import {
   setAssets,
   setEntries,
 } from '$lib/test/config';
-import { waitForToastsToHide } from '$lib/test/toast';
+import { getShownToastAlert, waitForToastsToHide } from '$lib/test/toast';
 
 import DeleteEntriesDialog from './delete-entries-dialog.svelte';
 
@@ -246,9 +246,7 @@ describe('DeleteEntriesDialog', () => {
     await new Promise((resolve) => {
       setTimeout(resolve, 100);
     });
-    expect(
-      document.querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error'),
-    ).toBeNull();
+    expect(getShownToastAlert('error')).toBeNull();
     expect(error).not.toHaveBeenCalled();
     expect(selectedEntries.current).toEqual([entries[0]]);
   });

@@ -174,6 +174,8 @@
   const enabledExternalServiceEntries = $derived(
     [...cloudServiceEntries, ...enabledStockAssetProviderEntries].sort(sortServicesByName),
   );
+  /** Names of the media libraries marked with the `default` option, in order of precedence. */
+  const preferredLibraryNames = $derived(getPreferredLibraryNames(fieldConfig));
   /**
    * Name of the selected location: the first location marked with the `default` option that’s
    * offered, or else the first location offered, until the user picks another, and again whenever
@@ -188,7 +190,7 @@
       hasPendingFiles: untrack(() => !!pendingFiles.length),
       cloudServiceEntries,
       externalServiceEntries: enabledExternalServiceEntries,
-      preferredLibraryNames: getPreferredLibraryNames(fieldConfig),
+      preferredLibraryNames,
     }),
   );
   const isDefaultLibrary = $derived(libraryName.startsWith('default-'));
@@ -446,6 +448,7 @@
       libraryName,
       cloudServiceEntries,
       canUpload: !!externalAssetsPanel?.canUpload(),
+      preferredLibraryNames,
     });
 
     if (action.type === 'upload') {

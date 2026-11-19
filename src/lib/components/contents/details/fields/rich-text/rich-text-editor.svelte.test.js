@@ -11,7 +11,7 @@ import { createMockImageFile, initTestConfig } from '$lib/test/config';
 import { createMockDraft } from '$lib/test/draft';
 import { createMockCloudService, createMockExternalAsset } from '$lib/test/factories';
 import { renderFieldEditor } from '$lib/test/field.svelte';
-import { waitForToastsToHide } from '$lib/test/toast';
+import { getShownToastText, waitForToastsToHide } from '$lib/test/toast';
 
 import RichTextEditor from './rich-text-editor.svelte';
 
@@ -647,14 +647,7 @@ describe('RichTextEditor', () => {
 
       const { props, draft } = await dropImage({ default: false });
 
-      await expect
-        .poll(() =>
-          document
-            .querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error')
-            ?.textContent?.replace(/\s+/g, ' ')
-            .trim(),
-        )
-        .toBe('error Error Upload failed.');
+      await expect.poll(() => getShownToastText('error')).toBe('error Error Upload failed.');
       expect(page.getByRole('dialog', { name: 'Select Image' }).query()).toBeNull();
       expect(props.currentValue).toBe('Hello');
       expect(draft.files).toEqual({});

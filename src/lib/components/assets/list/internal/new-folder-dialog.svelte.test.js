@@ -12,7 +12,7 @@ import {
 import { selectedSubfolderPath } from '$lib/services/assets/subfolders';
 import { showNewSubfolderDialog } from '$lib/services/assets/view';
 import { createMockAsset, initTestConfig, setAssets } from '$lib/test/config';
-import { waitForToastsToHide } from '$lib/test/toast';
+import { getShownToastAlert, getShownToastText, waitForToastsToHide } from '$lib/test/toast';
 
 import NewFolderDialog from './new-folder-dialog.svelte';
 
@@ -159,18 +159,11 @@ describe('NewFolderDialog', () => {
     );
     // The commit can take a while, and the dialog is gone by now, so a toast says it’s under way
     await expect
-      .poll(() =>
-        document
-          .querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.info')
-          ?.textContent?.replace(/\s+/g, ' ')
-          .trim(),
-      )
+      .poll(() => getShownToastText('info'))
       .toBe('info Information Creating the folder…');
 
     resolve();
-    await expect
-      .poll(() => document.querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.info'))
-      .toBeNull();
+    await expect.poll(() => getShownToastAlert('info')).toBeNull();
     expect(window.location.hash).toBe('#/assets/static/uploads');
   }, 15000);
 
@@ -209,12 +202,7 @@ describe('NewFolderDialog', () => {
       await vi.waitFor(() => expect(createSubfolder).toHaveBeenCalledWith('static/uploads/new'));
       // A toast stays in the DOM while hidden, so look for the one that is shown
       await expect
-        .poll(() =>
-          document
-            .querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error')
-            ?.textContent?.replace(/\s+/g, ' ')
-            .trim(),
-        )
+        .poll(() => getShownToastText('error'))
         .toBe('error Error Couldn’t create the folder.');
       expect(window.location.hash).toBe('#/assets/static/uploads');
       await waitForToastsToHide();

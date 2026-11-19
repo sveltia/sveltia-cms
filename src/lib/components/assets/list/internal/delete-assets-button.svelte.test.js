@@ -6,7 +6,7 @@ import AssetUpdatesToast from '$lib/components/assets/shared/asset-updates-toast
 import { deleteAssets } from '$lib/services/assets/data/delete';
 import { lockedBranch } from '$lib/services/backends/branch-access';
 import { createMockAsset, initTestConfig, setAssets } from '$lib/test/config';
-import { waitForToastsToHide } from '$lib/test/toast';
+import { getShownToastText, waitForToastsToHide } from '$lib/test/toast';
 
 import DeleteAssetsButton from './delete-assets-button.svelte';
 
@@ -56,14 +56,7 @@ describe('DeleteAssetsButton (repository)', () => {
       await page.getByRole('button', { name: 'Delete Selected Assets' }).click();
       await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
       await vi.waitFor(() => expect(deleteAssets).toHaveBeenCalledWith(assets));
-      await expect
-        .poll(() =>
-          document
-            .querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error')
-            ?.textContent?.replace(/\s+/g, ' ')
-            .trim(),
-        )
-        .toBe('error Error Delete failed.');
+      await expect.poll(() => getShownToastText('error')).toBe('error Error Delete failed.');
       expect(onDelete).not.toHaveBeenCalled();
       await waitForToastsToHide();
     } finally {

@@ -243,23 +243,28 @@ describe('getDroppedFileDestination', () => {
   ];
 
   test('goes to the repository unless a cloud service is marked as the default', () => {
-    expect(getDroppedFileDestination({ repositoryAvailable: true, cloudServiceEntries })).toBe(
-      'repository',
-    );
+    // Without a mark, the repository is only a fallback, as a cloud service could take the files
+    expect(getDroppedFileDestination({ repositoryAvailable: true, cloudServiceEntries })).toEqual({
+      destination: 'repository',
+      ambiguous: true,
+    });
+    expect(
+      getDroppedFileDestination({ repositoryAvailable: true, cloudServiceEntries: [] }),
+    ).toEqual({ destination: 'repository', ambiguous: false });
     expect(
       getDroppedFileDestination({
         repositoryAvailable: true,
         cloudServiceEntries,
         preferredLibraryNames: ['default', 'r2'],
       }),
-    ).toBe('repository');
+    ).toEqual({ destination: 'repository', ambiguous: false });
     expect(
       getDroppedFileDestination({
         repositoryAvailable: true,
         cloudServiceEntries,
         preferredLibraryNames: ['r2'],
       }),
-    ).toBe('cloud');
+    ).toEqual({ destination: 'cloud', ambiguous: false });
   });
 
   test('skips a marked location that can’t take the files', () => {
@@ -270,25 +275,32 @@ describe('getDroppedFileDestination', () => {
         cloudServiceEntries,
         preferredLibraryNames: ['cloudinary', 'gcs'],
       }),
-    ).toBe('repository');
+    ).toEqual({ destination: 'repository', ambiguous: true });
     expect(
       getDroppedFileDestination({
         repositoryAvailable: false,
         cloudServiceEntries,
         preferredLibraryNames: ['default', 's3'],
       }),
-    ).toBe('cloud');
+    ).toEqual({ destination: 'cloud', ambiguous: false });
   });
 
   test('goes to a cloud service when the repository is unavailable', () => {
-    expect(getDroppedFileDestination({ repositoryAvailable: false, cloudServiceEntries })).toBe(
-      'cloud',
-    );
+    expect(getDroppedFileDestination({ repositoryAvailable: false, cloudServiceEntries })).toEqual({
+      destination: 'cloud',
+      ambiguous: true,
+    });
+    expect(
+      getDroppedFileDestination({
+        repositoryAvailable: false,
+        cloudServiceEntries: cloudServiceEntries.slice(0, 2),
+      }),
+    ).toEqual({ destination: 'cloud', ambiguous: false });
     expect(
       getDroppedFileDestination({
         repositoryAvailable: false,
         cloudServiceEntries: [['cloudinary', /** @type {any} */ ({})]],
       }),
-    ).toBeUndefined();
+    ).toEqual({ destination: undefined, ambiguous: false });
   });
 });

@@ -11,7 +11,7 @@ import {
 } from '$lib/services/assets/folders';
 import { renamingSubfolder, selectedSubfolderPath } from '$lib/services/assets/subfolders';
 import { createMockAsset, initTestConfig, setAssets } from '$lib/test/config';
-import { waitForToastsToHide } from '$lib/test/toast';
+import { getShownToastAlert, getShownToastText, waitForToastsToHide } from '$lib/test/toast';
 
 import RenameFolderDialog from './rename-folder-dialog.svelte';
 
@@ -163,12 +163,7 @@ describe('RenameFolderDialog', () => {
 
       await vi.waitFor(() => expect(renameSubfolder).toHaveBeenCalledOnce());
       await expect
-        .poll(() =>
-          document
-            .querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error')
-            ?.textContent?.replace(/\s+/g, ' ')
-            .trim(),
-        )
+        .poll(() => getShownToastText('error'))
         .toBe('error Error Couldn’t rename the folder.');
       await waitForToastsToHide();
     } finally {
@@ -191,12 +186,8 @@ describe('RenameFolderDialog', () => {
       await dialog.getByRole('button', { name: 'Rename' }).click();
 
       await vi.waitFor(() => expect(renameSubfolder).toHaveBeenCalledOnce());
-      await expect
-        .poll(() => document.querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert'))
-        .toBeNull();
-      expect(
-        document.querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error'),
-      ).toBeNull();
+      await expect.poll(() => getShownToastAlert()).toBeNull();
+      expect(getShownToastAlert('error')).toBeNull();
       expect(error).not.toHaveBeenCalled();
     } finally {
       error.mockRestore();

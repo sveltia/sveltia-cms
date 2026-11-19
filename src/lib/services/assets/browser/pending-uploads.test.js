@@ -87,6 +87,18 @@ describe('getPendingUploadAction()', () => {
     ).toEqual({ type: 'switch', serviceId: 'cloudflare-r2' });
   });
 
+  test('switches to the service marked as the default that can upload', () => {
+    // Cloudinary is marked first, but can’t take the files
+    expect(
+      getPendingUploadAction({
+        ...base,
+        libraryName: 'cloudinary',
+        canUpload: false,
+        preferredLibraryNames: ['default', 'cloudinary', 'cloudflare-r2'],
+      }),
+    ).toEqual({ type: 'switch', serviceId: 'cloudflare-r2' });
+  });
+
   test('rejects the files when no cloud service can upload', () => {
     expect(
       getPendingUploadAction({

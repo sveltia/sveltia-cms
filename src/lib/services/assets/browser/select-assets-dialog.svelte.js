@@ -1,5 +1,6 @@
 import { getFolderPublicPath } from '$lib/services/assets/info';
 import { canBrowseSubfolders, getRelativePath } from '$lib/services/assets/subfolders';
+import { findPreferredLibraryName } from '$lib/services/integrations/media-libraries/options';
 import {
   allStockAssetProviders,
   getStockAssetMediaLibraryOptions,
@@ -105,13 +106,12 @@ export const getInitialLibraryName = ({
 
   // A cloud storage service isn’t offered when a folder is to be selected, or when it’s disabled
   // for the field. Files waiting to be uploaded need a service that can take them.
-  const preferredName = preferredLibraryNames.find((name) =>
-    name === 'default'
-      ? !!firstDefaultLibraryName
-      : cloudServiceEntries.some(
-          ([serviceId, { upload }]) => serviceId === name && (!hasPendingFiles || !!upload),
-        ),
-  );
+  const preferredName = findPreferredLibraryName({
+    preferredLibraryNames,
+    repositoryAvailable: !!firstDefaultLibraryName,
+    cloudServiceEntries,
+    uploadRequired: hasPendingFiles,
+  });
 
   if (preferredName && preferredName !== 'default') {
     return preferredName;

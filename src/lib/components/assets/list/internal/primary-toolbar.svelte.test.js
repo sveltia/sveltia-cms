@@ -13,7 +13,7 @@ import { env } from '$lib/services/user/env.svelte';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import { createMockAsset, createMockImageFile, initTestConfig, setAssets } from '$lib/test/config';
 import { createMockAssetFolder } from '$lib/test/factories';
-import { waitForToastsToHide } from '$lib/test/toast';
+import { getShownToastAlert, getShownToastText, waitForToastsToHide } from '$lib/test/toast';
 
 import PrimaryToolbar from './primary-toolbar.svelte';
 
@@ -140,14 +140,7 @@ describe('PrimaryToolbar', () => {
       await page.getByRole('button', { name: 'Delete Selected Assets' }).click();
       await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
       await vi.waitFor(() => expect(deleteAssets).toHaveBeenCalledWith(assets));
-      await expect
-        .poll(() =>
-          document
-            .querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error')
-            ?.textContent?.replace(/\s+/g, ' ')
-            .trim(),
-        )
-        .toBe('error Error Delete failed.');
+      await expect.poll(() => getShownToastText('error')).toBe('error Error Delete failed.');
       expect(error).toHaveBeenCalledWith(new Error('offline'));
       await waitForToastsToHide();
     } finally {
@@ -171,9 +164,7 @@ describe('PrimaryToolbar', () => {
       await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
       await vi.waitFor(() => expect(deleteAssets).toHaveBeenCalledWith(assets));
       await expect.element(page.getByRole('alertdialog')).not.toBeInTheDocument();
-      expect(
-        document.querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error'),
-      ).toBeNull();
+      expect(getShownToastAlert('error')).toBeNull();
       expect(error).not.toHaveBeenCalled();
     } finally {
       error.mockRestore();

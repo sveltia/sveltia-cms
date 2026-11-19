@@ -1,3 +1,8 @@
+import {
+  findPreferredLibraryName,
+  getUploadableServiceEntries,
+} from '$lib/services/integrations/media-libraries/options';
+
 /**
  * @import { MediaLibraryService } from '$lib/types/private';
  */
@@ -22,6 +27,9 @@
  * @param {string} args.libraryName Name of the selected location.
  * @param {[string, MediaLibraryService][]} args.cloudServiceEntries Cloud storage services offered.
  * @param {boolean} args.canUpload Whether the panel of the selected service can upload files now.
+ * @param {string[]} [args.preferredLibraryNames] Names of the media libraries marked with the
+ * `default` option, in order of precedence. A marked service that can upload is switched to first,
+ * as the files were dropped for it.
  * @returns {PendingUploadAction} Action to take: `upload` the files to the selected service,
  * `switch` to another service, `reject` the files, or `wait` for the dialog to open or for the
  * credentials, or with nothing to upload.
@@ -32,6 +40,7 @@ export const getPendingUploadAction = ({
   libraryName,
   cloudServiceEntries,
   canUpload,
+  preferredLibraryNames = [],
 }) => {
   if (!pendingFileCount) {
     return { type: 'wait' };
@@ -49,7 +58,13 @@ export const getPendingUploadAction = ({
   }
 
   // Cloudinary, for one, only takes files through its own widget
-  const [serviceId] = cloudServiceEntries.find(([, { upload }]) => !!upload) ?? [];
+  const serviceId =
+    findPreferredLibraryName({
+      preferredLibraryNames,
+      repositoryAvailable: false,
+      cloudServiceEntries,
+      uploadRequired: true,
+    }) ?? getUploadableServiceEntries(cloudServiceEntries)[0]?.[0];
 
   return serviceId ? { type: 'switch', serviceId } : { type: 'reject' };
 };

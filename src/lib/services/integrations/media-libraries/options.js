@@ -3,6 +3,7 @@ import { isObject } from '@sveltia/utils/object';
 import { cmsConfig } from '$lib/services/config/state';
 
 /**
+ * @import { MediaLibraryService } from '$lib/types/private';
  * @import { CmsConfig, MediaField, MediaLibraries } from '$lib/types/public';
  */
 
@@ -128,4 +129,43 @@ export const getPreferredLibraryNames = (fieldConfig) => {
 
     return isObject(options) && options.default === true;
   });
+};
+
+/**
+ * Get the cloud storage services that can take files from the CMS. A service without an upload
+ * function, like Cloudinary, only takes files through its own widget.
+ * @param {[string, MediaLibraryService][]} cloudServiceEntries Cloud storage services.
+ * @returns {[string, MediaLibraryService][]} Services that can upload files.
+ */
+export const getUploadableServiceEntries = (cloudServiceEntries) =>
+  cloudServiceEntries.filter(([, { upload }]) => !!upload);
+
+/**
+ * Find the first media library marked with the `default` option that’s offered.
+ * @param {object} args Arguments.
+ * @param {string[]} args.preferredLibraryNames Names of the media libraries marked with the
+ * `default` option, in order of precedence, as returned by {@link getPreferredLibraryNames}.
+ * `default` stands for the repository.
+ * @param {boolean} args.repositoryAvailable Whether a repository folder is offered.
+ * @param {[string, MediaLibraryService][]} args.cloudServiceEntries Cloud storage services offered.
+ * @param {boolean} [args.uploadRequired] Whether the library has to take files to be uploaded,
+ * which leaves out a cloud storage service that can’t upload them.
+ * @returns {string | undefined} Library name, or `undefined` if none of the marked libraries is
+ * offered.
+ */
+export const findPreferredLibraryName = ({
+  preferredLibraryNames,
+  repositoryAvailable,
+  cloudServiceEntries,
+  uploadRequired = false,
+}) => {
+  const serviceEntries = uploadRequired
+    ? getUploadableServiceEntries(cloudServiceEntries)
+    : cloudServiceEntries;
+
+  return preferredLibraryNames.find((name) =>
+    name === 'default'
+      ? repositoryAvailable
+      : serviceEntries.some(([serviceId]) => serviceId === name),
+  );
 };

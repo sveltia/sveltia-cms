@@ -9,7 +9,7 @@ import { processedAssets } from '$lib/services/assets/process';
 import { uploadingAssets } from '$lib/services/assets/state';
 import { showAssetOverlay } from '$lib/services/assets/view';
 import { createMockAsset, initTestConfig, setAssets } from '$lib/test/config';
-import { waitForToastsToHide } from '$lib/test/toast';
+import { getShownToastAlert, waitForToastsToHide } from '$lib/test/toast';
 
 import UploadAssetsConfirmDialog from './upload-assets-confirm-dialog.svelte';
 
@@ -316,12 +316,8 @@ describe('UploadAssetsConfirmDialog', () => {
     await page.getByRole('alertdialog').getByRole('button', { name: 'Upload' }).click();
 
     await vi.waitFor(() => expect(saveAssets).toHaveBeenCalled());
-    await expect
-      .poll(() => document.querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert'))
-      .toBeNull();
-    expect(
-      document.querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error'),
-    ).toBeNull();
+    await expect.poll(() => getShownToastAlert()).toBeNull();
+    expect(getShownToastAlert('error')).toBeNull();
     expect(error).not.toHaveBeenCalled();
   });
 

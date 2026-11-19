@@ -13,7 +13,7 @@ import {
   setAssets,
   setEntries,
 } from '$lib/test/config';
-import { waitForToastsToHide } from '$lib/test/toast';
+import { getShownToastAlert, getShownToastText, waitForToastsToHide } from '$lib/test/toast';
 
 import DeleteFolderDialog from './delete-folder-dialog.svelte';
 
@@ -136,12 +136,7 @@ describe('DeleteFolderDialog', () => {
 
       await vi.waitFor(() => expect(deleteSubfolder).toHaveBeenCalledOnce());
       await expect
-        .poll(() =>
-          document
-            .querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error')
-            ?.textContent?.replace(/\s+/g, ' ')
-            .trim(),
-        )
+        .poll(() => getShownToastText('error'))
         .toBe('error Error Couldn’t delete the folder.');
       await waitForToastsToHide();
     } finally {
@@ -167,9 +162,7 @@ describe('DeleteFolderDialog', () => {
       await new Promise((resolve) => {
         setTimeout(resolve, 100);
       });
-      expect(
-        document.querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error'),
-      ).toBeNull();
+      expect(getShownToastAlert('error')).toBeNull();
       expect(error).not.toHaveBeenCalled();
     } finally {
       error.mockRestore();

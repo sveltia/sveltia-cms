@@ -7,7 +7,7 @@ import { saveAssets } from '$lib/services/assets/data/create';
 import { editingAsset } from '$lib/services/assets/state';
 import { showAssetOverlay } from '$lib/services/assets/view';
 import { createMockAsset } from '$lib/test/config';
-import { waitForToastsToHide } from '$lib/test/toast';
+import { getShownToastAlert, getShownToastText, waitForToastsToHide } from '$lib/test/toast';
 
 import EditAssetDialog from './edit-asset-dialog.svelte';
 
@@ -97,14 +97,7 @@ describe('EditAssetDialog', () => {
       await dialog.getByRole('button', { name: 'Save' }).click();
 
       await vi.waitFor(() => expect(saveAssets).toHaveBeenCalledOnce());
-      await expect
-        .poll(() =>
-          document
-            .querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error')
-            ?.textContent?.replace(/\s+/g, ' ')
-            .trim(),
-        )
-        .toBe('error Error Save failed.');
+      await expect.poll(() => getShownToastText('error')).toBe('error Error Save failed.');
       expect(error).toHaveBeenCalledWith(new Error('offline'));
 
       // The dialog is back with the edited text, so saving can be retried
@@ -141,9 +134,7 @@ describe('EditAssetDialog', () => {
       // The dialog is back with the edited text, so saving can be retried
       await expect.element(textarea).toHaveValue('Hello, world!');
       expect(editingAsset.current).toBe(asset);
-      expect(
-        document.querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error'),
-      ).toBeNull();
+      expect(getShownToastAlert('error')).toBeNull();
       expect(error).not.toHaveBeenCalled();
     } finally {
       error.mockRestore();
@@ -184,14 +175,7 @@ describe('EditAssetDialog', () => {
       showAssetOverlay.current = false;
       reject(new Error('offline'));
 
-      await expect
-        .poll(() =>
-          document
-            .querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error')
-            ?.textContent?.replace(/\s+/g, ' ')
-            .trim(),
-        )
-        .toBe('error Error Save failed.');
+      await expect.poll(() => getShownToastText('error')).toBe('error Error Save failed.');
       await expect.poll(() => editingAsset.current).toBeUndefined();
       expect(page.getByRole('dialog').elements()).toHaveLength(0);
       await waitForToastsToHide();
@@ -222,9 +206,7 @@ describe('EditAssetDialog', () => {
       await textarea.fill('Hello, world!');
       await dialog.getByRole('button', { name: 'Save' }).click();
       await vi.waitFor(() => expect(saveAssets).toHaveBeenCalledOnce());
-      await expect
-        .poll(() => document.querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error'))
-        .not.toBeNull();
+      await expect.poll(() => getShownToastAlert('error')).not.toBeNull();
 
       // The dialog is back with the edited text, so saving can be retried
       await expect.element(textarea).toHaveValue('Hello, world!');

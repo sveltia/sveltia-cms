@@ -27,7 +27,6 @@
   import { getField } from '$lib/services/contents/entry/fields';
   import { processResource } from '$lib/services/contents/fields/file/process';
   import {
-    getDroppedFileDestination,
     getMediaFieldAssetOptions,
     processResources,
   } from '$lib/services/contents/fields/file/resources';
@@ -38,6 +37,10 @@
     NODE_NAME_MAP,
   } from '$lib/services/contents/fields/rich-text';
   import { IMAGE_COMPONENT_IDS } from '$lib/services/contents/fields/rich-text/components/definitions';
+  import {
+    getImageSrcFieldConfig,
+    sortDroppedImages,
+  } from '$lib/services/contents/fields/rich-text/image-uploads';
   import {
     getDroppedImages,
     getPastedImages,
@@ -51,7 +54,6 @@
     resolveAllowNestedComponents,
   } from '$lib/services/contents/fields/rich-text/options';
   import { getCanonicalLocale, getDirection } from '$lib/services/contents/i18n';
-  import { getPreferredLibraryNames } from '$lib/services/integrations/media-libraries/options';
   import { syncValues, watch } from '$lib/services/utils/state.svelte';
 
   /**
@@ -172,10 +174,10 @@
   );
   const imageComponent = $derived(components.find(({ id }) => IMAGE_COMPONENT_IDS.includes(id)));
   const srcFieldConfig = $derived(
-    /** @type {ImageField | undefined} */ (
+    getImageSrcFieldConfig(
       /** @type {import('@sveltia/ui').TextEditorComponent & EditorComponentDefinition} */ (
         imageComponent
-      )?.fields?.find(({ name }) => name === 'src')
+      ),
     ),
   );
   const assetOptions = $derived(
@@ -203,18 +205,15 @@
       return;
     }
 
-    const { folder, enabled, libraryConfig, cloudServiceEntries } = assetOptions;
+    const { folder, libraryConfig } = assetOptions;
     const draft = entryDraft.current;
     const _locale = locale;
     const component = imageComponent;
 
-    // A file goes to the location marked with the `default` option, so it’s not saved to the
-    // repository when it should go to a cloud storage service, or when the repository is disabled
-    // @see https://github.com/sveltia/sveltia-cms/issues/1172
-    const destination = getDroppedFileDestination({
-      repositoryAvailable: enabled && !!folder,
-      cloudServiceEntries,
-      preferredLibraryNames: getPreferredLibraryNames(srcFieldConfig),
+    const { inlineImages, uploadFiles, rejected } = sortDroppedImages({
+      images,
+      srcFieldConfig,
+      assetOptions,
     });
 
     /**
@@ -239,23 +238,14 @@
       });
     };
 
-    /** @type {File[]} */
-    const cloudFiles = [];
-
     processingImages += 1;
 
     try {
       // eslint-disable-next-line no-restricted-syntax
-      for (const { file, src: externalSrc, alt = '' } of images) {
+      for (const { file, src: externalSrc, alt = '' } of inlineImages) {
         let src = externalSrc;
 
         if (file) {
-          if (destination !== 'repository') {
-            cloudFiles.push(file);
-            // eslint-disable-next-line no-continue
-            continue;
-          }
-
           // eslint-disable-next-line no-await-in-loop
           const { value } = await processResource({
             draft,
@@ -279,13 +269,11 @@
       processingImages -= 1;
     }
 
-    if (!cloudFiles.length) {
-      return;
+    if (rejected) {
+      filesRejected = true;
     }
 
-    if (!destination) {
-      filesRejected = true;
-
+    if (!uploadFiles.length) {
       return;
     }
 
@@ -319,7 +307,7 @@
       }
     };
 
-    pendingFiles = cloudFiles;
+    pendingFiles = uploadFiles;
     showSelectAssetsDialog = true;
   };
 

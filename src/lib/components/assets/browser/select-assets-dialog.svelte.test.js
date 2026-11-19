@@ -27,7 +27,7 @@ import {
   setAssets,
 } from '$lib/test/config';
 import { createFileDropEvent } from '$lib/test/drop';
-import { waitForToastsToHide } from '$lib/test/toast';
+import { getShownToastText, waitForToastsToHide } from '$lib/test/toast';
 
 import SelectAssetsDialog from './select-assets-dialog.svelte';
 
@@ -110,16 +110,6 @@ const isDropIndicatorShownOnDragOver = async () => {
 
   return !!document.querySelector('.drop-indicator');
 };
-
-/**
- * Get the text of the error toast shown, if any.
- * @returns {string | undefined} Text.
- */
-const getErrorToastText = () =>
-  document
-    .querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error')
-    ?.textContent?.replace(/\s+/g, ' ')
-    .trim();
 
 /**
  * Wait for the grid to be listed and activated.
@@ -1264,7 +1254,7 @@ describe('SelectAssetsDialog', () => {
     await expect
       .element(page.getByRole('dialog').getByRole('option', { name: 'Lorem Picsum' }))
       .toHaveAttribute('aria-selected', 'true');
-    await expect.poll(getErrorToastText).toBe('error Error Upload failed.');
+    await expect.poll(() => getShownToastText('error')).toBe('error Error Upload failed.');
     expect(props.pendingFiles).toEqual([]);
     await waitForToastsToHide();
   });
@@ -1333,7 +1323,7 @@ describe('SelectAssetsDialog', () => {
     await dialog.getByRole('option', { name: 'Lorem Picsum' }).click();
     expect(props.pendingFiles).toEqual([]);
     // They were meant for the cloud service, so no failure is reported
-    expect(getErrorToastText()).toBeUndefined();
+    expect(getShownToastText('error')).toBeUndefined();
   });
 
   test('opens the Cloudinary library, and closes once assets are picked', async () => {

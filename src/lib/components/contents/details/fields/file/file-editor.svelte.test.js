@@ -680,6 +680,26 @@ describe('FileEditor', () => {
       );
     });
 
+    test('hands dropped files to the service marked as the default', async () => {
+      const file = await createMockImageFile({ name: 'up.png' });
+
+      const { container, draft } = await renderEditor(
+        { media_libraries: { test_cloud: { default: true }, stock_assets: false } },
+        '',
+      );
+
+      // The repository is available too, but the mark tells where the files go
+      /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
+        createFileDropEvent([file]),
+      );
+
+      await expect.element(page.getByRole('dialog', { name: 'Select Image' })).toBeInTheDocument();
+      await vi.waitFor(() =>
+        expect(services.test_cloud.upload).toHaveBeenCalledWith([file], expect.anything()),
+      );
+      expect(draft.files).toEqual({});
+    });
+
     test('takes no dropped files when the only service can’t upload them', async () => {
       delete services.test_cloud.upload;
 
