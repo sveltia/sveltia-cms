@@ -5,7 +5,8 @@
   @see https://sveltiacms.app/en/docs/fields/richtext
 -->
 <script>
-  import { TextEditor } from '@sveltia/ui';
+  import { _ } from '@sveltia/i18n';
+  import { Alert, TextEditor, Toast } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import {
     $createParagraphNode as createParagraphNode,
@@ -13,6 +14,7 @@
     $insertNodes as insertNodes,
   } from 'lexical';
 
+  import SelectAssetsDialog from '$lib/components/assets/browser/select-assets-dialog.svelte';
   import { EditorComponent } from '$lib/components/contents/details/fields/rich-text/custom-node-features';
   import { cmsConfig } from '$lib/services/config';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
@@ -23,8 +25,12 @@
   } from '$lib/services/contents/editor/field-context';
   import { trackPendingWhile } from '$lib/services/contents/editor/pending.svelte';
   import { getField } from '$lib/services/contents/entry/fields';
-  import { getFieldAssetFolder } from '$lib/services/contents/fields/file/helpers';
   import { processResource } from '$lib/services/contents/fields/file/process';
+  import {
+    getDroppedFileDestination,
+    getMediaFieldAssetOptions,
+    processResources,
+  } from '$lib/services/contents/fields/file/resources';
   import {
     DEFAULT_BUTTONS,
     DEFAULT_MODES,
@@ -45,12 +51,12 @@
     resolveAllowNestedComponents,
   } from '$lib/services/contents/fields/rich-text/options';
   import { getCanonicalLocale, getDirection } from '$lib/services/contents/i18n';
-  import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
+  import { getPreferredLibraryNames } from '$lib/services/integrations/media-libraries/options';
   import { syncValues, watch } from '$lib/services/utils/state.svelte';
 
   /**
    * @import { ImageEntry } from '$lib/services/contents/fields/rich-text/images';
-   * @import { FieldEditorProps } from '$lib/types/private';
+   * @import { FieldEditorProps, SelectedResource } from '$lib/types/private';
    * @import {
    * EditorComponentDefinition,
    * ImageField,
@@ -100,6 +106,21 @@
    * Number of dropped or pasted image batches being processed before they’re inserted.
    */
   let processingImages = $state(0);
+  let showSelectAssetsDialog = $state(false);
+  /**
+   * Files dropped or pasted into the editor, to be uploaded to a cloud storage service in the
+   * Select Assets dialog.
+   * @type {File[]}
+   */
+  let pendingFiles = $state([]);
+  /**
+   * Inserts the images uploaded in the Select Assets dialog into the editor the files were dropped
+   * or pasted into.
+   * @type {((resources: SelectedResource[]) => Promise<void>) | undefined}
+   */
+  let insertUploadedImages = undefined;
+  /** Whether dropped or pasted files have been rejected, as no location can take them. */
+  let filesRejected = $state(false);
 
   const {
     // Field type-specific options
@@ -150,8 +171,22 @@
     ),
   );
   const imageComponent = $derived(components.find(({ id }) => IMAGE_COMPONENT_IDS.includes(id)));
-  const targetAssetFolder = $derived(
-    getFieldAssetFolder({ collectionName, fileName, componentName, typedKeyPath, isIndexFile }),
+  const srcFieldConfig = $derived(
+    /** @type {ImageField | undefined} */ (
+      /** @type {import('@sveltia/ui').TextEditorComponent & EditorComponentDefinition} */ (
+        imageComponent
+      )?.fields?.find(({ name }) => name === 'src')
+    ),
+  );
+  const assetOptions = $derived(
+    getMediaFieldAssetOptions({
+      collectionName,
+      fileName,
+      isIndexFile,
+      componentName,
+      typedKeyPath,
+      fieldConfig: /** @type {ImageField} */ (srcFieldConfig),
+    }),
   );
 
   /**
@@ -168,18 +203,44 @@
       return;
     }
 
-    const srcFieldConfig =
-      /** @type {import('@sveltia/ui').TextEditorComponent & EditorComponentDefinition} */ (
-        imageComponent
-      ).fields?.find(({ name }) => name === 'src');
+    const { folder, enabled, libraryConfig, cloudServiceEntries } = assetOptions;
+    const draft = entryDraft.current;
+    const _locale = locale;
+    const component = imageComponent;
 
-    const { config: libraryConfig } = getDefaultMediaLibraryOptions({
-      fieldConfig: /** @type {ImageField} */ (srcFieldConfig),
+    // A file goes to the location marked with the `default` option, so it’s not saved to the
+    // repository when it should go to a cloud storage service, or when the repository is disabled
+    // @see https://github.com/sveltia/sveltia-cms/issues/1172
+    const destination = getDroppedFileDestination({
+      repositoryAvailable: enabled && !!folder,
+      cloudServiceEntries,
+      preferredLibraryNames: getPreferredLibraryNames(srcFieldConfig),
     });
 
-    const draft = entryDraft.current;
-    const folder = targetAssetFolder;
-    const _locale = locale;
+    /**
+     * Whether the editor still shows the content the images were dropped in. The editor is reused
+     * when the pane switches to another locale or another entry is opened, so the image would be
+     * inserted into the content it shows now, with a path resolved for the one it was dropped in.
+     * @returns {boolean} Result.
+     */
+    const isSameContent = () => entryDraft.current === draft && locale === _locale;
+
+    /**
+     * Insert an image.
+     * @param {string} src Image URL.
+     * @param {string} alt Alternative text.
+     */
+    const insertImage = (src, alt) => {
+      editor.update(() => {
+        const node = component.createNode({ src, alt });
+
+        // Start a new paragraph after the image, unless the field holds a single one
+        insertNodes(multiline ? [node, createParagraphNode()] : [node]);
+      });
+    };
+
+    /** @type {File[]} */
+    const cloudFiles = [];
 
     processingImages += 1;
 
@@ -189,6 +250,12 @@
         let src = externalSrc;
 
         if (file) {
+          if (destination !== 'repository') {
+            cloudFiles.push(file);
+            // eslint-disable-next-line no-continue
+            continue;
+          }
+
           // eslint-disable-next-line no-await-in-loop
           const { value } = await processResource({
             draft,
@@ -197,33 +264,63 @@
             locale: _locale,
           });
 
-          // The editor is reused when the pane switches to another locale or another entry is
-          // opened, so the image would be inserted into the content it shows now, with a path
-          // resolved for the one it was dropped in
-          if (entryDraft.current !== draft || locale !== _locale) {
+          if (!isSameContent()) {
             return;
           }
 
           src = value;
         }
 
-        if (!src) {
-          // eslint-disable-next-line no-continue
-          continue;
+        if (src) {
+          insertImage(src, alt);
         }
-
-        const _src = src;
-
-        editor.update(() => {
-          const node = imageComponent.createNode({ src: _src, alt });
-
-          // Start a new paragraph after the image, unless the field holds a single one
-          insertNodes(multiline ? [node, createParagraphNode()] : [node]);
-        });
       }
     } finally {
       processingImages -= 1;
     }
+
+    if (!cloudFiles.length) {
+      return;
+    }
+
+    if (!destination) {
+      filesRejected = true;
+
+      return;
+    }
+
+    /**
+     * Insert the images the user has selected in the Select Assets dialog, which uploads the files
+     * to the cloud storage service, asking for the credentials if needed.
+     * @param {SelectedResource[]} resources Selected resources.
+     */
+    insertUploadedImages = async (resources) => {
+      // A save made right after the images have been selected waits for them to be inserted
+      processingImages += 1;
+
+      try {
+        const results = await processResources({
+          draft,
+          resources,
+          folder,
+          libraryConfig,
+          locale: _locale,
+        });
+
+        if (isSameContent()) {
+          results.forEach(({ value }) => {
+            if (value) {
+              insertImage(value, '');
+            }
+          });
+        }
+      } finally {
+        processingImages -= 1;
+      }
+    };
+
+    pendingFiles = cloudFiles;
+    showSelectAssetsDialog = true;
   };
 
   /**
@@ -353,6 +450,30 @@
     {/key}
   {/await}
 </div>
+
+{#if srcFieldConfig}
+  <SelectAssetsDialog
+    kind="image"
+    multiple
+    draft={entryDraft.current}
+    {locale}
+    fieldConfig={srcFieldConfig}
+    assetLibraryFolderMap={assetOptions.folderMap}
+    enabledCloudServiceEntries={assetOptions.cloudServiceEntries}
+    bind:open={showSelectAssetsDialog}
+    bind:pendingFiles
+    onSelect={(resources) => {
+      insertUploadedImages?.(resources);
+    }}
+    onClose={() => {
+      insertUploadedImages = undefined;
+    }}
+  />
+{/if}
+
+<Toast bind:show={filesRejected}>
+  <Alert status="error">{_('uploading_files_failed')}</Alert>
+</Toast>
 
 <style>
   .wrapper {

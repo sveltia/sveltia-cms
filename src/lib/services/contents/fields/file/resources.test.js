@@ -6,6 +6,7 @@ import {
 } from '$lib/services/contents/fields/file/helpers';
 import { processResource } from '$lib/services/contents/fields/file/process';
 import {
+  getDroppedFileDestination,
   getMediaFieldAssetOptions,
   getRejectedFileNames,
   processResources,
@@ -230,5 +231,64 @@ describe('resolveSelectionResult', () => {
         inEditorComponent: false,
       }),
     ).toMatchObject({ values: ['/a.png', '/b.png'], value: undefined });
+  });
+});
+
+describe('getDroppedFileDestination', () => {
+  /** @type {any[]} */
+  const cloudServiceEntries = [
+    ['cloudinary', {}],
+    ['r2', { upload: vi.fn() }],
+    ['s3', { upload: vi.fn() }],
+  ];
+
+  test('goes to the repository unless a cloud service is marked as the default', () => {
+    expect(getDroppedFileDestination({ repositoryAvailable: true, cloudServiceEntries })).toBe(
+      'repository',
+    );
+    expect(
+      getDroppedFileDestination({
+        repositoryAvailable: true,
+        cloudServiceEntries,
+        preferredLibraryNames: ['default', 'r2'],
+      }),
+    ).toBe('repository');
+    expect(
+      getDroppedFileDestination({
+        repositoryAvailable: true,
+        cloudServiceEntries,
+        preferredLibraryNames: ['r2'],
+      }),
+    ).toBe('cloud');
+  });
+
+  test('skips a marked location that can’t take the files', () => {
+    // Cloudinary can’t upload, and the repository has no folder
+    expect(
+      getDroppedFileDestination({
+        repositoryAvailable: true,
+        cloudServiceEntries,
+        preferredLibraryNames: ['cloudinary', 'gcs'],
+      }),
+    ).toBe('repository');
+    expect(
+      getDroppedFileDestination({
+        repositoryAvailable: false,
+        cloudServiceEntries,
+        preferredLibraryNames: ['default', 's3'],
+      }),
+    ).toBe('cloud');
+  });
+
+  test('goes to a cloud service when the repository is unavailable', () => {
+    expect(getDroppedFileDestination({ repositoryAvailable: false, cloudServiceEntries })).toBe(
+      'cloud',
+    );
+    expect(
+      getDroppedFileDestination({
+        repositoryAvailable: false,
+        cloudServiceEntries: [['cloudinary', /** @type {any} */ ({})]],
+      }),
+    ).toBeUndefined();
   });
 });

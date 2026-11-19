@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
 import { customComponentRegistry } from '$lib/services/api/registries';
@@ -6,9 +6,12 @@ import { globalAssetFolder } from '$lib/services/assets/folders';
 import { cmsConfig } from '$lib/services/config';
 import { trackPendingFieldUpdate } from '$lib/services/contents/editor/pending';
 import { processResource } from '$lib/services/contents/fields/file/process';
+import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
 import { createMockImageFile, initTestConfig } from '$lib/test/config';
 import { createMockDraft } from '$lib/test/draft';
+import { createMockCloudService, createMockExternalAsset } from '$lib/test/factories';
 import { renderFieldEditor } from '$lib/test/field.svelte';
+import { waitForToastsToHide } from '$lib/test/toast';
 
 import RichTextEditor from './rich-text-editor.svelte';
 
@@ -560,6 +563,103 @@ describe('RichTextEditor', () => {
     });
     expect(props.currentValue).toBe('Hello');
     expect(Object.keys(draft.files)).toHaveLength(0);
+  });
+
+  describe('with a cloud storage service', () => {
+    /** @type {any} */
+    const services = allCloudStorageServices;
+
+    /**
+     * Load the configuration with the given media library options, and drop an image onto the
+     * editor.
+     * @param {Record<string, any>} mediaLibraries Site-level `media_libraries` option.
+     * @returns {Promise<{ props: any, draft: any }>} Editor props and draft.
+     */
+    const dropImage = async (mediaLibraries) => {
+      await initTestConfig({
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'content/posts',
+            fields: [{ name: 'body', widget: 'richtext' }],
+          },
+        ],
+      });
+      // Set after the validation, which only knows the actual services
+      /** @type {any} */ (cmsConfig.current).media_libraries = mediaLibraries;
+
+      const { props, draft } = await renderEditor('Hello');
+      const editor = page.getByRole('textbox');
+
+      await expect.poll(() => editor.element().textContent).toBe('Hello');
+
+      const dataTransfer = new DataTransfer();
+
+      dataTransfer.items.add(await createMockImageFile({ name: 'up.png' }));
+      editor
+        .element()
+        .dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer }));
+
+      return { props, draft };
+    };
+
+    beforeEach(() => {
+      // Register a service that needs no network access
+      services.test_cloud = createMockCloudService({
+        upload: vi.fn(async (/** @type {File[]} */ files) =>
+          files.map(({ name }) => createMockExternalAsset({ fileName: name })),
+        ),
+      });
+    });
+
+    afterEach(() => {
+      delete services.test_cloud;
+    });
+
+    test.each([
+      ['marked as the default', { test_cloud: { default: true } }],
+      ['when the repository is disabled', { default: false }],
+    ])('uploads a dropped image to the service %s', async (_label, mediaLibraries) => {
+      const { props, draft } = await dropImage(mediaLibraries);
+      const dialog = page.getByRole('dialog', { name: 'Select Image' });
+
+      // The dialog opens on the service to upload the file there, and selects the uploaded image
+      await expect.element(dialog).toBeInTheDocument();
+      await vi.waitFor(() =>
+        expect(services.test_cloud.upload).toHaveBeenCalledWith(
+          [expect.objectContaining({ name: 'up.png' })],
+          expect.anything(),
+        ),
+      );
+      await expect.element(dialog.getByRole('button', { name: 'Insert' })).toBeEnabled();
+      await dialog.getByRole('button', { name: 'Insert' }).click();
+
+      // The image is inserted with its URL on the service, and nothing goes to the repository
+      await expect
+        .poll(() => props.currentValue)
+        .toContain('![](https://cdn.example.com/images/up.png)');
+      expect(draft.files).toEqual({});
+    });
+
+    test('rejects a dropped image when no location can take it', async () => {
+      delete services.test_cloud.upload;
+
+      const { props, draft } = await dropImage({ default: false });
+
+      await expect
+        .poll(() =>
+          document
+            .querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error')
+            ?.textContent?.replace(/\s+/g, ' ')
+            .trim(),
+        )
+        .toBe('error Error Upload failed.');
+      expect(page.getByRole('dialog', { name: 'Select Image' }).query()).toBeNull();
+      expect(props.currentValue).toBe('Hello');
+      expect(draft.files).toEqual({});
+      await waitForToastsToHide();
+    });
   });
 
   test('locks the components in a read-only field', async () => {

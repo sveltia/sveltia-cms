@@ -86,6 +86,45 @@ export const getMediaFieldAssetOptions = ({
 };
 
 /**
+ * Decide where files dropped or pasted into a field without a picker, like an image into the rich
+ * text editor, go: the first location marked with the `default` option that can take them, or else
+ * the repository, or else a cloud storage service that can upload them. A cloud service without an
+ * upload function, like Cloudinary, can’t.
+ * @param {object} args Arguments.
+ * @param {boolean} args.repositoryAvailable Whether the default media library is enabled and has a
+ * folder to upload the files to.
+ * @param {[string, MediaLibraryService][]} args.cloudServiceEntries Cloud storage services enabled
+ * for the field.
+ * @param {string[]} [args.preferredLibraryNames] Names of the media libraries marked with the
+ * `default` option, in order of precedence. `default` stands for the repository.
+ * @returns {'repository' | 'cloud' | undefined} Destination, or `undefined` if no location can take
+ * the files.
+ */
+export const getDroppedFileDestination = ({
+  repositoryAvailable,
+  cloudServiceEntries,
+  preferredLibraryNames = [],
+}) => {
+  const uploadableIds = cloudServiceEntries
+    .filter(([, { upload }]) => !!upload)
+    .map(([serviceId]) => serviceId);
+
+  const preferredName = preferredLibraryNames.find((name) =>
+    name === 'default' ? repositoryAvailable : uploadableIds.includes(name),
+  );
+
+  if (preferredName) {
+    return preferredName === 'default' ? 'repository' : 'cloud';
+  }
+
+  if (repositoryAvailable) {
+    return 'repository';
+  }
+
+  return uploadableIds.length ? 'cloud' : undefined;
+};
+
+/**
  * Process the resources selected in the Select Assets dialog, or dropped or pasted into a field.
  * A file to be uploaded that doesn’t come with a folder of its own, including a stock photo that
  * isn’t hotlinked, goes to the given folder.
