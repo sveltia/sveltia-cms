@@ -70,7 +70,7 @@ jobs:
         run: ${{ matrix.task.command }}
       - name: Upload the bundle
         if: ${{ matrix.task.bundle == 'upload' }}
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: bundle
           # The bundle, and the locale files the tests serve in place of the CDN
@@ -85,7 +85,7 @@ jobs:
       # did. Each shard uploads its own, which lists the tests of that shard only
       - name: Upload the end-to-end test report
         if: ${{ matrix.task.report && failure() }}
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: playwright-report-${{ matrix.task.report }}
           path: playwright-report/
