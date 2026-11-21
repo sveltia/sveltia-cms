@@ -12,6 +12,7 @@
   import { Alert, Button, Dialog, Spacer, Toast } from '@sveltia/ui';
   import { untrack } from 'svelte';
 
+  import DisabledLocaleState from '$lib/components/contents/details/disabled-locale-state.svelte';
   import EntryEditor from '$lib/components/contents/details/editor/entry-editor.svelte';
   import SlugEditor from '$lib/components/contents/details/editor/slug-editor.svelte';
   import ValidationErrorsToast from '$lib/components/contents/details/editor/validation-errors-toast.svelte';
@@ -299,12 +300,18 @@
       <div role="none" id="{componentId}-body" class="fields" data-locale={locale}>
         <!-- There’s no sidebar with the Slug panel in the dialog, so a slug that has to be typed
           in is edited here. Otherwise, the slug template fills it -->
-        {#if needsSlugInput(entryDraft.current) && entryDraft.current.slugEditor[locale]}
-          {#key locale}
-            <SlugEditor {locale} />
-          {/key}
+        {#if !entryDraft.current.currentLocales[locale]}
+          <!-- A disabled locale has no values to edit, so it has to be enabled first, like in the
+            entry editor’s pane -->
+          <DisabledLocaleState {locale} />
+        {:else}
+          {#if needsSlugInput(entryDraft.current) && entryDraft.current.slugEditor[locale]}
+            {#key locale}
+              <SlugEditor {locale} />
+            {/key}
+          {/if}
+          <EntryEditor {locale} />
         {/if}
-        <EntryEditor {locale} />
       </div>
     {/if}
   </div>

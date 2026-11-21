@@ -148,6 +148,15 @@ describe('QuickAddDialog', () => {
           i18n: true,
           fields: [{ name: 'title', label: 'Title', widget: 'string', i18n: true }],
         },
+        {
+          name: 'topics',
+          label: 'Topics',
+          label_singular: 'Topic',
+          folder: 'content/topics',
+          // A new entry only has the default locale enabled
+          i18n: { initial_locales: 'default' },
+          fields: [{ name: 'title', label: 'Title', widget: 'string', i18n: true }],
+        },
       ],
     });
   });
@@ -773,6 +782,44 @@ describe('QuickAddDialog', () => {
     expect(createPendingEntry).toHaveBeenCalledWith(
       expect.objectContaining({
         draft: expect.objectContaining({
+          currentValues: { en: { title: 'Travel' }, fr: { title: 'Voyage' } },
+        }),
+      }),
+    );
+  });
+
+  test('offers to enable a disabled locale instead of showing its fields', async () => {
+    await renderDialog({ collectionName: 'topics' });
+
+    const dialog = page.getByRole('dialog', { name: /Creating.*Topic/ });
+    const title = dialog.getByRole('textbox', { name: 'Title' });
+
+    await title.fill('Travel');
+    // The locale is marked as disabled in the switcher
+    await dialog.getByRole('radio', { name: /^French \S/ }).click();
+    // Values typed in a disabled locale couldn’t be stored, so its fields aren’t offered
+    await expect
+      .element(dialog.getByRole('alert'))
+      .toHaveTextContent('The \u2068French\u2069 content has been disabled.');
+    expect(title.elements()).toHaveLength(0);
+
+    await dialog.getByRole('button', { name: 'Enable \u2068French\u2069' }).click();
+    await expect.element(title).toHaveValue('');
+    await title.fill('Voyage');
+    // The locale is no longer marked as disabled in the switcher
+    await expect.element(dialog.getByRole('radio', { name: 'French', exact: true })).toBeVisible();
+    await dialog.getByRole('radio', { name: 'English' }).click();
+    await expect.element(title).toHaveValue('Travel');
+
+    vi.mocked(createPendingEntry).mockResolvedValue(createPending('topics', 'travel'));
+
+    await dialog.getByRole('button', { name: 'Add' }).click();
+
+    await expect.poll(() => vi.mocked(createPendingEntry).mock.calls.length).toBe(1);
+    expect(createPendingEntry).toHaveBeenCalledWith(
+      expect.objectContaining({
+        draft: expect.objectContaining({
+          currentLocales: { en: true, fr: true },
           currentValues: { en: { title: 'Travel' }, fr: { title: 'Voyage' } },
         }),
       }),
