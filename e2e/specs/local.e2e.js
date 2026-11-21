@@ -460,11 +460,9 @@ test.describe('Git commits', () => {
     await expect
       .poll(async () => {
         const repoFiles = await cms.readRepo();
+        const head = repoFiles['.git/refs/heads/main'];
 
-        return (
-          repoFiles['.git/refs/heads/main'] !== `${initialHead}\n` &&
-          !('.git/index.lock' in repoFiles)
-        );
+        return !!head && head !== `${initialHead}\n` && !('.git/index.lock' in repoFiles);
       })
       .toBe(true);
 
