@@ -4,6 +4,7 @@ import { backend } from '$lib/services/backends';
 import { lockedBranch, mergeLockedBranch } from '$lib/services/backends/branch-access';
 import { getDeletionGroup } from '$lib/services/backends/git/shared/pull-requests';
 import { cmsConfig } from '$lib/services/config';
+import { isDraftReadonly } from '$lib/services/config/readonly';
 import { allEntries, findEntryByPaths } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntryPaths } from '$lib/services/contents/entry/paths';
@@ -378,6 +379,16 @@ export const isWorkflowDraft = ({ collection, collectionName, fileName, original
  */
 export const isPendingDeletion = (entry) =>
   /** @type {UnpublishedEntry | undefined} */ (entry)?.workflow?.status === 'pending_deletion';
+
+/**
+ * Check whether an entry draft is shown for reference only, which is when it’s read-only (see
+ * {@link isDraftReadonly}) or awaiting deletion (see {@link isPendingDeletion}). Its content can’t
+ * be changed then, nor can its locales be enabled.
+ * @param {EntryDraft | null | undefined} draft Entry draft.
+ * @returns {boolean} Result.
+ */
+export const isDraftLocked = (draft) =>
+  isDraftReadonly(draft) || isPendingDeletion(draft?.originalEntry);
 
 /**
  * Get the entries deleted along with the given unpublished entry. A selection of entries is deleted

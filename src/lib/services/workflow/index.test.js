@@ -29,6 +29,7 @@ import {
   hasPublishedVersion,
   isDirectPublishAllowed,
   isDiscardableDraft,
+  isDraftLocked,
   isOrphanedForkDraft,
   isPendingDeletion,
   isPublishAllowed,
@@ -1358,5 +1359,37 @@ describe('Test isDirectPublishAllowed()', () => {
     mergeLockedBranch.current = 'main';
     expect(isDirectPublishAllowed(collection, undefined)).toBe(true);
     expect(isDirectPublishAllowed(collection, entry)).toBe(false);
+  });
+});
+
+describe('isDraftLocked', () => {
+  beforeEach(() => {
+    cmsConfig.current = /** @type {any} */ ({});
+    onTestFinished(() => {
+      cmsConfig.current = undefined;
+    });
+  });
+
+  test('returns false without a draft, or for an editable one', () => {
+    expect(isDraftLocked(undefined)).toBe(false);
+    expect(isDraftLocked(null)).toBe(false);
+    expect(isDraftLocked(/** @type {any} */ ({ collection: {}, originalEntry: undefined }))).toBe(
+      false,
+    );
+  });
+
+  test('detects a read-only draft', () => {
+    expect(isDraftLocked(/** @type {any} */ ({ collection: { readonly: true } }))).toBe(true);
+  });
+
+  test('detects a draft whose entry is awaiting deletion', () => {
+    expect(
+      isDraftLocked(
+        /** @type {any} */ ({
+          collection: {},
+          originalEntry: { workflow: { status: 'pending_deletion' } },
+        }),
+      ),
+    ).toBe(true);
   });
 });

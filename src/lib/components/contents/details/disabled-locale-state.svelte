@@ -9,11 +9,10 @@
   import { _ } from '@sveltia/i18n';
   import { Button, EmptyState } from '@sveltia/ui';
 
-  import { isDraftReadonly } from '$lib/services/config/readonly';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { toggleLocale } from '$lib/services/contents/draft/update/locale';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
-  import { isPendingDeletion } from '$lib/services/workflow';
+  import { isDraftLocked } from '$lib/services/workflow';
 
   /**
    * @import { InternalLocaleCode } from '$lib/types/private';
@@ -30,11 +29,8 @@
   const entryDraft = getEntryDraftContext();
 
   const hasContent = $derived(!!entryDraft.current?.currentValues[locale]);
-  // A read-only entry, or one awaiting deletion, is shown for reference only, so its locales can’t
-  // be enabled
-  const locked = $derived(
-    isDraftReadonly(entryDraft.current) || isPendingDeletion(entryDraft.current?.originalEntry),
-  );
+  // A locked entry is shown for reference only, so its locales can’t be enabled
+  const locked = $derived(isDraftLocked(entryDraft.current));
   /* v8 ignore start -- a locale configured for the site always has a label */
   const labelOptions = $derived({ values: { locale: getLocaleLabel(locale) ?? locale } });
   /* v8 ignore stop */
