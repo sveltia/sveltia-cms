@@ -136,6 +136,33 @@ export const submitManifest = (actionURL, manifest) => {
 };
 
 /**
+ * Look up whether a GitHub account is an organization or a user, which decides where GitHub creates
+ * the app. This is done from the browser, because GitHub limits requests without credentials by IP
+ * address, and the service shares its address with other Cloudflare Workers.
+ * @param {string} owner Account name.
+ * @returns {Promise<'Organization' | 'User' | undefined>} Account type, or `undefined` if it can’t
+ * be found out, which leaves the lookup to the service.
+ */
+export const getOwnerType = async (owner) => {
+  try {
+    const response = await fetch(`https://api.github.com/users/${encodeURIComponent(owner)}`, {
+      headers: { Accept: 'application/vnd.github+json' },
+      signal: AbortSignal.timeout(10_000),
+    });
+
+    if (response.ok) {
+      const { type } = await response.json();
+
+      return type === 'Organization' ? 'Organization' : 'User';
+    }
+  } catch {
+    // Left to the service
+  }
+
+  return undefined;
+};
+
+/**
  * Register a GitHub App for the repository and install it, through GitHub.
  * @param {object} args Arguments.
  * @param {string} args.repo Repository, as `owner/name`.
@@ -146,7 +173,12 @@ export const submitManifest = (actionURL, manifest) => {
 export const connectGitHub = async ({ repo, replace = false }) => {
   const { action_url: actionURL, manifest } = await fetchWithSecret('/v1/setup/github', {
     method: 'POST',
-    body: { repo, return_url: window.location.href, replace },
+    body: {
+      repo,
+      return_url: window.location.href,
+      replace,
+      owner_type: await getOwnerType(repo.split('/')[0]),
+    },
   });
 
   submitManifest(actionURL, manifest);

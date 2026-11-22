@@ -162,6 +162,12 @@ export class MockAdditions {
   setupReturnURL = undefined;
 
   /**
+   * Type of the repository owner the setup wizard looked up on GitHub and sent, if any.
+   * @type {string | undefined}
+   */
+  setupOwnerType = undefined;
+
+  /**
    * Other sites the service serves, or `null` when it serves only this one and doesn’t know the
    * operator API, like a tenant’s path or another platform.
    * @type {{ id: string, name: string, created_at: string, url: string }[] | null}
@@ -648,6 +654,7 @@ export class MockAdditions {
 
       if (pathname === '/v1/setup/github') {
         this.setupReturnURL = body.return_url;
+        this.setupOwnerType = body.owner_type;
 
         return respond(200, {
           action_url: 'https://github.com/settings/apps/new?state=e2e-state',

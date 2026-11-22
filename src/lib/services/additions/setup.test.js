@@ -7,6 +7,7 @@ import {
   additionsSetup,
   closeSetup,
   connectGitHub,
+  getOwnerType,
   getSetupResultMessage,
   openSetup,
   readSetupResult,
@@ -94,9 +95,33 @@ describe('saveAdmin', () => {
   });
 });
 
+describe('getOwnerType', () => {
+  test('looks the account up on GitHub', async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(Response.json({ type: 'Organization' }))
+      .mockResolvedValueOnce(Response.json({ type: 'User' }));
+
+    await expect(getOwnerType('sveltia')).resolves.toBe('Organization');
+    await expect(getOwnerType('octocat')).resolves.toBe('User');
+    expect(fetchMock.mock.calls[0][0]).toBe('https://api.github.com/users/sveltia');
+  });
+
+  test('leaves the lookup to the service when GitHub refuses or can’t be reached', async () => {
+    vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(Response.json({ message: 'API rate limit exceeded' }, { status: 403 }))
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'));
+
+    await expect(getOwnerType('sveltia')).resolves.toBeUndefined();
+    await expect(getOwnerType('sveltia')).resolves.toBeUndefined();
+  });
+});
+
 describe('connectGitHub', () => {
   test('submits the manifest the service returns to GitHub, coming back to this page', async () => {
     const submit = vi.spyOn(HTMLFormElement.prototype, 'submit').mockImplementation(() => {});
+
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(Response.json({ type: 'User' }));
 
     await unlockSetup('secret');
     vi.mocked(fetchAdditions).mockResolvedValueOnce({
@@ -109,7 +134,12 @@ describe('connectGitHub', () => {
     expect(fetchAdditions).toHaveBeenLastCalledWith('/v1/setup/github', {
       method: 'POST',
       token: 'secret',
-      body: { repo: 'octocat/site', return_url: window.location.href, replace: false },
+      body: {
+        repo: 'octocat/site',
+        return_url: window.location.href,
+        replace: false,
+        owner_type: 'User',
+      },
     });
     expect(submit).toHaveBeenCalledOnce();
 

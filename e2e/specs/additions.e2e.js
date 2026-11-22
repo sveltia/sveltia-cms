@@ -627,6 +627,10 @@ test.describe('setup wizard', () => {
     /** @type {string | undefined} */
     let manifest;
 
+    // The wizard looks up the repository owner from the browser, then the service doesn’t have to
+    await page.route('https://api.github.com/users/*', (route) =>
+      route.fulfill({ json: { login: 'sveltia', type: 'User' } }),
+    );
     await page.route('https://github.com/settings/apps/new?*', (route) => {
       manifest = new URLSearchParams(route.request().postData() ?? '').get('manifest') ?? '';
 
@@ -667,6 +671,7 @@ test.describe('setup wizard', () => {
       page.getByRole('status').filter({ hasText: 'GitHub is connected. You can now sign in.' }),
     ).toBeVisible();
     expect(JSON.parse(/** @type {string} */ (manifest))).toEqual({ name: 'Sveltia CMS e2e-site' });
+    expect(additions.setupOwnerType).toBe('User');
     // The outcome is taken out of the URL, so a reload doesn’t show it again
     expect(new URL(page.url()).searchParams.has('additions_setup')).toBe(false);
 
