@@ -64,7 +64,7 @@
     "@lexical/markdown": "^0.53.0",
     "@sindresorhus/transliterate": "^3.1.0",
     "@sveltia/i18n": "^1.5.0",
-    "@sveltia/ui": "^0.96.0",
+    "@sveltia/ui": "^0.96.1",
     "@sveltia/utils": "^0.13.2",
     "buffer": "^6.0.3",
     "create-react-class": "^15.7.0",
