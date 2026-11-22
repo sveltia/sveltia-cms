@@ -335,7 +335,7 @@ additions:
       ok: GitHub מחובר. אפשר להתחבר עכשיו.
       github_app_not_created: ה-GitHub App לא נוצרה. השתמשו בסוד הניהול כדי לנסות שוב.
       github_app_not_installed: ה-GitHub App לא הותקנה. השתמשו בסוד הניהול כדי לנסות שוב.
-      github_wrong_account: ה-GitHub App הותקנה בחשבון אחר מזה של המאגר. התקינו אותה בחשבון של בעלי המאגר ונסו שוב.
+      github_wrong_account: ה-GitHub App הותקנה בחשבון שאינו הבעלים של המאגר. התקינו אותה בחשבון שהמאגר שייך לו ונסו שוב.
       github_repository_not_included: ה-GitHub App הותקנה ללא גישה למאגר. העניקו לה גישה למאגר ב-GitHub ונסו שוב.
       unexpected: ההתחברות ל-GitHub נכשלה בשל שגיאה בלתי צפויה. נסו שוב.
   locks:

@@ -320,7 +320,7 @@ additions:
       ok: GitHub är anslutet. Du kan nu logga in.
       github_app_not_created: GitHub-appen skapades inte. Använd administratörshemligheten för att försöka igen.
       github_app_not_installed: GitHub-appen installerades inte. Använd administratörshemligheten för att försöka igen.
-      github_wrong_account: GitHub-appen installerades på ett annat konto än Git-repots. Installera den på repots ägare och försök igen.
+      github_wrong_account: GitHub-appen installerades på ett konto som inte äger Git-repot. Installera den på kontot som äger repot och försök igen.
       github_repository_not_included: GitHub-appen installerades utan åtkomst till Git-repot. Ge den åtkomst till repot på GitHub och försök igen.
       unexpected: Anslutningen till GitHub misslyckades på grund av ett oväntat fel. Försök igen.
   locks:

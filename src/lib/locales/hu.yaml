@@ -320,7 +320,7 @@ additions:
       ok: A GitHub csatlakoztatva. Most már bejelentkezhetsz.
       github_app_not_created: A GitHub-alkalmazás nem jött létre. Próbáld újra az adminisztrátori titkos kulccsal.
       github_app_not_installed: A GitHub-alkalmazás nem lett telepítve. Próbáld újra az adminisztrátori titkos kulccsal.
-      github_wrong_account: A GitHub-alkalmazást nem a tároló tulajdonosának fiókjára telepítették. Telepítsd a tároló tulajdonosára, és próbáld újra.
+      github_wrong_account: A GitHub-alkalmazást olyan fiókra telepítették, amely nem a tároló tulajdonosa. Telepítsd a tároló tulajdonosának fiókjára, és próbáld újra.
       github_repository_not_included: A GitHub-alkalmazást a tárolóhoz való hozzáférés nélkül telepítették. Adj neki hozzáférést a tárolóhoz a GitHubon, és próbáld újra.
       unexpected: Váratlan hiba miatt nem sikerült csatlakozni a GitHubhoz. Próbáld újra.
   locks:

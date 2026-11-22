@@ -319,7 +319,7 @@ additions:
       ok: GitHub 已连接。现在可以登录了。
       github_app_not_created: GitHub App 未创建。请使用管理员密钥重试。
       github_app_not_installed: GitHub App 未安装。请使用管理员密钥重试。
-      github_wrong_account: GitHub App 安装到了与仓库所属账户不同的账户上。请将其安装到仓库所有者的账户上，然后重试。
+      github_wrong_account: GitHub App 安装到了不拥有该仓库的账户上。请将其安装到拥有该仓库的账户上，然后重试。
       github_repository_not_included: GitHub App 安装时未授予该仓库的访问权限。请在 GitHub 上为其授予仓库访问权限，然后重试。
       unexpected: 由于意外错误，连接 GitHub 失败。请重试。
   locks:

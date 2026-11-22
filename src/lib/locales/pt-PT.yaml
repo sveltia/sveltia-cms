@@ -320,7 +320,7 @@ additions:
       ok: O GitHub está ligado. Já pode iniciar sessão.
       github_app_not_created: A GitHub App não foi criada. Utilize o segredo de administrador para tentar novamente.
       github_app_not_installed: A GitHub App não foi instalada. Utilize o segredo de administrador para tentar novamente.
-      github_wrong_account: A GitHub App foi instalada numa conta diferente da do repositório. Instale-a na conta do proprietário do repositório e tente novamente.
+      github_wrong_account: A GitHub App foi instalada numa conta que não é proprietária do repositório. Instale-a na conta proprietária do repositório e tente novamente.
       github_repository_not_included: A GitHub App foi instalada sem acesso ao repositório. Conceda-lhe acesso ao repositório no GitHub e tente novamente.
       unexpected: A ligação ao GitHub falhou devido a um erro inesperado. Tente novamente.
   locks:

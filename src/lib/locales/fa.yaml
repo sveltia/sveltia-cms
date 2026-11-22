@@ -320,7 +320,7 @@ additions:
       ok: GitHub متصل شد. اکنون می‌توانید وارد شوید.
       github_app_not_created: GitHub App ایجاد نشد. برای تلاش مجدد از رمز مدیر استفاده کنید.
       github_app_not_installed: GitHub App نصب نشد. برای تلاش مجدد از رمز مدیر استفاده کنید.
-      github_wrong_account: GitHub App روی حسابی غیر از حساب مالک مخزن نصب شده است. آن را روی حساب مالک مخزن نصب کرده و دوباره تلاش کنید.
+      github_wrong_account: GitHub App روی حسابی نصب شده است که مالک مخزن نیست. آن را روی حسابی که مالک مخزن است نصب کرده و دوباره تلاش کنید.
       github_repository_not_included: GitHub App بدون دسترسی به مخزن نصب شده است. در GitHub به آن دسترسی به مخزن بدهید و دوباره تلاش کنید.
       unexpected: اتصال به GitHub به دلیل یک خطای غیرمنتظره ناموفق بود. لطفاً دوباره تلاش کنید.
   locks:

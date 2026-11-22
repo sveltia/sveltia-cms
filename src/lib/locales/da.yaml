@@ -320,7 +320,7 @@ additions:
       ok: GitHub er forbundet. Du kan nu logge ind.
       github_app_not_created: GitHub-appen blev ikke oprettet. Brug administratorhemmeligheden for at prøve igen.
       github_app_not_installed: GitHub-appen blev ikke installeret. Brug administratorhemmeligheden for at prøve igen.
-      github_wrong_account: GitHub-appen blev installeret på en anden konto end repositoriets. Installer den på repositoriets ejer, og prøv igen.
+      github_wrong_account: GitHub-appen blev installeret på en konto, der ikke ejer repositoriet. Installer den på den konto, der ejer repositoriet, og prøv igen.
       github_repository_not_included: GitHub-appen blev installeret uden adgang til repositoriet. Giv den adgang til repositoriet på GitHub, og prøv igen.
       unexpected: Forbindelsen til GitHub mislykkedes på grund af en uventet fejl. Prøv igen.
   locks:

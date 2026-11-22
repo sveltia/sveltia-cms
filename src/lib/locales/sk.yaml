@@ -320,7 +320,7 @@ additions:
       ok: GitHub je pripojený. Teraz sa môžete prihlásiť.
       github_app_not_created: Aplikácia GitHub App nebola vytvorená. Skúste to znova pomocou tajného kľúča správcu.
       github_app_not_installed: Aplikácia GitHub App nebola nainštalovaná. Skúste to znova pomocou tajného kľúča správcu.
-      github_wrong_account: Aplikácia GitHub App bola nainštalovaná v inom účte, než ktorému patrí repozitár. Nainštalujte ju u vlastníka repozitára a skúste to znova.
+      github_wrong_account: Aplikácia GitHub App bola nainštalovaná v účte, ktorému repozitár nepatrí. Nainštalujte ju v účte, ktorému repozitár patrí, a skúste to znova.
       github_repository_not_included: Aplikácia GitHub App bola nainštalovaná bez prístupu k repozitáru. Na GitHube jej udeľte prístup k repozitáru a skúste to znova.
       unexpected: Pripojenie ku GitHubu zlyhalo pre neočakávanú chybu. Skúste to znova.
   locks:

@@ -320,7 +320,7 @@ additions:
       ok: GitHub is verbonden. Je kunt nu inloggen.
       github_app_not_created: De GitHub App is niet aangemaakt. Gebruik het beheerdersgeheim om het opnieuw te proberen.
       github_app_not_installed: De GitHub App is niet geïnstalleerd. Gebruik het beheerdersgeheim om het opnieuw te proberen.
-      github_wrong_account: De GitHub App is geïnstalleerd op een ander account dan dat van de repository. Installeer de app op de eigenaar van de repository en probeer het opnieuw.
+      github_wrong_account: De GitHub App is geïnstalleerd op een account dat niet de eigenaar van de repository is. Installeer de app op het account dat eigenaar van de repository is en probeer het opnieuw.
       github_repository_not_included: De GitHub App is geïnstalleerd zonder toegang tot de repository. Geef de app op GitHub toegang tot de repository en probeer het opnieuw.
       unexpected: Verbinden met GitHub is mislukt door een onverwachte fout. Probeer het opnieuw.
   locks:

@@ -320,7 +320,7 @@ additions:
       ok: GitHub on yhdistetty. Voit nyt kirjautua sisään.
       github_app_not_created: GitHub Appia ei luotu. Yritä uudelleen ylläpitäjän salaisella avaimella.
       github_app_not_installed: GitHub Appia ei asennettu. Yritä uudelleen ylläpitäjän salaisella avaimella.
-      github_wrong_account: GitHub App asennettiin eri tilille kuin repositorion tili. Asenna se repositorion omistajalle ja yritä uudelleen.
+      github_wrong_account: GitHub App asennettiin tilille, joka ei omista repositoriota. Asenna se tilille, joka omistaa repositorion, ja yritä uudelleen.
       github_repository_not_included: GitHub App asennettiin ilman pääsyä repositorioon. Anna sille pääsy repositorioon GitHubissa ja yritä uudelleen.
       unexpected: GitHubiin yhdistäminen epäonnistui odottamattoman virheen vuoksi. Yritä uudelleen.
   locks:

@@ -320,7 +320,7 @@ additions:
       ok: Το GitHub συνδέθηκε. Μπορείτε τώρα να συνδεθείτε.
       github_app_not_created: Η GitHub App δεν δημιουργήθηκε. Χρησιμοποιήστε το μυστικό διαχειριστή για να δοκιμάσετε ξανά.
       github_app_not_installed: Η GitHub App δεν εγκαταστάθηκε. Χρησιμοποιήστε το μυστικό διαχειριστή για να δοκιμάσετε ξανά.
-      github_wrong_account: Η GitHub App εγκαταστάθηκε σε διαφορετικό λογαριασμό από αυτόν του repository. Εγκαταστήστε την στον κάτοχο του repository και δοκιμάστε ξανά.
+      github_wrong_account: Η GitHub App εγκαταστάθηκε σε λογαριασμό που δεν είναι κάτοχος του repository. Εγκαταστήστε την στον λογαριασμό που είναι κάτοχος του repository και δοκιμάστε ξανά.
       github_repository_not_included: Η GitHub App εγκαταστάθηκε χωρίς πρόσβαση στο repository. Δώστε της πρόσβαση στο repository στο GitHub και δοκιμάστε ξανά.
       unexpected: Η σύνδεση με το GitHub απέτυχε λόγω μη αναμενόμενου σφάλματος. Παρακαλούμε δοκιμάστε ξανά.
   locks:

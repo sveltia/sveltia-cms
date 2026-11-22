@@ -320,7 +320,7 @@ additions:
       ok: Đã kết nối GitHub. Bây giờ bạn có thể đăng nhập.
       github_app_not_created: GitHub App chưa được tạo. Hãy dùng mã bí mật quản trị để thử lại.
       github_app_not_installed: GitHub App chưa được cài đặt. Hãy dùng mã bí mật quản trị để thử lại.
-      github_wrong_account: GitHub App đã được cài đặt trên một tài khoản khác với chủ sở hữu kho mã nguồn. Hãy cài đặt nó trên tài khoản chủ sở hữu kho mã nguồn và thử lại.
+      github_wrong_account: GitHub App đã được cài đặt trên một tài khoản không sở hữu kho mã nguồn. Hãy cài đặt nó trên tài khoản sở hữu kho mã nguồn và thử lại.
       github_repository_not_included: GitHub App đã được cài đặt nhưng không có quyền truy cập vào kho mã nguồn. Hãy cấp cho nó quyền truy cập kho mã nguồn trên GitHub và thử lại.
       unexpected: Kết nối với GitHub không thành công do lỗi không mong muốn. Vui lòng thử lại.
   locks:

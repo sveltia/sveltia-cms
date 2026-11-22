@@ -316,7 +316,7 @@ additions:
       ok: GitHub에 연결되었습니다. 이제 로그인할 수 있습니다.
       github_app_not_created: GitHub 앱이 생성되지 않았습니다. 관리자 시크릿을 사용하여 다시 시도하십시오.
       github_app_not_installed: GitHub 앱이 설치되지 않았습니다. 관리자 시크릿을 사용하여 다시 시도하십시오.
-      github_wrong_account: GitHub 앱이 저장소 소유자가 아닌 다른 계정에 설치되었습니다. 저장소 소유자 계정에 설치한 후 다시 시도하십시오.
+      github_wrong_account: GitHub 앱이 저장소를 소유하지 않은 계정에 설치되었습니다. 저장소를 소유한 계정에 설치한 후 다시 시도하십시오.
       github_repository_not_included: GitHub 앱이 저장소에 대한 접근 권한 없이 설치되었습니다. GitHub에서 앱에 저장소 접근 권한을 부여한 후 다시 시도하십시오.
       unexpected: 예기치 않은 오류로 인해 GitHub에 연결하지 못했습니다. 다시 시도하십시오.
   locks:

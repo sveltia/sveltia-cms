@@ -219,7 +219,7 @@ describe('SignInForm', () => {
 
     await expect
       .element(page.getByRole('alert'))
-      .toMatchTextContent(/installed on another account than the repository’s/);
+      .toMatchTextContent(/installed on an account that doesn’t own the repository/);
     expect(page.getByRole('status').elements()).toHaveLength(0);
   });
 

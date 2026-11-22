@@ -320,7 +320,7 @@ additions:
       ok: GitHub està connectat. Ara podeu iniciar la sessió.
       github_app_not_created: No s’ha creat la GitHub App. Useu el secret d’administrador per tornar-ho a provar.
       github_app_not_installed: No s’ha instal·lat la GitHub App. Useu el secret d’administrador per tornar-ho a provar.
-      github_wrong_account: La GitHub App s’ha instal·lat en un compte diferent del del repositori. Instal·leu-la al propietari del repositori i torneu-ho a provar.
+      github_wrong_account: La GitHub App s’ha instal·lat en un compte que no és el propietari del repositori. Instal·leu-la al compte propietari del repositori i torneu-ho a provar.
       github_repository_not_included: La GitHub App s’ha instal·lat sense accés al repositori. Doneu-li accés al repositori a GitHub i torneu-ho a provar.
       unexpected: La connexió amb GitHub ha fallat a causa d’un error inesperat. Torneu-ho a provar.
   locks:

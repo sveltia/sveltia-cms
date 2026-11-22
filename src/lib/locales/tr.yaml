@@ -319,7 +319,7 @@ additions:
       ok: GitHub bağlandı. Artık giriş yapabilirsiniz.
       github_app_not_created: GitHub App oluşturulmadı. Tekrar denemek için yönetici gizli anahtarını kullanın.
       github_app_not_installed: GitHub App yüklenmedi. Tekrar denemek için yönetici gizli anahtarını kullanın.
-      github_wrong_account: GitHub App, reponun sahibinden farklı bir hesaba yüklendi. Uygulamayı reponun sahibine yükleyip tekrar deneyin.
+      github_wrong_account: GitHub App, reponun sahibi olmayan bir hesaba yüklendi. Uygulamayı reponun sahibi olan hesaba yükleyip tekrar deneyin.
       github_repository_not_included: GitHub App repoya erişim olmadan yüklendi. GitHub’da uygulamaya repo erişimi verip tekrar deneyin.
       unexpected: Beklenmeyen bir hata nedeniyle GitHub’a bağlanılamadı. Lütfen tekrar deneyin.
   locks:

@@ -320,7 +320,7 @@ additions:
       ok: GitHub est connecté. Vous pouvez maintenant vous connecter.
       github_app_not_created: La GitHub App n’a pas été créée. Utilisez le secret d’administration pour réessayer.
       github_app_not_installed: La GitHub App n’a pas été installée. Utilisez le secret d’administration pour réessayer.
-      github_wrong_account: La GitHub App a été installée sur un autre compte que celui du dépôt. Installez-la sur le propriétaire du dépôt et réessayez.
+      github_wrong_account: La GitHub App a été installée sur un compte qui n’est pas propriétaire du dépôt. Installez-la sur le compte propriétaire du dépôt et réessayez.
       github_repository_not_included: La GitHub App a été installée sans accès au dépôt. Donnez-lui accès au dépôt sur GitHub et réessayez.
       unexpected: La connexion à GitHub a échoué en raison d’une erreur inattendue. Veuillez réessayer.
   locks:

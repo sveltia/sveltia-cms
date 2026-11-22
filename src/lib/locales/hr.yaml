@@ -320,7 +320,7 @@ additions:
       ok: GitHub je povezan. Sada se možete prijaviti.
       github_app_not_created: GitHub aplikacija nije stvorena. Upotrijebite administratorsku tajnu i pokušajte ponovno.
       github_app_not_installed: GitHub aplikacija nije instalirana. Upotrijebite administratorsku tajnu i pokušajte ponovno.
-      github_wrong_account: GitHub aplikacija instalirana je na račun koji nije vlasnik repozitorija. Instalirajte je na vlasnika repozitorija i pokušajte ponovno.
+      github_wrong_account: GitHub aplikacija instalirana je na račun koji nije vlasnik repozitorija. Instalirajte je na račun koji je vlasnik repozitorija i pokušajte ponovno.
       github_repository_not_included: GitHub aplikacija instalirana je bez pristupa repozitoriju. Dodijelite joj pristup repozitoriju na GitHubu i pokušajte ponovno.
       unexpected: Povezivanje s GitHubom nije uspjelo zbog neočekivane pogreške. Pokušajte ponovno.
   locks:

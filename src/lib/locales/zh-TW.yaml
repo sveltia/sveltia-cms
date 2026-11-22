@@ -319,7 +319,7 @@ additions:
       ok: 已連線到 GitHub。您現在可以登入了。
       github_app_not_created: 未建立 GitHub App。請使用管理員密鑰再試一次。
       github_app_not_installed: 未安裝 GitHub App。請使用管理員密鑰再試一次。
-      github_wrong_account: GitHub App 安裝到了與倉庫不同的帳號。請將其安裝到倉庫擁有者的帳號後再試一次。
+      github_wrong_account: GitHub App 安裝到了不擁有此倉庫的帳號。請將其安裝到擁有此倉庫的帳號後再試一次。
       github_repository_not_included: GitHub App 安裝時未取得該倉庫的存取權。請在 GitHub 上授予它倉庫存取權後再試一次。
       unexpected: 因發生意外錯誤，無法連線到 GitHub。請再試一次。
   locks:

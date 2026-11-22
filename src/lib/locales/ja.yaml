@@ -317,7 +317,7 @@ additions:
       ok: GitHub に接続されました。ログインできます。
       github_app_not_created: GitHub App が作成されませんでした。管理用シークレットを使用してやり直してください。
       github_app_not_installed: GitHub App がインストールされませんでした。管理用シークレットを使用してやり直してください。
-      github_wrong_account: GitHub App がリポジトリとは別のアカウントにインストールされました。リポジトリの所有者にインストールしてやり直してください。
+      github_wrong_account: GitHub App がリポジトリを所有していないアカウントにインストールされました。リポジトリを所有するアカウントにインストールしてやり直してください。
       github_repository_not_included: GitHub App がリポジトリへのアクセス権なしでインストールされました。GitHub でリポジトリへのアクセスを許可してやり直してください。
       unexpected: 予期しないエラーにより GitHub への接続に失敗しました。もう一度お試しください。
   locks:
