@@ -254,7 +254,7 @@ additions:
   current_password: رمز عبور فعلی
   # {$username} is the username filled in from a magic link emailed to the user
   filled_from_link: نام کاربری و رمز عبور از یک لینک پر شده‌اند. فقط در صورتی وارد شوید که «{$username}» نام کاربری شما باشد.
-  change_password_description: شما در اینجا وارد باقی می‌مانید و از دستگاه‌های دیگر خود خارج خواهید شد.
+  change_password_description: در این دستگاه متصل می‌مانید و از دستگاه‌های دیگر خارج خواهید شد.
   password_changed: رمز عبور شما تغییر کرد.
   # The Account settings panel of a Sveltia CMS Additions user
   account:
@@ -334,9 +334,9 @@ additions:
     # {$name} is the name of the person editing the entry
     being_edited_by_x: در حال ویرایش توسط {$name}
     # {$names} is a list of the other people who have the entry open in the editor
-    also_open_by_x: همچنین باز توسط {$names}
+    also_open_by_x: همچنین باز شده توسط {$names}
     # {$names} is a list of the people who have the entry open, besides anyone editing it
-    open_by_x: باز توسط {$names}
+    open_by_x: باز شده توسط {$names}
   users:
     title: کاربران
     add_user: افزودن کاربر
@@ -455,9 +455,9 @@ additions:
         unreachable: دسترسی به GitHub امکان‌پذیر نبود. لطفاً بعداً دوباره تلاش کنید.
       check_again: بررسی مجدد
       # {$branch} is the name of the repository’s default branch
-      branch_protected: مجموعه‌قوانین (Ruleset) از شاخه «{$branch}» در برابر force push و حذف محافظت می‌کنند.
-      branch_bypassed: مجموعه‌قوانین از شاخه «{$branch}» محافظت می‌کنند، اما برنامه می‌تواند آن‌ها را دور بزند، بنابراین ویرایشگران همچنان می‌توانند روی آن force push کنند یا آن را حذف کنند. برنامه را از فهرست‌های استثنای آن مجموعه‌قوانین حذف کنید.
-      branch_unprotected: هیچ مجموعه‌قوانینی از شاخه «{$branch}» در برابر force push و حذف محافظت نمی‌کند، بنابراین ویرایشگران می‌توانند تاریخچه آن را بازنویسی یا آن را حذف کنند. در تنظیمات مخزن یک مجموعه‌قوانین اضافه کنید که هر دو را مسدود کند، بدون اینکه برنامه در فهرست استثنای آن باشد.
+      branch_protected: مجموعه قوانین (Ruleset) از شاخه «{$branch}» در برابر force push و حذف محافظت می‌کنند.
+      branch_bypassed: مجموعه قوانین از شاخه «{$branch}» محافظت می‌کنند، اما برنامه می‌تواند آن‌ها را دور بزند، بنابراین ویرایشگران همچنان می‌توانند روی آن force push کنند یا آن را حذف کنند. برنامه را از فهرست‌های استثنای آن مجموعه قوانین حذف کنید.
+      branch_unprotected: هیچ مجموعه قوانینی از شاخه «{$branch}» در برابر force push و حذف محافظت نمی‌کند، بنابراین ویرایشگران می‌توانند تاریخچه آن را بازنویسی یا آن را حذف کنند. در تنظیمات مخزن یک مجموعه قوانین اضافه کنید که هر دو را مسدود کند، بدون اینکه برنامه در فهرست استثنای آن باشد.
       repository_rules: باز کردن قوانین مخزن
       private_key: کلید خصوصی
       private_key_description: برای جایگزینی کلید خصوصی، یک کلید جدید در تنظیمات برنامه در GitHub بسازید، سپس فایل .pem دانلودشده را بارگذاری کنید. پس از آن، کلید قدیمی را در آنجا حذف کنید.
@@ -467,7 +467,7 @@ additions:
       private_key_summary: سرویس از کلید خصوصی برنامه برای دسترسی به مخزن در GitHub استفاده می‌کند. اگر ممکن است فاش شده باشد، آن را جایگزین کنید.
       private_key_replaced: کلید خصوصی جایگزین شد.
       commit_author: نویسنده کامیت
-      commit_author_description: انتخاب کنید چه کسی به عنوان نویسنده تغییرات ذخیره‌شده در CMS نمایش داده شود. GitHub فقط کامیت‌هایی را امضا می‌کند که نویسنده‌شان برنامه است، بنابراین اگر یک مجموعه‌قوانین کامیت‌های امضاشده را الزامی می‌کند، برنامه را انتخاب کنید. سایر کاربران ظرف یک ساعت این تغییر را دریافت می‌کنند.
+      commit_author_description: انتخاب کنید چه کسی به عنوان نویسنده تغییرات ذخیره‌شده در CMS نمایش داده شود. GitHub فقط کامیت‌هایی را امضا می‌کند که نویسنده‌شان برنامه است، بنابراین اگر یک مجموعه قوانین کامیت‌های امضاشده را الزامی می‌کند، برنامه را انتخاب کنید. سایر کاربران ظرف یک ساعت این تغییر را دریافت می‌کنند.
       commit_author_user: فردی که تغییر را ایجاد کرده است
       commit_author_bot: GitHub App، با آن فرد به عنوان هم‌نویسنده
       commit_author_saved: نویسنده کامیت ذخیره شد.
@@ -625,7 +625,7 @@ local_git_skip_reasons:
   # The operation in progress, with how to finish or cancel it
   operation_in_progress:
     merge: یک ادغام (merge) در حال انجام است. آن را با git commit کامل کنید یا با git merge --abort لغو کنید.
-    rebase: یک rebase در حال انجام است. آن را با git rebase --continue کامل کنید یا با git rebase --abort لغو کنید. اگر از آن گذشته‌اید، git rebase --quit آن را بدون تغییر فایل‌های شما کنار می‌گذارد.
+    rebase: یک rebase در حال انجام است. آن را با git rebase --continue کامل کنید یا با git rebase --abort لغو کنید. اگر دیگر قصد ادامه آن را ندارید، git rebase --quit آن را بدون تغییر فایل‌های شما کنار می‌گذارد.
     cherry_pick: یک cherry-pick در حال انجام است. آن را با git cherry-pick --continue کامل کنید یا با git cherry-pick --abort لغو کنید.
     revert: یک revert در حال انجام است. آن را با git revert --continue کامل کنید یا با git revert --abort لغو کنید.
     am: اعمال وصله‌ها با git am در حال انجام است. آن را با git am --continue کامل کنید یا با git am --abort لغو کنید.
@@ -1341,7 +1341,7 @@ bulk_edit_invalid: برخی از مقادیر معتبر نیستند. فیلد�
 saving_bulk_edits_failed: ذخیره تغییرات ناموفق بود. لطفاً دوباره تلاش کنید.
 
 # Bulk edit: confirmation shown when leaving the mode with unsaved changes
-discard_bulk_edits_confirm: تغییرات اعمال‌شده روی ورودی‌ها دور انداخته شوند؟
+discard_bulk_edits_confirm: آیا تغییرات اعمال‌شده روی ورودی‌ها لغو شوند؟
 
 # ==============================================================================
 # File Upload and Processing
