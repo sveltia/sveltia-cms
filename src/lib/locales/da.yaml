@@ -11,6 +11,8 @@
 create: Opret
 select: Vælg
 select_all: Vælg alle
+# Accessible name of the checkbox that selects a single entry or asset in a list
+select_item: Vælg {$name}
 upload: Upload
 copy: Kopiér
 download: Download
@@ -69,6 +71,10 @@ primary: Primær
 secondary: Sekundær
 collection: Samling
 folder: Mappe
+# Label of the subfolder list in the asset picker
+folders: Mapper
+# Menu in a breadcrumb holding the folders that don’t fit
+more_folders: Flere mapper
 
 # ==============================================================================
 # Miscellaneous Labels
@@ -113,6 +119,7 @@ welcome_message: Velkommen til {$name}
 powered_by: Leveret af {$name}
 
 # Shown during initial configuration and data loading
+unsupported_browser_error: Din browser understøttes ikke. Opdater den til den nyeste version, eller brug en anden browser.
 loading_cms_config: Indlæser CMS-konfiguration…
 loading_site_data: Indlæser webstedsdata…
 loading_site_data_error: Der opstod en fejl under indlæsning af webstedsdata.
@@ -125,6 +132,8 @@ sign_in_with_x: Log ind med {$service}
 # Access token dialog: alternative authentication method
 sign_in_using_access_token: Log ind med adgangstoken
 sign_in_using_access_token_description: Indtast dit token herunder. Det skal have læse- og skriveadgang til repositoriets indhold.
+# Shown after the description above when Editorial Workflow is enabled, which opens and merges pull requests
+sign_in_using_access_token_workflow_note: Da den redaktionelle arbejdsgang er slået til, skal det også have læse- og skriveadgang til pull requests.
 # Inline link text with embedded HTML anchor tag
 # {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
 sign_in_using_access_token_link: Du kan generere et token under <a>dine brugerindstillinger på {$service}</a>.
@@ -143,6 +152,11 @@ work_with_local_repo_description: Når du bliver bedt om det, skal du vælge rod
 work_with_local_repo_description_no_repo: Når du bliver bedt om det, skal du vælge rodmappen for dit Git-repository.
 # Button label for demo/test repository
 work_with_test_repo: Arbejd med testrepository
+# Button label for the test repository when sample content is seeded, e.g. on a demo site
+start_demo: Start demo
+# Shown below the disabled test repository option in a browser that can’t save files to its
+# storage, e.g. Safari before version 26
+test_repo_unsupported_browser: Din browser kan ikke gemme testrepositoriets filer. Opdater den til den nyeste version, eller brug en anden browser.
 
 # Authentication errors
 # Error messages shown during sign-in failures
@@ -167,14 +181,28 @@ sign_in_error:
 backend_unsupported_version: Backenden {$name} kræver {$name} {$version} eller nyere.
 # {$repo} is the repository identifier, typically in owner/repo format
 repository_no_access: Du har ikke adgang til repositoriet ”{$repo}”.
+# {$repo} is the repository identifier, typically in owner/repo format
+repository_no_write_access: Du har ikke skriveadgang til repositoriet ”{$repo}”.
 repository_not_found: Repositoriet ”{$repo}” findes ikke.
 repository_empty: Repositoriet ”{$repo}” har ingen branches.
 # {$repo} is the repository identifier, and {$branch} is the configured branch name
 branch_not_found: Repositoriet ”{$repo}” har ikke branchen ”{$branch}”.
+# {$repo} is the repository identifier, and {$dir} is the configured root directory
+root_dir_not_found: Rodmappen ”{$dir}” findes ikke i repositoriet ”{$repo}”.
 
 # General errors
 # Fallback error dialog title for unexpected errors
 unexpected_error: Uventet fejl
+# Shown in place of the page when an unexpected error stops it from being displayed
+# {$message} is the error message
+page_crashed: Noget gik galt, og siden kan ikke vises. {$message}
+# Shown in place of a field editor or preview when an unexpected error stops it from being displayed
+# {$message} is the error message
+field_crashed: Noget gik galt, og feltet kan ikke vises. {$message}
+# Button label for displaying a part of the page again after an unexpected error
+try_again: Prøv igen
+# Button label for reloading the CMS after an unexpected error
+reload_cms: Genindlæs CMS
 
 # Entry file parsing errors
 # Toast notification when entry files fail to parse on initial load
@@ -203,6 +231,332 @@ sign_in: Log ind
 sign_in_with_mobile: Log ind med din mobil
 # Instructions shown in the mobile sign-in dialog for passwordless authentication
 sign_in_with_mobile_instruction: Scan QR-koden herunder med din telefon eller tablet for at logge ind uden adgangskode. Dine indstillinger kopieres automatisk.
+# Confirmation dialog shown when the CMS is opened with a sign-in link from the mobile sign-in
+# QR code. {$account} is the account name, {$service} is the Git service name, e.g. GitHub
+sign_in_with_link: Log ind med link
+sign_in_with_link_confirmation: Dette link logger dig ind som {$account} på {$service} og kopierer indstillingerne fra den enhed det blev oprettet på. Fortsæt kun hvis du selv har oprettet linket.
+
+# Sign-in with Sveltia CMS Additions, which manages its own user accounts instead of the Git
+# service’s. Don’t localize “Sveltia CMS Additions”
+additions:
+  username: Brugernavn
+  password: Adgangskode
+  sign_in: Log ind
+  new_password_title: Vælg en ny adgangskode
+  new_password_description: Du er logget ind med en midlertidig adgangskode. Vælg en ny for at fortsætte.
+  new_password: Ny adgangskode
+  password_too_short: Adgangskoden er for kort. Brug mindst 12 tegn.
+  change_password: Skift adgangskode
+  # {$name} is the user’s username, {$role} their role, e.g. Editor
+  signed_in_as_x_with_role: Logget ind som {$name} ({$role})
+  link_github: Tilknyt GitHub-konto
+  link_github_error: GitHub-kontoen kunne ikke tilknyttes
+  current_password: Nuværende adgangskode
+  # {$username} is the username filled in from a magic link emailed to the user
+  filled_from_link: Brugernavnet og adgangskoden er udfyldt fra et link. Log kun ind hvis ”{$username}” er dit brugernavn.
+  change_password_description: Du forbliver logget ind her og bliver logget ud på dine andre enheder.
+  password_changed: Din adgangskode er ændret.
+  # The Account settings panel of a Sveltia CMS Additions user
+  account:
+    profile: Profil
+    profile_description: Dit navn vises for andre i CMS’et, fx på dokumentlåse og kommentarer, og i dine commits.
+    username_description: Dit brugernavn kan ikke ændres.
+    email: E-mail
+    email_description: Den bruges i de commits du laver, så GitHub kan knytte dem til din konto. Uden en e-mailadresse bruges en pladsholderadresse. Kun en administrator kan ændre den.
+    change_name: Skift navn
+    name_changed: Dit navn er ændret.
+    password: Adgangskode
+    no_password: Du logger ind med GitHub, så du har ingen adgangskode at ændre. En administrator kan give dig en ved at nulstille din adgangskode.
+  setup:
+    use_admin_secret: Brug administratorhemmelighed
+    title: Konfigurer Sveltia CMS Additions
+    secret_description: Indtast den administratorhemmelighed der er angivet i indstillingerne for din Sveltia CMS Additions-tjeneste. Den gemmes kun i denne fane mens du konfigurerer.
+    admin_secret: Administratorhemmelighed
+    continue: Fortsæt
+    back: Tilbage til login
+    admin_title: Administratorkonto
+    admin_create_description: Opret den første administratorkonto. Du logger ind med den og administrerer de andre brugere.
+    admin_reset_description: Der findes allerede en administratorkonto. For at komme ind igen kan du nulstille adgangskoden for en administrator her eller oprette en ny.
+    admin_saved: Administratorkontoen er klar. Log ind med den adgangskode du lige har indtastet.
+    create_admin: Opret administrator
+    reset_password: Gem administrator
+    github_title: GitHub
+    # {$repo} is the repository, e.g. octocat/site
+    github_description: Opret en GitHub App til dette websted, og installer den på repositoriet ”{$repo}”. GitHub beder dig bekræfte og sender dig derefter tilbage hertil.
+    # {$repo} is the repository, {$app} is the name of the GitHub App
+    github_connected: Forbundet til repositoriet ”{$repo}” med GitHub-appen ”{$app}”.
+    connect_github: Forbind til GitHub
+    # {$step} is the number of the current step, {$total} the number of steps
+    step_x_of_y: Trin {$step} af {$total}
+    admin_exists: Der findes en administratorkonto.
+    reset_admin_password: Nulstil administratoradgangskode
+    setup_complete: Konfigurationen er fuldført. Log ind med en administratorkonto for at administrere brugere og indstillinger. Du kan til enhver tid vende tilbage hertil med administratorhemmeligheden.
+    manage_sites: Administrer andre websteder
+    back_to_setup: Tilbage
+    sites_title: Andre websteder
+    sites_description: Denne tjeneste kan også betjene andre websteder, hver med sine egne brugere, indstillinger og GitHub App. Angiv webstedets URL som ”base_url” i dets CMS-konfiguration, og konfigurer derefter webstedet dér med administratorhemmeligheden.
+    no_sites: Der er endnu ingen andre websteder.
+    site_id: Websteds-id
+    site_id_description: 1 til 32 små bogstaver, tal og bindestreger, fx ”acme”. Det indgår i webstedets URL og kan ikke ændres.
+    site_name_optional: Navn (valgfrit)
+    add_site: Tilføj websted
+    # {$name} is the name of the site
+    site_added: ”{$name}” er tilføjet. Angiv webstedets URL som ”base_url” i dets CMS-konfiguration, og åbn derefter konfigurationsguiden dér.
+    # {$name} is the name of the site
+    copy_site_url: Kopiér URL’en til {$name}
+    delete_site: Slet websted
+    # {$name} is the name of the site
+    delete_site_x: Slet {$name}
+    # {$name} is the name of the site, {$id} is its ID
+    delete_site_confirmation: Når du sletter ”{$name}”, slettes også dets brugere, indstillinger og kommentarer. Det kan ikke fortrydes. GitHub-appen forbliver på GitHub, hvor du kan slette den. Skriv ”{$id}” for at bekræfte.
+    site_id_to_confirm: Websteds-id til bekræftelse
+    data_key_locked_title: Administratorhemmeligheden er ændret
+    data_key_locked_description: Administratorhemmeligheden er blevet ændret, så de gemte indstillinger kan ikke læses. Indtast den tidligere hemmelighed for at beholde dem, eller start forfra hvis den er gået tabt.
+    previous_secret: Tidligere administratorhemmelighed
+    unlock: Lås op
+    rekey: Start forfra
+    rekey_confirmation: Hvis du starter forfra, slettes GitHub-appens loginoplysninger og de andre gemte hemmeligheder, og alle bliver logget ud. Adgangskoderne bevares. Vil du fortsætte?
+    result:
+      ok: GitHub er forbundet. Du kan nu logge ind.
+      github_app_not_created: GitHub-appen blev ikke oprettet. Brug administratorhemmeligheden for at prøve igen.
+      github_app_not_installed: GitHub-appen blev ikke installeret. Brug administratorhemmeligheden for at prøve igen.
+      github_wrong_account: GitHub-appen blev installeret på en anden konto end repositoriets. Installer den på repositoriets ejer, og prøv igen.
+      github_repository_not_included: GitHub-appen blev installeret uden adgang til repositoriet. Giv den adgang til repositoriet på GitHub, og prøv igen.
+      unexpected: Forbindelsen til GitHub mislykkedes på grund af en uventet fejl. Prøv igen.
+  locks:
+    # {$name} is the name of the person editing the entry, {$time} when they started
+    being_edited: '{$name} har redigeret dette dokument siden {$time}, så du kan kun se det.'
+    being_edited_by_you: Du redigerer dette dokument i en anden fane, så du kan kun se det her.
+    # {$name} is the name of the person who took over the entry
+    taken_over: '{$name} har overtaget dette dokument, så du kan nu kun se det.'
+    take_over: Overtag
+    unavailable: Dokumentlåse er ikke tilgængelige, så en anden redigerer måske dette dokument samtidig.
+    # {$name} is the name of the person editing the entry
+    being_edited_by_x: Redigeres af {$name}
+    # {$names} is a list of the other people who have the entry open in the editor
+    also_open_by_x: Også åbnet af {$names}
+    # {$names} is a list of the people who have the entry open, besides anyone editing it
+    open_by_x: Åbnet af {$names}
+  users:
+    title: Brugere
+    add_user: Tilføj bruger
+    edit_user: Rediger bruger
+    add: Tilføj
+    name: Navn
+    username_description: Et brugernavn kan ikke ændres når brugeren er tilføjet.
+    email_optional: E-mail (valgfri)
+    email_description: Den bruges i de commits personen laver, så GitHub kan knytte dem til vedkommendes konto. Uden en e-mailadresse bruges en pladsholderadresse.
+    role: Rolle
+    status: Status
+    last_sign_in: Seneste login
+    sign_in_column: Login
+    methods:
+      password: Adgangskode
+      # {$login} is a GitHub username
+      github: GitHub ({$login})
+    actions: Handlinger
+    you: (dig)
+    never: Aldrig
+    roles:
+      admin: Administrator
+      editor: Redaktør
+      viewer: Læser
+    statuses:
+      active: Aktiv
+      temporary_password: Midlertidig adgangskode
+      waiting_for_sign_in: Afventer første login
+      disabled: Deaktiveret
+    # {$name} is the user’s name
+    show_options_for_x: Vis muligheder for {$name}
+    options: Brugermuligheder
+    reset_password: Nulstil adgangskode
+    sign_out_everywhere: Log ud overalt
+    enable: Aktivér bruger
+    disable: Deaktivér bruger
+    delete: Slet bruger
+    # {$name} is the user’s name
+    reset_password_confirmation: Vil du give {$name} en ny midlertidig adgangskode? Vedkommende bliver logget ud overalt og skal vælge en ny adgangskode ved næste login.
+    delete_confirmation: Vil du slette {$name}? Det kan ikke fortrydes.
+    temporary_password: Midlertidig adgangskode
+    # {$name} is the user’s name
+    temporary_password_description: Giv dette brugernavn og denne midlertidige adgangskode til {$name}. Adgangskoden vises ikke igen, og vedkommende vælger sin egen adgangskode ved login.
+    copy_username: Kopiér brugernavn
+    copy_password: Kopiér adgangskode
+    # {$name} is the user’s name
+    email_credentials: Send e-mail til {$name}
+    # The emails the admin sends from their own email app, with the sign-in details: `new` to a user
+    # who has just been added, `reset` to one whose password has been reset. Each line is a string of
+    # its own, as line breaks aren’t kept in these files
+    credentials_email:
+      # {$name} is the user’s name
+      greeting: Hej {$name},
+      # {$url} is a link to the CMS that fills in the username and the temporary password
+      sign_in_link: 'Loginlink: {$url}'
+      # {$username} is the username
+      username: 'Brugernavn: {$username}'
+      # {$password} is the temporary password
+      password: 'Midlertidig adgangskode: {$password}'
+      new:
+        # {$app} is the name of the CMS
+        subject: Dine loginoplysninger til {$app}
+        # {$app} is the name of the CMS
+        message: Du kan nu logge ind på {$app}. Åbn linket herunder, som udfylder dit brugernavn og din midlertidige adgangskode, og vælg din egen adgangskode når du logger ind.
+      reset:
+        # {$app} is the name of the CMS
+        subject: Din adgangskode til {$app} er blevet nulstillet
+        # {$app} is the name of the CMS
+        message: Din adgangskode til {$app} er blevet nulstillet, og du er blevet logget ud overalt. Åbn linket herunder, som udfylder dit brugernavn og din midlertidige adgangskode, og vælg en ny adgangskode når du logger ind.
+    allowed_domains: Tilladte domæner
+    allowed_domains_description: De websteder der må bruge Sveltia CMS Additions, ét værtsnavn pr. linje. Et jokertegn (*) matcher ethvert underdomæne, fx *.example.com. Angiv så vidt muligt præcise værtsnavne. Listen gælder kun for dette websted, også selvom den samme Sveltia CMS Additions-instans også betjener andre websteder.
+    save_allowed_domains: Gem tilladte domæner
+    allowed_domains_saved: De tilladte domæner er gemt.
+    sign_in_tab: Login
+    # {$latest} is the newest version of Sveltia CMS Additions, {$current} the one in use
+    update_available: Sveltia CMS Additions {$latest} er tilgængelig. Du kører {$current}.
+    release_notes: Release notes
+    github_username_optional: GitHub-brugernavn (valgfrit)
+    github_username_description: Med et GitHub-brugernavn logger brugeren ind med den GitHub-konto i stedet for med en adgangskode.
+    # {$name} is the user’s name
+    github_required: '{$name} kan kun logge ind med GitHub, så vedkommendes GitHub-brugernavn kan ikke fjernes. Nulstil først adgangskoden for at give vedkommende en adgangskode at logge ind med.'
+    adopt: Overtag konto
+    sign_in:
+      github: Tillad login med GitHub
+      github_description: Brugerne logger ind med deres GitHub-konto og får deres eget GitHub-token, så deres ændringer bliver committet i deres navn. En administrator tilføjer dem først med deres GitHub-brugernavn, medmindre en tilmeldingsregel dækker dem.
+      # Shown when signing in with GitHub is being turned off while {$count} users can only sign in
+      # with it
+      github_only_warning: |
+        .input {$count :integer}
+        .match $count
+          one {{ Én bruger kan kun logge ind med GitHub og vil ikke kunne logge ind når det er slået fra, før du nulstiller vedkommendes adgangskode. }}
+          *   {{ {$count} brugere kan kun logge ind med GitHub og vil ikke kunne logge ind når det er slået fra, før du nulstiller deres adgangskoder. }}
+      rules: Tilmeldingsregler
+      rules_description: Medlemmer af den GitHub-organisation som appen er installeret på, kan logge ind uden først at blive tilføjet. Deres konto får den rolle du vælger, og bliver deaktiveret hvis de forlader organisationen, medmindre du overtager den.
+      org: GitHub-organisation
+      add_rule: Tilføj regel
+      # {$org} is the name of a GitHub organization
+      remove_rule: Fjern regel for {$org}
+      # For a rule whose organization hasn’t been entered yet
+      remove_empty_rule: Fjern regel
+      save: Gem loginindstillinger
+      saved: Loginindstillingerne er gemt.
+    domains_tab: Domæner
+    github_tab: GitHub
+    github:
+      app: GitHub App
+      repository: Repository
+      not_installed: Ikke installeret
+      statuses:
+        ok: Appen virker.
+        not_registered: Der er endnu ikke konfigureret nogen GitHub App. Kør konfigurationsguiden fra loginsiden med administratorhemmeligheden.
+        key_missing: Appens private nøgle gik tabt da administratorhemmeligheden blev udskiftet. Generér en ny privat nøgle i appindstillingerne på GitHub, og upload den herunder.
+        key_rejected: GitHub accepterer ikke appens private nøgle, fx fordi den er blevet slettet dér. Generér en ny privat nøgle i appindstillingerne på GitHub, og upload den herunder.
+        not_installed: Appen er ikke installeret på repositoriet. Installer den igen fra appens side på GitHub, eller kør konfigurationsguiden.
+        suspended: Appens installation er suspenderet. Ophæv suspenderingen i installationsindstillingerne på GitHub.
+        unreachable: Der kunne ikke oprettes forbindelse til GitHub. Prøv igen senere.
+      check_again: Kontrollér igen
+      # {$branch} is the name of the repository’s default branch
+      branch_protected: Regelsæt beskytter branchen ”{$branch}” mod force push og sletning.
+      branch_bypassed: Regelsæt beskytter branchen ”{$branch}”, men appen kan omgå dem, så redaktører stadig kan force pushe til den eller slette den. Fjern appen fra undtagelseslisterne i de pågældende regelsæt.
+      branch_unprotected: Intet regelsæt beskytter branchen ”{$branch}” mod force push og sletning, så redaktører kan omskrive dens historik eller slette den. Tilføj et regelsæt i repositoriets indstillinger der blokerer begge dele, uden appen på undtagelseslisten.
+      repository_rules: Åbn repositoriets regler
+      private_key: Privat nøgle
+      private_key_description: For at udskifte den private nøgle skal du generere en ny i appindstillingerne på GitHub og derefter uploade den .pem-fil der bliver downloadet. Slet bagefter den gamle nøgle dér.
+      app_settings: Åbn appindstillinger
+      upload_private_key: Upload privat nøgle
+      replace_private_key: Udskift privat nøgle
+      private_key_summary: Tjenesten bruger appens private nøgle til at få adgang til repositoriet på GitHub. Udskift den hvis den kan være blevet lækket.
+      private_key_replaced: Den private nøgle er udskiftet.
+      commit_author: Commit-forfatter
+      commit_author_description: Vælg hvem der vises som forfatter til de ændringer der gemmes i CMS’et. GitHub signerer kun de commits som appen er forfatter til, så vælg appen hvis et regelsæt kræver signerede commits. Andre brugere får ændringen inden for en time.
+      commit_author_user: Den person der foretog ændringen
+      commit_author_bot: GitHub-appen, med personen som medforfatter
+      commit_author_saved: Commit-forfatteren er gemt.
+  # Administration section for the API keys and the deploy hook an admin shares with everyone
+  credentials:
+    title: Loginoplysninger
+    description: API-nøgler og deploy-hooket der indtastes her, bruges af alle der logger ind, medmindre de indtaster deres egne under Indstillinger. Alle der er logget ind i CMS’et, kan læse dem, så indtast kun nøgler du gerne vil dele med dit team.
+    save: Gem loginoplysninger
+    saved: Loginoplysningerne er gemt.
+    # {$service} is the service name, e.g. DeepL
+    invalid_key: API-nøglen til {$service} ser ikke rigtig ud.
+  error:
+    unauthenticated: Din session er udløbet. Log ind igen.
+    wrong_admin_secret: Administratorhemmeligheden er forkert.
+    admin_secret_missing: Administratorhemmeligheden er ikke angivet i indstillingerne for Sveltia CMS Additions-tjenesten.
+    admin_secret_too_short: Administratorhemmeligheden i indstillingerne for Sveltia CMS Additions-tjenesten er for kort. Brug mindst 32 tilfældige tegn.
+    wrong_previous_secret: Den tidligere administratorhemmelighed er forkert.
+    not_an_admin: Denne bruger er ikke administrator. Vælg et andet brugernavn.
+    invalid_username: Et brugernavn består af 3 til 30 små bogstaver, tal, punktummer, bindestreger eller understregninger.
+    last_admin: Der skal være mindst én administrator.
+    cannot_disable_self: Du kan ikke deaktivere din egen konto.
+    cannot_delete_self: Du kan ikke slette din egen konto.
+    username_taken: En anden bruger har dette brugernavn.
+    email_taken: En anden bruger har denne e-mailadresse.
+    invalid_name: Navnet skal have 1 til 100 tegn.
+    invalid_email: E-mailadressen er ugyldig.
+    invalid_domains: Et af de tilladte domæner er ikke et gyldigt værtsnavn.
+    current_origin_removed: De tilladte domæner skal omfatte det websted du bruger nu.
+    forbidden: Kun administratorer kan gøre dette.
+    invalid_credentials: Brugernavnet eller adgangskoden er forkert.
+    user_disabled: Denne konto er deaktiveret. Bed din administrator om hjælp.
+    too_many_attempts: For mange forsøg. Prøv igen senere.
+    wrong_password: Den nuværende adgangskode er forkert.
+    same_password: Vælg en ny adgangskode der er forskellig fra den nuværende.
+    invalid_github_login: Dette er ikke et gyldigt GitHub-brugernavn.
+    github_user_not_found: Der findes ingen GitHub-bruger med dette navn.
+    github_account_taken: En anden bruger logger ind med denne GitHub-konto.
+    invalid_rules: En tilmeldingsregel kræver navnet på en GitHub-organisation.
+    invalid_rule_role: En tilmeldingsregel kan kun give rollen redaktør eller læser.
+    rule_org_not_installed: GitHub-appen skal være installeret på organisationen i en tilmeldingsregel.
+    not_invited: Du har ingen konto her. Bed din administrator om at tilføje dig.
+    method_disabled: Login med GitHub er slået fra.
+    access_denied: Login blev annulleret.
+    github_app_not_set_up: Sveltia CMS Additions er endnu ikke forbundet til GitHub. Bed din administrator om at fuldføre konfigurationen.
+    invalid_tenant_id: Websteds-id’et skal bestå af 1 til 32 små bogstaver, tal og bindestreger og må ikke være ”default”.
+    invalid_tenant_name: Webstedets navn må højst have 100 tegn.
+    tenant_exists: Der findes allerede et websted med dette id.
+    github_app_missing: Der er endnu ikke konfigureret nogen GitHub App.
+    invalid_private_key: Filen er ikke en gyldig privat nøgle.
+    private_key_mismatch: GitHub accepterer ikke denne private nøgle for appen. Sørg for at du har genereret den i appens indstillinger.
+    github_error: GitHub svarede med en fejl. Prøv igen senere.
+    data_key_locked: Sveltia CMS Additions kan ikke bruges før en administrator er færdig med at ændre administratorhemmeligheden.
+    not_configured: Sveltia CMS Additions er ikke konfigureret korrekt. Bed din administrator om hjælp.
+    origin_not_allowed: Dette websted har ikke tilladelse til at bruge Sveltia CMS Additions. Bed din administrator om at tilføje det til de tilladte domæner.
+    not_set_up: Sveltia CMS Additions er endnu ikke forbundet til GitHub. Bed din administrator om at fuldføre konfigurationen.
+    # A user whose password an admin has reset signs in another way, e.g. with GitHub
+    temporary_password: Din adgangskode er blevet nulstillet. Log ind med dit brugernavn og den midlertidige adgangskode du har fået af din administrator, og vælg derefter en ny.
+    # {$url} is the URL of the service
+    incompatible: Denne version af Sveltia CMS virker ikke med Sveltia CMS Additions-tjenesten på {$url}.
+    unreachable: Der kunne ikke oprettes forbindelse til Sveltia CMS Additions. Prøv igen senere.
+    insecure_connection: Sveltia CMS Additions skal leveres via HTTPS. Kontrollér `base_url` i CMS-konfigurationen.
+    unexpected: Anmodningen til Sveltia CMS Additions mislykkedes på grund af en uventet fejl. Prøv igen senere.
+
+  # Conversation panel: comments on the entry, kept by Sveltia CMS Additions
+  conversation:
+    title: Samtale
+    refresh: Opdater samtale
+    empty: Ingen kommentarer endnu.
+    # Button above a long conversation, which is loaded from its latest comments
+    show_older: Vis ældre kommentarer
+    # Label of the list of comments
+    timeline: Kommentarer
+    deleted_user: Slettet bruger
+    you: Dig
+    edited: redigeret
+    comment_label: Kommentar
+    placeholder: Skriv en kommentar (Markdown)
+    visible_to_cms_users: Kun synlig for CMS-brugere
+    send: Kommentér
+    options: Kommentarmuligheder
+    edit: Rediger
+    delete: Slet
+    save: Gem
+    delete_confirmation: Vil du slette denne kommentar? Det kan ikke fortrydes.
+    send_failed: Kommentaren kunne ikke sendes.
+
+  # Placeholder of an API key or deploy hook field the user has left empty, while an admin of
+  # Sveltia CMS Additions has entered one for everyone
+  provided_by_admin: Leveret af din administrator
 
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
@@ -210,6 +564,15 @@ sign_in_with_mobile_instruction: Scan QR-koden herunder med din telefon eller ta
 signed_in_as_x: Logget ind som {$name}
 working_with_local_repo: Arbejder med lokalt repository
 working_with_test_repo: Arbejder med testrepository
+working_in_demo_mode: Demotilstand
+
+# Demo welcome dialog: shown once after signing in to a demo site, where the test repository is
+# seeded with sample content and the changes are only stored in the browser
+demo_welcome:
+  title: Velkommen til Sveltia CMS-demoen
+  description: Du er velkommen til at udforske CMS’et og redigere eksempelindholdet. Dine ændringer gemmes kun i denne browser. Intet bliver udgivet online, og ingen andre kan se dem.
+  reset_hint: Hvis du vil starte forfra med det oprindelige indhold, skal du vælge Slet alle data under Indstillinger > Datahåndtering.
+  button_label: Kom i gang
 
 # Account menu: action items for sign-out and app installation
 sign_out: Log ud
@@ -225,9 +588,14 @@ install_as_app: Installer som app
 contents: Indhold
 assets: Medier
 editorial_workflow: Redaktionel arbejdsgang
+# Name of the Editorial Workflow page when all the content uses Preview Workflow, which has no
+# review stages, so the page only lists the drafts
+drafts: Kladder
 cms_config: CMS-konfiguration
 # Mobile menu page title (shown only on small screens)
 menu: Menu
+# Mobile menu page section heading listing the custom pages registered by the site
+custom_pages: Sider
 
 # Mobile promo infobar: encouraging users to try the mobile version
 mobile_promo_title: Sveltia CMS findes nu på mobilen!
@@ -238,10 +606,36 @@ mobile_promo_button: Prøv det
 new_language_available: Sveltia CMS findes nu på {$locale}!
 change_language: Skift sprog
 
+# Live reload infobar: shown when the CMS runs on a page that a framework’s development server (e.g.
+# Astro) reloads on every file change, instead of a static HTML file
+live_reload_warning: Din udviklingsserver genindlæser denne side hver gang en fil ændres, hvilket kan afbryde lagring og efterlade dine filer i stykker. Server i stedet CMS’et fra en statisk HTML-fil. <a>Få mere at vide</a>
+
 # Toast notification shown while the translation for the selected language is being downloaded
 # {$locale} is the localized language name, e.g., “French”
 switching_language: Skifter til {$locale}…
 locale_load_failed: Oversættelsen til {$locale} kunne ikke indlæses. Prøv igen senere.
+
+# Toast notification shown when changes saved with the local backend couldn’t be committed to Git
+# {$reason} is one of the `local_git_skip_reasons` strings below
+local_git_not_committed: Dine ændringer er gemt, men ikke committet til Git. {$reason} Hvis du kun vil gemme filerne, kan du slå Git-commits fra under Indstillinger > Udvikler.
+local_git_skip_reasons:
+  unsupported_repository: Dit repository bruger en Git-funktion som CMS’et ikke understøtter, fx et linket worktree, SHA-256-objektnavne, reftable-formatet, et sparse index eller et index i version 3 eller 4, som indstillingen feature.manyFiles og git add -N bruger.
+  missing_identity: Dit navn og din e-mailadresse er ikke angivet i repositoriets Git-konfiguration, og CMS’et kan ikke læse din globale konfiguration. Angiv dem i repositoriet med git config --local user.name "Dit navn" og git config --local user.email "dig@example.com".
+  locked: En anden Git-proces bruger repositoriet. Hvis der ikke kører nogen, skal du slette filen .git/index.lock.
+  # The operation in progress, with how to finish or cancel it
+  operation_in_progress:
+    merge: En merge er i gang. Afslut den med git commit, eller annuller den med git merge --abort.
+    rebase: En rebase er i gang. Afslut den med git rebase --continue, eller annuller den med git rebase --abort. Hvis du er gået videre, kan du droppe den med git rebase --quit uden at ændre dine filer.
+    cherry_pick: Et cherry-pick er i gang. Afslut det med git cherry-pick --continue, eller annuller det med git cherry-pick --abort.
+    revert: En revert er i gang. Afslut den med git revert --continue, eller annuller den med git revert --abort.
+    am: Anvendelse af patches med git am er i gang. Afslut den med git am --continue, eller annuller den med git am --abort.
+    conflict: Nogle filer har konflikter. Løs dem, og stage resultaterne først.
+  detached_head: Der er ikke tjekket nogen branch ud.
+  staged_changes: Du har andre ændringer der er staget til commit. Commit dem, eller fjern dem fra stage først.
+  # {$path} is the file path
+  lfs: '{$path} spores med Git LFS, som CMS’et ikke kan committe til.'
+  # {$message} is the error message
+  error: Der opstod en uventet fejl. {$message}
 
 # Site and page navigation
 # Toolbar button aria-label for visiting the live site
@@ -276,6 +670,10 @@ account: Konto
 live_site: Webstedet
 git_repository: Git-repository
 settings: Indstillinger
+
+# Page for the people who look after the CMS, apart from the personal settings: user management
+# and the CMS configuration
+administration: Administration
 
 # Help menu: button aria-labels and section headings
 show_help_menu: Vis hjælpemenu
@@ -369,6 +767,10 @@ viewing_x_asset_folder: |
 # Cloud storage service view announcement
 # {$service} is the cloud storage service name, e.g. Uploadcare
 viewing_x_external_location: Du ser nu mediefilerne på {$service}.
+# Administration page announcements
+viewing_admin_section_list: Du ser nu listen over sektioner under Administration.
+# {$section} is the section label, e.g. Users
+viewing_x_admin_section: Du ser nu sektionen ”{$section}” på siden Administration.
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
@@ -387,6 +789,7 @@ x_of_x_selected: '{$selected} af {$total} valgt'
 
 # View switcher: toggle between list and grid views
 switch_view: Skift visning
+table_view: Tabelvisning
 list_view: Listevisning
 grid_view: Miniaturevisning
 switch_to_list_view: Skift til listevisning
@@ -400,6 +803,16 @@ switch_to_grid_view: Skift til miniaturevisning
 # Sort menu: button labels and options
 sort: Sortér
 sorting_options: Sorteringsmuligheder
+# Table view column labels for the entry metadata used as `{{…}}` template tags
+table_column_keys:
+  # The folder containing the entry file
+  dirname: Mappe
+  # The entry file name without the extension
+  filename: Filnavn
+  # The entry file extension
+  extension: Filendelse
+  # The enabled locales of the entry
+  locales: Sprog
 # Sort key option labels
 sort_keys:
   # No sorting; entries appear in their natural repository order
@@ -439,6 +852,8 @@ grouping_options: Grupperingsmuligheder
 # Asset type filter and group labels
 type: Type
 all: Alle
+# Group option for the linked files, which can be hosted anywhere: the host name of the file’s URL
+domain: Domæne
 # Asset type labels
 image: Billede
 video: Video
@@ -457,6 +872,9 @@ all_assets: Alle medier
 global_assets: Globale medier
 # Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
 linked_files: Linkede filer
+# Badge and message shown on a linked file that couldn’t be loaded, e.g. because it has been deleted
+file_unavailable: Ikke tilgængelig
+file_unavailable_description: Filen kunne ikke indlæses. Den er muligvis blevet flyttet eller slettet.
 
 # ==============================================================================
 # Entry and Collection Actions
@@ -492,12 +910,27 @@ creating_entries_nearing_quota: |
     *   one {{ Denne samling nærmer sig sin grænse på {$quota} dokumenter. Du kan kun oprette {$remaining} dokument mere. }}
     *   *   {{ Denne samling nærmer sig sin grænse på {$quota} dokumenter. Du kan kun oprette {$remaining} dokumenter mere. }}
 
+# Read-only restrictions set with the `readonly` option: advisory messages
+readonly_cms: CMS’et er i skrivebeskyttet tilstand. Du kan se indhold og medier, men ikke foretage ændringer.
+readonly_collection: Denne samling er skrivebeskyttet. Du kan se dens indhold, men ikke foretage ændringer.
+readonly_entry: Dette dokument er skrivebeskyttet. Du kan se det, men ikke foretage ændringer.
+readonly_asset_folder: Denne mappe er skrivebeskyttet. Du kan se dens mediefiler, men ikke foretage ændringer.
+readonly_branch: Du har ikke tilladelse til at pushe til branchen ”{$branch}”. Du kan se dette indhold, men ikke foretage ændringer.
+readonly_role: Du har kun læseadgang. Du kan se indhold og medier, men ikke foretage ændringer.
+readonly_reference: Dokumentet er skrivebeskyttet, så henvisningen kan ikke fjernes.
+# {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
+cannot_rename_referenced_entry: 'Dette dokument kan ikke omdøbes, fordi følgende skrivebeskyttede dokumenter henviser til det med dets nuværende navn: {$entries}.'
+# {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
+cannot_move_referenced_asset: 'Denne mediefil kan ikke flyttes eller omdøbes, fordi følgende skrivebeskyttede dokumenter bruger den: {$entries}.'
+
 # Navigation: back links and list labels
 back_to_collection: Tilbage til samlingen
 collection_list: Samlingsliste
 back_to_collection_list: Tilbage til samlingslisten
 asset_folder_list: Mediemappeliste
 back_to_asset_folder_list: Tilbage til mediemappelisten
+# Back button shown in place of the one above while browsing a subfolder of an asset folder
+back_to_parent_folder: Tilbage til overordnet mappe
 
 # ==============================================================================
 # Search
@@ -556,6 +989,53 @@ no_entries_found: Ingen dokumenter fundet.
 # Upload dialog: title and button label
 upload_assets: Upload nye mediefiler
 
+# New Folder button and dialog in the Asset Library
+new_folder: Ny mappe
+new_folder_name: Mappenavn
+new_folder_create: Opret
+# {$folder} is the path of the folder the new one will be created in, starting with a slash
+new_folder_description: Den nye mappe oprettes i ”{$folder}”.
+# Validation errors for the new folder name
+new_folder_error:
+  empty: Mappenavnet må ikke være tomt.
+  invalid: Mappenavnet må ikke indeholde skråstreger eller begynde med et punktum.
+  # A name the CMS itself is usually served from, e.g. `admin` or `cms`
+  reserved: Filerne i en mappe med dette navn er skrivebeskyttede, da selve CMS’et normalt serveres fra den.
+  duplicate: Der findes allerede en mappe eller fil med dette navn her.
+# Progress and error messages while the folder is being created
+creating_folder: Opretter mappen…
+creating_folder_failed: Mappen kunne ikke oprettes.
+
+# Menu on a folder in the Asset Library, and the Rename Folder and Delete Folder dialogs
+folder_options: Mappemuligheder
+show_folder_options: Vis mappemuligheder
+rename_folder: Omdøb mappe
+delete_folder: Slet mappe
+# Rename Folder dialog body text
+# {$count} is the number of assets in the folder, which are moved along with it
+enter_new_name_for_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Indtast et nyt navn herunder. }}
+    one {{ Indtast et nyt navn herunder. Mediefilen i mappen flyttes med, og et dokument der bruger den, bliver opdateret. }}
+    *   {{ Indtast et nyt navn herunder. De {$count} mediefiler i mappen flyttes med, og dokumenter der bruger dem, bliver opdateret. }}
+# Delete Folder confirmation
+# {$name} is the folder name and {$count} is the number of assets in the folder
+confirm_deleting_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Er du sikker på at du vil slette den tomme mappe ”{$name}”? }}
+    one {{ Er du sikker på at du vil slette mappen ”{$name}” og mediefilen i den? }}
+    *   {{ Er du sikker på at du vil slette mappen ”{$name}” og de {$count} mediefiler i den? }}
+# Progress and error messages while the folder is being renamed or deleted
+renaming_folder: Omdøber mappen…
+renaming_folder_failed: Mappen kunne ikke omdøbes.
+deleting_folder: Sletter mappen…
+deleting_folder_failed: Mappen kunne ikke slettes.
+# Asset Library and asset picker: notice shown when a cloud storage service holds more files than
+# are listed at once
+external_assets_truncated: Der er for mange filer på tjenesten til at vise dem alle, så nogle af dem er udeladt.
+
 # Edit options menu: button and item labels
 edit_options: Redigeringsmuligheder
 show_edit_options: Vis redigeringsmuligheder
@@ -568,6 +1048,47 @@ edit_x: Rediger {$name}
 
 # Asset text editor: switch for line wrapping
 wrap_long_lines: Ombryd lange linjer
+
+# Move assets: dialog for moving assets to another folder in the repository
+move: Flyt
+move_asset: Flyt mediefil
+# Dialog title. {$name} is the asset name when a single asset is moved, and {$count} is the number of
+# assets being moved
+move_assets_title: |
+  .input {$count :integer}
+  .match $count
+    one {{ Flyt {$name} }}
+    *   {{ Flyt {$count} mediefiler }}
+# Dialog body text. {$count} is the number of entries that currently use the assets
+select_asset_move_destination: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Vælg den mappe der skal flyttes til. }}
+    one {{ Vælg den mappe der skal flyttes til. Et dokument der bruger mediefilerne, bliver også opdateret. }}
+    *   {{ Vælg den mappe der skal flyttes til. {$count} dokumenter der bruger mediefilerne, bliver også opdateret. }}
+# Accessible label of the folder tree in the Move dialog
+asset_move_destination: Destinationsmappe
+# Shown when the assets being moved are all in the selected folder already
+assets_already_in_folder: |
+  .input {$count :integer}
+  .match $count
+    one {{ Mediefilen er allerede i denne mappe. }}
+    *   {{ Mediefilerne er allerede i denne mappe. }}
+# Shown when files with the same names exist in the selected folder. {$names} is a comma-separated
+# list of file names
+asset_move_conflict: 'Følgende filer findes allerede i denne mappe: {$names}.'
+moving_assets: Flytter mediefilerne…
+moving_assets_failed: Mediefilerne kunne ikke flyttes.
+# Warning shown when files have been moved off a cloud storage service, but the originals couldn’t
+# be deleted from it
+asset_move_cleanup_failed: Filerne er flyttet, men originalerne kunne ikke slettes fra lagringstjenesten.
+# Shown when files on a cloud storage service can’t be renamed or moved, because the entries using
+# them can’t be updated, e.g. for an Open Authoring contributor. {$count} is the number of files
+cannot_change_used_external_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Denne fil kan ikke omdøbes eller flyttes, fordi de dokumenter der bruger den, ikke kan opdateres. }}
+    *   {{ Disse filer kan ikke omdøbes eller flyttes, fordi de dokumenter der bruger dem, ikke kan opdateres. }}
 
 # Rename asset: dialog and validation
 rename_asset: Omdøb mediefil
@@ -586,6 +1107,15 @@ enter_new_name_for_asset_error:
   empty: Filnavnet må ikke være tomt.
   character: Filnavnet må ikke indeholde specialtegn.
   duplicate: Dette filnavn bruges allerede til en anden mediefil.
+  # A name starting with a dot hides the file, which the CMS wouldn’t list any more
+  leading_dot: Filnavnet må ikke begynde med et punktum.
+  # The name of a file next to the asset that isn’t an asset, like an entry file
+  file_duplicate: Der findes allerede en anden fil med dette navn her.
+  # The name of a folder next to the file
+  folder_duplicate: Der findes allerede en mappe med dette navn her.
+# Shown while renaming a file whose name will be changed on saving, e.g. by the `slugify_filename`
+# media library option
+file_will_be_saved_as: Filen bliver gemt som ”{$name}”.
 # Confirmation dialog shown when the file extension is changed while renaming an asset
 change_file_extension: Skift filendelse
 # {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
@@ -599,6 +1129,11 @@ file_extension_change_warning: Filen vises eller håndteres muligvis ikke korrek
 replace_asset: Erstat mediefil
 # {$name} is the asset being replaced
 replace_x: Erstat {$name}
+# File/Image field: labels of the Replace and Remove buttons
+replace_file: Erstat fil
+replace_image: Erstat billede
+remove_file: Fjern fil
+remove_image: Fjern billede
 
 # File selection prompts: drop zones and file pickers
 # Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
@@ -688,6 +1223,29 @@ confirm_deleting_selected_assets: |
     one {{ Er du sikker på at du vil slette den valgte mediefil? }}
     *   {{ Er du sikker på at du vil slette de {$count} valgte mediefiler? }}
 confirm_deleting_all_assets: Er du sikker på at du vil slette alle mediefilerne?
+# Note added to the confirmation when entries use the assets being deleted; the references are
+# removed in the same commit. {$count} is the number of entries using them
+deleting_referenced_assets_note: |
+  .input {$count :integer}
+  .match $count
+    one {{ Henvisningen til den i et dokument bliver også fjernet. }}
+    *   {{ Henvisningerne til den i {$count} dokumenter bliver også fjernet. }}
+# Shown in place of the confirmation when removing the references would leave a field in an entry
+# invalid, e.g. a required Image field with nothing left, so the deletion is refused. The fields are
+# listed below the message, each with the validation error it would have. {$count} is the number of
+# assets being deleted
+cannot_delete_referenced_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Denne mediefil kan ikke slettes, fordi følgende felter i de dokumenter der bruger den, ikke længere vil være gyldige uden den. Opdater først de dokumenter. }}
+    *   {{ Disse mediefiler kan ikke slettes, fordi følgende felter i de dokumenter der bruger dem, ikke længere vil være gyldige uden dem. Opdater først de dokumenter. }}
+# Error shown in the asset deletion dialog when the entries using the assets couldn’t be looked up,
+# so the deletion can’t go ahead. {$count} is the number of assets being deleted
+checking_asset_references_failed: |
+  .input {$count :integer}
+  .match $count
+    one {{ Det kunne ikke kontrolleres hvilke dokumenter der bruger denne mediefil. Luk denne dialog, og prøv igen. }}
+    *   {{ Det kunne ikke kontrolleres hvilke dokumenter der bruger disse mediefiler. Luk denne dialog, og prøv igen. }}
 
 # Delete entries: dialog titles and confirmation messages
 # {$count} is the number of entries targeted by the action
@@ -720,6 +1278,23 @@ confirm_deleting_selected_entries_with_assets: |
     *   {{ Er du sikker på at du vil slette de {$count} valgte dokumenter og de tilknyttede mediefiler? }}
 confirm_deleting_all_entries: Er du sikker på at du vil slette alle dokumenterne?
 confirm_deleting_all_entries_with_assets: Er du sikker på at du vil slette alle dokumenterne og de tilknyttede mediefiler?
+# Note added to the confirmation when other entries reference the entries being deleted through
+# Relation fields; the references are removed in the same commit. {$count} is the number of
+# referencing entries
+deleting_referenced_entries_note: |
+  .input {$count :integer}
+  .match $count
+    one {{ Henvisningen til det i et andet dokument bliver også fjernet. }}
+    *   {{ Henvisningerne til det i {$count} andre dokumenter bliver også fjernet. }}
+# Shown in place of the confirmation when removing the references would leave a Relation field in
+# another entry invalid, e.g. a required field with nothing selected, so the deletion is refused.
+# The fields are listed below the message, each with the validation error it would have. {$count}
+# is the number of entries being deleted
+cannot_delete_referenced_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Dette dokument kan ikke slettes, fordi følgende felter i andre dokumenter ikke længere vil være gyldige uden det. Opdater først de dokumenter. }}
+    *   {{ Disse dokumenter kan ikke slettes, fordi følgende felter i andre dokumenter ikke længere vil være gyldige uden dem. Opdater først de dokumenter. }}
 
 # ==============================================================================
 # Entry Reordering
@@ -733,6 +1308,40 @@ cancel_reordering_entries: Annuller ændring af rækkefølgen
 
 # Reorder error message
 saving_reorder_failed: Den nye rækkefølge af dokumenter kunne ikke gemmes. Prøv igen.
+
+# ==============================================================================
+# Bulk Entry Editing
+# ==============================================================================
+# Strings for editing the fields of many entries at once in a table.
+
+# Bulk edit mode: toggle buttons
+bulk_edit_entries: Masseredigér dokumenter
+save_bulk_edits: Gem masseredigeringer
+cancel_bulk_edits: Annuller masseredigering
+
+# Bulk edit table: column header of the entry titles
+bulk_edit_entry: Dokument
+
+# Bulk edit table: label of the table
+bulk_edit_table: Masseredigering
+
+# Bulk edit table: label of a cell input; {$field} is the field label, {$entry} is the entry title
+bulk_edit_cell: '{$field} for {$entry}'
+
+# Bulk edit status: number of changed fields
+bulk_edit_count: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Ingen ændringer }}
+    one {{ 1 ændring }}
+    *   {{ {$count} ændringer }}
+
+# Bulk edit error messages
+bulk_edit_invalid: Nogle af værdierne er ugyldige. Ret de fremhævede felter, og prøv igen.
+saving_bulk_edits_failed: Ændringerne kunne ikke gemmes. Prøv igen.
+
+# Bulk edit: confirmation shown when leaving the mode with unsaved changes
+discard_bulk_edits_confirm: Vil du kassere de ændringer der er foretaget i dokumenterne?
 
 # ==============================================================================
 # File Upload and Processing
@@ -782,6 +1391,20 @@ warning_invalid_files: |
   .match $count
     one {{ Denne fil kan ikke uploades fordi den er beskadiget eller fordi indholdet ikke svarer til filendelsen. Det sker ofte når et foto er blevet omdøbt i stedet for konverteret, fx et HEIC-billede gemt som en JPEG-fil. Konvertér filen, og prøv igen. }}
     *   {{ Disse filer kan ikke uploades fordi de er beskadigede eller fordi indholdet ikke svarer til filendelserne. Det sker ofte når fotos er blevet omdøbt i stedet for konverteret, fx HEIC-billeder gemt som JPEG-filer. Konvertér filerne, og prøv igen. }}
+# {$count} is the number of files that are not of a type the field accepts, even once transformed
+# {$types} is the list of accepted file types, such as “.pdf or .txt”
+warning_unsupported_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Denne fil kan ikke uploades fordi den ikke er en af følgende typer: {$types}. }}
+    *   {{ Disse filer kan ikke uploades fordi de ikke er en af følgende typer: {$types}. }}
+# {$count} is the number of files that are not of an image type the field accepts
+# {$types} is the list of accepted image formats, such as “PNG or WebP”
+warning_unsupported_image_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Denne fil kan ikke uploades fordi kun et billede af følgende typer accepteres: {$types}. }}
+    *   {{ Disse filer kan ikke uploades fordi kun billeder af følgende typer accepteres: {$types}. }}
 
 # File format validation when replacing an asset
 # Warning section for replacement files that are in a different format
@@ -817,6 +1440,8 @@ uploading_files_failed: Upload mislykkedes.
 # Errors shown when a file on a cloud storage service could not be deleted or renamed
 deleting_assets_failed: Sletning mislykkedes.
 renaming_asset_failed: Omdøbning mislykkedes.
+# Error shown when an edited text file in the Asset Library could not be saved
+saving_asset_failed: Lagring mislykkedes.
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
@@ -854,6 +1479,8 @@ entry_validation_errors: |
   .match $count
     one {{ Ét felt har en fejl. Ret den for at gemme dokumentet. }}
     *   {{ {$count} felter har fejl. Ret dem for at gemme dokumentet. }}
+# Button on the validation error toast that opens the Validation panel listing the errors
+show_errors: Vis fejl
 
 # ==============================================================================
 # Success Notifications
@@ -930,6 +1557,19 @@ assets_deleted: |
   .match $count
     one {{ Mediefilen er slettet. }}
     *   {{ {$count} mediefiler er slettet. }}
+folder_created: Mappen er oprettet.
+# Folder info panel in the Asset Library sidebar
+folder_path: Mappesti
+folder_contents: Indhold
+# {$count} is the number of subfolders in the folder
+x_folders: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Ingen mapper }}
+    one {{ {$count} mappe }}
+    *   {{ {$count} mapper }}
+folder_renamed: Mappen er omdøbt.
+folder_deleted: Mappen er slettet.
 
 # ==============================================================================
 # Content Editor
@@ -970,6 +1610,9 @@ edit_singleton_announcement: Du redigerer nu filen ”{$file}”.
 # Shown when CI skip is enabled/disabled
 save_and_publish: Gem og udgiv
 save_without_publishing: Gem uden at udgive
+# Shown disabled in place of `save_and_publish` while entries created or edited from a Relation
+# field are in a collection whose review can’t be skipped with the `direct_publish` option
+save_and_publish_needs_review: Gem og udgiv (relaterede dokumenter skal gennemses)
 
 # Editor options menu
 show_editor_options: Vis editorindstillinger
@@ -999,6 +1642,9 @@ swap_panes: Byt paneler
 # {$locale} is the localized language name for the current content pane, e.g., English
 edit_x_locale: Rediger indhold på {$locale}
 preview_x_locale: Forhåndsvis indhold på {$locale}
+# The content of a monolingual entry, which has no locale to name
+edit_content: Rediger indhold
+preview_content: Forhåndsvis indhold
 
 # Preview iframe labels
 content_preview: Forhåndsvisning af indhold
@@ -1007,6 +1653,8 @@ content_preview: Forhåndsvisning af indhold
 # {$locale} is the localized language name for the content options menu, e.g., English
 show_content_options_x_locale: Vis indholdsmuligheder for {$locale}
 content_options_x_locale: Indholdsmuligheder for {$locale}
+show_content_options: Vis indholdsmuligheder
+content_options: Indholdsmuligheder
 
 # Field container labels
 # {$field} is the field’s display label
@@ -1045,6 +1693,9 @@ deploy_preview:
   view: Vis forhåndsvisning
   # Shown while the site is still being built, with or without a URL to open yet
   building: Forhåndsvisningen bygges stadig.
+  # Shown when the build failed, so no preview is available. The failure may lie in the site’s own
+  # code rather than the entry, so the editor is told not to assume it’s theirs, and who to ask
+  build_failed: Forhåndsvisningen kunne ikke bygges. Det skyldes ikke nødvendigvis dine ændringer. Kontakt din webstedsadministrator hvis problemet fortsætter.
   # Shown briefly while the CI/CD provider is being queried
   checking: Søger efter forhåndsvisning…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
@@ -1078,9 +1729,20 @@ translate_from: Oversæt fra…
 # {$locale} is the localized language name of the source content being translated, e.g., English
 translate_from_x: Oversæt fra {$locale}
 
-# Revert changes
+# Revert changes, restore the default values or clear the fields. The field options menu offers
+# them for a field, the content options menu of an editor pane for the locale it shows, and the
+# editor options menu for the whole entry, the latter two asking for confirmation first
 revert_changes: Fortryd ændringer
 revert_all_changes: Fortryd alle ændringer
+restore_default: Gendan standard
+clear_all: Ryd alle
+confirm_reverting_changes: Er du sikker på at du vil fortryde alle ændringer i dette dokument?
+# {$locale} is a locale name, e.g. French
+confirm_reverting_changes_x_locale: Er du sikker på at du vil fortryde alle ændringer i indholdet på {$locale}?
+confirm_restoring_defaults: Er du sikker på at du vil gendanne standardværdierne for alle felter i dette dokument? Dine ændringer går tabt.
+confirm_restoring_defaults_x_locale: Er du sikker på at du vil gendanne standardværdierne for alle felter i indholdet på {$locale}? Dine ændringer går tabt.
+confirm_clearing_fields: Er du sikker på at du vil rydde alle felter i dette dokument? Dine ændringer går tabt.
+confirm_clearing_fields_x_locale: Er du sikker på at du vil rydde alle felter i indholdet på {$locale}? Dine ændringer går tabt.
 
 # Slug editing
 edit_slug: Rediger slug
@@ -1088,6 +1750,8 @@ edit_slug_error:
   empty: Slug må ikke være tomt.
   invalid: Slug må ikke indeholde specialtegn, herunder skråstreger og mellemrum.
   duplicate: Dette slug bruges allerede til et andet dokument.
+# {$slug} is the slug filled from the slug template, which a number is added to when another entry uses it
+slug_numbered: Slugget ”{$slug}” bruges til et andet dokument, så der bliver tilføjet et tal til det.
 
 # Entry path editing for nested entries
 # Heading for the parent folder picker shown when the `meta.path` option is enabled
@@ -1201,6 +1865,13 @@ validation:
     email: Indtast en gyldig e-mailadresse.
     url: Indtast en gyldig URL.
 
+  # Value used for the same field in another entry of the collection
+  value_not_unique: Denne værdi bruges til et andet dokument.
+  # Key of a keyed List field item used for another item of the same list
+  key_not_unique: Denne nøgle bruges til et andet element.
+  # Key of a keyed List field item that is a whole number, which doesn’t keep its order in a map
+  key_numeric: Nøglen må ikke være et heltal, da elementerne så ville miste deres rækkefølge.
+
   # Custom field validation error
   invalid_value: Ugyldig værdi.
   unexpected_error: Der opstod en uventet fejl.
@@ -1222,6 +1893,12 @@ entry_sidebar:
     # Button in the panel header that validates the entry on demand
     validate: Valider
 
+  # Slug panel: shows the entry slug and lets the user edit it
+  slug:
+    title: Slug
+    generated_on_save: Slugget genereres ud fra dokumentets indhold når det gemmes. Eventuel dato og tid i det vil være tidspunktet for lagringen.
+    unavailable: Dette dokument har ikke noget slug.
+
   # History panel: shows entry commit history
   history:
     title: Historik
@@ -1233,11 +1910,55 @@ entry_sidebar:
     title: Backlinks
     no_entries: Ingen dokumenter henviser til dette dokument.
 
+  # Tab label of a panel with a count, e.g. of comments. {$title} is the panel title
+  title_with_count: '{$title} ({$count})'
+
+# Status shown next to the Save button while an entry with many new files is being saved
+# {$done} and {$total} are the number of files prepared and to prepare, or the number of commits
+# made and the estimated number of commits in all
+save_progress:
+  preparing: 'Forbereder filer: {$done} af {$total}'
+  committing: 'Gemmer på GitHub: {$done} af ca. {$total} commits'
+
 # Entry save error dialog
 saving_entry:
   error:
     title: Fejl
     description: Der opstod en fejl da dokumentet skulle gemmes. Prøv igen senere.
+
+# Dialog shown when saving the entry would overwrite a change someone else has made in the
+# repository since the entry was opened in the editor
+save_conflict:
+  title: Dokumentet er ændret af en anden
+  # `{$name}` is the other person’s name, `{$date}` when they made the change
+  modified_by: '{$name} ændrede dette dokument {$date}, efter du åbnede det.'
+  # Shown instead of `modified_by` when the other person isn’t known
+  modified: Dette dokument er blevet ændret i repositoriet efter du åbnede det.
+  deleted: Dette dokument er blevet slettet fra repositoriet efter du åbnede det.
+  # Follows `modified_by` or `modified`
+  overwrite_warning: Hvis du gemmer nu, går de andres ændringer tabt.
+  # Follows `deleted`
+  recreate_warning: Hvis du gemmer nu, bliver dokumentet oprettet igen.
+  # Follows `modified_by`, `modified` or `deleted` for an entry stored in the same file as the other
+  # entries of the collection, which can’t be saved over the change
+  reload_warning: Da dokumentet er gemt i samme fil som andre dokumenter, kan det ikke gemmes oven i ændringen. Annuller redigeringen, åbn derefter dokumentet igen fra listen, og foretag dine redigeringer.
+  # OK button label
+  save_anyway: Gem alligevel
+  # Error shown when the repository was updated between the check above and the commit itself
+  branch_moved: Repositoriet er blevet opdateret af en anden under lagringen. Prøv igen.
+  # Error shown when saving would change an item in a file storing all the entries of a collection,
+  # which someone else has changed or moved since it was loaded
+  array_item_changed: Et dokument der er gemt i samme fil, er blevet ændret af en anden. Prøv igen.
+  # {$path} is the file path
+  array_file_invalid: Filen {$path} kan ikke opdateres, da den ikke indeholder en gyldig liste over dokumenter.
+
+# Notice shown in the entry editor when someone else has changed or deleted the entry in the
+# repository while the user has it open. The change itself is described with the `save_conflict`
+# strings above
+remote_change:
+  reload_entry: Genindlæs dokument
+  # Confirmation shown before reloading when the user has unsaved changes
+  confirm_reloading_entry: Er du sikker på at du vil genindlæse dokumentet? Dine ikke-gemte ændringer går tabt.
 
 # ==============================================================================
 # Asset Editor
@@ -1311,21 +2032,63 @@ map_lat_lng: Kort der viser breddegrad {$latitude}, længdegrad {$longitude}
 remove_this_item: Fjern dette element
 move_up: Flyt op
 move_down: Flyt ned
+# Menu of a list item or file with the extra reorder actions, shown in a list of 3 or more items
+reorder_options: Muligheder for rækkefølge
+move_to_top: Flyt øverst
+move_to_bottom: Flyt nederst
+# Opens a dialog asking for the position to move a list item to
+move_to: Flyt til…
+# Dialog asking for the new position of an item. {$count} is the number of items in the list
+move_to_description: Indtast en position fra 1 til {$count}.
+move_to_position: Position
 # aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
 # or moved with the arrow keys while the handle has focus
 reorder_item: Flyt element
 # aria-label for the text input holding one item of a simple List field, which has no subfield to
 # take a label from
 list_item_value: Elementværdi
+# aria-label for each item of a List field, giving its position in the list
+# {$position} is the 1-based position of the item, {$count} is the number of items
+list_item_position: Element {$position} af {$count}
+# Message shown in place of a removed List field item or Object field, next to a Restore button
+# that puts it back
+item_removed: Elementet er fjernet.
 
-# Add item button label
+# Add item button label, also used by the Relation field to create a new entry in the referenced
+# collection, with the collection’s singular label
 # Example: “Add Image”, “Add Author”
 # {$name} is the label of the item type that can be added
 add_x: Tilføj {$name}
 
 # List item context menu
+# aria-label for the button opening the menu, and for the menu itself
+list_item_options: Elementmuligheder
 add_item_above: Tilføj element ovenfor
 add_item_below: Tilføj element nedenfor
+paste_item_above: Indsæt element ovenfor
+paste_item_below: Indsæt element nedenfor
+paste_item_to_replace: Indsæt og erstat
+
+# List item clipboard
+# Button in the list toolbar to paste a copied item, from any list in any entry, at the end of the
+# list, or at the start with the `add_to_top` option
+paste_item: Indsæt element
+list_item_copied: Elementet er kopieret.
+# ⋮ stands for the icon of the item menu button; keep it, along with the button’s aria-label
+no_list_item_to_paste: Der er intet kopieret element at indsætte. For at kopiere et skal du åbne et elements ⋮-menu (Elementmuligheder) og vælge Kopiér.
+list_item_not_compatible: Det kopierede element passer ikke ind i denne liste.
+# {$count} is the number of the values left out, as the list doesn’t have the fields
+list_item_pasted_without_values: |
+  .input {$count :integer}
+  .match $count
+    one {{ Elementet er indsat. En værdi som denne liste ikke tager imod, blev udeladt. }}
+    *   {{ Elementet er indsat. {$count} værdier som denne liste ikke tager imod, blev udeladt. }}
+# {$count} is the number of the files the pasted item references that couldn’t be found
+list_item_pasted_without_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Elementet er indsat, men en fil som det bruger, blev ikke fundet. Kontrollér filfelterne i elementet. }}
+    *   {{ Elementet er indsat, men {$count} filer som det bruger, blev ikke fundet. Kontrollér filfelterne i elementet. }}
 
 # Variable-type list selector
 select_list_type: Vælg listetype
@@ -1344,12 +2107,45 @@ opacity: Opacitet
 # Select field: empty option placeholder
 unselected_option: (Ingen)
 
+# Relation field: creating or editing a referenced entry without leaving the editor
+relation_field:
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  save_together_hint: Det nye element ({$name}) bliver gemt sammen med det dokument du redigerer.
+  # Error shown when the entry couldn’t be prepared. {$name} is the singular label of the collection
+  add_failed: Elementet ({$name}) kunne ikke tilføjes. Se browserkonsollen for detaljer.
+  # Title of the dialog to edit an entry selected in the field. {$name} is the singular label of the
+  # referenced collection
+  edit_entry_title: Redigerer {$name}
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  edit_together_hint: Dine ændringer i elementet ({$name}) bliver gemt sammen med det dokument du redigerer.
+  # Error shown when the changes couldn’t be prepared. {$name} is the singular label of the collection
+  edit_failed: Ændringerne i elementet ({$name}) kunne ikke anvendes. Se browserkonsollen for detaljer.
+  # Error shown when the changes would move the entry to another file path, e.g. through a path
+  # template using a field. {$name} is the singular label of the collection
+  move_unsupported: Disse ændringer ville flytte elementet ({$name}) til en anden placering, hvilket kun kan gøres ved at redigere det for sig selv.
+  # Error shown when saving, if someone else has changed an entry edited from the field since. {$name}
+  # is the summary of that entry
+  edit_conflict: ”{$name}” er blevet ændret af en anden siden du redigerede det. Åbn det igen fra feltet for at gennemgå dine ændringer i forhold til den nyeste version.
+  # Error shown when saving, if someone else has deleted an entry edited from the field since.
+  # {$name} is the summary of that entry
+  edit_deleted: ”{$name}” er blevet slettet af en anden siden du redigerede det. Fjern det fra feltet for at gemme dokumentet.
+  # Accessible label of the menu listing the selected entries that can be edited
+  select_entry_to_edit: Vælg et dokument der skal redigeres
+  # Warning shown in the editor of an entry that has been edited from a Relation field of another
+  # entry, while the changes wait in that entry’s pull request. {$name} is the summary of that
+  # entry
+  edited_with_entry: Ændringer i dette dokument venter på at blive udgivet sammen med ”{$name}”. Hvis du gemmer det nu, bliver de to sæt ændringer kombineret når det dokument udgives, hvilket kan mislykkes hvis de overlapper.
+  # Warning shown in the dialog when an entry edited from the field has been changed by someone else
+  # since. {$name} is the singular label of the collection
+  changed_since_edit: Dette element ({$name}) er blevet ændret af en anden siden du redigerede det. Dine ændringer vises oven på den nyeste version. Gennemgå dem før du opdaterer.
+
 # Select Assets dialog
 assets_dialog:
   # Dialog titles for different selection modes
   title:
     file: Vælg fil
     image: Vælg billede
+    folder: Vælg mappe
 
   # Search input labels
   search_for_file: Søg efter filer
@@ -1357,6 +2153,18 @@ assets_dialog:
 
   # Locations panel aria-label
   locations: Placeringer
+
+  # Folder selection mode for a File field with the `select_folder` option. {$path} is the public
+  # path of the folder to be selected, and {$count} is the number of folders selected
+  selected_folder: 'Valgt mappe: {$path}'
+  selected_folders: |
+    .input {$count :integer}
+    .match $count
+      one {{ {$count} mappe valgt }}
+      *   {{ {$count} mapper valgt }}
+  no_subfolders: Denne mappe har ingen undermapper.
+  # Shown for a cloud storage service whose `prefix` option depends on fields of the entry
+  prefix_unresolved: Udfyld de felter som denne placering afhænger af, for at gennemse og uploade dens filer.
 
   # Asset folder options
   folder:
@@ -1374,6 +2182,7 @@ assets_dialog:
 
   # Stock photo panels
   available_images: Tilgængelige billeder
+  available_files: Tilgængelige filer
 
   # URL entry option
   enter_url: Indtast URL
@@ -1396,6 +2205,9 @@ assets_dialog:
   photo_credit:
     title: Fotokreditering
     description: 'Brug om muligt følgende kreditering:'
+    # {$field} is the label of the Markdown field the credit is added to
+    insert_to_field: Indsæt i {$field}
+    copy_as_markdown: Kopiér som Markdown
 
   # Unsaved asset badge
   unsaved: Ikke gemt
@@ -1438,6 +2250,7 @@ editor_components:
   alt: Alternativ tekst
   title: Titel
   link: Link
+  caption: Billedtekst
 
 # Key-Value field: column headers and validation
 key_value:
@@ -1502,6 +2315,15 @@ cloud_storage:
   uploadcare:
     auth_key_label: API Secret Key
 
+  azure_blob_storage:
+    auth_key_label: SAS Token
+
+  backblaze_b2:
+    auth_key_label: Application Key
+
+  bunny_storage:
+    auth_key_label: Storage Zone Password
+
 # ==============================================================================
 # Configuration Validation
 # ==============================================================================
@@ -1555,16 +2377,42 @@ config:
     unsupported_backend_suggestion: Brug i stedet en af de <a>understøttede backends</a>.
     missing_repository: Repositoriet er ikke defineret.
     invalid_repository: Det konfigurerede repository er ugyldigt. Det skal have formatet ”owner/repo”.
+    # Don’t localize `api_root`
+    missing_api_root: Indstillingen `api_root` er ikke defineret. Den er påkrævet for Forgejo-backenden.
+    invalid_root_dir: Rodmappen er ugyldig. Den skal være en sti i repositoriet, uden ”..”.
+    invalid_root_dir_branch: Rodmappen kan ikke bruges i branchnavnene for udgivelsestilstandene `editorial_workflow` og `preview`. Ingen del af dens sti må begynde med et punktum, slutte med ”.lock” eller indeholde et mellemrum eller et specialtegn som kolon eller stjerne.
+    path_outside_root_dir: Stien ”{$path}” fører uden for rodmappen, hvor CMS’et ikke kan vise filer.
     oauth_implicit_flow: Den konfigurerede autentificeringsmetode (implicit flow) understøttes ikke i Sveltia CMS. Brug en anden <a>autentificeringsmetode</a> i stedet.
     github_pkce_unsupported: PKCE-autorisation understøttes endnu ikke på grund af begrænsninger hos GitHub. Brug en anden <a>autentificeringsmetode</a> i stedet.
+    additions_no_base_url: Indstillingen `base_url` skal være URL’en til din Sveltia CMS Additions-tjeneste.
     oauth_no_app_id: OAuth-applikationens id er ikke defineret.
     # Don’t localize `open_authoring`, `editorial_workflow` and `preview`
-    open_authoring_no_workflow: Indstillingen `open_authoring` kræver udgivelsestilstanden `editorial_workflow`. Se <a>dokumentationen</a> for detaljer.
+    open_authoring_no_workflow: Indstillingen `open_authoring` kræver udgivelsestilstanden `editorial_workflow` eller `preview`. Se <a>dokumentationen</a> for detaljer.
     # Don’t localize `auth_methods`
     no_auth_methods: Indstillingen `auth_methods` skal indeholde mindst én metode.
+    # Don’t localize `auth_scope`, `repo` and `public_repo`
+    auth_scope_no_repo: Indstillingen `auth_scope` skal indeholde `repo` eller `public_repo`.
     missing_media_folder: Mediemappen er ikke defineret.
     public_folder_relative_path: Den konfigurerede offentlige mappe er ugyldig. Den skal være en absolut sti der begynder med ”/”.
     public_folder_absolute_url: En absolut URL i indstillingen for den offentlige mappe understøttes ikke i Sveltia CMS.
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    unsupported_folder_template_tag: Indstillingen `{$option}` indeholder skabelontagget `{$tag}`, som ikke understøttes dér. Kun slug-skabelontags som `\{\{slug\}\}` og `\{\{year\}\}` samt tagsene `\{\{dirname\}\}`, `\{\{filename\}\}`, `\{\{extension\}\}`, `\{\{media_folder\}\}` og `\{\{public_folder\}\}` kan bruges.
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    global_folder_template_tag: Indstillingen `{$option}` indeholder skabelontagget `{$tag}`, som kun kan bruges i indstillingen for en samling, en samlingsfil eller et felt, hvor der er et dokument at udfylde det med.
+    # {$replacement} is the configured replacement string; Don’t localize `sanitize_replacement`
+    invalid_sanitize_replacement: Indstillingen `sanitize_replacement` er sat til `{$replacement}`, men den indeholder et tegn der ikke kan bruges i et slug, så den kan ikke erstatte et.
+    # {$option} is the option name (`site_url` or `display_url`) and {$url} is the configured value
+    invalid_url_option: Indstillingen `{$option}` er sat til `{$url}`, men den skal være en absolut URL der begynder med `https://` eller `http://`.
+    # Don’t localize `publish_mode`, `stages`, `draft`, `pending_review` and `pending_publish`
+    invalid_publish_mode_stages: Indstillingen `stages` i `publish_mode` skal begynde med `draft` og angive trinnene i rækkefølgen `draft`, `pending_review`, `pending_publish` uden gentagelser.
+    # Don’t localize `i18n` and `locales`
+    i18n_no_locales: Indstillingen `i18n.locales` skal angive mindst ét sprog.
+    # {$locale} is the locale code from the configuration; Don’t localize `default_locale` and `locales`
+    i18n_invalid_default_locale: Indstillingen `default_locale` er sat til `{$locale}`, men det er ikke et af sprogene i `locales`.
+    # {$locale} is the locale code from the configuration; Don’t localize `initial_locales` and `locales`
+    i18n_invalid_initial_locale: Indstillingen `initial_locales` indeholder `{$locale}`, men det er ikke et af sprogene i `locales`.
+    # Don’t localize `i18n`
+    i18n_no_collections: 'Indstillingen `i18n` er konfigureret på øverste niveau, men ingen af samlingerne eller singletonerne har indstillingen `i18n`, så intet indhold kan oversættes. Tilføj `i18n: true` til de samlinger og singletoner der skal oversættes.'
     # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
     invalid_transformation_key: Indstillingen `transformations` indeholder en ikke-understøttet nøgle `{$key}`. Den skal være `raster_image`, `svg` eller et understøttet rasterbilledformat.
     # {$key} is the transformation key; Don’t localize `quality`
@@ -1577,18 +2425,52 @@ config:
     invalid_asset_collection_name: Mediesamlingsnavnet `{$name}` er ugyldigt. Det må ikke indeholde specialtegn.
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: Navne på mediesamlinger skal være unikke, men `{$name}` bruges mere end én gang.
-    # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_no_options: Samlingen skal have enten indstillingen `folder`, `files` eller `divider` defineret.
-    # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_multiple_options: Samlingen kan ikke have indstillingerne `folder`, `files` og `divider` på samme tid.
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_no_options: Samlingen skal have enten indstillingen `folder`, `file`, `files` eller `divider` defineret.
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_multiple_options: Samlingen kan ikke have mere end én af indstillingerne `folder`, `file`, `files` og `divider`.
     # {$extension} is the file extension and {$format} is the configured content format
     file_format_mismatch: Filendelsen `{$extension}` passer ikke til formatet `{$format}`.
+    # {$name} is the field name from the configuration and {$widget} is its field type
+    front_matter_body_field_not_text: Feltet `{$name}` gemmes som brødteksten under front matter, som kun kan indeholde tekst og ikke et tal, en boolesk værdi, en liste eller et objekt, som et `{$widget}`-felt gør. Brug en felttype der indeholder tekst, eller omdøb feltet.
+    # {$file} is the file path from the configuration; Don’t localize `file` and `locale`. The curly
+    # brackets are escaped with backslashes for MessageFormat 2
+    invalid_collection_data_file: Indstillingen `file` `{$file}` er ugyldig. Den skal være stien til en JSON-fil uden pladsholderen `\{\{locale\}\}`.
+    # {$prop} is the option name; Don’t localize `file`
+    unsupported_collection_data_file_option: Indstillingen `{$prop}` understøttes ikke i en samling med indstillingen `file`.
+    # Don’t localize `file`, `publish_mode` and `simple`
+    collection_data_file_workflow: Redaktionel arbejdsgang og arbejdsgang med forhåndsvisning, herunder åben redigering, understøttes ikke i en samling med indstillingen `file`. Sæt samlingens indstilling `publish_mode` til `simple`.
+    # {$prop} is the option name; Don’t localize `file` and `slug`. The curly brackets are escaped
+    # with backslashes for MessageFormat 2
+    collection_data_file_slug_tag: Indstillingen `{$prop}` kan ikke indeholde tagget `\{\{slug\}\}` i en samling med indstillingen `file`, da et dokuments slug er dets position, som ændres når dokumenterne flyttes eller slettes. Brug i stedet et felt med en unik værdi.
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
     invalid_slug_slash: Slug-skabelonen `{$slug}` er ugyldig da den ikke må indeholde skråstreger. Brug indstillingen `path` i stedet for `slug` for at organisere dokumenter i undermapper.
+    # {$name} is the field name from the configuration; Don’t localize `identifier_field`
+    invalid_identifier_field: Indstillingen `identifier_field` henviser til `{$name}`, men der er ikke defineret noget sådant felt i samlingen.
+    # {$name} is the field name from the configuration; Don’t localize `filter`
+    invalid_filter_field: Indstillingen `filter` henviser til `{$name}`, men der er ikke defineret noget sådant felt i samlingen.
+    # Don’t localize `filter`, `value` and `pattern`
+    invalid_filter_no_condition: Indstillingen `filter` skal have enten indstillingen `value` eller `pattern` at matche dokumenter mod.
+    # {$option} is an option name such as `slug` or `summary` and {$name} is the field name or template tag from the configuration
+    option_field_not_found: Indstillingen `{$option}` henviser til `{$name}`, men der er ikke defineret noget sådant felt.
+    # {$name} is the field name from the configuration and {$widget} is its field type; Don’t localize `thumbnail`
+    thumbnail_field_not_media: Indstillingen `thumbnail` henviser til `{$name}`, men det skal være et Image- eller File-felt, ikke et `{$widget}`-felt.
+    # Don’t localize `inline` or `multiple`
+    invalid_inline_component_fields: Tilstanden `inline` kræver et enkelt Boolean-, Color-, DateTime-, Number-, Relation-, Select- eller String-felt. Et Relation- eller Select-felt må ikke have indstillingen `multiple` slået til.
+    # {$option} is an option name such as `pattern` or `filter` and {$pattern} is the configured pattern
+    invalid_regex: Indstillingen `{$option}` indeholder et ugyldigt regulært udtryk `{$pattern}`, som bliver ignoreret.
     # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
     invalid_reorder_group: Indstillingen `reorder` henviser til en visningsgruppe med navnet `{$name}`, men der er ikke defineret nogen sådan gruppe i indstillingen `view_groups`.
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit` and `fields`
+    invalid_bulk_edit_field: Listen `fields` i indstillingen `bulk_edit` henviser til et felt med navnet `{$name}`, men der er ikke defineret noget sådant felt på øverste niveau i samlingen.
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit`, `fields` and `multiple`
+    unsupported_bulk_edit_field: Feltet `{$name}` i listen `fields` i indstillingen `bulk_edit` kan ikke masseredigeres. Kun Boolean-, Color-, DateTime-, Number-, Relation-, Select- og String-felter der ikke er skrivebeskyttede, ikke har indstillingen `multiple` slået til og ikke sættes automatisk ved lagring, understøttes.
     # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
     invalid_sortable_field: Indstillingen `sortable_fields` henviser til et felt med navnet `{$name}`, men der er ikke defineret noget sådant felt i samlingen.
+    # Don’t localize `sortable_fields` and `default_sort`
+    multiple_sortable_field_defaults: Kun ét element i indstillingen `sortable_fields` kan have indstillingen `default_sort`.
+    # {$option} is `table_columns` or `summary_fields`, and {$name} is the field name from the configuration
+    invalid_table_column_field: Indstillingen `{$option}` henviser til et felt med navnet `{$name}`, men der er ikke defineret noget sådant felt i samlingen.
     # {$name} is the field name from the configuration; Don’t localize `view_groups`
     invalid_view_group_field: Indstillingen `view_groups` henviser til et felt med navnet `{$name}`, men der er ikke defineret noget sådant felt i samlingen.
     # {$name} is the field name from the configuration; Don’t localize `view_filters`
@@ -1600,9 +2482,15 @@ config:
     duplicate_view_group_name: Navne på visningsgrupper skal være unikke, men `{$name}` bruges mere end én gang.
     # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
     missing_view_filter_name: Visningsfilter {$count} skal have indstillingen `name` defineret som en ikke-tom streng.
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `pattern`, `eq` and `gte`
+    invalid_view_filter_no_condition: Visningsfilter {$count} skal have indstillingen `pattern` eller en sammenligningsindstilling som `eq` eller `gte` at matche dokumenter mod.
     # {$name} is the invalid or duplicate view filter name
     invalid_view_filter_name: Visningsfilternavnet `{$name}` er ugyldigt. Det må ikke indeholde specialtegn.
     duplicate_view_filter_name: Navne på visningsfiltre skal være unikke, men `{$name}` bruges mere end én gang.
+    # {$name} is the default view group name from the configuration; Don’t localize `default` and `view_groups`
+    invalid_view_group_default: Indstillingen `default` i `view_groups` er sat til `{$name}`, men ingen visningsgruppe har det navn.
+    # {$name} is the default view filter name from the configuration; Don’t localize `default` and `view_filters`
+    invalid_view_filter_default: Indstillingen `default` i `view_filters` er sat til `{$name}`, men intet visningsfilter har det navn.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: Samling {$count} skal have indstillingen `name` defineret som en ikke-tom streng.
     # {$name} is the invalid or duplicate collection name
@@ -1617,8 +2505,19 @@ config:
     collection_no_fields: Samlingen skal have indstillingen `fields` defineret med mindst ét felt.
     # Don’t localize `fields`
     collection_file_no_fields: Samlingsfilen skal have indstillingen `fields` defineret med mindst ét felt.
+    # Don’t localize `i18n`, `locale` and `folder`
+    collection_folder_i18n_required: Samlingen skal have indstillingen `i18n` defineret hvis pladsholderen `locale` bruges i stien i `folder`.
+    # {$folder} is the invalid folder path; Don’t localize `locale`, `folder` and the example path. The
+    # curly brackets in the example are escaped with backslashes for MessageFormat 2
+    invalid_collection_folder_locale: Stien `{$folder}` i `folder` er ugyldig. Pladsholderen `locale` må kun bruges én gang som et helt mappenavn, fx `content/\{\{locale\}\}/posts`.
     # Don’t localize `i18n`, `locale` and `file`
     collection_file_i18n_required: Samlingsfilen skal have indstillingen `i18n` defineret hvis pladsholderen `locale` bruges i stien i `file`.
+    # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
+    collection_i18n_no_fields: 'Samlingen har indstillingen `i18n`, men ingen af dens felter har indstillingen `i18n`, så intet felt kan oversættes. Tilføj `i18n: true` eller `i18n: duplicate` til de felter der skal oversættes.'
+    # Don’t localize `i18n` and `i18n: true`
+    collection_i18n_no_files: 'Samlingen har indstillingen `i18n`, men ingen af dens filer har indstillingen `i18n`, så ingen fil kan oversættes. Tilføj `i18n: true` til de filer der skal oversættes.'
+    # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
+    collection_file_i18n_no_fields: 'Samlingsfilen har indstillingen `i18n`, men ingen af dens felter har indstillingen `i18n`, så intet felt kan oversættes. Tilføj `i18n: true` eller `i18n: duplicate` til de felter der skal oversættes.'
     # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
     missing_field_name: Felt {$count} skal have indstillingen `name` defineret som en ikke-tom streng.
     # {$name} is the invalid or duplicate field name
@@ -1630,6 +2529,8 @@ config:
     invalid_variable_type: Variabeltypenavnet `{$name}` er ugyldigt. Det må ikke indeholde specialtegn.
     duplicate_variable_type: Navne på variabeltyper skal være unikke, men `{$name}` bruges mere end én gang.
     date_field_type: 'Den forældede felttype Date understøttes ikke i Sveltia CMS. Brug felttypen DateTime med indstillingen `type: date` i stedet.'
+    # curly brackets in the placeholder are escaped with backslashes for MessageFormat 2
+    hidden_field_locale_without_i18n: Indstillingen `default` i et Hidden-felt bruger pladsholderen `\{\{locale\}\}`, men i18n er ikke slået til for samlingen, så indholdet har intet sprog at udfylde den med.
     # {$timeZone} is the invalid IANA timezone identifier from the configuration
     invalid_timezone: 'Ugyldig tidszone: {$timeZone}. Den skal være et gyldigt IANA-tidszone-id som `America/New_York` eller `Asia/Tokyo`.'
     # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
@@ -1642,12 +2543,85 @@ config:
     invalid_list_variable_type: Listefeltets variabeltype er ugyldig. Indstillingen `widget` er sat til `{$widget}`, men den skal være `object`.
     # Don’t localize `fields`, and `types`
     invalid_object_field: Objektfeltet kan ikke have indstillingerne `fields` og `types` på samme tid.
+    # {$min} and {$max} are option names such as `min` and `max` or `minlength` and `maxlength`
+    invalid_range_options: Indstillingen `{$min}` må ikke være større end indstillingen `{$max}`.
+    # {$step} is the configured value; Don’t localize `step`
+    invalid_step: Indstillingen `step` er sat til `{$step}`, men den skal være større end nul eller `-1` for at slå trin fra.
+    # Don’t localize `options`
+    select_field_no_options: Select-feltet skal have mindst ét element i indstillingen `options`.
+    # {$value} is the option value from the configuration; Don’t localize `options`
+    select_field_duplicate_option: Select-feltets `options` skal være unikke, men `{$value}` bruges mere end én gang.
+    # {$value} is the default value from the configuration; Don’t localize `default` and `options`
+    select_field_invalid_default: Select-feltets indstilling `default` er sat til `{$value}`, men det er ikke en af værdierne i `options`.
+    # Don’t localize `fields` and `types`
+    list_field_no_subfields: Listefeltets indstilling `fields` eller `types` skal have mindst ét element. Udelad indstillingen for en liste med simple værdier.
+    # Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_object: Listefeltets indstilling `default` indeholder et objekt, men hvert element skal være en simpel værdi, fordi feltet ikke har `fields` eller `types`.
+    # {$value} is the default item from the configuration; Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_item: Listefeltets indstilling `default` indeholder `{$value}`, men hvert element skal være et objekt, fordi feltet har `fields` eller `types`.
+    # {$key} is a property name of the default item from the configuration; Don’t localize `default`
+    list_field_invalid_default_key: Listefeltets indstilling `default` indeholder et element med egenskaben `{$key}`, men intet underfelt har det navn.
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    list_field_default_missing_type: Listefeltets indstilling `default` indeholder et element uden egenskaben `{$typeKey}`, som angiver en af typerne i `types`.
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default item; Don’t localize `default` and `types`
+    list_field_invalid_default_type: Listefeltets indstilling `default` indeholder et element hvis egenskab `{$typeKey}` er `{$value}`, men det er ikke en af typerne i `types`.
+    # Don’t localize `map_key_field`, `fields` and `types`
+    list_field_map_key_no_subfields: Listefeltets indstilling `map_key_field` kræver indstillingen `fields` eller `types`, da hver nøgle hentes fra et underfelt.
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_not_found: Listefeltets indstilling `map_key_field` henviser til `{$name}`, men intet underfelt har det navn.
+    # {$name} is the subfield name, and {$type} is the variable type name; Don’t localize `map_key_field`
+    list_field_map_key_missing_in_type: Listefeltets indstilling `map_key_field` henviser til `{$name}`, men typen `{$type}` har intet underfelt med det navn.
+    # {$name} is the subfield name, and {$widget} is its field type; Don’t localize `map_key_field`
+    list_field_map_key_invalid_type: Listefeltets indstilling `map_key_field` henviser til `{$name}`, men det skal være et String-, Relation- eller Select-felt, ikke et `{$widget}`-felt.
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `multiple`
+    list_field_map_key_multiple: Listefeltets indstilling `map_key_field` henviser til `{$name}`, men underfeltet kan ikke have flere værdier, da hvert element skal have én nøgle. Fjern dets indstilling `multiple`.
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_option_not_string: Listefeltets indstilling `map_key_field` henviser til `{$name}`, men underfeltets muligheder skal have strengværdier, da hver nøgle gemmes som en streng.
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `required`
+    list_field_map_key_not_required: Listefeltets indstilling `map_key_field` henviser til `{$name}`, men underfeltet kan ikke være valgfrit, da hvert element skal have en nøgle. Fjern dets indstilling `required`.
+    # {$name} is the subfield name; Don’t localize `map_key_field`, `i18n: false` and `i18n: duplicate`
+    list_field_map_key_not_localized: 'Listefeltets indstilling `map_key_field` henviser til `{$name}`, men underfeltet kan ikke have `i18n: false`, da elementerne skal have en nøgle på alle sprog. Brug `i18n: duplicate`, eller fjern indstillingen.'
+    # Don’t localize `i18n`, `duplicate_if_empty`, `multiple` and `true`
+    duplicate_if_empty_multiple: 'Indstillingen `i18n: duplicate_if_empty` understøttes ikke for et felt med indstillingen `multiple`, så feltet fungerer som et felt med `i18n: true`.'
+    # Don’t localize `default` and `multiple`
+    invalid_default_multiple: Indstillingen `default` skal være et array, fordi indstillingen `multiple` er `true`.
+    invalid_default_single: Indstillingen `default` skal være en enkelt værdi og ikke et array, fordi indstillingen `multiple` ikke er `true`.
+    # {$key} is a property name of the default object from the configuration; Don’t localize `default`
+    object_field_invalid_default_key: Objektfeltets indstilling `default` har egenskaben `{$key}`, men intet underfelt har det navn.
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    object_field_default_missing_type: Objektfeltets indstilling `default` har ikke egenskaben `{$typeKey}`, som angiver en af typerne i `types`.
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default object; Don’t localize `default` and `types`
+    object_field_invalid_default_type: Egenskaben `{$typeKey}` i objektfeltets indstilling `default` er `{$value}`, men det er ikke en af typerne i `types`.
+    # Don’t localize `default` and `output_code_only`
+    code_field_invalid_default_object: Code-feltets indstilling `default` skal være en streng, fordi indstillingen `output_code_only` er `true`.
+    # {$key} is a property name of the default object, {$code} and {$lang} are the configured property names; Don’t localize `default` and `keys`
+    code_field_invalid_default_key: Code-feltets indstilling `default` har egenskaben `{$key}`, men indstillingen `keys` tillader kun `{$code}` og `{$lang}`.
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_invalid_expression: Compute-feltets indstilling `value` skal være et gyldigt aritmetisk udtryk, fx `\{\{fields.price\}\} * \{\{fields.quantity\}\}`, fordi indstillingen `value_type` er `{$valueType}`.
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_uuid_in_expression: Compute-feltets indstilling `value` kan ikke bruge et UUID-tag som `\{\{uuid\}\}`, fordi indstillingen `value_type` er `{$valueType}`, hvilket gør den til et aritmetisk udtryk.
+    # {$value} is the default value and {$valueType} is the configured value type; Don’t localize `default` and `value_type`
+    number_field_default_not_integer: Number-feltets indstilling `default` er sat til `{$value}`, men den skal være et heltal, fordi indstillingen `value_type` er `{$valueType}`.
+    number_field_default_not_number: Number-feltets indstilling `default` er sat til `{$value}`, men den skal være et tal, fordi indstillingen `value_type` er `{$valueType}`.
+    # Don’t localize `fields` and `types`
+    object_field_no_subfields: Objektfeltets indstilling `fields` eller `types` skal have mindst ét element.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: Den refererede samling `{$collection}` er ugyldig eller ikke defineret.
     relation_field_invalid_collection_file: Den refererede fil `{$file}` er ugyldig eller ikke defineret.
     # Don’t localize `file`
     relation_field_missing_file_name: Indstillingen `file` skal være defineret for en relation til en filsamling.
     relation_field_invalid_value_field: Det refererede værdifelt `{$field}` er ugyldigt eller ikke defineret.
+    # {$collection} is the referenced collection name; Don’t localize `file`, `value_field` and `slug`.
+    # The curly brackets are escaped with backslashes for MessageFormat 2
+    relation_field_array_file_slug: Relationen til samlingen `{$collection}` kan ikke gemme værdien `\{\{slug\}\}`, da et dokuments slug i en samling med indstillingen `file` er dets position, som ændres når dokumenterne flyttes eller slettes. Sæt i stedet indstillingen `value_field` til et felt med en unik værdi.
+    # {$collection} is the referenced collection name; Don’t localize `file`
+    relation_field_array_file_workflow: En samling med indstillingen `file` kan ikke have en relation til samlingen `{$collection}`, som bruger redaktionel arbejdsgang eller arbejdsgang med forhåndsvisning, da henvisningerne til et dokument der omdøbes eller slettes dér, ikke kan opdateres i filen.
+    relation_field_invalid_display_field: Det refererede visningsfelt `{$field}` er ugyldigt eller ikke defineret.
+    relation_field_invalid_search_field: Det refererede søgefelt `{$field}` er ugyldigt eller ikke defineret.
+    relation_field_invalid_filter_field: Det refererede filterfelt `{$field}` er ugyldigt eller ikke defineret.
+    relation_field_invalid_sort_field: Det refererede sorteringsfelt `{$field}` er ugyldigt eller ikke defineret.
+    # Don’t localize `sort_by` and `file`
+    relation_field_sort_by_file_ignored: Indstillingen `sort_by` gælder ikke for en relation til en fil, hvis muligheder følger listeelementernes rækkefølge. Den bliver ignoreret.
     unexpected: Uventet fejl
 
     # Schema validation errors, reported when the configuration doesn’t match the published JSON
@@ -1680,18 +2654,56 @@ config:
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: OAuth-applikationens id er ikke defineret. Brugere skal angive et adgangstoken for at logge ind.
+    # Don’t localize `prefix`
+    site_library_prefix_template: Indstillingen `prefix` i et mediebibliotek indeholder skabelontags, som kun understøttes på feltniveau, da der ikke er noget dokument at udfylde dem med på øverste niveau.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: Indstillingen `{$prop}` understøttes ikke i Sveltia CMS. Den bliver ignoreret.
+    # Don’t localize `stages`, `publish_mode`, `editorial_workflow` and {$type}, which is `preview` or `simple`
+    publish_mode_stages_ignored: Indstillingen `stages` i `publish_mode` gælder kun for udgivelsestilstanden `editorial_workflow`, så den ignoreres med `{$type}`.
+    # Don’t localize `pattern`, `m` and `s`
+    inline_component_multiline_pattern: Denne inline-komponents `pattern` har flaget `m` eller `s` eller matcher linjeskift, men en inline-komponent matches kun inden for et afsnit.
+    # {$name} is a button or component name and {$option} is `buttons` or `editor_components`; Don’t localize them and `multiline: false`
+    single_line_block_item: 'Elementet `{$name}` i indstillingen `{$option}` bliver ignoreret, da et felt med `multiline: false` kun kan indeholde inline-indhold.'
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: Både `picker_utc` og de nyere tidszoneindstillinger (`input_timezone` eller `output_utc`) er sat. De nye indstillinger har forrang. Overvej at fjerne `picker_utc` fra din konfiguration.
+    # Don’t localize `localize_format` and `format`
+    localize_format_without_format: Indstillingen `localize_format` har ingen effekt, fordi feltet ikke har indstillingen `format`, og dets værdi gemmes i ISO 8601-formatet.
+    # {$name} is a template tag like `fields.lines.*.price`; Don’t localize `value`, `*` and `sum()`
+    compute_field_wildcard_without_item: Compute-feltets indstilling `value` henviser til `{$name}`, men feltet er ikke i et element i den liste som `*` står for, så det giver ingen værdi. Kun en aggregeringsfunktion som `sum()` kan bruge alle elementer i en liste.
+    # {$name} is a template tag like `fields.lines.*.amount`; Don’t localize `value`
+    compute_field_self_reference: Compute-feltets indstilling `value` henviser til selve feltet som `{$name}`, så dets værdi ændres hver gang den beregnes, og falder aldrig til ro.
+    # {$name} is a template tag like `fields.total`; Don’t localize `value`
+    compute_field_reference_cycle: Compute-feltets indstilling `value` henviser til `{$name}`, et andet Compute-felt der henviser tilbage til dette felt, direkte eller via andre felter, så deres værdier falder aldrig til ro.
+    # Don’t localize `localize_format`, `true` and `de`
+    localize_format_without_i18n: Indstillingen `localize_format` er `true`, men i18n er ikke slået til for samlingen, så værdien skrives på engelsk. Sæt i stedet indstillingen til en sprogkode som `de`.
+    # {$locale} is the locale code from the configuration; Don’t localize `localize_format`
+    localize_format_unsupported_locale: Indstillingen `localize_format` er sat til `{$locale}`, som ikke er et understøttet sprog, så værdien skrives på engelsk.
     # Don’t localize `preview_path`
     preview_path_no_date_field: Indstillingen `preview_path` bruger dato- og tidstags, men samlingen har ikke noget DateTime-felt at læse dem fra, så linket til forhåndsvisningen bliver ikke vist.
     # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
     preview_path_date_field_not_found: Indstillingen `preview_path_date_field` henviser til et felt med navnet `{$name}`, men der er ikke defineret noget DateTime-felt med det navn, så linket til forhåndsvisningen bliver ikke vist.
     # {$name} is the template tag from the configuration; Don’t localize `preview_path`
     preview_path_field_not_found: Indstillingen `preview_path` henviser til `{$name}`, men der er ikke defineret noget felt med det navn i samlingen, så linket til forhåndsvisningen bliver ikke vist.
+    # {$name} is the default identifier field name; Don’t localize `identifier_field` and `slug`
+    missing_identifier_field: Samlingen har intet `{$name}`-felt at navngive nye dokumenter med, så hvert nyt dokument får et tilfældigt slug. Tilføj et `{$name}`-felt, eller angiv indstillingen `identifier_field` eller `slug`.
+    # Don’t localize `slug`, `i18n`, `multiple_files`, `multiple_folders` and `multiple_root_folders`
+    slug_i18n_ineffective: Indstillingen `i18n` i `slug` har ingen effekt, fordi samlingen ikke bruger i18n-strukturen `multiple_files`, `multiple_folders` eller `multiple_root_folders`, hvor hvert sprog har sin egen fil.
+    # Don’t localize `slug`, `template` and `auto_increment`
+    slug_template_ignored: Indstillingen `template` i `slug` bliver ignoreret, fordi indstillingen `auto_increment` nummererer sluggene i stedet.
+    # {$file} is the file path; Don’t localize `file`, `locale`, `i18n`, `false`,
+    # `omit_default_locale_from_file_path` and the example paths. The curly brackets in the examples
+    # are escaped with backslashes for MessageFormat 2
+    locale_not_omitted_from_file_path: Pladsholderen `locale` kan ikke fjernes fra stien `{$file}` i `file`, så standardsproget bevares i den trods i18n-indstillingen `omit_default_locale_from_file_path`. For at udelade sproget skal du bruge pladsholderen som et helt mappenavn, fx `\{\{locale\}\}/about.md`, eller mellem filnavnet og filendelsen, fx `about.\{\{locale\}\}.md`. For at bevare det skal du sætte indstillingen til `false` i filens indstilling `i18n`.
+    # Don’t localize `i18n`
+    i18n_not_configured: Indstillingen `i18n` er slået til, men i18n er ikke konfigureret på øverste niveau i konfigurationen eller i samlingen, så indstillingen har ingen effekt.
+    # Don’t localize `public_folder` and `media_folder`
+    empty_public_folder: Indstillingen `public_folder` er en tom streng, så stien i `media_folder` bruges i stedet til de mediestier der gemmes i dokumenter. Fjern indstillingen, eller sæt den til den sti du vil bruge, fx `/images`.
     # {$option} is an option path from the configuration, such as `filter.Regulation`
     schema_unknown_option: Indstillingen `{$option}` er ikke defineret i konfigurationsskemaet for Sveltia CMS. Den bliver ignoreret. Tjek for slåfejl eller syntaksfejl.
+    # Don’t localize `default_localized`, `default` and `i18n`
+    default_localized_without_i18n: Indstillingen `default_localized` har ingen effekt, fordi i18n ikke er slået til for samlingen. Brug i stedet indstillingen `default`.
+    # {$locale} is a locale code from the configuration; Don’t localize `default_localized`
+    default_localized_unknown_locale: Indstillingen `default_localized` har en værdi for `{$locale}`, som ikke er et af samlingens sprog, så værdien bliver aldrig brugt.
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'Se kompatibilitetsnoterne for detaljer: {$link}'
@@ -1724,6 +2736,11 @@ viewing_editorial_workflow: 'Du ser nu tavlen for den redaktionelle arbejdsgang.
 # Same as above, for an Open Authoring contributor: their board has no Ready column, because only
 # a maintainer can publish
 viewing_open_authoring_workflow: 'Du ser nu tavlen for den redaktionelle arbejdsgang. Kladder: {$draft}. Til gennemsyn: {$review}. Afventer sletning: {$deletion}.'
+# Same as above, when the In Review stage is left out with the `stages` publish mode option
+viewing_editorial_workflow_without_review: 'Du ser nu tavlen for den redaktionelle arbejdsgang. Kladder: {$draft}. Klar: {$ready}. Afventer sletning: {$deletion}.'
+# Same as above, when all the content uses Preview Workflow, which has no review stages, so the
+# page only lists the drafts
+viewing_preview_workflow: 'Du ser nu siden Kladder. Kladder: {$draft}. Afventer sletning: {$deletion}.'
 
 # Workflow status names. `drafts` is the plural form used as a column heading,
 # while `draft` is the singular form used in the editor’s status button.
@@ -1735,6 +2752,10 @@ status:
   # A pending removal, which is a status of its own rather than a stage: it has no review to go
   # through, only the deletion itself to carry out or call off
   pending_deletion: Afventer sletning
+  # Merged changes the site hasn’t caught up with yet: it’s being rebuilt and deployed from the
+  # merge, so a published entry isn’t live and a deleted one is still up. Heading of the tray below
+  # the board that lists them until the site has caught up
+  deploying: Udrulles
 
 workflow:
   # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
@@ -1778,6 +2799,14 @@ workflow:
   status_updated: Status er opdateret.
   # Error notification when the status could not be changed
   status_change_failed: Status kunne ikke ændres. Prøv igen.
+  # Workflow page: toolbar button that reads the pull requests again, to pick up the changes made
+  # by anyone else since the board was loaded, and the toast notifications shown while doing so and
+  # once done
+  refresh: Opdater
+  refreshing: Opdaterer…
+  refreshed: Tavlen er opdateret.
+  # Error notification when the board could not be refreshed
+  refresh_failed: Tavlen kunne ikke opdateres. Prøv igen.
   # Error notification when the status can’t be changed because the entry is incomplete. Required
   # fields can be left empty while the entry is a draft, but not once it moves on from there
   status_change_blocked: Dokumentet indeholder fejl. Ret dem før du ændrer status.
@@ -1788,6 +2817,10 @@ workflow:
   # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
   send_for_review: Send til gennemsyn
   confirm_sending_for_review: Dine ændringer er gemt som en kladde. Vil du sende dokumentet til gennemsyn så nogen kan se på det og udgive det?
+  # Same as above, when the In Review stage is left out with the `stages` publish mode option, so
+  # the next step is to mark the entry as ready to be published
+  mark_as_ready: Markér som klar
+  confirm_marking_as_ready: Dine ændringer er gemt som en kladde. Vil du markere dokumentet som klar så det kan udgives?
   # Editor toolbar: button shown when the entry is ready to be published
   publish_entry: Udgiv dokument
   # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
@@ -1819,6 +2852,8 @@ workflow:
     .match $count
       one {{ Et af dem er endnu ikke udgivet, så dine ikke-udgivne ændringer bliver kasseret. En eventuel udgivet version forbliver udgivet. }}
       *   {{ {$count} af dem er endnu ikke udgivet, så dine ikke-udgivne ændringer bliver kasseret. Eventuelle udgivne versioner forbliver udgivet. }}
+  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
+  confirm_publishing_entry_after_build: Er du sikker på at du vil udgive dette dokument? Dine ændringer bliver offentlige når dit websted er bygget igen.
   # Workflow page: toast notifications shown while an entry is being published from a card, and
   # once publishing has completed
   publishing_entry: Udgiver dokument…
@@ -1830,10 +2865,55 @@ workflow:
   entry_deleted: Dokumentet er slettet.
   # Error notification when publishing fails
   publishing_entry_failed: Dokumentet kunne ikke udgives. Prøv igen.
+  # Error notification when an entry can’t be published from the CMS, because its request also
+  # changes files that aren’t part of the entry and that the CMS doesn’t show, goes somewhere other
+  # than the site’s branch, or is too large to check. Keep the wording free of Git jargon
+  publish_refused_other_changes: Dette dokument kan ikke udgives her, fordi det indeholder andre ændringer som CMS’et ikke kan vise dig. Bed en udvikler om at gennemse det.
+  # Error notification when an entry can’t be published because its branch has been committed to
+  # since the entry was opened, so what would be published isn’t what was reviewed
+  publish_refused_entry_changed: Dokumentet er blevet ændret siden du åbnede det. Genindlæs siden for at gennemse den nyeste version før du udgiver det.
+  review_on_x: Gennemse på {$service}
+  from_fork: Fra en fork
+  fork_entry_editable: Dette dokument kommer fra en bidragyders pull request, der er oprettet fra ”{$fork}”. Dine ændringer gemmes i bidragyderens branch. Gennemse og merge pull requesten på Git-tjenesten.
+  fork_entry_locked: Dette dokument kommer fra en bidragyders pull request, der er oprettet fra ”{$fork}”. Bidragyderen tillader ikke at vedligeholdere redigerer den, så den kan kun ses her.
+  fork_not_editable: Bidragyderen tillader ikke at vedligeholdere redigerer denne pull request.
+  fork_entry_gone: Bidragyderens pull request er ikke længere åben, så ændringerne kan ikke gemmes i den.
+  # Error shown in the save error dialog when an entry can’t be saved for review, because a request
+  # the CMS doesn’t show is already open from the branch the entry would be saved to. `{$number}` is
+  # the request number, e.g. `#12` on GitHub or `!12` on GitLab. Keep the wording free of Git jargon
+  branch_in_use: En anden anmodning ({$number}) er allerede åben for dette dokument uden for CMS’et. Bed en udvikler om at lukke den først.
   # Workflow page: empty column message
   no_entries: Ingen dokumenter.
   # Workflow page: aria-label for a draggable entry card
   drag_entry: Træk for at ændre status
+  # Workflow page: note on a card in the Deploying tray, marking an entry that’s being removed from
+  # the site rather than published to it
+  deploying_deletion: Sletning
+  # Workflow page: note on a card listing the new entries that were created from a Relation field
+  # of the entry and are published along with it, e.g. “Also adds Section: Getting Started”
+  companion_entries: Tilføjer også {$entries}
+  # Workflow page: note on a card listing the existing entries that were edited from a Relation
+  # field of the entry and are published along with it, e.g. “Also changes Author: Ada Lovelace”
+  edited_companion_entries: Ændrer også {$entries}
+  # Workflow page: one of the entries listed by `companion_entries` or `edited_companion_entries`,
+  # named by its collection’s singular label and its title
+  companion_entry: '{$collection}: {$title}'
+
+# Dialog asking the user for a commit message every time changes are saved, when the site is
+# configured to. The message is recorded in the repository’s history along with the changes
+commit_message:
+  # Dialog title
+  title: Commit-besked
+  # Description when the user writes the whole message, which the text box is filled in with
+  description_replace: Beskriv dine ændringer. Beskeden registreres i historikken sammen med dem.
+  # Description when the text the user enters is added before or after a message the CMS writes
+  description_addition: Tilføj en note til den besked der registreres i historikken sammen med dine ændringer, fx et issuenummer. Feltet kan stå tomt.
+  # Accessible name of the text box when the user writes the whole message
+  message: Commit-besked
+  # Accessible name of the text box when the text is added before or after the message
+  addition: Note
+  # Preview of the message as it will be recorded. {$message} is the message
+  preview: 'Besked: {$message}'
 
 # Open Authoring: a contributor without write access to the configured repository works in a fork
 # of it, and their changes reach the site through a pull request a maintainer merges
@@ -1847,6 +2927,10 @@ open_authoring:
   fork_declined: Du skal have en fork af repositoriet på din konto for at kunne foreslå ændringer.
   # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
   fork_failed: Der kunne ikke oprettes en fork af repositoriet ”{$repo}” på din konto.
+  # Error shown when the user’s fork doesn’t have the branch the CMS is configured with, so there’s
+  # nothing to start their changes from. {$fork} and {$repo} are repository identifiers in
+  # owner/repo format, {$branch} is the branch name
+  fork_branch_missing: Din fork ”{$fork}” har ikke branchen ”{$branch}”. Opdater forken fra repositoriet ”{$repo}”, og log derefter ind igen.
   # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
   # because the API rate limit is exhausted. {$repo} is the repository identifier
   permission_check_failed: Din adgang til repositoriet ”{$repo}” kunne ikke kontrolleres. Prøv igen om et øjeblik.
@@ -1861,6 +2945,10 @@ open_authoring:
   private_repo_scope_required: Dit login giver ikke adgang til private repositorier, så repositoriet ”{$repo}” kan ikke læses. Bed en vedligeholder om at tjekke CMS’ets godkendelsesindstillinger.
   # Error shown when a contributor tries to publish an entry, which only a maintainer can do
   publish_unsupported: Kun en vedligeholder kan udgive ændringer på dette websted. Marker i stedet dit dokument som ”Til gennemsyn”, så kigger nogen på det.
+  # Error shown when a contributor changes the status of an entry whose request a maintainer has
+  # published since the page was loaded, leaving nothing to review. The entry then leaves the
+  # Editorial Workflow board and the editor closes. Keep the wording free of Git jargon
+  entry_already_published: En vedligeholder har allerede udgivet dette dokument, så der er intet tilbage at gennemse.
   # Error shown when a change would go straight to the site instead of being reviewed, which a
   # contributor can’t do. It covers media library uploads and deletions, and entry reordering
   direct_commit_unsupported: Denne ændring kan ikke foretages direkte. Kun redigeringer af dokumenter kan foreslås til gennemsyn.
@@ -1878,6 +2966,8 @@ categories: Kategorier
 
 # Preferences panels
 prefs:
+  account:
+    title: Konto
   # API key management feedback messages
   changes:
     api_key_saved: API-nøglen er gemt.
@@ -1927,7 +3017,7 @@ prefs:
         select_service: Vælg tjeneste
       api_keys:
         title: API-nøgler til oversættelsestjenester
-        description: Administrer API-nøgler til <a>oversættelsestjenester</a>.
+        description: Administrer API-nøgler til <a>oversættelsestjenester</a>. API-nøgler til generelle AI-tjenester kan administreres i AI-indstillingerne.
       # API key input label, e.g., “DeepL Key”
       # {$service} is the translation service name
       field_label: '{$service}-nøgle'
@@ -1961,6 +3051,16 @@ prefs:
       field_label: '{$service}-API-nøgle'
       no_services: Der er ikke konfigureret nogen <a>cloudlagringstjenester</a>.
 
+  # AI panel
+  ai:
+    title: AI
+    api_keys:
+      title: API-nøgler til AI-tjenester
+      description: Administrer API-nøgler til AI-tjenester.
+    # API key input label, e.g., “OpenAI GPT API Key”
+    # {$service} is the AI service name
+    field_label: '{$service}-API-nøgle'
+
   # Accessibility panel
   accessibility:
     title: Tilgængelighed
@@ -1971,6 +3071,7 @@ prefs:
 
   # Data Management panel
   data:
+    title: Datahåndtering
     clear_data:
       title: Ryd data
       # Clear File Cache button
@@ -1986,13 +3087,23 @@ prefs:
 
   # Developer panel
   developer:
+    title: Udvikler
     developer_mode:
       title: Udviklertilstand
       description: Slå udviklerorienterede funktioner til, herunder detaljerede konsollogs og systemets egne kontekstmenuer.
       switch_label: Slå udviklertilstand til
+    local_git:
+      title: Git-commits
+      description: Commit dine ændringer til den aktuelle branch i dit lokale repository hver gang du gemmer dem, sådan som CMS’et gør når du arbejder med et eksternt repository. Du kan derefter gennemse og pushe dine commits med dine sædvanlige Git-værktøjer.
+      switch_label: Commit ændringer til Git
+      checking: Kontrollerer repositoriet…
+      # {$branch} is the branch name, {$name} and {$email} are the commit author’s name and email address
+      ready: Ændringer bliver committet til branchen {$branch} som {$name} ({$email}).
+      # {$reason} is one of the `local_git_skip_reasons` strings
+      not_ready: Ændringer kan ikke committes lige nu. {$reason}
     deploy_hook:
       title: Deploy-hook
-      description: Indtast en webhook-URL der skal kaldes når du manuelt udløser en udrulning ved at vælge Udgiv ændringer. Feltet kan stå tomt hvis du bruger GitHub Actions.
+      description: Indtast en webhook-URL der skal kaldes når du manuelt udløser en udrulning ved at vælge Udgiv ændringer. Feltet kan stå tomt hvis du bruger GitHub Actions eller GitLab CI/CD.
       # Hook URL input
       url:
         field_label: Hook-URL

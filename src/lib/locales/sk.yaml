@@ -119,6 +119,7 @@ welcome_message: Vitajte v aplikácii {$name}
 powered_by: Beží na {$name}
 
 # Shown during initial configuration and data loading
+unsupported_browser_error: Váš prehliadač nie je podporovaný. Aktualizujte ho na najnovšiu verziu alebo použite iný prehliadač.
 loading_cms_config: Načítava sa konfigurácia CMS…
 loading_site_data: Načítavajú sa údaje webu…
 loading_site_data_error: Pri načítavaní údajov webu sa vyskytla chyba.
@@ -151,6 +152,11 @@ work_with_local_repo_description: Po výzve vyberte koreňový priečinok repozi
 work_with_local_repo_description_no_repo: Po výzve vyberte koreňový priečinok svojho Git repozitára.
 # Button label for demo/test repository
 work_with_test_repo: Pracovať s testovacím repozitárom
+# Button label for the test repository when sample content is seeded, e.g. on a demo site
+start_demo: Spustiť ukážku
+# Shown below the disabled test repository option in a browser that can’t save files to its
+# storage, e.g. Safari before version 26
+test_repo_unsupported_browser: Váš prehliadač nedokáže ukladať súbory testovacieho repozitára. Aktualizujte ho na najnovšiu verziu alebo použite iný prehliadač.
 
 # Authentication errors
 # Error messages shown during sign-in failures
@@ -175,14 +181,28 @@ sign_in_error:
 backend_unsupported_version: Backend {$name} vyžaduje {$name} vo verzii {$version} alebo novšej.
 # {$repo} is the repository identifier, typically in owner/repo format
 repository_no_access: Nemáte prístup k repozitáru „{$repo}“.
+# {$repo} is the repository identifier, typically in owner/repo format
+repository_no_write_access: Nemáte prístup na zápis do repozitára „{$repo}“.
 repository_not_found: Repozitár „{$repo}“ neexistuje.
 repository_empty: Repozitár „{$repo}“ nemá žiadne vetvy.
 # {$repo} is the repository identifier, and {$branch} is the configured branch name
 branch_not_found: Repozitár „{$repo}“ nemá vetvu „{$branch}“.
+# {$repo} is the repository identifier, and {$dir} is the configured root directory
+root_dir_not_found: Koreňový priečinok „{$dir}“ v repozitári „{$repo}“ neexistuje.
 
 # General errors
 # Fallback error dialog title for unexpected errors
 unexpected_error: Neočakávaná chyba
+# Shown in place of the page when an unexpected error stops it from being displayed
+# {$message} is the error message
+page_crashed: Niečo sa pokazilo a túto stránku nemožno zobraziť. {$message}
+# Shown in place of a field editor or preview when an unexpected error stops it from being displayed
+# {$message} is the error message
+field_crashed: Niečo sa pokazilo a toto pole nemožno zobraziť. {$message}
+# Button label for displaying a part of the page again after an unexpected error
+try_again: Skúsiť znova
+# Button label for reloading the CMS after an unexpected error
+reload_cms: Znova načítať CMS
 
 # Entry file parsing errors
 # Toast notification when entry files fail to parse on initial load
@@ -216,12 +236,344 @@ sign_in_with_mobile_instruction: Na prihlásenie bez hesla naskenujte QR kód ni
 sign_in_with_link: Prihlásiť sa pomocou odkazu
 sign_in_with_link_confirmation: Tento odkaz vás prihlási ako {$account} v službe {$service} a skopíruje nastavenia zo zariadenia, na ktorom bol vytvorený. Pokračujte, iba ak ste odkaz vytvorili sami.
 
+# Sign-in with Sveltia CMS Additions, which manages its own user accounts instead of the Git
+# service’s. Don’t localize “Sveltia CMS Additions”
+additions:
+  username: Používateľské meno
+  password: Heslo
+  sign_in: Prihlásiť sa
+  new_password_title: Zvoľte si nové heslo
+  new_password_description: Prihlásili ste sa dočasným heslom. Ak chcete pokračovať, zvoľte si nové.
+  new_password: Nové heslo
+  password_too_short: Heslo je príliš krátke. Použite aspoň 12 znakov.
+  change_password: Zmeniť heslo
+  # {$name} is the user’s username, {$role} their role, e.g. Editor
+  signed_in_as_x_with_role: 'Prihlásený účet: {$name} ({$role})'
+  link_github: Prepojiť účet GitHub
+  link_github_error: Účet GitHub sa nepodarilo prepojiť
+  current_password: Aktuálne heslo
+  # {$username} is the username filled in from a magic link emailed to the user
+  filled_from_link: Používateľské meno a heslo boli vyplnené z odkazu. Prihláste sa, iba ak je „{$username}“ vaše používateľské meno.
+  change_password_description: Tu zostanete prihlásení a na ostatných zariadeniach budete odhlásení.
+  password_changed: Vaše heslo bolo zmenené.
+  # The Account settings panel of a Sveltia CMS Additions user
+  account:
+    profile: Profil
+    profile_description: Vaše meno sa ostatným zobrazuje v CMS, napríklad pri zámkoch položiek a komentároch, a vo vašich commitoch.
+    username_description: Používateľské meno nemožno zmeniť.
+    email: E-mail
+    email_description: Používa sa vo vašich commitoch, aby ich GitHub mohol priradiť k vášmu účtu. Ak ho nezadáte, použije sa zástupná adresa. Zmeniť ho môže iba správca.
+    change_name: Zmeniť meno
+    name_changed: Vaše meno bolo zmenené.
+    password: Heslo
+    no_password: Prihlasujete sa cez GitHub, takže nemáte heslo, ktoré by ste mohli zmeniť. Správca vám ho môže prideliť obnovením hesla.
+  setup:
+    use_admin_secret: Použiť tajný kľúč správcu
+    title: Nastavenie Sveltia CMS Additions
+    secret_description: Zadajte tajný kľúč správcu nastavený v nastaveniach vašej služby Sveltia CMS Additions. Uchováva sa iba v tejto karte počas nastavovania.
+    admin_secret: Tajný kľúč správcu
+    continue: Pokračovať
+    back: Späť na prihlásenie
+    admin_title: Účet správcu
+    admin_create_description: Vytvorte prvý účet správcu. Budete sa ním prihlasovať a spravovať ostatných používateľov.
+    admin_reset_description: Účet správcu už existuje. Ak sa chcete znova dostať dnu, obnovte tu heslo niektorého správcu alebo vytvorte ďalší účet.
+    admin_saved: Účet správcu je pripravený. Prihláste sa heslom, ktoré ste práve zadali.
+    create_admin: Vytvoriť správcu
+    reset_password: Uložiť správcu
+    github_title: GitHub
+    # {$repo} is the repository, e.g. octocat/site
+    github_description: Vytvorte pre tento web aplikáciu GitHub App a nainštalujte ju do repozitára „{$repo}“. GitHub vás požiada o potvrdenie a potom vás vráti sem.
+    # {$repo} is the repository, {$app} is the name of the GitHub App
+    github_connected: Pripojené k repozitáru „{$repo}“ pomocou aplikácie GitHub App „{$app}“.
+    connect_github: Pripojiť ku GitHubu
+    # {$step} is the number of the current step, {$total} the number of steps
+    step_x_of_y: Krok {$step} z {$total}
+    admin_exists: Účet správcu existuje.
+    reset_admin_password: Obnoviť heslo správcu
+    setup_complete: Nastavenie je dokončené. Prihláste sa účtom správcu a spravujte používateľov a nastavenia. Pomocou tajného kľúča správcu sa sem môžete kedykoľvek vrátiť.
+    manage_sites: Spravovať ďalšie weby
+    back_to_setup: Späť
+    sites_title: Ďalšie weby
+    sites_description: Táto služba môže obsluhovať aj ďalšie weby, každý s vlastnými používateľmi, nastaveniami a aplikáciou GitHub App. V konfigurácii CMS daného webu nastavte „base_url“ na jeho URL a potom tam web nastavte pomocou tajného kľúča správcu.
+    no_sites: Zatiaľ tu nie sú žiadne ďalšie weby.
+    site_id: ID webu
+    site_id_description: 1 až 32 malých písmen, číslic a spojovníkov, napríklad „acme“. Zobrazuje sa v URL webu a nemožno ho zmeniť.
+    site_name_optional: Názov (voliteľné)
+    add_site: Pridať web
+    # {$name} is the name of the site
+    site_added: Web „{$name}“ bol pridaný. V jeho konfigurácii CMS nastavte „base_url“ na túto URL a potom tam otvorte sprievodcu nastavením.
+    # {$name} is the name of the site
+    copy_site_url: Kopírovať URL webu {$name}
+    delete_site: Odstrániť web
+    # {$name} is the name of the site
+    delete_site_x: Odstrániť {$name}
+    # {$name} is the name of the site, {$id} is its ID
+    delete_site_confirmation: Odstránením webu „{$name}“ sa odstránia aj jeho používatelia, nastavenia a komentáre. Túto akciu nemožno vrátiť späť. Aplikácia GitHub App zostane na GitHube, kde ju môžete odstrániť. Na potvrdenie zadajte „{$id}“.
+    site_id_to_confirm: ID webu na potvrdenie
+    data_key_locked_title: Tajný kľúč správcu bol zmenený
+    data_key_locked_description: Tajný kľúč správcu bol zmenený, takže uložené nastavenia nemožno prečítať. Ak ich chcete zachovať, zadajte predchádzajúci kľúč, alebo začnite odznova, ak ste ho stratili.
+    previous_secret: Predchádzajúci tajný kľúč správcu
+    unlock: Odomknúť
+    rekey: Začať odznova
+    rekey_confirmation: Začatím odznova sa odstránia prihlasovacie údaje aplikácie GitHub App a ostatné uložené tajné kľúče a všetci budú odhlásení. Heslá zostanú zachované. Pokračovať?
+    result:
+      ok: GitHub je pripojený. Teraz sa môžete prihlásiť.
+      github_app_not_created: Aplikácia GitHub App nebola vytvorená. Skúste to znova pomocou tajného kľúča správcu.
+      github_app_not_installed: Aplikácia GitHub App nebola nainštalovaná. Skúste to znova pomocou tajného kľúča správcu.
+      github_wrong_account: Aplikácia GitHub App bola nainštalovaná v inom účte, než ktorému patrí repozitár. Nainštalujte ju u vlastníka repozitára a skúste to znova.
+      github_repository_not_included: Aplikácia GitHub App bola nainštalovaná bez prístupu k repozitáru. Na GitHube jej udeľte prístup k repozitáru a skúste to znova.
+      unexpected: Pripojenie ku GitHubu zlyhalo pre neočakávanú chybu. Skúste to znova.
+  locks:
+    # {$name} is the name of the person editing the entry, {$time} when they started
+    being_edited: Používateľ {$name} upravuje túto položku od {$time}, takže si ju môžete iba prezerať.
+    being_edited_by_you: Túto položku upravujete na inej karte, takže si ju tu môžete iba prezerať.
+    # {$name} is the name of the person who took over the entry
+    taken_over: Túto položku prevzal používateľ {$name}, takže si ju teraz môžete iba prezerať.
+    take_over: Prevziať
+    unavailable: Zámky položiek nie sú k dispozícii, takže túto položku môže súčasne upravovať aj niekto iný.
+    # {$name} is the name of the person editing the entry
+    being_edited_by_x: 'Upravuje: {$name}'
+    # {$names} is a list of the other people who have the entry open in the editor
+    also_open_by_x: 'Otvorené aj u: {$names}'
+    # {$names} is a list of the people who have the entry open, besides anyone editing it
+    open_by_x: 'Otvorené u: {$names}'
+  users:
+    title: Používatelia
+    add_user: Pridať používateľa
+    edit_user: Upraviť používateľa
+    add: Pridať
+    name: Meno
+    username_description: Po pridaní používateľa už jeho používateľské meno nemožno zmeniť.
+    email_optional: E-mail (voliteľné)
+    email_description: Používa sa v commitoch tejto osoby, aby ich GitHub mohol priradiť k jej účtu. Ak ho nezadáte, použije sa zástupná adresa.
+    role: Rola
+    status: Stav
+    last_sign_in: Posledné prihlásenie
+    sign_in_column: Prihlásenie
+    methods:
+      password: Heslo
+      # {$login} is a GitHub username
+      github: GitHub ({$login})
+    actions: Akcie
+    you: (vy)
+    never: Nikdy
+    roles:
+      admin: Správca
+      editor: Redaktor
+      viewer: Čitateľ
+    statuses:
+      active: Aktívny
+      temporary_password: Dočasné heslo
+      waiting_for_sign_in: Čaká na prvé prihlásenie
+      disabled: Zakázaný
+    # {$name} is the user’s name
+    show_options_for_x: Zobraziť možnosti pre {$name}
+    options: Možnosti používateľa
+    reset_password: Obnoviť heslo
+    sign_out_everywhere: Odhlásiť všade
+    enable: Povoliť používateľa
+    disable: Zakázať používateľa
+    delete: Odstrániť používateľa
+    # {$name} is the user’s name
+    reset_password_confirmation: Prideliť používateľovi {$name} nové dočasné heslo? Používateľ bude odhlásený všade a pri ďalšom prihlásení si bude musieť zvoliť nové heslo.
+    delete_confirmation: Odstrániť používateľa {$name}? Túto akciu nemožno vrátiť späť.
+    temporary_password: Dočasné heslo
+    # {$name} is the user’s name
+    temporary_password_description: Odovzdajte toto používateľské meno a dočasné heslo používateľovi {$name}. Heslo sa už znova nezobrazí a pri prihlásení si používateľ zvolí vlastné.
+    copy_username: Kopírovať používateľské meno
+    copy_password: Kopírovať heslo
+    # {$name} is the user’s name
+    email_credentials: Poslať e-mailom používateľovi {$name}
+    # The emails the admin sends from their own email app, with the sign-in details: `new` to a user
+    # who has just been added, `reset` to one whose password has been reset. Each line is a string of
+    # its own, as line breaks aren’t kept in these files
+    credentials_email:
+      # {$name} is the user’s name
+      greeting: Dobrý deň, {$name},
+      # {$url} is a link to the CMS that fills in the username and the temporary password
+      sign_in_link: 'Odkaz na prihlásenie: {$url}'
+      # {$username} is the username
+      username: 'Používateľské meno: {$username}'
+      # {$password} is the temporary password
+      password: 'Dočasné heslo: {$password}'
+      new:
+        # {$app} is the name of the CMS
+        subject: Vaše prihlasovacie údaje do {$app}
+        # {$app} is the name of the CMS
+        message: Teraz sa môžete prihlásiť do {$app}. Otvorte odkaz nižšie, ktorý vyplní vaše používateľské meno a dočasné heslo, a pri prihlásení si zvoľte vlastné heslo.
+      reset:
+        # {$app} is the name of the CMS
+        subject: Vaše heslo do {$app} bolo obnovené
+        # {$app} is the name of the CMS
+        message: Vaše heslo do {$app} bolo obnovené a boli ste odhlásení všade. Otvorte odkaz nižšie, ktorý vyplní vaše používateľské meno a dočasné heslo, a pri prihlásení si zvoľte nové heslo.
+    allowed_domains: Povolené domény
+    allowed_domains_description: Weby, ktoré môžu používať Sveltia CMS Additions, jeden názov hostiteľa na riadok. Zástupný znak (*) zodpovedá ľubovoľnej subdoméne, napríklad *.example.com. Kde je to možné, uveďte presné názvy hostiteľov. Zoznam platí iba pre tento web, aj keď rovnaká inštancia Sveltia CMS Additions obsluhuje aj iné weby.
+    save_allowed_domains: Uložiť povolené domény
+    allowed_domains_saved: Povolené domény boli uložené.
+    sign_in_tab: Prihlásenie
+    # {$latest} is the newest version of Sveltia CMS Additions, {$current} the one in use
+    update_available: K dispozícii je Sveltia CMS Additions {$latest}. Používate verziu {$current}.
+    release_notes: Poznámky k verzii
+    github_username_optional: Používateľské meno GitHub (voliteľné)
+    github_username_description: Ak je zadané používateľské meno GitHub, používateľ sa prihlasuje týmto účtom GitHub namiesto hesla.
+    # {$name} is the user’s name
+    github_required: Používateľ {$name} sa môže prihlásiť iba cez GitHub, preto jeho používateľské meno GitHub nemožno odobrať. Najprv obnovte heslo, aby sa mohol prihlasovať heslom.
+    adopt: Prevziať účet
+    sign_in:
+      github: Povoliť prihlásenie cez GitHub
+      github_description: Ľudia sa prihlasujú svojím účtom GitHub a dostanú vlastný token GitHub, takže ich zmeny sa commitujú pod ich menom. Správca ich najprv pridá s ich používateľským menom GitHub, pokiaľ sa na nich nevzťahuje niektoré pravidlo registrácie.
+      # Shown when signing in with GitHub is being turned off while {$count} users can only sign in
+      # with it
+      github_only_warning: |
+        .input {$count :integer}
+        .match $count
+          one {{ Jeden používateľ sa môže prihlásiť iba cez GitHub a po vypnutí tejto možnosti sa nebude môcť prihlásiť, kým mu neobnovíte heslo. }}
+          few {{ {$count} používatelia sa môžu prihlásiť iba cez GitHub a po vypnutí tejto možnosti sa nebudú môcť prihlásiť, kým im neobnovíte heslá. }}
+          *   {{ {$count} používateľov sa môže prihlásiť iba cez GitHub a po vypnutí tejto možnosti sa nebudú môcť prihlásiť, kým im neobnovíte heslá. }}
+      rules: Pravidlá registrácie
+      rules_description: Členovia organizácie GitHub, v ktorej je aplikácia nainštalovaná, sa môžu prihlásiť bez toho, aby ich bolo treba najprv pridať. Ich účet dostane rolu, ktorú zvolíte, a zakáže sa, ak organizáciu opustia, pokiaľ ho neprevezmete.
+      org: Organizácia GitHub
+      add_rule: Pridať pravidlo
+      # {$org} is the name of a GitHub organization
+      remove_rule: Odobrať pravidlo pre {$org}
+      # For a rule whose organization hasn’t been entered yet
+      remove_empty_rule: Odobrať pravidlo
+      save: Uložiť nastavenia prihlásenia
+      saved: Nastavenia prihlásenia boli uložené.
+    domains_tab: Domény
+    github_tab: GitHub
+    github:
+      app: GitHub App
+      repository: Repozitár
+      not_installed: Nenainštalovaná
+      statuses:
+        ok: Aplikácia funguje.
+        not_registered: Zatiaľ nie je nastavená žiadna aplikácia GitHub App. Spustite sprievodcu nastavením zo stránky prihlásenia pomocou tajného kľúča správcu.
+        key_missing: Súkromný kľúč aplikácie sa stratil pri výmene tajného kľúča správcu. Vygenerujte nový súkromný kľúč v nastaveniach aplikácie na GitHube a nahrajte ho nižšie.
+        key_rejected: GitHub neprijíma súkromný kľúč aplikácie, napríklad preto, že tam bol odstránený. Vygenerujte nový súkromný kľúč v nastaveniach aplikácie na GitHube a nahrajte ho nižšie.
+        not_installed: Aplikácia nie je nainštalovaná v repozitári. Nainštalujte ju znova zo stránky aplikácie na GitHube alebo spustite sprievodcu nastavením.
+        suspended: Inštalácia aplikácie je pozastavená. Obnovte ju v nastaveniach inštalácie na GitHube.
+        unreachable: GitHub nie je dostupný. Skúste to znova neskôr.
+      check_again: Skontrolovať znova
+      # {$branch} is the name of the repository’s default branch
+      branch_protected: Sady pravidiel chránia vetvu „{$branch}“ pred vynúteným odoslaním (force push) a odstránením.
+      branch_bypassed: Sady pravidiel chránia vetvu „{$branch}“, ale aplikácia ich môže obísť, takže redaktori by do nej stále mohli vynútene odosielať alebo ju odstrániť. Odoberte aplikáciu zo zoznamov výnimiek týchto sád pravidiel.
+      branch_unprotected: Vetvu „{$branch}“ nechráni pred vynúteným odoslaním (force push) a odstránením žiadna sada pravidiel, takže redaktori by mohli prepísať jej históriu alebo ju odstrániť. V nastaveniach repozitára pridajte sadu pravidiel, ktorá blokuje oboje, bez aplikácie v zozname výnimiek.
+      repository_rules: Otvoriť pravidlá repozitára
+      private_key: Súkromný kľúč
+      private_key_description: Ak chcete nahradiť súkromný kľúč, vygenerujte nový v nastaveniach aplikácie na GitHube a potom nahrajte stiahnutý súbor .pem. Potom tam starý kľúč odstráňte.
+      app_settings: Otvoriť nastavenia aplikácie
+      upload_private_key: Nahrať súkromný kľúč
+      replace_private_key: Nahradiť súkromný kľúč
+      private_key_summary: Služba používa súkromný kľúč aplikácie na získanie prístupu k repozitáru na GitHube. Ak mohol byť prezradený, nahraďte ho.
+      private_key_replaced: Súkromný kľúč bol nahradený.
+      commit_author: Autor commitov
+      commit_author_description: Vyberte, kto sa zobrazí ako autor zmien uložených v CMS. GitHub podpisuje iba commity, ktorých autorom je aplikácia, preto vyberte aplikáciu, ak sada pravidiel vyžaduje podpísané commity. Ostatní používatelia dostanú zmenu do hodiny.
+      commit_author_user: Osoba, ktorá zmenu vykonala
+      commit_author_bot: Aplikácia GitHub App s danou osobou ako spoluautorom
+      commit_author_saved: Autor commitov bol uložený.
+  # Administration section for the API keys and the deploy hook an admin shares with everyone
+  credentials:
+    title: Prístupové údaje
+    description: API kľúče a webhook pre nasadenie zadané tu používajú všetci, ktorí sa prihlásia, pokiaľ si v Nastaveniach nezadajú vlastné. Môže si ich prečítať ktokoľvek prihlásený do CMS, preto zadávajte iba kľúče, ktoré môžete zdieľať so svojím tímom.
+    save: Uložiť prístupové údaje
+    saved: Prístupové údaje boli uložené.
+    # {$service} is the service name, e.g. DeepL
+    invalid_key: API kľúč pre {$service} nevyzerá správne.
+  error:
+    unauthenticated: Vaša relácia vypršala. Prihláste sa znova.
+    wrong_admin_secret: Tajný kľúč správcu je nesprávny.
+    admin_secret_missing: Tajný kľúč správcu nie je nastavený v nastaveniach služby Sveltia CMS Additions.
+    admin_secret_too_short: Tajný kľúč správcu nastavený v nastaveniach služby Sveltia CMS Additions je príliš krátky. Použite aspoň 32 náhodných znakov.
+    wrong_previous_secret: Predchádzajúci tajný kľúč správcu je nesprávny.
+    not_an_admin: Tento používateľ nie je správca. Zvoľte iné používateľské meno.
+    invalid_username: Používateľské meno má 3 až 30 malých písmen, číslic, bodiek, spojovníkov alebo podčiarkovníkov.
+    last_admin: Musí existovať aspoň jeden správca.
+    cannot_disable_self: Nemôžete zakázať vlastný účet.
+    cannot_delete_self: Nemôžete odstrániť vlastný účet.
+    username_taken: Toto používateľské meno už má iný používateľ.
+    email_taken: Túto e-mailovú adresu už má iný používateľ.
+    invalid_name: Meno musí mať 1 až 100 znakov.
+    invalid_email: E-mailová adresa nie je platná.
+    invalid_domains: Jedna z povolených domén nie je platný názov hostiteľa.
+    current_origin_removed: Povolené domény musia zahŕňať web, ktorý práve používate.
+    forbidden: Toto môžu robiť iba správcovia.
+    invalid_credentials: Používateľské meno alebo heslo je nesprávne.
+    user_disabled: Tento účet je zakázaný. Požiadajte o pomoc správcu.
+    too_many_attempts: Príliš veľa pokusov. Skúste to znova neskôr.
+    wrong_password: Aktuálne heslo je nesprávne.
+    same_password: Zvoľte nové heslo, ktoré sa líši od aktuálneho.
+    invalid_github_login: Toto nie je platné používateľské meno GitHub.
+    github_user_not_found: Používateľ GitHub s týmto menom neexistuje.
+    github_account_taken: Týmto účtom GitHub sa už prihlasuje iný používateľ.
+    invalid_rules: Pravidlo registrácie vyžaduje názov organizácie GitHub.
+    invalid_rule_role: Pravidlo registrácie môže prideliť iba rolu redaktora alebo čitateľa.
+    rule_org_not_installed: Aplikácia GitHub App musí byť nainštalovaná v organizácii pravidla registrácie.
+    not_invited: Nemáte tu účet. Požiadajte správcu, aby vás pridal.
+    method_disabled: Prihlásenie cez GitHub je vypnuté.
+    access_denied: Prihlásenie bolo zrušené.
+    github_app_not_set_up: Sveltia CMS Additions zatiaľ nie je pripojené ku GitHubu. Požiadajte správcu, aby dokončil nastavenie.
+    invalid_tenant_id: ID webu musí mať 1 až 32 malých písmen, číslic a spojovníkov a nemôže byť „default“.
+    invalid_tenant_name: Názov webu môže mať najviac 100 znakov.
+    tenant_exists: Web s týmto ID už existuje.
+    github_app_missing: Zatiaľ nie je nastavená žiadna aplikácia GitHub App.
+    invalid_private_key: Súbor nie je platný súkromný kľúč.
+    private_key_mismatch: GitHub tento súkromný kľúč pre aplikáciu neprijíma. Uistite sa, že ste ho vygenerovali v nastaveniach aplikácie.
+    github_error: GitHub odpovedal chybou. Skúste to znova neskôr.
+    data_key_locked: Sveltia CMS Additions nemožno používať, kým správca nedokončí zmenu tajného kľúča správcu.
+    not_configured: Sveltia CMS Additions nie je správne nakonfigurované. Požiadajte o pomoc správcu.
+    origin_not_allowed: Tento web nemá povolené používať Sveltia CMS Additions. Požiadajte správcu, aby ho pridal medzi povolené domény.
+    not_set_up: Sveltia CMS Additions zatiaľ nie je pripojené ku GitHubu. Požiadajte správcu, aby dokončil nastavenie.
+    # A user whose password an admin has reset signs in another way, e.g. with GitHub
+    temporary_password: Vaše heslo bolo obnovené. Prihláste sa svojím používateľským menom a dočasným heslom, ktoré vám dal správca, a potom si zvoľte nové.
+    # {$url} is the URL of the service
+    incompatible: Táto verzia Sveltia CMS nefunguje so službou Sveltia CMS Additions na adrese {$url}.
+    unreachable: Sveltia CMS Additions nie je dostupné. Skúste to znova neskôr.
+    insecure_connection: Sveltia CMS Additions musí byť poskytované cez HTTPS. Skontrolujte `base_url` v konfigurácii CMS.
+    unexpected: Požiadavka na Sveltia CMS Additions zlyhala pre neočakávanú chybu. Skúste to znova neskôr.
+
+  # Conversation panel: comments on the entry, kept by Sveltia CMS Additions
+  conversation:
+    title: Konverzácia
+    refresh: Obnoviť konverzáciu
+    empty: Zatiaľ žiadne komentáre.
+    # Button above a long conversation, which is loaded from its latest comments
+    show_older: Zobraziť staršie komentáre
+    # Label of the list of comments
+    timeline: Komentáre
+    deleted_user: Odstránený používateľ
+    you: Vy
+    edited: upravené
+    comment_label: Komentár
+    placeholder: Napíšte komentár (Markdown)
+    visible_to_cms_users: Viditeľné iba pre používateľov CMS
+    send: Komentovať
+    options: Možnosti komentára
+    edit: Upraviť
+    delete: Odstrániť
+    save: Uložiť
+    delete_confirmation: Odstrániť tento komentár? Túto akciu nemožno vrátiť späť.
+    send_failed: Komentár sa nepodarilo odoslať.
+
+  # Placeholder of an API key or deploy hook field the user has left empty, while an admin of
+  # Sveltia CMS Additions has entered one for everyone
+  provided_by_admin: Poskytnuté vaším správcom
+
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
 # {$name} is the signed-in user’s login name
 signed_in_as_x: 'Prihlásený účet: {$name}'
 working_with_local_repo: Práca s lokálnym repozitárom
 working_with_test_repo: Práca s testovacím repozitárom
+working_in_demo_mode: Režim ukážky
+
+# Demo welcome dialog: shown once after signing in to a demo site, where the test repository is
+# seeded with sample content and the changes are only stored in the browser
+demo_welcome:
+  title: Vitajte v ukážke Sveltia CMS
+  description: Pokojne si CMS preskúmajte a upravujte ukážkový obsah. Vaše zmeny sa ukladajú iba v tomto prehliadači. Nič sa nezverejní online a nikto iný ich neuvidí.
+  reset_hint: Ak chcete začať odznova s pôvodným obsahom, vyberte Vymazať všetky údaje v časti Nastavenia > Správa údajov.
+  button_label: Začať
 
 # Account menu: action items for sign-out and app installation
 sign_out: Odhlásiť sa
@@ -237,9 +589,14 @@ install_as_app: Nainštalovať ako aplikáciu
 contents: Obsah
 assets: Médiá
 editorial_workflow: Schvaľovací proces
+# Name of the Editorial Workflow page when all the content uses Preview Workflow, which has no
+# review stages, so the page only lists the drafts
+drafts: Koncepty
 cms_config: Konfigurácia CMS
 # Mobile menu page title (shown only on small screens)
 menu: Ponuka
+# Mobile menu page section heading listing the custom pages registered by the site
+custom_pages: Stránky
 
 # Mobile promo infobar: encouraging users to try the mobile version
 mobile_promo_title: Sveltia CMS je teraz k dispozícii aj na mobilných zariadeniach!
@@ -250,10 +607,36 @@ mobile_promo_button: Vyskúšať
 new_language_available: Sveltia CMS je teraz k dispozícii v jazyku {$locale}!
 change_language: Zmeniť jazyk
 
+# Live reload infobar: shown when the CMS runs on a page that a framework’s development server (e.g.
+# Astro) reloads on every file change, instead of a static HTML file
+live_reload_warning: Váš vývojový server znova načíta túto stránku pri každej zmene súboru, čo môže prerušiť ukladanie a poškodiť vaše súbory. Namiesto toho poskytujte CMS zo statického súboru HTML. <a>Ďalšie informácie</a>
+
 # Toast notification shown while the translation for the selected language is being downloaded
 # {$locale} is the localized language name, e.g., “French”
 switching_language: Prepína sa na jazyk {$locale}…
 locale_load_failed: Nepodarilo sa načítať preklad v jazyku {$locale}. Skúste to neskôr.
+
+# Toast notification shown when changes saved with the local backend couldn’t be committed to Git
+# {$reason} is one of the `local_git_skip_reasons` strings below
+local_git_not_committed: Vaše zmeny boli uložené, ale neboli commitnuté do Gitu. {$reason} Ak chcete iba ukladať súbory, vypnite commity Git v časti Nastavenia > Pre vývojárov.
+local_git_skip_reasons:
+  unsupported_repository: Váš repozitár používa funkciu Gitu, ktorú CMS nepodporuje, napríklad prepojený pracovný strom (worktree), názvy objektov SHA-256, formát reftable, riedky index (sparse index) alebo index vo verzii 3 alebo 4, ktorý používajú možnosť feature.manyFiles a príkaz git add -N.
+  missing_identity: Vaše meno a e-mailová adresa nie sú nastavené v konfigurácii Gitu repozitára a CMS nedokáže prečítať vašu globálnu konfiguráciu. Nastavte ich v repozitári príkazmi git config --local user.name "Your Name" a git config --local user.email "you@example.com".
+  locked: Repozitár používa iný proces Gitu. Ak žiadny nebeží, odstráňte súbor .git/index.lock.
+  # The operation in progress, with how to finish or cancel it
+  operation_in_progress:
+    merge: Prebieha zlučovanie (merge). Dokončite ho príkazom git commit alebo ho zrušte príkazom git merge --abort.
+    rebase: Prebieha rebase. Dokončite ho príkazom git rebase --continue alebo ho zrušte príkazom git rebase --abort. Ak ste už pokračovali inou prácou, príkaz git rebase --quit ho zahodí bez zmeny vašich súborov.
+    cherry_pick: Prebieha cherry-pick. Dokončite ho príkazom git cherry-pick --continue alebo ho zrušte príkazom git cherry-pick --abort.
+    revert: Prebieha revert. Dokončite ho príkazom git revert --continue alebo ho zrušte príkazom git revert --abort.
+    am: Prebieha aplikovanie záplat príkazom git am. Dokončite ho príkazom git am --continue alebo ho zrušte príkazom git am --abort.
+    conflict: Niektoré súbory obsahujú konflikty. Najprv ich vyriešte a výsledky pripravte na commit (stage).
+  detached_head: Nie je vybraná (checkout) žiadna vetva.
+  staged_changes: Na commit máte pripravené iné zmeny. Najprv ich commitnite alebo zrušte ich prípravu (unstage).
+  # {$path} is the file path
+  lfs: Súbor {$path} je sledovaný pomocou Git LFS, do ktorého CMS nedokáže commitovať.
+  # {$message} is the error message
+  error: Vyskytla sa neočakávaná chyba. {$message}
 
 # Site and page navigation
 # Toolbar button aria-label for visiting the live site
@@ -288,6 +671,10 @@ account: Účet
 live_site: Verejný web
 git_repository: Git repozitár
 settings: Nastavenia
+
+# Page for the people who look after the CMS, apart from the personal settings: user management
+# and the CMS configuration
+administration: Správa
 
 # Help menu: button aria-labels and section headings
 show_help_menu: Zobraziť ponuku pomocníka
@@ -383,6 +770,10 @@ viewing_x_asset_folder: |
 # Cloud storage service view announcement
 # {$service} is the cloud storage service name, e.g. Uploadcare
 viewing_x_external_location: Teraz si prezeráte médiá v službe {$service}.
+# Administration page announcements
+viewing_admin_section_list: Teraz si prezeráte zoznam sekcií stránky Správa.
+# {$section} is the section label, e.g. Users
+viewing_x_admin_section: Teraz si prezeráte sekciu „{$section}“ na stránke Správa.
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
@@ -401,6 +792,7 @@ x_of_x_selected: Vybrané {$selected} z {$total}
 
 # View switcher: toggle between list and grid views
 switch_view: Prepnúť zobrazenie
+table_view: Tabuľka
 list_view: Zoznam
 grid_view: Mriežka
 switch_to_list_view: Prepnúť na zoznam
@@ -414,6 +806,16 @@ switch_to_grid_view: Prepnúť na mriežku
 # Sort menu: button labels and options
 sort: Zoradiť
 sorting_options: Možnosti zoradenia
+# Table view column labels for the entry metadata used as `{{…}}` template tags
+table_column_keys:
+  # The folder containing the entry file
+  dirname: Priečinok
+  # The entry file name without the extension
+  filename: Názov súboru
+  # The entry file extension
+  extension: Prípona
+  # The enabled locales of the entry
+  locales: Jazyky
 # Sort key option labels
 sort_keys:
   # No sorting; entries appear in their natural repository order
@@ -523,6 +925,7 @@ readonly_collection: Táto kolekcia je iba na čítanie. Jej obsah si môžete p
 readonly_entry: Táto položka je iba na čítanie. Môžete si ju prezerať, ale nemôžete robiť žiadne zmeny.
 readonly_asset_folder: Tento priečinok je iba na čítanie. Jeho médiá si môžete prezerať, ale nemôžete robiť žiadne zmeny.
 readonly_branch: Nemáte oprávnenie odosielať zmeny do vetvy „{$branch}“. Tento obsah si môžete prezerať, ale nemôžete robiť žiadne zmeny.
+readonly_role: Máte prístup iba na prezeranie. Obsah a médiá si môžete prezerať, ale nemôžete robiť žiadne zmeny.
 readonly_reference: Položka je iba na čítanie, preto odkaz nemožno odobrať.
 # {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
 cannot_rename_referenced_entry: 'Túto položku nemožno premenovať, pretože by bolo potrebné upraviť odkazy na ňu v týchto položkách, ktoré sa nedajú upravovať: {$entries}.'
@@ -609,6 +1012,8 @@ new_folder_description: Nový priečinok sa vytvorí v priečinku „{$folder}�
 new_folder_error:
   empty: Názov priečinka nemôže byť prázdny.
   invalid: Názov priečinka nemôže obsahovať lomky ani začínať bodkou.
+  # A name the CMS itself is usually served from, e.g. `admin` or `cms`
+  reserved: Súbory v priečinku s týmto názvom sú iba na čítanie, pretože sa z neho zvyčajne poskytuje samotné CMS.
   duplicate: Priečinok alebo súbor s týmto názvom tu už existuje.
 # Progress and error messages while the folder is being created
 creating_folder: Vytvára sa priečinok…
@@ -642,6 +1047,9 @@ renaming_folder: Premenúva sa priečinok…
 renaming_folder_failed: Priečinok sa nepodarilo premenovať.
 deleting_folder: Odstraňuje sa priečinok…
 deleting_folder_failed: Priečinok sa nepodarilo odstrániť.
+# Asset Library and asset picker: notice shown when a cloud storage service holds more files than
+# are listed at once
+external_assets_truncated: V službe je príliš veľa súborov na to, aby sa dali zobraziť všetky, preto niektoré z nich nie sú uvedené.
 
 # Edit options menu: button and item labels
 edit_options: Možnosti úprav
@@ -655,6 +1063,49 @@ edit_x: Upraviť {$name}
 
 # Asset text editor: switch for line wrapping
 wrap_long_lines: Zalamovať dlhé riadky
+
+# Move assets: dialog for moving assets to another folder in the repository
+move: Presunúť
+move_asset: Presunúť médium
+# Dialog title. {$name} is the asset name when a single asset is moved, and {$count} is the number of
+# assets being moved
+move_assets_title: |
+  .input {$count :integer}
+  .match $count
+    one {{ Presunúť {$name} }}
+    few {{ Presunúť {$count} médiá }}
+    *   {{ Presunúť {$count} médií }}
+# Dialog body text. {$count} is the number of entries that currently use the assets
+select_asset_move_destination: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Vyberte priečinok, do ktorého sa má presunúť. }}
+    one {{ Vyberte priečinok, do ktorého sa má presunúť. Aktualizuje sa aj položka, ktorá médiá používa. }}
+    few {{ Vyberte priečinok, do ktorého sa má presunúť. Aktualizujú sa aj {$count} položky, ktoré médiá používajú. }}
+    *   {{ Vyberte priečinok, do ktorého sa má presunúť. Aktualizuje sa aj {$count} položiek, ktoré médiá používajú. }}
+# Accessible label of the folder tree in the Move dialog
+asset_move_destination: Cieľový priečinok
+# Shown when the assets being moved are all in the selected folder already
+assets_already_in_folder: |
+  .input {$count :integer}
+  .match $count
+    one {{ Médium sa už nachádza v tomto priečinku. }}
+    *   {{ Médiá sa už nachádzajú v tomto priečinku. }}
+# Shown when files with the same names exist in the selected folder. {$names} is a comma-separated
+# list of file names
+asset_move_conflict: 'V tomto priečinku už existujú tieto súbory: {$names}.'
+moving_assets: Presúvajú sa médiá…
+moving_assets_failed: Médiá sa nepodarilo presunúť.
+# Warning shown when files have been moved off a cloud storage service, but the originals couldn’t
+# be deleted from it
+asset_move_cleanup_failed: Súbory boli presunuté, ale originály sa nepodarilo odstrániť z úložiska.
+# Shown when files on a cloud storage service can’t be renamed or moved, because the entries using
+# them can’t be updated, e.g. for an Open Authoring contributor. {$count} is the number of files
+cannot_change_used_external_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Tento súbor nemožno premenovať ani presunúť, pretože položky, ktoré ho používajú, nemožno aktualizovať. }}
+    *   {{ Tieto súbory nemožno premenovať ani presunúť, pretože položky, ktoré ich používajú, nemožno aktualizovať. }}
 
 # Rename asset: dialog and validation
 rename_asset: Premenovať médium
@@ -674,6 +1125,15 @@ enter_new_name_for_asset_error:
   empty: Názov súboru nemôže byť prázdny.
   character: Názov súboru nemôže obsahovať špeciálne znaky.
   duplicate: Tento názov súboru už používa iné médium.
+  # A name starting with a dot hides the file, which the CMS wouldn’t list any more
+  leading_dot: Názov súboru nemôže začínať bodkou.
+  # The name of a file next to the asset that isn’t an asset, like an entry file
+  file_duplicate: Iný súbor s týmto názvom tu už existuje.
+  # The name of a folder next to the file
+  folder_duplicate: Priečinok s týmto názvom tu už existuje.
+# Shown while renaming a file whose name will be changed on saving, e.g. by the `slugify_filename`
+# media library option
+file_will_be_saved_as: Súbor sa uloží ako „{$name}“.
 # Confirmation dialog shown when the file extension is changed while renaming an asset
 change_file_extension: Zmeniť príponu súboru
 # {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
@@ -799,6 +1259,13 @@ cannot_delete_referenced_assets: |
   .match $count
     one {{ Toto médium nie je možné odstrániť, pretože nasledujúce polia v položkách, ktoré ho používajú, by bez neho už neboli platné. Najprv tieto položky upravte. }}
     *   {{ Tieto médiá nie je možné odstrániť, pretože nasledujúce polia v položkách, ktoré ich používajú, by bez nich už neboli platné. Najprv tieto položky upravte. }}
+# Error shown in the asset deletion dialog when the entries using the assets couldn’t be looked up,
+# so the deletion can’t go ahead. {$count} is the number of assets being deleted
+checking_asset_references_failed: |
+  .input {$count :integer}
+  .match $count
+    one {{ Nepodarilo sa zistiť, ktoré položky používajú toto médium. Zavrite toto dialógové okno a skúste to znova. }}
+    *   {{ Nepodarilo sa zistiť, ktoré položky používajú tieto médiá. Zavrite toto dialógové okno a skúste to znova. }}
 
 # Delete entries: dialog titles and confirmation messages
 # {$count} is the number of entries targeted by the action
@@ -866,6 +1333,41 @@ cancel_reordering_entries: Zrušiť zmenu poradia
 saving_reorder_failed: Nové poradie položiek sa nepodarilo uložiť. Skúste to znova.
 
 # ==============================================================================
+# Bulk Entry Editing
+# ==============================================================================
+# Strings for editing the fields of many entries at once in a table.
+
+# Bulk edit mode: toggle buttons
+bulk_edit_entries: Hromadne upraviť položky
+save_bulk_edits: Uložiť hromadné úpravy
+cancel_bulk_edits: Zrušiť hromadné úpravy
+
+# Bulk edit table: column header of the entry titles
+bulk_edit_entry: Položka
+
+# Bulk edit table: label of the table
+bulk_edit_table: Hromadný editor
+
+# Bulk edit table: label of a cell input; {$field} is the field label, {$entry} is the entry title
+bulk_edit_cell: '{$field} – {$entry}'
+
+# Bulk edit status: number of changed fields
+bulk_edit_count: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Žiadne zmeny }}
+    one {{ 1 zmena }}
+    few {{ {$count} zmeny }}
+    *   {{ {$count} zmien }}
+
+# Bulk edit error messages
+bulk_edit_invalid: Niektoré hodnoty nie sú platné. Opravte zvýraznené polia a skúste to znova.
+saving_bulk_edits_failed: Zmeny sa nepodarilo uložiť. Skúste to znova.
+
+# Bulk edit: confirmation shown when leaving the mode with unsaved changes
+discard_bulk_edits_confirm: Zahodiť zmeny vykonané v položkách?
+
+# ==============================================================================
 # File Upload and Processing
 # ==============================================================================
 # Strings for file upload dialogs, progress indicators, and validation.
@@ -914,6 +1416,20 @@ warning_invalid_files: |
   .match $count
     one {{ Tento súbor nie je možné nahrať, pretože je poškodený alebo jeho obsah nezodpovedá jeho prípone. Často sa to stáva, keď sa fotografia namiesto konverzie len premenuje, napríklad obrázok HEIC uložený ako súbor JPEG. Skonvertujte súbor a skúste to znova. }}
     *   {{ Tieto súbory nie je možné nahrať, pretože sú poškodené alebo ich obsah nezodpovedá ich príponám. Často sa to stáva, keď sa fotografie namiesto konverzie len premenujú, napríklad obrázky HEIC uložené ako súbory JPEG. Skonvertujte súbory a skúste to znova. }}
+# {$count} is the number of files that are not of a type the field accepts, even once transformed
+# {$types} is the list of accepted file types, such as “.pdf or .txt”
+warning_unsupported_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Tento súbor nie je možné nahrať, pretože nie je žiadneho z týchto typov: {$types}. }}
+    *   {{ Tieto súbory nie je možné nahrať, pretože nie sú žiadneho z týchto typov: {$types}. }}
+# {$count} is the number of files that are not of an image type the field accepts
+# {$types} is the list of accepted image formats, such as “PNG or WebP”
+warning_unsupported_image_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Tento súbor nie je možné nahrať, pretože sa prijímajú iba obrázky týchto typov: {$types}. }}
+    *   {{ Tieto súbory nie je možné nahrať, pretože sa prijímajú iba obrázky týchto typov: {$types}. }}
 
 # File format validation when replacing an asset
 # Warning section for replacement files that are in a different format
@@ -951,6 +1467,8 @@ uploading_files_failed: Nahrávanie zlyhalo.
 # Errors shown when a file on a cloud storage service could not be deleted or renamed
 deleting_assets_failed: Odstránenie zlyhalo.
 renaming_asset_failed: Premenovanie zlyhalo.
+# Error shown when an edited text file in the Asset Library could not be saved
+saving_asset_failed: Uloženie zlyhalo.
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
@@ -1134,6 +1652,9 @@ edit_singleton_announcement: Teraz upravujete súbor „{$file}“.
 # Shown when CI skip is enabled/disabled
 save_and_publish: Uložiť a publikovať
 save_without_publishing: Uložiť bez publikovania
+# Shown disabled in place of `save_and_publish` while entries created or edited from a Relation
+# field are in a collection whose review can’t be skipped with the `direct_publish` option
+save_and_publish_needs_review: Uložiť a publikovať (súvisiace položky vyžadujú kontrolu)
 
 # Editor options menu
 show_editor_options: Zobraziť možnosti editora
@@ -1214,6 +1735,9 @@ deploy_preview:
   view: Zobraziť náhľad
   # Shown while the site is still being built, with or without a URL to open yet
   building: Náhľad sa ešte pripravuje.
+  # Shown when the build failed, so no preview is available. The failure may lie in the site’s own
+  # code rather than the entry, so the editor is told not to assume it’s theirs, and who to ask
+  build_failed: Náhľad sa nepodarilo pripraviť. Nemusí to byť spôsobené vašimi zmenami. Ak problém pretrváva, obráťte sa na správcu webu.
   # Shown briefly while the CI/CD provider is being queried
   checking: Hľadá sa náhľad…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
@@ -1268,6 +1792,8 @@ edit_slug_error:
   empty: Slug nemôže byť prázdny.
   invalid: Slug nesmie obsahovať špeciálne znaky vrátane lomiek a medzier.
   duplicate: Tento slug už používa iná položka.
+# {$slug} is the slug filled from the slug template, which a number is added to when another entry uses it
+slug_numbered: Slug „{$slug}“ už používa iná položka, preto sa k nemu pridá číslo.
 
 # Entry path editing for nested entries
 # Heading for the parent folder picker shown when the `meta.path` option is enabled
@@ -1389,6 +1915,13 @@ validation:
     email: Zadajte platnú e-mailovú adresu.
     url: Zadajte platnú URL.
 
+  # Value used for the same field in another entry of the collection
+  value_not_unique: Túto hodnotu už používa iná položka.
+  # Key of a keyed List field item used for another item of the same list
+  key_not_unique: Tento kľúč už používa iná položka zoznamu.
+  # Key of a keyed List field item that is a whole number, which doesn’t keep its order in a map
+  key_numeric: Kľúč nemôže byť celé číslo, pretože položky by stratili svoje poradie.
+
   # Custom field validation error
   invalid_value: Neplatná hodnota.
   unexpected_error: Vyskytla sa neočakávaná chyba.
@@ -1426,6 +1959,16 @@ entry_sidebar:
   backlinks:
     title: Spätné odkazy
     no_entries: Na túto položku neodkazujú žiadne položky.
+
+  # Tab label of a panel with a count, e.g. of comments. {$title} is the panel title
+  title_with_count: '{$title} ({$count})'
+
+# Status shown next to the Save button while an entry with many new files is being saved
+# {$done} and {$total} are the number of files prepared and to prepare, or the number of commits
+# made and the estimated number of commits in all
+save_progress:
+  preparing: 'Pripravujú sa súbory: {$done} z {$total}'
+  committing: 'Ukladá sa na GitHub: {$done} z približne {$total} commitov'
 
 # Entry save error dialog
 saving_entry:
@@ -1539,12 +2082,27 @@ map_lat_lng: Mapa zobrazujúca zemepisnú šírku {$latitude}, zemepisnú dĺžk
 remove_this_item: Odobrať túto položku
 move_up: Posunúť nahor
 move_down: Posunúť nadol
+# Menu of a list item or file with the extra reorder actions, shown in a list of 3 or more items
+reorder_options: Možnosti zmeny poradia
+move_to_top: Presunúť na začiatok
+move_to_bottom: Presunúť na koniec
+# Opens a dialog asking for the position to move a list item to
+move_to: Presunúť na…
+# Dialog asking for the new position of an item. {$count} is the number of items in the list
+move_to_description: Zadajte pozíciu od 1 do {$count}.
+move_to_position: Pozícia
 # aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
 # or moved with the arrow keys while the handle has focus
 reorder_item: Zmeniť poradie položky
 # aria-label for the text input holding one item of a simple List field, which has no subfield to
 # take a label from
 list_item_value: Hodnota položky
+# aria-label for each item of a List field, giving its position in the list
+# {$position} is the 1-based position of the item, {$count} is the number of items
+list_item_position: Položka {$position} z {$count}
+# Message shown in place of a removed List field item or Object field, next to a Restore button
+# that puts it back
+item_removed: Položka bola odobraná.
 
 # Add item button label, also used by the Relation field to create a new entry in the referenced
 # collection, with the collection’s singular label
@@ -1557,6 +2115,32 @@ add_x: Pridať {$name}
 list_item_options: Možnosti položky zoznamu
 add_item_above: Pridať položku nad
 add_item_below: Pridať položku pod
+paste_item_above: Vložiť položku nad
+paste_item_below: Vložiť položku pod
+paste_item_to_replace: Vložiť a nahradiť
+
+# List item clipboard
+# Button in the list toolbar to paste a copied item, from any list in any entry, at the end of the
+# list, or at the start with the `add_to_top` option
+paste_item: Vložiť položku
+list_item_copied: Položka bola skopírovaná.
+# ⋮ stands for the icon of the item menu button; keep it, along with the button’s aria-label
+no_list_item_to_paste: Nie je skopírovaná žiadna položka na vloženie. Ak ju chcete skopírovať, otvorte ponuku ⋮ (Možnosti položky zoznamu) danej položky a vyberte Kopírovať.
+list_item_not_compatible: Skopírovaná položka sa do tohto zoznamu nehodí.
+# {$count} is the number of the values left out, as the list doesn’t have the fields
+list_item_pasted_without_values: |
+  .input {$count :integer}
+  .match $count
+    one {{ Položka bola vložená. Hodnota, ktorú tento zoznam neprijíma, bola vynechaná. }}
+    few {{ Položka bola vložená. {$count} hodnoty, ktoré tento zoznam neprijíma, boli vynechané. }}
+    *   {{ Položka bola vložená. {$count} hodnôt, ktoré tento zoznam neprijíma, bolo vynechaných. }}
+# {$count} is the number of the files the pasted item references that couldn’t be found
+list_item_pasted_without_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Položka bola vložená, ale súbor, ktorý používa, sa nenašiel. Skontrolujte polia súborov v položke. }}
+    few {{ Položka bola vložená, ale {$count} súbory, ktoré používa, sa nenašli. Skontrolujte polia súborov v položke. }}
+    *   {{ Položka bola vložená, ale {$count} súborov, ktoré používa, sa nenašlo. Skontrolujte polia súborov v položke. }}
 
 # Variable-type list selector
 select_list_type: Vybrať typ zoznamu
@@ -1575,12 +2159,37 @@ opacity: Viditeľnosť
 # Select field: empty option placeholder
 unselected_option: (Žiadne)
 
-# Relation field: creating a referenced entry without leaving the editor
+# Relation field: creating or editing a referenced entry without leaving the editor
 relation_field:
   # Note shown in the dialog. {$name} is the singular label of the referenced collection
   save_together_hint: Nová položka „{$name}“ sa uloží spolu s položkou, ktorú upravujete.
   # Error shown when the entry couldn’t be prepared. {$name} is the singular label of the collection
   add_failed: Položku „{$name}“ sa nepodarilo pridať. Podrobnosti nájdete v konzole prehliadača.
+  # Title of the dialog to edit an entry selected in the field. {$name} is the singular label of the
+  # referenced collection
+  edit_entry_title: 'Úprava: {$name}'
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  edit_together_hint: Vaše zmeny v položke „{$name}“ sa uložia spolu s položkou, ktorú upravujete.
+  # Error shown when the changes couldn’t be prepared. {$name} is the singular label of the collection
+  edit_failed: Zmeny v položke „{$name}“ sa nepodarilo použiť. Podrobnosti nájdete v konzole prehliadača.
+  # Error shown when the changes would move the entry to another file path, e.g. through a path
+  # template using a field. {$name} is the singular label of the collection
+  move_unsupported: Tieto zmeny by presunuli položku „{$name}“ na iné miesto, čo je možné iba pri jej samostatnej úprave.
+  # Error shown when saving, if someone else has changed an entry edited from the field since. {$name}
+  # is the summary of that entry
+  edit_conflict: Položku „{$name}“ zmenil niekto iný potom, ako ste ju upravili. Otvorte ju znova z poľa a porovnajte svoje zmeny s najnovšou verziou.
+  # Error shown when saving, if someone else has deleted an entry edited from the field since.
+  # {$name} is the summary of that entry
+  edit_deleted: Položku „{$name}“ odstránil niekto iný potom, ako ste ju upravili. Ak chcete položku uložiť, odoberte ju z poľa.
+  # Accessible label of the menu listing the selected entries that can be edited
+  select_entry_to_edit: Vyberte položku na úpravu
+  # Warning shown in the editor of an entry that has been edited from a Relation field of another
+  # entry, while the changes wait in that entry’s pull request. {$name} is the summary of that
+  # entry
+  edited_with_entry: Zmeny v tejto položke čakajú na publikovanie spolu s položkou „{$name}“. Ak ju teraz uložíte, obe sady zmien sa pri publikovaní tamtej položky spoja, čo môže zlyhať, ak sa prekrývajú.
+  # Warning shown in the dialog when an entry edited from the field has been changed by someone else
+  # since. {$name} is the singular label of the collection
+  changed_since_edit: Túto položku („{$name}“) zmenil niekto iný potom, ako ste ju upravili. Vaše zmeny sa zobrazujú nad najnovšou verziou. Pred aktualizáciou ich skontrolujte.
 
 # Select Assets dialog
 assets_dialog:
@@ -1607,6 +2216,8 @@ assets_dialog:
       few {{ Vybrané {$count} priečinky }}
       *   {{ Vybraných {$count} priečinkov }}
   no_subfolders: Tento priečinok nemá žiadne podpriečinky.
+  # Shown for a cloud storage service whose `prefix` option depends on fields of the entry
+  prefix_unresolved: Ak chcete prehľadávať a nahrávať súbory na tomto mieste, vyplňte polia, od ktorých závisí.
 
   # Asset folder options
   folder:
@@ -1647,6 +2258,9 @@ assets_dialog:
   photo_credit:
     title: Autor fotografie
     description: 'Ak je to možné, uveďte nasledujúci údaj o autorovi:'
+    # {$field} is the label of the Markdown field the credit is added to
+    insert_to_field: Vložiť do poľa {$field}
+    copy_as_markdown: Kopírovať ako Markdown
 
   # Unsaved asset badge
   unsaved: Neuložené
@@ -1692,6 +2306,7 @@ editor_components:
   alt: Alternatívny text
   title: Názov
   link: Odkaz
+  caption: Popis
 
 # Key-Value field: column headers and validation
 key_value:
@@ -1756,6 +2371,12 @@ cloud_storage:
   uploadcare:
     auth_key_label: API Secret Key
 
+  azure_blob_storage:
+    auth_key_label: Token SAS
+
+  backblaze_b2:
+    auth_key_label: Aplikačný kľúč
+
   bunny_storage:
     auth_key_label: Storage Zone Password
 
@@ -1812,26 +2433,42 @@ config:
     unsupported_backend_suggestion: Namiesto toho použite jeden z <a>podporovaných backendov</a>.
     missing_repository: Repozitár nie je definovaný.
     invalid_repository: Nakonfigurovaný repozitár je neplatný. Musí byť vo formáte „vlastník/repozitár“.
+    # Don’t localize `api_root`
+    missing_api_root: Možnosť `api_root` nie je definovaná. Pre backend Forgejo je povinná.
+    invalid_root_dir: Koreňový priečinok je neplatný. Musí to byť cesta v rámci repozitára bez „..“.
+    invalid_root_dir_branch: Koreňový priečinok nemožno použiť v názvoch vetiev režimov publikovania `editorial_workflow` a `preview`. Žiadna časť jeho cesty nesmie začínať bodkou, končiť na „.lock“ ani obsahovať medzeru alebo špeciálny znak, napríklad dvojbodku či hviezdičku.
+    path_outside_root_dir: Cesta „{$path}“ vedie mimo koreňového priečinka, kde CMS nemôže zobraziť súbory.
     oauth_implicit_flow: Nakonfigurovaná metóda overenia (implicit flow) nie je vo Sveltia CMS podporovaná. Namiesto nej použite inú <a>metódu overenia</a>.
     github_pkce_unsupported: Autorizácia PKCE zatiaľ nie je podporovaná kvôli obmedzeniam GitHubu. Namiesto nej použite inú <a>metódu overenia</a>.
+    additions_no_base_url: Možnosť `base_url` musí byť URL vašej služby Sveltia CMS Additions.
     oauth_no_app_id: ID aplikácie OAuth nie je definované.
     # Don’t localize `open_authoring`, `editorial_workflow` and `preview`
-    open_authoring_no_workflow: Možnosť `open_authoring` vyžaduje režim publikovania `editorial_workflow`. Podrobnosti nájdete v <a>dokumentácii</a>.
+    open_authoring_no_workflow: Možnosť `open_authoring` vyžaduje režim publikovania `editorial_workflow` alebo `preview`. Podrobnosti nájdete v <a>dokumentácii</a>.
     # Don’t localize `auth_methods`
     no_auth_methods: Možnosť `auth_methods` musí obsahovať aspoň jednu metódu.
+    # Don’t localize `auth_scope`, `repo` and `public_repo`
+    auth_scope_no_repo: Možnosť `auth_scope` musí obsahovať `repo` alebo `public_repo`.
     missing_media_folder: Priečinok médií nie je definovaný.
     public_folder_relative_path: Nakonfigurovaný verejný priečinok je neplatný. Musí to byť absolútna cesta začínajúca znakom „/“.
     public_folder_absolute_url: Absolútna URL v možnosti verejného priečinka nie je vo Sveltia CMS podporovaná.
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    unsupported_folder_template_tag: Možnosť `{$option}` obsahuje značku šablóny `{$tag}`, ktorá tam nie je podporovaná. Použiť možno iba značky šablóny slugu, napríklad `\{\{slug\}\}` a `\{\{year\}\}`, a značky `\{\{dirname\}\}`, `\{\{filename\}\}`, `\{\{extension\}\}`, `\{\{media_folder\}\}` a `\{\{public_folder\}\}`.
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    global_folder_template_tag: Možnosť `{$option}` obsahuje značku šablóny `{$tag}`, ktorú možno použiť iba v možnosti kolekcie, súboru kolekcie alebo poľa, kde existuje položka, z ktorej sa dá vyplniť.
     # {$replacement} is the configured replacement string; Don’t localize `sanitize_replacement`
     invalid_sanitize_replacement: Možnosť `sanitize_replacement` je nastavená na `{$replacement}`, ale obsahuje znak, ktorý sa v slugu nedá použiť, takže nemôže slúžiť ako náhrada.
     # {$option} is the option name (`site_url` or `display_url`) and {$url} is the configured value
     invalid_url_option: Možnosť `{$option}` je nastavená na `{$url}`, ale musí to byť absolútna URL začínajúca na `https://` alebo `http://`.
+    # Don’t localize `publish_mode`, `stages`, `draft`, `pending_review` and `pending_publish`
+    invalid_publish_mode_stages: Možnosť `stages` v `publish_mode` musí začínať na `draft` a uvádzať fázy v poradí `draft`, `pending_review`, `pending_publish` bez opakovania.
     # Don’t localize `i18n` and `locales`
     i18n_no_locales: Možnosť `i18n.locales` musí obsahovať aspoň jeden jazyk.
     # {$locale} is the locale code from the configuration; Don’t localize `default_locale` and `locales`
     i18n_invalid_default_locale: Možnosť `default_locale` je nastavená na `{$locale}`, ale tento jazyk nie je medzi `locales`.
     # {$locale} is the locale code from the configuration; Don’t localize `initial_locales` and `locales`
     i18n_invalid_initial_locale: Možnosť `initial_locales` obsahuje `{$locale}`, ale tento jazyk nie je medzi `locales`.
+    # Don’t localize `i18n`
+    i18n_no_collections: 'Možnosť `i18n` je nakonfigurovaná na najvyššej úrovni, ale žiadna z kolekcií ani samostatných položiek nemá možnosť `i18n`, takže nemožno prekladať žiadny obsah. Pridajte `i18n: true` do kolekcií a samostatných položiek, ktoré chcete prekladať.'
     # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
     invalid_transformation_key: Možnosť `transformations` obsahuje nepodporovaný kľúč `{$key}`. Musí to byť `raster_image`, `svg` alebo podporovaný formát rastrového obrázka.
     # {$key} is the transformation key; Don’t localize `quality`
@@ -1850,13 +2487,15 @@ config:
     invalid_collection_multiple_options: Kolekcia nemôže mať viac ako jednu z možností `folder`, `file`, `files` a `divider`.
     # {$extension} is the file extension and {$format} is the configured content format
     file_format_mismatch: Prípona `{$extension}` nezodpovedá formátu `{$format}`.
+    # {$name} is the field name from the configuration and {$widget} is its field type
+    front_matter_body_field_not_text: Pole `{$name}` sa ukladá ako telo pod front matter, ktoré môže obsahovať iba text, nie číslo, logickú hodnotu, zoznam ani objekt, ako to robí pole `{$widget}`. Použite typ poľa, ktorý obsahuje text, alebo pole premenujte.
     # {$file} is the file path from the configuration; Don’t localize `file` and `locale`. The curly
     # brackets are escaped with backslashes for MessageFormat 2
     invalid_collection_data_file: Možnosť `file` s hodnotou `{$file}` je neplatná. Musí to byť cesta k súboru JSON bez parametra `\{\{locale\}\}`.
     # {$prop} is the option name; Don’t localize `file`
     unsupported_collection_data_file_option: Možnosť `{$prop}` nie je podporovaná v kolekcii s možnosťou `file`.
     # Don’t localize `file`, `publish_mode` and `simple`
-    collection_data_file_workflow: Schvaľovací proces vrátane Open Authoring nie je podporovaný v kolekcii s možnosťou `file`. Nastavte možnosť `publish_mode` kolekcie na `simple`.
+    collection_data_file_workflow: Schvaľovací proces a náhľadový proces vrátane Open Authoring nie sú podporované v kolekcii s možnosťou `file`. Nastavte možnosť `publish_mode` kolekcie na `simple`.
     # {$prop} is the option name; Don’t localize `file` and `slug`. The curly brackets are escaped
     # with backslashes for MessageFormat 2
     collection_data_file_slug_tag: Možnosť `{$prop}` nemôže v kolekcii s možnosťou `file` obsahovať parameter `\{\{slug\}\}`, pretože slug položky je jej poradie, ktoré sa mení pri zmene poradia alebo odstránení položiek. Namiesto toho použite pole s unikátnou hodnotou.
@@ -1872,12 +2511,22 @@ config:
     option_field_not_found: Možnosť `{$option}` odkazuje na `{$name}`, ale žiadne také pole nie je definované.
     # {$name} is the field name from the configuration and {$widget} is its field type; Don’t localize `thumbnail`
     thumbnail_field_not_media: Možnosť `thumbnail` odkazuje na `{$name}`, ale musí to byť pole typu Image alebo File, nie pole typu `{$widget}`.
+    # Don’t localize `inline` or `multiple`
+    invalid_inline_component_fields: Režim `inline` vyžaduje jedno pole typu Boolean, Color, DateTime, Number, Relation, Select alebo String. Pole Relation alebo Select nemôže mať zapnutú možnosť `multiple`.
     # {$option} is an option name such as `pattern` or `filter` and {$pattern} is the configured pattern
     invalid_regex: Možnosť `{$option}` obsahuje neplatný regulárny výraz `{$pattern}`, ktorý sa ignoruje.
     # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
     invalid_reorder_group: Možnosť `reorder` odkazuje na skupinu zobrazenia s názvom `{$name}`, ale v možnosti `view_groups` nie je definovaná žiadna taká skupina.
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit` and `fields`
+    invalid_bulk_edit_field: Zoznam `fields` v možnosti `bulk_edit` odkazuje na pole s názvom `{$name}`, ale v kolekcii nie je definované žiadne také pole najvyššej úrovne.
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit`, `fields` and `multiple`
+    unsupported_bulk_edit_field: Pole `{$name}` v zozname `fields` možnosti `bulk_edit` nemožno upravovať hromadne. Podporované je iba pole typu Boolean, Color, DateTime, Number, Relation, Select alebo String, ktoré nie je iba na čítanie, nemá zapnutú možnosť `multiple` a nenastavuje sa automaticky pri uložení.
     # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
     invalid_sortable_field: Možnosť `sortable_fields` odkazuje na pole s názvom `{$name}`, ale v kolekcii nie je definované žiadne také pole.
+    # Don’t localize `sortable_fields` and `default_sort`
+    multiple_sortable_field_defaults: Možnosť `default_sort` môže mať iba jedna položka v možnosti `sortable_fields`.
+    # {$option} is `table_columns` or `summary_fields`, and {$name} is the field name from the configuration
+    invalid_table_column_field: Možnosť `{$option}` odkazuje na pole s názvom `{$name}`, ale v kolekcii nie je definované žiadne také pole.
     # {$name} is the field name from the configuration; Don’t localize `view_groups`
     invalid_view_group_field: Možnosť `view_groups` odkazuje na pole s názvom `{$name}`, ale v kolekcii nie je definované žiadne také pole.
     # {$name} is the field name from the configuration; Don’t localize `view_filters`
@@ -1919,6 +2568,12 @@ config:
     invalid_collection_folder_locale: Cesta `folder` s hodnotou `{$folder}` je neplatná. Zástupný symbol `locale` sa musí použiť iba raz ako celý názov priečinka, napríklad `content/\{\{locale\}\}/posts`.
     # Don’t localize `i18n`, `locale` and `file`
     collection_file_i18n_required: Súbor kolekcie musí mať definovanú možnosť `i18n`, ak sa v ceste `file` používa parameter `locale`.
+    # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
+    collection_i18n_no_fields: 'Kolekcia má možnosť `i18n`, ale žiadne z jej polí nemá možnosť `i18n`, takže nemožno prekladať žiadne pole. Pridajte `i18n: true` alebo `i18n: duplicate` do polí, ktoré chcete prekladať.'
+    # Don’t localize `i18n` and `i18n: true`
+    collection_i18n_no_files: 'Kolekcia má možnosť `i18n`, ale žiadny z jej súborov nemá možnosť `i18n`, takže nemožno prekladať žiadny súbor. Pridajte `i18n: true` do súborov, ktoré chcete prekladať.'
+    # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
+    collection_file_i18n_no_fields: 'Súbor kolekcie má možnosť `i18n`, ale žiadne z jeho polí nemá možnosť `i18n`, takže nemožno prekladať žiadne pole. Pridajte `i18n: true` alebo `i18n: duplicate` do polí, ktoré chcete prekladať.'
     # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
     missing_field_name: Pole {$count} musí mať možnosť `name` definovanú ako neprázdny reťazec.
     # {$name} is the invalid or duplicate field name
@@ -1930,6 +2585,8 @@ config:
     invalid_variable_type: Názov typu premennej `{$name}` je neplatný. Nesmie obsahovať špeciálne znaky.
     duplicate_variable_type: Názvy typov premenných musia byť unikátne, ale `{$name}` sa používa viackrát.
     date_field_type: 'Zastaraný typ poľa Date nie je vo Sveltia CMS podporovaný. Namiesto neho použite typ poľa DateTime s možnosťou `type: date`.'
+    # curly brackets in the placeholder are escaped with backslashes for MessageFormat 2
+    hidden_field_locale_without_i18n: Možnosť `default` poľa Hidden používa zástupný symbol `\{\{locale\}\}`, ale pre kolekciu nie je zapnutá internacionalizácia (i18n), takže obsah nemá jazyk, ktorým by sa dal vyplniť.
     # {$timeZone} is the invalid IANA timezone identifier from the configuration
     invalid_timezone: 'Neplatné časové pásmo: {$timeZone}. Musí to byť platný identifikátor časového pásma IANA, napríklad `America/New_York` alebo `Asia/Tokyo`.'
     # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
@@ -1964,6 +2621,24 @@ config:
     list_field_default_missing_type: Možnosť `default` poľa List obsahuje položku bez vlastnosti `{$typeKey}`, ktorá určuje jeden z typov v `types`.
     # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default item; Don’t localize `default` and `types`
     list_field_invalid_default_type: Možnosť `default` poľa List obsahuje položku, ktorej vlastnosť `{$typeKey}` má hodnotu `{$value}`, ale tá nie je medzi `types`.
+    # Don’t localize `map_key_field`, `fields` and `types`
+    list_field_map_key_no_subfields: Možnosť `map_key_field` poľa List vyžaduje možnosť `fields` alebo `types`, pretože každý kľúč sa berie z podpoľa.
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_not_found: Možnosť `map_key_field` poľa List odkazuje na `{$name}`, ale žiadne podpole nemá taký názov.
+    # {$name} is the subfield name, and {$type} is the variable type name; Don’t localize `map_key_field`
+    list_field_map_key_missing_in_type: Možnosť `map_key_field` poľa List odkazuje na `{$name}`, ale typ `{$type}` nemá žiadne podpole s týmto názvom.
+    # {$name} is the subfield name, and {$widget} is its field type; Don’t localize `map_key_field`
+    list_field_map_key_invalid_type: Možnosť `map_key_field` poľa List odkazuje na `{$name}`, ale musí to byť pole String, Relation alebo Select, nie pole `{$widget}`.
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `multiple`
+    list_field_map_key_multiple: Možnosť `map_key_field` poľa List odkazuje na `{$name}`, ale podpole nemôže prijímať viac hodnôt, pretože každá položka potrebuje jeden kľúč. Odstráňte jeho možnosť `multiple`.
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_option_not_string: Možnosť `map_key_field` poľa List odkazuje na `{$name}`, ale možnosti podpoľa musia mať reťazcové hodnoty, pretože každý kľúč sa ukladá ako reťazec.
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `required`
+    list_field_map_key_not_required: Možnosť `map_key_field` poľa List odkazuje na `{$name}`, ale podpole nemôže byť voliteľné, pretože každá položka potrebuje kľúč. Odstráňte jeho možnosť `required`.
+    # {$name} is the subfield name; Don’t localize `map_key_field`, `i18n: false` and `i18n: duplicate`
+    list_field_map_key_not_localized: 'Možnosť `map_key_field` poľa List odkazuje na `{$name}`, ale podpole nemôže mať `i18n: false`, pretože položky potrebujú kľúč v každom jazyku. Použite `i18n: duplicate` alebo túto možnosť odstráňte.'
+    # Don’t localize `i18n`, `duplicate_if_empty`, `multiple` and `true`
+    duplicate_if_empty_multiple: 'Možnosť `i18n: duplicate_if_empty` nie je podporovaná pre pole s možnosťou `multiple`, takže pole funguje ako pole s `i18n: true`.'
     # Don’t localize `default` and `multiple`
     invalid_default_multiple: Možnosť `default` musí byť pole hodnôt, pretože možnosť `multiple` má hodnotu `true`.
     invalid_default_single: Možnosť `default` musí byť jedna hodnota, nie pole hodnôt, pretože možnosť `multiple` nemá hodnotu `true`.
@@ -1977,6 +2652,10 @@ config:
     code_field_invalid_default_object: Možnosť `default` poľa Code musí byť reťazec, pretože možnosť `output_code_only` má hodnotu `true`.
     # {$key} is a property name of the default object, {$code} and {$lang} are the configured property names; Don’t localize `default` and `keys`
     code_field_invalid_default_key: Možnosť `default` poľa Code má vlastnosť `{$key}`, ale možnosť `keys` povoľuje iba `{$code}` a `{$lang}`.
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_invalid_expression: Možnosť `value` poľa Compute musí byť platný aritmetický výraz, napríklad `\{\{fields.price\}\} * \{\{fields.quantity\}\}`, pretože možnosť `value_type` má hodnotu `{$valueType}`.
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_uuid_in_expression: Možnosť `value` poľa Compute nemôže používať značku UUID, napríklad `\{\{uuid\}\}`, pretože možnosť `value_type` má hodnotu `{$valueType}`, takže ide o aritmetický výraz.
     # {$value} is the default value and {$valueType} is the configured value type; Don’t localize `default` and `value_type`
     number_field_default_not_integer: Možnosť `default` poľa Number je nastavená na `{$value}`, ale musí to byť celé číslo, pretože možnosť `value_type` má hodnotu `{$valueType}`.
     number_field_default_not_number: Možnosť `default` poľa Number je nastavená na `{$value}`, ale musí to byť číslo, pretože možnosť `value_type` má hodnotu `{$valueType}`.
@@ -1992,10 +2671,13 @@ config:
     # The curly brackets are escaped with backslashes for MessageFormat 2
     relation_field_array_file_slug: Vzťah ku kolekcii `{$collection}` nemôže ukladať hodnotu `\{\{slug\}\}`, pretože v kolekcii s možnosťou `file` je slug položky jej poradie, ktoré sa mení pri zmene poradia alebo odstránení položiek. Namiesto toho nastavte možnosť `value_field` na pole s unikátnou hodnotou.
     # {$collection} is the referenced collection name; Don’t localize `file`
-    relation_field_array_file_workflow: Kolekcia s možnosťou `file` nemôže mať vzťah ku kolekcii `{$collection}`, ktorá používa schvaľovací proces, pretože odkazy na položku, ktorá sa tam premenuje alebo odstráni, nie je možné v súbore aktualizovať.
+    relation_field_array_file_workflow: Kolekcia s možnosťou `file` nemôže mať vzťah ku kolekcii `{$collection}`, ktorá používa schvaľovací alebo náhľadový proces, pretože odkazy na položku, ktorá sa tam premenuje alebo odstráni, nie je možné v súbore aktualizovať.
     relation_field_invalid_display_field: Odkazované zobrazované pole `{$field}` je neplatné alebo nie je definované.
     relation_field_invalid_search_field: Odkazované pole vyhľadávania `{$field}` je neplatné alebo nie je definované.
     relation_field_invalid_filter_field: Odkazované pole filtra `{$field}` je neplatné alebo nie je definované.
+    relation_field_invalid_sort_field: Odkazované pole na zoradenie `{$field}` je neplatné alebo nie je definované.
+    # Don’t localize `sort_by` and `file`
+    relation_field_sort_by_file_ignored: Možnosť `sort_by` sa nevzťahuje na vzťah k súboru, ktorého možnosti nasledujú poradie položiek zoznamu. Bude ignorovaná.
     unexpected: Neočakávaná chyba
 
     # Schema validation errors, reported when the configuration doesn’t match the published JSON
@@ -2028,10 +2710,30 @@ config:
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: ID aplikácie OAuth nie je definované. Používatelia sa musia prihlásiť pomocou prístupového tokenu.
+    # Don’t localize `prefix`
+    site_library_prefix_template: Možnosť `prefix` knižnice médií obsahuje značky šablóny, ktoré sú podporované iba na úrovni poľa, pretože na najvyššej úrovni neexistuje položka, z ktorej by sa dali vyplniť.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: Možnosť `{$prop}` nie je vo Sveltia CMS podporovaná. Bude ignorovaná.
+    # Don’t localize `stages`, `publish_mode`, `editorial_workflow` and {$type}, which is `preview` or `simple`
+    publish_mode_stages_ignored: Možnosť `stages` v `publish_mode` sa vzťahuje iba na režim publikovania `editorial_workflow`, takže pri `{$type}` sa ignoruje.
+    # Don’t localize `pattern`, `m` and `s`
+    inline_component_multiline_pattern: Možnosť `pattern` tohto vloženého komponentu má príznak `m` alebo `s` alebo zodpovedá zalomeniam riadkov, ale vložený komponent sa vyhľadáva iba v rámci odseku.
+    # {$name} is a button or component name and {$option} is `buttons` or `editor_components`; Don’t localize them and `multiline: false`
+    single_line_block_item: 'Položka `{$name}` možnosti `{$option}` sa ignoruje, pretože pole s `multiline: false` môže obsahovať iba vložený (inline) obsah.'
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: Je nastavená možnosť `picker_utc` aj novšie možnosti časového pásma (`input_timezone` alebo `output_utc`). Prednosť majú nové možnosti. Zvážte odstránenie `picker_utc` z konfigurácie.
+    # Don’t localize `localize_format` and `format`
+    localize_format_without_format: Možnosť `localize_format` nemá žiadny účinok, pretože pole nemá možnosť `format` a jeho hodnota sa ukladá vo formáte ISO 8601.
+    # {$name} is a template tag like `fields.lines.*.price`; Don’t localize `value`, `*` and `sum()`
+    compute_field_wildcard_without_item: Možnosť `value` poľa Compute odkazuje na `{$name}`, ale pole sa nenachádza v položke zoznamu, ktorý zastupuje `*`, takže sa vyhodnotí ako prázdne. Každú položku zoznamu môže použiť iba agregačná funkcia, napríklad `sum()`.
+    # {$name} is a template tag like `fields.lines.*.amount`; Don’t localize `value`
+    compute_field_self_reference: Možnosť `value` poľa Compute odkazuje na samotné pole ako `{$name}`, takže jeho hodnota sa pri každom výpočte mení a nikdy sa neustáli.
+    # {$name} is a template tag like `fields.total`; Don’t localize `value`
+    compute_field_reference_cycle: Možnosť `value` poľa Compute odkazuje na `{$name}`, iné pole Compute, ktoré priamo alebo cez iné polia odkazuje späť na toto pole, takže ich hodnoty sa nikdy neustália.
+    # Don’t localize `localize_format`, `true` and `de`
+    localize_format_without_i18n: Možnosť `localize_format` má hodnotu `true`, ale pre kolekciu nie je zapnutá internacionalizácia (i18n), takže hodnota sa zapíše v angličtine. Namiesto toho nastavte možnosť na kód jazyka, napríklad `de`.
+    # {$locale} is the locale code from the configuration; Don’t localize `localize_format`
+    localize_format_unsupported_locale: Možnosť `localize_format` je nastavená na `{$locale}`, čo nie je podporovaný jazyk, takže hodnota sa zapíše v angličtine.
     # Don’t localize `preview_path`
     preview_path_no_date_field: Možnosť `preview_path` používa parametre dátumu a času, ale kolekcia nemá žiadne pole DateTime, z ktorého by ich bolo možné načítať, takže odkaz na náhľad sa nezobrazí.
     # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
@@ -2042,12 +2744,22 @@ config:
     missing_identifier_field: Kolekcia nemá pole `{$name}`, podľa ktorého by sa pomenovali nové položky, takže každá nová položka dostane náhodný slug. Pridajte pole `{$name}` alebo nastavte možnosť `identifier_field` či `slug`.
     # Don’t localize `slug`, `i18n`, `multiple_files`, `multiple_folders` and `multiple_root_folders`
     slug_i18n_ineffective: Možnosť `i18n` v `slug` nemá žiadny efekt, pretože kolekcia nepoužíva štruktúru i18n `multiple_files`, `multiple_folders` ani `multiple_root_folders`, v ktorej má každý jazyk vlastný súbor.
+    # Don’t localize `slug`, `template` and `auto_increment`
+    slug_template_ignored: Možnosť `template` v `slug` sa ignoruje, pretože slugy namiesto toho čísluje možnosť `auto_increment`.
+    # {$file} is the file path; Don’t localize `file`, `locale`, `i18n`, `false`,
+    # `omit_default_locale_from_file_path` and the example paths. The curly brackets in the examples
+    # are escaped with backslashes for MessageFormat 2
+    locale_not_omitted_from_file_path: Zástupný symbol `locale` nemožno odstrániť z cesty `file` `{$file}`, takže predvolený jazyk v nej zostane napriek možnosti i18n `omit_default_locale_from_file_path`. Ak chcete jazyk vynechať, použite zástupný symbol ako celý názov priečinka, napríklad `\{\{locale\}\}/about.md`, alebo medzi názvom súboru a príponou, napríklad `about.\{\{locale\}\}.md`. Ak ho chcete ponechať, nastavte túto možnosť na `false` v možnosti `i18n` súboru.
     # Don’t localize `i18n`
     i18n_not_configured: Možnosť `i18n` je zapnutá, ale i18n nie je nakonfigurované na najvyššej úrovni konfigurácie ani v kolekcii, takže táto možnosť nemá žiadny efekt.
     # Don’t localize `public_folder` and `media_folder`
     empty_public_folder: Možnosť `public_folder` je prázdny reťazec, preto sa pre cesty k médiám ukladané v položkách použije namiesto nej cesta `media_folder`. Odstráňte túto možnosť alebo ju nastavte na cestu, ktorú chcete použiť, napríklad `/images`.
     # {$option} is an option path from the configuration, such as `filter.Regulation`
     schema_unknown_option: Možnosť `{$option}` nie je definovaná v schéme konfigurácie Sveltia CMS. Bude ignorovaná. Skontrolujte, či nejde o preklep alebo syntaktickú chybu.
+    # Don’t localize `default_localized`, `default` and `i18n`
+    default_localized_without_i18n: Možnosť `default_localized` nemá žiadny účinok, pretože pre kolekciu nie je zapnutá internacionalizácia (i18n). Namiesto nej použite možnosť `default`.
+    # {$locale} is a locale code from the configuration; Don’t localize `default_localized`
+    default_localized_unknown_locale: Možnosť `default_localized` má hodnotu pre `{$locale}`, čo nie je žiadny z jazykov kolekcie, takže hodnota sa nikdy nepoužije.
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'Podrobnosti nájdete v poznámkach o kompatibilite: {$link}'
@@ -2080,6 +2792,11 @@ viewing_editorial_workflow: 'Teraz si prezeráte tabuľu schvaľovacieho procesu
 # Same as above, for an Open Authoring contributor: their board has no Ready column, because only
 # a maintainer can publish
 viewing_open_authoring_workflow: 'Teraz si prezeráte tabuľu schvaľovacieho procesu. Koncepty: {$draft}. Na kontrole: {$review}. Čaká na odstránenie: {$deletion}.'
+# Same as above, when the In Review stage is left out with the `stages` publish mode option
+viewing_editorial_workflow_without_review: 'Teraz si prezeráte tabuľu schvaľovacieho procesu. Koncepty: {$draft}. Pripravené: {$ready}. Čaká na odstránenie: {$deletion}.'
+# Same as above, when all the content uses Preview Workflow, which has no review stages, so the
+# page only lists the drafts
+viewing_preview_workflow: 'Teraz si prezeráte stránku Koncepty. Koncepty: {$draft}. Čaká na odstránenie: {$deletion}.'
 
 # Workflow status names. `drafts` is the plural form used as a column heading,
 # while `draft` is the singular form used in the editor’s status button.
@@ -2140,6 +2857,14 @@ workflow:
   status_updated: Stav bol aktualizovaný.
   # Error notification when the status could not be changed
   status_change_failed: Stav sa nepodarilo zmeniť. Skúste to znova.
+  # Workflow page: toolbar button that reads the pull requests again, to pick up the changes made
+  # by anyone else since the board was loaded, and the toast notifications shown while doing so and
+  # once done
+  refresh: Obnoviť
+  refreshing: Obnovuje sa…
+  refreshed: Tabuľa je aktuálna.
+  # Error notification when the board could not be refreshed
+  refresh_failed: Tabuľu sa nepodarilo obnoviť. Skúste to znova.
   # Error notification when the status can’t be changed because the entry is incomplete. Required
   # fields can be left empty while the entry is a draft, but not once it moves on from there
   status_change_blocked: Položka obsahuje chyby. Pred zmenou stavu ich opravte.
@@ -2150,6 +2875,10 @@ workflow:
   # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
   send_for_review: Odoslať na kontrolu
   confirm_sending_for_review: Vaše zmeny boli uložené ako koncept. Odoslať položku na kontrolu, aby si ju niekto mohol pozrieť a publikovať?
+  # Same as above, when the In Review stage is left out with the `stages` publish mode option, so
+  # the next step is to mark the entry as ready to be published
+  mark_as_ready: Označiť ako pripravené
+  confirm_marking_as_ready: Vaše zmeny boli uložené ako koncept. Označiť položku ako pripravenú, aby ju bolo možné publikovať?
   # Editor toolbar: button shown when the entry is ready to be published
   publish_entry: Publikovať položku
   # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
@@ -2195,6 +2924,23 @@ workflow:
   entry_deleted: Položka bola odstránená.
   # Error notification when publishing fails
   publishing_entry_failed: Položku sa nepodarilo publikovať. Skúste to znova.
+  # Error notification when an entry can’t be published from the CMS, because its request also
+  # changes files that aren’t part of the entry and that the CMS doesn’t show, goes somewhere other
+  # than the site’s branch, or is too large to check. Keep the wording free of Git jargon
+  publish_refused_other_changes: Túto položku tu nemožno publikovať, pretože obsahuje aj iné zmeny, ktoré vám CMS nedokáže zobraziť. Požiadajte vývojára, aby ju skontroloval.
+  # Error notification when an entry can’t be published because its branch has been committed to
+  # since the entry was opened, so what would be published isn’t what was reviewed
+  publish_refused_entry_changed: Položka bola zmenená potom, ako ste ju otvorili. Pred publikovaním znova načítajte stránku a skontrolujte najnovšiu verziu.
+  review_on_x: Skontrolovať v službe {$service}
+  from_fork: Z forku
+  fork_entry_editable: Táto položka pochádza z pull requestu prispievateľa otvoreného z „{$fork}“. Vaše zmeny sa ukladajú do jeho vetvy. Pull request skontrolujte a zlúčte v službe Git.
+  fork_entry_locked: Táto položka pochádza z pull requestu prispievateľa otvoreného z „{$fork}“. Prispievateľ nepovoľuje správcom ho upravovať, takže si ho tu môžete iba prezerať.
+  fork_not_editable: Prispievateľ nepovoľuje správcom upravovať tento pull request.
+  fork_entry_gone: Pull request prispievateľa už nie je otvorený, takže doň nemožno uložiť zmeny.
+  # Error shown in the save error dialog when an entry can’t be saved for review, because a request
+  # the CMS doesn’t show is already open from the branch the entry would be saved to. `{$number}` is
+  # the request number, e.g. `#12` on GitHub or `!12` on GitLab. Keep the wording free of Git jargon
+  branch_in_use: Pre túto položku je už mimo CMS otvorená iná požiadavka ({$number}). Požiadajte vývojára, aby ju najprv zatvoril.
   # Workflow page: empty column message
   no_entries: Žiadne položky.
   # Workflow page: aria-label for a draggable entry card
@@ -2202,6 +2948,31 @@ workflow:
   # Workflow page: note on a card in the Deploying tray, marking an entry that’s being removed from
   # the site rather than published to it
   deploying_deletion: Odstránenie
+  # Workflow page: note on a card listing the new entries that were created from a Relation field
+  # of the entry and are published along with it, e.g. “Also adds Section: Getting Started”
+  companion_entries: 'Pridáva aj: {$entries}'
+  # Workflow page: note on a card listing the existing entries that were edited from a Relation
+  # field of the entry and are published along with it, e.g. “Also changes Author: Ada Lovelace”
+  edited_companion_entries: 'Mení aj: {$entries}'
+  # Workflow page: one of the entries listed by `companion_entries` or `edited_companion_entries`,
+  # named by its collection’s singular label and its title
+  companion_entry: '{$collection}: {$title}'
+
+# Dialog asking the user for a commit message every time changes are saved, when the site is
+# configured to. The message is recorded in the repository’s history along with the changes
+commit_message:
+  # Dialog title
+  title: Správa commitu
+  # Description when the user writes the whole message, which the text box is filled in with
+  description_replace: Opíšte svoje zmeny. Správa sa zaznamená do histórie spolu s nimi.
+  # Description when the text the user enters is added before or after a message the CMS writes
+  description_addition: Pridajte poznámku k správe, ktorá sa zaznamená do histórie spolu s vašimi zmenami, napríklad číslo úlohy. Môžete ju nechať prázdnu.
+  # Accessible name of the text box when the user writes the whole message
+  message: Správa commitu
+  # Accessible name of the text box when the text is added before or after the message
+  addition: Poznámka
+  # Preview of the message as it will be recorded. {$message} is the message
+  preview: 'Správa: {$message}'
 
 # Open Authoring: a contributor without write access to the configured repository works in a fork
 # of it, and their changes reach the site through a pull request a maintainer merges
@@ -2215,6 +2986,10 @@ open_authoring:
   fork_declined: Na navrhovanie zmien potrebujete vo svojom účte fork repozitára.
   # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
   fork_failed: Vo vašom účte sa nepodarilo vytvoriť fork repozitára „{$repo}“.
+  # Error shown when the user’s fork doesn’t have the branch the CMS is configured with, so there’s
+  # nothing to start their changes from. {$fork} and {$repo} are repository identifiers in
+  # owner/repo format, {$branch} is the branch name
+  fork_branch_missing: Váš fork „{$fork}“ nemá vetvu „{$branch}“. Aktualizujte fork z repozitára „{$repo}“ a potom sa znova prihláste.
   # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
   # because the API rate limit is exhausted. {$repo} is the repository identifier
   permission_check_failed: Nepodarilo sa overiť váš prístup k repozitáru „{$repo}“. Skúste to znova o chvíľu.
@@ -2229,6 +3004,10 @@ open_authoring:
   private_repo_scope_required: Vaše prihlásenie nezahŕňa prístup k súkromným repozitárom, takže repozitár „{$repo}“ nie je možné načítať. Požiadajte správcu, aby skontroloval nastavenia overovania CMS.
   # Error shown when a contributor tries to publish an entry, which only a maintainer can do
   publish_unsupported: Zmeny na tomto webe môže publikovať iba správca. Namiesto toho označte svoju položku ako „Na kontrole“ a niekto sa na ňu pozrie.
+  # Error shown when a contributor changes the status of an entry whose request a maintainer has
+  # published since the page was loaded, leaving nothing to review. The entry then leaves the
+  # Editorial Workflow board and the editor closes. Keep the wording free of Git jargon
+  entry_already_published: Správca už túto položku publikoval, takže nie je čo kontrolovať.
   # Error shown when a change would go straight to the site instead of being reviewed, which a
   # contributor can’t do. It covers media library uploads and deletions, and entry reordering
   direct_commit_unsupported: Túto zmenu nie je možné vykonať priamo. Na kontrolu je možné navrhnúť iba úpravy položiek.
@@ -2246,6 +3025,8 @@ categories: Kategórie
 
 # Preferences panels
 prefs:
+  account:
+    title: Účet
   # API key management feedback messages
   changes:
     api_key_saved: API kľúč bol uložený.
@@ -2295,7 +3076,7 @@ prefs:
         select_service: Vybrať službu
       api_keys:
         title: API kľúče prekladových služieb
-        description: Spravujte API kľúče pre <a>prekladové služby</a>.
+        description: Spravujte API kľúče pre <a>prekladové služby</a>. API kľúče pre všeobecné služby AI môžete spravovať v nastaveniach AI.
       # API key input label, e.g., “DeepL Key”
       # {$service} is the translation service name
       field_label: Kľúč pre {$service}
@@ -2329,6 +3110,16 @@ prefs:
       field_label: API kľúč pre {$service}
       no_services: Nie sú nakonfigurované žiadne <a>cloudové úložiská</a>.
 
+  # AI panel
+  ai:
+    title: AI
+    api_keys:
+      title: API kľúče služieb AI
+      description: Spravujte API kľúče pre služby AI.
+    # API key input label, e.g., “OpenAI GPT API Key”
+    # {$service} is the AI service name
+    field_label: API kľúč {$service}
+
   # Accessibility panel
   accessibility:
     title: Prístupnosť
@@ -2339,6 +3130,7 @@ prefs:
 
   # Data Management panel
   data:
+    title: Správa údajov
     clear_data:
       title: Vymazať údaje
       # Clear File Cache button
@@ -2354,13 +3146,23 @@ prefs:
 
   # Developer panel
   developer:
+    title: Pre vývojárov
     developer_mode:
       title: Režim pre vývojárov
       description: Povoliť niektoré funkcie určené pre vývojárov vrátane podrobných záznamov v konzole a natívnych kontextových menu.
       switch_label: Zapnúť režim pre vývojárov
+    local_git:
+      title: Commity Git
+      description: Pri každom uložení commitnite svoje zmeny do aktuálnej vetvy lokálneho repozitára, ako to CMS robí pri práci so vzdialeným repozitárom. Commity potom môžete skontrolovať a odoslať (push) svojimi bežnými nástrojmi Git.
+      switch_label: Commitovať zmeny do Gitu
+      checking: Kontroluje sa repozitár…
+      # {$branch} is the branch name, {$name} and {$email} are the commit author’s name and email address
+      ready: Zmeny sa budú commitovať do vetvy {$branch} ako {$name} ({$email}).
+      # {$reason} is one of the `local_git_skip_reasons` strings
+      not_ready: Zmeny teraz nemožno commitnúť. {$reason}
     deploy_hook:
       title: Webhook pre nasadenie (Deploy Hook)
-      description: Zadajte URL webhooku, ktorý sa zavolá, keď ručne spustíte nasadenie výberom možnosti Publikovať zmeny. Ak používate GitHub Actions, môžete toto pole nechať prázdne.
+      description: Zadajte URL webhooku, ktorý sa zavolá, keď ručne spustíte nasadenie výberom možnosti Publikovať zmeny. Ak používate GitHub Actions alebo GitLab CI/CD, môžete toto pole nechať prázdne.
       # Hook URL input
       url:
         field_label: URL webhooku

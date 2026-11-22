@@ -236,6 +236,328 @@ sign_in_with_mobile_instruction: A jelszó nélküli bejelentkezéshez olvasd be
 sign_in_with_link: Bejelentkezés hivatkozással
 sign_in_with_link_confirmation: Ez a hivatkozás {$account} néven jelentkeztet be a szolgáltatásba ({$service}), és átmásolja a beállításokat arról az eszközről, amelyen létrehozták. Csak akkor folytasd, ha a hivatkozást te magad hoztad létre.
 
+# Sign-in with Sveltia CMS Additions, which manages its own user accounts instead of the Git
+# service’s. Don’t localize “Sveltia CMS Additions”
+additions:
+  username: Felhasználónév
+  password: Jelszó
+  sign_in: Bejelentkezés
+  new_password_title: Új jelszó megadása
+  new_password_description: Ideiglenes jelszóval jelentkeztél be. A folytatáshoz adj meg egy újat.
+  new_password: Új jelszó
+  password_too_short: A jelszó túl rövid. Legalább 12 karaktert használj.
+  change_password: Jelszó módosítása
+  # {$name} is the user’s username, {$role} their role, e.g. Editor
+  signed_in_as_x_with_role: 'Bejelentkezve: {$name} ({$role})'
+  link_github: GitHub-fiók összekapcsolása
+  link_github_error: Nem sikerült összekapcsolni a GitHub-fiókot
+  current_password: Jelenlegi jelszó
+  # {$username} is the username filled in from a magic link emailed to the user
+  filled_from_link: A felhasználónevet és a jelszót egy hivatkozásból töltöttük ki. Csak akkor jelentkezz be, ha a felhasználóneved „{$username}”.
+  change_password_description: Itt bejelentkezve maradsz, a többi eszközödön viszont kijelentkeztetünk.
+  password_changed: A jelszavad megváltozott.
+  # The Account settings panel of a Sveltia CMS Additions user
+  account:
+    profile: Profil
+    profile_description: A neved megjelenik a CMS többi felhasználója számára, például a bejegyzészárolásoknál és a hozzászólásoknál, valamint a commitjaidban is.
+    username_description: A felhasználóneved nem módosítható.
+    email: E-mail-cím
+    email_description: A commitjaidban szerepel, így a GitHub hozzá tudja kapcsolni őket a fiókodhoz. Ha nincs megadva, egy helyettesítő cím kerül a helyére. Csak adminisztrátor módosíthatja.
+    change_name: Név módosítása
+    name_changed: A neved megváltozott.
+    password: Jelszó
+    no_password: GitHubbal jelentkezel be, ezért nincs módosítható jelszavad. Egy adminisztrátor a jelszavad visszaállításával adhat neked egyet.
+  setup:
+    use_admin_secret: Adminisztrátori titkos kulcs használata
+    title: A Sveltia CMS Additions beállítása
+    secret_description: Add meg a Sveltia CMS Additions szolgáltatásod beállításaiban megadott adminisztrátori titkos kulcsot. Csak a beállítás idejére marad meg ezen a lapon.
+    admin_secret: Adminisztrátori titkos kulcs
+    continue: Tovább
+    back: Vissza a bejelentkezéshez
+    admin_title: Adminisztrátori fiók
+    admin_create_description: Hozd létre az első adminisztrátori fiókot. Ezzel fogsz bejelentkezni, és ezzel kezeled a többi felhasználót.
+    admin_reset_description: Már létezik adminisztrátori fiók. A hozzáférés visszaszerzéséhez itt visszaállíthatod egy adminisztrátor jelszavát, vagy létrehozhatsz egy újabbat.
+    admin_saved: Az adminisztrátori fiók elkészült. Jelentkezz be az imént megadott jelszóval.
+    create_admin: Adminisztrátor létrehozása
+    reset_password: Adminisztrátor mentése
+    github_title: GitHub
+    # {$repo} is the repository, e.g. octocat/site
+    github_description: 'Hozz létre egy GitHub-alkalmazást ehhez a webhelyhez, és telepítsd a következő tárolóra: „{$repo}”. A GitHub megerősítést kér, majd visszairányít ide.'
+    # {$repo} is the repository, {$app} is the name of the GitHub App
+    github_connected: 'Csatlakoztatva a következő tárolóhoz: „{$repo}”. GitHub-alkalmazás: „{$app}”.'
+    connect_github: Csatlakozás a GitHubhoz
+    # {$step} is the number of the current step, {$total} the number of steps
+    step_x_of_y: '{$step}. lépés (összesen {$total})'
+    admin_exists: Létezik adminisztrátori fiók.
+    reset_admin_password: Adminisztrátori jelszó visszaállítása
+    setup_complete: A beállítás befejeződött. A felhasználók és a beállítások kezeléséhez jelentkezz be egy adminisztrátori fiókkal. Az adminisztrátori titkos kulccsal bármikor visszatérhetsz ide.
+    manage_sites: Más webhelyek kezelése
+    back_to_setup: Vissza
+    sites_title: Más webhelyek
+    sites_description: Ez a szolgáltatás más webhelyeket is kiszolgálhat, mindegyiket saját felhasználókkal, beállításokkal és GitHub-alkalmazással. Egy webhely CMS-konfigurációjában állítsd a „base_url” értékét a webhely URL-jére, majd ott állítsd be a webhelyet az adminisztrátori titkos kulccsal.
+    no_sites: Még nincsenek más webhelyek.
+    site_id: Webhelyazonosító
+    site_id_description: 1–32 kisbetű, számjegy és kötőjel, például „acme”. Megjelenik a webhely URL-jében, és nem módosítható.
+    site_name_optional: Név (nem kötelező)
+    add_site: Webhely hozzáadása
+    # {$name} is the name of the site
+    site_added: „{$name}” hozzáadva. A CMS-konfigurációjában állítsd a „base_url” értékét a webhely URL-jére, majd ott nyisd meg a beállítási varázslót.
+    # {$name} is the name of the site
+    copy_site_url: 'URL másolása: {$name}'
+    delete_site: Webhely törlése
+    # {$name} is the name of the site
+    delete_site_x: 'Törlés: {$name}'
+    # {$name} is the name of the site, {$id} is its ID
+    delete_site_confirmation: '„{$name}” törlésével a felhasználói, a beállításai és a hozzászólásai is törlődnek. Ez nem vonható vissza. A GitHub-alkalmazás megmarad a GitHubon, ahol törölheted. A megerősítéshez írd be: „{$id}”.'
+    site_id_to_confirm: Webhelyazonosító a megerősítéshez
+    data_key_locked_title: Az adminisztrátori titkos kulcs megváltozott
+    data_key_locked_description: Az adminisztrátori titkos kulcs megváltozott, ezért a tárolt beállítások nem olvashatók. Megtartásukhoz add meg az előző titkos kulcsot, vagy ha elveszett, kezdd újra.
+    previous_secret: Előző adminisztrátori titkos kulcs
+    unlock: Feloldás
+    rekey: Újrakezdés
+    rekey_confirmation: Az újrakezdés törli a GitHub-alkalmazás hitelesítő adatait és a többi tárolt titkos adatot, és mindenkit kijelentkeztet. A jelszavak megmaradnak. Folytatod?
+    result:
+      ok: A GitHub csatlakoztatva. Most már bejelentkezhetsz.
+      github_app_not_created: A GitHub-alkalmazás nem jött létre. Próbáld újra az adminisztrátori titkos kulccsal.
+      github_app_not_installed: A GitHub-alkalmazás nem lett telepítve. Próbáld újra az adminisztrátori titkos kulccsal.
+      github_wrong_account: A GitHub-alkalmazást nem a tároló tulajdonosának fiókjára telepítették. Telepítsd a tároló tulajdonosára, és próbáld újra.
+      github_repository_not_included: A GitHub-alkalmazást a tárolóhoz való hozzáférés nélkül telepítették. Adj neki hozzáférést a tárolóhoz a GitHubon, és próbáld újra.
+      unexpected: Váratlan hiba miatt nem sikerült csatlakozni a GitHubhoz. Próbáld újra.
+  locks:
+    # {$name} is the name of the person editing the entry, {$time} when they started
+    being_edited: '{$name} {$time} óta szerkeszti ezt a bejegyzést, ezért csak megtekintheted.'
+    being_edited_by_you: Egy másik lapon szerkeszted ezt a bejegyzést, ezért itt csak megtekintheted.
+    # {$name} is the name of the person who took over the entry
+    taken_over: '{$name} átvette ezt a bejegyzést, ezért most már csak megtekintheted.'
+    take_over: Átvétel
+    unavailable: A bejegyzészárolás nem érhető el, ezért előfordulhat, hogy valaki más is szerkeszti egyszerre ezt a bejegyzést.
+    # {$name} is the name of the person editing the entry
+    being_edited_by_x: 'Szerkeszti: {$name}'
+    # {$names} is a list of the other people who have the entry open in the editor
+    also_open_by_x: 'Szintén megnyitotta: {$names}'
+    # {$names} is a list of the people who have the entry open, besides anyone editing it
+    open_by_x: 'Megnyitotta: {$names}'
+  users:
+    title: Felhasználók
+    add_user: Felhasználó hozzáadása
+    edit_user: Felhasználó szerkesztése
+    add: Hozzáadás
+    name: Név
+    username_description: A felhasználónév a felhasználó hozzáadása után nem módosítható.
+    email_optional: E-mail-cím (nem kötelező)
+    email_description: A felhasználó commitjaiban szerepel, így a GitHub hozzá tudja kapcsolni őket a fiókjához. Ha nincs megadva, egy helyettesítő cím kerül a helyére.
+    role: Szerepkör
+    status: Állapot
+    last_sign_in: Utolsó bejelentkezés
+    sign_in_column: Bejelentkezés
+    methods:
+      password: Jelszó
+      # {$login} is a GitHub username
+      github: GitHub ({$login})
+    actions: Műveletek
+    you: (te)
+    never: Soha
+    roles:
+      admin: Adminisztrátor
+      editor: Szerkesztő
+      viewer: Megtekintő
+    statuses:
+      active: Aktív
+      temporary_password: Ideiglenes jelszó
+      waiting_for_sign_in: Első bejelentkezésre vár
+      disabled: Letiltva
+    # {$name} is the user’s name
+    show_options_for_x: 'Beállítások megjelenítése: {$name}'
+    options: Felhasználói beállítások
+    reset_password: Jelszó visszaállítása
+    sign_out_everywhere: Kijelentkeztetés mindenhonnan
+    enable: Felhasználó engedélyezése
+    disable: Felhasználó letiltása
+    delete: Felhasználó törlése
+    # {$name} is the user’s name
+    reset_password_confirmation: 'Biztosan új ideiglenes jelszót adsz a következő felhasználónak: {$name}? Mindenhonnan ki lesz jelentkeztetve, és a következő bejelentkezéskor új jelszót kell választania.'
+    delete_confirmation: 'Biztosan törlöd a következő felhasználót: {$name}? Ez nem vonható vissza.'
+    temporary_password: Ideiglenes jelszó
+    # {$name} is the user’s name
+    temporary_password_description: 'Add át ezt a felhasználónevet és ideiglenes jelszót a következő személynek: {$name}. A jelszó többé nem jelenik meg, és bejelentkezéskor saját jelszót választ majd.'
+    copy_username: Felhasználónév másolása
+    copy_password: Jelszó másolása
+    # {$name} is the user’s name
+    email_credentials: 'E-mail küldése: {$name}'
+    # The emails the admin sends from their own email app, with the sign-in details: `new` to a user
+    # who has just been added, `reset` to one whose password has been reset. Each line is a string of
+    # its own, as line breaks aren’t kept in these files
+    credentials_email:
+      # {$name} is the user’s name
+      greeting: Kedves {$name}!
+      # {$url} is a link to the CMS that fills in the username and the temporary password
+      sign_in_link: 'Bejelentkezési hivatkozás: {$url}'
+      # {$username} is the username
+      username: 'Felhasználónév: {$username}'
+      # {$password} is the temporary password
+      password: 'Ideiglenes jelszó: {$password}'
+      new:
+        # {$app} is the name of the CMS
+        subject: 'Bejelentkezési adataid: {$app}'
+        # {$app} is the name of the CMS
+        message: 'Mostantól bejelentkezhetsz ide: {$app}. Nyisd meg az alábbi hivatkozást, amely kitölti a felhasználónevedet és az ideiglenes jelszavadat, majd bejelentkezéskor válassz saját jelszót.'
+      reset:
+        # {$app} is the name of the CMS
+        subject: A jelszavadat visszaállítottuk ({$app})
+        # {$app} is the name of the CMS
+        message: A jelszavadat visszaállítottuk ({$app}), és mindenhonnan kijelentkeztettünk. Nyisd meg az alábbi hivatkozást, amely kitölti a felhasználónevedet és az ideiglenes jelszavadat, majd bejelentkezéskor válassz új jelszót.
+    allowed_domains: Engedélyezett domainek
+    allowed_domains_description: Azok a webhelyek, amelyek használhatják a Sveltia CMS Additions szolgáltatást, soronként egy gazdagépnévvel. A helyettesítő karakter (*) bármely aldomainre illeszkedik, például *.example.com. Ahol lehet, pontos gazdagépneveket adj meg. A lista csak erre a webhelyre vonatkozik, akkor is, ha ugyanaz a Sveltia CMS Additions-példány más webhelyeket is kiszolgál.
+    save_allowed_domains: Engedélyezett domainek mentése
+    allowed_domains_saved: Az engedélyezett domainek mentve.
+    sign_in_tab: Bejelentkezés
+    # {$latest} is the newest version of Sveltia CMS Additions, {$current} the one in use
+    update_available: 'Elérhető a Sveltia CMS Additions {$latest} verziója. Jelenleg használt verzió: {$current}.'
+    release_notes: Kiadási megjegyzések
+    github_username_optional: GitHub-felhasználónév (nem kötelező)
+    github_username_description: GitHub-felhasználónév megadásakor a felhasználó jelszó helyett ezzel a GitHub-fiókkal jelentkezik be.
+    # {$name} is the user’s name
+    github_required: '{$name} csak GitHubbal tud bejelentkezni, ezért a GitHub-felhasználóneve nem távolítható el. Előbb állítsd vissza a jelszavát, hogy legyen jelszava a bejelentkezéshez.'
+    adopt: Fiók átvétele
+    sign_in:
+      github: Bejelentkezés engedélyezése GitHubbal
+      github_description: A felhasználók a GitHub-fiókjukkal jelentkeznek be, és saját GitHub-tokent kapnak, így a módosításaikat a saját nevükben commitoljuk. Előbb egy adminisztrátornak hozzá kell adnia őket a GitHub-felhasználónevükkel, kivéve, ha egy regisztrációs szabály vonatkozik rájuk.
+      # Shown when signing in with GitHub is being turned off while {$count} users can only sign in
+      # with it
+      github_only_warning: |
+        .input {$count :integer}
+        .match $count
+          one {{ Egy felhasználó csak GitHubbal tud bejelentkezni, és a kikapcsolás után nem tud majd bejelentkezni, amíg vissza nem állítod a jelszavát. }}
+          *   {{ {$count} felhasználó csak GitHubbal tud bejelentkezni, és a kikapcsolás után nem tud majd bejelentkezni, amíg vissza nem állítod a jelszavát. }}
+      rules: Regisztrációs szabályok
+      rules_description: Annak a GitHub-szervezetnek a tagjai, amelyre az alkalmazás telepítve van, előzetes hozzáadás nélkül is bejelentkezhetnek. A fiókjuk az általad választott szerepkört kapja, és le lesz tiltva, ha kilépnek a szervezetből, kivéve, ha átveszed.
+      org: GitHub-szervezet
+      add_rule: Szabály hozzáadása
+      # {$org} is the name of a GitHub organization
+      remove_rule: 'Szabály eltávolítása: {$org}'
+      # For a rule whose organization hasn’t been entered yet
+      remove_empty_rule: Szabály eltávolítása
+      save: Bejelentkezési beállítások mentése
+      saved: A bejelentkezési beállítások mentve.
+    domains_tab: Domainek
+    github_tab: GitHub
+    github:
+      app: GitHub-alkalmazás
+      repository: Tároló
+      not_installed: Nincs telepítve
+      statuses:
+        ok: Az alkalmazás működik.
+        not_registered: Még nincs beállítva GitHub-alkalmazás. Futtasd a beállítási varázslót a bejelentkezési oldalról az adminisztrátori titkos kulccsal.
+        key_missing: Az alkalmazás privát kulcsa elveszett, amikor az adminisztrátori titkos kulcsot lecserélték. Hozz létre egy új privát kulcsot az alkalmazás beállításaiban a GitHubon, és töltsd fel alább.
+        key_rejected: A GitHub nem fogadja el az alkalmazás privát kulcsát, például mert ott törölték. Hozz létre egy új privát kulcsot az alkalmazás beállításaiban a GitHubon, és töltsd fel alább.
+        not_installed: Az alkalmazás nincs telepítve a tárolóra. Telepítsd újra az alkalmazás GitHub-oldaláról, vagy futtasd a beállítási varázslót.
+        suspended: Az alkalmazás telepítése fel van függesztve. Szüntesd meg a felfüggesztést a telepítés beállításaiban a GitHubon.
+        unreachable: A GitHub nem érhető el. Próbáld újra később.
+      check_again: Ellenőrzés újra
+      # {$branch} is the name of the repository’s default branch
+      branch_protected: 'Szabálykészletek védik a következő ágat a force pushtól és a törléstől: „{$branch}”.'
+      branch_bypassed: 'Szabálykészletek védik a következő ágat: „{$branch}”, de az alkalmazás megkerülheti őket, így a szerkesztők továbbra is force pusholhatnak rá, vagy törölhetik. Távolítsd el az alkalmazást ezeknek a szabálykészleteknek a kivétellistáiról.'
+      branch_unprotected: 'Egyetlen szabálykészlet sem védi a következő ágat a force pushtól és a törléstől: „{$branch}”, így a szerkesztők átírhatják az előzményeit, vagy törölhetik. Adj hozzá a tároló beállításaiban egy szabálykészletet, amely mindkettőt tiltja, és amelynek kivétellistáján nem szerepel az alkalmazás.'
+      repository_rules: Tárolószabályok megnyitása
+      private_key: Privát kulcs
+      private_key_description: A privát kulcs cseréjéhez hozz létre egy újat az alkalmazás beállításaiban a GitHubon, majd töltsd fel a letöltött .pem fájlt. Utána töröld ott a régi kulcsot.
+      app_settings: Alkalmazásbeállítások megnyitása
+      upload_private_key: Privát kulcs feltöltése
+      replace_private_key: Privát kulcs cseréje
+      private_key_summary: A szolgáltatás az alkalmazás privát kulcsával fér hozzá a tárolóhoz a GitHubon. Cseréld le, ha illetéktelenek kezébe kerülhetett.
+      private_key_replaced: A privát kulcs lecserélve.
+      commit_author: Commit szerzője
+      commit_author_description: Válaszd ki, ki jelenjen meg a CMS-ben mentett módosítások szerzőjeként. A GitHub csak az alkalmazás által létrehozott commitokat írja alá, ezért válaszd az alkalmazást, ha egy szabálykészlet aláírt commitokat követel meg. A többi felhasználónál egy órán belül érvénybe lép a változás.
+      commit_author_user: A módosítást végző személy
+      commit_author_bot: A GitHub-alkalmazás, a személlyel mint társszerzővel
+      commit_author_saved: A commit szerzője mentve.
+  # Administration section for the API keys and the deploy hook an admin shares with everyone
+  credentials:
+    title: Hitelesítő adatok
+    description: Az itt megadott API-kulcsokat és telepítési webhookot mindenki használja, aki bejelentkezik, kivéve, ha a Beállításokban sajátot ad meg. A CMS-be bejelentkezett bárki elolvashatja őket, ezért csak olyan kulcsokat adj meg, amelyeket nyugodtan megosztasz a csapatoddal.
+    save: Hitelesítő adatok mentése
+    saved: A hitelesítő adatok mentve.
+    # {$service} is the service name, e.g. DeepL
+    invalid_key: A megadott {$service} API-kulcs nem tűnik helyesnek.
+  error:
+    unauthenticated: A munkameneted lejárt. Jelentkezz be újra.
+    wrong_admin_secret: Az adminisztrátori titkos kulcs helytelen.
+    admin_secret_missing: Az adminisztrátori titkos kulcs nincs beállítva a Sveltia CMS Additions szolgáltatás beállításaiban.
+    admin_secret_too_short: A Sveltia CMS Additions szolgáltatás beállításaiban megadott adminisztrátori titkos kulcs túl rövid. Legalább 32 véletlenszerű karaktert használj.
+    wrong_previous_secret: Az előző adminisztrátori titkos kulcs helytelen.
+    not_an_admin: Ez a felhasználó nem adminisztrátor. Válassz másik felhasználónevet.
+    invalid_username: 'A felhasználónév 3–30 karakterből állhat: kisbetűkből, számjegyekből, pontokból, kötőjelekből vagy aláhúzásjelekből.'
+    last_admin: Legalább egy adminisztrátornak lennie kell.
+    cannot_disable_self: A saját fiókodat nem tilthatod le.
+    cannot_delete_self: A saját fiókodat nem törölheted.
+    username_taken: Ez a felhasználónév már egy másik felhasználóé.
+    email_taken: Ez az e-mail-cím már egy másik felhasználóé.
+    invalid_name: A névnek 1–100 karakterből kell állnia.
+    invalid_email: Az e-mail-cím érvénytelen.
+    invalid_domains: Az egyik engedélyezett domain nem érvényes gazdagépnév.
+    current_origin_removed: Az engedélyezett domaineknek tartalmazniuk kell azt a webhelyet, amelyet most használsz.
+    forbidden: Ezt csak adminisztrátorok tehetik meg.
+    invalid_credentials: A felhasználónév vagy a jelszó helytelen.
+    user_disabled: Ez a fiók le van tiltva. Kérj segítséget az adminisztrátortól.
+    too_many_attempts: Túl sok próbálkozás. Próbáld újra később.
+    wrong_password: A jelenlegi jelszó helytelen.
+    same_password: Olyan új jelszót válassz, amely eltér a jelenlegitől.
+    invalid_github_login: Ez nem érvényes GitHub-felhasználónév.
+    github_user_not_found: Nincs ilyen nevű GitHub-felhasználó.
+    github_account_taken: Ezzel a GitHub-fiókkal már egy másik felhasználó jelentkezik be.
+    invalid_rules: A regisztrációs szabályhoz meg kell adni egy GitHub-szervezet nevét.
+    invalid_rule_role: Regisztrációs szabály csak szerkesztői vagy megtekintői szerepkört adhat.
+    rule_org_not_installed: A GitHub-alkalmazást telepíteni kell a regisztrációs szabályban szereplő szervezetre.
+    not_invited: Itt nincs fiókod. Kérd meg az adminisztrátort, hogy adjon hozzá.
+    method_disabled: A GitHubbal való bejelentkezés ki van kapcsolva.
+    access_denied: A bejelentkezés megszakadt.
+    github_app_not_set_up: A Sveltia CMS Additions még nincs csatlakoztatva a GitHubhoz. Kérd meg az adminisztrátort, hogy fejezze be a beállítást.
+    invalid_tenant_id: A webhelyazonosító 1–32 kisbetűből, számjegyből és kötőjelből állhat, és nem lehet „default”.
+    invalid_tenant_name: A webhely neve legfeljebb 100 karakter lehet.
+    tenant_exists: Már létezik ilyen azonosítójú webhely.
+    github_app_missing: Még nincs beállítva GitHub-alkalmazás.
+    invalid_private_key: A fájl nem érvényes privát kulcs.
+    private_key_mismatch: A GitHub nem fogadja el ezt a privát kulcsot az alkalmazáshoz. Győződj meg róla, hogy az alkalmazás beállításaiban hoztad létre.
+    github_error: A GitHub hibával válaszolt. Próbáld újra később.
+    data_key_locked: A Sveltia CMS Additions nem használható, amíg egy adminisztrátor be nem fejezi az adminisztrátori titkos kulcs módosítását.
+    not_configured: A Sveltia CMS Additions nincs megfelelően konfigurálva. Kérj segítséget az adminisztrátortól.
+    origin_not_allowed: Ez a webhely nem használhatja a Sveltia CMS Additions szolgáltatást. Kérd meg az adminisztrátort, hogy vegye fel az engedélyezett domainek közé.
+    not_set_up: A Sveltia CMS Additions még nincs csatlakoztatva a GitHubhoz. Kérd meg az adminisztrátort, hogy fejezze be a beállítást.
+    # A user whose password an admin has reset signs in another way, e.g. with GitHub
+    temporary_password: A jelszavadat visszaállították. Jelentkezz be a felhasználóneveddel és az adminisztrátortól kapott ideiglenes jelszóval, majd válassz újat.
+    # {$url} is the URL of the service
+    incompatible: 'A Sveltia CMS ezen verziója nem működik a Sveltia CMS Additions szolgáltatással a következő címen: {$url}.'
+    unreachable: A Sveltia CMS Additions nem érhető el. Próbáld újra később.
+    insecure_connection: A Sveltia CMS Additions szolgáltatást HTTPS-en keresztül kell kiszolgálni. Ellenőrizd a `base_url` beállítást a CMS-konfigurációban.
+    unexpected: Váratlan hiba miatt nem sikerült a kérés a Sveltia CMS Additions felé. Próbáld újra később.
+
+  # Conversation panel: comments on the entry, kept by Sveltia CMS Additions
+  conversation:
+    title: Beszélgetés
+    refresh: Beszélgetés frissítése
+    empty: Még nincsenek hozzászólások.
+    # Button above a long conversation, which is loaded from its latest comments
+    show_older: Korábbi hozzászólások megjelenítése
+    # Label of the list of comments
+    timeline: Hozzászólások
+    deleted_user: Törölt felhasználó
+    you: Te
+    edited: szerkesztve
+    comment_label: Hozzászólás
+    placeholder: Írj hozzászólást (Markdown)
+    visible_to_cms_users: Csak a CMS felhasználói láthatják
+    send: Küldés
+    options: Hozzászólás beállításai
+    edit: Szerkesztés
+    delete: Törlés
+    save: Mentés
+    delete_confirmation: Biztosan törlöd ezt a hozzászólást? Ez nem vonható vissza.
+    send_failed: Nem sikerült elküldeni a hozzászólást.
+
+  # Placeholder of an API key or deploy hook field the user has left empty, while an admin of
+  # Sveltia CMS Additions has entered one for everyone
+  provided_by_admin: Az adminisztrátor adta meg
+
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
 # {$name} is the signed-in user’s login name
@@ -349,6 +671,10 @@ live_site: Élő webhely
 git_repository: Git-tároló
 settings: Beállítások
 
+# Page for the people who look after the CMS, apart from the personal settings: user management
+# and the CMS configuration
+administration: Adminisztráció
+
 # Help menu: button aria-labels and section headings
 show_help_menu: Súgómenü megjelenítése
 # Help section heading in dropdowns and mobile menu
@@ -441,6 +767,10 @@ viewing_x_asset_folder: |
 # Cloud storage service view announcement
 # {$service} is the cloud storage service name, e.g. Uploadcare
 viewing_x_external_location: 'Most ennek a szolgáltatásnak a médiafájljait nézed: {$service}.'
+# Administration page announcements
+viewing_admin_section_list: Most az Adminisztráció oldal szakaszainak listáját nézed.
+# {$section} is the section label, e.g. Users
+viewing_x_admin_section: Most az Adminisztráció oldal „{$section}” szakaszát nézed.
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
@@ -586,6 +916,7 @@ readonly_collection: Ez a gyűjtemény csak olvasható. Megtekintheted a tartalm
 readonly_entry: Ez a bejegyzés csak olvasható. Megtekintheted, de nem módosíthatsz semmit.
 readonly_asset_folder: Ez a mappa csak olvasható. Megtekintheted a médiafájljait, de nem módosíthatsz semmit.
 readonly_branch: 'Nincs jogosultságod pusholni a következő ágra: „{$branch}”. Megtekintheted ezt a tartalmat, de nem módosíthatsz semmit.'
+readonly_role: Csak megtekintési jogosultságod van. Megtekintheted a tartalmat és a médiafájlokat, de nem módosíthatsz semmit.
 readonly_reference: A bejegyzés csak olvasható, ezért a hivatkozás nem távolítható el.
 # {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
 cannot_rename_referenced_entry: 'Ez a bejegyzés nem nevezhető át, mert a következő csak olvasható bejegyzések a jelenlegi nevével hivatkoznak rá: {$entries}.'
@@ -1362,6 +1693,9 @@ deploy_preview:
   view: Előnézet megtekintése
   # Shown while the site is still being built, with or without a URL to open yet
   building: Az előnézet még készül.
+  # Shown when the build failed, so no preview is available. The failure may lie in the site’s own
+  # code rather than the entry, so the editor is told not to assume it’s theirs, and who to ask
+  build_failed: Az előnézetet nem sikerült elkészíteni. Ezt nem feltétlenül a te módosításaid okozták. Ha a probléma továbbra is fennáll, fordulj a webhely adminisztrátorához.
   # Shown briefly while the CI/CD provider is being queried
   checking: Előnézet keresése…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
@@ -1416,6 +1750,8 @@ edit_slug_error:
   empty: Az URL-azonosító nem lehet üres.
   invalid: Az URL-azonosító nem tartalmazhat speciális karaktereket, például perjelet vagy szóközt.
   duplicate: Ezt az URL-azonosítót már egy másik bejegyzés használja.
+# {$slug} is the slug filled from the slug template, which a number is added to when another entry uses it
+slug_numbered: 'Ezt az URL-azonosítót már egy másik bejegyzés használja: „{$slug}”, ezért egy szám kerül hozzá.'
 
 # Entry path editing for nested entries
 # Heading for the parent folder picker shown when the `meta.path` option is enabled
@@ -1573,6 +1909,9 @@ entry_sidebar:
   backlinks:
     title: Hivatkozó bejegyzések
     no_entries: Egyetlen bejegyzés sem hivatkozik erre a bejegyzésre.
+
+  # Tab label of a panel with a count, e.g. of comments. {$title} is the panel title
+  title_with_count: '{$title} ({$count})'
 
 # Status shown next to the Save button while an entry with many new files is being saved
 # {$done} and {$total} are the number of files prepared and to prepare, or the number of commits
@@ -2045,6 +2384,7 @@ config:
     path_outside_root_dir: Az elérési út („{$path}”) a gyökérkönyvtáron kívülre vezet, ahol a CMS nem tudja listázni a fájlokat.
     oauth_implicit_flow: A beállított hitelesítési módszert (implicit folyamat) a Sveltia CMS nem támogatja. Használj helyette egy másik <a>hitelesítési módszert</a>.
     github_pkce_unsupported: A PKCE-hitelesítés a GitHub korlátai miatt még nem támogatott. Használj helyette egy másik <a>hitelesítési módszert</a>.
+    additions_no_base_url: A `base_url` beállításnak a Sveltia CMS Additions szolgáltatásod URL-jének kell lennie.
     oauth_no_app_id: Az OAuth-alkalmazásazonosító nincs megadva.
     # Don’t localize `open_authoring`, `editorial_workflow` and `preview`
     open_authoring_no_workflow: Az `open_authoring` beállításhoz az `editorial_workflow` vagy a `preview` közzétételi mód szükséges. A részletekért lásd a <a>dokumentációt</a>.
@@ -2626,6 +2966,8 @@ categories: Kategóriák
 
 # Preferences panels
 prefs:
+  account:
+    title: Fiók
   # API key management feedback messages
   changes:
     api_key_saved: API-kulcs mentve.

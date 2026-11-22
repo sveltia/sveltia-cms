@@ -236,6 +236,328 @@ sign_in_with_mobile_instruction: Skann QR-koden nedenfor med telefonen eller net
 sign_in_with_link: Logg inn med lenke
 sign_in_with_link_confirmation: Denne lenken logger deg inn som {$account} på {$service} og kopierer innstillingene fra enheten den ble laget på. Fortsett bare hvis du laget lenken selv.
 
+# Sign-in with Sveltia CMS Additions, which manages its own user accounts instead of the Git
+# service’s. Don’t localize “Sveltia CMS Additions”
+additions:
+  username: Brukernavn
+  password: Passord
+  sign_in: Logg inn
+  new_password_title: Velg et nytt passord
+  new_password_description: Du logget inn med et midlertidig passord. Velg et nytt for å fortsette.
+  new_password: Nytt passord
+  password_too_short: Passordet er for kort. Bruk minst 12 tegn.
+  change_password: Endre passord
+  # {$name} is the user’s username, {$role} their role, e.g. Editor
+  signed_in_as_x_with_role: Logget inn som {$name} ({$role})
+  link_github: Koble til GitHub-konto
+  link_github_error: Kunne ikke koble til GitHub-kontoen
+  current_password: Nåværende passord
+  # {$username} is the username filled in from a magic link emailed to the user
+  filled_from_link: Brukernavnet og passordet er fylt ut fra en lenke. Logg bare inn hvis «{$username}» er brukernavnet ditt.
+  change_password_description: Du forblir logget inn her og blir logget ut på de andre enhetene dine.
+  password_changed: Passordet ditt er endret.
+  # The Account settings panel of a Sveltia CMS Additions user
+  account:
+    profile: Profil
+    profile_description: Navnet ditt vises for andre i CMS-et, for eksempel på oppføringslåser og kommentarer, og i commitene dine.
+    username_description: Brukernavnet ditt kan ikke endres.
+    email: E-post
+    email_description: Den brukes i commitene du lager, slik at GitHub kan knytte dem til kontoen din. Uten en e-postadresse brukes en plassholderadresse. Bare en administrator kan endre den.
+    change_name: Endre navn
+    name_changed: Navnet ditt er endret.
+    password: Passord
+    no_password: Du logger inn med GitHub, så du har ikke noe passord å endre. En administrator kan gi deg et ved å tilbakestille passordet ditt.
+  setup:
+    use_admin_secret: Bruk administratorhemmelighet
+    title: Sett opp Sveltia CMS Additions
+    secret_description: Skriv inn administratorhemmeligheten som er satt i innstillingene for Sveltia CMS Additions-tjenesten din. Den oppbevares bare i denne fanen mens du setter opp.
+    admin_secret: Administratorhemmelighet
+    continue: Fortsett
+    back: Tilbake til innlogging
+    admin_title: Administratorkonto
+    admin_create_description: Opprett den første administratorkontoen. Du logger inn med den og administrerer de andre brukerne.
+    admin_reset_description: Det finnes allerede en administratorkonto. For å komme inn igjen kan du tilbakestille passordet til en administrator her, eller opprette en ny.
+    admin_saved: Administratorkontoen er klar. Logg inn med passordet du nettopp skrev inn.
+    create_admin: Opprett administrator
+    reset_password: Lagre administrator
+    github_title: GitHub
+    # {$repo} is the repository, e.g. octocat/site
+    github_description: Lag en GitHub-app for dette nettstedet, og installer den på repositoriet «{$repo}». GitHub ber deg bekrefte og sender deg så tilbake hit.
+    # {$repo} is the repository, {$app} is the name of the GitHub App
+    github_connected: Koblet til repositoriet «{$repo}» med GitHub-appen «{$app}».
+    connect_github: Koble til GitHub
+    # {$step} is the number of the current step, {$total} the number of steps
+    step_x_of_y: Steg {$step} av {$total}
+    admin_exists: Det finnes en administratorkonto.
+    reset_admin_password: Tilbakestill administratorpassord
+    setup_complete: Oppsettet er fullført. Logg inn med en administratorkonto for å administrere brukere og innstillinger. Du kan komme tilbake hit med administratorhemmeligheten når som helst.
+    manage_sites: Administrer andre nettsteder
+    back_to_setup: Tilbake
+    sites_title: Andre nettsteder
+    sites_description: Denne tjenesten kan også betjene andre nettsteder, hvert med egne brukere, innstillinger og GitHub-app. Sett «base_url» i CMS-konfigurasjonen til et nettsted til nettstedets URL, og sett så opp nettstedet der med administratorhemmeligheten.
+    no_sites: Det finnes ingen andre nettsteder ennå.
+    site_id: Nettsteds-ID
+    site_id_description: 1 til 32 små bokstaver, sifre og bindestreker, for eksempel «acme». Den vises i URL-en til nettstedet og kan ikke endres.
+    site_name_optional: Navn (valgfritt)
+    add_site: Legg til nettsted
+    # {$name} is the name of the site
+    site_added: «{$name}» er lagt til. Sett «base_url» i CMS-konfigurasjonen til nettstedet til URL-en dets, og åpne så oppsettsveiviseren der.
+    # {$name} is the name of the site
+    copy_site_url: Kopier URL-en til {$name}
+    delete_site: Slett nettsted
+    # {$name} is the name of the site
+    delete_site_x: Slett {$name}
+    # {$name} is the name of the site, {$id} is its ID
+    delete_site_confirmation: Hvis du sletter «{$name}», slettes også brukerne, innstillingene og kommentarene til nettstedet. Dette kan ikke angres. GitHub-appen blir værende på GitHub, der du kan slette den. Skriv «{$id}» for å bekrefte.
+    site_id_to_confirm: Nettsteds-ID for bekreftelse
+    data_key_locked_title: Administratorhemmeligheten er endret
+    data_key_locked_description: Administratorhemmeligheten er endret, så de lagrede innstillingene kan ikke leses. Skriv inn den forrige hemmeligheten for å beholde dem, eller begynn på nytt hvis den er tapt.
+    previous_secret: Forrige administratorhemmelighet
+    unlock: Lås opp
+    rekey: Begynn på nytt
+    rekey_confirmation: Hvis du begynner på nytt, slettes påloggingsdataene til GitHub-appen og de andre lagrede hemmelighetene, og alle blir logget ut. Passordene beholdes. Vil du fortsette?
+    result:
+      ok: GitHub er koblet til. Nå kan du logge inn.
+      github_app_not_created: GitHub-appen ble ikke laget. Bruk administratorhemmeligheten for å prøve igjen.
+      github_app_not_installed: GitHub-appen ble ikke installert. Bruk administratorhemmeligheten for å prøve igjen.
+      github_wrong_account: GitHub-appen ble installert på en annen konto enn den som eier repositoriet. Installer den på eieren av repositoriet og prøv igjen.
+      github_repository_not_included: GitHub-appen ble installert uten tilgang til repositoriet. Gi den tilgang til repositoriet på GitHub og prøv igjen.
+      unexpected: Tilkoblingen til GitHub mislyktes på grunn av en uventet feil. Prøv igjen.
+  locks:
+    # {$name} is the name of the person editing the entry, {$time} when they started
+    being_edited: '{$name} har redigert denne oppføringen siden {$time}, så du kan bare se den.'
+    being_edited_by_you: Du redigerer denne oppføringen i en annen fane, så du kan bare se den her.
+    # {$name} is the name of the person who took over the entry
+    taken_over: '{$name} har tatt over denne oppføringen, så nå kan du bare se den.'
+    take_over: Ta over
+    unavailable: Oppføringslåser er ikke tilgjengelige, så noen andre kan redigere denne oppføringen samtidig.
+    # {$name} is the name of the person editing the entry
+    being_edited_by_x: Redigeres av {$name}
+    # {$names} is a list of the other people who have the entry open in the editor
+    also_open_by_x: Også åpen hos {$names}
+    # {$names} is a list of the people who have the entry open, besides anyone editing it
+    open_by_x: Åpen hos {$names}
+  users:
+    title: Brukere
+    add_user: Legg til bruker
+    edit_user: Rediger bruker
+    add: Legg til
+    name: Navn
+    username_description: Brukernavnet kan ikke endres etter at brukeren er lagt til.
+    email_optional: E-post (valgfritt)
+    email_description: Den brukes i commitene denne personen lager, slik at GitHub kan knytte dem til kontoen deres. Uten en e-postadresse brukes en plassholderadresse.
+    role: Rolle
+    status: Status
+    last_sign_in: Sist innlogget
+    sign_in_column: Innlogging
+    methods:
+      password: Passord
+      # {$login} is a GitHub username
+      github: GitHub ({$login})
+    actions: Handlinger
+    you: (deg)
+    never: Aldri
+    roles:
+      admin: Administrator
+      editor: Redaktør
+      viewer: Leser
+    statuses:
+      active: Aktiv
+      temporary_password: Midlertidig passord
+      waiting_for_sign_in: Venter på første innlogging
+      disabled: Deaktivert
+    # {$name} is the user’s name
+    show_options_for_x: Vis valg for {$name}
+    options: Brukervalg
+    reset_password: Tilbakestill passord
+    sign_out_everywhere: Logg ut overalt
+    enable: Aktiver bruker
+    disable: Deaktiver bruker
+    delete: Slett bruker
+    # {$name} is the user’s name
+    reset_password_confirmation: Vil du gi {$name} et nytt midlertidig passord? Personen blir logget ut overalt og må velge et nytt passord ved neste innlogging.
+    delete_confirmation: Vil du slette {$name}? Dette kan ikke angres.
+    temporary_password: Midlertidig passord
+    # {$name} is the user’s name
+    temporary_password_description: Gi dette brukernavnet og det midlertidige passordet til {$name}. Passordet vises ikke igjen, og personen velger sitt eget passord ved innlogging.
+    copy_username: Kopier brukernavn
+    copy_password: Kopier passord
+    # {$name} is the user’s name
+    email_credentials: Send e-post til {$name}
+    # The emails the admin sends from their own email app, with the sign-in details: `new` to a user
+    # who has just been added, `reset` to one whose password has been reset. Each line is a string of
+    # its own, as line breaks aren’t kept in these files
+    credentials_email:
+      # {$name} is the user’s name
+      greeting: Hei {$name},
+      # {$url} is a link to the CMS that fills in the username and the temporary password
+      sign_in_link: 'Innloggingslenke: {$url}'
+      # {$username} is the username
+      username: 'Brukernavn: {$username}'
+      # {$password} is the temporary password
+      password: 'Midlertidig passord: {$password}'
+      new:
+        # {$app} is the name of the CMS
+        subject: Innloggingsdetaljene dine for {$app}
+        # {$app} is the name of the CMS
+        message: Nå kan du logge inn på {$app}. Åpne lenken nedenfor, som fyller ut brukernavnet og det midlertidige passordet ditt, og velg ditt eget passord når du logger inn.
+      reset:
+        # {$app} is the name of the CMS
+        subject: Passordet ditt for {$app} er tilbakestilt
+        # {$app} is the name of the CMS
+        message: Passordet ditt for {$app} er tilbakestilt, og du er logget ut overalt. Åpne lenken nedenfor, som fyller ut brukernavnet og det midlertidige passordet ditt, og velg et nytt passord når du logger inn.
+    allowed_domains: Tillatte domener
+    allowed_domains_description: Nettstedene som kan bruke Sveltia CMS Additions, ett vertsnavn per linje. Et jokertegn (*) samsvarer med alle underdomener, for eksempel *.example.com. Oppgi eksakte vertsnavn der du kan. Listen gjelder bare dette nettstedet, selv om den samme Sveltia CMS Additions-instansen også betjener andre nettsteder.
+    save_allowed_domains: Lagre tillatte domener
+    allowed_domains_saved: De tillatte domenene er lagret.
+    sign_in_tab: Innlogging
+    # {$latest} is the newest version of Sveltia CMS Additions, {$current} the one in use
+    update_available: Sveltia CMS Additions {$latest} er tilgjengelig. Du bruker {$current}.
+    release_notes: Versjonsmerknader
+    github_username_optional: GitHub-brukernavn (valgfritt)
+    github_username_description: Med et GitHub-brukernavn logger brukeren inn med den GitHub-kontoen i stedet for med passord.
+    # {$name} is the user’s name
+    github_required: '{$name} kan bare logge inn med GitHub, så GitHub-brukernavnet kan ikke fjernes. Tilbakestill passordet først for å gi personen et passord å logge inn med.'
+    adopt: Overta konto
+    sign_in:
+      github: Tillat innlogging med GitHub
+      github_description: Brukere logger inn med GitHub-kontoen sin og får sitt eget GitHub-token, så endringene deres committes i deres navn. En administrator legger dem til først, med GitHub-brukernavnet deres, med mindre en registreringsregel dekker dem.
+      # Shown when signing in with GitHub is being turned off while {$count} users can only sign in
+      # with it
+      github_only_warning: |
+        .input {$count :integer}
+        .match $count
+          one {{ Én bruker kan bare logge inn med GitHub og vil ikke kunne logge inn når det er slått av, før du tilbakestiller passordet. }}
+          *   {{ {$count} brukere kan bare logge inn med GitHub og vil ikke kunne logge inn når det er slått av, før du tilbakestiller passordene deres. }}
+      rules: Registreringsregler
+      rules_description: Medlemmer av GitHub-organisasjonen appen er installert på, kan logge inn uten å bli lagt til først. Kontoen deres får rollen du velger, og deaktiveres hvis de forlater organisasjonen, med mindre du overtar den.
+      org: GitHub-organisasjon
+      add_rule: Legg til regel
+      # {$org} is the name of a GitHub organization
+      remove_rule: Fjern regelen for {$org}
+      # For a rule whose organization hasn’t been entered yet
+      remove_empty_rule: Fjern regel
+      save: Lagre innloggingsinnstillinger
+      saved: Innloggingsinnstillingene er lagret.
+    domains_tab: Domener
+    github_tab: GitHub
+    github:
+      app: GitHub-app
+      repository: Repositorium
+      not_installed: Ikke installert
+      statuses:
+        ok: Appen fungerer.
+        not_registered: Ingen GitHub-app er satt opp ennå. Kjør oppsettsveiviseren fra innloggingssiden med administratorhemmeligheten.
+        key_missing: Den private nøkkelen til appen gikk tapt da administratorhemmeligheten ble byttet ut. Generer en ny privat nøkkel i appinnstillingene på GitHub, og last den opp nedenfor.
+        key_rejected: GitHub godtar ikke den private nøkkelen til appen, for eksempel fordi den er slettet der. Generer en ny privat nøkkel i appinnstillingene på GitHub, og last den opp nedenfor.
+        not_installed: Appen er ikke installert på repositoriet. Installer den på nytt fra siden til appen på GitHub, eller kjør oppsettsveiviseren.
+        suspended: Installasjonen av appen er suspendert. Opphev suspensjonen i installasjonsinnstillingene på GitHub.
+        unreachable: Fikk ikke kontakt med GitHub. Prøv igjen senere.
+      check_again: Sjekk igjen
+      # {$branch} is the name of the repository’s default branch
+      branch_protected: Regelsett beskytter grenen «{$branch}» mot force push og sletting.
+      branch_bypassed: Regelsett beskytter grenen «{$branch}», men appen kan omgå dem, så redaktører kan fortsatt force-pushe til den eller slette den. Fjern appen fra unntakslistene i disse regelsettene.
+      branch_unprotected: Ingen regelsett beskytter grenen «{$branch}» mot force push og sletting, så redaktører kan skrive om historikken eller slette den. Legg til et regelsett i repositoriets innstillinger som blokkerer begge deler, uten appen på unntakslisten.
+      repository_rules: Åpne repositoriets regler
+      private_key: Privat nøkkel
+      private_key_description: For å bytte ut den private nøkkelen genererer du en ny i appinnstillingene på GitHub, og laster så opp .pem-filen som lastes ned. Slett den gamle nøkkelen der etterpå.
+      app_settings: Åpne appinnstillinger
+      upload_private_key: Last opp privat nøkkel
+      replace_private_key: Bytt ut privat nøkkel
+      private_key_summary: Tjenesten bruker den private nøkkelen til appen for å få tilgang til repositoriet på GitHub. Bytt den ut hvis den kan ha blitt eksponert.
+      private_key_replaced: Den private nøkkelen er byttet ut.
+      commit_author: Commit-forfatter
+      commit_author_description: Velg hvem som vises som forfatter av endringene som lagres i CMS-et. GitHub signerer bare commitene appen står som forfatter av, så velg appen hvis et regelsett krever signerte commits. Andre brukere får endringen innen en time.
+      commit_author_user: Personen som gjorde endringen
+      commit_author_bot: GitHub-appen, med personen som medforfatter
+      commit_author_saved: Commit-forfatteren er lagret.
+  # Administration section for the API keys and the deploy hook an admin shares with everyone
+  credentials:
+    title: Tilgangsdata
+    description: API-nøkler og deploy-hooken som legges inn her, brukes av alle som logger inn, med mindre de legger inn sine egne under Innstillinger. Alle som er logget inn i CMS-et, kan lese dem, så legg bare inn nøkler du er komfortabel med å dele med teamet ditt.
+    save: Lagre tilgangsdata
+    saved: Tilgangsdataene er lagret.
+    # {$service} is the service name, e.g. DeepL
+    invalid_key: API-nøkkelen for {$service} ser ikke riktig ut.
+  error:
+    unauthenticated: Økten din er utløpt. Logg inn på nytt.
+    wrong_admin_secret: Administratorhemmeligheten er feil.
+    admin_secret_missing: Administratorhemmeligheten er ikke satt i innstillingene for Sveltia CMS Additions-tjenesten.
+    admin_secret_too_short: Administratorhemmeligheten som er satt i innstillingene for Sveltia CMS Additions-tjenesten, er for kort. Bruk minst 32 tilfeldige tegn.
+    wrong_previous_secret: Den forrige administratorhemmeligheten er feil.
+    not_an_admin: Denne brukeren er ikke administrator. Velg et annet brukernavn.
+    invalid_username: Et brukernavn består av 3 til 30 små bokstaver, sifre, punktum, bindestreker eller understreker.
+    last_admin: Det må være minst én administrator.
+    cannot_disable_self: Du kan ikke deaktivere din egen konto.
+    cannot_delete_self: Du kan ikke slette din egen konto.
+    username_taken: En annen bruker har dette brukernavnet.
+    email_taken: En annen bruker har denne e-postadressen.
+    invalid_name: Navnet må ha 1 til 100 tegn.
+    invalid_email: E-postadressen er ugyldig.
+    invalid_domains: Et av de tillatte domenene er ikke et gyldig vertsnavn.
+    current_origin_removed: De tillatte domenene må inkludere nettstedet du bruker nå.
+    forbidden: Bare administratorer kan gjøre dette.
+    invalid_credentials: Brukernavnet eller passordet er feil.
+    user_disabled: Denne kontoen er deaktivert. Be administratoren din om hjelp.
+    too_many_attempts: For mange forsøk. Prøv igjen senere.
+    wrong_password: Det nåværende passordet er feil.
+    same_password: Velg et nytt passord som er forskjellig fra det nåværende.
+    invalid_github_login: Dette er ikke et gyldig GitHub-brukernavn.
+    github_user_not_found: Det finnes ingen GitHub-bruker med dette navnet.
+    github_account_taken: En annen bruker logger inn med denne GitHub-kontoen.
+    invalid_rules: En registreringsregel trenger navnet på en GitHub-organisasjon.
+    invalid_rule_role: En registreringsregel kan bare gi rollen redaktør eller leser.
+    rule_org_not_installed: GitHub-appen må være installert på organisasjonen i en registreringsregel.
+    not_invited: Du har ingen konto her. Be administratoren din om å legge deg til.
+    method_disabled: Innlogging med GitHub er slått av.
+    access_denied: Innloggingen ble avbrutt.
+    github_app_not_set_up: Sveltia CMS Additions er ikke koblet til GitHub ennå. Be administratoren din om å fullføre oppsettet.
+    invalid_tenant_id: Nettsteds-ID-en må bestå av 1 til 32 små bokstaver, sifre og bindestreker, og kan ikke være «default».
+    invalid_tenant_name: Navnet på nettstedet kan ha høyst 100 tegn.
+    tenant_exists: Det finnes allerede et nettsted med denne ID-en.
+    github_app_missing: Ingen GitHub-app er satt opp ennå.
+    invalid_private_key: Filen er ikke en gyldig privat nøkkel.
+    private_key_mismatch: GitHub godtar ikke denne private nøkkelen for appen. Sørg for at du genererte den i innstillingene til appen.
+    github_error: GitHub svarte med en feil. Prøv igjen senere.
+    data_key_locked: Sveltia CMS Additions kan ikke brukes før en administrator er ferdig med å endre administratorhemmeligheten.
+    not_configured: Sveltia CMS Additions er ikke riktig konfigurert. Be administratoren din om hjelp.
+    origin_not_allowed: Dette nettstedet har ikke lov til å bruke Sveltia CMS Additions. Be administratoren din om å legge det til i de tillatte domenene.
+    not_set_up: Sveltia CMS Additions er ikke koblet til GitHub ennå. Be administratoren din om å fullføre oppsettet.
+    # A user whose password an admin has reset signs in another way, e.g. with GitHub
+    temporary_password: Passordet ditt er tilbakestilt. Logg inn med brukernavnet ditt og det midlertidige passordet du fikk av administratoren din, og velg så et nytt.
+    # {$url} is the URL of the service
+    incompatible: Denne versjonen av Sveltia CMS fungerer ikke med Sveltia CMS Additions-tjenesten på {$url}.
+    unreachable: Fikk ikke kontakt med Sveltia CMS Additions. Prøv igjen senere.
+    insecure_connection: Sveltia CMS Additions må serveres over HTTPS. Sjekk `base_url` i CMS-konfigurasjonen.
+    unexpected: Forespørselen til Sveltia CMS Additions mislyktes på grunn av en uventet feil. Prøv igjen senere.
+
+  # Conversation panel: comments on the entry, kept by Sveltia CMS Additions
+  conversation:
+    title: Samtale
+    refresh: Oppdater samtalen
+    empty: Ingen kommentarer ennå.
+    # Button above a long conversation, which is loaded from its latest comments
+    show_older: Vis eldre kommentarer
+    # Label of the list of comments
+    timeline: Kommentarer
+    deleted_user: Slettet bruker
+    you: Du
+    edited: redigert
+    comment_label: Kommentar
+    placeholder: Skriv en kommentar (Markdown)
+    visible_to_cms_users: Bare synlig for CMS-brukere
+    send: Kommenter
+    options: Kommentarvalg
+    edit: Rediger
+    delete: Slett
+    save: Lagre
+    delete_confirmation: Vil du slette denne kommentaren? Dette kan ikke angres.
+    send_failed: Kommentaren kunne ikke sendes.
+
+  # Placeholder of an API key or deploy hook field the user has left empty, while an admin of
+  # Sveltia CMS Additions has entered one for everyone
+  provided_by_admin: Levert av administratoren din
+
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
 # {$name} is the signed-in user’s login name
@@ -349,6 +671,10 @@ live_site: Nettstedet
 git_repository: Git-repositorium
 settings: Innstillinger
 
+# Page for the people who look after the CMS, apart from the personal settings: user management
+# and the CMS configuration
+administration: Administrasjon
+
 # Help menu: button aria-labels and section headings
 show_help_menu: Vis hjelpemeny
 # Help section heading in dropdowns and mobile menu
@@ -441,6 +767,10 @@ viewing_x_asset_folder: |
 # Cloud storage service view announcement
 # {$service} is the cloud storage service name, e.g. Uploadcare
 viewing_x_external_location: Du ser nå mediefilene på {$service}.
+# Administration page announcements
+viewing_admin_section_list: Du ser nå listen over administrasjonsseksjoner.
+# {$section} is the section label, e.g. Users
+viewing_x_admin_section: Du ser nå seksjonen «{$section}» på administrasjonssiden.
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
@@ -586,6 +916,7 @@ readonly_collection: Denne samlingen er skrivebeskyttet. Du kan se innholdet, me
 readonly_entry: Denne oppføringen er skrivebeskyttet. Du kan se den, men ikke gjøre endringer.
 readonly_asset_folder: Denne mappen er skrivebeskyttet. Du kan se mediefilene, men ikke gjøre endringer.
 readonly_branch: Du har ikke tillatelse til å pushe til grenen «{$branch}». Du kan se innholdet, men ikke gjøre endringer.
+readonly_role: Du har bare lesetilgang. Du kan se innhold og medier, men ikke gjøre endringer.
 readonly_reference: Oppføringen er skrivebeskyttet, så referansen kan ikke fjernes.
 # {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
 cannot_rename_referenced_entry: 'Denne oppføringen kan ikke få nytt navn, fordi disse skrivebeskyttede oppføringene viser til den med det nåværende navnet: {$entries}.'
@@ -1362,6 +1693,9 @@ deploy_preview:
   view: Vis forhåndsvisning
   # Shown while the site is still being built, with or without a URL to open yet
   building: Forhåndsvisningen lages fortsatt.
+  # Shown when the build failed, so no preview is available. The failure may lie in the site’s own
+  # code rather than the entry, so the editor is told not to assume it’s theirs, and who to ask
+  build_failed: Forhåndsvisningen kunne ikke lages. Det er ikke nødvendigvis endringene dine som er årsaken. Hvis problemet vedvarer, kan du kontakte administratoren for nettstedet.
   # Shown briefly while the CI/CD provider is being queried
   checking: Ser etter forhåndsvisning…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
@@ -1576,6 +1910,9 @@ entry_sidebar:
     title: Tilbakelenker
     no_entries: Ingen oppføringer viser til denne oppføringen.
 
+  # Tab label of a panel with a count, e.g. of comments. {$title} is the panel title
+  title_with_count: '{$title} ({$count})'
+
 # Status shown next to the Save button while an entry with many new files is being saved
 # {$done} and {$total} are the number of files prepared and to prepare, or the number of commits
 # made and the estimated number of commits in all
@@ -1773,19 +2110,19 @@ unselected_option: (Ingen)
 # Relation field: creating or editing a referenced entry without leaving the editor
 relation_field:
   # Note shown in the dialog. {$name} is the singular label of the referenced collection
-  save_together_hint: 'Den nye oppføringen ({$name}) blir lagret sammen med oppføringen du redigerer.'
+  save_together_hint: Den nye oppføringen ({$name}) blir lagret sammen med oppføringen du redigerer.
   # Error shown when the entry couldn’t be prepared. {$name} is the singular label of the collection
-  add_failed: 'Kunne ikke legge til oppføringen ({$name}). Se nettleserkonsollen for detaljer.'
+  add_failed: Kunne ikke legge til oppføringen ({$name}). Se nettleserkonsollen for detaljer.
   # Title of the dialog to edit an entry selected in the field. {$name} is the singular label of the
   # referenced collection
   edit_entry_title: 'Rediger: {$name}'
   # Note shown in the dialog. {$name} is the singular label of the referenced collection
-  edit_together_hint: 'Endringene dine i oppføringen ({$name}) blir lagret sammen med oppføringen du redigerer.'
+  edit_together_hint: Endringene dine i oppføringen ({$name}) blir lagret sammen med oppføringen du redigerer.
   # Error shown when the changes couldn’t be prepared. {$name} is the singular label of the collection
-  edit_failed: 'Endringene i oppføringen ({$name}) kunne ikke tas i bruk. Se nettleserkonsollen for detaljer.'
+  edit_failed: Endringene i oppføringen ({$name}) kunne ikke tas i bruk. Se nettleserkonsollen for detaljer.
   # Error shown when the changes would move the entry to another file path, e.g. through a path
   # template using a field. {$name} is the singular label of the collection
-  move_unsupported: 'Disse endringene ville flyttet oppføringen ({$name}) til et annet sted. Det kan bare gjøres ved å redigere den for seg selv.'
+  move_unsupported: Disse endringene ville flyttet oppføringen ({$name}) til et annet sted. Det kan bare gjøres ved å redigere den for seg selv.
   # Error shown when saving, if someone else has changed an entry edited from the field since. {$name}
   # is the summary of that entry
   edit_conflict: «{$name}» er endret av noen andre siden du redigerte den. Åpne den på nytt fra feltet for å sammenligne endringene dine med den nyeste versjonen.
@@ -1800,7 +2137,7 @@ relation_field:
   edited_with_entry: Endringer i denne oppføringen venter på å bli publisert sammen med «{$name}». Hvis du lagrer den nå, blir de to settene med endringer slått sammen når den oppføringen publiseres. Det kan mislykkes hvis de overlapper.
   # Warning shown in the dialog when an entry edited from the field has been changed by someone else
   # since. {$name} is the singular label of the collection
-  changed_since_edit: 'Denne oppføringen ({$name}) er endret av noen andre siden du redigerte den. Endringene dine vises oppå den nyeste versjonen. Se over dem før du oppdaterer.'
+  changed_since_edit: Denne oppføringen ({$name}) er endret av noen andre siden du redigerte den. Endringene dine vises oppå den nyeste versjonen. Se over dem før du oppdaterer.
 
 # Select Assets dialog
 assets_dialog:
@@ -2047,6 +2384,7 @@ config:
     path_outside_root_dir: Banen «{$path}» peker utenfor rotmappen, der CMS-et ikke kan liste filer.
     oauth_implicit_flow: Den konfigurerte innloggingsmetoden (implicit flow) er ikke støttet i Sveltia CMS. Bruk en annen <a>innloggingsmetode</a> i stedet.
     github_pkce_unsupported: PKCE-autorisasjon er ikke støttet ennå på grunn av begrensninger hos GitHub. Bruk en annen <a>innloggingsmetode</a> i stedet.
+    additions_no_base_url: Alternativet `base_url` må være URL-en til Sveltia CMS Additions-tjenesten din.
     oauth_no_app_id: ID for OAuth-applikasjonen er ikke definert.
     # Don’t localize `open_authoring`, `editorial_workflow` and `preview`
     open_authoring_no_workflow: Alternativet `open_authoring` krever publiseringsmodusen `editorial_workflow` eller `preview`. Se <a>dokumentasjonen</a> for detaljer.
@@ -2628,6 +2966,8 @@ categories: Kategorier
 
 # Preferences panels
 prefs:
+  account:
+    title: Konto
   # API key management feedback messages
   changes:
     api_key_saved: API-nøkkelen er lagret.

@@ -236,6 +236,328 @@ sign_in_with_mobile_instruction: Escanea el siguiente código QR con tu teléfon
 sign_in_with_link: Iniciar sesión con un enlace
 sign_in_with_link_confirmation: Este enlace inicia tu sesión como {$account} en {$service} y copia la configuración del dispositivo en el que se creó. Continúa solo si has creado el enlace tú mismo.
 
+# Sign-in with Sveltia CMS Additions, which manages its own user accounts instead of the Git
+# service’s. Don’t localize “Sveltia CMS Additions”
+additions:
+  username: Nombre de usuario
+  password: Contraseña
+  sign_in: Iniciar sesión
+  new_password_title: Elige una nueva contraseña
+  new_password_description: Has iniciado sesión con una contraseña temporal. Elige una nueva para continuar.
+  new_password: Nueva contraseña
+  password_too_short: La contraseña es demasiado corta. Usa al menos 12 caracteres.
+  change_password: Cambiar contraseña
+  # {$name} is the user’s username, {$role} their role, e.g. Editor
+  signed_in_as_x_with_role: Sesión iniciada como {$name} ({$role})
+  link_github: Vincular cuenta de GitHub
+  link_github_error: No se ha podido vincular la cuenta de GitHub
+  current_password: Contraseña actual
+  # {$username} is the username filled in from a magic link emailed to the user
+  filled_from_link: El nombre de usuario y la contraseña se han rellenado a partir de un enlace. Inicia sesión solo si “{$username}” es tu nombre de usuario.
+  change_password_description: Mantendrás la sesión iniciada aquí y se cerrará en tus otros dispositivos.
+  password_changed: Se ha cambiado tu contraseña.
+  # The Account settings panel of a Sveltia CMS Additions user
+  account:
+    profile: Perfil
+    profile_description: Otras personas ven tu nombre en el CMS (por ejemplo, en los bloqueos de entradas y en los comentarios) y en tus commits.
+    username_description: Tu nombre de usuario no se puede cambiar.
+    email: Correo electrónico
+    email_description: Se usa en los commits que haces para que GitHub pueda vincularlos a tu cuenta. Si no tienes uno, se usa una dirección genérica. Solo un administrador puede cambiarlo.
+    change_name: Cambiar nombre
+    name_changed: Se ha cambiado tu nombre.
+    password: Contraseña
+    no_password: Inicias sesión con GitHub, así que no tienes ninguna contraseña que cambiar. Un administrador puede asignarte una restableciendo tu contraseña.
+  setup:
+    use_admin_secret: Usar el secreto de administrador
+    title: Configurar Sveltia CMS Additions
+    secret_description: Introduce el secreto de administrador definido en los ajustes de tu servicio de Sveltia CMS Additions. Solo se conserva en esta pestaña mientras realizas la configuración.
+    admin_secret: Secreto de administrador
+    continue: Continuar
+    back: Volver al inicio de sesión
+    admin_title: Cuenta de administrador
+    admin_create_description: Crea la primera cuenta de administrador. La usarás para iniciar sesión y gestionar al resto de usuarios.
+    admin_reset_description: Ya existe una cuenta de administrador. Para volver a acceder, restablece aquí la contraseña de un administrador o crea otra cuenta.
+    admin_saved: La cuenta de administrador está lista. Inicia sesión con la contraseña que acabas de introducir.
+    create_admin: Crear administrador
+    reset_password: Guardar administrador
+    github_title: GitHub
+    # {$repo} is the repository, e.g. octocat/site
+    github_description: Crea una GitHub App para este sitio e instálala en el repositorio “{$repo}”. GitHub te pedirá que lo confirmes y después te traerá de vuelta aquí.
+    # {$repo} is the repository, {$app} is the name of the GitHub App
+    github_connected: Conectado al repositorio “{$repo}” con la GitHub App “{$app}”.
+    connect_github: Conectar con GitHub
+    # {$step} is the number of the current step, {$total} the number of steps
+    step_x_of_y: Paso {$step} de {$total}
+    admin_exists: Ya existe una cuenta de administrador.
+    reset_admin_password: Restablecer la contraseña de administrador
+    setup_complete: La configuración se ha completado. Inicia sesión con una cuenta de administrador para gestionar los usuarios y los ajustes. Puedes volver aquí con el secreto de administrador en cualquier momento.
+    manage_sites: Gestionar otros sitios
+    back_to_setup: Atrás
+    sites_title: Otros sitios
+    sites_description: Este servicio también puede usarse para otros sitios, cada uno con sus propios usuarios, ajustes y GitHub App. Establece “base_url” en la configuración del CMS de un sitio con su URL y, a continuación, configura el sitio allí con el secreto de administrador.
+    no_sites: Todavía no hay otros sitios.
+    site_id: ID del sitio
+    site_id_description: De 1 a 32 letras minúsculas, dígitos y guiones, como “acme”. Aparece en la URL del sitio y no se puede cambiar.
+    site_name_optional: Nombre (opcional)
+    add_site: Añadir sitio
+    # {$name} is the name of the site
+    site_added: Se ha añadido “{$name}”. Establece “base_url” en su configuración del CMS con su URL y, a continuación, abre allí el asistente de configuración.
+    # {$name} is the name of the site
+    copy_site_url: Copiar la URL de {$name}
+    delete_site: Eliminar sitio
+    # {$name} is the name of the site
+    delete_site_x: Eliminar {$name}
+    # {$name} is the name of the site, {$id} is its ID
+    delete_site_confirmation: Al eliminar “{$name}”, también se eliminan sus usuarios, ajustes y comentarios. Esta acción no se puede deshacer. La GitHub App se mantiene en GitHub, donde puedes eliminarla. Escribe “{$id}” para confirmar.
+    site_id_to_confirm: ID del sitio para confirmar
+    data_key_locked_title: Se ha cambiado el secreto de administrador
+    data_key_locked_description: Se ha cambiado el secreto de administrador, así que no se pueden leer los ajustes guardados. Introduce el secreto anterior para conservarlos o empieza de nuevo si lo has perdido.
+    previous_secret: Secreto de administrador anterior
+    unlock: Desbloquear
+    rekey: Empezar de nuevo
+    rekey_confirmation: Al empezar de nuevo, se eliminan las credenciales de la GitHub App y los demás secretos guardados, y se cierra la sesión de todo el mundo. Las contraseñas se conservan. ¿Quieres continuar?
+    result:
+      ok: GitHub está conectado. Ya puedes iniciar sesión.
+      github_app_not_created: No se ha creado la GitHub App. Usa el secreto de administrador para volver a intentarlo.
+      github_app_not_installed: No se ha instalado la GitHub App. Usa el secreto de administrador para volver a intentarlo.
+      github_wrong_account: La GitHub App se ha instalado en una cuenta distinta de la del repositorio. Instálala en la cuenta propietaria del repositorio e inténtalo de nuevo.
+      github_repository_not_included: La GitHub App se ha instalado sin acceso al repositorio. Dale acceso al repositorio en GitHub e inténtalo de nuevo.
+      unexpected: No se ha podido conectar con GitHub debido a un error inesperado. Inténtalo de nuevo.
+  locks:
+    # {$name} is the name of the person editing the entry, {$time} when they started
+    being_edited: '{$name} está editando esta entrada desde {$time}, así que solo puedes verla.'
+    being_edited_by_you: Estás editando esta entrada en otra pestaña, así que aquí solo puedes verla.
+    # {$name} is the name of the person who took over the entry
+    taken_over: '{$name} ha tomado el control de esta entrada, así que ahora solo puedes verla.'
+    take_over: Tomar el control
+    unavailable: Los bloqueos de entradas no están disponibles, así que puede que otra persona esté editando esta entrada al mismo tiempo.
+    # {$name} is the name of the person editing the entry
+    being_edited_by_x: En edición por {$name}
+    # {$names} is a list of the other people who have the entry open in the editor
+    also_open_by_x: 'También la tienen abierta: {$names}'
+    # {$names} is a list of the people who have the entry open, besides anyone editing it
+    open_by_x: 'La tienen abierta: {$names}'
+  users:
+    title: Usuarios
+    add_user: Añadir usuario
+    edit_user: Editar usuario
+    add: Añadir
+    name: Nombre
+    username_description: El nombre de usuario no se puede cambiar una vez añadido el usuario.
+    email_optional: Correo electrónico (opcional)
+    email_description: Se usa en los commits que hace esta persona para que GitHub pueda vincularlos a su cuenta. Si no tiene uno, se usa una dirección genérica.
+    role: Rol
+    status: Estado
+    last_sign_in: Último inicio de sesión
+    sign_in_column: Inicio de sesión
+    methods:
+      password: Contraseña
+      # {$login} is a GitHub username
+      github: GitHub ({$login})
+    actions: Acciones
+    you: (tú)
+    never: Nunca
+    roles:
+      admin: Administrador
+      editor: Editor
+      viewer: Lector
+    statuses:
+      active: Activo
+      temporary_password: Contraseña temporal
+      waiting_for_sign_in: Pendiente del primer inicio de sesión
+      disabled: Deshabilitado
+    # {$name} is the user’s name
+    show_options_for_x: Mostrar las opciones de {$name}
+    options: Opciones de usuario
+    reset_password: Restablecer contraseña
+    sign_out_everywhere: Cerrar sesión en todas partes
+    enable: Habilitar usuario
+    disable: Deshabilitar usuario
+    delete: Eliminar usuario
+    # {$name} is the user’s name
+    reset_password_confirmation: ¿Quieres dar a {$name} una nueva contraseña temporal? Se cerrará su sesión en todas partes y tendrá que elegir una nueva contraseña la próxima vez que inicie sesión.
+    delete_confirmation: ¿Quieres eliminar a {$name}? Esta acción no se puede deshacer.
+    temporary_password: Contraseña temporal
+    # {$name} is the user’s name
+    temporary_password_description: Facilita este nombre de usuario y esta contraseña temporal a {$name}. La contraseña no se volverá a mostrar, y podrá elegir su propia contraseña al iniciar sesión.
+    copy_username: Copiar nombre de usuario
+    copy_password: Copiar contraseña
+    # {$name} is the user’s name
+    email_credentials: Enviar por correo a {$name}
+    # The emails the admin sends from their own email app, with the sign-in details: `new` to a user
+    # who has just been added, `reset` to one whose password has been reset. Each line is a string of
+    # its own, as line breaks aren’t kept in these files
+    credentials_email:
+      # {$name} is the user’s name
+      greeting: 'Hola, {$name}:'
+      # {$url} is a link to the CMS that fills in the username and the temporary password
+      sign_in_link: 'Enlace de inicio de sesión: {$url}'
+      # {$username} is the username
+      username: 'Nombre de usuario: {$username}'
+      # {$password} is the temporary password
+      password: 'Contraseña temporal: {$password}'
+      new:
+        # {$app} is the name of the CMS
+        subject: Tus datos de inicio de sesión en {$app}
+        # {$app} is the name of the CMS
+        message: Ya puedes iniciar sesión en {$app}. Abre el siguiente enlace, que rellena tu nombre de usuario y tu contraseña temporal, y elige tu propia contraseña al iniciar sesión.
+      reset:
+        # {$app} is the name of the CMS
+        subject: Se ha restablecido tu contraseña de {$app}
+        # {$app} is the name of the CMS
+        message: Se ha restablecido tu contraseña de {$app} y se ha cerrado tu sesión en todas partes. Abre el siguiente enlace, que rellena tu nombre de usuario y tu contraseña temporal, y elige una nueva contraseña al iniciar sesión.
+    allowed_domains: Dominios permitidos
+    allowed_domains_description: Los sitios que pueden usar Sveltia CMS Additions, un nombre de host por línea. Un comodín (*) coincide con cualquier subdominio, como *.example.com. Indica nombres de host exactos siempre que puedas. La lista solo se aplica a este sitio, aunque la misma instancia de Sveltia CMS Additions también dé servicio a otros sitios.
+    save_allowed_domains: Guardar dominios permitidos
+    allowed_domains_saved: Se han guardado los dominios permitidos.
+    sign_in_tab: Inicio de sesión
+    # {$latest} is the newest version of Sveltia CMS Additions, {$current} the one in use
+    update_available: Sveltia CMS Additions {$latest} está disponible. Estás usando la versión {$current}.
+    release_notes: Notas de la versión
+    github_username_optional: Nombre de usuario de GitHub (opcional)
+    github_username_description: Con un nombre de usuario de GitHub, el usuario inicia sesión con esa cuenta de GitHub en lugar de con una contraseña.
+    # {$name} is the user’s name
+    github_required: '{$name} solo puede iniciar sesión con GitHub, así que no se puede quitar su nombre de usuario de GitHub. Restablece primero su contraseña para darle una con la que iniciar sesión.'
+    adopt: Adoptar cuenta
+    sign_in:
+      github: Permitir iniciar sesión con GitHub
+      github_description: Las personas inician sesión con su cuenta de GitHub y obtienen su propio token de GitHub, así que sus cambios se registran en commits a su nombre. Un administrador las añade primero con su nombre de usuario de GitHub, salvo que estén cubiertas por una regla de registro.
+      # Shown when signing in with GitHub is being turned off while {$count} users can only sign in
+      # with it
+      github_only_warning: |
+        .input {$count :integer}
+        .match $count
+          one {{ Un usuario solo puede iniciar sesión con GitHub y no podrá hacerlo cuando se desactive esta opción, hasta que restablezcas su contraseña. }}
+          *   {{ {$count} usuarios solo pueden iniciar sesión con GitHub y no podrán hacerlo cuando se desactive esta opción, hasta que restablezcas sus contraseñas. }}
+      rules: Reglas de registro
+      rules_description: Los miembros de la organización de GitHub en la que está instalada la app pueden iniciar sesión sin que se les añada antes. Su cuenta recibe el rol que elijas y se deshabilita si abandonan la organización, a menos que la adoptes.
+      org: Organización de GitHub
+      add_rule: Añadir regla
+      # {$org} is the name of a GitHub organization
+      remove_rule: Quitar la regla de {$org}
+      # For a rule whose organization hasn’t been entered yet
+      remove_empty_rule: Quitar regla
+      save: Guardar ajustes de inicio de sesión
+      saved: Se han guardado los ajustes de inicio de sesión.
+    domains_tab: Dominios
+    github_tab: GitHub
+    github:
+      app: GitHub App
+      repository: Repositorio
+      not_installed: No instalada
+      statuses:
+        ok: La app funciona correctamente.
+        not_registered: Todavía no hay ninguna GitHub App configurada. Ejecuta el asistente de configuración desde la página de inicio de sesión con el secreto de administrador.
+        key_missing: La clave privada de la app se perdió al reemplazar el secreto de administrador. Genera una nueva clave privada en los ajustes de la app en GitHub y súbela a continuación.
+        key_rejected: GitHub no acepta la clave privada de la app, por ejemplo, porque se eliminó allí. Genera una nueva clave privada en los ajustes de la app en GitHub y súbela a continuación.
+        not_installed: La app no está instalada en el repositorio. Vuelve a instalarla desde la página de la app en GitHub o ejecuta el asistente de configuración.
+        suspended: La instalación de la app está suspendida. Reactívala en los ajustes de la instalación en GitHub.
+        unreachable: No se ha podido conectar con GitHub. Inténtalo de nuevo más tarde.
+      check_again: Volver a comprobar
+      # {$branch} is the name of the repository’s default branch
+      branch_protected: Hay conjuntos de reglas que protegen la branch “{$branch}” frente a force pushes y eliminaciones.
+      branch_bypassed: Hay conjuntos de reglas que protegen la branch “{$branch}”, pero la app puede omitirlos, así que los editores aún podrían hacer force push en ella o eliminarla. Quita la app de las listas de omisión de esos conjuntos de reglas.
+      branch_unprotected: Ningún conjunto de reglas protege la branch “{$branch}” frente a force pushes y eliminaciones, así que los editores podrían reescribir su historial o eliminarla. Añade en los ajustes del repositorio un conjunto de reglas que bloquee ambas acciones, sin la app en su lista de omisión.
+      repository_rules: Abrir las reglas del repositorio
+      private_key: Clave privada
+      private_key_description: Para reemplazar la clave privada, genera una nueva en los ajustes de la app en GitHub y, a continuación, sube el archivo .pem que se descarga. Después, elimina allí la clave antigua.
+      app_settings: Abrir los ajustes de la app
+      upload_private_key: Subir clave privada
+      replace_private_key: Reemplazar clave privada
+      private_key_summary: El servicio usa la clave privada de la app para acceder al repositorio en GitHub. Reemplázala si puede haber quedado expuesta.
+      private_key_replaced: Se ha reemplazado la clave privada.
+      commit_author: Autor de los commits
+      commit_author_description: Elige quién aparece como autor de los cambios guardados en el CMS. GitHub solo firma los commits cuyo autor es la app, así que elige la app si un conjunto de reglas exige commits firmados. Los demás usuarios recibirán el cambio en el plazo de una hora.
+      commit_author_user: La persona que ha hecho el cambio
+      commit_author_bot: La GitHub App, con la persona como coautora
+      commit_author_saved: Se ha guardado el autor de los commits.
+  # Administration section for the API keys and the deploy hook an admin shares with everyone
+  credentials:
+    title: Credenciales
+    description: Las claves de API y el hook de despliegue introducidos aquí los usan todas las personas que inician sesión, salvo que introduzcan los suyos en Ajustes. Cualquier persona con sesión iniciada en el CMS puede leerlos, así que introduce solo claves que no te importe compartir con tu equipo.
+    save: Guardar credenciales
+    saved: Se han guardado las credenciales.
+    # {$service} is the service name, e.g. DeepL
+    invalid_key: La clave de API de {$service} no parece correcta.
+  error:
+    unauthenticated: Tu sesión ha caducado. Vuelve a iniciar sesión.
+    wrong_admin_secret: El secreto de administrador no es correcto.
+    admin_secret_missing: El secreto de administrador no está definido en los ajustes del servicio de Sveltia CMS Additions.
+    admin_secret_too_short: El secreto de administrador definido en los ajustes del servicio de Sveltia CMS Additions es demasiado corto. Usa al menos 32 caracteres aleatorios.
+    wrong_previous_secret: El secreto de administrador anterior no es correcto.
+    not_an_admin: Este usuario no es administrador. Elige otro nombre de usuario.
+    invalid_username: El nombre de usuario debe tener entre 3 y 30 letras minúsculas, dígitos, puntos, guiones o guiones bajos.
+    last_admin: Debe haber al menos un administrador.
+    cannot_disable_self: No puedes deshabilitar tu propia cuenta.
+    cannot_delete_self: No puedes eliminar tu propia cuenta.
+    username_taken: Otro usuario ya tiene este nombre de usuario.
+    email_taken: Otro usuario ya tiene esta dirección de correo electrónico.
+    invalid_name: El nombre debe tener entre 1 y 100 caracteres.
+    invalid_email: La dirección de correo electrónico no es válida.
+    invalid_domains: Uno de los dominios permitidos no es un nombre de host válido.
+    current_origin_removed: Los dominios permitidos deben incluir el sitio que estás usando ahora.
+    forbidden: Solo los administradores pueden hacer esto.
+    invalid_credentials: El nombre de usuario o la contraseña no son correctos.
+    user_disabled: Esta cuenta está deshabilitada. Pide ayuda a tu administrador.
+    too_many_attempts: Demasiados intentos. Inténtalo de nuevo más tarde.
+    wrong_password: La contraseña actual no es correcta.
+    same_password: Elige una nueva contraseña distinta de la actual.
+    invalid_github_login: Este nombre de usuario de GitHub no es válido.
+    github_user_not_found: No hay ningún usuario de GitHub con este nombre.
+    github_account_taken: Otro usuario inicia sesión con esta cuenta de GitHub.
+    invalid_rules: Una regla de registro necesita el nombre de una organización de GitHub.
+    invalid_rule_role: Una regla de registro solo puede asignar el rol de editor o de lector.
+    rule_org_not_installed: La GitHub App debe estar instalada en la organización de una regla de registro.
+    not_invited: No tienes una cuenta aquí. Pide a tu administrador que te añada.
+    method_disabled: El inicio de sesión con GitHub está desactivado.
+    access_denied: Se ha cancelado el inicio de sesión.
+    github_app_not_set_up: Sveltia CMS Additions todavía no está conectado a GitHub. Pide a tu administrador que termine la configuración.
+    invalid_tenant_id: El ID del sitio debe tener entre 1 y 32 letras minúsculas, dígitos y guiones, y no puede ser “default”.
+    invalid_tenant_name: El nombre del sitio puede tener como máximo 100 caracteres.
+    tenant_exists: Ya existe un sitio con este ID.
+    github_app_missing: Todavía no hay ninguna GitHub App configurada.
+    invalid_private_key: El archivo no es una clave privada válida.
+    private_key_mismatch: GitHub no acepta esta clave privada para la app. Asegúrate de haberla generado en los ajustes de la app.
+    github_error: GitHub ha respondido con un error. Inténtalo de nuevo más tarde.
+    data_key_locked: Sveltia CMS Additions no se puede usar hasta que un administrador termine de cambiar su secreto de administrador.
+    not_configured: Sveltia CMS Additions no está configurado correctamente. Pide ayuda a tu administrador.
+    origin_not_allowed: Este sitio no tiene permiso para usar Sveltia CMS Additions. Pide a tu administrador que lo añada a los dominios permitidos.
+    not_set_up: Sveltia CMS Additions todavía no está conectado a GitHub. Pide a tu administrador que termine la configuración.
+    # A user whose password an admin has reset signs in another way, e.g. with GitHub
+    temporary_password: Se ha restablecido tu contraseña. Inicia sesión con tu nombre de usuario y la contraseña temporal que te ha dado tu administrador y, después, elige una nueva.
+    # {$url} is the URL of the service
+    incompatible: Esta versión de Sveltia CMS no funciona con el servicio de Sveltia CMS Additions en {$url}.
+    unreachable: No se ha podido conectar con Sveltia CMS Additions. Inténtalo de nuevo más tarde.
+    insecure_connection: Sveltia CMS Additions debe servirse a través de HTTPS. Revisa el valor de `base_url` en la configuración del CMS.
+    unexpected: La solicitud a Sveltia CMS Additions ha fallado debido a un error inesperado. Inténtalo de nuevo más tarde.
+
+  # Conversation panel: comments on the entry, kept by Sveltia CMS Additions
+  conversation:
+    title: Conversación
+    refresh: Actualizar la conversación
+    empty: Aún no hay comentarios.
+    # Button above a long conversation, which is loaded from its latest comments
+    show_older: Mostrar comentarios anteriores
+    # Label of the list of comments
+    timeline: Comentarios
+    deleted_user: Usuario eliminado
+    you: Tú
+    edited: editado
+    comment_label: Comentario
+    placeholder: Deja un comentario (Markdown)
+    visible_to_cms_users: Solo visible para los usuarios del CMS
+    send: Comentar
+    options: Opciones del comentario
+    edit: Editar
+    delete: Eliminar
+    save: Guardar
+    delete_confirmation: ¿Quieres eliminar este comentario? Esta acción no se puede deshacer.
+    send_failed: No se ha podido enviar el comentario.
+
+  # Placeholder of an API key or deploy hook field the user has left empty, while an admin of
+  # Sveltia CMS Additions has entered one for everyone
+  provided_by_admin: Lo proporciona tu administrador
+
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
 # {$name} is the signed-in user’s login name
@@ -349,6 +671,10 @@ live_site: Sitio publicado
 git_repository: Repositorio Git
 settings: Ajustes
 
+# Page for the people who look after the CMS, apart from the personal settings: user management
+# and the CMS configuration
+administration: Administración
+
 # Help menu: button aria-labels and section headings
 show_help_menu: Mostrar el menú de ayuda
 # Help section heading in dropdowns and mobile menu
@@ -441,6 +767,10 @@ viewing_x_asset_folder: |
 # Cloud storage service view announcement
 # {$service} is the cloud storage service name, e.g. Uploadcare
 viewing_x_external_location: Ahora estás viendo los recursos en {$service}.
+# Administration page announcements
+viewing_admin_section_list: Ahora estás viendo la lista de secciones de Administración.
+# {$section} is the section label, e.g. Users
+viewing_x_admin_section: Ahora estás viendo la sección “{$section}” de la página de Administración.
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
@@ -586,6 +916,7 @@ readonly_collection: Esta colección es de solo lectura. Puedes ver su contenido
 readonly_entry: Esta entrada es de solo lectura. Puedes verla, pero no puedes realizar cambios.
 readonly_asset_folder: Esta carpeta es de solo lectura. Puedes ver sus recursos, pero no realizar cambios.
 readonly_branch: No tienes permiso para hacer push a la branch “{$branch}”. Puedes ver este contenido, pero no puedes realizar cambios.
+readonly_role: Tienes acceso de solo lectura. Puedes ver el contenido y los recursos, pero no puedes realizar cambios.
 readonly_reference: La entrada es de solo lectura, así que no se puede eliminar la referencia.
 # {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
 cannot_rename_referenced_entry: 'No se puede renombrar esta entrada porque las siguientes entradas de solo lectura hacen referencia a ella por su nombre actual: {$entries}.'
@@ -717,6 +1048,47 @@ edit_x: Editar {$name}
 
 # Asset text editor: switch for line wrapping
 wrap_long_lines: Ajuste de línea automático
+
+# Move assets: dialog for moving assets to another folder in the repository
+move: Mover
+move_asset: Mover recurso
+# Dialog title. {$name} is the asset name when a single asset is moved, and {$count} is the number of
+# assets being moved
+move_assets_title: |
+  .input {$count :integer}
+  .match $count
+    one {{ Mover {$name} }}
+    *   {{ Mover {$count} recursos }}
+# Dialog body text. {$count} is the number of entries that currently use the assets
+select_asset_move_destination: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Selecciona la carpeta de destino. }}
+    one {{ Selecciona la carpeta de destino. También se actualizará una entrada que usa los recursos. }}
+    *   {{ Selecciona la carpeta de destino. También se actualizarán {$count} entradas que usan los recursos. }}
+# Accessible label of the folder tree in the Move dialog
+asset_move_destination: Carpeta de destino
+# Shown when the assets being moved are all in the selected folder already
+assets_already_in_folder: |
+  .input {$count :integer}
+  .match $count
+    one {{ El recurso ya está en esta carpeta. }}
+    *   {{ Los recursos ya están en esta carpeta. }}
+# Shown when files with the same names exist in the selected folder. {$names} is a comma-separated
+# list of file names
+asset_move_conflict: 'Los siguientes archivos ya existen en esta carpeta: {$names}.'
+moving_assets: Moviendo los recursos…
+moving_assets_failed: No se han podido mover los recursos.
+# Warning shown when files have been moved off a cloud storage service, but the originals couldn’t
+# be deleted from it
+asset_move_cleanup_failed: Los archivos se han movido, pero no se han podido eliminar los originales del servicio de almacenamiento.
+# Shown when files on a cloud storage service can’t be renamed or moved, because the entries using
+# them can’t be updated, e.g. for an Open Authoring contributor. {$count} is the number of files
+cannot_change_used_external_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ No se puede cambiar el nombre de este archivo ni moverlo porque no se pueden actualizar las entradas que lo usan. }}
+    *   {{ No se puede cambiar el nombre de estos archivos ni moverlos porque no se pueden actualizar las entradas que los usan. }}
 
 # Rename asset: dialog and validation
 rename_asset: Cambiar el nombre del recurso
@@ -1321,6 +1693,9 @@ deploy_preview:
   view: Ver la vista previa
   # Shown while the site is still being built, with or without a URL to open yet
   building: La vista previa aún se está generando.
+  # Shown when the build failed, so no preview is available. The failure may lie in the site’s own
+  # code rather than the entry, so the editor is told not to assume it’s theirs, and who to ask
+  build_failed: No se ha podido generar la vista previa. No tiene por qué deberse a tus cambios. Si el problema persiste, ponte en contacto con el administrador del sitio.
   # Shown briefly while the CI/CD provider is being queried
   checking: Buscando una vista previa…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
@@ -1375,6 +1750,8 @@ edit_slug_error:
   empty: El slug no puede estar vacío.
   invalid: El slug no puede contener caracteres especiales, incluidas las barras y los espacios.
   duplicate: Este slug ya se usa para otra entrada.
+# {$slug} is the slug filled from the slug template, which a number is added to when another entry uses it
+slug_numbered: El slug “{$slug}” ya lo usa otra entrada, así que se le añadirá un número.
 
 # Entry path editing for nested entries
 # Heading for the parent folder picker shown when the `meta.path` option is enabled
@@ -1532,6 +1909,9 @@ entry_sidebar:
   backlinks:
     title: Enlaces entrantes
     no_entries: Ninguna entrada hace referencia a esta entrada.
+
+  # Tab label of a panel with a count, e.g. of comments. {$title} is the panel title
+  title_with_count: '{$title} ({$count})'
 
 # Status shown next to the Save button while an entry with many new files is being saved
 # {$done} and {$total} are the number of files prepared and to prepare, or the number of commits
@@ -1825,6 +2205,9 @@ assets_dialog:
   photo_credit:
     title: Autoría de la foto
     description: 'Incluye la autoría original si es posible:'
+    # {$field} is the label of the Markdown field the credit is added to
+    insert_to_field: Insertar en {$field}
+    copy_as_markdown: Copiar como Markdown
 
   # Unsaved asset badge
   unsaved: Sin guardar
@@ -1867,6 +2250,7 @@ editor_components:
   alt: Texto alternativo
   title: Título
   link: Enlace
+  caption: Leyenda
 
 # Key-Value field: column headers and validation
 key_value:
@@ -2000,6 +2384,7 @@ config:
     path_outside_root_dir: La ruta “{$path}” sale del directorio raíz, donde el CMS no puede listar archivos.
     oauth_implicit_flow: El método de autenticación configurado (flujo implícito) no es compatible con Sveltia CMS. Usa un <a>método de autenticación</a> diferente en su lugar.
     github_pkce_unsupported: La autorización PKCE aún no es compatible debido a las limitaciones de GitHub. Usa un <a>método de autenticación</a> diferente en su lugar.
+    additions_no_base_url: La opción `base_url` debe ser la URL de tu servicio de Sveltia CMS Additions.
     oauth_no_app_id: No se ha definido el ID de la aplicación OAuth.
     # Don’t localize `open_authoring`, `editorial_workflow` and `preview`
     open_authoring_no_workflow: La opción `open_authoring` requiere el modo de publicación `editorial_workflow` o `preview`. Consulta la <a>documentación</a> para más detalles.
@@ -2487,6 +2872,12 @@ workflow:
   # Error notification when an entry can’t be published because its branch has been committed to
   # since the entry was opened, so what would be published isn’t what was reviewed
   publish_refused_entry_changed: La entrada se ha modificado desde que la abriste. Vuelve a cargar la página para revisar la versión más reciente antes de publicarla.
+  review_on_x: Revisar en {$service}
+  from_fork: Desde un fork
+  fork_entry_editable: Esta entrada procede de una pull request de un colaborador abierta desde “{$fork}”. Tus cambios se guardan en su branch. Revisa la pull request y haz merge en el servicio Git.
+  fork_entry_locked: Esta entrada procede de una pull request de un colaborador abierta desde “{$fork}”. El colaborador no permite que los mantenedores la editen, así que aquí solo se puede ver.
+  fork_not_editable: El colaborador no permite que los mantenedores editen esta pull request.
+  fork_entry_gone: La pull request del colaborador ya no está abierta, así que no se pueden guardar los cambios en ella.
   # Error shown in the save error dialog when an entry can’t be saved for review, because a request
   # the CMS doesn’t show is already open from the branch the entry would be saved to. `{$number}` is
   # the request number, e.g. `#12` on GitHub or `!12` on GitLab. Keep the wording free of Git jargon
@@ -2575,6 +2966,8 @@ categories: Categorías
 
 # Preferences panels
 prefs:
+  account:
+    title: Cuenta
   # API key management feedback messages
   changes:
     api_key_saved: Clave de API guardada.

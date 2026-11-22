@@ -169,6 +169,9 @@ work_with_local_repo_description_no_repo: כשתתבקשו, בחרו את תיק
 work_with_test_repo: עבודה עם מאגר לבדיקה
 # Button label for the test repository when sample content is seeded, e.g. on a demo site
 start_demo: הפעלת הדגמה
+# Shown below the disabled test repository option in a browser that can’t save files to its
+# storage, e.g. Safari before version 26
+test_repo_unsupported_browser: הדפדפן שלכם אינו יכול לשמור את הקבצים של המאגר לבדיקה. עדכנו אותו לגרסה האחרונה או השתמשו בדפדפן אחר.
 
 # Authentication errors
 # Error messages shown during sign-in failures
@@ -193,6 +196,8 @@ sign_in_error:
 backend_unsupported_version: ממשק {$name} דורש את {$name} בגרסה {$version} ומעלה.
 # {$repo} is the repository identifier, typically in owner/repo format
 repository_no_access: אין לכם גישה למאגר „{$repo}”.
+# {$repo} is the repository identifier, typically in owner/repo format
+repository_no_write_access: אין לכם הרשאת כתיבה למאגר „{$repo}”.
 repository_not_found: המאגר „{$repo}” אינו קיים.
 repository_empty: למאגר „{$repo}” אין ענפים.
 # {$repo} is the repository identifier, and {$branch} is the configured branch name
@@ -222,6 +227,7 @@ entry_parse_errors: |
   .match $count
     one {{ אירעה שגיאה בפענוח קובץ של פריט. בדקו את מסוף הדפדפן לפרטים. }}
     *   {{ אירעו שגיאות בפענוח קובצי פריטים. בדקו את מסוף הדפדפן לפרטים. }}
+
 # ==============================================================================
 # Authentication and Account
 # ==============================================================================
@@ -245,6 +251,329 @@ sign_in_with_mobile_instruction: סרקו את הקוד שלמטה בטלפון 
 sign_in_with_link: כניסה באמצעות קישור
 sign_in_with_link_confirmation: הקישור הזה מחבר אתכם כ-{$account} ב{$service} ומעתיק את ההגדרות מהמכשיר שבו נוצר. המשיכו רק אם יצרתם אותו בעצמכם.
 
+# Sign-in with Sveltia CMS Additions, which manages its own user accounts instead of the Git
+# service’s. Don’t localize “Sveltia CMS Additions”
+additions:
+  username: שם משתמש
+  password: סיסמה
+  sign_in: התחברות
+  new_password_title: בחירת סיסמה חדשה
+  new_password_description: התחברתם באמצעות סיסמה זמנית. בחרו סיסמה חדשה כדי להמשיך.
+  new_password: סיסמה חדשה
+  password_too_short: הסיסמה קצרה מדי. השתמשו ב-12 תווים לפחות.
+  change_password: שינוי סיסמה
+  # {$name} is the user’s username, {$role} their role, e.g. Editor
+  signed_in_as_x_with_role: מחוברים כ-{$name} ({$role})
+  link_github: קישור חשבון GitHub
+  link_github_error: קישור חשבון ה-GitHub נכשל
+  current_password: הסיסמה הנוכחית
+  # {$username} is the username filled in from a magic link emailed to the user
+  filled_from_link: שם המשתמש והסיסמה מולאו מתוך קישור. התחברו רק אם „{$username}” הוא שם המשתמש שלכם.
+  change_password_description: תישארו מחוברים כאן, ותנותקו במכשירים האחרים שלכם.
+  password_changed: הסיסמה שלכם שונתה.
+  # The Account settings panel of a Sveltia CMS Additions user
+  account:
+    profile: פרופיל
+    profile_description: השם שלכם מוצג לאנשים אחרים במערכת, למשל בנעילות של פריטים ובתגובות, וגם ב-commits שלכם.
+    username_description: לא ניתן לשנות את שם המשתמש שלכם.
+    email: דוא״ל
+    email_description: הכתובת משמשת ב-commits שאתם מבצעים, כדי ש-GitHub יוכל לקשר אותם לחשבון שלכם. בלעדיה תשמש כתובת ממלאת מקום. רק מנהל יכול לשנות אותה.
+    change_name: שינוי שם
+    name_changed: השם שלכם שונה.
+    password: סיסמה
+    no_password: אתם מתחברים באמצעות GitHub, ולכן אין לכם סיסמה לשנות. מנהל יכול לתת לכם סיסמה על ידי איפוס הסיסמה שלכם.
+  setup:
+    use_admin_secret: שימוש בסוד הניהול
+    title: הגדרת Sveltia CMS Additions
+    secret_description: הזינו את סוד הניהול שהוגדר בהגדרות של שירות Sveltia CMS Additions שלכם. הוא נשמר רק בלשונית הזו במהלך ההגדרה.
+    admin_secret: סוד הניהול
+    continue: המשך
+    back: חזרה להתחברות
+    admin_title: חשבון מנהל
+    admin_create_description: צרו את חשבון המנהל הראשון. תתחברו באמצעותו ותנהלו את שאר המשתמשים.
+    admin_reset_description: כבר קיים חשבון מנהל. כדי לחזור ולהיכנס, אפסו כאן את הסיסמה של מנהל, או צרו מנהל נוסף.
+    admin_saved: חשבון המנהל מוכן. התחברו עם הסיסמה שהזנתם זה עתה.
+    create_admin: יצירת מנהל
+    reset_password: שמירת המנהל
+    github_title: GitHub
+    # {$repo} is the repository, e.g. octocat/site
+    github_description: צרו GitHub App עבור האתר הזה והתקינו אותה במאגר „{$repo}”. GitHub יבקש מכם אישור, ואז יחזיר אתכם לכאן.
+    # {$repo} is the repository, {$app} is the name of the GitHub App
+    github_connected: מחובר למאגר „{$repo}” באמצעות ה-GitHub App „{$app}”.
+    connect_github: התחברות ל-GitHub
+    # {$step} is the number of the current step, {$total} the number of steps
+    step_x_of_y: שלב {$step} מתוך {$total}
+    admin_exists: קיים חשבון מנהל.
+    reset_admin_password: איפוס סיסמת המנהל
+    setup_complete: ההגדרה הושלמה. התחברו עם חשבון מנהל כדי לנהל משתמשים והגדרות. אפשר לחזור לכאן עם סוד הניהול בכל עת.
+    manage_sites: ניהול אתרים אחרים
+    back_to_setup: חזרה
+    sites_title: אתרים אחרים
+    sites_description: השירות הזה יכול לשרת גם אתרים אחרים, ולכל אחד מהם משתמשים, הגדרות ו-GitHub App משלו. הגדירו את „base_url” בתצורת המערכת של אתר לכתובת שלו, ואז הגדירו שם את האתר עם סוד הניהול.
+    no_sites: אין עדיין אתרים אחרים.
+    site_id: מזהה האתר
+    site_id_description: 1 עד 32 אותיות לטיניות קטנות, ספרות ומקפים, למשל „acme”. המזהה מופיע בכתובת האתר ולא ניתן לשנות אותו.
+    site_name_optional: שם (רשות)
+    add_site: הוספת אתר
+    # {$name} is the name of the site
+    site_added: „{$name}” נוסף. הגדירו את „base_url” בתצורת המערכת שלו לכתובת שלו, ואז פתחו שם את אשף ההגדרה.
+    # {$name} is the name of the site
+    copy_site_url: העתקת הכתובת של {$name}
+    delete_site: מחיקת האתר
+    # {$name} is the name of the site
+    delete_site_x: מחיקת {$name}
+    # {$name} is the name of the site, {$id} is its ID
+    delete_site_confirmation: מחיקת „{$name}” תמחק גם את המשתמשים, ההגדרות והתגובות שלו. לא ניתן לבטל פעולה זו. ה-GitHub App תישאר ב-GitHub, ושם אפשר למחוק אותה. הקלידו „{$id}” לאישור.
+    site_id_to_confirm: מזהה האתר לאישור
+    data_key_locked_title: סוד הניהול שונה
+    data_key_locked_description: סוד הניהול שונה, ולכן לא ניתן לקרוא את ההגדרות השמורות. הזינו את הסוד הקודם כדי לשמור אותן, או התחילו מחדש אם הוא אבד.
+    previous_secret: סוד הניהול הקודם
+    unlock: ביטול הנעילה
+    rekey: התחלה מחדש
+    rekey_confirmation: התחלה מחדש תמחק את פרטי הגישה של ה-GitHub App ואת שאר הסודות השמורים, ותנתק את כולם. הסיסמאות יישמרו. להמשיך?
+    result:
+      ok: GitHub מחובר. אפשר להתחבר עכשיו.
+      github_app_not_created: ה-GitHub App לא נוצרה. השתמשו בסוד הניהול כדי לנסות שוב.
+      github_app_not_installed: ה-GitHub App לא הותקנה. השתמשו בסוד הניהול כדי לנסות שוב.
+      github_wrong_account: ה-GitHub App הותקנה בחשבון אחר מזה של המאגר. התקינו אותה בחשבון של בעלי המאגר ונסו שוב.
+      github_repository_not_included: ה-GitHub App הותקנה ללא גישה למאגר. העניקו לה גישה למאגר ב-GitHub ונסו שוב.
+      unexpected: ההתחברות ל-GitHub נכשלה בשל שגיאה בלתי צפויה. נסו שוב.
+  locks:
+    # {$name} is the name of the person editing the entry, {$time} when they started
+    being_edited: הפריט הזה בעריכה של {$name} מאז {$time}, ולכן אפשר רק לצפות בו.
+    being_edited_by_you: אתם עורכים את הפריט הזה בלשונית אחרת, ולכן כאן אפשר רק לצפות בו.
+    # {$name} is the name of the person who took over the entry
+    taken_over: העריכה של הפריט הזה עברה אל {$name}, ולכן עכשיו אפשר רק לצפות בו.
+    take_over: השתלטות על העריכה
+    unavailable: נעילת פריטים אינה זמינה, ולכן ייתכן שמישהו אחר עורך את הפריט הזה באותו זמן.
+    # {$name} is the name of the person editing the entry
+    being_edited_by_x: בעריכה על ידי {$name}
+    # {$names} is a list of the other people who have the entry open in the editor
+    also_open_by_x: פתוח גם אצל {$names}
+    # {$names} is a list of the people who have the entry open, besides anyone editing it
+    open_by_x: פתוח אצל {$names}
+  users:
+    title: משתמשים
+    add_user: הוספת משתמש
+    edit_user: עריכת משתמש
+    add: הוספה
+    name: שם
+    username_description: לא ניתן לשנות שם משתמש לאחר שהמשתמש נוסף.
+    email_optional: דוא״ל (רשות)
+    email_description: הכתובת משמשת ב-commits שהאדם הזה מבצע, כדי ש-GitHub יוכל לקשר אותם לחשבון שלו. בלעדיה תשמש כתובת ממלאת מקום.
+    role: תפקיד
+    status: סטטוס
+    last_sign_in: התחברות אחרונה
+    sign_in_column: התחברות
+    methods:
+      password: סיסמה
+      # {$login} is a GitHub username
+      github: GitHub ({$login})
+    actions: פעולות
+    you: (אתם)
+    never: אף פעם
+    roles:
+      admin: מנהל
+      editor: עורך
+      viewer: צופה
+    statuses:
+      active: פעיל
+      temporary_password: סיסמה זמנית
+      waiting_for_sign_in: ממתין להתחברות ראשונה
+      disabled: מושבת
+    # {$name} is the user’s name
+    show_options_for_x: הצגת אפשרויות עבור {$name}
+    options: אפשרויות משתמש
+    reset_password: איפוס סיסמה
+    sign_out_everywhere: התנתקות מכל המכשירים
+    enable: הפעלת המשתמש
+    disable: השבתת המשתמש
+    delete: מחיקת המשתמש
+    # {$name} is the user’s name
+    reset_password_confirmation: לתת ל-{$name} סיסמה זמנית חדשה? החשבון ינותק מכל המכשירים, ובהתחברות הבאה יהיה צריך לבחור סיסמה חדשה.
+    delete_confirmation: למחוק את {$name}? לא ניתן לבטל פעולה זו.
+    temporary_password: סיסמה זמנית
+    # {$name} is the user’s name
+    temporary_password_description: מסרו את שם המשתמש והסיסמה הזמנית האלה ל-{$name}. הסיסמה לא תוצג שוב, ובהתחברות יהיה צריך לבחור סיסמה אישית.
+    copy_username: העתקת שם המשתמש
+    copy_password: העתקת הסיסמה
+    # {$name} is the user’s name
+    email_credentials: שליחה בדוא״ל אל {$name}
+    # The emails the admin sends from their own email app, with the sign-in details: `new` to a user
+    # who has just been added, `reset` to one whose password has been reset. Each line is a string of
+    # its own, as line breaks aren’t kept in these files
+    credentials_email:
+      # {$name} is the user’s name
+      greeting: שלום {$name},
+      # {$url} is a link to the CMS that fills in the username and the temporary password
+      sign_in_link: 'קישור להתחברות: {$url}'
+      # {$username} is the username
+      username: 'שם משתמש: {$username}'
+      # {$password} is the temporary password
+      password: 'סיסמה זמנית: {$password}'
+      new:
+        # {$app} is the name of the CMS
+        subject: פרטי ההתחברות שלכם ל-{$app}
+        # {$app} is the name of the CMS
+        message: עכשיו אפשר להתחבר ל-{$app}. פתחו את הקישור שלמטה, שממלא את שם המשתמש והסיסמה הזמנית שלכם, ובחרו סיסמה משלכם בעת ההתחברות.
+      reset:
+        # {$app} is the name of the CMS
+        subject: הסיסמה שלכם ל-{$app} אופסה
+        # {$app} is the name of the CMS
+        message: הסיסמה שלכם ל-{$app} אופסה, ונותקתם מכל המכשירים. פתחו את הקישור שלמטה, שממלא את שם המשתמש והסיסמה הזמנית שלכם, ובחרו סיסמה חדשה בעת ההתחברות.
+    allowed_domains: דומיינים מורשים
+    allowed_domains_description: האתרים שיכולים להשתמש ב-Sveltia CMS Additions, שם מארח אחד בכל שורה. תו כללי (*) מתאים לכל תת-דומיין, למשל *.example.com. ציינו שמות מארח מדויקים ככל האפשר. הרשימה חלה על האתר הזה בלבד, גם אם אותו מופע של Sveltia CMS Additions משרת גם אתרים אחרים.
+    save_allowed_domains: שמירת הדומיינים המורשים
+    allowed_domains_saved: הדומיינים המורשים נשמרו.
+    sign_in_tab: התחברות
+    # {$latest} is the newest version of Sveltia CMS Additions, {$current} the one in use
+    update_available: גרסה {$latest} של Sveltia CMS Additions זמינה. אתם משתמשים בגרסה {$current}.
+    release_notes: מה חדש
+    github_username_optional: שם משתמש ב-GitHub (רשות)
+    github_username_description: כשמוגדר שם משתמש ב-GitHub, המשתמש מתחבר עם חשבון ה-GitHub הזה במקום עם סיסמה.
+    # {$name} is the user’s name
+    github_required: החשבון של {$name} מתחבר רק באמצעות GitHub, ולכן לא ניתן להסיר את שם המשתמש ב-GitHub. אפסו קודם את הסיסמה כדי לתת לחשבון סיסמה להתחברות.
+    adopt: אימוץ החשבון
+    sign_in:
+      github: אפשור התחברות באמצעות GitHub
+      github_description: המשתמשים מתחברים עם חשבון ה-GitHub שלהם ומקבלים אסימון GitHub משלהם, כך שהשינויים שלהם נרשמים בשמם. מנהל מוסיף אותם קודם, עם שם המשתמש שלהם ב-GitHub, אלא אם כלל הרשמה חל עליהם.
+      # Shown when signing in with GitHub is being turned off while {$count} users can only sign in
+      # with it
+      github_only_warning: |
+        .input {$count :integer}
+        .match $count
+          one {{ משתמש אחד יכול להתחבר רק באמצעות GitHub, ולא יוכל להתחבר לאחר הכיבוי, עד שתאפסו את הסיסמה שלו. }}
+          two {{ שני משתמשים יכולים להתחבר רק באמצעות GitHub, ולא יוכלו להתחבר לאחר הכיבוי, עד שתאפסו את הסיסמאות שלהם. }}
+          *   {{ {$count} משתמשים יכולים להתחבר רק באמצעות GitHub, ולא יוכלו להתחבר לאחר הכיבוי, עד שתאפסו את הסיסמאות שלהם. }}
+      rules: כללי הרשמה
+      rules_description: חברי ארגון ה-GitHub שבו האפליקציה מותקנת יכולים להתחבר גם בלי שהוסיפו אותם קודם. החשבון שלהם מקבל את התפקיד שתבחרו, ומושבת אם הם עוזבים את הארגון, אלא אם תאמצו אותו.
+      org: ארגון GitHub
+      add_rule: הוספת כלל
+      # {$org} is the name of a GitHub organization
+      remove_rule: הסרת הכלל עבור {$org}
+      # For a rule whose organization hasn’t been entered yet
+      remove_empty_rule: הסרת הכלל
+      save: שמירת הגדרות ההתחברות
+      saved: הגדרות ההתחברות נשמרו.
+    domains_tab: דומיינים
+    github_tab: GitHub
+    github:
+      app: GitHub App
+      repository: מאגר
+      not_installed: לא מותקנת
+      statuses:
+        ok: האפליקציה פועלת.
+        not_registered: עדיין לא הוגדרה GitHub App. הפעילו את אשף ההגדרה מעמוד ההתחברות עם סוד הניהול.
+        key_missing: המפתח הפרטי של האפליקציה אבד כשסוד הניהול הוחלף. צרו מפתח פרטי חדש בהגדרות האפליקציה ב-GitHub והעלו אותו למטה.
+        key_rejected: GitHub אינו מקבל את המפתח הפרטי של האפליקציה, למשל מפני שהוא נמחק שם. צרו מפתח פרטי חדש בהגדרות האפליקציה ב-GitHub והעלו אותו למטה.
+        not_installed: האפליקציה אינה מותקנת במאגר. התקינו אותה מחדש מעמוד האפליקציה ב-GitHub, או הפעילו את אשף ההגדרה.
+        suspended: ההתקנה של האפליקציה מושעית. בטלו את ההשעיה בהגדרות ההתקנה ב-GitHub.
+        unreachable: לא ניתן היה להתחבר ל-GitHub. נסו שוב מאוחר יותר.
+      check_again: בדיקה שוב
+      # {$branch} is the name of the repository’s default branch
+      branch_protected: ערכות כללים מגנות על הענף „{$branch}” מפני force push ומחיקה.
+      branch_bypassed: ערכות כללים מגנות על הענף „{$branch}”, אבל האפליקציה יכולה לעקוף אותן, כך שעורכים עדיין יוכלו לבצע בו force push או למחוק אותו. הסירו את האפליקציה מרשימות העקיפה של ערכות הכללים האלה.
+      branch_unprotected: אף ערכת כללים אינה מגנה על הענף „{$branch}” מפני force push ומחיקה, כך שעורכים יוכלו לשכתב את ההיסטוריה שלו או למחוק אותו. הוסיפו בהגדרות המאגר ערכת כללים שחוסמת את שניהם, בלי האפליקציה ברשימת העקיפה שלה.
+      repository_rules: פתיחת כללי המאגר
+      private_key: מפתח פרטי
+      private_key_description: כדי להחליף את המפתח הפרטי, צרו מפתח חדש בהגדרות האפליקציה ב-GitHub, ואז העלו את קובץ ה-.pem שיורד. לאחר מכן מחקו שם את המפתח הישן.
+      app_settings: פתיחת הגדרות האפליקציה
+      upload_private_key: העלאת מפתח פרטי
+      replace_private_key: החלפת המפתח הפרטי
+      private_key_summary: השירות משתמש במפתח הפרטי של האפליקציה כדי לקבל גישה למאגר ב-GitHub. החליפו אותו אם ייתכן שהוא נחשף.
+      private_key_replaced: המפתח הפרטי הוחלף.
+      commit_author: מחבר ה-commit
+      commit_author_description: בחרו מי יופיע כמחבר השינויים שנשמרים במערכת. GitHub חותם רק על commits שהאפליקציה היא המחברת שלהם, ולכן בחרו באפליקציה אם ערכת כללים דורשת commits חתומים. שאר המשתמשים יקבלו את השינוי בתוך שעה.
+      commit_author_user: האדם שביצע את השינוי
+      commit_author_bot: ה-GitHub App, עם האדם כמחבר שותף
+      commit_author_saved: מחבר ה-commit נשמר.
+  # Administration section for the API keys and the deploy hook an admin shares with everyone
+  credentials:
+    title: פרטי גישה
+    description: מפתחות ה-API והוק הפרסום שמוזנים כאן משמשים את כל מי שמתחבר, אלא אם הזין מפתחות משלו בהגדרות. כל מי שמחובר למערכת יכול לקרוא אותם, ולכן הזינו רק מפתחות שאתם מוכנים לשתף עם הצוות שלכם.
+    save: שמירת פרטי הגישה
+    saved: פרטי הגישה נשמרו.
+    # {$service} is the service name, e.g. DeepL
+    invalid_key: מפתח ה-API עבור {$service} נראה שגוי.
+  error:
+    unauthenticated: פג תוקף ההתחברות שלכם. התחברו שוב.
+    wrong_admin_secret: סוד הניהול שגוי.
+    admin_secret_missing: סוד הניהול אינו מוגדר בהגדרות של שירות Sveltia CMS Additions.
+    admin_secret_too_short: סוד הניהול שהוגדר בהגדרות של שירות Sveltia CMS Additions קצר מדי. השתמשו ב-32 תווים אקראיים לפחות.
+    wrong_previous_secret: סוד הניהול הקודם שגוי.
+    not_an_admin: המשתמש הזה אינו מנהל. בחרו שם משתמש אחר.
+    invalid_username: שם משתמש מכיל 3 עד 30 אותיות לטיניות קטנות, ספרות, נקודות, מקפים או קווים תחתונים.
+    last_admin: חייב להיות מנהל אחד לפחות.
+    cannot_disable_self: לא ניתן להשבית את החשבון שלכם.
+    cannot_delete_self: לא ניתן למחוק את החשבון שלכם.
+    username_taken: שם המשתמש הזה כבר שייך למשתמש אחר.
+    email_taken: כתובת הדוא״ל הזו כבר שייכת למשתמש אחר.
+    invalid_name: השם חייב להכיל 1 עד 100 תווים.
+    invalid_email: כתובת הדוא״ל אינה תקינה.
+    invalid_domains: אחד הדומיינים המורשים אינו שם מארח תקין.
+    current_origin_removed: הדומיינים המורשים חייבים לכלול את האתר שבו אתם משתמשים כעת.
+    forbidden: רק מנהלים יכולים לבצע פעולה זו.
+    invalid_credentials: שם המשתמש או הסיסמה שגויים.
+    user_disabled: החשבון הזה מושבת. פנו למנהל לעזרה.
+    too_many_attempts: יותר מדי ניסיונות. נסו שוב מאוחר יותר.
+    wrong_password: הסיסמה הנוכחית שגויה.
+    same_password: בחרו סיסמה חדשה ששונה מהסיסמה הנוכחית.
+    invalid_github_login: זה אינו שם משתמש תקין ב-GitHub.
+    github_user_not_found: אין משתמש GitHub בשם הזה.
+    github_account_taken: משתמש אחר כבר מתחבר עם חשבון ה-GitHub הזה.
+    invalid_rules: כלל הרשמה מחייב שם של ארגון GitHub.
+    invalid_rule_role: כלל הרשמה יכול להעניק רק את התפקיד עורך או צופה.
+    rule_org_not_installed: ה-GitHub App חייבת להיות מותקנת בארגון של כלל ההרשמה.
+    not_invited: אין לכם חשבון כאן. בקשו מהמנהל להוסיף אתכם.
+    method_disabled: ההתחברות באמצעות GitHub כבויה.
+    access_denied: ההתחברות בוטלה.
+    github_app_not_set_up: Sveltia CMS Additions עדיין אינו מחובר ל-GitHub. בקשו מהמנהל להשלים את ההגדרה.
+    invalid_tenant_id: מזהה האתר חייב להכיל 1 עד 32 אותיות לטיניות קטנות, ספרות ומקפים, ואינו יכול להיות „default”.
+    invalid_tenant_name: שם האתר יכול להכיל עד 100 תווים.
+    tenant_exists: כבר קיים אתר עם המזהה הזה.
+    github_app_missing: עדיין לא הוגדרה GitHub App.
+    invalid_private_key: הקובץ אינו מפתח פרטי תקין.
+    private_key_mismatch: GitHub אינו מקבל את המפתח הפרטי הזה עבור האפליקציה. ודאו שיצרתם אותו בהגדרות האפליקציה.
+    github_error: GitHub החזיר שגיאה. נסו שוב מאוחר יותר.
+    data_key_locked: לא ניתן להשתמש ב-Sveltia CMS Additions עד שמנהל ישלים את שינוי סוד הניהול.
+    not_configured: Sveltia CMS Additions אינו מוגדר כראוי. פנו למנהל לעזרה.
+    origin_not_allowed: האתר הזה אינו מורשה להשתמש ב-Sveltia CMS Additions. בקשו מהמנהל להוסיף אותו לדומיינים המורשים.
+    not_set_up: Sveltia CMS Additions עדיין אינו מחובר ל-GitHub. בקשו מהמנהל להשלים את ההגדרה.
+    # A user whose password an admin has reset signs in another way, e.g. with GitHub
+    temporary_password: הסיסמה שלכם אופסה. התחברו עם שם המשתמש שלכם והסיסמה הזמנית שקיבלתם מהמנהל, ואז בחרו סיסמה חדשה.
+    # {$url} is the URL of the service
+    incompatible: הגרסה הזו של Sveltia CMS אינה עובדת עם שירות Sveltia CMS Additions בכתובת {$url}.
+    unreachable: לא ניתן היה להתחבר ל-Sveltia CMS Additions. נסו שוב מאוחר יותר.
+    insecure_connection: יש להגיש את Sveltia CMS Additions דרך HTTPS. בדקו את `base_url` בתצורת המערכת.
+    unexpected: הבקשה ל-Sveltia CMS Additions נכשלה בשל שגיאה בלתי צפויה. נסו שוב מאוחר יותר.
+
+  # Conversation panel: comments on the entry, kept by Sveltia CMS Additions
+  conversation:
+    title: שיחה
+    refresh: רענון השיחה
+    empty: אין עדיין תגובות.
+    # Button above a long conversation, which is loaded from its latest comments
+    show_older: הצגת תגובות ישנות יותר
+    # Label of the list of comments
+    timeline: תגובות
+    deleted_user: משתמש שנמחק
+    you: אתם
+    edited: נערך
+    comment_label: תגובה
+    placeholder: כתבו תגובה (Markdown)
+    visible_to_cms_users: גלוי למשתמשי המערכת בלבד
+    send: שליחת תגובה
+    options: אפשרויות התגובה
+    edit: עריכה
+    delete: מחיקה
+    save: שמירה
+    delete_confirmation: למחוק את התגובה הזו? לא ניתן לבטל פעולה זו.
+    send_failed: לא ניתן היה לשלוח את התגובה.
+
+  # Placeholder of an API key or deploy hook field the user has left empty, while an admin of
+  # Sveltia CMS Additions has entered one for everyone
+  provided_by_admin: סופק על ידי מנהל המערכת
+
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
 # {$name} is the signed-in user’s login name
@@ -252,6 +581,14 @@ signed_in_as_x: מחוברים כ-{$name}
 working_with_local_repo: עובדים עם מאגר מקומי
 working_with_test_repo: עובדים עם מאגר לבדיקה
 working_in_demo_mode: מצב הדגמה
+
+# Demo welcome dialog: shown once after signing in to a demo site, where the test repository is
+# seeded with sample content and the changes are only stored in the browser
+demo_welcome:
+  title: ברוכים הבאים להדגמה של Sveltia CMS
+  description: אתם מוזמנים לחקור את המערכת ולערוך את התוכן לדוגמה. השינויים שלכם נשמרים רק בדפדפן הזה. שום דבר לא מתפרסם ברשת, ואף אחד אחר לא יכול לראות אותם.
+  reset_hint: כדי להתחיל מחדש עם התוכן המקורי, בחרו „מחיקת כל הנתונים” תחת הגדרות > ניהול נתונים.
+  button_label: התחלה
 
 # Account menu: action items for sign-out and app installation
 sign_out: התנתקות
@@ -350,6 +687,10 @@ live_site: האתר החי
 git_repository: מאגר Git
 settings: הגדרות
 
+# Page for the people who look after the CMS, apart from the personal settings: user management
+# and the CMS configuration
+administration: ניהול
+
 # Help menu: button aria-labels and section headings
 show_help_menu: הצגת תפריט העזרה
 # Help section heading in dropdowns and mobile menu
@@ -444,6 +785,10 @@ viewing_x_asset_folder: |
 # Cloud storage service view announcement
 # {$service} is the cloud storage service name, e.g. Uploadcare
 viewing_x_external_location: אלה קובצי המדיה ב{$service}.
+# Administration page announcements
+viewing_admin_section_list: זוהי רשימת האזורים בעמוד הניהול.
+# {$section} is the section label, e.g. Users
+viewing_x_admin_section: זהו האזור „{$section}” בעמוד הניהול.
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
@@ -588,12 +933,14 @@ creating_entries_nearing_quota: |
     *   one {{ האוסף הזה מתקרב למכסה של {$quota} פריטים. אפשר ליצור עוד פריט אחד בלבד. }}
     *   two {{ האוסף הזה מתקרב למכסה של {$quota} פריטים. אפשר ליצור עוד שני פריטים בלבד. }}
     *   *   {{ האוסף הזה מתקרב למכסה של {$quota} פריטים. אפשר ליצור עוד {$remaining} פריטים בלבד. }}
+
 # Read-only restrictions set with the `readonly` option: advisory messages
 readonly_cms: המערכת במצב קריאה בלבד. אפשר לצפות בתוכן ובקובצי המדיה אך לא לבצע שינויים.
 readonly_collection: האוסף הזה לקריאה בלבד. אפשר לצפות בתוכן שלו אך לא לבצע שינויים.
 readonly_entry: הפריט הזה לקריאה בלבד. אפשר לצפות בו אך לא לבצע שינויים.
 readonly_asset_folder: התיקייה הזו לקריאה בלבד. אפשר לצפות בקובצי המדיה שבה אך לא לבצע שינויים.
 readonly_branch: אין לכם הרשאה לדחוף לענף „{$branch}”. אפשר לצפות בתוכן אך לא לבצע שינויים.
+readonly_role: יש לכם הרשאת צפייה בלבד. אפשר לצפות בתוכן ובקובצי המדיה אך לא לבצע שינויים.
 readonly_reference: הפריט לקריאה בלבד, ולכן לא ניתן להסיר את ההפניה.
 # {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
 cannot_rename_referenced_entry: 'לא ניתן לשנות את שם הפריט, מפני שהפריטים הבאים, שהם לקריאה בלבד, מפנים אליו בשמו הנוכחי: {$entries}.'
@@ -638,6 +985,7 @@ viewing_asset_search_results: |
     one {{ אלה תוצאות החיפוש עבור „{$terms}”. נמצא קובץ אחד. }}
     two {{ אלה תוצאות החיפוש עבור „{$terms}”. נמצאו שני קבצים. }}
     *   {{ אלה תוצאות החיפוש עבור „{$terms}”. נמצאו {$count} קבצים. }}
+
 # Result count labels
 # Used in search result headings to show counts
 # {$count} is the number of matching entries
@@ -656,6 +1004,7 @@ x_assets: |
     one {{ קובץ אחד }}
     two {{ שני קבצים }}
     *   {{ {$count} קבצים }}
+
 # Empty state messages
 no_files_found: לא נמצאו קבצים.
 no_entries_found: לא נמצאו פריטים.
@@ -730,6 +1079,49 @@ edit_x: עריכת {$name}
 # Asset text editor: switch for line wrapping
 wrap_long_lines: גלישת שורות ארוכות
 
+# Move assets: dialog for moving assets to another folder in the repository
+move: העברה
+move_asset: העברת קובץ המדיה
+# Dialog title. {$name} is the asset name when a single asset is moved, and {$count} is the number of
+# assets being moved
+move_assets_title: |
+  .input {$count :integer}
+  .match $count
+    one {{ העברת {$name} }}
+    two {{ העברת שני קובצי מדיה }}
+    *   {{ העברת {$count} קובצי מדיה }}
+# Dialog body text. {$count} is the number of entries that currently use the assets
+select_asset_move_destination: |
+  .input {$count :integer}
+  .match $count
+    0   {{ בחרו את תיקיית היעד. }}
+    one {{ בחרו את תיקיית היעד. גם פריט אחד שמשתמש בקובצי המדיה יתעדכן. }}
+    two {{ בחרו את תיקיית היעד. גם שני פריטים שמשתמשים בקובצי המדיה יתעדכנו. }}
+    *   {{ בחרו את תיקיית היעד. גם {$count} פריטים שמשתמשים בקובצי המדיה יתעדכנו. }}
+# Accessible label of the folder tree in the Move dialog
+asset_move_destination: תיקיית היעד
+# Shown when the assets being moved are all in the selected folder already
+assets_already_in_folder: |
+  .input {$count :integer}
+  .match $count
+    one {{ קובץ המדיה כבר נמצא בתיקייה הזו. }}
+    *   {{ קובצי המדיה כבר נמצאים בתיקייה הזו. }}
+# Shown when files with the same names exist in the selected folder. {$names} is a comma-separated
+# list of file names
+asset_move_conflict: 'הקבצים הבאים כבר קיימים בתיקייה הזו: {$names}.'
+moving_assets: מעביר את קובצי המדיה…
+moving_assets_failed: לא ניתן להעביר את קובצי המדיה.
+# Warning shown when files have been moved off a cloud storage service, but the originals couldn’t
+# be deleted from it
+asset_move_cleanup_failed: הקבצים הועברו, אך לא ניתן היה למחוק את הקבצים המקוריים משירות האחסון.
+# Shown when files on a cloud storage service can’t be renamed or moved, because the entries using
+# them can’t be updated, e.g. for an Open Authoring contributor. {$count} is the number of files
+cannot_change_used_external_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ לא ניתן לשנות את שם הקובץ הזה או להעביר אותו, מפני שלא ניתן לעדכן את הפריטים שמשתמשים בו. }}
+    *   {{ לא ניתן לשנות את שמות הקבצים האלה או להעביר אותם, מפני שלא ניתן לעדכן את הפריטים שמשתמשים בהם. }}
+
 # Rename asset: dialog and validation
 rename_asset: שינוי שם קובץ המדיה
 # {$name} is the current asset name
@@ -750,6 +1142,8 @@ enter_new_name_for_asset_error:
   duplicate: שם הקובץ הזה כבר משמש קובץ מדיה אחר.
   # A name starting with a dot hides the file, which the CMS wouldn’t list any more
   leading_dot: שם הקובץ אינו יכול להתחיל בנקודה.
+  # The name of a file next to the asset that isn’t an asset, like an entry file
+  file_duplicate: קובץ אחר בשם הזה כבר קיים כאן.
   # The name of a folder next to the file
   folder_duplicate: תיקייה בשם הזה כבר קיימת כאן.
 # Shown while renaming a file whose name will be changed on saving, e.g. by the `slugify_filename`
@@ -802,6 +1196,7 @@ drop_image_files_or: |
   .match $count
     one {{ גררו קובץ תמונה לכאן או }}
     *   {{ גררו קובצי תמונה לכאן או }}
+
 # File picker and clipboard actions used by upload controls
 browse: עיון
 # Generic clipboard paste action used by non-image file fields
@@ -820,6 +1215,7 @@ drop_files_here: |
   .match $count
     one {{ גררו קובץ לכאן }}
     *   {{ גררו קבצים לכאן }}
+
 # File type validation errors
 unsupported_file_type: סוג קובץ שאינו נתמך
 # {$type} is the expected asset type label, such as image or document
@@ -833,6 +1229,7 @@ choose_files: |
   .match $count
     one {{ בחירת קובץ }}
     *   {{ בחירת קבצים }}
+
 # ==============================================================================
 # Delete Confirmations
 # ==============================================================================
@@ -884,6 +1281,7 @@ checking_asset_references_failed: |
   .match $count
     one {{ לא ניתן לבדוק אילו פריטים משתמשים בקובץ המדיה הזה. סגרו את החלון ונסו שוב. }}
     *   {{ לא ניתן לבדוק אילו פריטים משתמשים בקובצי המדיה האלה. סגרו את החלון ונסו שוב. }}
+
 # Delete entries: dialog titles and confirmation messages
 # {$count} is the number of entries targeted by the action
 delete_entries: |
@@ -935,6 +1333,7 @@ cannot_delete_referenced_entries: |
   .match $count
     one {{ לא ניתן למחוק את הפריט הזה, מפני שהשדות הבאים בפריטים אחרים לא יהיו תקינים בלעדיו. עדכנו קודם את הפריטים האלה. }}
     *   {{ לא ניתן למחוק את הפריטים האלה, מפני שהשדות הבאים בפריטים אחרים לא יהיו תקינים בלעדיהם. עדכנו קודם את הפריטים האלה. }}
+
 # ==============================================================================
 # Entry Reordering
 # ==============================================================================
@@ -975,6 +1374,7 @@ bulk_edit_count: |
     one {{ שינוי אחד }}
     two {{ שני שינויים }}
     *   {{ {$count} שינויים }}
+
 # Bulk edit error messages
 bulk_edit_invalid: חלק מהערכים אינם תקינים. תקנו את השדות המסומנים ונסו שוב.
 saving_bulk_edits_failed: שמירת השינויים נכשלה. נסו שוב.
@@ -994,6 +1394,7 @@ processing_files: |
   .match $count
     one {{ מעבד קובץ. זה עשוי לקחת זמן. }}
     *   {{ מעבד קבצים. זה עשוי לקחת זמן. }}
+
 # Uploading section aria-label
 uploading_files: מעלה קבצים
 
@@ -1010,6 +1411,7 @@ confirm_uploading_files: |
     one {{ הקובץ הזה יישמר בתיקייה „{$folder}”: }}
     two {{ שני הקבצים האלה יישמרו בתיקייה „{$folder}”: }}
     *   {{ {$count} הקבצים האלה יישמרו בתיקייה „{$folder}”: }}
+
 # File size validation
 # Warning section for files exceeding size limits
 oversized_files: קבצים גדולים מדי
@@ -1019,6 +1421,7 @@ warning_oversized_files: |
   .match $count
     one {{ לא ניתן להעלות את הקובץ הזה מפני שהוא חורג מהגודל המרבי, {$size}. הקטינו אותו או בחרו קובץ אחר. }}
     *   {{ לא ניתן להעלות את הקבצים האלה מפני שהם חורגים מהגודל המרבי, {$size}. הקטינו אותם או בחרו קבצים אחרים. }}
+
 # File integrity validation
 # Warning section for files that cannot be decoded
 invalid_files: קבצים לא תקינים
@@ -1042,6 +1445,7 @@ warning_unsupported_image_files: |
   .match $count
     one {{ לא ניתן להעלות את הקובץ הזה מפני שמתקבלת רק תמונה מהסוגים הבאים: {$types}. }}
     *   {{ לא ניתן להעלות את הקבצים האלה מפני שמתקבלות רק תמונות מהסוגים הבאים: {$types}. }}
+
 # File format validation when replacing an asset
 # Warning section for replacement files that are in a different format
 mismatched_files: קבצים שאינם תואמים
@@ -1051,6 +1455,7 @@ warning_mismatched_files: |
   .match $count
     one {{ הקובץ הזה אינו יכול להחליף את „{$name}” מפני שהוא בפורמט אחר. המירו אותו לאותו פורמט ונסו שוב. }}
     *   {{ הקבצים האלה אינם יכולים להחליף את „{$name}” מפני שהם בפורמט אחר. המירו אותם לאותו פורמט ונסו שוב. }}
+
 # File name conflict resolution
 # {$count} is the number of conflicting file names in the target folder
 file_name_conflict_confirmation: |
@@ -1145,6 +1550,7 @@ entries_deleted: |
     one {{ הפריט נמחק. }}
     two {{ שני פריטים נמחקו. }}
     *   {{ {$count} פריטים נמחקו. }}
+
 # Asset operations
 # {$count} is the number of assets or asset-derived values affected by the operation
 assets_saved: |
@@ -1261,6 +1667,9 @@ edit_singleton_announcement: אתם עורכים את הקובץ „{$file}”.
 # Shown when CI skip is enabled/disabled
 save_and_publish: שמירה ופרסום
 save_without_publishing: שמירה בלי לפרסם
+# Shown disabled in place of `save_and_publish` while entries created or edited from a Relation
+# field are in a collection whose review can’t be skipped with the `direct_publish` option
+save_and_publish_needs_review: שמירה ופרסום (פריטים קשורים דורשים בדיקה)
 
 # Editor options menu
 show_editor_options: הצגת אפשרויות העורך
@@ -1341,6 +1750,9 @@ deploy_preview:
   view: צפייה בתצוגה מקדימה
   # Shown while the site is still being built, with or without a URL to open yet
   building: התצוגה המקדימה עדיין נבנית.
+  # Shown when the build failed, so no preview is available. The failure may lie in the site’s own
+  # code rather than the entry, so the editor is told not to assume it’s theirs, and who to ask
+  build_failed: לא ניתן היה לבנות את התצוגה המקדימה. הבעיה לא בהכרח נגרמה מהשינויים שלכם. אם היא נמשכת, פנו למנהל האתר.
   # Shown briefly while the CI/CD provider is being queried
   checking: מחפש תצוגה מקדימה…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
@@ -1395,6 +1807,8 @@ edit_slug_error:
   empty: המזהה בכתובת אינו יכול להיות ריק.
   invalid: המזהה בכתובת אינו יכול להכיל תווים מיוחדים, ובכללם לוכסנים ורווחים.
   duplicate: המזהה הזה כבר משמש פריט אחר.
+# {$slug} is the slug filled from the slug template, which a number is added to when another entry uses it
+slug_numbered: המזהה בכתובת „{$slug}” כבר משמש פריט אחר, ולכן יתווסף אליו מספר.
 
 # Entry path editing for nested entries
 # Heading for the parent folder picker shown when the `meta.path` option is enabled
@@ -1441,6 +1855,7 @@ editor:
         one {{ שדה אחד הועתק מ{$source}. }}
         two {{ שני שדות הועתקו מ{$source}. }}
         *   {{ {$count} שדות הועתקו מ{$source}. }}
+
 # ==============================================================================
 # Field Validation
 # ==============================================================================
@@ -1471,6 +1886,7 @@ validation:
         one {{ יש להוסיף פריט אחד לפחות. }}
         two {{ יש להוסיף שני פריטים לפחות. }}
         *   {{ יש להוסיף {$min} פריטים לפחות. }}
+
   # Maximum value/count exceeded
   range_overflow:
     # {$max} is the maximum allowed value, already formatted for the input type
@@ -1492,12 +1908,12 @@ validation:
         one {{ אי אפשר להוסיף יותר מפריט אחד. }}
         two {{ אי אפשר להוסיף יותר משני פריטים. }}
         *   {{ אי אפשר להוסיף יותר מ-{$max} פריטים. }}
+
   # String length constraints
   # {$min :integer} and {$max :integer} are character-count limits
-  too_short: |
-    יש להזין לפחות {$min} תווים.
-  too_long: |
-    אפשר להזין עד {$max} תווים.
+  too_short: יש להזין לפחות {$min} תווים.
+  too_long: אפשר להזין עד {$max} תווים.
+
   # Type validation errors
   type_mismatch:
     number: הזינו מספר.
@@ -1506,6 +1922,10 @@ validation:
 
   # Value used for the same field in another entry of the collection
   value_not_unique: הערך הזה כבר משמש פריט אחר.
+  # Key of a keyed List field item used for another item of the same list
+  key_not_unique: המפתח הזה כבר משמש פריט אחר.
+  # Key of a keyed List field item that is a whole number, which doesn’t keep its order in a map
+  key_numeric: המפתח אינו יכול להיות מספר שלם, מפני שהפריטים יאבדו את הסדר שלהם.
 
   # Custom field validation error
   invalid_value: ערך לא תקין.
@@ -1544,6 +1964,16 @@ entry_sidebar:
   backlinks:
     title: הפניות נכנסות
     no_entries: אף פריט אינו מפנה לפריט הזה.
+
+  # Tab label of a panel with a count, e.g. of comments. {$title} is the panel title
+  title_with_count: '{$title} ({$count})'
+
+# Status shown next to the Save button while an entry with many new files is being saved
+# {$done} and {$total} are the number of files prepared and to prepare, or the number of commits
+# made and the estimated number of commits in all
+save_progress:
+  preparing: 'מכין קבצים: {$done} מתוך {$total}'
+  committing: 'שומר ב-GitHub: {$done} מתוך כ-{$total} commits'
 
 # Entry save error dialog
 saving_entry:
@@ -1657,6 +2087,15 @@ map_lat_lng: מפה המציגה קו רוחב {$latitude}, קו אורך {$long
 remove_this_item: הסרת הפריט
 move_up: העברה למעלה
 move_down: העברה למטה
+# Menu of a list item or file with the extra reorder actions, shown in a list of 3 or more items
+reorder_options: אפשרויות שינוי הסדר
+move_to_top: העברה לראש הרשימה
+move_to_bottom: העברה לסוף הרשימה
+# Opens a dialog asking for the position to move a list item to
+move_to: העברה למיקום…
+# Dialog asking for the new position of an item. {$count} is the number of items in the list
+move_to_description: הזינו מיקום מ-1 עד {$count}.
+move_to_position: מיקום
 # aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
 # or moved with the arrow keys while the handle has focus
 reorder_item: שינוי מיקום הפריט
@@ -1666,6 +2105,9 @@ list_item_value: ערך הפריט
 # aria-label for each item of a List field, giving its position in the list
 # {$position} is the 1-based position of the item, {$count} is the number of items
 list_item_position: פריט {$position} מתוך {$count}
+# Message shown in place of a removed List field item or Object field, next to a Restore button
+# that puts it back
+item_removed: הפריט הוסר.
 
 # Add item button label, also used by the Relation field to create a new entry in the referenced
 # collection, with the collection’s singular label
@@ -1678,6 +2120,32 @@ add_x: הוספת {$name}
 list_item_options: אפשרויות פריט הרשימה
 add_item_above: הוספת פריט מעל
 add_item_below: הוספת פריט מתחת
+paste_item_above: הדבקת פריט מעל
+paste_item_below: הדבקת פריט מתחת
+paste_item_to_replace: הדבקה במקום הפריט
+
+# List item clipboard
+# Button in the list toolbar to paste a copied item, from any list in any entry, at the end of the
+# list, or at the start with the `add_to_top` option
+paste_item: הדבקת פריט
+list_item_copied: הפריט הועתק.
+# ⋮ stands for the icon of the item menu button; keep it, along with the button’s aria-label
+no_list_item_to_paste: אין פריט מועתק להדבקה. כדי להעתיק פריט, פתחו את התפריט ⋮ (אפשרויות פריט הרשימה) שלו ובחרו „העתקה”.
+list_item_not_compatible: הפריט שהועתק אינו מתאים לרשימה הזו.
+# {$count} is the number of the values left out, as the list doesn’t have the fields
+list_item_pasted_without_values: |
+  .input {$count :integer}
+  .match $count
+    one {{ הפריט הודבק. ערך אחד שהרשימה הזו אינה מקבלת הושמט. }}
+    two {{ הפריט הודבק. שני ערכים שהרשימה הזו אינה מקבלת הושמטו. }}
+    *   {{ הפריט הודבק. {$count} ערכים שהרשימה הזו אינה מקבלת הושמטו. }}
+# {$count} is the number of the files the pasted item references that couldn’t be found
+list_item_pasted_without_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ הפריט הודבק, אך קובץ שהוא משתמש בו לא נמצא. בדקו את שדות הקבצים בפריט. }}
+    two {{ הפריט הודבק, אך שני קבצים שהוא משתמש בהם לא נמצאו. בדקו את שדות הקבצים בפריט. }}
+    *   {{ הפריט הודבק, אך {$count} קבצים שהוא משתמש בהם לא נמצאו. בדקו את שדות הקבצים בפריט. }}
 
 # Variable-type list selector
 select_list_type: בחירת סוג הפריט
@@ -1696,12 +2164,37 @@ opacity: אטימות
 # Select field: empty option placeholder
 unselected_option: (ללא)
 
-# Relation field: creating a referenced entry without leaving the editor
+# Relation field: creating or editing a referenced entry without leaving the editor
 relation_field:
   # Note shown in the dialog. {$name} is the singular label of the referenced collection
   save_together_hint: ה{$name} החדש יישמר יחד עם הפריט שאתם עורכים.
   # Error shown when the entry couldn’t be prepared. {$name} is the singular label of the collection
   add_failed: לא ניתן היה להוסיף את ה{$name}. בדקו את מסוף הדפדפן לפרטים.
+  # Title of the dialog to edit an entry selected in the field. {$name} is the singular label of the
+  # referenced collection
+  edit_entry_title: עריכת {$name}
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  edit_together_hint: השינויים שלכם ב{$name} יישמרו יחד עם הפריט שאתם עורכים.
+  # Error shown when the changes couldn’t be prepared. {$name} is the singular label of the collection
+  edit_failed: לא ניתן היה להחיל את השינויים ב{$name}. בדקו את מסוף הדפדפן לפרטים.
+  # Error shown when the changes would move the entry to another file path, e.g. through a path
+  # template using a field. {$name} is the singular label of the collection
+  move_unsupported: השינויים האלה יעבירו את ה{$name} למיקום אחר, ואת זה אפשר לעשות רק בעריכה נפרדת שלו.
+  # Error shown when saving, if someone else has changed an entry edited from the field since. {$name}
+  # is the summary of that entry
+  edit_conflict: „{$name}” שונה על ידי מישהו אחר מאז שערכתם אותו. פתחו אותו שוב מהשדה כדי לבדוק את השינויים שלכם מול הגרסה האחרונה.
+  # Error shown when saving, if someone else has deleted an entry edited from the field since.
+  # {$name} is the summary of that entry
+  edit_deleted: „{$name}” נמחק על ידי מישהו אחר מאז שערכתם אותו. הסירו אותו מהשדה כדי לשמור את הפריט.
+  # Accessible label of the menu listing the selected entries that can be edited
+  select_entry_to_edit: בחירת פריט לעריכה
+  # Warning shown in the editor of an entry that has been edited from a Relation field of another
+  # entry, while the changes wait in that entry’s pull request. {$name} is the summary of that
+  # entry
+  edited_with_entry: השינויים בפריט הזה ממתינים לפרסום יחד עם „{$name}”. אם תשמרו אותו עכשיו, שתי קבוצות השינויים ישולבו כשהפריט ההוא יפורסם, וזה עלול להיכשל אם הן חופפות.
+  # Warning shown in the dialog when an entry edited from the field has been changed by someone else
+  # since. {$name} is the singular label of the collection
+  changed_since_edit: ה{$name} הזה שונה על ידי מישהו אחר מאז שערכתם אותו. השינויים שלכם מוצגים מעל הגרסה האחרונה. בדקו אותם לפני העדכון.
 
 # Select Assets dialog
 assets_dialog:
@@ -1728,6 +2221,8 @@ assets_dialog:
       two {{ שתי תיקיות נבחרו }}
       *   {{ {$count} תיקיות נבחרו }}
   no_subfolders: אין תיקיות משנה בתיקייה הזו.
+  # Shown for a cloud storage service whose `prefix` option depends on fields of the entry
+  prefix_unresolved: מלאו את השדות שהמיקום הזה תלוי בהם כדי לעיין בקבצים שלו ולהעלות אליו קבצים.
 
   # Asset folder options
   folder:
@@ -1768,6 +2263,9 @@ assets_dialog:
   photo_credit:
     title: קרדיט לתמונה
     description: 'השתמשו בקרדיט הבא אם אפשר:'
+    # {$field} is the label of the Markdown field the credit is added to
+    insert_to_field: הוספה לשדה {$field}
+    copy_as_markdown: העתקה כ-Markdown
 
   # Unsaved asset badge
   unsaved: לא נשמר
@@ -1798,6 +2296,7 @@ character_counter:
       one {{ הוזן תו אחד. מקסימום: {$max}. }}
       two {{ הוזנו שני תווים. מקסימום: {$max}. }}
       *   {{ הוזנו {$count} תווים. מקסימום: {$max}. }}
+
 # YouTube video player iframe title
 youtube_video_player: נגן הווידאו של YouTube
 
@@ -1812,6 +2311,7 @@ editor_components:
   alt: טקסט חלופי
   title: כותרת
   link: קישור
+  caption: כיתוב
 
 # Key-Value field: column headers and validation
 key_value:
@@ -1876,6 +2376,12 @@ cloud_storage:
   uploadcare:
     auth_key_label: מפתח סוד API
 
+  azure_blob_storage:
+    auth_key_label: אסימון SAS
+
+  backblaze_b2:
+    auth_key_label: מפתח יישום
+
   bunny_storage:
     auth_key_label: סיסמת אזור האחסון
 
@@ -1892,6 +2398,7 @@ config:
     .match $count
       one {{ יש שגיאה בתצורת המערכת. פתרו את הבעיה ונסו שוב. }}
       *   {{ יש שגיאות בתצורת המערכת. פתרו את הבעיות ונסו שוב. }}
+
   # Error location prefixes
   error_locator:
     # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
@@ -1931,16 +2438,21 @@ config:
     unsupported_backend_suggestion: השתמשו באחד <a>השירותים הנתמכים</a> במקום זאת.
     missing_repository: לא הוגדר מאגר.
     invalid_repository: המאגר שהוגדר אינו תקין. עליו להיות בתבנית „owner/repo”.
+    # Don’t localize `api_root`
+    missing_api_root: האפשרות `api_root` אינה מוגדרת. היא נדרשת עבור שירות Forgejo.
     invalid_root_dir: תיקיית השורש אינה תקינה. עליה להיות נתיב בתוך המאגר, בלי „..”.
     invalid_root_dir_branch: לא ניתן להשתמש בתיקיית השורש בשמות הענפים של מצבי הפרסום `editorial_workflow` ו-`preview`. אף חלק בנתיב שלה אינו יכול להתחיל בנקודה, להסתיים ב-„.lock” או להכיל רווח או תו מיוחד כגון נקודתיים או כוכבית.
     path_outside_root_dir: הנתיב „{$path}” מוביל אל מחוץ לתיקיית השורש, שם המערכת אינה יכולה להציג קבצים.
     oauth_implicit_flow: שיטת האימות שהוגדרה (implicit flow) אינה נתמכת ב-Sveltia CMS. השתמשו ב<a>שיטת אימות</a> אחרת במקום זאת.
     github_pkce_unsupported: הרשאת PKCE אינה נתמכת עדיין בשל מגבלות של GitHub. השתמשו ב<a>שיטת אימות</a> אחרת במקום זאת.
+    additions_no_base_url: האפשרות `base_url` חייבת להיות הכתובת של שירות Sveltia CMS Additions שלכם.
     oauth_no_app_id: לא הוגדר מזהה יישום OAuth.
     # Don’t localize `open_authoring`, `editorial_workflow` and `preview`
     open_authoring_no_workflow: האפשרות `open_authoring` מחייבת את מצב הפרסום `editorial_workflow` או `preview`. ראו <a>תיעוד</a> לפרטים.
     # Don’t localize `auth_methods`
     no_auth_methods: האפשרות `auth_methods` חייבת לכלול שיטה אחת לפחות.
+    # Don’t localize `auth_scope`, `repo` and `public_repo`
+    auth_scope_no_repo: האפשרות `auth_scope` חייבת לכלול את `repo` או `public_repo`.
     missing_media_folder: לא הוגדרה תיקיית מדיה.
     public_folder_relative_path: התיקייה הציבורית שהוגדרה אינה תקינה. עליה להיות נתיב מוחלט המתחיל ב-„/”.
     public_folder_absolute_url: כתובת מוחלטת עבור אפשרות התיקייה הציבורית אינה נתמכת ב-Sveltia CMS.
@@ -2016,6 +2528,8 @@ config:
     unsupported_bulk_edit_field: לא ניתן לערוך בצורה מרוכזת את השדה `{$name}` שברשימת `fields` של האפשרות `bulk_edit`. נתמך רק שדה מסוג בוליאני, צבע, תאריך ושעה, מספר, קשר, בחירה או מחרוזת, שאינו לקריאה בלבד, שהאפשרות `multiple` אינה מופעלת בו, ושאינו נקבע אוטומטית בשמירה.
     # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
     invalid_sortable_field: האפשרות `sortable_fields` מפנה לשדה בשם `{$name}`, אך שדה כזה אינו מוגדר באוסף.
+    # Don’t localize `sortable_fields` and `default_sort`
+    multiple_sortable_field_defaults: רק לפריט אחד באפשרות `sortable_fields` יכולה להיות האפשרות `default_sort`.
     # {$option} is `table_columns` or `summary_fields`, and {$name} is the field name from the configuration
     invalid_table_column_field: האפשרות `{$option}` מפנה לשדה בשם `{$name}`, אך שדה כזה אינו מוגדר באוסף.
     # {$name} is the field name from the configuration; Don’t localize `view_groups`
@@ -2112,6 +2626,24 @@ config:
     list_field_default_missing_type: האפשרות `default` של שדה List מכילה פריט ללא המאפיין `{$typeKey}`, שמזהה אחד מ-`types`.
     # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default item; Don’t localize `default` and `types`
     list_field_invalid_default_type: האפשרות `default` של שדה List מכילה פריט שהמאפיין `{$typeKey}` שלו הוא `{$value}`, אך הוא אינו אחד מ-`types`.
+    # Don’t localize `map_key_field`, `fields` and `types`
+    list_field_map_key_no_subfields: האפשרות `map_key_field` של שדה List מחייבת את האפשרות `fields` או `types`, מפני שכל מפתח נלקח משדה משנה.
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_not_found: האפשרות `map_key_field` של שדה List מפנה אל `{$name}`, אך אין שדה משנה בשם הזה.
+    # {$name} is the subfield name, and {$type} is the variable type name; Don’t localize `map_key_field`
+    list_field_map_key_missing_in_type: האפשרות `map_key_field` של שדה List מפנה אל `{$name}`, אך לסוג `{$type}` אין שדה משנה בשם הזה.
+    # {$name} is the subfield name, and {$widget} is its field type; Don’t localize `map_key_field`
+    list_field_map_key_invalid_type: האפשרות `map_key_field` של שדה List מפנה אל `{$name}`, אך עליו להיות שדה מסוג מחרוזת, קשר או בחירה, ולא שדה `{$widget}`.
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `multiple`
+    list_field_map_key_multiple: האפשרות `map_key_field` של שדה List מפנה אל `{$name}`, אך שדה המשנה אינו יכול לקבל ערכים מרובים, מפני שכל פריט צריך מפתח יחיד. הסירו את האפשרות `multiple` שלו.
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_option_not_string: האפשרות `map_key_field` של שדה List מפנה אל `{$name}`, אך האפשרויות של שדה המשנה חייבות להיות בעלות ערכי מחרוזת, מפני שכל מפתח נשמר כמחרוזת.
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `required`
+    list_field_map_key_not_required: האפשרות `map_key_field` של שדה List מפנה אל `{$name}`, אך שדה המשנה אינו יכול להיות אופציונלי, מפני שכל פריט צריך מפתח. הסירו את האפשרות `required` שלו.
+    # {$name} is the subfield name; Don’t localize `map_key_field`, `i18n: false` and `i18n: duplicate`
+    list_field_map_key_not_localized: 'האפשרות `map_key_field` של שדה List מפנה אל `{$name}`, אך לשדה המשנה לא יכול להיות `i18n: false`, מפני שהפריטים צריכים מפתח בכל שפה. השתמשו ב-`i18n: duplicate` או הסירו את האפשרות.'
+    # Don’t localize `i18n`, `duplicate_if_empty`, `multiple` and `true`
+    duplicate_if_empty_multiple: 'האפשרות `i18n: duplicate_if_empty` אינה נתמכת בשדה עם האפשרות `multiple`, ולכן השדה פועל כמו שדה עם `i18n: true`.'
     # Don’t localize `default` and `multiple`
     invalid_default_multiple: האפשרות `default` חייבת להיות מערך מפני שהאפשרות `multiple` היא `true`.
     invalid_default_single: האפשרות `default` חייבת להיות ערך יחיד ולא מערך, מפני שהאפשרות `multiple` אינה `true`.
@@ -2125,6 +2657,10 @@ config:
     code_field_invalid_default_object: האפשרות `default` של שדה Code חייבת להיות מחרוזת מפני שהאפשרות `output_code_only` היא `true`.
     # {$key} is a property name of the default object, {$code} and {$lang} are the configured property names; Don’t localize `default` and `keys`
     code_field_invalid_default_key: לאפשרות `default` של שדה Code יש את המאפיין `{$key}`, אך האפשרות `keys` מתירה רק את `{$code}` ואת `{$lang}`.
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_invalid_expression: האפשרות `value` של שדה Compute חייבת להיות ביטוי חשבוני תקין, כמו `\{\{fields.price\}\} * \{\{fields.quantity\}\}`, מפני שהאפשרות `value_type` היא `{$valueType}`.
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_uuid_in_expression: האפשרות `value` של שדה Compute אינה יכולה להשתמש בתג UUID כמו `\{\{uuid\}\}`, מפני שהאפשרות `value_type` היא `{$valueType}`, מה שהופך אותה לביטוי חשבוני.
     # {$value} is the default value and {$valueType} is the configured value type; Don’t localize `default` and `value_type`
     number_field_default_not_integer: האפשרות `default` של שדה Number מוגדרת כ-`{$value}`, אך עליה להיות מספר שלם מפני שהאפשרות `value_type` היא `{$valueType}`.
     number_field_default_not_number: האפשרות `default` של שדה Number מוגדרת כ-`{$value}`, אך עליה להיות מספר מפני שהאפשרות `value_type` היא `{$valueType}`.
@@ -2144,6 +2680,9 @@ config:
     relation_field_invalid_display_field: שדה התצוגה `{$field}` שאליו מפנים אינו תקין או שאינו מוגדר.
     relation_field_invalid_search_field: שדה החיפוש `{$field}` שאליו מפנים אינו תקין או שאינו מוגדר.
     relation_field_invalid_filter_field: שדה הסינון `{$field}` שאליו מפנים אינו תקין או שאינו מוגדר.
+    relation_field_invalid_sort_field: שדה המיון `{$field}` שאליו מפנים אינו תקין או שאינו מוגדר.
+    # Don’t localize `sort_by` and `file`
+    relation_field_sort_by_file_ignored: האפשרות `sort_by` אינה חלה על קשר לקובץ, שהאפשרויות שלו מופיעות לפי סדר פריטי הרשימה. המערכת תתעלם ממנה.
     unexpected: שגיאה בלתי צפויה
 
     # Schema validation errors, reported when the configuration doesn’t match the published JSON
@@ -2176,12 +2715,30 @@ config:
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: לא הוגדר מזהה יישום OAuth. המשתמשים יידרשו לספק אסימון גישה כדי להתחבר.
+    # Don’t localize `prefix`
+    site_library_prefix_template: האפשרות `prefix` של ספריית מדיה מכילה תגי תבנית, שנתמכים רק ברמת השדה, מפני שברמה העליונה אין פריט שאפשר למלא אותם ממנו.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: האפשרות `{$prop}` אינה נתמכת ב-Sveltia CMS. המערכת תתעלם ממנה.
     # Don’t localize `stages`, `publish_mode`, `editorial_workflow` and {$type}, which is `preview` or `simple`
     publish_mode_stages_ignored: האפשרות `stages` של `publish_mode` חלה רק על מצב הפרסום `editorial_workflow`, ולכן המערכת מתעלמת ממנה עם `{$type}`.
+    # Don’t localize `pattern`, `m` and `s`
+    inline_component_multiline_pattern: ל-`pattern` של הרכיב המוטבע הזה יש הדגל `m` או `s`, או שהוא מתאים למעברי שורה, אך רכיב מוטבע מזוהה רק בתוך פסקה.
+    # {$name} is a button or component name and {$option} is `buttons` or `editor_components`; Don’t localize them and `multiline: false`
+    single_line_block_item: 'המערכת מתעלמת מהפריט `{$name}` שבאפשרות `{$option}`, מפני ששדה עם `multiline: false` יכול להכיל תוכן מוטבע בלבד.'
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: גם `picker_utc` וגם אפשרויות אזור הזמן החדשות (`input_timezone` או `output_utc`) מוגדרות. לאפשרויות החדשות יש עדיפות. שקלו להסיר את `picker_utc` מהתצורה שלכם.
+    # Don’t localize `localize_format` and `format`
+    localize_format_without_format: לאפשרות `localize_format` אין השפעה, מפני שלשדה אין אפשרות `format` והערך שלו נשמר בתבנית ISO 8601.
+    # {$name} is a template tag like `fields.lines.*.price`; Don’t localize `value`, `*` and `sum()`
+    compute_field_wildcard_without_item: האפשרות `value` של שדה Compute מפנה אל `{$name}`, אך השדה אינו נמצא בפריט של הרשימה ש-`*` מייצג, ולכן אין לו ערך. רק פונקציית צבירה כמו `sum()` יכולה להשתמש בכל הפריטים של רשימה.
+    # {$name} is a template tag like `fields.lines.*.amount`; Don’t localize `value`
+    compute_field_self_reference: האפשרות `value` של שדה Compute מפנה לשדה עצמו בתור `{$name}`, ולכן הערך שלו משתנה בכל חישוב ואף פעם לא מתייצב.
+    # {$name} is a template tag like `fields.total`; Don’t localize `value`
+    compute_field_reference_cycle: האפשרות `value` של שדה Compute מפנה אל `{$name}`, שדה Compute אחר שמפנה בחזרה לשדה הזה, ישירות או דרך שדות אחרים, ולכן הערכים שלהם אף פעם לא מתייצבים.
+    # Don’t localize `localize_format`, `true` and `de`
+    localize_format_without_i18n: האפשרות `localize_format` היא `true`, אך i18n אינו מופעל באוסף, ולכן הערך נכתב באנגלית. הגדירו במקום זאת קוד שפה כמו `de`.
+    # {$locale} is the locale code from the configuration; Don’t localize `localize_format`
+    localize_format_unsupported_locale: האפשרות `localize_format` מוגדרת כ-`{$locale}`, שאינה שפה נתמכת, ולכן הערך נכתב באנגלית.
     # Don’t localize `preview_path`
     preview_path_no_date_field: האפשרות `preview_path` משתמשת בתגי תאריך ושעה, אך לאוסף אין שדה DateTime לקרוא מהם, ולכן קישור התצוגה המקדימה לא יוצג.
     # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
@@ -2204,6 +2761,10 @@ config:
     empty_public_folder: האפשרות `public_folder` היא מחרוזת ריקה, ולכן נתיב ה-`media_folder` משמש לנתיבי קובצי המדיה הנשמרים בפריטים במקום זאת. הסירו את האפשרות, או הגדירו אותה לנתיב שברצונכם להשתמש בו, כגון `/images`.
     # {$option} is an option path from the configuration, such as `filter.Regulation`
     schema_unknown_option: האפשרות `{$option}` אינה מוגדרת בסכמת התצורה של Sveltia CMS. המערכת תתעלם ממנה. בדקו אם יש שגיאת כתיב או שגיאת תחביר.
+    # Don’t localize `default_localized`, `default` and `i18n`
+    default_localized_without_i18n: לאפשרות `default_localized` אין השפעה, מפני ש-i18n אינו מופעל באוסף. השתמשו באפשרות `default` במקום זאת.
+    # {$locale} is a locale code from the configuration; Don’t localize `default_localized`
+    default_localized_unknown_locale: לאפשרות `default_localized` יש ערך עבור `{$locale}`, שאינה אחת מהשפות של האוסף, ולכן הערך לעולם אינו בשימוש.
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'ראו את הערות התאימות לפרטים: {$link}'
@@ -2301,6 +2862,14 @@ workflow:
   status_updated: הסטטוס עודכן.
   # Error notification when the status could not be changed
   status_change_failed: שינוי הסטטוס נכשל. אפשר לנסות שוב.
+  # Workflow page: toolbar button that reads the pull requests again, to pick up the changes made
+  # by anyone else since the board was loaded, and the toast notifications shown while doing so and
+  # once done
+  refresh: רענון
+  refreshing: מרענן…
+  refreshed: הלוח מעודכן.
+  # Error notification when the board could not be refreshed
+  refresh_failed: לא ניתן היה לרענן את הלוח. נסו שוב.
   # Error notification when the status can’t be changed because the entry is incomplete. Required
   # fields can be left empty while the entry is a draft, but not once it moves on from there
   status_change_blocked: יש שגיאות בפריט. צריך לתקן אותן לפני שינוי הסטטוס.
@@ -2367,6 +2936,12 @@ workflow:
   # Error notification when an entry can’t be published because its branch has been committed to
   # since the entry was opened, so what would be published isn’t what was reviewed
   publish_refused_entry_changed: הפריט שונה מאז שפתחתם אותו. טענו מחדש את העמוד כדי לבדוק את הגרסה האחרונה לפני הפרסום.
+  review_on_x: בדיקה ב{$service}
+  from_fork: מעותק של המאגר
+  fork_entry_editable: הפריט הזה מגיע מבקשת משיכה של תורם, שנפתחה מ-„{$fork}”. השינויים שלכם נשמרים בענף של התורם. בדקו ומזגו את בקשת המשיכה בשירות ה-Git.
+  fork_entry_locked: הפריט הזה מגיע מבקשת משיכה של תורם, שנפתחה מ-„{$fork}”. התורם אינו מאפשר למתחזקים לערוך אותה, ולכן כאן אפשר רק לצפות בפריט.
+  fork_not_editable: התורם אינו מאפשר למתחזקים לערוך את בקשת המשיכה הזו.
+  fork_entry_gone: בקשת המשיכה של התורם כבר אינה פתוחה, ולכן לא ניתן לשמור בה את השינויים.
   # Error shown in the save error dialog when an entry can’t be saved for review, because a request
   # the CMS doesn’t show is already open from the branch the entry would be saved to. `{$number}` is
   # the request number, e.g. `#12` on GitHub or `!12` on GitLab. Keep the wording free of Git jargon
@@ -2378,6 +2953,15 @@ workflow:
   # Workflow page: note on a card in the Deploying tray, marking an entry that’s being removed from
   # the site rather than published to it
   deploying_deletion: מחיקה
+  # Workflow page: note on a card listing the new entries that were created from a Relation field
+  # of the entry and are published along with it, e.g. “Also adds Section: Getting Started”
+  companion_entries: מוסיף גם {$entries}
+  # Workflow page: note on a card listing the existing entries that were edited from a Relation
+  # field of the entry and are published along with it, e.g. “Also changes Author: Ada Lovelace”
+  edited_companion_entries: משנה גם {$entries}
+  # Workflow page: one of the entries listed by `companion_entries` or `edited_companion_entries`,
+  # named by its collection’s singular label and its title
+  companion_entry: '{$collection}: {$title}'
 
 # Dialog asking the user for a commit message every time changes are saved, when the site is
 # configured to. The message is recorded in the repository’s history along with the changes
@@ -2446,6 +3030,8 @@ categories: קטגוריות
 
 # Preferences panels
 prefs:
+  account:
+    title: חשבון
   # API key management feedback messages
   changes:
     api_key_saved: מפתח ה-API נשמר.
@@ -2495,7 +3081,7 @@ prefs:
         select_service: בחירת שירות
       api_keys:
         title: מפתחות API לשירותי תרגום
-        description: ניהול מפתחות API עבור <a>שירותי תרגום</a>.
+        description: ניהול מפתחות API עבור <a>שירותי תרגום</a>. את מפתחות ה-API לשירותי בינה מלאכותית כלליים אפשר לנהל בהגדרות הבינה המלאכותית.
       # API key input label, e.g., “DeepL Key”
       # {$service} is the translation service name
       field_label: מפתח {$service}
@@ -2528,6 +3114,16 @@ prefs:
       # {$service} is the cloud storage service name
       field_label: מפתח API של {$service}
       no_services: לא הוגדרו <a>שירותי אחסון בענן</a>.
+
+  # AI panel
+  ai:
+    title: בינה מלאכותית
+    api_keys:
+      title: מפתחות API לשירותי בינה מלאכותית
+      description: ניהול מפתחות API עבור שירותי בינה מלאכותית.
+    # API key input label, e.g., “OpenAI GPT API Key”
+    # {$service} is the AI service name
+    field_label: מפתח API של {$service}
 
   # Accessibility panel
   accessibility:
@@ -2571,7 +3167,7 @@ prefs:
       not_ready: לא ניתן לשלוח שינויים כרגע. {$reason}
     deploy_hook:
       title: הוק פרסום
-      description: הזינו כתובת webhook שתיקרא כשתפעילו פרסום ידנית באמצעות ״פרסום השינויים״. אפשר להשאיר ריק אם אתם משתמשים ב-GitHub Actions.
+      description: הזינו כתובת webhook שתיקרא כשתפעילו פרסום ידנית באמצעות „פרסום השינויים”. אפשר להשאיר ריק אם אתם משתמשים ב-GitHub Actions או ב-GitLab CI/CD.
       # Hook URL input
       url:
         field_label: כתובת ההוק

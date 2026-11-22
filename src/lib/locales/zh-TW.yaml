@@ -11,6 +11,8 @@
 create: 新增
 select: 選擇
 select_all: 全選
+# Accessible name of the checkbox that selects a single entry or asset in a list
+select_item: 選取 {$name}
 upload: 上傳
 copy: 複製
 download: 下載
@@ -69,6 +71,10 @@ primary: 主要
 secondary: 次要
 collection: 集合
 folder: 資料夾
+# Label of the subfolder list in the asset picker
+folders: 資料夾
+# Menu in a breadcrumb holding the folders that don’t fit
+more_folders: 更多資料夾
 
 # ==============================================================================
 # Miscellaneous Labels
@@ -113,6 +119,7 @@ welcome_message: 歡迎使用 {$name}
 powered_by: 由 {$name} 提供
 
 # Shown during initial configuration and data loading
+unsupported_browser_error: 不支援您的瀏覽器。請更新至最新版本或改用其他瀏覽器。
 loading_cms_config: 載入 CMS 設定……
 loading_site_data: 載入網站資料……
 loading_site_data_error: 載入網站資料時發生錯誤。
@@ -125,6 +132,8 @@ sign_in_with_x: 使用 {$service} 登入
 # Access token dialog: alternative authentication method
 sign_in_using_access_token: 使用存取權杖登入
 sign_in_using_access_token_description: 在下方輸入權杖，需要有倉庫內容的讀寫權限。
+# Shown after the description above when Editorial Workflow is enabled, which opens and merges pull requests
+sign_in_using_access_token_workflow_note: 由於已啟用編輯工作流程，權杖也必須具備提取要求的讀寫權限。
 # Inline link text with embedded HTML anchor tag
 # {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
 sign_in_using_access_token_link: 可到 <a>{$service} 使用者設定頁面</a>產生權杖。
@@ -143,6 +152,11 @@ work_with_local_repo_description: 在彈出的對話框中，選擇「{$repo}」
 work_with_local_repo_description_no_repo: 在彈出的對話框中，選擇您的 Git 倉庫的根目錄。
 # Button label for demo/test repository
 work_with_test_repo: 使用測試倉庫
+# Button label for the test repository when sample content is seeded, e.g. on a demo site
+start_demo: 開始示範
+# Shown below the disabled test repository option in a browser that can’t save files to its
+# storage, e.g. Safari before version 26
+test_repo_unsupported_browser: 您的瀏覽器無法儲存測試倉庫的檔案。請更新至最新版本或改用其他瀏覽器。
 
 # Authentication errors
 # Error messages shown during sign-in failures
@@ -167,14 +181,28 @@ sign_in_error:
 backend_unsupported_version: '{$name} 後端需要 {$name} {$version} 或更高版本。'
 # {$repo} is the repository identifier, typically in owner/repo format
 repository_no_access: 您沒有存取「{$repo}」倉庫的權限。
+# {$repo} is the repository identifier, typically in owner/repo format
+repository_no_write_access: 您沒有「{$repo}」倉庫的寫入權限。
 repository_not_found: 「{$repo}」倉庫不存在。
 repository_empty: 「{$repo}」倉庫沒有分支。
 # {$repo} is the repository identifier, and {$branch} is the configured branch name
 branch_not_found: 「{$repo}」倉庫沒有「{$branch}」分支。
+# {$repo} is the repository identifier, and {$dir} is the configured root directory
+root_dir_not_found: 「{$repo}」倉庫中不存在根目錄「{$dir}」。
 
 # General errors
 # Fallback error dialog title for unexpected errors
 unexpected_error: 意外錯誤
+# Shown in place of the page when an unexpected error stops it from being displayed
+# {$message} is the error message
+page_crashed: 發生錯誤，無法顯示此頁面。{$message}
+# Shown in place of a field editor or preview when an unexpected error stops it from being displayed
+# {$message} is the error message
+field_crashed: 發生錯誤，無法顯示此欄位。{$message}
+# Button label for displaying a part of the page again after an unexpected error
+try_again: 再試一次
+# Button label for reloading the CMS after an unexpected error
+reload_cms: 重新載入 CMS
 
 # Entry file parsing errors
 # Toast notification when entry files fail to parse on initial load
@@ -202,6 +230,331 @@ sign_in: 登入
 sign_in_with_mobile: 手機掃碼登入
 # Instructions shown in the mobile sign-in dialog for passwordless authentication
 sign_in_with_mobile_instruction: 使用手機或平板掃描下方的 QR 碼即可免輸入密碼登入，設定會自動複製到裝置。
+# Confirmation dialog shown when the CMS is opened with a sign-in link from the mobile sign-in
+# QR code. {$account} is the account name, {$service} is the Git service name, e.g. GitHub
+sign_in_with_link: 使用連結登入
+sign_in_with_link_confirmation: 此連結會讓您以 {$account} 身分登入 {$service}，並從建立連結的裝置複製設定。請僅在連結是您自己建立時才繼續。
+
+# Sign-in with Sveltia CMS Additions, which manages its own user accounts instead of the Git
+# service’s. Don’t localize “Sveltia CMS Additions”
+additions:
+  username: 使用者名稱
+  password: 密碼
+  sign_in: 登入
+  new_password_title: 設定新密碼
+  new_password_description: 您使用臨時密碼登入。請設定新密碼以繼續。
+  new_password: 新密碼
+  password_too_short: 密碼太短。請至少使用 12 個字元。
+  change_password: 變更密碼
+  # {$name} is the user’s username, {$role} their role, e.g. Editor
+  signed_in_as_x_with_role: 目前以 {$name}（{$role}）身分登入
+  link_github: 連結 GitHub 帳號
+  link_github_error: 無法連結 GitHub 帳號
+  current_password: 目前的密碼
+  # {$username} is the username filled in from a magic link emailed to the user
+  filled_from_link: 已從連結填入使用者名稱和密碼。請僅在「{$username}」是您的使用者名稱時登入。
+  change_password_description: 您在此處會保持登入狀態，其他裝置則會被登出。
+  password_changed: 您的密碼已變更。
+  # The Account settings panel of a Sveltia CMS Additions user
+  account:
+    profile: 個人資料
+    profile_description: 您的名稱會在 CMS 中向其他人顯示（例如項目鎖定和留言），也會出現在您的提交中。
+    username_description: 使用者名稱無法變更。
+    email: 電子郵件
+    email_description: 此地址會用於您的提交，讓 GitHub 能將提交連結到您的帳號。未設定時會使用預留位置地址。只有管理員可以變更。
+    change_name: 變更名稱
+    name_changed: 您的名稱已變更。
+    password: 密碼
+    no_password: 您使用 GitHub 登入，因此沒有可變更的密碼。管理員可以透過重設密碼為您設定一組密碼。
+  setup:
+    use_admin_secret: 使用管理員密鑰
+    title: 設定 Sveltia CMS Additions
+    secret_description: 請輸入在 Sveltia CMS Additions 服務設定中設定的管理員密鑰。它只會在設定期間保留在此分頁中。
+    admin_secret: 管理員密鑰
+    continue: 繼續
+    back: 返回登入
+    admin_title: 管理員帳號
+    admin_create_description: 建立第一個管理員帳號。您將使用它登入並管理其他使用者。
+    admin_reset_description: 管理員帳號已存在。若要重新登入，請在此重設某位管理員的密碼，或建立另一個管理員帳號。
+    admin_saved: 管理員帳號已就緒。請使用剛才輸入的密碼登入。
+    create_admin: 建立管理員
+    reset_password: 儲存管理員
+    github_title: GitHub
+    # {$repo} is the repository, e.g. octocat/site
+    github_description: 為此網站建立 GitHub App，並將其安裝到「{$repo}」倉庫。GitHub 會要求您確認，然後將您帶回此處。
+    # {$repo} is the repository, {$app} is the name of the GitHub App
+    github_connected: 已透過「{$app}」GitHub App 連線到「{$repo}」倉庫。
+    connect_github: 連線到 GitHub
+    # {$step} is the number of the current step, {$total} the number of steps
+    step_x_of_y: 第 {$step} 步，共 {$total} 步
+    admin_exists: 管理員帳號已存在。
+    reset_admin_password: 重設管理員密碼
+    setup_complete: 設定已完成。請使用管理員帳號登入以管理使用者和設定。您隨時可以使用管理員密鑰回到此處。
+    manage_sites: 管理其他網站
+    back_to_setup: 返回
+    sites_title: 其他網站
+    sites_description: 此服務也可以為其他網站提供服務，每個網站都有各自的使用者、設定和 GitHub App。請在網站的 CMS 設定中將「base_url」設為此服務的 URL，然後在該網站上使用管理員密鑰進行設定。
+    no_sites: 目前還沒有其他網站。
+    site_id: 網站 ID
+    site_id_description: 1 到 32 個小寫字母、數字和連字號，例如「acme」。它會出現在網站的 URL 中，且無法變更。
+    site_name_optional: 名稱（選填）
+    add_site: 新增網站
+    # {$name} is the name of the site
+    site_added: 已新增「{$name}」。請在其 CMS 設定中將「base_url」設為它的 URL，然後在該處開啟設定精靈。
+    # {$name} is the name of the site
+    copy_site_url: 複製 {$name} 的 URL
+    delete_site: 刪除網站
+    # {$name} is the name of the site
+    delete_site_x: 刪除 {$name}
+    # {$name} is the name of the site, {$id} is its ID
+    delete_site_confirmation: 刪除「{$name}」也會刪除它的使用者、設定和留言，且無法復原。GitHub App 會保留在 GitHub 上，您可以在那裡刪除它。請輸入「{$id}」以確認。
+    site_id_to_confirm: 輸入網站 ID 以確認
+    data_key_locked_title: 管理員密鑰已變更
+    data_key_locked_description: 管理員密鑰已變更，因此無法讀取已儲存的設定。請輸入先前的密鑰以保留設定，若已遺失則重新開始。
+    previous_secret: 先前的管理員密鑰
+    unlock: 解鎖
+    rekey: 重新開始
+    rekey_confirmation: 重新開始會刪除 GitHub App 憑證和其他已儲存的密鑰，並登出所有人。密碼會保留。要繼續嗎？
+    result:
+      ok: 已連線到 GitHub。您現在可以登入了。
+      github_app_not_created: 未建立 GitHub App。請使用管理員密鑰再試一次。
+      github_app_not_installed: 未安裝 GitHub App。請使用管理員密鑰再試一次。
+      github_wrong_account: GitHub App 安裝到了與倉庫不同的帳號。請將其安裝到倉庫擁有者的帳號後再試一次。
+      github_repository_not_included: GitHub App 安裝時未取得該倉庫的存取權。請在 GitHub 上授予它倉庫存取權後再試一次。
+      unexpected: 因發生意外錯誤，無法連線到 GitHub。請再試一次。
+  locks:
+    # {$name} is the name of the person editing the entry, {$time} when they started
+    being_edited: '{$name} 自 {$time} 起正在編輯此項目，因此您只能檢視。'
+    being_edited_by_you: 您正在另一個分頁中編輯此項目，因此在這裡只能檢視。
+    # {$name} is the name of the person who took over the entry
+    taken_over: '{$name} 已接手此項目，因此您現在只能檢視。'
+    take_over: 接手編輯
+    unavailable: 項目鎖定無法使用，因此其他人可能同時在編輯此項目。
+    # {$name} is the name of the person editing the entry
+    being_edited_by_x: '{$name} 正在編輯'
+    # {$names} is a list of the other people who have the entry open in the editor
+    also_open_by_x: '{$names} 也開啟了此項目'
+    # {$names} is a list of the people who have the entry open, besides anyone editing it
+    open_by_x: '{$names} 開啟了此項目'
+  users:
+    title: 使用者
+    add_user: 新增使用者
+    edit_user: 編輯使用者
+    add: 新增
+    name: 名稱
+    username_description: 使用者新增後，使用者名稱即無法變更。
+    email_optional: 電子郵件（選填）
+    email_description: 此地址會用於此人所做的提交，讓 GitHub 能將提交連結到其帳號。未設定時會使用預留位置地址。
+    role: 角色
+    status: 狀態
+    last_sign_in: 上次登入
+    sign_in_column: 登入方式
+    methods:
+      password: 密碼
+      # {$login} is a GitHub username
+      github: GitHub（{$login}）
+    actions: 操作
+    you: （您）
+    never: 從未
+    roles:
+      admin: 管理員
+      editor: 編輯者
+      viewer: 檢視者
+    statuses:
+      active: 使用中
+      temporary_password: 臨時密碼
+      waiting_for_sign_in: 等待首次登入
+      disabled: 已停用
+    # {$name} is the user’s name
+    show_options_for_x: 顯示 {$name} 的選項
+    options: 使用者選項
+    reset_password: 重設密碼
+    sign_out_everywhere: 從所有裝置登出
+    enable: 啟用使用者
+    disable: 停用使用者
+    delete: 刪除使用者
+    # {$name} is the user’s name
+    reset_password_confirmation: 要為 {$name} 設定新的臨時密碼嗎？對方將從所有裝置登出，並須在下次登入時設定新密碼。
+    delete_confirmation: 要刪除 {$name} 嗎？此操作無法復原。
+    temporary_password: 臨時密碼
+    # {$name} is the user’s name
+    temporary_password_description: 請將此使用者名稱和臨時密碼提供給 {$name}。此資訊不會再次顯示，對方登入時會設定自己的密碼。
+    copy_username: 複製使用者名稱
+    copy_password: 複製密碼
+    # {$name} is the user’s name
+    email_credentials: 以電子郵件傳送給 {$name}
+    # The emails the admin sends from their own email app, with the sign-in details: `new` to a user
+    # who has just been added, `reset` to one whose password has been reset. Each line is a string of
+    # its own, as line breaks aren’t kept in these files
+    credentials_email:
+      # {$name} is the user’s name
+      greeting: '{$name} 您好：'
+      # {$url} is a link to the CMS that fills in the username and the temporary password
+      sign_in_link: 登入連結：{$url}
+      # {$username} is the username
+      username: 使用者名稱：{$username}
+      # {$password} is the temporary password
+      password: 臨時密碼：{$password}
+      new:
+        # {$app} is the name of the CMS
+        subject: 您的 {$app} 登入資訊
+        # {$app} is the name of the CMS
+        message: 您現在可以登入 {$app}。請開啟下方連結，它會自動填入您的使用者名稱和臨時密碼，並在登入時設定您自己的密碼。
+      reset:
+        # {$app} is the name of the CMS
+        subject: 您的 {$app} 密碼已重設
+        # {$app} is the name of the CMS
+        message: 您的 {$app} 密碼已重設，且您已從所有裝置登出。請開啟下方連結，它會自動填入您的使用者名稱和臨時密碼，並在登入時設定新密碼。
+    allowed_domains: 允許的網域
+    allowed_domains_description: 可使用 Sveltia CMS Additions 的網站，每行一個主機名稱。萬用字元（*）可比對任何子網域，例如 *.example.com。請盡量列出確切的主機名稱。即使同一個 Sveltia CMS Additions 執行個體也為其他網站提供服務，此清單也僅適用於此網站。
+    save_allowed_domains: 儲存允許的網域
+    allowed_domains_saved: 允許的網域已儲存。
+    sign_in_tab: 登入
+    # {$latest} is the newest version of Sveltia CMS Additions, {$current} the one in use
+    update_available: Sveltia CMS Additions {$latest} 已推出。您目前使用的是 {$current}。
+    release_notes: 版本資訊
+    github_username_optional: GitHub 使用者名稱（選填）
+    github_username_description: 設定 GitHub 使用者名稱後，使用者將以該 GitHub 帳號登入，而不是使用密碼。
+    # {$name} is the user’s name
+    github_required: '{$name} 只能使用 GitHub 登入，因此無法移除其 GitHub 使用者名稱。請先重設其密碼，讓對方有密碼可以登入。'
+    adopt: 接管帳號
+    sign_in:
+      github: 允許使用 GitHub 登入
+      github_description: 使用者以自己的 GitHub 帳號登入，並取得自己的 GitHub 權杖，因此變更會以他們本人的名義提交。除非符合註冊規則，否則須先由管理員以其 GitHub 使用者名稱新增。
+      # Shown when signing in with GitHub is being turned off while {$count} users can only sign in
+      # with it
+      github_only_warning: |
+        .input {$count :integer}
+        .match $count
+          *   {{ 有 {$count} 位使用者只能使用 GitHub 登入，關閉後將無法登入，直到您重設其密碼為止。 }}
+      rules: 註冊規則
+      rules_description: 已安裝此應用程式的 GitHub 組織成員無須事先新增即可登入。他們的帳號會獲得您選擇的角色，若離開該組織，帳號將被停用，除非您接管該帳號。
+      org: GitHub 組織
+      add_rule: 新增規則
+      # {$org} is the name of a GitHub organization
+      remove_rule: 移除 {$org} 的規則
+      # For a rule whose organization hasn’t been entered yet
+      remove_empty_rule: 移除規則
+      save: 儲存登入設定
+      saved: 登入設定已儲存。
+    domains_tab: 網域
+    github_tab: GitHub
+    github:
+      app: GitHub App
+      repository: 倉庫
+      not_installed: 未安裝
+      statuses:
+        ok: 應用程式運作正常。
+        not_registered: 尚未設定 GitHub App。請在登入頁面使用管理員密鑰執行設定精靈。
+        key_missing: 更換管理員密鑰時，應用程式的私密金鑰已遺失。請在 GitHub 上的應用程式設定中產生新的私密金鑰，並在下方上傳。
+        key_rejected: GitHub 不接受此應用程式的私密金鑰，例如因為它已在 GitHub 上被刪除。請在 GitHub 上的應用程式設定中產生新的私密金鑰，並在下方上傳。
+        not_installed: 此應用程式未安裝在倉庫上。請從 GitHub 上的應用程式頁面重新安裝，或執行設定精靈。
+        suspended: 此應用程式的安裝已被暫停。請在 GitHub 上的安裝設定中取消暫停。
+        unreachable: 無法連線到 GitHub。請稍後再試。
+      check_again: 再次檢查
+      # {$branch} is the name of the repository’s default branch
+      branch_protected: 規則集已保護「{$branch}」分支，防止強制推送和刪除。
+      branch_bypassed: 規則集保護了「{$branch}」分支，但此應用程式可以略過這些規則，因此編輯者仍可能對其強制推送或刪除它。請將此應用程式從這些規則集的略過清單中移除。
+      branch_unprotected: 沒有任何規則集保護「{$branch}」分支免於強制推送和刪除，因此編輯者可能改寫其歷史記錄或刪除它。請在倉庫設定中新增一個同時阻擋這兩項操作的規則集，且不要將此應用程式加入其略過清單。
+      repository_rules: 開啟倉庫規則
+      private_key: 私密金鑰
+      private_key_description: 若要更換私密金鑰，請在 GitHub 上的應用程式設定中產生新的金鑰，然後上傳下載的 .pem 檔案。之後再到該處刪除舊金鑰。
+      app_settings: 開啟應用程式設定
+      upload_private_key: 上傳私密金鑰
+      replace_private_key: 更換私密金鑰
+      private_key_summary: 此服務使用應用程式的私密金鑰來存取 GitHub 上的倉庫。若金鑰可能已外洩，請更換。
+      private_key_replaced: 私密金鑰已更換。
+      commit_author: 提交作者
+      commit_author_description: 選擇在 CMS 中儲存的變更要顯示誰為作者。GitHub 只會為應用程式所撰寫的提交簽署，因此若規則集要求簽署提交，請選擇應用程式。其他使用者會在一小時內套用此變更。
+      commit_author_user: 做出變更的人
+      commit_author_bot: GitHub App，並將該人列為共同作者
+      commit_author_saved: 提交作者已儲存。
+  # Administration section for the API keys and the deploy hook an admin shares with everyone
+  credentials:
+    title: 憑證
+    description: 在此輸入的 API 金鑰和部署 Hook 會供所有登入的人使用，除非他們在「設定」中輸入自己的金鑰。任何登入 CMS 的人都能讀取這些資訊，因此請只輸入您願意與團隊共用的金鑰。
+    save: 儲存憑證
+    saved: 憑證已儲存。
+    # {$service} is the service name, e.g. DeepL
+    invalid_key: '{$service} 的 API 金鑰看起來不正確。'
+  error:
+    unauthenticated: 您的工作階段已過期。請重新登入。
+    wrong_admin_secret: 管理員密鑰不正確。
+    admin_secret_missing: Sveltia CMS Additions 服務的設定中未設定管理員密鑰。
+    admin_secret_too_short: Sveltia CMS Additions 服務設定中的管理員密鑰太短。請至少使用 32 個隨機字元。
+    wrong_previous_secret: 先前的管理員密鑰不正確。
+    not_an_admin: 此使用者不是管理員。請選擇其他使用者名稱。
+    invalid_username: 使用者名稱須為 3 到 30 個小寫字母、數字、點、連字號或底線。
+    last_admin: 至少必須有一位管理員。
+    cannot_disable_self: 您無法停用自己的帳號。
+    cannot_delete_self: 您無法刪除自己的帳號。
+    username_taken: 其他使用者已使用此使用者名稱。
+    email_taken: 其他使用者已使用此電子郵件地址。
+    invalid_name: 名稱必須為 1 到 100 個字元。
+    invalid_email: 電子郵件地址無效。
+    invalid_domains: 其中一個允許的網域不是有效的主機名稱。
+    current_origin_removed: 允許的網域必須包含您目前使用的網站。
+    forbidden: 只有管理員可以執行此操作。
+    invalid_credentials: 使用者名稱或密碼不正確。
+    user_disabled: 此帳號已停用。請向管理員尋求協助。
+    too_many_attempts: 嘗試次數過多。請稍後再試。
+    wrong_password: 目前的密碼不正確。
+    same_password: 請選擇與目前密碼不同的新密碼。
+    invalid_github_login: 這不是有效的 GitHub 使用者名稱。
+    github_user_not_found: 找不到此名稱的 GitHub 使用者。
+    github_account_taken: 其他使用者已使用此 GitHub 帳號登入。
+    invalid_rules: 註冊規則需要 GitHub 組織名稱。
+    invalid_rule_role: 註冊規則只能指派編輯者或檢視者角色。
+    rule_org_not_installed: GitHub App 必須安裝在註冊規則所指定的組織上。
+    not_invited: 您在此處沒有帳號。請聯絡管理員將您新增。
+    method_disabled: 已關閉 GitHub 登入。
+    access_denied: 登入已取消。
+    github_app_not_set_up: Sveltia CMS Additions 尚未連線到 GitHub。請聯絡管理員完成設定。
+    invalid_tenant_id: 網站 ID 必須為 1 到 32 個小寫字母、數字和連字號，且不能是「default」。
+    invalid_tenant_name: 網站名稱最多為 100 個字元。
+    tenant_exists: 已存在使用此 ID 的網站。
+    github_app_missing: 尚未設定 GitHub App。
+    invalid_private_key: 此檔案不是有效的私密金鑰。
+    private_key_mismatch: GitHub 不接受此應用程式使用這個私密金鑰。請確認金鑰是在應用程式的設定中產生的。
+    github_error: GitHub 回應了錯誤。請稍後再試。
+    data_key_locked: 在管理員完成變更管理員密鑰之前，無法使用 Sveltia CMS Additions。
+    not_configured: Sveltia CMS Additions 設定不正確。請向管理員尋求協助。
+    origin_not_allowed: 此網站不允許使用 Sveltia CMS Additions。請聯絡管理員將其加入允許的網域。
+    not_set_up: Sveltia CMS Additions 尚未連線到 GitHub。請聯絡管理員完成設定。
+    # A user whose password an admin has reset signs in another way, e.g. with GitHub
+    temporary_password: 您的密碼已重設。請使用您的使用者名稱和管理員提供的臨時密碼登入，然後設定新密碼。
+    # {$url} is the URL of the service
+    incompatible: 此版本的 Sveltia CMS 無法與位於 {$url} 的 Sveltia CMS Additions 服務搭配使用。
+    unreachable: 無法連線到 Sveltia CMS Additions。請稍後再試。
+    insecure_connection: Sveltia CMS Additions 必須透過 HTTPS 提供。請檢查 CMS 設定中的 `base_url`。
+    unexpected: 因發生意外錯誤，對 Sveltia CMS Additions 的請求失敗。請稍後再試。
+
+  # Conversation panel: comments on the entry, kept by Sveltia CMS Additions
+  conversation:
+    title: 對話
+    refresh: 重新整理對話
+    empty: 尚無留言。
+    # Button above a long conversation, which is loaded from its latest comments
+    show_older: 顯示較舊的留言
+    # Label of the list of comments
+    timeline: 留言
+    deleted_user: 已刪除的使用者
+    you: 您
+    edited: 已編輯
+    comment_label: 留言
+    placeholder: 留言（支援 Markdown）
+    visible_to_cms_users: 僅 CMS 使用者可見
+    send: 留言
+    options: 留言選項
+    edit: 編輯
+    delete: 刪除
+    save: 儲存
+    delete_confirmation: 要刪除此留言嗎？此操作無法復原。
+    send_failed: 無法送出留言。
+
+  # Placeholder of an API key or deploy hook field the user has left empty, while an admin of
+  # Sveltia CMS Additions has entered one for everyone
+  provided_by_admin: 由管理員提供
 
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
@@ -209,6 +562,15 @@ sign_in_with_mobile_instruction: 使用手機或平板掃描下方的 QR 碼即�
 signed_in_as_x: 目前以 {$name} 身分登入
 working_with_local_repo: 正在使用本機倉庫
 working_with_test_repo: 正在使用測試倉庫
+working_in_demo_mode: 示範模式
+
+# Demo welcome dialog: shown once after signing in to a demo site, where the test repository is
+# seeded with sample content and the changes are only stored in the browser
+demo_welcome:
+  title: 歡迎使用 Sveltia CMS 示範
+  description: 歡迎自由探索 CMS 並編輯範例內容。您的變更只會儲存在此瀏覽器中，不會發布到網路上，其他人也看不到。
+  reset_hint: 若要以原始內容重新開始，請在「設定」>「資料管理」中選擇「清除所有資料」。
+  button_label: 開始使用
 
 # Account menu: action items for sign-out and app installation
 sign_out: 登出
@@ -224,9 +586,14 @@ install_as_app: 安裝成應用程式
 contents: 內容
 assets: 媒體
 editorial_workflow: 編輯工作流程
+# Name of the Editorial Workflow page when all the content uses Preview Workflow, which has no
+# review stages, so the page only lists the drafts
+drafts: 草稿
 cms_config: CMS 設定
 # Mobile menu page title (shown only on small screens)
 menu: 選單
+# Mobile menu page section heading listing the custom pages registered by the site
+custom_pages: 頁面
 
 # Mobile promo infobar: encouraging users to try the mobile version
 mobile_promo_title: Sveltia CMS 現已支援行動裝置！
@@ -237,10 +604,36 @@ mobile_promo_button: 立即試用
 new_language_available: Sveltia CMS 現已支援 {$locale}！
 change_language: 切換語言
 
+# Live reload infobar: shown when the CMS runs on a page that a framework’s development server (e.g.
+# Astro) reloads on every file change, instead of a static HTML file
+live_reload_warning: 您的開發伺服器會在檔案變更時重新載入此頁面，這可能會中斷儲存並導致檔案損毀。請改由靜態 HTML 檔案提供 CMS。<a>了解詳情</a>
+
 # Toast notification shown while the translation for the selected language is being downloaded
 # {$locale} is the localized language name, e.g., “French”
 switching_language: 正在切換到 {$locale}……
 locale_load_failed: 無法載入 {$locale} 翻譯。請稍後再試。
+
+# Toast notification shown when changes saved with the local backend couldn’t be committed to Git
+# {$reason} is one of the `local_git_skip_reasons` strings below
+local_git_not_committed: 您的變更已儲存，但尚未提交到 Git。{$reason}若只想儲存檔案，請在「設定」>「開發者」中關閉 Git 提交。
+local_git_skip_reasons:
+  unsupported_repository: 您的倉庫使用了 CMS 不支援的 Git 功能，例如連結的工作樹、SHA-256 物件名稱、reftable 格式、稀疏索引，或第 3 版或第 4 版的索引（feature.manyFiles 選項和 git add -N 會使用這些版本）。
+  missing_identity: 倉庫的 Git 設定中未設定您的名稱和電子郵件地址，且 CMS 無法讀取您的全域設定。請在倉庫中使用 git config --local user.name "Your Name" 和 git config --local user.email "you@example.com" 進行設定。
+  locked: 另一個 Git 程序正在使用此倉庫。若沒有程序在執行，請刪除 .git/index.lock 檔案。
+  # The operation in progress, with how to finish or cancel it
+  operation_in_progress:
+    merge: 合併正在進行中。請使用 git commit 完成，或使用 git merge --abort 取消。
+    rebase: Rebase 正在進行中。請使用 git rebase --continue 完成，或使用 git rebase --abort 取消。若您已不再需要，git rebase --quit 會放棄它而不變更您的檔案。
+    cherry_pick: Cherry-pick 正在進行中。請使用 git cherry-pick --continue 完成，或使用 git cherry-pick --abort 取消。
+    revert: Revert 正在進行中。請使用 git revert --continue 完成，或使用 git revert --abort 取消。
+    am: 正在使用 git am 套用修補檔。請使用 git am --continue 完成，或使用 git am --abort 取消。
+    conflict: 部分檔案有衝突。請先解決衝突並暫存結果。
+  detached_head: 目前沒有簽出任何分支。
+  staged_changes: 您有其他已暫存待提交的變更。請先提交或取消暫存這些變更。
+  # {$path} is the file path
+  lfs: '{$path} 由 Git LFS 追蹤，CMS 無法提交至其中。'
+  # {$message} is the error message
+  error: 發生意外錯誤。{$message}
 
 # Site and page navigation
 # Toolbar button aria-label for visiting the live site
@@ -275,6 +668,10 @@ account: 帳號
 live_site: 線上網站
 git_repository: Git 倉庫
 settings: 設定
+
+# Page for the people who look after the CMS, apart from the personal settings: user management
+# and the CMS configuration
+administration: 管理
 
 # Help menu: button aria-labels and section headings
 show_help_menu: 顯示說明選單
@@ -366,6 +763,10 @@ viewing_x_asset_folder: |
 # Cloud storage service view announcement
 # {$service} is the cloud storage service name, e.g. Uploadcare
 viewing_x_external_location: 您正在瀏覽 {$service} 上的媒體檔案。
+# Administration page announcements
+viewing_admin_section_list: 您正在瀏覽管理區段清單。
+# {$section} is the section label, e.g. Users
+viewing_x_admin_section: 您正在瀏覽管理頁面的「{$section}」區段。
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
@@ -384,6 +785,7 @@ x_of_x_selected: 已選取 {$selected} / {$total} 個
 
 # View switcher: toggle between list and grid views
 switch_view: 切換檢視
+table_view: 表格檢視
 list_view: 清單檢視
 grid_view: 網格檢視
 switch_to_list_view: 切換到清單檢視
@@ -397,6 +799,16 @@ switch_to_grid_view: 切換到網格檢視
 # Sort menu: button labels and options
 sort: 排序
 sorting_options: 排序選項
+# Table view column labels for the entry metadata used as `{{…}}` template tags
+table_column_keys:
+  # The folder containing the entry file
+  dirname: 資料夾
+  # The entry file name without the extension
+  filename: 檔名
+  # The entry file extension
+  extension: 副檔名
+  # The enabled locales of the entry
+  locales: 語言
 # Sort key option labels
 sort_keys:
   # No sorting; entries appear in their natural repository order
@@ -436,6 +848,8 @@ grouping_options: 分組選項
 # Asset type filter and group labels
 type: 類型
 all: 全部
+# Group option for the linked files, which can be hosted anywhere: the host name of the file’s URL
+domain: 網域
 # Asset type labels
 image: 圖片
 video: 影片
@@ -454,6 +868,9 @@ all_assets: 全部媒體
 global_assets: 全域媒體
 # Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
 linked_files: 連結的檔案
+# Badge and message shown on a linked file that couldn’t be loaded, e.g. because it has been deleted
+file_unavailable: 無法使用
+file_unavailable_description: 無法載入此檔案。它可能已被移動或刪除。
 
 # ==============================================================================
 # Entry and Collection Actions
@@ -473,12 +890,29 @@ entry_not_found: 找不到項目。
 # Entry creation restrictions: tooltip and advisory messages
 creating_entries_disabled_by_admin: 管理員禁止在此集合中建立新項目。
 # {$quota} is the collection’s maximum entry count
-creating_entries_disabled_by_quota: 您無法向此集合新增新項目，因已達到 {$quota} 個項目的上限。
+creating_entries_disabled_by_quota: |
+  .input {$quota :integer}
+  .match $quota
+    *   {{ 此集合已達到 {$quota} 個項目的上限，因此無法新增項目。 }}
 # {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
 creating_entries_nearing_quota: |
+  .input {$quota :integer}
   .input {$remaining :integer}
-  .match $remaining
-    * {{ 此集合已接近 {$quota} 個項目的上限。您只能再建立 {$remaining} 個項目。 }}
+  .match $quota $remaining
+    *   *   {{ 此集合已接近 {$quota} 個項目的上限。您只能再建立 {$remaining} 個項目。 }}
+
+# Read-only restrictions set with the `readonly` option: advisory messages
+readonly_cms: CMS 處於唯讀模式。您可以檢視內容和媒體，但無法進行任何變更。
+readonly_collection: 此集合為唯讀。您可以檢視其內容，但無法進行任何變更。
+readonly_entry: 此項目為唯讀。您可以檢視，但無法進行任何變更。
+readonly_asset_folder: 此資料夾為唯讀。您可以檢視其中的媒體檔案，但無法進行任何變更。
+readonly_branch: 您沒有推送到「{$branch}」分支的權限。您可以檢視此內容，但無法進行任何變更。
+readonly_role: 您只有檢視權限。您可以檢視內容和媒體，但無法進行任何變更。
+readonly_reference: 此項目為唯讀，因此無法移除參照。
+# {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
+cannot_rename_referenced_entry: 此項目無法重新命名，因為下列唯讀項目以其目前名稱參照它：{$entries}。
+# {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
+cannot_move_referenced_asset: 此媒體檔案無法移動或重新命名，因為下列唯讀項目正在使用它：{$entries}。
 
 # Navigation: back links and list labels
 back_to_collection: 返回集合
@@ -486,6 +920,8 @@ collection_list: 集合清單
 back_to_collection_list: 返回集合清單
 asset_folder_list: 媒體資料夾清單
 back_to_asset_folder_list: 返回媒體資料夾清單
+# Back button shown in place of the one above while browsing a subfolder of an asset folder
+back_to_parent_folder: 返回上層資料夾
 
 # ==============================================================================
 # Search
@@ -540,6 +976,51 @@ no_entries_found: 找不到項目。
 # Upload dialog: title and button label
 upload_assets: 上傳新的媒體檔案
 
+# New Folder button and dialog in the Asset Library
+new_folder: 新增資料夾
+new_folder_name: 資料夾名稱
+new_folder_create: 建立
+# {$folder} is the path of the folder the new one will be created in, starting with a slash
+new_folder_description: 新資料夾將建立在「{$folder}」中。
+# Validation errors for the new folder name
+new_folder_error:
+  empty: 資料夾名稱不能為空。
+  invalid: 資料夾名稱不能包含斜槓或以點開頭。
+  # A name the CMS itself is usually served from, e.g. `admin` or `cms`
+  reserved: 此名稱的資料夾中的檔案為唯讀，因為 CMS 本身通常是從該資料夾提供的。
+  duplicate: 此處已有同名的資料夾或檔案。
+# Progress and error messages while the folder is being created
+creating_folder: 正在建立資料夾……
+creating_folder_failed: 無法建立資料夾。
+
+# Menu on a folder in the Asset Library, and the Rename Folder and Delete Folder dialogs
+folder_options: 資料夾選項
+show_folder_options: 顯示資料夾選項
+rename_folder: 重新命名資料夾
+delete_folder: 刪除資料夾
+# Rename Folder dialog body text
+# {$count} is the number of assets in the folder, which are moved along with it
+enter_new_name_for_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ 請在下方輸入新名稱。 }}
+    *   {{ 請在下方輸入新名稱。資料夾中的 {$count} 個媒體檔案會一併移動，使用這些檔案的項目也會隨之更新。 }}
+# Delete Folder confirmation
+# {$name} is the folder name and {$count} is the number of assets in the folder
+confirm_deleting_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ 您確定要刪除空的「{$name}」資料夾嗎？ }}
+    *   {{ 您確定要刪除「{$name}」資料夾及其中的 {$count} 個媒體檔案嗎？ }}
+# Progress and error messages while the folder is being renamed or deleted
+renaming_folder: 正在重新命名資料夾……
+renaming_folder_failed: 無法重新命名資料夾。
+deleting_folder: 正在刪除資料夾……
+deleting_folder_failed: 無法刪除資料夾。
+# Asset Library and asset picker: notice shown when a cloud storage service holds more files than
+# are listed at once
+external_assets_truncated: 服務上的檔案太多，無法全部列出，因此部分檔案未顯示。
+
 # Edit options menu: button and item labels
 edit_options: 編輯選項
 show_edit_options: 顯示編輯選項
@@ -552,6 +1033,44 @@ edit_x: 編輯 {$name}
 
 # Asset text editor: switch for line wrapping
 wrap_long_lines: 自動換行
+
+# Move assets: dialog for moving assets to another folder in the repository
+move: 移動
+move_asset: 移動媒體檔案
+# Dialog title. {$name} is the asset name when a single asset is moved, and {$count} is the number of
+# assets being moved
+move_assets_title: |
+  .input {$count :integer}
+  .match $count
+    1   {{ 移動 {$name} }}
+    *   {{ 移動 {$count} 個媒體檔案 }}
+# Dialog body text. {$count} is the number of entries that currently use the assets
+select_asset_move_destination: |
+  .input {$count :integer}
+  .match $count
+    0   {{ 請選擇要移動到的資料夾。 }}
+    *   {{ 請選擇要移動到的資料夾。使用這些媒體檔案的 {$count} 個項目也會隨之更新。 }}
+# Accessible label of the folder tree in the Move dialog
+asset_move_destination: 目的地資料夾
+# Shown when the assets being moved are all in the selected folder already
+assets_already_in_folder: |
+  .input {$count :integer}
+  .match $count
+    *   {{ 媒體檔案已在此資料夾中。 }}
+# Shown when files with the same names exist in the selected folder. {$names} is a comma-separated
+# list of file names
+asset_move_conflict: 此資料夾中已存在下列檔案：{$names}。
+moving_assets: 正在移動媒體檔案……
+moving_assets_failed: 無法移動媒體檔案。
+# Warning shown when files have been moved off a cloud storage service, but the originals couldn’t
+# be deleted from it
+asset_move_cleanup_failed: 檔案已移動，但無法從儲存服務中刪除原始檔案。
+# Shown when files on a cloud storage service can’t be renamed or moved, because the entries using
+# them can’t be updated, e.g. for an Open Authoring contributor. {$count} is the number of files
+cannot_change_used_external_files: |
+  .input {$count :integer}
+  .match $count
+    *   {{ 無法重新命名或移動這些檔案，因為使用它們的項目無法更新。 }}
 
 # Rename asset: dialog and validation
 rename_asset: 重新命名媒體檔案
@@ -569,6 +1088,15 @@ enter_new_name_for_asset_error:
   empty: 檔名不能為空。
   character: 檔名不能包含特殊字元。
   duplicate: 該檔名已用於其他媒體檔案。
+  # A name starting with a dot hides the file, which the CMS wouldn’t list any more
+  leading_dot: 檔名不能以點開頭。
+  # The name of a file next to the asset that isn’t an asset, like an entry file
+  file_duplicate: 此處已有同名的其他檔案。
+  # The name of a folder next to the file
+  folder_duplicate: 此處已有同名的資料夾。
+# Shown while renaming a file whose name will be changed on saving, e.g. by the `slugify_filename`
+# media library option
+file_will_be_saved_as: 檔案將儲存為「{$name}」。
 # Confirmation dialog shown when the file extension is changed while renaming an asset
 change_file_extension: 變更副檔名
 # {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
@@ -582,6 +1110,11 @@ file_extension_change_warning: 若副檔名與實際的檔案格式不符，檔�
 replace_asset: 替換媒體檔案
 # {$name} is the asset being replaced
 replace_x: 替換 {$name}
+# File/Image field: labels of the Replace and Remove buttons
+replace_file: 替換檔案
+replace_image: 替換圖片
+remove_file: 移除檔案
+remove_image: 移除圖片
 
 # File selection prompts: drop zones and file pickers
 # Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
@@ -663,6 +1196,26 @@ confirm_deleting_selected_assets: |
   .match $count
     * {{ 您確定要刪除選取的 {$count} 個媒體檔案嗎？ }}
 confirm_deleting_all_assets: 您確定要刪除所有媒體檔案嗎？
+# Note added to the confirmation when entries use the assets being deleted; the references are
+# removed in the same commit. {$count} is the number of entries using them
+deleting_referenced_assets_note: |
+  .input {$count :integer}
+  .match $count
+    *   {{ {$count} 個項目中對它的參照也會一併移除。 }}
+# Shown in place of the confirmation when removing the references would leave a field in an entry
+# invalid, e.g. a required Image field with nothing left, so the deletion is refused. The fields are
+# listed below the message, each with the validation error it would have. {$count} is the number of
+# assets being deleted
+cannot_delete_referenced_assets: |
+  .input {$count :integer}
+  .match $count
+    *   {{ 無法刪除媒體檔案，因為使用它的項目中的下列欄位在刪除後將變為無效。請先更新這些項目。 }}
+# Error shown in the asset deletion dialog when the entries using the assets couldn’t be looked up,
+# so the deletion can’t go ahead. {$count} is the number of assets being deleted
+checking_asset_references_failed: |
+  .input {$count :integer}
+  .match $count
+    *   {{ 無法檢查哪些項目使用了這些媒體檔案。請關閉此對話框後再試一次。 }}
 
 # Delete entries: dialog titles and confirmation messages
 # {$count} is the number of entries targeted by the action
@@ -691,6 +1244,21 @@ confirm_deleting_selected_entries_with_assets: |
     * {{ 您確定要刪除選取的 {$count} 個項目及其相關的媒體檔案嗎？ }}
 confirm_deleting_all_entries: 您確定要刪除所有項目嗎？
 confirm_deleting_all_entries_with_assets: 您確定要刪除所有項目及其相關的媒體檔案嗎？
+# Note added to the confirmation when other entries reference the entries being deleted through
+# Relation fields; the references are removed in the same commit. {$count} is the number of
+# referencing entries
+deleting_referenced_entries_note: |
+  .input {$count :integer}
+  .match $count
+    *   {{ 其他 {$count} 個項目中對它的參照也會一併移除。 }}
+# Shown in place of the confirmation when removing the references would leave a Relation field in
+# another entry invalid, e.g. a required field with nothing selected, so the deletion is refused.
+# The fields are listed below the message, each with the validation error it would have. {$count}
+# is the number of entries being deleted
+cannot_delete_referenced_entries: |
+  .input {$count :integer}
+  .match $count
+    *   {{ 無法刪除項目，因為其他項目中的下列欄位在刪除後將變為無效。請先更新這些項目。 }}
 
 # ==============================================================================
 # Entry Reordering
@@ -704,6 +1272,39 @@ cancel_reordering_entries: 取消排序
 
 # Reorder error message
 saving_reorder_failed: 儲存新的項目順序失敗。請再試一次。
+
+# ==============================================================================
+# Bulk Entry Editing
+# ==============================================================================
+# Strings for editing the fields of many entries at once in a table.
+
+# Bulk edit mode: toggle buttons
+bulk_edit_entries: 批次編輯項目
+save_bulk_edits: 儲存批次編輯
+cancel_bulk_edits: 取消批次編輯
+
+# Bulk edit table: column header of the entry titles
+bulk_edit_entry: 項目
+
+# Bulk edit table: label of the table
+bulk_edit_table: 批次編輯器
+
+# Bulk edit table: label of a cell input; {$field} is the field label, {$entry} is the entry title
+bulk_edit_cell: '{$entry} 的{$field}'
+
+# Bulk edit status: number of changed fields
+bulk_edit_count: |
+  .input {$count :integer}
+  .match $count
+    0   {{ 沒有變更 }}
+    *   {{ {$count} 項變更 }}
+
+# Bulk edit error messages
+bulk_edit_invalid: 部分值無效。請修正標示的欄位後再試一次。
+saving_bulk_edits_failed: 無法儲存變更。請再試一次。
+
+# Bulk edit: confirmation shown when leaving the mode with unsaved changes
+discard_bulk_edits_confirm: 要捨棄對項目所做的變更嗎？
 
 # ==============================================================================
 # File Upload and Processing
@@ -749,6 +1350,18 @@ warning_invalid_files: |
   .input {$count :integer}
   .match $count
     * {{ 這些檔案無法上傳，因為檔案已損毀，或內容與副檔名不符。這種情況常見於照片只被改名而沒有實際轉檔，例如把 HEIC 圖片存成 JPEG 檔案。請先轉換檔案格式再試一次。 }}
+# {$count} is the number of files that are not of a type the field accepts, even once transformed
+# {$types} is the list of accepted file types, such as “.pdf or .txt”
+warning_unsupported_files: |
+  .input {$count :integer}
+  .match $count
+    *   {{ 這些檔案無法上傳，因為不屬於下列類型：{$types}。 }}
+# {$count} is the number of files that are not of an image type the field accepts
+# {$types} is the list of accepted image formats, such as “PNG or WebP”
+warning_unsupported_image_files: |
+  .input {$count :integer}
+  .match $count
+    *   {{ 這些檔案無法上傳，因為僅接受下列類型的圖片：{$types}。 }}
 
 # File format validation when replacing an asset
 # Warning section for replacement files that are in a different format
@@ -781,6 +1394,8 @@ uploading_files_failed: 上傳失敗。
 # Errors shown when a file on a cloud storage service could not be deleted or renamed
 deleting_assets_failed: 刪除失敗。
 renaming_asset_failed: 重新命名失敗。
+# Error shown when an edited text file in the Asset Library could not be saved
+saving_asset_failed: 儲存失敗。
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
@@ -817,6 +1432,8 @@ entry_validation_errors: |
   .input {$count :integer}
   .match $count
     * {{ 有 {$count} 個欄位存在錯誤。請更正後儲存項目。 }}
+# Button on the validation error toast that opens the Validation panel listing the errors
+show_errors: 顯示錯誤
 
 # ==============================================================================
 # Success Notifications
@@ -881,6 +1498,18 @@ assets_deleted: |
   .input {$count :integer}
   .match $count
     * {{ 媒體檔案已刪除。 }}
+folder_created: 資料夾已建立。
+# Folder info panel in the Asset Library sidebar
+folder_path: 資料夾路徑
+folder_contents: 內容
+# {$count} is the number of subfolders in the folder
+x_folders: |
+  .input {$count :integer}
+  .match $count
+    0   {{ 無資料夾 }}
+    *   {{ {$count} 個資料夾 }}
+folder_renamed: 資料夾已重新命名。
+folder_deleted: 資料夾已刪除。
 
 # ==============================================================================
 # Content Editor
@@ -921,6 +1550,9 @@ edit_singleton_announcement: 您正在編輯「{$file}」檔案。
 # Shown when CI skip is enabled/disabled
 save_and_publish: 儲存並發布
 save_without_publishing: 儲存但不發布
+# Shown disabled in place of `save_and_publish` while entries created or edited from a Relation
+# field are in a collection whose review can’t be skipped with the `direct_publish` option
+save_and_publish_needs_review: 儲存並發布（相關項目需要審核）
 
 # Editor options menu
 show_editor_options: 顯示編輯器選項
@@ -950,6 +1582,9 @@ swap_panes: 交換面板
 # {$locale} is the localized language name for the current content pane, e.g., English
 edit_x_locale: 編輯 {$locale} 內容
 preview_x_locale: 預覽 {$locale} 內容
+# The content of a monolingual entry, which has no locale to name
+edit_content: 編輯內容
+preview_content: 預覽內容
 
 # Preview iframe labels
 content_preview: 內容預覽
@@ -958,6 +1593,8 @@ content_preview: 內容預覽
 # {$locale} is the localized language name for the content options menu, e.g., English
 show_content_options_x_locale: 顯示 {$locale} 內容選項
 content_options_x_locale: '{$locale} 內容選項'
+show_content_options: 顯示內容選項
+content_options: 內容選項
 
 # Field container labels
 # {$field} is the field’s display label
@@ -996,6 +1633,9 @@ deploy_preview:
   view: 檢視預覽
   # Shown while the site is still being built, with or without a URL to open yet
   building: 預覽仍在建置中。
+  # Shown when the build failed, so no preview is available. The failure may lie in the site’s own
+  # code rather than the entry, so the editor is told not to assume it’s theirs, and who to ask
+  build_failed: 無法建置預覽。這不一定是您的變更造成的。若問題持續發生，請聯絡網站管理員。
   # Shown briefly while the CI/CD provider is being queried
   checking: 正在檢查預覽……
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
@@ -1028,9 +1668,20 @@ translate_from: 從其他語言翻譯……
 # {$locale} is the localized language name of the source content being translated, e.g., English
 translate_from_x: 從 {$locale} 翻譯
 
-# Revert changes
+# Revert changes, restore the default values or clear the fields. The field options menu offers
+# them for a field, the content options menu of an editor pane for the locale it shows, and the
+# editor options menu for the whole entry, the latter two asking for confirmation first
 revert_changes: 復原變更
 revert_all_changes: 復原所有變更
+restore_default: 還原預設值
+clear_all: 全部清除
+confirm_reverting_changes: 您確定要復原對此項目所做的所有變更嗎？
+# {$locale} is a locale name, e.g. French
+confirm_reverting_changes_x_locale: 您確定要復原對 {$locale} 內容所做的所有變更嗎？
+confirm_restoring_defaults: 您確定要將此項目中所有欄位還原為預設值嗎？您的變更將會遺失。
+confirm_restoring_defaults_x_locale: 您確定要將 {$locale} 內容中所有欄位還原為預設值嗎？您的變更將會遺失。
+confirm_clearing_fields: 您確定要清除此項目中的所有欄位嗎？您的變更將會遺失。
+confirm_clearing_fields_x_locale: 您確定要清除 {$locale} 內容中的所有欄位嗎？您的變更將會遺失。
 
 # Slug editing
 edit_slug: 編輯網址代號
@@ -1038,6 +1689,8 @@ edit_slug_error:
   empty: 網址代號不能為空。
   invalid: 網址代號不能包含特殊字元（包括斜槓和空格）。
   duplicate: 此網址代號已用於其他項目。
+# {$slug} is the slug filled from the slug template, which a number is added to when another entry uses it
+slug_numbered: 網址代號「{$slug}」已用於其他項目，因此會在其後加上數字。
 
 # Entry path editing for nested entries
 # Heading for the parent folder picker shown when the `meta.path` option is enabled
@@ -1143,6 +1796,13 @@ validation:
     email: 請輸入有效的電子郵件地址。
     url: 請輸入有效的 URL。
 
+  # Value used for the same field in another entry of the collection
+  value_not_unique: 此值已用於其他項目。
+  # Key of a keyed List field item used for another item of the same list
+  key_not_unique: 此鍵已用於其他項目。
+  # Key of a keyed List field item that is a whole number, which doesn’t keep its order in a map
+  key_numeric: 鍵不能是整數，否則項目會失去順序。
+
   # Custom field validation error
   invalid_value: 無效的值。
   unexpected_error: 意外錯誤。
@@ -1164,6 +1824,12 @@ entry_sidebar:
     # Button in the panel header that validates the entry on demand
     validate: 驗證
 
+  # Slug panel: shows the entry slug and lets the user edit it
+  slug:
+    title: 網址代號
+    generated_on_save: 網址代號會在儲存時根據項目內容產生。其中的日期和時間將為儲存時的日期和時間。
+    unavailable: 此項目沒有網址代號。
+
   # History panel: shows entry commit history
   history:
     title: 歷史
@@ -1175,11 +1841,55 @@ entry_sidebar:
     title: 反向連結
     no_entries: 沒有項目參照到這一筆。
 
+  # Tab label of a panel with a count, e.g. of comments. {$title} is the panel title
+  title_with_count: '{$title}（{$count}）'
+
+# Status shown next to the Save button while an entry with many new files is being saved
+# {$done} and {$total} are the number of files prepared and to prepare, or the number of commits
+# made and the estimated number of commits in all
+save_progress:
+  preparing: 正在準備檔案：{$done} / {$total}
+  committing: 正在儲存到 GitHub：{$done} / 約 {$total} 次提交
+
 # Entry save error dialog
 saving_entry:
   error:
     title: 錯誤
     description: 儲存項目時發生錯誤。請稍後再試。
+
+# Dialog shown when saving the entry would overwrite a change someone else has made in the
+# repository since the entry was opened in the editor
+save_conflict:
+  title: 項目已被他人變更
+  # `{$name}` is the other person’s name, `{$date}` when they made the change
+  modified_by: '{$name} 在您開啟此項目後，於 {$date} 變更了它。'
+  # Shown instead of `modified_by` when the other person isn’t known
+  modified: 在您開啟此項目後，它已在倉庫中被變更。
+  deleted: 在您開啟此項目後，它已從倉庫中被刪除。
+  # Follows `modified_by` or `modified`
+  overwrite_warning: 如果現在儲存，對方的變更將會遺失。
+  # Follows `deleted`
+  recreate_warning: 如果現在儲存，此項目將會重新建立。
+  # Follows `modified_by`, `modified` or `deleted` for an entry stored in the same file as the other
+  # entries of the collection, which can’t be saved over the change
+  reload_warning: 由於此項目與其他項目儲存在同一個檔案中，因此無法覆寫該變更。請取消編輯，然後從清單中重新開啟此項目並進行編輯。
+  # OK button label
+  save_anyway: 仍要儲存
+  # Error shown when the repository was updated between the check above and the commit itself
+  branch_moved: 儲存期間倉庫已被他人更新。請再試一次。
+  # Error shown when saving would change an item in a file storing all the entries of a collection,
+  # which someone else has changed or moved since it was loaded
+  array_item_changed: 儲存在同一個檔案中的某個項目已被他人變更。請再試一次。
+  # {$path} is the file path
+  array_file_invalid: 無法更新 {$path} 檔案，因為它不包含有效的項目清單。
+
+# Notice shown in the entry editor when someone else has changed or deleted the entry in the
+# repository while the user has it open. The change itself is described with the `save_conflict`
+# strings above
+remote_change:
+  reload_entry: 重新載入項目
+  # Confirmation shown before reloading when the user has unsaved changes
+  confirm_reloading_entry: 您確定要重新載入此項目嗎？未儲存的變更將會遺失。
 
 # ==============================================================================
 # Asset Editor
@@ -1250,21 +1960,61 @@ map_lat_lng: 顯示緯度 {$latitude}、經度 {$longitude} 的地圖
 remove_this_item: 移除這一項
 move_up: 上移
 move_down: 下移
+# Menu of a list item or file with the extra reorder actions, shown in a list of 3 or more items
+reorder_options: 排序選項
+move_to_top: 移到最上方
+move_to_bottom: 移到最下方
+# Opens a dialog asking for the position to move a list item to
+move_to: 移到……
+# Dialog asking for the new position of an item. {$count} is the number of items in the list
+move_to_description: 請輸入 1 到 {$count} 之間的位置。
+move_to_position: 位置
 # aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
 # or moved with the arrow keys while the handle has focus
 reorder_item: 調整項目順序
 # aria-label for the text input holding one item of a simple List field, which has no subfield to
 # take a label from
 list_item_value: 項目值
+# aria-label for each item of a List field, giving its position in the list
+# {$position} is the 1-based position of the item, {$count} is the number of items
+list_item_position: 第 {$position} 項，共 {$count} 項
+# Message shown in place of a removed List field item or Object field, next to a Restore button
+# that puts it back
+item_removed: 已移除項目。
 
-# Add item button label
+# Add item button label, also used by the Relation field to create a new entry in the referenced
+# collection, with the collection’s singular label
 # Example: “Add Image”, “Add Author”
 # {$name} is the label of the item type that can be added
 add_x: 新增 {$name}
 
 # List item context menu
+# aria-label for the button opening the menu, and for the menu itself
+list_item_options: 清單項目選項
 add_item_above: 在上方新增項目
 add_item_below: 在下方新增項目
+paste_item_above: 在上方貼上項目
+paste_item_below: 在下方貼上項目
+paste_item_to_replace: 貼上並替換
+
+# List item clipboard
+# Button in the list toolbar to paste a copied item, from any list in any entry, at the end of the
+# list, or at the start with the `add_to_top` option
+paste_item: 貼上項目
+list_item_copied: 項目已複製。
+# ⋮ stands for the icon of the item menu button; keep it, along with the button’s aria-label
+no_list_item_to_paste: 沒有可貼上的已複製項目。若要複製項目，請開啟項目的 ⋮（清單項目選項）選單，然後選擇「複製」。
+list_item_not_compatible: 複製的項目不適用於此清單。
+# {$count} is the number of the values left out, as the list doesn’t have the fields
+list_item_pasted_without_values: |
+  .input {$count :integer}
+  .match $count
+    *   {{ 項目已貼上。此清單不接受的 {$count} 個值已被略過。 }}
+# {$count} is the number of the files the pasted item references that couldn’t be found
+list_item_pasted_without_files: |
+  .input {$count :integer}
+  .match $count
+    *   {{ 項目已貼上，但找不到它使用的 {$count} 個檔案。請檢查項目中的檔案欄位。 }}
 
 # Variable-type list selector
 select_list_type: 選擇清單類型
@@ -1283,12 +2033,45 @@ opacity: 不透明度
 # Select field: empty option placeholder
 unselected_option: (無)
 
+# Relation field: creating or editing a referenced entry without leaving the editor
+relation_field:
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  save_together_hint: 新的{$name}將與您正在編輯的項目一起儲存。
+  # Error shown when the entry couldn’t be prepared. {$name} is the singular label of the collection
+  add_failed: 無法新增{$name}。詳細資訊請查看瀏覽器主控台。
+  # Title of the dialog to edit an entry selected in the field. {$name} is the singular label of the
+  # referenced collection
+  edit_entry_title: 編輯{$name}
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  edit_together_hint: 您對{$name}所做的變更將與您正在編輯的項目一起儲存。
+  # Error shown when the changes couldn’t be prepared. {$name} is the singular label of the collection
+  edit_failed: 無法套用對{$name}所做的變更。詳細資訊請查看瀏覽器主控台。
+  # Error shown when the changes would move the entry to another file path, e.g. through a path
+  # template using a field. {$name} is the singular label of the collection
+  move_unsupported: 這些變更會將{$name}移到其他位置，這只能透過單獨編輯它來完成。
+  # Error shown when saving, if someone else has changed an entry edited from the field since. {$name}
+  # is the summary of that entry
+  edit_conflict: 在您編輯「{$name}」之後，它已被他人變更。請從欄位中重新開啟它，對照最新版本檢查您的變更。
+  # Error shown when saving, if someone else has deleted an entry edited from the field since.
+  # {$name} is the summary of that entry
+  edit_deleted: 在您編輯「{$name}」之後，它已被他人刪除。請將它從欄位中移除，才能儲存項目。
+  # Accessible label of the menu listing the selected entries that can be edited
+  select_entry_to_edit: 選擇要編輯的項目
+  # Warning shown in the editor of an entry that has been edited from a Relation field of another
+  # entry, while the changes wait in that entry’s pull request. {$name} is the summary of that
+  # entry
+  edited_with_entry: 此項目的變更正等待與「{$name}」一起發布。如果現在儲存，兩組變更會在該項目發布時合併；若兩者有重疊，可能會失敗。
+  # Warning shown in the dialog when an entry edited from the field has been changed by someone else
+  # since. {$name} is the singular label of the collection
+  changed_since_edit: 在您編輯此{$name}之後，它已被他人變更。您的變更會顯示在最新版本之上。請在更新前檢查。
+
 # Select Assets dialog
 assets_dialog:
   # Dialog titles for different selection modes
   title:
     file: 選擇檔案
     image: 選擇圖片
+    folder: 選擇資料夾
 
   # Search input labels
   search_for_file: 搜尋檔案
@@ -1296,6 +2079,17 @@ assets_dialog:
 
   # Locations panel aria-label
   locations: 位置
+
+  # Folder selection mode for a File field with the `select_folder` option. {$path} is the public
+  # path of the folder to be selected, and {$count} is the number of folders selected
+  selected_folder: 已選取的資料夾：{$path}
+  selected_folders: |
+    .input {$count :integer}
+    .match $count
+      *   {{ 已選取 {$count} 個資料夾 }}
+  no_subfolders: 此資料夾沒有子資料夾。
+  # Shown for a cloud storage service whose `prefix` option depends on fields of the entry
+  prefix_unresolved: 請填寫此位置所依據的欄位，才能瀏覽和上傳其中的檔案。
 
   # Asset folder options
   folder:
@@ -1313,6 +2107,7 @@ assets_dialog:
 
   # Stock photo panels
   available_images: 可用的圖片
+  available_files: 可用的檔案
 
   # URL entry option
   enter_url: 輸入 URL
@@ -1335,6 +2130,9 @@ assets_dialog:
   photo_credit:
     title: 圖片來源
     description: 請盡可能使用以下出處標示：
+    # {$field} is the label of the Markdown field the credit is added to
+    insert_to_field: 插入到{$field}
+    copy_as_markdown: 複製為 Markdown
 
   # Unsaved asset badge
   unsaved: 未儲存
@@ -1374,6 +2172,7 @@ editor_components:
   alt: 替代文字
   title: 標題
   link: 連結
+  caption: 說明文字
 
 # Key-Value field: column headers and validation
 key_value:
@@ -1438,6 +2237,15 @@ cloud_storage:
   uploadcare:
     auth_key_label: API 金鑰
 
+  azure_blob_storage:
+    auth_key_label: SAS 權杖
+
+  backblaze_b2:
+    auth_key_label: 應用程式金鑰
+
+  bunny_storage:
+    auth_key_label: 儲存區域密碼
+
 # ==============================================================================
 # Configuration Validation
 # ==============================================================================
@@ -1489,16 +2297,42 @@ config:
     unsupported_backend_suggestion: 請改用<a>支援的後端</a>。
     missing_repository: 未定義倉庫。
     invalid_repository: 設定的倉庫無效。格式必須為「owner/repo」。
+    # Don’t localize `api_root`
+    missing_api_root: 未定義 `api_root` 選項。Forgejo 後端需要此選項。
+    invalid_root_dir: 根目錄無效。它必須是倉庫內的路徑，且不能包含「..」。
+    invalid_root_dir_branch: 根目錄無法用於 `editorial_workflow` 和 `preview` 發布模式的分支名稱。其路徑的任何部分都不能以點開頭、以「.lock」結尾，或包含空格或特殊字元（例如冒號或星號）。
+    path_outside_root_dir: 路徑「{$path}」指向根目錄之外，CMS 無法在該處列出檔案。
     oauth_implicit_flow: Sveltia CMS 不支援設定的認證方法（隱式授權）。請改用其他<a>認證方法</a>。
     github_pkce_unsupported: 由於 GitHub 的限制，暫不支援 PKCE 授權。請改用其他<a>認證方法</a>。
+    additions_no_base_url: '`base_url` 選項必須是您的 Sveltia CMS Additions 服務的 URL。'
     oauth_no_app_id: 未定義 OAuth 應用程式 ID。
     # Don’t localize `open_authoring`, `editorial_workflow` and `preview`
-    open_authoring_no_workflow: '`open_authoring` 選項需要搭配 `editorial_workflow` 發布模式。詳見<a>說明文件</a>。'
+    open_authoring_no_workflow: '`open_authoring` 選項需要搭配 `editorial_workflow` 或 `preview` 發布模式。詳見<a>說明文件</a>。'
     # Don’t localize `auth_methods`
     no_auth_methods: '`auth_methods` 選項必須至少包含一種方法。'
+    # Don’t localize `auth_scope`, `repo` and `public_repo`
+    auth_scope_no_repo: '`auth_scope` 選項必須包含 `repo` 或 `public_repo`。'
     missing_media_folder: 未定義媒體資料夾。
     public_folder_relative_path: 設定的公開資料夾無效。必須是以「/」開頭的絕對路徑。
     public_folder_absolute_url: Sveltia CMS 不支援為公開資料夾選項設定絕對 URL。
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    unsupported_folder_template_tag: '`{$option}` 選項包含不支援的 `{$tag}` 模板標記。只能使用網址代號模板標記（例如 `\{\{slug\}\}` 和 `\{\{year\}\}`），以及 `\{\{dirname\}\}`、`\{\{filename\}\}`、`\{\{extension\}\}`、`\{\{media_folder\}\}` 和 `\{\{public_folder\}\}` 標記。'
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    global_folder_template_tag: '`{$option}` 選項包含 `{$tag}` 模板標記，此標記只能用於集合、集合檔案或欄位的選項中，因為只有在那裡才有項目可供填入。'
+    # {$replacement} is the configured replacement string; Don’t localize `sanitize_replacement`
+    invalid_sanitize_replacement: '`sanitize_replacement` 選項設為 `{$replacement}`，但其中含有無法用於網址代號的字元，因此無法用來替代字元。'
+    # {$option} is the option name (`site_url` or `display_url`) and {$url} is the configured value
+    invalid_url_option: '`{$option}` 選項設為 `{$url}`，但它必須是以 `https://` 或 `http://` 開頭的絕對 URL。'
+    # Don’t localize `publish_mode`, `stages`, `draft`, `pending_review` and `pending_publish`
+    invalid_publish_mode_stages: '`publish_mode` 的 `stages` 選項必須以 `draft` 開頭，並依 `draft`、`pending_review`、`pending_publish` 的順序列出階段，且不得重複。'
+    # Don’t localize `i18n` and `locales`
+    i18n_no_locales: '`i18n.locales` 選項必須至少列出一個語言。'
+    # {$locale} is the locale code from the configuration; Don’t localize `default_locale` and `locales`
+    i18n_invalid_default_locale: '`default_locale` 選項設為 `{$locale}`，但它不在 `locales` 之中。'
+    # {$locale} is the locale code from the configuration; Don’t localize `initial_locales` and `locales`
+    i18n_invalid_initial_locale: '`initial_locales` 選項包含 `{$locale}`，但它不在 `locales` 之中。'
+    # Don’t localize `i18n`
+    i18n_no_collections: '已在最上層設定 `i18n` 選項，但沒有任何集合或獨立項目設定 `i18n` 選項，因此沒有內容可以翻譯。請在要翻譯的集合和獨立項目中加入 `i18n: true`。'
     # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
     invalid_transformation_key: '`transformations` 選項含有不支援的 `{$key}` 鍵。它必須是 `raster_image`、`svg` 或支援的點陣圖格式。'
     # {$key} is the transformation key; Don’t localize `quality`
@@ -1511,18 +2345,52 @@ config:
     invalid_asset_collection_name: 媒體集合名稱 `{$name}` 無效。不能包含特殊字元。
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: 媒體集合名稱必須唯一，但 `{$name}` 使用了多次。
-    # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_no_options: 集合必須定義 `folder`、`files` 或 `divider` 選項。
-    # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_multiple_options: 集合不能同時設定 `folder`、`files` 和 `divider` 選項。
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_no_options: 集合必須定義 `folder`、`file`、`files` 或 `divider` 選項。
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_multiple_options: 集合只能設定 `folder`、`file`、`files` 和 `divider` 選項中的其中一個。
     # {$extension} is the file extension and {$format} is the configured content format
     file_format_mismatch: '`{$extension}` 副檔名與 `{$format}` 格式不相符。'
+    # {$name} is the field name from the configuration and {$widget} is its field type
+    front_matter_body_field_not_text: '`{$name}` 欄位會儲存為 front matter 下方的內文，而內文只能容納文字，無法像 `{$widget}` 欄位那樣容納數字、布林值、清單或物件。請使用容納文字的欄位類型，或重新命名此欄位。'
+    # {$file} is the file path from the configuration; Don’t localize `file` and `locale`. The curly
+    # brackets are escaped with backslashes for MessageFormat 2
+    invalid_collection_data_file: '`file` 選項 `{$file}` 無效。它必須是 JSON 檔案的路徑，且不能包含 `\{\{locale\}\}` 佔位符。'
+    # {$prop} is the option name; Don’t localize `file`
+    unsupported_collection_data_file_option: 設定了 `file` 選項的集合不支援 `{$prop}` 選項。
+    # Don’t localize `file`, `publish_mode` and `simple`
+    collection_data_file_workflow: 設定了 `file` 選項的集合不支援編輯工作流程和預覽工作流程（包括開放撰稿）。請將集合的 `publish_mode` 選項設為 `simple`。
+    # {$prop} is the option name; Don’t localize `file` and `slug`. The curly brackets are escaped
+    # with backslashes for MessageFormat 2
+    collection_data_file_slug_tag: 在設定了 `file` 選項的集合中，`{$prop}` 選項不能包含 `\{\{slug\}\}` 標記，因為項目的網址代號就是它的位置，會在項目重新排序或刪除時改變。請改用具有唯一值的欄位。
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
     invalid_slug_slash: 網址代號模板 `{$slug}` 無效，因為它不能包含斜槓。要按子資料夾組織項目，請使用 `path` 選項而非 `slug`。
+    # {$name} is the field name from the configuration; Don’t localize `identifier_field`
+    invalid_identifier_field: '`identifier_field` 選項指向 `{$name}`，但集合中未定義該欄位。'
+    # {$name} is the field name from the configuration; Don’t localize `filter`
+    invalid_filter_field: '`filter` 選項指向 `{$name}`，但集合中未定義該欄位。'
+    # Don’t localize `filter`, `value` and `pattern`
+    invalid_filter_no_condition: '`filter` 選項必須設定 `value` 或 `pattern` 選項，用以比對項目。'
+    # {$option} is an option name such as `slug` or `summary` and {$name} is the field name or template tag from the configuration
+    option_field_not_found: '`{$option}` 選項指向 `{$name}`，但未定義該欄位。'
+    # {$name} is the field name from the configuration and {$widget} is its field type; Don’t localize `thumbnail`
+    thumbnail_field_not_media: '`thumbnail` 選項指向 `{$name}`，但它必須是 Image 或 File 欄位，而不是 `{$widget}` 欄位。'
+    # Don’t localize `inline` or `multiple`
+    invalid_inline_component_fields: '`inline` 模式需要單一的 Boolean、Color、DateTime、Number、Relation、Select 或 String 欄位。Relation 或 Select 欄位不能啟用 `multiple` 選項。'
+    # {$option} is an option name such as `pattern` or `filter` and {$pattern} is the configured pattern
+    invalid_regex: '`{$option}` 選項包含無效的正規表示式 `{$pattern}`，將會被忽略。'
     # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
     invalid_reorder_group: '`reorder` 選項指向名為 `{$name}` 的檢視分組，但 `view_groups` 選項中未定義該分組。'
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit` and `fields`
+    invalid_bulk_edit_field: '`bulk_edit` 選項的 `fields` 清單指向名為 `{$name}` 的欄位，但集合中未定義該最上層欄位。'
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit`, `fields` and `multiple`
+    unsupported_bulk_edit_field: '`bulk_edit` 選項的 `fields` 清單中的 `{$name}` 欄位無法批次編輯。僅支援非唯讀、未啟用 `multiple` 選項且不會在儲存時自動設定的 Boolean、Color、DateTime、Number、Relation、Select 或 String 欄位。'
     # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
     invalid_sortable_field: '`sortable_fields` 選項指向名為 `{$name}` 的欄位，但集合中未定義該欄位。'
+    # Don’t localize `sortable_fields` and `default_sort`
+    multiple_sortable_field_defaults: '`sortable_fields` 選項中只能有一個項目設定 `default_sort` 選項。'
+    # {$option} is `table_columns` or `summary_fields`, and {$name} is the field name from the configuration
+    invalid_table_column_field: '`{$option}` 選項指向名為 `{$name}` 的欄位，但集合中未定義該欄位。'
     # {$name} is the field name from the configuration; Don’t localize `view_groups`
     invalid_view_group_field: '`view_groups` 選項指向名為 `{$name}` 的欄位，但集合中未定義該欄位。'
     # {$name} is the field name from the configuration; Don’t localize `view_filters`
@@ -1534,9 +2402,15 @@ config:
     duplicate_view_group_name: 檢視分組名稱必須是唯一的，但 `{$name}` 被使用了多次。
     # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
     missing_view_filter_name: 第 {$count} 個檢視篩選器必須將 `name` 選項定義為非空白字串。
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `pattern`, `eq` and `gte`
+    invalid_view_filter_no_condition: 第 {$count} 個檢視篩選器必須設定 `pattern` 選項或比較選項（例如 `eq` 或 `gte`），用以比對項目。
     # {$name} is the invalid or duplicate view filter name
     invalid_view_filter_name: 檢視篩選器名稱 `{$name}` 無效。名稱不得包含特殊字元。
     duplicate_view_filter_name: 檢視篩選器名稱必須是唯一的，但 `{$name}` 被使用了多次。
+    # {$name} is the default view group name from the configuration; Don’t localize `default` and `view_groups`
+    invalid_view_group_default: '`view_groups` 的 `default` 選項設為 `{$name}`，但沒有該名稱的檢視分組。'
+    # {$name} is the default view filter name from the configuration; Don’t localize `default` and `view_filters`
+    invalid_view_filter_default: '`view_filters` 的 `default` 選項設為 `{$name}`，但沒有該名稱的檢視篩選器。'
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: 集合 {$count} 必須將 `name` 選項定義為非空字串。
     # {$name} is the invalid or duplicate collection name
@@ -1551,8 +2425,19 @@ config:
     collection_no_fields: 集合必須將 `fields` 選項定義為至少包含一個欄位。
     # Don’t localize `fields`
     collection_file_no_fields: 集合檔案必須將 `fields` 選項定義為至少包含一個欄位。
+    # Don’t localize `i18n`, `locale` and `folder`
+    collection_folder_i18n_required: 如果在 `folder` 路徑中使用了 `locale` 佔位符，則集合必須定義 `i18n` 選項。
+    # {$folder} is the invalid folder path; Don’t localize `locale`, `folder` and the example path. The
+    # curly brackets in the example are escaped with backslashes for MessageFormat 2
+    invalid_collection_folder_locale: '`folder` 路徑 `{$folder}` 無效。`locale` 佔位符只能作為完整的資料夾名稱使用一次，例如 `content/\{\{locale\}\}/posts`。'
     # Don’t localize `i18n`, `locale` and `file`
     collection_file_i18n_required: 如果在 `file` 路徑中使用了 `locale` 佔位符，則集合檔案必須定義 `i18n` 選項。
+    # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
+    collection_i18n_no_fields: '集合設定了 `i18n` 選項，但其欄位都沒有 `i18n` 選項，因此沒有欄位可以翻譯。請在要翻譯的欄位中加入 `i18n: true` 或 `i18n: duplicate`。'
+    # Don’t localize `i18n` and `i18n: true`
+    collection_i18n_no_files: '集合設定了 `i18n` 選項，但其檔案都沒有 `i18n` 選項，因此沒有檔案可以翻譯。請在要翻譯的檔案中加入 `i18n: true`。'
+    # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
+    collection_file_i18n_no_fields: '集合檔案設定了 `i18n` 選項，但其欄位都沒有 `i18n` 選項，因此沒有欄位可以翻譯。請在要翻譯的欄位中加入 `i18n: true` 或 `i18n: duplicate`。'
     # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
     missing_field_name: 欄位 {$count} 必須將 `name` 選項定義為非空字串。
     # {$name} is the invalid or duplicate field name
@@ -1564,6 +2449,8 @@ config:
     invalid_variable_type: 變數類型名稱 `{$name}` 無效。不能包含特殊字元。
     duplicate_variable_type: 變數類型名稱必須唯一，但 `{$name}` 使用了多次。
     date_field_type: 'Sveltia CMS 不支援已棄用的 Date 欄位類型。請改用帶有 `type: date` 選項的 DateTime 欄位類型。'
+    # curly brackets in the placeholder are escaped with backslashes for MessageFormat 2
+    hidden_field_locale_without_i18n: Hidden 欄位的 `default` 選項使用了 `\{\{locale\}\}` 佔位符，但集合未啟用國際化，因此內容沒有可填入的語言。
     # {$timeZone} is the invalid IANA timezone identifier from the configuration
     invalid_timezone: 無效的時區：{$timeZone}。必須是有效的 IANA 時區識別碼，如 `America/New_York` 或 `Asia/Tokyo`。
     # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
@@ -1576,12 +2463,85 @@ config:
     invalid_list_variable_type: List 欄位的變數類型無效。`widget` 選項設定為 `{$widget}`，但必須是 `object`。
     # Don’t localize `fields`, and `types`
     invalid_object_field: Object 欄位不能同時設定 `fields` 和 `types` 選項。
+    # {$min} and {$max} are option names such as `min` and `max` or `minlength` and `maxlength`
+    invalid_range_options: '`{$min}` 選項不能大於 `{$max}` 選項。'
+    # {$step} is the configured value; Don’t localize `step`
+    invalid_step: '`step` 選項設為 `{$step}`，但它必須大於零，或設為 `-1` 以關閉步進。'
+    # Don’t localize `options`
+    select_field_no_options: Select 欄位的 `options` 選項必須至少包含一個項目。
+    # {$value} is the option value from the configuration; Don’t localize `options`
+    select_field_duplicate_option: Select 欄位的 `options` 必須唯一，但 `{$value}` 使用了多次。
+    # {$value} is the default value from the configuration; Don’t localize `default` and `options`
+    select_field_invalid_default: Select 欄位的 `default` 選項設為 `{$value}`，但它不在 `options` 之中。
+    # Don’t localize `fields` and `types`
+    list_field_no_subfields: List 欄位的 `fields` 或 `types` 選項必須至少包含一個項目。若要建立純值清單，請省略此選項。
+    # Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_object: List 欄位的 `default` 選項包含物件，但由於此欄位沒有 `fields` 或 `types`，每個項目都必須是純值。
+    # {$value} is the default item from the configuration; Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_item: List 欄位的 `default` 選項包含 `{$value}`，但由於此欄位有 `fields` 或 `types`，每個項目都必須是物件。
+    # {$key} is a property name of the default item from the configuration; Don’t localize `default`
+    list_field_invalid_default_key: List 欄位的 `default` 選項包含具有 `{$key}` 屬性的項目，但沒有該名稱的子欄位。
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    list_field_default_missing_type: List 欄位的 `default` 選項包含缺少 `{$typeKey}` 屬性的項目，此屬性用於識別 `types` 之一。
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default item; Don’t localize `default` and `types`
+    list_field_invalid_default_type: List 欄位的 `default` 選項包含 `{$typeKey}` 屬性為 `{$value}` 的項目，但它不在 `types` 之中。
+    # Don’t localize `map_key_field`, `fields` and `types`
+    list_field_map_key_no_subfields: List 欄位的 `map_key_field` 選項需要 `fields` 或 `types` 選項，因為每個鍵都取自子欄位。
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_not_found: List 欄位的 `map_key_field` 選項指向 `{$name}`，但沒有該名稱的子欄位。
+    # {$name} is the subfield name, and {$type} is the variable type name; Don’t localize `map_key_field`
+    list_field_map_key_missing_in_type: List 欄位的 `map_key_field` 選項指向 `{$name}`，但 `{$type}` 類型沒有該名稱的子欄位。
+    # {$name} is the subfield name, and {$widget} is its field type; Don’t localize `map_key_field`
+    list_field_map_key_invalid_type: List 欄位的 `map_key_field` 選項指向 `{$name}`，但它必須是 String、Relation 或 Select 欄位，而不是 `{$widget}` 欄位。
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `multiple`
+    list_field_map_key_multiple: List 欄位的 `map_key_field` 選項指向 `{$name}`，但該子欄位不能接受多個值，因為每個項目都需要單一的鍵。請移除其 `multiple` 選項。
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_option_not_string: List 欄位的 `map_key_field` 選項指向 `{$name}`，但該子欄位的選項必須是字串值，因為每個鍵都以字串儲存。
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `required`
+    list_field_map_key_not_required: List 欄位的 `map_key_field` 選項指向 `{$name}`，但該子欄位不能是選填的，因為每個項目都需要鍵。請移除其 `required` 選項。
+    # {$name} is the subfield name; Don’t localize `map_key_field`, `i18n: false` and `i18n: duplicate`
+    list_field_map_key_not_localized: 'List 欄位的 `map_key_field` 選項指向 `{$name}`，但該子欄位不能設定 `i18n: false`，因為每個語言中的項目都需要鍵。請使用 `i18n: duplicate` 或移除此選項。'
+    # Don’t localize `i18n`, `duplicate_if_empty`, `multiple` and `true`
+    duplicate_if_empty_multiple: '設定了 `multiple` 選項的欄位不支援 `i18n: duplicate_if_empty` 選項，因此該欄位會如同設定 `i18n: true` 一樣運作。'
+    # Don’t localize `default` and `multiple`
+    invalid_default_multiple: 由於 `multiple` 選項為 `true`，`default` 選項必須是陣列。
+    invalid_default_single: 由於 `multiple` 選項不是 `true`，`default` 選項必須是單一值，而不是陣列。
+    # {$key} is a property name of the default object from the configuration; Don’t localize `default`
+    object_field_invalid_default_key: Object 欄位的 `default` 選項具有 `{$key}` 屬性，但沒有該名稱的子欄位。
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    object_field_default_missing_type: Object 欄位的 `default` 選項缺少 `{$typeKey}` 屬性，此屬性用於識別 `types` 之一。
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default object; Don’t localize `default` and `types`
+    object_field_invalid_default_type: Object 欄位 `default` 選項的 `{$typeKey}` 屬性為 `{$value}`，但它不在 `types` 之中。
+    # Don’t localize `default` and `output_code_only`
+    code_field_invalid_default_object: 由於 `output_code_only` 選項為 `true`，Code 欄位的 `default` 選項必須是字串。
+    # {$key} is a property name of the default object, {$code} and {$lang} are the configured property names; Don’t localize `default` and `keys`
+    code_field_invalid_default_key: Code 欄位的 `default` 選項具有 `{$key}` 屬性，但 `keys` 選項只允許 `{$code}` 和 `{$lang}`。
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_invalid_expression: 由於 `value_type` 選項為 `{$valueType}`，Compute 欄位的 `value` 選項必須是有效的算術運算式，例如 `\{\{fields.price\}\} * \{\{fields.quantity\}\}`。
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_uuid_in_expression: 由於 `value_type` 選項為 `{$valueType}`，使其成為算術運算式，因此 Compute 欄位的 `value` 選項不能使用 `\{\{uuid\}\}` 之類的 UUID 標記。
+    # {$value} is the default value and {$valueType} is the configured value type; Don’t localize `default` and `value_type`
+    number_field_default_not_integer: Number 欄位的 `default` 選項設為 `{$value}`，但由於 `value_type` 選項為 `{$valueType}`，它必須是整數。
+    number_field_default_not_number: Number 欄位的 `default` 選項設為 `{$value}`，但由於 `value_type` 選項為 `{$valueType}`，它必須是數字。
+    # Don’t localize `fields` and `types`
+    object_field_no_subfields: Object 欄位的 `fields` 或 `types` 選項必須至少包含一個項目。
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: 引用的集合 `{$collection}` 無效或未定義。
     relation_field_invalid_collection_file: 引用的檔案 `{$file}` 無效或未定義。
     # Don’t localize `file`
     relation_field_missing_file_name: 關聯檔案集合時必須定義 `file` 選項。
     relation_field_invalid_value_field: 引用的值欄位 `{$field}` 無效或未定義。
+    # {$collection} is the referenced collection name; Don’t localize `file`, `value_field` and `slug`.
+    # The curly brackets are escaped with backslashes for MessageFormat 2
+    relation_field_array_file_slug: 與 `{$collection}` 集合的關聯無法儲存 `\{\{slug\}\}` 值，因為在設定了 `file` 選項的集合中，項目的網址代號就是它的位置，會在項目重新排序或刪除時改變。請改將 `value_field` 選項設為具有唯一值的欄位。
+    # {$collection} is the referenced collection name; Don’t localize `file`
+    relation_field_array_file_workflow: 設定了 `file` 選項的集合不能與使用編輯工作流程或預覽工作流程的 `{$collection}` 集合建立關聯，因為在該集合中重新命名或刪除的項目，其參照無法在檔案中更新。
+    relation_field_invalid_display_field: 引用的顯示欄位 `{$field}` 無效或未定義。
+    relation_field_invalid_search_field: 引用的搜尋欄位 `{$field}` 無效或未定義。
+    relation_field_invalid_filter_field: 引用的篩選欄位 `{$field}` 無效或未定義。
+    relation_field_invalid_sort_field: 引用的排序欄位 `{$field}` 無效或未定義。
+    # Don’t localize `sort_by` and `file`
+    relation_field_sort_by_file_ignored: '`sort_by` 選項不適用於與檔案的關聯，其選項會依清單項目的順序排列。此選項將會被忽略。'
     unexpected: 意外錯誤
 
     # Schema validation errors, reported when the configuration doesn’t match the published JSON
@@ -1614,18 +2574,56 @@ config:
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: 未定義 OAuth 應用程式 ID。使用者需要提供存取權杖才能登入。
+    # Don’t localize `prefix`
+    site_library_prefix_template: 媒體庫的 `prefix` 選項包含模板標記，但模板標記僅在欄位層級受支援，因為在最上層沒有項目可供填入。
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: Sveltia CMS 不支援 `{$prop}` 選項。該選項將會被忽略。
+    # Don’t localize `stages`, `publish_mode`, `editorial_workflow` and {$type}, which is `preview` or `simple`
+    publish_mode_stages_ignored: '`publish_mode` 的 `stages` 選項僅適用於 `editorial_workflow` 發布模式，因此在 `{$type}` 下會被忽略。'
+    # Don’t localize `pattern`, `m` and `s`
+    inline_component_multiline_pattern: 此行內元件的 `pattern` 具有 `m` 或 `s` 旗標，或會比對換行，但行內元件只會在段落內進行比對。
+    # {$name} is a button or component name and {$option} is `buttons` or `editor_components`; Don’t localize them and `multiline: false`
+    single_line_block_item: '`{$option}` 選項的 `{$name}` 項目會被忽略，因為設定了 `multiline: false` 的欄位只能容納行內內容。'
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: 同時設定了 `picker_utc` 和較新的時區選項（`input_timezone` 或 `output_utc`）。新選項將優先生效。請考慮從設定中移除 `picker_utc`。
+    # Don’t localize `localize_format` and `format`
+    localize_format_without_format: '`localize_format` 選項沒有作用，因為此欄位沒有 `format` 選項，其值會以 ISO 8601 格式儲存。'
+    # {$name} is a template tag like `fields.lines.*.price`; Don’t localize `value`, `*` and `sum()`
+    compute_field_wildcard_without_item: Compute 欄位的 `value` 選項指向 `{$name}`，但此欄位不在 `*` 所代表的清單項目中，因此無法解析出任何值。只有 `sum()` 之類的彙總函式才能使用清單中的所有項目。
+    # {$name} is a template tag like `fields.lines.*.amount`; Don’t localize `value`
+    compute_field_self_reference: Compute 欄位的 `value` 選項以 `{$name}` 指向欄位本身，因此每次計算時其值都會改變，永遠不會穩定。
+    # {$name} is a template tag like `fields.total`; Don’t localize `value`
+    compute_field_reference_cycle: Compute 欄位的 `value` 選項指向 `{$name}`，而這個 Compute 欄位又直接或透過其他欄位指回此欄位，因此它們的值永遠不會穩定。
+    # Don’t localize `localize_format`, `true` and `de`
+    localize_format_without_i18n: '`localize_format` 選項為 `true`，但集合未啟用國際化，因此值會以英文寫入。請改將此選項設為 `de` 之類的語言代碼。'
+    # {$locale} is the locale code from the configuration; Don’t localize `localize_format`
+    localize_format_unsupported_locale: '`localize_format` 選項設為 `{$locale}`，但這不是受支援的語言，因此值會以英文寫入。'
     # Don’t localize `preview_path`
     preview_path_no_date_field: '`preview_path` 選項使用了日期與時間標記，但集合中沒有可讀取的 DateTime 欄位，因此不會顯示預覽連結。'
     # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
     preview_path_date_field_not_found: '`preview_path_date_field` 選項指向名為 `{$name}` 的欄位，但沒有定義該名稱的 DateTime 欄位，因此不會顯示預覽連結。'
     # {$name} is the template tag from the configuration; Don’t localize `preview_path`
     preview_path_field_not_found: '`preview_path` 選項指向 `{$name}`，但集合中未定義該欄位，因此不會顯示預覽連結。'
+    # {$name} is the default identifier field name; Don’t localize `identifier_field` and `slug`
+    missing_identifier_field: 集合沒有可用來命名新項目的 `{$name}` 欄位，因此每個新項目都會獲得隨機的網址代號。請新增 `{$name}` 欄位，或設定 `identifier_field` 或 `slug` 選項。
+    # Don’t localize `slug`, `i18n`, `multiple_files`, `multiple_folders` and `multiple_root_folders`
+    slug_i18n_ineffective: '`slug` 的 `i18n` 選項沒有作用，因為此集合未使用每個語言各有獨立檔案的 `multiple_files`、`multiple_folders` 或 `multiple_root_folders` 國際化結構。'
+    # Don’t localize `slug`, `template` and `auto_increment`
+    slug_template_ignored: '`slug` 的 `template` 選項會被忽略，因為 `auto_increment` 選項會改為以編號產生網址代號。'
+    # {$file} is the file path; Don’t localize `file`, `locale`, `i18n`, `false`,
+    # `omit_default_locale_from_file_path` and the example paths. The curly brackets in the examples
+    # are escaped with backslashes for MessageFormat 2
+    locale_not_omitted_from_file_path: 無法從 `file` 路徑 `{$file}` 中移除 `locale` 佔位符，因此儘管設定了 `omit_default_locale_from_file_path` 國際化選項，預設語言仍會保留在路徑中。若要省略語言，請將佔位符作為完整的資料夾名稱使用（例如 `\{\{locale\}\}/about.md`），或放在檔名和副檔名之間（例如 `about.\{\{locale\}\}.md`）。若要保留，請在該檔案的 `i18n` 選項中將此選項設為 `false`。
+    # Don’t localize `i18n`
+    i18n_not_configured: 已啟用 `i18n` 選項，但設定的最上層或集合中都未設定國際化，因此此選項沒有作用。
+    # Don’t localize `public_folder` and `media_folder`
+    empty_public_folder: '`public_folder` 選項為空字串，因此項目中儲存的媒體路徑會改用 `media_folder` 路徑。請移除此選項，或將其設為您要使用的路徑，例如 `/images`。'
     # {$option} is an option path from the configuration, such as `filter.Regulation`
     schema_unknown_option: Sveltia CMS 設定結構描述中未定義 `{$option}` 選項。該選項將會被忽略。請檢查是否有拼字或語法錯誤。
+    # Don’t localize `default_localized`, `default` and `i18n`
+    default_localized_without_i18n: '`default_localized` 選項沒有作用，因為集合未啟用國際化。請改用 `default` 選項。'
+    # {$locale} is a locale code from the configuration; Don’t localize `default_localized`
+    default_localized_unknown_locale: '`default_localized` 選項含有 `{$locale}` 的值，但這不是集合的語言之一，因此該值永遠不會被使用。'
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 詳見相容性說明：{$link}
@@ -1658,6 +2656,11 @@ viewing_editorial_workflow: 您正在瀏覽編輯工作流程看板。草稿：{
 # Same as above, for an Open Authoring contributor: their board has no Ready column, because only
 # a maintainer can publish
 viewing_open_authoring_workflow: 您正在瀏覽編輯工作流程看板。草稿：{$draft}。審核中：{$review}。待刪除：{$deletion}。
+# Same as above, when the In Review stage is left out with the `stages` publish mode option
+viewing_editorial_workflow_without_review: 您正在瀏覽編輯工作流程看板。草稿：{$draft}。可發布：{$ready}。待刪除：{$deletion}。
+# Same as above, when all the content uses Preview Workflow, which has no review stages, so the
+# page only lists the drafts
+viewing_preview_workflow: 您正在瀏覽草稿頁面。草稿：{$draft}。待刪除：{$deletion}。
 
 # Workflow status names. `drafts` is the plural form used as a column heading,
 # while `draft` is the singular form used in the editor’s status button.
@@ -1669,6 +2672,10 @@ status:
   # A pending removal, which is a status of its own rather than a stage: it has no review to go
   # through, only the deletion itself to carry out or call off
   pending_deletion: 待刪除
+  # Merged changes the site hasn’t caught up with yet: it’s being rebuilt and deployed from the
+  # merge, so a published entry isn’t live and a deleted one is still up. Heading of the tray below
+  # the board that lists them until the site has caught up
+  deploying: 部署中
 
 workflow:
   # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
@@ -1710,6 +2717,14 @@ workflow:
   status_updated: 狀態已更新。
   # Error notification when the status could not be changed
   status_change_failed: 無法變更狀態。請再試一次。
+  # Workflow page: toolbar button that reads the pull requests again, to pick up the changes made
+  # by anyone else since the board was loaded, and the toast notifications shown while doing so and
+  # once done
+  refresh: 重新整理
+  refreshing: 重新整理中……
+  refreshed: 看板已是最新狀態。
+  # Error notification when the board could not be refreshed
+  refresh_failed: 無法重新整理看板。請再試一次。
   # Error notification when the status can’t be changed because the entry is incomplete. Required
   # fields can be left empty while the entry is a draft, but not once it moves on from there
   status_change_blocked: 這個項目有錯誤。請先修正後再變更狀態。
@@ -1720,6 +2735,10 @@ workflow:
   # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
   send_for_review: 送出審核
   confirm_sending_for_review: 您的變更已儲存為草稿。要將這個項目送出審核，讓其他人檢視並發布嗎？
+  # Same as above, when the In Review stage is left out with the `stages` publish mode option, so
+  # the next step is to mark the entry as ready to be published
+  mark_as_ready: 標示為可發布
+  confirm_marking_as_ready: 您的變更已儲存為草稿。要將此項目標示為可發布，以便進行發布嗎？
   # Editor toolbar: button shown when the entry is ready to be published
   publish_entry: 發布項目
   # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
@@ -1749,6 +2768,8 @@ workflow:
     .input {$count :integer}
     .match $count
       * {{ 其中有 {$count} 個尚未發布，因此您未發布的變更將被捨棄。已發布的版本則會維持發布狀態。 }}
+  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
+  confirm_publishing_entry_after_build: 確定要發布這個項目嗎？網站重新建置完成後，您的變更就會上線。
   # Workflow page: toast notifications shown while an entry is being published from a card, and
   # once publishing has completed
   publishing_entry: 正在發布項目……
@@ -1760,10 +2781,55 @@ workflow:
   entry_deleted: 項目已刪除。
   # Error notification when publishing fails
   publishing_entry_failed: 無法發布項目。請再試一次。
+  # Error notification when an entry can’t be published from the CMS, because its request also
+  # changes files that aren’t part of the entry and that the CMS doesn’t show, goes somewhere other
+  # than the site’s branch, or is too large to check. Keep the wording free of Git jargon
+  publish_refused_other_changes: 無法在此發布這個項目，因為它附帶了 CMS 無法顯示給您的其他變更。請聯絡開發人員檢查。
+  # Error notification when an entry can’t be published because its branch has been committed to
+  # since the entry was opened, so what would be published isn’t what was reviewed
+  publish_refused_entry_changed: 在您開啟此項目後，它已被變更。請重新載入頁面，檢查最新版本後再發布。
+  review_on_x: 在 {$service} 上審核
+  from_fork: 來自 fork
+  fork_entry_editable: 此項目來自貢獻者從「{$fork}」開啟的提取要求。您的變更會儲存到對方的分支。請在 Git 服務上審核並合併該提取要求。
+  fork_entry_locked: 此項目來自貢獻者從「{$fork}」開啟的提取要求。該貢獻者不允許維護者編輯，因此在此只能檢視。
+  fork_not_editable: 該貢獻者不允許維護者編輯此提取要求。
+  fork_entry_gone: 該貢獻者的提取要求已不再開啟，因此無法將變更儲存到其中。
+  # Error shown in the save error dialog when an entry can’t be saved for review, because a request
+  # the CMS doesn’t show is already open from the branch the entry would be saved to. `{$number}` is
+  # the request number, e.g. `#12` on GitHub or `!12` on GitLab. Keep the wording free of Git jargon
+  branch_in_use: 此項目已有另一個在 CMS 外部開啟的要求（{$number}）。請聯絡開發人員先將其關閉。
   # Workflow page: empty column message
   no_entries: 沒有項目。
   # Workflow page: aria-label for a draggable entry card
   drag_entry: 拖曳以變更狀態
+  # Workflow page: note on a card in the Deploying tray, marking an entry that’s being removed from
+  # the site rather than published to it
+  deploying_deletion: 刪除
+  # Workflow page: note on a card listing the new entries that were created from a Relation field
+  # of the entry and are published along with it, e.g. “Also adds Section: Getting Started”
+  companion_entries: 同時新增 {$entries}
+  # Workflow page: note on a card listing the existing entries that were edited from a Relation
+  # field of the entry and are published along with it, e.g. “Also changes Author: Ada Lovelace”
+  edited_companion_entries: 同時變更 {$entries}
+  # Workflow page: one of the entries listed by `companion_entries` or `edited_companion_entries`,
+  # named by its collection’s singular label and its title
+  companion_entry: '{$collection}：{$title}'
+
+# Dialog asking the user for a commit message every time changes are saved, when the site is
+# configured to. The message is recorded in the repository’s history along with the changes
+commit_message:
+  # Dialog title
+  title: 提交訊息
+  # Description when the user writes the whole message, which the text box is filled in with
+  description_replace: 請描述您的變更。此訊息會與變更一起記錄在歷史記錄中。
+  # Description when the text the user enters is added before or after a message the CMS writes
+  description_addition: 為與您的變更一起記錄在歷史記錄中的訊息加上附註，例如問題編號。可以留空。
+  # Accessible name of the text box when the user writes the whole message
+  message: 提交訊息
+  # Accessible name of the text box when the text is added before or after the message
+  addition: 附註
+  # Preview of the message as it will be recorded. {$message} is the message
+  preview: 訊息：{$message}
 
 # Open Authoring: a contributor without write access to the configured repository works in a fork
 # of it, and their changes reach the site through a pull request a maintainer merges
@@ -1777,6 +2843,10 @@ open_authoring:
   fork_declined: 您的帳號下必須有該倉庫的 fork，才能提出變更建議。
   # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
   fork_failed: 無法在您的帳號下建立「{$repo}」倉庫的 fork。
+  # Error shown when the user’s fork doesn’t have the branch the CMS is configured with, so there’s
+  # nothing to start their changes from. {$fork} and {$repo} are repository identifiers in
+  # owner/repo format, {$branch} is the branch name
+  fork_branch_missing: 您的「{$fork}」fork 中沒有「{$branch}」分支。請從「{$repo}」倉庫更新該 fork，然後重新登入。
   # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
   # because the API rate limit is exhausted. {$repo} is the repository identifier
   permission_check_failed: 無法確認您對「{$repo}」倉庫的存取權限。請稍後再試。
@@ -1791,6 +2861,10 @@ open_authoring:
   private_repo_scope_required: 您的登入權限不包含私有倉庫，因此無法讀取「{$repo}」倉庫。請聯絡維護者檢查 CMS 的認證設定。
   # Error shown when a contributor tries to publish an entry, which only a maintainer can do
   publish_unsupported: 只有維護者才能發布這個網站的變更。請改將您的項目標示為審核中，會有人來檢視。
+  # Error shown when a contributor changes the status of an entry whose request a maintainer has
+  # published since the page was loaded, leaving nothing to review. The entry then leaves the
+  # Editorial Workflow board and the editor closes. Keep the wording free of Git jargon
+  entry_already_published: 維護者已發布此項目，因此已沒有需要審核的內容。
   # Error shown when a change would go straight to the site instead of being reviewed, which a
   # contributor can’t do. It covers media library uploads and deletions, and entry reordering
   direct_commit_unsupported: 這項變更無法直接套用。只有對項目的編輯可以提出審核建議。
@@ -1808,6 +2882,8 @@ categories: 分類
 
 # Preferences panels
 prefs:
+  account:
+    title: 帳號
   # API key management feedback messages
   changes:
     api_key_saved: API 金鑰已儲存。
@@ -1857,7 +2933,7 @@ prefs:
         select_service: 選擇服務
       api_keys:
         title: 翻譯服務 API 金鑰
-        description: 管理<a>翻譯服務</a>的 API 金鑰。
+        description: 管理<a>翻譯服務</a>的 API 金鑰。通用 AI 服務的 API 金鑰可在 AI 設定中管理。
       # API key input label, e.g., “DeepL Key”
       # {$service} is the translation service name
       field_label: '{$service} 金鑰'
@@ -1891,6 +2967,16 @@ prefs:
       field_label: '{$service} API 金鑰'
       no_services: 未設定<a>雲端儲存服務</a>。
 
+  # AI panel
+  ai:
+    title: AI
+    api_keys:
+      title: AI 服務 API 金鑰
+      description: 管理 AI 服務的 API 金鑰。
+    # API key input label, e.g., “OpenAI GPT API Key”
+    # {$service} is the AI service name
+    field_label: '{$service} API 金鑰'
+
   # Accessibility panel
   accessibility:
     title: 無障礙
@@ -1901,6 +2987,7 @@ prefs:
 
   # Data Management panel
   data:
+    title: 資料管理
     clear_data:
       title: 清除資料
       # Clear File Cache button
@@ -1916,13 +3003,23 @@ prefs:
 
   # Developer panel
   developer:
+    title: 開發者
     developer_mode:
       title: 開發者模式
       description: 啟用一些給開發者用的功能，包括詳細的主控台記錄和原生快顯選單。
       switch_label: 啟用開發者模式
+    local_git:
+      title: Git 提交
+      description: 每次儲存變更時，將其提交到本機倉庫的目前分支，就像使用遠端倉庫時 CMS 所做的一樣。之後您可以使用慣用的 Git 工具檢查並推送這些提交。
+      switch_label: 將變更提交到 Git
+      checking: 正在檢查倉庫……
+      # {$branch} is the branch name, {$name} and {$email} are the commit author’s name and email address
+      ready: 變更將以 {$name}（{$email}）的身分提交到 {$branch} 分支。
+      # {$reason} is one of the `local_git_skip_reasons` strings
+      not_ready: 目前無法提交變更。{$reason}
     deploy_hook:
       title: 部署 Hook
-      description: 手動部署時（選擇「發布變更」）會呼叫此 URL。使用 GitHub Actions 可留空。
+      description: 手動部署時（選擇「發布變更」）會呼叫此 Webhook URL。使用 GitHub Actions 或 GitLab CI/CD 時可留空。
       # Hook URL input
       url:
         field_label: Hook URL
