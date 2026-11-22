@@ -259,7 +259,7 @@ additions:
   # The Account settings panel of a Sveltia CMS Additions user
   account:
     profile: Profil
-    profile_description: Navnet ditt vises for andre i CMS-et, for eksempel på oppføringslåser og kommentarer, og i commitene dine.
+    profile_description: Navnet ditt vises for andre brukere i CMS-et, for eksempel på oppføringslåser og kommentarer, og i commitene dine.
     username_description: Brukernavnet ditt kan ikke endres.
     email: E-post
     email_description: Den brukes i commitene du lager, slik at GitHub kan knytte dem til kontoen din. Uten en e-postadresse brukes en plassholderadresse. Bare en administrator kan endre den.

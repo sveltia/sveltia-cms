@@ -259,7 +259,7 @@ additions:
   # The Account settings panel of a Sveltia CMS Additions user
   account:
     profile: Perfil
-    profile_description: El vostre nom és visible per a altres persones al CMS, per exemple en els bloquejos d’entrades i els comentaris, i també en les vostres confirmacions.
+    profile_description: El vostre nom és visible per a altres usuaris al CMS, per exemple en els bloquejos d’entrades i els comentaris, i també en les vostres confirmacions.
     username_description: El vostre nom d’usuari no es pot canviar.
     email: Correu electrònic
     email_description: S’usa a les confirmacions que feu perquè GitHub les pugui vincular al vostre compte. Si no n’hi ha cap, s’usa una adreça provisional. Només un administrador el pot canviar.
@@ -421,7 +421,7 @@ additions:
     adopt: Adopta el compte
     sign_in:
       github: Permet iniciar la sessió amb GitHub
-      github_description: Les persones inicien la sessió amb el seu compte de GitHub i obtenen el seu propi testimoni de GitHub, de manera que els seus canvis es confirmen al seu nom. Primer les ha d’afegir un administrador amb el seu nom d’usuari de GitHub, tret que les cobreixi una regla de registre.
+      github_description: Els usuaris inicien la sessió amb el seu compte de GitHub i obtenen el seu propi testimoni de GitHub, de manera que els seus canvis es confirmen al seu nom. Primer els ha d’afegir un administrador amb el seu nom d’usuari de GitHub, tret que els cobreixi una regla de registre.
       # Shown when signing in with GitHub is being turned off while {$count} users can only sign in
       # with it
       github_only_warning: |

@@ -263,7 +263,7 @@ additions:
   # The Account settings panel of a Sveltia CMS Additions user
   account:
     profile: الملف الشخصي
-    profile_description: يظهر اسمك للآخرين في نظام إدارة المحتوى، مثل أقفال العناصر والتعليقات، وفي عمليات الإيداع (Commits) الخاصة بك.
+    profile_description: يظهر اسمك للمستخدمين الآخرين في نظام إدارة المحتوى، مثل أقفال العناصر والتعليقات، وفي عمليات الإيداع (Commits) الخاصة بك.
     username_description: لا يمكن تغيير اسم المستخدم الخاص بك.
     email: البريد الإلكتروني
     email_description: يُستخدم في عمليات الإيداع التي تجريها، ليتمكن GitHub من ربطها بحسابك. إذا لم يكن موجوداً، يُستخدم عنوان بديل. يمكن للمسؤول فقط تغييره.
@@ -425,7 +425,7 @@ additions:
     adopt: تبنّي الحساب
     sign_in:
       github: السماح بتسجيل الدخول باستخدام GitHub
-      github_description: يسجّل الأشخاص الدخول بحساب GitHub الخاص بهم ويحصلون على رمز GitHub خاص بهم، لذلك تُودَع تغييراتهم بأسمائهم. يضيفهم المسؤول أولاً، مع اسم مستخدم GitHub الخاص بهم، ما لم تشملهم قاعدة تسجيل.
+      github_description: يسجّل المستخدمون الدخول بحساب GitHub الخاص بهم ويحصلون على رمز GitHub خاص بهم، لذلك تُودَع تغييراتهم بأسمائهم. يضيفهم المسؤول أولاً، مع اسم مستخدم GitHub الخاص بهم، ما لم تشملهم قاعدة تسجيل.
       # Shown when signing in with GitHub is being turned off while {$count} users can only sign in
       # with it
       github_only_warning: |

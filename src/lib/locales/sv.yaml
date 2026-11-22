@@ -259,7 +259,7 @@ additions:
   # The Account settings panel of a Sveltia CMS Additions user
   account:
     profile: Profil
-    profile_description: Ditt namn visas för andra i CMS:et, till exempel vid postlås och kommentarer, samt i dina commits.
+    profile_description: Ditt namn visas för andra användare i CMS:et, till exempel vid postlås och kommentarer, samt i dina commits.
     username_description: Ditt användarnamn kan inte ändras.
     email: E-post
     email_description: Den används i de commits du gör, så att GitHub kan koppla dem till ditt konto. Utan en e-postadress används en platshållaradress. Endast en administratör kan ändra den.
@@ -421,7 +421,7 @@ additions:
     adopt: Ta över konto
     sign_in:
       github: Tillåt inloggning med GitHub
-      github_description: Personer loggar in med sitt GitHub-konto och får en egen GitHub-token, så att deras ändringar committas i deras namn. En administratör lägger först till dem med deras GitHub-användarnamn, om de inte omfattas av en registreringsregel.
+      github_description: Användare loggar in med sitt GitHub-konto och får en egen GitHub-token, så att deras ändringar committas i deras namn. En administratör lägger först till dem med deras GitHub-användarnamn, om de inte omfattas av en registreringsregel.
       # Shown when signing in with GitHub is being turned off while {$count} users can only sign in
       # with it
       github_only_warning: |

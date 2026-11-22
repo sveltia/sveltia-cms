@@ -256,7 +256,7 @@ additions:
   # The Account settings panel of a Sveltia CMS Additions user
   account:
     profile: プロフィール
-    profile_description: 名前は CMS 上で他の人に表示されるほか (例：エントリーのロックやコメント)、あなたのコミットにも使われます。
+    profile_description: 名前は CMS 上で他のユーザーに表示されるほか (例：エントリーのロックやコメント)、あなたのコミットにも使われます。
     username_description: ユーザー名は変更できません。
     email: メールアドレス
     email_description: あなたのコミットに使われ、GitHub がコミットをあなたのアカウントに関連付けられるようになります。空の場合は代わりのアドレスが使われます。変更できるのは管理者のみです。

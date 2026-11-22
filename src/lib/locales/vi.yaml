@@ -259,7 +259,7 @@ additions:
   # The Account settings panel of a Sveltia CMS Additions user
   account:
     profile: Hồ sơ
-    profile_description: Tên của bạn được hiển thị cho người khác trong CMS, chẳng hạn trên khóa bài viết và bình luận, cũng như trong các commit của bạn.
+    profile_description: Tên của bạn được hiển thị cho người dùng khác trong CMS, chẳng hạn trên khóa bài viết và bình luận, cũng như trong các commit của bạn.
     username_description: Không thể thay đổi tên người dùng của bạn.
     email: Email
     email_description: Email này được dùng trong các commit bạn tạo để GitHub có thể liên kết chúng với tài khoản của bạn. Nếu không có, một địa chỉ giữ chỗ sẽ được sử dụng. Chỉ quản trị viên mới có thể thay đổi email này.
@@ -421,7 +421,7 @@ additions:
     adopt: Tiếp nhận tài khoản
     sign_in:
       github: Cho phép đăng nhập bằng GitHub
-      github_description: Mọi người đăng nhập bằng tài khoản GitHub của họ và nhận mã GitHub riêng, nhờ đó các thay đổi được commit dưới tên của chính họ. Quản trị viên cần thêm họ trước bằng tên người dùng GitHub, trừ khi họ thuộc phạm vi của một quy tắc đăng ký.
+      github_description: Người dùng đăng nhập bằng tài khoản GitHub của họ và nhận mã GitHub riêng, nhờ đó các thay đổi được commit dưới tên của chính họ. Quản trị viên cần thêm họ trước bằng tên người dùng GitHub, trừ khi họ thuộc phạm vi của một quy tắc đăng ký.
       # Shown when signing in with GitHub is being turned off while {$count} users can only sign in
       # with it
       github_only_warning: |

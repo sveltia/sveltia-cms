@@ -274,7 +274,7 @@ additions:
   # The Account settings panel of a Sveltia CMS Additions user
   account:
     profile: פרופיל
-    profile_description: השם שלכם מוצג לאנשים אחרים במערכת, למשל בנעילות של פריטים ובתגובות, וגם ב-commits שלכם.
+    profile_description: השם שלכם מוצג למשתמשים אחרים במערכת, למשל בנעילות של פריטים ובתגובות, וגם ב-commits שלכם.
     username_description: לא ניתן לשנות את שם המשתמש שלכם.
     email: דוא״ל
     email_description: הכתובת משמשת ב-commits שאתם מבצעים, כדי ש-GitHub יוכל לקשר אותם לחשבון שלכם. בלעדיה תשמש כתובת ממלאת מקום. רק מנהל יכול לשנות אותה.

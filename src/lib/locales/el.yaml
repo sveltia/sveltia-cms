@@ -259,7 +259,7 @@ additions:
   # The Account settings panel of a Sveltia CMS Additions user
   account:
     profile: Προφίλ
-    profile_description: Το όνομά σας εμφανίζεται σε άλλα άτομα στο CMS, π.χ. στα κλειδώματα καταχωρίσεων και στα σχόλια, καθώς και στα commits σας.
+    profile_description: Το όνομά σας εμφανίζεται σε άλλους χρήστες στο CMS, π.χ. στα κλειδώματα καταχωρίσεων και στα σχόλια, καθώς και στα commits σας.
     username_description: Το όνομα χρήστη σας δεν μπορεί να αλλάξει.
     email: Email
     email_description: Χρησιμοποιείται στα commits που κάνετε, ώστε το GitHub να μπορεί να τα συνδέσει με τον λογαριασμό σας. Χωρίς αυτό, χρησιμοποιείται μια διεύθυνση κράτησης θέσης. Μόνο ένας διαχειριστής μπορεί να το αλλάξει.

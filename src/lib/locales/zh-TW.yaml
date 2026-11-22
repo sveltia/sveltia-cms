@@ -258,7 +258,7 @@ additions:
   # The Account settings panel of a Sveltia CMS Additions user
   account:
     profile: 個人資料
-    profile_description: 您的名稱會在 CMS 中向其他人顯示（例如項目鎖定和留言），也會出現在您的提交中。
+    profile_description: 您的名稱會在 CMS 中向其他使用者顯示（例如項目鎖定和留言），也會出現在您的提交中。
     username_description: 使用者名稱無法變更。
     email: 電子郵件
     email_description: 此地址會用於您的提交，讓 GitHub 能將提交連結到您的帳號。未設定時會使用預留位置地址。只有管理員可以變更。

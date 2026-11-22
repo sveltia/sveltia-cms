@@ -258,7 +258,7 @@ additions:
   # The Account settings panel of a Sveltia CMS Additions user
   account:
     profile: Profil
-    profile_description: Adınız CMS’te diğer kişilere, örneğin içerik kilitlerinde ve yorumlarda, ayrıca commit’lerinizde görünür.
+    profile_description: Adınız CMS’te diğer kullanıcılara, örneğin içerik kilitlerinde ve yorumlarda, ayrıca commit’lerinizde görünür.
     username_description: Kullanıcı adınız değiştirilemez.
     email: E-posta
     email_description: GitHub’ın commit’lerinizi hesabınızla ilişkilendirebilmesi için yaptığınız commit’lerde kullanılır. E-posta yoksa yer tutucu bir adres kullanılır. Bunu yalnızca bir yönetici değiştirebilir.

@@ -259,7 +259,7 @@ additions:
   # The Account settings panel of a Sveltia CMS Additions user
   account:
     profile: Profil
-    profile_description: Vaše meno sa ostatným zobrazuje v CMS, napríklad pri zámkoch položiek a komentároch, a vo vašich commitoch.
+    profile_description: Vaše meno sa ostatným používateľom zobrazuje v CMS, napríklad pri zámkoch položiek a komentároch, a vo vašich commitoch.
     username_description: Používateľské meno nemožno zmeniť.
     email: E-mail
     email_description: Používa sa vo vašich commitoch, aby ich GitHub mohol priradiť k vášmu účtu. Ak ho nezadáte, použije sa zástupná adresa. Zmeniť ho môže iba správca.
@@ -421,7 +421,7 @@ additions:
     adopt: Prevziať účet
     sign_in:
       github: Povoliť prihlásenie cez GitHub
-      github_description: Ľudia sa prihlasujú svojím účtom GitHub a dostanú vlastný token GitHub, takže ich zmeny sa commitujú pod ich menom. Správca ich najprv pridá s ich používateľským menom GitHub, pokiaľ sa na nich nevzťahuje niektoré pravidlo registrácie.
+      github_description: Používatelia sa prihlasujú svojím účtom GitHub a dostanú vlastný token GitHub, takže ich zmeny sa commitujú pod ich menom. Správca ich najprv pridá s ich používateľským menom GitHub, pokiaľ sa na nich nevzťahuje niektoré pravidlo registrácie.
       # Shown when signing in with GitHub is being turned off while {$count} users can only sign in
       # with it
       github_only_warning: |

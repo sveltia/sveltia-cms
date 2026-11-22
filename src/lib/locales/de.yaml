@@ -259,7 +259,7 @@ additions:
   # The Account settings panel of a Sveltia CMS Additions user
   account:
     profile: Profil
-    profile_description: Ihr Name wird anderen Personen im CMS angezeigt, z. B. bei Eintragssperren und Kommentaren, sowie in Ihren Commits.
+    profile_description: Ihr Name wird anderen Benutzern im CMS angezeigt, z. B. bei Eintragssperren und Kommentaren, sowie in Ihren Commits.
     username_description: Ihr Benutzername kann nicht geändert werden.
     email: E-Mail
     email_description: Sie wird in Ihren Commits verwendet, damit GitHub diese Ihrem Konto zuordnen kann. Ohne Adresse wird eine Platzhalteradresse verwendet. Nur ein Admin kann sie ändern.
@@ -421,7 +421,7 @@ additions:
     adopt: Konto übernehmen
     sign_in:
       github: Anmeldung mit GitHub erlauben
-      github_description: Personen melden sich mit ihrem GitHub-Konto an und erhalten ein eigenes GitHub-Token, sodass ihre Änderungen unter ihrem Namen committet werden. Ein Admin fügt sie zuvor mit ihrem GitHub-Benutzernamen hinzu, sofern keine Registrierungsregel für sie gilt.
+      github_description: Benutzer melden sich mit ihrem GitHub-Konto an und erhalten ein eigenes GitHub-Token, sodass ihre Änderungen unter ihrem Namen committet werden. Ein Admin fügt sie zuvor mit ihrem GitHub-Benutzernamen hinzu, sofern keine Registrierungsregel für sie gilt.
       # Shown when signing in with GitHub is being turned off while {$count} users can only sign in
       # with it
       github_only_warning: |

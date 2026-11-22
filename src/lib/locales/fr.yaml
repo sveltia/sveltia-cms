@@ -259,7 +259,7 @@ additions:
   # The Account settings panel of a Sveltia CMS Additions user
   account:
     profile: Profil
-    profile_description: Votre nom est visible par les autres personnes dans le CMS, par exemple sur les verrous d’entrée et les commentaires, ainsi que dans vos commits.
+    profile_description: Votre nom est visible par les autres utilisateurs dans le CMS, par exemple sur les verrous d’entrée et les commentaires, ainsi que dans vos commits.
     username_description: Votre nom d’utilisateur ne peut pas être modifié.
     email: E-mail
     email_description: Votre adresse e-mail est utilisée dans vos commits, afin que GitHub puisse les associer à votre compte. À défaut, une adresse générique est utilisée. Seul un administrateur peut la modifier.

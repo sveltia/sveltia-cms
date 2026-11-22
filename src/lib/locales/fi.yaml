@@ -259,7 +259,7 @@ additions:
   # The Account settings panel of a Sveltia CMS Additions user
   account:
     profile: Profiili
-    profile_description: Nimesi näkyy muille CMS:ssä, esimerkiksi merkintöjen lukoissa ja kommenteissa, sekä commiteissasi.
+    profile_description: Nimesi näkyy muille käyttäjille CMS:ssä, esimerkiksi merkintöjen lukoissa ja kommenteissa, sekä commiteissasi.
     username_description: Käyttäjätunnustasi ei voi vaihtaa.
     email: Sähköposti
     email_description: Sitä käytetään tekemissäsi commiteissa, jotta GitHub voi yhdistää ne tiliisi. Jos sitä ei ole, käytetään paikkamerkkiosoitetta. Vain ylläpitäjä voi muuttaa sitä.

@@ -255,7 +255,7 @@ additions:
   # The Account settings panel of a Sveltia CMS Additions user
   account:
     profile: 프로필
-    profile_description: 이름은 엔트리 잠금, 댓글 등 CMS에서 다른 사람에게 표시되며, 커밋에도 기록됩니다.
+    profile_description: 이름은 엔트리 잠금, 댓글 등 CMS에서 다른 사용자에게 표시되며, 커밋에도 기록됩니다.
     username_description: 사용자 이름은 변경할 수 없습니다.
     email: 이메일
     email_description: 작성하신 커밋에 사용되어 GitHub가 커밋을 계정에 연결할 수 있습니다. 설정하지 않으면 임시 주소가 사용됩니다. 관리자만 변경할 수 있습니다.
