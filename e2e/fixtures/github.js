@@ -1,6 +1,6 @@
 import { createHash } from 'crypto';
 
-import { MockGitRepository } from './git.js';
+import { getBlobSHA, MockGitRepository } from './git.js';
 
 /**
  * @import { Page, Route } from '@playwright/test';
@@ -145,6 +145,13 @@ export class MockGitHub extends MockGitRepository {
    * @type {Map<string, { tree: Map<string, string>, prefix: string }>}
    */
   subtrees = new Map();
+
+  /**
+   * File trees created with the Git Data API, or handed out as a commit’s tree for one to be based
+   * on, keyed by their made-up SHA.
+   * @type {Map<string, Map<string, string>>}
+   */
+  gitDataTrees = new Map();
 
   /**
    * The OAuth scopes of the sign-in, as GitHub reports them in the `X-OAuth-Scopes` header, e.g.
@@ -766,6 +773,10 @@ export class MockGitHub extends MockGitRepository {
       );
     }
 
+    if (path.startsWith('git/') && !path.startsWith('git/trees/')) {
+      return this.handleGitDataRequest(method, path.slice('git/'.length), body);
+    }
+
     if (method === 'POST' && path === 'pulls') {
       return this.handleCreatePullRequest(/** @type {Record<string, any>} */ (body));
     }
@@ -1012,6 +1023,106 @@ export class MockGitHub extends MockGitRepository {
       this.refs.set(branch, body.sha);
 
       return { json: { ref: `refs/heads/${branch}`, object: { sha: body.sha, type: 'commit' } } };
+    }
+
+    return undefined;
+  }
+
+  /**
+   * Answer a request to the Git Data API, which the CMS writes a commit with when it has to set the
+   * author: a blob for each binary file, a tree based on the head’s, then a commit. The branch is
+   * then moved with {@link handleRefRequest}. The commit requests go to {@link received}.
+   * @param {string} method HTTP method.
+   * @param {string} path Path after `git/`, e.g. `blobs` or `commits/{sha}`.
+   * @param {Record<string, any> | null} body Request body.
+   * @returns {MockResponse | undefined} Response.
+   * @see https://docs.github.com/en/rest/git
+   */
+  handleGitDataRequest(method, path, body) {
+    /**
+     * Store file content as a blob.
+     * @param {Buffer} buffer Content.
+     * @returns {string} Blob SHA.
+     */
+    const storeBlob = (buffer) => {
+      const sha = getBlobSHA(buffer);
+
+      this.blobs.set(sha, buffer);
+
+      return sha;
+    };
+
+    if (method === 'POST' && path === 'blobs') {
+      return {
+        status: 201,
+        json: { sha: storeBlob(Buffer.from(body?.content, body?.encoding)) },
+      };
+    }
+
+    if (method === 'GET' && path.startsWith('commits/')) {
+      const commit = this.getCommit(path.slice('commits/'.length));
+
+      if (!commit) {
+        return { status: 404, json: { message: 'Not Found' } };
+      }
+
+      const treeSHA = `tree-${commit.oid}`;
+
+      this.gitDataTrees.set(treeSHA, commit.tree);
+
+      return { json: { sha: commit.oid, tree: { sha: treeSHA } } };
+    }
+
+    if (method === 'POST' && path === 'trees') {
+      const baseTree = this.gitDataTrees.get(body?.base_tree);
+
+      if (!baseTree) {
+        return { status: 422, json: { message: 'Invalid tree info' } };
+      }
+
+      const tree = new Map(baseTree);
+
+      /** @type {{ path: string, sha?: string | null, content?: string }[]} */ (
+        body?.tree ?? []
+      ).forEach(({ path: filePath, sha, content }) => {
+        if (content !== undefined) {
+          tree.set(filePath, storeBlob(Buffer.from(content)));
+        } else if (sha === null) {
+          tree.delete(filePath);
+        } else {
+          tree.set(filePath, /** @type {string} */ (sha));
+        }
+      });
+
+      const treeSHA = `tree-${this.gitDataTrees.size}`;
+
+      this.gitDataTrees.set(treeSHA, tree);
+
+      return { status: 201, json: { sha: treeSHA } };
+    }
+
+    if (method === 'POST' && path === 'commits') {
+      this.received.push(/** @type {Record<string, any>} */ (body));
+
+      const tree = /** @type {Map<string, string>} */ (this.gitDataTrees.get(body?.tree));
+      const parent = this.getCommit(body?.parents[0]);
+
+      const paths = [...new Set([...tree.keys(), ...(parent?.tree.keys() ?? [])])].filter(
+        (filePath) => tree.get(filePath) !== parent?.tree.get(filePath),
+      );
+
+      const commit = this.addCommit({
+        tree,
+        paths,
+        message: body?.message,
+        author: body?.author,
+        parents: body?.parents,
+      });
+
+      return {
+        status: 201,
+        json: { sha: commit.oid, committer: { date: commit.date.toISOString() } },
+      };
     }
 
     return undefined;

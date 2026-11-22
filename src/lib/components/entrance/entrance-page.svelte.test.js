@@ -31,6 +31,7 @@ vi.mock('$lib/services/user/auth.svelte', async () => {
     getBackend: vi.fn(),
     signInAutomatically: vi.fn(),
     signInManually: vi.fn(),
+    signInWithNewPassword: vi.fn(),
     signOut: vi.fn(),
   };
 });

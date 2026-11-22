@@ -2115,9 +2115,6 @@ open_authoring:
 # Settings page aria-label
 categories: الفئات
 
-# Site Configuration Editor
-site_configuration_editor: محرر إعدادات الموقع
-
 # Preferences panels
 prefs:
   # API key management feedback messages

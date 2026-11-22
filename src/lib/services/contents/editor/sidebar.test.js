@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { isAdditionsEnabled } from '$lib/services/app/additions';
 import { backend } from '$lib/services/backends';
 import { entryEditorSettings } from '$lib/services/contents/editor/settings';
 import {
+  getSidebarPanelLabel,
   getSidebarPanels,
   showSidebarPanel,
   sidebarSheetPanel,
@@ -11,7 +13,17 @@ import { hasEntrySlug } from '$lib/services/contents/editor/slug';
 import { getReferencingRelationFields } from '$lib/services/contents/entry/relations';
 import { env } from '$lib/services/user/env.svelte';
 
+vi.mock('@sveltia/i18n', () => ({
+  _: vi.fn((key, { values } = {}) => (values ? `${key} ${JSON.stringify(values)}` : key)),
+}));
 vi.mock('$lib/services/backends', () => ({ backend: { current: undefined } }));
+
+const { additions } = vi.hoisted(() => ({ additions: { getConversationCount: vi.fn(() => 0) } }));
+
+vi.mock('$lib/services/app/additions', () => ({
+  isAdditionsEnabled: vi.fn(() => false),
+  requireAdditions: vi.fn(() => additions),
+}));
 vi.mock('$lib/services/contents/editor/settings', () => ({
   entryEditorSettings: { current: undefined },
 }));
@@ -47,6 +59,25 @@ describe('getSidebarPanels()', () => {
       { key: 'backlinks', icon: 'article_shortcut', disabled: true },
     ]);
     expect(getReferencingRelationFields).not.toHaveBeenCalled();
+  });
+
+  test('offers the conversation with Sveltia CMS Additions, for an existing entry', () => {
+    vi.mocked(isAdditionsEnabled).mockReturnValue(true);
+    additions.getConversationCount.mockReturnValue(3);
+
+    try {
+      expect(getSidebarPanels(undefined)).toContainEqual({
+        key: 'conversation',
+        icon: 'forum',
+        disabled: true,
+        badge: 3,
+      });
+      expect(
+        getDisabledKeys({ collectionName: 'posts', originalEntry: { subPath: 'hello' } }),
+      ).not.toContain('conversation');
+    } finally {
+      vi.mocked(isAdditionsEnabled).mockReturnValue(false);
+    }
   });
 
   test('offers the slug of an entry that has one', () => {
@@ -101,5 +132,19 @@ describe('showSidebarPanel()', () => {
     showSidebarPanel('validation');
     expect(sidebarSheetPanel.current).toBe('validation');
     expect(entryEditorSettings.current).toEqual({ showPreview: true });
+  });
+});
+
+describe('getSidebarPanelLabel()', () => {
+  test('adds the count on the badge, if any, to the title', () => {
+    expect(getSidebarPanelLabel({ key: 'history', icon: 'history', disabled: false })).toBe(
+      'entry_sidebar.history.title',
+    );
+    expect(
+      getSidebarPanelLabel({ key: 'conversation', icon: 'forum', disabled: false, badge: 0 }),
+    ).toBe('additions.conversation.title');
+    expect(
+      getSidebarPanelLabel({ key: 'conversation', icon: 'forum', disabled: false, badge: 3 }),
+    ).toBe('entry_sidebar.title_with_count {"title":"additions.conversation.title","count":3}');
   });
 });

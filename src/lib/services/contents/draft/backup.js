@@ -6,7 +6,11 @@ import { createDisplayBlobURL } from '$lib/services/assets/info';
 import { backend } from '$lib/services/backends';
 import { getBackupDatabaseName } from '$lib/services/backends/fs/test';
 import { cmsConfigVersion } from '$lib/services/config';
-import { isDraftReadonly } from '$lib/services/config/readonly';
+import {
+  isDraftConfigReadonly,
+  isDraftLockedByOthers,
+  isDraftReadonly,
+} from '$lib/services/config/readonly';
 import { getIndexFileName } from '$lib/services/contents/collection/entries/index-file';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import {
@@ -173,11 +177,19 @@ const isArrayItemDraft = ({ originalEntry }) => originalEntry?.arrayIndex !== un
 export const saveBackup = async (draft) => {
   // Skip if the user hasn’t manually interacted with the editor, so that only programmatic changes,
   // e.g. Lexical markdown reformatting, don’t trigger a backup
+  if (!(prefs.useDraftBackup ?? true) || !draft.interacted || isArrayItemDraft(draft)) {
+    return;
+  }
+
+  // Nothing is backed up, or deleted, while the draft is read-only, e.g. while the user is asked
+  // whether to restore a backup, which a click in the editor mustn’t delete. The exception is
+  // someone else taking over the entry, which makes the draft read-only, but the changes made until
+  // then are still backed up, so they aren’t lost. An unchanged draft of an entry someone else is
+  // editing keeps the backup of earlier changes until it can be edited again
   if (
-    !(prefs.useDraftBackup ?? true) ||
-    !draft.interacted ||
-    isDraftReadonly(draft) ||
-    isArrayItemDraft(draft)
+    isDraftLockedByOthers(draft)
+      ? !!draft.restorePending || isDraftConfigReadonly(draft) || !isDraftModified(draft)
+      : isDraftReadonly(draft)
   ) {
     return;
   }

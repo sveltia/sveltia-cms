@@ -1775,9 +1775,6 @@ open_authoring:
 # Settings page aria-label
 categories: 범주
 
-# Site Configuration Editor
-site_configuration_editor: 사이트 설정 에디터
-
 # Preferences panels
 prefs:
   # API key management feedback messages

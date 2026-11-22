@@ -24,7 +24,7 @@
   import { browsingCmsFolder, selectedSubfolderPath } from '$lib/services/assets/subfolders';
   import { getFolderLabelByCollection, listedAssets } from '$lib/services/assets/view';
   import { lockedBranch } from '$lib/services/backends/branch-access';
-  import { getReadonlyMessage } from '$lib/services/config/readonly';
+  import { getReadonlyMessage, isViewer } from '$lib/services/config/readonly';
   import { env } from '$lib/services/user/env.svelte';
   import { createPath } from '$lib/services/utils/file';
   import { encodePathSegments } from '$lib/services/utils/url';
@@ -42,8 +42,8 @@
 
   const assets = $derived(selectedOrFocusedAssets.current);
   // The folder is read-only with the `readonly` option, or all the assets are because the user
-  // can’t push to the configured branch
-  const readonly = $derived(!!folder?.readonly || !!lockedBranch.current);
+  // can’t push to the configured branch or is a viewer
+  const readonly = $derived(!!folder?.readonly || !!lockedBranch.current || isViewer());
 
   // Uploading to the media library commits straight to the configured branch rather than going
   // through review, so it’s not something an Open Authoring contributor or a user who can’t push to

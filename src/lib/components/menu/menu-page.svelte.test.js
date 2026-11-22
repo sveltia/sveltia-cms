@@ -73,4 +73,27 @@ describe('MenuPage', () => {
       customPageRegistry.clear();
     }
   });
+
+  test('lists the Administration sections above the account menu', async () => {
+    window.location.hash = '#/menu';
+    prefs.devModeEnabled = true;
+
+    try {
+      const { container } = await render(MenuPage, {});
+
+      expect([...container.querySelectorAll('h3')].map((h3) => h3.textContent)).toEqual([
+        'Administration',
+        'Account',
+        'Help',
+      ]);
+
+      await page
+        .getByRole('menu', { name: 'Administration' })
+        .getByRole('menuitem', { name: 'CMS Configuration' })
+        .click();
+      await expect.poll(() => window.location.hash).toBe('#/admin/config');
+    } finally {
+      prefs.devModeEnabled = false;
+    }
+  });
 });

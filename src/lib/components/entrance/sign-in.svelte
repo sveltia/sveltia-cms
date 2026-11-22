@@ -1,9 +1,10 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { Button, ConfirmationDialog, Icon, PromptDialog, Spacer } from '@sveltia/ui';
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
 
   import { DOCS_BASE_URL } from '$lib/services/app';
+  import { getAdditions } from '$lib/services/app/additions';
   import { loadBackendService } from '$lib/services/backends';
   import { isDemoSite } from '$lib/services/backends/fs/seed';
   import { cancelAuthorization } from '$lib/services/backends/git/shared/auth';
@@ -57,6 +58,9 @@
     getSignInOptions(configuredBackend, backend?.label),
   );
 
+  // Sveltia CMS Additions, whose chunk is loaded along with the backend if it’s enabled
+  const additions = $derived(getAdditions());
+
   /* v8 ignore start -- the name is only read while the dialog is open, when the account is set */
   /**
    * Account name to show when the user is asked whether to sign in with a magic link.
@@ -87,6 +91,14 @@
     );
   });
 
+  $effect(() => {
+    // With Sveltia CMS Additions, once its chunk is loaded: read the outcome of connecting the
+    // service to GitHub, if the user is coming back from there, and the sign-in methods it offers
+    if (additions) {
+      untrack(() => additions.prepareSignIn());
+    }
+  });
+
   onMount(() => {
     // Skip automatic sign-in if there’s already an error (e.g. repository access denied), so the
     // error message is preserved and the user can try again with different credentials. Also skip
@@ -108,6 +120,8 @@
       -->
       <Button variant="secondary" label={_('cancel')} onclick={cancelAuthorization.current} />
     {/if}
+  {:else if additions?.additionsSetup.open}
+    <additions.SetupWizard />
   {:else if backend}
     {#if showLocalBackendOption}
       <Button
@@ -139,6 +153,9 @@
         </div>
       {/if}
       <Spacer />
+    {/if}
+    {#if additions}
+      <additions.SignInForm {backendName} primary={!showLocalBackendOption} />
     {/if}
     {#if !oauthOptionHidden}
       <Button
@@ -230,10 +247,9 @@
     align-items: center;
     gap: 12px;
 
-    :global {
-      .button {
-        width: 320px;
-      }
+    /* Only the buttons of the page itself, not the one that shows a password */
+    & > :global(.button) {
+      width: 320px;
     }
   }
 

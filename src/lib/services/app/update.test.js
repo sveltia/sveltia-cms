@@ -3,10 +3,11 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { getScriptVersionSpec } from '$lib/services/app/dependencies';
-import { getLatestVersion, isUpdateAvailable } from '$lib/services/app/update';
+import { compareVersions, getLatestVersion, isUpdateAvailable } from '$lib/services/app/update';
 
 vi.mock('$lib/services/app', () => ({
-  UNPKG_BASE_URL: 'https://unpkg.com/@sveltia/cms',
+  PACKAGE_NAME: '@sveltia/cms',
+  UNPKG_ORIGIN: 'https://unpkg.com',
   version: '1.0.0',
 }));
 vi.mock('$lib/services/app/dependencies', () => ({ getScriptVersionSpec: vi.fn() }));
@@ -45,12 +46,37 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+describe('compareVersions()', () => {
+  test('compares versions part by part as numbers', () => {
+    expect(compareVersions('1.2.0', '1.10.0')).toBeLessThan(0);
+    expect(compareVersions('2.0.0', '1.99.9')).toBeGreaterThan(0);
+    expect(compareVersions('1.2.3', '1.2.3')).toBe(0);
+  });
+
+  test('counts a missing part as zero, whichever version lacks it', () => {
+    expect(compareVersions('1.0', '1.0.0')).toBe(0);
+    expect(compareVersions('1.0.1', '1.0')).toBeGreaterThan(0);
+    expect(compareVersions('1.0', '1.0.1')).toBeLessThan(0);
+  });
+
+  test('ignores a pre-release suffix and parts that aren’t numbers', () => {
+    expect(compareVersions('1.0.1-beta.1', '1.0.0')).toBeGreaterThan(0);
+    expect(compareVersions('1.0.0-beta.1', '1.0.0')).toBe(0);
+    expect(compareVersions('x.y', '0.0')).toBe(0);
+  });
+});
+
 describe('getLatestVersion()', () => {
   test('returns the published version', async () => {
     respondWith({ version: '1.2.3' });
 
     expect(await getLatestVersion()).toBe('1.2.3');
     expect(fetchMock).toHaveBeenCalledWith('https://unpkg.com/@sveltia/cms/package.json');
+    // Another package, such as Sveltia CMS Additions
+    expect(await getLatestVersion({ packageName: '@sveltia/cms-additions' })).toBe('1.2.3');
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'https://unpkg.com/@sveltia/cms-additions/package.json',
+    );
   });
 
   test('returns nothing for a failed response', async () => {

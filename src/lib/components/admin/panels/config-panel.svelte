@@ -1,23 +1,34 @@
+<!--
+  @component
+  The CMS configuration, as loaded, for developers.
+-->
 <script>
   import { _ } from '@sveltia/i18n';
   import { stringify } from 'yaml';
 
-  import PageContainer from '$lib/components/common/page-container.svelte';
+  import MainArea from '$lib/components/admin/main-area.svelte';
   import { rawCmsConfig } from '$lib/services/config';
+
+  /**
+   * @typedef {object} Props
+   * @property {string} title Title of the section.
+   */
+
+  /** @type {Props} */
+  let { title } = $props();
 </script>
 
-<PageContainer aria-label={_('site_configuration_editor')}>
-  {#snippet main()}
-    <div role="blockquote" aria-label={_('cms_config')}>
-      <pre>{stringify(rawCmsConfig)}</pre>
-    </div>
-  {/snippet}
-</PageContainer>
+<MainArea {title}>
+  <div role="blockquote" aria-label={_('cms_config')}>
+    <pre>{stringify(rawCmsConfig)}</pre>
+  </div>
+</MainArea>
 
 <style>
   div {
     flex: auto;
     overflow: auto;
+    margin: -16px;
   }
 
   pre {

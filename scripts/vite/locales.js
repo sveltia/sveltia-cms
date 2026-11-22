@@ -75,7 +75,9 @@ const squashStrings = (value) => {
 
 /**
  * Transform YAML files into JS object modules, stripping comments and squashing multiline strings.
- * This also handles `?raw` imports used by dependencies such as `@sveltia/ui`.
+ * This also handles `?raw` imports used by dependencies such as `@sveltia/ui`, and two queries that
+ * split a locale file between the main bundle and a chunk: `?only=key` keeps just the top-level
+ * section with the key, e.g. the strings of the `additions` chunk, and `?omit=key` the others.
  * @returns {import('vite').Plugin} Vite plugin.
  */
 export const yamlToJS = () => ({
@@ -88,9 +90,23 @@ export const yamlToJS = () => ({
     if (!cleanId.endsWith('.yaml') && !cleanId.endsWith('.yml')) return null;
 
     const content = await readFile(cleanId, 'utf-8');
-    const parsed = squashStrings(parseYAML(content));
+    const params = new URLSearchParams(query);
+    const only = params.get('only');
+    const omit = params.get('omit');
+    /** @type {any} */
+    let parsed = squashStrings(parseYAML(content));
 
-    if (new URLSearchParams(query).has('raw')) {
+    if (only) {
+      parsed = { [only]: parsed[only] };
+    }
+
+    if (omit) {
+      const { [omit]: _omitted, ...rest } = parsed;
+
+      parsed = rest;
+    }
+
+    if (params.has('raw')) {
       // Return a JSON string so that the runtime `yaml.parse` call in dependencies still works
       return `export default ${JSON.stringify(JSON.stringify(parsed))};`;
     }

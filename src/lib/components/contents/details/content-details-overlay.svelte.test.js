@@ -3,7 +3,10 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import { entryLocks, getLockKey, watchEntry } from '$lib/services/additions/locks.svelte';
+import { loadAdditions } from '$lib/services/app/additions';
 import { lockedBranch } from '$lib/services/backends/branch-access';
+import { cmsConfig } from '$lib/services/config';
 import { getCollection, selectedCollection } from '$lib/services/contents/collection';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
 import { EntryDraftState } from '$lib/services/contents/draft/state.svelte';
@@ -15,6 +18,7 @@ import {
 } from '$lib/services/contents/editor';
 import { entryEditorSettings } from '$lib/services/contents/editor/settings';
 import { sidebarSheetPanel } from '$lib/services/contents/editor/sidebar';
+import { user } from '$lib/services/user/account.svelte';
 import { env } from '$lib/services/user/env.svelte';
 import { prefs } from '$lib/services/user/prefs.svelte';
 import { allUnpublishedEntries } from '$lib/services/workflow';
@@ -29,6 +33,15 @@ import { createMockDraft } from '$lib/test/draft';
 import { waitForToastsToHide } from '$lib/test/toast';
 
 import ContentDetailsOverlay from './content-details-overlay.svelte';
+
+/** Function that lets an entry go, returned by `watchEntry`. */
+const { stopWatching } = vi.hoisted(() => ({ stopWatching: vi.fn() }));
+
+// The lock state is real; watching an entry would talk to Sveltia CMS Additions
+vi.mock('$lib/services/additions/locks.svelte', async (importOriginal) => ({
+  ...(await importOriginal()),
+  watchEntry: vi.fn(() => stopWatching),
+}));
 
 vi.mock('$lib/services/deployments/poll', () => ({
   retainDeployPolling: vi.fn(() => () => {}),
@@ -490,6 +503,92 @@ describe('ContentDetailsOverlay', () => {
       .element(page.getByRole('textbox', { name: 'Title' }))
       .toHaveAttribute('aria-readonly', 'true');
     expect(page.getByRole('button', { name: 'Save' }).elements()).toHaveLength(0);
+  });
+
+  test('holds the entry’s lock and tells others it’s open, and says who else holds it', async () => {
+    selectedCollection.current = getCollection('plain');
+    user.account = /** @type {any} */ ({ backendName: 'github', role: 'editor' });
+
+    /**
+     * Create a draft of an existing entry, which can be locked.
+     * @returns {any} Draft.
+     */
+    const createLockedDraft = () =>
+      createMockDraft({
+        collectionName: 'plain',
+        fields,
+        values: { _default: { title: 'Hello', body: '', 'author.name': 'Melvin' } },
+        draft: {
+          collection: getCollection('plain'),
+          isNew: false,
+          originalEntry: createMockEntry({ slug: 'hello', folder: 'content/plain' }),
+        },
+      });
+
+    const key = getLockKey('plain', 'hello');
+    const config = cmsConfig.current;
+
+    try {
+      // Locks are only taken with Sveltia CMS Additions
+      const { entryDraft: draftWithoutAdditions } = await renderOverlay(createLockedDraft());
+
+      expect(watchEntry).not.toHaveBeenCalled();
+      draftWithoutAdditions.current = null;
+      flushSync();
+
+      cmsConfig.current = /** @type {any} */ ({
+        ...config,
+        backend: { name: 'github', repo: 'me/site', auth_type: 'additions' },
+      });
+      await loadAdditions();
+
+      const { entryDraft } = await renderOverlay(createLockedDraft());
+
+      // Others are told the entry is open, and its lock is held, until it’s closed
+      expect(watchEntry).toHaveBeenCalledWith(key, { hold: true });
+      expect(stopWatching).not.toHaveBeenCalled();
+      entryDraft.current = null;
+      flushSync();
+      expect(stopWatching).toHaveBeenCalledOnce();
+
+      // Someone else holds it: the lock infobar says so instead of the generic message
+      Object.assign(entryLocks, {
+        connection: 'mine',
+        locks: { [key]: { key, user_id: 'u2', name: 'Bob', since: '', connection: 'theirs' } },
+      });
+      vi.mocked(watchEntry).mockClear();
+      user.account = /** @type {any} */ ({ backendName: 'github', role: 'viewer' });
+
+      const { entryDraft: viewerDraft } = await renderOverlay(createLockedDraft());
+
+      await expect.element(page.getByText(/has been editing this entry/)).toBeVisible();
+      await expect
+        .element(page.getByRole('textbox', { name: 'Title' }))
+        .toHaveAttribute('aria-readonly', 'true');
+      expect(page.getByText(/You can view this/).elements()).toHaveLength(0);
+      // A viewer never acquires a lock, but others still see them looking at the entry
+      expect(watchEntry).toHaveBeenCalledWith(key, { hold: false });
+
+      // Nor does anyone else who can’t edit the entry, e.g. without access to the branch, which
+      // would keep those who can from editing it
+      viewerDraft.current = null;
+      flushSync();
+      Object.assign(entryLocks, { connection: '', locks: {} });
+      user.account = /** @type {any} */ ({ backendName: 'github', role: 'editor' });
+      lockedBranch.current = 'main';
+      vi.mocked(watchEntry).mockClear();
+
+      await renderOverlay(createLockedDraft());
+
+      await expect
+        .element(page.getByRole('textbox', { name: 'Title' }))
+        .toHaveAttribute('aria-readonly', 'true');
+      expect(watchEntry).toHaveBeenCalledWith(key, { hold: false });
+    } finally {
+      cmsConfig.current = config;
+      Object.assign(entryLocks, { connection: '', locks: {} });
+      user.account = undefined;
+    }
   });
 
   test('drops the draft when the overlay is closed', async () => {

@@ -2,6 +2,10 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import { additionsAuth } from '$lib/services/additions/auth.svelte';
+import { prepareSignIn } from '$lib/services/additions/session';
+import { additionsSetup } from '$lib/services/additions/setup.svelte';
+import { loadAdditions } from '$lib/services/app/additions';
 import { loadChunk } from '$lib/services/app/dependencies';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { cancelAuthorization } from '$lib/services/backends/git/shared/auth';
@@ -15,6 +19,13 @@ import {
 import { env } from '$lib/services/user/env.svelte';
 
 import SignIn from './sign-in.svelte';
+
+// Getting the sign-in page ready would read the URL and load the sign-in methods from Sveltia CMS
+// Additions
+vi.mock('$lib/services/additions/session', async (importOriginal) => ({
+  .../** @type {any} */ (await importOriginal()),
+  prepareSignIn: vi.fn(),
+}));
 
 // Signing in talks to the backend; only the state and the calls matter here
 vi.mock('$lib/services/user/auth.svelte', async () => {
@@ -34,6 +45,7 @@ vi.mock('$lib/services/user/auth.svelte', async () => {
     getBackend: vi.fn(),
     signInAutomatically: vi.fn(),
     signInManually: vi.fn(),
+    signInWithNewPassword: vi.fn(),
     signOut: vi.fn(),
   };
 });
@@ -461,5 +473,114 @@ describe('SignIn', () => {
     expect(
       page.getByRole('button', { name: 'Sign In Using Access Token' }).elements(),
     ).toHaveLength(0);
+  });
+
+  describe('with Sveltia CMS Additions', () => {
+    beforeEach(() => {
+      env.isLocalHost = false;
+      additionsAuth.passwordChange = undefined;
+      additionsAuth.signInMethods = [];
+      additionsSetup.open = false;
+      additionsSetup.result = '';
+      cmsConfig.current = /** @type {any} */ ({
+        backend: {
+          name: 'github',
+          repo: 'acme/site',
+          auth_type: 'additions',
+          base_url: 'https://additions.example.com',
+        },
+      });
+    });
+
+    test('offers its sign-in form instead of GitHub', async () => {
+      await render(SignIn, {});
+
+      await expect.element(page.getByRole('textbox', { name: 'Username' })).toBeVisible();
+      await expect
+        .element(page.getByRole('button', { name: 'Sign In', exact: true }))
+        .toHaveClass('primary');
+      expect(page.getByRole('button', { name: /^Sign In with/ }).elements()).toHaveLength(0);
+      expect(
+        page.getByRole('button', { name: 'Sign In Using Access Token' }).elements(),
+      ).toHaveLength(0);
+
+      // The form signs in to the configured backend
+      await page.getByRole('textbox', { name: 'Username' }).fill('editor');
+      await page.getByLabelText('Password').fill('correct horse battery staple');
+      await page.getByRole('button', { name: 'Sign In', exact: true }).click();
+      await vi.waitFor(() =>
+        expect(signInManually).toHaveBeenCalledWith('github', undefined, {
+          username: 'editor',
+          password: 'correct horse battery staple',
+        }),
+      );
+    });
+
+    test('offers its sign-in form after the local repository on localhost', async () => {
+      env.isLocalHost = true;
+
+      await render(SignIn, {});
+
+      await expect
+        .element(page.getByRole('button', { name: 'Work with Local Repository' }))
+        .toBeVisible();
+      await expect
+        .element(page.getByRole('button', { name: 'Sign In', exact: true }))
+        .toHaveClass('secondary');
+    });
+
+    test('gets the sign-in page ready once its chunk is loaded', async () => {
+      cmsConfig.current = /** @type {any} */ ({ backend: { name: 'github', repo: 'acme/site' } });
+
+      await render(SignIn, {});
+      await expect
+        .element(page.getByRole('button', { name: 'Sign In with \u2068GitHub\u2069' }))
+        .toBeVisible();
+      expect(prepareSignIn).not.toHaveBeenCalled();
+
+      cmsConfig.current = /** @type {any} */ ({
+        backend: {
+          name: 'github',
+          repo: 'acme/site',
+          auth_type: 'additions',
+          base_url: 'https://additions.example.com',
+        },
+      });
+      await loadAdditions();
+
+      await expect.element(page.getByRole('textbox', { name: 'Username' })).toBeVisible();
+      expect(prepareSignIn).toHaveBeenCalledOnce();
+    });
+
+    test('shows the setup wizard in place of the sign-in form', async () => {
+      additionsSetup.open = true;
+
+      await render(SignIn, {});
+
+      await expect
+        .element(page.getByRole('region', { name: 'Set Up Sveltia CMS Additions' }))
+        .toBeVisible();
+      expect(page.getByRole('textbox', { name: 'Username' }).elements()).toHaveLength(0);
+    });
+  });
+
+  test('offers neither its sign-in form nor its setup wizard without Sveltia CMS Additions', async () => {
+    // Even if the wizard was left open
+    additionsSetup.open = true;
+
+    try {
+      await render(SignIn, {});
+
+      await expect
+        .element(page.getByRole('button', { name: 'Sign In with \u2068GitHub\u2069' }))
+        .toBeVisible();
+      expect(page.getByRole('textbox', { name: 'Username' }).elements()).toHaveLength(0);
+      expect(
+        page.getByRole('region', { name: 'Set Up Sveltia CMS Additions' }).elements(),
+      ).toHaveLength(0);
+      expect(prepareSignIn).not.toHaveBeenCalled();
+    } finally {
+      additionsSetup.open = false;
+    }
   });
 });

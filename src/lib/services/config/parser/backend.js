@@ -179,6 +179,16 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
       errors.add(_('config.error.oauth_no_app_id'));
     }
 
+    // Sveltia CMS Additions has no default location: each site deploys its own
+    if (
+      name === 'github' &&
+      authType === 'additions' &&
+      // @ts-ignore GitHub only
+      !(typeof backend.base_url === 'string' && URL.canParse(backend.base_url))
+    ) {
+      errors.add(_('config.error.additions_no_base_url'));
+    }
+
     if (openAuthoring) {
       // Open Authoring turns each change into a pull request from the contributor’s fork, so it
       // only makes sense on top of Editorial Workflow or Preview Workflow. The site-level option is

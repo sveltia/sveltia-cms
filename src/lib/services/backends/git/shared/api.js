@@ -81,6 +81,8 @@ const pendingRefreshes = new Map();
  * @returns {Promise<AuthTokens>} New access token and refresh token.
  */
 const requestTokenRefresh = async ({ clientId, tokenURL, refreshToken }) => {
+  const sentRefreshToken = refreshToken;
+
   const response = await requestAccessToken(
     tokenURL,
     { grant_type: 'refresh_token', client_id: clientId, refresh_token: refreshToken },
@@ -113,9 +115,36 @@ const requestTokenRefresh = async ({ clientId, tokenURL, refreshToken }) => {
     refreshToken = result?.refresh_token;
   }
 
-  // Update the user store with the new token and refresh token
-  if (user.account) {
-    user.account = { ...user.account, token, refreshToken };
+  /** @type {{ role?: User['role'] } | undefined} */
+  const account = result?.user;
+  /**
+   * @type {{ kind?: string, commit_author?: User['commitAuthor'], expires_at?: string } |
+   * undefined}
+   */
+  const git = result?.git;
+
+  // Update the user store with the new token and refresh token. Sveltia CMS Additions also returns
+  // the user, whose role may have changed since they signed in, e.g. when an admin made them a
+  // viewer, which revoked the previous token, and how to author their commits, which an admin may
+  // have changed as well. Nothing is updated if the account has moved on meanwhile, e.g. to a new
+  // session after a password change, or another user has signed in, as the tokens are for the
+  // previous one
+  if (user.account && user.account.refreshToken === sentRefreshToken) {
+    user.account = {
+      ...user.account,
+      token,
+      refreshToken,
+      ...(account?.role ? { role: account.role } : {}),
+      // The kind of token can change too: a user’s own token is replaced with the app’s once it
+      // can’t be refreshed any more, and a user’s own token comes without a commit author
+      ...(git
+        ? {
+            commitAuthor: git.commit_author,
+            ownGitHubToken: git.kind === 'user',
+            tokenExpiresAt: git.expires_at,
+          }
+        : {}),
+    };
 
     // Store them right away, before the lock is released, rather than waiting for the store to be
     // saved, so another tab whose token has expired as well takes them instead of refreshing with
@@ -191,6 +220,8 @@ const getStoredTokens = (storedUser) => {
     !isNonEmptyString(storedUser?.token) ||
     storedUser.backendName !== account.backendName ||
     storedUser.id !== account.id ||
+    // A Sveltia CMS Additions account has no ID here, so the username tells them apart
+    storedUser.login !== account.login ||
     // Don’t lose the refresh token
     (!!account.refreshToken && !refreshToken)
   ) {

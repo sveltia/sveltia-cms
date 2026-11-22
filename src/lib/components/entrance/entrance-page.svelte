@@ -96,12 +96,14 @@
     z-index: 101;
     flex: auto;
     display: flex;
-    justify-content: center;
-    align-items: center;
     gap: 16px;
     padding: 32px;
+    overflow-y: auto;
 
     .inner {
+      /* Centered with margins rather than `align-items`, so a tall form, e.g. the setup wizard,
+         scrolls from its top instead of overflowing above the window */
+      margin: auto;
       display: flex;
       flex-direction: column;
       align-items: center;

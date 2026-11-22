@@ -1,3 +1,4 @@
+import { getAdditions } from '$lib/services/app/additions';
 import { allAssets } from '$lib/services/assets/state';
 import { saveChanges } from '$lib/services/backends/save';
 import { allEntries } from '$lib/services/contents';
@@ -9,6 +10,7 @@ import {
 import { buildRenumberChanges } from '$lib/services/contents/collection/entries/reorder';
 import { getArrayItemTarget } from '$lib/services/contents/draft/save/changes';
 import { getPreviousSha, resolveCacheDB } from '$lib/services/contents/draft/save/file-changes';
+import { getEntryKey } from '$lib/services/contents/entry/entry-key';
 import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import {
   buildCascadeDeleteChanges,
@@ -125,4 +127,11 @@ export const deleteEntries = async (entries, assets = []) => {
   });
 
   updateStores({ ids, assetPaths });
+
+  // Comments kept by Sveltia CMS Additions go with their entry, in the background
+  if (collection) {
+    entries.forEach(({ subPath }) => {
+      getAdditions()?.deleteEntryComments(getEntryKey(collection.name, subPath));
+    });
+  }
 };

@@ -1972,9 +1972,6 @@ open_authoring:
 # Settings page aria-label
 categories: Kategorie
 
-# Site Configuration Editor
-site_configuration_editor: Edytor konfiguracji witryny
-
 # Preferences panels
 prefs:
   # API key management feedback messages

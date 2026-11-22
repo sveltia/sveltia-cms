@@ -1,5 +1,9 @@
+import { loadAdditions } from '$lib/services/app/additions';
 import { getUserProfile } from '$lib/services/backends/git/github/user';
-import { signInToBackend } from '$lib/services/backends/git/shared/auth';
+import {
+  signInToBackend,
+  signOut as signOutFromBackend,
+} from '$lib/services/backends/git/shared/auth';
 import { cmsConfig } from '$lib/services/config';
 import { isWorkflowConfigured } from '$lib/services/workflow/config';
 
@@ -38,11 +42,27 @@ export const getTokenPageURL = (instanceURL) => {
 };
 
 /**
- * Sign in with the GitHub REST API.
+ * Sign in with the GitHub REST API, or with Sveltia CMS Additions when it’s enabled, which hands
+ * out the GitHub token instead.
  * @param {SignInOptions} options Options.
- * @returns {Promise<User | void>} User info, or nothing when the sign-in flow cannot be started.
+ * @returns {Promise<User | void>} User info, or nothing when finishing PKCE auth flow in a popup,
+ * the sign-in flow cannot be started, or a Sveltia CMS Additions user must change their password.
  * @throws {Error} When there was an authentication error.
  */
-export const signIn = (options) => signInToBackend({ options, getUserProfile });
+export const signIn = async (options) => {
+  const additions = await loadAdditions();
 
-export { signOut } from '$lib/services/backends/git/shared/auth';
+  return additions
+    ? additions.signInWithAdditions(options)
+    : signInToBackend({ options, getUserProfile });
+};
+
+/**
+ * Sign out. With Sveltia CMS Additions, this ends the session there, revoking its GitHub token.
+ * @returns {Promise<void>}
+ */
+export const signOut = async () => {
+  const additions = await loadAdditions();
+
+  return additions ? additions.signOutFromAdditions() : signOutFromBackend();
+};

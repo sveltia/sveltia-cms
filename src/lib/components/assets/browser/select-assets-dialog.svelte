@@ -50,8 +50,8 @@
   import { getPreferredLibraryNames } from '$lib/services/integrations/media-libraries/options';
   import { allStockAssetProviders } from '$lib/services/integrations/media-libraries/stock';
   import { normalize } from '$lib/services/search/util';
+  import { getApiKey } from '$lib/services/user/api-keys';
   import { env } from '$lib/services/user/env.svelte';
-  import { prefs } from '$lib/services/user/prefs.svelte';
   import { createPath, getDirName, getGitHash } from '$lib/services/utils/file';
   import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
 
@@ -273,7 +273,7 @@
   const isEnabledMediaService = $derived(
     enabledStockAssetProviderEntries.some(
       ([serviceId, { authType }]) =>
-        serviceId === libraryName && (authType === 'none' || !!prefs.apiKeys?.[libraryName]),
+        serviceId === libraryName && (authType === 'none' || !!getApiKey(libraryName)),
     ),
   );
   const isCloudLibrary = $derived(

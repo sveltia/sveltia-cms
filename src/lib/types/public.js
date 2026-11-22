@@ -2405,9 +2405,13 @@
  * `https://HOSTNAME/api/graphql` for GitHub Enterprise Server.
  * @property {string} [base_url] OAuth base URL origin. Required when using an OAuth client other
  * than Netlify, including [Sveltia CMS Authenticator](https://github.com/sveltia/sveltia-cms-auth).
- * Default: `https://api.netlify.com`.
- * @property {''} [auth_type] OAuth grant type. The default is an empty string, which is
- * authorization code grant. `pkce` is not yet supported due to GitHub’s limitations.
+ * With `auth_type: additions`, it’s the URL of the Sveltia CMS Additions service. Default:
+ * `https://api.netlify.com`.
+ * @property {'' | 'additions'} [auth_type] OAuth grant type. The default is an empty string, which
+ * is authorization code grant. `pkce` is not yet supported due to GitHub’s limitations.
+ * `additions` signs users in with [Sveltia CMS
+ * Additions](https://github.com/sveltia/sveltia-cms-additions) instead of GitHub: it manages the
+ * accounts and roles, and hands out GitHub tokens, so users don’t need a GitHub account.
  * @property {string} [auth_endpoint] OAuth base URL path. Default: `auth`.
  * @property {string} [app_id] OAuth application ID. Not used at this time; reserved for PKCE
  * authorization, which is not yet supported with GitHub.

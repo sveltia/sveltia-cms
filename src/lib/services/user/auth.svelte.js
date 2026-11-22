@@ -2,6 +2,7 @@ import { _ } from '@sveltia/i18n';
 import { isObject } from '@sveltia/utils/object';
 import { LocalStorage } from '@sveltia/utils/storage';
 
+import { isAdditionsEnabled, loadAdditions, requireAdditions } from '$lib/services/app/additions';
 import { goto, parseLocation } from '$lib/services/app/navigation';
 import { backend, backendName, selectBackend } from '$lib/services/backends';
 import { lockedBranch, mergeLockedBranch } from '$lib/services/backends/branch-access';
@@ -59,6 +60,12 @@ export const auth = $state({
   unauthenticated: true,
   /** Whether a sign-in is in progress. */
   signingIn: false,
+  /**
+   * A username and a temporary password from a magic link emailed to a Sveltia CMS Additions user,
+   * to fill in the sign-in form with. The user still signs in, and then chooses their own password.
+   * @type {{ username: string, password: string } | undefined}
+   */
+  emailedSignIn: undefined,
 });
 
 /**
@@ -174,7 +181,9 @@ export const logError = (ex, context = 'authentication') => {
 };
 
 /**
- * Parse a magic link URL generated for QR code sign-in to extract the token and preferences.
+ * Parse a magic link URL to extract what it carries: the token and preferences of a QR code
+ * sign-in, or the username and temporary password emailed to a Sveltia CMS Additions user, which
+ * are kept in {@link auth} to fill in the sign-in form.
  * @returns {{ _user: { token: string } | undefined, copiedPrefs: Record<string, any> | undefined
  * }} Object containing the user token and copied preferences.
  */
@@ -203,6 +212,12 @@ export const parseMagicLink = () => {
       if (isObject(data.prefs)) {
         copiedPrefs = data.prefs;
       }
+    } else if (
+      isObject(data) &&
+      typeof data.username === 'string' &&
+      typeof data.password === 'string'
+    ) {
+      auth.emailedSignIn = { username: data.username, password: data.password };
     }
   } catch {
     //
@@ -415,7 +430,15 @@ export const signInAutomatically = async () => {
   // A user cached with another backend, e.g. before the site moved from GitLab to GitHub, holds a
   // token for that service, which mustn’t be sent to the configured one. Netlify/Decap CMS doesn’t
   // use such a cache either. Clear it, so the sign-in page is shown
-  if (!verified && _backend && getCachedBackendName(_user) !== backendName.current) {
+  // The same goes for a user cached before the site started or stopped using Sveltia CMS
+  // Additions, whose session token, or GitHub refresh token, belongs to the other service. Only
+  // Additions gives a user a role. The stub cached while a sign-in popup is open has no token yet
+  if (
+    !verified &&
+    _backend &&
+    (getCachedBackendName(_user) !== backendName.current ||
+      (backendName.current !== 'local' && !!_user.token && !!_user.role !== isAdditionsEnabled()))
+  ) {
     await clearUserCache();
 
     return;
@@ -448,6 +471,9 @@ export const signInAutomatically = async () => {
 
   // Use the cached user to start fetching files
   user.account = /** @type {User} */ (_user);
+  // Someone already signed in has no use for the details of an emailed magic link, which would
+  // otherwise fill in the sign-in form after they sign out
+  auth.emailedSignIn = undefined;
 
   // Copy user preferences passed with QR code, or drop the credentials copied with a link to
   // another account
@@ -477,8 +503,14 @@ export const signInAutomatically = async () => {
  * Sign in with the given backend.
  * @param {string} _backendName Backend name to be used.
  * @param {string} [token] Personal Access Token (PAT) to be used for authentication.
+ * @param {object} [credentials] Credentials for Sveltia CMS Additions.
+ * @param {string} [credentials.username] Username.
+ * @param {string} [credentials.password] Password.
+ * @param {string} [credentials.refreshToken] Session token, after the user has changed a temporary
+ * password.
+ * @param {string} [credentials.provider] Provider to sign in through instead, e.g. `github`.
  */
-export const signInManually = async (_backendName, token) => {
+export const signInManually = async (_backendName, token, credentials = {}) => {
   resetError();
 
   const _backend = await trySelectBackend(_backendName);
@@ -495,7 +527,7 @@ export const signInManually = async (_backendName, token) => {
   auth.signingIn = true;
 
   try {
-    _user = await _backend.signIn({ token, auto: false });
+    _user = await _backend.signIn({ token, auto: false, ...credentials });
   } catch (/** @type {any} */ ex) {
     auth.signingIn = false;
     auth.unauthenticated = true;
@@ -521,6 +553,8 @@ export const signInManually = async (_backendName, token) => {
   }
 
   clearMagicLinkCredentials(_user);
+  // Signed in, so the details of an emailed magic link, if any, aren’t needed any more
+  auth.emailedSignIn = undefined;
   user.account = _user;
 
   try {
@@ -529,6 +563,35 @@ export const signInManually = async (_backendName, token) => {
     logError(ex, 'dataFetch');
     await clearUserCacheIfNeeded(ex);
   }
+};
+
+/**
+ * Replace the temporary password of a Sveltia CMS Additions user, then finish signing in with the
+ * new session the change returns.
+ * @param {string} _backendName Backend name to be used.
+ * @param {string} newPassword New password.
+ * @returns {Promise<boolean>} Whether the password was changed. Signing in afterwards reports its
+ * own errors.
+ */
+export const signInWithNewPassword = async (_backendName, newPassword) => {
+  resetError();
+
+  /** @type {string} */
+  let refreshToken;
+
+  try {
+    // Only offered with Sveltia CMS Additions
+    await loadAdditions();
+    refreshToken = await requireAdditions().changeTemporaryPassword(newPassword);
+  } catch (/** @type {any} */ ex) {
+    logError(ex);
+
+    return false;
+  }
+
+  await signInManually(_backendName, undefined, { refreshToken });
+
+  return true;
 };
 
 /**

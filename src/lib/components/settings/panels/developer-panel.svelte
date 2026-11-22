@@ -7,6 +7,7 @@
   import { getLocalGitStatusLabel } from '$lib/services/backends/fs/git/messages';
   import { checkLocalGitStatus } from '$lib/services/backends/fs/local';
   import { skipCIConfigured } from '$lib/services/backends/git/shared/integration';
+  import { getDeployHook, isSharedDeployHook } from '$lib/services/user/api-keys';
   import { prefs } from '$lib/services/user/prefs.svelte';
 
   /**
@@ -27,6 +28,10 @@
    * @returns {Promise<LocalGitStatus>} Status.
    */
   const getLocalGitStatus = async () => /** @type {LocalGitStatus} */ (await checkLocalGitStatus());
+
+  // An admin’s hook is used until the user enters their own, with its header, if it has one
+  const deployHookShared = $derived(isSharedDeployHook());
+  const deployHookAuthShared = $derived(deployHookShared && !!getDeployHook()?.authHeader);
 </script>
 
 {#snippet deployHookInput(
@@ -34,6 +39,7 @@
   /** @type {string} */ ariaLabel,
   /** @type {string} */ savedMessage,
   /** @type {string} */ removedMessage,
+  /** @type {boolean} */ shared,
 )}
   <div role="none">
     <TextInput
@@ -42,6 +48,7 @@
       flex
       {ariaLabel}
       showInlineLabel={true}
+      placeholder={shared ? _('additions.provided_by_admin') : undefined}
       onchange={() => {
         onChange?.({ message: prefs[prop] ? savedMessage : removedMessage });
       }}
@@ -105,12 +112,14 @@
       _('prefs.developer.deploy_hook.url.field_label'),
       _('prefs.developer.deploy_hook.url.saved'),
       _('prefs.developer.deploy_hook.url.removed'),
+      deployHookShared,
     )}
     {@render deployHookInput(
       'deployHookAuthHeader',
       _('prefs.developer.deploy_hook.auth.field_label'),
       _('prefs.developer.deploy_hook.auth.saved'),
       _('prefs.developer.deploy_hook.auth.removed'),
+      deployHookAuthShared,
     )}
   </section>
 {/if}

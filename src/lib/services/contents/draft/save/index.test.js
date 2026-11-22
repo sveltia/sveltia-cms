@@ -38,6 +38,16 @@ import { createMockForkPullRequest } from '$lib/test/factories';
 
 import { saveEntry as _saveEntry } from '.';
 
+const { additions } = vi.hoisted(() => ({
+  additions: {
+    moveEntryConversation: vi.fn(),
+    // Nobody else is editing the entry
+    getDraftLockKey: vi.fn(() => undefined),
+    getOthersLock: vi.fn(() => undefined),
+  },
+}));
+
+vi.mock('$lib/services/app/additions', () => ({ getAdditions: vi.fn(() => additions) }));
 vi.mock('$lib/services/backends');
 vi.mock('$lib/services/backends/git/shared/integration', async () => {
   const { isDeployingCommit } = await import('$lib/services/backends/git/shared/commits');
@@ -963,6 +973,22 @@ describe('draft/save/index', () => {
       await saveEntry();
 
       expect(clearEntryHistoryCache).toHaveBeenCalledWith('original-entry-id');
+    });
+
+    it('should move the comments of an entry whose path has changed', async () => {
+      mockDraft.originalEntry = { id: 'original-entry-id', subPath: 'old-post' };
+      vi.mocked(createSavingEntryData).mockResolvedValue({
+        savingEntry: { id: 'test-id', slug: 'test-post', subPath: 'test-post', locales: {} },
+        changes: [],
+        savingAssets: [],
+      });
+
+      await saveEntry();
+
+      expect(additions.moveEntryConversation).toHaveBeenCalledWith(
+        `${mockDraft.collectionName}/old-post`,
+        `${mockDraft.collectionName}/test-post`,
+      );
     });
 
     it('should not clear entry history cache when originalEntry is absent', async () => {

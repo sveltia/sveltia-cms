@@ -2444,9 +2444,6 @@ open_authoring:
 # Settings page aria-label
 categories: קטגוריות
 
-# Site Configuration Editor
-site_configuration_editor: עורך הגדרות האתר
-
 # Preferences panels
 prefs:
   # API key management feedback messages

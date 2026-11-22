@@ -2,7 +2,10 @@ import { describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import { loadAdditions } from '$lib/services/app/additions';
+import { backendName } from '$lib/services/backends';
 import { cmsConfig } from '$lib/services/config';
+import { user } from '$lib/services/user/account.svelte';
 
 import SettingsDialog from './settings-dialog.svelte';
 
@@ -34,6 +37,36 @@ describe('SettingsDialog', () => {
 
     await tabs.nth(2).click();
     await expect.element(dialog.getByRole('heading', { name: 'Editor' })).toBeVisible();
+  });
+
+  test('opens on the Account panel of Sveltia CMS Additions, until it’s no longer offered', async () => {
+    cmsConfig.current = /** @type {any} */ ({
+      backend: { name: 'github', repo: 'acme/site', auth_type: 'additions' },
+    });
+    backendName.current = 'github';
+    user.account = /** @type {any} */ ({ backendName: 'github', login: 'ada', name: 'Ada' });
+    await loadAdditions();
+
+    try {
+      await render(SettingsDialog, { open: true });
+
+      const dialog = page.getByRole('dialog', { name: 'Settings' });
+
+      await expect
+        .element(dialog.getByRole('tab', { name: 'Account' }))
+        .toHaveAttribute('aria-selected', 'true');
+      await expect.element(dialog.getByRole('heading', { name: 'Profile' })).toBeVisible();
+
+      // Without it, the first panel is selected instead
+      backendName.current = 'local';
+      await expect
+        .element(dialog.getByRole('tab', { name: 'Appearance' }))
+        .toHaveAttribute('aria-selected', 'true');
+      await expect.element(dialog.getByRole('heading', { name: 'Theme' })).toBeVisible();
+    } finally {
+      cmsConfig.current = undefined;
+      backendName.current = undefined;
+    }
   });
 
   test('offers the internationalization category for a multilingual site', async () => {

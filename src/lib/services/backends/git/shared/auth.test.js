@@ -864,7 +864,11 @@ describe('git/shared/auth', () => {
         'auth',
         expect.any(String),
       );
-      expect(LocalStorage.set).toHaveBeenCalledWith('sveltia-cms.auth', expect.any(Object));
+      expect(LocalStorage.set).toHaveBeenCalledWith('sveltia-cms.auth', {
+        csrfToken: expect.any(String),
+        codeVerifier: expect.any(String),
+        realAuthURL: expect.stringMatching(/^https:\/\/gitlab\.com\/oauth\/authorize\?client_id=/),
+      });
       expect(LocalStorage.set).toHaveBeenCalledWith('sveltia-cms.user', { backendName: 'gitlab' });
 
       const messageHandler = mockWindow.addEventListener.mock.calls.find(
@@ -886,6 +890,71 @@ describe('git/shared/auth', () => {
       });
 
       await authPromise;
+    });
+
+    it('should get the auth URL once the popup has opened', async () => {
+      mockWindow.open.mockReturnValue(mockPopup);
+
+      const getAuthURL = vi.fn(async () => {
+        // Opened first, as a browser may block a popup opened after a request
+        expect(mockWindow.open).toHaveBeenCalled();
+
+        return 'https://additions.example/v1/auth/start/github?link=abc';
+      });
+
+      initClientSideAuth({
+        backendName: 'github',
+        clientId: 'sveltia-cms',
+        authURL: getAuthURL,
+        scope: '',
+      }).catch(() => undefined);
+
+      await vi.waitFor(() =>
+        expect(LocalStorage.set).toHaveBeenCalledWith(
+          'sveltia-cms.auth',
+          expect.objectContaining({
+            realAuthURL: expect.stringMatching(/\/start\/github\?link=abc&client_id=/),
+          }),
+        ),
+      );
+    });
+
+    it('should close the popup when the auth URL can’t be had', async () => {
+      const popup = { ...mockPopup, close: vi.fn() };
+
+      mockWindow.open.mockReturnValue(popup);
+
+      await expect(
+        initClientSideAuth({
+          backendName: 'github',
+          clientId: 'sveltia-cms',
+          authURL: vi.fn().mockRejectedValue(new Error('Unreachable')),
+          scope: '',
+        }),
+      ).rejects.toThrow('Unreachable');
+      expect(popup.close).toHaveBeenCalled();
+    });
+
+    it('should add the parameters to an auth URL that has a query already', async () => {
+      mockWindow.open.mockReturnValue(mockPopup);
+
+      initClientSideAuth({
+        backendName: 'github',
+        clientId: 'sveltia-cms',
+        authURL: 'https://additions.example/v1/auth/start/github?link=abc',
+        scope: '',
+      }).catch(() => undefined);
+
+      await vi.waitFor(() =>
+        expect(LocalStorage.set).toHaveBeenCalledWith(
+          'sveltia-cms.auth',
+          expect.objectContaining({
+            realAuthURL: expect.stringMatching(
+              /^https:\/\/additions\.example\/v1\/auth\/start\/github\?link=abc&client_id=/,
+            ),
+          }),
+        ),
+      );
     });
 
     it('should throw AbortError when popup cannot be opened', async () => {

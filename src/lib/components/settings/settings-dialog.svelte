@@ -14,7 +14,16 @@
   /** @type {Props} */
   let { open = $bindable(false), onClose = undefined } = $props();
 
-  let selectedPanel = $state('appearance');
+  /** @type {string | undefined} */
+  let selectedPanel = $state();
+
+  // The first panel until another is selected: Account when it’s there, otherwise Appearance. Also
+  // the first one when the selected panel is no longer offered
+  const currentPanel = $derived(
+    panels.current.some(({ key }) => key === selectedPanel)
+      ? /** @type {string} */ (selectedPanel)
+      : panels.current[0].key,
+  );
 </script>
 
 <Dialog
@@ -33,7 +42,7 @@
       {#each panels.current as { key, icon } (key)}
         <Tab
           label={_(`prefs.${key}.title`)}
-          selected={key === selectedPanel}
+          selected={key === currentPanel}
           aria-controls="prefs-tab-{key}"
           onSelect={() => {
             selectedPanel = key;

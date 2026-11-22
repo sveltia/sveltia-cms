@@ -1,10 +1,14 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
+import { getConversationCount } from '$lib/services/additions/conversation.svelte';
+import { entryLocks, getLockKey } from '$lib/services/additions/locks.svelte';
+import { loadAdditions } from '$lib/services/app/additions';
 import { allAssetFolders } from '$lib/services/assets/folders';
 import { backendName } from '$lib/services/backends';
 import { reportCommits } from '$lib/services/backends/commit-progress';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
+import { cmsConfig } from '$lib/services/config';
 import { getCollection } from '$lib/services/contents/collection';
 import {
   contentUpdatesToast,
@@ -45,6 +49,11 @@ import { getShownToastText, waitForToastsToHide } from '$lib/test/toast';
 import Toolbar from './toolbar.svelte';
 
 vi.mock('$lib/services/contents/draft/save', () => ({ saveEntry: vi.fn() }));
+// Comments are kept by Sveltia CMS Additions, which only one test turns on
+vi.mock('$lib/services/additions/conversation.svelte', async (importOriginal) => ({
+  ...(await importOriginal()),
+  getConversationCount: vi.fn(() => 0),
+}));
 vi.mock('$lib/services/contents/collection/data/delete', () => ({
   updateStores: vi.fn(),
   deleteEntries: vi.fn(),
@@ -326,6 +335,61 @@ describe('Toolbar', () => {
     await page.getByRole('button', { name: 'Save' }).click();
     await page.getByRole('button', { name: 'Show Errors' }).click();
     expect(sidebarSheetPanel.current).toBe('validation');
+  });
+
+  test('shows the comment count on the Conversation item on a small screen', async () => {
+    env.isSmallScreen = true;
+    env.isLargeScreen = false;
+    cmsConfig.current = /** @type {any} */ ({
+      ...cmsConfig.current,
+      backend: { name: 'github', repo: 'me/site', auth_type: 'additions' },
+    });
+    vi.mocked(getConversationCount).mockReturnValue(3);
+
+    try {
+      await loadAdditions();
+      await renderToolbar();
+
+      const menu = await openMenu();
+
+      await expect
+        .element(menu.getByRole('menuitem', { name: /^.Conversation. \(3\)$/ }))
+        .toBeVisible();
+    } finally {
+      vi.mocked(getConversationCount).mockReturnValue(0);
+    }
+  });
+
+  test('shows who else has the entry open, with Sveltia CMS Additions only', async () => {
+    const key = getLockKey('posts', helloEntry.subPath);
+
+    Object.assign(entryLocks, {
+      userId: 'u1',
+      presence: { [key]: [{ connection: 'theirs', user_id: 'u2', name: 'Ada Lovelace' }] },
+    });
+
+    const label = 'Also open by \u2068Ada Lovelace\u2069';
+
+    try {
+      await renderExisting();
+      await expect.element(page.getByRole('button', { name: 'Save' })).toBeVisible();
+      expect(page.getByRole('img', { name: label }).elements()).toHaveLength(0);
+
+      cmsConfig.current = /** @type {any} */ ({
+        ...cmsConfig.current,
+        backend: { name: 'github', repo: 'me/site', auth_type: 'additions' },
+      });
+      await loadAdditions();
+
+      const avatars = page
+        .getByRole('toolbar', { name: 'Primary' })
+        .getByRole('img', { name: label });
+
+      await expect.element(avatars).toBeVisible();
+      await expect.element(avatars).toHaveTextContent('AL');
+    } finally {
+      Object.assign(entryLocks, { userId: '', presence: {} });
+    }
   });
 
   test('reports a failure to save', async () => {

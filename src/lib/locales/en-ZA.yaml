@@ -2474,9 +2474,6 @@ open_authoring:
 # Settings page aria-label
 categories: Categories
 
-# Site Configuration Editor
-site_configuration_editor: Site Configuration Editor
-
 # Preferences panels
 prefs:
   # API key management feedback messages

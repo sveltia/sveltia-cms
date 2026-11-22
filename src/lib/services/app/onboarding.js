@@ -1,5 +1,6 @@
 import { LocalStorage } from '@sveltia/utils/storage';
 
+import { isAdditionsEnabled } from '$lib/services/app/additions';
 import { LOCAL_STORAGE_KEY_PREFIX } from '$lib/services/app/cache';
 import { getUISettingsDB } from '$lib/services/app/ui-settings';
 import { backend } from '$lib/services/backends';
@@ -9,7 +10,9 @@ import { env } from '$lib/services/user/env.svelte';
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
 
 /**
- * Whether the dialog offering to sign in on a mobile device can be shown.
+ * Whether the dialog offering to sign in on a mobile device can be shown. The link carries the
+ * backend token, which with Sveltia CMS Additions is a GitHub token that only works with the
+ * session it was issued for, so it couldn’t sign anyone in and would only expose the token.
  */
 export const canShowMobileSignInDialog = createDerivedState(
   () =>
@@ -17,7 +20,8 @@ export const canShowMobileSignInDialog = createDerivedState(
     env.hasMouse &&
     !env.isLocalHost &&
     !!backend.current?.isGit &&
-    !!user.account?.token,
+    !!user.account?.token &&
+    !isAdditionsEnabled(),
 );
 
 /**

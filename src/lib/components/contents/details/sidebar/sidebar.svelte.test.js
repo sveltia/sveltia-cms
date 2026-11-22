@@ -1,7 +1,10 @@
-import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
+import { getConversationCount } from '$lib/services/additions/conversation.svelte';
+import { loadAdditions } from '$lib/services/app/additions';
 import { backendName } from '$lib/services/backends';
+import { cmsConfig } from '$lib/services/config';
 import { entryEditorSettings } from '$lib/services/contents/editor/settings';
 import { createMockEntry, initTestConfig } from '$lib/test/config';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
@@ -13,7 +16,27 @@ vi.mock('$lib/services/contents/entry/history', () => ({
   clearEntryHistoryCache: vi.fn(),
 }));
 
+vi.mock('$lib/services/additions/conversation.svelte', async (importOriginal) => ({
+  ...(await importOriginal()),
+  getConversationCount: vi.fn(() => 0),
+  loadConversation: vi.fn(),
+}));
+
+/**
+ * Turn on Sveltia CMS Additions, which keeps the comments, and load its chunk.
+ */
+const enableAdditions = async () => {
+  cmsConfig.current = /** @type {any} */ ({
+    ...cmsConfig.current,
+    backend: { name: 'github', repo: 'me/site', auth_type: 'additions' },
+  });
+  await loadAdditions();
+};
+
 describe('Sidebar', () => {
+  /** @type {typeof cmsConfig.current} */
+  let config;
+
   beforeAll(async () => {
     await initTestConfig({
       collections: [
@@ -34,11 +57,16 @@ describe('Sidebar', () => {
         },
       ],
     });
+    config = cmsConfig.current;
   });
 
   beforeEach(() => {
     backendName.current = undefined;
     entryEditorSettings.current = { ...entryEditorSettings.current, sidebarPanel: null };
+  });
+
+  afterEach(() => {
+    cmsConfig.current = config;
   });
 
   test('offers the panels as tabs, remembering the choice', async () => {
@@ -104,8 +132,8 @@ describe('Sidebar', () => {
     // So does opening a panel elsewhere, once the Slug panel is shown again
     await tabs.getByRole('radio', { name: 'Slug' }).click();
     await expect.element(page.getByRole('group', { name: 'Slug' })).toBeInTheDocument();
-    entryEditorSettings.current = { ...entryEditorSettings.current, sidebarPanel: 'history' };
-    await expect.element(page.getByRole('group', { name: 'History' })).toBeInTheDocument();
+    entryEditorSettings.current = { ...entryEditorSettings.current, sidebarPanel: 'validation' };
+    await expect.element(page.getByRole('group', { name: 'Validation' })).toBeInTheDocument();
   });
 
   test('closes the Slug panel opened for a new entry with its tab', async () => {
@@ -158,5 +186,46 @@ describe('Sidebar', () => {
 
     await renderWithDraft(Sidebar, { draft: createMockDraft() });
     await expect.element(page.getByRole('group', { name: 'Validation' })).toBeInTheDocument();
+  });
+
+  test('falls back to the Validation panel when the remembered one doesn’t apply', async () => {
+    // History, for a new entry, which has none yet
+    entryEditorSettings.current = { ...entryEditorSettings.current, sidebarPanel: 'history' };
+
+    await renderWithDraft(Sidebar, { draft: createMockDraft() });
+    await expect.element(page.getByRole('radio', { name: 'History' })).toBeDisabled();
+    await expect.element(page.getByRole('group', { name: 'Validation' })).toBeInTheDocument();
+    // Still remembered for the next entry that has a history
+    expect(entryEditorSettings.current?.sidebarPanel).toBe('history');
+  });
+
+  test('shows how many comments an entry has on the Conversation tab', async () => {
+    await enableAdditions();
+    vi.mocked(getConversationCount).mockReturnValue(3);
+
+    await renderWithDraft(Sidebar, {
+      draft: createMockDraft({
+        collectionName: 'tags',
+        draft: { isNew: false, originalEntry: createMockEntry({ slug: 'svelte' }) },
+      }),
+    });
+
+    const tab = page.getByRole('radio', { name: /^.Conversation. \(3\)$/ });
+
+    await expect.element(tab).toBeEnabled();
+    expect(tab.element().querySelector('.badge')?.textContent).toBe('3');
+  });
+
+  test('caps the comment count shown on the tab', async () => {
+    await enableAdditions();
+    vi.mocked(getConversationCount).mockReturnValue(120);
+
+    await renderWithDraft(Sidebar, { draft: createMockDraft() });
+
+    const tab = page.getByRole('radio', { name: /^.Conversation. \(120\)$/ });
+
+    // A new entry can’t have comments yet
+    await expect.element(tab).toBeDisabled();
+    expect(tab.element().querySelector('.badge')?.textContent).toBe('99+');
   });
 });

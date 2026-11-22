@@ -2,7 +2,9 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import { startSession } from '$lib/services/additions/session';
 import { customPageRegistry } from '$lib/services/api/registries';
+import { loadAdditions } from '$lib/services/app/additions';
 import { selectedCustomPageId } from '$lib/services/app/custom-pages';
 import { selectedPageName } from '$lib/services/app/navigation';
 import { backendName } from '$lib/services/backends';
@@ -18,6 +20,11 @@ import { createMockEntry, initTestConfig, setEntries } from '$lib/test/config';
 
 import MainRouter from './main-router.svelte';
 
+// Sharing the entry locks and the rest would talk to Sveltia CMS Additions
+vi.mock('$lib/services/additions/session', async (importOriginal) => ({
+  ...(await importOriginal()),
+  startSession: vi.fn(),
+}));
 vi.mock('$lib/services/deployments/poll', () => ({
   retainDeployPolling: vi.fn(() => () => {}),
   recheckDeployments: vi.fn(),
@@ -54,11 +61,79 @@ describe('MainRouter', () => {
     expect(selectedPageName.current).toBe('assets');
     expect(searchMode.current).toBe('assets');
 
+    // The former CMS configuration page leads to its Administration section
+    prefs.devModeEnabled = true;
     window.location.hash = '#/config';
+    await expect.poll(() => window.location.hash).toBe('#/admin/config');
     await expect
       .element(page.getByRole('blockquote', { name: 'CMS Configuration' }))
       .toBeInTheDocument();
+    expect(selectedPageName.current).toBe('admin');
     expect(searchMode.current).toBeNull();
+
+    // Turning developer mode off there leaves the page with nothing to show
+    prefs.devModeEnabled = false;
+    await expect.element(page.getByText('Page not found.')).toBeVisible();
+  });
+
+  test('has the Administration page only for those who can see a section of it', async () => {
+    window.location.hash = '#/admin/users';
+
+    await render(MainRouter);
+    await expect.poll(() => selectedPageName.current).toBe('not-found');
+
+    // An admin of Sveltia CMS Additions
+    await initTestConfig({
+      backend: {
+        name: 'github',
+        repo: 'me/site',
+        auth_type: 'additions',
+        base_url: 'https://additions.example.com',
+      },
+    });
+    await loadAdditions();
+    user.account = /** @type {any} */ ({ backendName: 'github', login: 'admin', role: 'admin' });
+    window.location.hash = '#/collections';
+    window.location.hash = '#/admin/users';
+    await expect.poll(() => selectedPageName.current).toBe('admin');
+    await expect.element(page.getByRole('main', { name: 'Users' })).toBeInTheDocument();
+    await expect
+      .element(page.getByRole('radio', { name: 'Administration' }))
+      .toHaveAttribute('aria-checked', 'true');
+  });
+
+  test('shares the entry locks and the rest with Sveltia CMS Additions while mounted', async () => {
+    const stopSession = vi.fn();
+
+    vi.mocked(startSession).mockReturnValue(stopSession);
+    window.location.hash = '#/collections';
+
+    // Not without it
+    const { unmount: unmountWithout } = await render(MainRouter);
+
+    await expect.element(page.getByRole('toolbar', { name: 'Global' })).toBeVisible();
+    expect(startSession).not.toHaveBeenCalled();
+    await unmountWithout();
+
+    await initTestConfig({
+      backend: {
+        name: 'github',
+        repo: 'me/site',
+        auth_type: 'additions',
+        base_url: 'https://additions.example.com',
+      },
+    });
+    await loadAdditions();
+
+    const { unmount } = await render(MainRouter);
+
+    await expect.element(page.getByRole('toolbar', { name: 'Global' })).toBeVisible();
+    expect(startSession).toHaveBeenCalledOnce();
+    expect(stopSession).not.toHaveBeenCalled();
+
+    // Signing out
+    await unmount();
+    expect(stopSession).toHaveBeenCalledOnce();
   });
 
   test('opens the content library from the root', async () => {
@@ -85,10 +160,7 @@ describe('MainRouter', () => {
     expect(selectedPageName.current).toBe('not-found');
 
     // A standalone page takes no sub path
-    prefs.devModeEnabled = true;
-    window.location.hash = '#/config';
-    await expect.poll(() => selectedPageName.current).toBe('config');
-    window.location.hash = '#/config/foo';
+    window.location.hash = '#/workflow/foo';
     await expect.poll(() => selectedPageName.current).toBe('not-found');
 
     // Nor does a page name with a suffix

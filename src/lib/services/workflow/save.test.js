@@ -11,6 +11,7 @@ import { getCommitAuthor } from '$lib/services/backends/save';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
+import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { resolveCacheDB } from '$lib/services/contents/draft/save/file-changes';
 import {
   buildCascadeDeleteChanges,
@@ -41,6 +42,13 @@ import {
 import { checkReviewedHead, verifyMergeState } from '$lib/services/workflow/verify';
 import { createMockForkPullRequest } from '$lib/test/factories';
 
+const { additions } = vi.hoisted(() => ({
+  additions: { deleteEntryComments: vi.fn(), moveEntryConversation: vi.fn() },
+}));
+
+vi.mock('$lib/services/app/additions', () => ({
+  getAdditions: vi.fn(() => additions),
+}));
 vi.mock('$lib/services/api/events');
 vi.mock('$lib/services/assets/info', () => ({ getAssetBlob: vi.fn() }));
 vi.mock('$lib/services/backends', () => ({ backend: { current: undefined } }));
@@ -51,6 +59,9 @@ vi.mock('$lib/services/contents/collection', () => ({
   getCollection: vi.fn(() => ({ name: 'posts', _type: 'entry' })),
 }));
 vi.mock('$lib/services/contents/collection/files', () => ({ getCollectionFile: vi.fn() }));
+vi.mock('$lib/services/contents/collection/entries', () => ({
+  getEntriesByCollection: vi.fn(() => []),
+}));
 vi.mock('$lib/services/contents/entry/relations/cascade/delete', () => {
   /** @type {import('vitest').Mock<(args: any) => any>} */
   const planMock = vi.fn(() => ({ targets: [], blockers: [] }));
@@ -2509,6 +2520,45 @@ describe('workflow/save', () => {
 
       expect(workflowService.discard).toHaveBeenCalledWith(entry.workflow.pullRequest);
       expect(allUnpublishedEntries.current).toEqual([]);
+      // It was never published, so its comments go with it
+      expect(additions.deleteEntryComments).toHaveBeenCalledWith('posts/hello');
+    });
+
+    test('keeps the comments of a published entry', async () => {
+      const entry = createEntry('cms/posts/hello');
+
+      vi.mocked(getEntriesByCollection).mockReturnValueOnce([
+        /** @type {any} */ ({ subPath: 'hello', locales: {} }),
+      ]);
+      upsertUnpublishedEntry(entry);
+      await discardWorkflowEntry(entry);
+
+      expect(additions.deleteEntryComments).not.toHaveBeenCalled();
+      expect(additions.moveEntryConversation).not.toHaveBeenCalled();
+    });
+
+    test('gives the comments back to the published entry a draft renames', async () => {
+      const entry = /** @type {any} */ (createEntry('cms/posts/hello'));
+
+      entry.workflow.pullRequest.files = [
+        { path: 'content/posts/hello.md', previousPath: 'content/posts/hi.md' },
+        { path: 'content/posts/hello/cover.jpg' },
+      ];
+      vi.mocked(getEntriesByCollection).mockReturnValueOnce([
+        /** @type {any} */ ({
+          subPath: 'other',
+          locales: { _default: { path: 'content/posts/other.md' } },
+        }),
+        /** @type {any} */ ({
+          subPath: 'hi',
+          locales: { _default: { path: 'content/posts/hi.md' } },
+        }),
+      ]);
+      upsertUnpublishedEntry(entry);
+      await discardWorkflowEntry(entry);
+
+      expect(additions.moveEntryConversation).toHaveBeenCalledWith('posts/hello', 'posts/hi');
+      expect(additions.deleteEntryComments).not.toHaveBeenCalled();
     });
   });
 

@@ -76,6 +76,26 @@
  * @property {string} [avatarURL] Avatar URL.
  * @property {string} [profileURL] Profile URL.
  * @property {boolean} [bot] Whether the user is a service account.
+ * @property {'admin' | 'editor' | 'viewer'} [role] Role given by Sveltia CMS Additions. A viewer
+ * can’t make changes.
+ * @property {AdditionsCommitAuthor} [commitAuthor] How Sveltia CMS Additions asks the user’s
+ * commits to be authored, since its GitHub token belongs to an app, not the user.
+ * @property {boolean} [hasPassword] Whether the Sveltia CMS Additions user has a password, which
+ * someone who only signs in with GitHub doesn’t, so they have none to change.
+ * @property {boolean} [ownGitHubToken] Whether the GitHub token Sveltia CMS Additions gave is the
+ * user’s own, as they signed in with GitHub or linked their GitHub account, rather than the app’s.
+ * @property {string} [tokenExpiresAt] When the GitHub token Sveltia CMS Additions gave expires, as
+ * ISO 8601, so it can be refreshed in time.
+ */
+
+/**
+ * Authorship of the commits made with a Sveltia CMS Additions token.
+ * @typedef {object} AdditionsCommitAuthor
+ * @property {'user' | 'bot'} mode `user` to make the user the author, through the Git Data API, or
+ * `bot` to leave the app as the author, through GraphQL, which GitHub signs, with the user in a
+ * `Co-authored-by` trailer.
+ * @property {string} name User’s name.
+ * @property {string} email User’s email.
  */
 
 /**
@@ -362,6 +382,11 @@
  * @property {boolean} auto Whether the sign-in process is automatic.
  * @property {string} [token] User’s locally-cached OAuth access token. Git backends only.
  * @property {string} [refreshToken] User’s locally-cached OAuth refresh token. Git backends only.
+ * With Sveltia CMS Additions, it’s the session token.
+ * @property {string} [username] Username to sign in to Sveltia CMS Additions with.
+ * @property {string} [password] Password to sign in to Sveltia CMS Additions with.
+ * @property {string} [provider] Provider to sign in to Sveltia CMS Additions through, e.g.
+ * `github`.
  */
 
 /**
@@ -622,6 +647,26 @@
  * published.
  * @property {(pullRequest: WorkflowPullRequest) => Promise<void>} discard Function to close the
  * pull request and delete the workflow branch.
+ */
+
+/**
+ * Someone who wrote a comment.
+ * @typedef {object} ConversationAuthor
+ * @property {string} name Display name.
+ * @property {string} login Username on Sveltia CMS Additions.
+ * @property {boolean} isSelf Whether it’s the signed-in user.
+ */
+
+/**
+ * A comment in an entry’s conversation, kept by Sveltia CMS Additions.
+ * @typedef {object} ConversationItem
+ * @property {string} id ID.
+ * @property {string} body Markdown.
+ * @property {ConversationAuthor | null} author Author, or `null` once deleted.
+ * @property {Date} createdDate When it was written.
+ * @property {Date} updatedDate When it was last edited.
+ * @property {boolean} canEdit Whether the signed-in user can edit it.
+ * @property {boolean} canDelete Whether the signed-in user can delete it.
  */
 
 /**

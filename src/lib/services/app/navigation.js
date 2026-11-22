@@ -410,7 +410,7 @@ export const redirectLegacyEntryLink = () => {
  * Page names that make up the whole route. Unlike the content library and the other pages that
  * take a path of their own, anything following these in the URL is a dead link.
  */
-const STANDALONE_PAGE_NAMES = ['workflow', 'config', 'menu'];
+const STANDALONE_PAGE_NAMES = ['workflow', 'menu'];
 /**
  * Search modes set by the pages that search their own items.
  * @type {Record<string, 'contents' | 'assets'>}
@@ -434,6 +434,11 @@ export const resolveRoute = (path, pageNames) => {
   // The page name has to fill the whole first path segment, so `/collections-foo` doesn’t pass for
   // the content library and land on a page that can’t make sense of the rest of the path
   const { pageName } = path.match(`^\\/(?<pageName>${pageNames.join('|')})(?=\\/|$)`)?.groups ?? {};
+
+  // The CMS configuration has moved to the Administration page
+  if (path === '/config') {
+    return { redirect: '#/admin/config' };
+  }
 
   if (!pageName) {
     // The bare `#/` path is where the app starts, so open the content library. Any other unknown

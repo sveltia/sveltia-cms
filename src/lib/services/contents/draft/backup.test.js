@@ -6,12 +6,16 @@ import { isProxy } from 'node:util/types';
 import { IndexedDB } from '@sveltia/utils/storage';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { entryLocks, getDraftLockKey, getOthersLock } from '$lib/services/additions/locks.svelte';
+import { getAdditions } from '$lib/services/app/additions';
 import { cmsConfigVersion } from '$lib/services/config';
 import { isDraftModified } from '$lib/services/contents/draft';
 import { createState } from '$lib/services/utils/state.svelte';
 import { createMockForkPullRequest } from '$lib/test/factories';
 
 vi.mock('@sveltia/utils/storage');
+// Sveltia CMS Additions is loaded, with its real entry locks
+vi.mock('$lib/services/app/additions', () => ({ getAdditions: vi.fn() }));
 vi.mock('@sveltia/utils/file', () => ({
   getBlobRegex: vi.fn((flags = '') => new RegExp('\\bblob:http://localhost/[\\w-]+\\b', flags)),
 }));
@@ -225,6 +229,44 @@ describe('draft/backup', () => {
   });
 
   describe('saveBackup', () => {
+    beforeEach(() => {
+      vi.mocked(getAdditions).mockReturnValue(
+        /** @type {any} */ ({ getDraftLockKey, getOthersLock }),
+      );
+    });
+
+    it('should still save the changes made before someone took over the entry', async () => {
+      mockPrefs.useDraftBackup = true;
+      vi.mocked(isDraftModified).mockReturnValue(true);
+
+      const draft = {
+        collectionName: 'posts',
+        originalEntry: { slug: 'my-post', subPath: 'my-post' },
+        currentLocales: { en: true },
+        currentSlugs: { en: 'my-post' },
+        currentValues: { en: { title: 'My Post' } },
+        files: {},
+        interacted: true,
+      };
+
+      const key = /** @type {string} */ (getDraftLockKey(draft));
+
+      Object.assign(entryLocks, {
+        connection: 'mine',
+        locks: { [key]: { key, user_id: 'u2', name: 'Bob', since: '', connection: 'theirs' } },
+      });
+
+      try {
+        await saveBackup(draft);
+      } finally {
+        Object.assign(entryLocks, { connection: '', locks: {} });
+      }
+
+      expect(mockBackupDB.put).toHaveBeenCalledWith(
+        expect.objectContaining({ collectionName: 'posts', slug: 'my-post' }),
+      );
+    });
+
     it('should save backup when draft is modified', async () => {
       mockPrefs.useDraftBackup = true;
       cmsConfigVersion.current = 'v1.0.0';
@@ -668,6 +710,48 @@ describe('draft/backup', () => {
       await saveBackup(draft);
 
       expect(mockBackupDB.put).not.toHaveBeenCalled();
+    });
+
+    it('should keep the backup while the user is asked whether to restore it', async () => {
+      mockPrefs.useDraftBackup = true;
+      // Nothing has been changed, which would otherwise delete the backup
+      vi.mocked(isDraftModified).mockReturnValue(false);
+
+      await saveBackup({
+        collectionName: 'posts',
+        originalEntry: { slug: 'my-post', subPath: 'my-post' },
+        interacted: true,
+        restorePending: true,
+      });
+
+      expect(mockBackupDB.delete).not.toHaveBeenCalled();
+      expect(mockBackupDB.put).not.toHaveBeenCalled();
+    });
+
+    it('should keep the backup of an unchanged entry someone else is editing', async () => {
+      mockPrefs.useDraftBackup = true;
+      vi.mocked(isDraftModified).mockReturnValue(false);
+
+      const draft = {
+        collectionName: 'posts',
+        originalEntry: { slug: 'my-post', subPath: 'my-post' },
+        interacted: true,
+      };
+
+      const key = /** @type {string} */ (getDraftLockKey(draft));
+
+      Object.assign(entryLocks, {
+        connection: 'mine',
+        locks: { [key]: { key, user_id: 'u2', name: 'Bob', since: '', connection: 'theirs' } },
+      });
+
+      try {
+        await saveBackup(draft);
+      } finally {
+        Object.assign(entryLocks, { connection: '', locks: {} });
+      }
+
+      expect(mockBackupDB.delete).not.toHaveBeenCalled();
     });
 
     it('should not save backup for a read-only entry', async () => {

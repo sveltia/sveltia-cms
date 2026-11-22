@@ -1,6 +1,7 @@
 import { _ } from '@sveltia/i18n';
 
 import { callEventHooks } from '$lib/services/api/events';
+import { getAdditions } from '$lib/services/app/additions';
 import { isCommitCancelled } from '$lib/services/backends/commit-prompt';
 import { isPublishingCommit } from '$lib/services/backends/git/shared/integration';
 import { checkForRemoteChanges } from '$lib/services/backends/refresh';
@@ -31,6 +32,7 @@ import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { updateComputedValues } from '$lib/services/contents/draft/update/compute';
 import { isRequiredEnforced } from '$lib/services/contents/draft/validate/required';
 import { validateAndRevealErrors } from '$lib/services/contents/draft/validate/reveal';
+import { getEntryKey } from '$lib/services/contents/entry/entry-key';
 import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
 import { buildCascadeChanges } from '$lib/services/contents/entry/relations/cascade/update';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
@@ -413,6 +415,15 @@ const finishSave = async ({ draft, savingEntry, pendingEntries, useWorkflow, ski
       clearEntryHistoryCache(entry.id);
     }
   });
+
+  // Comments kept by Sveltia CMS Additions follow an entry whose slug or path has changed. It runs
+  // in the background, as the save is done
+  if (originalEntry && originalEntry.subPath !== savingEntry.subPath) {
+    getAdditions()?.moveEntryConversation(
+      getEntryKey(collectionName, originalEntry.subPath),
+      getEntryKey(collectionName, savingEntry.subPath),
+    );
+  }
 };
 
 /**

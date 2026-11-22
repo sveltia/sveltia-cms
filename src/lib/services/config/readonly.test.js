@@ -1,17 +1,25 @@
 // @ts-nocheck
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
+import { getAdditions } from '$lib/services/app/additions';
 import { lockedBranch } from '$lib/services/backends/branch-access';
 
 import {
   getReadonlyMessage,
   isConfigReadonly,
   isDraftConfigReadonly,
+  isDraftLockedByOthers,
   isDraftReadonly,
   isLockedByBranch,
   isReadonly,
+  isViewer,
 } from './readonly';
 import { cmsConfig } from './state';
+
+const mockUser = vi.hoisted(() => ({ account: /** @type {any} */ (undefined) }));
+
+vi.mock('$lib/services/user/account.svelte', () => ({ user: mockUser }));
+vi.mock('$lib/services/app/additions', () => ({ getAdditions: vi.fn() }));
 
 vi.mock('@sveltia/i18n', () => ({
   _: vi.fn((key, options) => (options ? `${key}:${options.values.branch}` : key)),
@@ -19,6 +27,35 @@ vi.mock('@sveltia/i18n', () => ({
 
 afterEach(() => {
   lockedBranch.current = undefined;
+  mockUser.account = undefined;
+});
+
+describe('Test isViewer()', () => {
+  test('is true only for a Sveltia CMS Additions viewer', () => {
+    expect(isViewer()).toBe(false);
+
+    mockUser.account = { backendName: 'github', role: 'editor' };
+    expect(isViewer()).toBe(false);
+
+    mockUser.account = { backendName: 'github', role: 'viewer' };
+    expect(isViewer()).toBe(true);
+  });
+
+  test('makes everything read-only for a viewer, with a message about the role', () => {
+    cmsConfig.current = {};
+    mockUser.account = { backendName: 'github', role: 'viewer' };
+
+    // The role isn’t part of the `readonly` option, which asset folders read before sign-in
+    expect(isConfigReadonly()).toBe(false);
+    expect(isReadonly({ collection: { name: 'posts' } })).toBe(true);
+    expect(getReadonlyMessage('entry', { collection: { name: 'posts' } })).toBe('readonly_role');
+
+    // The CMS being read-only for everyone is still the more important message
+    cmsConfig.current = { readonly: true };
+    expect(getReadonlyMessage('entry')).toBe('readonly_cms');
+
+    cmsConfig.current = undefined;
+  });
 });
 
 describe('Test isReadonly()', () => {
@@ -181,6 +218,36 @@ describe('Test isDraftReadonly()', () => {
     expect(isDraftConfigReadonly({ collection: {}, restorePending: true })).toBe(false);
     expect(isDraftConfigReadonly({ collection: { readonly: true } })).toBe(true);
     expect(isDraftConfigReadonly(null)).toBe(false);
+  });
+
+  test('is read-only while someone else holds the entry’s lock', () => {
+    cmsConfig.current = {};
+
+    const draft = { collection: {}, collectionName: 'posts', originalEntry: { subPath: 'a' } };
+    /** @type {Record<string, any>} */
+    const othersLocks = { 'posts/a': { name: 'Bob' } };
+
+    // Without Sveltia CMS Additions, there are no locks
+    expect(isDraftLockedByOthers(draft)).toBe(false);
+
+    vi.mocked(getAdditions).mockReturnValue({
+      getDraftLockKey: vi.fn(
+        ({ collectionName, originalEntry }) => `${collectionName}/${originalEntry.subPath}`,
+      ),
+      getOthersLock: vi.fn((key) => othersLocks[key]),
+    });
+
+    try {
+      expect(isDraftLockedByOthers(draft)).toBe(true);
+      expect(isDraftReadonly(draft)).toBe(true);
+
+      delete othersLocks['posts/a'];
+
+      expect(isDraftLockedByOthers(draft)).toBe(false);
+      expect(isDraftReadonly(draft)).toBe(false);
+    } finally {
+      vi.mocked(getAdditions).mockReturnValue(undefined);
+    }
   });
 });
 

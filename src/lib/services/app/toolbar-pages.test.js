@@ -15,6 +15,7 @@ const baseArgs = {
   assetsLink: '/assets/-/all',
   workflowEnabled: false,
   workflowLabelKey: 'workflow.title',
+  adminLink: undefined,
   customPages: [],
   selectedCustomPageId: '',
   isSmallScreen: false,
@@ -84,5 +85,31 @@ describe('getToolbarPages()', () => {
     expect(
       getToolbarPages({ ...baseArgs, selectedPageName: 'assets', hasAssets: true })[1].selected,
     ).toBe(true);
+  });
+
+  test('lists Administration after the workflow, except on a small screen', () => {
+    const args = {
+      ...baseArgs,
+      selectedPageName: 'admin',
+      workflowEnabled: true,
+      adminLink: '/admin/domains',
+    };
+
+    expect(getToolbarPages(args).map(({ key }) => key)).toEqual([
+      'collections',
+      'workflow',
+      'admin',
+    ]);
+    expect(getToolbarPages(args)[2]).toEqual({
+      key: 'admin',
+      label: 'administration',
+      icon: 'settings_applications',
+      link: '/admin/domains',
+      selected: true,
+    });
+    // The Menu page lists it instead
+    expect(getToolbarPages({ ...args, isSmallScreen: true }).map(({ key }) => key)).not.toContain(
+      'admin',
+    );
   });
 });

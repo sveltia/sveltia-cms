@@ -70,6 +70,14 @@ vi.mock('$lib/services/contents', () => ({
   dataLoaded: mockDataLoaded,
 }));
 
+const mockChangeTemporaryPassword = vi.hoisted(() => vi.fn());
+
+vi.mock('$lib/services/app/additions', () => ({
+  isAdditionsEnabled: vi.fn(() => false),
+  loadAdditions: vi.fn(async () => undefined),
+  requireAdditions: vi.fn(() => ({ changeTemporaryPassword: mockChangeTemporaryPassword })),
+}));
+
 vi.mock('$lib/services/user/account.svelte', () => ({
   user: mockUser,
 }));
@@ -229,6 +237,50 @@ describe('auth service', () => {
 
       expect(result._user).toEqual({ token: 'magic-token' });
       expect(result.copiedPrefs).toEqual(prefs);
+    });
+
+    it('should keep the username and password of an emailed magic link to fill in the form', () => {
+      const encodedData = encodeMagicLinkData({ username: 'viewer', password: 'kq7m-x2pd' });
+
+      mockParseLocation.mockReturnValue({
+        path: {
+          /**
+           * Mock match function.
+           * @returns {object} Match result with groups.
+           */
+          match: () => ({ groups: { encodedData } }),
+        },
+      });
+
+      const result = authModule.parseMagicLink();
+
+      // Nothing to sign in with automatically
+      expect(result._user).toBeUndefined();
+      expect(result.copiedPrefs).toBeUndefined();
+      expect(authModule.auth.emailedSignIn).toEqual({
+        username: 'viewer',
+        password: 'kq7m-x2pd',
+      });
+      // Taken out of the URL, like a token
+      expect(mockGoto).toHaveBeenCalledWith('', { replaceState: true });
+      authModule.auth.emailedSignIn = undefined;
+    });
+
+    it('should ignore a magic link with a username but no password', () => {
+      const encodedData = encodeMagicLinkData({ username: 'viewer' });
+
+      mockParseLocation.mockReturnValue({
+        path: {
+          /**
+           * Mock match function.
+           * @returns {object} Match result with groups.
+           */
+          match: () => ({ groups: { encodedData } }),
+        },
+      });
+
+      authModule.parseMagicLink();
+      expect(authModule.auth.emailedSignIn).toBeUndefined();
     });
 
     it('should parse magic link with token but no prefs', () => {
@@ -827,6 +879,34 @@ describe('auth service', () => {
       expect(mockGoto).not.toHaveBeenCalled();
     });
 
+    it('should forget the details of an emailed magic link once a cached user signs in', async () => {
+      const cachedUser = { token: 'cached-token', backendName: 'github' };
+      const encodedData = encodeMagicLinkData({ username: 'editor', password: 'kq7m-x2pd' });
+
+      mockParseLocation.mockReturnValue({
+        path: {
+          /**
+           * Mock match function.
+           * @returns {object} Match result with groups.
+           */
+          match: () => ({ groups: { encodedData } }),
+        },
+      });
+      mockLocalStorage.get.mockResolvedValue(cachedUser);
+      mockBackendStore.current = mockBackend;
+      mockCmsConfigStore.current = mockCmsConfig;
+      mockBackend.signIn.mockResolvedValue(cachedUser);
+      mockBackend.fetchFiles.mockResolvedValue(undefined);
+
+      await authModule.signInAutomatically();
+
+      // Signed in from the cache, so the sign-in form won’t be filled in after signing out
+      expect(mockBackend.signIn).toHaveBeenCalledWith(
+        expect.objectContaining({ token: 'cached-token' }),
+      );
+      expect(authModule.auth.emailedSignIn).toBeUndefined();
+    });
+
     it('should return early if user cache is empty object', async () => {
       mockParseLocation.mockReturnValue({
         path: {
@@ -887,6 +967,44 @@ describe('auth service', () => {
       expect(mockUser.account).toBeUndefined();
       expect(auth.signingIn).toBe(false);
       expect(auth.unauthenticated).toBe(true);
+    });
+
+    it('should not send a token cached for or without Sveltia CMS Additions to the other', async () => {
+      const { isAdditionsEnabled } = await import('$lib/services/app/additions');
+
+      mockBackendStore.current = mockBackend;
+      mockCmsConfigStore.current = mockCmsConfig;
+
+      // A session token from when the site used Sveltia CMS Additions, which only gives a role
+      mockLocalStorage.get.mockImplementation(async (key) =>
+        key === 'sveltia-cms.user'
+          ? { backendName: 'github', token: 'ghs_x', refreshToken: 'session', role: 'editor' }
+          : null,
+      );
+      mockUser.account = undefined;
+      await authModule.signInAutomatically();
+      expect(mockBackend.signIn).not.toHaveBeenCalled();
+      expect(mockLocalStorage.set).toHaveBeenCalledWith('sveltia-cms.user', {});
+
+      // A GitHub refresh token from before the site started using it
+      vi.mocked(isAdditionsEnabled).mockReturnValue(true);
+      mockLocalStorage.get.mockImplementation(async (key) =>
+        key === 'sveltia-cms.user'
+          ? { backendName: 'github', token: 'gho_x', refreshToken: 'ghr_x' }
+          : null,
+      );
+      mockUser.account = undefined;
+      await authModule.signInAutomatically();
+      expect(mockBackend.signIn).not.toHaveBeenCalled();
+
+      // The stub cached while a sign-in popup is open, which has no token yet, goes on
+      mockLocalStorage.get.mockImplementation(async (key) =>
+        key === 'sveltia-cms.user' ? { backendName: 'github' } : null,
+      );
+      mockUser.account = undefined;
+      await authModule.signInAutomatically();
+      expect(mockBackend.signIn).toHaveBeenCalledWith({ auto: true });
+      vi.mocked(isAdditionsEnabled).mockReturnValue(false);
     });
 
     it('should not send a token Decap CMS cached for another backend to the configured one', async () => {
@@ -1506,6 +1624,16 @@ describe('auth service', () => {
       expect(mockUser.account).toEqual({ login: 'bob', token: 'token-b' });
     });
 
+    it('should forget the details of an emailed magic link once signed in', async () => {
+      authModule.auth.emailedSignIn = { username: 'editor', password: 'kq7m-x2pd' };
+      mockBackend.signIn.mockResolvedValue({ login: 'bob', token: 'token-b' });
+      mockBackend.fetchFiles.mockResolvedValue(undefined);
+
+      await authModule.signInManually('github', 'token-b');
+
+      expect(authModule.auth.emailedSignIn).toBeUndefined();
+    });
+
     it('should sign in with provided credentials and set signingIn state', async () => {
       const user = { token: 'manual-token' };
 
@@ -1523,6 +1651,50 @@ describe('auth service', () => {
       expect(auth.unauthenticated).toBe(false);
       expect(mockUser.account).toEqual(user);
       expect(mockBackend.fetchFiles).toHaveBeenCalled();
+    });
+
+    it('should change a temporary password, then sign in with the new session', async () => {
+      mockChangeTemporaryPassword.mockResolvedValue('new-session');
+      mockBackend.signIn.mockResolvedValue(undefined);
+
+      await expect(authModule.signInWithNewPassword('github', 'new password')).resolves.toBe(true);
+
+      expect(mockChangeTemporaryPassword).toHaveBeenCalledWith('new password');
+      expect(mockBackend.signIn).toHaveBeenCalledWith({
+        token: undefined,
+        auto: false,
+        refreshToken: 'new-session',
+      });
+    });
+
+    it('should report a failed password change without signing in', async () => {
+      const error = new Error('Refused', { cause: { message: 'Refused by the service' } });
+
+      mockChangeTemporaryPassword.mockRejectedValue(error);
+
+      await expect(authModule.signInWithNewPassword('github', 'new password')).resolves.toBe(false);
+
+      expect(auth.signInError.message).toBe('Refused by the service');
+      expect(mockBackend.signIn).not.toHaveBeenCalled();
+    });
+
+    it('should pass Sveltia CMS Additions credentials on to the backend', async () => {
+      mockBackend.signIn.mockResolvedValue(undefined);
+
+      await authModule.signInManually('github', undefined, {
+        username: 'editor',
+        password: 'secret',
+      });
+
+      expect(mockBackend.signIn).toHaveBeenCalledWith({
+        token: undefined,
+        auto: false,
+        username: 'editor',
+        password: 'secret',
+      });
+      // A user who must change a temporary password isn’t signed in yet
+      expect(auth.unauthenticated).toBe(true);
+      expect(mockBackend.fetchFiles).not.toHaveBeenCalled();
     });
 
     it('should handle sign in failure and set signingIn state', async () => {

@@ -23,9 +23,14 @@
   import SidebarSheet from '$lib/components/contents/details/sidebar/sidebar-sheet.svelte';
   import Sidebar from '$lib/components/contents/details/sidebar/sidebar.svelte';
   import Toolbar from '$lib/components/contents/details/toolbar.svelte';
+  import { getAdditions, requireAdditions } from '$lib/services/app/additions';
   import { focusOverlay, rememberFocus } from '$lib/services/app/focus';
   import { goto } from '$lib/services/app/navigation';
-  import { getReadonlyMessage, isDraftConfigReadonly } from '$lib/services/config/readonly';
+  import {
+    getReadonlyMessage,
+    isDraftConfigReadonly,
+    isDraftLockedByOthers,
+  } from '$lib/services/config/readonly';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { collectionState } from '$lib/services/contents/collection/view';
   import { resetBackupToastState, scheduleBackup } from '$lib/services/contents/draft/backup';
@@ -59,7 +64,7 @@
   import { createLatestGuard } from '$lib/services/utils/scheduling';
   import { watch } from '$lib/services/utils/state.svelte';
   import { isOrphanedForkDraft } from '$lib/services/workflow';
-  import { getForkEntryNotice } from '$lib/services/workflow/forks';
+  import { getForkEntryNotice, isLockedForkEntry } from '$lib/services/workflow/forks';
 
   /**
    * @import { EntryDraftState } from '$lib/services/contents/draft/state.svelte';
@@ -142,6 +147,21 @@
       ? _('workflow.fork_entry_gone')
       : getForkEntryNotice(entryDraft.current?.originalEntry),
   );
+  // Sveltia CMS Additions, whose chunk is loaded along with the backend if it’s enabled
+  const additions = $derived(getAdditions());
+  // Sveltia CMS Additions entry lock, which tells others the entry is being edited
+  const lockKey = $derived(additions?.getDraftLockKey(entryDraft.current));
+  // A new entry that can’t be created gets the message in place of the editor instead, and someone
+  // else editing the entry is what the lock infobar says
+  const showReadonlyInfobar = $derived(
+    readonly &&
+      !loading &&
+      !(isNew && creationDisabled) &&
+      !isDraftLockedByOthers(entryDraft.current),
+  );
+  // Only someone who can edit the entry takes its lock, or they would keep those who can from
+  // editing it. A viewer, or anyone else who can’t, only sees whether someone else is editing it
+  const holdsLock = $derived(!readonly && !isLockedForkEntry(entryDraft.current?.originalEntry));
   const [firstPaneSize, secondPaneSize, minPaneSize] = $derived(
     getPaneSizes({ firstPane: editorFirstPane.current, secondPane: editorSecondPane.current }),
   );
@@ -384,6 +404,22 @@
     untrack(() => scheduleBackup(draft));
   });
 
+  // Tell others the entry is open, read-only or not, so they can see who else is looking at it, and
+  // hold its lock while it’s open, if the user can edit it
+  $effect(() => {
+    const key = lockKey;
+    const hold = holdsLock;
+
+    if (!key) {
+      return undefined;
+    }
+
+    // There’s only a key with Sveltia CMS Additions
+    const { watchEntry } = requireAdditions();
+
+    return untrack(() => watchEntry(key, { hold }));
+  });
+
   $effect(() => {
     if (paneStateKey) {
       // Reset the editor panes
@@ -475,8 +511,10 @@
   bind:this={wrapper}
 >
   {#key entryDraft.current?.id}
-    <!-- A new entry that can’t be created gets the message in place of the editor instead -->
-    {#if readonly && !loading && !(isNew && creationDisabled)}
+    {#if additions}
+      <additions.EntryLockInfobar {lockKey} />
+    {/if}
+    {#if showReadonlyInfobar}
       <Infobar
         dismissible={false}
         --sui-infobar-border-width="0 0 1px"

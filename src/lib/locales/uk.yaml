@@ -1983,9 +1983,6 @@ open_authoring:
 # Settings page aria-label
 categories: Категорії
 
-# Site Configuration Editor
-site_configuration_editor: Редактор конфігурації сайту
-
 # Preferences panels
 prefs:
   # API key management feedback messages

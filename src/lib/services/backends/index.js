@@ -1,3 +1,4 @@
+import { loadAdditions } from '$lib/services/app/additions';
 import local from '$lib/services/backends/fs/local';
 import test from '$lib/services/backends/fs/test';
 import { gitBackendServices, loadGitBackendService } from '$lib/services/backends/git/services';
@@ -67,13 +68,17 @@ export const backend = createDerivedState(() =>
 
 /**
  * Get a backend service, loading it first if it’s kept in a chunk. The local backend wraps the
- * configured Git backend, so that one is loaded along with it.
+ * configured Git backend, so that one is loaded along with it, and so is the `additions` chunk
+ * when the CMS works with Sveltia CMS Additions.
  * @param {string} name Backend name.
  * @returns {Promise<BackendService | undefined>} Service, or `undefined` if there’s no backend with
  * the name.
  * @throws {Error} If the service can’t be loaded.
  */
 export const loadBackendService = async (name) => {
+  // Sveltia CMS Additions takes over the sign-in, so it comes with the backend
+  await loadAdditions();
+
   if (name === 'local') {
     const remoteName = cmsConfig.current?.backend.name;
 

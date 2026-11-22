@@ -2,8 +2,10 @@ import { createHash } from 'crypto';
 import { existsSync, readdirSync, readFileSync, statSync } from 'fs';
 import path from 'path';
 
-import { parse as parseSvelte } from 'svelte/compiler';
+import { compile, compileModule, parse as parseSvelte } from 'svelte/compiler';
 import { parseAst } from 'vite';
+
+import svelteConfig from '../../svelte.config.js';
 
 /**
  * @typedef {object} SharedModule
@@ -13,6 +15,8 @@ import { parseAst } from 'vite';
 
 /**
  * @typedef {object} ChunkModules
+ * @property {Set<string>} mainFiles Absolute paths of the modules in the chunk directories that the
+ * main bundle keeps, as the rest of the app imports them.
  * @property {Set<string>} ownFiles Absolute paths of the modules bundled into the chunks, the
  * entries included.
  * @property {SharedModule[]} sharedModules Modules the chunks import from the main bundle, in a
@@ -53,18 +57,105 @@ const isSourceSpecifier = (specifier) => specifier.startsWith('$lib/') || specif
 
 /**
  * Resolve a source module specifier to the absolute path of the file.
- * @param {string} specifier Module specifier, e.g. `$lib/services/config` or `./user.js`.
+ * @param {string} specifier Module specifier, e.g. `$lib/services/config` or `./user.js`. A query,
+ * e.g. `?only=additions` on a locale file, is kept on the path, as the build resolves it the same
+ * way.
  * @param {string} importer Absolute path of the importing module.
  * @returns {string | undefined} File path, or `undefined` if no file matches.
  */
 const resolveSourceModule = (specifier, importer) => {
-  const base = specifier.startsWith('$lib/')
-    ? path.join(LIB_DIR, specifier.slice('$lib/'.length))
-    : path.resolve(path.dirname(importer), specifier);
+  const [pathname, query] = specifier.split('?');
 
-  return RESOLVE_SUFFIXES.map((suffix) => `${base}${suffix}`).find(
-    (file) => existsSync(file) && statSync(file).isFile(),
+  const base = pathname.startsWith('$lib/')
+    ? path.join(LIB_DIR, pathname.slice('$lib/'.length))
+    : path.resolve(path.dirname(importer), pathname);
+
+  const file = RESOLVE_SUFFIXES.map((suffix) => `${base}${suffix}`).find(
+    (candidate) => existsSync(candidate) && statSync(candidate).isFile(),
   );
+
+  return file && query !== undefined ? `${file}?${query}` : file;
+};
+
+/**
+ * Whether the given module is a data file, e.g. a locale file, which has no imports and is bundled
+ * into each chunk that imports it, as a copy can’t hold state.
+ * @param {string} file Absolute path of the module, possibly with a query.
+ * @returns {boolean} Result.
+ */
+const isDataFile = (file) => /\.ya?ml(?:\?|$)/.test(file);
+
+/**
+ * Get the JavaScript code of a module as the build sees it: a Svelte component or a module that
+ * uses runes is compiled first, with the options the build compiles it with, as the compiled code
+ * imports the Svelte runtime as well.
+ * @param {string} file Absolute path of the module.
+ * @returns {string} Code.
+ */
+const getModuleCode = (file) => {
+  const source = readFileSync(file, 'utf-8');
+  const options = { filename: file, generate: /** @type {const} */ ('client'), dev: false };
+
+  if (file.endsWith('.svelte')) {
+    return compile(source, { ...svelteConfig.compilerOptions, ...options, css: 'injected' }).js
+      .code;
+  }
+
+  if (file.endsWith('.svelte.js')) {
+    return compileModule(source, options).js.code;
+  }
+
+  return source;
+};
+
+/**
+ * Get the names of the members of a namespace that a module reads, e.g. `state` and `get` for
+ * `$.state(0)` and `$.get(count)`, which is how compiled Svelte code uses its runtime.
+ * @param {import('estree').Node} ast Program.
+ * @param {string} namespace Local name of the namespace, e.g. `$`.
+ * @returns {string[]} Names.
+ * @throws {Error} If the namespace is used other than by reading a named member, e.g. passed on.
+ */
+const getNamespaceMembers = (ast, namespace) => {
+  /** @type {Set<string>} */
+  const names = new Set();
+
+  /**
+   * Walk a node and its descendants.
+   * @param {any} node Node.
+   * @param {any} [parent] Parent node.
+   * @throws {Error} If the namespace is used other than by reading a named member.
+   */
+  const walk = (node, parent) => {
+    if (!node || typeof node.type !== 'string') {
+      return;
+    }
+
+    if (node.type === 'Identifier' && node.name === namespace) {
+      if (
+        parent?.type === 'MemberExpression' &&
+        parent.object === node &&
+        !parent.computed &&
+        parent.property.type === 'Identifier'
+      ) {
+        names.add(parent.property.name);
+      } else if (parent?.type !== 'ImportNamespaceSpecifier') {
+        throw new Error(`The ${namespace} namespace is used other than by reading a member`);
+      }
+    }
+
+    Object.values(node).forEach((value) => {
+      (Array.isArray(value) ? value : [value]).forEach((child) => {
+        if (child && typeof child === 'object' && child !== parent) {
+          walk(child, node);
+        }
+      });
+    });
+  };
+
+  walk(ast);
+
+  return [...names];
 };
 
 /**
@@ -85,15 +176,25 @@ const listSourceModules = (dir) =>
  * @throws {Error} If the module imports or re-exports a whole namespace, whose names can’t be told
  * without parsing the imported module too.
  */
-const getImports = (file) =>
-  parseAst(readFileSync(file, 'utf-8')).body.flatMap((node) => {
+const getImports = (file) => {
+  const ast = parseAst(getModuleCode(file));
+
+  return ast.body.flatMap((node) => {
     if (node.type === 'ImportDeclaration') {
+      const specifier = /** @type {string} */ (node.source.value);
+
       return [
         {
-          specifier: /** @type {string} */ (node.source.value),
-          names: node.specifiers.map((spec) => {
+          specifier,
+          names: node.specifiers.flatMap((spec) => {
             if (spec.type === 'ImportNamespaceSpecifier') {
-              throw new Error(`Namespace import of ${node.source.value} in ${file}`);
+              // Compiled Svelte code takes its runtime as a namespace, whose members can be told
+              // from how it’s used; a namespace of a source module would need parsing that too
+              if (isSourceSpecifier(specifier)) {
+                throw new Error(`Namespace import of ${specifier} in ${file}`);
+              }
+
+              return getNamespaceMembers(ast, spec.local.name);
             }
 
             return spec.type === 'ImportDefaultSpecifier'
@@ -124,6 +225,7 @@ const getImports = (file) =>
 
     return [];
   });
+};
 
 /**
  * Collect the specifiers of the modules imported anywhere in a syntax tree, with a string literal.
@@ -286,7 +388,7 @@ export const getChunkModules = ({ entries, ownDirs }) => {
   while (mainQueue.length) {
     const file = /** @type {string} */ (mainQueue.shift());
 
-    getImports(file).forEach(({ specifier }) => {
+    (isDataFile(file) ? [] : getImports(file)).forEach(({ specifier }) => {
       const resolved = isSourceSpecifier(specifier)
         ? resolveSourceModule(specifier, file)
         : undefined;
@@ -311,6 +413,14 @@ export const getChunkModules = ({ entries, ownDirs }) => {
 
       if (!id) {
         throw new Error(`Cannot resolve ${specifier} in ${file}`);
+      }
+
+      // A data file is bundled wherever it’s imported, under its own query, e.g. the part of a
+      // locale file a chunk needs
+      if (isDataFile(id)) {
+        ownFiles.add(id);
+
+        return;
       }
 
       if (isInOwnDir(id) && !mainFiles.has(id)) {
@@ -351,5 +461,5 @@ export const getChunkModules = ({ entries, ownDirs }) => {
     .digest('hex')
     .slice(0, 12);
 
-  return { ownFiles, sharedModules, layoutId };
+  return { mainFiles, ownFiles, sharedModules, layoutId };
 };

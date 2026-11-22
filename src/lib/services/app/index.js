@@ -1,9 +1,20 @@
 export { dependencies, version } from 'virtual:package-info';
 
 /**
+ * Origin of the UNPKG CDN, which serves npm packages. The CMS loads its locales and other files
+ * from there, so a site’s Content Security Policy already allows it.
+ */
+export const UNPKG_ORIGIN = 'https://unpkg.com';
+
+/**
+ * Name of the CMS package on npm.
+ */
+export const PACKAGE_NAME = '@sveltia/cms';
+
+/**
  * Base URL for the CMS on the UNPKG CDN.
  */
-export const UNPKG_BASE_URL = 'https://unpkg.com/@sveltia/cms';
+export const UNPKG_BASE_URL = `${UNPKG_ORIGIN}/${PACKAGE_NAME}`;
 
 /**
  * URL of the Sveltia CMS repository on GitHub.

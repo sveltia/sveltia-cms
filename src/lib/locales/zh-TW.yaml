@@ -1806,9 +1806,6 @@ open_authoring:
 # Settings page aria-label
 categories: 分類
 
-# Site Configuration Editor
-site_configuration_editor: 網站設定編輯器
-
 # Preferences panels
 prefs:
   # API key management feedback messages

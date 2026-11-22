@@ -2,6 +2,7 @@
   import { _ } from '@sveltia/i18n';
   import { Button, Icon, SelectButton, SelectButtonGroup } from '@sveltia/ui';
 
+  import { getAdminLink } from '$lib/services/app/admin';
   import {
     customPages,
     openCustomPage,
@@ -68,6 +69,7 @@
       assetsLink,
       workflowEnabled: workflowEnabled.current,
       workflowLabelKey: workflowPageLabelKey.current,
+      adminLink: getAdminLink(),
       customPages: listedCustomPages.filter(({ newTab }) => !newTab),
       selectedCustomPageId: selectedCustomPageId.current,
       isSmallScreen: env.isSmallScreen,

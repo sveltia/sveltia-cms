@@ -26,6 +26,7 @@
   import SaveConflictDialog from '$lib/components/contents/details/save-conflict-dialog.svelte';
   import EntryStatusMenu from '$lib/components/workflow/entry-status-menu.svelte';
   import PublishEntryButton from '$lib/components/workflow/publish-entry-button.svelte';
+  import { getAdditions } from '$lib/services/app/additions';
   import { getEntryEditorBackPath, goBack, goto, overlayTitle } from '$lib/services/app/navigation';
   import { saveProgress } from '$lib/services/backends/commit-progress';
   import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
@@ -46,7 +47,11 @@
   import { fieldUpdatePending } from '$lib/services/contents/editor/pending';
   import { createResetMenuState } from '$lib/services/contents/editor/reset-menu.svelte';
   import { duplicateEntryDraft, saveEntryDraftFlow } from '$lib/services/contents/editor/save';
-  import { getSidebarPanels, showSidebarPanel } from '$lib/services/contents/editor/sidebar';
+  import {
+    getSidebarPanelLabel,
+    getSidebarPanels,
+    showSidebarPanel,
+  } from '$lib/services/contents/editor/sidebar';
   import { canUpdateSlug } from '$lib/services/contents/editor/slug';
   import { getEntryToolbarState } from '$lib/services/contents/editor/toolbar';
   import { getEntryRelativeAssets } from '$lib/services/contents/entry/assets';
@@ -84,6 +89,8 @@
    */
 
   const entryDraft = getEntryDraftContext();
+  // Sveltia CMS Additions, which shows who else has the entry open
+  const additions = $derived(getAdditions());
 
   /** @type {Props} */
   let { disabled = false } = $props();
@@ -400,6 +407,9 @@
       {/if}
     </h2>
   {/if}
+  {#if additions}
+    <additions.EntryViewers />
+  {/if}
   {#if !env.isSmallScreen}
     {@render overflowButtons()}
   {/if}
@@ -496,12 +506,13 @@
           <!-- The sidebar doesn’t fit on a small screen, so its panels open in a bottom sheet. The
             menu can’t be opened while the toolbar is disabled -->
           {#if !notFound}
-            {#each getSidebarPanels(entryDraft.current) as { key, disabled: panelDisabled } (key)}
+            {#each getSidebarPanels(entryDraft.current) as panel (panel.key)}
+              <!-- With the count shown on the sidebar button’s badge, e.g. of comments -->
               <MenuItem
-                label={_(`entry_sidebar.${key}.title`)}
-                disabled={panelDisabled}
+                label={getSidebarPanelLabel(panel)}
+                disabled={panel.disabled}
                 onclick={() => {
-                  showSidebarPanel(key);
+                  showSidebarPanel(panel.key);
                 }}
               />
             {/each}

@@ -12,14 +12,21 @@ import {
   MIN_COMMIT_PAYLOAD_SIZE,
 } from '$lib/services/backends/git/github/commits';
 import { getBranchRepository, getWorkflowRepository } from '$lib/services/backends/git/github/fork';
+import { createGitDataCommit } from '$lib/services/backends/git/github/git-data';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchGraphQL } from '$lib/services/backends/git/shared/api';
-import { signOffCommitMessage } from '$lib/services/backends/git/shared/commits';
+import {
+  createCommitMessage,
+  signOffCommitMessage,
+} from '$lib/services/backends/git/shared/commits';
 import { repositoryHead } from '$lib/services/backends/git/shared/head';
+import { user } from '$lib/services/user/account.svelte';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 // Mock dependencies
 vi.mock('$lib/services/backends/git/github/fork');
+vi.mock('$lib/services/backends/git/github/git-data');
+vi.mock('$lib/services/user/account.svelte', () => ({ user: { account: undefined } }));
 vi.mock('$lib/services/backends/git/github/repository');
 vi.mock('$lib/services/backends/git/shared/api');
 vi.mock('$lib/services/backends/git/shared/commits', async (importOriginal) => ({
@@ -58,6 +65,7 @@ describe('GitHub commits service', () => {
     });
     forkedRepository.current = undefined;
     repositoryHead.current = '';
+    user.account = undefined;
     vi.mocked(getWorkflowRepository).mockReturnValue({ owner: 'test-owner', repo: 'test-repo' });
     vi.mocked(getBranchRepository).mockImplementation((branch) => ({
       ...getWorkflowRepository(),
@@ -1257,6 +1265,122 @@ describe('GitHub commits service', () => {
     });
   });
 
+  describe('commitChanges with Sveltia CMS Additions', () => {
+    const AUTHOR = { name: 'Ed Itor', email: 'ed@users.noreply.additions.example' };
+
+    const CHANGES = /** @type {any[]} */ ([
+      { action: 'create', path: 'content/a.md', data: 'A' },
+      { action: 'delete', path: 'content/b.md' },
+    ]);
+
+    test('credits the person as co-author of a commit the app authors', async () => {
+      user.account = /** @type {any} */ ({ commitAuthor: { mode: 'bot', ...AUTHOR } });
+      repositoryHead.current = 'head-sha';
+      vi.mocked(fetchGraphQL).mockResolvedValueOnce({
+        createCommitOnBranch: {
+          commit: { oid: 'new-sha', committedDate: '2026-10-13T00:00:00Z' },
+        },
+      });
+
+      await commitChanges(CHANGES, /** @type {any} */ ({ commitType: 'create' }));
+
+      expect(vi.mocked(fetchGraphQL).mock.calls[0][1]?.input.message).toEqual({
+        headline: 'Test commit message',
+        body: 'Co-authored-by: Ed Itor <ed@users.noreply.additions.example>',
+      });
+      expect(createGitDataCommit).not.toHaveBeenCalled();
+    });
+
+    test('puts the co-author after the body of a message that has one', async () => {
+      user.account = /** @type {any} */ ({ commitAuthor: { mode: 'bot', ...AUTHOR } });
+      repositoryHead.current = 'head-sha';
+      // Signed off as well, so the co-author joins the trailer block
+      vi.mocked(createCommitMessage).mockReturnValueOnce(
+        'Update a\n\nFix the typo\n\nSigned-off-by: Ed Itor <ed@example.com>',
+      );
+      vi.mocked(fetchGraphQL).mockResolvedValueOnce({
+        createCommitOnBranch: {
+          commit: { oid: 'new-sha', committedDate: '2026-10-13T00:00:00Z' },
+        },
+      });
+
+      await commitChanges(CHANGES, /** @type {any} */ ({ commitType: 'create' }));
+
+      expect(vi.mocked(fetchGraphQL).mock.calls[0][1]?.input.message).toEqual({
+        headline: 'Update a',
+        body:
+          'Fix the typo\n\nSigned-off-by: Ed Itor <ed@example.com>\n' +
+          'Co-authored-by: Ed Itor <ed@users.noreply.additions.example>',
+      });
+    });
+
+    test('makes the person the author through the Git Data API, in a single commit', async () => {
+      user.account = /** @type {any} */ ({ commitAuthor: { mode: 'user', ...AUTHOR } });
+      repositoryHead.current = 'head-sha';
+      vi.mocked(createGitDataCommit).mockResolvedValue({
+        oid: 'new-sha',
+        committedDate: '2026-10-13T00:00:00Z',
+        file_0: { oid: 'a-sha' },
+        file_1: { oid: 'big-sha' },
+      });
+
+      // Over the size at which GraphQL commits are split
+      const big = new Blob([new Uint8Array(MAX_COMMIT_PAYLOAD_SIZE + 1)]);
+
+      vi.mocked(encodeBase64).mockImplementation(async (data) =>
+        data === big ? 'x'.repeat(MAX_COMMIT_PAYLOAD_SIZE + 1) : 'base64content',
+      );
+
+      const result = await commitChanges(
+        [
+          ...CHANGES.slice(0, 1),
+          { action: 'create', path: 'images/big.jpg', data: big },
+          CHANGES[1],
+        ],
+        /** @type {any} */ ({ commitType: 'create' }),
+      );
+
+      expect(fetchGraphQL).not.toHaveBeenCalled();
+      expect(createGitDataCommit).toHaveBeenCalledOnce();
+      expect(createGitDataCommit).toHaveBeenCalledWith({
+        owner: 'test-owner',
+        repo: 'test-repo',
+        branch: 'main',
+        expectedHeadOid: 'head-sha',
+        // Assets first, as always
+        additions: [
+          expect.objectContaining({ index: 1, path: 'images/big.jpg' }),
+          expect.objectContaining({ index: 0, path: 'content/a.md' }),
+        ],
+        deletions: [{ path: 'content/b.md' }],
+        message: 'Test commit message',
+        author: { mode: 'user', ...AUTHOR },
+      });
+      expect(result.sha).toBe('new-sha');
+      expect(result.files['content/a.md']).toEqual({ sha: 'a-sha' });
+      expect(result.files['images/big.jpg']).toEqual({ sha: 'big-sha', file: big });
+    });
+
+    test('reports a commit refused because the branch has moved', async () => {
+      user.account = /** @type {any} */ ({ commitAuthor: { mode: 'user', ...AUTHOR } });
+      repositoryHead.current = 'head-sha';
+      vi.mocked(createGitDataCommit).mockRejectedValue(
+        new Error('Server responded with an error', {
+          cause: { status: 422, message: 'Update is not a fast forward' },
+        }),
+      );
+      vi.mocked(fetchGraphQL).mockResolvedValueOnce({
+        repository: {
+          ref: { target: { history: { nodes: [{ oid: 'someone-elses-sha', message: '' }] } } },
+        },
+      });
+
+      await expect(
+        commitChanges(CHANGES, /** @type {any} */ ({ commitType: 'create' })),
+      ).rejects.toThrow('The branch has moved since the site data was loaded.');
+    });
+  });
+
   describe('fetchFileCommits', () => {
     test('fetches and returns commits for a single path', async () => {
       vi.mocked(fetchGraphQL).mockResolvedValue({
@@ -1311,10 +1435,77 @@ describe('GitHub commits service', () => {
         message: '',
         authorName: 'Bob',
         authorEmail: 'bob@example.com',
-        authorAvatarURL: 'https://example.com/bob.png',
+        // Not a GitHub user, so GitHub’s default avatar is left out
+        authorAvatarURL: undefined,
         authorLogin: undefined,
         date: new Date('2024-05-01T10:00:00Z'),
       });
+    });
+
+    test('credits the person an app committed for, with their avatar rather than the app’s', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({
+        repository: {
+          history_0: {
+            target: {
+              history: {
+                nodes: [
+                  {
+                    oid: 'abc123',
+                    messageHeadline: 'Update Post “hello”',
+                    messageBody: 'Co-authored-by: Ada Lovelace <ada@example.com>',
+                    author: {
+                      name: 'my-app[bot]',
+                      email: 'bot@example.com',
+                      avatarUrl: 'https://example.com/bot.png',
+                      user: null,
+                    },
+                    authors: {
+                      nodes: [
+                        { email: 'bot@example.com', avatarUrl: 'https://example.com/bot.png' },
+                        {
+                          email: 'Ada@Example.com',
+                          avatarUrl: 'https://example.com/ada.png',
+                          user: { login: 'ada' },
+                        },
+                      ],
+                    },
+                    committedDate: '2024-06-01T12:00:00Z',
+                  },
+                  {
+                    oid: 'def456',
+                    messageHeadline: 'Update Post “hello”',
+                    // GitHub didn’t list the co-author
+                    messageBody: 'Co-authored-by: Bea <bea@example.com>',
+                    author: { name: 'my-app[bot]', email: 'bot@example.com', user: null },
+                    committedDate: '2024-05-01T12:00:00Z',
+                  },
+                ],
+              },
+            },
+          },
+        },
+      });
+
+      expect(await fetchFileCommits(['content/en/post.md'])).toEqual([
+        {
+          sha: 'abc123',
+          message: 'Update Post “hello”',
+          authorName: 'Ada Lovelace',
+          authorEmail: 'ada@example.com',
+          authorAvatarURL: 'https://example.com/ada.png',
+          authorLogin: 'ada',
+          date: new Date('2024-06-01T12:00:00Z'),
+        },
+        {
+          sha: 'def456',
+          message: 'Update Post “hello”',
+          authorName: 'Bea',
+          authorEmail: 'bea@example.com',
+          authorAvatarURL: undefined,
+          authorLogin: undefined,
+          date: new Date('2024-05-01T12:00:00Z'),
+        },
+      ]);
     });
 
     test('deduplicates commits across multiple paths', async () => {

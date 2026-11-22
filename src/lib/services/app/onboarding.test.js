@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { isAdditionsEnabled } from '$lib/services/app/additions';
 import { backend } from '$lib/services/backends';
 import { user } from '$lib/services/user/account.svelte';
 import { env } from '$lib/services/user/env.svelte';
@@ -55,6 +56,8 @@ vi.mock('$lib/services/backends/fs/seed', () => ({
 vi.mock('$lib/services/backends', () => ({
   backend: { current: undefined },
 }));
+
+vi.mock('$lib/services/app/additions', () => ({ isAdditionsEnabled: vi.fn(() => false) }));
 
 vi.mock('$lib/services/user/account.svelte', () => ({
   user: { account: null },
@@ -127,6 +130,13 @@ describe('onboarding', () => {
     it('should be false when there is no backend', () => {
       setConditions({ backend: null });
       expect(canShowMobileSignInDialog.current).toBe(false);
+    });
+
+    it('should be false with Sveltia CMS Additions, whose GitHub token can’t sign anyone in', () => {
+      vi.mocked(isAdditionsEnabled).mockReturnValue(true);
+      setConditions({ user: { token: 'installation-token' } });
+      expect(canShowMobileSignInDialog.current).toBe(false);
+      vi.mocked(isAdditionsEnabled).mockReturnValue(false);
     });
 
     it('should be false when the user has no token', () => {

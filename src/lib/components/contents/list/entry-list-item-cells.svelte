@@ -9,6 +9,7 @@
 
   import EntryThumbnail from '$lib/components/contents/shared/entry-thumbnail.svelte';
   import StatusBadge from '$lib/components/workflow/status-badge.svelte';
+  import { getAdditions } from '$lib/services/app/additions';
   import { selectedEntryIdSet } from '$lib/services/contents/collection/entries';
   import {
     getIndexFile,
@@ -54,6 +55,8 @@
 
   // Editorial Workflow information, only present on an unpublished entry
   const workflow = $derived(/** @type {UnpublishedEntry} */ (entry).workflow);
+  // Sveltia CMS Additions, which tells who else is editing or viewing the entry
+  const additions = $derived(getAdditions());
   /* v8 ignore start -- the app locale is always set once the UI strings are loaded */
   // Plain-text summary naming the selection checkbox, so a screen reader hears which entry it
   // selects rather than an unlabelled checkbox. `appLocale.current` is a key, because the summary
@@ -119,6 +122,9 @@
   {@render title()}
 {/if}
 <GridCell class="status">
+  {#if additions}
+    <additions.EntryActivity collectionName={collection.name} subPath={entry.subPath} />
+  {/if}
   {#if workflow}
     <StatusBadge status={getEntryStage(/** @type {UnpublishedEntry} */ (entry), collection)} />
   {/if}

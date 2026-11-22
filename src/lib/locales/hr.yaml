@@ -1936,9 +1936,6 @@ open_authoring:
 # Settings page aria-label
 categories: Kategorije
 
-# Site Configuration Editor
-site_configuration_editor: Uređivač konfiguracije web-mjesta
-
 # Preferences panels
 prefs:
   # API key management feedback messages

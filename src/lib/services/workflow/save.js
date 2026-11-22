@@ -2,6 +2,7 @@ import { unique } from '@sveltia/utils/array';
 import { generateUUID } from '@sveltia/utils/crypto';
 
 import { callEventHooks } from '$lib/services/api/events';
+import { getAdditions } from '$lib/services/app/additions';
 import { getAssetBlob } from '$lib/services/assets/info';
 import { allAssets } from '$lib/services/assets/state';
 import { backend } from '$lib/services/backends';
@@ -15,8 +16,10 @@ import { toRepoChanges } from '$lib/services/backends/root-dir';
 import { getCommitAuthor } from '$lib/services/backends/save';
 import { allEntries, findEntryByPaths } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
+import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
 import { resolveCacheDB } from '$lib/services/contents/draft/save/file-changes';
+import { getEntryKey } from '$lib/services/contents/entry/entry-key';
 import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import {
   buildCascadeDeleteChanges,
@@ -851,6 +854,25 @@ export const discardWorkflowEntry = async (entry) => {
 
   await workflow.discard(pullRequest);
   clearUnpublishedEntry(pullRequest, removeWorkflowAssets);
+
+  const { collectionName } = entry.workflow;
+  const key = getEntryKey(collectionName, entry.subPath);
+  // Paths of the files the pull request renamed, if it renames a published entry
+  const previousPaths = new Set(pullRequest.files.map(({ previousPath }) => previousPath));
+
+  const publishedEntry = getEntriesByCollection(collectionName).find(
+    ({ subPath, locales }) =>
+      subPath === entry.subPath ||
+      Object.values(locales).some(({ path }) => previousPaths.has(path)),
+  );
+
+  if (!publishedEntry) {
+    // A draft that was never published takes its comments along
+    getAdditions()?.deleteEntryComments(key);
+  } else if (publishedEntry.subPath !== entry.subPath) {
+    // The comments moved with the rename when the draft was saved; give them back
+    getAdditions()?.moveEntryConversation(key, getEntryKey(collectionName, publishedEntry.subPath));
+  }
 };
 
 /**

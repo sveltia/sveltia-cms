@@ -1869,9 +1869,6 @@ open_authoring:
 # Settings page aria-label
 categories: دسته‌بندی‌ها
 
-# Site Configuration Editor
-site_configuration_editor: ویرایشگر پیکربندی سایت
-
 # Preferences panels
 prefs:
   # API key management feedback messages

@@ -30,6 +30,12 @@ import { toRepositoryPath } from '$lib/services/backends/git/shared/repository';
 import { cmsConfig } from '$lib/services/config';
 
 /**
+ * Path of the Sveltia CMS Additions endpoint whose `/authorize` part is replaced with `/token` to
+ * make the token URL.
+ */
+const ADDITIONS_AUTH_PATH = 'v1/auth/authorize';
+
+/**
  * @import { BackendService, RepositoryInfo } from '$lib/types/private';
  */
 
@@ -60,6 +66,7 @@ export const init = () => {
     // ask a contributor for than full `repo` access. A list can add `workflow`, which keeps a fork
     // in sync when the repository’s GitHub Actions workflow files change
     auth_scope: authScope = 'repo',
+    auth_type: authType,
   } = backend;
 
   const { owner, repo } = toRepositoryPath(/** @type {string} */ (projectPath));
@@ -75,8 +82,10 @@ export const init = () => {
     getTokenPageURL,
     getBaseURLs,
     authRoot,
-    authPath,
-    tokenPath: '/access_token',
+    // Sveltia CMS Additions exchanges the session token for a GitHub token at `/v1/auth/token`,
+    // which the usual refresh on a 401 response calls
+    authPath: authType === 'additions' ? ADDITIONS_AUTH_PATH : authPath,
+    tokenPath: authType === 'additions' ? '/token' : '/access_token',
     api: {
       clientId,
       authScope: [authScope, 'user'].flat().join(','),

@@ -2,6 +2,7 @@ import { LINKED_FILES_SERVICE_ID, linkedFilesService } from '$lib/services/asset
 import { canPreviewFile } from '$lib/services/assets/kinds';
 import { cmsConfig } from '$lib/services/config';
 import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
+import { getApiKey } from '$lib/services/user/api-keys';
 import { prefs } from '$lib/services/user/prefs.svelte';
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
 import { encodePathSegments } from '$lib/services/utils/url';
@@ -243,13 +244,14 @@ export const externalAssetSearchTerms = createRawState('');
 
 /**
  * Get the credentials needed to call the given service’s API, which the user has entered in the
- * Asset Library, the asset picker or the Settings dialog.
+ * Asset Library, the asset picker or the Settings dialog. Without the user’s own API key, the one
+ * an admin of Sveltia CMS Additions has shared is used.
  * @param {MediaLibraryService} service Service.
  * @returns {{ apiKey: string, userName: string, password: string }} Credentials, each of which is
  * an empty string if not entered.
  */
 export const getFetchOptions = ({ serviceId }) => {
-  const apiKey = prefs.apiKeys?.[serviceId] ?? '';
+  const apiKey = getApiKey(serviceId);
   const [userName = '', password = ''] = (prefs.logins?.[serviceId] ?? '').split(' ');
 
   return { apiKey, userName, password };

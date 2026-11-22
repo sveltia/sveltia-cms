@@ -884,7 +884,7 @@ describe('navigation', () => {
   });
 
   describe('resolveRoute', () => {
-    const pageNames = ['collections', 'assets', 'search', 'workflow', 'config', 'menu', 'settings'];
+    const pageNames = ['collections', 'assets', 'search', 'workflow', 'admin', 'menu', 'settings'];
 
     it('should redirect the root path to the content library', () => {
       expect(resolveRoute('/', pageNames)).toEqual({ redirect: '#/collections' });
@@ -900,8 +900,19 @@ describe('navigation', () => {
 
     it('should report a standalone page followed by a sub path as not found', () => {
       expect(resolveRoute('/workflow/foo', pageNames)).toEqual({ notFound: true });
-      expect(resolveRoute('/config/foo', pageNames)).toEqual({ notFound: true });
       expect(resolveRoute('/menu/foo', pageNames)).toEqual({ notFound: true });
+    });
+
+    it('should send the former CMS configuration page to the Administration page', () => {
+      expect(resolveRoute('/config', pageNames)).toEqual({ redirect: '#/admin/config' });
+      expect(resolveRoute('/config/foo', pageNames)).toEqual({ notFound: true });
+    });
+
+    it('should let the Administration page take a section', () => {
+      expect(resolveRoute('/admin/users', pageNames)).toEqual({
+        pageName: 'admin',
+        searchMode: null,
+      });
     });
 
     it('should set the search mode for the content and asset libraries', () => {

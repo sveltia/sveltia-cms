@@ -4,13 +4,12 @@
   fit. It’s opened from the editor options menu or the validation toast.
 -->
 <script>
-  import { _ } from '@sveltia/i18n';
   import { Drawer } from '@sveltia/ui';
   import { onMount } from 'svelte';
 
   import SidebarPanel from '$lib/components/contents/details/sidebar/sidebar-panel.svelte';
   import { highlightEditorField } from '$lib/services/contents/editor/fields';
-  import { sidebarSheetPanel } from '$lib/services/contents/editor/sidebar';
+  import { getSidebarPanelTitle, sidebarSheetPanel } from '$lib/services/contents/editor/sidebar';
 
   /**
    * @import { InternalLocaleCode } from '$lib/types/private';
@@ -56,7 +55,7 @@
   position="bottom"
   size="medium"
   swipeDismiss
-  title={key ? _(`entry_sidebar.${key}.title`) : ''}
+  title={key ? getSidebarPanelTitle(key) : ''}
   onClose={() => {
     closingKey = null;
 

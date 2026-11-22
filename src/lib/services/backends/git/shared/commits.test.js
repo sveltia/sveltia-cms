@@ -9,6 +9,7 @@ import {
   createLastCommitError,
   dedupeFileCommits,
   fetchPerPathCommits,
+  formatPersonTrailer,
   hasSkipCIMarker,
   isDeployingCommit,
   signOffCommitMessage,
@@ -1086,6 +1087,20 @@ describe('git/shared/commits', () => {
         }
       },
     );
+  });
+});
+
+describe('formatPersonTrailer()', () => {
+  it('keeps the name and email on one line, without breaking the brackets', () => {
+    expect(formatPersonTrailer('Co-authored-by', { name: 'Ada', email: 'ada@example.com' })).toBe(
+      'Co-authored-by: Ada <ada@example.com>',
+    );
+    expect(
+      formatPersonTrailer('Co-authored-by', {
+        name: 'Ada\nCo-authored-by: Eve',
+        email: ' <ada@example.com> ',
+      }),
+    ).toBe('Co-authored-by: Ada Co-authored-by: Eve <ada@example.com>');
   });
 });
 

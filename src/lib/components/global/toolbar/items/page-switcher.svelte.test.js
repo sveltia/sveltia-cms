@@ -11,6 +11,7 @@ import { backendName, loadBackendService } from '$lib/services/backends';
 import { cmsConfig } from '$lib/services/config';
 import { searchMode } from '$lib/services/search';
 import { env } from '$lib/services/user/env.svelte';
+import { prefs } from '$lib/services/user/prefs.svelte';
 import { createMockEntry, initTestConfig, setEntries } from '$lib/test/config';
 
 import PageSwitcher from './page-switcher.svelte';
@@ -45,6 +46,7 @@ describe('PageSwitcher', () => {
 
   afterEach(() => {
     customPageRegistry.clear();
+    prefs.devModeEnabled = false;
   });
 
   test('switches between the contents and assets pages', async () => {
@@ -148,6 +150,17 @@ describe('PageSwitcher', () => {
 
     await render(PageSwitcher, {});
     expect(getPageLabels()).toEqual(['Contents', 'Assets']);
+  });
+
+  test('adds Administration for those who can see any of them', async () => {
+    // The CMS configuration, in developer mode
+    prefs.devModeEnabled = true;
+
+    await render(PageSwitcher, {});
+    expect(getPageLabels()).toEqual(['Contents', 'Assets', 'Administration']);
+
+    await page.getByRole('radio', { name: 'Administration' }).click();
+    await expect.poll(() => window.location.hash).toBe('#/admin');
   });
 
   test('adds the menu page on a small screen', async () => {

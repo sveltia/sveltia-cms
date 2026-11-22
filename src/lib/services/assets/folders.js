@@ -5,6 +5,7 @@ import { isInCmsFolder } from '$lib/services/assets/reserved';
 import { lockedBranch } from '$lib/services/backends/branch-access';
 import { hasTemplateTags } from '$lib/services/common/template/tags';
 import { getTemplatePattern } from '$lib/services/common/template/utils';
+import { isViewer } from '$lib/services/config/readonly';
 import { getCustomComponentName } from '$lib/services/contents/fields/rich-text/components/definitions';
 import {
   getLocaleFolderPattern,
@@ -289,10 +290,11 @@ export const canCreateAsset = (assetFolder) =>
  * Whether the media library can’t be changed. Uploading, replacing, renaming, moving and deleting
  * assets, and creating folders, commit straight to the configured branch rather than going through
  * review, which neither an Open Authoring contributor nor a user who can’t push to the branch can
- * do. An asset attached to an entry is committed with that entry, so it’s unaffected.
+ * do. An asset attached to an entry is committed with that entry, so it’s unaffected. A viewer
+ * can’t change anything at all.
  */
 export const assetsLocked = createDerivedState(
-  () => openAuthoring.current || !!lockedBranch.current,
+  () => openAuthoring.current || !!lockedBranch.current || isViewer(),
 );
 
 /**

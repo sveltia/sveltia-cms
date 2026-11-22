@@ -97,8 +97,8 @@ words:
   - husenunicorn
   - iarna
   - iccs
-  - IIFE
   - iids
+  - IIFE
   - indexeddb
   - infobar
   - infobars
@@ -150,6 +150,7 @@ words:
   - popups
   - postcss
   - prefs
+  - prehash
   - previewable
   - privatemaker
   - programmatically

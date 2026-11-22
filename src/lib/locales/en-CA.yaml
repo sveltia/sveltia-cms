@@ -236,6 +236,328 @@ sign_in_with_mobile_instruction: Scan the QR code below with your phone or table
 sign_in_with_link: Sign In with Link
 sign_in_with_link_confirmation: This link signs you in as {$account} on {$service} and copies the settings from the device it was created on. Continue only if you created the link yourself.
 
+# Sign-in with Sveltia CMS Additions, which manages its own user accounts instead of the Git
+# service’s. Don’t localize “Sveltia CMS Additions”
+additions:
+  username: Username
+  password: Password
+  sign_in: Sign In
+  new_password_title: Choose a New Password
+  new_password_description: You signed in with a temporary password. Choose a new one to continue.
+  new_password: New password
+  password_too_short: The password is too short. Use at least 12 characters.
+  change_password: Change Password
+  # {$name} is the user’s username, {$role} their role, e.g. Editor
+  signed_in_as_x_with_role: Signed In as {$name} ({$role})
+  link_github: Link GitHub Account
+  link_github_error: Couldn’t Link GitHub Account
+  current_password: Current password
+  # {$username} is the username filled in from a magic link emailed to the user
+  filled_from_link: The username and password have been filled in from a link. Sign in only if “{$username}” is your username.
+  change_password_description: You’ll stay signed in here and be signed out on your other devices.
+  password_changed: Your password has been changed.
+  # The Account settings panel of a Sveltia CMS Additions user
+  account:
+    profile: Profile
+    profile_description: Your name appears to other people in the CMS, e.g. on entry locks and comments, and on your commits.
+    username_description: Your username can’t be changed.
+    email: Email
+    email_description: It’s used in the commits you make, so GitHub can link them to your account. Without one, a placeholder address is used. Only an admin can change it.
+    change_name: Change Name
+    name_changed: Your name has been changed.
+    password: Password
+    no_password: You sign in with GitHub, so you have no password to change. An admin can give you one by resetting your password.
+  setup:
+    use_admin_secret: Use Admin Secret
+    title: Set Up Sveltia CMS Additions
+    secret_description: Enter the admin secret set in the settings of your Sveltia CMS Additions service. It’s only kept in this tab while you set up.
+    admin_secret: Admin secret
+    continue: Continue
+    back: Back to Sign In
+    admin_title: Admin Account
+    admin_create_description: Create the first admin account. You’ll sign in with it and manage the other users.
+    admin_reset_description: An admin account already exists. To get back in, reset the password of an admin here, or create another one.
+    admin_saved: The admin account is ready. Sign in with the password you just entered.
+    create_admin: Create Admin
+    reset_password: Save Admin
+    github_title: GitHub
+    # {$repo} is the repository, e.g. octocat/site
+    github_description: Create a GitHub App for this site and install it on the “{$repo}” repository. GitHub asks you to confirm, then brings you back here.
+    # {$repo} is the repository, {$app} is the name of the GitHub App
+    github_connected: Connected to the “{$repo}” repository with the “{$app}” GitHub App.
+    connect_github: Connect to GitHub
+    # {$step} is the number of the current step, {$total} the number of steps
+    step_x_of_y: Step {$step} of {$total}
+    admin_exists: An admin account exists.
+    reset_admin_password: Reset Admin Password
+    setup_complete: Setup is complete. Sign in with an admin account to manage users and settings. You can come back here with the admin secret at any time.
+    manage_sites: Manage Other Sites
+    back_to_setup: Back
+    sites_title: Other Sites
+    sites_description: This service can also serve other sites, each with its own users, settings and GitHub App. Set “base_url” in a site’s CMS configuration to its URL, then set the site up there with the admin secret.
+    no_sites: There are no other sites yet.
+    site_id: Site ID
+    site_id_description: 1 to 32 lower-case letters, digits and hyphens, e.g. “acme”. It appears in the site’s URL and can’t be changed.
+    site_name_optional: Name (optional)
+    add_site: Add Site
+    # {$name} is the name of the site
+    site_added: “{$name}” has been added. Set “base_url” in its CMS configuration to its URL, then open the setup wizard there.
+    # {$name} is the name of the site
+    copy_site_url: Copy the URL of {$name}
+    delete_site: Delete Site
+    # {$name} is the name of the site
+    delete_site_x: Delete {$name}
+    # {$name} is the name of the site, {$id} is its ID
+    delete_site_confirmation: Deleting “{$name}” also deletes its users, settings and comments. This can’t be undone. The GitHub App stays on GitHub, where you can delete it. Type “{$id}” to confirm.
+    site_id_to_confirm: Site ID to confirm
+    data_key_locked_title: Admin Secret Changed
+    data_key_locked_description: The admin secret was changed, so the stored settings can’t be read. Enter the previous secret to keep them, or start over if it’s lost.
+    previous_secret: Previous admin secret
+    unlock: Unlock
+    rekey: Start Over
+    rekey_confirmation: Starting over deletes the GitHub App credentials and the other stored secrets, and signs everyone out. Passwords are kept. Continue?
+    result:
+      ok: GitHub is connected. You can now sign in.
+      github_app_not_created: The GitHub App wasn’t created. Use the admin secret to try again.
+      github_app_not_installed: The GitHub App wasn’t installed. Use the admin secret to try again.
+      github_wrong_account: The GitHub App was installed on another account than the repository’s. Install it on the repository’s owner and try again.
+      github_repository_not_included: The GitHub App was installed without access to the repository. Give it access to the repository on GitHub and try again.
+      unexpected: Connecting to GitHub failed due to an unexpected error. Please try again.
+  locks:
+    # {$name} is the name of the person editing the entry, {$time} when they started
+    being_edited: '{$name} has been editing this entry since {$time}, so you can only view it.'
+    being_edited_by_you: You’re editing this entry in another tab, so you can only view it here.
+    # {$name} is the name of the person who took over the entry
+    taken_over: '{$name} took over this entry, so you can only view it now.'
+    take_over: Take Over
+    unavailable: Entry locks are unavailable, so someone else may be editing this entry at the same time.
+    # {$name} is the name of the person editing the entry
+    being_edited_by_x: Being edited by {$name}
+    # {$names} is a list of the other people who have the entry open in the editor
+    also_open_by_x: Also open by {$names}
+    # {$names} is a list of the people who have the entry open, besides anyone editing it
+    open_by_x: Open by {$names}
+  users:
+    title: Users
+    add_user: Add User
+    edit_user: Edit User
+    add: Add
+    name: Name
+    username_description: A username can’t be changed once the user has been added.
+    email_optional: Email (optional)
+    email_description: It’s used in the commits this person makes, so GitHub can link them to their account. Without one, a placeholder address is used.
+    role: Role
+    status: Status
+    last_sign_in: Last Sign-In
+    sign_in_column: Sign-In
+    methods:
+      password: Password
+      # {$login} is a GitHub username
+      github: GitHub ({$login})
+    actions: Actions
+    you: (you)
+    never: Never
+    roles:
+      admin: Admin
+      editor: Editor
+      viewer: Viewer
+    statuses:
+      active: Active
+      temporary_password: Temporary password
+      waiting_for_sign_in: Waiting for first sign-in
+      disabled: Disabled
+    # {$name} is the user’s name
+    show_options_for_x: Show Options for {$name}
+    options: User Options
+    reset_password: Reset Password
+    sign_out_everywhere: Sign Out Everywhere
+    enable: Enable User
+    disable: Disable User
+    delete: Delete User
+    # {$name} is the user’s name
+    reset_password_confirmation: Give {$name} a new temporary password? They’ll be signed out everywhere and have to choose a new password at the next sign-in.
+    delete_confirmation: Delete {$name}? This can’t be undone.
+    temporary_password: Temporary Password
+    # {$name} is the user’s name
+    temporary_password_description: Give this username and temporary password to {$name}. It won’t be shown again, and they’ll choose their own password when they sign in.
+    copy_username: Copy Username
+    copy_password: Copy Password
+    # {$name} is the user’s name
+    email_credentials: Email to {$name}
+    # The emails the admin sends from their own email app, with the sign-in details: `new` to a user
+    # who has just been added, `reset` to one whose password has been reset. Each line is a string of
+    # its own, as line breaks aren’t kept in these files
+    credentials_email:
+      # {$name} is the user’s name
+      greeting: Hello {$name},
+      # {$url} is a link to the CMS that fills in the username and the temporary password
+      sign_in_link: 'Sign-in link: {$url}'
+      # {$username} is the username
+      username: 'Username: {$username}'
+      # {$password} is the temporary password
+      password: 'Temporary password: {$password}'
+      new:
+        # {$app} is the name of the CMS
+        subject: Your sign-in details for {$app}
+        # {$app} is the name of the CMS
+        message: You can now sign in to {$app}. Open the link below, which fills in your username and temporary password, and choose your own password when you sign in.
+      reset:
+        # {$app} is the name of the CMS
+        subject: Your password for {$app} has been reset
+        # {$app} is the name of the CMS
+        message: Your password for {$app} has been reset, and you’ve been signed out everywhere. Open the link below, which fills in your username and temporary password, and choose a new password when you sign in.
+    allowed_domains: Allowed Domains
+    allowed_domains_description: The sites that can use Sveltia CMS Additions, one hostname per line. A wildcard (*) matches any subdomain, e.g. *.example.com. List exact hostnames where you can. The list applies to this site only, even if the same Sveltia CMS Additions instance serves other sites too.
+    save_allowed_domains: Save Allowed Domains
+    allowed_domains_saved: The allowed domains have been saved.
+    sign_in_tab: Sign-In
+    # {$latest} is the newest version of Sveltia CMS Additions, {$current} the one in use
+    update_available: Sveltia CMS Additions {$latest} is available. You’re running {$current}.
+    release_notes: Release Notes
+    github_username_optional: GitHub username (optional)
+    github_username_description: With a GitHub username, the user signs in with that GitHub account instead of a password.
+    # {$name} is the user’s name
+    github_required: '{$name} can only sign in with GitHub, so their GitHub username can’t be removed. Reset their password first to give them a password to sign in with.'
+    adopt: Adopt Account
+    sign_in:
+      github: Allow signing in with GitHub
+      github_description: People sign in with their GitHub account and get their own GitHub token, so their changes are committed as them. An admin adds them first, with their GitHub username, unless a sign-up rule covers them.
+      # Shown when signing in with GitHub is being turned off while {$count} users can only sign in
+      # with it
+      github_only_warning: |
+        .input {$count :integer}
+        .match $count
+          one {{ One user can only sign in with GitHub, and won’t be able to sign in once it’s turned off, until you reset their password. }}
+          *   {{ {$count} users can only sign in with GitHub, and won’t be able to sign in once it’s turned off, until you reset their passwords. }}
+      rules: Sign-Up Rules
+      rules_description: Members of the GitHub organization the app is installed on can sign in without being added first. Their account gets the role you choose, and is disabled if they leave the organization, unless you adopt it.
+      org: GitHub organization
+      add_rule: Add Rule
+      # {$org} is the name of a GitHub organization
+      remove_rule: Remove Rule for {$org}
+      # For a rule whose organization hasn’t been entered yet
+      remove_empty_rule: Remove Rule
+      save: Save Sign-In Settings
+      saved: The sign-in settings have been saved.
+    domains_tab: Domains
+    github_tab: GitHub
+    github:
+      app: GitHub App
+      repository: Repository
+      not_installed: Not installed
+      statuses:
+        ok: The app works.
+        not_registered: No GitHub App is set up yet. Run the setup wizard from the sign-in page with the admin secret.
+        key_missing: The app’s private key was lost when the admin secret was replaced. Generate a new private key in the app settings on GitHub and upload it below.
+        key_rejected: GitHub doesn’t accept the app’s private key, for example because it was deleted there. Generate a new private key in the app settings on GitHub and upload it below.
+        not_installed: The app isn’t installed on the repository. Install it again from the app’s page on GitHub, or run the setup wizard.
+        suspended: The app’s installation is suspended. Unsuspend it in the installation settings on GitHub.
+        unreachable: GitHub couldn’t be reached. Please try again later.
+      check_again: Check Again
+      # {$branch} is the name of the repository’s default branch
+      branch_protected: Rulesets protect the “{$branch}” branch from force pushes and deletion.
+      branch_bypassed: Rulesets protect the “{$branch}” branch, but the app can bypass them, so editors could still force push to it or delete it. Remove the app from the bypass lists of those rulesets.
+      branch_unprotected: No ruleset protects the “{$branch}” branch from force pushes and deletion, so editors could rewrite its history or delete it. Add a ruleset in the repository settings that blocks both, without the app on its bypass list.
+      repository_rules: Open Repository Rules
+      private_key: Private Key
+      private_key_description: To replace the private key, generate a new one in the app settings on GitHub, then upload the .pem file that downloads. Delete the old key there afterwards.
+      app_settings: Open App Settings
+      upload_private_key: Upload Private Key
+      replace_private_key: Replace Private Key
+      private_key_summary: The service uses the app’s private key to get access to the repository on GitHub. Replace it if it may have been exposed.
+      private_key_replaced: The private key has been replaced.
+      commit_author: Commit Author
+      commit_author_description: Choose who appears as the author of the changes saved in the CMS. GitHub only signs the commits the app authors, so choose the app if a ruleset requires signed commits. Other users get the change within an hour.
+      commit_author_user: The person who made the change
+      commit_author_bot: The GitHub App, with the person as co-author
+      commit_author_saved: The commit author has been saved.
+  # Administration section for the API keys and the deploy hook an admin shares with everyone
+  credentials:
+    title: Credentials
+    description: API keys and the deploy hook entered here are used by everyone who signs in, unless they enter their own in Settings. Anyone signed in to the CMS can read them, so only enter keys you’re happy to share with your team.
+    save: Save Credentials
+    saved: The credentials have been saved.
+    # {$service} is the service name, e.g. DeepL
+    invalid_key: The API key for {$service} doesn’t look right.
+  error:
+    unauthenticated: Your session has expired. Please sign in again.
+    wrong_admin_secret: The admin secret is wrong.
+    admin_secret_missing: The admin secret isn’t set in the settings of the Sveltia CMS Additions service.
+    admin_secret_too_short: The admin secret set in the settings of the Sveltia CMS Additions service is too short. Use at least 32 random characters.
+    wrong_previous_secret: The previous admin secret is wrong.
+    not_an_admin: This user isn’t an admin. Choose another username.
+    invalid_username: A username has 3 to 30 lower-case letters, digits, dots, hyphens or underscores.
+    last_admin: There must be at least one admin.
+    cannot_disable_self: You can’t disable your own account.
+    cannot_delete_self: You can’t delete your own account.
+    username_taken: Another user has this username.
+    email_taken: Another user has this email address.
+    invalid_name: The name must have 1 to 100 characters.
+    invalid_email: The email address is not valid.
+    invalid_domains: One of the allowed domains is not a valid hostname.
+    current_origin_removed: The allowed domains must include the site you’re using now.
+    forbidden: Only admins can do this.
+    invalid_credentials: The username or password is wrong.
+    user_disabled: This account is disabled. Ask your admin for help.
+    too_many_attempts: Too many attempts. Please try again later.
+    wrong_password: The current password is wrong.
+    same_password: Choose a new password that’s different from the current one.
+    invalid_github_login: This is not a valid GitHub username.
+    github_user_not_found: There is no GitHub user with this name.
+    github_account_taken: Another user signs in with this GitHub account.
+    invalid_rules: A sign-up rule needs a GitHub organization name.
+    invalid_rule_role: A sign-up rule can only give the editor or viewer role.
+    rule_org_not_installed: The GitHub App has to be installed on the organization of a sign-up rule.
+    not_invited: You don’t have an account here. Ask your admin to add you.
+    method_disabled: Signing in with GitHub is turned off.
+    access_denied: The sign-in was cancelled.
+    github_app_not_set_up: Sveltia CMS Additions is not connected to GitHub yet. Ask your admin to finish the setup.
+    invalid_tenant_id: The site ID must be 1 to 32 lower-case letters, digits and hyphens, and can’t be “default”.
+    invalid_tenant_name: The site name must be up to 100 characters.
+    tenant_exists: A site with this ID already exists.
+    github_app_missing: No GitHub App is set up yet.
+    invalid_private_key: The file is not a valid private key.
+    private_key_mismatch: GitHub doesn’t accept this private key for the app. Make sure you generated it in the app’s settings.
+    github_error: GitHub responded with an error. Please try again later.
+    data_key_locked: Sveltia CMS Additions can’t be used until an admin finishes changing its admin secret.
+    not_configured: Sveltia CMS Additions is not configured properly. Ask your admin for help.
+    origin_not_allowed: This site is not allowed to use Sveltia CMS Additions. Ask your admin to add it to the allowed domains.
+    not_set_up: Sveltia CMS Additions is not connected to GitHub yet. Ask your admin to finish the setup.
+    # A user whose password an admin has reset signs in another way, e.g. with GitHub
+    temporary_password: Your password has been reset. Sign in with your username and the temporary password your admin gave you, then choose a new one.
+    # {$url} is the URL of the service
+    incompatible: This version of Sveltia CMS doesn’t work with the Sveltia CMS Additions service at {$url}.
+    unreachable: Sveltia CMS Additions could not be reached. Please try again later.
+    insecure_connection: Sveltia CMS Additions must be served over HTTPS. Check the `base_url` in the CMS configuration.
+    unexpected: The request to Sveltia CMS Additions failed due to an unexpected error. Please try again later.
+
+  # Conversation panel: comments on the entry, kept by Sveltia CMS Additions
+  conversation:
+    title: Conversation
+    refresh: Refresh Conversation
+    empty: No comments yet.
+    # Button above a long conversation, which is loaded from its latest comments
+    show_older: Show Older Comments
+    # Label of the list of comments
+    timeline: Comments
+    deleted_user: Deleted user
+    you: You
+    edited: edited
+    comment_label: Comment
+    placeholder: Leave a comment (Markdown)
+    visible_to_cms_users: Visible to CMS users only
+    send: Comment
+    options: Comment Options
+    edit: Edit
+    delete: Delete
+    save: Save
+    delete_confirmation: Delete this comment? This can’t be undone.
+    send_failed: The comment couldn’t be sent.
+
+  # Placeholder of an API key or deploy hook field the user has left empty, while an admin of
+  # Sveltia CMS Additions has entered one for everyone
+  provided_by_admin: Provided by your administrator
+
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
 # {$name} is the signed-in user’s login name
@@ -349,6 +671,10 @@ live_site: Live Site
 git_repository: Git Repository
 settings: Settings
 
+# Page for the people who look after the CMS, apart from the personal settings: user management
+# and the CMS configuration
+administration: Administration
+
 # Help menu: button aria-labels and section headings
 show_help_menu: Show Help Menu
 # Help section heading in dropdowns and mobile menu
@@ -441,6 +767,10 @@ viewing_x_asset_folder: |
 # Cloud storage service view announcement
 # {$service} is the cloud storage service name, e.g. Uploadcare
 viewing_x_external_location: You’re now viewing the assets on {$service}.
+# Administration page announcements
+viewing_admin_section_list: You’re now viewing the list of Administration sections.
+# {$section} is the section label, e.g. Users
+viewing_x_admin_section: You’re now viewing the “{$section}” section of the Administration page.
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
@@ -586,6 +916,7 @@ readonly_collection: This collection is read-only. You can view its content but 
 readonly_entry: This entry is read-only. You can view it but cannot make any changes.
 readonly_asset_folder: This folder is read-only. You can view its assets but cannot make any changes.
 readonly_branch: You don’t have permission to push to the “{$branch}” branch. You can view this content but cannot make any changes.
+readonly_role: You have view-only access. You can view content and assets but cannot make any changes.
 readonly_reference: The entry is read-only, so the reference can’t be removed.
 # {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
 cannot_rename_referenced_entry: 'This entry can’t be renamed, because the following read-only entries refer to it by its current name: {$entries}.'
@@ -1574,6 +1905,9 @@ entry_sidebar:
     title: Backlinks
     no_entries: No entries are referencing this entry.
 
+  # Tab label of a panel with a count, e.g. of comments. {$title} is the panel title
+  title_with_count: '{$title} ({$count})'
+
 # Status shown next to the Save button while an entry with many new files is being saved
 # {$done} and {$total} are the number of files prepared and to prepare, or the number of commits
 # made and the estimated number of commits in all
@@ -2043,6 +2377,7 @@ config:
     path_outside_root_dir: The path “{$path}” leads outside the root directory, where the CMS can’t list files.
     oauth_implicit_flow: The configured authentication method (implicit flow) is not supported in Sveltia CMS. Use a different <a>authentication method</a> instead.
     github_pkce_unsupported: PKCE authorization is not yet supported due to GitHub’s limitations. Use a different <a>authentication method</a> instead.
+    additions_no_base_url: The `base_url` option must be the URL of your Sveltia CMS Additions service.
     oauth_no_app_id: OAuth application ID is not defined.
     # Don’t localize `open_authoring`, `editorial_workflow` and `preview`
     open_authoring_no_workflow: The `open_authoring` option requires the `editorial_workflow` or `preview` publish mode. See the <a>documentation</a> for details.
@@ -2622,11 +2957,10 @@ open_authoring:
 # Settings page aria-label
 categories: Categories
 
-# Site Configuration Editor
-site_configuration_editor: Site Configuration Editor
-
 # Preferences panels
 prefs:
+  account:
+    title: Account
   # API key management feedback messages
   changes:
     api_key_saved: API key saved.

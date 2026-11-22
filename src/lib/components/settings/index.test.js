@@ -1,5 +1,7 @@
 import { describe, expect, test, vi } from 'vitest';
 
+import { getAdditions } from '$lib/services/app/additions';
+import { backendName } from '$lib/services/backends';
 import { cmsConfig } from '$lib/services/config';
 
 import { panels } from '.';
@@ -33,6 +35,10 @@ vi.mock('$lib/components/settings/panels/language-panel.svelte', () => ({
 vi.mock('$lib/components/settings/panels/media-panel.svelte', () => ({
   default: {},
 }));
+
+// The Account panel comes from the Sveltia CMS Additions chunk, when it’s loaded
+vi.mock('$lib/services/app/additions', () => ({ getAdditions: vi.fn() }));
+vi.mock('$lib/services/backends', () => ({ backendName: { current: 'github' } }));
 
 describe('Settings panels', () => {
   test('should export panels store', () => {
@@ -162,5 +168,26 @@ describe('Settings panels', () => {
     };
 
     expect(panels.current.find((panel) => panel.key === 'i18n')).toBeUndefined();
+  });
+
+  test('should add the account panel first with Sveltia CMS Additions', () => {
+    const AccountPanel = {};
+
+    vi.mocked(getAdditions).mockReturnValue(/** @type {any} */ ({ AccountPanel }));
+
+    expect(panels.current[0]).toEqual({
+      key: 'account',
+      icon: 'account_circle',
+      component: AccountPanel,
+    });
+
+    // Not with a local repository, used without signing in to the service
+    backendName.current = 'local';
+    expect(panels.current.find((panel) => panel.key === 'account')).toBeUndefined();
+    backendName.current = 'github';
+
+    // Nor without Sveltia CMS Additions
+    vi.mocked(getAdditions).mockReturnValue(undefined);
+    expect(panels.current.find((panel) => panel.key === 'account')).toBeUndefined();
   });
 });

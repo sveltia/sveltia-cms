@@ -13,7 +13,7 @@ import { getValueFormat } from '$lib/services/contents/fields/rich-text';
 import { isDuplicateIfEmptyField } from '$lib/services/contents/i18n/duplicate-if-empty';
 import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
 import { translator } from '$lib/services/integrations/translators';
-import { prefs } from '$lib/services/user/prefs.svelte';
+import { getApiKey } from '$lib/services/user/api-keys';
 import { isNumeric } from '$lib/services/utils/number';
 import { escapeHTML } from '$lib/services/utils/string';
 
@@ -394,7 +394,7 @@ export const translateFields = async ({
     ]),
   );
 
-  let apiKey = prefs.apiKeys?.[serviceId];
+  let apiKey = getApiKey(serviceId);
 
   if (!apiKey) {
     const { promise, resolve } = Promise.withResolvers();

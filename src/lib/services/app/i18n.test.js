@@ -28,6 +28,7 @@ const mockGetPathInfo = vi.hoisted(() => vi.fn());
 vi.mock('$lib/locales/en-CA.yaml', () => ({ default: mockEnData }));
 vi.mock('$lib/locales/en-GB.yaml', () => ({ default: mockEnData }));
 vi.mock('$lib/locales/en-US.yaml', () => ({ default: mockEnData }));
+vi.mock('$lib/locales/en-US.yaml?omit=additions', () => ({ default: mockEnData }));
 vi.mock('$lib/locales/ja.yaml', () => ({ default: mockJaData }));
 
 vi.mock('@sveltia/i18n', () => ({

@@ -220,6 +220,36 @@ const TRAILER_LINE_REGEX = /^[A-Za-z0-9-]+:\s*\S/;
  * @returns {string} Cleaned value.
  */
 const cleanTrailerValue = (value) => (value ?? '').replace(/[\s<>]+/g, ' ').trim();
+
+/**
+ * Format a trailer that credits a person, e.g. `Co-authored-by: Name <email>`. Their name and email
+ * are kept on the line, whatever they hold.
+ * @param {string} token Trailer token, e.g. `Co-authored-by`.
+ * @param {{ name: string, email: string }} person Person.
+ * @returns {string} Trailer line.
+ */
+export const formatPersonTrailer = (token, { name, email }) =>
+  `${token}: ${cleanTrailerValue(name)} <${cleanTrailerValue(email)}>`;
+
+/**
+ * Add a trailer line to a commit message. It joins the trailer block the message already ends with,
+ * if any, and otherwise follows a blank line.
+ * @param {string} message Commit message.
+ * @param {string} trailer Trailer line, e.g. `Co-authored-by: Name <email>`.
+ * @returns {string} Message with the trailer.
+ */
+export const addCommitTrailer = (message, trailer) => {
+  const text = message.trimEnd();
+  const paragraphs = text.split(/\r?\n\s*\r?\n/);
+  const lastParagraph = /** @type {string} */ (paragraphs.at(-1));
+
+  const endsWithTrailers =
+    paragraphs.length > 1 &&
+    lastParagraph.split(/\r?\n/).every((line) => TRAILER_LINE_REGEX.test(line));
+
+  return `${text}${endsWithTrailers ? '\n' : '\n\n'}${trailer}`;
+};
+
 /**
  * Signed-in user accounts that have been warned about their missing email, so the warning is only
  * shown once per sign-in rather than for every commit.
@@ -275,14 +305,10 @@ export const signOffCommitMessage = (message) => {
     return message;
   }
 
-  const paragraphs = text.split(/\r?\n\s*\r?\n/);
-  const lastParagraph = /** @type {string} */ (paragraphs.at(-1));
-
-  const endsWithTrailers =
-    paragraphs.length > 1 &&
-    lastParagraph.split(/\r?\n/).every((line) => TRAILER_LINE_REGEX.test(line));
-
-  return `${text}${endsWithTrailers ? '\n' : '\n\n'}Signed-off-by: ${author} <${cleanEmail}>`;
+  return addCommitTrailer(
+    message,
+    formatPersonTrailer('Signed-off-by', { name: author, email: cleanEmail }),
+  );
 };
 
 /**

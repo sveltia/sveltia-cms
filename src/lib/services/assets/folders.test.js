@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { customComponentRegistry } from '$lib/services/api/registries';
 import { lockedBranch } from '$lib/services/backends/branch-access';
+import { user } from '$lib/services/user/account.svelte';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import { createMockAssetFolder } from '$lib/test/factories';
 
@@ -1864,6 +1865,18 @@ describe('assets/folders', () => {
       lockedBranch.current = 'main';
 
       expect(assetsLocked.current).toBe(true);
+    });
+
+    it('should be true for a Sveltia CMS Additions viewer', () => {
+      user.account = { backendName: 'github', role: 'viewer' };
+
+      expect(assetsLocked.current).toBe(true);
+
+      user.account = { backendName: 'github', role: 'editor' };
+
+      expect(assetsLocked.current).toBe(false);
+
+      user.account = undefined;
     });
   });
 

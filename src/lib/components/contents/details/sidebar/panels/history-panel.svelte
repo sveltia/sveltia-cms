@@ -3,16 +3,17 @@
   import { Button } from '@sveltia/ui';
   import { untrack } from 'svelte';
 
+  import Avatar from '$lib/components/common/avatar.svelte';
   import PanelContainer from '$lib/components/contents/details/sidebar/panels/panel-container.svelte';
   import { backend } from '$lib/services/backends';
   import { getCommitMessagePromptMode } from '$lib/services/backends/commit-prompt';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { fetchEntryHistory } from '$lib/services/contents/entry/history';
-  import { formatDate } from '$lib/services/utils/date';
+  import { formatRecentDateTime } from '$lib/services/utils/date';
   import { openNewTab } from '$lib/services/utils/window';
 
   /**
-   * @import { Entry, FileCommit } from '$lib/types/private';
+   * @import { Entry, EntryDraft, FileCommit } from '$lib/types/private';
    */
 
   const entryDraft = getEntryDraftContext();
@@ -42,7 +43,9 @@
   const load = async (target) => {
     loading = true;
 
-    const result = await fetchEntryHistory(target);
+    // Including the files it had before it was renamed outside the CMS
+    const { collection, fields } = /** @type {EntryDraft} */ (entryDraft.current);
+    const result = await fetchEntryHistory(target, { collection, fields });
 
     if (target === entry) {
       ({ commits, error } = result);
@@ -86,25 +89,21 @@
               openNewTab(/** @type {string} */ (commitURL));
             }}
           >
-            {#if commit.authorAvatarURL}
-              <img
-                class="avatar"
-                src={commit.authorAvatarURL}
-                alt=""
-                width="24"
-                height="24"
-                loading="lazy"
-              />
-            {:else}
-              <span class="avatar placeholder" aria-hidden="true"></span>
-            {/if}
+            <!-- Initials for someone GitHub doesn’t know, e.g. whom an app committed for -->
+            <Avatar
+              name={commit.authorName}
+              username={commit.authorLogin}
+              src={commit.authorAvatarURL}
+            />
             <span class="details">
               {#if message}
                 <span class="message" title={message}><bdi>{message}</bdi></span>
               {/if}
               <span class="meta" class:secondary={!!message}>
                 <span class="author"><bdi>{commit.authorName}</bdi></span>
-                <span class="date">{formatDate(commit.date, appLocale.current)}</span>
+                <span class="date">
+                  {formatRecentDateTime({ timestamp: commit.date, locale: appLocale.current })}
+                </span>
               </span>
             </span>
           </Button>
@@ -119,14 +118,6 @@
 <style>
   .commits {
     padding: 4px;
-  }
-
-  .avatar {
-    flex: none;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background-color: var(--sui-secondary-background-color);
   }
 
   .details {

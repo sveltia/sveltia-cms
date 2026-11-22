@@ -1,4 +1,4 @@
-import { UNPKG_BASE_URL, version as userVersion } from '$lib/services/app';
+import { PACKAGE_NAME, UNPKG_ORIGIN, version as userVersion } from '$lib/services/app';
 import { getScriptVersionSpec } from '$lib/services/app/dependencies';
 
 /**
@@ -15,15 +15,19 @@ export const UPDATE_CHECK_INTERVAL = 60 * 60 * 1000; // 1 hour
 export const UPDATE_CACHE_TIMEOUT = 10 * 60 * 1000; // 10 min
 
 /**
- * Get the latest published version of the application.
- * @param {string} [versionSpec] Version range or tag to resolve, e.g. `^1`, as it appears in the
- * script URL. The latest release if omitted or empty.
+ * Get the latest published version of a package, by default the application. It’s read from UNPKG
+ * rather than the npm registry, as the CMS already loads files from there, so a site’s Content
+ * Security Policy doesn’t need to allow another origin.
+ * @param {object} [args] Arguments.
+ * @param {string} [args.versionSpec] Version range or tag to resolve, e.g. `^1`, as it appears in
+ * the script URL. The latest release if omitted or empty.
+ * @param {string} [args.packageName] Package name, e.g. `@sveltia/cms-additions`.
  * @returns {Promise<string | undefined>} Version, or `undefined` if it couldn’t be fetched.
  */
-export const getLatestVersion = async (versionSpec = '') => {
+export const getLatestVersion = async ({ versionSpec = '', packageName = PACKAGE_NAME } = {}) => {
   try {
     const response = await fetch(
-      `${UNPKG_BASE_URL}${versionSpec ? `@${versionSpec}` : ''}/package.json`,
+      `${UNPKG_ORIGIN}/${packageName}${versionSpec ? `@${versionSpec}` : ''}/package.json`,
     );
 
     if (!response.ok) {
@@ -39,19 +43,34 @@ export const getLatestVersion = async (versionSpec = '') => {
 };
 
 /**
- * Check whether the given version is newer than the running one. The versions are compared part by
- * part as numbers, so `0.10.0` is newer than `0.9.0`. An older version can be reported right after
- * a release, while the CDN still serves a cached `package.json`, and that’s not an update.
+ * Compare two versions like `1.2.3`, part by part as numbers, so `0.10.0` is newer than `0.9.0`. A
+ * missing part counts as `0`, so `1.0` is the same as `1.0.0`, and a pre-release suffix is ignored.
+ * @param {string} a Version.
+ * @param {string} b Version.
+ * @returns {number} Negative if `a` is older, positive if newer, zero if the same.
+ */
+export const compareVersions = (a, b) => {
+  const [x, y] = [a, b].map((version) =>
+    version
+      .split('-')[0]
+      .split('.')
+      .map((part) => Number(part) || 0),
+  );
+
+  return Array.from({ length: Math.max(x.length, y.length) }).reduce(
+    (/** @type {number} */ result, _, index) => result || (x[index] ?? 0) - (y[index] ?? 0),
+    0,
+  );
+};
+
+/**
+ * Check whether the given version is newer than the running one. An older version can be reported
+ * right after a release, while the CDN still serves a cached `package.json`, and that’s not an
+ * update.
  * @param {string} latestVersion Latest published version, e.g. `1.2.3`.
  * @returns {boolean} Result.
  */
-const isNewerVersion = (latestVersion) => {
-  const latest = latestVersion.split('.').map(Number);
-  const current = userVersion.split('.').map(Number);
-  const index = latest.findIndex((part, i) => part !== (current[i] ?? 0));
-
-  return index > -1 && latest[index] > (current[index] ?? 0);
-};
+const isNewerVersion = (latestVersion) => compareVersions(latestVersion, userVersion) > 0;
 
 /**
  * Check whether a new version of the application is available, and whether a reload would pick it
@@ -65,7 +84,7 @@ export const isUpdateAvailable = async () => {
   const versionSpec = getScriptVersionSpec();
 
   if (versionSpec !== undefined) {
-    const resolvedVersion = await getLatestVersion(versionSpec);
+    const resolvedVersion = await getLatestVersion({ versionSpec });
 
     if (resolvedVersion && isNewerVersion(resolvedVersion)) {
       return true;

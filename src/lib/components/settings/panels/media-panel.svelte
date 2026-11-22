@@ -3,15 +3,13 @@
 
   import ApiKeySection from '$lib/components/settings/controls/api-key-section.svelte';
   import { DOCS_BASE_URL } from '$lib/services/app';
-  import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
   import {
-    allStockAssetProviders,
-    getStockAssetMediaLibraryOptions,
-  } from '$lib/services/integrations/media-libraries/stock';
+    getCloudStorageServiceEntries,
+    getStockPhotoServiceEntries,
+  } from '$lib/services/integrations/api-key-services';
 
   /**
-   * @import { MediaLibraryService, SettingsPanelOnChangeArgs } from '$lib/types/private';
-   * @import { StockAssetProviderName } from '$lib/types/public';
+   * @import { SettingsPanelOnChangeArgs } from '$lib/types/private';
    */
 
   /**
@@ -22,21 +20,8 @@
   /** @type {Props} */
   let { onChange = undefined } = $props();
 
-  const enabledStockAssetProviderEntries = $derived.by(() => {
-    const { providers = [] } = getStockAssetMediaLibraryOptions();
-
-    return /** @type {[StockAssetProviderName, MediaLibraryService][]} */ (
-      Object.entries(allStockAssetProviders)
-    ).filter(([serviceId, { authType }]) => providers.includes(serviceId) && authType !== 'none');
-  });
-
-  /* v8 ignore start -- every built-in service says whether it’s enabled */
-  const enabledCloudServiceEntries = $derived(
-    Object.entries(allCloudStorageServices).filter(
-      ([, { isEnabled, authType }]) => (isEnabled?.() ?? true) && authType !== 'widget',
-    ),
-  );
-  /* v8 ignore stop */
+  const enabledStockAssetProviderEntries = $derived(getStockPhotoServiceEntries());
+  const enabledCloudServiceEntries = $derived(getCloudStorageServiceEntries());
 </script>
 
 <ApiKeySection

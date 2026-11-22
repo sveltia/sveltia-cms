@@ -250,6 +250,29 @@ describe('GitHub backend service', () => {
       expect(result).toBe(repository);
     });
 
+    test('exchanges the session token at the Sveltia CMS Additions token endpoint', () => {
+      cmsConfig.current = /** @type {any} */ ({
+        backend: {
+          name: BACKEND_NAME,
+          repo: 'owner/repo',
+          branch: 'main',
+          auth_type: 'additions',
+          base_url: 'https://additions.example.com',
+        },
+      });
+
+      init();
+
+      expect(Object.assign).toHaveBeenCalledWith(
+        apiConfig,
+        expect.objectContaining({
+          authURL: 'https://additions.example.com/v1/auth/authorize',
+          tokenURL: 'https://additions.example.com/v1/auth/token',
+          restBaseURL: DEFAULT_API_ROOT,
+        }),
+      );
+    });
+
     test('initializes with default auth type when not specified', () => {
       const mockCmsConfig = {
         backend: {

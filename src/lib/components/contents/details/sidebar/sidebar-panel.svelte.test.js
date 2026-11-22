@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
+import { loadAdditions } from '$lib/services/app/additions';
 import { createMockEntry, initTestConfig } from '$lib/test/config';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 
@@ -11,13 +12,26 @@ vi.mock('$lib/services/contents/entry/history', () => ({
   clearEntryHistoryCache: vi.fn(),
 }));
 
+vi.mock('$lib/services/additions/conversation.svelte', async (importOriginal) => ({
+  ...(await importOriginal()),
+  loadConversation: vi.fn(),
+}));
+
 const fields = [{ name: 'title', label: 'Title', widget: 'string', required: true }];
 
 describe('SidebarPanel', () => {
   beforeAll(async () => {
+    // The Conversation panel comes with the chunk of Sveltia CMS Additions
     await initTestConfig({
+      backend: {
+        name: 'github',
+        repo: 'me/site',
+        auth_type: 'additions',
+        base_url: 'https://additions.example.com',
+      },
       collections: [{ name: 'posts', label: 'Posts', folder: 'content/posts', fields }],
     });
+    await loadAdditions();
   });
 
   test.each([
@@ -25,6 +39,7 @@ describe('SidebarPanel', () => {
     ['history', 'History'],
     ['backlinks', 'Backlinks'],
     ['validation', 'Validation'],
+    ['conversation', 'Conversation'],
   ])('renders the %s panel', async (key, title) => {
     await renderWithDraft(SidebarPanel, {
       draft: createMockDraft({

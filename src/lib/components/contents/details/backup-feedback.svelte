@@ -8,7 +8,7 @@
     restoreDialogState,
   } from '$lib/services/contents/draft/backup';
   import { showContentOverlay } from '$lib/services/contents/editor';
-  import { formatBackupTime } from '$lib/services/contents/editor/backup-date';
+  import { formatRecentDateTime } from '$lib/services/utils/date';
 
   const { resolve } = $derived(restoreDialogState.current);
   /* v8 ignore start -- the time is only read while the dialog is shown, which has a timestamp */
@@ -17,7 +17,7 @@
   const datetime = $derived.by(() => {
     const { timestamp } = restoreDialogState.current;
 
-    return timestamp ? formatBackupTime({ timestamp, locale: appLocale.current }) : undefined;
+    return timestamp ? formatRecentDateTime({ timestamp, locale: appLocale.current }) : undefined;
   });
   /* v8 ignore stop */
 

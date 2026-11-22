@@ -1842,9 +1842,6 @@ open_authoring:
 # Settings page aria-label
 categories: Danh mục
 
-# Site Configuration Editor
-site_configuration_editor: Trình chỉnh sửa cấu hình trang web
-
 # Preferences panels
 prefs:
   # API key management feedback messages

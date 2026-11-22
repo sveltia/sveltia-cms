@@ -1876,9 +1876,6 @@ open_authoring:
 # Settings page aria-label
 categories: Kategorier
 
-# Site Configuration Editor
-site_configuration_editor: Hemsideskonfigurationsredigerare
-
 # Preferences panels
 prefs:
   # API key management feedback messages

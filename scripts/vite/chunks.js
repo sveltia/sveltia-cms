@@ -1,11 +1,15 @@
 import { readdirSync } from 'fs';
+import path from 'path';
 
+import { svelte } from '@sveltejs/vite-plugin-svelte';
 import React from 'react';
 import { build } from 'vite';
 
 import { SHARED_MODULES_KEY_PREFIX, SHARED_REACT_KEY } from '../../src/lib/chunks/constants.js';
+import svelteConfig from '../../svelte.config.js';
 
 import { getChunkModules } from './chunk-modules.js';
+import { yamlToJS } from './locales.js';
 import { readPackageJson, virtualModule } from './utils.js';
 
 /**
@@ -28,16 +32,25 @@ const CHUNKS = Object.fromEntries(
 
 /**
  * Chunks made of app modules rather than a package, which take the modules they share with the rest
- * of the app from the main bundle, keyed by chunk name: the backends a site may not use, and the
- * Map field, which few sites have. The value is the directory whose modules the chunk owns. See
- * {@link getChunkModules}.
+ * of the app from the main bundle, keyed by chunk name: the backends a site may not use, the Map
+ * field, which few sites have, and Sveltia CMS Additions. The value is the directories whose
+ * modules the chunk owns. See {@link getChunkModules}.
  */
 const APP_CHUNK_DIRS = {
-  gitea: 'src/lib/services/backends/git/gitea',
-  gitlab: 'src/lib/services/backends/git/gitlab',
-  map: 'src/lib/services/contents/fields/map',
+  additions: ['src/lib/components/additions', 'src/lib/services/additions'],
+  gitea: ['src/lib/services/backends/git/gitea'],
+  gitlab: ['src/lib/services/backends/git/gitlab'],
+  map: ['src/lib/services/contents/fields/map'],
 };
 
+/**
+ * Directories the main bundle must import nothing from, so their chunk stays out of it entirely. A
+ * backend chunk shares a few constants with the configuration parser, but every module of Sveltia
+ * CMS Additions is reached through `getAdditions()`, which keeps a site without it from paying
+ * for it. A stray import would quietly pull the module into the main bundle, so the build fails
+ * instead.
+ */
+const SEALED_CHUNK_DIRS = APP_CHUNK_DIRS.additions;
 /**
  * The modules the app chunks own and those they share with the main bundle, worked out on first
  * use, as it takes reading the whole source.
@@ -48,12 +61,26 @@ let appChunkModules;
 /**
  * Get the modules the app chunks own and those they share with the main bundle.
  * @returns {import('./chunk-modules.js').ChunkModules} Modules.
+ * @throws {Error} If the main bundle imports a module of a chunk in {@link SEALED_CHUNK_DIRS}.
  */
 const getAppChunkModules = () => {
   appChunkModules ??= getChunkModules({
     entries: Object.keys(APP_CHUNK_DIRS).map((name) => CHUNKS[name]),
-    ownDirs: Object.values(APP_CHUNK_DIRS),
+    ownDirs: Object.values(APP_CHUNK_DIRS).flat(),
   });
+
+  const sealedDirs = SEALED_CHUNK_DIRS.map((dir) => `${path.resolve(dir)}${path.sep}`);
+
+  const leaked = [...appChunkModules.mainFiles].filter((file) =>
+    sealedDirs.some((dir) => file.startsWith(dir)),
+  );
+
+  if (leaked.length) {
+    throw new Error(
+      `The main bundle imports modules of the additions chunk: ${leaked.join(', ')}. Use ` +
+        '`getAdditions()` instead.',
+    );
+  }
 
   return appChunkModules;
 };
@@ -263,7 +290,13 @@ export const buildChunks = ({ resolve }) => ({
         'process.env.NODE_ENV': JSON.stringify('production'),
       },
       resolve,
-      plugins: [shimReact(), shareMainModules()],
+      // The app chunks are made of Svelte components and modules as well as locale strings
+      plugins: [
+        shimReact(),
+        shareMainModules(),
+        yamlToJS(),
+        svelte({ ...svelteConfig, emitCss: false }),
+      ],
       build: {
         outDir: CHUNKS_DIR,
         emptyOutDir: true,
