@@ -274,11 +274,10 @@
     placeholder={_('find_place')}
     aria-label={_('find_place')}
   />
-  <!-- @todo Replace `title` with a native tooltip -->
   <Button
     variant="tertiary"
     iconic
-    title={_('use_your_location')}
+    tooltip={_('use_your_location')}
     aria-label={_('use_your_location')}
     disabled={readonly}
     onclick={() => {

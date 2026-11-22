@@ -606,6 +606,7 @@
                 iconic
                 size="small"
                 variant="tertiary"
+                tooltip={_('swap_panes')}
                 aria-label={_('swap_panes')}
                 style="--gutter-position: {firstPaneWidth}px"
                 onclick={swapPanes}

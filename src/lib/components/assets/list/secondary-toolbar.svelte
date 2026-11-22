@@ -86,15 +86,17 @@
   {/if}
   <ViewSwitcher disabled={!hasListedAssets} {currentView} aria-controls="asset-list" />
   {#if !(env.isSmallScreen || env.isMediumScreen)}
+    {@const label = _(currentView.current.showInfo ? 'hide_info' : 'show_info')}
     <Divider orientation="vertical" />
     <Button
       variant="ghost"
       iconic
       disabled={!hasListedAssets}
       pressed={!!currentView.current.showInfo}
+      tooltip={label}
+      aria-label={label}
       aria-controls={currentView.current.showInfo ? 'asset-info' : undefined}
       aria-expanded={!!currentView.current.showInfo}
-      aria-label={_(currentView.current.showInfo ? 'hide_info' : 'show_info')}
       onclick={() => {
         currentView.current = {
           ...currentView.current,

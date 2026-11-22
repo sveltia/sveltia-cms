@@ -83,15 +83,17 @@
       aria-controls="entry-list"
     />
     {#if !(env.isSmallScreen || env.isMediumScreen)}
+      {@const label = _(currentView.current.showMedia ? 'hide_assets' : 'show_assets')}
       <Divider orientation="vertical" />
       <Button
         variant="ghost"
         iconic
         disabled={!hasListedEntries || !getAssetFolder({ collectionName })}
         pressed={!!currentView.current.showMedia}
+        tooltip={label}
+        aria-label={label}
         aria-controls={currentView.current.showMedia ? 'collection-assets' : undefined}
         aria-expanded={!!currentView.current.showMedia}
-        aria-label={_(currentView.current.showMedia ? 'hide_assets' : 'show_assets')}
         onclick={() => {
           currentView.current = {
             ...currentView.current,

@@ -84,6 +84,7 @@
         variant="ghost"
         iconic
         {selected}
+        tooltip={label}
         aria-label={label}
         keyShortcuts={index < 9 ? `Alt+${index + 1}` : undefined}
         onclick={() => {
@@ -100,6 +101,7 @@
     <Button
       variant="ghost"
       iconic
+      tooltip={page.label}
       aria-label={page.label}
       onclick={() => {
         openCustomPage(page);

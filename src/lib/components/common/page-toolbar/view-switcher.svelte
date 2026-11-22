@@ -55,6 +55,7 @@
             selected={selectedType === type}
             variant="ghost"
             iconic
+            tooltip={_(`${type}_view`)}
             aria-label={_(`${type}_view`)}
             onSelect={() => {
               switchView(type);
@@ -72,6 +73,7 @@
       {disabled}
       variant="ghost"
       iconic
+      tooltip={_(isGridView ? 'list_view' : 'grid_view')}
       aria-label={_(isGridView ? 'switch_to_list_view' : 'switch_to_grid_view')}
       onclick={() => {
         switchView(isGridView ? 'list' : 'grid');

@@ -71,14 +71,13 @@
   })}
   {@const languagePair = { sourceLanguage: otherLocale, targetLanguage: locale }}
   {#await isButtonDisabled(languagePair) then disabled}
-    <!-- @todo Replace `title` with a native tooltip -->
     <Button
       variant="ghost"
       {size}
       iconic
       popupPosition="bottom-right"
+      tooltip={label}
       aria-label={label}
-      title={label}
       disabled={disabled || translating}
       onclick={() => {
         translate(languagePair);
@@ -95,6 +94,7 @@
     {size}
     iconic
     popupPosition="bottom-right"
+    tooltip={_('translate')}
     aria-label={_('translate')}
     disabled={sourceDisabled}
   >

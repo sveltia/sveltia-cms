@@ -55,6 +55,7 @@
   iconic
   disabled={allDisabled}
   popupPosition="bottom-right"
+  tooltip={_('create_entry_or_assets')}
   aria-label={_('create_entry_or_assets')}
 >
   {#snippet endIcon()}

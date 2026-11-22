@@ -20,6 +20,7 @@
     label={isLocalRepo ? _('local_workflow.indicator') : undefined}
     class={hasAvatar ? 'avatar' : ''}
     popupPosition="bottom-right"
+    tooltip={_('account')}
     aria-label={_('show_account_menu')}
     bind:this={menuButton}
   >

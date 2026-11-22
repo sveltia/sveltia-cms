@@ -59,9 +59,12 @@
   >
     {#each panels as panel (panel.key)}
       {@const { key, icon, disabled, badge } = panel}
+      {@const label = getSidebarPanelLabel(panel)}
       <SelectButton
         iconic
-        aria-label={getSidebarPanelLabel(panel)}
+        tooltip={label}
+        tooltipPosition="left"
+        aria-label={label}
         selected={activeKey === key}
         {disabled}
         onclick={() => {
