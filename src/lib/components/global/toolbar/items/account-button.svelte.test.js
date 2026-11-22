@@ -47,7 +47,9 @@ describe('AccountButton', () => {
     const { container } = await render(AccountButton, {});
 
     expect(container.querySelector('img')).toBeNull();
-    expect(container).toHaveTextContent('account_circle');
+    await expect
+      .element(page.getByRole('button', { name: 'Show Account Menu' }))
+      .toHaveTextContent('account_circle');
   });
 
   test('is labelled as the local workflow with a local repository', async () => {
