@@ -262,7 +262,7 @@ additions:
     change_name: 이름 변경
     name_changed: 이름이 변경되었습니다.
     password: 비밀번호
-    no_password: GitHub로 로그인하시므로 변경할 비밀번호가 없습니다. 관리자가 비밀번호를 재설정하면 비밀번호를 받을 수 있습니다.
+    no_password: 이 계정은 GitHub로만 로그인하므로 변경할 비밀번호가 없습니다. 관리자가 비밀번호를 재설정하면 비밀번호를 받을 수 있습니다.
   setup:
     use_admin_secret: 관리자 시크릿 사용
     title: Sveltia CMS Additions 설정

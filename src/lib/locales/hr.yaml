@@ -266,7 +266,7 @@ additions:
     change_name: Promijeni ime
     name_changed: Vaše je ime promijenjeno.
     password: Lozinka
-    no_password: Prijavljujete se putem GitHuba, pa nemate lozinku koju biste mogli promijeniti. Administrator vam je može dodijeliti poništavanjem vaše lozinke.
+    no_password: Vaš se račun prijavljuje samo putem GitHuba, pa nema lozinku koju biste mogli promijeniti. Administrator vam je može dodijeliti poništavanjem vaše lozinke.
   setup:
     use_admin_secret: Upotrijebi administratorsku tajnu
     title: Postavljanje Sveltia CMS Additions

@@ -266,7 +266,7 @@ additions:
     change_name: Zmeniť meno
     name_changed: Vaše meno bolo zmenené.
     password: Heslo
-    no_password: Prihlasujete sa cez GitHub, takže nemáte heslo, ktoré by ste mohli zmeniť. Správca vám ho môže prideliť obnovením hesla.
+    no_password: Váš účet sa prihlasuje iba cez GitHub, takže nemá heslo, ktoré by ste mohli zmeniť. Správca vám ho môže prideliť obnovením hesla.
   setup:
     use_admin_secret: Použiť tajný kľúč správcu
     title: Nastavenie Sveltia CMS Additions

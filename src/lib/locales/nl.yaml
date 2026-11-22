@@ -266,7 +266,7 @@ additions:
     change_name: Naam wijzigen
     name_changed: Je naam is gewijzigd.
     password: Wachtwoord
-    no_password: Je logt in met GitHub, dus je hebt geen wachtwoord om te wijzigen. Een beheerder kan je er een geven door je wachtwoord opnieuw in te stellen.
+    no_password: Je account logt alleen in met GitHub, dus het heeft geen wachtwoord om te wijzigen. Een beheerder kan je er een geven door je wachtwoord opnieuw in te stellen.
   setup:
     use_admin_secret: Beheerdersgeheim gebruiken
     title: Sveltia CMS Additions instellen

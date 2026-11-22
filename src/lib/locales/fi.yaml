@@ -266,7 +266,7 @@ additions:
     change_name: Vaihda nimi
     name_changed: Nimesi on vaihdettu.
     password: Salasana
-    no_password: Kirjaudut sisään GitHubilla, joten sinulla ei ole vaihdettavaa salasanaa. Ylläpitäjä voi antaa sinulle salasanan nollaamalla salasanasi.
+    no_password: Tilisi kirjautuu sisään vain GitHubilla, joten sillä ei ole vaihdettavaa salasanaa. Ylläpitäjä voi antaa sinulle salasanan nollaamalla salasanasi.
   setup:
     use_admin_secret: Käytä ylläpitäjän salaista avainta
     title: Ota Sveltia CMS Additions käyttöön

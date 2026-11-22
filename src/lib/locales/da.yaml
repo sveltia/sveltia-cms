@@ -266,7 +266,7 @@ additions:
     change_name: Skift navn
     name_changed: Dit navn er ændret.
     password: Adgangskode
-    no_password: Du logger ind med GitHub, så du har ingen adgangskode at ændre. En administrator kan give dig en ved at nulstille din adgangskode.
+    no_password: Din konto logger kun ind med GitHub, så den har ingen adgangskode at ændre. En administrator kan give dig en ved at nulstille din adgangskode.
   setup:
     use_admin_secret: Brug administratorhemmelighed
     title: Konfigurer Sveltia CMS Additions

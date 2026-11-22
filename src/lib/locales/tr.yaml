@@ -265,7 +265,7 @@ additions:
     change_name: Adı Değiştir
     name_changed: Adınız değiştirildi.
     password: Şifre
-    no_password: GitHub ile giriş yaptığınız için değiştirilecek bir şifreniz yok. Bir yönetici şifrenizi sıfırlayarak size bir şifre verebilir.
+    no_password: Hesabınız yalnızca GitHub ile giriş yaptığı için değiştirilecek bir şifresi yok. Bir yönetici şifrenizi sıfırlayarak size bir şifre verebilir.
   setup:
     use_admin_secret: Yönetici Gizli Anahtarını Kullan
     title: Sveltia CMS Additions’ı Kur

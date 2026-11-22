@@ -266,7 +266,7 @@ additions:
     change_name: Canvia el nom
     name_changed: S’ha canviat el nom.
     password: Contrasenya
-    no_password: Inicieu la sessió amb GitHub, de manera que no teniu cap contrasenya per canviar. Un administrador us en pot donar una restablint-vos la contrasenya.
+    no_password: El vostre compte només inicia la sessió amb GitHub, de manera que no té cap contrasenya per canviar. Un administrador us en pot donar una restablint-vos la contrasenya.
   setup:
     use_admin_secret: Usa el secret d’administrador
     title: Configura Sveltia CMS Additions

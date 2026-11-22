@@ -266,7 +266,7 @@ additions:
     change_name: Ändra namn
     name_changed: Ditt namn har ändrats.
     password: Lösenord
-    no_password: Du loggar in med GitHub, så du har inget lösenord att byta. En administratör kan ge dig ett genom att återställa ditt lösenord.
+    no_password: Ditt konto loggar bara in med GitHub, så det har inget lösenord att byta. En administratör kan ge dig ett genom att återställa ditt lösenord.
   setup:
     use_admin_secret: Använd administratörshemlighet
     title: Konfigurera Sveltia CMS Additions

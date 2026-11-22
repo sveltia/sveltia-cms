@@ -266,7 +266,7 @@ additions:
     change_name: Name ändern
     name_changed: Ihr Name wurde geändert.
     password: Passwort
-    no_password: Sie melden sich mit GitHub an und haben daher kein Passwort, das Sie ändern könnten. Ein Admin kann Ihnen eines geben, indem Ihr Passwort zurückgesetzt wird.
+    no_password: Ihr Konto meldet sich nur mit GitHub an und hat daher kein Passwort, das Sie ändern könnten. Ein Admin kann Ihnen eines geben, indem Ihr Passwort zurückgesetzt wird.
   setup:
     use_admin_secret: Admin-Secret verwenden
     title: Sveltia CMS Additions einrichten

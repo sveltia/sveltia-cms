@@ -266,7 +266,7 @@ additions:
     change_name: Név módosítása
     name_changed: A neved megváltozott.
     password: Jelszó
-    no_password: GitHubbal jelentkezel be, ezért nincs módosítható jelszavad. Egy adminisztrátor a jelszavad visszaállításával adhat neked egyet.
+    no_password: A fiókod csak GitHubbal jelentkezik be, ezért nincs módosítható jelszava. Egy adminisztrátor a jelszavad visszaállításával adhat neked egyet.
   setup:
     use_admin_secret: Adminisztrátori titkos kulcs használata
     title: A Sveltia CMS Additions beállítása

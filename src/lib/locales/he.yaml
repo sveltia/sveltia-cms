@@ -281,7 +281,7 @@ additions:
     change_name: שינוי שם
     name_changed: השם שלכם שונה.
     password: סיסמה
-    no_password: אתם מתחברים באמצעות GitHub, ולכן אין לכם סיסמה לשנות. מנהל יכול לתת לכם סיסמה על ידי איפוס הסיסמה שלכם.
+    no_password: החשבון שלכם מתחבר באמצעות GitHub בלבד, ולכן אין לו סיסמה לשנות. מנהל יכול לתת לכם סיסמה על ידי איפוס הסיסמה שלכם.
   setup:
     use_admin_secret: שימוש בסוד הניהול
     title: הגדרת Sveltia CMS Additions

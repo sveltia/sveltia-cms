@@ -266,7 +266,7 @@ additions:
     change_name: Đổi tên
     name_changed: Tên của bạn đã được thay đổi.
     password: Mật khẩu
-    no_password: Bạn đăng nhập bằng GitHub nên không có mật khẩu để thay đổi. Quản trị viên có thể cấp mật khẩu cho bạn bằng cách đặt lại mật khẩu.
+    no_password: Tài khoản của bạn chỉ đăng nhập bằng GitHub nên không có mật khẩu để thay đổi. Quản trị viên có thể cấp mật khẩu cho bạn bằng cách đặt lại mật khẩu.
   setup:
     use_admin_secret: Dùng mã bí mật quản trị
     title: Thiết lập Sveltia CMS Additions
