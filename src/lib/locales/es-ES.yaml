@@ -2876,7 +2876,7 @@ workflow:
   from_fork: Desde un fork
   fork_entry_editable: Esta entrada procede de una pull request de un colaborador abierta desde “{$fork}”. Tus cambios se guardan en su branch. Revisa la pull request y haz merge en el servicio Git.
   fork_entry_locked: Esta entrada procede de una pull request de un colaborador abierta desde “{$fork}”. El colaborador no permite que los administradores del repositorio la editen, solo se podrá visualizar.
-  fork_not_editable: El colaborador no permite que los administradores editen esta pull request.
+  fork_not_editable: El colaborador no permite que los administradores del repositorio editen esta pull request.
   fork_entry_gone: La pull request del colaborador ya no está abierta, así que no se pueden guardar los cambios en ella.
   # Error shown in the save error dialog when an entry can’t be saved for review, because a request
   # the CMS doesn’t show is already open from the branch the entry would be saved to. `{$number}` is
