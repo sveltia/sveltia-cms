@@ -1165,6 +1165,39 @@ describe('SelectAssetsDialog', () => {
     );
   });
 
+  test('selects the pending file when the same file is dropped', async () => {
+    // A file already picked for another field whose folder has the same path
+    const pending = await createMockImageFile({ name: 'pending.png' });
+    const pendingFolder = { ...globalAssetFolder.current, collectionName: 'posts' };
+    const draftURL = URL.createObjectURL(pending);
+
+    const { onSelect } = await renderDialog({
+      draft: {
+        originalEntry: undefined,
+        files: { [draftURL]: { file: pending, folder: pendingFolder } },
+      },
+    });
+
+    const dialog = page.getByRole('dialog');
+
+    await waitForGrid(3);
+
+    // The file isn’t listed twice, and the pending one is selected
+    dropFiles([pending, pending]);
+    await expect.element(dialog.getByRole('button', { name: 'Insert' })).toBeEnabled();
+    expect(document.querySelectorAll('#select-assets-grid [role="option"]')).toHaveLength(3);
+    expect(
+      document.querySelectorAll('#select-assets-grid [role="option"][aria-selected="true"]'),
+    ).toHaveLength(1);
+
+    await dialog.getByRole('button', { name: 'Insert' }).click();
+    await vi.waitFor(() =>
+      expect(onSelect).toHaveBeenCalledWith([
+        { file: pending, folder: pendingFolder, subfolderPath: '', replace: false },
+      ]),
+    );
+  });
+
   test('uploads the chosen or pending files to the cloud service', async () => {
     const click = vi.spyOn(HTMLInputElement.prototype, 'click').mockImplementation(() => {});
 

@@ -22,6 +22,7 @@
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
   import { getPendingUploadAction } from '$lib/services/assets/browser/pending-uploads';
   import {
+    getDroppedResources,
     getInitialLibraryName,
     getInsertedResources,
     getLocationResources,
@@ -42,7 +43,7 @@
   } from '$lib/services/assets/subfolders';
   import { selectAssetsView, showContentOverlay } from '$lib/services/contents/editor';
   import { checkDuplicates } from '$lib/services/contents/fields/file/duplicates.svelte';
-  import { hasSameAsset } from '$lib/services/contents/fields/file/helpers';
+  import { findSameUnsavedAsset } from '$lib/services/contents/fields/file/helpers';
   import { createFolderAssetListing } from '$lib/services/contents/fields/file/listing.svelte';
   import { convertFileItemToAsset } from '$lib/services/contents/fields/file/process';
   import { getMediaLibraryOptions } from '$lib/services/integrations/media-libraries';
@@ -341,15 +342,22 @@
    * Process a dropped file.
    * @param {File} file File to be processed.
    * @param {boolean} replace Whether the file replaces an existing asset with the same name.
-   * @returns {Promise<Asset | undefined>} Processed asset or `undefined` if the file already
-   * exists.
+   * @returns {Promise<{ asset: Asset, replace: boolean }>} Asset for the file, which is the one
+   * already pending upload if the same file is, and whether it replaces an existing asset.
    */
   const processFile = async (file, replace) => {
     const sha = await getGitHash(file);
     const folder = selectedFolder;
 
-    if (hasSameAsset({ sha, folder, unsavedAssets: assetListing.unsavedAssets })) {
-      return undefined;
+    const pendingAsset = findSameUnsavedAsset({
+      sha,
+      folder,
+      unsavedAssets: assetListing.unsavedAssets,
+    });
+
+    if (pendingAsset) {
+      // The pending file is selected rather than listed twice, and keeps its own way of saving
+      return { asset: pendingAsset, replace: !!pendingAsset.replace };
     }
 
     const asset = await convertFileItemToAsset({
@@ -363,7 +371,7 @@
 
     droppedAssets.push(asset);
 
-    return asset;
+    return { asset, replace };
   };
 
   /**
@@ -385,9 +393,9 @@
       return;
     }
 
-    selectedResources = (await Promise.all(files.map((file) => processFile(file, replace))))
-      .filter((asset) => !!asset)
-      .map((asset) => ({ asset, replace }));
+    selectedResources = getDroppedResources(
+      await Promise.all(files.map((file) => processFile(file, replace))),
+    );
   };
 
   /**

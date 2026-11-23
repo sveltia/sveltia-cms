@@ -5,6 +5,7 @@ import { getStockAssetMediaLibraryOptions } from '$lib/services/integrations/med
 import { createMockAssetFolder } from '$lib/test/factories';
 
 import {
+  getDroppedResources,
   getFirstDefaultLibraryName,
   getInitialLibraryName,
   getInsertedResources,
@@ -316,6 +317,24 @@ describe('getUnsavedAssetSubfolderPath()', () => {
 
   test('returns an empty string without a target folder', () => {
     expect(getUnsavedAssetSubfolderPath(asset, undefined)).toBe('');
+  });
+});
+
+describe('getDroppedResources()', () => {
+  test('should select each asset once', () => {
+    const pending = /** @type {any} */ ({ unsaved: true, blobURL: 'blob:pending', path: 'a.png' });
+    const dropped = /** @type {any} */ ({ unsaved: true, blobURL: 'blob:dropped', path: 'a.png' });
+
+    expect(
+      getDroppedResources([
+        { asset: pending, replace: false },
+        { asset: dropped, replace: true },
+        { asset: pending, replace: false },
+      ]),
+    ).toEqual([
+      { asset: pending, replace: false },
+      { asset: dropped, replace: true },
+    ]);
   });
 });
 

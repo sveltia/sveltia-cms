@@ -1519,7 +1519,7 @@ describe('Test processResource()', () => {
 
       // @ts-ignore - Test with simplified types
       const result = await processResource({
-        draft: { files: {} },
+        draft: /** @type {any} */ ({ files: {} }),
         resource: { file: new File(['content'], 'My Photo.webp'), folder, credit: '' },
         libraryConfig: { slugify_filename: true },
       });
@@ -1602,7 +1602,7 @@ describe('Test processResource()', () => {
 
       // @ts-ignore - Test with simplified types
       const result = await processResource({
-        draft,
+        draft: /** @type {any} */ (draft),
         resource: { file, folder, subfolderPath: 'gallery', credit: '' },
         libraryConfig: { transformations: { raster_image: { format: 'webp' } } },
       });

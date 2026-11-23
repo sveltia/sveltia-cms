@@ -433,16 +433,16 @@ export const listAssets = ({
 };
 
 /**
- * Check if an asset with the same content and folder already exists in the unsaved assets. Any
- * folder with the same path counts as the same one, as `processResource()` takes it.
+ * Find an unsaved asset with the same content and folder. Any folder with the same path counts as
+ * the same one, as `processResource()` takes it.
  * @param {object} args Arguments.
  * @param {string} args.sha Git object ID (SHA-1 hash) of the file.
  * @param {AssetFolderInfo | undefined} args.folder Asset folder.
  * @param {Asset[]} args.unsavedAssets Unsaved assets.
- * @returns {boolean} `true` if the asset already exists.
+ * @returns {Asset | undefined} Unsaved asset, if any.
  */
-export const hasSameAsset = ({ sha, folder, unsavedAssets }) =>
-  unsavedAssets.some(
+export const findSameUnsavedAsset = ({ sha, folder, unsavedAssets }) =>
+  unsavedAssets.find(
     (asset) =>
       !!asset.file &&
       asset.sha === sha &&

@@ -1,3 +1,4 @@
+import { getAssetKey } from '$lib/services/assets';
 import { getFolderPublicPath } from '$lib/services/assets/info';
 import { canBrowseSubfolders, getRelativePath } from '$lib/services/assets/subfolders';
 import { findPreferredLibraryName } from '$lib/services/integrations/media-libraries/options';
@@ -203,6 +204,19 @@ export const getPickedFolderPublicPaths = ({
  */
 export const getUnsavedAssetSubfolderPath = ({ path }, targetFolderPath) =>
   targetFolderPath !== undefined ? getDirName(getRelativePath(path, targetFolderPath)) : '';
+
+/**
+ * Get the resources to select once files are dropped. A file dropped more than once, or one already
+ * pending upload, comes with the same asset, which is selected only once.
+ * @param {{ asset: Asset, replace: boolean }[]} resources Dropped files’ assets, and whether each
+ * replaces an existing asset with the same name.
+ * @returns {SelectedResource[]} Resources.
+ */
+export const getDroppedResources = (resources) => {
+  const keys = resources.map(({ asset }) => getAssetKey(asset));
+
+  return resources.filter((_resource, index) => keys.indexOf(keys[index]) === index);
+};
 
 /**
  * Get the resources to hand over to the field once the Insert button is clicked. An unsaved asset
