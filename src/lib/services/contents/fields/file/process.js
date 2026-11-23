@@ -1,6 +1,7 @@
 import equal from 'fast-deep-equal';
 import { sanitize } from 'isomorphic-dompurify';
 
+import { isAssetInFolder } from '$lib/services/assets';
 import { getEntryAssetFolderPath } from '$lib/services/assets/entry-folder';
 import { isSameFileName } from '$lib/services/assets/file-name';
 import { createDisplayBlobURL, getAssetPublicURL } from '$lib/services/assets/info';
@@ -296,14 +297,16 @@ export const processResource = async ({ draft, resource, libraryConfig, accept, 
 
       // Check if the selected file has already been uploaded or is pending upload, otherwise
       // duplicate files lead to an `each_key_duplicate` error in Svelte. A file replacing an
-      // existing one must keep its name, so an identical file under another name doesn’t count
+      // existing one must keep its name, so an identical file under another name doesn’t count.
+      // An asset is assigned to one of the folders sharing its path, e.g. the `media_folder` of
+      // another collection, so any folder with the same path counts as the same folder.
       const existingAsset = [
         ...getSavedAssetsForEntry(draft, folder, locale),
         ...(await getUnsavedAssets({ draft })),
       ].find(
         (a) =>
           a.sha === sha &&
-          equal(a.folder, folder) &&
+          isAssetInFolder(a, folder) &&
           (!replace || ((!a.unsaved || a.replace) && isSameFileName(a.name, name))),
       );
 

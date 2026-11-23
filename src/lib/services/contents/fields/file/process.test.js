@@ -541,6 +541,59 @@ describe('Test processResource()', () => {
     expect(Object.keys(draft.files)).toHaveLength(0);
   });
 
+  test('should use an existing asset in another folder with the same path', async () => {
+    // https://github.com/sveltia/sveltia-cms/issues/1182 — two collections with the same
+    // `media_folder`, and the asset assigned to the folder of the other collection
+    const mockFile = new File(['content'], 'photo.webp', { type: 'image/webp' });
+    // @ts-ignore - Simplified draft for testing
+    const draft = { files: {} };
+
+    /**
+     * Create the folder of a collection whose `media_folder` is shared with the other.
+     * @param {string} collectionName Collection name.
+     * @returns {any} Asset folder.
+     */
+    const folderOf = (collectionName) => ({
+      collectionName,
+      internalPath: 'src/assets/uploads',
+      publicPath: '../../assets/uploads',
+      entryRelative: false,
+      hasTemplateTags: false,
+    });
+
+    // @ts-ignore - Simplified resource for testing
+    const resource = { file: mockFile, folder: folderOf('posts'), credit: '' };
+
+    const existingAsset = {
+      sha: 'git-hash',
+      folder: folderOf('pages'),
+      path: 'src/assets/uploads/photo.webp',
+    };
+
+    getGitHashMock.mockResolvedValue('git-hash');
+    allAssets.current = /** @type {any} */ ([existingAsset]);
+    equalMock.mockReturnValue(false);
+    getAssetPublicURLMock.mockReturnValue('../../assets/uploads/photo.webp');
+
+    // @ts-ignore - Test with simplified types
+    const result = await processResource({ draft, resource, libraryConfig: {} });
+
+    expect(result.value).toBe('../../assets/uploads/photo.webp');
+    expect(getAssetPublicURLMock).toHaveBeenCalledWith(existingAsset, expect.anything());
+    expect(Object.keys(draft.files)).toHaveLength(0);
+
+    // An identical file in a folder with another path is a different upload
+    allAssets.current = /** @type {any} */ ([
+      { ...existingAsset, folder: { ...folderOf('pages'), internalPath: 'static/images' } },
+    ]);
+
+    // @ts-ignore - Test with simplified types
+    const otherResult = await processResource({ draft, resource, libraryConfig: {} });
+
+    expect(otherResult.value).toMatch(/^blob:/);
+    expect(Object.keys(draft.files)).toHaveLength(1);
+  });
+
   test('should reuse the same file pending upload to another subfolder', async () => {
     const pendingFile = new File(['content'], 'photo.jpg', { type: 'image/jpeg' });
     const mockFile = new File(['content'], 'photo.jpg', { type: 'image/jpeg' });
