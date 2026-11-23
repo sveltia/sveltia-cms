@@ -9,6 +9,10 @@ import { mount } from 'svelte';
 
 import appStrings from '$lib/locales/en-US.yaml';
 
+// Start each test file from the default preferences: a test file runs on a browser worker that an
+// earlier file may have used, and the preferences it saved would otherwise still be there
+localStorage.removeItem('sveltia-cms.prefs');
+
 // Load the app’s default locale strings the way `initAppLocale()` does, so a component test can
 // find an element by the text a user sees rather than by a message key
 addMessages('en-US', { ...appStrings, _sui: componentStrings });
