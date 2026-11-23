@@ -302,16 +302,22 @@ const findSameAsset = ({
 };
 
 /**
- * Get the result of processing a file that is not one of the accepted file types.
- * @param {File} file File.
+ * Get the result of a resource that leaves nothing to add to the field.
+ * @param {object} [fileNames] Name of the file that can’t be used, by the reason. None when there
+ * is no repository folder to upload the file to.
+ * @param {string} [fileNames.oversizedFileName] Name of a file exceeding the size limit.
+ * @param {string} [fileNames.invalidFileName] Name of a file that is corrupt, mislabeled or no
+ * longer readable.
+ * @param {string} [fileNames.mismatchedFileName] Name of a file that is not one of the accepted
+ * file types.
  * @returns {ProcessResourceResult} Result.
  */
-const getMismatchedResult = (file) => ({
+const getFailedResult = ({ oversizedFileName, invalidFileName, mismatchedFileName } = {}) => ({
   value: undefined,
   credit: '',
-  oversizedFileName: undefined,
-  invalidFileName: undefined,
-  mismatchedFileName: file.name,
+  oversizedFileName,
+  invalidFileName,
+  ...(mismatchedFileName ? { mismatchedFileName } : {}),
 });
 
 /**
@@ -341,12 +347,7 @@ export const processResource = async ({ draft, resource, libraryConfig, accept, 
     // A file is uploaded to a repository folder, which there isn’t when only a cloud media library
     // is configured and neither the field nor the collection has its own `media_folder`
     if (!folder) {
-      return {
-        value: undefined,
-        credit: '',
-        oversizedFileName: undefined,
-        invalidFileName: undefined,
-      };
+      return getFailedResult();
     }
 
     /** @type {string | undefined} */
@@ -358,19 +359,14 @@ export const processResource = async ({ draft, resource, libraryConfig, accept, 
       // The file can’t be read any more, e.g. it was moved or deleted after being picked. It can’t
       // be uploaded either way, so it’s reported along with the corrupt files rather than failing
       // the whole batch and leaving the field stuck in the processing state.
-      return {
-        value: undefined,
-        credit: '',
-        oversizedFileName: undefined,
-        invalidFileName: file.name,
-      };
+      return getFailedResult({ invalidFileName: file.name });
     }
 
     if (existingBlobURL) {
       // The file is already pending, as processed for another field maybe, which can accept other
       // file types
       if (!isAcceptedFile(file, accept)) {
-        return getMismatchedResult(file);
+        return getFailedResult({ mismatchedFileName: file.name });
       }
 
       value = existingBlobURL;
@@ -384,17 +380,12 @@ export const processResource = async ({ draft, resource, libraryConfig, accept, 
       file = processedFile;
 
       if (invalid) {
-        return {
-          value: undefined,
-          credit: '',
-          oversizedFileName: undefined,
-          invalidFileName: file.name,
-        };
+        return getFailedResult({ invalidFileName: file.name });
       }
 
       // The original file is named, as the user knows it by that name
       if (!isAcceptedFile(file, accept)) {
-        return getMismatchedResult(/** @type {File} */ (resource.file));
+        return getFailedResult({ mismatchedFileName: /** @type {File} */ (resource.file).name });
       }
 
       const sha = await getGitHash(file);
@@ -424,12 +415,7 @@ export const processResource = async ({ draft, resource, libraryConfig, accept, 
         file = undefined;
       } else if (oversized) {
         // Like a corrupt file, an oversized file leaves nothing to add to the field
-        return {
-          value: undefined,
-          credit: '',
-          oversizedFileName: file.name,
-          invalidFileName: undefined,
-        };
+        return getFailedResult({ oversizedFileName: file.name });
       } else {
         // Set a temporary blob URL, which will be later replaced with the actual file path. The URL
         // is made for display, e.g. an SVG image can’t run script, while the file itself is cached

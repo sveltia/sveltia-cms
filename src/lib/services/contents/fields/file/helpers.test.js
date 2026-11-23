@@ -19,7 +19,6 @@ import {
 // Mock dependencies
 vi.mock('@sveltia/utils/crypto');
 vi.mock('@sveltia/utils/file');
-vi.mock('fast-deep-equal');
 vi.mock('$lib/services/assets/entry-relative', () => ({
   fillInternalPathTemplate: vi.fn(),
 }));
@@ -51,7 +50,6 @@ const { getAssetFolder } = await import('$lib/services/assets/folders');
 const { allAssetFolders } = await import('$lib/services/assets/folders');
 const { getHash } = await import('@sveltia/utils/crypto');
 const { getPathInfo, isValidFileType } = await import('@sveltia/utils/file');
-const { default: equal } = await import('fast-deep-equal');
 const { fillInternalPathTemplate } = await import('$lib/services/assets/entry-relative');
 const { allAssets } = await import('$lib/services/assets/state');
 const { getSlugs } = await import('$lib/services/contents/draft/slugs');
@@ -1946,8 +1944,6 @@ describe('contents/fields/file/helpers', () => {
     it('should return false when asset has no file', () => {
       const asset = /** @type {any} */ ({ file: undefined, sha: 'abc123', folder });
 
-      vi.mocked(equal).mockReturnValue(true);
-
       expect(hasSameAsset({ sha: 'abc123', folder, unsavedAssets: [asset] })).toBe(false);
     });
 
@@ -1956,17 +1952,34 @@ describe('contents/fields/file/helpers', () => {
       const assetFolder = { ...folder, internalPath: 'other' };
       const asset = /** @type {any} */ ({ file, sha: 'abc123', folder: assetFolder });
 
-      vi.mocked(equal).mockReturnValue(false);
-
       expect(hasSameAsset({ sha: 'abc123', folder, unsavedAssets: [asset] })).toBe(false);
-      expect(equal).toHaveBeenCalledWith(assetFolder, folder);
+    });
+
+    it('should return true for another folder with the same path', () => {
+      const file = new File(['data'], 'photo.jpg');
+      const assetFolder = { ...folder, collectionName: 'pages' };
+      const asset = /** @type {any} */ ({ file, sha: 'abc123', folder: assetFolder });
+
+      expect(hasSameAsset({ sha: 'abc123', folder, unsavedAssets: [asset] })).toBe(true);
+    });
+
+    it('should tell a folder apart from none', () => {
+      const file = new File(['data'], 'photo.jpg');
+      const asset = /** @type {any} */ ({ file, sha: 'abc123', folder });
+      const folderless = /** @type {any} */ ({ file, sha: 'abc123', folder: undefined });
+
+      expect(hasSameAsset({ sha: 'abc123', folder: undefined, unsavedAssets: [asset] })).toBe(
+        false,
+      );
+      expect(hasSameAsset({ sha: 'abc123', folder, unsavedAssets: [folderless] })).toBe(false);
+      expect(hasSameAsset({ sha: 'abc123', folder: undefined, unsavedAssets: [folderless] })).toBe(
+        true,
+      );
     });
 
     it('should return false when hash does not match', () => {
       const file = new File(['data'], 'photo.jpg');
       const asset = /** @type {any} */ ({ file, sha: 'different-hash', folder });
-
-      vi.mocked(equal).mockReturnValue(true);
 
       expect(hasSameAsset({ sha: 'abc123', folder, unsavedAssets: [asset] })).toBe(false);
     });
@@ -1974,8 +1987,6 @@ describe('contents/fields/file/helpers', () => {
     it('should return true when hash and folder both match', () => {
       const file = new File(['data'], 'photo.jpg');
       const asset = /** @type {any} */ ({ file, sha: 'abc123', folder });
-
-      vi.mocked(equal).mockReturnValue(true);
 
       expect(hasSameAsset({ sha: 'abc123', folder, unsavedAssets: [asset] })).toBe(true);
     });
@@ -1986,16 +1997,12 @@ describe('contents/fields/file/helpers', () => {
         { file: new File(['data2'], 'photo2.jpg'), sha: 'abc123', folder },
       ]);
 
-      vi.mocked(equal).mockReturnValue(true);
-
       expect(hasSameAsset({ sha: 'abc123', folder, unsavedAssets: assets })).toBe(true);
     });
 
     it('should compare the stored hash without reading the file', () => {
       const file = new File(['data'], 'photo.jpg');
       const asset = /** @type {any} */ ({ file, sha: 'abc123', folder });
-
-      vi.mocked(equal).mockReturnValue(true);
 
       expect(hasSameAsset({ sha: 'abc123', folder, unsavedAssets: [asset] })).toBe(true);
       expect(getHash).not.toHaveBeenCalled();
