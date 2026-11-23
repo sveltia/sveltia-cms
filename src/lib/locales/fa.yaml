@@ -2844,7 +2844,7 @@ workflow:
     .input {$count :integer}
     .match $count
       one {{ هنوز منتشر نشده است، بنابراین تغییرات منتشرنشده شما از بین خواهند رفت. هر نسخه منتشرشده‌ای منتشرشده باقی خواهد ماند. }}
-      *   {{ هنوز منتشر نشده‌اند، بنابراین تغییرات منتشرنشده شما از بین خواهند رف. هر نسخه منتشرشده‌ای منتشرشده باقی خواهد ماند. }}
+      *   {{ هنوز منتشر نشده‌اند، بنابراین تغییرات منتشرنشده شما از بین خواهند رفت. هر نسخه منتشرشده‌ای منتشرشده باقی خواهد ماند. }}
   # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
   # the number of selected entries that are unpublished.
   deleting_unpublished_note_some: |
