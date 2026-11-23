@@ -34,8 +34,8 @@ importers:
         specifier: ^1.5.0
         version: 1.5.0(svelte@5.59.1(@typescript-eslint/types@8.73.0))
       '@sveltia/ui':
-        specifier: ^0.96.2
-        version: 0.96.2(svelte@5.59.1(@typescript-eslint/types@8.73.0))(typescript@6.0.3)
+        specifier: ^0.96.3
+        version: 0.96.3(svelte@5.59.1(@typescript-eslint/types@8.73.0))(typescript@6.0.3)
       '@sveltia/utils':
         specifier: ^0.13.2
         version: 0.13.2
@@ -1262,8 +1262,8 @@ packages:
     peerDependencies:
       svelte: ^5.0.0
 
-  '@sveltia/ui@0.96.2':
-    resolution: {integrity: sha512-Rryvmr03SDgN9gIfzMKyiw3aF1j1edPmzunkp9FNLxwLzlgK3kcz26QT5JM2DNXPYQLSDx5QeudTlftaOCj6jg==}
+  '@sveltia/ui@0.96.3':
+    resolution: {integrity: sha512-3NN1yK7bLj3dGGZtKe+kcegl9PvinlmBrkhWMOuuxdelHinGzi/m1CG9yH/jOQnNAMY8fltl5mm1ZFGOadUgXA==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -1995,8 +1995,8 @@ packages:
     resolution: {integrity: sha512-cgwlv/1iFQiFnU96XXgROh8xTeetsnJiDsTc7TYCLFd9+/WNkIqPTxiM/8pSd8VIrhXGTf1Ny1q1hquVqDJB5w==}
     engines: {node: '>= 4'}
 
-  dompurify@3.4.18:
-    resolution: {integrity: sha512-ofe3wI/uNm68HInABYFJYqQxRw1EaKAjNdrFVKqjUY+UZurvNd2L/HuQe097s/4RivWiZyP6tT7aoT8atjfhwg==}
+  dompurify@3.5.0:
+    resolution: {integrity: sha512-LYC0ZkE8P1V42JsRYTwMdme/2ET8SpOc5AA2eOFjP/IadvRd2fwiT4TVz5vkfy0XUx12aS2UaRkTnfVPNOv9vw==}
 
   domutils@3.2.2:
     resolution: {integrity: sha512-6kZKyUajlDuqlHKVX1w7gyslj9MPIXzIFiz/rGu35uC1wMi+kMhQwGhl4lt9unC9Vb9INnY9Z3/ZA3+FhASLaw==}
@@ -4907,7 +4907,7 @@ snapshots:
       messageformat: 4.1.0
       svelte: 5.59.1(@typescript-eslint/types@8.73.0)
 
-  '@sveltia/ui@0.96.2(svelte@5.59.1(@typescript-eslint/types@8.73.0))(typescript@6.0.3)':
+  '@sveltia/ui@0.96.3(svelte@5.59.1(@typescript-eslint/types@8.73.0))(typescript@6.0.3)':
     dependencies:
       '@lexical/code-core': 0.53.0(typescript@6.0.3)
       '@lexical/dragon': 0.53.0(typescript@6.0.3)
@@ -5704,7 +5704,7 @@ snapshots:
     dependencies:
       domelementtype: 2.3.0
 
-  dompurify@3.4.18:
+  dompurify@3.5.0:
     optionalDependencies:
       '@types/trusted-types': 2.0.7
 
@@ -6567,7 +6567,7 @@ snapshots:
 
   isomorphic-dompurify@4.8.0(@napi-rs/canvas@1.2.0):
     dependencies:
-      dompurify: 3.4.18
+      dompurify: 3.5.0
       jsdom: 31.0.1(@napi-rs/canvas@1.2.0)
     transitivePeerDependencies:
       - '@napi-rs/canvas'
