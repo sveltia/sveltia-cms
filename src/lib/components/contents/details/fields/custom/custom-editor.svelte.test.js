@@ -1,0 +1,495 @@
+import { createElement } from 'react';
+import { describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
+
+import { React } from '$lib/services/api';
+import { allAssetFolders } from '$lib/services/assets/folders';
+import {
+  awaitCustomFieldValidations,
+  validateCustomField,
+} from '$lib/services/contents/draft/validate/custom-fields';
+import { buildControlProps } from '$lib/services/contents/fields/custom/editor';
+import { createMockDraft } from '$lib/test/draft';
+import { renderFieldEditor } from '$lib/test/field.svelte';
+
+import CustomEditor from './custom-editor.svelte';
+
+vi.mock('$lib/services/contents/fields/custom/editor', { spy: true });
+
+/**
+ * @import { CustomField } from '$lib/types/public';
+ */
+
+/** @type {CustomField} */
+const fieldConfig = /** @type {any} */ ({ name: 'stars', widget: 'rating', max: 5 });
+
+/**
+ * A custom control: a number input reporting changes through the Netlify/Decap CMS API.
+ * @param {any} props Control props.
+ * @returns {any} React element.
+ */
+const RatingControl = ({ forID, value, field, onChange, classNameWrapper }) =>
+  createElement('input', {
+    id: forID,
+    className: classNameWrapper,
+    type: 'number',
+    max: field.get('max'),
+    value: value ?? '',
+    /**
+     * Report the new value.
+     * @param {any} event Event.
+     * @returns {void} Nothing.
+     */
+    onChange: (event) => onChange(Number(event.target.value)),
+  });
+
+/**
+ * Render the editor within a draft.
+ * @param {any} currentValue Field value.
+ * @param {any} [control] Control component.
+ * @param {Record<string, any>} [context] Field editor context.
+ * @returns {Promise<{ draft: any, props: any, entryDraft: any, unmount: () => void }>} Draft,
+ * props, draft state and unmount function.
+ */
+const renderEditor = async (currentValue, control = RatingControl, context = undefined) => {
+  const draft = createMockDraft({
+    fields: [fieldConfig],
+    values: { _default: { stars: currentValue } },
+  });
+
+  const { props, entryDraft, unmount } = await renderFieldEditor(CustomEditor, {
+    fieldConfig,
+    fieldLabel: 'Stars',
+    locale: '_default',
+    currentValue,
+    props: { control },
+    draft,
+    context: context ? { 'field-editor': context } : undefined,
+  });
+
+  return { draft, props, entryDraft, unmount };
+};
+
+/**
+ * Create a class control with an `isValid` method, as Netlify/Decap CMS expects.
+ * @param {(...args: any[]) => any} isValid Validation method.
+ * @returns {any} Control.
+ */
+const createValidatingControl = (isValid) => {
+  /**
+   * The control.
+   */
+  class ValidatingControl {
+    /**
+     * Create the control.
+     * @param {any} props Control props.
+     */
+    constructor(props) {
+      this.props = props;
+    }
+
+    /**
+     * Validate the value.
+     * @returns {any} Result.
+     */
+    isValid = isValid;
+
+    /**
+     * Render the control.
+     * @returns {any} React element.
+     */
+    render() {
+      return createElement('input', { value: this.props.value ?? '', readOnly: true });
+    }
+  }
+
+  // React treats a class as a component when it has a `render()` method
+  /** @type {any} */ (ValidatingControl.prototype).isReactComponent = {};
+
+  return ValidatingControl;
+};
+
+/** @type {any[]} */
+const reports = [];
+
+/**
+ * A control that exposes the file helpers through buttons, and reports the outcome.
+ * @param {any} props Control props.
+ * @returns {any} React element.
+ */
+const FileControl = ({ addFile, pickFile, onChange }) =>
+  createElement(
+    'div',
+    null,
+    createElement(
+      'button',
+      {
+        type: 'button',
+        /**
+         * Add a file to the draft.
+         * @returns {Promise<void>}
+         */
+        onClick: async () => {
+          try {
+            const url = await addFile(new File(['x'], 'note.txt', { type: 'text/plain' }));
+
+            reports.push(url);
+            onChange(url);
+          } catch (/** @type {any} */ error) {
+            reports.push(error);
+            onChange(error.message);
+          }
+        },
+      },
+      'Add',
+    ),
+    createElement(
+      'button',
+      {
+        type: 'button',
+        /**
+         * Pick a file.
+         * @returns {Promise<void>}
+         */
+        onClick: async () => {
+          try {
+            reports.push(await pickFile());
+          } catch (/** @type {any} */ error) {
+            reports.push(error);
+          }
+        },
+      },
+      'Pick',
+    ),
+  );
+
+describe('CustomEditor', () => {
+  test('renders the React control with the Netlify/Decap CMS-compatible props', async () => {
+    await renderEditor(3);
+
+    const input = page.getByRole('spinbutton');
+
+    await expect.element(input).toHaveValue(3);
+    await expect.element(input).toHaveAttribute('id', 'stars');
+    await expect.element(input).toHaveAttribute('max', '5');
+  });
+
+  test('renders the control only once on mount', async () => {
+    await renderEditor(3);
+    await expect.element(page.getByRole('spinbutton')).toHaveValue(3);
+
+    expect(buildControlProps).toHaveBeenCalledOnce();
+  });
+
+  test('writes a change reported by the control to the draft', async () => {
+    const { draft } = await renderEditor(3);
+
+    await page.getByRole('spinbutton').fill('4');
+
+    await expect.poll(() => draft.currentValues._default.stars).toBe(4);
+  });
+
+  test('re-renders the control when the value changes externally', async () => {
+    const { props } = await renderEditor(3);
+
+    await expect.element(page.getByRole('spinbutton')).toHaveValue(3);
+    props.currentValue = 5;
+    await expect.element(page.getByRole('spinbutton')).toHaveValue(5);
+  });
+
+  test('stores a non-primitive value under its key paths', async () => {
+    /**
+     * A control storing an object.
+     * @param {any} props Control props.
+     * @returns {any} React element.
+     */
+    const PointControl = ({ onChange }) => {
+      /**
+       * Report an object value.
+       * @returns {void} Nothing.
+       */
+      const onClick = () => onChange({ x: 1, y: 2 });
+
+      return createElement('button', { type: 'button', onClick }, 'Set');
+    };
+
+    const { draft } = await renderEditor(undefined, PointControl);
+
+    await page.getByRole('button', { name: 'Set' }).click();
+
+    await expect.poll(() => draft.currentValues._default['stars.x']).toBe(1);
+    expect(draft.currentValues._default['stars.y']).toBe(2);
+  });
+
+  test('clears a non-primitive value, dropping its key paths', async () => {
+    /**
+     * A control storing a list, which it can clear.
+     * @param {any} props Control props.
+     * @returns {any} React element.
+     */
+    const TagsControl = ({ onChange }) => {
+      /**
+       * Report a list value.
+       * @returns {void} Nothing.
+       */
+      const set = () => onChange(['a', 'b']);
+      /**
+       * Clear the value.
+       * @returns {void} Nothing.
+       */
+      const clear = () => onChange(null);
+
+      return createElement(
+        'div',
+        null,
+        createElement('button', { type: 'button', onClick: set }, 'Set'),
+        createElement('button', { type: 'button', onClick: clear }, 'Clear'),
+      );
+    };
+
+    const { draft } = await renderEditor(undefined, TagsControl);
+
+    await page.getByRole('button', { name: 'Set' }).click();
+    await expect.poll(() => draft.currentValues._default['stars.1']).toBe('b');
+    await page.getByRole('button', { name: 'Clear' }).click();
+
+    // The items would otherwise still make up the old value, so the control couldn’t be cleared
+    await expect.poll(() => draft.currentValues._default.stars).toBeNull();
+    expect(Object.keys(draft.currentValues._default)).toEqual(['stars']);
+  });
+
+  test('lets the control add a file to the draft', async () => {
+    reports.length = 0;
+
+    // The global folder the file is uploaded to
+    const folder = {
+      collectionName: undefined,
+      internalPath: 'static/uploads',
+      publicPath: '/uploads',
+      entryRelative: false,
+      hasTemplateTags: false,
+      isAssetCollection: false,
+    };
+
+    allAssetFolders.current = [folder];
+
+    try {
+      const { draft } = await renderEditor(undefined, FileControl);
+
+      await page.getByRole('button', { name: 'Add' }).click();
+
+      await expect.poll(() => draft.currentValues._default.stars).toMatch(/^blob:/);
+      expect(Object.values(draft.files)[0]).toEqual(
+        expect.objectContaining({ file: expect.any(File), folder }),
+      );
+    } finally {
+      allAssetFolders.current = [];
+    }
+  });
+
+  test('lets the control pick a file, unless the entry editor has been left', async () => {
+    reports.length = 0;
+
+    const { entryDraft } = await renderEditor(undefined, FileControl);
+
+    await page.getByRole('button', { name: 'Pick' }).click();
+
+    const dialog = page.getByRole('dialog', { name: 'Select File' });
+
+    await expect.element(dialog).toBeInTheDocument();
+    await dialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect.poll(() => reports).toEqual([null]);
+
+    // The helpers can’t be used once the draft is gone, but a control may still hold them
+    entryDraft.current = null;
+    await page.getByRole('button', { name: 'Add' }).click();
+    await page.getByRole('button', { name: 'Pick' }).click();
+    await expect.poll(() => reports.length).toBe(3);
+    expect(reports[1].message).toBe('addFile() can only be called while an entry is being edited');
+    expect(reports[2].message).toBe('pickFile() can only be called while an entry is being edited');
+  });
+
+  // A List with a single subfield gives it a context of its own, which mustn’t hide the component
+  test.each(['rich-text-editor-component', 'single-subfield-list-field'])(
+    'encodes spaces in a picked URL within a rich text editor component (%s)',
+    async (fieldContext) => {
+      reports.length = 0;
+
+      await renderEditor(undefined, FileControl, { fieldContext, valueStoreKey: 'extraValues' });
+
+      await page.getByRole('button', { name: 'Pick' }).click();
+
+      const dialog = page.getByRole('dialog', { name: 'Select File' });
+
+      await dialog.getByRole('option', { name: 'Enter URL' }).click();
+      await dialog.getByRole('textbox').fill('https://example.com/my doc.pdf');
+      await dialog.getByRole('button', { name: 'Insert' }).click();
+
+      await expect
+        .poll(() => reports)
+        .toEqual([expect.objectContaining({ value: 'https://example.com/my%20doc.pdf' })]);
+    },
+  );
+
+  test('registers the control instance for validation', async () => {
+    const isValid = vi.fn(() => true);
+    const { unmount } = await renderEditor(3, createValidatingControl(isValid));
+
+    await vi.waitFor(() => expect(isValid).toHaveBeenCalled());
+
+    // The instance is unregistered along with the control
+    unmount();
+    await expect.poll(() => document.querySelector('input')).toBeNull();
+  });
+
+  test('moves the validation along with the key path, e.g. when list items are reordered', async () => {
+    const isValid = vi.fn(() => ({ error: { message: 'Invalid' } }));
+    const { props, unmount } = await renderEditor(3, createValidatingControl(isValid));
+
+    /**
+     * Get the validity of the field at the given key path.
+     * @param {string} keyPath Key path.
+     * @returns {any} Validity.
+     */
+    const getValidity = (keyPath) => {
+      /** @type {Record<string, boolean>} */
+      const validity = {};
+
+      validateCustomField({ locale: '_default', keyPath, validity });
+
+      return validity;
+    };
+
+    await vi.waitFor(() => expect(isValid).toHaveBeenCalled());
+    await awaitCustomFieldValidations();
+    expect(getValidity('stars')).toEqual({ customError: true, customErrorMessage: 'Invalid' });
+
+    // The editor is kept while its list item moves, so the key path changes under it
+    isValid.mockClear();
+    props.keyPath = 'list.0.stars';
+    await vi.waitFor(() => expect(isValid).toHaveBeenCalled());
+    await awaitCustomFieldValidations();
+    expect(getValidity('list.0.stars')).toEqual({
+      customError: true,
+      customErrorMessage: 'Invalid',
+    });
+    // Nothing is left registered under the old key path
+    expect(getValidity('stars')).toEqual({});
+
+    unmount();
+    await expect.poll(() => document.querySelector('input')).toBeNull();
+    expect(getValidity('list.0.stars')).toEqual({});
+  });
+
+  test('renders a function control using hooks from the React the CMS exposes', async () => {
+    /**
+     * A control keeping a click count in state with the `useState` hook, and reporting it.
+     * @param {any} props Control props.
+     * @returns {any} React element.
+     */
+    const CounterControl = ({ value, onChange }) => {
+      const [count, setCount] = React.useState(value ?? 0);
+
+      return createElement(
+        'button',
+        {
+          type: 'button',
+          /**
+           * Increment the count.
+           * @returns {void} Nothing.
+           */
+          onClick: () => {
+            setCount(count + 1);
+            onChange(count + 1);
+          },
+        },
+        `Count: ${count}`,
+      );
+    };
+
+    const { draft } = await renderEditor(3, CounterControl);
+    const button = page.getByRole('button');
+
+    await expect.element(button).toHaveTextContent('Count: 3');
+    await button.click();
+    await expect.element(button).toHaveTextContent('Count: 4');
+    await expect.poll(() => draft.currentValues._default.stars).toBe(4);
+  });
+
+  test('registers an `isValid` method exposed by a function control for validation', async () => {
+    const isValid = vi.fn(() => true);
+    let renderCount = 0;
+
+    /**
+     * A function control exposing an `isValid` method with the `useImperativeHandle` hook. The
+     * handle is created again on every render, as no dependencies are given.
+     * @param {any} props Control props.
+     * @returns {any} React element.
+     */
+    const ValidatingControl = ({ value, ref }) => {
+      renderCount += 1;
+      React.useImperativeHandle(ref, () => ({ isValid }));
+
+      return createElement('input', { value: value ?? '', readOnly: true });
+    };
+
+    const { props } = await renderEditor(3, ValidatingControl);
+
+    await vi.waitFor(() => expect(isValid).toHaveBeenCalledWith(3, expect.anything()));
+
+    // A new handle doesn’t render the control again
+    await new Promise((resolve) => {
+      setTimeout(resolve, 100);
+    });
+
+    expect(renderCount).toBeLessThan(5);
+
+    // The value is validated again when it changes
+    props.currentValue = 4;
+    await vi.waitFor(() => expect(isValid).toHaveBeenCalledWith(4, expect.anything()));
+  });
+
+  test('validates the value again when another field in the entry changes', async () => {
+    const isValid = vi.fn(() => true);
+
+    /**
+     * A function control exposing an `isValid` method with the `useImperativeHandle` hook.
+     * @param {any} props Control props.
+     * @returns {any} React element.
+     */
+    const ValidatingControl = ({ value, ref }) => {
+      React.useImperativeHandle(ref, () => ({ isValid }), []);
+
+      return createElement('input', { value: value ?? '', readOnly: true });
+    };
+
+    const { entryDraft } = await renderEditor(3, ValidatingControl);
+
+    await vi.waitFor(() => expect(isValid).toHaveBeenCalled());
+    isValid.mockClear();
+    entryDraft.current.currentValues._default.title = 'Hello';
+    await vi.waitFor(() => expect(isValid).toHaveBeenCalledWith(3, expect.anything()));
+  });
+
+  test('registers an `isValid` method exposed by a `forwardRef` control', async () => {
+    const isValid = vi.fn(() => true);
+
+    const ValidatingControl = React.forwardRef(
+      /**
+       * A function control exposing an `isValid` method with the `useImperativeHandle` hook.
+       * @param {any} props Control props.
+       * @param {any} ref Ref to the control instance.
+       * @returns {any} React element.
+       */
+      ({ value }, ref) => {
+        React.useImperativeHandle(ref, () => ({ isValid }), []);
+
+        return createElement('input', { value: value ?? '', readOnly: true });
+      },
+    );
+
+    await renderEditor(3, ValidatingControl);
+
+    await vi.waitFor(() => expect(isValid).toHaveBeenCalled());
+  });
+});

@@ -1,6 +1,13 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { formatSummary } from '$lib/services/contents/fields/object/helpers';
+import {
+  formatSummary,
+  getTypedKeyPath,
+  getTypedSubKeyPath,
+  getUnknownTypeMessage,
+  resolveVariableType,
+  warnUnknownType,
+} from '$lib/services/contents/fields/object/helpers';
 
 vi.mock('$lib/services/config');
 
@@ -28,6 +35,29 @@ describe('Test formatSummary() — comprehensive tests', async () => {
                 { name: 'hidden_field', widget: 'hidden' },
                 { name: 'tags', widget: 'list', field: { name: 'tag', widget: 'string' } },
                 { name: 'rating', widget: 'number' },
+                { name: 'body', widget: 'richtext' },
+              ],
+            },
+            {
+              name: 'section',
+              widget: 'object',
+              types: [
+                {
+                  name: 'text',
+                  summary: '{{body}}',
+                  fields: [{ name: 'body', widget: 'richtext' }],
+                },
+              ],
+            },
+            {
+              name: 'content_blocks',
+              widget: 'list',
+              types: [
+                {
+                  name: 'text',
+                  summary: '{{body}}',
+                  fields: [{ name: 'body', widget: 'richtext' }],
+                },
               ],
             },
           ],
@@ -327,6 +357,21 @@ describe('Test formatSummary() — comprehensive tests', async () => {
       ).toEqual('Main Title');
     });
 
+    test('should resolve several nested templates in a transformation argument', () => {
+      expect(
+        formatSummary({
+          ...baseArgs,
+          valueMap: {
+            'metadata.description': '',
+            'metadata.title': 'Main Title',
+            'metadata.name': 'Jane',
+          },
+          summaryTemplate:
+            "{{fields.description | default('{{fields.title}} by {{fields.name}}')}}",
+        }),
+      ).toEqual('Main Title by Jane');
+    });
+
     test('should handle nested templates with missing inner field', () => {
       expect(
         formatSummary({
@@ -444,5 +489,183 @@ describe('Test formatSummary() — comprehensive tests', async () => {
 
       expect(result1).toEqual(result2);
     });
+  });
+
+  describe('Rich Text field values', () => {
+    const markdown =
+      'A **richtext** _widget_ as summary\n\nshows [raw](https://example.com) markdown';
+
+    const html = '<p>A <strong>richtext</strong> <em>widget</em> as summary shows raw markdown</p>';
+    const plainText = 'A richtext widget as summary shows raw markdown';
+
+    test('should strip Markdown syntax and HTML tags in an Object field summary', () => {
+      [markdown, html].forEach((body) => {
+        expect(formatSummary({ ...baseArgs, valueMap: { 'metadata.body': body } })).toEqual(
+          plainText,
+        );
+
+        expect(
+          formatSummary({
+            ...baseArgs,
+            valueMap: { 'metadata.body': body },
+            summaryTemplate: '{{fields.body}}',
+          }),
+        ).toEqual(plainText);
+      });
+    });
+
+    test('should strip Markdown syntax and HTML tags in a typed Object field summary', () => {
+      [markdown, html].forEach((body) => {
+        expect(
+          formatSummary({
+            ...baseArgs,
+            keyPath: 'section',
+            valueMap: { 'section.type': 'text', 'section.body': body },
+            summaryTemplate: '{{body}}',
+          }),
+        ).toEqual(plainText);
+      });
+    });
+
+    test('should strip Markdown syntax and HTML tags in a typed List field item summary', () => {
+      [markdown, html].forEach((body) => {
+        expect(
+          formatSummary({
+            ...baseArgs,
+            keyPath: 'content_blocks',
+            itemKeyPath: 'content_blocks.0',
+            valueMap: { 'content_blocks.0.type': 'text', 'content_blocks.0.body': body },
+            summaryTemplate: '{{body}}',
+          }),
+        ).toEqual(plainText);
+      });
+    });
+  });
+});
+
+describe('getUnknownTypeMessage()', () => {
+  const types = [{ name: 'image' }, { name: 'text' }];
+
+  test('names a type the field doesn’t define', () => {
+    expect(
+      getUnknownTypeMessage({ fieldType: 'object', type: 'video', typeKey: 'type', types }),
+    ).toBe('The “video” type is not defined for the object field.');
+    expect(
+      getUnknownTypeMessage({ fieldType: 'list', type: 'video', typeKey: 'type', types }),
+    ).toBe('The “video” type is not defined for the list field.');
+  });
+
+  test('explains a missing type key', () => {
+    expect(
+      getUnknownTypeMessage({ fieldType: 'object', type: undefined, typeKey: 'kind', types }),
+    ).toBe(
+      'The type key is not found in the object. The item must include the “kind” property with ' +
+        'one of the defined types: image, text',
+    );
+    expect(
+      getUnknownTypeMessage({ fieldType: 'list', type: undefined, typeKey: 'kind', types }),
+    ).toBe(
+      'The type key is not found in the list item. The item must include the “kind” property ' +
+        'with one of the defined types: image, text',
+    );
+  });
+});
+
+describe('warnUnknownType()', () => {
+  const types = [{ name: 'image' }];
+
+  test('logs the message with the field or item key path', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    warnUnknownType({
+      fieldType: 'object',
+      keyPath: 'hero',
+      type: 'video',
+      typeKey: 'type',
+      types,
+    });
+    warnUnknownType({
+      fieldType: 'list',
+      keyPath: 'blocks.1',
+      type: 'video',
+      typeKey: 'type',
+      types,
+    });
+
+    expect(warn.mock.calls).toEqual([
+      ['Object field hero: The “video” type is not defined for the object field.'],
+      ['List item blocks.1: The “video” type is not defined for the list field.'],
+    ]);
+
+    warn.mockRestore();
+  });
+});
+
+describe('resolveVariableType()', () => {
+  const fields = [{ name: 'title' }];
+
+  const types = [
+    { name: 'image', fields: [{ name: 'src' }], summary: '{{fields.src}}' },
+    { name: 'text' },
+  ];
+
+  test('returns the subfields of a field without variable types', () => {
+    expect(resolveVariableType({ fields, summary: '{{fields.title}}', type: 'image' })).toEqual({
+      typeConfig: undefined,
+      unknownType: false,
+      subFields: fields,
+      summaryTemplate: '{{fields.title}}',
+    });
+    expect(resolveVariableType({})).toEqual({
+      typeConfig: undefined,
+      unknownType: false,
+      subFields: [],
+      summaryTemplate: undefined,
+    });
+  });
+
+  test('returns the subfields and summary of a known type', () => {
+    expect(resolveVariableType({ types, fields, summary: 'default', type: 'image' })).toEqual({
+      typeConfig: types[0],
+      unknownType: false,
+      subFields: types[0].fields,
+      summaryTemplate: '{{fields.src}}',
+    });
+    expect(resolveVariableType({ types, summary: 'default', type: 'text' })).toEqual({
+      typeConfig: types[1],
+      unknownType: false,
+      subFields: [],
+      summaryTemplate: 'default',
+    });
+  });
+
+  test('flags a missing or unknown type', () => {
+    const expected = {
+      typeConfig: undefined,
+      unknownType: true,
+      subFields: [],
+      summaryTemplate: 'default',
+    };
+
+    expect(resolveVariableType({ types, fields, summary: 'default', type: 'video' })).toEqual(
+      expected,
+    );
+    expect(resolveVariableType({ types, fields, summary: 'default' })).toEqual(expected);
+  });
+});
+
+describe('getTypedKeyPath()', () => {
+  test('adds the type, if any', () => {
+    expect(getTypedKeyPath('sections.*', 'banner')).toBe('sections.*<banner>');
+    expect(getTypedKeyPath('hero', undefined)).toBe('hero');
+  });
+});
+
+describe('getTypedSubKeyPath()', () => {
+  test('appends the subfield name to the typed key path', () => {
+    expect(
+      getTypedSubKeyPath({ typedKeyPath: 'sections.*', type: 'banner', subFieldName: 'title' }),
+    ).toBe('sections.*<banner>.title');
+    expect(getTypedSubKeyPath({ typedKeyPath: 'hero', subFieldName: 'title' })).toBe('hero.title');
   });
 });

@@ -1,0 +1,1975 @@
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { page, userEvent } from 'vitest/browser';
+
+import { getConversationCount } from '$lib/services/additions/conversation.svelte';
+import { entryLocks, getLockKey } from '$lib/services/additions/locks.svelte';
+import { loadAdditions } from '$lib/services/app/additions';
+import { allAssetFolders } from '$lib/services/assets/folders';
+import { backendName } from '$lib/services/backends';
+import { reportCommits } from '$lib/services/backends/commit-progress';
+import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
+import { cmsConfig } from '$lib/services/config';
+import { getCollection } from '$lib/services/contents/collection';
+import {
+  contentUpdatesToast,
+  UPDATE_TOAST_DEFAULT_STATE,
+} from '$lib/services/contents/collection/data';
+import { deleteEntries } from '$lib/services/contents/collection/data/delete';
+import { nestedFilterPath } from '$lib/services/contents/collection/nested';
+import { duplicateDraft } from '$lib/services/contents/draft/create/duplicate';
+import { saveEntry } from '$lib/services/contents/draft/save';
+import { copyFromLocaleToast, listItemClipboardToast } from '$lib/services/contents/editor';
+import { trackPendingFieldUpdate } from '$lib/services/contents/editor/pending';
+import { entryEditorSettings } from '$lib/services/contents/editor/settings';
+import { sidebarSheetPanel } from '$lib/services/contents/editor/sidebar';
+import { deployPollTimedOut } from '$lib/services/deployments';
+import { recheckDeployments } from '$lib/services/deployments/poll';
+import { env } from '$lib/services/user/env.svelte';
+import { prefs } from '$lib/services/user/prefs.svelte';
+import { formatDate } from '$lib/services/utils/date';
+import { allUnpublishedEntries } from '$lib/services/workflow';
+import {
+  deleteWorkflowEntries,
+  discardWorkflowEntries,
+  discardWorkflowEntry,
+  publishWorkflowEntry,
+  updateWorkflowStatus,
+} from '$lib/services/workflow/save';
+import {
+  createMockAsset,
+  createMockEntry,
+  createMockForkPullRequest,
+  initTestConfig,
+  setAssets,
+  setEntries,
+} from '$lib/test/config';
+import { createMockDraft, renderWithDraft } from '$lib/test/draft';
+import { getShownToastText, waitForToastsToHide } from '$lib/test/toast';
+
+import Toolbar from './toolbar.svelte';
+
+vi.mock('$lib/services/contents/draft/save', () => ({ saveEntry: vi.fn() }));
+// Comments are kept by Sveltia CMS Additions, which only one test turns on
+vi.mock('$lib/services/additions/conversation.svelte', async (importOriginal) => ({
+  ...(await importOriginal()),
+  getConversationCount: vi.fn(() => 0),
+}));
+vi.mock('$lib/services/contents/collection/data/delete', () => ({
+  updateStores: vi.fn(),
+  deleteEntries: vi.fn(),
+}));
+vi.mock('$lib/services/contents/draft/create/duplicate', () => ({ duplicateDraft: vi.fn() }));
+vi.mock('$lib/services/deployments/poll', () => ({
+  retainDeployPolling: vi.fn(() => () => {}),
+  recheckDeployments: vi.fn(),
+}));
+vi.mock('$lib/services/workflow/save', () => ({
+  upsertUnpublishedEntry: vi.fn(),
+  removeUnpublishedEntry: vi.fn(),
+  saveWorkflowChanges: vi.fn(),
+  updateWorkflowStatus: vi.fn(),
+  publishWorkflowEntry: vi.fn(),
+  publishReviewedEntry: vi.fn(),
+  discardWorkflowEntry: vi.fn(),
+  deleteWorkflowEntry: vi.fn(),
+  discardWorkflowEntries: vi.fn(),
+  deleteWorkflowEntries: vi.fn(),
+}));
+
+const fields = [{ name: 'title', widget: 'string' }];
+const postsCollection = { name: 'posts', label: 'Posts', folder: 'content/posts', fields };
+const helloEntry = createMockEntry({ slug: 'hello', content: { _default: { title: 'Hello' } } });
+const worldEntry = createMockEntry({ slug: 'world', content: { _default: { title: 'World' } } });
+
+/**
+ * Open another entry in the editor, as the user can do with the Back button while a save is in
+ * flight.
+ * @param {any} entryDraft Entry draft state.
+ * @returns {any} Draft of the other entry, with a change of its own.
+ */
+const openOtherEntry = (entryDraft) => {
+  const draft = createMockDraft({
+    fields,
+    values: { _default: { title: 'World edited' } },
+    draft: { collection: getCollection('posts'), isNew: false, originalEntry: worldEntry },
+  });
+
+  entryDraft.current = draft;
+  window.location.hash = '#/collections/posts/entries/world';
+
+  return draft;
+};
+
+/**
+ * Render the toolbar.
+ * @param {Record<string, any>} [draftProps] Draft properties to override.
+ * @param {Record<string, any>} [props] Props.
+ * @returns {Promise<{ draft: any, entryDraft: any }>} Draft and its state.
+ */
+const renderToolbar = async (draftProps = {}, props = {}) => {
+  const draft = createMockDraft({
+    fields,
+    values: { _default: { title: 'Hello' } },
+    draft: { collection: getCollection('posts'), ...draftProps },
+  });
+
+  const { entryDraft } = await renderWithDraft(Toolbar, { draft, props });
+
+  return { draft, entryDraft };
+};
+
+/**
+ * Render the toolbar for an existing entry.
+ * @param {Record<string, any>} [draftProps] Draft properties to override.
+ * @returns {Promise<{ draft: any, entryDraft: any }>} Draft and its state.
+ */
+const renderExisting = (draftProps = {}) =>
+  renderToolbar({ isNew: false, originalEntry: helloEntry, ...draftProps });
+
+/**
+ * Open the editor options menu.
+ * @returns {Promise<import('vitest/browser').Locator>} Menu.
+ */
+const openMenu = async () => {
+  await page.getByRole('button', { name: 'Show Editor Options' }).click();
+
+  return page.getByRole('menu', { name: 'Editor Options' });
+};
+
+describe('Toolbar', () => {
+  beforeEach(async () => {
+    await initTestConfig({
+      site_url: 'https://example.com',
+      collections: [{ ...postsCollection, preview_path: 'posts/{{slug}}' }],
+    });
+    setEntries([helloEntry]);
+    backendName.current = undefined;
+    env.isSmallScreen = false;
+    env.isLargeScreen = true;
+    prefs.closeOnSave = true;
+    entryEditorSettings.current = { showPreview: true, showSecondPane: true, syncScrolling: true };
+    sidebarSheetPanel.current = null;
+    allUnpublishedEntries.current = [];
+    deployPollTimedOut.current = false;
+    contentUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE };
+    copyFromLocaleToast.current = { ...copyFromLocaleToast.current, show: false };
+    window.location.hash = '#/collections/posts/new';
+    vi.mocked(saveEntry).mockResolvedValue(/** @type {any} */ (helloEntry));
+  });
+
+  test('saves a new entry and goes back to the list', async () => {
+    const { draft, entryDraft } = await renderToolbar();
+    const toolbar = page.getByRole('toolbar', { name: 'Primary' });
+
+    expect(toolbar.element().querySelector('h2')).toHaveTextContent('Creating \u2068Posts\u2069');
+
+    const save = toolbar.getByRole('button', { name: 'Save' });
+
+    // A new entry can always be saved
+    await expect.element(save).toBeEnabled();
+    await save.click();
+
+    await vi.waitFor(() =>
+      expect(saveEntry).toHaveBeenCalledWith({
+        draft,
+        skipCI: undefined,
+        overwrite: false,
+        publish: false,
+      }),
+    );
+    await expect.poll(() => window.location.hash).toBe('#/collections/posts');
+    expect(entryDraft.current).toBeNull();
+  });
+
+  test('keeps the editor open when preferred', async () => {
+    prefs.closeOnSave = false;
+
+    const { entryDraft } = await renderToolbar();
+
+    await page.getByRole('button', { name: 'Save' }).click();
+
+    // The URL now points to the saved entry, and the draft is recreated from it
+    await expect.poll(() => window.location.hash).toBe('#/collections/posts/entries/hello');
+    await expect.poll(() => entryDraft.current?.isNew).toBe(false);
+  });
+
+  test('shows the entry title, and saves once modified', async () => {
+    const { draft } = await renderExisting();
+    const toolbar = page.getByRole('toolbar', { name: 'Primary' });
+
+    expect(toolbar.element().querySelector('h2')).toHaveTextContent('Posts › Hello');
+    await expect.element(toolbar.getByRole('button', { name: 'View on Live Site' })).toBeEnabled();
+
+    const save = toolbar.getByRole('button', { name: 'Save' });
+
+    await expect.element(save).toBeDisabled();
+    draft.currentValues._default.title = 'Hi';
+    await expect.element(save).toBeEnabled();
+  });
+
+  test('reports the progress of a long save, and keeps the button disabled until it ends', async () => {
+    const { draft } = await renderExisting();
+    const save = page.getByRole('button', { name: 'Save' });
+    const { promise, resolve } = Promise.withResolvers();
+
+    vi.mocked(saveEntry).mockImplementation(async () => {
+      reportCommits(12, 26);
+      await promise;
+
+      return /** @type {any} */ (helloEntry);
+    });
+
+    draft.currentValues._default.title = 'Hi';
+    await expect.element(save).toBeEnabled();
+    await save.click();
+
+    const status = /** @type {HTMLElement} */ (document.querySelector('.save-progress'));
+
+    await expect.element(status).toMatchTextContent('Saving to GitHub: 12 of about 26 commits');
+    expect(status.getAttribute('aria-live')).toBe('polite');
+    await expect.element(page.getByRole('button', { name: 'Saving…' })).toBeDisabled();
+    resolve(undefined);
+    await expect.element(page.getByText('Saving to GitHub')).not.toBeInTheDocument();
+  });
+
+  test('can be saved while a change is on its way to the draft', async () => {
+    const { draft } = await renderExisting();
+    const save = page.getByRole('button', { name: 'Save' });
+    const { promise, resolve } = Promise.withResolvers();
+
+    await expect.element(save).toBeDisabled();
+    // A rich text editor writes a change to the draft a moment after it’s made
+    trackPendingFieldUpdate(promise);
+    await expect.element(save).toBeEnabled();
+    await save.click();
+    draft.currentValues._default.title = 'Hi';
+    resolve(undefined);
+
+    await vi.waitFor(() =>
+      expect(saveEntry).toHaveBeenCalledWith({
+        draft,
+        skipCI: undefined,
+        overwrite: false,
+        publish: false,
+      }),
+    );
+  });
+
+  test('doesn’t save once a pending change turns out to change nothing', async () => {
+    await renderExisting();
+
+    const save = page.getByRole('button', { name: 'Save' });
+    const { promise, resolve } = Promise.withResolvers();
+
+    trackPendingFieldUpdate(promise);
+    await save.click();
+    resolve(undefined);
+
+    await expect.element(save).toBeDisabled();
+    expect(saveEntry).not.toHaveBeenCalled();
+  });
+
+  test('reports the fields that failed validation', async () => {
+    vi.mocked(saveEntry).mockRejectedValue(new Error('validation_failed'));
+
+    await renderToolbar({
+      validities: { _default: { title: { valid: false }, body: { valid: false } } },
+    });
+    await page.getByRole('button', { name: 'Save' }).click();
+
+    await expect
+      .element(page.getByRole('alert'))
+      .toHaveTextContent(
+        'error Error 2 fields have errors. Please correct them to save the entry. Show Errors',
+      );
+
+    // The button opens the Validation panel in the sidebar, and puts the toast away
+    await page.getByRole('button', { name: 'Show Errors' }).click();
+    expect(entryEditorSettings.current?.sidebarPanel).toBe('validation');
+    expect(sidebarSheetPanel.current).toBeNull();
+    await expect.poll(() => getShownToastText()).toBeUndefined();
+  });
+
+  test('puts the validation error toast away by itself', async () => {
+    vi.mocked(saveEntry).mockRejectedValue(new Error('validation_failed'));
+
+    await renderToolbar({ validities: { _default: { title: { valid: false } } } });
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect.element(page.getByRole('button', { name: 'Show Errors' })).toBeVisible();
+
+    await waitForToastsToHide();
+  });
+
+  test('offers no sidebar panels for a missing entry on a small screen', async () => {
+    env.isSmallScreen = true;
+    env.isLargeScreen = false;
+
+    await renderWithDraft(Toolbar, { draft: undefined });
+
+    const menu = await openMenu();
+
+    await expect.element(menu.getByRole('menuitem', { name: 'Revert All Changes' })).toBeVisible();
+    expect(menu.getByRole('menuitem', { name: 'Validation' }).elements()).toHaveLength(0);
+  });
+
+  test('opens the sidebar panels in the sheet on a small screen', async () => {
+    env.isSmallScreen = true;
+    env.isLargeScreen = false;
+    vi.mocked(saveEntry).mockRejectedValue(new Error('validation_failed'));
+
+    await renderToolbar({ validities: { _default: { title: { valid: false } } } });
+
+    const menu = await openMenu();
+
+    // A new entry has no history, and nothing refers to the collection
+    await expect.element(menu.getByRole('menuitem', { name: 'Validation' })).toBeEnabled();
+    await expect.element(menu.getByRole('menuitem', { name: 'History' })).toBeDisabled();
+    await expect.element(menu.getByRole('menuitem', { name: 'Backlinks' })).toBeDisabled();
+
+    await menu.getByRole('menuitem', { name: 'Validation' }).click();
+    expect(sidebarSheetPanel.current).toBe('validation');
+    // The sheet isn’t remembered
+    expect(entryEditorSettings.current?.sidebarPanel).toBeUndefined();
+
+    sidebarSheetPanel.current = null;
+    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Show Errors' }).click();
+    expect(sidebarSheetPanel.current).toBe('validation');
+  });
+
+  test('shows the comment count on the Conversation item on a small screen', async () => {
+    env.isSmallScreen = true;
+    env.isLargeScreen = false;
+    cmsConfig.current = /** @type {any} */ ({
+      ...cmsConfig.current,
+      backend: { name: 'github', repo: 'me/site', auth_type: 'additions' },
+    });
+    vi.mocked(getConversationCount).mockReturnValue(3);
+
+    try {
+      await loadAdditions();
+      await renderToolbar();
+
+      const menu = await openMenu();
+
+      await expect
+        .element(menu.getByRole('menuitem', { name: /^.Conversation. \(3\)$/ }))
+        .toBeVisible();
+    } finally {
+      vi.mocked(getConversationCount).mockReturnValue(0);
+    }
+  });
+
+  test('shows who else has the entry open, with Sveltia CMS Additions only', async () => {
+    const key = getLockKey('posts', helloEntry.subPath);
+
+    Object.assign(entryLocks, {
+      userId: 'u1',
+      presence: { [key]: [{ connection: 'theirs', user_id: 'u2', name: 'Ada Lovelace' }] },
+    });
+
+    const label = 'Also open by \u2068Ada Lovelace\u2069';
+
+    try {
+      await renderExisting();
+      await expect.element(page.getByRole('button', { name: 'Save' })).toBeVisible();
+      expect(page.getByRole('img', { name: label }).elements()).toHaveLength(0);
+
+      cmsConfig.current = /** @type {any} */ ({
+        ...cmsConfig.current,
+        backend: { name: 'github', repo: 'me/site', auth_type: 'additions' },
+      });
+      await loadAdditions();
+
+      const avatars = page
+        .getByRole('toolbar', { name: 'Primary' })
+        .getByRole('img', { name: label });
+
+      await expect.element(avatars).toBeVisible();
+      await expect.element(avatars).toHaveTextContent('AL');
+    } finally {
+      Object.assign(entryLocks, { userId: '', presence: {} });
+    }
+  });
+
+  test('reports a failure to save', async () => {
+    vi.mocked(saveEntry).mockRejectedValue(
+      new Error('saving_failed', { cause: new Error('Server is down') }),
+    );
+
+    await renderToolbar();
+    await page.getByRole('button', { name: 'Save' }).click();
+
+    const dialog = page.getByRole('alertdialog', { name: 'Error' });
+
+    await expect.element(dialog).toBeInTheDocument();
+    expect(dialog.element().textContent).toContain('Server is down');
+  });
+
+  test('asks before saving over someone else’s change, and saves when told to', async () => {
+    const commitDate = new Date('2026-03-04T05:06:00Z');
+
+    vi.mocked(saveEntry)
+      .mockRejectedValueOnce(
+        new Error('save_conflict', {
+          cause: {
+            type: 'modified',
+            entry: { ...helloEntry, commitAuthor: { name: 'Alex' }, commitDate },
+            canOverwrite: true,
+          },
+        }),
+      )
+      .mockResolvedValueOnce(/** @type {any} */ (helloEntry));
+
+    const { draft, entryDraft } = await renderExisting();
+    const save = page.getByRole('button', { name: 'Save' });
+
+    draft.currentValues._default.title = 'Hi';
+    await expect.element(save).toBeEnabled();
+    await save.click();
+
+    const dialog = page.getByRole('alertdialog', { name: 'Entry Changed by Someone Else' });
+
+    await expect.element(dialog).toBeInTheDocument();
+    expect(dialog.element().textContent?.replace(/\s+/g, ' ')).toContain(
+      `\u2068Alex\u2069 changed this entry on \u2068${formatDate(commitDate, 'en-US')}\u2069, ` +
+        'after you opened it. If you save now, their changes will be lost.',
+    );
+
+    await dialog.getByRole('button', { name: 'Save Anyway' }).click();
+
+    await vi.waitFor(() =>
+      expect(saveEntry).toHaveBeenLastCalledWith({
+        draft,
+        skipCI: undefined,
+        overwrite: true,
+        publish: false,
+      }),
+    );
+    // Saved and closed
+    await expect.poll(() => entryDraft.current).toBe(null);
+  });
+
+  test('says when the entry was deleted by someone else, and leaves it when cancelled', async () => {
+    vi.mocked(saveEntry).mockRejectedValue(
+      new Error('save_conflict', { cause: { type: 'deleted', canOverwrite: true } }),
+    );
+
+    const { draft, entryDraft } = await renderExisting();
+    const save = page.getByRole('button', { name: 'Save' });
+
+    draft.currentValues._default.title = 'Hi';
+    await expect.element(save).toBeEnabled();
+    await save.click();
+
+    const dialog = page.getByRole('alertdialog', { name: 'Entry Changed by Someone Else' });
+
+    await expect.element(dialog).toBeInTheDocument();
+    expect(dialog.element().textContent?.replace(/\s+/g, ' ')).toContain(
+      'This entry has been deleted from the repository after you opened it. ' +
+        'If you save now, the entry will be created again.',
+    );
+
+    await dialog.getByRole('button', { name: 'Cancel' }).click();
+
+    await expect.element(dialog).not.toBeInTheDocument();
+    expect(saveEntry).toHaveBeenCalledOnce();
+    // Still editing
+    expect(entryDraft.current).toBe(draft);
+  });
+
+  test('only tells what happened when the entry can’t be saved over the change', async () => {
+    // An entry stored in a file with the other entries is told by its position
+    vi.mocked(saveEntry).mockRejectedValue(
+      new Error('save_conflict', {
+        cause: { type: 'modified', entry: helloEntry, canOverwrite: false },
+      }),
+    );
+
+    const { draft, entryDraft } = await renderExisting();
+    const save = page.getByRole('button', { name: 'Save' });
+
+    draft.currentValues._default.title = 'Hi';
+    await expect.element(save).toBeEnabled();
+    await save.click();
+
+    const dialog = page.getByRole('alertdialog', { name: 'Entry Changed by Someone Else' });
+
+    await expect.element(dialog).toBeInTheDocument();
+    expect(dialog.element().textContent?.replace(/\s+/g, ' ')).toContain(
+      'This entry has been changed in the repository after you opened it. As the entry is ' +
+        'stored in the same file as other entries, it can’t be saved over the change.',
+    );
+    await expect
+      .element(dialog.getByRole('button', { name: 'Save Anyway' }))
+      .not.toBeInTheDocument();
+
+    await dialog.getByRole('button', { name: 'OK' }).click();
+
+    await expect.element(dialog).not.toBeInTheDocument();
+    expect(saveEntry).toHaveBeenCalledOnce();
+    // Still editing
+    expect(entryDraft.current).toBe(draft);
+  });
+
+  test('duplicates the entry once its assets are copied, then opens the duplicate', async () => {
+    const { promise, resolve } = Promise.withResolvers();
+
+    vi.mocked(duplicateDraft).mockReturnValue(/** @type {any} */ (promise));
+    window.location.hash = '#/collections/posts/entries/hello';
+
+    const { draft } = await renderExisting();
+
+    await (await openMenu()).getByRole('menuitem', { name: 'Duplicate Entry' }).click();
+    await vi.waitFor(() => expect(duplicateDraft).toHaveBeenCalledOnce());
+
+    // Copying the assets takes a moment, during which the controls are locked
+    const options = page.getByRole('button', { name: 'Show Editor Options' });
+
+    await expect.element(options).toBeDisabled();
+    expect(window.location.hash).toBe('#/collections/posts/entries/hello');
+
+    resolve(draft);
+    await expect.poll(() => window.location.hash).toBe('#/collections/posts/new');
+    await expect.element(options).toBeEnabled();
+  });
+
+  test('stays put when the editor is left while duplicating', async () => {
+    // The duplication is called off when the draft is gone by the time the assets are copied
+    vi.mocked(duplicateDraft).mockResolvedValue(undefined);
+    window.location.hash = '#/collections/posts/entries/hello';
+
+    await renderExisting();
+    await (await openMenu()).getByRole('menuitem', { name: 'Duplicate Entry' }).click();
+    await vi.waitFor(() => expect(duplicateDraft).toHaveBeenCalledOnce());
+    await expect.element(page.getByRole('button', { name: 'Show Editor Options' })).toBeEnabled();
+    expect(window.location.hash).toBe('#/collections/posts/entries/hello');
+  });
+
+  test('offers to duplicate an entry stored as a page bundle', async () => {
+    // An entry with assets of its own can be duplicated too, as they’re copied along with it
+    await initTestConfig({
+      site_url: 'https://example.com',
+      collections: [{ ...postsCollection, name: 'bundles', path: '{{slug}}/index' }],
+    });
+
+    await renderToolbar({
+      isNew: false,
+      originalEntry: helloEntry,
+      collection: getCollection('bundles'),
+    });
+
+    await expect
+      .element((await openMenu()).getByRole('menuitem', { name: 'Duplicate Entry' }))
+      .toBeEnabled();
+  });
+
+  test('offers to duplicate, delete, rename and revert an existing entry', async () => {
+    vi.mocked(deleteEntries).mockResolvedValue(undefined);
+
+    const { draft } = await renderExisting();
+    const menu = await openMenu();
+
+    // The live site link is in the toolbar on a large screen, not in the menu
+    expect(
+      menu
+        .getByRole('menuitem')
+        .elements()
+        .map((el) => el.textContent?.trim()),
+    ).toEqual([
+      'Duplicate',
+      'Delete',
+      'Edit Slug',
+      'Revert All Changes',
+      'Restore Default',
+      'Clear All',
+    ]);
+    await expect.element(menu.getByRole('menuitem', { name: 'Edit Slug' })).toBeEnabled();
+    await expect.element(menu.getByRole('menuitem', { name: 'Revert All Changes' })).toBeDisabled();
+    // A checked item has a check icon
+    expect(
+      menu
+        .getByRole('menuitemcheckbox')
+        .elements()
+        .map((el) => el.textContent?.trim().replace(/\s*check$/, '')),
+    ).toEqual(['Show Second Pane', 'Show Preview', 'Sync Scrolling']);
+
+    await menu.getByRole('menuitem', { name: 'Duplicate Entry' }).click();
+    await vi.waitFor(() => expect(duplicateDraft).toHaveBeenCalled());
+
+    await expect.poll(() => document.querySelector('dialog.popup')).toBeNull();
+    await (await openMenu()).getByRole('menuitem', { name: 'Delete Entry' }).click();
+
+    const dialog = page.getByRole('alertdialog', { name: 'Delete Entry' });
+
+    await expect
+      .element(dialog)
+      .toHaveTextContent('Delete Entry Are you sure you want to delete this entry? Delete Cancel');
+    await dialog.getByRole('button', { name: 'Delete' }).click();
+
+    await vi.waitFor(() => expect(deleteEntries).toHaveBeenCalledWith([helloEntry], []));
+    await expect.poll(() => window.location.hash).toBe('#/collections/posts');
+
+    // The draft is left alone, as the list page reports the outcome
+    expect(draft.isNew).toBe(false);
+  });
+
+  describe('deleting a referenced entry', () => {
+    const travelTag = createMockEntry({
+      slug: 'travel',
+      folder: 'content/tags',
+      content: { _default: { title: 'Travel' } },
+    });
+
+    /**
+     * Load the given posts along with the tag, and open the deletion dialog for the tag.
+     * @param {Record<string, any>[]} posts Flattened content of each post.
+     * @returns {Promise<import('vitest/browser').Locator>} Dialog.
+     */
+    const openDeleteDialog = async (posts) => {
+      setEntries([
+        travelTag,
+        ...posts.map((content, index) =>
+          createMockEntry({ slug: `post-${index}`, content: { _default: content } }),
+        ),
+      ]);
+
+      await renderToolbar({
+        isNew: false,
+        originalEntry: travelTag,
+        collectionName: 'tags',
+        collection: getCollection('tags'),
+      });
+      await (await openMenu()).getByRole('menuitem', { name: 'Delete Entry' }).click();
+
+      return page.getByRole('alertdialog', { name: 'Delete Entry' });
+    };
+
+    beforeEach(async () => {
+      await initTestConfig({
+        collections: [
+          {
+            name: 'tags',
+            label: 'Tags',
+            folder: 'content/tags',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+          {
+            ...postsCollection,
+            fields: [
+              { name: 'title', widget: 'string' },
+              { name: 'category', label: 'Category', widget: 'relation', collection: 'tags' },
+              {
+                name: 'topic',
+                label: 'Topic',
+                widget: 'relation',
+                collection: 'tags',
+                required: false,
+              },
+            ],
+          },
+        ],
+      });
+      window.location.hash = '#/collections/tags/entries/travel';
+      vi.mocked(deleteEntries).mockResolvedValue(undefined);
+    });
+
+    test('notes the entry whose reference is removed', async () => {
+      const dialog = await openDeleteDialog([{ title: 'A', topic: 'travel' }]);
+
+      await expect
+        .element(dialog)
+        .toHaveTextContent(
+          'Delete Entry Are you sure you want to delete this entry? The reference to it in ' +
+            'another entry will be removed as well. Delete Cancel',
+        );
+      await dialog.getByRole('button', { name: 'Delete' }).click();
+
+      await vi.waitFor(() => expect(deleteEntries).toHaveBeenCalledWith([travelTag], []));
+    });
+
+    test('refuses the deletion when a required field would be left empty', async () => {
+      const dialog = await openDeleteDialog([
+        { title: 'A', category: 'travel' },
+        { title: 'B', topic: 'travel' },
+      ]);
+
+      await expect
+        .element(dialog.getByRole('alert'))
+        .toMatchTextContent('This entry can’t be deleted');
+      // There’s nothing to confirm
+      await expect.element(dialog).not.toMatchTextContent('Are you sure');
+      await expect
+        .element(dialog.getByRole('listitem'))
+        .toHaveTextContent('Posts › A Category: This field is required.');
+      await expect.element(dialog.getByRole('button', { name: 'Delete' })).toBeDisabled();
+    });
+  });
+
+  test('offers nothing that would change a read-only entry', async () => {
+    await renderExisting({ collection: { ...getCollection('posts'), readonly: true } });
+
+    const toolbar = page.getByRole('toolbar', { name: 'Primary' });
+
+    expect(toolbar.getByRole('button', { name: 'Save' }).elements()).toHaveLength(0);
+
+    const menu = await openMenu();
+
+    expect(menu.getByRole('menuitem', { name: 'Duplicate' }).elements()).toHaveLength(0);
+    expect(menu.getByRole('menuitem', { name: 'Delete' }).elements()).toHaveLength(0);
+    await expect.element(menu.getByRole('menuitem', { name: 'Edit Slug' })).toBeDisabled();
+    // The view options are still there
+    await expect
+      .element(menu.getByRole('menuitemcheckbox', { name: 'Show Preview' }))
+      .toBeInTheDocument();
+  });
+
+  test('opens the Slug panel', async () => {
+    await renderExisting({ currentSlugs: { _default: 'hello' } });
+    await (await openMenu()).getByRole('menuitem', { name: 'Edit Slug' }).click();
+
+    expect(entryEditorSettings.current?.sidebarPanel).toBe('slug');
+  });
+
+  test('reverts the changes', async () => {
+    const { draft } = await renderExisting();
+
+    draft.currentValues._default.title = 'Hi';
+
+    const menu = await openMenu();
+
+    await menu.getByRole('menuitem', { name: 'Revert All Changes' }).click();
+
+    // The changes are only reverted once confirmed
+    const dialog = page.getByRole('alertdialog');
+
+    await expect.element(dialog).toMatchTextContent('revert all the changes made to this entry?');
+    expect(draft.currentValues._default.title).toBe('Hi');
+    await dialog.getByRole('button', { name: 'Revert All Changes' }).click();
+    await expect.poll(() => draft.currentValues._default.title).toBe('Hello');
+  });
+
+  test('restores the default values and clears the fields once confirmed', async () => {
+    const { draft } = await renderExisting();
+
+    await (await openMenu()).getByRole('menuitem', { name: 'Clear All' }).click();
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Clear All' }).click();
+    await expect.poll(() => draft.currentValues._default.title).toBe('');
+
+    // Cancelling leaves the fields alone
+    await expect.poll(() => document.querySelector('dialog.popup')).toBeNull();
+    draft.currentValues._default.title = 'Hi';
+    await (await openMenu()).getByRole('menuitem', { name: 'Restore Default' }).click();
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Cancel' }).click();
+    expect(draft.currentValues._default.title).toBe('Hi');
+  });
+
+  test('toggles the panes', async () => {
+    await renderExisting();
+
+    const menu = await openMenu();
+
+    await menu.getByRole('menuitemcheckbox', { name: 'Show Preview' }).click();
+    expect(entryEditorSettings.current?.showPreview).toBe(false);
+
+    await expect.poll(() => document.querySelector('dialog.popup')).toBeNull();
+    await (await openMenu()).getByRole('menuitemcheckbox', { name: 'Show Second Pane' }).click();
+    expect(entryEditorSettings.current?.showSecondPane).toBe(false);
+
+    // The preview and scrolling options need the second pane
+    await expect.poll(() => document.querySelector('dialog.popup')).toBeNull();
+    await expect
+      .element((await openMenu()).getByRole('menuitemcheckbox', { name: 'Sync Scrolling' }))
+      .toBeDisabled();
+  });
+
+  test('limits the options for a new entry', async () => {
+    await renderToolbar();
+
+    const menu = await openMenu();
+
+    expect(
+      menu
+        .getByRole('menuitem')
+        .elements()
+        .map((el) => el.textContent?.trim()),
+    ).toEqual(['Edit Slug', 'Revert All Changes', 'Restore Default', 'Clear All']);
+    await expect.element(menu.getByRole('menuitem', { name: 'Edit Slug' })).toBeDisabled();
+  });
+
+  test('offers to save without publishing when CI can be skipped', async () => {
+    await initTestConfig({
+      backend: { name: 'github', repo: 'me/site', skip_ci: false },
+      collections: [postsCollection],
+    });
+    backendName.current = 'github';
+
+    const { draft } = await renderToolbar();
+
+    await page.getByRole('button', { name: 'Publish' }).click();
+    await vi.waitFor(() =>
+      expect(saveEntry).toHaveBeenCalledWith({
+        draft,
+        skipCI: undefined,
+        overwrite: false,
+        publish: false,
+      }),
+    );
+
+    // The split button offers the opposite
+    const { draft: anotherDraft } = await renderToolbar();
+
+    await page.getByRole('button', { name: 'More Options' }).last().click();
+    await page.getByRole('menuitem', { name: 'Save without Publishing' }).click();
+    await vi.waitFor(() =>
+      expect(saveEntry).toHaveBeenCalledWith({
+        draft: anotherDraft,
+        skipCI: true,
+        overwrite: false,
+        publish: false,
+      }),
+    );
+  });
+
+  test('goes back to the collection list for a singleton', async () => {
+    await initTestConfig({
+      collections: [postsCollection],
+      singletons: [{ name: 'about', label: 'About', file: 'content/about.md', fields }],
+    });
+
+    const collection = /** @type {any} */ (getCollection('_singletons'));
+    const collectionFile = collection?._fileMap?.about;
+
+    await renderToolbar({ collection, collectionFile });
+    await page.getByRole('button', { name: 'Cancel Editing' }).click();
+
+    await expect.poll(() => window.location.hash).toBe('#/collections');
+  });
+
+  test('reports a failure to delete', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.mocked(deleteEntries).mockRejectedValue(new Error('Boom'));
+
+    await renderExisting();
+    await (await openMenu()).getByRole('menuitem', { name: 'Delete Entry' }).click();
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
+
+    await expect
+      .element(page.getByRole('alert'))
+      .toHaveTextContent('error Error Couldn’t delete the entry. Please try again.');
+    await waitForToastsToHide();
+  });
+
+  test('says what stands in the way of the deletion', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.mocked(deleteEntries).mockRejectedValue(
+      createLocalizedError(
+        'Cannot delete a published entry as an Open Authoring contributor',
+        'open_authoring.direct_commit_unsupported',
+      ),
+    );
+
+    await renderExisting();
+    await (await openMenu()).getByRole('menuitem', { name: 'Delete Entry' }).click();
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
+
+    await expect
+      .element(page.getByRole('alert'))
+      .toHaveTextContent(
+        'error Error This change can’t be made directly. Only edits to entries can be suggested for review.',
+      );
+    await waitForToastsToHide();
+  });
+
+  test('reports a failure to save without a cause', async () => {
+    vi.mocked(saveEntry).mockRejectedValue(new Error('saving_failed'));
+
+    await renderToolbar();
+    await page.getByRole('button', { name: 'Save' }).click();
+
+    const dialog = page.getByRole('alertdialog', { name: 'Error' });
+
+    await expect.element(dialog).toBeVisible();
+    // Only the generic description, not the error key
+    expect(dialog.element().textContent).toContain('There was an error while saving the entry.');
+    expect(dialog.element().textContent).not.toContain('saving_failed');
+    expect(dialog.element().querySelector('.error')).toBeNull();
+  });
+
+  test('renders a bare toolbar for a missing entry', async () => {
+    entryEditorSettings.current = undefined;
+
+    const { container } = await renderWithDraft(Toolbar, { draft: undefined });
+    const toolbar = page.getByRole('toolbar', { name: 'Primary' });
+
+    await expect.element(toolbar).toBeVisible();
+    expect(container.querySelector('h2')?.textContent?.trim()).toBe('');
+    await expect.element(toolbar.getByRole('button', { name: 'Save' })).toBeEnabled();
+
+    // The pane settings fall back to their defaults
+    await (await openMenu()).getByRole('menuitemcheckbox', { name: 'Show Second Pane' }).click();
+    expect(/** @type {any} */ (entryEditorSettings.current)?.showSecondPane).toBe(false);
+  });
+
+  describe('a save that lands after another entry has been opened', () => {
+    test('leaves the other entry open when the editor would be closed', async () => {
+      const { promise, resolve } = Promise.withResolvers();
+
+      vi.mocked(saveEntry).mockReturnValueOnce(/** @type {any} */ (promise));
+
+      const { entryDraft } = await renderToolbar();
+
+      await page.getByRole('button', { name: 'Save' }).click();
+      await vi.waitFor(() => expect(saveEntry).toHaveBeenCalledOnce());
+      openOtherEntry(entryDraft);
+      resolve(helloEntry);
+
+      // The save is over once the button is no longer labelled as saving
+      await expect
+        .element(page.getByRole('button', { name: 'Save', exact: true }))
+        .toBeInTheDocument();
+      expect(window.location.hash).toBe('#/collections/posts/entries/world');
+      expect(entryDraft.current?.originalEntry).toEqual(worldEntry);
+      expect(entryDraft.current?.currentValues._default.title).toBe('World edited');
+    });
+
+    test('leaves the other entry’s draft alone when the editor would stay open', async () => {
+      prefs.closeOnSave = false;
+
+      const { promise, resolve } = Promise.withResolvers();
+
+      vi.mocked(saveEntry).mockReturnValueOnce(/** @type {any} */ (promise));
+
+      const { draft, entryDraft } = await renderExisting();
+
+      draft.currentValues._default.title = 'Hi';
+      await page.getByRole('button', { name: 'Save' }).click();
+      await vi.waitFor(() => expect(saveEntry).toHaveBeenCalledOnce());
+      openOtherEntry(entryDraft);
+      resolve(helloEntry);
+
+      await expect
+        .element(page.getByRole('button', { name: 'Save', exact: true }))
+        .toBeInTheDocument();
+      expect(window.location.hash).toBe('#/collections/posts/entries/world');
+      expect(entryDraft.current?.originalEntry).toEqual(worldEntry);
+      expect(entryDraft.current?.currentValues._default.title).toBe('World edited');
+    });
+
+    test('doesn’t offer to save over someone else’s change to the other entry', async () => {
+      const { promise, reject } = Promise.withResolvers();
+
+      vi.mocked(saveEntry).mockReturnValueOnce(/** @type {any} */ (promise));
+
+      const { draft, entryDraft } = await renderExisting();
+
+      draft.currentValues._default.title = 'Hi';
+      await page.getByRole('button', { name: 'Save' }).click();
+      await vi.waitFor(() => expect(saveEntry).toHaveBeenCalledOnce());
+      openOtherEntry(entryDraft);
+      reject(
+        new Error('save_conflict', {
+          cause: { type: 'modified', entry: helloEntry, canOverwrite: true },
+        }),
+      );
+
+      // Saving anyway would save the other entry, so the save is only reported as failed
+      await expect.element(page.getByRole('alertdialog', { name: 'Error' })).toBeInTheDocument();
+      expect(
+        page.getByRole('alertdialog', { name: 'Entry Changed by Someone Else' }).query(),
+      ).toBeNull();
+    });
+
+    test('isn’t saved once another entry is opened while a change is on its way', async () => {
+      const { draft, entryDraft } = await renderExisting();
+      const { promise, resolve } = Promise.withResolvers();
+
+      draft.currentValues._default.title = 'Hi';
+      trackPendingFieldUpdate(promise);
+      await page.getByRole('button', { name: 'Save' }).click();
+      openOtherEntry(entryDraft);
+      // The other entry has changes of its own, which the save must not pick up
+      entryDraft.current.currentValues._default.title = 'World changed';
+      resolve(undefined);
+
+      await expect
+        .element(page.getByRole('button', { name: 'Save', exact: true }))
+        .toBeInTheDocument();
+      expect(saveEntry).not.toHaveBeenCalled();
+    });
+  });
+
+  test('closes the editor after saving by default', async () => {
+    prefs.closeOnSave = undefined;
+    window.location.hash = '#/collections/posts/new';
+
+    const { entryDraft } = await renderToolbar();
+
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect.poll(() => entryDraft.current).toBe(null);
+    await expect.poll(() => window.location.hash).toBe('#/collections/posts');
+  });
+
+  test('keeps the URL of an existing entry once saved', async () => {
+    prefs.closeOnSave = false;
+    window.location.hash = '#/collections/posts/entries/hello';
+
+    const { draft } = await renderExisting();
+
+    draft.currentValues._default.title = 'Hi';
+    await page.getByRole('button', { name: 'Save' }).click();
+    await vi.waitFor(() => expect(saveEntry).toHaveBeenCalledOnce());
+    expect(window.location.hash).toBe('#/collections/posts/entries/hello');
+  });
+
+  test('labels the buttons while saving and publishing', async () => {
+    await initTestConfig({
+      backend: { name: 'github', repo: 'me/site', skip_ci: false },
+      collections: [postsCollection],
+    });
+    backendName.current = 'github';
+
+    const { promise, resolve } = Promise.withResolvers();
+
+    vi.mocked(saveEntry).mockReturnValue(/** @type {any} */ (promise));
+
+    await renderToolbar();
+    await page.getByRole('button', { name: 'Publish' }).click();
+    await expect.element(page.getByRole('button', { name: 'Publishing…' })).toBeInTheDocument();
+    resolve(helloEntry);
+
+    // With automatic deployments turned off, the button reads Save instead
+    await initTestConfig({
+      backend: { name: 'github', repo: 'me/site', skip_ci: true },
+      collections: [postsCollection],
+    });
+    vi.mocked(saveEntry).mockReturnValue(/** @type {any} */ (new Promise(() => {})));
+    await renderToolbar();
+    await page.getByRole('button', { name: 'More Options' }).last().click();
+    await expect.element(page.getByRole('menuitem', { name: 'Save and Publish' })).toBeVisible();
+    await userEvent.keyboard('{Escape}');
+    await page.getByRole('button', { name: 'Save' }).last().click();
+    await expect.element(page.getByRole('button', { name: 'Saving…' })).toBeInTheDocument();
+  });
+
+  test('doesn’t close the editor with the Escape key pressed during an IME composition', async () => {
+    prefs.closeWithEscape = true;
+    await renderToolbar();
+
+    const backButton = page.getByRole('button', { name: 'Cancel Editing' });
+
+    await expect.element(backButton).toHaveAttribute('aria-keyshortcuts', 'Escape');
+
+    /**
+     * Press the Escape key.
+     * @param {KeyboardEventInit & { keyCode?: number }} [init] Event details.
+     */
+    const pressEscape = (init = {}) => {
+      document.body.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Escape',
+          code: 'Escape',
+          bubbles: true,
+          cancelable: true,
+          ...init,
+        }),
+      );
+    };
+
+    // Cancelling a conversion: Chrome and Firefox flag the event, Safari sends it right after the
+    // composition has ended with the `keyCode` of `229`
+    pressEscape({ key: 'Process', isComposing: true });
+    pressEscape({ keyCode: 229 });
+    await new Promise((resolve) => {
+      setTimeout(resolve, 100);
+    });
+    expect(window.location.hash).toBe('#/collections/posts/new');
+
+    pressEscape();
+    await expect.poll(() => window.location.hash).toBe('#/collections/posts');
+  });
+
+  test('titles a collection file, which can only be discarded', async () => {
+    await initTestConfig({
+      collections: [
+        postsCollection,
+        {
+          name: 'pages',
+          label: 'Pages',
+          files: [{ name: 'about', label: 'About Us', file: 'content/about.md', fields }],
+        },
+      ],
+    });
+
+    const collection = /** @type {any} */ (getCollection('pages'));
+    const collectionFile = collection?._fileMap?.about;
+
+    await renderToolbar({
+      isNew: false,
+      collection,
+      collectionFile,
+      originalEntry: createMockEntry({ slug: 'about', folder: 'content' }),
+    });
+
+    expect(page.getByRole('toolbar').element().querySelector('h2')).toHaveTextContent(
+      'Pages › About Us',
+    );
+
+    const menu = await openMenu();
+
+    expect(menu.getByRole('menuitem', { name: 'Duplicate Entry' }).elements()).toHaveLength(0);
+    expect(menu.getByRole('menuitem', { name: 'Delete Entry' }).elements()).toHaveLength(0);
+  });
+
+  test('goes back to the folder being browsed in a collection with nested entries', async () => {
+    await initTestConfig({
+      collections: [
+        {
+          ...postsCollection,
+          name: 'nested',
+          folder: 'content/nested',
+          nested: { depth: 3 },
+          meta: { path: {} },
+        },
+      ],
+    });
+    nestedFilterPath.current = 'docs';
+    window.location.hash = '#/collections/nested/entries/docs/hello';
+
+    try {
+      await renderToolbar({
+        isNew: false,
+        collection: getCollection('nested'),
+        originalEntry: createMockEntry({ slug: 'docs/hello', folder: 'content/nested' }),
+      });
+
+      // The slug of such an entry is its path, which the slug editor can’t change
+      await expect
+        .element((await openMenu()).getByRole('menuitem', { name: 'Edit Slug' }))
+        .toBeDisabled();
+      await userEvent.keyboard('{Escape}');
+      await page.getByRole('button', { name: 'Cancel Editing' }).click();
+      await expect.poll(() => window.location.hash).toBe('#/collections/nested/filter/docs');
+    } finally {
+      nestedFilterPath.current = '';
+    }
+  });
+
+  test('warns about the assets stored alongside the entry when deleting it', async () => {
+    vi.mocked(deleteEntries).mockResolvedValue(undefined);
+    await initTestConfig({
+      // Entry-relative, so the assets go with the entry
+      collections: [
+        {
+          ...postsCollection,
+          name: 'bundles',
+          media_folder: '',
+          fields: [...fields, { name: 'image', widget: 'image' }],
+        },
+      ],
+    });
+
+    const folder = allAssetFolders.current.find(
+      ({ collectionName }) => collectionName === 'bundles',
+    );
+
+    const entry = createMockEntry({
+      slug: 'hello',
+      folder: 'content/posts',
+      content: { _default: { title: 'Hello', image: 'photo.png' } },
+    });
+
+    setEntries([entry]);
+    setAssets([
+      createMockAsset({ name: 'photo.png', folderPath: 'content/posts', asset: { folder } }),
+    ]);
+
+    try {
+      await renderToolbar({
+        isNew: false,
+        collection: getCollection('bundles'),
+        originalEntry: entry,
+      });
+      await (await openMenu()).getByRole('menuitem', { name: 'Delete Entry' }).click();
+      await expect
+        .element(page.getByRole('alertdialog', { name: 'Delete Entry' }))
+        .toHaveTextContent(
+          'Delete Entry Are you sure you want to delete this entry and associated assets? Delete Cancel',
+        );
+    } finally {
+      setAssets([]);
+    }
+  });
+
+  test('shows the toast of the list item clipboard', async () => {
+    await renderExisting();
+
+    listItemClipboardToast.current = { id: 1, show: true, status: 'success', message: 'Copied.' };
+    await expect.poll(() => getShownToastText()).toBe('check_circle Success Copied.');
+    await waitForToastsToHide();
+    expect(listItemClipboardToast.current.show).toBe(false);
+  });
+
+  test('reports a copy without a source language', async () => {
+    await renderExisting();
+
+    copyFromLocaleToast.current = {
+      id: 2,
+      show: true,
+      status: 'error',
+      message: 'copy.none',
+      count: 1,
+      sourceLanguage: undefined,
+    };
+    await expect.poll(() => getShownToastText()).toBe('error Error Nothing to copy.');
+
+    // An unknown language is named by its code
+    copyFromLocaleToast.current = {
+      id: 3,
+      show: true,
+      status: 'success',
+      message: 'copy.complete',
+      count: 1,
+      sourceLanguage: 'xx',
+    };
+    await expect
+      .poll(() => getShownToastText())
+      .toBe('check_circle Success Field copied from \u2068xx\u2069.');
+    await waitForToastsToHide();
+    expect(copyFromLocaleToast.current.show).toBe(false);
+  });
+
+  test('reports an unexpected error', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.mocked(saveEntry).mockRejectedValue(new Error('Unexpected'));
+
+    await renderToolbar();
+    await page.getByRole('button', { name: 'Save' }).click();
+
+    const dialog = page.getByRole('alertdialog', { name: 'Error' });
+
+    await expect
+      .element(dialog)
+      .toHaveTextContent(
+        'Error There was an error while saving the entry. Please try again later. OK',
+      );
+    await dialog.getByRole('button', { name: 'OK' }).click();
+    await expect.element(page.getByRole('button', { name: 'Show Editor Options' })).toHaveFocus();
+  });
+
+  test('does nothing once the draft is gone', async () => {
+    const { entryDraft } = await renderToolbar();
+
+    entryDraft.current = null;
+    await page.getByRole('button', { name: 'Save' }).click();
+    expect(saveEntry).not.toHaveBeenCalled();
+
+    // The menu can still be opened
+    await expect
+      .element((await openMenu()).getByRole('menuitemcheckbox', { name: 'Sync Scrolling' }))
+      .toBeVisible();
+  });
+
+  test('offers to check for the preview again once the checks have given up', async () => {
+    deployPollTimedOut.current = true;
+
+    await renderExisting();
+    await (await openMenu()).getByRole('menuitem', { name: 'Check for Preview' }).click();
+    expect(recheckDeployments).toHaveBeenCalled();
+  });
+
+  test('offers the second pane for a localized collection', async () => {
+    await initTestConfig({
+      site_url: 'https://example.com',
+      i18n: { structure: 'multiple_folders', locales: ['en', 'fr'], default_locale: 'en' },
+      collections: [{ ...postsCollection, name: 'localized', i18n: true }],
+    });
+
+    const draft = createMockDraft({
+      collectionName: 'localized',
+      fields,
+      i18n: { i18nEnabled: true, allLocales: ['en', 'fr'], defaultLocale: 'en' },
+      values: { en: { title: 'Hello' }, fr: { title: 'Bonjour' } },
+      draft: { collection: getCollection('localized') },
+    });
+
+    await renderWithDraft(Toolbar, { draft });
+
+    const menu = await openMenu();
+
+    expect(
+      menu
+        .getByRole('menuitemcheckbox')
+        .elements()
+        .map((el) => el.textContent?.trim().replace(/\s*check$/, '')),
+    ).toEqual(['Show Second Pane', 'Show Preview', 'Sync Scrolling']);
+  });
+
+  test('toggles the scroll syncing', async () => {
+    await renderExisting();
+    await (await openMenu()).getByRole('menuitemcheckbox', { name: 'Sync Scrolling' }).click();
+    expect(entryEditorSettings.current?.syncScrolling).toBe(false);
+  });
+
+  test('has nothing to sync without a preview and a second locale', async () => {
+    await renderExisting({ canPreview: false });
+    await expect
+      .element((await openMenu()).getByRole('menuitemcheckbox', { name: 'Sync Scrolling' }))
+      .toBeDisabled();
+  });
+
+  test('has nothing to sync once the preview of a single locale is hidden', async () => {
+    await renderExisting();
+
+    const syncScrolling = (await openMenu()).getByRole('menuitemcheckbox', {
+      name: 'Sync Scrolling',
+    });
+
+    await expect.element(syncScrolling).toBeEnabled();
+    entryEditorSettings.current = { ...entryEditorSettings.current, showPreview: false };
+    await expect.element(syncScrolling).toBeDisabled();
+  });
+
+  test('reports the result of copying from another locale', async () => {
+    await renderExisting();
+
+    copyFromLocaleToast.current = {
+      id: 1,
+      show: true,
+      status: 'success',
+      message: 'copy.complete',
+      count: 2,
+      sourceLanguage: 'en',
+    };
+    await expect
+      .element(page.getByRole('status'))
+      .toHaveTextContent('check_circle Success 2 fields copied from \u2068English\u2069.');
+  });
+
+  describe('with Editorial Workflow', () => {
+    /** @type {any} */
+    const unpublishedEntry = {
+      ...helloEntry,
+      workflow: {
+        status: 'draft',
+        collectionName: 'posts',
+        pullRequest: { number: 1, branch: 'cms/posts/hello' },
+      },
+    };
+
+    beforeEach(async () => {
+      await initTestConfig({
+        backend: { name: 'github', repo: 'me/site' },
+        publish_mode: 'editorial_workflow',
+        collections: [{ ...postsCollection, preview_path: 'posts/{{slug}}' }],
+      });
+      backendName.current = 'github';
+      allUnpublishedEntries.current = [unpublishedEntry];
+      vi.mocked(saveEntry).mockResolvedValue(unpublishedEntry);
+      vi.mocked(updateWorkflowStatus).mockResolvedValue(unpublishedEntry);
+    });
+
+    test('offers to send a saved draft for review', async () => {
+      const { draft } = await renderToolbar();
+
+      await page.getByRole('button', { name: 'Save' }).click();
+
+      const dialog = page.getByRole('alertdialog', { name: 'Send for Review' });
+
+      await expect.element(dialog).toBeInTheDocument();
+      await dialog.getByRole('button', { name: 'Send for Review' }).click();
+
+      await vi.waitFor(() =>
+        expect(updateWorkflowStatus).toHaveBeenCalledWith(unpublishedEntry, 'pending_review'),
+      );
+      await expect.poll(() => window.location.hash).toBe('#/collections/posts');
+      expect(draft).toBeDefined();
+    });
+
+    test('offers to mark a saved draft ready when the review stage is left out', async () => {
+      await initTestConfig({
+        backend: { name: 'github', repo: 'me/site' },
+        publish_mode: { type: 'editorial_workflow', stages: ['draft', 'pending_publish'] },
+        collections: [postsCollection],
+      });
+
+      await renderToolbar();
+      await page.getByRole('button', { name: 'Save' }).click();
+
+      const dialog = page.getByRole('alertdialog', { name: 'Mark as Ready' });
+
+      await expect
+        .element(dialog)
+        .toMatchTextContent(/Mark the entry as ready so it can be published\?/);
+      await dialog.getByRole('button', { name: 'Mark as Ready' }).click();
+
+      await vi.waitFor(() =>
+        expect(updateWorkflowStatus).toHaveBeenCalledWith(unpublishedEntry, 'pending_publish'),
+      );
+    });
+
+    test('saves and publishes in one go when direct publishing is enabled', async () => {
+      await initTestConfig({
+        backend: { name: 'github', repo: 'me/site' },
+        publish_mode: { type: 'editorial_workflow', direct_publish: true },
+        collections: [postsCollection],
+      });
+
+      await renderToolbar();
+      await page.getByRole('button', { name: 'More Options' }).first().click();
+      await page.getByRole('menuitem', { name: 'Save and Publish' }).click();
+
+      await vi.waitFor(() =>
+        expect(saveEntry).toHaveBeenCalledWith(
+          expect.objectContaining({ publish: true, skipCI: false }),
+        ),
+      );
+      await vi.waitFor(() => expect(publishWorkflowEntry).toHaveBeenCalledWith(unpublishedEntry));
+      // Nothing is left to hand over for review
+      expect(page.getByRole('alertdialog').elements()).toHaveLength(0);
+      await expect.poll(() => window.location.hash).toBe('#/collections/posts');
+    });
+
+    test('doesn’t offer to publish an entry whose contributor’s pull request has gone', async () => {
+      await initTestConfig({
+        backend: { name: 'github', repo: 'me/site' },
+        publish_mode: { type: 'editorial_workflow', direct_publish: true },
+        collections: [postsCollection],
+      });
+
+      // The pull request was merged or closed since the editor was opened, so it’s off the store
+      allUnpublishedEntries.current = [];
+      await renderExisting({
+        originalEntry: {
+          ...helloEntry,
+          workflow: { ...unpublishedEntry.workflow, pullRequest: createMockForkPullRequest() },
+        },
+      });
+
+      await expect
+        .element(
+          page.getByRole('toolbar', { name: 'Primary' }).getByRole('button', { name: 'Save' }),
+        )
+        .toBeInTheDocument();
+      // The Save button comes without the popup that offers Save and Publish
+      expect(page.getByRole('button', { name: 'More Options' }).elements()).toHaveLength(0);
+    });
+
+    test('refuses to save and publish along with an entry that has to be reviewed', async () => {
+      await initTestConfig({
+        backend: { name: 'github', repo: 'me/site' },
+        publish_mode: { type: 'editorial_workflow', direct_publish: true },
+        collections: [
+          postsCollection,
+          {
+            name: 'reviewed',
+            folder: 'content/reviewed',
+            // The site-level option is inherited unless turned off
+            publish_mode: { type: 'editorial_workflow', direct_publish: false },
+            fields,
+          },
+        ],
+      });
+
+      const { entryDraft } = await renderToolbar({
+        pendingEntries: [
+          { collectionName: 'reviewed', entry: { id: 'x', locales: {} }, values: ['x'] },
+        ],
+        // Referenced from a rich text editor component
+        extraValues: { _default: { ref: 'x' } },
+      });
+
+      await page.getByRole('button', { name: 'More Options' }).first().click();
+
+      const item = page.getByRole('menuitem', {
+        name: 'Save and Publish (Related Entries Need Review)',
+      });
+
+      await expect.element(item).toHaveAttribute('aria-disabled', 'true');
+      expect(
+        page.getByRole('menuitem', { name: 'Save and Publish', exact: true }).elements(),
+      ).toHaveLength(0);
+
+      // A deselected entry isn’t saved, so it doesn’t count
+      entryDraft.current.extraValues._default.ref = '';
+      await expect
+        .element(page.getByRole('menuitem', { name: 'Save and Publish', exact: true }))
+        .not.toHaveAttribute('aria-disabled', 'true');
+    });
+
+    test('saves a draft as usual when direct publishing is enabled', async () => {
+      await initTestConfig({
+        backend: { name: 'github', repo: 'me/site' },
+        publish_mode: { type: 'preview', direct_publish: true },
+        collections: [postsCollection],
+      });
+
+      await renderToolbar();
+      await page.getByRole('button', { name: 'Save', exact: true }).click();
+
+      await vi.waitFor(() =>
+        expect(saveEntry).toHaveBeenCalledWith(expect.objectContaining({ publish: false })),
+      );
+      expect(publishWorkflowEntry).not.toHaveBeenCalled();
+      // Preview Workflow has no stage to hand the draft over to
+      expect(page.getByRole('alertdialog').elements()).toHaveLength(0);
+    });
+
+    test('leaves another entry opened while sending for review alone', async () => {
+      const { promise, resolve } = Promise.withResolvers();
+
+      vi.mocked(updateWorkflowStatus).mockReturnValueOnce(/** @type {any} */ (promise));
+
+      const { entryDraft } = await renderToolbar();
+
+      await page.getByRole('button', { name: 'Save' }).click();
+      await page
+        .getByRole('alertdialog', { name: 'Send for Review' })
+        .getByRole('button', { name: 'Send for Review' })
+        .click();
+      await vi.waitFor(() => expect(updateWorkflowStatus).toHaveBeenCalledOnce());
+      openOtherEntry(entryDraft);
+      resolve(unpublishedEntry);
+
+      await expect
+        .element(page.getByRole('button', { name: 'Save', exact: true }))
+        .toBeInTheDocument();
+      expect(window.location.hash).toBe('#/collections/posts/entries/world');
+      expect(entryDraft.current?.originalEntry).toEqual(worldEntry);
+    });
+
+    test('can leave the draft as is', async () => {
+      await renderToolbar();
+      await page.getByRole('button', { name: 'Save' }).click();
+      await page.getByRole('alertdialog').getByRole('button', { name: 'Later' }).click();
+
+      await expect.poll(() => window.location.hash).toBe('#/collections/posts');
+      expect(updateWorkflowStatus).not.toHaveBeenCalled();
+    });
+
+    test('shows the status and offers to discard the changes', async () => {
+      await renderExisting();
+
+      const toolbar = page.getByRole('toolbar', { name: 'Primary' });
+
+      await expect
+        .element(toolbar.getByRole('button', { name: 'Status: \u2068Draft\u2069' }))
+        .toBeInTheDocument();
+      // The entry is not ready to be published yet
+      expect(toolbar.getByRole('button', { name: 'Publish Entry' }).elements()).toHaveLength(0);
+
+      const menu = await openMenu();
+
+      expect(
+        menu
+          .getByRole('menuitem')
+          .elements()
+          .map((el) => el.textContent?.trim()),
+      ).toEqual([
+        'Duplicate',
+        'Discard',
+        'Delete',
+        'Edit Slug',
+        'Revert All Changes',
+        'Restore Default',
+        'Clear All',
+      ]);
+    });
+
+    test('links a contributor’s locked pull request to the Git service, with nothing to save', async () => {
+      /** @type {any} */
+      const forkEntry = {
+        ...unpublishedEntry,
+        workflow: {
+          ...unpublishedEntry.workflow,
+          status: 'pending_publish',
+          pullRequest: createMockForkPullRequest({ editable: false }),
+        },
+      };
+
+      allUnpublishedEntries.current = [forkEntry];
+      await renderExisting({ originalEntry: forkEntry });
+
+      const toolbar = page.getByRole('toolbar', { name: 'Primary' });
+
+      await expect.element(toolbar.getByRole('button', { name: /^Review on/ })).toBeInTheDocument();
+      expect(toolbar.getByRole('button', { name: 'Save' }).elements()).toHaveLength(0);
+      expect(toolbar.getByRole('button', { name: 'Publish Entry' }).elements()).toHaveLength(0);
+    });
+
+    test('offers to publish an entry that is ready', async () => {
+      allUnpublishedEntries.current = [
+        {
+          ...unpublishedEntry,
+          workflow: { ...unpublishedEntry.workflow, status: 'pending_publish' },
+        },
+      ];
+
+      await renderExisting();
+
+      const toolbar = page.getByRole('toolbar', { name: 'Primary' });
+
+      await expect
+        .element(toolbar.getByRole('button', { name: 'Status: \u2068Ready\u2069' }))
+        .toBeInTheDocument();
+      await expect.element(toolbar.getByRole('button', { name: 'Publish Entry' })).toBeEnabled();
+    });
+
+    test('keeps the status after the slug has been edited', async () => {
+      // The slug was edited after the pull request was opened, so the branch still carries the old
+      // slug while the entry has the new one
+      const renamedEntry = {
+        ...createMockEntry({ slug: 'renamed', content: { _default: { title: 'Renamed' } } }),
+        workflow: { ...unpublishedEntry.workflow, status: 'pending_publish' },
+      };
+
+      allUnpublishedEntries.current = [renamedEntry];
+
+      await renderExisting({ originalEntry: renamedEntry });
+
+      const toolbar = page.getByRole('toolbar', { name: 'Primary' });
+
+      await expect
+        .element(toolbar.getByRole('button', { name: 'Status: \u2068Ready\u2069' }))
+        .toBeInTheDocument();
+      await expect.element(toolbar.getByRole('button', { name: 'Publish Entry' })).toBeEnabled();
+    });
+
+    test('reports a failure to send for review', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      vi.mocked(updateWorkflowStatus).mockRejectedValue(new Error('Boom'));
+
+      const { entryDraft } = await renderToolbar();
+
+      await page.getByRole('button', { name: 'Save' }).click();
+      await page.getByRole('alertdialog').getByRole('button', { name: 'Send for Review' }).click();
+
+      await expect
+        .element(page.getByRole('alertdialog', { name: 'Error' }))
+        .toHaveTextContent(
+          'Error There was an error while saving the entry. Please try again later. Couldn’t change the status. Please try again. OK',
+        );
+      // The editor stays open, so the status change can be retried from the status menu
+      expect(window.location.hash).not.toBe('#/collections/posts');
+      // The draft is pointed at the entry as saved, all the same. Left on the pre-save one, the
+      // next save would compare it with the branch and report the save that just landed as
+      // someone else’s change
+      await expect.poll(() => entryDraft.current?.isNew).toBe(false);
+      await expect.poll(() => entryDraft.current?.originalEntry).toBe(unpublishedEntry);
+    });
+
+    test('says what stands in the way of sending for review', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      vi.mocked(updateWorkflowStatus).mockRejectedValue(
+        createLocalizedError('The workflow branch is in use.', 'workflow.branch_in_use', {
+          number: '!3',
+        }),
+      );
+
+      await renderToolbar();
+
+      await page.getByRole('button', { name: 'Save' }).click();
+      await page.getByRole('alertdialog').getByRole('button', { name: 'Send for Review' }).click();
+
+      await expect
+        .element(page.getByRole('alertdialog', { name: 'Error' }))
+        .toHaveTextContent(
+          'Error There was an error while saving the entry. Please try again later. Another request (\u2068!3\u2069) is already open for this entry outside the CMS. Ask a developer to close it first. OK',
+        );
+    });
+
+    test('deletes an unpublished entry by discarding its pull request', async () => {
+      // Nothing has been published yet
+      setEntries([]);
+      vi.mocked(discardWorkflowEntries).mockResolvedValue(undefined);
+
+      await renderExisting();
+      await (await openMenu()).getByRole('menuitem', { name: 'Delete Entry' }).click();
+
+      const dialog = page.getByRole('alertdialog', { name: 'Delete Entry' });
+
+      await expect
+        .element(dialog)
+        .toHaveTextContent(
+          'Delete Entry This entry hasn’t been published yet, so deleting it will discard it completely. Delete Cancel',
+        );
+      await dialog.getByRole('button', { name: 'Delete' }).click();
+
+      await vi.waitFor(() =>
+        expect(discardWorkflowEntries).toHaveBeenCalledWith([unpublishedEntry]),
+      );
+      await expect.poll(() => contentUpdatesToast.current.deleted).toBe(true);
+      await expect.poll(() => window.location.hash).toBe('#/collections/posts');
+    });
+
+    test('proposes the deletion of a published entry', async () => {
+      setEntries([helloEntry]);
+      vi.mocked(deleteWorkflowEntries).mockResolvedValue(undefined);
+
+      await renderExisting();
+      await (await openMenu()).getByRole('menuitem', { name: 'Delete' }).click();
+
+      const dialog = page.getByRole('alertdialog', { name: 'Delete Entry' });
+
+      await expect.element(dialog).toBeInTheDocument();
+      expect(dialog.element().textContent).toContain(
+        'It won’t be removed until the deletion is published.',
+      );
+      await dialog.getByRole('button', { name: 'Delete' }).click();
+
+      await vi.waitFor(() => expect(deleteWorkflowEntries).toHaveBeenCalled());
+      await expect.poll(() => contentUpdatesToast.current.deletionPending).toBe(true);
+    });
+
+    test('finds the references to a renamed entry’s published version', async () => {
+      await initTestConfig({
+        backend: { name: 'github', repo: 'me/site' },
+        publish_mode: 'editorial_workflow',
+        collections: [
+          {
+            name: 'tags',
+            label: 'Tags',
+            folder: 'content/tags',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+          {
+            ...postsCollection,
+            fields: [
+              { name: 'title', widget: 'string' },
+              {
+                name: 'tag',
+                label: 'Tag',
+                widget: 'relation',
+                collection: 'tags',
+                required: false,
+              },
+            ],
+          },
+        ],
+      });
+
+      const travelTag = createMockEntry({
+        slug: 'travel',
+        folder: 'content/tags',
+        content: { _default: { title: 'Travel' } },
+      });
+
+      // The pull request renamed the tag; the published post still references the old slug
+      /** @type {any} */
+      const renamedTag = {
+        ...createMockEntry({
+          slug: 'trips',
+          folder: 'content/tags',
+          content: { _default: { title: 'Trips' } },
+        }),
+        workflow: {
+          status: 'draft',
+          collectionName: 'tags',
+          previousPaths: ['content/tags/travel.md'],
+          pullRequest: { number: 2, branch: 'cms/tags/travel' },
+        },
+      };
+
+      setEntries([
+        travelTag,
+        createMockEntry({ slug: 'a', content: { _default: { title: 'A', tag: 'travel' } } }),
+      ]);
+      allUnpublishedEntries.current = [renamedTag];
+      vi.mocked(deleteWorkflowEntries).mockResolvedValue(undefined);
+      window.location.hash = '#/collections/tags/entries/trips';
+
+      await renderToolbar({
+        isNew: false,
+        originalEntry: renamedTag,
+        collectionName: 'tags',
+        collection: getCollection('tags'),
+      });
+      await (await openMenu()).getByRole('menuitem', { name: 'Delete' }).click();
+
+      await expect
+        .element(page.getByRole('alertdialog', { name: 'Delete Entry' }))
+        .toMatchTextContent('The reference to it in another entry will be removed as well.');
+    });
+
+    test('discards the changes to a published entry', async () => {
+      setEntries([helloEntry]);
+      vi.mocked(discardWorkflowEntry).mockResolvedValue(undefined);
+
+      await renderExisting();
+      await (await openMenu()).getByRole('menuitem', { name: 'Discard Changes' }).click();
+
+      const dialog = page.getByRole('alertdialog', { name: 'Discard Changes' });
+
+      await expect
+        .element(dialog)
+        .toHaveTextContent(
+          'Discard Changes This entry has unpublished changes. Discarding them will restore the published version. The entry itself won’t be deleted. Discard Cancel',
+        );
+      await dialog.getByRole('button', { name: 'Discard' }).click();
+
+      await vi.waitFor(() => expect(discardWorkflowEntry).toHaveBeenCalledWith(unpublishedEntry));
+      await expect.poll(() => contentUpdatesToast.current.discarded).toBe(true);
+    });
+
+    test('offers to cancel a pending deletion, and nothing else', async () => {
+      setEntries([helloEntry]);
+      allUnpublishedEntries.current = [
+        {
+          ...unpublishedEntry,
+          workflow: { ...unpublishedEntry.workflow, status: 'pending_deletion' },
+        },
+      ];
+      vi.mocked(discardWorkflowEntry).mockResolvedValue(undefined);
+
+      await renderExisting();
+
+      const toolbar = page.getByRole('toolbar', { name: 'Primary' });
+
+      expect(toolbar.getByRole('button', { name: 'Save' }).elements()).toHaveLength(0);
+      expect(toolbar.getByRole('button', { name: /Status/ }).elements()).toHaveLength(0);
+
+      const menu = await openMenu();
+
+      await expect.element(menu.getByRole('menuitem', { name: 'Edit Slug' })).toBeDisabled();
+      await menu.getByRole('menuitem', { name: 'Cancel Deletion' }).click();
+
+      const dialog = page.getByRole('alertdialog', { name: 'Cancel Deletion' });
+
+      await expect.element(dialog).toBeInTheDocument();
+      await dialog.getByRole('button', { name: 'Cancel Deletion' }).click();
+
+      await vi.waitFor(() => expect(discardWorkflowEntry).toHaveBeenCalled());
+      await expect.poll(() => contentUpdatesToast.current.deletionCancelled).toBe(true);
+    });
+
+    test('offers no workflow action for a read-only entry', async () => {
+      setEntries([helloEntry]);
+      allUnpublishedEntries.current = [
+        {
+          ...unpublishedEntry,
+          workflow: { ...unpublishedEntry.workflow, status: 'pending_publish' },
+        },
+      ];
+
+      await renderExisting({ collection: { ...getCollection('posts'), readonly: true } });
+
+      const toolbar = page.getByRole('toolbar', { name: 'Primary' });
+
+      expect(toolbar.getByRole('button', { name: 'Save' }).elements()).toHaveLength(0);
+      expect(toolbar.getByRole('button', { name: /Status/ }).elements()).toHaveLength(0);
+      expect(toolbar.getByRole('button', { name: 'Publish Entry' }).elements()).toHaveLength(0);
+
+      const menu = await openMenu();
+
+      expect(menu.getByRole('menuitem', { name: /Discard|Delete/ }).elements()).toHaveLength(0);
+    });
+
+    test('moves the actions into the menu on a small screen', async () => {
+      env.isSmallScreen = true;
+      env.isLargeScreen = false;
+
+      await renderExisting();
+
+      const toolbar = page.getByRole('toolbar', { name: 'Primary' });
+
+      expect(toolbar.element().querySelector('h2')).toBeNull();
+      expect(toolbar.getByRole('button', { name: 'View on Live Site' }).elements()).toHaveLength(0);
+
+      const menu = await openMenu();
+
+      expect(
+        menu
+          .getByRole('menuitem')
+          .elements()
+          .map((el) => el.textContent?.trim()),
+      ).toEqual([
+        'View on Live Site',
+        'Slug',
+        'Validation',
+        'History',
+        'Backlinks',
+        'Duplicate',
+        'Discard',
+        'Delete',
+        // The Slug panel above takes the place of the Edit Slug shortcut
+        'Revert All Changes',
+        'Restore Default',
+        'Clear All',
+      ]);
+      // The pane options are for large screens
+      expect(menu.getByRole('menuitemcheckbox').elements()).toHaveLength(0);
+    });
+
+    test('leaves a collection that opted out of the workflow alone', async () => {
+      // The collection-level `publish_mode` option overrides the site-level one
+      await initTestConfig({
+        backend: { name: 'github', repo: 'me/site' },
+        publish_mode: 'editorial_workflow',
+        collections: [{ ...postsCollection, publish_mode: 'simple' }],
+      });
+      vi.mocked(saveEntry).mockResolvedValue(/** @type {any} */ (helloEntry));
+
+      const { draft } = await renderToolbar();
+
+      await page.getByRole('button', { name: 'Save' }).click();
+
+      // A plain save: no review prompt, and the editor closes
+      await vi.waitFor(() =>
+        expect(saveEntry).toHaveBeenCalledWith({
+          draft,
+          skipCI: undefined,
+          overwrite: false,
+          publish: false,
+        }),
+      );
+      await expect.poll(() => window.location.hash).toBe('#/collections/posts');
+      expect(page.getByRole('alertdialog').elements()).toHaveLength(0);
+      expect(updateWorkflowStatus).not.toHaveBeenCalled();
+    });
+
+    test('keeps an entry with a pull request in the workflow after its collection opted out', async () => {
+      // The pull request may have been opened before the collection opted out, or by a contributor
+      // working on a fork. Saving straight to the configured branch would publish it unreviewed
+      await initTestConfig({
+        backend: { name: 'github', repo: 'me/site', skip_ci: false },
+        publish_mode: 'editorial_workflow',
+        collections: [{ ...postsCollection, publish_mode: 'simple' }],
+      });
+      setEntries([helloEntry]);
+      vi.mocked(discardWorkflowEntry).mockResolvedValue(undefined);
+
+      await renderExisting();
+
+      const toolbar = page.getByRole('toolbar', { name: 'Primary' });
+
+      await expect
+        .element(toolbar.getByRole('button', { name: 'Status: \u2068Draft\u2069' }))
+        .toBeInTheDocument();
+      // A plain Save button, not the Publish split button the simple mode would offer
+      await expect.element(toolbar.getByRole('button', { name: 'Save' })).toBeInTheDocument();
+      expect(toolbar.getByRole('button', { name: 'Publish Entry' }).elements()).toHaveLength(0);
+
+      await (await openMenu()).getByRole('menuitem', { name: 'Discard Changes' }).click();
+      await page.getByRole('alertdialog').getByRole('button', { name: 'Discard' }).click();
+
+      await vi.waitFor(() => expect(discardWorkflowEntry).toHaveBeenCalledWith(unpublishedEntry));
+    });
+
+    test('shows the status for a collection that opted in on its own', async () => {
+      await initTestConfig({
+        backend: { name: 'github', repo: 'me/site' },
+        collections: [{ ...postsCollection, publish_mode: 'editorial_workflow' }],
+      });
+
+      await renderExisting();
+
+      await expect
+        .element(
+          page
+            .getByRole('toolbar', { name: 'Primary' })
+            .getByRole('button', { name: 'Status: \u2068Draft\u2069' }),
+        )
+        .toBeInTheDocument();
+    });
+  });
+});

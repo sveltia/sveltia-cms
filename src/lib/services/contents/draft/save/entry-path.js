@@ -8,14 +8,21 @@ import {
   getSharedEntryFileName,
   usesCustomEntryPath,
 } from '$lib/services/contents/collection/nested';
+import { getOwnFolderName, localizeDirPath } from '$lib/services/contents/collection/nested/i18n';
+import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
+import { hasLocalizedSlugs } from '$lib/services/contents/collection/slug';
 import {
-  getFolderName,
-  getOwnFolderName,
-  localizeDirPath,
-} from '$lib/services/contents/collection/nested/i18n';
-import { hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
+  getChosenDirPath,
+  getEntryDateTimeParts,
+  getRandomValues,
+} from '$lib/services/contents/draft/slugs';
+import { resolveFileConfig } from '$lib/services/contents/file/config';
 import { getLocalePath } from '$lib/services/contents/i18n';
-import { createPath } from '$lib/services/utils/file';
+import {
+  fillLocalePlaceholder,
+  hasLocalePlaceholder,
+} from '$lib/services/contents/i18n/placeholder';
+import { createPath, getBaseName } from '$lib/services/utils/file';
 
 /**
  * @import {
@@ -46,6 +53,12 @@ export const buildPathByStructure = ({
   omitLocale,
   structure,
 }) => {
+  // The `{{locale}}` placeholder in the `folder` option says where the locale folder goes, so the
+  // structure has nothing to add
+  if (hasLocalePlaceholder(basePath)) {
+    return `${fillLocalePlaceholder({ path: basePath, locale, omitLocale })}/${path}.${extension}`;
+  }
+
   switch (structure) {
     case 'multiple_folders':
       return omitLocale
@@ -78,8 +91,8 @@ export const buildPathByStructure = ({
  * folder named after the localized slug.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
- * @param {string} args.slug Entry slug in the locale. For an existing entry in a nested collection,
- * that’s the entry’s sub path in the locale.
+ * @param {string} args.slug Entry slug in the locale. For an existing entry in a collection with
+ * nested entries, that’s the entry’s sub path in the locale.
  * @param {string | undefined} args.indexFileName File name shared by every entry in the collection,
  * if any.
  * @param {InternalLocaleCode} args.locale Locale code.
@@ -95,14 +108,14 @@ export const buildCustomEntryPath = ({ draft, slug, indexFileName, locale }) => 
     // Every entry shares one file name, so a folder is what makes an entry. A new entry therefore
     // gets a folder of its own, named after the slug, within the folder the editor points at
     if (isNew) {
-      return createPath([localizeDirPath({ collection, dirPath, locale }), slug, indexFileName]);
+      return createPath([getChosenDirPath(draft, locale), slug, indexFileName]);
     }
 
     // An existing entry already has such a folder, and the editor points at it. In another locale,
     // the folder goes by the name in the localized slug; a locale that has just been enabled has a
     // bare slug, which becomes the folder name as it would for a new entry
     const parentPath = localizeDirPath({ collection, dirPath: getEntryDirPath(dirPath), locale });
-    const ownFolderName = localized ? getOwnFolderName(slug) || slug : getFolderName(dirPath);
+    const ownFolderName = localized ? getOwnFolderName(slug) || slug : getBaseName(dirPath);
 
     return createPath([parentPath, ownFolderName, indexFileName]);
   }
@@ -114,7 +127,8 @@ export const buildCustomEntryPath = ({ draft, slug, indexFileName, locale }) => 
 
   const fileName = originalSubPath ? getPathInfo(originalSubPath).basename : slug;
 
-  return createPath([localizeDirPath({ collection, dirPath, locale }), fileName]);
+  // A slug filed as a bare name has been made unique within the same folder
+  return createPath([getChosenDirPath(draft, locale), fileName]);
 };
 
 /**
@@ -147,6 +161,28 @@ export const keepsOriginalPath = ({ draft, locale, slug }) => {
 };
 
 /**
+ * Get the sub path of an existing entry’s file going by the given slug, for a locale of the entry
+ * whose own file can’t be kept, typically one enabled after the entry was created. Unless the entry
+ * is renamed, its files keep their slug, so the new file goes alongside them rather than where the
+ * collection’s `path` option would put a new entry: the template can have tags that aren’t filled
+ * the same way twice, like `{{year}}` without a date field, which takes the time of the save, or
+ * `{{uuid_short}}`, while the localized files of an entry are linked by their shared sub path when
+ * they’re read back. A renamed entry has no file going by the new slug, so the template is filled
+ * again for every locale.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {string} args.slug Entry slug in the locale.
+ * @param {RegExp} args.fullPathRegEx Regular expression matching the collection’s entry paths.
+ * @returns {string | undefined} Sub path without the locale and file extension, or `undefined` if
+ * no file of the entry has the slug.
+ */
+export const getKeptSubPath = ({ draft, slug, fullPathRegEx }) =>
+  Object.values(draft.originalEntry?.locales ?? {})
+    .filter((localizedEntry) => localizedEntry.slug === slug)
+    .map(({ path }) => path.match(fullPathRegEx)?.groups?.subPath)
+    .find((subPath) => !!subPath);
+
+/**
  * Determine the file path for the given entry draft depending on the collection type, i18n config
  * and entry collection’s subpath.
  * @param {object} args Arguments.
@@ -170,6 +206,13 @@ export const createEntryPath = ({ draft, locale, slug }) => {
     return getLocalePath({ _i18n, locale, path: stripSlashes(file) });
   }
 
+  // All the entries are stored in one file, which holds all the translations
+  if (isArrayFileCollection(collection)) {
+    return /** @type {string} */ (
+      /** @type {InternalEntryCollection} */ (collection)._file.fullPath
+    );
+  }
+
   const entryCollection = /** @type {InternalEntryCollection} */ (collection);
   const indexFileName = getSharedEntryFileName(entryCollection);
   // A blank folder in the path editor means the entry goes where it would without the editor, so
@@ -182,27 +225,37 @@ export const createEntryPath = ({ draft, locale, slug }) => {
     return /** @type {Entry} */ (originalEntry).locales[locale].path;
   }
 
-  const {
-    _file: { basePath, subPath, extension },
-  } = entryCollection;
+  // The index file can have an extension of its own
+  const { basePath, subPath, extension, fullPathRegEx } = resolveFileConfig({
+    collection: entryCollection,
+    isIndexFile,
+  });
 
   /**
    * Support entry collection’s subpath.
    * @see https://decapcms.org/docs/collection-folder/#folder-collections-path
    * @see https://decapcms.org/docs/collection-nested/
-   * @see https://sveltiacms.app/en/docs/collections/entries#managing-entry-file-paths
+   * @see https://sveltiacms.app/en/docs/collections/entries/slugs#file-paths
    */
   let path = isIndexFile
     ? /** @type {string} */ (getIndexFile(entryCollection)?.name)
     : useCustomPath
       ? buildCustomEntryPath({ draft, slug, indexFileName, locale })
       : subPath
-        ? fillTemplate(subPath, {
+        ? // A locale enabled for an existing entry goes alongside the entry’s other files.
+          // Otherwise the template is filled with the default locale’s values, as the default
+          // locale, so that every locale, and every call for the same draft, e.g. for the entry
+          // file and for its entry-relative assets, gets the same random values for tags like
+          // `{{uuid_short}}`
+          (getKeptSubPath({ draft, slug, fullPathRegEx: /** @type {RegExp} */ (fullPathRegEx) }) ??
+          fillTemplate(subPath, {
             collection: entryCollection,
-            locale,
+            locale: defaultLocale,
             content: currentValues[defaultLocale],
             currentSlug: slug,
-          })
+            dateTimeParts: getEntryDateTimeParts(draft),
+            randomValues: getRandomValues(draft),
+          }))
         : slug;
 
   // Remove extension from index file name if it already has one

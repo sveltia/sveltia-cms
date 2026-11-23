@@ -1,15 +1,22 @@
 import { _ } from '@sveltia/i18n';
 
-import { isFieldMultiple } from '$lib/services/contents/entry/fields';
+import { getDraftFieldArgs, getField, isFieldMultiple } from '$lib/services/contents/entry/fields';
+import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
 import { getFormattedDateTime } from '$lib/services/contents/fields/date-time/validate';
+import {
+  COMPONENT_NAME_PREFIX_REGEX,
+  stripComponentNamePrefix,
+} from '$lib/services/contents/fields/rich-text';
+import { getFieldLabel } from '$lib/services/contents/i18n/options';
 
 /**
- * @import { EntryValidityState } from '$lib/types/private';
+ * @import { EntryDraft, EntryValidityState, InternalLocaleCode } from '$lib/types/private';
  * @import {
  * DateTimeField,
  * DateTimeInputType,
  * Field,
+ * FieldKeyPath,
  * MinMaxValueField,
  * StringField,
  * TextField,
@@ -89,8 +96,12 @@ export const getFieldValidationMessages = ({ validity, fieldConfig }) => {
     ? parsedDateTimeConf
     : /** @type {MinMaxValueField} */ (fieldConfig);
 
+  // A multiple-value Select or Relation field has its options selected rather than items added, so
+  // it gets the `select` message
   const canAddMultiValue =
-    fieldType === 'list' || fieldType === 'keyvalue' || isFieldMultiple(fieldConfig);
+    fieldType === 'list' ||
+    fieldType === 'keyvalue' ||
+    (MEDIA_FIELD_TYPES.includes(fieldType) && isFieldMultiple(fieldConfig));
 
   if (validity.valueMissing) {
     messages.push(_('validation.value_missing'));
@@ -142,9 +153,99 @@ export const getFieldValidationMessages = ({ validity, fieldConfig }) => {
     messages.push(_(`validation.type_mismatch.${type}`));
   }
 
+  if (validity.duplicateError) {
+    messages.push(_('validation.value_not_unique'));
+  }
+
+  if (validity.mapKeyDuplicate) {
+    messages.push(_('validation.key_not_unique'));
+  }
+
+  if (validity.mapKeyNumeric) {
+    messages.push(_('validation.key_numeric'));
+  }
+
   if (validity.customError) {
     messages.push(validity.customErrorMessage ?? _('validation.invalid_value'));
   }
 
   return messages;
+};
+
+/**
+ * Get the human-readable validation error messages for the folder chosen with the entry path
+ * editor, which is validated as `_path` rather than as a field, so it has no stored messages.
+ * @param {EntryValidityState | undefined} validity Validity state of the path.
+ * @returns {string[]} List of translated error message strings, one per violated constraint.
+ * @see validatePath
+ */
+export const getPathValidationMessages = (validity) => {
+  /** @type {string[]} */
+  const messages = [];
+
+  if (validity?.patternMismatch) {
+    messages.push(_('edit_path_error.invalid'));
+  }
+
+  if (validity?.customError) {
+    messages.push(_('edit_path_error.recursive'));
+  }
+
+  if (validity?.duplicateError) {
+    messages.push(_('edit_path_error.duplicate'));
+  }
+
+  return messages;
+};
+
+/**
+ * Get the fields that have validation error messages in the given locale, in the order the fields
+ * were validated. That includes the fields of rich text editor components, stored in
+ * `extraValues`, and a multi-value field whose list itself is invalid, whose key path, e.g.
+ * `tags`, only holds messages while the values are stored under `tags.0`, `tags.1`, etc.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {InternalLocaleCode} args.locale Locale code.
+ * @returns {{ keyPath: FieldKeyPath, label: string, messages: string[] }[]} Invalid fields, with
+ * the label of each field or its name if the label is not defined, or an empty string if the field
+ * cannot be found.
+ */
+export const getInvalidFields = ({ draft, locale }) => {
+  const { currentValues, extraValues } = draft;
+  const currentValueMap = currentValues[locale] ?? {};
+  const extraValueMap = extraValues[locale] ?? {};
+
+  return (
+    Object.entries(draft.validationMessages[locale] ?? {})
+      .filter(([, messages]) => !!messages.length)
+      .map(([keyPath, messages]) => {
+        const [prefix] = keyPath.match(COMPONENT_NAME_PREFIX_REGEX) ?? [];
+        const valueMap = prefix ? extraValueMap : currentValueMap;
+
+        return { keyPath, messages, prefix, valueMap };
+      })
+      // The messages are kept until the next validation, so skip a field removed since then, e.g. a
+      // list item or a rich text editor component. A list is kept as long as it has an item, which
+      // is stored under `tags.0`, etc. while the list itself is validated as `tags`
+      .filter(
+        ({ keyPath, valueMap }) =>
+          keyPath in valueMap || Object.keys(valueMap).some((key) => key.startsWith(`${keyPath}.`)),
+      )
+      .map(({ keyPath, messages, prefix, valueMap }) => {
+        const field = getField(
+          getDraftFieldArgs(draft, {
+            keyPath: stripComponentNamePrefix(keyPath),
+            valueMap,
+            // A rich text editor component field is looked up in the component definition
+            componentName: prefix ? extraValueMap[`${prefix}__sc_component_name`] : undefined,
+          }),
+        );
+
+        return {
+          keyPath,
+          label: field ? getFieldLabel({ config: field, locale }) : '',
+          messages,
+        };
+      })
+  );
 };

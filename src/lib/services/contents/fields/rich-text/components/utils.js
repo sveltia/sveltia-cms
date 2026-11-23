@@ -1,4 +1,10 @@
-import { flatten, unflatten } from 'flat';
+import { isInternalPropKey } from '$lib/services/contents/fields/internal-props';
+import { flattenKeys, unflattenKeys } from '$lib/services/utils/object';
+
+/**
+ * @import { ResolvedEditorComponentDefinition } from '$lib/types/private';
+ * @import { EditorComponentDefinition } from '$lib/types/public';
+ */
 
 /**
  * Check if the given pattern is multiline.
@@ -9,21 +15,233 @@ export const isMultiLinePattern = ({ multiline, dotAll, source }) =>
   multiline || dotAll || source.includes('[\\s\\S]') || source.includes('[\\S\\s]');
 
 /**
+ * Check if the given component is inline, which means it’s matched within a paragraph and rendered
+ * within the text. A pattern-based inline component always is; any other component is if its
+ * pattern is not multiline.
+ * @param {Pick<ResolvedEditorComponentDefinition, 'pattern' | 'inlinePattern'>} componentDef
+ * Component definition.
+ * @returns {boolean} Result.
+ */
+export const isInlineComponentDef = ({ pattern, inlinePattern }) =>
+  !!inlinePattern || !isMultiLinePattern(pattern);
+
+/**
+ * Get the subject of each complex selector in the given selector list, the compound selector after
+ * the last combinator that the matched element itself is checked against, e.g. `img.wide` for
+ * `figure > img.wide`. Commas, whitespace and combinators within parentheses, brackets or quotes,
+ * as in `a:has(> img)` or `[title="a, b"]`, are part of a compound selector.
+ * @param {string} selector Selector list.
+ * @returns {string[]} Compound selectors.
+ */
+const getSelectorSubjects = (selector) => {
+  /** @type {string[]} */
+  const subjects = [];
+  let depth = 0;
+  let quote = '';
+  let start = 0;
+  let afterCombinator = false;
+
+  // Add a comma to end the last selector
+  [...selector, ','].forEach((char, index) => {
+    if (quote) {
+      if (char === quote) {
+        quote = '';
+      }
+
+      return;
+    }
+
+    if (depth === 0 && char === ',') {
+      subjects.push(selector.slice(start, index).trim());
+      start = index + 1;
+      afterCombinator = false;
+
+      return;
+    }
+
+    if (depth === 0 && /[\s>+~]/.test(char)) {
+      afterCombinator = true;
+
+      return;
+    }
+
+    if (afterCombinator) {
+      start = index;
+      afterCombinator = false;
+    }
+
+    if (char === '"' || char === "'") {
+      quote = char;
+    } else if (char === '(' || char === '[') {
+      depth += 1;
+    } else if (char === ')' || char === ']') {
+      depth -= 1;
+    }
+  });
+
+  return subjects;
+};
+
+/**
+ * Get the names of the elements the given `htmlSelector` of an editor component matches, e.g. `a`
+ * and `img` for `a:has(> img), figure > img`. The editor imports the component from these
+ * elements, so each selector in the list has to name the element type it matches.
+ * @param {string} selector Selector list.
+ * @returns {string[] | undefined} Lowercase tag names, without duplicates, or `undefined` if any of
+ * the selectors doesn’t start its last compound selector with a type selector, e.g. `.note` or
+ * `:is(aside, div)`.
+ */
+export const getSelectorTagNames = (selector) => {
+  const names = getSelectorSubjects(selector).map(
+    (subject) => /^[a-z][a-z\d-]*(?![\w-])/i.exec(subject)?.[0].toLowerCase() ?? '',
+  );
+
+  return names.every(Boolean) ? [...new Set(names)] : undefined;
+};
+
+/**
+ * Check if the given string is a valid CSS selector list.
+ * @param {string} selector Selector list.
+ * @returns {boolean} Result.
+ */
+export const isValidSelector = (selector) => {
+  try {
+    document.createDocumentFragment().querySelector(selector);
+
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Check if the given component definition supports the HTML format of the RichText field, which
+ * requires the `htmlSelector`, `fromBlockHTML` and `toBlockHTML` options.
+ * @param {EditorComponentDefinition} componentDef Component definition.
+ * @returns {boolean} Result.
+ */
+export const supportsHTML = ({ htmlSelector, fromBlockHTML, toBlockHTML }) =>
+  typeof htmlSelector === 'string' &&
+  typeof fromBlockHTML === 'function' &&
+  typeof toBlockHTML === 'function';
+
+/**
  * Normalize properties by removing internal properties.
  * @param {Record<string, any>} props Properties to normalize.
  * @returns {Record<string, any>} Properties excluding those starting with `__sc_`, which are used
  * for internal purposes.
  */
 export const normalizeProps = (props) =>
-  unflatten(
+  unflattenKeys(
     Object.fromEntries(
-      Object.entries(flatten(props)).filter(([key]) => !key.split('.').pop()?.startsWith('__sc_')),
+      Object.entries(flattenKeys(props)).filter(
+        ([key]) => !isInternalPropKey(/** @type {string} */ (key.split('.').pop())),
+      ),
     ),
   );
 
 /**
- * Replace double quotes with single quotes to avoid breaking Markdown syntax.
- * @param {string} str String to escape.
- * @returns {string} Escaped string.
+ * Get the names of the rich text editor components the given component is nested in. Lexical mounts
+ * each component outside the Svelte component tree, so the names can’t come from the context; each
+ * component instead lists its own name and those of its parents in the `data-component-path`
+ * attribute of the element holding its fields, which this reads from the closest one.
+ * @param {Element | undefined} element Element of a component.
+ * @returns {string[]} Component names, the outermost first.
  */
-export const replaceQuotes = (str) => str.replace(/"/g, "'");
+export const getParentComponentNames = (element) => {
+  /** @type {HTMLElement | null | undefined} */
+  const container = element?.parentElement?.closest('[data-component-path]');
+
+  return container ? JSON.parse(/** @type {string} */ (container.dataset.componentPath)) : [];
+};
+
+/**
+ * Follow whether the rich text editor the given component is in can’t be edited, which its textbox
+ * tells with the `aria-readonly` attribute. Lexical mounts each component outside the Svelte
+ * component tree, so the state can’t come from the context. Lexical also keeps applying updates
+ * while the editor isn’t editable, so the component has to hold back the changes itself.
+ * @param {Element | undefined} element Element of a component.
+ * @param {(readonly: boolean) => void} callback Function called with the state right away, and
+ * again whenever it changes.
+ * @returns {MutationObserver | undefined} Observer to disconnect once the component is gone, or
+ * `undefined` if the component isn’t in an editor.
+ */
+export const observeReadonly = (element, callback) => {
+  const textbox = element?.closest('[role="textbox"]');
+
+  if (!textbox) {
+    return undefined;
+  }
+
+  /**
+   * Call the function with the current state.
+   */
+  const update = () => {
+    callback(textbox.getAttribute('aria-readonly') === 'true');
+  };
+
+  const observer = new MutationObserver(update);
+
+  update();
+  observer.observe(textbox, { attributes: true, attributeFilter: ['aria-readonly'] });
+
+  return observer;
+};
+
+/**
+ * Follow the read-only state of the rich text editor the given component is in, like
+ * {@link observeReadonly}, from the next frame on: Lexical mounts the component before putting it
+ * in the editor, so the textbox can’t be found right away.
+ * @param {Element | undefined} element Element of a component.
+ * @param {(readonly: boolean) => void} callback Function called with the state once the frame has
+ * come, and again whenever it changes.
+ * @returns {() => void} Function to stop following the state once the component is gone. If the
+ * frame hasn’t come by then, the callback is never called.
+ */
+export const followReadonly = (element, callback) => {
+  /** @type {MutationObserver | undefined} */
+  let observer;
+
+  const frame = window.requestAnimationFrame(() => {
+    observer = observeReadonly(element, callback);
+  });
+
+  return () => {
+    window.cancelAnimationFrame(frame);
+    observer?.disconnect();
+  };
+};
+
+/**
+ * Unescape the title of a Markdown image, like `T \"q\"` in `![a](/a.png "T \"q\"")`, so the
+ * field shows `T "q"`. A backslash before an ASCII punctuation character escapes it, as anywhere
+ * else in Markdown, while one before any other character is a literal backslash. The alt text,
+ * like `Figure \[1` in `![Figure \[1](/a.png)`, is unescaped the same way.
+ * @param {string} title Title or alt text as it appears in Markdown, between the quotes or the
+ * brackets.
+ * @returns {string} Unescaped title or alt text.
+ * @see https://spec.commonmark.org/0.31.2/#link-title
+ * @see https://spec.commonmark.org/0.31.2/#backslash-escapes
+ */
+export const unescapeTitle = (title) => title.replace(/\\([!-/:-@[-`{-~])/g, '$1');
+
+/**
+ * Escape the title of a Markdown image, the counterpart of `unescapeTitle()`, so it can be put
+ * between double quotes: a double quote is escaped, as well as a backslash that would otherwise
+ * escape the next character or the closing quote.
+ * @param {string} title Title.
+ * @returns {string} Escaped title.
+ */
+export const escapeTitle = (title) =>
+  title.replace(/\\(?=[!-/:-@[-`{-~]|$)/g, '\\\\').replace(/"/g, '\\"');
+
+/**
+ * Escape the alt text of a Markdown image, the counterpart of `unescapeTitle()`, so it can be put
+ * between the brackets of `![…]`: a bracket is escaped, so an unbalanced one doesn’t end the alt
+ * text early or keep it open, as well as a backslash that would otherwise escape the next character
+ * or the closing bracket.
+ * @param {string} alt Alt text.
+ * @returns {string} Escaped alt text.
+ */
+export const escapeAlt = (alt) =>
+  alt.replace(/\\(?=[!-/:-@[-`{-~]|$)/g, '\\\\').replace(/[[\]]/g, '\\$&');

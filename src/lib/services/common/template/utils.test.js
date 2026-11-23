@@ -1,0 +1,121 @@
+import { describe, expect, test } from 'vitest';
+
+import {
+  getFileNameLocaleSuffixes,
+  getFileNameParts,
+  getTemplatePattern,
+  stripFieldTagPrefix,
+} from '$lib/services/common/template/utils';
+
+describe('Test stripFieldTagPrefix()', () => {
+  test('removes the `fields.` prefix', () => {
+    expect(stripFieldTagPrefix('fields.title')).toBe('title');
+    expect(stripFieldTagPrefix('fields.author.name')).toBe('author.name');
+  });
+
+  test('returns a tag without the prefix as is', () => {
+    expect(stripFieldTagPrefix('title')).toBe('title');
+    expect(stripFieldTagPrefix('slug')).toBe('slug');
+  });
+
+  test('only removes the prefix at the start', () => {
+    expect(stripFieldTagPrefix('author.fields.name')).toBe('author.fields.name');
+    expect(stripFieldTagPrefix('fields.fields.name')).toBe('fields.name');
+  });
+});
+
+describe('Test getFileNameParts()', () => {
+  test('splits the file name at the last dot', () => {
+    expect(getFileNameParts('content/posts/my-post.md')).toEqual({
+      filename: 'my-post',
+      extension: 'md',
+    });
+    expect(getFileNameParts('content/my.post.md')).toEqual({
+      filename: 'my.post',
+      extension: 'md',
+    });
+    expect(getFileNameParts('archive.tar.gz')).toEqual({
+      filename: 'archive.tar',
+      extension: 'gz',
+    });
+  });
+
+  test('returns an empty extension for a file name without a dot', () => {
+    expect(getFileNameParts('content/README')).toEqual({ filename: 'README', extension: '' });
+  });
+});
+
+describe('Test getFileNameParts() with locale suffixes', () => {
+  test('removes a locale code following the file name', () => {
+    expect(getFileNameParts('content/my.post.en.md', ['en', 'fr'])).toEqual({
+      filename: 'my.post',
+      extension: 'md',
+    });
+    expect(getFileNameParts('content/my-post.fr.md', ['en', 'fr'])).toEqual({
+      filename: 'my-post',
+      extension: 'md',
+    });
+  });
+
+  test('keeps a file name without a locale code', () => {
+    expect(getFileNameParts('content/my.post.md', ['en', 'fr'])).toEqual({
+      filename: 'my.post',
+      extension: 'md',
+    });
+  });
+});
+
+describe('Test getFileNameLocaleSuffixes()', () => {
+  /**
+   * Create a collection with the given i18n structure.
+   * @param {boolean} i18nMultiFile Whether the `multiple_files` structure is used.
+   * @returns {any} Collection.
+   */
+  const createCollection = (i18nMultiFile) => ({
+    _i18n: { structureMap: { i18nMultiFile }, allLocales: ['en', 'fr'] },
+  });
+
+  test('returns the locales with the `multiple_files` structure', () => {
+    expect(getFileNameLocaleSuffixes(createCollection(true))).toEqual(['en', 'fr']);
+  });
+
+  test('returns nothing with another structure', () => {
+    expect(getFileNameLocaleSuffixes(createCollection(false))).toEqual([]);
+  });
+
+  test('returns nothing without the i18n configuration', () => {
+    expect(getFileNameLocaleSuffixes(/** @type {any} */ ({}))).toEqual([]);
+    expect(getFileNameLocaleSuffixes(/** @type {any} */ ({ _i18n: {} }))).toEqual([]);
+  });
+});
+
+describe('Test getTemplatePattern()', () => {
+  test('replaces each template tag with the wildcard and escapes the rest', () => {
+    expect(getTemplatePattern('images/{{slug}}', '[^/]+')).toBe('images/[^/]+');
+    expect(getTemplatePattern('{{dirname}}/a.b/{{slug}}', '.+?')).toBe('.+?/a\\.b/.+?');
+  });
+
+  test('matches a path filled in for the template', () => {
+    const regex = new RegExp(`^${getTemplatePattern('static/{{dirname}}/images', '.+?')}$`);
+
+    expect(regex.test('static/blog/2024/images')).toBe(true);
+    expect(regex.test('static/images')).toBe(false);
+  });
+
+  test('returns a template without tags escaped', () => {
+    expect(getTemplatePattern('uploads', '.+?')).toBe('uploads');
+  });
+
+  test('replaces a tag with a nested template in a transformation argument as a whole', () => {
+    const template = "{{fields.slug | default('{{title}}')}}/index";
+    const pattern = getTemplatePattern(template, '[^/]+?');
+
+    expect(pattern).toBe('[^/]+?/index');
+    expect(new RegExp(`^${pattern}$`).test('hello-world/index')).toBe(true);
+    expect(getTemplatePattern("{{a | default('}}')}}-{{b}}", '.+?')).toBe('.+?-.+?');
+  });
+
+  test('matches an escaped tag literally, without the backslash', () => {
+    expect(getTemplatePattern('\\{{title}}/{{slug}}', '.+?')).toBe('\\{\\{title\\}\\}/.+?');
+  });
+});

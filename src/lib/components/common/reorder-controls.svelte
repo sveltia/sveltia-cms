@@ -11,13 +11,22 @@
 
   A touch screen gets Move Up/Down buttons instead, because HTML drag and drop is mouse-only: a
   touch gesture never fires `dragstart`, so a handle would do nothing at all there.
+
+  Once the list has enough items, a menu next to the handle or the buttons adds Move to Top and
+  Move to Bottom and Move to…, which asks for a position in a small dialog. A
+  list that renders the handle on its own with `part="handle"` leaves the menu to its buttons.
+
+  A list with room for both can render the two parts separately with `part`: the handle, shown only
+  with a fine pointer, and the buttons, shown on any device.
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Button, Icon, Spacer } from '@sveltia/ui';
+  import { Button, Icon, Menu, MenuButton, Spacer } from '@sveltia/ui';
 
+  import MoveToDialog from '$lib/components/common/move-to-dialog.svelte';
+  import ReorderMenuItems from '$lib/components/common/reorder-menu-items.svelte';
   import { env } from '$lib/services/user/env.svelte';
-  import { getKeyboardMoveTarget } from '$lib/services/utils/drag-sorting';
+  import { canMoveToEdge, getKeyboardMoveTarget } from '$lib/services/utils/drag-sorting';
 
   /**
    * @typedef {object} Props
@@ -26,6 +35,12 @@
    * @property {boolean} [disabled] Whether to disable reordering.
    * @property {'small' | 'medium'} [size] Button size.
    * @property {string} [icon] Name of the icon to use for the drag handle.
+   * @property {'auto' | 'handle' | 'buttons'} [part] Which control(s) to render: `auto` renders
+   * the drag handle with a fine pointer and the Move Up/Down buttons otherwise, `handle` renders
+   * only the drag handle, and only with a fine pointer, and `buttons` renders the Move Up/Down
+   * buttons on any device, side by side without a spacer.
+   * @property {boolean} [menu] Whether to render the reorder menu once the list has enough items. A
+   * list with an options menu of its own turns it off and adds the same items to that menu.
    * @property {() => void} [onGrab] Called when the drag handle is pressed, so the list can make
    * the item draggable. Never called on a touch screen.
    * @property {() => void} [onRelease] Called when the press ends without starting a drag.
@@ -41,6 +56,8 @@
     disabled = false,
     size = 'small',
     icon = 'drag_indicator',
+    part = 'auto',
+    menu = true,
     onGrab = undefined,
     onRelease = undefined,
     onMove = undefined,
@@ -57,9 +74,15 @@
     globalThis.removeEventListener('pointercancel', release);
     onRelease?.();
   };
+
+  const showHandle = $derived(env.hasMouse && part !== 'buttons');
+  let moveToDialogOpen = $state(false);
+
+  const showButtons = $derived(part === 'buttons' || (part === 'auto' && !env.hasMouse));
+  const showMenu = $derived(menu && part !== 'handle' && canMoveToEdge(itemCount));
 </script>
 
-{#if env.hasMouse}
+{#if showHandle}
   <Button
     {size}
     {disabled}
@@ -89,7 +112,8 @@
       <Icon name={icon} />
     {/snippet}
   </Button>
-{:else}
+{/if}
+{#if showButtons}
   <Button
     {size}
     iconic
@@ -102,7 +126,9 @@
       <Icon name="arrow_upward" />
     {/snippet}
   </Button>
-  <Spacer />
+  {#if part !== 'buttons'}
+    <Spacer />
+  {/if}
   <Button
     {size}
     iconic
@@ -115,6 +141,36 @@
       <Icon name="arrow_downward" />
     {/snippet}
   </Button>
+{/if}
+{#if showMenu}
+  <MenuButton
+    variant="ghost"
+    {size}
+    iconic
+    {disabled}
+    popupPosition="bottom-right"
+    data-action="move-options"
+    aria-label={_('reorder_options')}
+  >
+    {#snippet popup()}
+      <Menu ariaLabel={_('reorder_options')}>
+        <ReorderMenuItems
+          {index}
+          {itemCount}
+          onMove={(to, action) => onMove?.(to, action)}
+          onMoveTo={() => {
+            moveToDialogOpen = true;
+          }}
+        />
+      </Menu>
+    {/snippet}
+  </MenuButton>
+  <MoveToDialog
+    bind:open={moveToDialogOpen}
+    {index}
+    {itemCount}
+    onMove={(to) => onMove?.(to, 'move-options')}
+  />
 {/if}
 
 <style>

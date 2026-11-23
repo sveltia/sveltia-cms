@@ -1,0 +1,1009 @@
+import { sleep } from '@sveltia/utils/misc';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
+import { render } from 'vitest-browser-svelte';
+
+import AssetUpdatesToast from '$lib/components/assets/shared/asset-updates-toast.svelte';
+import { prepareExternalUploads } from '$lib/services/assets/external/data';
+import { selectAssetsView } from '$lib/services/contents/editor';
+import { env } from '$lib/services/user/env.svelte';
+import { prefs } from '$lib/services/user/prefs.svelte';
+import {
+  createMockCloudService,
+  createMockExternalAsset,
+  createMockImageFile,
+  initTestConfig,
+} from '$lib/test/config';
+import { createFileDropEvent } from '$lib/test/drop';
+import { waitForToastsToHide } from '$lib/test/toast';
+
+import ExternalAssetsPanel from './external-assets-panel.svelte';
+
+/**
+ * Downloads held until the test resolves them, keyed by download URL. A download not listed here
+ * goes ahead as usual.
+ */
+const { heldDownloads } = vi.hoisted(() => ({
+  heldDownloads: /** @type {Map<string, Promise<Blob>>} */ (new Map()),
+}));
+
+vi.mock('$lib/services/assets/external/data', async (importOriginal) => {
+  /** @type {typeof import('$lib/services/assets/external/data')} */
+  const actual = await importOriginal();
+
+  return {
+    ...actual,
+    prepareExternalUploads: vi.fn(actual.prepareExternalUploads),
+    fetchExternalAssetBlob: vi.fn(
+      async (/** @type {import('$lib/types/private').ExternalAsset} */ asset) =>
+        heldDownloads.get(asset.downloadURL) ?? actual.fetchExternalAssetBlob(asset),
+    ),
+  };
+});
+
+const assets = [
+  createMockExternalAsset({ fileName: 'a.png' }),
+  createMockExternalAsset({ fileName: 'b.png' }),
+];
+
+/**
+ * Get the option holding the given asset.
+ * @param {string} id Asset ID.
+ * @returns {import('vitest/browser').Locator} Locator.
+ */
+const getOption = (id) =>
+  page.elementLocator(
+    /** @type {HTMLElement} */ (document.querySelector(`[role="option"][data-value="${id}"]`)),
+  );
+
+/**
+ * Get the options of the listed assets, leaving out the folders listed ahead of them.
+ * @returns {import('vitest/browser').Locator} Locator.
+ */
+const getAssetOptions = () =>
+  page.getByRole('listbox', { name: /^Available (Images|Files)$/ }).getByRole('option');
+
+/**
+ * Wait for the list to be rendered.
+ * @param {number} count Expected number of items.
+ * @returns {Promise<void>}
+ */
+const waitForList = async (count) => {
+  await expect.poll(() => getAssetOptions().elements().length).toBe(count);
+};
+
+describe('ExternalAssetsPanel', () => {
+  beforeEach(async () => {
+    await initTestConfig({ media_libraries: { all: { max_file_size: 1000 } } });
+    env.isSmallScreen = false;
+    prefs.apiKeys = {};
+    prefs.logins = {};
+    selectAssetsView.current = { type: 'grid' };
+    heldDownloads.clear();
+  });
+
+  test('lists the assets and selects one by hotlinking', async () => {
+    const list = vi.fn().mockResolvedValue(assets);
+
+    const props = $state({
+      kind: /** @type {const} */ ('image'),
+      serviceProps: createMockCloudService({ list }),
+      selectedResources: /** @type {any[]} */ ([]),
+    });
+
+    const { container } = await render(ExternalAssetsPanel, props);
+
+    await waitForList(2);
+    // The list is named after the kind of assets being picked
+    await expect.element(page.getByRole('listbox', { name: 'Available Images' })).toBeVisible();
+    expect(list).toHaveBeenCalledWith({
+      kind: 'image',
+      fieldConfig: undefined,
+      apiKey: '',
+      userName: '',
+      password: '',
+    });
+    // A cloud storage service shows the file path
+    expect(container.querySelector('.name strong')).toHaveTextContent('a.png');
+
+    await getOption('images/a.png').click();
+    await expect
+      .poll(() => props.selectedResources)
+      .toEqual([{ url: 'https://cdn.example.com/images/a.png', credit: undefined }]);
+    await expect.element(getOption('images/a.png')).toHaveAttribute('aria-selected', 'true');
+
+    // Another selection replaces the previous one
+    await getOption('images/b.png').click();
+    await expect
+      .poll(() => props.selectedResources)
+      .toEqual([{ url: 'https://cdn.example.com/images/b.png', credit: undefined }]);
+
+    // An earlier asset replaces it too, although the list box reports it selected before it
+    // reports the later one deselected, while the resource is still being prepared
+    await getOption('images/a.png').click();
+    await expect.element(getOption('images/b.png')).toHaveAttribute('aria-selected', 'false');
+    await sleep(50);
+    expect(props.selectedResources).toEqual([
+      { url: 'https://cdn.example.com/images/a.png', credit: undefined },
+    ]);
+  });
+
+  test('replaces a single selection hidden by a search', async () => {
+    const props = $state({
+      serviceProps: createMockCloudService({
+        list: vi.fn().mockResolvedValue(assets),
+        search: vi.fn().mockResolvedValue([assets[1]]),
+      }),
+      searchTerms: '',
+      selectedResources: /** @type {any[]} */ ([]),
+    });
+
+    await render(ExternalAssetsPanel, props);
+    await waitForList(2);
+
+    await getOption('images/a.png').click();
+    await expect
+      .poll(() => props.selectedResources)
+      .toEqual([{ url: 'https://cdn.example.com/images/a.png', credit: undefined }]);
+
+    props.searchTerms = 'b';
+    await waitForList(1);
+    await getOption('images/b.png').click();
+    await expect
+      .poll(() => props.selectedResources)
+      .toEqual([{ url: 'https://cdn.example.com/images/b.png', credit: undefined }]);
+  });
+
+  test('leaves out a single selection replaced while it was hidden and still downloading', async () => {
+    /** @type {Record<string, (blob: Blob) => void>} */
+    const release = {};
+
+    assets.forEach(({ downloadURL }) => {
+      heldDownloads.set(
+        downloadURL,
+        new Promise((resolve) => {
+          release[downloadURL] = resolve;
+        }),
+      );
+    });
+
+    const props = $state({
+      serviceProps: createMockCloudService({
+        hotlinking: false,
+        list: vi.fn().mockResolvedValue(assets),
+        search: vi.fn().mockResolvedValue([assets[1]]),
+      }),
+      searchTerms: '',
+      selectedResources: /** @type {any[]} */ ([]),
+    });
+
+    await render(ExternalAssetsPanel, props);
+    await waitForList(2);
+
+    await getOption('images/a.png').click();
+    props.searchTerms = 'b';
+    await waitForList(1);
+    await getOption('images/b.png').click();
+
+    release['https://cdn.example.com/images/b.png'](new Blob(['b'], { type: 'image/png' }));
+    await expect
+      .poll(() => props.selectedResources.map((/** @type {any} */ r) => r.url))
+      .toEqual(['https://cdn.example.com/images/b.png']);
+
+    // The earlier pick is not added once its download completes
+    release['https://cdn.example.com/images/a.png'](new Blob(['a'], { type: 'image/png' }));
+    await sleep(50);
+    expect(props.selectedResources.map((/** @type {any} */ r) => r.url)).toEqual([
+      'https://cdn.example.com/images/b.png',
+    ]);
+  });
+
+  test('leaves out an asset deselected before its resource is ready', async () => {
+    const props = $state({
+      multiple: true,
+      serviceProps: createMockCloudService({ list: vi.fn().mockResolvedValue(assets) }),
+      selectedResources: /** @type {any[]} */ ([]),
+    });
+
+    await render(ExternalAssetsPanel, props);
+    await waitForList(2);
+
+    await getOption('images/b.png').click();
+    await expect
+      .poll(() => props.selectedResources)
+      .toEqual([{ url: 'https://cdn.example.com/images/b.png', credit: undefined }]);
+
+    const option = /** @type {HTMLElement} */ (getOption('images/a.png').element());
+
+    // Both clicks are handled before the resource of the first one is ready
+    option.click();
+    option.click();
+    await expect.element(getOption('images/a.png')).toHaveAttribute('aria-selected', 'false');
+    await sleep(50);
+    expect(props.selectedResources).toEqual([
+      { url: 'https://cdn.example.com/images/b.png', credit: undefined },
+    ]);
+
+    // Another asset is added to the selection once its resource is ready
+    await getOption('images/a.png').click();
+    await expect
+      .poll(() => props.selectedResources)
+      .toEqual([
+        { url: 'https://cdn.example.com/images/b.png', credit: undefined },
+        { url: 'https://cdn.example.com/images/a.png', credit: undefined },
+      ]);
+  });
+
+  test('downloads the selected file when hotlinking is not allowed', async () => {
+    const url = URL.createObjectURL(await createMockImageFile());
+
+    const asset = createMockExternalAsset({
+      fileName: 'photo.png',
+      asset: { downloadURL: url, previewURL: url, credit: 'Photo by Melvin' },
+    });
+
+    const props = $state({
+      serviceProps: createMockCloudService({
+        hotlinking: false,
+        list: vi.fn().mockResolvedValue([asset]),
+      }),
+      selectedResources: /** @type {any[]} */ ([]),
+    });
+
+    await render(ExternalAssetsPanel, props);
+    await waitForList(1);
+    await getOption('images/photo.png').click();
+
+    await expect.poll(() => props.selectedResources.length).toBe(1);
+
+    const [{ url: resourceURL, credit, file }] = props.selectedResources;
+
+    expect(resourceURL).toBe(url);
+    expect(credit).toBe('Photo by Melvin');
+    expect(file.name).toBe('photo.png');
+    expect(file.type).toBe('image/png');
+  });
+
+  test('reports a download failure', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const asset = createMockExternalAsset({
+      fileName: 'photo.png',
+      asset: { downloadURL: 'blob:http://localhost/missing' },
+    });
+
+    const props = $state({
+      serviceProps: createMockCloudService({
+        hotlinking: false,
+        list: vi.fn().mockResolvedValue([asset]),
+      }),
+      selectedResources: /** @type {any[]} */ ([]),
+    });
+
+    await render(ExternalAssetsPanel, props);
+    await waitForList(1);
+    await getOption('images/photo.png').click();
+
+    await expect
+      .element(page.getByRole('alert'))
+      .toHaveTextContent(
+        'There was an error while downloading the selected asset. Please try again later.',
+      );
+    expect(props.selectedResources).toEqual([]);
+  });
+
+  test('searches the assets', async () => {
+    const list = vi.fn().mockResolvedValue(assets);
+    // Hold the first search so the transient “Searching…” state can be observed
+    const pending = Promise.withResolvers();
+    const search = vi.fn().mockReturnValueOnce(pending.promise);
+
+    const props = $state({
+      serviceProps: createMockCloudService({ list, search }),
+      searchTerms: '',
+      selectedResources: /** @type {any[]} */ ([]),
+    });
+
+    await render(ExternalAssetsPanel, props);
+    await waitForList(2);
+
+    props.searchTerms = ' b ';
+    await expect.element(page.getByRole('alert')).toHaveTextContent('Searching…');
+    pending.resolve([assets[1]]);
+    await waitForList(1);
+    expect(search).toHaveBeenCalledWith('b', expect.anything());
+
+    search.mockResolvedValue([]);
+    props.searchTerms = 'c';
+    await expect.element(page.getByRole('alert')).toHaveTextContent('No files found.');
+  });
+
+  test('ignores the result of an earlier search that comes back late', async () => {
+    const earlier = Promise.withResolvers();
+    const search = vi.fn().mockReturnValueOnce(earlier.promise).mockResolvedValue([assets[1]]);
+
+    const props = $state({
+      serviceProps: createMockCloudService({ list: vi.fn().mockResolvedValue([]), search }),
+      searchTerms: 'a',
+      selectedResources: /** @type {any[]} */ ([]),
+    });
+
+    await render(ExternalAssetsPanel, props);
+    props.searchTerms = 'b';
+    await waitForList(1);
+
+    earlier.resolve(assets);
+    await sleep(100);
+    expect(getAssetOptions().elements()).toHaveLength(1);
+    expect(getOption(assets[1].id).element()).toBeInTheDocument();
+  });
+
+  test('ignores the failure of an earlier search that comes back late', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const earlier = Promise.withResolvers();
+    const search = vi.fn().mockReturnValueOnce(earlier.promise).mockResolvedValue([assets[1]]);
+
+    const props = $state({
+      serviceProps: createMockCloudService({ list: vi.fn().mockResolvedValue([]), search }),
+      searchTerms: 'a',
+      selectedResources: /** @type {any[]} */ ([]),
+    });
+
+    await render(ExternalAssetsPanel, props);
+    props.searchTerms = 'b';
+    await waitForList(1);
+
+    earlier.reject(new Error('Boom'));
+    await sleep(100);
+    expect(page.getByRole('alert').elements()).toHaveLength(0);
+    expect(getAssetOptions().elements()).toHaveLength(1);
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+
+  test('ignores the search terms on a service that can’t search', async () => {
+    const list = vi.fn().mockResolvedValue(assets);
+
+    // The terms are shared with another service in the dialog, like Unsplash for Lorem Picsum
+    const props = $state({
+      serviceProps: createMockCloudService({ list }),
+      searchTerms: 'a',
+      selectedResources: /** @type {any[]} */ ([]),
+    });
+
+    await render(ExternalAssetsPanel, props);
+    await waitForList(2);
+    expect(list).toHaveBeenCalledTimes(1);
+
+    props.searchTerms = 'b';
+    await sleep(100);
+    expect(list).toHaveBeenCalledTimes(1);
+  });
+
+  test('reports a listing failure', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await render(
+      ExternalAssetsPanel,
+      /** @type {any} */ ({
+        serviceProps: createMockCloudService({
+          list: vi.fn().mockRejectedValue(new Error('Boom')),
+        }),
+      }),
+    );
+
+    await expect
+      .element(page.getByRole('alert'))
+      .toHaveTextContent('There was an error while searching assets. Please try again later.');
+  });
+
+  test('clears a search failure on the next search', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const search = vi.fn().mockRejectedValueOnce(new Error('Boom')).mockResolvedValue(assets);
+
+    const props = $state({
+      serviceProps: createMockCloudService({ list: vi.fn().mockResolvedValue([]), search }),
+      searchTerms: 'a',
+      selectedResources: /** @type {any[]} */ ([]),
+    });
+
+    await render(ExternalAssetsPanel, props);
+
+    await expect
+      .element(page.getByRole('alert'))
+      .toHaveTextContent('There was an error while searching assets. Please try again later.');
+
+    props.searchTerms = 'b';
+    await waitForList(2);
+    expect(page.getByRole('alert').elements()).toHaveLength(0);
+  });
+
+  test('asks for the credentials first', async () => {
+    const list = vi.fn().mockResolvedValue(assets);
+
+    await render(
+      ExternalAssetsPanel,
+      /** @type {any} */ ({
+        serviceProps: createMockCloudService({
+          authType: 'api_key',
+          apiKeyPattern: /^[a-z]+$/,
+          list,
+        }),
+      }),
+    );
+
+    expect(list).not.toHaveBeenCalled();
+
+    await page.getByRole('textbox').fill('secret');
+    await waitForList(2);
+    expect(list).toHaveBeenCalledWith(expect.objectContaining({ apiKey: 'secret' }));
+    expect(prefs.apiKeys?.test_cloud).toBe('secret');
+  });
+
+  test('reports a service that isn’t configured', async () => {
+    await render(
+      ExternalAssetsPanel,
+      /** @type {any} */ ({
+        serviceProps: createMockCloudService({
+          init: vi.fn().mockResolvedValue(false),
+          list: vi.fn(),
+        }),
+      }),
+    );
+
+    await expect
+      .element(page.getByRole('alert'))
+      .toHaveTextContent('The service is not configured properly.');
+  });
+
+  test('prepares the uploaded files with the entry draft', async () => {
+    const draft = /** @type {any} */ ({ collection: { name: 'posts' } });
+    const upload = vi.fn().mockResolvedValue([]);
+
+    const { component } = await render(ExternalAssetsPanel, {
+      draft,
+      serviceProps: createMockCloudService({ list: vi.fn().mockResolvedValue(assets), upload }),
+      selectedResources: [],
+    });
+
+    await waitForList(2);
+
+    const file = await createMockImageFile({ name: 'c.png' });
+
+    await component.uploadFiles([file]);
+
+    expect(prepareExternalUploads).toHaveBeenCalledWith([file], expect.anything(), { draft });
+  });
+
+  test('uploads files, selecting them and reporting the rejected ones', async () => {
+    const upload = vi.fn(async (/** @type {File[]} */ files) =>
+      files.map((file) => createMockExternalAsset({ fileName: file.name })),
+    );
+
+    const props = $state({
+      multiple: true,
+      serviceProps: createMockCloudService({ list: vi.fn().mockResolvedValue(assets), upload }),
+      selectedResources: /** @type {any[]} */ ([]),
+    });
+
+    const { component } = await render(ExternalAssetsPanel, props);
+
+    await waitForList(2);
+
+    const valid = await createMockImageFile({ name: 'c.png' });
+    const oversized = new File([new Uint8Array(2000)], 'big.txt', { type: 'text/plain' });
+
+    await component.uploadFiles([valid, oversized]);
+
+    expect(upload).toHaveBeenCalledWith([valid], expect.anything());
+    expect(props.selectedResources).toEqual([
+      { url: 'https://cdn.example.com/images/c.png', credit: undefined },
+    ]);
+    // The uploaded file is listed first
+    await expect
+      .poll(() =>
+        getAssetOptions()
+          .elements()
+          .map((el) => el.dataset.value),
+      )
+      .toEqual(['images/c.png', 'images/a.png', 'images/b.png']);
+
+    const dialog = page.getByRole('alertdialog', { name: 'Large File' });
+
+    await expect.element(dialog).toBeInTheDocument();
+    expect(dialog.element().textContent).toContain('exceeds the maximum size');
+  });
+
+  test('lists a file uploaded under an existing name only once', async () => {
+    const upload = vi.fn(async (/** @type {File[]} */ files) =>
+      files.map((file) => createMockExternalAsset({ fileName: file.name })),
+    );
+
+    const { component } = await render(ExternalAssetsPanel, {
+      serviceProps: createMockCloudService({ list: vi.fn().mockResolvedValue(assets), upload }),
+      selectedResources: [],
+    });
+
+    await waitForList(2);
+    // The service overwrites the existing asset
+    await component.uploadFiles([await createMockImageFile({ name: 'b.png' })]);
+
+    await expect
+      .poll(() =>
+        getAssetOptions()
+          .elements()
+          .map((el) => el.dataset.value),
+      )
+      .toEqual(['images/b.png', 'images/a.png']);
+  });
+
+  test('keeps the global size limit when the field has shared options of its own', async () => {
+    const upload = vi.fn(async (/** @type {File[]} */ files) =>
+      files.map((file) => createMockExternalAsset({ fileName: file.name })),
+    );
+
+    const props = $state({
+      multiple: true,
+      fieldConfig: /** @type {any} */ ({
+        name: 'image',
+        widget: 'image',
+        media_libraries: { all: { transformations: {} } },
+      }),
+      serviceProps: createMockCloudService({ list: vi.fn().mockResolvedValue(assets), upload }),
+      selectedResources: /** @type {any[]} */ ([]),
+    });
+
+    const { component } = await render(ExternalAssetsPanel, props);
+
+    await waitForList(2);
+
+    const valid = await createMockImageFile({ name: 'c.png' });
+    const oversized = new File([new Uint8Array(2000)], 'big.txt', { type: 'text/plain' });
+
+    await component.uploadFiles([valid, oversized]);
+
+    expect(upload).toHaveBeenCalledWith([valid], expect.anything());
+    await expect.element(page.getByRole('alertdialog', { name: 'Large File' })).toBeInTheDocument();
+  });
+
+  test('uploads a file of any size while the list is still loading', async () => {
+    // No size limit is configured
+    await initTestConfig();
+
+    const upload = vi.fn(async (/** @type {File[]} */ files) =>
+      files.map((file) => createMockExternalAsset({ fileName: file.name })),
+    );
+
+    const props = $state({
+      serviceProps: createMockCloudService({ list: vi.fn(() => new Promise(() => {})), upload }),
+      selectedResources: /** @type {any[]} */ ([]),
+    });
+
+    const { component } = await render(ExternalAssetsPanel, props);
+
+    await expect.element(page.getByRole('alert')).toHaveTextContent('Loading…');
+
+    const big = new File([new Uint8Array(2000)], 'big.txt', { type: 'text/plain' });
+    const broken = new File(['x'], 'broken.png', { type: 'image/png' });
+
+    await component.uploadFiles([big, broken]);
+
+    expect(upload).toHaveBeenCalledWith([big], expect.anything());
+    await waitForList(1);
+    // Only the broken file is reported
+    await expect.element(page.getByRole('alertdialog', { name: 'Invalid File' })).toBeVisible();
+  });
+
+  test('reports an empty result', async () => {
+    await render(ExternalAssetsPanel, {
+      serviceProps: createMockCloudService({ list: vi.fn().mockResolvedValue(undefined) }),
+      selectedResources: [],
+    });
+
+    await expect.element(page.getByRole('alert')).toHaveTextContent('No files found.');
+  });
+
+  test('reports a file that can’t be decoded, and uploads nothing then', async () => {
+    const upload = vi.fn();
+
+    const { component } = await render(
+      ExternalAssetsPanel,
+      /** @type {any} */ ({
+        serviceProps: createMockCloudService({ list: vi.fn().mockResolvedValue([]), upload }),
+      }),
+    );
+
+    await expect.element(page.getByRole('alert')).toHaveTextContent('No files found.');
+    await component.uploadFiles([new File(['x'], 'broken.png', { type: 'image/png' })]);
+    expect(upload).not.toHaveBeenCalled();
+
+    const dialog = page.getByRole('alertdialog', { name: 'Invalid File' });
+
+    await expect.element(dialog).toBeVisible();
+    expect(dialog.element().textContent).toContain('broken.png');
+    await dialog.getByRole('button', { name: 'OK' }).click();
+    await expect.poll(() => document.querySelector('[role="alertdialog"]')).toBeNull();
+  });
+
+  test('uploads the files dropped onto the list', async () => {
+    // The toasts reporting the commit are rendered by the shared component
+    await render(AssetUpdatesToast, {});
+
+    const upload = vi.fn(async (/** @type {File[]} */ files) =>
+      files.map((file) => createMockExternalAsset({ fileName: file.name })),
+    );
+
+    await render(
+      ExternalAssetsPanel,
+      /** @type {any} */ ({
+        serviceProps: createMockCloudService({ list: vi.fn().mockResolvedValue([]), upload }),
+      }),
+    );
+
+    await expect.element(page.getByRole('alert')).toHaveTextContent('No files found.');
+
+    const file = await createMockImageFile({ name: 'dropped.png' });
+    const event = createFileDropEvent([file]);
+
+    /** @type {HTMLElement} */ (document.querySelector('.drop-target')).dispatchEvent(event);
+    await vi.waitFor(() => expect(upload).toHaveBeenCalledWith([file], expect.anything()));
+    // The progress toast goes away once the upload is done
+    await expect
+      .poll(() => document.querySelector('.sui.toast')?.getAttribute('aria-hidden'), {
+        timeout: 7000,
+      })
+      .toBe('true');
+  });
+
+  test('can’t upload to a service that doesn’t support it', async () => {
+    const { component } = await render(
+      ExternalAssetsPanel,
+      /** @type {any} */ ({
+        serviceProps: createMockCloudService({ list: vi.fn().mockResolvedValue([]) }),
+      }),
+    );
+
+    await expect.element(page.getByRole('alert')).toHaveTextContent('No files found.');
+    await component.uploadFiles([await createMockImageFile()]);
+    expect(document.querySelector('.drop-target')).toBeNull();
+  });
+
+  test('reports an upload failure, listing the files uploaded before it', async () => {
+    // The toasts reporting the commit are rendered by the shared component
+    await render(AssetUpdatesToast, {});
+
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    // The first file made it to the service before the second one failed
+    const uploaded = createMockExternalAsset({ fileName: 'c.png' });
+    const list = vi.fn().mockResolvedValueOnce([]).mockResolvedValue([uploaded]);
+
+    const props = $state({
+      serviceProps: createMockCloudService({
+        list,
+        upload: vi.fn().mockRejectedValue(new Error('Boom')),
+      }),
+      selectedResources: /** @type {any[]} */ ([]),
+    });
+
+    try {
+      const { component } = await render(ExternalAssetsPanel, props);
+
+      await expect.element(page.getByRole('alert')).toHaveTextContent('No files found.');
+      await component.uploadFiles([
+        await createMockImageFile({ name: 'c.png' }),
+        await createMockImageFile({ name: 'd.png' }),
+      ]);
+
+      await expect
+        .poll(() =>
+          document.querySelector('.sui.alert.error')?.textContent?.replace(/\s+/g, ' ').trim(),
+        )
+        .toBe('error Error Upload failed.');
+      expect(error).toHaveBeenCalledWith(new Error('Boom'));
+      // The list is reloaded, showing the file uploaded before the failure
+      await expect.poll(() => getAssetOptions().elements().length).toBe(1);
+      expect(list).toHaveBeenCalledTimes(2);
+      // The failure toast hides itself after a while
+      await waitForToastsToHide();
+    } finally {
+      error.mockRestore();
+    }
+  });
+
+  test('keeps the progress toast up until a slow upload is done, then hides it', async () => {
+    // The toasts reporting the commit are rendered by the shared component
+    await render(AssetUpdatesToast, {});
+
+    /**
+     * Finish the upload with the given assets.
+     * @type {(assets: any[]) => void}
+     */
+    let finishUpload = () => {};
+
+    const upload = vi.fn(
+      () =>
+        new Promise((resolve) => {
+          finishUpload = resolve;
+        }),
+    );
+
+    const props = $state({
+      serviceProps: createMockCloudService({ list: vi.fn().mockResolvedValue([]), upload }),
+      selectedResources: /** @type {any[]} */ ([]),
+    });
+
+    const { component } = await render(ExternalAssetsPanel, props);
+
+    await expect.element(page.getByRole('alert')).toHaveTextContent('No files found.');
+
+    const uploading = component.uploadFiles([await createMockImageFile({ name: 'c.png' })]);
+
+    await vi.waitFor(() => expect(upload).toHaveBeenCalled());
+
+    /**
+     * Get the toast showing the progress.
+     * @returns {Element | null | undefined} Toast.
+     */
+    const getProgressToast = () =>
+      [...document.querySelectorAll('.sui.toast')].find((toast) =>
+        toast.textContent?.includes('Uploading…'),
+      );
+
+    await expect.poll(() => getProgressToast()?.getAttribute('aria-hidden')).toBe('false');
+    // A toast hides itself after 5 seconds by default, but this one stays while uploading
+    await sleep(5500);
+    expect(getProgressToast()?.getAttribute('aria-hidden')).toBe('false');
+
+    finishUpload([createMockExternalAsset({ fileName: 'c.png' })]);
+    await uploading;
+
+    await expect.poll(() => getProgressToast()?.getAttribute('aria-hidden')).toBe('true');
+    expect(props.selectedResources).toEqual([
+      { url: 'https://cdn.example.com/images/c.png', credit: undefined },
+    ]);
+    // No failure is reported
+    expect(document.querySelector('.sui.alert.error')).toBeNull();
+  }, 15000);
+
+  test('shows the captions of stock photos in the list view', async () => {
+    const asset = createMockExternalAsset({
+      fileName: 'photo.jpg',
+      asset: { id: '123', description: 'A cat' },
+    });
+
+    const { container } = await render(
+      ExternalAssetsPanel,
+      /** @type {any} */ ({
+        serviceProps: createMockCloudService({
+          serviceType: 'stock_assets',
+          serviceId: 'unsplash',
+          list: vi.fn().mockResolvedValue([asset]),
+        }),
+      }),
+    );
+
+    await waitForList(1);
+    expect(container.querySelector('[role="listbox"]')).toHaveClass('grid');
+    expect(container.querySelector('.name strong')).toBeNull();
+
+    selectAssetsView.current = { type: 'list' };
+    await expect.poll(() => container.querySelector('.name strong')?.textContent).toBe('A cat');
+  });
+
+  test('forces the grid view for Picsum, which has no descriptions', async () => {
+    selectAssetsView.current = { type: 'list' };
+
+    const { container } = await render(
+      ExternalAssetsPanel,
+      /** @type {any} */ ({
+        serviceProps: createMockCloudService({
+          serviceType: 'stock_assets',
+          serviceId: 'picsum',
+          list: vi.fn().mockResolvedValue([createMockExternalAsset({ fileName: 'photo.jpg' })]),
+        }),
+      }),
+    );
+
+    await waitForList(1);
+    expect(container.querySelector('[role="listbox"]')).toHaveClass('grid');
+  });
+
+  describe('folders', () => {
+    const folderAssets = [
+      createMockExternalAsset({ fileName: 'a.png', folder: 'images' }),
+      createMockExternalAsset({ fileName: 'b.png', folder: 'images/2024' }),
+      createMockExternalAsset({ fileName: 'c.png', folder: 'docs' }),
+    ];
+
+    /**
+     * Render the panel for a service with folder support.
+     * @param {Partial<import('$lib/types/private').MediaLibraryService>} [service] Extra
+     * service functions.
+     * @returns {Promise<{ props: any, component: any, container: HTMLElement }>} Result.
+     */
+    const renderPanel = async (service = {}) => {
+      const props = $state({
+        multiple: true,
+        searchTerms: '',
+        serviceProps: createMockCloudService({
+          browse: vi.fn().mockResolvedValue({ assets: folderAssets, folders: ['images/empty'] }),
+          search: vi.fn().mockResolvedValue([folderAssets[1]]),
+          upload: vi.fn(async (/** @type {File[]} */ files, /** @type {any} */ { dirPath }) =>
+            files.map((file) => createMockExternalAsset({ fileName: file.name, folder: dirPath })),
+          ),
+          ...service,
+        }),
+        selectedResources: /** @type {any[]} */ ([]),
+      });
+
+      const { component, container } = await render(ExternalAssetsPanel, props);
+
+      return { props, component, container };
+    };
+
+    /**
+     * Get the names of the listed subfolders.
+     * @returns {string[]} Names.
+     */
+    const getFolderNames = () =>
+      page
+        .getByRole('listbox', { name: 'Folders' })
+        .getByRole('option')
+        .elements()
+        .map((el) => el.textContent?.replace(/\s+/g, ' ').trim());
+
+    test('browses the service folder by folder, with a breadcrumb leading back', async () => {
+      // Give the breadcrumb room, or it folds its middle into a menu
+      await page.viewport(1024, 768);
+
+      const { props, component } = await renderPanel();
+
+      // The root lists its folders and none of the files, which are all in folders
+      await expect.poll(getFolderNames).toEqual(['folder docs', 'folder images']);
+      // An empty list box would only be a stop for the Tab key
+      expect(page.getByRole('listbox').elements()).toHaveLength(1);
+      // Files of any kind can be picked
+      await page.getByRole('option', { name: 'images' }).click();
+      await expect.element(page.getByRole('listbox', { name: 'Available Files' })).toBeVisible();
+      await page
+        .getByRole('navigation', { name: 'Folder' })
+        .getByRole('button', { name: 'Test Cloud' })
+        .click();
+      await expect.poll(getFolderNames).toEqual(['folder docs', 'folder images']);
+      expect(page.getByRole('navigation').elements()).toHaveLength(0);
+      expect(component.canCreateFolder()).toBe(false);
+
+      await page.getByRole('option', { name: 'images' }).click();
+      await expect.poll(getFolderNames).toEqual(['folder 2024', 'folder empty']);
+      await waitForList(1);
+      expect(getAssetOptions().elements()[0].dataset.value).toBe('images/a.png');
+      // The path is relative to the folder being browsed
+      expect(getAssetOptions().elements()[0].querySelector('.name')).toHaveTextContent('a.png');
+
+      const breadcrumb = page.getByRole('navigation', { name: 'Folder' });
+
+      await expect.element(breadcrumb).toMatchTextContent(/Test Cloud.*images/);
+
+      // An empty folder has nothing but the breadcrumb
+      await page.getByRole('option', { name: 'empty' }).click();
+      await expect.element(page.getByRole('alert')).toHaveTextContent('No files found.');
+      await expect.element(breadcrumb).toMatchTextContent(/Test Cloud.*images.*empty/);
+
+      await breadcrumb.getByRole('button', { name: 'Test Cloud' }).click();
+      await expect.poll(getFolderNames).toEqual(['folder docs', 'folder images']);
+
+      // A search looks through the whole service, listing the matches with their paths
+      props.searchTerms = 'b';
+      await expect
+        .poll(() => page.getByRole('listbox', { name: 'Folders' }).elements())
+        .toEqual([]);
+      await waitForList(1);
+      expect(getAssetOptions().elements()[0].dataset.value).toBe('images/2024/b.png');
+      expect(getAssetOptions().elements()[0].querySelector('.name')).toMatchTextContent(
+        'images/2024/b.png',
+      );
+
+      await page.viewport(414, 896);
+    });
+
+    test('tells the user when some files are left out of the list', async () => {
+      const notice = page.getByRole('alert').filter({ hasText: 'too many files' });
+
+      const { props } = await renderPanel({
+        browse: vi
+          .fn()
+          .mockResolvedValue({ assets: folderAssets, folders: ['images/empty'], truncated: true }),
+      });
+
+      await expect.poll(getFolderNames).toEqual(['folder docs', 'folder images']);
+      await expect
+        .element(notice)
+        .toMatchTextContent(
+          'There are too many files on the service to list them all, so some of them are left out.',
+        );
+
+      // A search result has nothing to do with the listing
+      props.searchTerms = 'b';
+      await waitForList(1);
+      expect(notice.elements()).toHaveLength(0);
+    });
+
+    test('uploads files to the folder being browsed', async () => {
+      const { props, component } = await renderPanel();
+
+      await expect.poll(getFolderNames).toEqual(['folder docs', 'folder images']);
+      await page.getByRole('option', { name: 'images' }).click();
+      await waitForList(1);
+
+      const file = await createMockImageFile({ name: 'd.png' });
+
+      await component.uploadFiles([file]);
+
+      expect(props.serviceProps.upload).toHaveBeenCalledWith(
+        [file],
+        expect.objectContaining({ dirPath: 'images' }),
+      );
+      await waitForList(2);
+      expect(getAssetOptions().elements()[0].dataset.value).toBe('images/d.png');
+    });
+
+    test('creates a folder where the user is', async () => {
+      const createFolder = vi.fn().mockResolvedValue(undefined);
+      const { component } = await renderPanel({ createFolder });
+
+      await expect.poll(getFolderNames).toEqual(['folder docs', 'folder images']);
+      await page.getByRole('option', { name: 'images' }).click();
+      await waitForList(1);
+      expect(component.canCreateFolder()).toBe(true);
+
+      component.showNewFolderDialog();
+
+      const dialog = page.getByRole('dialog', { name: 'New Folder' });
+
+      await expect.element(dialog).toMatchTextContent('created in “\u2068/images\u2069”');
+
+      // A subfolder or a file already in the folder can’t be taken over
+      await dialog.getByRole('textbox').fill('2024');
+      await expect.element(dialog.getByRole('button', { name: 'Create' })).toBeDisabled();
+      await dialog.getByRole('textbox').fill('a.png');
+      await expect.element(dialog.getByRole('button', { name: 'Create' })).toBeDisabled();
+
+      await dialog.getByRole('textbox').fill('2025');
+      await dialog.getByRole('button', { name: 'Create' }).click();
+
+      await vi.waitFor(() =>
+        expect(createFolder).toHaveBeenCalledWith('images/2025', expect.anything()),
+      );
+      await expect.poll(getFolderNames).toEqual(['folder 2024', 'folder 2025', 'folder empty']);
+    });
+
+    test('names the service at its root, and reports a failure to create a folder', async () => {
+      // The toasts reporting the commit are rendered by the shared component
+      await render(AssetUpdatesToast, {});
+
+      const createFolder = vi.fn().mockRejectedValue(new Error('denied'));
+
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const { component } = await renderPanel({ createFolder });
+
+      await expect.poll(getFolderNames).toEqual(['folder docs', 'folder images']);
+      component.showNewFolderDialog();
+
+      const dialog = page.getByRole('dialog', { name: 'New Folder' });
+
+      await expect.element(dialog).toMatchTextContent('created in “\u2068Test Cloud\u2069”');
+      await dialog.getByRole('textbox').fill('2025');
+      await dialog.getByRole('button', { name: 'Create' }).click();
+
+      await expect
+        .poll(() =>
+          document.querySelector('.sui.alert.error')?.textContent?.replace(/\s+/g, ' ').trim(),
+        )
+        .toContain('Couldn’t create the folder.');
+      expect(getFolderNames()).toEqual(['folder docs', 'folder images']);
+      await waitForToastsToHide();
+    });
+  });
+});

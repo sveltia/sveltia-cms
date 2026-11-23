@@ -19,14 +19,9 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    collectionName,
-    label = undefined,
-    keyShortcuts = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { collectionName, label = undefined, keyShortcuts = undefined } = $props();
 
+  /* v8 ignore start -- only rendered while a collection is selected, once the locale is loaded */
   const hasOptions = $derived(
     // Use `allEntries.current` as a trigger to update the state when a new entry is created
     allEntries.current && selectedCollection.current
@@ -39,6 +34,7 @@
       ? getIndexFile(selectedCollection.current)?.label
       : '',
   );
+  /* v8 ignore stop */
   const ButtonComponent = $derived(hasOptions ? SplitButton : Button);
 
   /**
@@ -62,6 +58,15 @@
   };
 </script>
 
+{#snippet optionMenu()}
+  <Menu>
+    <MenuItem label={_('entry')} onclick={() => openEditor()} />
+    <MenuItem label={indexFileLabel} onclick={() => openEditor(true)} />
+  </Menu>
+{/snippet}
+
+<!-- A plain `Button` opens a popup on click whenever it’s given one, even an empty one, which
+would take the focus and make the content editor inert while it closes -->
 <ButtonComponent
   variant="primary"
   iconic={!label}
@@ -70,16 +75,9 @@
   aria-label={_('create_new_entry')}
   {keyShortcuts}
   onclick={() => openEditor()}
+  popup={hasOptions ? optionMenu : undefined}
 >
   {#snippet startIcon()}
     <Icon name="edit" />
-  {/snippet}
-  {#snippet popup()}
-    {#if hasOptions}
-      <Menu>
-        <MenuItem label={_('entry')} onclick={() => openEditor()} />
-        <MenuItem label={indexFileLabel} onclick={() => openEditor(true)} />
-      </Menu>
-    {/if}
   {/snippet}
 </ButtonComponent>

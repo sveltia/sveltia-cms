@@ -71,6 +71,17 @@ export const syncDuplicateKeys = ({ valueStore, defaultLocale, keyPath }) => {
     ) {
       setPairs(content, keyPath, alignedPairs);
     }
+
+    // With no keys left, the default locale holds the placeholder the editor stores for an empty
+    // KeyValue field. Mirror it, or the locale would be saved as an empty object rather than the
+    // same empty value, depending on whether its own editor happens to be open to add it
+    if (
+      !alignedPairs.length &&
+      valueStore[defaultLocale]?.[keyPath] === null &&
+      content[keyPath] !== null
+    ) {
+      content[keyPath] = null;
+    }
   });
 };
 

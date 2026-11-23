@@ -7,10 +7,12 @@
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Dialog, TextInput } from '@sveltia/ui';
   import { getPathInfo } from '@sveltia/utils/file';
+  import { tick } from 'svelte';
 
+  import NameInputDialog from '$lib/components/assets/list/name-input-dialog.svelte';
   import FileExtensionChangeDialog from '$lib/components/assets/shared/file-extension-change-dialog.svelte';
+  import { formatFileName, validateAssetName } from '$lib/services/assets/file-name';
   import { showAssetOverlay } from '$lib/services/assets/view';
   import { isEquivalentFileExtension } from '$lib/services/utils/file';
 
@@ -20,8 +22,17 @@
    * @property {string} name Current file name.
    * @property {string[]} otherNames Names of the other files in the same folder, which the new name
    * must not duplicate.
+   * @property {string[]} [folderNames] Names of the subfolders in the same folder, which the new
+   * name must not duplicate either.
+   * @property {string[]} [fileNames] Names of the files in the same folder that aren’t assets, like
+   * entry files, which the new name must not duplicate either.
    * @property {number} [usedEntryCount] Number of entries using the asset, mentioned in the dialog
    * body because they will be updated as well.
+   * @property {string} [blockedMessage] Why the asset can’t be renamed, e.g. because a read-only
+   * entry uses it. The message is shown in place of the input, and the Rename button is disabled.
+   * @property {boolean} [slugificationEnabled] Whether the new name is slugified, according to the
+   * `slugify_filename` media library option, as an uploaded file’s name is. The resulting name is
+   * shown below the input when it differs from the entered one.
    * @property {(newName: string) => void} onRename Called with the new name once confirmed.
    * @property {() => void} [onClose] Called when the dialog is closed for good, as opposed to
    * while the extension change confirmation is shown.
@@ -29,62 +40,79 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     open = $bindable(false),
     name,
     otherNames,
+    folderNames = [],
+    fileNames = [],
     usedEntryCount = 0,
+    blockedMessage = undefined,
+    slugificationEnabled = false,
     onRename,
     onClose = undefined,
-    /* eslint-enable prefer-const */
   } = $props();
 
-  const componentId = $props.id();
+  const title = $derived(_('rename_x', { values: { name } }));
 
   let confirmationOpen = $state(false);
   /** @type {HTMLInputElement | undefined} */
   let inputElement = $state();
-  /** Whether the file name has been auto-selected in the input field. */
-  let nameSelected = false;
+  /** Whether to keep the entered name when the dialog is reopened from the confirmation dialog. */
+  let keepName = false;
   let newName = $state('');
 
   const { extension: oldExtension } = $derived(getPathInfo(name));
   const trimmedName = $derived(newName.trim());
-  const newExtension = $derived(getPathInfo(trimmedName).extension);
+  /**
+   * Name the file will be renamed to, which may be different from the entered name: sanitized like
+   * an uploaded file’s name, and slugified if enabled.
+   */
+  const finalName = $derived(
+    trimmedName ? formatFileName(trimmedName, { slugificationEnabled }) : '',
+  );
+  const newExtension = $derived(getPathInfo(finalName).extension);
   /** Whether the file extension is being changed in a way that requires confirmation. */
   const extensionChanged = $derived(!isEquivalentFileExtension(oldExtension, newExtension));
 
-  const error = $derived.by(() => {
-    if (!trimmedName) return 'empty';
-    if (trimmedName.includes('/')) return 'character';
-    if (otherNames.includes(trimmedName)) return 'duplicate';
-    return undefined;
-  });
+  const error = $derived(
+    validateAssetName({
+      name: trimmedName,
+      fileName: finalName,
+      otherNames,
+      folderNames,
+      fileNames,
+    }),
+  );
 
   const invalid = $derived(!!error);
 
   /**
-   * Narrow down the selection in the input field to the file name, excluding the extension, just
-   * like the macOS Finder and Windows File Explorer do. The Dialog component selects the entire
-   * value once the dialog is open, so this is called in response to that initial selection.
+   * Focus the input field, and select the file name, excluding the extension, just like the macOS
+   * Finder and Windows File Explorer do. This is done once, as soon as the dialog is shown, rather
+   * than in response to a `select` event, which arrives later: the selection would then be narrowed
+   * after the user had already selected the whole name and started typing over it.
    */
-  const selectFileName = () => {
-    if (nameSelected || !inputElement) {
+  const selectFileName = async () => {
+    // Wait for the dialog to become interactive
+    await tick();
+
+    /* v8 ignore next 3 -- the input is rendered along with the dialog */
+    if (!inputElement) {
       return;
     }
 
-    nameSelected = true;
-
-    const { filename } = getPathInfo(inputElement.value);
-
-    inputElement.setSelectionRange(0, filename.length);
+    inputElement.focus();
+    inputElement.setSelectionRange(0, getPathInfo(inputElement.value).filename.length);
   };
 
-  // Reset the input whenever the dialog is opened
+  // Reset the input whenever the dialog is opened, unless we’re coming back from the confirmation
   $effect(() => {
     if (open) {
-      newName = name;
-      nameSelected = false;
+      if (!keepName) {
+        newName = name;
+      }
+
+      keepName = false;
     }
   });
 
@@ -98,17 +126,17 @@
   });
 </script>
 
-<Dialog
-  title={_('rename_x', { values: { name } })}
+<NameInputDialog
+  {title}
   bind:open
   okLabel={_('rename')}
-  okDisabled={trimmedName === name || invalid}
+  okDisabled={!!blockedMessage || finalName === name || invalid}
   onOk={() => {
     if (extensionChanged) {
       // Ask for confirmation before renaming
       confirmationOpen = true;
     } else {
-      onRename(trimmedName);
+      onRename(finalName);
     }
   }}
   onClose={() => {
@@ -116,29 +144,19 @@
       onClose?.();
     }
   }}
->
-  <p>
-    {_('enter_new_name_for_asset', { values: { count: usedEntryCount } })}
-  </p>
-  <div role="none">
-    <TextInput
-      dir="auto"
-      bind:value={newName}
-      bind:element={inputElement}
-      flex
-      {invalid}
-      aria-errormessage="{componentId}-error"
-      onselect={() => {
-        selectFileName();
-      }}
-    />
-  </div>
-  <div role="none" class="error" id="{componentId}-error">
-    {#if invalid}
-      {_(`enter_new_name_for_asset_error.${error}`)}
-    {/if}
-  </div>
-</Dialog>
+  onOpen={() => {
+    selectFileName();
+  }}
+  description={_('enter_new_name_for_asset', { values: { count: usedEntryCount } })}
+  {blockedMessage}
+  bind:value={newName}
+  bind:element={inputElement}
+  ariaLabel={title}
+  note={!invalid && finalName !== trimmedName
+    ? _('file_will_be_saved_as', { values: { name: finalName } })
+    : undefined}
+  error={invalid ? _(`enter_new_name_for_asset_error.${error}`) : undefined}
+/>
 
 <FileExtensionChangeDialog
   bind:open={confirmationOpen}
@@ -146,29 +164,12 @@
   {newExtension}
   okLabel={_('rename')}
   onOk={() => {
-    onRename(trimmedName);
+    onRename(finalName);
     onClose?.();
   }}
   onCancel={() => {
     // Go back to the rename dialog, keeping the entered name
+    keepName = true;
     open = true;
   }}
 />
-
-<style>
-  p {
-    margin: 0 0 8px;
-  }
-
-  div {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .error {
-    margin: 0;
-    color: var(--sui-error-foreground-color);
-    font-size: var(--sui-font-size-small);
-  }
-</style>

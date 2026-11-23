@@ -10,6 +10,10 @@
 
   import { forkPermissionRequest } from '$lib/services/workflow/open-authoring';
 
+  /**
+   * @import { ForkPermissionRequest } from '$lib/types/private';
+   */
+
   const request = $derived(forkPermissionRequest.current);
   // Writable, because the dialog sets it back to `false` when it’s dismissed
   let open = $derived(!!request);
@@ -28,5 +32,8 @@
     request?.respond(false);
   }}
 >
-  {_('open_authoring.confirm_forking_repository', { values: { repo: request?.repo ?? '' } })}
+  <!-- The content is only rendered while the dialog is open, for a request -->
+  {_('open_authoring.confirm_forking_repository', {
+    values: { repo: /** @type {ForkPermissionRequest} */ (request).repo },
+  })}
 </ConfirmationDialog>

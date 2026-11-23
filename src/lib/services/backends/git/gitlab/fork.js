@@ -1,0 +1,358 @@
+import {
+  fetchProjectPermissions,
+  getProjectId,
+  parseProjectPath,
+  repository,
+} from '$lib/services/backends/git/gitlab/repository';
+import { fetchAPI } from '$lib/services/backends/git/shared/api';
+import { fetchAPIOrUndefined } from '$lib/services/backends/git/shared/api-optional';
+import {
+  createLocalizedError,
+  createNoAccessError,
+} from '$lib/services/backends/git/shared/errors';
+import {
+  isOpenAuthoringConfiguredFor,
+  pollForFork,
+  requestForkWithFallbackName,
+  resolveBranchRepository,
+  resolveWorkflowRepository,
+  runOpenAuthoringSetUp,
+  setUpForkFor,
+} from '$lib/services/backends/git/shared/fork';
+import { isSameRepository } from '$lib/services/backends/git/shared/repository';
+import { user } from '$lib/services/user/account.svelte';
+
+/**
+ * @import { RepositoryPath } from '$lib/types/private';
+ */
+
+/**
+ * Maximum number of forks to look at when searching for the signed-in user’s own copy of the
+ * configured project. The list is already narrowed to the projects they own.
+ */
+const MAX_FORKS = 100;
+
+/**
+ * Numeric project ID of the configured project, which is filled in by
+ * {@link fetchProjectDetails} — so it’s only set once the signed-in user turns out to be a
+ * contributor, as a maintainer never reaches the code that needs it. A couple of GitLab
+ * endpoints — opening a merge request across projects, and comparing a fork’s branch with the
+ * configured one — take an ID rather than the encoded path every other request uses. `fork` is the
+ * contributor’s fork, recorded while it’s looked up, so a merge request can be checked to have come
+ * from it rather than from some other project of theirs.
+ * @type {{ base: number | undefined, fork: number | undefined }}
+ */
+export const projectIds = { base: undefined, fork: undefined };
+
+/**
+ * Check whether Open Authoring is turned on for this backend in the site configuration: see
+ * {@link isOpenAuthoringConfiguredFor}.
+ * @returns {boolean} `true` if the `open_authoring` backend option is enabled.
+ */
+export const isOpenAuthoringConfigured = () => isOpenAuthoringConfiguredFor('gitlab');
+
+/**
+ * Get the project that receives the CMS’s commits: the signed-in user’s fork when the current
+ * session is an Open Authoring one, and the configured project otherwise. Content is always read
+ * from the configured project, so this is only for writes and for the branches behind them.
+ * @returns {RepositoryPath} Project namespace and name.
+ */
+export const getWorkflowRepository = () => resolveWorkflowRepository(repository);
+
+/**
+ * Get the project a workflow branch lives in, and its name there: see
+ * {@link resolveBranchRepository}.
+ * @param {string} branch Branch name as the CMS knows it.
+ * @returns {RepositoryPath & { branch: string }} Project owner and name, and the branch name.
+ */
+export const getBranchRepository = (branch) => resolveBranchRepository(repository, branch);
+
+/**
+ * Fetch whether the signed-in user can commit to the configured project. The permission query
+ * answers both of the questions the sign-in has: a project it can’t see at all is a dead end, while
+ * one the user can read but not push to is what Open Authoring is for.
+ * @returns {Promise<{ canWrite: boolean }>} Project access.
+ * @throws {Error} When the user has no access to the project, or the answer couldn’t be
+ * determined — which is not the same thing.
+ */
+export const fetchRepositoryAccess = async () => {
+  const { owner, repo } = repository;
+  const { found, canPush } = await fetchProjectPermissions();
+
+  // Open Authoring still needs the contributor to be able to read the project, so being unable to
+  // see it is a dead end rather than a reason to fall back to a fork. The shared message is what
+  // the sign-in flow looks for to drop the cached credentials, the same as the regular access check
+  // does, so the user gets the sign-in form rather than the same error on every reload
+  if (!found) {
+    throw createNoAccessError(`${owner}/${repo}`);
+  }
+
+  return { canWrite: canPush };
+};
+
+/**
+ * Fetch what setting a fork up needs from the configured project: its numeric ID, which a couple of
+ * endpoints take instead of the encoded path, and whether it can be forked at all. Only a
+ * contributor gets this far, so a maintainer’s sign-in doesn’t pay for the request.
+ * @returns {Promise<{ allowForking: boolean }>} Whether the project allows forks.
+ * @see https://docs.gitlab.com/api/projects/#get-a-single-project
+ */
+export const fetchProjectDetails = async () => {
+  const { owner, repo } = repository;
+  /** @type {Record<string, any>} */
+  let project;
+
+  try {
+    project = /** @type {Record<string, any>} */ (await fetchAPI(`/projects/${getProjectId()}`));
+  } catch {
+    // Nothing can be set up without the project’s ID, and a spent rate limit or an outage is worth
+    // trying again, so say so rather than letting a bare API error reach the contributor
+    throw createLocalizedError(
+      'Failed to read the repository.',
+      'open_authoring.permission_check_failed',
+      { repo: `${owner}/${repo}` },
+    );
+  }
+
+  const { id, forking_access_level: forkingAccessLevel } = project;
+
+  projectIds.base = id;
+
+  // The feature is reported as `enabled`, `private` or `disabled`. An older instance may not report
+  // it at all, in which case the fork request is left to say whether it’s allowed
+  return { allowForking: forkingAccessLevel !== 'disabled' };
+};
+
+/**
+ * Look for the fork at the path GitLab gives it by default, which is the parent’s project name
+ * under the contributor’s own namespace. This is where it is unless they renamed or moved it. A
+ * project that happens to share the name but isn’t a fork of the configured one is ignored.
+ * @returns {Promise<RepositoryPath | undefined>} The fork, or `undefined` if it isn’t there.
+ * @see https://docs.gitlab.com/api/projects/#get-a-single-project
+ */
+export const fetchForkByName = async () => {
+  const { repo } = repository;
+  const userName = /** @type {string} */ (user.account?.login);
+
+  // The contributor has no project of that name, which is the common case on a first visit. Only
+  // that means there’s no fork at the path: reading a rate limit or an outage the same way would
+  // have the contributor asked to create another one, so that is passed on
+  const result = /** @type {Record<string, any> | undefined} */ (
+    await fetchAPIOrUndefined(`/projects/${getProjectId({ owner: userName, repo })}`)
+  );
+
+  if (!result) {
+    return undefined;
+  }
+
+  if (!isSameRepository(result.forked_from_project?.path_with_namespace, repository)) {
+    return undefined;
+  }
+
+  // GitLab keeps a redirect for a project that was renamed or transferred, so the path it resolved
+  // can sit in a namespace other than the one asked for. Everything the CMS writes goes to this
+  // project, so take it only once it’s confirmed to be the signed-in user’s own
+  if (result.namespace?.kind !== 'user' || result.namespace?.full_path !== userName) {
+    return undefined;
+  }
+
+  projectIds.fork = result.id;
+
+  return parseProjectPath(result.path_with_namespace);
+};
+
+/**
+ * Ask the configured project for the fork the signed-in user owns, wherever it’s named. This only
+ * runs when {@link fetchForkByName} came up empty. A failure to read the list is passed on rather
+ * than taken for no fork, which would have the contributor asked to create another one.
+ * @returns {Promise<RepositoryPath | undefined>} The fork, or `undefined` if there is none.
+ * @see https://docs.gitlab.com/api/project_forks/#list-forks-of-a-project
+ */
+export const fetchForkFromNetwork = async () => {
+  const userName = user.account?.login;
+
+  const forks = /** @type {Record<string, any>[]} */ (
+    await fetchAPI(`/projects/${getProjectId()}/forks?owned=true&per_page=${MAX_FORKS}`)
+  );
+
+  // Check the namespace rather than trusting the filter to have applied: committing to a fork in
+  // a group the contributor merely belongs to would put their drafts somewhere unexpected
+  const fork = forks.find(
+    ({ namespace }) => namespace?.kind === 'user' && namespace?.full_path === userName,
+  );
+
+  if (!fork) {
+    return undefined;
+  }
+
+  projectIds.fork = fork.id;
+
+  return parseProjectPath(fork.path_with_namespace);
+};
+
+/**
+ * Look for an existing fork of the configured project on the signed-in user’s namespace.
+ * @returns {Promise<RepositoryPath | undefined>} The fork, or `undefined` if there is none.
+ */
+export const fetchFork = async () => (await fetchForkByName()) ?? fetchForkFromNetwork();
+
+/**
+ * Import states that mean the fork is ready to be committed to. `none` is what a project that was
+ * never imported reports, which is what an older GitLab says about a finished fork.
+ */
+const FORK_READY_STATUSES = ['none', 'finished'];
+
+/**
+ * Wait until a newly requested fork can be committed to. GitLab copies the repository in the
+ * background and the request returns before the copy is complete, so committing to it right away
+ * could fail.
+ * @param {RepositoryPath} fork Fork to wait for.
+ * @param {number} [attemptsLeft] Number of checks at most, including the first one.
+ * @throws {Error} When the fork hasn’t become available within the allotted time, or the import
+ * failed outright.
+ * @see https://docs.gitlab.com/api/project_import_export/#import-status
+ */
+export const waitForFork = async (fork, attemptsLeft) => {
+  await pollForFork({
+    repoPath: `${fork.owner}/${fork.repo}`,
+    attemptsLeft,
+    /**
+     * Ask GitLab how far the copy has got.
+     * @returns {Promise<'ready' | 'pending' | 'failed'>} Import status, normalized.
+     */
+    checkFork: async () => {
+      /** @type {string | undefined} */
+      let importStatus;
+
+      try {
+        ({ import_status: importStatus } = /** @type {Record<string, any>} */ (
+          await fetchAPI(`/projects/${getProjectId(fork)}`)
+        ));
+      } catch {
+        // The fork isn’t readable yet, which is what the polling is for
+        return 'pending';
+      }
+
+      if (importStatus === undefined || FORK_READY_STATUSES.includes(importStatus)) {
+        return 'ready';
+      }
+
+      return importStatus === 'failed' ? 'failed' : 'pending';
+    },
+  });
+};
+
+/**
+ * Check whether the signed-in user already has a project at the path a fork gets by default, which
+ * is what stops a fork from being created there.
+ * @returns {Promise<boolean>} `true` if the path is taken.
+ * @see https://docs.gitlab.com/api/projects/#get-a-single-project
+ */
+const isForkPathTaken = async () => {
+  const userName = /** @type {string} */ (user.account?.login);
+
+  try {
+    await fetchAPI(`/projects/${getProjectId({ owner: userName, repo: repository.repo })}`);
+
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Fork the configured project onto the signed-in user’s namespace. GitLab doesn’t pick another
+ * name when the contributor already has an unrelated project at the default path, the way GitHub
+ * does, so the fork is given one made of the configured project’s namespace and name. Later
+ * sessions find it by {@link fetchForkFromNetwork}, as {@link fetchForkByName} only looks at the
+ * default path.
+ * @returns {Promise<RepositoryPath>} The new fork.
+ * @throws {Error} When the fork could not be created.
+ * @see https://docs.gitlab.com/api/project_forks/#fork-a-project
+ */
+export const createFork = async () => {
+  const { owner, repo } = repository;
+  const endpoint = `/projects/${getProjectId()}/fork`;
+  // A path can’t hold a slash, which a project in a subgroup has in its namespace
+  const name = `${owner.replaceAll('/', '-')}-${repo}`;
+
+  const result = await requestForkWithFallbackName({
+    repoPath: `${owner}/${repo}`,
+    /**
+     * Request a fork at the default path.
+     * @returns {Promise<any>} New fork.
+     */
+    requestFork: () => fetchAPI(endpoint, { method: 'POST' }),
+    /**
+     * Request a fork named after the configured project’s namespace and name.
+     * @returns {Promise<any>} New fork.
+     */
+    requestRenamedFork: () => fetchAPI(endpoint, { method: 'POST', body: { name, path: name } }),
+    // GitLab refuses a name or path that has already been taken in the namespace with 409 Conflict,
+    // or with 400 Bad Request on some versions. The lookup tells that from any other failure, such
+    // as forking being turned off
+    conflictStatuses: [400, 409],
+    isNameTaken: isForkPathTaken,
+  });
+
+  const fork = parseProjectPath(result.path_with_namespace);
+
+  projectIds.fork = result.id;
+
+  await waitForFork(fork);
+
+  return fork;
+};
+
+/**
+ * Work out how the signed-in user is going to write to the project, and set up a fork for them if
+ * they can’t write to the configured one. This replaces the plain access check performed when Open
+ * Authoring is turned off, because a contributor without write access is expected here rather than
+ * turned away.
+ *
+ * Unlike GitHub, GitLab has no API to bring a fork up to date with its parent, so nothing is done
+ * about one that has drifted. It doesn’t affect what a contributor submits: a workflow branch is
+ * created from the configured project’s branch rather than from the fork’s copy of it, so the merge
+ * request only contains the entry being edited either way.
+ * @throws {Error} When the fork could not be set up.
+ * @see https://sveltiacms.app/en/docs/workflows/open
+ */
+const setUpOpenAuthoring = async () => {
+  let allowForking = false;
+
+  await setUpForkFor({
+    repository,
+    fetchAccess: fetchRepositoryAccess,
+    /**
+     * Look up the fork, along with the project details, which are needed whether or not there’s a
+     * fork, for the project ID they record.
+     * @returns {Promise<RepositoryPath | undefined>} Fork.
+     */
+    fetchFork: async () => {
+      const [details, fork] = await Promise.all([fetchProjectDetails(), fetchFork()]);
+
+      ({ allowForking } = details);
+
+      return fork;
+    },
+    /**
+     * Tell whether the project can be forked, which the project details have said.
+     * @returns {boolean} Result.
+     */
+    fetchForkingAllowed: () => allowForking,
+    createFork,
+  });
+};
+
+/**
+ * Set up Open Authoring for the signed-in user: see {@link setUpOpenAuthoring}.
+ * @throws {Error} When the fork could not be set up.
+ */
+export const initOpenAuthoring = async () => {
+  // The IDs belong to the user being signed out, so don’t let a stale fork ID vouch for the next
+  // user’s merge requests
+  projectIds.base = undefined;
+  projectIds.fork = undefined;
+
+  await runOpenAuthoringSetUp(setUpOpenAuthoring);
+};

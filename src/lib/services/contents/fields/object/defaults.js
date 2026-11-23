@@ -1,7 +1,8 @@
 import { isObject } from '@sveltia/utils/object';
-import { flatten } from 'flat';
 
 import { isFieldRequired } from '$lib/services/contents/entry/fields';
+import { populateMissingSubfields } from '$lib/services/contents/fields/list/defaults';
+import { flattenKeys } from '$lib/services/utils/object';
 
 /**
  * @import { FlattenedEntryContent, GetDefaultValueMapFuncArgs } from '$lib/types/private';
@@ -16,19 +17,15 @@ import { isFieldRequired } from '$lib/services/contents/entry/fields';
 /**
  * Get the default value map for an Object field.
  * @param {GetDefaultValueMapFuncArgs} args Arguments. Note that `dynamicValue` is not used here, as
- * Object fields do not support dynamic values.
+ * an Object field doesn’t take a dynamic value as a whole. Its subfields can have their own, e.g.
+ * `?author.name=John`, which `populateDefault` passes down to them.
  * @returns {Record<FieldKeyPath, any>} Default value map.
  */
-export const getDefaultValueMap = ({
-  fieldConfig,
-  keyPath,
-  locale,
-  defaultLocale,
-  populateDefault,
-}) => {
+export const getDefaultValueMap = (args) => {
+  const { fieldConfig, keyPath, locale, defaultLocale, dynamicValues = {}, populateDefault } = args;
   const { default: defaultValue } = /** @type {ObjectField} */ (fieldConfig);
   const { fields: subFields } = /** @type {ObjectFieldWithSubFields} */ (fieldConfig);
-  const { types } = /** @type {ObjectFieldWithTypes} */ (fieldConfig);
+  const { types, typeKey = 'type' } = /** @type {ObjectFieldWithTypes} */ (fieldConfig);
   const required = isFieldRequired({ fieldConfig, locale });
   /** @type {FlattenedEntryContent} */
   const content = {};
@@ -36,22 +33,39 @@ export const getDefaultValueMap = ({
   // If the default value is a valid object, flatten it and prefix keys
   if (isObject(defaultValue)) {
     // Flatten the object and prefix keys with the key path and index
-    Object.entries(flatten(defaultValue)).forEach(([key, val]) => {
+    Object.entries(flattenKeys(defaultValue)).forEach(([key, val]) => {
       content[`${keyPath}.${key}`] = val;
     });
+
+    // The default may leave out some subfields, which then get their own default values, as they
+    // do in a List item. With variable types, only the subfields of the chosen type count
+    const fields = Array.isArray(types)
+      ? types.find(({ name }) => name === defaultValue[typeKey])?.fields
+      : subFields;
+
+    if (fields) {
+      populateMissingSubfields({ content, itemKeyPath: keyPath, fields, funcArgs: args });
+    }
 
     return content;
   }
 
-  if (!required || Array.isArray(types)) {
+  // An optional field is created after all when a subfield is given a dynamic value, e.g.
+  // `?meta.source=newsletter`, which would otherwise be lost
+  const hasDynamicSubfieldValues = Object.keys(dynamicValues).some((key) =>
+    key.startsWith(`${keyPath}.`),
+  );
+
+  if ((!required && !hasDynamicSubfieldValues) || Array.isArray(types)) {
     // Enable validation - for optional fields or fields with variable types
     content[keyPath] = null;
 
     return content;
   }
 
-  // For required fields without object-level default values and without types,
-  // populate default values from subfields if they exist and have defaults
+  // For required fields, or optional ones with dynamic subfield values, without object-level
+  // default values and without types, populate default values from subfields if they exist and
+  // have defaults, or their dynamic values
   if (subFields && subFields.length > 0) {
     subFields.forEach((_subField) => {
       populateDefault?.({

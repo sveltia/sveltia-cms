@@ -106,6 +106,16 @@ describe('config/loader', () => {
       expect(getConfigPath('/admin/file.name.ext')).toBe('/admin/config.yml');
       expect(getConfigPath('/admin/no-extension')).toBe('/admin/no-extension/config.yml');
     });
+
+    test('should keep the path on the same origin when it starts with multiple slashes', () => {
+      expect(getConfigPath('//evil.example/')).toBe('/evil.example/config.yml');
+      expect(getConfigPath('///evil.example/admin')).toBe('/evil.example/admin/config.yml');
+      expect(getConfigPath('//evil.example/index.html')).toBe('/evil.example/config.yml');
+      expect(getConfigPath('//')).toBe('/config.yml');
+      expect(new URL(getConfigPath('//evil.example/'), 'https://example.com/').origin).toBe(
+        'https://example.com',
+      );
+    });
   });
 
   describe('verifyLinksAreSecure', () => {
@@ -229,6 +239,15 @@ describe('config/loader', () => {
       document.querySelectorAll.mockReturnValue(mockLinks);
 
       expect(getConfigLinks()).toEqual([{ href: 'custom-config.yml', type: 'application/yaml' }]);
+    });
+
+    test('should leave the type unset for a link element without the `type` attribute', () => {
+      // A real `HTMLLinkElement` reports a missing `type` attribute as an empty string
+      const mockLinks = [{ href: 'custom-config.yml', type: '' }];
+
+      document.querySelectorAll.mockReturnValue(mockLinks);
+
+      expect(getConfigLinks()).toEqual([{ href: 'custom-config.yml', type: undefined }]);
     });
 
     test('should fall back to the file next to the admin page', () => {
@@ -421,6 +440,45 @@ describe('config/loader', () => {
       });
     });
 
+    test('should not let a merged config file set the prototype of the result', async () => {
+      const mockLinks = [
+        { href: 'base-config.json', type: 'application/json' },
+        { href: 'override-config.json', type: 'application/json' },
+      ];
+
+      document.querySelectorAll.mockReturnValue(mockLinks);
+
+      fetch
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          /**
+           *
+           */
+          json: () =>
+            Promise.resolve(JSON.parse('{"__proto__":{"base":true},"backend":{"name":"github"}}')),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          /**
+           *
+           */
+          json: () =>
+            Promise.resolve(
+              JSON.parse('{"__proto__":{"polluted":true},"backend":{"__proto__":{"x":1}}}'),
+            ),
+        });
+
+      const result = await fetchCmsConfig();
+
+      expect(Object.getPrototypeOf(result)).toBe(Object.prototype);
+      expect(Object.getPrototypeOf(result.backend)).toBe(Object.prototype);
+      expect(result).toEqual({ backend: { name: 'github' } });
+      expect(/** @type {any} */ (result).base).toBeUndefined();
+      expect(/** @type {any} */ (result).polluted).toBeUndefined();
+    });
+
     test('should handle JSON config files', async () => {
       const mockLinks = [{ href: 'config.json', type: 'application/json' }];
 
@@ -435,6 +493,18 @@ describe('config/loader', () => {
       const result = await fetchCmsConfig();
 
       expect(result).toEqual({ backend: { name: 'gitlab' } });
+    });
+
+    test('should handle legacy application/x-yaml type', async () => {
+      fetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: () => Promise.resolve('backend:\n  name: gitea'),
+      });
+
+      const result = await fetchFile({ href: '/config.yml', type: 'application/x-yaml' });
+
+      expect(result).toEqual({ backend: { name: 'gitea' } });
     });
 
     test('should throw error for unsupported file type', async () => {
@@ -508,6 +578,21 @@ describe('config/loader', () => {
       ];
 
       document.querySelectorAll.mockReturnValue(mockLinks);
+
+      fetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: () => Promise.resolve('backend:\n  name: github'),
+      });
+
+      const result = await fetchCmsConfig();
+
+      expect(result).toEqual({ backend: { name: 'github' } });
+    });
+
+    test('should parse a link element without the `type` attribute as YAML', async () => {
+      // A real `HTMLLinkElement` reports a missing `type` attribute as an empty string
+      document.querySelectorAll.mockReturnValue([{ href: 'config.yml', type: '' }]);
 
       fetch.mockResolvedValue({
         ok: true,

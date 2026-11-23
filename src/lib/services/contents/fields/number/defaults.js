@@ -1,7 +1,20 @@
+import {
+  getNumberFieldValue,
+  getValueType,
+  isInvalidNumberValue,
+  isStringOutput,
+  parseNumber,
+} from '$lib/services/contents/fields/number/helpers';
+
 /**
  * @import { FieldKeyPath, NumberField } from '$lib/types/public';
  * @import { GetDefaultValueMapFuncArgs } from '$lib/types/private';
  */
+
+/**
+ * Value types of a Number field.
+ */
+const VALUE_TYPES = ['int', 'float', 'int/string', 'float/string'];
 
 /**
  * Get the default value map for a Number field.
@@ -9,42 +22,24 @@
  * @returns {Record<FieldKeyPath, number | string | null>} Default value map.
  */
 export const getDefaultValueMap = ({ fieldConfig, keyPath, dynamicValue }) => {
-  const { default: defaultValue, value_type: valueType = 'int' } = /** @type {NumberField} */ (
-    fieldConfig
-  );
-
-  const value = dynamicValue ?? defaultValue;
-  const isString = typeof value === 'string';
+  const config = /** @type {NumberField} */ (fieldConfig);
+  const value = dynamicValue ?? config.default;
 
   if (value === undefined) {
-    if (valueType === 'int' || valueType === 'float') {
-      return { [keyPath]: null };
-    }
+    return { [keyPath]: isStringOutput(config) ? '' : null };
+  }
 
-    return { [keyPath]: '' };
+  if (!VALUE_TYPES.includes(getValueType(config))) {
+    return {};
+  }
+
+  const number = parseNumber(value);
+
+  if (isInvalidNumberValue(number, config)) {
+    return {};
   }
 
   // The `int/string` and `float/string` types accept the same input as `int` and `float` but save
   // it as a string, which is what the editor writes once the value is changed
-  if (['int', 'int/string'].includes(valueType)) {
-    const parsedValue = isString ? Number.parseInt(value, 10) : value;
-
-    if (!Number.isInteger(parsedValue)) {
-      return {};
-    }
-
-    return { [keyPath]: valueType === 'int' ? parsedValue : String(parsedValue) };
-  }
-
-  if (['float', 'float/string'].includes(valueType)) {
-    const parsedValue = isString ? Number.parseFloat(value) : value;
-
-    if (!Number.isFinite(parsedValue)) {
-      return {};
-    }
-
-    return { [keyPath]: valueType === 'float' ? parsedValue : String(parsedValue) };
-  }
-
-  return {};
+  return { [keyPath]: getNumberFieldValue({ inputValue: number, fieldConfig: config }) };
 };

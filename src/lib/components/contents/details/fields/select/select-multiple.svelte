@@ -1,13 +1,12 @@
 <script>
   import { Checkbox, CheckboxGroup, SelectTags } from '@sveltia/ui';
-  import { getContext } from 'svelte';
 
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { updateListField } from '$lib/services/contents/draft/update/list';
-  import { forEachTargetLocale } from '$lib/services/contents/draft/update/locale';
+  import { updateListFieldForLocales } from '$lib/services/contents/draft/update/list';
+  import { getFieldEditorContext } from '$lib/services/contents/editor/field-context';
 
   /**
-   * @import { FieldEditorContext, SelectFieldSelectorProps } from '$lib/types/private';
+   * @import { SelectFieldSelectorProps } from '$lib/types/private';
    * @import { SelectFieldValue } from '$lib/types/public';
    */
 
@@ -18,12 +17,10 @@
 
   const entryDraft = getEntryDraftContext();
 
-  /** @type {FieldEditorContext} */
-  const { valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
+  const { valueStoreKey = 'currentValues' } = getFieldEditorContext();
 
   /** @type {SelectFieldSelectorProps & Props} */
   let {
-    /* eslint-disable prefer-const */
     locale,
     keyPath,
     fieldId,
@@ -33,7 +30,6 @@
     readonly = false,
     invalid = false,
     options,
-    /* eslint-enable prefer-const */
   } = $props();
 
   const { i18n, max, dropdown_threshold: dropdownThreshold = 5 } = $derived(fieldConfig);
@@ -41,19 +37,23 @@
   /**
    * Update the value for the list.
    * @param {(arg: { valueList: any[], expanderStateList: any[] }) => void} manipulate See
-   * {@link updateListField}.
+   * {@link updateListFieldForLocales}.
    */
   const updateList = (manipulate) => {
     const draft = entryDraft.current;
 
     // Avoid an error while navigating pages
+    /* v8 ignore next 11 */
     if (draft) {
-      forEachTargetLocale(
-        { valueStore: draft[valueStoreKey], locale, i18n },
-        (_valueMap, _locale) => {
-          updateListField({ draft, locale: _locale, valueStoreKey, keyPath, manipulate });
-        },
-      );
+      updateListFieldForLocales({
+        draft,
+        locale,
+        i18n,
+        fieldConfig,
+        valueStoreKey,
+        keyPath,
+        manipulate,
+      });
     }
   };
 
@@ -73,7 +73,12 @@
    */
   const removeValue = (value) => {
     updateList(({ valueList }) => {
-      valueList.splice(valueList.indexOf(value), 1);
+      const index = valueList.indexOf(value);
+
+      // A duplicated locale may not have the value; `-1` would remove its last value instead
+      if (index > -1) {
+        valueList.splice(index, 1);
+      }
     });
   };
 </script>

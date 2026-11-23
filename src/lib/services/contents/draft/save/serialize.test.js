@@ -1,11 +1,8 @@
 import { describe, expect, test, vi } from 'vitest';
 
 import { cmsConfig } from '$lib/services/config';
-import {
-  copyProperty,
-  isValueEmpty,
-  serializeContent,
-} from '$lib/services/contents/draft/save/serialize';
+import { copyProperty, serializeContent } from '$lib/services/contents/draft/save/serialize';
+import { formatEntryFile } from '$lib/services/contents/file/format';
 
 vi.mock('$lib/services/assets');
 vi.mock('$lib/services/config', () => ({
@@ -22,6 +19,11 @@ const { isFieldRequired, getField } = vi.hoisted(() => ({
 
     return { name: keyPath, widget: 'string' };
   }),
+}));
+
+const { getFieldKind } = vi.hoisted(() => ({
+  // Field types named `custom-*` stand for the ones registered with `CMS.registerFieldType()`
+  getFieldKind: vi.fn((field) => (field.widget?.startsWith('custom-') ? 'custom' : 'builtin')),
 }));
 
 const { hasRootField } = vi.hoisted(() => ({
@@ -47,6 +49,7 @@ const { parseDateTimeConfig } = vi.hoisted(() => ({
 vi.mock('$lib/services/contents/entry/fields', () => ({
   isFieldRequired,
   getField,
+  getFieldKind,
   hasRootField,
 }));
 
@@ -580,10 +583,65 @@ describe('Test copyProperty()', () => {
         field: { name: 'optionalObject', widget: 'object', required: false },
       });
 
-      // Parent and its empty children should all be omitted
-      expect(sortedMap).toEqual({});
+      // Parent and its empty children should all be omitted, while the list item they belong to
+      // is kept as an empty object, so it doesn’t leave a hole in the list
+      expect(sortedMap).toEqual({ 'list.0': {} });
       // Children should also be removed from unsortedMap
       expect(unsortedMap).not.toHaveProperty('list.0.optionalObject.foo');
+    });
+
+    test('keeps an empty list item while omitting its empty properties', () => {
+      isFieldRequired.mockReturnValue(false);
+
+      const field = { name: 'note', widget: 'string', required: false };
+      const args = { locale: 'en', isTomlOutput: false, omitEmptyOptionalFields: true };
+      // A simple list item is kept even if it’s empty, or it’d leave a hole in the list
+      /** @type {FlattenedEntryContent} */
+      let sortedMap = { list: [] };
+
+      copyProperty({ ...args, sortedMap, unsortedMap: { 'list.0': '' }, key: 'list.0', field });
+      expect(sortedMap).toEqual({ list: [], 'list.0': '' });
+
+      // An item that already has another property doesn’t need a placeholder
+      sortedMap = { 'list.0.title': 'Title' };
+      copyProperty({
+        ...args,
+        sortedMap,
+        unsortedMap: { 'list.0.note': '' },
+        key: 'list.0.note',
+        field,
+      });
+      expect(sortedMap).toEqual({ 'list.0.title': 'Title' });
+
+      // Nor does an item with a value of its own
+      sortedMap = { 'list.0': {} };
+      copyProperty({
+        ...args,
+        sortedMap,
+        unsortedMap: { 'list.0.note': '' },
+        key: 'list.0.note',
+        field,
+      });
+      expect(sortedMap).toEqual({ 'list.0': {} });
+
+      // An object property named like an index, e.g. in a KeyValue field or an Object field with
+      // a placeholder, isn’t a list item, so it’s omitted, and so is a property below it
+      sortedMap = { stats: {} };
+      copyProperty({
+        ...args,
+        sortedMap,
+        unsortedMap: { 'stats.2024': '', 'stats.2025.note': '' },
+        key: 'stats.2024',
+        field,
+      });
+      copyProperty({
+        ...args,
+        sortedMap,
+        unsortedMap: { 'stats.2025.note': '' },
+        key: 'stats.2025.note',
+        field,
+      });
+      expect(sortedMap).toEqual({ stats: {} });
     });
 
     test('preserves optional object when at least one child is non-empty', () => {
@@ -649,6 +707,32 @@ describe('Test copyProperty()', () => {
       expect(sortedMap).toHaveProperty('publishDate');
     });
 
+    test('keeps an optional date when empty optional fields are omitted', async () => {
+      const { TomlDate: TomlDateClass } = await vi.importActual('smol-toml');
+      /** @type {FlattenedEntryContent} */
+      const sortedMap = {};
+
+      /** @type {FlattenedEntryContent} */
+      const unsortedMap = {
+        publishDate: '2024-01-15T10:30:00Z',
+      };
+
+      isFieldRequired.mockReturnValue(false);
+
+      copyProperty({
+        locale: 'en',
+        unsortedMap,
+        sortedMap,
+        isTomlOutput: true,
+        omitEmptyOptionalFields: true,
+        key: 'publishDate',
+        field: { name: 'publishDate', widget: 'datetime', required: false },
+      });
+
+      // A `TomlDate` is an object without any keys, but it’s not empty
+      expect(sortedMap.publishDate).toBeInstanceOf(TomlDateClass);
+    });
+
     test('does not convert date when isTomlOutput is false even if field is datetime', () => {
       /** @type {FlattenedEntryContent} */
       const sortedMap = {};
@@ -705,31 +789,64 @@ describe('Test copyProperty()', () => {
       expect(typeof sortedMap.publishDate).toBe('string');
     });
 
-    test('sets invalid date to undefined when string does not match date format', () => {
-      /** @type {FlattenedEntryContent} */
-      const sortedMap = {};
+    test('keeps a string that is not a date as it is', async () => {
+      const { TomlDate: TomlDateClass } = await vi.importActual('smol-toml');
 
       /** @type {FlattenedEntryContent} */
       const unsortedMap = {
-        title: 'Some random string',
+        a: 'TBD',
+        b: '2024-01',
+        c: '3:04 PM',
+        d: '2024-01-02',
+        e: '03:04:05',
       };
 
-      const args = {
-        locale: 'en',
-        unsortedMap,
-        sortedMap,
-        isTomlOutput: true,
-        omitEmptyOptionalFields: false,
-      };
+      /** @type {FlattenedEntryContent} */
+      const sortedMap = {};
 
-      copyProperty({
-        ...args,
-        key: 'title',
-        field: { name: 'title', widget: 'datetime', required: false },
+      Object.keys(unsortedMap).forEach((key) => {
+        copyProperty({
+          locale: 'en',
+          unsortedMap,
+          sortedMap,
+          isTomlOutput: true,
+          omitEmptyOptionalFields: false,
+          key,
+          field: { name: key, widget: 'datetime', required: false },
+        });
       });
 
-      // Invalid date strings result in undefined to prevent serialization errors
-      expect(sortedMap.title).toBeUndefined();
+      // Previously, any string `TomlDate` couldn’t parse was dropped
+      expect(sortedMap.a).toBe('TBD');
+      expect(sortedMap.b).toBe('2024-01');
+      expect(sortedMap.c).toBe('3:04 PM');
+      // A date or a time alone becomes a native TOML local date or time
+      expect(sortedMap.d).toBeInstanceOf(TomlDateClass);
+      expect(sortedMap.d.toISOString()).toBe('2024-01-02');
+      expect(sortedMap.e).toBeInstanceOf(TomlDateClass);
+      expect(sortedMap.e.toISOString()).toBe('03:04:05.000');
+    });
+
+    test('saves nothing for an empty value', () => {
+      /** @type {FlattenedEntryContent} */
+      const unsortedMap = { a: '', b: null, c: undefined };
+      /** @type {FlattenedEntryContent} */
+      const sortedMap = {};
+
+      Object.keys(unsortedMap).forEach((key) => {
+        copyProperty({
+          locale: 'en',
+          unsortedMap,
+          sortedMap,
+          isTomlOutput: true,
+          omitEmptyOptionalFields: false,
+          key,
+          field: { name: key, widget: 'datetime', required: false },
+        });
+      });
+
+      // `null` would otherwise become the Unix epoch
+      expect(sortedMap).toEqual({ a: undefined, b: undefined, c: undefined });
     });
 
     test('does not convert date when datetime format is configured', () => {
@@ -820,151 +937,6 @@ describe('Test copyProperty()', () => {
       // Restore the original TomlDate
       vi.unstubAllGlobals();
     });
-  });
-});
-
-describe('Test isValueEmpty()', () => {
-  test('returns true for undefined', () => {
-    expect(isValueEmpty(undefined)).toBe(true);
-  });
-
-  test('returns true for null', () => {
-    expect(isValueEmpty(null)).toBe(true);
-  });
-
-  test('returns true for empty string', () => {
-    expect(isValueEmpty('')).toBe(true);
-  });
-
-  test('returns true for empty array', () => {
-    expect(isValueEmpty([])).toBe(true);
-  });
-
-  test('returns true for empty object', () => {
-    expect(isValueEmpty({})).toBe(true);
-  });
-
-  test('returns false for boolean false (valid falsy value)', () => {
-    expect(isValueEmpty(false)).toBe(false);
-  });
-
-  test('returns false for number zero (valid falsy value)', () => {
-    expect(isValueEmpty(0)).toBe(false);
-  });
-
-  test('returns false for boolean true', () => {
-    expect(isValueEmpty(true)).toBe(false);
-  });
-
-  test('returns false for positive numbers', () => {
-    expect(isValueEmpty(1)).toBe(false);
-    expect(isValueEmpty(42)).toBe(false);
-    expect(isValueEmpty(3.14)).toBe(false);
-  });
-
-  test('returns false for negative numbers', () => {
-    expect(isValueEmpty(-1)).toBe(false);
-    expect(isValueEmpty(-42)).toBe(false);
-    expect(isValueEmpty(-3.14)).toBe(false);
-  });
-
-  test('returns false for non-empty strings', () => {
-    expect(isValueEmpty('hello')).toBe(false);
-    expect(isValueEmpty(' ')).toBe(false); // space is not empty
-    expect(isValueEmpty('0')).toBe(false); // string '0' is not empty
-    expect(isValueEmpty('false')).toBe(false); // string 'false' is not empty
-  });
-
-  test('returns false for arrays with elements', () => {
-    expect(isValueEmpty([1])).toBe(false);
-    expect(isValueEmpty([''])).toBe(false); // array with empty string is not empty
-    expect(isValueEmpty([null])).toBe(false); // array with null is not empty
-    expect(isValueEmpty([undefined])).toBe(false); // array with undefined is not empty
-    expect(isValueEmpty([1, 2, 3])).toBe(false);
-  });
-
-  test('returns false for objects with properties', () => {
-    expect(isValueEmpty({ a: 1 })).toBe(false);
-    expect(isValueEmpty({ key: '' })).toBe(false); // object with empty string value is not empty
-    expect(isValueEmpty({ key: null })).toBe(false); // object with null value is not empty
-    // object with undefined value is not empty
-    expect(isValueEmpty({ key: undefined })).toBe(false);
-    expect(isValueEmpty({ a: 1, b: 2 })).toBe(false);
-  });
-
-  test('returns false for functions', () => {
-    expect(isValueEmpty(() => {})).toBe(false);
-  });
-
-  test('returns true for Date objects (treated as objects with no enumerable keys)', () => {
-    expect(isValueEmpty(new Date())).toBe(true);
-  });
-
-  test('returns true for RegExp objects (treated as objects with no enumerable keys)', () => {
-    expect(isValueEmpty(/test/)).toBe(true);
-  });
-
-  test('returns true for Set objects (treated as objects with no enumerable keys)', () => {
-    expect(isValueEmpty(new Set())).toBe(true);
-    expect(isValueEmpty(new Set([1, 2, 3]))).toBe(true);
-  });
-
-  test('returns true for Map objects (treated as objects with no enumerable keys)', () => {
-    expect(isValueEmpty(new Map())).toBe(true);
-    expect(isValueEmpty(new Map([['key', 'value']]))).toBe(true);
-  });
-
-  test('handles edge cases with nested empty structures', () => {
-    // Arrays containing only empty values are still not empty
-    expect(isValueEmpty([{}])).toBe(false);
-    expect(isValueEmpty([[]])).toBe(false);
-    expect(isValueEmpty([''])).toBe(false);
-
-    // Objects with empty values are still not empty
-    expect(isValueEmpty({ nested: {} })).toBe(false);
-    expect(isValueEmpty({ arr: [] })).toBe(false);
-    expect(isValueEmpty({ str: '' })).toBe(false);
-  });
-
-  test('handles special number values', () => {
-    expect(isValueEmpty(NaN)).toBe(false); // NaN is not considered empty
-    expect(isValueEmpty(Infinity)).toBe(false);
-    expect(isValueEmpty(-Infinity)).toBe(false);
-  });
-
-  test('handles bigint values', () => {
-    expect(isValueEmpty(0n)).toBe(false); // BigInt 0 is not considered empty
-    expect(isValueEmpty(1n)).toBe(false);
-  });
-
-  test('handles symbol values', () => {
-    expect(isValueEmpty(Symbol('test'))).toBe(false);
-    expect(isValueEmpty(Symbol.iterator)).toBe(false);
-  });
-
-  test('handles objects with non-enumerable properties', () => {
-    const obj = {};
-
-    Object.defineProperty(obj, 'hidden', {
-      value: 'test',
-      enumerable: false,
-    });
-
-    // Object.keys() only returns enumerable properties, so this is empty
-    expect(isValueEmpty(obj)).toBe(true);
-  });
-
-  test('comprehensive validation of the specific empty values mentioned in comments', () => {
-    // These are the specific values mentioned in the JSDoc comment
-    expect(isValueEmpty(undefined)).toBe(true);
-    expect(isValueEmpty(null)).toBe(true);
-    expect(isValueEmpty('')).toBe(true);
-    expect(isValueEmpty([])).toBe(true);
-    expect(isValueEmpty({})).toBe(true);
-
-    // And confirming that false and 0 are NOT empty (as mentioned in the comment)
-    expect(isValueEmpty(false)).toBe(false);
-    expect(isValueEmpty(0)).toBe(false);
   });
 });
 
@@ -1063,6 +1035,43 @@ describe('Test serializeContent()', () => {
 
     expect(Object.keys(result)).toEqual(['translationKey', 'aliases', 'order', 'title', 'body']);
     expect(result.aliases).toEqual(['/posts/old', '/posts/older']);
+  });
+
+  test('places the permalink between the canonical slug and the aliases', () => {
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      collection: {
+        _type: 'entry',
+        reorder: true,
+        permalink_field: true,
+        _file: { format: 'json' },
+        _i18n: {
+          canonicalSlug: { key: 'translationKey' },
+        },
+      },
+      fields: [{ name: 'title', widget: 'string' }],
+      isIndexFile: false,
+    };
+
+    const valueMap = {
+      title: 'Test',
+      order: 3,
+      'aliases.0': '/posts/old',
+      permalink: '/posts/test/',
+      translationKey: 'abc',
+    };
+
+    const result = serializeContent({ draft, locale: 'en', valueMap });
+
+    expect(Object.keys(result)).toEqual([
+      'translationKey',
+      'permalink',
+      'aliases',
+      'order',
+      'title',
+    ]);
+    expect(result.permalink).toBe('/posts/test/');
   });
 
   test('places the aliases stored under the `aliases_field` property name', () => {
@@ -1201,6 +1210,32 @@ describe('Test serializeContent()', () => {
     expect(result.priority).toBe(7);
   });
 
+  test('keeps a configured order field where it is defined in the field list', () => {
+    /** @type {any} */
+    const draft = {
+      collectionName: 'faq',
+      collection: {
+        reorder: { key: 'weight' },
+        _file: { format: 'json' },
+        _i18n: {
+          canonicalSlug: { key: 'translationKey' },
+        },
+      },
+      fields: [
+        { name: 'title', widget: 'string' },
+        { name: 'weight', widget: 'number' },
+      ],
+      isIndexFile: false,
+    };
+
+    const valueMap = { weight: 1, title: 'Test', translationKey: 'abc' };
+    const result = serializeContent({ draft, locale: 'en', valueMap });
+
+    // @see https://github.com/sveltia/sveltia-cms/issues/1169
+    expect(Object.keys(result)).toEqual(['translationKey', 'title', 'weight']);
+    expect(result.weight).toBe(1);
+  });
+
   test('serializes content with root list field', () => {
     /** @type {any} */
     const draft = {
@@ -1259,6 +1294,87 @@ describe('Test serializeContent()', () => {
 
     expect(result).toHaveProperty('title', 'Test Post');
     expect(result).toHaveProperty('date');
+  });
+
+  test('writes native TOML dates for the front matter format detected in the file', async () => {
+    const { TomlDate: TomlDateClass } = await vi.importActual('smol-toml');
+
+    getField.mockImplementation(({ keyPath }) => ({
+      name: keyPath,
+      widget: keyPath === 'date' ? 'datetime' : 'string',
+    }));
+
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      // A Markdown collection reads YAML, TOML and JSON front matter alike
+      collection: { _file: { format: 'frontmatter' }, _i18n: { canonicalSlug: { key: 'slug' } } },
+      fields: [
+        { name: 'title', widget: 'string' },
+        { name: 'date', widget: 'datetime' },
+      ],
+      isIndexFile: false,
+    };
+
+    const valueMap = { title: 'Test Post', date: '2024-01-02T03:04:05+09:00' };
+
+    // An existing file with TOML front matter
+    expect(
+      serializeContent({
+        draft,
+        locale: 'en',
+        valueMap: { ...valueMap },
+        format: 'toml-frontmatter',
+      }).date,
+    ).toBeInstanceOf(TomlDateClass);
+    // An existing file with YAML front matter, or a new file, which gets YAML front matter
+    expect(
+      serializeContent({
+        draft,
+        locale: 'en',
+        valueMap: { ...valueMap },
+        format: 'yaml-frontmatter',
+      }).date,
+    ).toBe('2024-01-02T03:04:05+09:00');
+    expect(serializeContent({ draft, locale: 'en', valueMap: { ...valueMap } }).date).toBe(
+      '2024-01-02T03:04:05+09:00',
+    );
+
+    getField.mockImplementation(({ keyPath }) => ({ name: keyPath, widget: 'string' }));
+  });
+
+  test('keeps object keys with a dot as they are', () => {
+    getField.mockImplementation(
+      ({ keyPath }) =>
+        /** @type {any} */ (
+          keyPath === 'redirects' ? { name: 'redirects', widget: 'keyvalue' } : undefined
+        ),
+    );
+
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      collection: { _file: { format: 'json' }, _i18n: { canonicalSlug: { key: 'slug' } } },
+      fields: [{ name: 'redirects', widget: 'keyvalue' }],
+      isIndexFile: false,
+    };
+
+    // Content flattened with `flattenKeys()`, which escapes the dots in the keys: a KeyValue pair,
+    // and a property no field configuration describes, nested or not
+    const valueMap = {
+      'redirects.example\uE000com': 'a',
+      'redirects.v1\uE0002': 'b',
+      'nav\uE000home': 'Home',
+      'meta.og\uE000title': 'Title',
+    };
+
+    expect(serializeContent({ draft, locale: 'en', valueMap })).toEqual({
+      redirects: { 'example.com': 'a', 'v1.2': 'b' },
+      meta: { 'og.title': 'Title' },
+      'nav.home': 'Home',
+    });
+
+    getField.mockImplementation(({ keyPath }) => ({ name: keyPath, widget: 'string' }));
   });
 
   test('serializes content with collectionFile', () => {
@@ -1463,6 +1579,580 @@ describe('Test serializeContent()', () => {
         version: '1.0',
         category: 'tech',
       },
+    });
+  });
+
+  describe('custom field', () => {
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      collection: {
+        _file: { format: 'json' },
+        _i18n: {
+          canonicalSlug: { key: '' },
+        },
+      },
+      fields: [],
+      isIndexFile: false,
+    };
+
+    test('keeps an object value in place and in the order the control gave the properties', async () => {
+      const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+
+      vi.mocked(createKeyPathList).mockReturnValueOnce(['title', 'photo', 'body']);
+      getField.mockImplementation(({ keyPath }) => ({
+        name: keyPath,
+        widget: keyPath === 'photo' ? 'custom-photo' : 'string',
+      }));
+
+      const result = serializeContent({
+        draft,
+        locale: 'en',
+        valueMap: {
+          body: 'Text',
+          title: 'Title',
+          'photo.original': '/a.jpg',
+          'photo.thumbnail': '/a-thumb.webp',
+          'photo.aspectRatio': 1.5,
+        },
+      });
+
+      expect(JSON.stringify(result)).toBe(
+        JSON.stringify({
+          title: 'Title',
+          photo: { original: '/a.jpg', thumbnail: '/a-thumb.webp', aspectRatio: 1.5 },
+          body: 'Text',
+        }),
+      );
+    });
+
+    test('keeps a primitive or array value in place', async () => {
+      const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+
+      vi.mocked(createKeyPathList).mockReturnValueOnce(['color', 'tags', 'body']);
+      getField.mockImplementation(({ keyPath }) => ({
+        name: keyPath,
+        widget: keyPath === 'body' ? 'string' : 'custom-field',
+      }));
+
+      const result = serializeContent({
+        draft,
+        locale: 'en',
+        valueMap: { body: 'Text', 'tags.0': 'b', 'tags.1': 'a', color: '#fff' },
+      });
+
+      expect(JSON.stringify(result)).toBe(
+        JSON.stringify({ color: '#fff', tags: ['b', 'a'], body: 'Text' }),
+      );
+    });
+
+    test('keeps an object value of a field in a list item in place', async () => {
+      const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+
+      vi.mocked(createKeyPathList).mockReturnValueOnce([
+        'items',
+        'items.*.photo',
+        'items.*.caption',
+      ]);
+      getField.mockImplementation(({ keyPath }) => ({
+        name: keyPath,
+        widget: keyPath.endsWith('.photo') ? 'custom-photo' : 'string',
+      }));
+
+      const result = serializeContent({
+        draft,
+        locale: 'en',
+        valueMap: {
+          'items.0.caption': 'First',
+          'items.0.photo.src': '/a.jpg',
+          'items.0.photo.alt': 'A',
+          'items.1.caption': 'Second',
+        },
+      });
+
+      expect(JSON.stringify(result)).toBe(
+        JSON.stringify({
+          items: [{ photo: { src: '/a.jpg', alt: 'A' }, caption: 'First' }, { caption: 'Second' }],
+        }),
+      );
+    });
+  });
+
+  describe('hidden field', () => {
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      collection: {
+        _file: { format: 'json' },
+        _i18n: {
+          canonicalSlug: { key: '' },
+        },
+      },
+      fields: [],
+      isIndexFile: false,
+    };
+
+    test('keeps a list value read from a file in place', async () => {
+      const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+
+      vi.mocked(createKeyPathList).mockReturnValueOnce(['title', 'tags', 'body']);
+      getField.mockImplementation(({ keyPath }) => ({
+        name: keyPath,
+        widget: keyPath === 'tags' ? 'hidden' : 'string',
+      }));
+
+      const result = serializeContent({
+        draft,
+        locale: 'en',
+        valueMap: { title: 'Title', 'tags.0': 'b', 'tags.1': 'a', body: 'Text' },
+      });
+
+      expect(JSON.stringify(result)).toBe(
+        JSON.stringify({ title: 'Title', tags: ['b', 'a'], body: 'Text' }),
+      );
+    });
+
+    test('keeps an object value of a field in a list item in place', async () => {
+      const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+
+      vi.mocked(createKeyPathList).mockReturnValueOnce(['items', 'items.*.meta', 'items.*.name']);
+      getField.mockImplementation(({ keyPath }) => ({
+        name: keyPath,
+        widget: keyPath.endsWith('.meta') ? 'hidden' : 'string',
+      }));
+
+      const result = serializeContent({
+        draft,
+        locale: 'en',
+        valueMap: { 'items.0.name': 'First', 'items.0.meta.id': 1, 'items.0.meta.kind': 'a' },
+      });
+
+      expect(JSON.stringify(result)).toBe(
+        JSON.stringify({ items: [{ meta: { id: 1, kind: 'a' }, name: 'First' }] }),
+      );
+    });
+  });
+
+  describe('object field', () => {
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      collection: {
+        _file: { format: 'json' },
+        _i18n: {
+          canonicalSlug: { key: '' },
+        },
+      },
+      fields: [],
+      isIndexFile: false,
+    };
+
+    test('keeps subfields named like list indexes in an object without a placeholder', async () => {
+      const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+
+      vi.mocked(createKeyPathList).mockReturnValueOnce([
+        'stats',
+        'stats.2024',
+        'stats.2025',
+        'items',
+        'items.*.meta',
+        'items.*.meta.0',
+        'other',
+        'other.a',
+      ]);
+      getField.mockImplementation(({ keyPath }) => ({
+        name: keyPath,
+        widget: /^(?:stats|items\.\d+\.meta|items\.\*\.meta|other)$/.test(keyPath)
+          ? 'object'
+          : 'string',
+      }));
+
+      // A new entry or a newly added object has no placeholder, unlike the value read from a file
+      const result = serializeContent({
+        draft,
+        locale: 'en',
+        valueMap: {
+          'stats.2024': 'a',
+          'stats.2025': 'b',
+          'items.0.meta.0': 'c',
+          'other.a': 'd',
+        },
+      });
+
+      expect(result).toEqual({
+        stats: { 2024: 'a', 2025: 'b' },
+        items: [{ meta: { 0: 'c' } }],
+        other: { a: 'd' },
+      });
+      expect(Array.isArray(result.stats)).toBe(false);
+      expect(Array.isArray(result.items[0].meta)).toBe(false);
+    });
+  });
+
+  describe('code field', () => {
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      collection: {
+        _file: { format: 'json' },
+        _i18n: {
+          canonicalSlug: { key: '' },
+        },
+      },
+      fields: [],
+      isIndexFile: false,
+    };
+
+    test('keeps the code and the language in the order of the custom keys', async () => {
+      const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+
+      vi.mocked(createKeyPathList).mockReturnValueOnce(['script', 'body']);
+      getField.mockImplementation(({ keyPath }) => ({
+        name: keyPath,
+        widget: keyPath === 'script' ? 'code' : 'string',
+      }));
+
+      const result = serializeContent({
+        draft,
+        locale: 'en',
+        valueMap: {
+          body: 'Text',
+          'script.source': 'print(1)',
+          'script.language': 'python',
+          script: {},
+        },
+      });
+
+      expect(JSON.stringify(result)).toBe(
+        JSON.stringify({ script: { source: 'print(1)', language: 'python' }, body: 'Text' }),
+      );
+    });
+  });
+
+  describe('keyvalue field in list field', () => {
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      collection: {
+        _file: { format: 'json' },
+        _i18n: {
+          defaultLocale: 'en',
+          canonicalSlug: { key: '' },
+        },
+      },
+      fields: [{ name: 'test_list', widget: 'list' }],
+      isIndexFile: false,
+    };
+
+    test('serializes list with `fields` containing a keyvalue subfield as array', async () => {
+      const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+
+      vi.mocked(createKeyPathList).mockReturnValueOnce([
+        'test_list',
+        'test_list.*.title',
+        'test_list.*.pairs',
+      ]);
+
+      getField.mockImplementation(({ keyPath }) =>
+        keyPath === 'test_list.*.pairs'
+          ? { name: 'pairs', widget: 'keyvalue' }
+          : { name: keyPath, widget: 'string' },
+      );
+
+      const valueMap = {
+        'test_list.0.title': 'First',
+        'test_list.0.pairs.foo': 'bar',
+        'test_list.1.title': 'Second',
+        'test_list.1.pairs.0': 'zero',
+        'test_list.1.pairs.1': 'one',
+        'test_list.1.pairs.': 'empty',
+        'test_list.2.title': 'Third',
+        'test_list.2.pairs': {},
+      };
+
+      const result = serializeContent({ draft, locale: 'en', valueMap });
+
+      expect(result).toEqual({
+        test_list: [
+          { title: 'First', pairs: { foo: 'bar' } },
+          { title: 'Second', pairs: { 0: 'zero', 1: 'one', '': 'empty' } },
+          { title: 'Third', pairs: {} },
+        ],
+      });
+      expect(Array.isArray(result.test_list)).toBe(true);
+      expect(Array.isArray(result.test_list[1].pairs)).toBe(false);
+      expect(JSON.stringify(result)).not.toContain('*');
+    });
+
+    test('saves a field without pairs as an empty object, whether it holds the placeholder', async () => {
+      const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+
+      vi.mocked(createKeyPathList).mockReturnValueOnce(['shown', 'unrendered']);
+      getField.mockImplementation(({ keyPath }) => ({ name: keyPath, widget: 'keyvalue' }));
+
+      // The editor stores the placeholder once it has been shown, which the other one never was
+      expect(serializeContent({ draft, locale: 'en', valueMap: { shown: null } })).toEqual({
+        shown: {},
+        unrendered: {},
+      });
+
+      // A value the file holds where an object is expected is left alone
+      vi.mocked(createKeyPathList).mockReturnValueOnce(['shown']);
+      expect(serializeContent({ draft, locale: 'en', valueMap: { shown: 'text' } })).toEqual({
+        shown: 'text',
+      });
+    });
+
+    test('adds an empty object to another locale only for a localized field', async () => {
+      const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+
+      /** @type {Record<string, any>} */
+      const fieldMap = {
+        kv: { name: 'kv', widget: 'keyvalue' },
+        kvt: { name: 'kvt', widget: 'keyvalue', i18n: true },
+        o: { name: 'o', widget: 'object', i18n: true },
+        'o.kv': { name: 'kv', widget: 'keyvalue' },
+        'o.off': { name: 'off', widget: 'keyvalue', i18n: false },
+        p: { name: 'p', widget: 'object' },
+        'p.kv': { name: 'kv', widget: 'keyvalue', i18n: true },
+        items: { name: 'items', widget: 'list', i18n: 'duplicate' },
+        'items.*.kv': { name: 'kv', widget: 'keyvalue' },
+        'items.0.kv': { name: 'kv', widget: 'keyvalue' },
+      };
+
+      const keyPaths = ['kv', 'kvt', 'o.kv', 'o.off', 'p.kv', 'items.*.kv'];
+
+      getField.mockImplementation(({ keyPath }) => fieldMap[keyPath]);
+
+      // A list item holding nothing but a blank pair
+      const valueMap = { 'items.0.kv.': '' };
+
+      // Every field belongs in the default locale
+      vi.mocked(createKeyPathList).mockReturnValueOnce(keyPaths);
+      expect(serializeContent({ draft, locale: 'en', valueMap: { ...valueMap } })).toEqual({
+        kv: {},
+        kvt: {},
+        o: { kv: {}, off: {} },
+        p: { kv: {} },
+        items: [{ kv: {} }],
+      });
+
+      // A field that isn’t translatable, or whose ancestor isn’t, is left out of another locale.
+      // It got an empty object, which also added the file’s value of the Object field
+      vi.mocked(createKeyPathList).mockReturnValueOnce(keyPaths);
+      expect(serializeContent({ draft, locale: 'fr', valueMap: { ...valueMap } })).toEqual({
+        kvt: {},
+        o: { kv: {} },
+        items: [{ kv: {} }],
+      });
+
+      // A value the locale already holds is kept
+      vi.mocked(createKeyPathList).mockReturnValueOnce(['kv']);
+      expect(serializeContent({ draft, locale: 'fr', valueMap: { kv: 'text' } })).toEqual({
+        kv: 'text',
+      });
+    });
+
+    test('leaves out a blank pair, keeping a pair with an empty key and a value', async () => {
+      const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+
+      vi.mocked(createKeyPathList).mockReturnValueOnce(['blank', 'labelled']);
+      getField.mockImplementation(({ keyPath }) => ({ name: keyPath, widget: 'keyvalue' }));
+
+      const result = serializeContent({
+        draft,
+        locale: 'en',
+        // The blank pair of a required field’s default value, next to the one a file can hold
+        valueMap: { 'blank.': '', 'labelled.': 'value', 'labelled.a': '1' },
+      });
+
+      expect(result).toEqual({ blank: {}, labelled: { '': 'value', a: '1' } });
+    });
+
+    test('serializes list with a keyvalue `field` as array', async () => {
+      const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+
+      vi.mocked(createKeyPathList).mockReturnValueOnce(['test_list', 'test_list.*']);
+
+      getField.mockImplementation(({ keyPath }) =>
+        keyPath === 'test_list.*'
+          ? { name: 'test_keyvalue', widget: 'keyvalue' }
+          : { name: keyPath, widget: 'string' },
+      );
+
+      const valueMap = {
+        'test_list.0.foo': 'bar',
+        'test_list.1.0': 'zero',
+      };
+
+      const result = serializeContent({ draft, locale: 'en', valueMap });
+
+      expect(result).toEqual({ test_list: [{ foo: 'bar' }, { 0: 'zero' }] });
+      expect(Array.isArray(result.test_list)).toBe(true);
+      expect(Array.isArray(result.test_list[1])).toBe(false);
+    });
+
+    test('serializes keyvalue subfields of a list with variable types as objects', async () => {
+      const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+
+      vi.mocked(createKeyPathList).mockReturnValueOnce([
+        'test_list',
+        'test_list.*.type',
+        'test_list.*.pairs',
+      ]);
+
+      // The wildcard key path can’t be resolved without knowing the item type, so the field is
+      // only found with a concrete key path
+      getField.mockImplementation(({ keyPath }) => {
+        if (keyPath === 'test_list.0.pairs') {
+          return { name: 'pairs', widget: 'keyvalue' };
+        }
+
+        if (keyPath === 'test_list.1.pairs') {
+          return { name: 'pairs', widget: 'string' };
+        }
+
+        return keyPath === 'test_list.*.pairs'
+          ? /** @type {any} */ (undefined)
+          : { name: keyPath, widget: 'string' };
+      });
+
+      const valueMap = {
+        'test_list.0.type': 'a',
+        'test_list.0.pairs.0': 'zero',
+        'test_list.0.pairs.1': 'one',
+        'test_list.1.type': 'b',
+        'test_list.1.pairs': 'text',
+      };
+
+      const result = serializeContent({ draft, locale: 'en', valueMap });
+
+      expect(result).toEqual({
+        test_list: [
+          { type: 'a', pairs: { 0: 'zero', 1: 'one' } },
+          { type: 'b', pairs: 'text' },
+        ],
+      });
+      expect(Array.isArray(result.test_list[0].pairs)).toBe(false);
+    });
+
+    test('handles an empty keyvalue subfield like a top-level keyvalue field', async () => {
+      const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+      /** @type {any} */
+      const config = cmsConfig;
+
+      getField.mockImplementation(({ keyPath }) =>
+        keyPath === 'test_list.*.pairs'
+          ? { name: 'pairs', widget: 'keyvalue', required: false }
+          : { name: keyPath, widget: 'string' },
+      );
+      isFieldRequired.mockImplementation(({ fieldConfig }) => fieldConfig.required !== false);
+
+      // The editor stores `null` at the field’s own key path while it holds no pairs
+      const valueMap = {
+        'test_list.0.title': 'First',
+        'test_list.0.pairs': null,
+        'test_list.1.title': 'Second',
+        'test_list.1.pairs.foo': 'bar',
+      };
+
+      vi.mocked(createKeyPathList).mockReturnValueOnce([
+        'test_list',
+        'test_list.*.title',
+        'test_list.*.pairs',
+      ]);
+
+      expect(serializeContent({ draft, locale: 'en', valueMap: { ...valueMap } })).toEqual({
+        // The placeholder is saved as an empty object, like a field without one
+        test_list: [
+          { title: 'First', pairs: {} },
+          { title: 'Second', pairs: { foo: 'bar' } },
+        ],
+      });
+
+      vi.mocked(createKeyPathList).mockReturnValueOnce([
+        'test_list',
+        'test_list.*.title',
+        'test_list.*.pairs',
+      ]);
+
+      config.current = { output: { omit_empty_optional_fields: true } };
+
+      try {
+        expect(serializeContent({ draft, locale: 'en', valueMap: { ...valueMap } })).toEqual({
+          test_list: [{ title: 'First' }, { title: 'Second', pairs: { foo: 'bar' } }],
+        });
+      } finally {
+        config.current = {};
+        isFieldRequired.mockReset();
+      }
+    });
+
+    test('serializes empty list with a keyvalue subfield without wildcard keys', async () => {
+      const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+
+      vi.mocked(createKeyPathList).mockReturnValueOnce(['test_list', 'test_list.*.pairs']);
+
+      getField.mockImplementation(({ keyPath }) =>
+        keyPath === 'test_list.*.pairs'
+          ? { name: 'pairs', widget: 'keyvalue' }
+          : { name: keyPath, widget: 'list' },
+      );
+
+      const result = serializeContent({ draft, locale: 'en', valueMap: { test_list: [] } });
+
+      expect(result).toEqual({ test_list: [] });
+    });
+
+    test('keeps the empty items of optional lists when omitting empty optional fields', async () => {
+      const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+      /** @type {any} */
+      const config = cmsConfig;
+
+      vi.mocked(createKeyPathList).mockReturnValueOnce([
+        'tags',
+        'tags.*',
+        'links',
+        'links.*.label',
+        'links.*.url',
+        'groups',
+        'groups.*.links',
+        'groups.*.links.*.label',
+      ]);
+
+      getField.mockImplementation(({ keyPath }) =>
+        ['tags', 'links', 'groups', 'groups.*.links'].includes(keyPath)
+          ? { name: keyPath, widget: 'list', required: false }
+          : { name: keyPath.split('.').pop(), widget: 'string', required: false },
+      );
+      isFieldRequired.mockImplementation(({ fieldConfig }) => fieldConfig.required !== false);
+      config.current = { output: { omit_empty_optional_fields: true } };
+
+      const valueMap = {
+        tags: [],
+        'tags.0': '',
+        'tags.1': 'b',
+        links: [],
+        'links.0.label': '',
+        'links.0.url': '',
+        'links.1.label': 'L',
+        'links.1.url': '',
+        'groups.0.links.0.label': '',
+        'groups.0.links.1.label': 'G',
+      };
+
+      try {
+        expect(serializeContent({ draft, locale: 'en', valueMap })).toEqual({
+          // An item left empty is an item all the same, which mustn’t become `null`
+          tags: ['', 'b'],
+          // An object item keeps its place, while its empty properties are still omitted
+          links: [{}, { label: 'L' }],
+          groups: [{ links: [{}, { label: 'G' }] }],
+        });
+      } finally {
+        config.current = {};
+        isFieldRequired.mockReset();
+      }
     });
   });
 
@@ -1928,5 +2618,206 @@ describe('wildcardKeyPathRegexCache (within serializeContent)', () => {
     const result2 = serializeContent({ draft, locale: 'en', valueMap: { ...valueMap } });
 
     expect(result1).toEqual(result2);
+  });
+});
+
+describe('List field stored as a map (within serializeContent)', () => {
+  /**
+   * Create a draft with the given fields.
+   * @param {any[]} fields Fields.
+   * @param {string} [format] File format.
+   * @returns {any} Draft.
+   */
+  const createDraft = (fields, format = 'yaml') => ({
+    collectionName: 'references',
+    collection: { _file: { format }, _i18n: { canonicalSlug: { key: '' } } },
+    fields,
+    isIndexFile: false,
+  });
+
+  const listField = {
+    name: 'references',
+    widget: 'list',
+    map_key_field: 'key',
+    fields: [
+      { name: 'key', widget: 'string' },
+      { name: 'title', widget: 'string' },
+    ],
+  };
+
+  const valueMap = {
+    'references.0.key': 'harry',
+    'references.0.title': 'Harry',
+    'references.1.key': 'ron',
+    'references.1.title': 'Ron',
+  };
+
+  test('saves the items as a map in the list order', () => {
+    const result = serializeContent({
+      draft: createDraft([{ name: 'title', widget: 'string' }, listField]),
+      locale: 'en',
+      valueMap: { title: 'Hello', ...valueMap },
+    });
+
+    expect(result).toEqual({
+      title: 'Hello',
+      references: { harry: { title: 'Harry' }, ron: { title: 'Ron' } },
+    });
+    expect(Object.keys(result.references)).toEqual(['harry', 'ron']);
+  });
+
+  test('saves a top-level list as a map, even in a TOML file', () => {
+    const fields = [{ ...listField, root: true }];
+    const expected = { harry: { title: 'Harry' }, ron: { title: 'Ron' } };
+
+    expect(serializeContent({ draft: createDraft(fields), locale: 'en', valueMap })).toEqual(
+      expected,
+    );
+    expect(
+      serializeContent({ draft: createDraft(fields, 'toml'), locale: 'en', valueMap }),
+    ).toEqual(expected);
+  });
+
+  test('still ignores the `root` option of a list not stored as a map in a TOML file', () => {
+    const { map_key_field: _, ...arrayListField } = listField;
+    const fields = [{ ...arrayListField, root: true }];
+
+    expect(
+      serializeContent({ draft: createDraft(fields, 'toml'), locale: 'en', valueMap }),
+    ).toEqual({
+      references: [
+        { key: 'harry', title: 'Harry' },
+        { key: 'ron', title: 'Ron' },
+      ],
+    });
+  });
+
+  test('saves an empty top-level list as an empty map', () => {
+    const fields = [{ ...listField, root: true }];
+
+    expect(serializeContent({ draft: createDraft(fields), locale: 'en', valueMap: {} })).toEqual(
+      {},
+    );
+  });
+});
+
+describe('Null values in TOML output (within serializeContent)', () => {
+  /**
+   * Create a draft with the given fields.
+   * @param {any[]} fields Fields.
+   * @param {string} format File format.
+   * @returns {any} Draft.
+   */
+  const createDraft = (fields, format) => ({
+    collectionName: 'posts',
+    collection: { _file: { format }, _i18n: { canonicalSlug: { key: '' } } },
+    fields,
+    isIndexFile: false,
+  });
+
+  /**
+   * Serialize the given content and format it as the file is saved.
+   * @param {any[]} fields Fields.
+   * @param {Record<string, any>} valueMap Flattened entry content.
+   * @param {string} format File format.
+   * @returns {Promise<string>} File data.
+   */
+  const save = (fields, valueMap, format) =>
+    formatEntryFile({
+      content: serializeContent({ draft: createDraft(fields, format), locale: 'en', valueMap }),
+      _file: /** @type {any} */ ({
+        format,
+        fmDelimiters: format === 'toml-frontmatter' ? ['+++', '+++'] : undefined,
+      }),
+    });
+
+  const fields = [
+    { name: 'title', widget: 'string' },
+    // An empty optional integer field stores `null`
+    { name: 'numbers', widget: 'list', field: { widget: 'number', value_type: 'int' } },
+  ];
+
+  const valueMap = { title: 'Hello', 'numbers.0': 1, 'numbers.1': null, 'numbers.2': 3 };
+
+  test('drops a null list item in a TOML file', async () => {
+    expect(
+      serializeContent({ draft: createDraft(fields, 'toml'), locale: 'en', valueMap }),
+    ).toEqual({ title: 'Hello', numbers: [1, 3] });
+    await expect(save(fields, valueMap, 'toml')).resolves.toBe(
+      'title = "Hello"\nnumbers = [ 1, 3 ]\n',
+    );
+  });
+
+  test('drops a null list item in TOML front matter', async () => {
+    await expect(save(fields, valueMap, 'toml-frontmatter')).resolves.toBe(
+      '+++\ntitle = "Hello"\nnumbers = [ 1, 3 ]\n+++\n',
+    );
+  });
+
+  test('keeps a null list item in YAML and JSON', async () => {
+    await expect(save(fields, valueMap, 'yaml')).resolves.toBe(
+      'title: Hello\nnumbers:\n  - 1\n  - null\n  - 3\n',
+    );
+    await expect(save(fields, valueMap, 'json')).resolves.toBe(
+      '{\n  "title": "Hello",\n  "numbers": [\n    1,\n    null,\n    3\n  ]\n}\n',
+    );
+  });
+
+  test('drops a null object property in TOML as before', async () => {
+    await expect(save(fields, { title: null, 'numbers.0': 1 }, 'toml')).resolves.toBe(
+      'numbers = [ 1 ]\n',
+    );
+  });
+
+  test('drops null values in nested lists and in objects in a list', async () => {
+    const nestedFields = [{ name: 'items', widget: 'list' }];
+
+    await expect(
+      save(
+        nestedFields,
+        {
+          'items.0.tags.0': 'a',
+          'items.0.tags.1': null,
+          'items.0.tags.2': 'b',
+          // An object in a nested list is written as an inline table
+          'items.0.grid.0.0.x': null,
+          'items.0.grid.0.0.y': 1,
+          'items.0.grid.0.1': undefined,
+          'items.0.note': null,
+          'items.1': null,
+        },
+        'toml',
+      ),
+    ).resolves.toBe('[[items]]\ngrid = [ [ { y = 1 } ] ]\ntags = [ "a", "b" ]\n');
+  });
+
+  test('drops an empty item of a list of dates in TOML', async () => {
+    const { TomlDate: TomlDateClass } = await vi.importActual('smol-toml');
+
+    getField.mockImplementation(({ keyPath }) => ({
+      name: keyPath,
+      widget: keyPath.startsWith('dates.') ? 'datetime' : 'string',
+    }));
+
+    // A wildcard key path stands for the list items, which an empty date field saves as nothing
+    const dateFields = [{ name: 'dates.*', widget: 'datetime', required: false }];
+    const dateValueMap = { 'dates.0': '2024-01-02', 'dates.1': '', 'dates.2': '2024-03-04' };
+
+    try {
+      const content = serializeContent({
+        draft: createDraft(dateFields, 'toml'),
+        locale: 'en',
+        valueMap: { ...dateValueMap },
+      });
+
+      // A date is still a native TOML date
+      expect(content.dates).toHaveLength(2);
+      expect(content.dates[0]).toBeInstanceOf(TomlDateClass);
+      await expect(save(dateFields, { ...dateValueMap }, 'toml')).resolves.toBe(
+        'dates = [ 2024-01-02, 2024-03-04 ]\n',
+      );
+    } finally {
+      getField.mockImplementation(({ keyPath }) => ({ name: keyPath, widget: 'string' }));
+    }
   });
 });

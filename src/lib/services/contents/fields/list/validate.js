@@ -1,6 +1,5 @@
-import { escapeRegExp } from '@sveltia/utils/string';
-
-import { getOrCreate } from '$lib/services/utils/cache';
+import { validateItemCount } from '$lib/services/contents/draft/validate/validity';
+import { isNumeric } from '$lib/services/utils/number';
 
 /**
  * @import {
@@ -8,14 +7,13 @@ import { getOrCreate } from '$lib/services/utils/cache';
  * FlattenedEntryContent,
  * LocaleValidityMap,
  * } from '$lib/types/private';
- * @import { FieldKeyPath } from '$lib/types/public';
  */
 
 /**
- * Cache of pre-compiled list key-path regexes, keyed by field key path.
- * @type {Map<FieldKeyPath, RegExp>}
+ * Regular expression to match the item index at the start of a key path relative to its list, e.g.
+ * `0` in `0` or `0.name`.
  */
-const listKeyPathRegexCache = new Map();
+const LEADING_INDEX_REGEX = /^\d+/;
 
 /**
  * Validate a list/multiple-value field, updating `validity` in place.
@@ -61,29 +59,54 @@ export const validateListField = ({
    * @returns {number} Item count.
    */
   const countItems = () => {
-    // Pre-compile and cache the regex — validateAnyField is called on every keystroke.
-    const keyPathRegex = getOrCreate(
-      listKeyPathRegexCache,
-      keyPath,
-      () => new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+`),
-    );
+    const prefix = `${keyPath}.`;
+    /** @type {Set<string>} */
+    const indexes = new Set();
 
-    return new Set(
-      Object.keys(valueMap)
-        .map((key) => key.match(keyPathRegex)?.[0])
-        .filter(Boolean),
-    ).size;
+    // This runs on every keystroke once the entry has been validated, against the draft’s live
+    // values, so the cheap prefix test is done first and only the matching keys are parsed
+    Object.keys(valueMap).forEach((key) => {
+      if (key.startsWith(prefix)) {
+        const index = key.slice(prefix.length).match(LEADING_INDEX_REGEX)?.[0];
+
+        if (index !== undefined) {
+          indexes.add(index);
+        }
+      }
+    });
+
+    return indexes.size;
   };
 
   const size = Array.isArray(value) && !!value.length ? value.length : countItems();
 
-  if (required && !size) {
-    validity.valueMissing = true;
-  } else if (typeof min === 'number' && size < min) {
-    validity.rangeUnderflow = true;
-  } else if (typeof max === 'number' && size > max) {
-    validity.rangeOverflow = true;
-  }
+  validateItemCount(validity, { count: size, required, min, max });
 
   return { skip: false, empty: !size };
+};
+
+/**
+ * Get the items of a List field without subfields, which are stored as `field.0`, `field.1` …
+ * `field.N`, unless the list itself holds them in an array.
+ * @param {object} args Arguments.
+ * @param {string} args.keyPath Field key path.
+ * @param {any} args.value Current field value.
+ * @param {FlattenedEntryContent} args.valueMap Entry values.
+ * @returns {any[]} Items in list order.
+ */
+export const getListItems = ({ keyPath, value, valueMap }) => {
+  if (Array.isArray(value) && !!value.length) {
+    return value;
+  }
+
+  const prefix = `${keyPath}.`;
+
+  return Object.keys(valueMap)
+    .flatMap((key) => {
+      const index = key.startsWith(prefix) ? key.slice(prefix.length) : undefined;
+
+      return index !== undefined && isNumeric(index) ? [[Number(index), valueMap[key]]] : [];
+    })
+    .sort(([a], [b]) => a - b)
+    .map(([, item]) => item);
 };

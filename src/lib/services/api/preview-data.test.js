@@ -1,0 +1,1537 @@
+// @ts-nocheck
+import { Map as ImmutableMap, isMap } from 'immutable';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { ExternalAssetProxy } from '$lib/services/api/external-asset-proxy';
+import { warnDeprecation } from '$lib/services/config/deprecations';
+
+import {
+  buildEntry,
+  buildPreviewData,
+  convertEntryToMap,
+  createEntryMap,
+  createGetAsset,
+  getAssociatedPreviewAssets,
+  getMetaData,
+  getMetaDataPath,
+} from './preview-data';
+
+// Mock dependencies using vi.hoisted()
+const {
+  mockGetField,
+  mockGetMediaFieldSource,
+  mockGetRichTextMediaSource,
+  mockGetEntriesByCollection,
+  mockGetCollectionFileEntry,
+  mockGetAssetFolder,
+  mockIsAssetInFolder,
+  mockAllAssets,
+  mockGetEntryOptions,
+  mockGetCollection,
+} = vi.hoisted(() => ({
+  mockGetCollection: vi.fn(),
+  mockGetField: vi.fn(() => ({ widget: 'text' })),
+  mockGetMediaFieldSource: vi.fn(),
+  mockGetRichTextMediaSource: vi.fn(),
+  mockGetEntriesByCollection: vi.fn(() => []),
+  mockGetCollectionFileEntry: vi.fn(),
+  mockGetAssetFolder: vi.fn(),
+  mockIsAssetInFolder: vi.fn(),
+  mockAllAssets: { current: /** @type {any[]} */ ([]) },
+  // Resolve a `{{slug}}` or bare field name `value_field` like the Relation field does
+  mockGetEntryOptions: vi.fn(({ locale, fieldConfig, refEntry }) => {
+    const { value_field: valueField = '{{slug}}' } = fieldConfig;
+
+    const value =
+      valueField === '{{slug}}' ? refEntry.slug : refEntry.locales[locale]?.content?.[valueField];
+
+    return [{ label: value, value, searchValue: value }];
+  }),
+}));
+
+vi.mock('$lib/services/config/deprecations');
+vi.mock('$lib/services/assets', () => ({
+  isAssetInFolder: mockIsAssetInFolder,
+}));
+
+vi.mock('$lib/services/assets/media-field', () => ({
+  getMediaFieldSource: mockGetMediaFieldSource,
+  getRichTextMediaSource: mockGetRichTextMediaSource,
+}));
+
+vi.mock('$lib/services/assets/state', () => ({
+  allAssets: mockAllAssets,
+}));
+
+vi.mock('$lib/services/api/asset-proxy', () => ({
+  /**
+   *
+   */
+  AssetProxy: class MockAssetProxy {
+    /**
+     * Mock constructor for AssetProxy.
+     * @param {object} _asset The asset to proxy.
+     */
+    constructor(_asset) {
+      this.url = 'blob:...';
+    }
+  },
+}));
+
+vi.mock('$lib/services/api/unsaved-asset-proxy', () => ({
+  UnsavedAssetProxy: vi.fn(
+    /**
+     * Mock constructor for UnsavedAssetProxy.
+     * @param {string} blobURL Blob URL.
+     * @param {File} file File.
+     */
+    function MockUnsavedAssetProxy(blobURL, file) {
+      this.url = blobURL;
+      this.fileObj = file;
+    },
+  ),
+}));
+
+vi.mock('$lib/services/contents/collection', () => ({
+  getCollection: mockGetCollection,
+}));
+
+vi.mock('$lib/services/contents/collection/entries', () => ({
+  getEntriesByCollection: mockGetEntriesByCollection,
+}));
+
+vi.mock('$lib/services/contents/collection/files', () => ({
+  getCollectionFileEntry: mockGetCollectionFileEntry,
+}));
+
+vi.mock('$lib/services/contents/entry/fields', () => ({
+  getField: mockGetField,
+}));
+
+vi.mock('$lib/services/contents/fields/relation/helpers', () => ({
+  getEntryOptions: mockGetEntryOptions,
+}));
+
+vi.mock('$lib/services/assets/folders', () => ({
+  getAssetFolder: mockGetAssetFolder,
+}));
+
+// The library is loaded from the CDN at runtime; hand the real module to the code under test
+vi.mock('$lib/services/api/immutable', async () => {
+  const immutable = /** @type {typeof import('immutable')} */ (await vi.importActual('immutable'));
+
+  return {
+    /**
+     * Get the preloaded Immutable module.
+     * @returns {typeof import('immutable')} Immutable module.
+     */
+    getImmutable: () => immutable,
+    loadImmutable: vi.fn(async () => immutable),
+    preloadImmutable: vi.fn(),
+    immutableLoaded: { current: true },
+  };
+});
+
+describe('entry module', () => {
+  describe('createEntryMap', () => {
+    const baseArgs = {
+      content: { title: 'Hello', 'author.name': 'Jane' },
+      otherLocales: [],
+      locales: {
+        en: {
+          slug: 'hello',
+          content: { title: 'Hello', 'author.name': 'Jane' },
+          path: 'posts/hello.md',
+        },
+      },
+      slug: 'hello',
+      path: 'posts/hello.md',
+      isNew: false,
+      collectionName: 'posts',
+      associatedAssets: [],
+    };
+
+    it('should return an Immutable Map', () => {
+      expect(isMap(createEntryMap(baseArgs))).toBe(true);
+    });
+
+    it('should unflatten content into data', () => {
+      const map = createEntryMap(baseArgs);
+      const data = map.get('data');
+
+      expect(data.get('title')).toBe('Hello');
+      expect(data.getIn(['author', 'name'])).toBe('Jane');
+    });
+
+    it('should set i18n to empty map when no other locales', () => {
+      const map = createEntryMap(baseArgs);
+
+      expect(isMap(map.get('i18n'))).toBe(true);
+      expect(map.get('i18n').size).toBe(0);
+    });
+
+    it('should include unflattened content for each other locale in i18n', () => {
+      const map = createEntryMap({
+        ...baseArgs,
+        otherLocales: ['ja', 'fr'],
+        locales: {
+          en: { slug: 'hello', content: { title: 'Hello' }, path: 'posts/hello.md' },
+          ja: {
+            slug: 'hello',
+            content: { title: 'こんにちは', 'author.name': '田中' },
+            path: 'posts/hello.ja.md',
+          },
+          fr: { slug: 'hello', content: { title: 'Bonjour' }, path: 'posts/hello.fr.md' },
+        },
+      });
+
+      const i18n = map.get('i18n');
+
+      expect(i18n.getIn(['ja', 'data', 'title'])).toBe('こんにちは');
+      expect(i18n.getIn(['ja', 'data', 'author', 'name'])).toBe('田中');
+      expect(i18n.getIn(['fr', 'data', 'title'])).toBe('Bonjour');
+      expect(i18n.get('en')).toBeUndefined();
+    });
+
+    it('should set slug, path, collection and newRecord', () => {
+      const map = createEntryMap({
+        ...baseArgs,
+        slug: 'my-slug',
+        path: 'a/b.md',
+        isNew: true,
+        collectionName: 'blog',
+      });
+
+      expect(map.get('slug')).toBe('my-slug');
+      expect(map.get('path')).toBe('a/b.md');
+      expect(map.get('collection')).toBe('blog');
+      expect(map.get('newRecord')).toBe(true);
+    });
+
+    it('should map associated assets to mediaFiles', () => {
+      const assets = [
+        {
+          sha: 'abc123',
+          file: new File(['x'], 'img.jpg'),
+          size: 512,
+          blobURL: 'blob:http://localhost/1',
+          name: 'img.jpg',
+          path: '/images/img.jpg',
+        },
+      ];
+
+      const map = createEntryMap({ ...baseArgs, associatedAssets: /** @type {any} */ (assets) });
+      const mediaFiles = /** @type {any} */ (map.get('mediaFiles'));
+
+      expect(mediaFiles.size).toBe(1);
+
+      const file = mediaFiles.get(0);
+
+      expect(file.get('id')).toBe('abc123');
+      expect(file.get('name')).toBe('img.jpg');
+      expect(file.get('path')).toBe('/images/img.jpg');
+      expect(file.get('size')).toBe(512);
+      expect(file.get('url')).toBe('blob:http://localhost/1');
+      expect(file.get('displayURL')).toBe('blob:http://localhost/1');
+    });
+
+    it('should set meta.path to the entry path', () => {
+      const map = createEntryMap({ ...baseArgs, path: 'content/page.md' });
+
+      expect(map.getIn(['meta', 'path'])).toBe('content/page.md');
+    });
+
+    it('should include Netlify/Decap CMS compatibility properties with fixed values', () => {
+      const map = createEntryMap(baseArgs);
+
+      expect(map.get('isModification')).toBeNull();
+      expect(map.get('label')).toBeNull();
+      expect(map.get('partial')).toBe(false);
+      expect(map.get('author')).toBe('');
+      expect(map.get('raw')).toBe('');
+      expect(map.get('status')).toBe('');
+      expect(map.get('updatedOn')).toBe('');
+    });
+
+    it('should handle empty content', () => {
+      const map = createEntryMap({
+        ...baseArgs,
+        content: {},
+        locales: { en: { slug: 'hello', content: {}, path: 'posts/hello.md' } },
+      });
+
+      expect(isMap(map.get('data'))).toBe(true);
+      expect(map.get('data').size).toBe(0);
+    });
+  });
+
+  describe('convertEntryToMap', () => {
+    it('should convert an entry using the selected locale and include other locales', () => {
+      const entry = {
+        slug: 'hello',
+        locales: {
+          en: {
+            slug: 'hello',
+            content: { title: 'Hello' },
+            path: 'posts/hello.md',
+          },
+          ja: {
+            slug: 'hello',
+            content: { title: 'こんにちは' },
+            path: 'posts/hello.ja.md',
+          },
+        },
+      };
+
+      const map = convertEntryToMap({
+        entry: /** @type {any} */ (entry),
+        locale: 'en',
+        collectionName: 'posts',
+        associatedAssets: [],
+      });
+
+      expect(map.get('slug')).toBe('hello');
+      expect(map.getIn(['data', 'title'])).toBe('Hello');
+      expect(map.get('path')).toBe('posts/hello.md');
+      expect(map.getIn(['i18n', 'ja', 'data', 'title'])).toBe('こんにちは');
+    });
+
+    it('should prefer explicit content over entry locale content', () => {
+      const entry = {
+        locales: {
+          en: {
+            content: { title: 'Fallback' },
+            path: 'posts/fallback.md',
+          },
+        },
+      };
+
+      const map = convertEntryToMap({
+        entry: /** @type {any} */ (entry),
+        locale: 'en',
+        collectionName: 'posts',
+        associatedAssets: [],
+        content: { title: 'Override' },
+      });
+
+      expect(map.getIn(['data', 'title'])).toBe('Override');
+      expect(map.get('path')).toBe('posts/fallback.md');
+    });
+
+    it('should fall back to empty content and path when the locale data is missing', () => {
+      const map = convertEntryToMap({
+        entry: undefined,
+        locale: 'en',
+        collectionName: 'posts',
+        associatedAssets: [],
+      });
+
+      expect(map.get('slug')).toBe('');
+      expect(map.get('path')).toBe('');
+      expect(map.getIn(['data', 'title'])).toBeUndefined();
+      expect(map.get('collection')).toBe('posts');
+    });
+  });
+
+  describe('buildEntry', () => {
+    it('should build entry with current values replacing locales', () => {
+      const originalEntry = {
+        slug: 'hello',
+        subPath: 'posts/hello.md',
+        locales: {
+          en: {
+            slug: 'hello',
+            path: 'posts/hello.md',
+            content: { title: 'Hello', body: 'Old content' },
+          },
+          ja: {
+            slug: 'hello',
+            path: 'posts/hello.ja.md',
+            content: { title: 'こんにちは', body: '古いコンテンツ' },
+          },
+        },
+      };
+
+      const currentValues = {
+        en: { title: 'Hello Updated', body: 'New content' },
+        ja: { title: 'こんにちは更新', body: '新しいコンテンツ' },
+      };
+
+      const result = buildEntry({ originalEntry, currentValues });
+
+      expect(result.slug).toBe('hello');
+      expect(result.subPath).toBe('posts/hello.md');
+      expect(result.locales.en.slug).toBe('hello');
+      expect(result.locales.en.path).toBe('posts/hello.md');
+      expect(result.locales.en.content).toEqual({ title: 'Hello Updated', body: 'New content' });
+      expect(result.locales.ja.content).toEqual({
+        title: 'こんにちは更新',
+        body: '新しいコンテンツ',
+      });
+    });
+
+    it('should preserve locale-specific slugs', () => {
+      const originalEntry = {
+        slug: 'default-slug',
+        locales: {
+          en: { slug: 'english-slug', path: 'posts/en.md', content: {} },
+          ja: { slug: 'japanese-slug', path: 'posts/ja.md', content: {} },
+        },
+      };
+
+      const currentValues = {
+        en: { title: 'New English' },
+        ja: { title: '新しい日本語' },
+      };
+
+      const result = buildEntry({ originalEntry, currentValues });
+
+      expect(result.locales.en.slug).toBe('english-slug');
+      expect(result.locales.ja.slug).toBe('japanese-slug');
+    });
+
+    it('should fall back to original slug when locale-specific slug is missing', () => {
+      const originalEntry = {
+        slug: 'default-slug',
+        locales: {
+          en: { path: 'posts/en.md', content: {} }, // No slug
+          ja: { slug: 'japanese-slug', path: 'posts/ja.md', content: {} },
+        },
+      };
+
+      const currentValues = {
+        en: { title: 'English' },
+        ja: { title: '日本語' },
+      };
+
+      const result = buildEntry({ originalEntry, currentValues });
+
+      expect(result.locales.en.slug).toBe('default-slug');
+      expect(result.locales.ja.slug).toBe('japanese-slug');
+    });
+
+    it('should preserve locale-specific paths', () => {
+      const originalEntry = {
+        slug: 'test',
+        subPath: 'posts/test.md',
+        locales: {
+          en: { slug: 'test', path: 'posts/en/test.md', content: {} },
+          ja: { slug: 'test', path: 'posts/ja/test.md', content: {} },
+        },
+      };
+
+      const currentValues = {
+        en: { title: 'English' },
+        ja: { title: '日本語' },
+      };
+
+      const result = buildEntry({ originalEntry, currentValues });
+
+      expect(result.locales.en.path).toBe('posts/en/test.md');
+      expect(result.locales.ja.path).toBe('posts/ja/test.md');
+    });
+
+    it('should fall back to subPath when locale-specific path is missing', () => {
+      const originalEntry = {
+        slug: 'test',
+        subPath: 'posts/default.md',
+        locales: {
+          en: { slug: 'test', content: {} }, // No path
+          ja: { slug: 'test', path: 'posts/ja.md', content: {} },
+        },
+      };
+
+      const currentValues = {
+        en: { title: 'English' },
+        ja: { title: '日本語' },
+      };
+
+      const result = buildEntry({ originalEntry, currentValues });
+
+      expect(result.locales.en.path).toBe('posts/default.md');
+      expect(result.locales.ja.path).toBe('posts/ja.md');
+    });
+
+    it('should handle undefined originalEntry gracefully', () => {
+      const currentValues = {
+        en: { title: 'Content' },
+      };
+
+      const result = buildEntry({ originalEntry: undefined, currentValues });
+
+      expect(result).toBeDefined();
+      expect(result.locales.en.content).toEqual({ title: 'Content' });
+      expect(result.locales.en.slug).toBeUndefined();
+      expect(result.locales.en.path).toBeUndefined();
+    });
+
+    it('should handle empty currentValues', () => {
+      const originalEntry = {
+        slug: 'test',
+        subPath: 'posts/test.md',
+        locales: {
+          en: { slug: 'test', path: 'posts/test.md', content: { title: 'Old' } },
+        },
+      };
+
+      const result = buildEntry({ originalEntry, currentValues: {} });
+
+      expect(result.slug).toBe('test');
+      expect(result.subPath).toBe('posts/test.md');
+      expect(result.locales).toEqual({});
+    });
+
+    it('should handle entry with undefined subPath', () => {
+      const originalEntry = {
+        slug: 'test',
+        locales: {
+          en: { slug: 'test', content: {} }, // No path in locale either
+        },
+      };
+
+      const currentValues = {
+        en: { title: 'Content' },
+      };
+
+      const result = buildEntry({ originalEntry, currentValues });
+
+      expect(result.locales.en.path).toBeUndefined();
+    });
+
+    it('should preserve all other properties from originalEntry', () => {
+      const originalEntry = {
+        slug: 'test',
+        subPath: 'posts/test.md',
+        sha: 'abc123',
+        status: 'published',
+        customProp: 'custom-value',
+        locales: {
+          en: { slug: 'test', path: 'posts/test.md', content: { title: 'Old' } },
+        },
+      };
+
+      const currentValues = {
+        en: { title: 'New' },
+      };
+
+      const result = buildEntry({ originalEntry, currentValues });
+
+      expect(result.sha).toBe('abc123');
+      expect(result.status).toBe('published');
+      expect(result.customProp).toBe('custom-value');
+    });
+
+    it('should handle multiple new locales in currentValues', () => {
+      const originalEntry = {
+        slug: 'test',
+        subPath: 'posts/test.md',
+        locales: {
+          en: { slug: 'test', path: 'posts/test.md', content: {} },
+        },
+      };
+
+      const currentValues = {
+        en: { title: 'English' },
+        ja: { title: '日本語' },
+        fr: { title: 'Français' },
+      };
+
+      const result = buildEntry({ originalEntry, currentValues });
+
+      expect(Object.keys(result.locales)).toEqual(['en', 'ja', 'fr']);
+      expect(result.locales.en.content).toEqual({ title: 'English' });
+      expect(result.locales.ja.content).toEqual({ title: '日本語' });
+      expect(result.locales.fr.content).toEqual({ title: 'Français' });
+      // ja and fr should fall back to original slug and subPath
+      expect(result.locales.ja.slug).toBe('test');
+      expect(result.locales.ja.path).toBe('posts/test.md');
+      expect(result.locales.fr.slug).toBe('test');
+      expect(result.locales.fr.path).toBe('posts/test.md');
+    });
+  });
+});
+
+describe('React Helpers', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    mockGetField.mockReturnValue({ widget: 'text' });
+    mockGetEntriesByCollection.mockReturnValue([]);
+  });
+
+  describe('createGetAsset', () => {
+    const mockEntry = /** @type {any} */ ({ slug: 'article' });
+
+    it('should return AssetProxy when asset is found', () => {
+      mockGetMediaFieldSource.mockReturnValueOnce({ asset: { name: 'image.jpg' } });
+
+      const getter = createGetAsset({ entry: mockEntry, collectionName: 'posts' });
+      const result = getter('images/test.jpg');
+
+      expect(result).toEqual(expect.objectContaining({ url: 'blob:...' }));
+    });
+
+    it('should return a file on an external location by its URL', () => {
+      mockGetMediaFieldSource.mockReturnValueOnce({ url: 'https://example.com/photo.jpg' });
+
+      const result = createGetAsset({ collectionName: 'posts' })('https://example.com/photo.jpg');
+
+      expect(result).toBeInstanceOf(ExternalAssetProxy);
+      expect(result?.url).toBe('https://example.com/photo.jpg');
+    });
+
+    it('should return a file added to the draft by its blob URL', () => {
+      const file = new File(['a'], 'a.png', { type: 'image/png' });
+
+      const getter = createGetAsset({
+        entry: mockEntry,
+        collectionName: 'posts',
+        files: { 'blob:https://example.com/1': { file, folder: undefined, replace: false } },
+      });
+
+      const result = getter('blob:https://example.com/1');
+
+      expect(mockGetMediaFieldSource).not.toHaveBeenCalled();
+      expect(result).toEqual(expect.objectContaining({ url: 'blob:https://example.com/1' }));
+      expect(result?.fileObj).toBe(file);
+      // Any other blob URL is looked up as usual
+      expect(getter('blob:https://example.com/2')).toBeUndefined();
+      expect(mockGetMediaFieldSource).toHaveBeenCalledOnce();
+    });
+
+    it('should return undefined when asset is not found', () => {
+      mockGetMediaFieldSource.mockReturnValueOnce(undefined);
+
+      expect(createGetAsset({ collectionName: 'posts' })('nonexistent.jpg')).toBeUndefined();
+    });
+
+    it('should look up the asset for the entry', () => {
+      createGetAsset({
+        entry: mockEntry,
+        collectionName: 'articles',
+        fileName: 'config.json',
+      })('featured.jpg');
+
+      expect(mockGetMediaFieldSource).toHaveBeenCalledWith({
+        value: 'featured.jpg',
+        entry: mockEntry,
+        collectionName: 'articles',
+        fileName: 'config.json',
+        typedKeyPath: undefined,
+      });
+      expect(mockGetRichTextMediaSource).not.toHaveBeenCalled();
+    });
+
+    it('should look up the asset for the locale being previewed', () => {
+      createGetAsset({ entry: mockEntry, collectionName: 'posts', locale: 'fr' })('photo.jpg');
+
+      expect(mockGetMediaFieldSource).toHaveBeenCalledWith(
+        expect.objectContaining({ value: 'photo.jpg', entry: mockEntry, locale: 'fr' }),
+      );
+    });
+
+    it('should also search the editor component folders for a RichText field', () => {
+      mockGetRichTextMediaSource.mockReturnValueOnce({ asset: { name: 'figure.jpg' } });
+
+      const result = createGetAsset({
+        entry: mockEntry,
+        collectionName: 'posts',
+        typedKeyPath: 'body',
+        componentNames: ['image', 'figure'],
+      })('figure.jpg');
+
+      expect(result).toEqual(expect.objectContaining({ url: 'blob:...' }));
+      expect(mockGetRichTextMediaSource).toHaveBeenCalledWith({
+        value: 'figure.jpg',
+        entry: mockEntry,
+        collectionName: 'posts',
+        fileName: undefined,
+        typedKeyPath: 'body',
+        componentNames: ['image', 'figure'],
+      });
+      expect(mockGetMediaFieldSource).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getMetaDataPath', () => {
+    it('should drop the index of a missing or non-List parent field', () => {
+      mockGetField.mockReturnValue(undefined);
+
+      expect(
+        getMetaDataPath({ getFieldArgs: { collectionName: 'posts' }, keyPath: 'unknown.0.name' }),
+      ).toEqual(['unknown', 'name']);
+    });
+
+    it('should keep a numeric top-level field name', () => {
+      expect(
+        getMetaDataPath({ getFieldArgs: { collectionName: 'posts' }, keyPath: '2024.author' }),
+      ).toEqual(['2024', 'author']);
+      expect(mockGetField).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getMetaData', () => {
+    it('should return empty metadata when no relation fields', () => {
+      mockGetField.mockReturnValueOnce({ widget: 'text' });
+
+      const result = getMetaData({
+        locale: 'en',
+        getFieldArgs: {
+          collectionName: 'posts',
+          fileName: undefined,
+          valueMap: {},
+          isIndexFile: false,
+        },
+      });
+
+      expect(result instanceof ImmutableMap).toBe(true);
+    });
+
+    it.each([
+      ['the default locale of the referenced collection', { en: { content: { name: 'Jane' } } }],
+      ['the content without i18n', { _default: { content: { name: 'Jane' } } }],
+    ])('should fall back to %s for an entry without content in the locale', (_label, locales) => {
+      mockGetField.mockReturnValueOnce({
+        widget: 'relation',
+        collection: 'authors',
+        value_field: '{{slug}}',
+      });
+      mockGetEntriesByCollection.mockReturnValueOnce([{ slug: 'jane', locales }]);
+      mockGetCollection.mockReturnValueOnce({ _i18n: { defaultLocale: 'en' } });
+
+      const result = getMetaData({
+        locale: 'fr',
+        getFieldArgs: { collectionName: 'posts', valueMap: { author: 'jane' } },
+      });
+
+      expect(result.toJS()).toEqual({ author: { authors: { jane: { name: 'Jane' } } } });
+    });
+
+    it('should leave the metadata empty for an entry without content in any locale', () => {
+      mockGetField.mockReturnValueOnce({
+        widget: 'relation',
+        collection: 'authors',
+        value_field: '{{slug}}',
+      });
+      mockGetEntriesByCollection.mockReturnValueOnce([{ slug: 'jane', locales: { de: {} } }]);
+
+      const result = getMetaData({
+        locale: 'fr',
+        getFieldArgs: { collectionName: 'posts', valueMap: { author: 'jane' } },
+      });
+
+      expect(result.toJS()).toEqual({ author: { authors: { jane: undefined } } });
+    });
+
+    it('should ignore missing field definitions when building metadata', () => {
+      mockGetField.mockReturnValueOnce(undefined);
+
+      const result = getMetaData({
+        locale: 'en',
+        getFieldArgs: {
+          collectionName: 'posts',
+          fileName: undefined,
+          valueMap: { relatedPost: 'related-post' },
+          isIndexFile: false,
+        },
+      });
+
+      expect(result instanceof ImmutableMap).toBe(true);
+      expect(result.size).toBe(0);
+    });
+
+    it('should populate metadata for relation fields', () => {
+      const mockRefEntry = {
+        slug: 'related-post',
+        locales: { en: { content: { title: 'Related Post Title' } } },
+      };
+
+      mockGetField.mockReturnValueOnce({
+        widget: 'relation',
+        collection: 'posts',
+        value_field: '{{slug}}',
+      });
+      // @ts-ignore
+      mockGetEntriesByCollection.mockReturnValueOnce([mockRefEntry]);
+
+      const result = getMetaData({
+        locale: 'en',
+        getFieldArgs: {
+          collectionName: 'posts',
+          fileName: undefined,
+          valueMap: { relatedPost: 'related-post' },
+          isIndexFile: false,
+        },
+      });
+
+      expect(result instanceof ImmutableMap).toBe(true);
+    });
+
+    it('should look up referenced entries once per entry list, keeping the first match', () => {
+      const first = { slug: 'dup', locales: { en: { content: { title: 'First' } } } };
+      const second = { slug: 'dup', locales: { en: { content: { title: 'Second' } } } };
+      const refEntries = [first, second];
+
+      /**
+       * Build the metadata of an entry referencing `dup`.
+       * @returns {any} Metadata as a plain object.
+       */
+      const build = () => {
+        mockGetField.mockReturnValueOnce({
+          widget: 'relation',
+          collection: 'posts',
+          value_field: '{{slug}}',
+        });
+        // @ts-ignore
+        mockGetEntriesByCollection.mockReturnValueOnce(refEntries);
+
+        return getMetaData({
+          locale: 'en',
+          getFieldArgs: {
+            collectionName: 'posts',
+            fileName: undefined,
+            valueMap: { relatedPost: 'dup' },
+            isIndexFile: false,
+          },
+        }).toJS();
+      };
+
+      expect(build().relatedPost.posts.dup.title).toBe('First');
+      // Answered from the lookup table cached with the entry list
+      expect(build().relatedPost.posts.dup.title).toBe('First');
+    });
+
+    it('should key referenced entries by the values the `value_field` template resolves to', () => {
+      const alice = {
+        slug: 'alice',
+        locales: { en: { content: { 'name.first': 'Alice', 'tags.0': 'a', 'tags.1': 'b' } } },
+      };
+
+      const bob = { slug: 'bob', locales: { en: { content: { 'name.first': 'Bob' } } } };
+
+      const field = {
+        widget: 'relation',
+        collection: 'authors',
+        value_field: '{{locale}}/{{fields.name.first}}-{{tags.*}}',
+      };
+
+      // The parent key path `authors` of a value resolves to the Relation field too
+      mockGetField.mockReturnValue(field);
+      mockGetEntriesByCollection.mockReturnValueOnce([alice, bob]);
+      // What the Relation field stores, including one value per list item
+      mockGetEntryOptions
+        .mockReturnValueOnce([{ value: 'en/Alice-a' }, { value: 'en/Alice-b' }])
+        .mockReturnValueOnce([{ value: 'en/Bob-' }]);
+
+      const result = getMetaData({
+        locale: 'en',
+        getFieldArgs: {
+          collectionName: 'posts',
+          fileName: undefined,
+          valueMap: { 'authors.0': 'en/Alice-b', 'authors.1': 'en/Bob-', 'authors.2': 'missing' },
+          isIndexFile: false,
+        },
+      }).toJS();
+
+      expect(mockGetEntryOptions).toHaveBeenCalledWith({
+        locale: 'en',
+        fieldConfig: field,
+        refEntry: alice,
+      });
+      // The referenced entry’s data is nested, not flattened
+      expect(result.authors.authors['en/Alice-b'].name.first).toBe('Alice');
+      expect(result.authors.authors['en/Bob-'].name.first).toBe('Bob');
+      expect(result.authors.authors['en/Bob-']).not.toHaveProperty(['name.first']);
+      expect(result.authors.authors.missing).toBeUndefined();
+    });
+
+    it('should match a numeric stored value against the string option value', () => {
+      const entry = { slug: 'one', locales: { en: { content: { id: 1, title: 'One' } } } };
+      const field = { widget: 'relation', collection: 'items', value_field: 'id' };
+
+      mockGetField.mockReturnValueOnce(field);
+      mockGetEntriesByCollection.mockReturnValueOnce([entry]);
+      mockGetEntryOptions.mockReturnValueOnce([{ value: '1' }]);
+
+      const result = getMetaData({
+        locale: 'en',
+        getFieldArgs: {
+          collectionName: 'posts',
+          fileName: undefined,
+          valueMap: { item: 1 },
+          isIndexFile: false,
+        },
+      }).toJS();
+
+      expect(result.item.items[1].title).toBe('One');
+    });
+
+    it('should handle multiple relation fields', () => {
+      const mockRefEntry1 = {
+        slug: 'post-1',
+        locales: { en: { content: { title: 'Post 1' } } },
+      };
+
+      const mockRefEntry2 = {
+        slug: 'author-1',
+        locales: { en: { content: { name: 'Author 1' } } },
+      };
+
+      mockGetField
+        .mockReturnValueOnce({
+          widget: 'relation',
+          collection: 'posts',
+          value_field: '{{slug}}',
+        })
+        .mockReturnValueOnce({
+          widget: 'relation',
+          collection: 'authors',
+          value_field: '{{slug}}',
+        });
+
+      mockGetEntriesByCollection
+        .mockReturnValueOnce([mockRefEntry1])
+        .mockReturnValueOnce([mockRefEntry2]);
+
+      const result = getMetaData({
+        locale: 'en',
+        getFieldArgs: {
+          collectionName: 'posts',
+          fileName: undefined,
+          valueMap: { relatedPost: 'post-1', author: 'author-1' },
+          isIndexFile: false,
+        },
+      });
+
+      expect(result instanceof ImmutableMap).toBe(true);
+    });
+
+    it('should use cached entries when multiple relation fields reference same collection', () => {
+      const mockRefEntry1 = {
+        slug: 'post-1',
+        locales: { en: { content: { title: 'Post 1' } } },
+      };
+
+      const mockRefEntry2 = {
+        slug: 'post-2',
+        locales: { en: { content: { title: 'Post 2' } } },
+      };
+
+      mockGetField
+        .mockReturnValueOnce({
+          widget: 'relation',
+          collection: 'posts',
+          value_field: '{{slug}}',
+        })
+        .mockReturnValueOnce({
+          widget: 'relation',
+          collection: 'posts',
+          value_field: '{{slug}}',
+        });
+
+      // Should only be called once - second field uses cache
+      mockGetEntriesByCollection.mockReturnValueOnce([mockRefEntry1, mockRefEntry2]);
+
+      const result = getMetaData({
+        locale: 'en',
+        getFieldArgs: {
+          collectionName: 'posts',
+          fileName: undefined,
+          valueMap: { relatedPost1: 'post-1', relatedPost2: 'post-2' },
+          isIndexFile: false,
+        },
+      });
+
+      expect(result instanceof ImmutableMap).toBe(true);
+      // Verify entries were only fetched once (cache was used for second field)
+      expect(mockGetEntriesByCollection).toHaveBeenCalledTimes(1);
+    });
+
+    it('should use slug matching by default', () => {
+      const mockEntry = {
+        slug: 'test-entry',
+        locales: { en: { content: {} } },
+      };
+
+      mockGetField.mockReturnValueOnce({
+        widget: 'relation',
+        collection: 'posts',
+      });
+      mockGetEntriesByCollection.mockReturnValueOnce([mockEntry]);
+
+      const result = getMetaData({
+        locale: 'en',
+        getFieldArgs: {
+          collectionName: 'posts',
+          fileName: undefined,
+          valueMap: { related: 'test-entry' },
+          isIndexFile: false,
+        },
+      });
+
+      expect(result instanceof ImmutableMap).toBe(true);
+    });
+
+    it('should match by custom value_field when specified', () => {
+      const mockEntry = {
+        slug: 'test-entry',
+        locales: { en: { content: { id: 'custom-id', title: 'Entry' } } },
+      };
+
+      mockGetField.mockReturnValueOnce({
+        widget: 'relation',
+        collection: 'posts',
+        value_field: 'id',
+      });
+      mockGetEntriesByCollection.mockReturnValueOnce([mockEntry]);
+
+      const result = getMetaData({
+        locale: 'en',
+        getFieldArgs: {
+          collectionName: 'posts',
+          fileName: undefined,
+          valueMap: { related: 'custom-id' },
+          isIndexFile: false,
+        },
+      });
+
+      expect(result instanceof ImmutableMap).toBe(true);
+      expect(mockGetField).toHaveBeenCalled();
+      // Verify that the matching logic works
+      expect(mockGetEntriesByCollection).toHaveBeenCalledWith('posts');
+    });
+
+    it('should use file entry when relation field has file property', () => {
+      const mockEntry = {
+        slug: 'config',
+        locales: { en: { content: { id: 'config-file', title: 'Config' } } },
+      };
+
+      mockGetField.mockReset();
+      mockGetField.mockReturnValue({
+        widget: 'relation',
+        collection: 'pages',
+        file: 'config.json',
+        value_field: 'id',
+      });
+
+      mockGetCollectionFileEntry.mockReturnValueOnce(mockEntry);
+
+      const result = getMetaData({
+        locale: 'en',
+        getFieldArgs: {
+          collectionName: 'pages',
+          fileName: undefined,
+          valueMap: { pageConfig: 'config-file' },
+          isIndexFile: false,
+        },
+      });
+
+      expect(result instanceof ImmutableMap).toBe(true);
+      // Verify file entry was requested
+      expect(mockGetCollectionFileEntry).toHaveBeenCalledWith('pages', 'config.json');
+    });
+
+    it('should handle entries without requested locale in relation field', () => {
+      const mockEntry = {
+        slug: 'test-entry',
+        locales: {
+          en: { content: { id: '1', title: 'English' } },
+          // No ja locale
+        },
+      };
+
+      mockGetField.mockReturnValueOnce({
+        widget: 'relation',
+        collection: 'posts',
+        value_field: 'id',
+      });
+      mockGetEntriesByCollection.mockReturnValueOnce([mockEntry]);
+
+      const result = getMetaData({
+        locale: 'ja', // Request Japanese but entry only has English
+        getFieldArgs: {
+          collectionName: 'posts',
+          fileName: undefined,
+          valueMap: { related: '1' },
+          isIndexFile: false,
+        },
+      });
+
+      expect(result instanceof ImmutableMap).toBe(true);
+    });
+
+    describe('nests the metadata of a field like Decap CMS', () => {
+      const relation = { widget: 'relation', collection: 'authors', value_field: '{{slug}}' };
+
+      /** @type {Record<string, any>} */
+      const fields = {
+        author: relation,
+        authors: { ...relation, multiple: true },
+        'authors.*': { ...relation, multiple: true },
+        info: { widget: 'object', fields: [{ ...relation, name: 'author' }] },
+        'info.author': relation,
+        books: { widget: 'list', fields: [{ ...relation, name: 'author' }] },
+        'books.*.author': relation,
+        tags: { widget: 'list', field: { ...relation, name: 'tag' } },
+        'tags.*': relation,
+        items: { widget: 'list', field: { widget: 'object', name: 'item', fields: [] } },
+        'items.*.author': relation,
+      };
+
+      const jane = { slug: 'jane', locales: { en: { content: { name: 'Jane' } } } };
+      const john = { slug: 'john', locales: { en: { content: { name: 'John' } } } };
+
+      /**
+       * Build the metadata of the given content.
+       * @param {Record<string, string>} valueMap Flattened content.
+       * @returns {any} Metadata as a plain object.
+       */
+      const build = (valueMap) => {
+        mockGetField.mockImplementation(({ keyPath }) => fields[keyPath.replace(/\.\d+/g, '.*')]);
+        mockGetEntriesByCollection.mockReturnValue([jane, john]);
+
+        return getMetaData({
+          locale: 'en',
+          getFieldArgs: { collectionName: 'posts', valueMap },
+        }).toJS();
+      };
+
+      it('for a top-level Relation field', () => {
+        expect(build({ author: 'jane' })).toEqual({
+          author: { authors: { jane: { name: 'Jane' } } },
+        });
+      });
+
+      it('for a Relation field with the `multiple` option', () => {
+        expect(build({ 'authors.0': 'jane', 'authors.1': 'john' })).toEqual({
+          authors: { authors: { jane: { name: 'Jane' }, john: { name: 'John' } } },
+        });
+      });
+
+      it('for a Relation field in an Object field, also keeping the flattened key path', () => {
+        const metadata = { authors: { jane: { name: 'Jane' } } };
+
+        expect(build({ 'info.author': 'jane' })).toEqual({
+          info: { author: metadata },
+          'info.author': metadata,
+        });
+      });
+
+      it('for a Relation field in List items, merging the items', () => {
+        expect(build({ 'books.0.author': 'jane', 'books.1.author': 'john' })).toEqual({
+          books: { author: { authors: { jane: { name: 'Jane' }, john: { name: 'John' } } } },
+          'books.0.author': { authors: { jane: { name: 'Jane' } } },
+          'books.1.author': { authors: { john: { name: 'John' } } },
+        });
+      });
+
+      it('for the single Relation subfield of a List field, under the subfield’s name', () => {
+        const metadata = { authors: { jane: { name: 'Jane' }, john: { name: 'John' } } };
+
+        // The List field’s own name holds the legacy metadata too
+        expect(build({ 'tags.0': 'jane', 'tags.1': 'john' })).toEqual({
+          tags: { tag: metadata, ...metadata },
+        });
+      });
+
+      it('for a Relation field in an Object field with a numeric name', () => {
+        const metadata = { authors: { jane: { name: 'Jane' } } };
+
+        fields.years = { widget: 'object', fields: [{ ...relation, name: '2024' }] };
+        // The mock looks a numeric segment up as `*`
+        fields['years.*'] = relation;
+
+        try {
+          expect(build({ 'years.2024': 'jane' })).toEqual({
+            years: { 2024: metadata },
+            'years.2024': metadata,
+          });
+        } finally {
+          delete fields.years;
+          delete fields['years.*'];
+        }
+      });
+
+      describe('deprecation warning', () => {
+        /**
+         * Build the metadata of the given content as an Immutable Map.
+         * @param {Record<string, string>} valueMap Flattened content.
+         * @returns {any} Metadata.
+         */
+        const buildMap = (valueMap) => {
+          build(valueMap);
+
+          return getMetaData({
+            locale: 'en',
+            getFieldArgs: { collectionName: 'posts', valueMap },
+          });
+        };
+
+        it.each([
+          ['get', (map) => map.get('info.author')],
+          ['getIn', (map) => map.getIn(['info.author', 'authors', 'jane'])],
+        ])('warns about a flat key path read with `%s()`', (_method, read) => {
+          const result = read(buildMap({ 'info.author': 'jane' }));
+
+          expect(result.toJS()).toBeTruthy();
+          expect(warnDeprecation).toHaveBeenCalledExactlyOnceWith('flat_metadata_keys');
+        });
+
+        it('warns about a List item’s flat key path', () => {
+          const map = buildMap({ 'books.0.author': 'jane' });
+
+          expect(map.getIn(['books.0.author', 'authors', 'jane', 'name'])).toBe('Jane');
+          expect(warnDeprecation).toHaveBeenCalledWith('flat_metadata_keys');
+        });
+
+        it('warns about the single subfield’s metadata under the List field’s name', () => {
+          const map = buildMap({ 'tags.0': 'jane' });
+
+          expect(map.getIn(['tags', 'authors', 'jane', 'name'])).toBe('Jane');
+          expect(warnDeprecation).toHaveBeenCalledWith('flat_metadata_keys');
+        });
+
+        it('leaves a Map without deprecated keys alone, like the shared empty Map', () => {
+          expect(Object.hasOwn(buildMap({}), 'get')).toBe(false);
+          expect(Object.hasOwn(ImmutableMap(), 'get')).toBe(false);
+          expect(Object.hasOwn(buildMap({ author: 'jane' }), 'get')).toBe(false);
+        });
+
+        it('keeps the not-set value of a read', () => {
+          const map = buildMap({ 'info.author': 'jane' });
+
+          expect(map.get('unknown', 'fallback')).toBe('fallback');
+          expect(map.getIn(['tags', 'authors'], 'fallback')).toBe('fallback');
+        });
+
+        it('stays quiet about the current paths and about building the Map', () => {
+          const map = buildMap({
+            author: 'jane',
+            'info.author': 'jane',
+            'books.0.author': 'jane',
+            'tags.0': 'jane',
+          });
+
+          expect(map.getIn(['author', 'authors', 'jane', 'name'])).toBe('Jane');
+          expect(map.getIn(['info', 'author', 'authors', 'jane', 'name'])).toBe('Jane');
+          expect(map.getIn(['books', 'author', 'authors', 'jane', 'name'])).toBe('Jane');
+          expect(map.getIn(['tags', 'tag', 'authors', 'jane', 'name'])).toBe('Jane');
+          map.toJS();
+          expect(warnDeprecation).not.toHaveBeenCalled();
+        });
+
+        it('stays quiet about a single subfield named after the referenced collection', () => {
+          fields.writers = { widget: 'list', field: { ...relation, name: 'authors' } };
+          fields['writers.*'] = relation;
+
+          try {
+            const map = buildMap({ 'writers.0': 'jane' });
+
+            expect(map.getIn(['writers', 'authors', 'authors', 'jane', 'name'])).toBe('Jane');
+            expect(warnDeprecation).not.toHaveBeenCalled();
+          } finally {
+            delete fields.writers;
+            delete fields['writers.*'];
+          }
+        });
+      });
+
+      it('for a field name and value that are also `Object.prototype` members', () => {
+        fields.constructor = relation;
+        jane.slug = '__proto__';
+
+        try {
+          build({ constructor: '__proto__' });
+
+          // Read the Immutable Map, as `toJS()` would turn `__proto__` back into the prototype
+          const result = getMetaData({
+            locale: 'en',
+            getFieldArgs: { collectionName: 'posts', valueMap: { constructor: '__proto__' } },
+          });
+
+          expect(result.keySeq().toArray()).toEqual(['constructor']);
+          expect(result.getIn(['constructor', 'authors', '__proto__']).toJS()).toEqual({
+            name: 'Jane',
+          });
+          expect(Object.hasOwn(Object, 'authors')).toBe(false);
+        } finally {
+          delete fields.constructor;
+          jane.slug = 'jane';
+        }
+      });
+
+      it('for a Relation field in the single Object subfield of a List field', () => {
+        const metadata = { authors: { jane: { name: 'Jane' } } };
+
+        expect(build({ 'items.0.author': 'jane' })).toEqual({
+          items: { item: { author: metadata } },
+          'items.0.author': metadata,
+        });
+      });
+    });
+  });
+
+  describe('getAssociatedPreviewAssets', () => {
+    beforeEach(() => {
+      mockGetAssetFolder.mockReset();
+      mockIsAssetInFolder.mockReset();
+      mockAllAssets.current = [];
+    });
+
+    it('should return empty array when asset folder is not found', () => {
+      mockGetAssetFolder.mockReturnValueOnce(null);
+
+      const result = getAssociatedPreviewAssets({
+        collectionName: 'posts',
+        fileName: undefined,
+      });
+
+      expect(result).toEqual([]);
+      expect(mockGetAssetFolder).toHaveBeenCalledWith({
+        collectionName: 'posts',
+        fileName: undefined,
+      });
+    });
+
+    it('should filter and return assets when asset folder is found', () => {
+      const mockAssetFolder = { collectionName: 'posts', internalPath: 'assets' };
+
+      const mockAssets = [
+        { name: 'image1.jpg', path: '/assets/image1.jpg' },
+        { name: 'image2.jpg', path: '/assets/image2.jpg' },
+      ];
+
+      mockGetAssetFolder.mockReturnValueOnce(mockAssetFolder);
+      mockAllAssets.current = mockAssets;
+      mockIsAssetInFolder.mockImplementation(() => true);
+
+      const result = getAssociatedPreviewAssets({
+        collectionName: 'posts',
+        fileName: undefined,
+      });
+
+      expect(result).toEqual(mockAssets);
+      expect(mockGetAssetFolder).toHaveBeenCalledWith({
+        collectionName: 'posts',
+        fileName: undefined,
+      });
+      expect(mockIsAssetInFolder).toHaveBeenCalledTimes(2);
+    });
+
+    it('should reuse the result until the asset list is replaced', () => {
+      const mockAssetFolder = { collectionName: 'posts', internalPath: 'assets' };
+      const mockAssets = [{ name: 'image1.jpg', path: '/assets/image1.jpg' }];
+
+      mockGetAssetFolder.mockReturnValue(mockAssetFolder);
+      mockIsAssetInFolder.mockImplementation(() => true);
+      mockAllAssets.current = mockAssets;
+
+      const first = getAssociatedPreviewAssets({ collectionName: 'posts' });
+
+      expect(getAssociatedPreviewAssets({ collectionName: 'posts' })).toBe(first);
+      expect(mockIsAssetInFolder).toHaveBeenCalledTimes(1);
+
+      mockAllAssets.current = [...mockAssets, { name: 'image2.jpg', path: '/assets/image2.jpg' }];
+
+      expect(getAssociatedPreviewAssets({ collectionName: 'posts' })).toHaveLength(2);
+    });
+
+    it('should filter assets based on folder membership', () => {
+      const mockAssetFolder = { collectionName: 'posts', internalPath: 'assets' };
+
+      const mockAssets = [
+        { name: 'image1.jpg', path: '/assets/image1.jpg' },
+        { name: 'image2.jpg', path: '/other/image2.jpg' },
+      ];
+
+      mockGetAssetFolder.mockReturnValueOnce(mockAssetFolder);
+      mockAllAssets.current = mockAssets;
+      mockIsAssetInFolder.mockImplementation((asset) => asset.path.includes('/assets/'));
+
+      const result = getAssociatedPreviewAssets({
+        collectionName: 'posts',
+        fileName: 'index.md',
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe('image1.jpg');
+    });
+  });
+  describe('buildPreviewData', () => {
+    beforeEach(() => {
+      mockGetField.mockReset();
+      mockGetField.mockReturnValue({ widget: 'text' });
+      mockGetAssetFolder.mockReset();
+      mockIsAssetInFolder.mockReset();
+      mockAllAssets.current = [];
+    });
+
+    it('should not build the field metadata until it’s read', () => {
+      const mockDraft = {
+        collectionName: 'posts',
+        fileName: undefined,
+        isIndexFile: false,
+        originalEntry: {
+          slug: 'test-post',
+          locales: { en: { slug: 'test-post', path: '/posts/test-post', content: {} } },
+        },
+        currentValues: { en: { title: 'Updated Title' } },
+      };
+
+      const result = buildPreviewData({ draft: mockDraft, locale: 'en' });
+
+      // Building the metadata looks up a field config for every value in the entry, which a custom
+      // field control, the only consumer of `entryMap` alone, shouldn’t have to pay for
+      expect(result.entryMap).toBeDefined();
+      expect(mockGetField).not.toHaveBeenCalled();
+
+      const { fieldsMetaData } = result;
+
+      expect(isMap(fieldsMetaData)).toBe(true);
+      expect(mockGetField).toHaveBeenCalledOnce();
+
+      // The result is kept, so several previews reading it in the same tick share the computation
+      expect(result.fieldsMetaData).toBe(fieldsMetaData);
+      expect(mockGetField).toHaveBeenCalledOnce();
+    });
+
+    it('should leave the internal list item properties out of the data', () => {
+      const values = {
+        title: 'Hello',
+        'items.0.name': 'A',
+        'items.0.__sc_item_id': 'id-1',
+        'items.0.__sc_item_original_key_path': 'items.0',
+      };
+
+      const mockDraft = {
+        collectionName: 'posts',
+        fileName: undefined,
+        isIndexFile: false,
+        originalEntry: undefined,
+        currentValues: { en: values, ja: values },
+      };
+
+      const { entryMap, valueMap } = buildPreviewData({ draft: mockDraft, locale: 'en' });
+      const expected = { title: 'Hello', items: [{ name: 'A' }] };
+
+      expect(valueMap).toEqual({ title: 'Hello', 'items.0.name': 'A' });
+      expect(entryMap.get('data').toJS()).toEqual(expected);
+      expect(entryMap.getIn(['i18n', 'ja', 'data']).toJS()).toEqual(expected);
+    });
+
+    it('should build preview data with all required properties', () => {
+      const mockDraft = {
+        collectionName: 'posts',
+        fileName: undefined,
+        isIndexFile: false,
+        originalEntry: {
+          slug: 'test-post',
+          locales: {
+            en: {
+              slug: 'test-post',
+              path: '/posts/test-post',
+              content: { title: 'Test Post' },
+            },
+          },
+        },
+        currentValues: {
+          en: { title: 'Updated Title' },
+        },
+      };
+
+      const result = buildPreviewData({
+        draft: mockDraft,
+        locale: 'en',
+      });
+
+      expect(result).toHaveProperty('entryMap');
+      expect(result).toHaveProperty('valueMap');
+      expect(result).toHaveProperty('getFieldArgs');
+      expect(result).toHaveProperty('fieldsMetaData');
+      expect(result).toHaveProperty('getAsset');
+      expect(isMap(result.entryMap)).toBe(true);
+      expect(result.valueMap).toEqual({ title: 'Updated Title' });
+      expect(result.getFieldArgs).toEqual({
+        collectionName: 'posts',
+        fileName: undefined,
+        valueMap: { title: 'Updated Title' },
+        isIndexFile: false,
+      });
+      expect(isMap(result.fieldsMetaData)).toBe(true);
+      expect(typeof result.getAsset).toBe('function');
+    });
+
+    it('should use current values for the specified locale', () => {
+      const mockDraft = {
+        collectionName: 'posts',
+        fileName: undefined,
+        isIndexFile: false,
+        originalEntry: {
+          slug: 'test-post',
+          locales: {
+            en: {
+              slug: 'test-post',
+              path: '/posts/test-post',
+              content: { title: 'English Title' },
+            },
+            ja: {
+              slug: 'テスト記事',
+              path: '/ja/posts/テスト記事',
+              content: { title: '日本語タイトル' },
+            },
+          },
+        },
+        currentValues: {
+          en: { title: 'Updated EN' },
+          ja: { title: '更新されたJA' },
+        },
+      };
+
+      const resultEn = buildPreviewData({
+        draft: mockDraft,
+        locale: 'en',
+      });
+
+      const resultJa = buildPreviewData({
+        draft: mockDraft,
+        locale: 'ja',
+      });
+
+      expect(resultEn.valueMap).toEqual({ title: 'Updated EN' });
+      expect(resultJa.valueMap).toEqual({ title: '更新されたJA' });
+    });
+
+    it('should include entryMap from converted entry data', () => {
+      mockGetAssetFolder.mockReturnValueOnce(null);
+
+      const mockDraft = {
+        collectionName: 'posts',
+        fileName: undefined,
+        isIndexFile: false,
+        originalEntry: {
+          slug: 'test-post',
+          locales: {
+            en: {
+              slug: 'test-post',
+              path: '/posts/test-post',
+              content: { title: 'Test Post' },
+            },
+          },
+        },
+        currentValues: {
+          en: { title: 'Updated Title' },
+        },
+      };
+
+      const result = buildPreviewData({
+        draft: mockDraft,
+        locale: 'en',
+      });
+
+      expect(result.entryMap).toBeDefined();
+      expect(isMap(result.entryMap)).toBe(true);
+      expect(result.entryMap.get('slug')).toBe('test-post');
+      expect(result.entryMap.get('collection')).toBe('posts');
+    });
+  });
+});

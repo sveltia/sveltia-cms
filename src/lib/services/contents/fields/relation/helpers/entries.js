@@ -1,6 +1,6 @@
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { stripIndexFileName } from '$lib/services/contents/collection/nested';
-import { getFieldDisplayValue } from '$lib/services/contents/entry/fields';
+import { getFieldDisplayValue } from '$lib/services/contents/entry/values';
 import {
   analyzeListFields,
   processListFields,
@@ -16,6 +16,7 @@ import { replaceTemplateFields } from '$lib/services/contents/fields/relation/he
  * InternalCollection,
  * InternalLocaleCode,
  * RelationOption,
+ * UnlistedEntry,
  * } from '$lib/types/private';
  * @import { FieldKeyPath } from '$lib/types/public';
  */
@@ -46,19 +47,26 @@ import { replaceTemplateFields } from '$lib/services/contents/fields/relation/he
  */
 
 /**
+ * Leave out options without a value. The value is empty when the entry lacks a field in the
+ * `value_field` template, and such an option can’t refer to the entry: falling back to another
+ * value, like the entry summary, would store a reference that doesn’t match the entry.
+ * @param {RelationOption[]} options Options.
+ * @returns {RelationOption[]} Options with a value.
+ */
+const excludeOptionsWithoutValue = (options) => options.filter(({ value }) => !!value);
+
+/**
  * Process a single entry to generate relation options.
  * @param {object} params Parameters.
  * @param {Entry} params.refEntry Reference entry.
  * @param {FlattenedEntryContent} params.content Entry content.
  * @param {InternalCollection} params.collection Collection configuration.
  * @param {TemplateStrings} params.templates Template strings.
- * @param {string[]} params.allFieldNames All field names.
- * @param {boolean} params.hasListFields Whether entry has list fields.
- * @param {string} params.collectionName Collection name.
  * @param {string} [params.fileName] File name.
  * @param {InternalLocaleCode} params.locale Current locale.
  * @param {string} params.identifierField Identifier field.
- * @param {InternalLocaleCode} params.defaultLocale Default locale.
+ * @param {UnlistedEntry[]} [params.pendingEntries] Entries not yet among the saved ones, which a
+ * Relation field of the entry can refer to.
  * @returns {RelationOption[]} Array of relation options.
  */
 export const processEntry = ({
@@ -66,18 +74,22 @@ export const processEntry = ({
   content,
   collection,
   templates,
-  allFieldNames,
-  hasListFields,
-  collectionName,
   fileName,
   locale,
   identifierField,
-  defaultLocale,
+  pendingEntries = undefined,
 }) => {
   const { locales } = refEntry;
-  // In a nested collection an entry’s slug is its path within the collection folder, ending with
-  // the file name shared by every entry. A reference to the entry leaves that name out, the same
-  // way a preview path does
+
+  const {
+    name: collectionName,
+    _i18n: { defaultLocale },
+  } = collection;
+
+  const { allFieldNames, hasListFields } = templates;
+  // In a collection with nested entries an entry’s slug is its path within the collection folder,
+  // ending with the file name shared by every entry. A reference to the entry leaves that name out,
+  // the same way a preview path does
   const slug = stripIndexFileName(collection, refEntry.slug);
   const isIndexFile = isCollectionIndexFile(collection, refEntry);
   /** @type {GetFieldArgs} */
@@ -93,15 +105,19 @@ export const processEntry = ({
     getFieldDisplayValue({
       ...getFieldArgs,
       keyPath,
-      valueMap: _locale ? locales[_locale].content : content,
+      // A multi-file entry can lack a locale’s file, including the default locale’s
+      valueMap: _locale ? (locales[_locale]?.content ?? {}) : content,
       locale: _locale ?? locale,
+      pendingEntries,
     });
 
   const context = { slug, locale, getDisplayValue };
   const fallbackContext = { content, locales, defaultLocale, identifierField };
 
   if (!hasListFields) {
-    return [createSimpleOption({ templates, allFieldNames, context, fallbackContext })];
+    return excludeOptionsWithoutValue([
+      createSimpleOption({ templates, allFieldNames, context, fallbackContext }),
+    ]);
   }
 
   // Handle list fields
@@ -117,7 +133,7 @@ export const processEntry = ({
   });
 
   if (hasProcessedListFields) {
-    return results;
+    return excludeOptionsWithoutValue(results);
   }
 
   const { _displayField, _valueField, _searchField } = templates;
@@ -136,11 +152,5 @@ export const processEntry = ({
     fallbackContext,
   );
 
-  return [
-    {
-      label: label || '',
-      value: value || slug,
-      searchValue: searchValue || label || '',
-    },
-  ];
+  return excludeOptionsWithoutValue([{ label, value, searchValue: searchValue || label }]);
 };

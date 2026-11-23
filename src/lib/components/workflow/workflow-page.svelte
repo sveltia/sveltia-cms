@@ -1,71 +1,60 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Alert, ConfirmationDialog, EmptyState, Group, Toast } from '@sveltia/ui';
+  import {
+    Alert,
+    Button,
+    ConfirmationDialog,
+    EmptyState,
+    Group,
+    Icon,
+    Spacer,
+    Toast,
+    Toolbar,
+  } from '@sveltia/ui';
 
+  import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
   import PageContainer from '$lib/components/common/page-container.svelte';
   import WorkflowEntryCard from '$lib/components/workflow/workflow-entry-card.svelte';
   import { announcedPageStatus } from '$lib/services/app/navigation';
-  import { allEntries } from '$lib/services/contents';
   import { retainDeployPolling } from '$lib/services/deployments/poll';
   import {
-    hasPublishedVersion,
-    unpublishedEntries,
+    allUnpublishedEntries,
+    checkPublishedVersion,
+    getUnpublishedEntryById,
+    isPendingDeletion,
+    publishingBranches,
     workflowDataReady,
   } from '$lib/services/workflow';
-  import { WORKFLOW_STATUS_LABELS } from '$lib/services/workflow/constants';
-  import { openAuthoring, workflowStages } from '$lib/services/workflow/open-authoring';
+  import {
+    COLUMN_LABELS,
+    getBoardAnnouncement,
+    getDiscardMessages,
+    getPublishMessages,
+    groupEntriesByStatus,
+    REFRESH_MESSAGES,
+    STATUS_UPDATE_MESSAGES,
+  } from '$lib/services/workflow/board';
+  import { deployingEntries } from '$lib/services/workflow/deploy';
+  import { getDiscardDialogStrings, getPublishDialogStrings } from '$lib/services/workflow/dialogs';
+  import { reloadUnpublishedEntries } from '$lib/services/workflow/load';
   import {
     discardWorkflowEntry,
-    publishWorkflowEntry,
+    publishReviewedEntry,
     updateWorkflowStatus,
   } from '$lib/services/workflow/save';
-  import { validateWorkflowEntry } from '$lib/services/workflow/validate';
+  import {
+    boardStages,
+    getStageOfEntry,
+    isStageAvailable,
+    workflowPageLabelKey,
+  } from '$lib/services/workflow/stages';
+  import { canMoveToStatus, canPublish } from '$lib/services/workflow/validate';
+  import { getWorkflowErrorMessage } from '$lib/services/workflow/verify';
 
   /**
    * @import { UnpublishedEntry, WorkflowStatus } from '$lib/types/private';
+   * @import { ToastMessages } from '$lib/services/workflow/board';
    */
-
-  /**
-   * Column headings. The `drafts` heading is plural, unlike the singular status label used in the
-   * entry editor’s status button.
-   * @type {Record<WorkflowStatus, string>}
-   */
-  const COLUMN_LABELS = { ...WORKFLOW_STATUS_LABELS, draft: 'status.drafts' };
-
-  /**
-   * @typedef {object} ToastMessages
-   * @property {string} info I18n string key shown while the action is in progress.
-   * @property {string} success I18n string key shown once the action has completed.
-   * @property {string} error I18n string key shown when the action has failed.
-   */
-
-  /** @type {ToastMessages} */
-  const STATUS_UPDATE_MESSAGES = {
-    info: 'workflow.updating_status',
-    success: 'workflow.status_updated',
-    error: 'workflow.status_change_failed',
-  };
-
-  /** @type {ToastMessages} */
-  const DELETION_MESSAGES = {
-    info: 'workflow.deleting_entry',
-    success: 'workflow.entry_deleted',
-    error: 'deleting_entry_failed',
-  };
-
-  /** @type {ToastMessages} */
-  const CANCELLATION_MESSAGES = {
-    info: 'workflow.cancelling_deletion',
-    success: 'workflow.deletion_cancelled',
-    error: 'workflow.cancelling_deletion_failed',
-  };
-
-  /** @type {ToastMessages} */
-  const PUBLISHING_MESSAGES = {
-    info: 'workflow.publishing_entry',
-    success: 'workflow.entry_published',
-    error: 'workflow.publishing_entry_failed',
-  };
 
   // `$state.raw` rather than `$state`, because the latter deeply proxies the entry, and the proxy
   // would end up back in the store when the status is saved. `structuredClone()` throws on a proxy,
@@ -92,26 +81,38 @@
    * @type {string[]}
    */
   let busyBranches = $state.raw([]);
+  /** Whether the pull requests are being read again at the user’s request. */
+  let refreshing = $state(false);
 
-  // `allEntries.current` is a dependency, because the entry can be published from another view
-  const publishedVersionExists = $derived(
-    !!targetEntry && !!allEntries.current && hasPublishedVersion(targetEntry),
-  );
+  /**
+   * Whether an action is in flight for the given entry. A publish is recorded by the service as
+   * well, because the merge can take minutes and outlive this page: a card for an entry whose
+   * merge was started before the page was opened is busy all the same.
+   * @param {UnpublishedEntry} entry Entry.
+   * @returns {boolean} Result.
+   */
+  const isBusy = ({
+    workflow: {
+      pullRequest: { branch },
+    },
+  }) => busyBranches.includes(branch) || publishingBranches.current.includes(branch);
+
+  // The entry can be published from another view, so the check depends on `allEntries`
+  const publishedVersionExists = $derived(checkPublishedVersion(targetEntry));
   // For an entry awaiting deletion the two actions are reversed: the first one calls the removal
   // off, and the second one carries it out
   const targetIsDeletion = $derived(targetEntry?.workflow.status === 'pending_deletion');
+  const discardDialogStrings = $derived(
+    getDiscardDialogStrings({ pendingDeletion: targetIsDeletion, publishedVersionExists }),
+  );
+  const publishDialogStrings = $derived(getPublishDialogStrings({ deletion: targetIsDeletion }));
 
   // A pending deletion has a status of its own, so it never lands in a stage column. It’s listed
   // below the board instead, and its cards don’t drag: there are no stages to move it through
-  const columns = $derived(
-    workflowStages.current.map((status) => ({
-      status,
-      entries: unpublishedEntries.current.filter((entry) => entry.workflow.status === status),
-    })),
+  const { columns, pendingDeletions } = $derived(
+    groupEntriesByStatus(boardStages.current, allUnpublishedEntries.current, getStageOfEntry),
   );
-  const pendingDeletions = $derived(
-    unpublishedEntries.current.filter(({ workflow }) => workflow.status === 'pending_deletion'),
-  );
+  const deploying = $derived(deployingEntries.current);
 
   // Keep the deploy state fresh while the board is open, so a preview link turns live as soon as
   // its build finishes. One hold covers every card, because the lookup batches across all the open
@@ -121,6 +122,47 @@
 
   /** Whether the page has already been announced, so a later status change doesn’t repeat it. */
   let announced = false;
+
+  /**
+   * Show the given message with a toast notification.
+   * @param {'info' | 'success' | 'error'} status Status of the message.
+   * @param {string} message Localized message.
+   */
+  const notify = (status, message) => {
+    toastStatus = status;
+    toastMessage = message;
+    showToast = true;
+  };
+
+  /**
+   * Report the progress and the result of a request with a toast notification.
+   * @param {Promise<any>} request Request being performed.
+   * @param {ToastMessages} messages I18n string keys for each state.
+   * @param {() => void} onSettled Function called once the request has settled.
+   * @param {(ex: any) => string} [getErrorMessage] Function returning the localized message for
+   * the given failure. The `error` message by default.
+   */
+  const reportRequest = async (
+    request,
+    messages,
+    onSettled,
+    getErrorMessage = () => _(messages.error),
+  ) => {
+    notify('info', _(messages.info));
+
+    // The toast is shown again with the result in case it has already been dismissed while the
+    // request was in flight
+    try {
+      await request;
+      notify('success', _(messages.success));
+    } catch (/** @type {any} */ ex) {
+      notify('error', getErrorMessage(ex));
+      // eslint-disable-next-line no-console
+      console.error(ex);
+    } finally {
+      onSettled();
+    }
+  };
 
   /**
    * Report the progress and the result of an Editorial Workflow action with a toast notification.
@@ -136,25 +178,32 @@
     const { branch } = entry.workflow.pullRequest;
 
     busyBranches = [...busyBranches, branch];
-    toastStatus = 'info';
-    toastMessage = messages.info;
-    showToast = true;
 
-    try {
-      await request;
-      toastStatus = 'success';
-      toastMessage = messages.success;
-    } catch (/** @type {any} */ ex) {
-      toastStatus = 'error';
-      toastMessage = messages.error;
-      // eslint-disable-next-line no-console
-      console.error(ex);
-    } finally {
-      busyBranches = busyBranches.filter((_branch) => _branch !== branch);
-    }
+    await reportRequest(
+      request,
+      messages,
+      () => {
+        busyBranches = busyBranches.filter((_branch) => _branch !== branch);
+      },
+      // A failure that trying again wouldn’t fix says why, e.g. a publish refused over what the
+      // pull request holds, or another request open from the branch
+      (ex) => getWorkflowErrorMessage(ex, messages.error),
+    );
+  };
 
-    // Show the toast again in case it has already been dismissed while the request was in flight
-    showToast = true;
+  /**
+   * Read the pull requests again, to pick up what anyone else has changed since the board was
+   * loaded, without waiting for the next scheduled check, and report the result with a toast
+   * notification. A reload already in flight, such as a scheduled check, may have listed the pull
+   * requests before the button was clicked, so the board is reloaded again after it rather than
+   * joining it.
+   */
+  const refresh = async () => {
+    refreshing = true;
+
+    await reportRequest(reloadUnpublishedEntries({ fresh: true }), REFRESH_MESSAGES, () => {
+      refreshing = false;
+    });
   };
 
   /**
@@ -164,9 +213,25 @@
    * @param {string} messageKey I18n string key of the message to show.
    */
   const reportValidationErrors = (messageKey) => {
-    toastStatus = 'error';
-    toastMessage = messageKey;
-    showToast = true;
+    notify('error', _(messageKey));
+  };
+
+  /**
+   * Ask for confirmation before deleting the given entry, or calling its pending deletion off.
+   * @param {UnpublishedEntry} entry Entry.
+   */
+  const confirmDelete = (entry) => {
+    targetEntry = entry;
+    showDeleteDialog = true;
+  };
+
+  /**
+   * Ask for confirmation before publishing the given entry, or carrying out its pending deletion.
+   * @param {UnpublishedEntry} entry Entry.
+   */
+  const confirmPublish = (entry) => {
+    targetEntry = entry;
+    showPublishDialog = true;
   };
 
   /**
@@ -174,16 +239,16 @@
    * @param {WorkflowStatus} status New status.
    */
   const moveEntry = async (status) => {
-    const entry = draggedEntry;
+    const entry = getUnpublishedEntryById(draggedEntry?.id);
 
     draggedEntry = undefined;
     dropTarget = undefined;
 
-    if (!entry || entry.workflow.status === status) {
+    if (!entry || getStageOfEntry(entry) === status || !isStageAvailable(entry, status)) {
       return;
     }
 
-    if (status !== 'draft' && !validateWorkflowEntry({ entry })) {
+    if (!canMoveToStatus({ entry, status })) {
       reportValidationErrors('workflow.status_change_blocked');
 
       return;
@@ -201,170 +266,180 @@
 
     announced = true;
 
-    const [draft, review, ready = 0] = columns.map(({ entries }) => entries.length);
-    const deletion = pendingDeletions.length;
+    const { key, values } = getBoardAnnouncement(columns, pendingDeletions);
 
-    // The board has no Ready column for an Open Authoring contributor, so its count is left out of
-    // the announcement rather than reported as zero
-    announcedPageStatus.current = openAuthoring.current
-      ? _('viewing_open_authoring_workflow', { values: { draft, review, deletion } })
-      : _('viewing_editorial_workflow', { values: { draft, review, ready, deletion } });
+    announcedPageStatus.current = _(key, { values });
   });
 </script>
 
-<PageContainer aria-label={_('editorial_workflow')}>
+<PageContainer aria-label={_(workflowPageLabelKey.current)}>
   {#snippet main()}
-    {#if !workflowDataReady.current}
-      <EmptyState>
-        <span role="none">{_('loading_entries', { values: { count: 2 } })}</span>
-      </EmptyState>
-    {:else}
-      <!-- The page container lays its children out in a row, so the board and the list below it
-      need a column wrapper of their own -->
-      <!-- The column count varies: an Open Authoring contributor can’t publish, so the board
-      leaves out the stage that says an entry is ready to go live -->
-      <div role="none" class="board" style:--column-count={columns.length}>
-        <div role="none" class="columns">
-          {#each columns as { status, entries } (status)}
-            <Group class="column" aria-labelledby="{status}-column-title">
-              <header role="none">
-                <h3 role="none" id="{status}-column-title">{_(COLUMN_LABELS[status])}</h3>
-              </header>
-              <div
-                role="list"
-                class="entries"
-                class:drop-target={dropTarget === status}
-                aria-label={_(COLUMN_LABELS[status])}
-                ondragover={(/** @type {DragEvent} */ event) => {
-                  if (!draggedEntry) {
-                    return;
-                  }
+    <PageContainerMainArea aria-label={_(workflowPageLabelKey.current)}>
+      {#snippet primaryToolbar()}
+        <Toolbar variant="primary">
+          <h2 role="none">{_(workflowPageLabelKey.current)}</h2>
+          <Spacer flex />
+          <Button
+            variant="ghost"
+            iconic
+            aria-label={_('workflow.refresh')}
+            disabled={!workflowDataReady.current || refreshing}
+            onclick={refresh}
+          >
+            {#snippet startIcon()}
+              <Icon name="refresh" />
+            {/snippet}
+          </Button>
+        </Toolbar>
+      {/snippet}
+      {#snippet mainContent()}
+        {#if !workflowDataReady.current}
+          <EmptyState>
+            <span role="none">{_('loading_entries', { values: { count: 2 } })}</span>
+          </EmptyState>
+        {:else}
+          <!-- The board and the trays below it share a wrapper carrying the column count, which
+          varies: an Open Authoring contributor can’t publish, so the board leaves out the stage
+          that says an entry is ready to go live -->
+          <div
+            role="none"
+            class="board"
+            class:single={columns.length === 1}
+            style:--column-count={columns.length}
+          >
+            <div role="none" class="columns">
+              {#each columns as { status, entries } (status)}
+                <Group class="column" aria-labelledby="{status}-column-title">
+                  <header role="none">
+                    <h3 role="none" id="{status}-column-title">{_(COLUMN_LABELS[status])}</h3>
+                  </header>
+                  <div
+                    role="list"
+                    class="entries"
+                    class:drop-target={dropTarget === status}
+                    aria-label={_(COLUMN_LABELS[status])}
+                    ondragover={(/** @type {DragEvent} */ event) => {
+                      if (!draggedEntry || !isStageAvailable(draggedEntry, status)) {
+                        return;
+                      }
 
-                  event.preventDefault();
+                      event.preventDefault();
 
-                  if (event.dataTransfer) {
-                    event.dataTransfer.dropEffect = 'move';
-                  }
+                      if (event.dataTransfer) {
+                        event.dataTransfer.dropEffect = 'move';
+                      }
 
-                  dropTarget = status;
-                }}
-                ondragleave={() => {
-                  if (dropTarget === status) {
-                    dropTarget = undefined;
-                  }
-                }}
-                ondrop={(/** @type {DragEvent} */ event) => {
-                  event.preventDefault();
-                  moveEntry(status);
-                }}
-              >
-                {#each entries as entry (entry.id)}
-                  <WorkflowEntryCard
-                    {entry}
-                    busy={busyBranches.includes(entry.workflow.pullRequest.branch)}
-                    dragging={draggedEntry?.id === entry.id}
-                    onDragStart={() => {
-                      draggedEntry = entry;
+                      dropTarget = status;
                     }}
-                    onDragEnd={() => {
-                      draggedEntry = undefined;
-                      dropTarget = undefined;
+                    ondragleave={() => {
+                      if (dropTarget === status) {
+                        dropTarget = undefined;
+                      }
                     }}
-                    onDelete={() => {
-                      targetEntry = entry;
-                      showDeleteDialog = true;
+                    ondrop={(/** @type {DragEvent} */ event) => {
+                      event.preventDefault();
+                      moveEntry(status);
                     }}
-                    onPublish={() => {
-                      targetEntry = entry;
-                      showPublishDialog = true;
-                    }}
-                  />
-                {:else}
-                  <EmptyState>
-                    <span role="none">{_('workflow.no_entries')}</span>
-                  </EmptyState>
-                {/each}
+                  >
+                    {#each entries as entry (entry.id)}
+                      <WorkflowEntryCard
+                        {entry}
+                        busy={isBusy(entry)}
+                        dragging={draggedEntry?.id === entry.id}
+                        onDragStart={() => {
+                          draggedEntry = entry;
+                        }}
+                        onDragEnd={() => {
+                          draggedEntry = undefined;
+                          dropTarget = undefined;
+                        }}
+                        onDelete={() => confirmDelete(entry)}
+                        onPublish={() => confirmPublish(entry)}
+                      />
+                    {:else}
+                      <EmptyState>
+                        <span role="none">{_('workflow.no_entries')}</span>
+                      </EmptyState>
+                    {/each}
+                  </div>
+                </Group>
+              {/each}
+            </div>
+            <!-- Only rendered when something is pending, so the board keeps the height
+            otherwise -->
+            {#if pendingDeletions.length}
+              <div role="none" class="tray">
+                <Group class="group" aria-labelledby="deletions-title">
+                  <header role="none">
+                    <h3 role="none" id="deletions-title">{_('status.pending_deletion')}</h3>
+                  </header>
+                  <div role="list" class="entries" aria-label={_('status.pending_deletion')}>
+                    {#each pendingDeletions as entry (entry.id)}
+                      <WorkflowEntryCard
+                        {entry}
+                        busy={isBusy(entry)}
+                        onDelete={() => confirmDelete(entry)}
+                        onPublish={() => confirmPublish(entry)}
+                      />
+                    {/each}
+                  </div>
+                </Group>
               </div>
-            </Group>
-          {/each}
-        </div>
-        <!-- Only rendered when something is pending, so the board keeps the height otherwise -->
-        {#if pendingDeletions.length}
-          <div role="none" class="deletions">
-            <Group class="group" aria-labelledby="deletions-title">
-              <header role="none">
-                <h3 role="none" id="deletions-title">{_('status.pending_deletion')}</h3>
-              </header>
-              <div role="list" class="entries" aria-label={_('status.pending_deletion')}>
-                {#each pendingDeletions as entry (entry.id)}
-                  <WorkflowEntryCard
-                    {entry}
-                    busy={busyBranches.includes(entry.workflow.pullRequest.branch)}
-                    onDelete={() => {
-                      targetEntry = entry;
-                      showDeleteDialog = true;
-                    }}
-                    onPublish={() => {
-                      targetEntry = entry;
-                      showPublishDialog = true;
-                    }}
-                  />
-                {/each}
+            {/if}
+            <!-- Merged changes the site hasn’t caught up with yet. A deletion is gone from the
+            entry list once merged, so this is the only place left to say the site still has it -->
+            {#if deploying.length}
+              <div role="none" class="tray">
+                <Group class="group" aria-labelledby="deploying-title">
+                  <header role="none">
+                    <h3 role="none" id="deploying-title">{_('status.deploying')}</h3>
+                  </header>
+                  <div role="list" class="entries" aria-label={_('status.deploying')}>
+                    {#each deploying as { entry } (entry.workflow.pullRequest.branch)}
+                      <WorkflowEntryCard {entry} deploying />
+                    {/each}
+                  </div>
+                </Group>
               </div>
-            </Group>
+            {/if}
           </div>
         {/if}
-      </div>
-    {/if}
+      {/snippet}
+    </PageContainerMainArea>
   {/snippet}
 </PageContainer>
 
 <ConfirmationDialog
   bind:open={showDeleteDialog}
-  title={targetIsDeletion
-    ? _('workflow.cancel_deletion')
-    : publishedVersionExists
-      ? _('workflow.discard_changes')
-      : _('delete_entries', { values: { count: 1 } })}
-  okLabel={_(
-    targetIsDeletion ? 'workflow.cancel_deletion' : publishedVersionExists ? 'discard' : 'delete',
-  )}
+  title={discardDialogStrings.title}
+  okLabel={discardDialogStrings.label}
   onOk={async () => {
-    const entry = targetEntry;
+    const entry = getUnpublishedEntryById(targetEntry?.id);
 
     if (entry) {
       await runAction(
         entry,
         discardWorkflowEntry(entry),
-        targetIsDeletion ? CANCELLATION_MESSAGES : DELETION_MESSAGES,
+        getDiscardMessages(isPendingDeletion(entry)),
       );
     }
   }}
 >
-  {_(
-    targetIsDeletion
-      ? 'workflow.confirm_cancelling_deletion'
-      : publishedVersionExists
-        ? 'workflow.confirm_discarding_entry_changes'
-        : 'workflow.confirm_deleting_unpublished_entry',
-  )}
+  {discardDialogStrings.message}
 </ConfirmationDialog>
 
 <ConfirmationDialog
   bind:open={showPublishDialog}
-  title={targetIsDeletion
-    ? _('delete_entries', { values: { count: 1 } })
-    : _('workflow.publish_entry')}
-  okLabel={_(targetIsDeletion ? 'delete' : 'publish')}
+  title={publishDialogStrings.title}
+  okLabel={publishDialogStrings.label}
   onOk={async () => {
-    const entry = targetEntry;
+    const entry = getUnpublishedEntryById(targetEntry?.id);
 
     if (!entry) {
       return;
     }
 
-    // A removal has no content to check; publishing it is what carries the deletion out
-    if (!targetIsDeletion && !validateWorkflowEntry({ entry })) {
+    if (!canPublish({ entry })) {
       reportValidationErrors('workflow.publish_blocked');
 
       return;
@@ -372,27 +447,27 @@
 
     await runAction(
       entry,
-      publishWorkflowEntry(entry),
-      targetIsDeletion ? DELETION_MESSAGES : PUBLISHING_MESSAGES,
+      // Pinned to the version the dialog was opened for
+      publishReviewedEntry(entry, targetEntry),
+      getPublishMessages(isPendingDeletion(entry)),
     );
   }}
 >
-  {_(
-    targetIsDeletion ? 'workflow.confirm_completing_deletion' : 'workflow.confirm_publishing_entry',
-  )}
+  {publishDialogStrings.message}
 </ConfirmationDialog>
 
 <!-- The `id` makes the auto-hide timer restart when the message changes -->
 {#if toastMessage}
   <Toast id={toastMessage} bind:show={showToast}>
-    <Alert status={toastStatus}>{_(toastMessage)}</Alert>
+    <Alert status={toastStatus}>{toastMessage}</Alert>
   </Toast>
 {/if}
 
 <style>
   /*
-   * Entries awaiting removal, listed below the board rather than as a fourth column: they have no
-   * stages to move through, and a column would take a quarter of the width for something rare
+   * Entries awaiting removal, and merged ones the site hasn’t caught up with, are listed in trays
+   * below the board rather than as extra columns: they have no stages to move through, and a
+   * column would take a share of the width for something rare
    */
 
   .board {
@@ -402,7 +477,18 @@
     overflow: hidden;
   }
 
-  .deletions {
+  /*
+   * With a single column, as with Preview Workflow, the cards would be stretched across the page,
+   * so they’re laid out in a grid instead, both in the column and in the trays below it
+   */
+
+  .board.single .entries {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    align-content: start;
+  }
+
+  .tray {
     flex: none;
     display: flex;
     flex-direction: column;

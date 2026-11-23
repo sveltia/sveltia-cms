@@ -1,6 +1,9 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Menu, MenuButton, MenuItemCheckbox, MenuItemRadio } from '@sveltia/ui';
+  import { Menu, MenuButton, MenuItemCheckbox } from '@sveltia/ui';
+
+  import ConditionRadioItems from '$lib/components/common/page-toolbar/condition-radio-items.svelte';
+  import { getConditionKey, getViewConditions } from '$lib/services/common/view';
 
   /**
    * @import { AssetListView, EntryListView } from '$lib/types/private';
@@ -20,7 +23,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     currentView,
     'aria-controls': ariaControls,
     label = '',
@@ -28,18 +30,19 @@
     multiple = false,
     noneLabel = '',
     filters = [],
-    /* eslint-enable prefer-const */
   } = $props();
 </script>
 
 <MenuButton variant="ghost" label={label || _('filter')} {disabled} popupPosition="bottom-right">
   {#snippet popup()}
-    <Menu aria-label={_('filtering_options')} aria-controls={ariaControls}>
+    <Menu ariaLabel={_('filtering_options')} aria-controls={ariaControls}>
       {#if multiple}
-        {#each filters as filter (`${filter.field}|${String(filter.pattern)}`)}
-          {@const { label: _label, field, pattern } = filter}
+        {#each filters as filter (getConditionKey(getViewConditions(filter)))}
+          {@const { label: _label } = filter}
+          {@const conditions = getViewConditions(filter)}
+          {@const key = getConditionKey(conditions)}
           {@const index = (currentView.current.filters || []).findIndex(
-            (f) => f.field === field && String(f.pattern) === String(pattern),
+            (f) => getConditionKey(f) === key,
           )}
           <MenuItemCheckbox
             label={_label}
@@ -51,7 +54,7 @@
               if (index > -1) {
                 updatedFilters.splice(index, 1);
               } else {
-                updatedFilters.push({ field, pattern });
+                updatedFilters.push(conditions);
               }
 
               currentView.current = { ...view, filters: updatedFilters };
@@ -59,30 +62,13 @@
           />
         {/each}
       {:else}
-        <MenuItemRadio
-          label={noneLabel || _('sort_keys.none')}
-          checked={!currentView.current.filter}
-          onSelect={() => {
-            currentView.current = {
-              ...currentView.current,
-              filter: undefined,
-            };
-          }}
+        <ConditionRadioItems
+          {currentView}
+          viewKey="filter"
+          noneValue={undefined}
+          {noneLabel}
+          options={filters}
         />
-        {#each filters as filter (`${filter.field}|${String(filter.pattern)}`)}
-          {@const { label: _label, field, pattern } = filter}
-          <MenuItemRadio
-            label={_label}
-            checked={currentView.current.filter?.field === field &&
-              String(currentView.current.filter.pattern) === String(pattern)}
-            onSelect={() => {
-              currentView.current = {
-                ...currentView.current,
-                filter: { field, pattern },
-              };
-            }}
-          />
-        {/each}
       {/if}
     </Menu>
   {/snippet}

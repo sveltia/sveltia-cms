@@ -1,0 +1,398 @@
+import { isObject } from '@sveltia/utils/object';
+import equal from 'fast-deep-equal';
+
+import {
+  collectFieldValues,
+  filterRealValues,
+  suspendAutoDuplication,
+} from '$lib/services/contents/draft';
+import { populateDefaultValue } from '$lib/services/contents/draft/defaults';
+import { getDraftFieldArgs } from '$lib/services/contents/entry/fields';
+import { deleteSubtree } from '$lib/services/contents/entry/subtree';
+import { syncAllDuplicateKeys } from '$lib/services/contents/fields/key-value/duplicate-keys';
+import { getListFieldInfo, isPairedList } from '$lib/services/contents/fields/list/helpers';
+import { getFlatSubFields } from '$lib/services/contents/fields/list/subfields';
+import { isFieldMirrored, isFieldTranslatable } from '$lib/services/contents/i18n/fields';
+import { localizeDefaultValue } from '$lib/services/contents/i18n/options';
+import { getInheritedI18nOption } from '$lib/services/contents/i18n/shared-values';
+
+/**
+ * @import {
+ * EntryDraft,
+ * FlattenedEntryContent,
+ * InternalLocaleCode,
+ * LocaleContentMap,
+ * } from '$lib/types/private';
+ * @import {
+ * ComplexListField,
+ * Field,
+ * FieldKeyPath,
+ * ListField,
+ * ObjectField,
+ * } from '$lib/types/public';
+ */
+
+/**
+ * Field types whose value a user doesn’t enter, so it’s kept when the field, or the Object field
+ * holding it, is cleared or restored to its default value: a Hidden field holds a value set by the
+ * developer, a UUID field identifies the entry or object, and a Compute field is derived from the
+ * other fields anyway.
+ */
+const PRESERVED_FIELD_TYPES = ['compute', 'hidden', 'uuid'];
+
+/**
+ * @typedef {object} ResetOptions
+ * @property {boolean} [restore] Whether to restore the default values rather than clearing them.
+ */
+
+/**
+ * @typedef {object} ResetContentArgs
+ * @property {FlattenedEntryContent} content Flattened content for the locale, modified in place.
+ * @property {Field} fieldConfig Field configuration.
+ * @property {FieldKeyPath} keyPath Field key path.
+ * @property {InternalLocaleCode} locale Locale of the content.
+ * @property {InternalLocaleCode} defaultLocale Default locale of the entry draft.
+ * @property {Field['i18n']} [inheritedI18n] `i18n` option of the nearest ancestor field that has
+ * one. A field without the option of its own is duplicated along with an ancestor using the
+ * `duplicate` or `sync` strategy, but it’s only translatable with an `i18n` option of its own.
+ * @property {boolean} [mirror] Whether the content belongs to another locale than the one being
+ * reset, which holds the same values as that locale for the fields using the `duplicate` or `sync`
+ * strategy, and the same items for the paired List fields. Only those fields are reset then.
+ * @property {boolean} [syncOnly] Whether only the fields using the `sync` strategy are mirrored,
+ * as the locale being reset isn’t the default locale, where a `duplicate` field can’t be edited and
+ * the items of a paired List field can’t be added or removed.
+ * @property {boolean} [restore] Whether to restore the default values rather than clearing them.
+ */
+
+/**
+ * Reset the value of the given field in the given content, recursing into the subfields of an
+ * Object field, whose type is kept along with the object itself.
+ *
+ * Clearing leaves a List field without items and a KeyValue field without pairs, although the
+ * editor of a KeyValue field or a List field without subfields still shows a blank row to type
+ * into. Any other field gets the value it would have without a default, e.g. an empty string or
+ * `false`. Restoring gives every field the value a new entry would have instead, taking the
+ * `default` option into account.
+ *
+ * The subfields the user can’t edit in the locale are left alone, as are the read-only ones, those
+ * listed in {@link PRESERVED_FIELD_TYPES}, and a List field whose items can’t be removed or, when
+ * restoring, added.
+ * @param {ResetContentArgs} args Arguments.
+ */
+const resetContent = (args) => {
+  const { content, fieldConfig, keyPath, locale, defaultLocale, inheritedI18n } = args;
+  const { mirror = false, syncOnly = false, restore = false } = args;
+  const { widget: fieldType = 'string', i18n: ownI18n } = fieldConfig;
+  const i18n = ownI18n ?? inheritedI18n;
+
+  if (PRESERVED_FIELD_TYPES.includes(fieldType) || /** @type {any} */ (fieldConfig).readonly) {
+    return;
+  }
+
+  // A List field with subfields keeps its items if the user can’t remove them: clearing removes
+  // every item, and restoring the default value can remove items as well as add them
+  if (
+    fieldType === 'list' &&
+    getListFieldInfo(/** @type {ListField} */ (fieldConfig)).hasSubFields
+  ) {
+    const { allow_add: allowAdd = true, allow_remove: allowRemove = true } =
+      /** @type {ComplexListField} */ (fieldConfig);
+
+    if (!allowRemove || (restore && !allowAdd)) {
+      return;
+    }
+  }
+
+  // The subfields of an Object field are checked one by one, as their `i18n` options can differ
+  if (fieldType === 'object') {
+    // A `null` value means the optional Object field is collapsed, so it has nothing to reset
+    if (content[keyPath] === null) {
+      return;
+    }
+
+    // With the `i18n` option that applies to the field, so a duplicated field takes the default
+    // locale’s localized default
+    const objectConfig = /** @type {ObjectField} */ ({ ...fieldConfig, i18n });
+
+    const { default: objectDefault } = /** @type {ObjectField} */ (
+      localizeDefaultValue({ fieldConfig: objectConfig, locale, defaultLocale })
+    );
+
+    (getFlatSubFields(fieldConfig, content, keyPath) ?? []).forEach((subField) => {
+      // The default value of the Object field as a whole takes precedence over the subfield’s own,
+      // including its localized one
+      const subFieldConfig =
+        restore && isObject(objectDefault) && Object.hasOwn(objectDefault, subField.name)
+          ? /** @type {Field} */ ({
+              ...subField,
+              default: objectDefault[subField.name],
+              default_localized: undefined,
+            })
+          : subField;
+
+      resetContent({
+        ...args,
+        fieldConfig: subFieldConfig,
+        keyPath: `${keyPath}.${subField.name}`,
+        inheritedI18n: i18n,
+      });
+    });
+
+    return;
+  }
+
+  const resettable = mirror
+    ? // Another locale follows the locale being reset where the field holds the same value in every
+      // locale, and a paired List field holds the same items in every locale, although their values
+      // are translatable
+      syncOnly
+      ? i18n === 'sync'
+      : isFieldMirrored(i18n) || isPairedList(fieldConfig)
+    : // A field that isn’t translatable follows the default locale, so it can’t be edited in
+      // another locale, unless it’s kept in sync with the other locales
+      locale === defaultLocale || isFieldTranslatable(ownI18n) || i18n === 'sync';
+
+  if (!resettable) {
+    return;
+  }
+
+  deleteSubtree(content, keyPath);
+
+  if (!restore) {
+    if (fieldType === 'keyvalue') {
+      // No pairs, just the placeholder the editor stores for an empty KeyValue field, so that the
+      // field still gets validated
+      content[keyPath] = null;
+
+      return;
+    }
+
+    if (fieldType === 'list') {
+      // An empty list, even for a required List field limited to one item, which would get an
+      // item from its default value
+      content[keyPath] = [];
+
+      return;
+    }
+  }
+
+  populateDefaultValue({
+    content,
+    keyPath,
+    // With the `i18n` option that applies to the field, so a value duplicated along with an
+    // ancestor is written in another locale as well. Clearing ignores the default value
+    fieldConfig: /** @type {Field} */ ({
+      ...fieldConfig,
+      i18n,
+      ...(restore ? {} : { default: undefined, default_localized: undefined }),
+    }),
+    locale,
+    defaultLocale,
+    dynamicValues: {},
+  });
+};
+
+/**
+ * Reset the given field in a locale of the given value store and in the other locales where the
+ * field holds the same value: any locale where it’s duplicated if that’s the default locale, and
+ * any locale where it’s synced otherwise.
+ * @param {object} args Arguments.
+ * @param {LocaleContentMap} args.valueStore Value store keyed by locale, modified in place.
+ * @param {Field} args.fieldConfig Field configuration.
+ * @param {FieldKeyPath} args.keyPath Field key path.
+ * @param {InternalLocaleCode} args.locale Locale to reset the field in.
+ * @param {InternalLocaleCode} args.defaultLocale Default locale of the entry draft.
+ * @param {Field['i18n']} [args.inheritedI18n] `i18n` option that applies to the field.
+ * @param {boolean} [args.restore] Whether to restore the default values rather than clearing them.
+ */
+const resetFieldInStore = ({ valueStore, locale, ...args }) => {
+  const syncOnly = locale !== args.defaultLocale;
+
+  resetContent({ ...args, content: valueStore[locale], locale });
+
+  Object.entries(valueStore).forEach(([otherLocale, content]) => {
+    if (otherLocale !== locale) {
+      resetContent({ ...args, content, locale: otherLocale, mirror: true, syncOnly });
+    }
+  });
+};
+
+/**
+ * Get the arguments for {@link resetContent} to reset the given field of the given entry draft,
+ * including the `i18n` option that applies to the field, looked up in its ancestors.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {FlattenedEntryContent} args.valueMap Flattened content for the locale, where the
+ * ancestors are looked up.
+ * @param {Field} args.fieldConfig Field configuration.
+ * @param {FieldKeyPath} args.keyPath Field key path.
+ * @param {InternalLocaleCode} args.locale Locale to reset the field in.
+ * @param {boolean} [args.restore] Whether to restore the default values rather than clearing them.
+ * @returns {Omit<ResetContentArgs, 'content'>} Arguments.
+ */
+const getResetArgs = ({ draft, valueMap, ...args }) => ({
+  ...args,
+  defaultLocale: draft.defaultLocale,
+  inheritedI18n: getInheritedI18nOption({
+    fieldConfig: args.fieldConfig,
+    getFieldArgs: getDraftFieldArgs(draft, { keyPath: args.keyPath, valueMap }),
+  }),
+});
+
+/**
+ * Check whether resetting the given field would change anything in the given locale.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {FlattenedEntryContent} args.valueMap Flattened content for the locale.
+ * @param {Field} args.fieldConfig Field configuration.
+ * @param {FieldKeyPath} args.keyPath Field key path.
+ * @param {InternalLocaleCode} args.locale Locale of the content.
+ * @param {boolean} [args.restore] Whether to restore the default values rather than clearing them.
+ * @returns {boolean} Result.
+ */
+export const canResetField = (args) => {
+  const values = collectFieldValues(args.valueMap, args.keyPath);
+  const resetValues = { ...values };
+
+  resetContent({ ...getResetArgs(args), content: resetValues });
+
+  return !equal(values, resetValues);
+};
+
+/**
+ * Clear the value of the given field in the entry draft, or restore its default value, so the
+ * user can start over. See {@link resetContent} for what that means for each field type. Resetting
+ * a field in the default locale resets it in the other locales as well where it’s duplicated,
+ * whether with its own `duplicate` or `sync` strategy or along with an ancestor’s, and resetting a
+ * `sync` field in any other locale resets it in every locale. A field using the
+ * `duplicate_if_empty` strategy is left alone in the other locales, which take the default locale’s
+ * value again as soon as it’s next edited. A paired List field loses its items in the other locales
+ * as well, or gets their default items, as its items are the same in every locale. See
+ * {@link isPairedList}.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {Field} args.fieldConfig Field configuration.
+ * @param {FieldKeyPath} args.keyPath Field key path.
+ * @param {InternalLocaleCode} args.locale Locale to reset the field in.
+ * @param {boolean} [args.restore] Whether to restore the default values rather than clearing them.
+ */
+export const resetField = (args) => {
+  const { draft, locale } = args;
+  const { currentValues, defaultLocale } = draft;
+
+  // The other locales are reset here rather than by the value proxy, which copies a value to them
+  // as it’s written, as the proxy can’t tell which field a List item or a KeyValue pair belongs to
+  suspendAutoDuplication(() => {
+    resetFieldInStore({
+      ...getResetArgs({ ...args, valueMap: currentValues[locale] }),
+      valueStore: currentValues,
+    });
+
+    // The keys of a KeyValue field using the `duplicate_keys` i18n strategy, whether it’s the
+    // reset field or one nested in it, have to be updated in the other locales as well
+    if (locale === defaultLocale) {
+      syncAllDuplicateKeys({
+        valueStore: currentValues,
+        defaultLocale,
+        getFieldArgs: getDraftFieldArgs(draft),
+      });
+    }
+  });
+};
+
+/**
+ * Get the locales to reset in the given draft.
+ * @param {EntryDraft} draft Entry draft.
+ * @param {InternalLocaleCode} [locale] Locale to reset. If omitted, every enabled locale.
+ * @returns {InternalLocaleCode[]} Locales.
+ */
+const getTargetLocales = ({ currentValues, currentLocales }, locale) =>
+  locale ? [locale] : Object.keys(currentValues).filter((_locale) => currentLocales[_locale]);
+
+/**
+ * Reset every field of the given value store in the given locales.
+ * @param {object} args Arguments.
+ * @param {LocaleContentMap} args.valueStore Value store keyed by locale, modified in place.
+ * @param {Field[]} args.fields Fields of the entry.
+ * @param {InternalLocaleCode[]} args.locales Locales to reset.
+ * @param {InternalLocaleCode} args.defaultLocale Default locale of the entry draft.
+ * @param {boolean} args.restore Whether to restore the default values rather than clearing them.
+ */
+const resetAllFields = ({ valueStore, fields, locales, defaultLocale, restore }) => {
+  locales.forEach((locale) => {
+    fields.forEach((fieldConfig) => {
+      resetFieldInStore({
+        valueStore,
+        fieldConfig,
+        keyPath: fieldConfig.name,
+        locale,
+        defaultLocale,
+        restore,
+      });
+    });
+  });
+};
+
+/**
+ * Check whether resetting every field of the given entry draft would change anything.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {InternalLocaleCode} [args.locale] Locale to reset. If omitted, every enabled locale.
+ * @param {boolean} [args.restore] Whether to restore the default values rather than clearing them.
+ * @returns {boolean} Result.
+ */
+export const canResetEntry = ({ draft, locale, restore = false }) => {
+  const { fields, currentValues, defaultLocale } = draft;
+
+  /**
+   * Take a plain copy of the current values, without the internal properties.
+   * @returns {LocaleContentMap} Copy.
+   */
+  const copyValues = () =>
+    Object.fromEntries(
+      Object.entries(currentValues).map(([_locale, valueMap]) => [
+        _locale,
+        filterRealValues(valueMap),
+      ]),
+    );
+
+  const values = copyValues();
+  const resetValues = copyValues();
+
+  resetAllFields({
+    valueStore: resetValues,
+    fields,
+    locales: getTargetLocales(draft, locale),
+    defaultLocale,
+    restore,
+  });
+
+  return !equal(values, resetValues);
+};
+
+/**
+ * Clear every field of the given entry draft, or restore their default values. See
+ * {@link resetContent} for what that means for each field type.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {InternalLocaleCode} [args.locale] Locale to reset. If omitted, every enabled locale.
+ * Resetting the default locale resets the fields duplicated in the other locales as well, and
+ * resetting any locale resets the synced fields in every locale.
+ * @param {boolean} [args.restore] Whether to restore the default values rather than clearing them.
+ */
+export const resetEntry = ({ draft, locale, restore = false }) => {
+  const { fields, currentValues, defaultLocale } = draft;
+  const locales = getTargetLocales(draft, locale);
+
+  suspendAutoDuplication(() => {
+    resetAllFields({ valueStore: currentValues, fields, locales, defaultLocale, restore });
+
+    if (locales.includes(defaultLocale)) {
+      syncAllDuplicateKeys({
+        valueStore: currentValues,
+        defaultLocale,
+        getFieldArgs: getDraftFieldArgs(draft),
+      });
+    }
+  });
+};

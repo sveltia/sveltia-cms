@@ -43,3 +43,29 @@ export const runConcurrently = async (
       .map(() => work()),
   );
 };
+
+/**
+ * Run the given task for each item with {@link runConcurrently}, and collect the results.
+ * @template T, R
+ * @param {T[]} items Items to process.
+ * @param {(item: T) => Promise<R>} task Task to be performed for each item.
+ * @param {object} [options] Options.
+ * @param {number} [options.concurrency] Maximum number of tasks in flight. Defaults to
+ * {@link MAX_CONCURRENT_REQUESTS}.
+ * @returns {Promise<R[]>} Results, in the same order as the given items.
+ */
+export const mapConcurrently = async (items, task, options) => {
+  /** @type {R[]} */
+  const results = Array(items.length);
+
+  // Store the results by index so they come out in the same order as the items
+  await runConcurrently(
+    [...items.keys()],
+    async (index) => {
+      results[index] = await task(items[index]);
+    },
+    options,
+  );
+
+  return results;
+};

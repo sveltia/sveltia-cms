@@ -1,0 +1,337 @@
+import { applyTransformations } from '$lib/services/common/transformations';
+import { getCollection } from '$lib/services/contents/collection';
+import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
+import { getField, isFieldMultiple } from '$lib/services/contents/entry/fields';
+import { getKeysByPrefix, getListItemKeys } from '$lib/services/contents/entry/key-paths';
+import { RICH_TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
+import { getDateTimeFieldDisplayValue } from '$lib/services/contents/fields/date-time/display';
+import { getNumberFormatter, storesNumber } from '$lib/services/contents/fields/number/helpers';
+import { getReferencedOptionLabel } from '$lib/services/contents/fields/relation/helpers';
+import { getOptionLabel } from '$lib/services/contents/fields/select/helpers';
+import { getCanonicalLocale, getListFormatter } from '$lib/services/contents/i18n';
+import { getCommitAuthorName } from '$lib/services/utils/commit-author';
+import { stripMarkdown } from '$lib/services/utils/markdown';
+import { isNonEmptyString } from '$lib/services/utils/string';
+
+/**
+ * @import {
+ * Entry,
+ * FlattenedEntryContent,
+ * GetFieldArgs,
+ * InternalLocaleCode,
+ * StringTransformation,
+ * UnlistedEntry,
+ * } from '$lib/types/private';
+ * @import {
+ * DateTimeField,
+ * Field,
+ * FieldKeyPath,
+ * ListFieldWithSubField,
+ * ListFieldWithSubFields,
+ * ListFieldWithTypes,
+ * RelationField,
+ * SelectField,
+ * } from '$lib/types/public';
+ */
+
+/**
+ * Check whether the given field is a Rich Text field.
+ * @param {Field | undefined} fieldConfig Field configuration.
+ * @returns {boolean} Result.
+ */
+const isRichTextField = (fieldConfig) =>
+  RICH_TEXT_FIELD_TYPES.includes(/** @type {string} */ (fieldConfig?.widget));
+
+/**
+ * Get a field’s display value that matches the given field name (key path).
+ * @param {object} args Arguments.
+ * @param {string} args.collectionName Collection name.
+ * @param {string} [args.fileName] Collection file name. File/singleton collection only.
+ * @param {string} [args.componentName] Name of the rich text editor component whose field the key
+ * path points to. The key path and the value map then come without the component’s key path
+ * prefix.
+ * @param {FlattenedEntryContent} [args.valueMap] Object holding current entry values.
+ * @param {FieldKeyPath} args.keyPath Key path, e.g. `author.name`.
+ * @param {InternalLocaleCode} args.locale Locale.
+ * @param {StringTransformation[]} [args.transformations] String transformations.
+ * @param {boolean} [args.isIndexFile] Whether the corresponding entry is the collection’s special
+ * index file used specifically in Hugo.
+ * @param {UnlistedEntry[]} [args.pendingEntries] Entries not yet among the saved ones, which a
+ * Relation field value can refer to.
+ * @param {boolean} [args.plainText] Whether to remove the Markdown syntax and HTML tags from a Rich
+ * Text field value, e.g. for a summary.
+ * @returns {string} Resolved display value.
+ */
+export const getFieldDisplayValue = ({
+  collectionName,
+  fileName,
+  componentName = undefined,
+  valueMap = {},
+  keyPath,
+  locale,
+  transformations,
+  isIndexFile = false,
+  pendingEntries = undefined,
+  plainText = false,
+}) => {
+  const fieldConfig = getField({
+    collectionName,
+    fileName,
+    componentName,
+    valueMap,
+    keyPath,
+    isIndexFile,
+  });
+
+  // A field named after an `Object.prototype` member, e.g. `constructor`, mustn’t resolve to that
+  // member when the entry lacks the field
+  let value = Object.hasOwn(valueMap, keyPath) ? valueMap[keyPath] : undefined;
+
+  // If the field doesn’t exist in `valueMap` and transformations are applied, apply them to an
+  // empty string, like an entry summary does, so that `default()` can fill in the missing value
+  if (value === undefined && transformations?.length) {
+    return String(applyTransformations({ fieldConfig, value: '', transformations, locale }));
+  }
+
+  if (fieldConfig?.widget === 'datetime') {
+    // If the `date` transformation is provided, do nothing; it should be used instead of the field
+    // `format` option, so the keep the original value for `applyTransformations()`
+    if (!transformations?.some(({ method }) => method === 'date')) {
+      value = getDateTimeFieldDisplayValue({
+        locale,
+        fieldConfig: /** @type {DateTimeField} */ (fieldConfig),
+        currentValue: value,
+      });
+    }
+  }
+
+  if (fieldConfig?.widget === 'relation') {
+    value = getReferencedOptionLabel({
+      fieldConfig: /** @type {RelationField} */ (fieldConfig),
+      valueMap,
+      keyPath,
+      locale,
+      pendingEntries,
+    });
+  }
+
+  if (fieldConfig?.widget === 'select') {
+    value = getOptionLabel({
+      fieldConfig: /** @type {SelectField} */ (fieldConfig),
+      valueMap,
+      keyPath,
+    });
+  }
+
+  if (fieldConfig?.widget === 'list') {
+    const { field } = /** @type {ListFieldWithSubField} */ (fieldConfig);
+    const { fields } = /** @type {ListFieldWithSubFields} */ (fieldConfig);
+    const { types } = /** @type {ListFieldWithTypes} */ (fieldConfig);
+
+    if (fields || types) {
+      // Ignore
+    } else {
+      const itemKeys = getListItemKeys(valueMap, keyPath);
+
+      // Concat values of single field list or simple list. An item of the former is resolved like
+      // its subfield, which can hold a number, a boolean or the value of a Select option, while the
+      // latter holds strings
+      value = getListFormatter(locale).format(
+        (field
+          ? itemKeys.map((key) =>
+              getFieldDisplayValue({
+                collectionName,
+                fileName,
+                componentName,
+                valueMap,
+                keyPath: key,
+                locale,
+                isIndexFile,
+                pendingEntries,
+                plainText,
+              }),
+            )
+          : itemKeys.map((key) => valueMap[key]).filter((val) => typeof val === 'string')
+        ).filter((val) => !!val),
+      );
+    }
+  }
+
+  // A number stored by a Number field or a Compute field is formatted for display. An empty field,
+  // stored as `null` or an empty string, or missing, is left empty rather than formatted as `0` or
+  // `NaN`
+  if (
+    fieldConfig &&
+    storesNumber(fieldConfig) &&
+    value !== null &&
+    value !== undefined &&
+    value !== ''
+  ) {
+    const number = Number(value);
+
+    // Text that isn’t a number, which the editor stores so it can be reported as invalid, is shown
+    // as is rather than as `NaN`
+    if (!Number.isNaN(number)) {
+      value = getNumberFormatter(getCanonicalLocale(locale)).format(number);
+    }
+  }
+
+  if (plainText && isRichTextField(fieldConfig) && typeof value === 'string') {
+    value = stripMarkdown(value);
+  }
+
+  if (Array.isArray(value)) {
+    value = getListFormatter(locale).format(value);
+  }
+
+  if (transformations?.length) {
+    value = applyTransformations({ fieldConfig, value, transformations, locale });
+  }
+
+  // Return an empty string if the value is null or undefined
+  return String(value ?? '');
+};
+
+/**
+ * Get the display value of the first visible field that has a non-empty value.
+ * @param {object} args Arguments.
+ * @param {FlattenedEntryContent} args.valueMap Entry content.
+ * @param {InternalLocaleCode} args.locale Locale code.
+ * @param {FieldKeyPath} args.keyPath Field key path.
+ * @param {GetFieldArgs} args.getFieldArgs Arguments for `getField`.
+ * @param {string} args.keyPathPrefix Key path prefix that a candidate must start with, e.g.
+ * `authors.0.`.
+ * @param {boolean} [args.plainText] Whether to remove the Markdown syntax and HTML tags from a Rich
+ * Text field value.
+ * @returns {string} Display value of the first visible field that has a non-empty value. If no such
+ * field is found, returns an empty string.
+ */
+export const getVisibleFieldDisplayValue = ({
+  valueMap,
+  locale,
+  keyPath,
+  keyPathPrefix,
+  getFieldArgs,
+  plainText = false,
+}) => {
+  // Find the first visible item key path that has a non-empty value. `title` and `name` are
+  // preferred, so they’re tried ahead of the map’s own order.
+  const visibleItemKeyPath = [
+    `${keyPath}.title`,
+    `${keyPath}.name`,
+    ...getKeysByPrefix(valueMap, keyPathPrefix),
+  ].find((_keyPath) => {
+    const value = valueMap[_keyPath];
+
+    if (
+      !_keyPath.startsWith(keyPathPrefix) ||
+      !(isNonEmptyString(value) || (typeof value === 'number' && !Number.isNaN(value)))
+    ) {
+      return false;
+    }
+
+    const fieldConfig = getField({ ...getFieldArgs, keyPath: _keyPath });
+
+    return !!fieldConfig && fieldConfig.widget !== 'hidden';
+  });
+
+  if (visibleItemKeyPath) {
+    return getFieldDisplayValue({
+      ...getFieldArgs,
+      keyPath: visibleItemKeyPath,
+      locale,
+      plainText,
+    });
+  }
+
+  return '';
+};
+
+/**
+ * Get an entry’s field value by locale and key.
+ * @param {object} args Arguments.
+ * @param {Entry} args.entry Entry.
+ * @param {InternalLocaleCode} args.locale Locale code.
+ * @param {string} args.collectionName Name of a collection that the entry belongs to.
+ * @param {FieldKeyPath | string} args.key Field key path or one of other entry metadata property
+ * keys: `slug`, `commit_author` and `commit_date`.
+ * @param {boolean} [args.resolveRef] Whether to resolve the referenced value if the target field is
+ * a relation field.
+ * @returns {any} Value. An array of the item values for a multi-value field — a List field, or a
+ * Relation, Select or media field with `multiple: true` — or of the subfield values for an Object
+ * field or a List field with subfields, which are stored flattened, so nothing lives at the field’s
+ * own key path.
+ */
+export const getPropertyValue = ({ entry, locale, collectionName, key, resolveRef = true }) => {
+  const { slug, locales, commitAuthor, commitDate } = entry;
+
+  if (key === 'slug') {
+    return slug;
+  }
+
+  if (key === 'commit_author') {
+    return getCommitAuthorName(commitAuthor);
+  }
+
+  if (key === 'commit_date') {
+    return commitDate;
+  }
+
+  const { content } = locales[locale] ?? {};
+
+  if (content === undefined) {
+    return undefined;
+  }
+
+  const collection = getCollection(collectionName);
+
+  if (!collection) {
+    return undefined;
+  }
+
+  const isIndexFile = isCollectionIndexFile(collection, entry);
+  const fieldConfig = getField({ collectionName, keyPath: key, isIndexFile });
+
+  // Resolve the displayed value for a relation field
+  if (resolveRef && fieldConfig?.widget === 'relation') {
+    return getReferencedOptionLabel({
+      fieldConfig: /** @type {RelationField} */ (fieldConfig),
+      valueMap: content,
+      keyPath: key,
+      locale,
+    });
+  }
+
+  // Gather the items of a multi-value field, which are flattened under `key.0`, `key.1` and so on,
+  // so a view filter can match any of them
+  // @see https://github.com/sveltia/sveltia-cms/issues/997
+  if (fieldConfig && (fieldConfig.widget === 'list' || isFieldMultiple(fieldConfig))) {
+    const itemKeys = getListItemKeys(content, key);
+
+    if (itemKeys.length) {
+      return itemKeys.map((itemKey) => content[itemKey]);
+    }
+  }
+
+  // A field named after an `Object.prototype` member, e.g. `constructor`, mustn’t resolve to that
+  // member when the entry lacks the field
+  const ownValue = Object.hasOwn(content, key) ? content[key] : undefined;
+
+  // Gather the subfield values of an Object field, or a List field with subfields, which are
+  // flattened under `key.name`, `key.0.name` and so on, so nothing lives at the field’s own key
+  // path unless it’s `null`. A view filter can then tell whether it has a value, or match any of
+  // the subfield values
+  // @see https://github.com/sveltia/sveltia-cms/issues/1004
+  if (
+    ownValue === undefined &&
+    (fieldConfig?.widget === 'object' || fieldConfig?.widget === 'list')
+  ) {
+    const subKeys = getKeysByPrefix(content, `${key}.`);
+
+    if (subKeys.length) {
+      return subKeys.map((subKey) => content[subKey]);
+    }
+  }
+
+  return ownValue;
+};

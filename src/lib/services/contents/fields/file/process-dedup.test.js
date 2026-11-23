@@ -1,10 +1,11 @@
+import equal from 'fast-deep-equal';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-// Mock all dependencies
-vi.mock('@sveltia/utils/crypto', () => ({
-  getHash: vi.fn(),
-}));
+import { getGitHash } from '$lib/services/utils/file';
 
+import { getExistingBlobURL } from './process';
+
+// Mock all dependencies
 vi.mock('fast-deep-equal', () => ({
   default: vi.fn(),
 }));
@@ -13,15 +14,17 @@ vi.mock('isomorphic-dompurify', () => ({
   sanitize: vi.fn(),
 }));
 
-vi.mock('$lib/services/assets', () => ({
+vi.mock('$lib/services/assets/state', () => ({
   allAssets: { current: [] },
 }));
 
 vi.mock('$lib/services/assets/info', () => ({
   getAssetPublicURL: vi.fn(),
+  hasCachedThumbnail: vi.fn(async () => false),
 }));
 
 vi.mock('$lib/services/integrations/media-libraries/default', () => ({
+  canConvertHEIC: vi.fn(() => false),
   transformFile: vi.fn(),
 }));
 
@@ -35,22 +38,18 @@ vi.mock('$lib/services/assets/kinds', () => ({
 
 describe('Test getExistingBlobURL() entry-relative folder handling', () => {
   /** @type {import('vitest').MockedFunction<any>} */
-  let getHashMock;
+  let getGitHashMock;
   /** @type {import('vitest').MockedFunction<any>} */
   let equalMock;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.resetAllMocks();
 
-    const { getHash } = await import('@sveltia/utils/crypto');
-    const equal = (await import('fast-deep-equal')).default;
-
-    getHashMock = /** @type {any} */ (vi.mocked(getHash));
+    getGitHashMock = /** @type {any} */ (vi.mocked(getGitHash));
     equalMock = /** @type {any} */ (vi.mocked(equal));
   });
 
   test('should not deduplicate files across different entry-relative folders', async () => {
-    const { getExistingBlobURL } = await import('./process');
     const mockFile = new File(['content'], 'test.jpg');
     const existingFile = new File(['content'], 'existing.jpg');
     const folder1 = { internalPath: 'images1', entryRelative: true };
@@ -64,7 +63,7 @@ describe('Test getExistingBlobURL() entry-relative folder handling', () => {
     };
 
     // Same content hash but different entry-relative folders
-    getHashMock.mockResolvedValueOnce('same-hash').mockResolvedValueOnce('same-hash');
+    getGitHashMock.mockResolvedValueOnce('same-hash').mockResolvedValueOnce('same-hash');
     equalMock.mockReturnValue(false);
 
     // @ts-ignore - Simplified for testing
@@ -74,7 +73,6 @@ describe('Test getExistingBlobURL() entry-relative folder handling', () => {
   });
 
   test('should deduplicate files in same entry-relative folder', async () => {
-    const { getExistingBlobURL } = await import('./process');
     const mockFile = new File(['content'], 'test.jpg');
     const existingFile = new File(['content'], 'existing.jpg');
     const folder = { internalPath: 'images1', entryRelative: true };
@@ -86,7 +84,7 @@ describe('Test getExistingBlobURL() entry-relative folder handling', () => {
       },
     };
 
-    getHashMock.mockResolvedValueOnce('same-hash').mockResolvedValueOnce('same-hash');
+    getGitHashMock.mockResolvedValueOnce('same-hash').mockResolvedValueOnce('same-hash');
     equalMock.mockReturnValue(true);
 
     // @ts-ignore - Simplified for testing
@@ -96,7 +94,6 @@ describe('Test getExistingBlobURL() entry-relative folder handling', () => {
   });
 
   test('should deduplicate files by hash only for non-entry-relative folders', async () => {
-    const { getExistingBlobURL } = await import('./process');
     const mockFile = new File(['content'], 'test.jpg');
     const existingFile = new File(['content'], 'existing.jpg');
     const folder1 = { internalPath: 'images1', entryRelative: false };
@@ -110,7 +107,7 @@ describe('Test getExistingBlobURL() entry-relative folder handling', () => {
     };
 
     // Same hash, different non-entry-relative folders - should still deduplicate
-    getHashMock.mockResolvedValueOnce('same-hash').mockResolvedValueOnce('same-hash');
+    getGitHashMock.mockResolvedValueOnce('same-hash').mockResolvedValueOnce('same-hash');
 
     // @ts-ignore - Simplified for testing
     const result = await getExistingBlobURL({ draft, file: mockFile, folder: folder2 });
@@ -119,7 +116,6 @@ describe('Test getExistingBlobURL() entry-relative folder handling', () => {
   });
 
   test('should deduplicate files by hash only when no folder is provided', async () => {
-    const { getExistingBlobURL } = await import('./process');
     const mockFile = new File(['content'], 'test.jpg');
     const existingFile = new File(['content'], 'existing.jpg');
 
@@ -133,7 +129,7 @@ describe('Test getExistingBlobURL() entry-relative folder handling', () => {
       },
     };
 
-    getHashMock.mockResolvedValueOnce('same-hash').mockResolvedValueOnce('same-hash');
+    getGitHashMock.mockResolvedValueOnce('same-hash').mockResolvedValueOnce('same-hash');
 
     // @ts-ignore - Simplified for testing
     const result = await getExistingBlobURL({ draft, file: mockFile });

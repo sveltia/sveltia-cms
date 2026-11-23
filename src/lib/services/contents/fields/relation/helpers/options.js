@@ -1,5 +1,4 @@
-import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary';
-import { getFieldReplacement } from '$lib/services/contents/fields/relation/helpers/templates';
+import { replaceTemplateFields } from '$lib/services/contents/fields/relation/helpers/templates';
 
 /**
  * @import { FlattenedEntryContent, InternalLocaleCode, RelationOption } from '$lib/types/private';
@@ -38,41 +37,18 @@ import { getFieldReplacement } from '$lib/services/contents/fields/relation/help
  * @param {string[]} params.allFieldNames All field names to replace.
  * @param {ReplacementContext} params.context Replacement context.
  * @param {FallbackContext} params.fallbackContext Fallback context.
- * @returns {RelationOption} Single relation option.
+ * @returns {RelationOption} Single relation option. Its `value` is empty if the entry lacks a
+ * field in the `value_field` template, so the option can’t refer to the entry.
  */
 export const createSimpleOption = ({ templates, allFieldNames, context, fallbackContext }) => {
-  const { slug } = context;
   const { _displayField, _valueField, _searchField } = templates;
-  const { content, locales, defaultLocale, identifierField } = fallbackContext;
 
-  const replacers = Object.fromEntries(
-    allFieldNames.map((fieldName) => [
-      fieldName,
-      getFieldReplacement(fieldName, context, fallbackContext),
-    ]),
+  const { label, value, searchValue } = replaceTemplateFields(
+    { label: _displayField, value: _valueField, searchValue: _searchField },
+    allFieldNames,
+    context,
+    fallbackContext,
   );
 
-  let label = _displayField;
-  let value = _valueField;
-  let searchValue = _searchField;
-
-  Object.entries(replacers).forEach(([key, val]) => {
-    label = label.replaceAll(`{{${key}}}`, val);
-    value = value.replaceAll(`{{${key}}}`, val);
-    searchValue = searchValue.replaceAll(`{{${key}}}`, val);
-  });
-
-  // Handle empty label fallback
-  if (!label || label.trim() === '') {
-    label =
-      getEntrySummaryFromContent(content, { identifierField }) ||
-      getEntrySummaryFromContent(locales[defaultLocale]?.content || {}, { identifierField }) ||
-      slug;
-  }
-
-  return {
-    label: label || '',
-    value: value || slug,
-    searchValue: searchValue || label || '',
-  };
+  return { label, value, searchValue: searchValue || label };
 };

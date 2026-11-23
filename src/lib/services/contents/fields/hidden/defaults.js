@@ -1,6 +1,7 @@
 import { generateUUID } from '@sveltia/utils/crypto';
 
-import { replaceTemplateTags } from '$lib/services/common/template';
+import { processNestedTemplates } from '$lib/services/common/template/nested';
+import { replaceTemplateTags } from '$lib/services/common/template/tags';
 import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
 import { user } from '$lib/services/user/account.svelte';
 
@@ -68,16 +69,27 @@ const getDefaultValue = ({ fieldConfig, locale, dynamicValue }) => {
 
   const context = { locale, account: /** @type {User} */ (user.account) };
 
-  return replaceTemplateTags(value, (_match, placeholder) => {
-    const { value: tag, transformations } = parseTransformations(placeholder);
+  /**
+   * Resolve a template tag of the value.
+   * @param {string} placeholder Tag content, e.g. `author-name | upper`.
+   * @returns {string} Resolved value.
+   */
+  const resolvePlaceholder = (placeholder) => {
+    const { value: tag, transformations: parsedTransformations } =
+      parseTransformations(placeholder);
+
     const val = replaceTemplateTag(tag, context);
+    // Resolve the tags in the transformation arguments, e.g. `default('{{author-login}}')`
+    const transformations = processNestedTemplates(parsedTransformations, resolvePlaceholder);
 
     if (transformations.length) {
       return applyTransformations({ value: val, transformations, locale });
     }
 
     return val;
-  });
+  };
+
+  return replaceTemplateTags(value, (_match, placeholder) => resolvePlaceholder(placeholder));
 };
 
 /**

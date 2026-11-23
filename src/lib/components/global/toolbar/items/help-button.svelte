@@ -3,11 +3,9 @@
   import { Icon, MenuButton } from '@sveltia/ui';
 
   import HelpMenu from '$lib/components/global/toolbar/items/help-menu.svelte';
-  import ShortcutsDialog from '$lib/components/help/shortcuts-dialog.svelte';
 
   /** @type {MenuButton | undefined} */
   let menuButton = $state();
-  let showShortcutsDialog = $state(false);
 </script>
 
 <div role="none" class="wrapper">
@@ -15,6 +13,7 @@
     variant="ghost"
     iconic
     popupPosition="bottom-right"
+    tooltip={_('help')}
     aria-label={_('show_help_menu')}
     bind:this={menuButton}
   >
@@ -26,13 +25,6 @@
     {/snippet}
   </MenuButton>
 </div>
-
-<ShortcutsDialog
-  bind:open={showShortcutsDialog}
-  onClose={() => {
-    menuButton?.focus();
-  }}
-/>
 
 <style>
   .wrapper {

@@ -2,22 +2,40 @@
 
 import { sleep } from '@sveltia/utils/misc';
 
+import { formatFileName } from '$lib/services/assets/file-name';
+import { getAssetKind, isMediaKind } from '$lib/services/assets/kinds';
 import { cmsConfig } from '$lib/services/config/state';
 import {
   findLibraryOptions,
   resolveLibraryOptions,
 } from '$lib/services/integrations/media-libraries/options';
+import { splitIntoChunks } from '$lib/services/utils/array';
 import { hmacSha256, toHex } from '$lib/services/utils/crypto';
-import { formatFileName } from '$lib/services/utils/file';
+import { assertResponseOK } from '$lib/services/utils/networking';
+import { fetchPages } from '$lib/services/utils/paging';
+import { encodeRFC3986 } from '$lib/services/utils/url';
 
 /**
  * @import {
+ * AssetKind,
  * ExternalAsset,
  * MediaLibraryFetchOptions,
  * MediaLibraryService,
  * } from '$lib/types/private';
  * @import { CmsConfig, MediaField, UploadcareMediaLibrary } from '$lib/types/public';
  */
+
+/**
+ * Origin of the legacy CDN, which projects created before September 4, 2025 can still use.
+ * @see https://uploadcare.com/docs/delivery/cdn/
+ */
+const LEGACY_CDN_ORIGIN = 'https://ucarecdn.com';
+/**
+ * Regex matching a URL on a project’s own CDN subdomain, like `https://demo.ucarecd.net/`, which
+ * newer projects serve their files from.
+ * @see https://uploadcare.com/docs/delivery/cdn/
+ */
+const PROJECT_CDN_URL_REGEX = /^https:\/\/[\w-]+\.ucarecd\.net\//i;
 
 /**
  * @typedef {object} UploadcareResource
@@ -68,6 +86,20 @@ export const getPublicKey = (fieldConfig) => {
 export const isEnabled = (fieldConfig) => !!getPublicKey(fieldConfig);
 
 /**
+ * Get the kind of an Uploadcare file. The media kinds come from the MIME type, which Uploadcare
+ * detects from the content, and the other kinds from the file name, the way the other storage
+ * services tell them. An SVG image is therefore an image, though Uploadcare doesn’t process it as
+ * one.
+ * @param {UploadcareResource} file File.
+ * @returns {AssetKind} Kind.
+ */
+const getFileKind = ({ mime_type: mimeType, original_filename: fileName }) => {
+  const [type] = mimeType.split('/');
+
+  return isMediaKind(type) ? /** @type {AssetKind} */ (type) : getAssetKind(fileName);
+};
+
+/**
  * Parse API results into ExternalAsset format.
  * @param {UploadcareResource[]} results API results.
  * @param {object} [options] Additional options.
@@ -96,21 +128,88 @@ export const parseResults = (results, { fieldConfig } = {}) => {
 
     const baseURL = `${new URL(cdnBase ?? url).origin}/${uuid}/`;
     const isImage = mimeType.startsWith('image/');
-    const isVideo = mimeType.startsWith('video/');
 
     return {
       id: uuid,
       description: fileName,
       previewURL: `${baseURL}${isImage ? '-/preview/400x400/' : ''}`,
+      // The file name is encoded, as it can contain characters like `#` or `%` that would end or
+      // garble the URL path, or a space or parenthesis that would break a Markdown link
       downloadURL:
         `${baseURL}${isImage && defaultOperations ? `-${defaultOperations}` : ''}` +
-        `${autoFilename ? fileName : ''}`,
+        `${autoFilename ? encodeRFC3986(fileName) : ''}`,
       fileName,
       lastModified: new Date(timestamp),
       size,
-      kind: isImage ? 'image' : isVideo ? 'video' : 'other',
+      kind: getFileKind(result),
     };
   });
+};
+
+/**
+ * Get the Uploadcare API keys for a request.
+ * @param {MediaLibraryFetchOptions} options Options containing the secret key (apiKey).
+ * @param {object} [args] Arguments.
+ * @param {boolean} [args.secretKeyRequired] Whether to require the secret key.
+ * @returns {{ publicKey: string, secretKey: string }} Public key and secret key.
+ * @throws {Error} When the public key is not configured, or the required secret key is not
+ * provided.
+ */
+const getKeys = ({ fieldConfig, apiKey: secretKey }, { secretKeyRequired = true } = {}) => {
+  const publicKey = getPublicKey(fieldConfig);
+
+  if (!publicKey) {
+    throw new Error('Uploadcare public key is not configured');
+  }
+
+  if (secretKeyRequired && !secretKey) {
+    throw new Error('Uploadcare secret key is not provided');
+  }
+
+  return { publicKey, secretKey };
+};
+
+/**
+ * Get the headers for a REST API request.
+ * @param {{ publicKey: string, secretKey: string }} keys Public key and secret key.
+ * @returns {Record<string, string>} Headers.
+ * @see https://uploadcare.com/api-refs/rest-api/v0.7.0/#section/Authentication
+ */
+const getRESTHeaders = ({ publicKey, secretKey }) => ({
+  Accept: 'application/vnd.uploadcare-v0.7+json',
+  Authorization: `Uploadcare.Simple ${publicKey}:${secretKey}`,
+});
+
+/**
+ * Get the origin of the CDN the project serves its files from: a subdomain of its own, like
+ * `https://demo.ucarecd.net`, or the legacy `https://ucarecdn.com`. The Upload API only returns the
+ * file UUIDs, so the origin is read from the URL the REST API gives for one of the uploaded files,
+ * which uses the domain the project currently serves files from.
+ * @param {string} uuid UUID of an uploaded file.
+ * @param {{ publicKey: string, secretKey: string }} keys Public key and secret key.
+ * @returns {Promise<string>} Origin. The legacy one if the file info can’t be fetched.
+ * @see https://uploadcare.com/docs/api/rest/file/info/
+ * @see https://uploadcare.com/docs/delivery/cdn/
+ */
+const getCDNOrigin = async (uuid, keys) => {
+  try {
+    const response = await fetch(`https://api.uploadcare.com/files/${uuid}/`, {
+      headers: getRESTHeaders(keys),
+    });
+
+    if (response.ok) {
+      /** @type {UploadcareResource} */
+      const { original_file_url: url } = await response.json();
+
+      if (url) {
+        return new URL(url).origin;
+      }
+    }
+  } catch {
+    // The files have been uploaded anyway, so fall back to the legacy CDN
+  }
+
+  return LEGACY_CDN_ORIGIN;
 };
 
 /**
@@ -123,17 +222,8 @@ export const parseResults = (results, { fieldConfig } = {}) => {
  * @see https://uploadcare.com/api-refs/rest-api/v0.7.0/#tag/File/operation/filesList
  */
 export const fetchFiles = async (options, { maxPages = 10, filter } = {}) => {
-  const { kind, fieldConfig, apiKey: secretKey } = options;
-  const publicKey = getPublicKey(fieldConfig);
-
-  if (!publicKey) {
-    return Promise.reject(new Error('Uploadcare public key is not configured'));
-  }
-
-  const headers = {
-    Accept: 'application/vnd.uploadcare-v0.7+json',
-    Authorization: `Uploadcare.Simple ${publicKey}:${secretKey}`,
-  };
+  const { kind, fieldConfig } = options;
+  const headers = getRESTHeaders(getKeys(options, { secretKeyRequired: false }));
 
   const params = new URLSearchParams({
     limit: '100',
@@ -141,42 +231,31 @@ export const fetchFiles = async (options, { maxPages = 10, filter } = {}) => {
     stored: 'true',
   });
 
-  /** @type {UploadcareResource[]} */
-  const allResults = [];
-  /** @type {string | null} */
-  let nextUrl = `https://api.uploadcare.com/files/?${params}`;
+  const allResults = await fetchPages(
+    async (/** @type {string | undefined} */ nextUrl) => {
+      const response = await fetch(nextUrl ?? `https://api.uploadcare.com/files/?${params}`, {
+        headers,
+      });
 
-  // Fetch up to maxPages pages
-  for (let page = 0; page < maxPages && nextUrl; page += 1) {
-    const response = await fetch(nextUrl, { headers });
+      await assertResponseOK(response, 'Failed to fetch files');
 
-    if (!response.ok) {
-      return Promise.reject(new Error(`Failed to fetch files: ${response.statusText}`));
-    }
+      /** @type {UploadcareListResponse} */
+      const data = await response.json();
+      // Apply filters: first kind filter if specified, then custom filter if provided
+      let { results } = data;
 
-    /** @type {UploadcareListResponse} */
-    const data = await response.json();
-    // Apply filters: first kind filter if specified, then custom filter if provided
-    let { results } = data;
+      if (kind) {
+        results = results.filter((file) => getFileKind(file) === kind);
+      }
 
-    if (kind === 'image') {
-      results = results.filter((file) => file.is_image);
-    }
+      if (filter) {
+        results = results.filter(filter);
+      }
 
-    if (filter) {
-      results = results.filter(filter);
-    }
-
-    allResults.push(...results);
-    nextUrl = data.next;
-
-    if (!nextUrl) {
-      break;
-    }
-
-    // Wait for a bit before requesting the next page
-    await sleep(50);
-  }
+      return { results, next: data.next };
+    },
+    { maxPages },
+  );
 
   return parseResults(allResults, { fieldConfig });
 };
@@ -230,17 +309,9 @@ export const upload = async (files, options) => {
     return [];
   }
 
-  const { fieldConfig, apiKey: secretKey } = options;
-  const publicKey = getPublicKey(fieldConfig);
-
-  if (!publicKey) {
-    return Promise.reject(new Error('Uploadcare public key is not configured'));
-  }
-
-  if (!secretKey) {
-    return Promise.reject(new Error('Uploadcare secret key is not provided'));
-  }
-
+  const { fieldConfig } = options;
+  const keys = getKeys(options);
+  const { publicKey, secretKey } = keys;
   // Generate signature for secure upload (expires in 30 minutes)
   const expire = Math.floor(Date.now() / 1000) + 1800;
   const signature = await generateSignature(secretKey, expire);
@@ -252,9 +323,21 @@ export const upload = async (files, options) => {
   formData.append('signature', signature);
   formData.append('expire', String(expire));
 
+  /**
+   * Files keyed by the form field name they are uploaded under, which is also the key of the
+   * response. The name is formatted, so it can differ from the original file name, and a file
+   * whose name is taken by an earlier file is renamed, otherwise the response would have one key
+   * for both.
+   * @type {Map<string, File>}
+   */
+  const fileMap = new Map();
+
   // Add all files to the same FormData
   files.forEach((file) => {
-    formData.append(formatFileName(file.name), file);
+    const fileName = formatFileName(file.name, { assetNamesInSameFolder: [...fileMap.keys()] });
+
+    fileMap.set(fileName, file);
+    formData.append(fileName, file);
   });
 
   const response = await fetch('https://upload.uploadcare.com/base/', {
@@ -262,34 +345,42 @@ export const upload = async (files, options) => {
     body: formData,
   });
 
-  if (!response.ok) {
-    throw new Error(`Failed to upload files: ${response.statusText}`);
-  }
+  await assertResponseOK(response, 'Failed to upload files');
 
   const data = await response.json();
+  const entries = Object.entries(data).filter(([key]) => !key.startsWith('UPLOADCARE_'));
+
+  // The options and their `config` exist, as the public key has been read from them
+  const { cdnBase } = /** @type {Record<string, any>} */ (
+    /** @type {UploadcareMediaLibrary} */ (resolveLibraryOptions('uploadcare', fieldConfig)).config
+  );
+
+  // A configured CDN base is used in place of the origin, so there’s no need to look it up then
+  const cdnOrigin =
+    cdnBase === undefined && entries.length
+      ? await getCDNOrigin(entries[0][1], keys)
+      : LEGACY_CDN_ORIGIN;
 
   // Handle both single and multiple file responses
-  const uploadedFiles = Object.entries(data)
-    .filter(([key]) => !key.startsWith('UPLOADCARE_'))
-    .map(([fileName, uuid]) => {
-      const file = files.find((f) => f.name === fileName);
-      const mimeType = file?.type || 'application/octet-stream';
-      const isImage = mimeType.startsWith('image/');
+  const uploadedFiles = entries.map(([fileName, uuid]) => {
+    const file = fileMap.get(fileName);
+    const mimeType = file?.type || 'application/octet-stream';
+    const isImage = mimeType.startsWith('image/');
 
-      return {
-        uuid,
-        original_filename: fileName,
-        original_file_url: `https://ucarecdn.com/${uuid}/${fileName}`,
-        size: file?.size || 0,
-        mime_type: mimeType,
-        is_image: isImage,
-        is_ready: true,
-        content_info: null,
-        datetime_uploaded: new Date().toISOString(),
-        datetime_stored: new Date().toISOString(),
-        datetime_removed: null,
-      };
-    });
+    return {
+      uuid,
+      original_filename: fileName,
+      original_file_url: `${cdnOrigin}/${uuid}/${fileName}`,
+      size: file?.size || 0,
+      mime_type: mimeType,
+      is_image: isImage,
+      is_ready: true,
+      content_info: null,
+      datetime_uploaded: new Date().toISOString(),
+      datetime_stored: new Date().toISOString(),
+      datetime_removed: null,
+    };
+  });
 
   return parseResults(uploadedFiles, { fieldConfig });
 };
@@ -303,47 +394,34 @@ export const upload = async (files, options) => {
  * @see https://uploadcare.com/api-refs/rest-api/v0.7.0/#tag/File/operation/filesDelete
  */
 export const deleteFiles = async (assets, options) => {
-  const { fieldConfig, apiKey: secretKey } = options;
-  const publicKey = getPublicKey(fieldConfig);
+  const headers = { ...getRESTHeaders(getKeys(options)), 'Content-Type': 'application/json' };
 
-  if (!publicKey) {
-    return Promise.reject(new Error('Uploadcare public key is not configured'));
-  }
+  const batches = splitIntoChunks(
+    assets.map(({ id }) => id),
+    100,
+  );
 
-  if (!secretKey) {
-    return Promise.reject(new Error('Uploadcare secret key is not provided'));
-  }
+  for (let index = 0; index < batches.length; index += 1) {
+    // Wait for a bit before sending the next batch
+    if (index > 0) {
+      await sleep(50);
+    }
 
-  const headers = {
-    Accept: 'application/vnd.uploadcare-v0.7+json',
-    Authorization: `Uploadcare.Simple ${publicKey}:${secretKey}`,
-    'Content-Type': 'application/json',
-  };
-
-  const uuids = assets.map(({ id }) => id);
-
-  for (let index = 0; index < uuids.length; index += 100) {
     const response = await fetch('https://api.uploadcare.com/files/storage/', {
       method: 'DELETE',
       headers,
-      body: JSON.stringify(uuids.slice(index, index + 100)),
+      body: JSON.stringify(batches[index]),
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to delete files: ${response.statusText}`);
-    }
-
-    // Wait for a bit before sending the next batch
-    if (index + 100 < uuids.length) {
-      await sleep(50);
-    }
+    await assertResponseOK(response, 'Failed to delete files');
   }
 
   return undefined;
 };
 
 /**
- * Whether the given URL points to a file on the configured Uploadcare CDN.
+ * Whether the given URL points to a file on the configured Uploadcare CDN, or else on the legacy
+ * CDN or a project’s own CDN subdomain.
  * @param {string} url URL.
  * @returns {boolean} Result.
  */
@@ -354,10 +432,14 @@ export const isAssetURL = (url) => {
     return false;
   }
 
-  try {
-    const { origin } = new URL(options.config?.cdnBase ?? 'https://ucarecdn.com/');
+  const cdnBase = options.config?.cdnBase;
 
-    return url.startsWith(`${origin}/`);
+  if (cdnBase === undefined) {
+    return url.startsWith(`${LEGACY_CDN_ORIGIN}/`) || PROJECT_CDN_URL_REGEX.test(url);
+  }
+
+  try {
+    return url.startsWith(`${new URL(cdnBase).origin}/`);
   } catch {
     // A malformed `cdnBase` can’t be matched
     return false;

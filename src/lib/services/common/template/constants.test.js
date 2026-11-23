@@ -1,15 +1,14 @@
+import { generateUUID } from '@sveltia/utils/crypto';
 import { describe, expect, test } from 'vitest';
+
+import { replaceTemplateTags } from '$lib/services/common/template/tags';
 
 import {
   DATE_TIME_FIELDS,
-  ESCAPED_PLACEHOLDER_REGEX,
-  INNER_TAG_REGEX,
   TEMPLATE_TAG_REGEX,
   TEMPLATE_TAG_REPLACE_REGEX,
   UUID_TYPES,
 } from './constants';
-
-import { replaceTemplateTags } from '.';
 
 describe('Template constants', () => {
   describe('TEMPLATE_TAG_REGEX', () => {
@@ -26,6 +25,11 @@ describe('Template constants', () => {
     test('should not match incomplete tags', () => {
       expect(TEMPLATE_TAG_REGEX.test('{{title')).toBe(false);
       expect(TEMPLATE_TAG_REGEX.test('title}}')).toBe(false);
+    });
+
+    test('should not match an escaped tag', () => {
+      expect(TEMPLATE_TAG_REGEX.test('\\{{title}}')).toBe(false);
+      expect('\\{{title}}-{{slug}}'.match(TEMPLATE_TAG_REGEX)?.[0]).toBe('{{slug}}');
     });
 
     test('should match first occurrence only', () => {
@@ -71,18 +75,18 @@ describe('Template constants', () => {
       expect(result).toEqual("<<draft | ternary('{{subtitle}}', '{{title}}')>>");
     });
 
-    test('should preserve standalone quoted placeholders inside transformation arguments', () => {
+    test('should replace a quoted placeholder in literal text that looks like a transformation', () => {
       const str = "default('{{title}}')";
       const result = replaceTemplateTags(str, (_match, tag) => `<<${tag}>>`);
 
-      expect(result).toEqual("default('{{title}}')");
+      expect(result).toEqual("default('<<title>>')");
     });
 
-    test('should preserve quoted placeholders in function argument positions', () => {
+    test('should replace a quoted placeholder in literal text that looks like a function call', () => {
       const str = "foo('{{title}}')";
       const result = replaceTemplateTags(str, (_match, tag) => `<<${tag}>>`);
 
-      expect(result).toEqual("foo('{{title}}')");
+      expect(result).toEqual("foo('<<title>>')");
     });
 
     test('should replace quoted placeholders when the surrounding delimiter is not a transformation delimiter', () => {
@@ -114,41 +118,6 @@ describe('Template constants', () => {
     });
   });
 
-  describe('ESCAPED_PLACEHOLDER_REGEX', () => {
-    test('should match escaped placeholder patterns', () => {
-      expect(ESCAPED_PLACEHOLDER_REGEX.test('\\{\\{escaped\\}\\}')).toBe(true);
-    });
-
-    test('should have global flag', () => {
-      expect(ESCAPED_PLACEHOLDER_REGEX.global).toBe(true);
-    });
-
-    test('should not match unescaped patterns', () => {
-      expect(ESCAPED_PLACEHOLDER_REGEX.test('{{unescaped}}')).toBe(false);
-    });
-  });
-
-  describe('INNER_TAG_REGEX', () => {
-    test('should match and capture inner tag content', () => {
-      const str = '{{title}}';
-      const match = str.match(INNER_TAG_REGEX);
-
-      expect(match?.groups?.innerTag).toBe('title');
-    });
-
-    test('should capture complex inner tags', () => {
-      const str = '{{fields.title | upper}}';
-      const match = str.match(INNER_TAG_REGEX);
-
-      expect(match?.groups?.innerTag).toBe('fields.title | upper');
-    });
-
-    test('should not match incomplete tags', () => {
-      expect('{{title'.match(INNER_TAG_REGEX)).toBeNull();
-      expect('title}}'.match(INNER_TAG_REGEX)).toBeNull();
-    });
-  });
-
   describe('DATE_TIME_FIELDS', () => {
     test('should contain all date-time field names', () => {
       expect(DATE_TIME_FIELDS).toContain('year');
@@ -169,19 +138,16 @@ describe('Template constants', () => {
   });
 
   describe('UUID_TYPES', () => {
-    test('should have uuid type', () => {
-      expect(UUID_TYPES.uuid).toBeDefined();
-      expect(UUID_TYPES.uuid).toBe('uuid');
+    test('should have the uuid type', () => {
+      expect(UUID_TYPES.uuid).toEqual({ length: undefined, pattern: expect.any(String) });
     });
 
-    test('should have uuid_short type', () => {
-      expect(UUID_TYPES.uuid_short).toBeDefined();
-      expect(UUID_TYPES.uuid_short).toBe('uuid_short');
+    test('should have the uuid_short type', () => {
+      expect(UUID_TYPES.uuid_short).toEqual({ length: 'short', pattern: '[0-9a-f]{12}' });
     });
 
-    test('should have uuid_shorter type', () => {
-      expect(UUID_TYPES.uuid_shorter).toBeDefined();
-      expect(UUID_TYPES.uuid_shorter).toBe('uuid_shorter');
+    test('should have the uuid_shorter type', () => {
+      expect(UUID_TYPES.uuid_shorter).toEqual({ length: 'shorter', pattern: '[0-9a-f]{8}' });
     });
 
     test('should be a mapping of tag names', () => {
@@ -189,9 +155,9 @@ describe('Template constants', () => {
       expect(Object.keys(UUID_TYPES)).toHaveLength(3);
     });
 
-    test('should contain only string values', () => {
-      Object.values(UUID_TYPES).forEach((value) => {
-        expect(typeof value).toBe('string');
+    test('should have a pattern matching each generated UUID', () => {
+      Object.values(UUID_TYPES).forEach(({ length, pattern }) => {
+        expect(generateUUID(length)).toMatch(new RegExp(`^${pattern}$`));
       });
     });
   });

@@ -1,13 +1,16 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { getLatestVersion, isUpdateAvailable } from '$lib/services/app/update';
+import { getScriptVersionSpec } from '$lib/services/app/dependencies';
+import { compareVersions, getLatestVersion, isUpdateAvailable } from '$lib/services/app/update';
 
 vi.mock('$lib/services/app', () => ({
-  UNPKG_BASE_URL: 'https://unpkg.com/@sveltia/cms',
+  PACKAGE_NAME: '@sveltia/cms',
+  UNPKG_ORIGIN: 'https://unpkg.com',
   version: '1.0.0',
 }));
+vi.mock('$lib/services/app/dependencies', () => ({ getScriptVersionSpec: vi.fn() }));
 
 /** @type {import('vitest').Mock} */
 let fetchMock;
@@ -34,12 +37,33 @@ beforeEach(() => {
   fetchMock = vi.fn();
   vi.stubGlobal('fetch', fetchMock);
   warnMock = vi.spyOn(console, 'warn').mockImplementation(() => {});
-  document.head.innerHTML = '';
+  // Loaded from the CDN without a version unless a test says otherwise
+  vi.mocked(getScriptVersionSpec).mockReturnValue('');
 });
 
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
+});
+
+describe('compareVersions()', () => {
+  test('compares versions part by part as numbers', () => {
+    expect(compareVersions('1.2.0', '1.10.0')).toBeLessThan(0);
+    expect(compareVersions('2.0.0', '1.99.9')).toBeGreaterThan(0);
+    expect(compareVersions('1.2.3', '1.2.3')).toBe(0);
+  });
+
+  test('counts a missing part as zero, whichever version lacks it', () => {
+    expect(compareVersions('1.0', '1.0.0')).toBe(0);
+    expect(compareVersions('1.0.1', '1.0')).toBeGreaterThan(0);
+    expect(compareVersions('1.0', '1.0.1')).toBeLessThan(0);
+  });
+
+  test('ignores a pre-release suffix and parts that aren’t numbers', () => {
+    expect(compareVersions('1.0.1-beta.1', '1.0.0')).toBeGreaterThan(0);
+    expect(compareVersions('1.0.0-beta.1', '1.0.0')).toBe(0);
+    expect(compareVersions('x.y', '0.0')).toBe(0);
+  });
 });
 
 describe('getLatestVersion()', () => {
@@ -48,6 +72,11 @@ describe('getLatestVersion()', () => {
 
     expect(await getLatestVersion()).toBe('1.2.3');
     expect(fetchMock).toHaveBeenCalledWith('https://unpkg.com/@sveltia/cms/package.json');
+    // Another package, such as Sveltia CMS Additions
+    expect(await getLatestVersion({ packageName: '@sveltia/cms-additions' })).toBe('1.2.3');
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'https://unpkg.com/@sveltia/cms-additions/package.json',
+    );
   });
 
   test('returns nothing for a failed response', async () => {
@@ -83,25 +112,75 @@ describe('isUpdateAvailable()', () => {
     expect(warnMock).not.toHaveBeenCalled();
   });
 
-  test('is true when the script is loaded unpinned from the CDN', async () => {
-    const script = document.createElement('script');
+  test('is false when the CDN reports an older version', async () => {
+    respondWith({ version: '0.9.10' });
 
-    script.src = 'https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js';
-    document.head.append(script);
+    expect(await isUpdateAvailable()).toBe(false);
+    expect(warnMock).not.toHaveBeenCalled();
+  });
+
+  test('compares the versions part by part as numbers', async () => {
+    respondWith({ version: '1.0.10' });
+
+    expect(await isUpdateAvailable()).toBe(true);
+
+    respondWith({ version: '1.0.0.1' });
+
+    expect(await isUpdateAvailable()).toBe(true);
+  });
+
+  test('is true when the script is loaded unpinned from the CDN', async () => {
     respondWith({ version: '1.1.0' });
 
     expect(await isUpdateAvailable()).toBe(true);
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(fetchMock).toHaveBeenCalledWith('https://unpkg.com/@sveltia/cms/package.json');
+    expect(warnMock).not.toHaveBeenCalled();
+  });
+
+  test('is true when a release within the version range of the script is available', async () => {
+    vi.mocked(getScriptVersionSpec).mockReturnValue('%5E1');
+    respondWith({ version: '1.1.0' });
+
+    expect(await isUpdateAvailable()).toBe(true);
+    expect(fetchMock).toHaveBeenCalledWith('https://unpkg.com/@sveltia/cms@%5E1/package.json');
+    expect(warnMock).not.toHaveBeenCalled();
+  });
+
+  test('is false with a warning when a release is only available outside the range', async () => {
+    vi.mocked(getScriptVersionSpec).mockReturnValue('%5E1');
+    fetchMock.mockImplementation(async (url) => ({
+      ok: true,
+      /**
+       * Parse the body.
+       * @returns {Promise<object>} Body.
+       */
+      json: async () => ({ version: url.includes('@%5E1') ? '1.0.0' : '2.0.0' }),
+    }));
+
+    expect(await isUpdateAvailable()).toBe(false);
+    expect(fetchMock).toHaveBeenLastCalledWith('https://unpkg.com/@sveltia/cms/package.json');
+    expect(warnMock).toHaveBeenCalledWith(
+      expect.stringContaining('A new version (2.0.0) is available. You are using version 1.0.0.'),
+    );
+  });
+
+  test('is false without a warning when no newer release is available for a range', async () => {
+    vi.mocked(getScriptVersionSpec).mockReturnValue('%5E1');
+    respondWith({ version: '1.0.0' });
+
+    expect(await isUpdateAvailable()).toBe(false);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(warnMock).not.toHaveBeenCalled();
   });
 
   test('is false with a warning when the version is pinned', async () => {
-    const script = document.createElement('script');
-
-    script.src = 'https://unpkg.com/@sveltia/cms@1.0.0/dist/sveltia-cms.js';
-    document.head.append(script);
+    vi.mocked(getScriptVersionSpec).mockReturnValue(undefined);
     respondWith({ version: '1.1.0' });
 
     expect(await isUpdateAvailable()).toBe(false);
-    expect(warnMock).toHaveBeenCalledWith(expect.stringContaining('1.1.0'));
+    expect(warnMock).toHaveBeenCalledWith(
+      expect.stringContaining('A new version (1.1.0) is available. You are using version 1.0.0.'),
+    );
   });
 });

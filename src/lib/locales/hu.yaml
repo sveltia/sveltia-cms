@@ -1,0 +1,3207 @@
+# Read https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md
+# for instructions on how to add new languages or update existing translations.
+
+# ==============================================================================
+# Common Actions
+# ==============================================================================
+# Generic action button labels used throughout the application. These are
+# reusable strings for common operations like save, delete, cancel, etc.
+
+# Primary actions: creation, selection, and file operations
+create: Új
+select: Kijelölés
+select_all: Összes kijelölése
+# Accessible name of the checkbox that selects a single entry or asset in a list
+select_item: '{$name} kijelölése'
+upload: Feltöltés
+copy: Másolás
+download: Letöltés
+duplicate: Duplikálás
+delete: Törlés
+reorder: Átrendezés
+
+# Dialog and form actions: confirmation and cancellation
+cancel: Mégse
+done: Kész
+save: Mentés
+# Progress indicator shown on the save button while a save operation is in progress
+saving: Mentés…
+
+# Publishing actions: used when committing changes to the repository
+publish: Közzététel
+# Progress indicator shown on the publish button during publishing
+publishing: Közzététel…
+
+# Modification actions: editing and updating content
+rename: Átnevezés
+update: Frissítés
+replace: Csere
+
+# List and collection actions: adding and removing items
+add: Hozzáadás
+remove: Eltávolítás
+clear: Kiürítés
+
+# Expansion and collapse actions: used for accordions, trees, and expandable sections
+expand: Kibontás
+expand_all: Összes kibontása
+collapse: Összecsukás
+collapse_all: Összes összecsukása
+
+# Content manipulation: inserting, restoring, and discarding
+insert: Beszúrás
+restore: Visszaállítás
+discard: Elvetés
+
+# ==============================================================================
+# Common UI Elements
+# ==============================================================================
+# Reusable labels and messages for common interface elements like status
+# indicators, loading states, and toolbar regions.
+
+# Status messages: search and results indicators
+# Shown in ARIA live regions during search operations
+searching: Keresés…
+no_results: Nincs találat.
+
+# Toolbar region labels: used as aria-labels for different toolbar areas
+# These help screen readers identify which toolbar is being navigated
+global: Globális
+primary: Elsődleges
+secondary: Másodlagos
+collection: Gyűjtemény
+folder: Mappa
+# Label of the subfolder list in the asset picker
+folders: Mappák
+# Menu in a breadcrumb holding the folders that don’t fit
+more_folders: További mappák
+
+# ==============================================================================
+# Miscellaneous Labels
+# ==============================================================================
+# Various labels used across the application for specific UI elements
+# that don’t fit into other categories.
+
+# Field and input labels
+api_key: API-kulcs
+details: Részletek
+back: Vissza
+# Reusable label for an option whose value is determined automatically, e.g. the UI language
+automatic: Automatikus
+# Loading indicator shown during async operations (asset preview, panels, etc.)
+loading: Betöltés…
+# Dismiss button for temporary notifications and infobars
+later: Később
+
+# Entry and collection labels
+# Slug field heading in entry editors
+slug: URL-azonosító
+# Fallback labels for singleton collections when names aren’t configured
+singleton: Egyedi oldal
+singletons: Egyedi oldalak
+
+# Error messages
+# Toast notification when clipboard operations fail
+clipboard_error: Nem sikerült a vágólapra másolni.
+
+# ==============================================================================
+# Sign-In Page
+# ==============================================================================
+# Strings specific to the authentication and sign-in page, including welcome
+# messages, loading states, OAuth flows, and repository access options.
+
+# Welcome and branding
+# Screen reader announcement when the sign-in page loads
+# {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
+welcome_message: 'Üdvözlet: {$name}'
+# Footer text with CMS branding
+# {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
+powered_by: 'Működteti: {$name}'
+
+# Shown during initial configuration and data loading
+unsupported_browser_error: A böngésződ nem támogatott. Frissítsd a legújabb verzióra, vagy használj másik böngészőt.
+loading_cms_config: CMS-konfiguráció betöltése…
+loading_site_data: Webhelyadatok betöltése…
+loading_site_data_error: Hiba történt a webhelyadatok betöltése közben.
+
+# OAuth and token authentication
+# Primary sign-in button label for OAuth providers (GitHub, GitLab, etc.)
+# {$service} is the sign-in provider label, such as GitHub or GitLab
+sign_in_with_x: Bejelentkezés {$service}-fiókkal
+
+# Access token dialog: alternative authentication method
+sign_in_using_access_token: Bejelentkezés hozzáférési tokennel
+sign_in_using_access_token_description: Add meg alább a tokenedet. Olvasási és írási hozzáféréssel kell rendelkeznie a tároló tartalmához.
+# Shown after the description above when Editorial Workflow is enabled, which opens and merges pull requests
+sign_in_using_access_token_workflow_note: Mivel a szerkesztői munkafolyamat be van kapcsolva, a pull requestekhez is olvasási és írási hozzáféréssel kell rendelkeznie.
+# Inline link text with embedded HTML anchor tag
+# {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
+sign_in_using_access_token_link: 'Tokent itt hozhatsz létre: <a>{$service}, felhasználói beállítások</a>.'
+# Input field label for personal access token
+personal_access_token: Személyes hozzáférési token
+
+# Authentication progress indicators
+authorizing: Engedélyezés…
+signing_in: Bejelentkezés…
+
+# Local and test repository options
+# Button label and description for working with a local Git repository
+work_with_local_repo: Munka helyi tárolóval
+# {$repo} is the configured repository name shown when it is available
+work_with_local_repo_description: 'Amikor a rendszer kéri, válaszd ki a következő tároló gyökérkönyvtárát: „{$repo}”.'
+work_with_local_repo_description_no_repo: Amikor a rendszer kéri, válaszd ki a Git-tárolód gyökérkönyvtárát.
+# Button label for demo/test repository
+work_with_test_repo: Munka teszttárolóval
+# Button label for the test repository when sample content is seeded, e.g. on a demo site
+start_demo: Demó indítása
+# Shown below the disabled test repository option in a browser that can’t save files to its
+# storage, e.g. Safari before version 26
+test_repo_unsupported_browser: A böngésződ nem tudja menteni a teszttároló fájljait. Frissítsd a legújabb verzióra, vagy használj másik böngészőt.
+
+# Authentication errors
+# Error messages shown during sign-in failures
+sign_in_error:
+  not_project_root: A kiválasztott mappa nem egy tároló gyökérkönyvtára. Próbáld újra.
+  picker_dismissed: Nem sikerült kiválasztani a tároló gyökérkönyvtárát. Próbáld újra.
+  authentication_aborted: A hitelesítés megszakadt. Próbáld újra.
+  invalid_token: A megadott token érvénytelen. Ellenőrizd, és próbáld újra.
+  # OAuth and authenticator errors (shown with error codes) — keys are defined in the Sveltia CMS Authenticator library
+  UNSUPPORTED_BACKEND: A hitelesítő nem támogatja a Git-háttérrendszeredet.
+  UNSUPPORTED_DOMAIN: A domainednek nincs engedélye a hitelesítő használatára.
+  MISCONFIGURED_CLIENT: Az OAuth-alkalmazás kliensazonosítója vagy titkos kulcsa nincs beállítva.
+  AUTH_CODE_REQUEST_FAILED: Nem sikerült engedélyezési kódot kapni. Próbáld újra később.
+  CSRF_DETECTED: Lehetséges CSRF-támadást észleltünk. A hitelesítési folyamat megszakadt.
+  TOKEN_REQUEST_FAILED: Nem sikerült hozzáférési tokent kérni. Próbáld újra később.
+  TOKEN_REFRESH_FAILED: Nem sikerült frissíteni a hozzáférési tokent. Próbáld újra később.
+  MALFORMED_RESPONSE: A szerver hibás formátumú adatokkal válaszolt. Próbáld újra később.
+
+# Backend and repository validation errors
+# Shown when the configured backend or repository is invalid or inaccessible
+# {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
+backend_unsupported_version: A háttérrendszer ({$name}) használatához {$name} {$version} vagy újabb verzió szükséges.
+# {$repo} is the repository identifier, typically in owner/repo format
+repository_no_access: 'Nincs hozzáférésed a következő tárolóhoz: „{$repo}”.'
+# {$repo} is the repository identifier, typically in owner/repo format
+repository_no_write_access: 'Nincs írási hozzáférésed a következő tárolóhoz: „{$repo}”.'
+repository_not_found: 'A következő tároló nem létezik: „{$repo}”.'
+repository_empty: 'A következő tárolóban nincs egyetlen ág sem: „{$repo}”.'
+# {$repo} is the repository identifier, and {$branch} is the configured branch name
+branch_not_found: A tárolóban („{$repo}”) nincs „{$branch}” nevű ág.
+# {$repo} is the repository identifier, and {$dir} is the configured root directory
+root_dir_not_found: 'A gyökérkönyvtár („{$dir}”) nem létezik a következő tárolóban: „{$repo}”.'
+
+# General errors
+# Fallback error dialog title for unexpected errors
+unexpected_error: Váratlan hiba
+# Shown in place of the page when an unexpected error stops it from being displayed
+# {$message} is the error message
+page_crashed: Hiba történt, ezért ez az oldal nem jeleníthető meg. {$message}
+# Shown in place of a field editor or preview when an unexpected error stops it from being displayed
+# {$message} is the error message
+field_crashed: Hiba történt, ezért ez a mező nem jeleníthető meg. {$message}
+# Button label for displaying a part of the page again after an unexpected error
+try_again: Újrapróbálás
+# Button label for reloading the CMS after an unexpected error
+reload_cms: CMS újratöltése
+
+# Entry file parsing errors
+# Toast notification when entry files fail to parse on initial load
+# {$count} is the number of entry files that failed to parse
+entry_parse_errors: |
+  .input {$count :integer}
+  .match $count
+    one {{ Hiba történt egy bejegyzésfájl feldolgozása közben. A részleteket a böngésző konzoljában találod. }}
+    *   {{ Hibák történtek a bejegyzésfájlok feldolgozása közben. A részleteket a böngésző konzoljában találod. }}
+
+# ==============================================================================
+# Authentication and Account
+# ==============================================================================
+# These strings are used for sign-in, account management, and authentication
+# flows throughout the application.
+
+# Sign-in page and external assets panel: credential input field aria-labels
+username: Felhasználónév
+password: Jelszó
+
+# Sign-in actions: primary button labels and account menu items
+# Used on the sign-in page and in confirmation dialogs for external assets
+sign_in: Bejelentkezés
+
+# Mobile sign-in feature: dialog title and instructions for QR code authentication
+sign_in_with_mobile: Bejelentkezés mobilon
+# Instructions shown in the mobile sign-in dialog for passwordless authentication
+sign_in_with_mobile_instruction: A jelszó nélküli bejelentkezéshez olvasd be az alábbi QR-kódot a telefonoddal vagy táblagépeddel. A beállításaid automatikusan átmásolódnak.
+# Confirmation dialog shown when the CMS is opened with a sign-in link from the mobile sign-in
+# QR code. {$account} is the account name, {$service} is the Git service name, e.g. GitHub
+sign_in_with_link: Bejelentkezés hivatkozással
+sign_in_with_link_confirmation: Ez a hivatkozás {$account} néven jelentkeztet be a szolgáltatásba ({$service}), és átmásolja a beállításokat arról az eszközről, amelyen létrehozták. Csak akkor folytasd, ha a hivatkozást te magad hoztad létre.
+
+# Sign-in with Sveltia CMS Additions, which manages its own user accounts instead of the Git
+# service’s. Don’t localize “Sveltia CMS Additions”
+additions:
+  username: Felhasználónév
+  password: Jelszó
+  sign_in: Bejelentkezés
+  new_password_title: Új jelszó megadása
+  new_password_description: Ideiglenes jelszóval jelentkeztél be. A folytatáshoz adj meg egy újat.
+  new_password: Új jelszó
+  password_too_short: A jelszó túl rövid. Legalább 12 karaktert használj.
+  change_password: Jelszó módosítása
+  # {$name} is the user’s username, {$role} their role, e.g. Editor
+  signed_in_as_x_with_role: 'Bejelentkezve: {$name} ({$role})'
+  link_github: GitHub-fiók összekapcsolása
+  link_github_error: Nem sikerült összekapcsolni a GitHub-fiókot
+  current_password: Jelenlegi jelszó
+  # {$username} is the username filled in from a magic link emailed to the user
+  filled_from_link: A felhasználónevet és a jelszót egy hivatkozásból töltöttük ki. Csak akkor jelentkezz be, ha a felhasználóneved „{$username}”.
+  change_password_description: Itt bejelentkezve maradsz, a többi eszközödön viszont kijelentkeztetünk.
+  password_changed: A jelszavad megváltozott.
+  # The Account settings panel of a Sveltia CMS Additions user
+  account:
+    profile: Profil
+    profile_description: A neved megjelenik a CMS többi felhasználója számára, például a bejegyzészárolásoknál és a hozzászólásoknál, valamint a commitjaidban is.
+    username_description: A felhasználóneved nem módosítható.
+    email: E-mail-cím
+    email_description: A commitjaidban szerepel, így a GitHub hozzá tudja kapcsolni őket a fiókodhoz. Ha nincs megadva, egy helyettesítő cím kerül a helyére. Csak adminisztrátor módosíthatja.
+    change_name: Név módosítása
+    name_changed: A neved megváltozott.
+    password: Jelszó
+    no_password: A fiókod csak GitHubbal jelentkezik be, ezért nincs módosítható jelszava. Egy adminisztrátor a jelszavad visszaállításával adhat neked egyet.
+  setup:
+    use_admin_secret: Adminisztrátori titkos kulcs használata
+    title: A Sveltia CMS Additions beállítása
+    secret_description: Add meg a Sveltia CMS Additions szolgáltatásod beállításaiban megadott adminisztrátori titkos kulcsot. Csak a beállítás idejére marad meg ezen a lapon.
+    admin_secret: Adminisztrátori titkos kulcs
+    continue: Tovább
+    back: Vissza a bejelentkezéshez
+    admin_title: Adminisztrátori fiók
+    admin_create_description: Hozd létre az első adminisztrátori fiókot. Ezzel fogsz bejelentkezni, és ezzel kezeled a többi felhasználót.
+    admin_reset_description: Már létezik adminisztrátori fiók. A hozzáférés visszaszerzéséhez itt visszaállíthatod egy adminisztrátor jelszavát, vagy létrehozhatsz egy újabbat.
+    admin_saved: Az adminisztrátori fiók elkészült. Jelentkezz be az imént megadott jelszóval.
+    create_admin: Adminisztrátor létrehozása
+    reset_password: Adminisztrátor mentése
+    github_title: GitHub
+    # {$repo} is the repository, e.g. octocat/site
+    github_description: 'Hozz létre egy GitHub-alkalmazást ehhez a webhelyhez, és telepítsd a következő tárolóra: „{$repo}”. A GitHub megerősítést kér, majd visszairányít ide.'
+    # {$repo} is the repository, {$app} is the name of the GitHub App
+    github_connected: 'Csatlakoztatva a következő tárolóhoz: „{$repo}”. GitHub-alkalmazás: „{$app}”.'
+    connect_github: Csatlakozás a GitHubhoz
+    # {$step} is the number of the current step, {$total} the number of steps
+    step_x_of_y: '{$step}. lépés (összesen {$total})'
+    admin_exists: Létezik adminisztrátori fiók.
+    reset_admin_password: Adminisztrátori jelszó visszaállítása
+    setup_complete: A beállítás befejeződött. A felhasználók és a beállítások kezeléséhez jelentkezz be egy adminisztrátori fiókkal. Az adminisztrátori titkos kulccsal bármikor visszatérhetsz ide.
+    manage_sites: Más webhelyek kezelése
+    back_to_setup: Vissza
+    sites_title: Más webhelyek
+    sites_description: Ez a szolgáltatás más webhelyeket is kiszolgálhat, mindegyiket saját felhasználókkal, beállításokkal és GitHub-alkalmazással. Egy webhely CMS-konfigurációjában állítsd a „base_url” értékét a webhely URL-jére, majd ott állítsd be a webhelyet az adminisztrátori titkos kulccsal.
+    no_sites: Még nincsenek más webhelyek.
+    site_id: Webhelyazonosító
+    site_id_description: 1–32 kisbetű, számjegy és kötőjel, például „acme”. Megjelenik a webhely URL-jében, és nem módosítható.
+    site_name_optional: Név (nem kötelező)
+    add_site: Webhely hozzáadása
+    # {$name} is the name of the site
+    site_added: „{$name}” hozzáadva. A CMS-konfigurációjában állítsd a „base_url” értékét a webhely URL-jére, majd ott nyisd meg a beállítási varázslót.
+    # {$name} is the name of the site
+    copy_site_url: 'URL másolása: {$name}'
+    delete_site: Webhely törlése
+    # {$name} is the name of the site
+    delete_site_x: 'Törlés: {$name}'
+    # {$name} is the name of the site, {$id} is its ID
+    delete_site_confirmation: '„{$name}” törlésével a felhasználói, a beállításai és a hozzászólásai is törlődnek. Ez nem vonható vissza. A GitHub-alkalmazás megmarad a GitHubon, ahol törölheted. A megerősítéshez írd be: „{$id}”.'
+    site_id_to_confirm: Webhelyazonosító a megerősítéshez
+    data_key_locked_title: Az adminisztrátori titkos kulcs megváltozott
+    data_key_locked_description: Az adminisztrátori titkos kulcs megváltozott, ezért a tárolt beállítások nem olvashatók. Megtartásukhoz add meg az előző titkos kulcsot, vagy ha elveszett, kezdd újra.
+    previous_secret: Előző adminisztrátori titkos kulcs
+    unlock: Feloldás
+    rekey: Újrakezdés
+    rekey_confirmation: Az újrakezdés törli a GitHub-alkalmazás hitelesítő adatait és a többi tárolt titkos adatot, és mindenkit kijelentkeztet. A jelszavak megmaradnak. Folytatod?
+    result:
+      ok: A GitHub csatlakoztatva. Most már bejelentkezhetsz.
+      github_app_not_created: A GitHub-alkalmazás nem jött létre. Próbáld újra az adminisztrátori titkos kulccsal.
+      github_app_not_installed: A GitHub-alkalmazás nem lett telepítve. Próbáld újra az adminisztrátori titkos kulccsal.
+      github_wrong_account: A GitHub-alkalmazást olyan fiókra telepítették, amely nem a tároló tulajdonosa. Telepítsd a tároló tulajdonosának fiókjára, és próbáld újra.
+      github_repository_not_included: A GitHub-alkalmazást a tárolóhoz való hozzáférés nélkül telepítették. Adj neki hozzáférést a tárolóhoz a GitHubon, és próbáld újra.
+      unexpected: Váratlan hiba miatt nem sikerült csatlakozni a GitHubhoz. Próbáld újra.
+  locks:
+    # {$name} is the name of the person editing the entry, {$time} when they started
+    being_edited: '{$name} {$time} óta szerkeszti ezt a bejegyzést, ezért csak megtekintheted.'
+    being_edited_by_you: Egy másik lapon szerkeszted ezt a bejegyzést, ezért itt csak megtekintheted.
+    # {$name} is the name of the person who took over the entry
+    taken_over: '{$name} átvette ezt a bejegyzést, ezért most már csak megtekintheted.'
+    take_over: Átvétel
+    unavailable: A bejegyzészárolás nem érhető el, ezért előfordulhat, hogy valaki más is szerkeszti egyszerre ezt a bejegyzést.
+    # {$name} is the name of the person editing the entry
+    being_edited_by_x: 'Szerkeszti: {$name}'
+    # {$names} is a list of the other people who have the entry open in the editor
+    also_open_by_x: 'Szintén megnyitotta: {$names}'
+    # {$names} is a list of the people who have the entry open, besides anyone editing it
+    open_by_x: 'Megnyitotta: {$names}'
+  users:
+    title: Felhasználók
+    add_user: Felhasználó hozzáadása
+    edit_user: Felhasználó szerkesztése
+    add: Hozzáadás
+    name: Név
+    username_description: A felhasználónév a felhasználó hozzáadása után nem módosítható.
+    email_optional: E-mail-cím (nem kötelező)
+    email_description: A felhasználó commitjaiban szerepel, így a GitHub hozzá tudja kapcsolni őket a fiókjához. Ha nincs megadva, egy helyettesítő cím kerül a helyére.
+    role: Szerepkör
+    status: Állapot
+    last_sign_in: Utolsó bejelentkezés
+    sign_in_column: Bejelentkezés
+    methods:
+      password: Jelszó
+      # {$login} is a GitHub username
+      github: GitHub ({$login})
+    actions: Műveletek
+    you: (te)
+    never: Soha
+    roles:
+      admin: Adminisztrátor
+      editor: Szerkesztő
+      viewer: Megtekintő
+    statuses:
+      active: Aktív
+      temporary_password: Ideiglenes jelszó
+      waiting_for_sign_in: Első bejelentkezésre vár
+      disabled: Letiltva
+    # {$name} is the user’s name
+    show_options_for_x: 'Beállítások megjelenítése: {$name}'
+    options: Felhasználói beállítások
+    reset_password: Jelszó visszaállítása
+    sign_out_everywhere: Kijelentkeztetés mindenhonnan
+    enable: Felhasználó engedélyezése
+    disable: Felhasználó letiltása
+    delete: Felhasználó törlése
+    # {$name} is the user’s name
+    reset_password_confirmation: 'Biztosan új ideiglenes jelszót adsz a következő felhasználónak: {$name}? Mindenhonnan ki lesz jelentkeztetve, és a következő bejelentkezéskor új jelszót kell választania.'
+    delete_confirmation: 'Biztosan törlöd a következő felhasználót: {$name}? Ez nem vonható vissza.'
+    temporary_password: Ideiglenes jelszó
+    # {$name} is the user’s name
+    temporary_password_description: 'Add át ezt a felhasználónevet és ideiglenes jelszót a következő személynek: {$name}. A jelszó többé nem jelenik meg, és bejelentkezéskor saját jelszót választ majd.'
+    copy_username: Felhasználónév másolása
+    copy_password: Jelszó másolása
+    # {$name} is the user’s name
+    email_credentials: 'E-mail küldése: {$name}'
+    # The emails the admin sends from their own email app, with the sign-in details: `new` to a user
+    # who has just been added, `reset` to one whose password has been reset. Each line is a string of
+    # its own, as line breaks aren’t kept in these files
+    credentials_email:
+      # {$name} is the user’s name
+      greeting: Kedves {$name}!
+      # {$url} is a link to the CMS that fills in the username and the temporary password
+      sign_in_link: 'Bejelentkezési hivatkozás: {$url}'
+      # {$username} is the username
+      username: 'Felhasználónév: {$username}'
+      # {$password} is the temporary password
+      password: 'Ideiglenes jelszó: {$password}'
+      new:
+        # {$app} is the name of the CMS
+        subject: 'Bejelentkezési adataid: {$app}'
+        # {$app} is the name of the CMS
+        message: 'Mostantól bejelentkezhetsz ide: {$app}. Nyisd meg az alábbi hivatkozást, amely kitölti a felhasználónevedet és az ideiglenes jelszavadat, majd bejelentkezéskor válassz saját jelszót.'
+      reset:
+        # {$app} is the name of the CMS
+        subject: A jelszavadat visszaállítottuk ({$app})
+        # {$app} is the name of the CMS
+        message: A jelszavadat visszaállítottuk ({$app}), és mindenhonnan kijelentkeztettünk. Nyisd meg az alábbi hivatkozást, amely kitölti a felhasználónevedet és az ideiglenes jelszavadat, majd bejelentkezéskor válassz új jelszót.
+    allowed_domains: Engedélyezett domainek
+    allowed_domains_description: Azok a webhelyek, amelyek használhatják a Sveltia CMS Additions szolgáltatást, soronként egy gazdagépnévvel. A helyettesítő karakter (*) bármely aldomainre illeszkedik, például *.example.com. Ahol lehet, pontos gazdagépneveket adj meg. A lista csak erre a webhelyre vonatkozik, akkor is, ha ugyanaz a Sveltia CMS Additions-példány más webhelyeket is kiszolgál.
+    save_allowed_domains: Engedélyezett domainek mentése
+    allowed_domains_saved: Az engedélyezett domainek mentve.
+    sign_in_tab: Bejelentkezés
+    # {$latest} is the newest version of Sveltia CMS Additions, {$current} the one in use
+    update_available: 'Elérhető a Sveltia CMS Additions {$latest} verziója. Jelenleg használt verzió: {$current}.'
+    release_notes: Kiadási megjegyzések
+    github_username_optional: GitHub-felhasználónév (nem kötelező)
+    github_username_description: GitHub-felhasználónév megadásakor a felhasználó jelszó helyett ezzel a GitHub-fiókkal jelentkezik be.
+    # {$name} is the user’s name
+    github_required: '{$name} csak GitHubbal tud bejelentkezni, ezért a GitHub-felhasználóneve nem távolítható el. Előbb állítsd vissza a jelszavát, hogy legyen jelszava a bejelentkezéshez.'
+    adopt: Fiók átvétele
+    sign_in:
+      github: Bejelentkezés engedélyezése GitHubbal
+      github_description: A felhasználók a GitHub-fiókjukkal jelentkeznek be, és saját GitHub-tokent kapnak, így a módosításaikat a saját nevükben commitoljuk. Előbb egy adminisztrátornak hozzá kell adnia őket a GitHub-felhasználónevükkel, kivéve, ha egy regisztrációs szabály vonatkozik rájuk.
+      # Shown when signing in with GitHub is being turned off while {$count} users can only sign in
+      # with it
+      github_only_warning: |
+        .input {$count :integer}
+        .match $count
+          one {{ Egy felhasználó csak GitHubbal tud bejelentkezni, és a kikapcsolás után nem tud majd bejelentkezni, amíg vissza nem állítod a jelszavát. }}
+          *   {{ {$count} felhasználó csak GitHubbal tud bejelentkezni, és a kikapcsolás után nem tud majd bejelentkezni, amíg vissza nem állítod a jelszavát. }}
+      rules: Regisztrációs szabályok
+      rules_description: Annak a GitHub-szervezetnek a tagjai, amelyre az alkalmazás telepítve van, előzetes hozzáadás nélkül is bejelentkezhetnek. A fiókjuk az általad választott szerepkört kapja, és le lesz tiltva, ha kilépnek a szervezetből, kivéve, ha átveszed.
+      org: GitHub-szervezet
+      add_rule: Szabály hozzáadása
+      # {$org} is the name of a GitHub organization
+      remove_rule: 'Szabály eltávolítása: {$org}'
+      # For a rule whose organization hasn’t been entered yet
+      remove_empty_rule: Szabály eltávolítása
+      save: Bejelentkezési beállítások mentése
+      saved: A bejelentkezési beállítások mentve.
+    domains_tab: Domainek
+    github_tab: GitHub
+    github:
+      app: GitHub-alkalmazás
+      repository: Tároló
+      not_installed: Nincs telepítve
+      statuses:
+        ok: Az alkalmazás működik.
+        not_registered: Még nincs beállítva GitHub-alkalmazás. Futtasd a beállítási varázslót a bejelentkezési oldalról az adminisztrátori titkos kulccsal.
+        key_missing: Az alkalmazás privát kulcsa elveszett, amikor az adminisztrátori titkos kulcsot lecserélték. Hozz létre egy új privát kulcsot az alkalmazás beállításaiban a GitHubon, és töltsd fel alább.
+        key_rejected: A GitHub nem fogadja el az alkalmazás privát kulcsát, például mert ott törölték. Hozz létre egy új privát kulcsot az alkalmazás beállításaiban a GitHubon, és töltsd fel alább.
+        not_installed: Az alkalmazás nincs telepítve a tárolóra. Telepítsd újra az alkalmazás GitHub-oldaláról, vagy futtasd a beállítási varázslót.
+        suspended: Az alkalmazás telepítése fel van függesztve. Szüntesd meg a felfüggesztést a telepítés beállításaiban a GitHubon.
+        unreachable: A GitHub nem érhető el. Próbáld újra később.
+      check_again: Ellenőrzés újra
+      # {$branch} is the name of the repository’s default branch
+      branch_protected: 'Szabálykészletek védik a következő ágat a force pushtól és a törléstől: „{$branch}”.'
+      branch_bypassed: 'Szabálykészletek védik a következő ágat: „{$branch}”, de az alkalmazás megkerülheti őket, így a szerkesztők továbbra is force pusholhatnak rá, vagy törölhetik. Távolítsd el az alkalmazást ezeknek a szabálykészleteknek a kivétellistáiról.'
+      branch_unprotected: 'Egyetlen szabálykészlet sem védi a következő ágat a force pushtól és a törléstől: „{$branch}”, így a szerkesztők átírhatják az előzményeit, vagy törölhetik. Adj hozzá a tároló beállításaiban egy szabálykészletet, amely mindkettőt tiltja, és amelynek kivétellistáján nem szerepel az alkalmazás.'
+      repository_rules: Tárolószabályok megnyitása
+      private_key: Privát kulcs
+      private_key_description: A privát kulcs cseréjéhez hozz létre egy újat az alkalmazás beállításaiban a GitHubon, majd töltsd fel a letöltött .pem fájlt. Utána töröld ott a régi kulcsot.
+      app_settings: Alkalmazásbeállítások megnyitása
+      upload_private_key: Privát kulcs feltöltése
+      replace_private_key: Privát kulcs cseréje
+      private_key_summary: A szolgáltatás az alkalmazás privát kulcsával fér hozzá a tárolóhoz a GitHubon. Cseréld le, ha illetéktelenek kezébe kerülhetett.
+      private_key_replaced: A privát kulcs lecserélve.
+      commit_author: Commit szerzője
+      commit_author_description: Válaszd ki, ki jelenjen meg a CMS-ben mentett módosítások szerzőjeként. A GitHub csak az alkalmazás által létrehozott commitokat írja alá, ezért válaszd az alkalmazást, ha egy szabálykészlet aláírt commitokat követel meg. A többi felhasználónál egy órán belül érvénybe lép a változás.
+      commit_author_user: A módosítást végző személy
+      commit_author_bot: A GitHub-alkalmazás, a személlyel mint társszerzővel
+      commit_author_saved: A commit szerzője mentve.
+  # Administration section for the API keys and the deploy hook an admin shares with everyone
+  credentials:
+    title: Hitelesítő adatok
+    description: Az itt megadott API-kulcsokat és telepítési webhookot mindenki használja, aki bejelentkezik, kivéve, ha a Beállításokban sajátot ad meg. A CMS-be bejelentkezett bárki elolvashatja őket, ezért csak olyan kulcsokat adj meg, amelyeket nyugodtan megosztasz a csapatoddal.
+    save: Hitelesítő adatok mentése
+    saved: A hitelesítő adatok mentve.
+    # {$service} is the service name, e.g. DeepL
+    invalid_key: A megadott {$service} API-kulcs nem tűnik helyesnek.
+  error:
+    unauthenticated: A munkameneted lejárt. Jelentkezz be újra.
+    wrong_admin_secret: Az adminisztrátori titkos kulcs helytelen.
+    admin_secret_missing: Az adminisztrátori titkos kulcs nincs beállítva a Sveltia CMS Additions szolgáltatás beállításaiban.
+    admin_secret_too_short: A Sveltia CMS Additions szolgáltatás beállításaiban megadott adminisztrátori titkos kulcs túl rövid. Legalább 32 véletlenszerű karaktert használj.
+    wrong_previous_secret: Az előző adminisztrátori titkos kulcs helytelen.
+    not_an_admin: Ez a felhasználó nem adminisztrátor. Válassz másik felhasználónevet.
+    invalid_username: 'A felhasználónév 3–30 karakterből állhat: kisbetűkből, számjegyekből, pontokból, kötőjelekből vagy aláhúzásjelekből.'
+    last_admin: Legalább egy adminisztrátornak lennie kell.
+    cannot_disable_self: A saját fiókodat nem tilthatod le.
+    cannot_delete_self: A saját fiókodat nem törölheted.
+    username_taken: Ez a felhasználónév már egy másik felhasználóé.
+    email_taken: Ez az e-mail-cím már egy másik felhasználóé.
+    invalid_name: A névnek 1–100 karakterből kell állnia.
+    invalid_email: Az e-mail-cím érvénytelen.
+    invalid_domains: Az egyik engedélyezett domain nem érvényes gazdagépnév.
+    current_origin_removed: Az engedélyezett domaineknek tartalmazniuk kell azt a webhelyet, amelyet most használsz.
+    forbidden: Ezt csak adminisztrátorok tehetik meg.
+    invalid_credentials: A felhasználónév vagy a jelszó helytelen.
+    user_disabled: Ez a fiók le van tiltva. Kérj segítséget az adminisztrátortól.
+    too_many_attempts: Túl sok próbálkozás. Próbáld újra később.
+    wrong_password: A jelenlegi jelszó helytelen.
+    same_password: Olyan új jelszót válassz, amely eltér a jelenlegitől.
+    invalid_github_login: Ez nem érvényes GitHub-felhasználónév.
+    github_user_not_found: Nincs ilyen nevű GitHub-felhasználó.
+    github_account_taken: Ezzel a GitHub-fiókkal már egy másik felhasználó jelentkezik be.
+    invalid_rules: A regisztrációs szabályhoz meg kell adni egy GitHub-szervezet nevét.
+    invalid_rule_role: Regisztrációs szabály csak szerkesztői vagy megtekintői szerepkört adhat.
+    rule_org_not_installed: A GitHub-alkalmazást telepíteni kell a regisztrációs szabályban szereplő szervezetre.
+    not_invited: Itt nincs fiókod. Kérd meg az adminisztrátort, hogy adjon hozzá.
+    method_disabled: A GitHubbal való bejelentkezés ki van kapcsolva.
+    access_denied: A bejelentkezés megszakadt.
+    github_app_not_set_up: A Sveltia CMS Additions még nincs csatlakoztatva a GitHubhoz. Kérd meg az adminisztrátort, hogy fejezze be a beállítást.
+    invalid_tenant_id: A webhelyazonosító 1–32 kisbetűből, számjegyből és kötőjelből állhat, és nem lehet „default”.
+    invalid_tenant_name: A webhely neve legfeljebb 100 karakter lehet.
+    tenant_exists: Már létezik ilyen azonosítójú webhely.
+    github_app_missing: Még nincs beállítva GitHub-alkalmazás.
+    invalid_private_key: A fájl nem érvényes privát kulcs.
+    private_key_mismatch: A GitHub nem fogadja el ezt a privát kulcsot az alkalmazáshoz. Győződj meg róla, hogy az alkalmazás beállításaiban hoztad létre.
+    github_error: A GitHub hibával válaszolt. Próbáld újra később.
+    data_key_locked: A Sveltia CMS Additions nem használható, amíg egy adminisztrátor be nem fejezi az adminisztrátori titkos kulcs módosítását.
+    not_configured: A Sveltia CMS Additions nincs megfelelően konfigurálva. Kérj segítséget az adminisztrátortól.
+    origin_not_allowed: Ez a webhely nem használhatja a Sveltia CMS Additions szolgáltatást. Kérd meg az adminisztrátort, hogy vegye fel az engedélyezett domainek közé.
+    not_set_up: A Sveltia CMS Additions még nincs csatlakoztatva a GitHubhoz. Kérd meg az adminisztrátort, hogy fejezze be a beállítást.
+    # A user whose password an admin has reset signs in another way, e.g. with GitHub
+    temporary_password: A jelszavadat visszaállították. Jelentkezz be a felhasználóneveddel és az adminisztrátortól kapott ideiglenes jelszóval, majd válassz újat.
+    # {$url} is the URL of the service
+    incompatible: 'A Sveltia CMS ezen verziója nem működik a Sveltia CMS Additions szolgáltatással a következő címen: {$url}.'
+    unreachable: A Sveltia CMS Additions nem érhető el. Próbáld újra később.
+    insecure_connection: A Sveltia CMS Additions szolgáltatást HTTPS-en keresztül kell kiszolgálni. Ellenőrizd a `base_url` beállítást a CMS-konfigurációban.
+    unexpected: Váratlan hiba miatt nem sikerült a kérés a Sveltia CMS Additions felé. Próbáld újra később.
+
+  # Conversation panel: comments on the entry, kept by Sveltia CMS Additions
+  conversation:
+    title: Beszélgetés
+    refresh: Beszélgetés frissítése
+    empty: Még nincsenek hozzászólások.
+    # Button above a long conversation, which is loaded from its latest comments
+    show_older: Korábbi hozzászólások megjelenítése
+    # Label of the list of comments
+    timeline: Hozzászólások
+    deleted_user: Törölt felhasználó
+    you: Te
+    edited: szerkesztve
+    comment_label: Hozzászólás
+    placeholder: Írj hozzászólást (Markdown)
+    visible_to_cms_users: Csak a CMS felhasználói láthatják
+    send: Küldés
+    options: Hozzászólás beállításai
+    edit: Szerkesztés
+    delete: Törlés
+    save: Mentés
+    delete_confirmation: Biztosan törlöd ezt a hozzászólást? Ez nem vonható vissza.
+    send_failed: Nem sikerült elküldeni a hozzászólást.
+
+  # Placeholder of an API key or deploy hook field the user has left empty, while an admin of
+  # Sveltia CMS Additions has entered one for everyone
+  provided_by_admin: Az adminisztrátor adta meg
+
+# Account menu: user status and repository mode indicators
+# Shown at the top of the account dropdown menu
+# {$name} is the signed-in user’s login name
+signed_in_as_x: 'Bejelentkezve: {$name}'
+working_with_local_repo: Munka helyi tárolóval
+working_with_test_repo: Munka teszttárolóval
+working_in_demo_mode: Demó mód
+
+# Demo welcome dialog: shown once after signing in to a demo site, where the test repository is
+# seeded with sample content and the changes are only stored in the browser
+demo_welcome:
+  title: Üdvözöl a Sveltia CMS demó
+  description: Nyugodtan fedezd fel a CMS-t, és szerkeszd a mintatartalmat. A módosításaid csak ebben a böngészőben mentődnek. Semmi nem jelenik meg az interneten, és senki más nem látja őket.
+  reset_hint: Ha az eredeti tartalommal szeretnéd újrakezdeni, válaszd az Összes adat törlése lehetőséget a Beállítások > Adatkezelés alatt.
+  button_label: Kezdjük
+
+# Account menu: action items for sign-out and app installation
+sign_out: Kijelentkezés
+install_as_app: Telepítés alkalmazásként
+
+# ==============================================================================
+# Global Toolbar
+# ==============================================================================
+# Strings used in the main application toolbar, including navigation, search,
+# notifications, and menu items.
+
+# Main page titles in the global navigation and page switcher button group
+contents: Tartalom
+assets: Médiatár
+editorial_workflow: Szerkesztői munkafolyamat
+# Name of the Editorial Workflow page when all the content uses Preview Workflow, which has no
+# review stages, so the page only lists the drafts
+drafts: Piszkozatok
+cms_config: CMS-konfiguráció
+# Mobile menu page title (shown only on small screens)
+menu: Menü
+# Mobile menu page section heading listing the custom pages registered by the site
+custom_pages: Oldalak
+
+# Mobile promo infobar: encouraging users to try the mobile version
+mobile_promo_title: A Sveltia CMS már mobilon is elérhető!
+mobile_promo_button: Próbáld ki
+
+# New language infobar: encouraging users to switch to a newly available language
+# {$locale} is the localized language name, e.g., “French”
+new_language_available: A Sveltia CMS már {$locale} nyelven is elérhető!
+change_language: Nyelv módosítása
+
+# Live reload infobar: shown when the CMS runs on a page that a framework’s development server (e.g.
+# Astro) reloads on every file change, instead of a static HTML file
+live_reload_warning: A fejlesztői szervered minden fájlmódosításkor újratölti ezt az oldalt, ami megszakíthatja a mentést, és sérült fájlokat hagyhat maga után. Helyette statikus HTML-fájlból szolgáld ki a CMS-t. <a>További információ</a>
+
+# Toast notification shown while the translation for the selected language is being downloaded
+# {$locale} is the localized language name, e.g., “French”
+switching_language: Váltás {$locale} nyelvre…
+locale_load_failed: Nem sikerült betölteni a fordítást ({$locale}). Próbáld újra később.
+
+# Toast notification shown when changes saved with the local backend couldn’t be committed to Git
+# {$reason} is one of the `local_git_skip_reasons` strings below
+local_git_not_committed: A módosításaidat mentettük, de nem commitoltuk őket a Gitbe. {$reason} Ha csak a fájlokat szeretnéd menteni, kapcsold ki a Git-commitokat a Beállítások > Fejlesztő részben.
+local_git_skip_reasons:
+  unsupported_repository: A tárolód olyan Git-funkciót használ, amelyet a CMS nem támogat, például csatolt munkafát (linked worktree), SHA-256 objektumneveket, reftable formátumot, ritka indexet (sparse index) vagy 3-as, illetve 4-es verziójú indexet, amelyet a feature.manyFiles beállítás és a git add -N használ.
+  missing_identity: A neved és az e-mail-címed nincs beállítva a tároló Git-konfigurációjában, és a CMS nem tudja beolvasni a globálisat. Állítsd be őket a tárolóban a git config --local user.name "Your Name" és a git config --local user.email "you@example.com" paranccsal.
+  locked: Egy másik Git-folyamat használja a tárolót. Ha egy sem fut, töröld a .git/index.lock fájlt.
+  # The operation in progress, with how to finish or cancel it
+  operation_in_progress:
+    merge: Egy merge folyamatban van. Fejezd be a git commit paranccsal, vagy szakítsd meg a git merge --abort paranccsal.
+    rebase: Egy rebase folyamatban van. Fejezd be a git rebase --continue paranccsal, vagy szakítsd meg a git rebase --abort paranccsal. Ha már továbbléptél, a git rebase --quit a fájlok módosítása nélkül elveti.
+    cherry_pick: Egy cherry-pick folyamatban van. Fejezd be a git cherry-pick --continue paranccsal, vagy szakítsd meg a git cherry-pick --abort paranccsal.
+    revert: Egy revert folyamatban van. Fejezd be a git revert --continue paranccsal, vagy szakítsd meg a git revert --abort paranccsal.
+    am: Patchek alkalmazása van folyamatban a git am paranccsal. Fejezd be a git am --continue paranccsal, vagy szakítsd meg a git am --abort paranccsal.
+    conflict: Egyes fájlokban ütközések vannak. Előbb oldd fel őket, és stage-eld az eredményt.
+  detached_head: Nincs kiválasztott (checkout) ág.
+  staged_changes: Más módosítások is commitra várnak (staged). Előbb commitold őket, vagy vond vissza a stage-elésüket.
+  # {$path} is the file path
+  lfs: Ezt a fájlt ({$path}) a Git LFS követi, ezért a CMS nem tudja commitolni.
+  # {$message} is the error message
+  error: Váratlan hiba történt. {$message}
+
+# Site and page navigation
+# Toolbar button aria-label for visiting the live site
+visit_live_site: Élő webhely megnyitása
+# Page switcher button group aria-label for switching between main sections
+switch_page: Oldalváltás
+
+# Search input placeholders
+search_placeholder_contents: Keresés a tartalomban…
+search_placeholder_assets: Keresés a médiafájlok között…
+search_placeholder_all: Keresés a tartalomban és a médiafájlok között…
+
+# Create button: aria-label for the create menu in the toolbar
+create_entry_or_assets: Bejegyzés vagy médiafájl létrehozása
+
+# Publishing actions: button labels and progress indicators
+publish_changes: Módosítások közzététele
+publishing_changes: Módosítások közzététele…
+# Error notification when publishing fails
+publishing_changes_failed: Nem sikerült közzétenni a módosításokat. Próbáld újra.
+
+# Notifications: button aria-labels and section headings
+show_notifications: Értesítések megjelenítése
+notifications: Értesítések
+
+# Account menu: button aria-labels and section headings
+show_account_menu: Fiókmenü megjelenítése
+# Account section heading in the account menu and mobile menu page
+account: Fiók
+
+# Account menu items: links to external resources
+live_site: Élő webhely
+git_repository: Git-tároló
+settings: Beállítások
+
+# Page for the people who look after the CMS, apart from the personal settings: user management
+# and the CMS configuration
+administration: Adminisztráció
+
+# Help menu: button aria-labels and section headings
+show_help_menu: Súgómenü megjelenítése
+# Help section heading in dropdowns and mobile menu
+help: Súgó
+
+# Help menu items: documentation and support resources
+keyboard_shortcuts: Billentyűparancsok
+documentation: Dokumentáció
+release_notes: Kiadási megjegyzések
+announcements: Bejelentések
+# Version badge aria-label in the release notes menu item
+# {$version} is the current app version string
+version_x: '{$version} verzió'
+# Additional help menu items
+report_issue: Hiba bejelentése
+share_feedback: Visszajelzés küldése
+get_help: Segítségkérés
+donate: Támogatás
+join_discord: Csatlakozz hozzánk a Discordon
+bluesky: Kövess minket a Blueskyon
+
+# Update notification: infobar message and button
+update_available: Elérhető a Sveltia CMS legújabb verziója.
+update_now: Frissítés most
+
+# Backend status notifications
+# Shown when the Git backend (GitHub, GitLab, etc.) is experiencing issues
+# {$service} is the backend service label shown in the toolbar notice, e.g., GitHub or GitLab
+backend_status:
+  minor_incident: '{$service}: kisebb üzemzavar tapasztalható. Ez hatással lehet a munkádra.'
+  major_incident: '{$service}: jelentős üzemzavar tapasztalható. Érdemes lehet megvárni, amíg a helyzet javul.'
+
+# ==============================================================================
+# Content and Asset Libraries
+# ==============================================================================
+# Strings used in the main content and asset management interfaces, including
+# lists, navigation, and collection/folder views.
+
+# Page container aria-labels
+content_library: Tartalomtár
+asset_library: Médiatár
+
+# Primary sidebar section headings and list aria-labels
+collections: Gyűjtemények
+entries: Bejegyzések
+files: Fájlok
+
+# Asset location selector: option group labels
+asset_location:
+  # Assets stored in the site’s Git repository
+  repository: Saját webhely
+  external: Külső helyek
+  stock_photos: Stockfotók
+
+# Sidebar and list labels
+# Collection assets panel aria-label
+collection_assets: Gyűjtemény médiafájljai
+# List aria-labels for different list types
+entry_list: Bejegyzéslista
+file_list: Fájllista
+asset_list: Médiafájllista
+
+# Collection and folder page titles
+# Used as aria-labels on page containers
+# {$collection} is the current collection label
+x_collection: '{$collection} gyűjtemény'
+# {$folder} is the current asset folder label
+x_asset_folder: '{$folder} médiamappa'
+
+# Navigation announcements (ARIA live regions)
+# Announce page changes for screen reader users
+viewing_collection_list: Most a gyűjtemények listáját nézed.
+viewing_asset_folder_list: Most a médiamappák listáját nézed.
+# Collection view announcements with entry counts
+# {$collection} is the collection label and {$count} is the number of entries in it
+viewing_x_collection: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Most ezt a gyűjteményt nézed: „{$collection}”. Még nincs benne bejegyzés. }}
+    one {{ Most ezt a gyűjteményt nézed: „{$collection}”. Egy bejegyzés van benne. }}
+    *   {{ Most ezt a gyűjteményt nézed: „{$collection}”. {$count} bejegyzés van benne. }}
+# Asset folder view announcements with asset counts
+# {$folder} is the folder label and {$count} is the number of assets in it
+viewing_x_asset_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Most ezt a médiamappát nézed: „{$folder}”. Még nincs benne médiafájl. }}
+    one {{ Most ezt a médiamappát nézed: „{$folder}”. Egy médiafájl van benne. }}
+    *   {{ Most ezt a médiamappát nézed: „{$folder}”. {$count} médiafájl van benne. }}
+# Cloud storage service view announcement
+# {$service} is the cloud storage service name, e.g. Uploadcare
+viewing_x_external_location: 'Most ennek a szolgáltatásnak a médiafájljait nézed: {$service}.'
+# Administration page announcements
+viewing_admin_section_list: Most az Adminisztráció oldal szakaszainak listáját nézed.
+# {$section} is the section label, e.g. Users
+viewing_x_admin_section: Most az Adminisztráció oldal „{$section}” szakaszát nézed.
+
+# Singleton file selection announcement
+# {$file} is the singleton file name
+singleton_selected_announcement: 'Nyomj Entert a fájl szerkesztéséhez: „{$file}”.'
+
+# Error messages: page, collection, folder or file not found
+page_not_found: Az oldal nem található.
+collection_not_found: A gyűjtemény nem található.
+asset_folder_not_found: A médiamappa nem található.
+file_not_found: A fájl nem található.
+
+# Selection count indicator
+# Shown in the toolbar when items are selected (e.g., “2 of 10 selected”)
+# {$selected} is the selected item count and {$total} is the total item count
+x_of_x_selected: '{$selected} / {$total} kijelölve'
+
+# View switcher: toggle between list and grid views
+switch_view: Nézetváltás
+table_view: Táblázatnézet
+list_view: Listanézet
+grid_view: Rácsnézet
+switch_to_list_view: Váltás listanézetre
+switch_to_grid_view: Váltás rácsnézetre
+
+# ==============================================================================
+# List Controls: Sort, Filter, and Group
+# ==============================================================================
+# Strings for sorting, filtering, and grouping entries and assets in lists.
+
+# Sort menu: button labels and options
+sort: Rendezés
+sorting_options: Rendezési beállítások
+# Table view column labels for the entry metadata used as `{{…}}` template tags
+table_column_keys:
+  # The folder containing the entry file
+  dirname: Mappa
+  # The entry file name without the extension
+  filename: Fájlnév
+  # The entry file extension
+  extension: Kiterjesztés
+  # The enabled locales of the entry
+  locales: Nyelvek
+# Sort key option labels
+sort_keys:
+  # No sorting; entries appear in their natural repository order
+  none: Nincs
+  name: Név
+  slug: URL-azonosító
+  # Sort by the last commit’s author name
+  commit_author: Módosította
+  # Sort by the last commit date
+  commit_date: Módosítás dátuma
+  # Sort by the date a file on a cloud storage service was last modified
+  last_modified: Módosítás dátuma
+  # Sort by file size
+  size: Méret
+  # Sort by the entry’s computed summary text
+  _summary: Összefoglaló
+  # Manual order defined by the user via drag-and-drop
+  _manual: Kézi
+# Sort order labels used with field names
+# Example: “Name, A to Z” or “Updated on, new to old”
+# {$label} is the localized sort field label
+ascending: '{$label}, növekvő'
+ascending_date: '{$label}, régebbitől az újabbig'
+descending: '{$label}, csökkenő'
+descending_date: '{$label}, újabbtól a régebbiig'
+ascending_number: '{$label}, növekvő'
+descending_number: '{$label}, csökkenő'
+
+# Filter menu: button labels and options
+filter: Szűrés
+filtering_options: Szűrési beállítások
+
+# Group menu: button labels and options
+group: Csoportosítás
+grouping_options: Csoportosítási beállítások
+
+# Asset type filter and group labels
+type: Típus
+all: Összes
+# Group option for the linked files, which can be hosted anywhere: the host name of the file’s URL
+domain: Domain
+# Asset type labels
+image: Kép
+video: Videó
+audio: Hang
+document: Dokumentum
+other: Egyéb
+
+# Toolbar toggles: show/hide panels
+show_assets: Médiafájlok megjelenítése
+hide_assets: Médiafájlok elrejtése
+show_info: Információk megjelenítése
+hide_info: Információk elrejtése
+
+# Folder display labels when no specific path is configured
+all_assets: Összes médiafájl
+global_assets: Globális médiafájlok
+# Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
+linked_files: Hivatkozott fájlok
+# Badge and message shown on a linked file that couldn’t be loaded, e.g. because it has been deleted
+file_unavailable: Nem elérhető
+file_unavailable_description: Ezt a fájlt nem sikerült betölteni. Lehet, hogy áthelyezték vagy törölték.
+
+# ==============================================================================
+# Entry and Collection Actions
+# ==============================================================================
+# Strings related to creating, editing, and managing entries and collections.
+
+# Message shown while entries are still being retrieved: in the entry editor, when it was opened
+# with a direct link before all the data has been loaded, and on the Editorial Workflow page while
+# the pull requests are being fetched. {$count} selects the form
+loading_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Bejegyzés betöltése… }}
+    *   {{ Bejegyzések betöltése… }}
+# Error message when entry cannot be found
+entry_not_found: A bejegyzés nem található.
+
+# Entry creation restrictions: tooltip and advisory messages
+creating_entries_disabled_by_admin: Ebben a gyűjteményben az adminisztrátor letiltotta az új bejegyzések létrehozását.
+# {$quota} is the collection’s maximum entry count
+creating_entries_disabled_by_quota: |
+  .input {$quota :integer}
+  .match $quota
+    one {{ Ehhez a gyűjteményhez nem adhatsz hozzá új bejegyzést, mert elérte a korlátját ({$quota} bejegyzés). }}
+    *   {{ Ehhez a gyűjteményhez nem adhatsz hozzá új bejegyzést, mert elérte a korlátját ({$quota} bejegyzés). }}
+# {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
+creating_entries_nearing_quota: |
+  .input {$quota :integer}
+  .input {$remaining :integer}
+  .match $quota $remaining
+    one one {{ Ez a gyűjtemény közelít a korlátjához ({$quota} bejegyzés). Már csak {$remaining} bejegyzést hozhatsz létre. }}
+    one *   {{ Ez a gyűjtemény közelít a korlátjához ({$quota} bejegyzés). Már csak {$remaining} bejegyzést hozhatsz létre. }}
+    *   one {{ Ez a gyűjtemény közelít a korlátjához ({$quota} bejegyzés). Már csak {$remaining} bejegyzést hozhatsz létre. }}
+    *   *   {{ Ez a gyűjtemény közelít a korlátjához ({$quota} bejegyzés). Már csak {$remaining} bejegyzést hozhatsz létre. }}
+
+# Read-only restrictions set with the `readonly` option: advisory messages
+readonly_cms: A CMS csak olvasható módban van. Megtekintheted a tartalmat és a médiafájlokat, de nem módosíthatsz semmit.
+readonly_collection: Ez a gyűjtemény csak olvasható. Megtekintheted a tartalmát, de nem módosíthatsz semmit.
+readonly_entry: Ez a bejegyzés csak olvasható. Megtekintheted, de nem módosíthatsz semmit.
+readonly_asset_folder: Ez a mappa csak olvasható. Megtekintheted a médiafájljait, de nem módosíthatsz semmit.
+readonly_branch: 'Nincs jogosultságod pusholni a következő ágra: „{$branch}”. Megtekintheted ezt a tartalmat, de nem módosíthatsz semmit.'
+readonly_role: Csak megtekintési jogosultságod van. Megtekintheted a tartalmat és a médiafájlokat, de nem módosíthatsz semmit.
+readonly_reference: A bejegyzés csak olvasható, ezért a hivatkozás nem távolítható el.
+# {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
+cannot_rename_referenced_entry: 'Ez a bejegyzés nem nevezhető át, mert a következő csak olvasható bejegyzések a jelenlegi nevével hivatkoznak rá: {$entries}.'
+# {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
+cannot_move_referenced_asset: 'Ez a médiafájl nem helyezhető át és nem nevezhető át, mert a következő csak olvasható bejegyzések használják: {$entries}.'
+
+# Navigation: back links and list labels
+back_to_collection: Vissza a gyűjteményhez
+collection_list: Gyűjteménylista
+back_to_collection_list: Vissza a gyűjteménylistához
+asset_folder_list: Médiamappák listája
+back_to_asset_folder_list: Vissza a médiamappák listájához
+# Back button shown in place of the one above while browsing a subfolder of an asset folder
+back_to_parent_folder: Vissza a szülőmappához
+
+# ==============================================================================
+# Search
+# ==============================================================================
+# Strings used in the search feature for finding entries and assets.
+
+# Search page: headings and aria-labels
+search_results: Keresési találatok
+# {$terms} is the current search query text
+search_results_for_x: 'Keresési találatok: „{$terms}”'
+
+# Search result announcements (ARIA live regions)
+# Entry search results with counts
+# {$terms} is the search query and {$count} is the number of matching entries
+viewing_entry_search_results: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Most ennek a keresésnek a találatait nézed: „{$terms}”. Egyetlen bejegyzést sem találtunk. }}
+    one {{ Most ennek a keresésnek a találatait nézed: „{$terms}”. Egy bejegyzést találtunk. }}
+    *   {{ Most ennek a keresésnek a találatait nézed: „{$terms}”. {$count} bejegyzést találtunk. }}
+# Asset search results with counts
+# {$terms} is the search query and {$count} is the number of matching assets
+viewing_asset_search_results: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Most ennek a keresésnek a találatait nézed: „{$terms}”. Egyetlen médiafájlt sem találtunk. }}
+    one {{ Most ennek a keresésnek a találatait nézed: „{$terms}”. Egy médiafájlt találtunk. }}
+    *   {{ Most ennek a keresésnek a találatait nézed: „{$terms}”. {$count} médiafájlt találtunk. }}
+
+# Result count labels
+# Used in search result headings to show counts
+# {$count} is the number of matching entries
+x_entries: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Nincs bejegyzés }}
+    one {{ {$count} bejegyzés }}
+    *   {{ {$count} bejegyzés }}
+# {$count} is the number of matching assets
+x_assets: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Nincs médiafájl }}
+    one {{ {$count} médiafájl }}
+    *   {{ {$count} médiafájl }}
+
+# Empty state messages
+no_files_found: Nem található fájl.
+no_entries_found: Nem található bejegyzés.
+
+# ==============================================================================
+# Asset Management
+# ==============================================================================
+# Strings for uploading, editing, and managing assets (images, documents, etc.).
+
+# Upload dialog: title and button label
+upload_assets: Új médiafájlok feltöltése
+
+# New Folder button and dialog in the Asset Library
+new_folder: Új mappa
+new_folder_name: Mappa neve
+new_folder_create: Létrehozás
+# {$folder} is the path of the folder the new one will be created in, starting with a slash
+new_folder_description: 'Az új mappa itt jön létre: „{$folder}”.'
+# Validation errors for the new folder name
+new_folder_error:
+  empty: A mappa neve nem lehet üres.
+  invalid: A mappa neve nem tartalmazhat perjelet, és nem kezdődhet ponttal.
+  # A name the CMS itself is usually served from, e.g. `admin` or `cms`
+  reserved: Az ilyen nevű mappában lévő fájlok csak olvashatók, mivel általában maga a CMS is innen fut.
+  duplicate: Itt már létezik ilyen nevű mappa vagy fájl.
+# Progress and error messages while the folder is being created
+creating_folder: Mappa létrehozása…
+creating_folder_failed: Nem sikerült létrehozni a mappát.
+
+# Menu on a folder in the Asset Library, and the Rename Folder and Delete Folder dialogs
+folder_options: Mappabeállítások
+show_folder_options: Mappabeállítások megjelenítése
+rename_folder: Mappa átnevezése
+delete_folder: Mappa törlése
+# Rename Folder dialog body text
+# {$count} is the number of assets in the folder, which are moved along with it
+enter_new_name_for_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Add meg alább az új nevet. }}
+    one {{ Add meg alább az új nevet. A mappában lévő médiafájl is áthelyeződik, és az azt használó bejegyzések frissülnek. }}
+    *   {{ Add meg alább az új nevet. A mappában lévő {$count} médiafájl is áthelyeződik, és az azokat használó bejegyzések frissülnek. }}
+# Delete Folder confirmation
+# {$name} is the folder name and {$count} is the number of assets in the folder
+confirm_deleting_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Biztosan törlöd az üres „{$name}” mappát? }}
+    one {{ Biztosan törlöd ezt a mappát („{$name}”) és a benne lévő médiafájlt? }}
+    *   {{ Biztosan törlöd ezt a mappát („{$name}”) és a benne lévő {$count} médiafájlt? }}
+# Progress and error messages while the folder is being renamed or deleted
+renaming_folder: Mappa átnevezése…
+renaming_folder_failed: Nem sikerült átnevezni a mappát.
+deleting_folder: Mappa törlése…
+deleting_folder_failed: Nem sikerült törölni a mappát.
+# Asset Library and asset picker: notice shown when a cloud storage service holds more files than
+# are listed at once
+external_assets_truncated: A szolgáltatáson túl sok fájl van ahhoz, hogy mindet listázni lehessen, ezért néhány kimarad.
+
+# Edit options menu: button and item labels
+edit_options: Szerkesztési beállítások
+show_edit_options: Szerkesztési beállítások megjelenítése
+# Copy menu aria-label
+copy_options: Másolási beállítások
+# Edit menu items with specific asset names
+edit_asset: Médiafájl szerkesztése
+# {$name} is the selected asset name
+edit_x: 'Szerkesztés: {$name}'
+
+# Asset text editor: switch for line wrapping
+wrap_long_lines: Hosszú sorok tördelése
+
+# Move assets: dialog for moving assets to another folder in the repository
+move: Áthelyezés
+move_asset: Médiafájl áthelyezése
+# Dialog title. {$name} is the asset name when a single asset is moved, and {$count} is the number of
+# assets being moved
+move_assets_title: |
+  .input {$count :integer}
+  .match $count
+    one {{ Áthelyezés: {$name} }}
+    *   {{ {$count} médiafájl áthelyezése }}
+# Dialog body text. {$count} is the number of entries that currently use the assets
+select_asset_move_destination: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Válaszd ki a célmappát. }}
+    one {{ Válaszd ki a célmappát. A médiafájlokat használó bejegyzés is frissül. }}
+    *   {{ Válaszd ki a célmappát. A médiafájlokat használó {$count} bejegyzés is frissül. }}
+# Accessible label of the folder tree in the Move dialog
+asset_move_destination: Célmappa
+# Shown when the assets being moved are all in the selected folder already
+assets_already_in_folder: |
+  .input {$count :integer}
+  .match $count
+    one {{ A médiafájl már ebben a mappában van. }}
+    *   {{ A médiafájlok már ebben a mappában vannak. }}
+# Shown when files with the same names exist in the selected folder. {$names} is a comma-separated
+# list of file names
+asset_move_conflict: 'Ebben a mappában már léteznek a következő fájlok: {$names}.'
+moving_assets: Médiafájlok áthelyezése…
+moving_assets_failed: Nem sikerült áthelyezni a médiafájlokat.
+# Warning shown when files have been moved off a cloud storage service, but the originals couldn’t
+# be deleted from it
+asset_move_cleanup_failed: A fájlokat áthelyeztük, de az eredetieket nem sikerült törölni a tárhelyszolgáltatásból.
+# Shown when files on a cloud storage service can’t be renamed or moved, because the entries using
+# them can’t be updated, e.g. for an Open Authoring contributor. {$count} is the number of files
+cannot_change_used_external_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ez a fájl nem nevezhető át és nem helyezhető át, mert az azt használó bejegyzések nem frissíthetők. }}
+    *   {{ Ezek a fájlok nem nevezhetők át és nem helyezhetők át, mert az azokat használó bejegyzések nem frissíthetők. }}
+
+# Rename asset: dialog and validation
+rename_asset: Médiafájl átnevezése
+# {$name} is the current asset name
+rename_x: 'Átnevezés: {$name}'
+# Dialog body text indicating how many entries reference this asset
+# {$count} is the number of entries that currently reference the asset
+enter_new_name_for_asset: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Add meg alább az új nevet. }}
+    one {{ Add meg alább az új nevet. A médiafájlt használó bejegyzés is frissül. }}
+    *   {{ Add meg alább az új nevet. A médiafájlt használó {$count} bejegyzés is frissül. }}
+# Validation errors for asset renaming
+enter_new_name_for_asset_error:
+  empty: A fájlnév nem lehet üres.
+  character: A fájlnév nem tartalmazhat speciális karaktereket.
+  duplicate: Ezt a fájlnevet egy másik médiafájl használja.
+  # A name starting with a dot hides the file, which the CMS wouldn’t list any more
+  leading_dot: A fájlnév nem kezdődhet ponttal.
+  # The name of a file next to the asset that isn’t an asset, like an entry file
+  file_duplicate: Itt már létezik egy másik ilyen nevű fájl.
+  # The name of a folder next to the file
+  folder_duplicate: Itt már létezik ilyen nevű mappa.
+# Shown while renaming a file whose name will be changed on saving, e.g. by the `slugify_filename`
+# media library option
+file_will_be_saved_as: A fájlt „{$name}” néven mentjük.
+# Confirmation dialog shown when the file extension is changed while renaming an asset
+change_file_extension: Fájlkiterjesztés módosítása
+# {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
+confirm_file_extension_change:
+  change: Biztosan módosítod a kiterjesztést („.{$oldExtension}” → „.{$newExtension}”)?
+  add: 'Biztosan hozzáadod a következő kiterjesztést: „.{$newExtension}”?'
+  remove: 'Biztosan eltávolítod a következő kiterjesztést: „.{$oldExtension}”?'
+file_extension_change_warning: Ha a kiterjesztés nem egyezik a fájl tényleges formátumával, előfordulhat, hogy a fájl nem jelenik meg, vagy nem kezelhető megfelelően.
+
+# Replace asset: menu item and dialog title
+replace_asset: Médiafájl cseréje
+# {$name} is the asset being replaced
+replace_x: 'Csere: {$name}'
+# File/Image field: labels of the Replace and Remove buttons
+replace_file: Fájl cseréje
+replace_image: Kép cseréje
+remove_file: Fájl eltávolítása
+remove_image: Kép eltávolítása
+
+# File selection prompts: drop zones and file pickers
+# Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
+click_to_browse: Kattints a tallózáshoz…
+# Browse prompt shown on touch devices
+tap_to_browse: Koppints a tallózáshoz…
+# Drop zone text with browse button
+# {$count} is the number of files expected by the current picker mode
+drop_files_or_click_to_browse: |
+  .input {$count :integer}
+  .match $count
+    one {{ Húzz ide egy fájlt, vagy kattints a tallózáshoz… }}
+    *   {{ Húzz ide fájlokat, vagy kattints a tallózáshoz… }}
+# Partial drop zone text (ends with inline button)
+# {$count} is the number of files expected by the current picker mode
+# After the “or” text, the inline buttons are rendered with the localized strings
+drop_files_or: |
+  .input {$count :integer}
+  .match $count
+    one {{ Húzz ide egy fájlt, vagy }}
+    *   {{ Húzz ide fájlokat, vagy }}
+# Image-specific drop zone text
+# {$count} is the number of image files expected by the current picker mode
+# After the “or” text, the inline buttons are rendered with the localized strings
+drop_image_files_or: |
+  .input {$count :integer}
+  .match $count
+    one {{ Húzz ide egy képfájlt, vagy }}
+    *   {{ Húzz ide képfájlokat, vagy }}
+
+# File picker and clipboard actions used by upload controls
+browse: Tallózás
+# Generic clipboard paste action used by non-image file fields
+paste: Beillesztés
+# Clipboard paste action used by image fields
+paste_image: Kép beillesztése
+
+# Clipboard paste errors
+no_image_in_clipboard: Nem található kép a vágólapon.
+clipboard_access_denied: A vágólap-hozzáférés megtagadva.
+
+# Drag-and-drop overlay text (shown while dragging)
+# {$count} is the number of files expected by the current picker mode
+drop_files_here: |
+  .input {$count :integer}
+  .match $count
+    one {{ Húzz ide egy fájlt }}
+    *   {{ Húzz ide fájlokat }}
+
+# File type validation errors
+unsupported_file_type: Nem támogatott fájltípus
+# {$type} is the expected asset type label, such as image or document
+dropped_file_type_mismatch: 'A behúzott fájl nem a következő típusok egyike: {$types}. Próbáld újra.'
+dropped_image_type_mismatch: 'A behúzott fájl nem támogatott. Csak a következő típusú kép fogadható el: {$types}. Próbáld újra.'
+
+# File chooser button label
+# {$count} is the number of files the picker allows the user to choose
+choose_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Fájl kiválasztása }}
+    *   {{ Fájlok kiválasztása }}
+
+# ==============================================================================
+# Delete Confirmations
+# ==============================================================================
+# Confirmation dialogs for deleting assets and entries.
+
+# Delete assets: dialog titles and confirmation messages
+# {$count} is the number of assets targeted by the action
+delete_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Médiafájl törlése }}
+    *   {{ Médiafájlok törlése }}
+# {$count} is the number of selected assets
+delete_selected_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Kijelölt médiafájl törlése }}
+    *   {{ Kijelölt médiafájlok törlése }}
+confirm_deleting_this_asset: Biztosan törlöd ezt a médiafájlt?
+# {$count} is the number of selected assets
+confirm_deleting_selected_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Biztosan törlöd a kijelölt médiafájlt? }}
+    *   {{ Biztosan törlöd a kijelölt {$count} médiafájlt? }}
+confirm_deleting_all_assets: Biztosan törlöd az összes médiafájlt?
+# Note added to the confirmation when entries use the assets being deleted; the references are
+# removed in the same commit. {$count} is the number of entries using them
+deleting_referenced_assets_note: |
+  .input {$count :integer}
+  .match $count
+    one {{ Egy bejegyzésből a rá mutató hivatkozás is törlődik. }}
+    *   {{ {$count} bejegyzésből is törlődnek a rá mutató hivatkozások. }}
+# Shown in place of the confirmation when removing the references would leave a field in an entry
+# invalid, e.g. a required Image field with nothing left, so the deletion is refused. The fields are
+# listed below the message, each with the validation error it would have. {$count} is the number of
+# assets being deleted
+cannot_delete_referenced_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ez a médiafájl nem törölhető, mert az azt használó bejegyzések alábbi mezői nélküle már nem lennének érvényesek. Előbb frissítsd ezeket a bejegyzéseket. }}
+    *   {{ Ezek a médiafájlok nem törölhetők, mert az azokat használó bejegyzések alábbi mezői nélkülük már nem lennének érvényesek. Előbb frissítsd ezeket a bejegyzéseket. }}
+# Error shown in the asset deletion dialog when the entries using the assets couldn’t be looked up,
+# so the deletion can’t go ahead. {$count} is the number of assets being deleted
+checking_asset_references_failed: |
+  .input {$count :integer}
+  .match $count
+    one {{ Nem sikerült ellenőrizni, mely bejegyzések használják ezt a médiafájlt. Zárd be ezt az ablakot, és próbáld újra. }}
+    *   {{ Nem sikerült ellenőrizni, mely bejegyzések használják ezeket a médiafájlokat. Zárd be ezt az ablakot, és próbáld újra. }}
+
+# Delete entries: dialog titles and confirmation messages
+# {$count} is the number of entries targeted by the action
+delete_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Bejegyzés törlése }}
+    *   {{ Bejegyzések törlése }}
+# {$count} is the number of selected entries
+delete_selected_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Kijelölt bejegyzés törlése }}
+    *   {{ Kijelölt bejegyzések törlése }}
+confirm_deleting_this_entry: Biztosan törlöd ezt a bejegyzést?
+confirm_deleting_this_entry_with_assets: Biztosan törlöd ezt a bejegyzést és a hozzá tartozó médiafájlokat?
+# Error notification shown when an entry could not be deleted
+deleting_entry_failed: Nem sikerült törölni a bejegyzést. Próbáld újra.
+# {$count} is the number of selected entries
+confirm_deleting_selected_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Biztosan törlöd a kijelölt bejegyzést? }}
+    *   {{ Biztosan törlöd a kijelölt {$count} bejegyzést? }}
+# {$count} is the number of selected entries whose associated assets would also be removed
+confirm_deleting_selected_entries_with_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Biztosan törlöd a kijelölt bejegyzést és a hozzá tartozó médiafájlokat? }}
+    *   {{ Biztosan törlöd a kijelölt {$count} bejegyzést és a hozzájuk tartozó médiafájlokat? }}
+confirm_deleting_all_entries: Biztosan törlöd az összes bejegyzést?
+confirm_deleting_all_entries_with_assets: Biztosan törlöd az összes bejegyzést és a hozzájuk tartozó médiafájlokat?
+# Note added to the confirmation when other entries reference the entries being deleted through
+# Relation fields; the references are removed in the same commit. {$count} is the number of
+# referencing entries
+deleting_referenced_entries_note: |
+  .input {$count :integer}
+  .match $count
+    one {{ Egy másik bejegyzésből a rá mutató hivatkozás is törlődik. }}
+    *   {{ {$count} másik bejegyzésből is törlődnek a rá mutató hivatkozások. }}
+# Shown in place of the confirmation when removing the references would leave a Relation field in
+# another entry invalid, e.g. a required field with nothing selected, so the deletion is refused.
+# The fields are listed below the message, each with the validation error it would have. {$count}
+# is the number of entries being deleted
+cannot_delete_referenced_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ez a bejegyzés nem törölhető, mert más bejegyzések alábbi mezői nélküle már nem lennének érvényesek. Előbb frissítsd ezeket a bejegyzéseket. }}
+    *   {{ Ezek a bejegyzések nem törölhetők, mert más bejegyzések alábbi mezői nélkülük már nem lennének érvényesek. Előbb frissítsd ezeket a bejegyzéseket. }}
+
+# ==============================================================================
+# Entry Reordering
+# ==============================================================================
+# Strings for manually reordering entries via drag-and-drop.
+
+# Reorder mode: toggle buttons
+reorder_entries: Bejegyzések átrendezése
+done_reordering_entries: Átrendezés befejezése
+cancel_reordering_entries: Átrendezés megszakítása
+
+# Reorder error message
+saving_reorder_failed: Nem sikerült menteni a bejegyzések új sorrendjét. Próbáld újra.
+
+# ==============================================================================
+# Bulk Entry Editing
+# ==============================================================================
+# Strings for editing the fields of many entries at once in a table.
+
+# Bulk edit mode: toggle buttons
+bulk_edit_entries: Bejegyzések tömeges szerkesztése
+save_bulk_edits: Tömeges módosítások mentése
+cancel_bulk_edits: Tömeges szerkesztés megszakítása
+
+# Bulk edit table: column header of the entry titles
+bulk_edit_entry: Bejegyzés
+
+# Bulk edit table: label of the table
+bulk_edit_table: Tömeges szerkesztő
+
+# Bulk edit table: label of a cell input; {$field} is the field label, {$entry} is the entry title
+bulk_edit_cell: '{$entry}: {$field}'
+
+# Bulk edit status: number of changed fields
+bulk_edit_count: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Nincs módosítás }}
+    one {{ 1 módosítás }}
+    *   {{ {$count} módosítás }}
+
+# Bulk edit error messages
+bulk_edit_invalid: Néhány érték érvénytelen. Javítsd a kiemelt mezőket, és próbáld újra.
+saving_bulk_edits_failed: Nem sikerült menteni a módosításokat. Próbáld újra.
+
+# Bulk edit: confirmation shown when leaving the mode with unsaved changes
+discard_bulk_edits_confirm: Elveted a bejegyzéseken végzett módosításokat?
+
+# ==============================================================================
+# File Upload and Processing
+# ==============================================================================
+# Strings for file upload dialogs, progress indicators, and validation.
+
+# Processing indicator shown during file preparation
+# {$count} is the number of files currently being processed
+processing_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Fájl feldolgozása. Ez eltarthat egy ideig. }}
+    *   {{ Fájlok feldolgozása. Ez eltarthat egy ideig. }}
+
+# Uploading section aria-label
+uploading_files: Fájlok feltöltése
+
+# Replace file confirmation
+# Dialog body when replacing an existing file
+# {$name} is the existing file name that will be replaced
+confirm_replacing_file: '„{$name}” helyére ez a fájl kerül:'
+
+# Upload confirmation with destination folder
+# {$folder} is the destination folder label and {$count} is the number of files being uploaded
+confirm_uploading_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ez a fájl ebbe a mappába kerül („{$folder}”): }}
+    *   {{ A következő {$count} fájl ebbe a mappába kerül („{$folder}”): }}
+
+# File size validation
+# Warning section for files exceeding size limits
+oversized_files: Túl nagy fájlok
+# {$size} is the maximum allowed file size and {$count} is the number of oversized files
+warning_oversized_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ez a fájl nem tölthető fel, mert meghaladja a maximális {$size} méretet. Csökkentsd a méretét, vagy válassz másik fájlt. }}
+    *   {{ Ezek a fájlok nem tölthetők fel, mert meghaladják a maximális {$size} méretet. Csökkentsd a méretüket, vagy válassz másik fájlokat. }}
+
+# File integrity validation
+# Warning section for files that cannot be decoded
+invalid_files: Érvénytelen fájlok
+# {$count} is the number of invalid files
+warning_invalid_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ez a fájl nem tölthető fel, mert sérült, vagy a tartalma nem egyezik a kiterjesztésével. Ez gyakran előfordul, ha egy fényképet átneveznek ahelyett, hogy átalakítanák, például ha egy HEIC képet JPEG fájlként mentenek. Alakítsd át a fájlt, és próbáld újra. }}
+    *   {{ Ezek a fájlok nem tölthetők fel, mert sérültek, vagy a tartalmuk nem egyezik a kiterjesztésükkel. Ez gyakran előfordul, ha fényképeket átneveznek ahelyett, hogy átalakítanák, például ha HEIC képeket JPEG fájlként mentenek. Alakítsd át a fájlokat, és próbáld újra. }}
+# {$count} is the number of files that are not of a type the field accepts, even once transformed
+# {$types} is the list of accepted file types, such as “.pdf or .txt”
+warning_unsupported_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ez a fájl nem tölthető fel, mert nem a következő típusok egyike: {$types}. }}
+    *   {{ Ezek a fájlok nem tölthetők fel, mert nem a következő típusok egyikébe tartoznak: {$types}. }}
+# {$count} is the number of files that are not of an image type the field accepts
+# {$types} is the list of accepted image formats, such as “PNG or WebP”
+warning_unsupported_image_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ez a fájl nem tölthető fel, mert csak a következő típusú kép fogadható el: {$types}. }}
+    *   {{ Ezek a fájlok nem tölthetők fel, mert csak a következő típusú képek fogadhatók el: {$types}. }}
+
+# File format validation when replacing an asset
+# Warning section for replacement files that are in a different format
+mismatched_files: Eltérő formátumú fájlok
+# {$name} is the name of the asset being replaced and {$count} is the number of mismatched files
+warning_mismatched_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ez a fájl nem cserélheti le a meglévő fájlt („{$name}”), mert eltérő a formátuma. Alakítsd át a fájlt ugyanarra a formátumra, és próbáld újra. }}
+    *   {{ Ezek a fájlok nem cserélhetik le a meglévő fájlt („{$name}”), mert eltérő a formátumuk. Alakítsd át a fájlokat ugyanarra a formátumra, és próbáld újra. }}
+
+# File name conflict resolution
+# {$count} is the number of conflicting file names in the target folder
+file_name_conflict_confirmation: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ebben a mappában már létezik egy azonos nevű fájl. Lecseréled? }}
+    *   {{ Ebben a mappában már létezik {$count} azonos nevű fájl. Lecseréled őket? }}
+# {$name} is the conflicting file name when there is exactly one conflict; {$count} is the total conflict count
+file_name_conflict_confirmation_with_name: |
+  .input {$count :integer}
+  .input {$name :string}
+  .match $count
+    one {{ Ebben a mappában már létezik egy „{$name}” nevű fájl. Lecseréled? }}
+    *   {{ Ebben a mappában már létezik {$count} azonos nevű fájl. Lecseréled őket? }}
+file_name_conflict_resolution: Fájlnévütközés feloldása
+# Option to keep both files (rename the new one)
+keep_both: Mindkettő megtartása
+
+# Upload progress and error messages
+uploading_files_progress: Feltöltés…
+uploading_files_failed: A feltöltés sikertelen.
+# Errors shown when a file on a cloud storage service could not be deleted or renamed
+deleting_assets_failed: A törlés sikertelen.
+renaming_asset_failed: Az átnevezés sikertelen.
+# Error shown when an edited text file in the Asset Library could not be saved
+saving_asset_failed: A mentés sikertelen.
+
+# File metadata display
+# Appended when a file was auto-converted (e.g., HEIF to JPEG)
+# {$type} is the original file type before conversion
+file_meta_converted_from_x: '(átalakítva, eredeti formátum: {$type})'
+
+# ==============================================================================
+# Entry Management
+# ==============================================================================
+# Strings for creating and managing entries in collections
+
+# Empty state messages
+no_entries_created: Ebben a gyűjteményben még nincsenek bejegyzések.
+# Button to create first entry
+create_new_entry: Új bejegyzés létrehozása
+# “Entry” option label in the create button menu
+entry: Bejegyzés
+
+# Special entry types
+# Fallback label for collection index files when no custom label is configured
+index_file: Indexfájl
+
+# Empty state for file collections
+no_files_in_collection: Ebben a gyűjteményben nincsenek elérhető fájlok.
+
+# Entry duplication
+duplicate_entry: Bejegyzés duplikálása
+entry_duplicated: A bejegyzés új piszkozatként duplikálva.
+
+# Validation errors
+# Toast shown when entry has validation errors preventing save
+# {$count} is the number of fields with validation errors
+entry_validation_errors: |
+  .input {$count :integer}
+  .match $count
+    one {{ Egy mező hibás. Javítsd ki a bejegyzés mentéséhez. }}
+    *   {{ {$count} mező hibás. Javítsd ki őket a bejegyzés mentéséhez. }}
+# Button on the validation error toast that opens the Validation panel listing the errors
+show_errors: Hibák megjelenítése
+
+# ==============================================================================
+# Success Notifications
+# ==============================================================================
+# Toast notifications shown after successful operations.
+
+# Entry operations
+# {$count} is the number of entries affected by the operation
+entry_saved: |
+  .input {$count :integer}
+  .match $count
+    one {{ Bejegyzés mentve. }}
+    *   {{ {$count} bejegyzés mentve. }}
+entry_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    one {{ Bejegyzés mentve és közzétéve. }}
+    *   {{ {$count} bejegyzés mentve és közzétéve. }}
+entries_deleted: |
+  .input {$count :integer}
+  .match $count
+    one {{ Bejegyzés törölve. }}
+    *   {{ {$count} bejegyzés törölve. }}
+
+# Asset operations
+# {$count} is the number of assets or asset-derived values affected by the operation
+assets_saved: |
+  .input {$count :integer}
+  .match $count
+    one {{ Médiafájl mentve. }}
+    *   {{ {$count} médiafájl mentve. }}
+assets_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    one {{ Médiafájl mentve és közzétéve. }}
+    *   {{ {$count} médiafájl mentve és közzétéve. }}
+asset_urls_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ URL a vágólapra másolva. }}
+    *   {{ {$count} URL a vágólapra másolva. }}
+asset_paths_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ Fájl elérési útja a vágólapra másolva. }}
+    *   {{ {$count} fájl elérési útja a vágólapra másolva. }}
+asset_ids_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ Fájlazonosító a vágólapra másolva. }}
+    *   {{ {$count} fájlazonosító a vágólapra másolva. }}
+asset_data_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ Fájladatok a vágólapra másolva. }}
+    *   {{ {$count} fájl adatai a vágólapra másolva. }}
+assets_downloaded: |
+  .input {$count :integer}
+  .match $count
+    one {{ Médiafájl letöltve. }}
+    *   {{ {$count} médiafájl letöltve. }}
+assets_moved: |
+  .input {$count :integer}
+  .match $count
+    one {{ Médiafájl áthelyezve. }}
+    *   {{ {$count} médiafájl áthelyezve. }}
+assets_renamed: |
+  .input {$count :integer}
+  .match $count
+    one {{ Médiafájl átnevezve. }}
+    *   {{ {$count} médiafájl átnevezve. }}
+assets_deleted: |
+  .input {$count :integer}
+  .match $count
+    one {{ Médiafájl törölve. }}
+    *   {{ {$count} médiafájl törölve. }}
+folder_created: Mappa létrehozva.
+# Folder info panel in the Asset Library sidebar
+folder_path: Mappa elérési útja
+folder_contents: Tartalom
+# {$count} is the number of subfolders in the folder
+x_folders: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Nincs mappa }}
+    one {{ {$count} mappa }}
+    *   {{ {$count} mappa }}
+folder_renamed: Mappa átnevezve.
+folder_deleted: Mappa törölve.
+
+# ==============================================================================
+# Content Editor
+# ==============================================================================
+# Strings for the main content/entry editor interface.
+
+# Editor container aria-label
+content_editor: Tartalomszerkesztő
+
+# Draft backup: restore dialog
+restore_backup_title: Piszkozat visszaállítása
+# {$datetime} is the localized timestamp of the saved draft backup
+restore_backup_description: Ehhez a bejegyzéshez van egy biztonsági mentés ({$datetime}). Visszaállítod a szerkesztett piszkozatot?
+
+# Draft backup notifications
+draft_backup_saved: A piszkozat biztonsági mentése elkészült.
+draft_backup_restored: A piszkozat biztonsági mentése visszaállítva.
+draft_backup_deleted: A piszkozat biztonsági mentése törölve.
+
+# Editor toolbar actions
+cancel_editing: Szerkesztés megszakítása
+
+# Editor page titles and announcements
+# Creating a new entry
+# {$name} is the singular label of the collection being created in
+create_entry_title: 'Létrehozás: {$name}'
+# {$collection} is the collection label
+create_entry_announcement: 'Most egy új bejegyzést hozol létre a következő gyűjteményben: „{$collection}”.'
+# Editing an existing entry
+# {$entry} is the current entry label and {$collection} is the collection label
+edit_entry_announcement: 'Most a következő bejegyzést szerkeszted: „{$entry}” („{$collection}” gyűjtemény).'
+# {$file} is the file name and {$collection} is the collection label
+edit_file_announcement: 'Most a következő fájlt szerkeszted: „{$file}” („{$collection}” gyűjtemény).'
+# {$file} is the singleton file name
+edit_singleton_announcement: 'Most a következő fájlt szerkeszted: „{$file}”.'
+
+# Save button variants
+# Shown when CI skip is enabled/disabled
+save_and_publish: Mentés és közzététel
+save_without_publishing: Mentés közzététel nélkül
+# Shown disabled in place of `save_and_publish` while entries created or edited from a Relation
+# field are in a collection whose review can’t be skipped with the `direct_publish` option
+save_and_publish_needs_review: Mentés és közzététel (a kapcsolódó bejegyzéseket ellenőrizni kell)
+
+# Editor options menu
+show_editor_options: Szerkesztőbeállítások megjelenítése
+editor_options: Szerkesztőbeállítások
+
+# Preview controls
+show_second_pane: Második panel megjelenítése
+show_preview: Előnézet megjelenítése
+
+# Editor settings
+sync_scrolling: Szinkronizált görgetés
+
+# Locale controls
+switch_locale: Nyelv váltása
+# Short status indicators appended to locale names
+locale_content_disabled_short: (letiltva)
+locale_content_error_short: (hiba)
+
+# Pane labels
+edit: Szerkesztés
+preview: Előnézet
+
+# Pane controls; not to be confused with pages
+swap_panes: Panelek felcserélése
+
+# Locale-specific pane labels
+# {$locale} is the localized language name for the current content pane, e.g., English
+edit_x_locale: Tartalom szerkesztése ({$locale})
+preview_x_locale: Tartalom előnézete ({$locale})
+# The content of a monolingual entry, which has no locale to name
+edit_content: Tartalom szerkesztése
+preview_content: Tartalom előnézete
+
+# Preview iframe labels
+content_preview: Tartalom előnézete
+
+# Locale content options
+# {$locale} is the localized language name for the content options menu, e.g., English
+show_content_options_x_locale: Tartalombeállítások megjelenítése ({$locale})
+content_options_x_locale: Tartalombeállítások ({$locale})
+show_content_options: Tartalombeállítások megjelenítése
+content_options: Tartalombeállítások
+
+# Field container labels
+# {$field} is the field’s display label
+x_field: „{$field}” mező
+
+# Field options menu
+show_field_options: Mezőbeállítások megjelenítése
+field_options: Mezőbeállítások
+
+# Unsupported field type error
+# {$name} is the unsupported field widget or type name
+unsupported_field_type_x: 'Nem támogatott mezőtípus: {$name}'
+
+# Locale management actions
+# {$locale} is the localized language name being enabled or disabled, e.g., English
+enable_x_locale: 'Nyelv engedélyezése: {$locale}'
+reenable_x_locale: 'Nyelv újraengedélyezése: {$locale}'
+disable_x_locale: 'Nyelv letiltása: {$locale}'
+
+# Locale status messages
+# {$locale} is the localized language name affected by the status change, e.g., English
+locale_x_has_been_disabled: A tartalom {$locale} nyelvű változata letiltva.
+locale_x_now_disabled: A tartalom {$locale} nyelvű változata most le van tiltva. A bejegyzés mentésekor törlődni fog.
+
+# Repository and site links
+view_in_repository: Megtekintés a tárolóban
+# {$service} is the external service label, such as GitHub or GitLab
+view_on_x: 'Megtekintés itt: {$service}'
+view_on_live_site: Megtekintés az élő webhelyen
+
+# Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
+# states mirror the build’s: it may be queued, live or failed. Keep the wording free of CI jargon,
+# as editors are often non-technical.
+deploy_preview:
+  # Button and menu item shown when a preview URL is available for an unpublished entry
+  view: Előnézet megtekintése
+  # Shown while the site is still being built, with or without a URL to open yet
+  building: Az előnézet még készül.
+  # Shown when the build failed, so no preview is available. The failure may lie in the site’s own
+  # code rather than the entry, so the editor is told not to assume it’s theirs, and who to ask
+  build_failed: Az előnézetet nem sikerült elkészíteni. Ezt nem feltétlenül a te módosításaid okozták. Ha a probléma továbbra is fennáll, fordulj a webhely adminisztrátorához.
+  # Shown briefly while the CI/CD provider is being queried
+  checking: Előnézet keresése…
+  # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
+  check_again: Előnézet keresése
+  # Button label while the CMS is waiting for the provider to build a preview of this entry. The
+  # control is disabled meanwhile, because the live site holds the published version, or nothing at
+  # all when the entry is new
+  awaiting: Előnézet ellenőrzése folyamatban
+  # Short forms of the states above, used on the compact badge shown on an Editorial Workflow card,
+  # where the full sentences don’t fit. A lookup in flight gets no badge, because it’s over in
+  # moments
+  short:
+    building: Készül…
+    failed: Sikertelen
+
+# Content copying from other locales
+copy_from: Másolás másik nyelvről…
+# {$locale} is the localized language name of the source content being copied, e.g., English
+copy_from_x: 'Másolás innen: {$locale}'
+
+# Translation features
+translation_options: Fordítási beállítások
+translate: Fordítás
+# {$count} is the number of fields selected for translation
+translate_fields: |
+  .input {$count :integer}
+  .match $count
+    one {{ Mező fordítása }}
+    *   {{ Mezők fordítása }}
+translate_from: Fordítás másik nyelvről…
+# {$locale} is the localized language name of the source content being translated, e.g., English
+translate_from_x: 'Fordítás innen: {$locale}'
+
+# Revert changes, restore the default values or clear the fields. The field options menu offers
+# them for a field, the content options menu of an editor pane for the locale it shows, and the
+# editor options menu for the whole entry, the latter two asking for confirmation first
+revert_changes: Módosítások visszavonása
+revert_all_changes: Összes módosítás visszavonása
+restore_default: Alapértelmezés visszaállítása
+clear_all: Összes kiürítése
+confirm_reverting_changes: Biztosan visszavonod a bejegyzésen végzett összes módosítást?
+# {$locale} is a locale name, e.g. French
+confirm_reverting_changes_x_locale: Biztosan visszavonod a tartalom {$locale} nyelvű változatán végzett összes módosítást?
+confirm_restoring_defaults: Biztosan visszaállítod a bejegyzés összes mezőjének alapértelmezett értékét? A módosításaid elvesznek.
+confirm_restoring_defaults_x_locale: Biztosan visszaállítod az összes mező alapértelmezett értékét a tartalom {$locale} nyelvű változatában? A módosításaid elvesznek.
+confirm_clearing_fields: Biztosan kiüríted a bejegyzés összes mezőjét? A módosításaid elvesznek.
+confirm_clearing_fields_x_locale: Biztosan kiüríted az összes mezőt a tartalom {$locale} nyelvű változatában? A módosításaid elvesznek.
+
+# Slug editing
+edit_slug: URL-azonosító szerkesztése
+edit_slug_error:
+  empty: Az URL-azonosító nem lehet üres.
+  invalid: Az URL-azonosító nem tartalmazhat speciális karaktereket, például perjelet vagy szóközt.
+  duplicate: Ezt az URL-azonosítót már egy másik bejegyzés használja.
+# {$slug} is the slug filled from the slug template, which a number is added to when another entry uses it
+slug_numbered: 'Ezt az URL-azonosítót már egy másik bejegyzés használja: „{$slug}”, ezért egy szám kerül hozzá.'
+
+# Entry path editing for nested entries
+# Heading for the parent folder picker shown when the `meta.path` option is enabled
+entry_parent_folder: Szülőmappa
+new_parent_folder: Új mappa
+new_parent_folder_create: Létrehozás
+new_parent_folder_name: Mappa neve
+# {$folder} is the name of the folder the new one will be created in
+new_parent_folder_description: 'Az új mappa a következő mappában jön létre: „{$folder}”.'
+new_parent_folder_error:
+  empty: A mappa neve nem lehet üres.
+  invalid: A mappa neve nem tartalmazhat perjelet, nem kezdődhet ponttal, és betűt vagy számot kell tartalmaznia.
+  duplicate: Itt már létezik ilyen nevű mappa.
+edit_path_error:
+  invalid: Az elérési út nem tartalmazhat relatív szakaszokat, például „..” elemet.
+  recursive: A bejegyzés nem helyezhető át a saját almappáinak egyikébe.
+  duplicate: Ezt az elérési utat már egy másik bejegyzés használja.
+
+# Required field indicator
+required: Kötelező
+
+# Editor operation feedback
+# Translation and copy operation status messages
+editor:
+  translation:
+    none: Nincs mit lefordítani.
+    started: Fordítás…
+    error: A fordítás nem sikerült.
+    # {$source} is the source language name and {$count} is the number of translated fields
+    complete: |
+      .input {$count :integer}
+      .match $count
+        0   {{ Nincs lefordított mező ({$source} nyelvről). }}
+        one {{ Mező lefordítva ({$source} nyelvről). }}
+        *   {{ {$count} mező lefordítva ({$source} nyelvről). }}
+  copy:
+    none: Nincs mit másolni.
+    # {$source} is the source language name and {$count} is the number of copied fields
+    complete: |
+      .input {$count :integer}
+      .match $count
+        0   {{ Nincs átmásolt mező ({$source} nyelvről). }}
+        one {{ Mező átmásolva ({$source} nyelvről). }}
+        *   {{ {$count} mező átmásolva ({$source} nyelvről). }}
+
+# ==============================================================================
+# Field Validation
+# ==============================================================================
+# Inline validation error messages for form fields.
+
+validation:
+  # Required field missing
+  value_missing: A mező kitöltése kötelező.
+
+  # Minimum value/count not met
+  range_underflow:
+    # {$min} is the minimum allowed value, already formatted for the input type
+    datetime-local: 'A dátum és időpont nem lehet korábbi ennél: {$min}.'
+    date: 'A dátum nem lehet korábbi ennél: {$min}.'
+    time: 'Az időpont nem lehet korábbi ennél: {$min}.'
+    number: Az érték nem lehet kisebb, mint {$min}.
+    # {$min} is the minimum number of selected options
+    select: |
+      .input {$min :integer}
+      .match $min
+        one {{ Legalább {$min} lehetőséget ki kell választanod. }}
+        *   {{ Legalább {$min} lehetőséget ki kell választanod. }}
+    # {$min} is the minimum number of list items
+    add: |
+      .input {$min :integer}
+      .match $min
+        one {{ Legalább {$min} elemet hozzá kell adnod. }}
+        *   {{ Legalább {$min} elemet hozzá kell adnod. }}
+
+  # Maximum value/count exceeded
+  range_overflow:
+    # {$max} is the maximum allowed value, already formatted for the input type
+    datetime-local: 'A dátum és időpont nem lehet későbbi ennél: {$max}.'
+    date: 'A dátum nem lehet későbbi ennél: {$max}.'
+    time: 'Az időpont nem lehet későbbi ennél: {$max}.'
+    number: Az érték nem lehet nagyobb, mint {$max}.
+    # {$max} is the maximum number of selected options
+    select: |
+      .input {$max :integer}
+      .match $max
+        one {{ Legfeljebb {$max} lehetőséget választhatsz ki. }}
+        *   {{ Legfeljebb {$max} lehetőséget választhatsz ki. }}
+    # {$max} is the maximum number of list items
+    add: |
+      .input {$max :integer}
+      .match $max
+        one {{ Legfeljebb {$max} elemet adhatsz hozzá. }}
+        *   {{ Legfeljebb {$max} elemet adhatsz hozzá. }}
+
+  # String length constraints
+  # {$min :integer} and {$max :integer} are character-count limits
+  too_short: |
+    .input {$min :integer}
+    .match $min
+      one {{ Legalább {$min} karaktert meg kell adnod. }}
+      *   {{ Legalább {$min} karaktert meg kell adnod. }}
+  too_long: |
+    .input {$max :integer}
+    .match $max
+      one {{ Legfeljebb {$max} karaktert adhatsz meg. }}
+      *   {{ Legfeljebb {$max} karaktert adhatsz meg. }}
+
+  # Type validation errors
+  type_mismatch:
+    number: Adj meg egy számot.
+    email: Adj meg egy érvényes e-mail-címet.
+    url: Adj meg egy érvényes URL-t.
+
+  # Value used for the same field in another entry of the collection
+  value_not_unique: Ezt az értéket már egy másik bejegyzés használja.
+  # Key of a keyed List field item used for another item of the same list
+  key_not_unique: Ezt a kulcsot már egy másik elem használja.
+  # Key of a keyed List field item that is a whole number, which doesn’t keep its order in a map
+  key_numeric: A kulcs nem lehet egész szám, mert az elemek elveszítenék a sorrendjüket.
+
+  # Custom field validation error
+  invalid_value: Érvénytelen érték.
+  unexpected_error: Váratlan hiba történt.
+
+# ==============================================================================
+# Entry Sidebar
+# ==============================================================================
+# Panels shown in the entry editor sidebar.
+
+entry_sidebar:
+  # Sidebar tab list aria-label
+  sidebar_panels: Oldalsáv panelei
+
+  # Validation panel: shows field validation errors
+  validation:
+    title: Ellenőrzés
+    placeholder: Az ellenőrzés eredményei itt jelennek meg.
+    no_errors_found: Nem található hiba.
+    # Button in the panel header that validates the entry on demand
+    validate: Ellenőrzés
+
+  # Slug panel: shows the entry slug and lets the user edit it
+  slug:
+    title: URL-azonosító
+    generated_on_save: Az URL-azonosító mentéskor jön létre a bejegyzés tartalmából. A benne szereplő dátum és időpont a mentés időpontja lesz.
+    unavailable: Ennek a bejegyzésnek nincs URL-azonosítója.
+
+  # History panel: shows entry commit history
+  history:
+    title: Előzmények
+    fetch_failed: Nem sikerült betölteni az előzményeket.
+    no_history: Nincsenek előzmények.
+
+  # Backlinks panel: shows entries referencing this entry
+  backlinks:
+    title: Hivatkozó bejegyzések
+    no_entries: Egyetlen bejegyzés sem hivatkozik erre a bejegyzésre.
+
+  # Tab label of a panel with a count, e.g. of comments. {$title} is the panel title
+  title_with_count: '{$title} ({$count})'
+
+# Status shown next to the Save button while an entry with many new files is being saved
+# {$done} and {$total} are the number of files prepared and to prepare, or the number of commits
+# made and the estimated number of commits in all
+save_progress:
+  preparing: 'Fájlok előkészítése: {$done} / {$total}'
+  committing: 'Mentés a GitHubra: {$done} / kb. {$total} commit'
+
+# Entry save error dialog
+saving_entry:
+  error:
+    title: Hiba
+    description: Hiba történt a bejegyzés mentése közben. Próbáld újra később.
+
+# Dialog shown when saving the entry would overwrite a change someone else has made in the
+# repository since the entry was opened in the editor
+save_conflict:
+  title: A bejegyzést valaki más módosította
+  # `{$name}` is the other person’s name, `{$date}` when they made the change
+  modified_by: '{$name} módosította ezt a bejegyzést ekkor: {$date}, miután megnyitottad.'
+  # Shown instead of `modified_by` when the other person isn’t known
+  modified: Ezt a bejegyzést módosították a tárolóban, miután megnyitottad.
+  deleted: Ezt a bejegyzést törölték a tárolóból, miután megnyitottad.
+  # Follows `modified_by` or `modified`
+  overwrite_warning: Ha most mented, az ő módosításai elvesznek.
+  # Follows `deleted`
+  recreate_warning: Ha most mented, a bejegyzés újra létrejön.
+  # Follows `modified_by`, `modified` or `deleted` for an entry stored in the same file as the other
+  # entries of the collection, which can’t be saved over the change
+  reload_warning: Mivel a bejegyzés ugyanabban a fájlban van tárolva, mint más bejegyzések, nem menthető a módosítás felülírásával. Szakítsd meg a szerkesztést, majd nyisd meg újra a bejegyzést a listából, és végezd el a módosításaidat.
+  # OK button label
+  save_anyway: Mentés mindenképp
+  # Error shown when the repository was updated between the check above and the commit itself
+  branch_moved: A tárolót valaki más frissítette mentés közben. Próbáld újra.
+  # Error shown when saving would change an item in a file storing all the entries of a collection,
+  # which someone else has changed or moved since it was loaded
+  array_item_changed: Egy ugyanabban a fájlban tárolt bejegyzést valaki más módosított. Próbáld újra.
+  # {$path} is the file path
+  array_file_invalid: A fájl ({$path}) nem frissíthető, mert nem tartalmaz érvényes bejegyzéslistát.
+
+# Notice shown in the entry editor when someone else has changed or deleted the entry in the
+# repository while the user has it open. The change itself is described with the `save_conflict`
+# strings above
+remote_change:
+  reload_entry: Bejegyzés újratöltése
+  # Confirmation shown before reloading when the user has unsaved changes
+  confirm_reloading_entry: Biztosan újratöltöd a bejegyzést? A nem mentett módosításaid elvesznek.
+
+# ==============================================================================
+# Asset Editor
+# ==============================================================================
+# Strings for the asset details and editing interface.
+
+# Asset details announcement
+# {$name} is the selected asset name
+viewing_x_asset_details: 'A következő médiafájl részleteit látod: „{$name}”.'
+
+# Asset editor container aria-label
+asset_editor: Médiafájl-szerkesztő
+
+# Buttons to move between the listed assets in the asset editor
+previous_asset: Előző médiafájl
+next_asset: Következő médiafájl
+
+# Preview unavailable message
+preview_unavailable: Az előnézet nem érhető el.
+
+# Copy menu items: public URLs, file paths, file data
+# {$count} is the number of selected assets
+public_urls: |
+  .input {$count :integer}
+  .match $count
+    one {{ Nyilvános URL }}
+    *   {{ Nyilvános URL-ek }}
+# {$count} is the number of selected assets
+file_paths: |
+  .input {$count :integer}
+  .match $count
+    one {{ Fájl elérési útja }}
+    *   {{ Fájlok elérési útja }}
+# Identifier of a file on a cloud storage service, e.g. an object key or a UUID
+# {$count} is the number of selected assets
+file_ids: |
+  .input {$count :integer}
+  .match $count
+    one {{ Fájlazonosító }}
+    *   {{ Fájlazonosítók }}
+file_data: Fájladatok
+
+# ==============================================================================
+# Asset Info Panel
+# ==============================================================================
+# Section headings and labels in the asset information panel.
+
+# Panel title and empty state shown in the asset sidebar
+asset_info: Médiafájl adatai
+select_asset_show_info: Válassz ki egy médiafájlt az adatai megjelenítéséhez.
+
+kind: Típus
+size: Méret
+dimensions: Méretek
+duration: Időtartam
+# Short heading for a list of entries using the selected asset
+used_in: Felhasználva itt
+created_date: Létrehozás dátuma
+location: Hely
+
+# Map aria-label showing GPS coordinates
+# {$latitude} and {$longitude} are the formatted coordinate values displayed on the map
+map_lat_lng: 'Térkép, szélesség: {$latitude}, hosszúság: {$longitude}'
+
+# ==============================================================================
+# List and Object Field Controls
+# ==============================================================================
+# Controls for List and Object field types.
+
+# List item actions
+remove_this_item: Elem eltávolítása
+move_up: Mozgatás felfelé
+move_down: Mozgatás lefelé
+# Menu of a list item or file with the extra reorder actions, shown in a list of 3 or more items
+reorder_options: Átrendezési lehetőségek
+move_to_top: Mozgatás a legelejére
+move_to_bottom: Mozgatás a legvégére
+# Opens a dialog asking for the position to move a list item to
+move_to: Áthelyezés máshová…
+# Dialog asking for the new position of an item. {$count} is the number of items in the list
+move_to_description: Adj meg egy pozíciót 1 és {$count} között.
+move_to_position: Pozíció
+# aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
+# or moved with the arrow keys while the handle has focus
+reorder_item: Elem átrendezése
+# aria-label for the text input holding one item of a simple List field, which has no subfield to
+# take a label from
+list_item_value: Elem értéke
+# aria-label for each item of a List field, giving its position in the list
+# {$position} is the 1-based position of the item, {$count} is the number of items
+list_item_position: '{$position}. elem (összesen {$count})'
+# Message shown in place of a removed List field item or Object field, next to a Restore button
+# that puts it back
+item_removed: Elem eltávolítva.
+
+# Add item button label, also used by the Relation field to create a new entry in the referenced
+# collection, with the collection’s singular label
+# Example: “Add Image”, “Add Author”
+# {$name} is the label of the item type that can be added
+add_x: '{$name} hozzáadása'
+
+# List item context menu
+# aria-label for the button opening the menu, and for the menu itself
+list_item_options: Listaelem beállításai
+add_item_above: Elem hozzáadása fölötte
+add_item_below: Elem hozzáadása alatta
+paste_item_above: Elem beillesztése fölötte
+paste_item_below: Elem beillesztése alatta
+paste_item_to_replace: Beillesztés cserével
+
+# List item clipboard
+# Button in the list toolbar to paste a copied item, from any list in any entry, at the end of the
+# list, or at the start with the `add_to_top` option
+paste_item: Elem beillesztése
+list_item_copied: Elem másolva.
+# ⋮ stands for the icon of the item menu button; keep it, along with the button’s aria-label
+no_list_item_to_paste: Nincs beilleszthető másolt elem. Elem másolásához nyisd meg az elem ⋮ (Listaelem beállításai) menüjét, és válaszd a Másolás lehetőséget.
+list_item_not_compatible: A másolt elem nem illik ebbe a listába.
+# {$count} is the number of the values left out, as the list doesn’t have the fields
+list_item_pasted_without_values: |
+  .input {$count :integer}
+  .match $count
+    one {{ Elem beillesztve. Egy érték, amelyet ez a lista nem fogad, kimaradt. }}
+    *   {{ Elem beillesztve. {$count} érték, amelyet ez a lista nem fogad, kimaradt. }}
+# {$count} is the number of the files the pasted item references that couldn’t be found
+list_item_pasted_without_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Elem beillesztve, de egy általa használt fájl nem található. Ellenőrizd az elem fájlmezőit. }}
+    *   {{ Elem beillesztve, de {$count} általa használt fájl nem található. Ellenőrizd az elem fájlmezőit. }}
+
+# Variable-type list selector
+select_list_type: Listatípus kiválasztása
+
+# Variable-type mismatch
+unknown_variable_type: Ez az elem ismeretlen típusa miatt nem jeleníthető meg. A részletekért nézd meg a böngésző konzolját.
+
+# ==============================================================================
+# Field Widgets
+# ==============================================================================
+# Strings for specific field widget types.
+
+# Color field: opacity slider
+opacity: Átlátszatlanság
+
+# Select field: empty option placeholder
+unselected_option: (Nincs)
+
+# Relation field: creating or editing a referenced entry without leaving the editor
+relation_field:
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  save_together_hint: Az új elem ({$name}) a szerkesztett bejegyzéssel együtt mentjük.
+  # Error shown when the entry couldn’t be prepared. {$name} is the singular label of the collection
+  add_failed: Az elem ({$name}) hozzáadása nem sikerült. A részletekért nézd meg a böngésző konzolját.
+  # Title of the dialog to edit an entry selected in the field. {$name} is the singular label of the
+  # referenced collection
+  edit_entry_title: '{$name} szerkesztése'
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  edit_together_hint: Az elemen ({$name}) végzett módosításaidat a szerkesztett bejegyzéssel együtt mentjük.
+  # Error shown when the changes couldn’t be prepared. {$name} is the singular label of the collection
+  edit_failed: Az elemen ({$name}) végzett módosításokat nem sikerült alkalmazni. A részletekért nézd meg a böngésző konzolját.
+  # Error shown when the changes would move the entry to another file path, e.g. through a path
+  # template using a field. {$name} is the singular label of the collection
+  move_unsupported: Ezek a módosítások másik helyre helyeznék át az elemet ({$name}), ami csak az elem önálló szerkesztésével lehetséges.
+  # Error shown when saving, if someone else has changed an entry edited from the field since. {$name}
+  # is the summary of that entry
+  edit_conflict: A bejegyzést („{$name}”) valaki más módosította, mióta szerkesztetted. Nyisd meg újra a mezőből, és vesd össze a módosításaidat a legújabb verzióval.
+  # Error shown when saving, if someone else has deleted an entry edited from the field since.
+  # {$name} is the summary of that entry
+  edit_deleted: A bejegyzést („{$name}”) valaki más törölte, mióta szerkesztetted. A bejegyzés mentéséhez távolítsd el a mezőből.
+  # Accessible label of the menu listing the selected entries that can be edited
+  select_entry_to_edit: Szerkesztendő bejegyzés kiválasztása
+  # Warning shown in the editor of an entry that has been edited from a Relation field of another
+  # entry, while the changes wait in that entry’s pull request. {$name} is the summary of that
+  # entry
+  edited_with_entry: A bejegyzés módosításai egy másik bejegyzéssel („{$name}”) együtt várnak közzétételre. Ha most mented, a két módosításcsomagot összevonjuk, amikor azt a bejegyzést közzéteszed, ami átfedés esetén sikertelen lehet.
+  # Warning shown in the dialog when an entry edited from the field has been changed by someone else
+  # since. {$name} is the singular label of the collection
+  changed_since_edit: Ezt az elemet ({$name}) valaki más módosította, mióta szerkesztetted. A módosításaid a legújabb verzióra alkalmazva jelennek meg. Frissítés előtt nézd át őket.
+
+# Select Assets dialog
+assets_dialog:
+  # Dialog titles for different selection modes
+  title:
+    file: Fájl kiválasztása
+    image: Kép kiválasztása
+    folder: Mappa kiválasztása
+
+  # Search input labels
+  search_for_file: Fájlok keresése
+  search_for_image: Képek keresése
+
+  # Locations panel aria-label
+  locations: Helyek
+
+  # Folder selection mode for a File field with the `select_folder` option. {$path} is the public
+  # path of the folder to be selected, and {$count} is the number of folders selected
+  selected_folder: 'Kiválasztott mappa: {$path}'
+  selected_folders: |
+    .input {$count :integer}
+    .match $count
+      one {{ {$count} mappa kiválasztva }}
+      *   {{ {$count} mappa kiválasztva }}
+  no_subfolders: Ez a mappa nem tartalmaz almappákat.
+  # Shown for a cloud storage service whose `prefix` option depends on fields of the entry
+  prefix_unresolved: Töltsd ki azokat a mezőket, amelyektől ez a hely függ, hogy böngészhesd és feltölthesd a fájljait.
+
+  # Asset folder options
+  folder:
+    field: Mező médiafájljai
+    entry: Bejegyzés médiafájljai
+    file: Fájl médiafájljai
+    collection: Gyűjtemény médiafájljai
+    global: Globális médiafájlok
+
+  # Error messages
+  error:
+    invalid_key: Az API-kulcs érvénytelen vagy lejárt. Ellenőrizd, és próbáld újra.
+    search_fetch_failed: Hiba történt a médiafájlok keresése közben. Próbáld újra később.
+    image_fetch_failed: Hiba történt a kiválasztott médiafájl letöltése közben. Próbáld újra később.
+
+  # Stock photo panels
+  available_images: Elérhető képek
+  available_files: Elérhető fájlok
+
+  # URL entry option
+  enter_url: URL megadása
+  enter_file_url: 'Add meg a fájl URL-jét:'
+  enter_image_url: 'Add meg a kép URL-jét:'
+
+  # Large file warning dialog
+  large_file:
+    title: Nagy fájl
+
+  # Invalid file warning dialog
+  invalid_file:
+    title: Érvénytelen fájl
+
+  # Warning dialog shown when files are rejected for more than one reason
+  rejected_files:
+    title: A fájlok nem tölthetők fel
+
+  # Photo credit dialog (stock photos)
+  photo_credit:
+    title: Fotó forrása
+    description: 'Ha lehetséges, használd a következő forrásmegjelölést:'
+    # {$field} is the label of the Markdown field the credit is added to
+    insert_to_field: 'Beszúrás ide: {$field}'
+    copy_as_markdown: Másolás Markdownként
+
+  # Unsaved asset badge
+  unsaved: Nem mentett
+
+# Character counter: shows character count for text fields
+character_counter:
+  # {$count} is the current character count; {$min} and {$max} are configured limits
+  min_max: |
+    .input {$count :integer}
+    .match $count
+      0   {{ Nincs megadott karakter. Minimum: {$min}. Maximum: {$max}. }}
+      one {{ {$count} karakter megadva. Minimum: {$min}. Maximum: {$max}. }}
+      *   {{ {$count} karakter megadva. Minimum: {$min}. Maximum: {$max}. }}
+  # {$count} is the current character count and {$min} is the minimum allowed count
+  min: |
+    .input {$count :integer}
+    .match $count
+      0   {{ Nincs megadott karakter. Minimum: {$min}. }}
+      one {{ {$count} karakter megadva. Minimum: {$min}. }}
+      *   {{ {$count} karakter megadva. Minimum: {$min}. }}
+  # {$count} is the current character count and {$max} is the maximum allowed count
+  max: |
+    .input {$count :integer}
+    .match $count
+      0   {{ Nincs megadott karakter. Maximum: {$max}. }}
+      one {{ {$count} karakter megadva. Maximum: {$max}. }}
+      *   {{ {$count} karakter megadva. Maximum: {$max}. }}
+
+# YouTube video player iframe title
+youtube_video_player: YouTube-videólejátszó
+
+# Date/time field: quick action buttons
+today: Ma
+now: Most
+
+# Rich-text editor: component field labels
+editor_components:
+  image: Kép
+  src: Forrás
+  alt: Helyettesítő szöveg
+  title: Cím
+  link: Hivatkozás
+  caption: Képaláírás
+
+# Key-Value field: column headers and validation
+key_value:
+  key: Kulcs
+  value: Érték
+  action: Művelet
+  empty_key: A kulcs megadása kötelező.
+  duplicate_key: A kulcsnak egyedinek kell lennie.
+
+# Map field: location search and geolocation
+find_place: Hely keresése
+use_your_location: Saját hely használata
+
+# Geolocation error dialog
+geolocation_error_title: Helymeghatározási hiba
+geolocation_error_body: Hiba történt a tartózkodási helyed lekérése közben.
+geolocation_unsupported: Ez a böngésző nem támogatja a Geolocation API-t.
+
+# Boolean field: display labels
+# Note that the keys must be quoted strings to avoid being interpreted as YAML booleans
+boolean:
+  'true': Igen
+  'false': Nem
+
+# ==============================================================================
+# Cloud Storage Services
+# ==============================================================================
+# Strings for external cloud storage service integrations.
+
+cloud_storage:
+  # Configuration error
+  invalid: A szolgáltatás nincs megfelelően konfigurálva.
+
+  # Authentication states
+  auth:
+    api_key:
+      key_label: API-kulcs
+      # {$key} is the credential label, e.g., API Key, and {$service} is the cloud service name
+      initial: 'Add meg a szolgáltatáshoz ({$service}) tartozó adatot: {$key}.'
+      requested: Ellenőrzés…
+      # {$key} is the credential label the user entered, e.g., API Key
+      error: 'A megadott adat érvénytelen: {$key}. Ellenőrizd, és próbáld újra.'
+    password:
+      # {$service} is the cloud service name
+      initial: Add meg a szolgáltatáshoz ({$service}) tartozó jelszavadat.
+      requested: Bejelentkezés…
+      error: A felhasználónév vagy a jelszó helytelen. Ellenőrizd, és próbáld újra.
+
+  # Shared by the S3-compatible services, unless overridden below
+  s3:
+    auth_key_label: Titkos hozzáférési kulcs
+
+  # Service-specific configurations
+  cloudinary:
+    iframe_title: Cloudinary médiatár
+    activate:
+      button_label: Cloudinary aktiválása
+      description: Bejelentkezés után a folytatáshoz kattints újra a Bejelentkezés gombra.
+    auth_key_label: API-titok
+    open_library: Cloudinary megnyitása
+
+  uploadcare:
+    auth_key_label: Titkos API-kulcs
+
+  azure_blob_storage:
+    auth_key_label: SAS-token
+
+  backblaze_b2:
+    auth_key_label: Alkalmazáskulcs
+
+  bunny_storage:
+    auth_key_label: Tárolózóna jelszava
+
+# ==============================================================================
+# Configuration Validation
+# ==============================================================================
+# Error and warning messages for CMS configuration validation.
+
+config:
+  # Error count notice on entrance page
+  # {$count} is the number of configuration errors found
+  errors: |
+    .input {$count :integer}
+    .match $count
+      one {{ Hiba van a CMS-konfigurációban. Javítsd a hibát, és próbáld újra. }}
+      *   {{ Hibák vannak a CMS-konfigurációban. Javítsd a hibákat, és próbáld újra. }}
+
+  # Error location prefixes
+  error_locator:
+    # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
+    collection: '{$collection} gyűjtemény'
+    file: '{$file} fájl'
+    component: '{$component} komponens'
+    # Don’t localize `{$field}`
+    field: '`{$field}` mező'
+
+  # Configuration error messages
+  error:
+    no_secure_context: A Sveltia CMS csak HTTPS- vagy localhost-URL-ekkel működik.
+    # {$count} is the number of insecure configuration file URLs
+    insecure_urls: |
+      .input {$count :integer}
+      .match $count
+        one {{ A konfigurációs fájl URL-jének HTTPS protokollt vagy localhost címet kell használnia. }}
+        *   {{ A konfigurációs fájlok URL-jeinek HTTPS protokollt vagy localhost címet kell használniuk. }}
+    fetch_failed: A konfigurációs fájlt nem sikerült lekérni.
+    # {$status} is the HTTP status code returned while fetching the config file
+    fetch_failed_not_ok: A HTTP-válasz {$status} állapotkóddal érkezett.
+    # Don’t localize `config.yml`, `load_config_file: false`, and `CMS.init()`
+    fetch_failed_with_manual_init: 'A konfigurációs fájlt nem sikerült lekérni. Ha meg szeretnéd akadályozni a `config.yml` fájl betöltését, add hozzá a <a>`load_config_file: false`</a> beállítást a `CMS.init()` függvénynek átadott konfigurációs objektumhoz.'
+    parse_failed: A konfigurációs fájlt nem sikerült feldolgozni.
+    parse_failed_invalid_object: A konfigurációs fájl nem érvényes JavaScript-objektum.
+    parse_failed_unsupported_type: A konfigurációs fájl típusa nem érvényes. Csak a YAML, a TOML és a JSON támogatott.
+    no_collection: Nincsenek gyűjtemények megadva.
+    # Don’t localize `hide`
+    no_visible_collection: Legalább egy gyűjteménynek láthatónak kell lennie. Ellenőrizd a `hide` beállítást.
+    missing_backend: A háttérrendszer nincs megadva.
+    missing_backend_name: A háttérrendszer neve nincs megadva.
+    # {$name} is the backend name from the CMS configuration
+    unsupported_known_backend: A háttérrendszert ({$name}) a Sveltia CMS <a>nem támogatja</a>.
+    # {$name} is the backend name from the CMS configuration
+    unsupported_deprecated_backend: Az elavult {$name} háttérrendszert a Sveltia CMS <a>nem támogatja</a>.
+    unsupported_custom_backend: Az egyéni háttérrendszereket a Sveltia CMS <a>nem támogatja</a>.
+    unsupported_backend_suggestion: Használd helyette valamelyik <a>támogatott háttérrendszert</a>.
+    missing_repository: A tároló nincs megadva.
+    invalid_repository: A megadott tároló érvénytelen. „owner/repo” formátumban kell megadni.
+    # Don’t localize `api_root`
+    missing_api_root: Az `api_root` beállítás nincs megadva. A Forgejo háttérrendszerhez kötelező.
+    invalid_root_dir: A gyökérkönyvtár érvénytelen. A tárolón belüli elérési útnak kell lennie, „..” nélkül.
+    invalid_root_dir_branch: A gyökérkönyvtár nem használható az `editorial_workflow` és a `preview` közzétételi mód ágneveiben. Az elérési út egyik része sem kezdődhet ponttal, nem végződhet „.lock” karaktersorra, és nem tartalmazhat szóközt vagy különleges karaktert, például kettőspontot vagy csillagot.
+    path_outside_root_dir: Az elérési út („{$path}”) a gyökérkönyvtáron kívülre vezet, ahol a CMS nem tudja listázni a fájlokat.
+    oauth_implicit_flow: A beállított hitelesítési módszert (implicit folyamat) a Sveltia CMS nem támogatja. Használj helyette egy másik <a>hitelesítési módszert</a>.
+    github_pkce_unsupported: A PKCE-hitelesítés a GitHub korlátai miatt még nem támogatott. Használj helyette egy másik <a>hitelesítési módszert</a>.
+    additions_no_base_url: A `base_url` beállításnak a Sveltia CMS Additions szolgáltatásod URL-jének kell lennie.
+    oauth_no_app_id: Az OAuth-alkalmazásazonosító nincs megadva.
+    # Don’t localize `open_authoring`, `editorial_workflow` and `preview`
+    open_authoring_no_workflow: Az `open_authoring` beállításhoz az `editorial_workflow` vagy a `preview` közzétételi mód szükséges. A részletekért lásd a <a>dokumentációt</a>.
+    # Don’t localize `auth_methods`
+    no_auth_methods: Az `auth_methods` beállításnak legalább egy módszert tartalmaznia kell.
+    # Don’t localize `auth_scope`, `repo` and `public_repo`
+    auth_scope_no_repo: Az `auth_scope` beállításnak tartalmaznia kell a `repo` vagy a `public_repo` értéket.
+    missing_media_folder: A médiamappa nincs megadva.
+    public_folder_relative_path: A megadott nyilvános mappa érvénytelen. „/” karakterrel kezdődő abszolút elérési útnak kell lennie.
+    public_folder_absolute_url: A Sveltia CMS nem támogatja abszolút URL megadását a nyilvános mappa beállításában.
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    unsupported_folder_template_tag: A beállítás (`{$option}`) olyan sabloncímkét (`{$tag}`) tartalmaz, amely ott nem támogatott. Csak az URL-azonosító sabloncímkéi, például a `\{\{slug\}\}` és a `\{\{year\}\}`, valamint a `\{\{dirname\}\}`, `\{\{filename\}\}`, `\{\{extension\}\}`, `\{\{media_folder\}\}` és `\{\{public_folder\}\}` címkék használhatók.
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    global_folder_template_tag: A beállítás (`{$option}`) olyan sabloncímkét (`{$tag}`) tartalmaz, amely csak gyűjtemény, gyűjteményfájl vagy mező beállításában használható, ahol van bejegyzés, amellyel kitölthető.
+    # {$replacement} is the configured replacement string; Don’t localize `sanitize_replacement`
+    invalid_sanitize_replacement: A `sanitize_replacement` beállítás értéke `{$replacement}`, de olyan karaktert tartalmaz, amely nem használható URL-azonosítóban, így nem szolgálhat helyettesítő karakterként.
+    # {$option} is the option name (`site_url` or `display_url`) and {$url} is the configured value
+    invalid_url_option: A beállítás (`{$option}`) értéke `{$url}`, de `https://` vagy `http://` előtaggal kezdődő abszolút URL-nek kell lennie.
+    # Don’t localize `publish_mode`, `stages`, `draft`, `pending_review` and `pending_publish`
+    invalid_publish_mode_stages: A `publish_mode` `stages` beállításának a `draft` szakasszal kell kezdődnie, és a szakaszokat `draft`, `pending_review`, `pending_publish` sorrendben kell felsorolnia, ismétlés nélkül.
+    # Don’t localize `i18n` and `locales`
+    i18n_no_locales: Az `i18n.locales` beállításnak legalább egy nyelvet tartalmaznia kell.
+    # {$locale} is the locale code from the configuration; Don’t localize `default_locale` and `locales`
+    i18n_invalid_default_locale: A `default_locale` beállítás értéke `{$locale}`, de ez nem szerepel a `locales` listában.
+    # {$locale} is the locale code from the configuration; Don’t localize `initial_locales` and `locales`
+    i18n_invalid_initial_locale: Az `initial_locales` beállítás olyan értéket tartalmaz (`{$locale}`), amely nem szerepel a `locales` listában.
+    # Don’t localize `i18n`
+    i18n_no_collections: 'Az `i18n` beállítás a legfelső szinten meg van adva, de egyik gyűjtemény vagy egyedi oldal sem rendelkezik `i18n` beállítással, így semmilyen tartalom nem fordítható. Add hozzá az `i18n: true` beállítást a lefordítandó gyűjteményekhez és egyedi oldalakhoz.'
+    # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
+    invalid_transformation_key: A `transformations` beállítás nem támogatott `{$key}` kulcsot tartalmaz. A kulcsnak `raster_image`, `svg` vagy egy támogatott rasztergrafikus képformátum nevének kell lennie.
+    # {$key} is the transformation key; Don’t localize `quality`
+    invalid_transformation_quality: 'Érvénytelen `quality` beállítás a következő átalakításnál: `{$key}`. 0 és 100 közötti egész számnak kell lennie.'
+    # {$prop} is either `width` or `height`; {$key} is the transformation key
+    invalid_transformation_size: 'Érvénytelen `{$prop}` beállítás a következő átalakításnál: `{$key}`. Pozitív egész számnak kell lennie.'
+    # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
+    missing_asset_collection_name: A sorban {$count}. médiagyűjteménynek nem üres karakterláncként megadott `name` beállítással kell rendelkeznie.
+    # {$name} is the invalid or duplicate asset collection name
+    invalid_asset_collection_name: 'Érvénytelen médiagyűjteménynév: `{$name}`. Nem tartalmazhat különleges karaktereket.'
+    # {$name} is the duplicate asset collection name
+    duplicate_asset_collection_name: 'A médiagyűjtemények nevének egyedinek kell lennie, de a következő név többször is szerepel: `{$name}`.'
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_no_options: A gyűjteménynek rendelkeznie kell a `folder`, `file`, `files` vagy `divider` beállítások egyikével.
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_multiple_options: A gyűjtemény a `folder`, `file`, `files` és `divider` beállítások közül legfeljebb eggyel rendelkezhet.
+    # {$extension} is the file extension and {$format} is the configured content format
+    file_format_mismatch: A kiterjesztés (`{$extension}`) nem egyezik a formátummal (`{$format}`).
+    # {$name} is the field name from the configuration and {$widget} is its field type
+    front_matter_body_field_not_text: A mezőt (`{$name}`) a front matter alatti törzsként mentjük, amely csak szöveget tartalmazhat, nem számot, logikai értéket, listát vagy objektumot, mint egy `{$widget}` típusú mező. Használj szöveget tároló mezőtípust, vagy nevezd át a mezőt.
+    # {$file} is the file path from the configuration; Don’t localize `file` and `locale`. The curly
+    # brackets are escaped with backslashes for MessageFormat 2
+    invalid_collection_data_file: A `file` beállítás értéke (`{$file}`) érvénytelen. JSON-fájl elérési útjának kell lennie, a `\{\{locale\}\}` helyőrző nélkül.
+    # {$prop} is the option name; Don’t localize `file`
+    unsupported_collection_data_file_option: A beállítás (`{$prop}`) nem támogatott a `file` beállítással rendelkező gyűjteményekben.
+    # Don’t localize `file`, `publish_mode` and `simple`
+    collection_data_file_workflow: A szerkesztői és az előnézeti munkafolyamat, beleértve az Open Authoring funkciót is, nem támogatott a `file` beállítással rendelkező gyűjteményekben. Állítsd a gyűjtemény `publish_mode` beállítását `simple` értékre.
+    # {$prop} is the option name; Don’t localize `file` and `slug`. The curly brackets are escaped
+    # with backslashes for MessageFormat 2
+    collection_data_file_slug_tag: A beállítás (`{$prop}`) nem tartalmazhatja a `\{\{slug\}\}` címkét a `file` beállítással rendelkező gyűjteményekben, mivel ott a bejegyzés URL-azonosítója a pozíciója, amely a bejegyzések átrendezésekor vagy törlésekor megváltozik. Használj helyette egyedi értékű mezőt.
+    # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
+    invalid_slug_slash: 'Érvénytelen URL-azonosító-sablon: `{$slug}`. Nem tartalmazhat perjelet. Ha almappákba szeretnéd rendezni a bejegyzéseket, a `slug` helyett használd a `path` beállítást.'
+    # {$name} is the field name from the configuration; Don’t localize `identifier_field`
+    invalid_identifier_field: Az `identifier_field` beállítás olyan mezőre hivatkozik (`{$name}`), amely nincs megadva a gyűjteményben.
+    # {$name} is the field name from the configuration; Don’t localize `filter`
+    invalid_filter_field: A `filter` beállítás olyan mezőre hivatkozik (`{$name}`), amely nincs megadva a gyűjteményben.
+    # Don’t localize `filter`, `value` and `pattern`
+    invalid_filter_no_condition: A `filter` beállításnak tartalmaznia kell a `value` vagy a `pattern` beállítást, amelyhez a bejegyzéseket illeszteni lehet.
+    # {$option} is an option name such as `slug` or `summary` and {$name} is the field name or template tag from the configuration
+    option_field_not_found: A beállítás (`{$option}`) olyan mezőre hivatkozik (`{$name}`), amely nincs megadva.
+    # {$name} is the field name from the configuration and {$widget} is its field type; Don’t localize `thumbnail`
+    thumbnail_field_not_media: A `thumbnail` beállítás egy mezőre hivatkozik (`{$name}`), de ennek Image vagy File típusú mezőnek kell lennie, nem `{$widget}` típusúnak.
+    # Don’t localize `inline` or `multiple`
+    invalid_inline_component_fields: Az `inline` módhoz egyetlen Boolean, Color, DateTime, Number, Relation, Select vagy String típusú mező szükséges. Relation vagy Select típusú mezőnél nem lehet engedélyezve a `multiple` beállítás.
+    # {$option} is an option name such as `pattern` or `filter` and {$pattern} is the configured pattern
+    invalid_regex: A beállítás (`{$option}`) érvénytelen reguláris kifejezést tartalmaz (`{$pattern}`), ezért figyelmen kívül marad.
+    # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
+    invalid_reorder_group: A `reorder` beállítás olyan nézetcsoportra hivatkozik (`{$name}`), amely nincs megadva a `view_groups` beállításban.
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit` and `fields`
+    invalid_bulk_edit_field: A `bulk_edit` beállítás `fields` listája olyan mezőre hivatkozik (`{$name}`), amely nincs megadva legfelső szintű mezőként a gyűjteményben.
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit`, `fields` and `multiple`
+    unsupported_bulk_edit_field: A `bulk_edit` beállítás `fields` listájában szereplő `{$name}` mező nem szerkeszthető tömegesen. Csak olyan Boolean, Color, DateTime, Number, Relation, Select vagy String típusú mező támogatott, amely nem írásvédett, nincs engedélyezve a `multiple` beállítása, és nem mentéskor kap automatikusan értéket.
+    # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
+    invalid_sortable_field: A `sortable_fields` beállítás olyan mezőre hivatkozik (`{$name}`), amely nincs megadva a gyűjteményben.
+    # Don’t localize `sortable_fields` and `default_sort`
+    multiple_sortable_field_defaults: A `sortable_fields` beállításban csak egy elem rendelkezhet `default_sort` beállítással.
+    # {$option} is `table_columns` or `summary_fields`, and {$name} is the field name from the configuration
+    invalid_table_column_field: A beállítás (`{$option}`) olyan mezőre hivatkozik (`{$name}`), amely nincs megadva a gyűjteményben.
+    # {$name} is the field name from the configuration; Don’t localize `view_groups`
+    invalid_view_group_field: A `view_groups` beállítás olyan mezőre hivatkozik (`{$name}`), amely nincs megadva a gyűjteményben.
+    # {$name} is the field name from the configuration; Don’t localize `view_filters`
+    invalid_view_filter_field: A `view_filters` beállítás olyan mezőre hivatkozik (`{$name}`), amely nincs megadva a gyűjteményben.
+    # {$count} is the 1-based view group index in the configuration array; Don’t localize `name`
+    missing_view_group_name: A sorban {$count}. nézetcsoportnak nem üres karakterláncként megadott `name` beállítással kell rendelkeznie.
+    # {$name} is the invalid or duplicate view group name
+    invalid_view_group_name: 'Érvénytelen nézetcsoportnév: `{$name}`. Nem tartalmazhat különleges karaktereket.'
+    duplicate_view_group_name: 'A nézetcsoportok nevének egyedinek kell lennie, de a következő név többször is szerepel: `{$name}`.'
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
+    missing_view_filter_name: A sorban {$count}. nézetszűrőnek nem üres karakterláncként megadott `name` beállítással kell rendelkeznie.
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `pattern`, `eq` and `gte`
+    invalid_view_filter_no_condition: A sorban {$count}. nézetszűrőnek rendelkeznie kell a `pattern` beállítással vagy egy összehasonlító beállítással, például `eq` vagy `gte`, amelyhez a bejegyzéseket illeszteni lehet.
+    # {$name} is the invalid or duplicate view filter name
+    invalid_view_filter_name: 'Érvénytelen nézetszűrőnév: `{$name}`. Nem tartalmazhat különleges karaktereket.'
+    duplicate_view_filter_name: 'A nézetszűrők nevének egyedinek kell lennie, de a következő név többször is szerepel: `{$name}`.'
+    # {$name} is the default view group name from the configuration; Don’t localize `default` and `view_groups`
+    invalid_view_group_default: A `view_groups` `default` beállításának értéke `{$name}`, de nincs ilyen nevű nézetcsoport.
+    # {$name} is the default view filter name from the configuration; Don’t localize `default` and `view_filters`
+    invalid_view_filter_default: A `view_filters` `default` beállításának értéke `{$name}`, de nincs ilyen nevű nézetszűrő.
+    # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
+    missing_collection_name: A sorban {$count}. gyűjteménynek nem üres karakterláncként megadott `name` beállítással kell rendelkeznie.
+    # {$name} is the invalid or duplicate collection name
+    invalid_collection_name: 'Érvénytelen gyűjteménynév: `{$name}`. Nem tartalmazhat különleges karaktereket.'
+    duplicate_collection_name: 'A gyűjtemények nevének egyedinek kell lennie, de a következő név többször is szerepel: `{$name}`.'
+    # {$count} is the 1-based file index inside a file collection; Don’t localize `name`
+    missing_collection_file_name: A sorban {$count}. gyűjteményfájlnak nem üres karakterláncként megadott `name` beállítással kell rendelkeznie.
+    # {$name} is the invalid or duplicate collection file name
+    invalid_collection_file_name: 'Érvénytelen gyűjteményfájlnév: `{$name}`. Nem tartalmazhat különleges karaktereket.'
+    duplicate_collection_file_name: 'A gyűjteményfájlok nevének egyedinek kell lennie, de a következő név többször is szerepel: `{$name}`.'
+    # Don’t localize `fields`
+    collection_no_fields: A gyűjteménynek rendelkeznie kell legalább egy mezőt tartalmazó `fields` beállítással.
+    # Don’t localize `fields`
+    collection_file_no_fields: A gyűjteményfájlnak rendelkeznie kell legalább egy mezőt tartalmazó `fields` beállítással.
+    # Don’t localize `i18n`, `locale` and `folder`
+    collection_folder_i18n_required: Ha a `folder` elérési útban szerepel a `locale` helyőrző, a gyűjteménynek rendelkeznie kell `i18n` beállítással.
+    # {$folder} is the invalid folder path; Don’t localize `locale`, `folder` and the example path. The
+    # curly brackets in the example are escaped with backslashes for MessageFormat 2
+    invalid_collection_folder_locale: A `folder` elérési út (`{$folder}`) érvénytelen. A `locale` helyőrző csak egyszer, teljes mappanévként használható, például `content/\{\{locale\}\}/posts`.
+    # Don’t localize `i18n`, `locale` and `file`
+    collection_file_i18n_required: Ha a `file` elérési útban szerepel a `locale` helyőrző, a gyűjteményfájlnak rendelkeznie kell `i18n` beállítással.
+    # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
+    collection_i18n_no_fields: 'A gyűjtemény rendelkezik `i18n` beállítással, de egyik mezője sem rendelkezik `i18n` beállítással, így egyetlen mező sem fordítható. Add hozzá az `i18n: true` vagy az `i18n: duplicate` beállítást a lefordítandó mezőkhöz.'
+    # Don’t localize `i18n` and `i18n: true`
+    collection_i18n_no_files: 'A gyűjtemény rendelkezik `i18n` beállítással, de egyik fájlja sem rendelkezik `i18n` beállítással, így egyetlen fájl sem fordítható. Add hozzá az `i18n: true` beállítást a lefordítandó fájlokhoz.'
+    # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
+    collection_file_i18n_no_fields: 'A gyűjteményfájl rendelkezik `i18n` beállítással, de egyik mezője sem rendelkezik `i18n` beállítással, így egyetlen mező sem fordítható. Add hozzá az `i18n: true` vagy az `i18n: duplicate` beállítást a lefordítandó mezőkhöz.'
+    # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
+    missing_field_name: A sorban {$count}. mezőnek nem üres karakterláncként megadott `name` beállítással kell rendelkeznie.
+    # {$name} is the invalid or duplicate field name
+    invalid_field_name: 'Érvénytelen mezőnév: `{$name}`. Nem tartalmazhat különleges karaktereket. Ha mezőket szeretnél egymásba ágyazni, <a>pontjelölés helyett használj Object típusú mezőket</a>.'
+    duplicate_field_name: 'A mezők nevének egyedinek kell lennie, de a következő név többször is szerepel: `{$name}`.'
+    # {$count} is the 1-based variable type index in the current types array
+    missing_variable_type: A sorban {$count}. változótípusnak nem üres karakterláncként megadott `name` beállítással kell rendelkeznie.
+    # {$name} is the invalid or duplicate variable type name
+    invalid_variable_type: 'Érvénytelen változótípusnév: `{$name}`. Nem tartalmazhat különleges karaktereket.'
+    duplicate_variable_type: 'A változótípusok nevének egyedinek kell lennie, de a következő név többször is szerepel: `{$name}`.'
+    date_field_type: 'Az elavult Date mezőtípust a Sveltia CMS nem támogatja. Használd helyette a DateTime mezőtípust a `type: date` beállítással.'
+    # curly brackets in the placeholder are escaped with backslashes for MessageFormat 2
+    hidden_field_locale_without_i18n: Egy Hidden típusú mező `default` beállítása a `\{\{locale\}\}` helyőrzőt használja, de a gyűjteményben nincs engedélyezve az i18n, így a tartalomnak nincs nyelve, amellyel kitölthetné.
+    # {$timeZone} is the invalid IANA timezone identifier from the configuration
+    invalid_timezone: 'Érvénytelen időzóna: {$timeZone}. Érvényes IANA-időzóna-azonosítónak kell lennie, például `America/New_York` vagy `Asia/Tokyo`.'
+    # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
+    unsupported_deprecated_option: 'Az elavult `{$prop}` beállítást a Sveltia CMS nem támogatja. Használd helyette a következő beállítást: `{$newProp}`.'
+    # Don’t localize `allow_multiple`, `multiple`, and `false`
+    allow_multiple: Az `allow_multiple` beállítást a Sveltia CMS nem támogatja. Használd helyette a `multiple` beállítást, amelynek alapértéke `false`.
+    # Don’t localize `field`, `fields`, and `types`
+    invalid_list_field: A List típusú mező nem használhatja együtt a `field`, a `fields` és a `types` beállítást.
+    # {$widget} is the configured widget value of the invalid variable type; Don’t localize `widget` and `object`
+    invalid_list_variable_type: A List típusú mező változótípusa érvénytelen. A `widget` beállítás értéke `{$widget}`, de `object` értékűnek kell lennie.
+    # Don’t localize `fields`, and `types`
+    invalid_object_field: Az Object típusú mező nem használhatja együtt a `fields` és a `types` beállítást.
+    # {$min} and {$max} are option names such as `min` and `max` or `minlength` and `maxlength`
+    invalid_range_options: A minimumot megadó beállítás (`{$min}`) nem lehet nagyobb a maximumot megadó beállításnál (`{$max}`).
+    # {$step} is the configured value; Don’t localize `step`
+    invalid_step: A `step` beállítás értéke `{$step}`, de nullánál nagyobbnak kell lennie, vagy `-1`-nek a léptetés kikapcsolásához.
+    # Don’t localize `options`
+    select_field_no_options: A Select típusú mező `options` beállításának legalább egy elemet kell tartalmaznia.
+    # {$value} is the option value from the configuration; Don’t localize `options`
+    select_field_duplicate_option: 'A Select típusú mező `options` értékeinek egyedinek kell lenniük, de a következő érték többször is szerepel: `{$value}`.'
+    # {$value} is the default value from the configuration; Don’t localize `default` and `options`
+    select_field_invalid_default: A Select típusú mező `default` beállításának értéke `{$value}`, de ez nem szerepel az `options` között.
+    # Don’t localize `fields` and `types`
+    list_field_no_subfields: A List típusú mező `fields` vagy `types` beállításának legalább egy elemet kell tartalmaznia. Egyszerű értékek listájához hagyd ki a beállítást.
+    # Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_object: A List típusú mező `default` beállítása objektumot tartalmaz, de minden elemnek egyszerű értéknek kell lennie, mert a mezőnek nincs `fields` vagy `types` beállítása.
+    # {$value} is the default item from the configuration; Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_item: A List típusú mező `default` beállítása tartalmaz egy értéket (`{$value}`), de minden elemnek objektumnak kell lennie, mert a mező rendelkezik `fields` vagy `types` beállítással.
+    # {$key} is a property name of the default item from the configuration; Don’t localize `default`
+    list_field_invalid_default_key: A List típusú mező `default` beállítása olyan elemet tartalmaz, amelynek van `{$key}` tulajdonsága, de nincs ilyen nevű almező.
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    list_field_default_missing_type: A List típusú mező `default` beállítása olyan elemet tartalmaz, amelyből hiányzik a `types` valamelyikét azonosító tulajdonság (`{$typeKey}`).
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default item; Don’t localize `default` and `types`
+    list_field_invalid_default_type: A List típusú mező `default` beállítása olyan elemet tartalmaz, amelynek `{$typeKey}` tulajdonsága `{$value}`, de ez nem szerepel a `types` között.
+    # Don’t localize `map_key_field`, `fields` and `types`
+    list_field_map_key_no_subfields: A List típusú mező `map_key_field` beállításához szükség van a `fields` vagy a `types` beállításra, mivel minden kulcs egy almezőből származik.
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_not_found: A List típusú mező `map_key_field` beállítása egy almezőre hivatkozik (`{$name}`), de nincs ilyen nevű almező.
+    # {$name} is the subfield name, and {$type} is the variable type name; Don’t localize `map_key_field`
+    list_field_map_key_missing_in_type: A List típusú mező `map_key_field` beállítása egy almezőre hivatkozik (`{$name}`), de a típusnak (`{$type}`) nincs ilyen nevű almezője.
+    # {$name} is the subfield name, and {$widget} is its field type; Don’t localize `map_key_field`
+    list_field_map_key_invalid_type: A List típusú mező `map_key_field` beállítása egy almezőre hivatkozik (`{$name}`), de ennek String, Relation vagy Select típusú mezőnek kell lennie, nem `{$widget}` típusúnak.
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `multiple`
+    list_field_map_key_multiple: A List típusú mező `map_key_field` beállítása egy almezőre hivatkozik (`{$name}`), de az almező nem fogadhat el több értéket, mivel minden elemnek egyetlen kulcsra van szüksége. Távolítsd el a `multiple` beállítását.
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_option_not_string: A List típusú mező `map_key_field` beállítása egy almezőre hivatkozik (`{$name}`), de az almező opcióinak karakterlánc-értékekkel kell rendelkezniük, mivel minden kulcs karakterláncként tárolódik.
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `required`
+    list_field_map_key_not_required: A List típusú mező `map_key_field` beállítása egy almezőre hivatkozik (`{$name}`), de az almezőnek kötelezőnek kell lennie, mivel minden elemnek kulcsra van szüksége. Távolítsd el a `required` beállítását.
+    # {$name} is the subfield name; Don’t localize `map_key_field`, `i18n: false` and `i18n: duplicate`
+    list_field_map_key_not_localized: 'A List típusú mező `map_key_field` beállítása egy almezőre hivatkozik (`{$name}`), de az almezőnél nem lehet `i18n: false`, mivel az elemeknek minden nyelven kulcsra van szükségük. Használd az `i18n: duplicate` beállítást, vagy távolítsd el a beállítást.'
+    # Don’t localize `i18n`, `duplicate_if_empty`, `multiple` and `true`
+    duplicate_if_empty_multiple: 'Az `i18n: duplicate_if_empty` beállítás nem támogatott a `multiple` beállítással rendelkező mezőknél, ezért a mező úgy működik, mintha `i18n: true` lenne beállítva.'
+    # Don’t localize `default` and `multiple`
+    invalid_default_multiple: A `default` beállításnak tömbnek kell lennie, mert a `multiple` beállítás értéke `true`.
+    invalid_default_single: A `default` beállításnak egyetlen értéknek kell lennie, nem tömbnek, mert a `multiple` beállítás értéke nem `true`.
+    # {$key} is a property name of the default object from the configuration; Don’t localize `default`
+    object_field_invalid_default_key: Az Object típusú mező `default` beállítása tartalmaz egy tulajdonságot (`{$key}`), de nincs ilyen nevű almező.
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    object_field_default_missing_type: Az Object típusú mező `default` beállításából hiányzik a `types` valamelyikét azonosító tulajdonság (`{$typeKey}`).
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default object; Don’t localize `default` and `types`
+    object_field_invalid_default_type: Az Object típusú mező `default` beállításának `{$typeKey}` tulajdonsága `{$value}`, de ez nem szerepel a `types` között.
+    # Don’t localize `default` and `output_code_only`
+    code_field_invalid_default_object: A Code típusú mező `default` beállításának karakterláncnak kell lennie, mert az `output_code_only` beállítás értéke `true`.
+    # {$key} is a property name of the default object, {$code} and {$lang} are the configured property names; Don’t localize `default` and `keys`
+    code_field_invalid_default_key: 'A Code típusú mező `default` beállítása tartalmaz egy tulajdonságot (`{$key}`), de a `keys` beállítás csak a következő tulajdonságokat engedélyezi: `{$code}` és `{$lang}`.'
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_invalid_expression: A Compute típusú mező `value` beállításának érvényes aritmetikai kifejezésnek kell lennie, például `\{\{fields.price\}\} * \{\{fields.quantity\}\}`, mert a `value_type` beállítás értéke `{$valueType}`.
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_uuid_in_expression: A Compute típusú mező `value` beállítása nem használhat UUID-címkét, például `\{\{uuid\}\}`, mert a `value_type` beállítás értéke `{$valueType}`, így aritmetikai kifejezésnek minősül.
+    # {$value} is the default value and {$valueType} is the configured value type; Don’t localize `default` and `value_type`
+    number_field_default_not_integer: A Number típusú mező `default` beállításának értéke `{$value}`, de egész számnak kell lennie, mert a `value_type` beállítás értéke `{$valueType}`.
+    number_field_default_not_number: A Number típusú mező `default` beállításának értéke `{$value}`, de számnak kell lennie, mert a `value_type` beállítás értéke `{$valueType}`.
+    # Don’t localize `fields` and `types`
+    object_field_no_subfields: Az Object típusú mező `fields` vagy `types` beállításának legalább egy elemet kell tartalmaznia.
+    # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
+    relation_field_invalid_collection: A hivatkozott `{$collection}` gyűjtemény érvénytelen vagy nincs megadva.
+    relation_field_invalid_collection_file: A hivatkozott `{$file}` fájl érvénytelen vagy nincs megadva.
+    # Don’t localize `file`
+    relation_field_missing_file_name: Fájlgyűjteményre mutató kapcsolat esetén meg kell adni a `file` beállítást.
+    relation_field_invalid_value_field: A hivatkozott `{$field}` értékmező érvénytelen vagy nincs megadva.
+    # {$collection} is the referenced collection name; Don’t localize `file`, `value_field` and `slug`.
+    # The curly brackets are escaped with backslashes for MessageFormat 2
+    relation_field_array_file_slug: A gyűjteményre (`{$collection}`) mutató kapcsolat nem tárolhatja a `\{\{slug\}\}` értéket, mivel a `file` beállítással rendelkező gyűjteményekben a bejegyzés URL-azonosítója a pozíciója, amely a bejegyzések átrendezésekor vagy törlésekor megváltozik. Állítsd inkább a `value_field` beállítást egy egyedi értékű mezőre.
+    # {$collection} is the referenced collection name; Don’t localize `file`
+    relation_field_array_file_workflow: A `file` beállítással rendelkező gyűjtemény nem tartalmazhat kapcsolatot olyan gyűjteményre (`{$collection}`), amely szerkesztői vagy előnézeti munkafolyamatot használ, mivel az ott átnevezett vagy törölt bejegyzésekre mutató hivatkozások nem frissíthetők a fájlban.
+    relation_field_invalid_display_field: A hivatkozott `{$field}` megjelenítési mező érvénytelen vagy nincs megadva.
+    relation_field_invalid_search_field: A hivatkozott `{$field}` keresési mező érvénytelen vagy nincs megadva.
+    relation_field_invalid_filter_field: A hivatkozott `{$field}` szűrőmező érvénytelen vagy nincs megadva.
+    relation_field_invalid_sort_field: A hivatkozott `{$field}` rendezési mező érvénytelen vagy nincs megadva.
+    # Don’t localize `sort_by` and `file`
+    relation_field_sort_by_file_ignored: A `sort_by` beállítás nem vonatkozik a fájlra mutató kapcsolatokra, amelyek opciói a listaelemek sorrendjét követik. Figyelmen kívül marad.
+    unexpected: Váratlan hiba
+
+    # Schema validation errors, reported when the configuration doesn’t match the published JSON
+    # schema. In all of these, {$option} is a configuration option path such as `backend.name` or
+    # `view_filters[0].pattern`, relative to the collection, file or field named before it.
+    # {$type} is a value type name from `schema_value_type` below
+    schema_invalid_type: A beállításnak (`{$option}`) {$type} kell lennie.
+    # {$values} is a list of the values the option accepts
+    schema_invalid_enum: 'A beállítás (`{$option}`) értéke a következők egyike lehet: {$values}.'
+    # {$value} is the only value the option accepts
+    schema_invalid_const: A beállítás (`{$option}`) értéke csak `{$value}` lehet.
+    schema_invalid_empty_value: A beállításnak (`{$option}`) üres karakterláncnak kell lennie.
+    # {$count} is the exact number of items the option must have
+    schema_invalid_item_count: A beállításnak (`{$option}`) {$count} elemből álló tömbnek kell lennie.
+    schema_invalid_value: A beállítás (`{$option}`) értéke érvénytelen.
+    schema_missing_option: 'Hiányzó kötelező beállítás: `{$option}`.'
+    # {$options} is a list of options, one of which must be defined
+    schema_missing_one_of: 'Az alábbi beállítások egyikének megadása kötelező: {$options}.'
+    # Value type names used in `schema_invalid_type`, each completing the sentence “The option must
+    # be …”
+    schema_value_type:
+      string: karakterláncnak
+      number: számnak
+      integer: egész számnak
+      boolean: logikai értéknek
+      array: tömbnek
+      object: objektumnak
+      'null': üresnek
+
+  # Warning messages (logged to console)
+  warning:
+    oauth_no_app_id: Az OAuth-alkalmazásazonosító nincs megadva. A felhasználóknak hozzáférési tokent kell megadniuk a bejelentkezéshez.
+    # Don’t localize `prefix`
+    site_library_prefix_template: Egy médiatár `prefix` beállítása sabloncímkéket tartalmaz, amelyek azonban csak mezőszinten támogatottak, mert legfelső szinten nincs bejegyzés, amellyel kitölthetők lennének.
+    # {$prop} is the unsupported option name that will be ignored
+    unsupported_ignored_option: A beállítást (`{$prop}`) a Sveltia CMS nem támogatja. Figyelmen kívül marad.
+    # Don’t localize `stages`, `publish_mode`, `editorial_workflow` and {$type}, which is `preview` or `simple`
+    publish_mode_stages_ignored: A `publish_mode` `stages` beállítása csak az `editorial_workflow` közzétételi módra vonatkozik, ezért `{$type}` mód esetén figyelmen kívül marad.
+    # Don’t localize `pattern`, `m` and `s`
+    inline_component_multiline_pattern: Ennek a soron belüli komponensnek a `pattern` beállítása `m` vagy `s` jelzőt tartalmaz, vagy sortörésekre illeszkedik, de a soron belüli komponensek csak egy bekezdésen belül illeszkednek.
+    # {$name} is a button or component name and {$option} is `buttons` or `editor_components`; Don’t localize them and `multiline: false`
+    single_line_block_item: 'A `{$option}` beállítás `{$name}` eleme figyelmen kívül marad, mivel a `multiline: false` beállítású mező csak soron belüli tartalmat tartalmazhat.'
+    # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
+    conflicting_timezone_options: A `picker_utc` és az újabb időzóna-beállítások (`input_timezone` vagy `output_utc`) egyaránt meg vannak adva. Az új beállítások élveznek elsőbbséget. Érdemes eltávolítani a `picker_utc` beállítást a konfigurációból.
+    # Don’t localize `localize_format` and `format`
+    localize_format_without_format: A `localize_format` beállításnak nincs hatása, mert a mezőnek nincs `format` beállítása, és az értéke ISO 8601 formátumban tárolódik.
+    # {$name} is a template tag like `fields.lines.*.price`; Don’t localize `value`, `*` and `sum()`
+    compute_field_wildcard_without_item: A Compute típusú mező `value` beállítása egy címkére hivatkozik (`{$name}`), de a mező nem a `*` által jelölt lista egy elemében található, így semmire sem oldódik fel. A lista összes elemét csak összesítő függvény, például a `sum()` használhatja.
+    # {$name} is a template tag like `fields.lines.*.amount`; Don’t localize `value`
+    compute_field_self_reference: A Compute típusú mező `value` beállítása `{$name}` formában önmagára hivatkozik, így az értéke minden számításkor megváltozik, és sosem állandósul.
+    # {$name} is a template tag like `fields.total`; Don’t localize `value`
+    compute_field_reference_cycle: A Compute típusú mező `value` beállítása egy mezőre hivatkozik (`{$name}`), amely egy másik Compute típusú mező, és közvetlenül vagy más mezőkön keresztül visszahivatkozik erre a mezőre, így az értékeik sosem állandósulnak.
+    # Don’t localize `localize_format`, `true` and `de`
+    localize_format_without_i18n: A `localize_format` beállítás értéke `true`, de a gyűjteményben nincs engedélyezve az i18n, így az érték angol formátumban íródik ki. Állítsd inkább a beállítást egy nyelvkódra, például `de`.
+    # {$locale} is the locale code from the configuration; Don’t localize `localize_format`
+    localize_format_unsupported_locale: A `localize_format` beállítás értéke `{$locale}`, amely nem támogatott nyelv, így az érték angol formátumban íródik ki.
+    # Don’t localize `preview_path`
+    preview_path_no_date_field: A `preview_path` beállítás dátum- és időcímkéket használ, de a gyűjteményben nincs DateTime típusú mező, amelyből kiolvashatók lennének, így az előnézeti hivatkozás nem jelenik meg.
+    # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
+    preview_path_date_field_not_found: A `preview_path_date_field` beállítás olyan mezőnévre hivatkozik (`{$name}`), amelyhez nincs megadva DateTime típusú mező, így az előnézeti hivatkozás nem jelenik meg.
+    # {$name} is the template tag from the configuration; Don’t localize `preview_path`
+    preview_path_field_not_found: A `preview_path` beállítás olyan mezőre hivatkozik (`{$name}`), amely nincs megadva a gyűjteményben, így az előnézeti hivatkozás nem jelenik meg.
+    # {$name} is the default identifier field name; Don’t localize `identifier_field` and `slug`
+    missing_identifier_field: A gyűjteményben nincs `{$name}` mező, amellyel az új bejegyzések elnevezhetők, ezért minden új bejegyzés véletlenszerű URL-azonosítót kap. Adj hozzá egy `{$name}` mezőt, vagy állítsd be az `identifier_field` vagy a `slug` beállítást.
+    # Don’t localize `slug`, `i18n`, `multiple_files`, `multiple_folders` and `multiple_root_folders`
+    slug_i18n_ineffective: A `slug` `i18n` beállításának nincs hatása, mert a gyűjtemény nem a `multiple_files`, `multiple_folders` vagy `multiple_root_folders` i18n-struktúrát használja, amelyben minden nyelvnek saját fájlja van.
+    # Don’t localize `slug`, `template` and `auto_increment`
+    slug_template_ignored: A `slug` `template` beállítása figyelmen kívül marad, mert az `auto_increment` beállítás számozza helyette az URL-azonosítókat.
+    # {$file} is the file path; Don’t localize `file`, `locale`, `i18n`, `false`,
+    # `omit_default_locale_from_file_path` and the example paths. The curly brackets in the examples
+    # are escaped with backslashes for MessageFormat 2
+    locale_not_omitted_from_file_path: A `locale` helyőrző nem távolítható el a `file` elérési útból (`{$file}`), így az alapértelmezett nyelv benne marad az `omit_default_locale_from_file_path` i18n-beállítás ellenére. A nyelv kihagyásához használd a helyőrzőt teljes mappanévként, például `\{\{locale\}\}/about.md`, vagy a fájlnév és a kiterjesztés között, például `about.\{\{locale\}\}.md`. A megtartásához állítsd a beállítást `false` értékre a fájl `i18n` beállításában.
+    # Don’t localize `i18n`
+    i18n_not_configured: Az `i18n` beállítás engedélyezve van, de az i18n nincs konfigurálva sem a konfiguráció legfelső szintjén, sem a gyűjteményben, így a beállításnak nincs hatása.
+    # Don’t localize `public_folder` and `media_folder`
+    empty_public_folder: A `public_folder` beállítás üres karakterlánc, ezért a bejegyzésekben mentett médiafájl-elérési utakhoz helyette a `media_folder` elérési útját használjuk. Távolítsd el a beállítást, vagy állítsd a használni kívánt elérési útra, például `/images`.
+    # {$option} is an option path from the configuration, such as `filter.Regulation`
+    schema_unknown_option: A beállítás (`{$option}`) nincs definiálva a Sveltia CMS konfigurációs sémájában. Figyelmen kívül marad. Ellenőrizd, nincs-e benne elírás vagy szintaktikai hiba.
+    # Don’t localize `default_localized`, `default` and `i18n`
+    default_localized_without_i18n: A `default_localized` beállításnak nincs hatása, mert a gyűjteményben nincs engedélyezve az i18n. Használd helyette a `default` beállítást.
+    # {$locale} is a locale code from the configuration; Don’t localize `default_localized`
+    default_localized_unknown_locale: A `default_localized` beállítás értéket tartalmaz egy nyelvhez (`{$locale}`), amely nem tartozik a gyűjtemény nyelvei közé, így ez az érték sosem érvényesül.
+
+  # Compatibility link appended to unsupported feature messages
+  compatibility_link: 'A részletekért lásd a kompatibilitási megjegyzéseket: {$link}'
+
+  # Console tip shown after config load
+  schema_tip: 'A jobb fejlesztői élmény érdekében a konfigurációs fájlt ellenőrizheted a Sveltia CMS JSON-sémájával. A részleteket itt találod: {$link}.'
+
+# ==============================================================================
+# Local Workflow
+# ==============================================================================
+# Strings for the Local Workflow feature (local repository support).
+
+local_workflow:
+  # Badge text in account button
+  indicator: Helyi
+  # Browser compatibility warnings
+  unsupported_browser: A helyi munkafolyamatot a böngésződ nem támogatja. Használd helyette a Chrome-ot vagy az Edge-et.
+  disabled: A helyi munkafolyamat le van tiltva a böngésződben. <a>Így engedélyezheted</a>.
+
+# ==============================================================================
+# Editorial Workflow
+# ==============================================================================
+# Strings for the Editorial Workflow feature (content review process), where
+# unpublished entries are stored as pull requests on the Git backend.
+
+# Editorial Workflow board announcement with the number of entries in each column. {$draft},
+# {$review} and {$ready} are those numbers. The counts are labelled rather than written as prose,
+# because selecting a plural form on three numbers at once would need a variant per combination
+viewing_editorial_workflow: 'Most a szerkesztői munkafolyamat tábláját látod. Piszkozatok: {$draft}. Ellenőrzés alatt: {$review}. Kész: {$ready}. Törlésre vár: {$deletion}.'
+# Same as above, for an Open Authoring contributor: their board has no Ready column, because only
+# a maintainer can publish
+viewing_open_authoring_workflow: 'Most a szerkesztői munkafolyamat tábláját látod. Piszkozatok: {$draft}. Ellenőrzés alatt: {$review}. Törlésre vár: {$deletion}.'
+# Same as above, when the In Review stage is left out with the `stages` publish mode option
+viewing_editorial_workflow_without_review: 'Most a szerkesztői munkafolyamat tábláját látod. Piszkozatok: {$draft}. Kész: {$ready}. Törlésre vár: {$deletion}.'
+# Same as above, when all the content uses Preview Workflow, which has no review stages, so the
+# page only lists the drafts
+viewing_preview_workflow: 'Most a Piszkozatok oldalt látod. Piszkozatok: {$draft}. Törlésre vár: {$deletion}.'
+
+# Workflow status names. `drafts` is the plural form used as a column heading,
+# while `draft` is the singular form used in the editor’s status button.
+status:
+  draft: Piszkozat
+  drafts: Piszkozatok
+  in_review: Ellenőrzés alatt
+  ready: Kész
+  # A pending removal, which is a status of its own rather than a stage: it has no review to go
+  # through, only the deletion itself to carry out or call off
+  pending_deletion: Törlésre vár
+  # Merged changes the site hasn’t caught up with yet: it’s being rebuilt and deployed from the
+  # merge, so a published entry isn’t live and a deleted one is still up. Heading of the tray below
+  # the board that lists them until the site has caught up
+  deploying: Telepítés folyamatban
+
+workflow:
+  # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
+  # reverse of a normal card’s: one calls the removal off, the other carries it out. The card’s own
+  # buttons are labelled “Cancel” and “Delete”; the dialog needs the longer form, because it already
+  # has a Cancel button of its own
+  cancel_deletion: Törlés visszavonása
+  confirm_cancelling_deletion: Biztosan visszavonod ezt a törlést? A bejegyzés közzétéve marad.
+  confirm_completing_deletion: Biztosan törlöd ezt a bejegyzést? Azonnal törlődik.
+  # Toast notification shown after an entry has been marked for deletion in the entry editor. The
+  # entry hasn’t been removed yet, so it doesn’t say “deleted”. The confirmation dialog has already
+  # explained that it stays until the deletion is published, so this doesn’t repeat it
+  deletion_pending: |
+    .input {$count :integer}
+    .match $count
+      one {{ Bejegyzés megjelölve törlésre. }}
+      *   {{ {$count} bejegyzés megjelölve törlésre. }}
+  # Toast notification shown after the unpublished changes to an entry have been thrown away
+  changes_discarded: |
+    .input {$count :integer}
+    .match $count
+      one {{ Módosítások elvetve. }}
+      *   {{ {$count} bejegyzés módosításai elvetve. }}
+  # Toast notifications shown while a deletion is being called off, and once that has completed
+  cancelling_deletion: Törlés visszavonása…
+  deletion_cancelled: Törlés visszavonva.
+  # Error notification when the deletion could not be cancelled
+  cancelling_deletion_failed: Nem sikerült visszavonni a törlést. Próbáld újra.
+  # Group heading shown above the unpublished entries in the entry list
+  unpublished_entries: Nem közzétett bejegyzések
+  published_entries: Közzétett bejegyzések
+  # Editor toolbar: status button label, which drops the prefix on a small screen, and menu
+  # aria-label. `status` is one of the `status` strings above.
+  entry_status_value: 'Állapot: {$status}'
+  change_entry_status: Bejegyzés állapotának módosítása
+  # Editor toolbar: progress label while the status is being changed
+  changing_status: Állapot módosítása…
+  # Workflow page: toast notification shown while the status is being updated after a card is
+  # dragged to another column, and once the update has completed
+  updating_status: Állapot frissítése…
+  status_updated: Állapot frissítve.
+  # Error notification when the status could not be changed
+  status_change_failed: Nem sikerült módosítani az állapotot. Próbáld újra.
+  # Workflow page: toolbar button that reads the pull requests again, to pick up the changes made
+  # by anyone else since the board was loaded, and the toast notifications shown while doing so and
+  # once done
+  refresh: Frissítés
+  refreshing: Frissítés…
+  refreshed: A tábla naprakész.
+  # Error notification when the board could not be refreshed
+  refresh_failed: Nem sikerült frissíteni a táblát. Próbáld újra.
+  # Error notification when the status can’t be changed because the entry is incomplete. Required
+  # fields can be left empty while the entry is a draft, but not once it moves on from there
+  status_change_blocked: A bejegyzés hibákat tartalmaz. Javítsd ki őket az állapot módosítása előtt.
+  # Error notification when an entry can’t be published because it’s incomplete, shown in the entry
+  # editor and on the Editorial Workflow page
+  publish_blocked: A bejegyzés hibákat tartalmaz. Javítsd ki őket a közzététel előtt.
+  # Confirmation dialog shown after an entry has been saved as a draft, offering the next step.
+  # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
+  send_for_review: Küldés ellenőrzésre
+  confirm_sending_for_review: A módosításaid piszkozatként mentve. Elküldöd a bejegyzést ellenőrzésre, hogy valaki átnézze és közzétegye?
+  # Same as above, when the In Review stage is left out with the `stages` publish mode option, so
+  # the next step is to mark the entry as ready to be published
+  mark_as_ready: Megjelölés késznek
+  confirm_marking_as_ready: A módosításaid piszkozatként mentve. Megjelölöd a bejegyzést késznek, hogy közzé lehessen tenni?
+  # Editor toolbar: button shown when the entry is ready to be published
+  publish_entry: Bejegyzés közzététele
+  # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
+  # entry has a published version, because only the pending changes are thrown away
+  discard_changes: Módosítások elvetése
+  # Confirmation message shown before deleting a published entry, replacing the direct
+  # `confirm_deleting_this_entry` when Editorial Workflow is enabled: the removal goes through
+  # review, so it isn’t immediate. Keep the label name in sync with `pending_deletion` below
+  confirm_deleting_published_entry: Biztosan törlöd ezt a bejegyzést? Csak a törlés közzétételekor törlődik. Addig is megtalálod a bejegyzéslistában „Törlésre vár” jelöléssel.
+  # Confirmation dialogs shown before deleting an unpublished entry. Deleting closes the pull
+  # request instead of committing a deletion to the configured branch. Keep the wording free of
+  # Git jargon, as editors are often non-technical.
+  # Used when the entry has never been published, so nothing of it is left afterwards
+  confirm_deleting_unpublished_entry: Ez a bejegyzés még nincs közzétéve, ezért a törlésével teljesen elvész.
+  # Used when the entry updates one that is already live, which stays untouched. The dialog is
+  # titled “Discard Changes”, so the wording is about discarding, not deleting
+  confirm_discarding_entry_changes: Ennek a bejegyzésnek nem közzétett módosításai vannak. Elvetésükkel a közzétett verzió áll vissza. Maga a bejegyzés nem törlődik.
+  # Extra sentence appended to the entry list’s delete confirmation when every selected entry is
+  # unpublished. {$count} is the number of selected entries. Keep the wording free of Git jargon.
+  deleting_unpublished_note_all: |
+    .input {$count :integer}
+    .match $count
+      one {{ Még nincs közzétéve, ezért a nem közzétett módosításaid elvesznek. Az esetleges közzétett verzió közzétéve marad. }}
+      *   {{ Ezek még nincsenek közzétéve, ezért a nem közzétett módosításaid elvesznek. Az esetleges közzétett verziók közzétéve maradnak. }}
+  # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
+  # the number of selected entries that are unpublished.
+  deleting_unpublished_note_some: |
+    .input {$count :integer}
+    .match $count
+      one {{ Egyikük még nincs közzétéve, ezért a nem közzétett módosításaid elvesznek. Az esetleges közzétett verzió közzétéve marad. }}
+      *   {{ Közülük {$count} még nincs közzétéve, ezért a nem közzétett módosításaid elvesznek. Az esetleges közzétett verziók közzétéve maradnak. }}
+  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
+  confirm_publishing_entry_after_build: Biztosan közzéteszed ezt a bejegyzést? A módosításaid a webhely újraépítése után jelennek meg élesben.
+  # Workflow page: toast notifications shown while an entry is being published from a card, and
+  # once publishing has completed
+  publishing_entry: Bejegyzés közzététele…
+  entry_published: Bejegyzés közzétéve.
+  # Workflow page: toast notifications shown while an entry is being deleted from a card, and once
+  # the deletion has completed
+  deleting_entry: Bejegyzés törlése…
+  discarding_changes: Módosítások elvetése…
+  entry_deleted: Bejegyzés törölve.
+  # Error notification when publishing fails
+  publishing_entry_failed: Nem sikerült közzétenni a bejegyzést. Próbáld újra.
+  # Error notification when an entry can’t be published from the CMS, because its request also
+  # changes files that aren’t part of the entry and that the CMS doesn’t show, goes somewhere other
+  # than the site’s branch, or is too large to check. Keep the wording free of Git jargon
+  publish_refused_other_changes: Ez a bejegyzés itt nem tehető közzé, mert olyan egyéb módosítások is tartoznak hozzá, amelyeket a CMS nem tud megjeleníteni. Kérj meg egy fejlesztőt, hogy nézze át.
+  # Error notification when an entry can’t be published because its branch has been committed to
+  # since the entry was opened, so what would be published isn’t what was reviewed
+  publish_refused_entry_changed: A bejegyzés megváltozott, mióta megnyitottad. Töltsd újra az oldalt, és nézd át a legfrissebb verziót a közzététel előtt.
+  review_on_x: 'Áttekintés itt: {$service}'
+  from_fork: Forkból
+  fork_entry_editable: 'Ez a bejegyzés egy közreműködő pull requestjéből származik, amelyet a következő forkból nyitott: „{$fork}”. A módosításaidat az ő ágára mentjük. A pull requestet a Git-szolgáltatásban nézheted át és olvaszthatod be.'
+  fork_entry_locked: 'Ez a bejegyzés egy közreműködő pull requestjéből származik, amelyet a következő forkból nyitott: „{$fork}”. A közreműködő nem engedélyezi, hogy a karbantartók szerkesszék, ezért itt csak megtekinthető.'
+  fork_not_editable: A közreműködő nem engedélyezi, hogy a karbantartók szerkesszék ezt a pull requestet.
+  fork_entry_gone: A közreműködő pull requestje már nincs nyitva, ezért a módosítások nem menthetők bele.
+  # Error shown in the save error dialog when an entry can’t be saved for review, because a request
+  # the CMS doesn’t show is already open from the branch the entry would be saved to. `{$number}` is
+  # the request number, e.g. `#12` on GitHub or `!12` on GitLab. Keep the wording free of Git jargon
+  branch_in_use: Ehhez a bejegyzéshez már nyitva van egy másik kérés ({$number}) a CMS-en kívül. Kérj meg egy fejlesztőt, hogy előbb zárja le.
+  # Workflow page: empty column message
+  no_entries: Nincsenek bejegyzések.
+  # Workflow page: aria-label for a draggable entry card
+  drag_entry: Húzd az állapot módosításához
+  # Workflow page: note on a card in the Deploying tray, marking an entry that’s being removed from
+  # the site rather than published to it
+  deploying_deletion: Törlés
+  # Workflow page: note on a card listing the new entries that were created from a Relation field
+  # of the entry and are published along with it, e.g. “Also adds Section: Getting Started”
+  companion_entries: 'Emellett hozzáadja: {$entries}'
+  # Workflow page: note on a card listing the existing entries that were edited from a Relation
+  # field of the entry and are published along with it, e.g. “Also changes Author: Ada Lovelace”
+  edited_companion_entries: 'Emellett módosítja: {$entries}'
+  # Workflow page: one of the entries listed by `companion_entries` or `edited_companion_entries`,
+  # named by its collection’s singular label and its title
+  companion_entry: '{$collection}: {$title}'
+
+# Dialog asking the user for a commit message every time changes are saved, when the site is
+# configured to. The message is recorded in the repository’s history along with the changes
+commit_message:
+  # Dialog title
+  title: Commit-üzenet
+  # Description when the user writes the whole message, which the text box is filled in with
+  description_replace: Írd le a módosításaidat. Az üzenet a módosításokkal együtt bekerül az előzményekbe.
+  # Description when the text the user enters is added before or after a message the CMS writes
+  description_addition: Adj hozzá egy megjegyzést a módosításaiddal együtt az előzményekbe kerülő üzenethez, például egy hibajegy számát. Üresen is hagyható.
+  # Accessible name of the text box when the user writes the whole message
+  message: Commit-üzenet
+  # Accessible name of the text box when the text is added before or after the message
+  addition: Megjegyzés
+  # Preview of the message as it will be recorded. {$message} is the message
+  preview: 'Üzenet: {$message}'
+
+# Open Authoring: a contributor without write access to the configured repository works in a fork
+# of it, and their changes reach the site through a pull request a maintainer merges
+open_authoring:
+  # Confirmation dialog shown when the CMS needs to create a fork for the contributor, and the
+  # label on its OK button. {$repo} is the repository identifier in owner/repo format
+  fork_repository: Tároló forkolása
+  fork: Forkolás
+  confirm_forking_repository: Ahhoz, hogy módosításokat javasolj a tárolóhoz („{$repo}”), létre kell hozni a tároló egy forkját a fiókodban. A módosításaid ebbe a forkba kerülnek, és egy karbantartó átnézi őket, mielőtt élővé válnak.
+  # Error shown when the user declined the dialog above
+  fork_declined: A módosítások javasolásához a tároló egy forkjára van szükség a fiókodban.
+  # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
+  fork_failed: 'Nem sikerült létrehozni a következő tároló forkját a fiókodban: „{$repo}”.'
+  # Error shown when the user’s fork doesn’t have the branch the CMS is configured with, so there’s
+  # nothing to start their changes from. {$fork} and {$repo} are repository identifiers in
+  # owner/repo format, {$branch} is the branch name
+  fork_branch_missing: A forkodban („{$fork}”) nincs „{$branch}” ág. Frissítsd a forkot a forrástárolóból („{$repo}”), majd jelentkezz be újra.
+  # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
+  # because the API rate limit is exhausted. {$repo} is the repository identifier
+  permission_check_failed: 'Nem sikerült ellenőrizni a hozzáférésedet a következő tárolóhoz: „{$repo}”. Próbáld újra egy kis idő múlva.'
+  # Error shown when the repository can’t be forked, which is the default for a private
+  # repository. {$repo} is the repository identifier
+  forking_disabled: 'A következő tároló nem engedélyezi a forkolást: „{$repo}”. Kérj meg egy karbantartót, hogy engedélyezze.'
+  # Error shown when the user was invited to the repository but hasn’t accepted yet, so they still
+  # have no access. {$repo} is the repository identifier
+  invitation_pending: 'Függőben lévő meghívásod van a következő tárolóhoz: „{$repo}”. Fogadd el a GitHubon, majd jelentkezz be újra.'
+  # Error shown when the repository is private but the sign-in doesn’t cover private repositories.
+  # {$repo} is the repository identifier
+  private_repo_scope_required: 'A bejelentkezésed nem biztosít hozzáférést a privát tárolókhoz, ezért a következő tároló nem olvasható: „{$repo}”. Kérj meg egy karbantartót, hogy ellenőrizze a CMS hitelesítési beállításait.'
+  # Error shown when a contributor tries to publish an entry, which only a maintainer can do
+  publish_unsupported: Ezen a webhelyen csak karbantartó tehet közzé módosításokat. Helyette állítsd a bejegyzésedet „Ellenőrzés alatt” állapotúra, és valaki átnézi.
+  # Error shown when a contributor changes the status of an entry whose request a maintainer has
+  # published since the page was loaded, leaving nothing to review. The entry then leaves the
+  # Editorial Workflow board and the editor closes. Keep the wording free of Git jargon
+  entry_already_published: Egy karbantartó már közzétette ezt a bejegyzést, így nincs mit ellenőrizni.
+  # Error shown when a change would go straight to the site instead of being reviewed, which a
+  # contributor can’t do. It covers media library uploads and deletions, and entry reordering
+  direct_commit_unsupported: Ez a módosítás nem hajtható végre közvetlenül. Ellenőrzésre csak a bejegyzések szerkesztései javasolhatók.
+  # Infobar shown while a contributor is signed in. {$repo} is their fork in owner/repo format
+  contributing_via_fork: A módosításaid a tároló forkjába („{$repo}”) kerülnek, és átnézik őket, mielőtt élővé válnak.
+  view_fork: Fork megtekintése
+
+# ==============================================================================
+# Settings Dialog
+# ==============================================================================
+# Strings for the settings/preferences dialog and its panels.
+
+# Settings page aria-label
+categories: Kategóriák
+
+# Preferences panels
+prefs:
+  account:
+    title: Fiók
+  # API key management feedback messages
+  changes:
+    api_key_saved: API-kulcs mentve.
+    api_key_removed: API-kulcs eltávolítva.
+    api_key_invalid: A megadott API-kulcs érvénytelen. Ellenőrizd, és próbáld újra.
+
+  # Preferences operation errors
+  error:
+    permission_denied: A cookie-tárolóhoz való hozzáférés megtagadva. Ellenőrizd a böngésző engedélyeit, és próbáld újra.
+
+  # Appearance panel
+  appearance:
+    title: Megjelenés
+    theme: Téma
+    select_theme: Téma kiválasztása
+
+  # Theme options
+  theme:
+    dark: Sötét
+    light: Világos
+
+  # Language panel
+  language:
+    title: Nyelv
+    ui_language:
+      title: Felhasználói felület nyelve
+      select_language: Nyelv kiválasztása
+
+  # Contents panel
+  contents:
+    title: Tartalom
+    editor:
+      title: Szerkesztő
+      use_draft_backup:
+        switch_label: Bejegyzéspiszkozatok automatikus biztonsági mentése
+      close_on_save:
+        switch_label: Szerkesztő bezárása piszkozat mentése után
+      close_with_escape:
+        switch_label: Szerkesztő bezárása az Escape billentyűvel
+
+  # Internationalization panel
+  i18n:
+    title: Nemzetköziesítés
+    translators:
+      default:
+        title: Alapértelmezett fordítószolgáltatás
+        select_service: Szolgáltatás kiválasztása
+      api_keys:
+        title: Fordítószolgáltatások API-kulcsai
+        description: A <a>fordítószolgáltatások</a> API-kulcsainak kezelése. Az általános MI-szolgáltatások API-kulcsai az MI-beállításokban kezelhetők.
+      # API key input label, e.g., “DeepL Key”
+      # {$service} is the translation service name
+      field_label: '{$service}-kulcs'
+      # Description with embedded links
+      # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
+      description: Regisztrálj a szolgáltatásra (<a {$homeHref}>{$service}</a>), és add meg itt <a {$apiKeyHref}>az API-kulcsodat</a> a szövegmezők gyors fordításához.
+
+  # Media panel
+  media:
+    title: Média
+    stock_photos:
+      api_keys:
+        title: Stockfotó-szolgáltatások API-kulcsai
+        description: A <a>stockfotó-szolgáltatások</a> API-kulcsainak kezelése.
+      # API key input label, e.g., “Unsplash API Key”
+      # {$service} is the stock photo service name
+      field_label: '{$service} API-kulcs'
+      # Description with embedded links
+      # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
+      description: Regisztrálj a szolgáltatásra (<a {$homeHref}>{$service} API</a>), és add meg itt <a {$apiKeyHref}>az API-kulcsodat</a>, hogy ingyenes stockfotókat illeszthess be a képmezőkbe.
+      # Photo credit attribution
+      # {$service} is the stock photo service name
+      credit: 'Fotók forrása: {$service}'
+      no_services: Nincs beállítva <a>stockfotó-szolgáltatás</a>.
+    cloud_storage:
+      api_keys:
+        title: Felhőtárhely-szolgáltatások API-kulcsai
+        description: A <a>felhőtárhely-szolgáltatások</a> API-kulcsainak kezelése.
+      # API key input label
+      # {$service} is the cloud storage service name
+      field_label: '{$service} API-kulcs'
+      no_services: Nincs beállítva <a>felhőtárhely-szolgáltatás</a>.
+
+  # AI panel
+  ai:
+    title: MI
+    api_keys:
+      title: MI-szolgáltatások API-kulcsai
+      description: Az MI-szolgáltatások API-kulcsainak kezelése.
+    # API key input label, e.g., “OpenAI GPT API Key”
+    # {$service} is the AI service name
+    field_label: '{$service} API-kulcs'
+
+  # Accessibility panel
+  accessibility:
+    title: Akadálymentesség
+    underline_links:
+      title: Hivatkozások aláhúzása
+      description: Hivatkozások aláhúzása a bejegyzés előnézetében és a felhasználói felület feliratain.
+      switch_label: Hivatkozások mindig aláhúzva
+
+  # Data Management panel
+  data:
+    title: Adatkezelés
+    clear_data:
+      title: Adatok törlése
+      # Clear File Cache button
+      file_cache:
+        description: A helyileg gyorsítótárazott fájltartalmak és bélyegképek törlése tárhely felszabadításához vagy az elavult adatok okozta problémák megoldásához.
+        button_label: Fájlgyorsítótár törlése
+        confirmation: A helyileg gyorsítótárazott fájltartalmak és bélyegképek törlődnek. A nem mentett piszkozataid és beállításaid megmaradnak, a törölt adatok pedig szükség szerint újra letöltődnek vagy létrejönnek. Ezután a CMS újratöltődik.
+      # Erase All Data button
+      all_data:
+        description: Minden olyan adat törlése, amelyet a CMS ebben a böngészőben tárol, beleértve a gyorsítótárazott fájlokat, a nem mentett piszkozatokat és a beállításokat. A tárolóba már elmentett tartalmakat ez nem érinti.
+        button_label: Összes adat törlése
+        confirmation: Az ebben a böngészőben tárolt összes adat törlődik, beleértve a gyorsítótárazott fájltartalmakat, a bélyegképeket, a nem mentett piszkozatokat, a beállításokat és a bejelentkezési állapotot. A tárolót ez nem érinti, de minden nem mentett módosítás elvész, és újra be kell jelentkezned. Ezután a CMS újratöltődik.
+
+  # Developer panel
+  developer:
+    title: Fejlesztő
+    developer_mode:
+      title: Fejlesztői mód
+      description: Néhány fejlesztőknek szóló funkció engedélyezése, többek között a részletes konzolnaplóké és a natív helyi menüké.
+      switch_label: Fejlesztői mód engedélyezése
+    local_git:
+      title: Git-commitok
+      description: A módosítások commitolása a helyi tároló aktuális ágára minden mentéskor, ahogyan a CMS távoli tároló esetén is teszi. A commitokat ezután a megszokott Git-eszközeiddel nézheted át és pusholhatod.
+      switch_label: Módosítások commitolása a Gitbe
+      checking: Tároló ellenőrzése…
+      # {$branch} is the branch name, {$name} and {$email} are the commit author’s name and email address
+      ready: 'A CMS a módosításokat {$name} ({$email}) nevében commitolja a következő ágra: {$branch}.'
+      # {$reason} is one of the `local_git_skip_reasons` strings
+      not_ready: A módosítások most nem commitolhatók. {$reason}
+    deploy_hook:
+      title: Telepítési webhook
+      description: Adj meg egy webhook-URL-t, amely akkor hívódik meg, amikor a „Módosítások közzététele” lehetőséggel manuálisan indítasz telepítést. Üresen hagyható, ha GitHub Actionst vagy GitLab CI/CD-t használsz.
+      # Hook URL input
+      url:
+        field_label: Webhook-URL
+        saved: Webhook-URL mentve.
+        removed: Webhook-URL eltávolítva.
+      # Authorization header input
+      auth:
+        field_label: Authorization fejléc (pl. Bearer <token>) (nem kötelező)
+        saved: Authorization fejléc mentve.
+        removed: Authorization fejléc eltávolítva.
+
+# ==============================================================================
+# Keyboard Shortcuts
+# ==============================================================================
+# Action descriptions for the keyboard shortcuts dialog.
+
+keyboard_shortcuts_:
+  view_content_library: Tartalomtár megtekintése
+  view_asset_library: Médiatár megtekintése
+  search: Keresés a bejegyzések és médiafájlok között
+  create_entry: Új bejegyzés létrehozása
+  save_entry: Bejegyzés mentése
+  cancel_editing: Bejegyzés szerkesztésének megszakítása
+
+# ==============================================================================
+# File Type Labels
+# ==============================================================================
+# Display labels for file types shown in asset info and upload previews.
+
+file_type_labels:
+  # Image formats
+  avif: AVIF-kép
+  bmp: BMP-kép
+  gif: GIF-kép
+  heic: HEIC-kép
+  heif: HEIF-kép
+  ico: Ikon
+  jpeg: JPEG-kép
+  jpg: JPEG-kép
+  png: PNG-kép
+  svg: SVG-kép
+  tif: TIFF-kép
+  tiff: TIFF-kép
+  webp: WebP-kép
+  # Video formats
+  avi: AVI-videó
+  m4v: MP4-videó
+  mov: QuickTime-videó
+  mp4: MP4-videó
+  mpeg: MPEG-videó
+  mpg: MPEG-videó
+  ogg: Ogg-videó
+  ogv: Ogg-videó
+  ts: MPEG-videó
+  webm: WebM-videó
+  3gp: 3GPP-videó
+  3g2: 3GPP2-videó
+  # Audio formats
+  aac: AAC-hang
+  mid: MIDI
+  midi: MIDI
+  m4a: MP4-hang
+  mp3: MP3-hang
+  oga: Ogg-hang
+  opus: OPUS-hang
+  wav: WAV-hang
+  weba: WebM-hang
+  # Document formats
+  csv: CSV-táblázat
+  doc: Word-dokumentum
+  docx: Word-dokumentum
+  odp: OpenDocument-bemutató
+  ods: OpenDocument-táblázat
+  odt: OpenDocument-szöveg
+  pdf: PDF-dokumentum
+  ppt: PowerPoint-bemutató
+  pptx: PowerPoint-bemutató
+  rtf: Formázott szöveges dokumentum
+  xls: Excel-táblázat
+  xlsx: Excel-táblázat
+  # Text formats
+  html: HTML-szöveg
+  js: JavaScript
+  json: JSON-szöveg
+  md: Markdown-szöveg
+  toml: TOML-szöveg
+  yaml: YAML-szöveg
+  yml: YAML-szöveg
+
+# ==============================================================================
+# File Size Units
+# ==============================================================================
+# Labels for file size units used in formatted file sizes.
+
+file_size_units:
+  # {$size} is the formatted numeric size for the current unit
+  b: '{$size} bájt'
+  kb: '{$size} KB'
+  mb: '{$size} MB'
+  gb: '{$size} GB'
+  tb: '{$size} TB'

@@ -1,21 +1,27 @@
-import { getPathInfo } from '@sveltia/utils/file';
-import mime from 'mime';
-
+import { isAdditionsEnabled } from '$lib/services/app/additions';
 import { fetchLastCommit } from '$lib/services/backends/git/github/commits';
 import {
-  getWorkflowRepository,
+  getContentRepository,
   initOpenAuthoring,
   isOpenAuthoringConfigured,
 } from '$lib/services/backends/git/github/fork';
+import { fetchAliasedBatch } from '$lib/services/backends/git/github/graphql';
 import {
+  checkBranchAccess,
   checkRepositoryAccess,
   fetchDefaultBranchName,
   repository,
 } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
-import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
-import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
+import { mapConcurrently, runConcurrently } from '$lib/services/backends/git/shared/concurrency';
+import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
+import { fetchRepositoryFiles } from '$lib/services/backends/git/shared/files';
 import { startSimulatedProgress } from '$lib/services/backends/git/shared/progress';
+import { getRepositoryPath } from '$lib/services/backends/git/shared/repository';
+import { toFileListItems } from '$lib/services/backends/git/shared/tree';
+import { getRootDir } from '$lib/services/backends/root-dir';
+import { getBotCoAuthor } from '$lib/services/utils/commit-author';
+import { encodePathSegments } from '$lib/services/utils/url';
 
 /**
  * @import {
@@ -28,21 +34,124 @@ import { startSimulatedProgress } from '$lib/services/backends/git/shared/progre
  */
 
 /**
- * Fetch the repository’s complete file list, and return it in the canonical format.
+ * @typedef {{ type: string, path: string, sha: string, size: number }} GitTreeEntry
+ */
+
+/**
+ * Fetch a Git tree.
+ * @param {string} treeRef Commit SHA, branch name or tree SHA.
+ * @param {boolean} recursive Whether to list the subtrees as well.
+ * @returns {Promise<{ tree: GitTreeEntry[], truncated: boolean }>} Tree, and whether the response
+ * was truncated because the tree is too big.
+ * @see https://docs.github.com/en/rest/git/trees#get-a-tree
+ */
+const fetchTree = async (treeRef, recursive) => {
+  const query = recursive ? '?recursive=1' : '';
+
+  return /** @type {{ tree: GitTreeEntry[], truncated: boolean }} */ (
+    await fetchAPI(
+      `${getRepositoryPath(repository)}/git/trees/${encodePathSegments(treeRef)}${query}`,
+    )
+  );
+};
+
+/**
+ * Fetch the repository’s complete file list, and return it in the canonical format. A tree too big
+ * to be listed recursively in one response, as in a huge repository, has its subtrees listed
+ * separately instead, as GitHub suggests. With the `root_dir` backend option, only the files in
+ * that directory are listed, which saves listing the whole of a big monorepo; the paths are still
+ * relative to the repository root.
  * @param {string} [lastHash] The last commit’s SHA-1 hash.
  * @returns {Promise<BaseFileListItemProps[]>} File list.
+ * @throws {Error} If a single directory has too many files to list, or if the root directory
+ * doesn’t exist.
  */
 export const fetchFileList = async (lastHash) => {
-  const { owner, repo, branch } = repository;
+  const ref = /** @type {string} */ (lastHash ?? repository.branch);
+  const rootDir = getRootDir();
+  /** @type {GitTreeEntry[]} */
+  const blobs = [];
 
-  const result =
-    /** @type {{ tree: { type: string, path: string, sha: string, size: number }[] }} */ (
-      await fetchAPI(`/repos/${owner}/${repo}/git/trees/${lastHash ?? branch}?recursive=1`)
+  /** @type {{ sha: string, prefix: string }[]} */
+  let pending = [
+    // A tree-ish expression addresses the directory’s tree without looking its SHA up first
+    rootDir ? { sha: `${ref}:${rootDir}`, prefix: `${rootDir}/` } : { sha: ref, prefix: '' },
+  ];
+
+  // One level at a time, so the requests in flight stay within the concurrency limit
+  while (pending.length) {
+    // eslint-disable-next-line no-await-in-loop
+    const results = await mapConcurrently(pending, async ({ sha, prefix }) => {
+      const { tree, truncated } = await fetchTree(sha, true).catch((ex) => {
+        if (rootDir && sha === `${ref}:${rootDir}` && ex?.cause?.status === 404) {
+          throw createLocalizedError('Failed to list the files.', 'root_dir_not_found', {
+            repo: `${repository.owner}/${repository.repo}`,
+            dir: rootDir,
+          });
+        }
+
+        throw ex;
+      });
+
+      if (!truncated) {
+        return { prefix, entries: tree, subtrees: [] };
+      }
+
+      // List this directory alone, and its subdirectories separately
+      const { tree: children, truncated: tooBig } = await fetchTree(sha, false);
+
+      if (tooBig) {
+        throw new Error(`The directory '${prefix || '/'}' has too many files to list.`);
+      }
+
+      return {
+        prefix,
+        entries: children,
+        subtrees: children.filter(({ type }) => type === 'tree'),
+      };
+    });
+
+    pending = results.flatMap(({ prefix, subtrees }) =>
+      subtrees.map(({ path, sha }) => ({ sha, prefix: `${prefix}${path}/` })),
     );
 
-  return result.tree
-    .filter(({ type }) => type === 'blob')
-    .map(({ path, sha, size }) => ({ path, sha, size, name: getPathInfo(path).basename }));
+    results.forEach(({ prefix, entries }) => {
+      entries.forEach((entry) => {
+        if (entry.type === 'blob') {
+          blobs.push({ ...entry, path: `${prefix}${entry.path}` });
+        }
+      });
+    });
+  }
+
+  return toFileListItems(blobs);
+};
+
+const FETCH_DIR_SHA_QUERY = `
+  query($owner: String!, $repo: String!, $expression: String!) {
+    repository(owner: $owner, name: $repo) {
+      object(expression: $expression) {
+        oid
+      }
+    }
+  }
+`;
+
+/**
+ * Find the tree SHA of a directory at the given commit.
+ * @param {string} ref Commit SHA or branch name.
+ * @param {string} dirPath Directory path relative to the repository root.
+ * @returns {Promise<string | undefined>} Tree SHA, or `undefined` if the directory doesn’t exist.
+ * @see https://docs.github.com/en/graphql/reference/objects#repository
+ */
+export const fetchDirSHA = async (ref, dirPath) => {
+  const { owner, repo } = repository;
+
+  const result = /** @type {{ repository?: { object?: { oid: string } | null } | null }} */ (
+    await fetchGraphQL(FETCH_DIR_SHA_QUERY, { owner, repo, expression: `${ref}:${dirPath}` })
+  );
+
+  return result.repository?.object?.oid;
 };
 
 /**
@@ -52,77 +161,43 @@ export const fetchFileList = async (lastHash) => {
 const CHUNK_SIZE = 250;
 
 /**
- * Get a query string for fetching the text contents of the given files from the repository.
- * @param {BaseFileListItem[]} chunk Sliced `fetchingFiles`.
- * @param {number} startIndex Start index.
- * @returns {string} Query string.
+ * Get the GraphQL field selection for fetching the text content of the given file.
+ * @param {BaseFileListItem} file File.
+ * @returns {string} Field selection, or an empty string for an asset, which has no content to read
+ * and is just listed for its metadata.
  */
-export const getFileContentsQuery = (chunk, startIndex) => {
-  const innerQuery = chunk
-    .map(({ type, sha }, i) => {
-      // Only a text file has content to read; an asset is just listed for its metadata
-      if (type === 'asset') {
-        return '';
-      }
-
-      return `
-        content_${startIndex + i}: object(oid: ${JSON.stringify(sha)}) {
-          ... on Blob { text isTruncated }
-        }
-      `;
-    })
-    .join('');
-
-  return `
-    query($owner: String!, $repo: String!) {
-      repository(owner: $owner, name: $repo) {
-        ${innerQuery}
-      }
-    }
-  `;
-};
+export const getFileContentsFragment = ({ type, sha }) =>
+  type === 'asset'
+    ? ''
+    : `object(oid: ${JSON.stringify(sha)}) { ... on Blob { text isTruncated } }`;
 
 /**
- * Get a query string for fetching the last commit of each of the given files from the repository.
- * @param {BaseFileListItem[]} chunk Sliced `fetchingFiles`.
- * @param {number} startIndex Start index.
- * @returns {string} Query string.
+ * Get the GraphQL field selection for fetching the last commit of the given file.
+ * @param {BaseFileListItem} file File.
+ * @returns {string} Field selection.
  */
-export const getFileMetadataQuery = (chunk, startIndex) => {
-  const innerQuery = chunk
-    .map(
-      ({ path }, i) => `
-        commit_${startIndex + i}: ref(qualifiedName: $branch) {
-          target {
-            ... on Commit {
-              history(first: 1, path: ${JSON.stringify(path)}) {
-                nodes {
-                  author {
-                    name
-                    email
-                    user {
-                      id: databaseId
-                      login
-                    }
-                  }
-                  committedDate
-                }
+export const getFileMetadataFragment = ({ path }) => `
+  ref(qualifiedName: $branch) {
+    target {
+      ... on Commit {
+        history(first: 1, path: ${JSON.stringify(path)}) {
+          nodes {
+            author {
+              name
+              email
+              user {
+                id: databaseId
+                login
               }
             }
+            committedDate
+            messageBody
           }
         }
-      `,
-    )
-    .join('');
-
-  return `
-    query($owner: String!, $repo: String!, $branch: String!) {
-      repository(owner: $owner, name: $repo) {
-        ${innerQuery}
       }
     }
-  `;
-};
+  }
+`;
 
 /**
  * Request a blob from the REST API. The `raw` media type asks for the file content itself, rather
@@ -139,7 +214,7 @@ export const getFileMetadataQuery = (chunk, startIndex) => {
  */
 const requestBlob = async ({ owner, repo, sha, responseType }) =>
   /** @type {Promise<string | Response>} */ (
-    fetchAPI(`/repos/${owner}/${repo}/git/blobs/${sha}`, {
+    fetchAPI(`${getRepositoryPath({ owner, repo })}/git/blobs/${sha}`, {
       headers: { Accept: 'application/vnd.github.raw' },
       responseType,
     })
@@ -163,7 +238,7 @@ export const fetchBlobText = async ({ owner, repo, sha }) =>
 /**
  * Parse the file contents from the API response.
  * @param {BaseFileListItem[]} fetchingFiles Base file list.
- * @param {Record<string, any>} results Results from the API.
+ * @param {any[]} results Result for each file from the API, in the same order.
  * @returns {Promise<RepositoryContentsMap>} Parsed file contents map. The commit metadata is left
  * out; it’s fetched separately with {@link fetchFileMetadata}.
  */
@@ -172,7 +247,7 @@ export const parseFileContents = async (fetchingFiles, results) => {
   const truncatedFiles = [];
 
   const entries = fetchingFiles.map(({ path, sha, size }, index) => {
-    const { text, isTruncated } = results[`content_${index}`] ?? {};
+    const { text, isTruncated } = results[index] ?? {};
     const data = { sha, size: /** @type {number} */ (size), text, meta: undefined };
 
     if (isTruncated) {
@@ -195,61 +270,55 @@ export const parseFileContents = async (fetchingFiles, results) => {
 /**
  * Parse the file metadata from the API response.
  * @param {BaseFileListItem[]} fetchingFiles Base file list.
- * @param {Record<string, any>} results Results from the API.
+ * @param {any[]} results Result for each file from the API, in the same order.
  * @returns {RepositoryMetadataMap} Parsed file metadata map.
  */
 export const parseFileMetadata = (fetchingFiles, results) =>
   Object.fromEntries(
-    fetchingFiles.map(({ path }, index) => {
-      const {
-        author: { name, email, user: _user },
-        committedDate,
-      } = results[`commit_${index}`].target.history.nodes[0];
+    fetchingFiles.flatMap(({ path }, index) => {
+      const commit = results[index]?.target?.history?.nodes?.[0];
+
+      // The file may have been deleted since the tree was fetched, leaving no commit to read. Skip
+      // it rather than losing the metadata of every other file; it’s fetched again next time
+      if (!commit) {
+        return [];
+      }
+
+      const { author, committedDate, messageBody } = commit;
+      const user = author?.user;
+      // A commit made by an app for someone, e.g. with Sveltia CMS Additions, is theirs
+      const coAuthor = getBotCoAuthor(author, messageBody);
 
       return [
-        path,
-        {
-          commitAuthor: { name, email, id: _user?.id, login: _user?.login },
-          commitDate: new Date(committedDate),
-        },
+        [
+          path,
+          {
+            // The author can be `null` when the commit has no valid author info
+            commitAuthor:
+              coAuthor ||
+              (author
+                ? { name: author.name, email: author.email, id: user?.id, login: user?.login }
+                : undefined),
+            commitDate: new Date(committedDate),
+          },
+        ],
       ];
     }),
   );
 
 /**
- * Query the API for the given files, a chunk at a time, and merge the aliased results.
+ * Query the API for the given files, a chunk at a time to avoid an API timeout, with a limited
+ * number of requests in flight at once to avoid a Too Many Requests error.
  * @param {BaseFileListItem[]} fetchingFiles Base file list.
- * @param {(chunk: BaseFileListItem[], startIndex: number) => string} getQuery Function to build
- * the query for a chunk.
- * @returns {Promise<Record<string, any>>} Merged results, keyed by alias.
+ * @param {string} alias Alias prefix.
+ * @param {(file: BaseFileListItem) => string} getFragment Function to build the field selection
+ * for a file.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.useBranch] Whether the field selection uses the `$branch` variable.
+ * @returns {Promise<any[]>} Result for each file, in the same order as `fetchingFiles`.
  */
-const fetchInChunks = async (fetchingFiles, getQuery) => {
-  /** @type {BaseFileListItem[][]} */
-  const chunks = [];
-  /** @type {Record<string, any>} */
-  const results = {};
-
-  for (let i = 0; i < fetchingFiles.length; i += CHUNK_SIZE) {
-    chunks.push(fetchingFiles.slice(i, i + CHUNK_SIZE));
-  }
-
-  // Split the file list into chunks and repeat requests to avoid API timeout, with a limited number
-  // in flight at once to avoid a Too Many Requests error. This replaces a fixed delay between the
-  // queries, which cost a large repository half a second per chunk no matter how quickly the API
-  // answered
-  await runConcurrently(
-    chunks.map((chunk, index) => ({ chunk, index })),
-    async ({ chunk, index }) => {
-      const result = /** @type {{ repository: Record<string, any> }} */ (
-        await fetchGraphQL(getQuery(chunk, index * CHUNK_SIZE))
-      );
-
-      Object.assign(results, result.repository);
-    },
-  );
-
-  return results;
-};
+const fetchInChunks = (fetchingFiles, alias, getFragment, { useBranch = false } = {}) =>
+  fetchAliasedBatch({ items: fetchingFiles, alias, getFragment, chunkSize: CHUNK_SIZE, useBranch });
 
 /**
  * Fetch the text contents of entry/config files. The commit metadata of the files is not included;
@@ -260,11 +329,11 @@ const fetchInChunks = async (fetchingFiles, getQuery) => {
 export const fetchFileContents = async (fetchingFiles) => {
   // Show a simulated progress bar because the request waiting time is long
   const stopProgress = startSimulatedProgress(fetchingFiles.length);
-  /** @type {Record<string, any>} */
+  /** @type {any[]} */
   let results;
 
   try {
-    results = await fetchInChunks(fetchingFiles, getFileContentsQuery);
+    results = await fetchInChunks(fetchingFiles, 'content', getFileContentsFragment);
   } finally {
     // Also on failure, so the interval doesn’t keep running behind the error message
     stopProgress();
@@ -281,27 +350,30 @@ export const fetchFileContents = async (fetchingFiles) => {
  * @returns {Promise<RepositoryMetadataMap>} Fetched metadata map.
  */
 export const fetchFileMetadata = async (fetchingFiles) =>
-  parseFileMetadata(fetchingFiles, await fetchInChunks(fetchingFiles, getFileMetadataQuery));
+  parseFileMetadata(
+    fetchingFiles,
+    await fetchInChunks(fetchingFiles, 'commit', getFileMetadataFragment, { useBranch: true }),
+  );
 
 /**
  * Fetch file list from the backend service, download/parse all the entry files, then cache them in
  * the {@link allEntries} and {@link allAssets} stores.
+ * @param {object} [options] Options.
+ * @param {{ hash: string, message: string }} [options.lastCommit] Last commit on the branch, if the
+ * caller has just fetched it, so it isn’t fetched again.
  */
-export const fetchFiles = async () => {
-  // With Open Authoring, a user without write access is a contributor rather than a stranger, so
-  // they’re given a fork to work in instead of being turned away. Setting the fork up may involve
-  // the user, so it has to finish before the data is fetched, unlike a plain access check
-  const openAuthoring = isOpenAuthoringConfigured();
-
-  if (openAuthoring) {
-    await initOpenAuthoring();
-  }
-
-  await fetchAndParseFiles({
+export const fetchFiles = async ({ lastCommit } = {}) => {
+  await fetchRepositoryFiles({
+    isOpenAuthoringConfigured,
+    initOpenAuthoring,
     repository,
-    checkAccess: openAuthoring ? undefined : checkRepositoryAccess,
+    // With Sveltia CMS Additions, the GitHub token is limited to the repository and the user’s
+    // role, and an installation token has no repository permissions to check
+    checkAccess: isAdditionsEnabled() ? undefined : checkRepositoryAccess,
+    checkBranchAccess,
     fetchDefaultBranchName,
     fetchLastCommit,
+    lastCommit,
     fetchFileList,
     fetchFileContents,
     fetchFileMetadata,
@@ -314,19 +386,24 @@ export const fetchFiles = async () => {
  * @returns {Promise<Blob>} Blob data.
  */
 export const fetchBlob = async (asset) => {
-  // An asset attached to an unpublished entry is committed to a workflow branch, which lives in the
-  // contributor’s fork with Open Authoring, so the blob has to be read from there
-  const { owner, repo } = asset.workflow ? getWorkflowRepository() : repository;
-  const { sha, path } = asset;
+  // An asset attached to an unpublished entry is committed to a workflow branch, whose blobs are
+  // read from the repository that serves the workflow branches’ files
+  const { owner, repo } = asset.workflow ? getContentRepository() : repository;
+  const { sha } = asset;
 
   const response = /** @type {Response} */ (
     await requestBlob({ owner, repo, sha, responseType: 'raw' })
   );
 
-  // Handle SVG and other non-binary files
-  if (response.headers.get('Content-Type') !== 'application/octet-stream') {
-    return new Blob([await response.text()], { type: mime.getType(path) ?? 'text/plain' });
+  // A `raw` response skips the shared error handling, so an error body would otherwise be returned
+  // as the file content, and moving or renaming the asset would commit it in place of the file
+  if (!response.ok) {
+    throw new Error('Failed to fetch the blob', { cause: { status: response.status } });
   }
 
+  // Keep the bytes as they are, even for a text file: decoding it would strip a UTF-8 BOM and
+  // transcode a file GitHub serves in another encoding, e.g. `charset=iso-8859-1`, and moving or
+  // renaming the asset would then commit the altered bytes. The caller sets the MIME type from the
+  // file name, as GitHub serves an SVG or any other text file as `text/plain`
   return response.blob();
 };

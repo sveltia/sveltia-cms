@@ -9,10 +9,23 @@ import globals from 'globals';
 
 export default [
   // Ignore files (migrated from .eslintrc.yaml ignorePatterns + .eslintignore)
-  { ignores: ['**/*.cjs', '**/*.d.ts', 'package/', '.vite/', '.claude/'] },
+  {
+    ignores: [
+      '**/*.cjs',
+      '**/*.d.ts',
+      'package/',
+      '.vite/',
+      '.vitest/',
+      '.claude/',
+      'playwright-report/',
+      'test-results/',
+      'bench-results/',
+    ],
+  },
 
-  // Register @stylistic and import-x plugins for all files (including .svelte)
-  (({ files: _f, ...c }) => c)(airbnbPlugins.stylistic),
+  // Register @stylistic and import-x plugins for all files (including .svelte). Use our own
+  // @stylistic instead of the older version bundled with Airbnb, which can't be registered twice
+  { name: airbnbPlugins.stylistic.name, plugins: { '@stylistic': stylistic } },
   (({ files: _f, ...c }) => c)(airbnbPlugins.importX),
 
   // Airbnb extended base rules, applied to all files (strip the `files` restriction
@@ -28,6 +41,19 @@ export default [
   // Svelte recommended + Prettier overrides
   ...sveltePlugin.configs['flat/recommended'],
   ...sveltePlugin.configs['flat/prettier'],
+
+  // A `.svelte.test.js` file can use runes like a `.svelte.js` module, but the Svelte parser only
+  // recognizes the latter by its file name, so declare the runes as globals instead
+  {
+    files: ['**/*.svelte.test.js'],
+    languageOptions: {
+      globals: Object.fromEntries(
+        ['$state', '$derived', '$effect', '$props', '$bindable', '$inspect', '$host'].map(
+          (rune) => [rune, 'readonly'],
+        ),
+      ),
+    },
+  },
 
   // package.json linting
   pkgJsonPlugin.configs['recommended-publishable'],
@@ -49,7 +75,6 @@ export default [
       },
     },
     plugins: {
-      '@stylistic': stylistic,
       'unused-imports': unusedImportsPlugin,
       jsdoc: jsdocPlugin,
     },
@@ -138,6 +163,13 @@ export default [
       'no-nested-ternary': 'off',
       'no-param-reassign': 'off',
       'no-void': 'off',
+      // The core rule wants the props never written back to be `const`, which can’t be done while
+      // `$props()` is destructured along with a `$bindable()` prop. The options are Airbnb’s
+      'prefer-const': 'off',
+      'svelte/prefer-const': [
+        'error',
+        { destructuring: 'any', ignoreReadBeforeAssign: true, excludedRunes: ['$props'] },
+      ],
       // https://github.com/sveltejs/eslint-plugin-svelte#white_check_mark-rules
       'svelte/no-at-html-tags': 'off',
       // Ignore false errors

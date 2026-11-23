@@ -34,30 +34,23 @@ describe('GitLab auth service', () => {
   });
 
   describe('getTokenPageURL', () => {
-    test('returns correct GitLab Personal Access Token URL', () => {
-      const repoURL = 'https://gitlab.com/owner/repo';
-      const result = getTokenPageURL(repoURL);
+    const query = 'name=Sveltia+CMS&scopes=api%2Cread_user';
 
-      expect(result).toBe(
-        'https://gitlab.com/-/user_settings/personal_access_tokens?name=Sveltia+CMS&scopes=api%2Cread_user',
+    test('returns correct GitLab Personal Access Token URL', () => {
+      expect(getTokenPageURL('https://gitlab.com')).toBe(
+        `https://gitlab.com/-/user_settings/personal_access_tokens?${query}`,
       );
     });
 
     test('handles GitLab self-hosted instance URLs', () => {
-      const repoURL = 'https://gitlab.example.com/owner/repo';
-      const result = getTokenPageURL(repoURL);
-
-      expect(result).toBe(
-        'https://gitlab.example.com/-/user_settings/personal_access_tokens?name=Sveltia+CMS&scopes=api%2Cread_user',
+      expect(getTokenPageURL('https://gitlab.example.com')).toBe(
+        `https://gitlab.example.com/-/user_settings/personal_access_tokens?${query}`,
       );
     });
 
-    test('handles different repository paths', () => {
-      const repoURL = 'https://gitlab.com/group/subgroup/project';
-      const result = getTokenPageURL(repoURL);
-
-      expect(result).toBe(
-        'https://gitlab.com/-/user_settings/personal_access_tokens?name=Sveltia+CMS&scopes=api%2Cread_user',
+    test('keeps the subpath of a self-hosted instance', () => {
+      expect(getTokenPageURL('https://example.com/gitlab')).toBe(
+        `https://example.com/gitlab/-/user_settings/personal_access_tokens?${query}`,
       );
     });
   });

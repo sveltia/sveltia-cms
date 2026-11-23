@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { validateStringField } from './validate';
 
 /**
- * @import { StringField } from '$lib/types/public';
+ * @import { StringField, TextField } from '$lib/types/public';
  */
 
 /** @type {Pick<StringField, 'widget' | 'name'>} */
@@ -168,6 +168,20 @@ describe('Test validateStringField()', () => {
         invalid: true,
       },
     });
+  });
+
+  test('should count a value that isn’t a string as the text it’s written as', () => {
+    /** @type {StringField} */
+    const fieldConfig = { ...baseFieldConfig, minlength: 3, prefix: '1' };
+
+    expect(validateStringField({ fieldConfig, locale: 'en', value: 12345 }).detail).toEqual({
+      count: 4,
+      hasMin: true,
+      hasMax: false,
+      invalid: false,
+    });
+    expect(validateStringField({ fieldConfig, locale: 'en', value: true }).detail.count).toBe(4);
+    expect(validateStringField({ fieldConfig, locale: 'en', value: null }).detail.count).toBe(0);
   });
 
   test('should handle empty string', () => {
@@ -673,7 +687,7 @@ describe('Test validateStringField()', () => {
             typeMismatch: false,
           },
           detail: {
-            count: 25,
+            count: 16,
             hasMin: false,
             hasMax: false,
             invalid: false,
@@ -710,7 +724,7 @@ describe('Test validateStringField()', () => {
             typeMismatch: false,
           },
           detail: {
-            count: 29,
+            count: 24,
             hasMin: false,
             hasMax: false,
             invalid: false,
@@ -748,7 +762,7 @@ describe('Test validateStringField()', () => {
             typeMismatch: false,
           },
           detail: {
-            count: 18,
+            count: 16,
             hasMin: false,
             hasMax: false,
             invalid: false,
@@ -756,17 +770,37 @@ describe('Test validateStringField()', () => {
         });
       });
 
-      test('should not affect count when stripping prefix/suffix', () => {
+      test('should leave the prefix and suffix out of the count', () => {
         /** @type {StringField} */
         const fieldConfig = {
           ...baseFieldConfig,
-          prefix: '$ ',
+          prefix: 'Room ',
+          suffix: ' (East)',
+          maxlength: 3,
         };
 
-        const value = '$ 100';
+        const value = 'Room 101 (East)';
         const result = validateStringField({ fieldConfig, locale: 'en', value });
 
-        expect(result.detail.count).toBe(5);
+        expect(result.detail.count).toBe(3);
+        expect(result.validity.tooLong).toBe(false);
+      });
+
+      test('should count the prefix and suffix of a text field, which has neither', () => {
+        /** @type {TextField} */
+        const fieldConfig = {
+          name: 'notes',
+          widget: 'text',
+          maxlength: 3,
+          // @ts-ignore
+          prefix: 'Room ',
+        };
+
+        const value = 'Room 101';
+        const result = validateStringField({ fieldConfig, locale: 'en', value });
+
+        expect(result.detail.count).toBe(8);
+        expect(result.validity.tooLong).toBe(true);
       });
 
       test('should handle missing prefix gracefully', () => {

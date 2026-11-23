@@ -1,31 +1,20 @@
 import { getDuplicateFiles } from '$lib/services/assets';
+import { createRawState, requestAnswer } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { Asset } from '$lib/types/private';
+ * @import { Asset, DuplicatesRequest } from '$lib/types/private';
  */
 
 /**
- * @typedef {object} DuplicatesState
- * @property {number} count Number of duplicate files.
- * @property {string} name Name of the first duplicate file.
- * @property {boolean} showDialog Whether to show the duplicates dialog.
- * @property {(value: boolean | undefined) => void} resolve Function to resolve the promise.
+ * The pending request asking the user what to do with duplicate files, which the UI turns into a
+ * conflict resolution dialog. It’s `undefined` while no request is outstanding.
+ * @type {{ current: DuplicatesRequest | undefined }}
  */
-
-/** @type {DuplicatesState} */
-const DEFAULT_STATE = {
-  count: 0,
-  name: '',
-  showDialog: false,
-  // eslint-disable-next-line jsdoc/require-jsdoc
-  resolve: () => {},
-};
-
-/** @type {DuplicatesState} */
-export const duplicates = $state({ ...DEFAULT_STATE });
+export const duplicatesRequest = createRawState();
 
 /**
- * Check for duplicate files and ask the user if they want to replace them.
+ * Check for duplicate files and ask the user if they want to replace them. An earlier request still
+ * waiting for an answer is cancelled.
  * @param {object} args Arguments.
  * @param {File[]} args.files File list.
  * @param {Asset[]} args.listedAssets Listed assets.
@@ -41,19 +30,5 @@ export const checkDuplicates = async ({ files, listedAssets }) => {
     return false;
   }
 
-  const { promise, resolve } = Promise.withResolvers();
-
-  Object.assign(duplicates, {
-    count,
-    name: dupFiles[0].name,
-    showDialog: true,
-    resolve,
-  });
-
-  const replace = await promise;
-
-  // Reset state
-  Object.assign(duplicates, { ...DEFAULT_STATE });
-
-  return replace;
+  return requestAnswer(duplicatesRequest, { count, name: dupFiles[0].name }, undefined);
 };

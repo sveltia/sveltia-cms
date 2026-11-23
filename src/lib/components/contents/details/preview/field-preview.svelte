@@ -1,11 +1,13 @@
 <script>
+  import ErrorBoundary from '$lib/components/common/error-boundary.svelte';
   import { CustomPreview, previews } from '$lib/components/contents/details/fields';
   import { customFieldTypeRegistry } from '$lib/services/api/registries';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { highlightEditorField } from '$lib/services/contents/editor/fields';
+  import { getFieldLocaleAccess } from '$lib/services/contents/editor/locale';
   import { getCurrentValue, isFieldMultiple } from '$lib/services/contents/entry/fields';
-  import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
+  import { getFieldLabel } from '$lib/services/contents/i18n/options';
 
   /**
    * @import { InternalLocaleCode, TypedFieldKeyPath } from '$lib/types/private';
@@ -24,28 +26,18 @@
   const entryDraft = getEntryDraftContext();
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    locale,
-    keyPath,
-    typedKeyPath,
-    fieldConfig,
-    showLabel = true,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { locale, keyPath, typedKeyPath, fieldConfig, showLabel = true } = $props();
 
-  const { name: fieldName, widget: fieldType = 'string', i18n = false } = $derived(fieldConfig);
-  const { label = '', preview = true } = $derived(/** @type {VisibleField} */ (fieldConfig));
+  const { widget: fieldType = 'string' } = $derived(fieldConfig);
+  const { preview = true } = $derived(/** @type {VisibleField} */ (fieldConfig));
+  const fieldLabel = $derived(getFieldLabel({ config: fieldConfig, locale }));
   const multiple = $derived(isFieldMultiple(fieldConfig));
   const isList = $derived(fieldType === 'list' || multiple);
-  const collection = $derived(entryDraft.current?.collection);
-  const collectionFile = $derived(entryDraft.current?.collectionFile);
-  const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale));
-  const { i18nEnabled, defaultLocale } = $derived(
-    (collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG,
+  const valueMap = $derived(getFieldValueMapSnapshot(entryDraft.current, locale, keyPath));
+  // A field duplicated along with an ancestor is shown in the other locales like in `FieldEditor`
+  const { isShown } = $derived(
+    getFieldLocaleAccess({ draft: entryDraft.current, fieldConfig, keyPath, locale, valueMap }),
   );
-  const canTranslate = $derived(i18nEnabled && (i18n === true || i18n === 'translate'));
-  const canDuplicate = $derived(i18nEnabled && (i18n === 'duplicate' || i18n === 'duplicate_keys'));
   const customFieldType = $derived(customFieldTypeRegistry.get(fieldType));
   const currentValue = $derived(
     getCurrentValue({ valueMap, keyPath, isList, isCustomFieldType: !!customFieldType }),
@@ -53,7 +45,9 @@
   const previewProps = $derived({ locale, keyPath, typedKeyPath, fieldConfig, currentValue });
 </script>
 
-{#if fieldType !== 'hidden' && preview && (locale === defaultLocale || canTranslate || canDuplicate)}
+<!-- Render nothing for a missing field configuration, e.g. when a custom preview template asks
+  for a key path that isn’t a configured field. The derived values above are read past the check -->
+{#if fieldConfig && fieldType !== 'hidden' && preview && isShown}
   <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <section
@@ -74,17 +68,19 @@
     }}
   >
     {#if showLabel}
-      <h4>{label || fieldName}</h4>
+      <h4>{fieldLabel}</h4>
     {/if}
-    {#if customFieldType?.preview}
-      <CustomPreview
-        {...{ ...previewProps, fieldConfig: /** @type {CustomField} */ (fieldConfig) }}
-        preview={customFieldType.preview}
-      />
-    {:else if fieldType in previews}
-      {@const Preview = previews[fieldType]}
-      <Preview {...previewProps} />
-    {/if}
+    <ErrorBoundary>
+      {#if customFieldType?.preview}
+        <CustomPreview
+          {...{ ...previewProps, fieldConfig: /** @type {CustomField} */ (fieldConfig) }}
+          preview={customFieldType.preview}
+        />
+      {:else if fieldType in previews}
+        {@const Preview = previews[fieldType]}
+        <Preview {...previewProps} />
+      {/if}
+    </ErrorBoundary>
   </section>
 {/if}
 
@@ -126,7 +122,13 @@
   }
 
   @media (width < 768px) {
-    :global([role='document']) {
+    /* Remove the padding to make an image or an embedded video full-width */
+    :global([role='document']) section > :global(p:has(img, iframe)) {
+      margin-inline: calc(var(--entry-preview-padding-inline) * -1);
+    }
+
+    /* A top-level field, which is wrapped for the Edit Pane to find it before it’s rendered */
+    :global([role='document'] > [data-lazy-key-path]) {
       & > section:is([data-field-type='file'], [data-field-type='image']):has(:global(img)),
       & > section:is([data-field-type='string']):has(:global(iframe)) {
         overflow: visible;

@@ -7,7 +7,7 @@ import { getDefaultValueMap } from './defaults';
  */
 
 // Mock the shared media library functions
-vi.mock('$lib/services/integrations/media-libraries/shared', () => ({
+vi.mock('$lib/services/integrations/media-libraries/multiple', () => ({
   isMultiple: vi.fn(),
 }));
 
@@ -30,7 +30,7 @@ describe('Test getDefaultValueMap()', () => {
     // Reset all mocks before each test
     vi.resetAllMocks();
 
-    const { isMultiple } = await import('$lib/services/integrations/media-libraries/shared');
+    const { isMultiple } = await import('$lib/services/integrations/media-libraries/multiple');
 
     isMultipleMock = /** @type {any} */ (vi.mocked(isMultiple));
   });
@@ -140,7 +140,7 @@ describe('Test getDefaultValueMap()', () => {
       defaultLocale: '_default',
     });
 
-    expect(result).toEqual({});
+    expect(result).toEqual({ attachments: [] });
     expect(isMultipleMock).toHaveBeenCalledWith(fieldConfig);
   });
 
@@ -190,7 +190,7 @@ describe('Test getDefaultValueMap()', () => {
       defaultLocale: '_default',
     });
 
-    expect(result).toEqual({});
+    expect(result).toEqual({ attachments: [] });
     expect(isMultipleMock).toHaveBeenCalledWith(fieldConfig);
   });
 
@@ -345,7 +345,7 @@ describe('Test getDefaultValueMap()', () => {
       dynamicValue,
     });
 
-    expect(result).toEqual({});
+    expect(result).toEqual({ attachments: [] });
     expect(isMultipleMock).toHaveBeenCalledWith(fieldConfig);
   });
 
@@ -472,7 +472,7 @@ describe('Test getDefaultValueMap()', () => {
       defaultLocale: '_default',
     });
 
-    expect(result).toEqual({});
+    expect(result).toEqual({ attachments: [] });
     expect(isMultipleMock).toHaveBeenCalledWith(fieldConfig);
   });
 });

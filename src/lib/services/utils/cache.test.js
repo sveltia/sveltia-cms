@@ -1,6 +1,14 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 
-import { getOrCreate, getOrCreateBounded } from './cache';
+import {
+  createLRUMap,
+  getOrCreate,
+  getOrCreateAsync,
+  getOrCreateBounded,
+  memoizeOnSource,
+  memoizeOnSources,
+  shareInFlight,
+} from './cache';
 
 describe('Test getOrCreate()', () => {
   test('calls create and stores value when key is absent', () => {
@@ -81,6 +89,84 @@ describe('Test getOrCreate()', () => {
     const second = getOrCreate(cache, 'k', () => ({ x: 2 }));
 
     expect(first).toBe(second);
+  });
+});
+
+describe('Test createLRUMap()', () => {
+  test('stores and returns values', () => {
+    const map = createLRUMap(2);
+
+    map.set('a', 1);
+
+    expect(map.has('a')).toBe(true);
+    expect(map.get('a')).toBe(1);
+    expect(map.has('b')).toBe(false);
+    expect(map.get('b')).toBeUndefined();
+  });
+
+  test('keeps an `undefined` value, which `has` tells apart from a missing one', () => {
+    const map = createLRUMap(2);
+
+    map.set('a', undefined);
+
+    expect(map.has('a')).toBe(true);
+    expect(map.get('a')).toBeUndefined();
+  });
+
+  test('evicts the oldest entry once the limit is exceeded', () => {
+    const map = createLRUMap(2);
+
+    map.set('a', 1);
+    map.set('b', 2);
+    map.set('c', 3);
+
+    expect(map.has('a')).toBe(false);
+    expect(map.has('b')).toBe(true);
+    expect(map.has('c')).toBe(true);
+  });
+
+  test('keeps an entry read with `get` and evicts the least recently used one', () => {
+    const map = createLRUMap(2);
+
+    map.set('a', 1);
+    map.set('b', 2);
+    map.get('a');
+    map.set('c', 3);
+
+    expect(map.has('a')).toBe(true);
+    expect(map.has('b')).toBe(false);
+  });
+
+  test('doesn’t mark an entry checked with `has` as recently used', () => {
+    const map = createLRUMap(2);
+
+    map.set('a', 1);
+    map.set('b', 2);
+    map.has('a');
+    map.set('c', 3);
+
+    expect(map.has('a')).toBe(false);
+  });
+
+  test('marks an overwritten entry as recently used', () => {
+    const map = createLRUMap(2);
+
+    map.set('a', 1);
+    map.set('b', 2);
+    map.set('a', 3);
+    map.set('c', 4);
+
+    expect(map.get('a')).toBe(3);
+    expect(map.has('b')).toBe(false);
+  });
+
+  test('clears all the entries', () => {
+    const map = createLRUMap(2);
+
+    map.set('a', 1);
+    map.clear();
+
+    expect(map.has('a')).toBe(false);
   });
 });
 
@@ -169,5 +255,111 @@ describe('Test getOrCreateBounded()', () => {
 
     expect(cache.size).toBe(5);
     expect([...cache.keys()]).toEqual(['key-495', 'key-496', 'key-497', 'key-498', 'key-499']);
+  });
+});
+
+describe('Test shareInFlight()', () => {
+  test('shares a pending task, then forgets it once settled', async () => {
+    const cache = new Map();
+    let calls = 0;
+
+    /**
+     * Count the calls, resolving with the running total.
+     * @returns {Promise<number>} Number of calls so far.
+     */
+    const create = async () => {
+      calls += 1;
+
+      return calls;
+    };
+
+    const first = shareInFlight(cache, 'a', create);
+
+    expect(shareInFlight(cache, 'a', create)).toBe(first);
+    await expect(first).resolves.toBe(1);
+    expect(cache.has('a')).toBe(false);
+    await expect(shareInFlight(cache, 'a', create)).resolves.toBe(2);
+  });
+
+  test('forgets a failed task', async () => {
+    const cache = new Map();
+
+    await expect(shareInFlight(cache, 'a', () => Promise.reject(new Error('x')))).rejects.toThrow();
+    expect(cache.has('a')).toBe(false);
+  });
+});
+
+describe('Test getOrCreateAsync()', () => {
+  test('remembers a successful result', async () => {
+    const cache = new Map();
+    const first = getOrCreateAsync(cache, 'a', async () => 1);
+
+    await expect(first).resolves.toBe(1);
+    expect(getOrCreateAsync(cache, 'a', async () => 2)).toBe(first);
+  });
+
+  test('forgets a failure, so a later caller can try again', async () => {
+    const cache = new Map();
+
+    await expect(
+      getOrCreateAsync(cache, 'a', () => Promise.reject(new Error('x'))),
+    ).rejects.toThrow('x');
+    expect(cache.has('a')).toBe(false);
+    await expect(getOrCreateAsync(cache, 'a', async () => 2)).resolves.toBe(2);
+  });
+});
+
+describe('Test memoizeOnSource()', () => {
+  test('builds the value once per source, and again once the source is replaced', () => {
+    let source = [1, 2];
+    const build = vi.fn((/** @type {number[]} */ items) => items.length);
+    const getValue = memoizeOnSource(() => source, build);
+
+    expect(getValue()).toBe(2);
+    expect(getValue()).toBe(2);
+    expect(build).toHaveBeenCalledOnce();
+
+    source = [1, 2, 3];
+
+    expect(getValue()).toBe(3);
+    expect(build).toHaveBeenCalledTimes(2);
+  });
+
+  test('also caches a value built from an undefined source', () => {
+    const build = vi.fn(() => 'x');
+    const getValue = memoizeOnSource(() => undefined, build);
+
+    expect(getValue()).toBe('x');
+    expect(getValue()).toBe('x');
+    expect(build).toHaveBeenCalledOnce();
+  });
+});
+
+describe('Test memoizeOnSources()', () => {
+  test('builds the value once per set of sources, and again once any of them is replaced', () => {
+    let first = [1, 2];
+    let second = ['a'];
+
+    const build = vi.fn(
+      (/** @type {number[]} */ numbers, /** @type {string[]} */ letters) =>
+        numbers.length + letters.length,
+    );
+
+    const getValue = memoizeOnSources(() => [first, second], build);
+
+    expect(getValue()).toBe(3);
+    expect(getValue()).toBe(3);
+    expect(build).toHaveBeenCalledOnce();
+    expect(build).toHaveBeenCalledWith(first, second);
+
+    second = ['a', 'b'];
+
+    expect(getValue()).toBe(4);
+    expect(build).toHaveBeenCalledTimes(2);
+
+    first = [1];
+
+    expect(getValue()).toBe(3);
+    expect(build).toHaveBeenCalledTimes(3);
   });
 });

@@ -11,12 +11,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    open = $bindable(false),
-    onClose = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { open = $bindable(false), onClose = undefined } = $props();
 
   const shortcuts = [
     { feature: 'view_content_library', keys: 'Alt+1' },
@@ -41,7 +36,7 @@
   }}
 >
   <div role="none" class="wrapper">
-    <Table aria-label={_('keyboard_shortcuts')}>
+    <Table ariaLabel={_('keyboard_shortcuts')}>
       {#each shortcuts as { feature, keys } (keys)}
         <TableRow>
           <TableCell class="feature">{_(`keyboard_shortcuts_.${feature}`)}</TableCell>

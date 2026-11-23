@@ -1,3 +1,5 @@
+import { DOCS_BASE_URL } from '$lib/services/app';
+
 /**
  * Mapping of deprecation warnings that have been issued once. This prevents flooding the console
  * with repeated warnings.
@@ -5,12 +7,14 @@
  */
 export const warnedOnceMap = {
   slug_length: false,
+  slug_editor_tag: false,
   yaml_quote: false,
-  uuid_read_only: false,
   save_all_locales: false,
   automatic_deployments: false,
   multiple_folders_i18n_root: false,
   omit_default_locale_from_filename: false,
+  logo_url: false,
+  flat_metadata_keys: false,
 };
 
 /**
@@ -20,32 +24,48 @@ export const warnedOnceMap = {
 export const warningMessages = {
   slug_length:
     'The `slug_length` collection option is deprecated and will be removed in Sveltia CMS 1.0. ' +
-    'Use the global `slug.maxlength` option instead. ',
+    'Use the global `slug.maxlength` option instead. ' +
+    `${DOCS_BASE_URL}/collections/entries/slugs#global-slug-options`,
+  slug_editor_tag:
+    'The `{{fields._slug}}` and `{{fields._slug | localize}}` slug template tags are deprecated ' +
+    'and will be removed in Sveltia CMS 1.0. Use the `slug` collection option’s object form ' +
+    'instead: `{{fields._slug}}` is equivalent to `slug: { editable: true }`, and ' +
+    '`{{fields._slug | localize}}` is equivalent to `slug: { editable: true, i18n: true }`. ' +
+    `${DOCS_BASE_URL}/collections/entries/slugs#making-slugs-editable`,
   yaml_quote:
     'The `yaml_quote` collection option is deprecated and will be removed in Sveltia CMS 1.0. ' +
     'Use the global `output.yaml.quote` option instead. `yaml_quote: true` is equivalent to ' +
-    '`quote: double`. https://sveltiacms.app/en/docs/data-output#controlling-data-output',
-  uuid_read_only:
-    'The `read_only` option for the UUID field type is deprecated and will be removed in Sveltia ' +
-    'CMS 1.0. Use the `readonly` option instead.',
+    '`quote: double`. ' +
+    `${DOCS_BASE_URL}/data-output#controlling-data-output`,
   save_all_locales:
     'The `save_all_locales` i18n option is deprecated and will be removed in Sveltia CMS 1.0. ' +
     'Use the `initial_locales` option instead. `save_all_locales: false` is equivalent to ' +
     '`initial_locales: all`. ' +
-    'https://sveltiacms.app/en/docs/i18n#disabling-non-default-locale-content',
+    `${DOCS_BASE_URL}/i18n/options#disabling-non-default-locale-content`,
   automatic_deployments:
     'The `automatic_deployments` backend option is deprecated and will be removed in Sveltia CMS ' +
     '1.0. Use the `skip_ci` option instead. `automatic_deployments: false` is equivalent to ' +
     '`skip_ci: true`, and `automatic_deployments: true` is equivalent to `skip_ci: false`. ' +
-    'https://sveltiacms.app/en/docs/deployments#disabling-automatic-deployments',
+    `${DOCS_BASE_URL}/deployments#disabling-automatic-deployments`,
   multiple_folders_i18n_root:
     'The `multiple_folders_i18n_root` i18n structure is deprecated and will be removed in ' +
     'Sveltia CMS 1.0. Use the `multiple_root_folders` structure instead. ' +
-    'https://sveltiacms.app/en/docs/i18n#multiple-root-folders',
+    `${DOCS_BASE_URL}/i18n/structures#multiple-root-folders`,
   omit_default_locale_from_filename:
     'The `omit_default_locale_from_filename` i18n option is deprecated and will be removed in ' +
     'Sveltia CMS 1.0. Use the `omit_default_locale_from_file_path` option instead. ' +
-    'https://sveltiacms.app/en/docs/i18n#managing-content-structure',
+    `${DOCS_BASE_URL}/i18n/options`,
+  logo_url:
+    'The `logo_url` option is deprecated and will be removed in a future version of Sveltia CMS. ' +
+    'Use the `logo.src` option instead. ' +
+    `${DOCS_BASE_URL}/customization#custom-logo`,
+  flat_metadata_keys:
+    'Reading the `fieldsMetaData` of a nested field with its flat key path, like `details.author` ' +
+    'or `books.0.author`, or the metadata of a List field’s single `field` under the List field’s ' +
+    'name is deprecated and will be removed in a future version of Sveltia CMS. Use the nested ' +
+    "path instead, like `fieldsMetaData.getIn(['books', 'author'])` or " +
+    "`fieldsMetaData.getIn(['tags', 'tag'])`. " +
+    `${DOCS_BASE_URL}/api/preview-templates`,
 };
 
 /**

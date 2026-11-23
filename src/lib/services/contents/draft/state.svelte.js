@@ -1,9 +1,11 @@
-import { getContext, setContext } from 'svelte';
+import { getContext, setContext, untrack } from 'svelte';
 
 import { isDraftModified } from '$lib/services/contents/draft';
+import { getValueMapSnapshots } from '$lib/services/contents/draft/value-map.svelte';
+import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
- * @import { EntryDraft } from '$lib/types/private';
+ * @import { EntryDraft, FlattenedEntryContent, InternalLocaleCode } from '$lib/types/private';
  */
 
 /**
@@ -19,6 +21,48 @@ const ROOT_ATTRIBUTE = 'data-entry-draft-root';
  * @type {WeakMap<Element, EntryDraftState>}
  */
 const rootElementMap = new WeakMap();
+/**
+ * Snapshots of the original value maps, keyed by the reactive value map they were taken from. A
+ * locale’s original values are only ever replaced as a whole — when the draft is saved, a locale
+ * is enabled or a backup is restored — never changed in place, so a snapshot stays valid as long as
+ * the map it was taken from is the one in the draft.
+ * @type {WeakMap<FlattenedEntryContent, FlattenedEntryContent>}
+ */
+const originalValueSnapshots = new WeakMap();
+
+/**
+ * Get a snapshot of the original values of every locale of the given draft. Called from a
+ * `$derived`, this only depends on which map each locale holds, not on every value in it.
+ * @param {EntryDraft} draft Entry draft.
+ * @returns {Record<InternalLocaleCode, FlattenedEntryContent>} Original values, keyed by locale.
+ */
+const getOriginalValueSnapshots = (draft) =>
+  Object.fromEntries(
+    Object.entries(draft.originalValues).map(([locale, valueMap]) => [
+      locale,
+      // A locale enabled without any content yet has no original values
+      valueMap
+        ? getOrCreate(originalValueSnapshots, valueMap, () =>
+            untrack(() => $state.snapshot(valueMap)),
+          )
+        : valueMap,
+    ]),
+  );
+
+/**
+ * Get a copy of the given draft for {@link isDraftModified} to compare, holding the shared value
+ * map snapshots rather than the value map proxies. The check is recomputed on every keystroke, and
+ * reading the values through the proxies would make it depend on every value of every locale, and
+ * pay for each read.
+ * @param {EntryDraft | null | undefined} draft Entry draft.
+ * @returns {EntryDraft | null | undefined} Copy of the draft, or the draft itself if there is none.
+ */
+const getComparedDraft = (draft) =>
+  draft && {
+    ...draft,
+    originalValues: getOriginalValueSnapshots(draft),
+    currentValues: getValueMapSnapshots(draft),
+  };
 
 /**
  * Reactive container for the entry draft open in an editor. The draft itself is a deeply reactive
@@ -40,7 +84,7 @@ export class EntryDraftState {
   /**
    * Whether the current draft has been modified.
    */
-  modified = $derived(isDraftModified(this.current));
+  modified = $derived(isDraftModified(getComparedDraft(this.current)));
 }
 
 /**

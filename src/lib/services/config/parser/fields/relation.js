@@ -1,8 +1,17 @@
-import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
-import { hasField } from '$lib/services/config/parser/utils/fields';
+import { isObject } from '@sveltia/utils/object';
+
+import { getTemplateTags } from '$lib/services/common/template/tags';
+import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
+import { hasSlugTag } from '$lib/services/config/parser/collections/array-file';
+import { checkMultipleDefault } from '$lib/services/config/parser/utils/defaults';
+import {
+  getCanonicalSlugKey,
+  hasField,
+  isNonFieldSortKey,
+} from '$lib/services/config/parser/utils/fields';
 import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
-import { DEFAULT_CANONICAL_SLUG } from '$lib/services/contents/i18n/config/constants';
-import { mergeI18nConfigs } from '$lib/services/contents/i18n/config/merge';
+import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
+import { getPublishMode, isWorkflowMode } from '$lib/services/workflow/config';
 
 /**
  * @import {
@@ -13,7 +22,6 @@ import { mergeI18nConfigs } from '$lib/services/contents/i18n/config/merge';
  * UnsupportedOption,
  * } from '$lib/types/private';
  * @import {
- * CmsConfig,
  * Collection,
  * CollectionDivider,
  * CollectionFile,
@@ -46,65 +54,195 @@ const UNSUPPORTED_OPTIONS = [
 ];
 
 /**
- * Get the canonical slug key for the referenced collection or file. When i18n is enabled, the key —
- * `translationKey` by default — is added to the content of each localized entry, allowing entries
- * to be matched across locales. It can therefore be used as the `value_field` of a Relation field
- * even though it’s not defined as a field.
- * @param {object} args Arguments.
- * @param {CmsConfig | undefined} args.cmsConfig The site configuration.
- * @param {Collection | CollectionDivider | InternalSingletonCollection} args.collection Referenced
- * collection.
- * @param {CollectionFile} [args.file] Referenced collection file, if the collection is a file
- * collection.
- * @returns {string | undefined} The key, or `undefined` if i18n is not enabled for the collection
- * or file.
- * @see https://sveltiacms.app/en/docs/i18n#localizing-entry-slugs
+ * Options of a Relation field that refer to fields defined in the referenced collection or file,
+ * with the i18n string key used to report an unknown one. A reference is either a plain field name
+ * or a template, with the same syntax; `display_fields` and `search_fields` hold a list of them.
+ * @type {{ option: string, strKey: string, list: boolean }[]}
  */
-const getCanonicalSlugKey = ({ cmsConfig, collection, file }) => {
-  const config = mergeI18nConfigs({ cmsConfig, collection, file });
-
-  if (!config?.locales?.length) {
-    return undefined;
-  }
-
-  return config.canonical_slug?.key ?? DEFAULT_CANONICAL_SLUG.key;
-};
+const FIELD_REFERENCE_OPTIONS = [
+  { option: 'value_field', strKey: 'relation_field_invalid_value_field', list: false },
+  { option: 'display_fields', strKey: 'relation_field_invalid_display_field', list: true },
+  { option: 'search_fields', strKey: 'relation_field_invalid_search_field', list: true },
+];
 
 /**
- * Validate the `value_field` option of a Relation field, which refers to one or more fields defined
+ * Validate a field reference in a Relation field option, which refers to one or more fields defined
  * in the referenced collection or file. An unknown key path is not reported at runtime — the widget
- * silently falls back to the entry summary or slug — so the stored values end up being something
- * other than what the configuration asks for.
+ * silently falls back to the entry summary or slug — so the stored, displayed or searched values
+ * end up being something other than what the configuration asks for.
  * @param {object} args Arguments.
- * @param {string} args.valueField The `value_field` option, e.g. `userId`, `name.first`,
- * `cities.*.id` or `{{locale}}/{{slug}}`.
+ * @param {string} args.reference The reference, e.g. `userId`, `name.first`, `cities.*.id` or
+ * `{{locale}}/{{slug}}`.
+ * @param {string} args.strKey The i18n string key for an unknown field.
  * @param {Field[]} args.fields Fields defined in the referenced collection or file.
  * @param {string | undefined} args.canonicalSlugKey The canonical slug key of the referenced
- * collection or file, if i18n is enabled. It’s not a field but a valid `value_field`.
+ * collection or file, if i18n is enabled. It’s not a field but can be referred to as one.
  * @param {ConfigParserContext} args.context Context.
  * @param {ConfigParserCollectors} args.collectors Collectors.
  */
-const checkValueField = ({ valueField, fields, canonicalSlugKey, context, collectors }) => {
-  const tags = [...valueField.matchAll(TEMPLATE_TAG_REPLACE_REGEX)].map(([, tag]) => tag);
+const checkFieldReference = ({
+  reference,
+  strKey,
+  fields,
+  canonicalSlugKey,
+  context,
+  collectors,
+}) => {
+  const tags = getTemplateTags(reference).map(({ content }) => content);
 
   // A plain field name like `userId` is equivalent to `{{userId}}`, meaning that `slug` refers to
   // the `slug` field while `{{slug}}` refers to the entry slug
   const keyPaths = tags.length
     ? tags.filter((tag) => !SPECIAL_TEMPLATE_TAGS.includes(tag))
-    : [valueField];
+    : [reference];
 
   keyPaths.forEach((keyPath) => {
     // The `fields.` prefix is supported for compatibility with other config options
-    const key = keyPath.replace(/^fields\./, '');
+    const key = stripFieldTagPrefix(keyPath);
 
     if (key !== canonicalSlugKey && !hasField(fields, key)) {
-      addMessage({
-        strKey: 'relation_field_invalid_value_field',
-        context,
-        collectors,
-        values: { field: keyPath },
-      });
+      addMessage({ strKey, context, collectors, values: { field: keyPath } });
     }
+  });
+};
+
+/**
+ * Validate the `value_field`, `display_fields` and `search_fields` options of a Relation field
+ * against the fields defined in the referenced collection or file.
+ * @param {object} args Arguments.
+ * @param {RelationField} args.fieldConfig Relation field configuration.
+ * @param {Field[]} args.fields Fields defined in the referenced collection or file.
+ * @param {string | undefined} args.canonicalSlugKey The canonical slug key of the referenced
+ * collection or file, if i18n is enabled.
+ * @param {string | undefined} args.orderFieldKey The reorder field key of the referenced
+ * collection, if any. It can be a sort key without being defined as a field.
+ * @param {ConfigParserContext} args.context Context.
+ * @param {ConfigParserCollectors} args.collectors Collectors.
+ */
+const checkFieldReferences = ({
+  fieldConfig,
+  fields,
+  canonicalSlugKey,
+  orderFieldKey,
+  context,
+  collectors,
+}) => {
+  const { file: fileName, filters, sort_by: sortBy } = fieldConfig;
+
+  // A filter’s `field` is a single key path, where `slug` is the entry slug and the `fields.`
+  // prefix marks a field, the same as in a template. A filter on an unknown field matches no
+  // entry, so the field is left with nothing to choose from
+  if (Array.isArray(filters)) {
+    filters.forEach((filter) => {
+      const field = isObject(filter) ? filter.field : undefined;
+
+      if (typeof field === 'string' && field && field !== 'slug') {
+        const key = stripFieldTagPrefix(field);
+
+        if (key !== canonicalSlugKey && !hasField(fields, key)) {
+          addMessage({
+            strKey: 'relation_field_invalid_filter_field',
+            context,
+            collectors,
+            values: { field },
+          });
+        }
+      }
+    });
+  }
+
+  // The sort field is a single key path like a `sortable_fields` key, where `slug` is the entry
+  // slug. An unknown field leaves every entry without a value, so the options aren’t sorted. The
+  // option is ignored for a referenced file, which is reported separately
+  const sortField = isObject(sortBy) ? sortBy.field : undefined;
+
+  if (
+    !fileName &&
+    typeof sortField === 'string' &&
+    sortField &&
+    !isNonFieldSortKey(sortField, { canonicalSlugKey, orderFieldKey }) &&
+    !hasField(fields, sortField)
+  ) {
+    addMessage({
+      strKey: 'relation_field_invalid_sort_field',
+      context,
+      collectors,
+      values: { field: sortField },
+    });
+  }
+
+  FIELD_REFERENCE_OPTIONS.forEach(({ option, strKey, list }) => {
+    const value = /** @type {Record<string, any>} */ (fieldConfig)[option];
+
+    // A value of the wrong type is reported against the JSON schema, so it’s skipped here, and so
+    // is an empty reference
+    if (Array.isArray(value) !== list) {
+      return;
+    }
+
+    /** @type {any[]} */ (list ? value : [value]).forEach((reference) => {
+      if (typeof reference === 'string' && reference) {
+        checkFieldReference({ reference, strKey, fields, canonicalSlugKey, context, collectors });
+      }
+    });
+  });
+};
+
+/**
+ * Validate the `value_field` option of a Relation field referring to an entry collection that
+ * stores all the entries in one file. The slug of such an entry is its position in the array, which
+ * changes when the entries are reordered or one is deleted, so a stored reference would silently
+ * point to another entry. The value has to come from a field instead.
+ * @param {object} args Arguments.
+ * @param {RelationField} args.fieldConfig Relation field configuration.
+ * @param {ConfigParserContext} args.context Context.
+ * @param {ConfigParserCollectors} args.collectors Collectors.
+ */
+const checkArrayFileValueField = ({ fieldConfig, context, collectors }) => {
+  const { collection, value_field: valueField = '{{slug}}' } = fieldConfig;
+
+  if (hasSlugTag(valueField)) {
+    addMessage({
+      strKey: 'relation_field_array_file_slug',
+      context,
+      collectors,
+      values: { collection },
+    });
+  }
+};
+
+/**
+ * Validate a Relation field in an entry collection that stores all the entries in one file, which
+ * can’t refer to a collection with Editorial Workflow. Renaming or deleting an entry there updates
+ * the references to it in the same pull request, but the file can only be written as a whole on
+ * the configured branch, so the pull request would replace the file with the one entry holding the
+ * reference.
+ * @param {object} args Arguments.
+ * @param {Collection | CollectionDivider | InternalSingletonCollection} args.collection Referenced
+ * collection.
+ * @param {ConfigParserContext} args.context Context.
+ * @param {ConfigParserCollectors} args.collectors Collectors.
+ */
+const checkArrayFileWorkflowRelation = ({ collection, context, collectors }) => {
+  const { cmsConfig, collection: parentCollection } = context;
+
+  if (
+    !parentCollection ||
+    !('file' in parentCollection) ||
+    typeof parentCollection.file !== 'string' ||
+    // A file/singleton collection’s entry can’t be renamed or deleted
+    'divider' in collection ||
+    'files' in collection ||
+    !isWorkflowMode(getPublishMode({ cmsConfig, collection }))
+  ) {
+    return;
+  }
+
+  addMessage({
+    strKey: 'relation_field_array_file_workflow',
+    context,
+    collectors,
+    values: { collection: collection.name },
   });
 };
 
@@ -115,8 +253,19 @@ const checkValueField = ({ valueField, fields, canonicalSlugKey, context, collec
 export const parseRelationFieldConfig = (args) => {
   const { config, context, collectors } = args;
   const fieldConfig = /** @type {RelationField} */ (config);
-  const { collection: collectionName, file: fileName, value_field: valueField } = fieldConfig;
+
+  const {
+    collection: collectionName,
+    file: fileName,
+    default: defaultValue,
+    multiple,
+  } = fieldConfig;
+
   const { cmsConfig } = context;
+
+  // Whether the default matches an entry can only be known once the entries are loaded, but its
+  // shape is known here
+  checkMultipleDefault({ defaultValue, multiple, context, collectors });
 
   const collection =
     collectionName === '_singletons'
@@ -161,6 +310,17 @@ export const parseRelationFieldConfig = (args) => {
     }
 
     canonicalSlugKey = getCanonicalSlugKey({ cmsConfig, collection, file });
+
+    // A value of the wrong type is reported against the JSON schema
+    if (
+      'file' in collection &&
+      typeof collection.file === 'string' &&
+      (fieldConfig.value_field === undefined || typeof fieldConfig.value_field === 'string')
+    ) {
+      checkArrayFileValueField({ fieldConfig, context, collectors });
+    }
+
+    checkArrayFileWorkflowRelation({ collection, context, collectors });
   } else {
     addMessage({
       strKey: 'relation_field_invalid_collection',
@@ -170,14 +330,32 @@ export const parseRelationFieldConfig = (args) => {
     });
   }
 
-  // Check if the `value_field` exists in the target collection/file. A collection or file without
-  // fields is reported separately, so skip the check in that case to avoid a duplicate error
+  // The options taken from a list in a single file follow the order of the list items
+  if (fileName && fieldConfig.sort_by !== undefined) {
+    addMessage({
+      type: 'warning',
+      strKey: 'relation_field_sort_by_file_ignored',
+      context,
+      collectors,
+    });
+  }
+
+  // Check if the referenced fields exist in the target collection/file. A collection or file
+  // without fields is reported separately, so skip the check in that case to avoid a duplicate
+  // error
   const targetFields = fileName
     ? file?.fields
     : /** @type {EntryCollection | undefined} */ (collection)?.fields;
 
-  if (typeof valueField === 'string' && valueField && targetFields?.length) {
-    checkValueField({ valueField, fields: targetFields, canonicalSlugKey, context, collectors });
+  if (targetFields?.length) {
+    checkFieldReferences({
+      fieldConfig,
+      fields: targetFields,
+      canonicalSlugKey,
+      orderFieldKey: getOrderFieldKey(collection),
+      context,
+      collectors,
+    });
   }
 
   checkUnsupportedOptions({ ...args, UNSUPPORTED_OPTIONS });

@@ -1,31 +1,36 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Button, Icon, TextInput } from '@sveltia/ui';
+  import { Button, Icon } from '@sveltia/ui';
   import { getPathInfo } from '@sveltia/utils/file';
-  import { isURL } from '@sveltia/utils/string';
-  import { tick } from 'svelte';
 
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import FileExtensionChangeDialog from '$lib/components/assets/shared/file-extension-change-dialog.svelte';
+  import EditableText from '$lib/components/common/editable-text.svelte';
   import ReorderControls from '$lib/components/common/reorder-controls.svelte';
   import { getAssetByPath } from '$lib/services/assets';
-  import { getMediaFieldURL } from '$lib/services/assets/info';
-  import { getMediaKind } from '$lib/services/assets/kinds';
+  import { formatFileName } from '$lib/services/assets/file-name';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { activeInlineEditors } from '$lib/services/contents/editor';
-  import { getUnsavedFileDisplayPath } from '$lib/services/contents/fields/file/helpers';
-  import { formatFileName, isEquivalentFileExtension } from '$lib/services/utils/file';
+  import {
+    getFileDisplayPath,
+    getUnsavedFileName,
+  } from '$lib/services/contents/fields/file/helpers';
+  import { getMediaFieldPreview } from '$lib/services/contents/fields/file/preview';
+  import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
+  import { isEquivalentFileExtension } from '$lib/services/utils/file';
   import { watch } from '$lib/services/utils/state.svelte';
 
   /**
-   * @import { Asset, AssetKind, Entry } from '$lib/types/private';
-   * @import { MediaField } from '$lib/types/public';
+   * @import { Asset, AssetKind, Entry, EntryDraft, InternalLocaleCode } from '$lib/types/private';
+   * @import { FileField, MediaField } from '$lib/types/public';
    */
 
   /**
    * @typedef {object} Props
    * @property {string} value The file value (URL, blob URL, or file path).
-   * @property {string} fieldId The field ID for accessibility.
+   * @property {string} fieldId The ID of the item, which its value element is identified with.
+   * @property {string} [groupFieldId] The ID of the field the item belongs to, whose label and
+   * error message describe the item. Defaults to {@link fieldId}, which is the same for a single
+   * file.
    * @property {MediaField} fieldConfig Field configuration.
    * @property {boolean} readonly Whether the field is readonly.
    * @property {boolean} invalid Whether the field is invalid.
@@ -35,6 +40,8 @@
    * @property {string} [typedKeyPath] Field key path for field-level media folders.
    * @property {string} [componentName] Custom editor component name for a field-level asset folder.
    * @property {Entry | undefined} entry The entry object.
+   * @property {InternalLocaleCode} [locale] Locale being edited, which an entry-relative path is
+   * relative to.
    * @property {() => void} [onReplace] Event handler for replace action.
    * @property {() => void} [onRemove] Event handler for remove action.
    * @property {number} [index] Index of the item within a multi-value field.
@@ -53,6 +60,7 @@
   const {
     value,
     fieldId,
+    groupFieldId = fieldId,
     fieldConfig,
     readonly = false,
     invalid = false,
@@ -62,6 +70,7 @@
     typedKeyPath = undefined,
     componentName = undefined,
     entry = undefined,
+    locale = undefined,
     onReplace,
     onRemove,
     index = 0,
@@ -95,6 +104,10 @@
 
   const { widget: fieldType } = $derived(fieldConfig);
   const isImageField = $derived(fieldType === 'image');
+  /** Whether the value is a folder path, with the File field’s `select_folder` option. */
+  const isFolder = $derived(
+    fieldType === 'file' && /** @type {FileField} */ (fieldConfig).select_folder === true,
+  );
   const sortable = $derived(!!onMove && !readonly);
   /**
    * Whether the file is not yet saved to the repository. An unsaved file is a pending upload cached
@@ -102,9 +115,36 @@
    */
   const unsaved = $derived(!!file && !!value?.startsWith('blob:'));
   const canRename = $derived(unsaved && !readonly);
+  /**
+   * Name the unsaved file will be saved with, which is filled with the current draft content if the
+   * `filename_template` media library option applies to the file.
+   */
+  const unsavedFileName = $derived(
+    file
+      ? /** @type {string} */ (
+          getUnsavedFileName({
+            draft: /** @type {EntryDraft} */ (entryDraft.current),
+            blobURL: value,
+          })
+        )
+      : undefined,
+  );
   const oldExtension = $derived(file ? getPathInfo(file.name).extension : undefined);
-  /** Sanitized file name to be saved, which may be different from the entered name. */
-  const finalName = $derived(formatFileName(newName.trim()));
+  /**
+   * Sanitized, and possibly slugified, file name to be saved, which may be different from the
+   * entered name.
+   */
+  const finalName = $derived.by(() => {
+    const name = newName.trim();
+
+    // An empty name has nothing to slugify
+    return name
+      ? formatFileName(name, {
+          slugificationEnabled: getDefaultMediaLibraryOptions({ fieldConfig }).config
+            .slugify_filename,
+        })
+      : '';
+  });
   const newExtension = $derived(getPathInfo(finalName).extension);
 
   const getURLArgs = $derived({
@@ -115,72 +155,27 @@
     componentName,
     typedKeyPath,
     fieldConfig,
+    locale,
   });
 
   /**
-   * Get the path to display for the asset or file. For an unsaved file, this is the public path
-   * where the file will be stored, with any template tags like `{{slug}}` and entry-relative paths
-   * resolved with the current draft content. It will be the same as the final path in most cases,
-   * but it could be different if a file with the same name already exists in the assets folder, and
-   * the new file is renamed to avoid conflicts, or if the entry slug changes before saving.
-   * @type {string} The path to display. If the folder could not be determined, it will only be the
-   * file name.
+   * Path to display for the asset or file. For an unsaved file, this is the public path where the
+   * file will be stored.
    */
-  const fileDisplayPath = $derived.by(() => {
-    if (!value) {
-      return '';
-    }
-
-    if (file) {
-      const name = decodeURI(file.name.normalize());
-
-      return entryDraft.current
-        ? getUnsavedFileDisplayPath({ draft: entryDraft.current, blobURL: value, fileName: name })
-        : name;
-    }
-
-    if (!value.startsWith('blob:')) {
-      const decodedValue = decodeURI(value);
-
-      // Truncate query string for display. This is mainly for Unsplash URLs which have a long query
-      // string for image parameters.
-      if (isURL(decodedValue)) {
-        // eslint-disable-next-line svelte/prefer-svelte-reactivity
-        const url = new URL(decodedValue);
-
-        if (url.search) {
-          url.search = '';
-          return `${url}…`;
-        }
-      }
-
-      return decodedValue;
-    }
-
-    return '';
-  });
-
-  /**
-   * Start editing the file name. The input field is focused, and the file name is selected,
-   * excluding the extension, just like the macOS Finder and Windows File Explorer do.
-   */
-  const startEditing = async () => {
-    if (!file) {
-      return;
-    }
-
-    newName = file.name;
-    editing = true;
-    await tick();
-    inputElement?.focus();
-    inputElement?.setSelectionRange(0, getPathInfo(newName).filename.length);
-  };
+  const fileDisplayPath = $derived(
+    getFileDisplayPath({
+      draft: /** @type {EntryDraft} */ (entryDraft.current),
+      value,
+      unsavedFileName,
+    }),
+  );
 
   /**
    * Rename the unsaved file by replacing the cached `File` object with a new one. The blob URL,
    * which is the current field value, remains the same, so no other references have to be updated.
    */
   const renameFile = () => {
+    /* v8 ignore next 3 -- the file is held in the draft as long as it’s shown here */
     if (!file || !entryDraft.current?.files[value]) {
       return;
     }
@@ -191,6 +186,8 @@
     });
 
     entryDraft.current.files[value].file = newFile;
+    // The name is set by hand, so the file name template no longer applies
+    delete entryDraft.current.files[value].nameTemplate;
     file = newFile;
     editing = false;
   };
@@ -198,80 +195,88 @@
   /**
    * Apply the entered file name. If the file extension is being changed, ask for confirmation
    * first, because a mismatched extension could make the file unusable.
+   * @returns {boolean} Whether the editing ends, which it doesn’t while waiting for the
+   * confirmation.
    */
   const applyNewName = () => {
-    if (!file || !finalName || finalName === file.name) {
-      editing = false;
-      return;
+    if (!file || !finalName || finalName === unsavedFileName) {
+      return true;
     }
 
     if (isEquivalentFileExtension(oldExtension, newExtension)) {
       renameFile();
-    } else {
-      showExtensionChangeDialog = true;
+
+      return true;
     }
+
+    // Keep editing until the change is confirmed
+    showExtensionChangeDialog = true;
+
+    return false;
   };
 
   /**
    * Update properties when value changes.
+   * @param {() => boolean} isStale Function telling whether the value has changed since, so the
+   * result of a slow lookup for an earlier value doesn’t replace the preview of the current one.
    */
-  const updateProps = async () => {
-    // Restore `file` after a draft backup is restored
-    if (value?.startsWith('blob:') && entryDraft.current) {
-      file = entryDraft.current.files[value]?.file;
+  const updateProps = async (isStale) => {
+    // Restore `file` after a draft backup is restored, and drop it once the value is no longer an
+    // unsaved file, e.g. after the changes are reverted, so its name isn’t shown for another value
+    file = value?.startsWith('blob:') ? entryDraft.current?.files[value]?.file : undefined;
+
+    // Remove the preview of the previous value, so it’s not shown for another one, e.g. a saved
+    // asset or an unsaved file replaced with another unsaved file
+    asset = undefined;
+    kind = undefined;
+    src = undefined;
+
+    // A folder has no preview, nor has an empty value
+    if (isFolder || !value) {
+      return;
+    }
+
+    if (isImageField && /^https?:/.test(value)) {
+      kind = 'image';
+      src = value;
+
+      return;
     }
 
     // Update the `src` when an asset is selected
-    if (value) {
-      if (isImageField && /^https?:/.test(value)) {
-        asset = undefined;
-        kind = 'image';
-        src = value;
-      } else if (!value.startsWith('blob:')) {
-        asset = getAssetByPath({ ...getURLArgs });
-        kind = undefined;
-        src = undefined;
-      }
+    if (!value.startsWith('blob:')) {
+      asset = getAssetByPath({ ...getURLArgs });
+    }
 
-      if (!asset && !src) {
-        kind = await getMediaKind(value);
-        src = kind ? await getMediaFieldURL({ ...getURLArgs, thumbnail: true }) : undefined;
+    if (!asset) {
+      // Take the arguments before waiting, as the value may have changed by then
+      const preview = await getMediaFieldPreview({ ...getURLArgs, thumbnail: true });
+
+      if (!isStale()) {
+        ({ kind, src } = preview);
       }
-    } else {
-      // Remove properties after the value is removed
-      asset = undefined;
-      file = undefined;
-      kind = undefined;
-      src = undefined;
     }
   };
 
   watch(
     () => value,
     () => {
-      updateProps();
+      let stale = false;
+
+      updateProps(() => stale);
+
+      return () => {
+        stale = true;
+      };
     },
   );
-
-  $effect(() => {
-    if (!editing) {
-      return undefined;
-    }
-
-    // Let the Escape key cancel the editing instead of closing the entry editor
-    activeInlineEditors.current += 1;
-
-    return () => {
-      activeInlineEditors.current -= 1;
-    };
-  });
 </script>
 
 <div
   role="none"
   class="filled"
   class:sortable
-  class:dragging
+  class:drag-placeholder={dragging}
   draggable={grabbed}
   ondragstart={(/** @type {DragEvent} */ event) => {
     onDragStart?.();
@@ -309,99 +314,34 @@
     <AssetPreview kind={asset.kind} {asset} variant="tile" checkerboard={true} />
   {:else}
     <span role="none" class="preview no-thumbnail">
-      <Icon name="draft" />
+      <Icon name={isFolder ? 'folder' : 'draft'} />
     </span>
   {/if}
   <div role="none">
-    {#if typeof value === 'string'}
-      <div role="none" class="path">
-        {#if editing}
-          <TextInput
-            id="{fieldId}-value"
-            dir="auto"
-            flex
-            bind:value={newName}
-            bind:element={inputElement}
-            {invalid}
-            {required}
-            aria-labelledby="{fieldId}-label"
-            aria-errormessage="{fieldId}-error"
-            onkeydown={(/** @type {KeyboardEvent} */ event) => {
-              const { key, isComposing } = event;
-
-              // Ignore the Enter key while the user is typing with an IME
-              if (isComposing || !(key === 'Enter' || key === 'Escape')) {
-                return;
-              }
-
-              event.preventDefault();
-              event.stopPropagation();
-
-              if (key === 'Enter') {
-                applyNewName();
-              } else {
-                editing = false;
-              }
-            }}
-          />
-          <Button
-            size="small"
-            iconic
-            disabled={!finalName}
-            aria-label={_('done')}
-            aria-controls="{fieldId}-value"
-            onclick={() => {
-              applyNewName();
-            }}
-          >
-            {#snippet startIcon()}
-              <Icon name="check" />
-            {/snippet}
-          </Button>
-          <Button
-            size="small"
-            iconic
-            aria-label={_('cancel')}
-            aria-controls="{fieldId}-value"
-            onclick={() => {
-              editing = false;
-            }}
-          >
-            {#snippet startIcon()}
-              <Icon name="close" />
-            {/snippet}
-          </Button>
-        {:else}
-          <div
-            role="textbox"
-            id="{fieldId}-value"
-            tabindex="0"
-            class="filename"
-            dir="ltr"
-            aria-readonly={readonly}
-            aria-invalid={invalid}
-            aria-required={required}
-            aria-labelledby="{fieldId}-label"
-            aria-errormessage="{fieldId}-error"
-          >
-            {fileDisplayPath}
-          </div>
-          {#if canRename}
-            <Button
-              size="small"
-              iconic
-              aria-label={_('rename')}
-              aria-controls="{fieldId}-value"
-              onclick={() => {
-                startEditing();
-              }}
-            >
-              {#snippet startIcon()}
-                <Icon name="edit" />
-              {/snippet}
-            </Button>
-          {/if}
-        {/if}
+    <div role="none" class="path">
+      <EditableText
+        id="{fieldId}-value"
+        value={fileDisplayPath}
+        initialText={unsavedFileName}
+        bind:editing
+        bind:text={newName}
+        bind:inputElement
+        canEdit={canRename}
+        editLabel={_('rename')}
+        {readonly}
+        {invalid}
+        {required}
+        applyDisabled={!finalName}
+        dir="ltr"
+        ariaLabelledby="{groupFieldId}-label"
+        ariaErrormessage="{groupFieldId}-error"
+        getSelectionEnd={(name) => getPathInfo(name).filename.length}
+        onApply={applyNewName}
+      />
+    </div>
+    {#if editing && finalName !== newName.trim()}
+      <div role="status" class="note">
+        {_('file_will_be_saved_as', { values: { name: finalName } })}
       </div>
     {/if}
     <div role="none">
@@ -458,14 +398,6 @@
     margin: var(--sui-focus-ring-width);
     background-color: var(--sui-primary-background-color); /* for dragging opacity */
 
-    /* The dragged item is left as a faint placeholder marking the gap it would drop into. The
-      pointer already carries the browser’s own drag image of it, so showing it twice at full
-      strength would just be confusing. */
-
-    &.dragging {
-      opacity: 0.25;
-    }
-
     :global {
       .preview {
         flex: none;
@@ -496,28 +428,15 @@
       flex: auto;
       overflow: hidden;
 
-      .path {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-
-        @media (width < 768px) {
-          font-size: var(--sui-font-size-small);
-        }
-
-        .filename {
-          flex: auto;
-        }
+      .note {
+        margin: 4px 0;
+        color: var(--sui-secondary-foreground-color);
+        font-size: var(--sui-font-size-small);
       }
 
-      .filename {
-        margin: var(--sui-focus-ring-width);
-        padding: 4px;
-        word-break: break-all;
-
-        &:empty {
-          margin: 0;
-          padding: 0;
+      .path {
+        @media (width < 768px) {
+          font-size: var(--sui-font-size-small);
         }
       }
     }
@@ -546,10 +465,8 @@
     justify-content: center;
     align-items: center;
     gap: 4px;
+    align-self: stretch;
     width: 28px;
-    height: -moz-available;
-    height: -webkit-fill-available;
-    height: stretch;
     background-color: var(--sui-secondary-border-color);
   }
 </style>

@@ -1,0 +1,395 @@
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
+import { render } from 'vitest-browser-svelte';
+
+import { mergeLockedBranch } from '$lib/services/backends/branch-access';
+import { deployments, productionSHA } from '$lib/services/deployments';
+import { openNewTab } from '$lib/services/utils/window';
+import { forkedRepository } from '$lib/services/workflow/open-authoring';
+import {
+  createMockEntry,
+  createMockForkPullRequest,
+  createMockWorkflowEntry,
+  initTestConfig,
+  setEntries,
+  TEST_IMAGE_URL,
+} from '$lib/test/config';
+
+import WorkflowEntryCard from './workflow-entry-card.svelte';
+
+vi.mock('$lib/services/utils/window', () => ({ openNewTab: vi.fn() }));
+
+const fields = [{ name: 'title', widget: 'string' }];
+
+/**
+ * Build an unpublished entry.
+ * @param {Record<string, any>} [workflow] Workflow properties to override.
+ * @param {Record<string, any>} [entry] Entry properties to override.
+ * @returns {any} Entry.
+ */
+const createEntry = (workflow = {}, entry = {}) =>
+  createMockWorkflowEntry({
+    content: { _default: { title: 'Hello' } },
+    pullRequest: {
+      headSHA: 'abc',
+      author: { name: 'Melvin' },
+      updatedDate: new Date('2024-01-15T10:00:00Z'),
+    },
+    workflow,
+    entry,
+  });
+
+describe('WorkflowEntryCard', () => {
+  beforeEach(async () => {
+    await initTestConfig({
+      site_url: 'https://example.com',
+      collections: [
+        {
+          name: 'posts',
+          label: 'Posts',
+          label_singular: 'Post',
+          folder: 'content/posts',
+          preview_path: 'posts/{{slug}}',
+          fields,
+        },
+        {
+          name: 'pages',
+          label: 'Pages',
+          files: [{ name: 'about', label: 'About Us', file: 'content/about.md', fields }],
+        },
+        { name: 'locked', label: 'Locked', folder: 'content/locked', delete: false, fields },
+        { name: 'frozen', label: 'Frozen', folder: 'content/frozen', readonly: true, fields },
+      ],
+    });
+    setEntries([]);
+    deployments.current = {};
+    productionSHA.current = '';
+    forkedRepository.current = undefined;
+    mergeLockedBranch.current = undefined;
+    window.location.hash = '#/workflow';
+  });
+
+  test('shows the entry with its author, date and build state', async () => {
+    const onDelete = vi.fn();
+
+    deployments.current = { abc: { state: 'pending', checkedTime: 0 } };
+
+    const { container } = await render(WorkflowEntryCard, { entry: createEntry(), onDelete });
+    const card = page.getByRole('listitem');
+
+    expect(container.querySelector('.collection')).toHaveTextContent('Post');
+    expect(container.querySelector('.author')).toHaveTextContent('Melvin');
+    expect(container.querySelector('.date')).toHaveTextContent('Jan 15');
+    expect(container.querySelector('.deploy-status-badge')).toHaveTextContent('Building…');
+    await expect.element(card).toHaveAttribute('draggable', 'true');
+
+    // The draft isn’t published, so the preview waits for the build
+    await expect.element(card.getByRole('button', { name: 'Checking for Preview' })).toBeDisabled();
+    // A draft has no publish button
+    expect(card.getByRole('button', { name: 'Publish Entry' }).elements()).toHaveLength(0);
+
+    await card.getByRole('button', { name: 'Delete Entry' }).click();
+    expect(onDelete).toHaveBeenCalledOnce();
+
+    await card.getByRole('button', { name: 'Hello' }).click();
+    await expect.poll(() => window.location.hash).toBe('#/collections/posts/entries/hello');
+  });
+
+  test('stands for a contributor’s pull request, linked from the card', async () => {
+    const entry = createMockWorkflowEntry({
+      status: 'pending_publish',
+      content: { _default: { title: 'Hello' } },
+      pullRequest: createMockForkPullRequest({
+        pullRequest: { updatedDate: new Date('2024-01-15T10:00:00Z') },
+      }),
+    });
+
+    const { container } = await render(WorkflowEntryCard, { entry });
+    const card = page.getByRole('listitem');
+
+    expect(container.querySelector('.note')).toHaveTextContent('From a fork');
+    // It’s reviewed and merged on the Git service, rather than published here
+    expect(card.getByRole('button', { name: 'Publish Entry' }).elements()).toHaveLength(0);
+    await card.getByRole('button', { name: /^Review on/ }).click();
+    expect(openNewTab).toHaveBeenCalledWith('https://github.com/owner/repo/pull/7');
+    // The editor is told which pull request to open the entry from
+    await card.getByRole('button', { name: 'Hello' }).click();
+    await expect.poll(() => window.location.hash).toBe('#/collections/posts/entries/hello?_pr=7');
+  });
+
+  test('lists the entries riding along in the pull request', async () => {
+    // @see https://github.com/sveltia/sveltia-cms/issues/1112
+    const { container } = await render(WorkflowEntryCard, {
+      entry: createEntry({
+        companions: [
+          {
+            collectionName: 'posts',
+            entry: createMockEntry({ slug: 'guides', content: { _default: { title: 'Guides' } } }),
+          },
+          // An existing entry edited along with the entry
+          // @see https://github.com/sveltia/sveltia-cms/issues/1129
+          {
+            collectionName: 'posts',
+            entry: createMockEntry({ slug: 'about', content: { _default: { title: 'About' } } }),
+            edited: true,
+          },
+        ],
+      }),
+    });
+
+    const notes = container.querySelectorAll('.companions');
+
+    expect(notes).toHaveLength(2);
+    expect(notes[0]).toHaveTextContent(
+      'Also adds \u2068\u2068Post\u2069: \u2068Guides\u2069\u2069',
+    );
+    expect(notes[1]).toHaveTextContent(
+      'Also changes \u2068\u2068Post\u2069: \u2068About\u2069\u2069',
+    );
+  });
+
+  test('offers to publish an entry that is ready', async () => {
+    const onPublish = vi.fn();
+
+    await render(WorkflowEntryCard, {
+      entry: createEntry({ status: 'pending_publish' }),
+      onPublish,
+    });
+
+    await page.getByRole('button', { name: 'Publish Entry' }).click();
+    expect(onPublish).toHaveBeenCalledOnce();
+  });
+
+  test('offers to discard the changes to a published entry', async () => {
+    setEntries([createMockEntry({ slug: 'hello' })]);
+
+    await render(WorkflowEntryCard, { entry: createEntry() });
+    await expect.element(page.getByRole('button', { name: 'Discard Changes' })).toBeInTheDocument();
+  });
+
+  test('presents a pending deletion with its own actions', async () => {
+    const onDelete = vi.fn();
+    const onPublish = vi.fn();
+
+    await render(WorkflowEntryCard, {
+      entry: createEntry({ status: 'pending_deletion' }),
+      onDelete,
+      onPublish,
+    });
+
+    const card = page.getByRole('listitem');
+
+    await expect.element(card).toHaveAttribute('draggable', 'false');
+
+    await card.getByRole('button', { name: 'Cancel Deletion' }).click();
+    expect(onDelete).toHaveBeenCalledOnce();
+
+    await card.getByRole('button', { name: 'Delete Entry' }).click();
+    expect(onPublish).toHaveBeenCalledOnce();
+  });
+
+  test('links a collection file by its name', async () => {
+    const { container } = await render(WorkflowEntryCard, {
+      entry: createEntry(
+        { collectionName: 'pages', fileName: 'about' },
+        { ...createMockEntry({ slug: 'about', folder: 'content' }), id: 'content/about' },
+      ),
+    });
+
+    expect(container.querySelector('.collection')).toHaveTextContent('Pages');
+    expect(container.querySelector('.title')).toHaveTextContent('About Us');
+    // A collection file always has a published version to fall back to
+    await expect.element(page.getByRole('button', { name: 'Discard Changes' })).toBeInTheDocument();
+
+    await page.getByRole('button', { name: 'About Us' }).click();
+    await expect.poll(() => window.location.hash).toBe('#/collections/pages/entries/about');
+  });
+
+  test('shows the thumbnail, or falls back to the slug without a collection', async () => {
+    await initTestConfig({
+      site_url: 'https://example.com',
+      collections: [
+        {
+          name: 'photos',
+          label: 'Photos',
+          folder: 'content/photos',
+          thumbnail: 'image',
+          fields: [...fields, { name: 'image', widget: 'image' }],
+        },
+      ],
+    });
+
+    const { container } = await render(WorkflowEntryCard, {
+      entry: createEntry(
+        {
+          collectionName: 'photos',
+          pullRequest: {
+            number: 2,
+            branch: 'cms/photos/hello',
+            author: { name: 'Melvin' },
+            updatedDate: new Date('2024-01-15T10:00:00Z'),
+          },
+        },
+        createMockEntry({
+          slug: 'hello',
+          folder: 'content/photos',
+          content: { _default: { title: 'Hello', image: TEST_IMAGE_URL } },
+        }),
+      ),
+    });
+
+    await expect
+      .poll(() => container.querySelector('img')?.getAttribute('src'))
+      .toBe(TEST_IMAGE_URL);
+
+    // A draft in a collection that no longer exists is identified by its slug
+    const { container: other } = await render(WorkflowEntryCard, {
+      entry: createEntry({ collectionName: 'gone' }),
+    });
+
+    expect(other.querySelector('.title')).toHaveTextContent('hello');
+  });
+
+  test('hides the actions that aren’t allowed', async () => {
+    await render(WorkflowEntryCard, {
+      entry: createEntry(
+        { collectionName: 'locked', status: 'pending_publish' },
+        createMockEntry({ slug: 'hello', folder: 'content/locked' }),
+      ),
+    });
+
+    expect(page.getByRole('button', { name: 'Delete Entry' }).elements()).toHaveLength(0);
+    await expect.element(page.getByRole('button', { name: 'Publish Entry' })).toBeInTheDocument();
+
+    // An Open Authoring contributor can’t publish
+    forkedRepository.current = /** @type {any} */ ({ owner: 'me', repo: 'site' });
+    await expect
+      .poll(() => page.getByRole('button', { name: 'Publish Entry' }).elements().length)
+      .toBe(0);
+  });
+
+  test('hides the publish action from a user who can’t merge the pull request', async () => {
+    const { pullRequest } = createEntry().workflow;
+
+    const { rerender } = await render(WorkflowEntryCard, {
+      entry: createEntry({
+        status: 'pending_publish',
+        pullRequest: { ...pullRequest, canMerge: true },
+      }),
+    });
+
+    await expect.element(page.getByRole('button', { name: 'Publish Entry' })).toBeInTheDocument();
+
+    await rerender({
+      entry: createEntry({
+        status: 'pending_publish',
+        pullRequest: { ...pullRequest, canMerge: false },
+      }),
+    });
+    await expect
+      .poll(() => page.getByRole('button', { name: 'Publish Entry' }).elements().length)
+      .toBe(0);
+    // Discarding the changes doesn’t merge anything, so it stays available
+    await expect.element(page.getByRole('button', { name: 'Delete Entry' })).toBeInTheDocument();
+  });
+
+  test('hides the publish action when the configured branch can’t be merged into', async () => {
+    await render(WorkflowEntryCard, { entry: createEntry({ status: 'pending_deletion' }) });
+
+    await expect.element(page.getByRole('button', { name: 'Delete Entry' })).toBeInTheDocument();
+
+    // Publishing a pending deletion is what removes the entry, so the Delete action goes
+    mergeLockedBranch.current = 'main';
+    await expect
+      .poll(() => page.getByRole('button', { name: 'Delete Entry' }).elements().length)
+      .toBe(0);
+    await expect.element(page.getByRole('button', { name: 'Cancel Deletion' })).toBeInTheDocument();
+  });
+
+  test('only lets a read-only entry be opened', async () => {
+    await render(WorkflowEntryCard, {
+      entry: createEntry(
+        { collectionName: 'frozen', status: 'pending_publish' },
+        createMockEntry({
+          slug: 'hello',
+          folder: 'content/frozen',
+          content: { _default: { title: 'Hello' } },
+        }),
+      ),
+    });
+
+    const card = page.getByRole('listitem');
+
+    await expect.element(card).toHaveAttribute('draggable', 'false');
+    expect(card.getByRole('button', { name: 'Delete Entry' }).elements()).toHaveLength(0);
+    expect(card.getByRole('button', { name: 'Publish Entry' }).elements()).toHaveLength(0);
+
+    await card.getByRole('button', { name: 'Hello' }).click();
+    await expect.poll(() => window.location.hash).toBe('#/collections/frozen/entries/hello');
+  });
+
+  test('reports the production build for a merged entry, with nothing left to do', async () => {
+    // The pull request’s own build is done; the production build is what the entry is waiting for
+    productionSHA.current = 'prod';
+    deployments.current = {
+      abc: { state: 'ready', checkedTime: 0 },
+      prod: { state: 'pending', checkedTime: 0 },
+    };
+
+    const { container } = await render(WorkflowEntryCard, {
+      entry: createEntry({ status: 'pending_publish' }),
+      deploying: true,
+    });
+
+    const card = page.getByRole('listitem');
+
+    expect(container.querySelector('.deploy-status-badge')).toHaveTextContent('Building…');
+    expect(container.querySelector('.note')).toBeNull();
+    await expect.element(card).toHaveAttribute('draggable', 'false');
+    expect(card.getByRole('button', { name: 'Publish Entry' }).elements()).toHaveLength(0);
+    expect(card.getByRole('button', { name: 'Delete Entry' }).elements()).toHaveLength(0);
+    expect(card.getByRole('button', { name: 'Discard Changes' }).elements()).toHaveLength(0);
+
+    // The entry is on the live site, or about to be, so that’s where the link goes
+    await expect
+      .element(card.getByRole('button', { name: 'View on Live Site' }))
+      .toHaveAttribute('aria-description', 'The preview is still being built.');
+    // The entry can still be opened
+    await expect.element(card.getByRole('button', { name: 'Hello' })).toBeEnabled();
+
+    deployments.current = { ...deployments.current, prod: { state: 'error', checkedTime: 0 } };
+    await expect.element(page.getByText('Build Failed')).toBeVisible();
+  });
+
+  test('marks a merged deletion, with nothing to open or link', async () => {
+    productionSHA.current = 'prod';
+    deployments.current = { prod: { state: 'pending', checkedTime: 0 } };
+
+    const { container } = await render(WorkflowEntryCard, {
+      entry: createEntry({ status: 'pending_deletion' }),
+      deploying: true,
+    });
+
+    const card = page.getByRole('listitem');
+
+    expect(container.querySelector('.note')).toHaveTextContent('Deletion');
+    expect(container.querySelector('.deploy-status-badge')).toHaveTextContent('Building…');
+    // The entry is gone from the CMS, and its page is about to go
+    await expect.element(card.getByRole('button', { name: 'Hello' })).toBeDisabled();
+    expect(card.getByRole('button', { name: 'View on Live Site' }).elements()).toHaveLength(0);
+    expect(card.getByRole('button', { name: 'Cancel Deletion' }).elements()).toHaveLength(0);
+  });
+
+  test('is disabled while busy, and marked while dragged', async () => {
+    const { container } = await render(WorkflowEntryCard, {
+      entry: createEntry({ status: 'pending_publish' }),
+      busy: true,
+      dragging: true,
+    });
+
+    await expect.element(page.getByRole('button', { name: 'Delete Entry' })).toBeDisabled();
+    await expect.element(page.getByRole('button', { name: 'Publish Entry' })).toBeDisabled();
+    expect(container.querySelector('.card')).toHaveClass('dragging');
+    expect(container.querySelector('.card')).toHaveAttribute('draggable', 'false');
+  });
+});

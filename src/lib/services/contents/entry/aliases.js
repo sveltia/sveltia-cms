@@ -1,5 +1,12 @@
+import { getManagedKey } from '$lib/services/contents/entry/managed-key';
+import { isNumeric } from '$lib/services/utils/number';
+
 /**
- * @import { FlattenedEntryContent, InternalCollection } from '$lib/types/private';
+ * @import {
+ * FlattenedEntryContent,
+ * InternalCollection,
+ * InternalEntryCollection,
+ * } from '$lib/types/private';
  * @import { Field, FieldKeyPath } from '$lib/types/public';
  */
 
@@ -22,22 +29,12 @@ export const DEFAULT_ALIASES_KEY = 'aliases';
  * collection. Entries in a file or singleton collection are identified by a file name that can
  * never be changed, so they can’t be renamed or duplicated in the first place.
  */
-export const getAliasesKey = ({ collection, fields = [] }) => {
-  if (collection?._type !== 'entry') {
-    return undefined;
-  }
+export const getAliasesKey = ({ collection, fields }) => {
+  const { aliases_field: option = DEFAULT_ALIASES_KEY } = /** @type {InternalEntryCollection} */ (
+    collection ?? {}
+  );
 
-  const { aliases_field: aliasesField = DEFAULT_ALIASES_KEY } = collection;
-  // `false` and an empty string both disable the feature
-  const aliasesKey = aliasesField === true ? DEFAULT_ALIASES_KEY : aliasesField || undefined;
-
-  // A field with the same name is the user’s to manage in the entry editor, so leave the property
-  // alone rather than writing to it behind their back
-  if (!aliasesKey || fields.some(({ name }) => name === aliasesKey)) {
-    return undefined;
-  }
-
-  return aliasesKey;
+  return getManagedKey({ collection, fields, option, defaultKey: DEFAULT_ALIASES_KEY });
 };
 
 /**
@@ -50,7 +47,7 @@ export const getAliasKeyPaths = (content, aliasesKey) => {
   const prefix = `${aliasesKey}.`;
 
   return Object.keys(content)
-    .filter((keyPath) => keyPath.startsWith(prefix) && /^\d+$/.test(keyPath.slice(prefix.length)))
+    .filter((keyPath) => keyPath.startsWith(prefix) && isNumeric(keyPath.slice(prefix.length)))
     .sort((a, b) => Number(a.slice(prefix.length)) - Number(b.slice(prefix.length)));
 };
 

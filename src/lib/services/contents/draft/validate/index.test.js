@@ -2,6 +2,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getField, isFieldMultiple, isFieldRequired } from '$lib/services/contents/entry/fields';
+import { stripComponentNamePrefix } from '$lib/services/contents/fields/rich-text';
+import { useActualDraftFieldArgs } from '$lib/test/fields';
 
 import { validateEntry as _validateEntry, validateDraft } from '.';
 
@@ -14,6 +16,11 @@ vi.mock('$lib/services/contents/draft/validate/messages', () => ({
   getFieldValidationMessages: vi.fn(() => []),
 }));
 vi.mock('$lib/services/common/template');
+
+await useActualDraftFieldArgs();
+vi.mocked(stripComponentNamePrefix).mockImplementation(
+  (await vi.importActual('$lib/services/contents/fields/rich-text')).stripComponentNamePrefix,
+);
 vi.mock('$lib/services/config');
 vi.mock('$lib/services/utils/regex');
 vi.mock('$lib/services/contents/draft/validate/required', () => ({
@@ -36,6 +43,7 @@ describe('draft/validate', () => {
       collection: {
         name: 'posts',
         _type: 'entry',
+        slug: '{{fields._slug}}',
         _i18n: {
           i18nEnabled: true,
           defaultLocale: 'en',
@@ -49,6 +57,8 @@ describe('draft/validate', () => {
       currentLocales: { en: true },
       currentValues: { en: {} },
       extraValues: { en: {} },
+      isNew: true,
+      originalSlugs: {},
       currentSlugs: { en: 'test-post' },
       slugEditor: { en: false },
     };

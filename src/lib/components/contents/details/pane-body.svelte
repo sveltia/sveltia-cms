@@ -1,24 +1,22 @@
 <script>
-  import { _ } from '@sveltia/i18n';
-  import { Button, EmptyState } from '@sveltia/ui';
-  import { sleep } from '@sveltia/utils/misc';
+  import { untrack } from 'svelte';
 
+  import DisabledLocaleState from '$lib/components/contents/details/disabled-locale-state.svelte';
   import EntryEditor from '$lib/components/contents/details/editor/entry-editor.svelte';
   import EntryPreview from '$lib/components/contents/details/preview/entry-preview.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { toggleLocale } from '$lib/services/contents/draft/update/locale';
+  import { createScrollSync } from '$lib/services/contents/editor/scroll-sync';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
-  import { getLocaleLabel } from '$lib/services/contents/i18n';
 
   /**
-   * @import { EntryEditorPane } from '$lib/types/private';
+   * @import { EntryEditorPane, InternalLocaleCode } from '$lib/types/private';
    */
 
   /**
    * @typedef {object} Props
    * @property {string} id The wrapper element’s `id` attribute.
    * @property {{ current: ?EntryEditorPane }} thisPane This pane’s mode and locale.
-   * @property {HTMLElement} [thisPaneContentArea] This pane’s content area.
+   * @property {HTMLElement} [thisPaneContentArea] This pane’s content area, bound for the parent.
    * @property {HTMLElement} [thatPaneContentArea] Another pane’s content area.
    */
 
@@ -26,143 +24,79 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     id,
     thisPane,
     thisPaneContentArea = $bindable(),
-    thatPaneContentArea = $bindable(),
-    /* eslint-enable prefer-const */
+    thatPaneContentArea = undefined,
   } = $props();
 
   const { syncScrolling } = $derived(entryEditorSettings.current ?? {});
   const locale = $derived(thisPane.current?.locale);
   const mode = $derived(thisPane.current?.mode);
-  const hasContent = $derived(!!locale && !!entryDraft.current?.currentValues[locale]);
-  const labelOptions = $derived({
-    values: { locale: locale ? (getLocaleLabel(locale) ?? locale) : '' },
-  });
-  const MainContent = $derived(mode === 'preview' ? EntryPreview : EntryEditor);
+  // A pane in the edit mode always has a locale
+  const editLocale = $derived(/** @type {InternalLocaleCode} */ (locale));
 
   /** @type {HTMLElement | undefined} */
   let contentArea = $state();
 
-  /**
-   * Sync the scroll position with the other edit/preview pane.
-   */
-  const syncScrollPosition = () => {
-    window.requestAnimationFrame(() => {
-      if (!syncScrolling || !contentArea || !thisPaneContentArea || !thatPaneContentArea) {
-        return;
-      }
-
-      const isIframe = thisPaneContentArea !== contentArea;
-      const { x, y } = isIframe ? { x: 0, y: 0 } : thisPaneContentArea.getBoundingClientRect();
-      const { ownerDocument, scrollTop, scrollHeight, clientHeight } = thisPaneContentArea;
-      const scrollTopMax = scrollHeight - clientHeight;
-      const scrollRatio = scrollTop / scrollTopMax;
-
-      // Find the field section in the top left corner of the content area. Use `findLast` to
-      // capture the topmost element; otherwise the List field sticky headers will interfere with
-      // the positioning.
-      // @see https://github.com/sveltia/sveltia-cms/issues/883
-      const thisElement = /** @type {HTMLElement | undefined} */ (
-        ownerDocument.elementsFromPoint(x + 80, y).findLast((e) => e.matches('[data-key-path]'))
-      );
-
-      if (!thisElement) {
-        // Calculate the scroll position based on the current scroll position of the this pane
-        thatPaneContentArea.scrollTop = thatPaneContentArea.scrollHeight * scrollRatio;
-
-        return;
-      }
-
-      const { keyPath } = thisElement.dataset;
-      const { top, height } = thisElement.getBoundingClientRect();
-      const ratio = (y - top) / height;
-
-      const thatElement = /** @type {HTMLElement | undefined} */ (
-        thatPaneContentArea.querySelector(`[data-key-path="${CSS.escape(keyPath ?? '')}"]`)
-      );
-
-      if (ratio < 0 || ratio > 1 || !thatElement) {
-        return;
-      }
-
-      // Scroll the other pane to the corresponding element, adjusting for the current scroll
-      // position and the ratio of the scroll position within the element.
-      thatPaneContentArea.scrollTop = thatElement.offsetTop - y + thatElement.clientHeight * ratio;
-    });
-  };
-
-  /** @type {AddEventListenerOptions} */
-  const eventOptions = { capture: true, passive: true };
-
-  /**
-   * Initialize the scroll synchronization by setting up event listeners and ensuring the content
-   * area is ready. The content area is either the main content area or the iframe’s content area.
-   * An iframe is used only when a custom preview stylesheet is provided.
-   */
-  const initializeScrollSync = async () => {
-    if (!contentArea) {
-      return;
-    }
-
-    if (thisPaneContentArea) {
-      // Remove previous event listeners if they exist
-      thisPaneContentArea.removeEventListener('wheel', syncScrollPosition, eventOptions);
-      thisPaneContentArea.removeEventListener('touchmove', syncScrollPosition, eventOptions);
-    }
-
-    // Check if the preview iframe is used in the preview mode
-    const iframe = /** @type {HTMLIFrameElement | null} */ (
-      contentArea.querySelector('iframe.preview')
-    );
-
-    if (iframe) {
-      // Wait for the content to be loaded in the iframe
-      await sleep(250);
-      thisPaneContentArea = /** @type {HTMLElement} */ (iframe?.contentDocument?.firstElementChild);
-    } else {
-      thisPaneContentArea = contentArea;
-    }
-
-    if (thisPaneContentArea) {
-      thisPaneContentArea.scrollTop = 0;
-      // Add event listeners manually to use passive mode
-      thisPaneContentArea.addEventListener('wheel', syncScrollPosition, eventOptions);
-      thisPaneContentArea.addEventListener('touchmove', syncScrollPosition, eventOptions);
-    }
-  };
+  /* eslint-disable jsdoc/require-jsdoc */
+  const scrollSync = createScrollSync({
+    get syncScrolling() {
+      return syncScrolling;
+    },
+    get mode() {
+      return mode;
+    },
+    get contentArea() {
+      return contentArea;
+    },
+    get thisPaneContentArea() {
+      return thisPaneContentArea;
+    },
+    set thisPaneContentArea(element) {
+      thisPaneContentArea = element;
+    },
+    get thatPaneContentArea() {
+      return thatPaneContentArea;
+    },
+  });
+  /* eslint-enable jsdoc/require-jsdoc */
 
   $effect(() => {
     // Initialize the scroll synchronization when the content area is ready. The pane mode is also a
     // dependency because the edit mode always uses the main content area, while the preview mode
-    // may use an iframe if a custom preview stylesheet is provided.
+    // uses an iframe if a custom preview stylesheet or template applies. The iframe is only there
+    // once it has loaded, so it initializes the sync again then.
     void [thisPane.current?.mode, contentArea];
-    initializeScrollSync();
+    // The initialization writes `thisPaneContentArea`, which it also reads, so it’s left out of
+    // the dependencies to keep the effect from running again on its own account
+    untrack(() => scrollSync.initialize());
+  });
+
+  // Forget this pane once it’s gone, so the module-level reference doesn’t keep the DOM of a closed
+  // editor from being garbage-collected
+  $effect(() => () => {
+    scrollSync.destroy();
   });
 </script>
 
 <div role="none" {id} class="wrapper">
   {#if locale && entryDraft.current?.currentLocales[locale]}
-    <div role="none" class="content" bind:this={contentArea}>
-      <MainContent {locale} />
+    <div role="none" class="content" bind:this={contentArea} onfocusin={scrollSync.onFocusIn}>
+      {#if mode === 'preview'}
+        <EntryPreview
+          {locale}
+          onFrameLoad={(iframe) => {
+            scrollSync.setPreviewFrame(iframe);
+            scrollSync.initialize();
+          }}
+        />
+      {:else}
+        <EntryEditor {locale} />
+      {/if}
     </div>
   {:else if mode === 'edit'}
-    <EmptyState>
-      <span role="alert">
-        {_(hasContent ? 'locale_x_now_disabled' : 'locale_x_has_been_disabled', labelOptions)}
-      </span>
-      <Button
-        variant="tertiary"
-        label={_(hasContent ? 'reenable_x_locale' : 'enable_x_locale', labelOptions)}
-        onclick={() => {
-          if (locale && entryDraft.current) {
-            toggleLocale({ draft: entryDraft.current, locale });
-          }
-        }}
-      />
-    </EmptyState>
+    <DisabledLocaleState locale={editLocale} />
   {/if}
 </div>
 

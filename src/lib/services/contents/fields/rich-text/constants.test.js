@@ -1,11 +1,8 @@
 import { describe, expect, test } from 'vitest';
 
-import {
-  GLOBAL_IMAGE_REGEX,
-  IMAGE_OR_LINKED_IMAGE_REGEX,
-  IMAGE_REGEX,
-  LINKED_IMAGE_REGEX,
-} from './constants.js';
+import { countMatches, expectLinearTime } from '$lib/test/complexity';
+
+import { IMAGE_OR_LINKED_IMAGE_REGEX, IMAGE_REGEX, LINKED_IMAGE_REGEX } from './constants.js';
 
 describe('Test IMAGE_REGEX', () => {
   test('matches simple image markdown syntax', () => {
@@ -235,7 +232,9 @@ describe('Test regex basic functionality', () => {
   });
 });
 
-describe('Test GLOBAL_IMAGE_REGEX', () => {
+describe('Test IMAGE_REGEX with the global flag', () => {
+  const GLOBAL_IMAGE_REGEX = new RegExp(IMAGE_REGEX, 'g');
+
   test('matches multiple images in a single string', () => {
     const markdown = `
 Here is the first image: ![first](image1.jpg)
@@ -440,5 +439,92 @@ describe('Test LINKED_IMAGE_REGEX', () => {
     expect(match?.groups?.alt2).toBe('alt');
     expect(match?.groups?.src2).toBe('https://cdn.example.com/image.jpg?v=1&size=large');
     expect(match?.groups?.link).toBe('https://example.com/page?id=1&ref=gallery');
+  });
+});
+
+describe('Test image regex performance and nesting', () => {
+  test('matches an image nested in an unclosed one on its own', () => {
+    expect('![a ![b](c.jpg)'.match(IMAGE_REGEX)?.groups).toEqual({
+      alt: 'b',
+      src: 'c.jpg',
+      title: undefined,
+    });
+    expect('![a](b (![c](d.jpg)'.match(IMAGE_REGEX)?.groups?.src).toBe('d.jpg');
+    expect('![a](b "![c](d.jpg)'.match(IMAGE_REGEX)?.groups?.src).toBe('d.jpg');
+  });
+
+  test('matches a title after spaces and an escaped space in the source', () => {
+    expect('![a](b   "t")'.match(IMAGE_REGEX)?.groups).toEqual({ alt: 'a', src: 'b', title: 't' });
+    expect('![a](b\\  "t")'.match(IMAGE_REGEX)?.groups).toEqual({
+      alt: 'a',
+      src: 'b\\ ',
+      title: 't',
+    });
+    expect('![a](b "x" "t")'.match(IMAGE_REGEX)?.groups).toEqual({
+      alt: 'a',
+      src: 'b "x"',
+      title: 't',
+    });
+  });
+
+  test('matches an alt text with balanced brackets', () => {
+    expect('![Photo [1]](a.jpg)'.match(IMAGE_REGEX)?.groups).toEqual({
+      alt: 'Photo [1]',
+      src: 'a.jpg',
+    });
+    expect('[![Photo [1]](a.jpg)](b)'.match(LINKED_IMAGE_REGEX)?.groups).toEqual({
+      alt2: 'Photo [1]',
+      src2: 'a.jpg',
+      link: 'b',
+    });
+    // An unbalanced bracket starts a link of its own, as in CommonMark
+    expect('![a [b](c.jpg)'.match(IMAGE_REGEX)).toBeNull();
+  });
+
+  test('matches a title in single quotes', () => {
+    expect("![a](my image.jpg 'It’s \\'t\\'')".match(IMAGE_REGEX)?.groups).toEqual({
+      alt: 'a',
+      src: 'my image.jpg',
+      singleQuotedTitle: "It’s \\'t\\'",
+    });
+    expect("[![a](b.jpg 't')](c)".match(LINKED_IMAGE_REGEX)?.groups).toEqual({
+      alt2: 'a',
+      src2: 'b.jpg',
+      singleQuotedTitle2: 't',
+      link: 'c',
+    });
+    // A quote within the file name isn’t a title
+    expect("![a](it's.jpg)".match(IMAGE_REGEX)?.groups?.src).toBe("it's.jpg");
+  });
+
+  test('matches a link with an unclosed parenthesis', () => {
+    expect('[![a](b)](c(d)'.match(LINKED_IMAGE_REGEX)?.groups?.link).toBe('c(d');
+    expect('[![a](b)](c(d)e)'.match(LINKED_IMAGE_REGEX)?.groups?.link).toBe('c(d)e');
+  });
+
+  test.each(
+    /** @type {[string, (n: number) => string, number][]} */ ([
+      ['unclosed parentheses', (n) => '![](a('.repeat(n), 1000],
+      ['image starts', (n) => '!['.repeat(n), 1000],
+      ['escaped image starts', (n) => '\\!['.repeat(n), 1000],
+      ['unclosed titles', (n) => '![](a "'.repeat(n), 1000],
+      ['unclosed single-quoted titles', (n) => "![](a '".repeat(n), 1000],
+      ['unclosed brackets in alt texts', (n) => '![a ['.repeat(n), 1000],
+      ['nested brackets in an alt text', (n) => `![${'[a]'.repeat(n)}`, 4000],
+      ['spaces before an unclosed single-quoted title', (n) => `![](a${' '.repeat(n)}'`, 4000],
+      ['trailing spaces', (n) => `![](a${' '.repeat(n)}`, 4000],
+      ['spaces before an unclosed title', (n) => `![](a${' '.repeat(n)}"`, 4000],
+      ['unclosed link parentheses', (n) => `[![](a)](${'('.repeat(n)}`, 4000],
+      ['linked image starts', (n) => '[![](a)]('.repeat(n), 1000],
+    ]),
+  )('matches in linear time: %s', (_name, build, size) => {
+    const globalImageRegex = new RegExp(IMAGE_REGEX, 'g');
+    const globalRegex = new RegExp(IMAGE_OR_LINKED_IMAGE_REGEX, 'g');
+
+    expectLinearTime(
+      build,
+      (markdown) => countMatches(markdown, globalImageRegex) + countMatches(markdown, globalRegex),
+      size,
+    );
   });
 });

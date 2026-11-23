@@ -1,48 +1,58 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import {
+    Alert,
     Button,
     Dialog,
     EmptyState,
     FilePicker,
     Icon,
-    Listbox,
-    Option,
-    OptionGroup,
     SearchBar,
-    Select,
     TextInput,
+    Toast,
   } from '@sveltia/ui';
-  import { getHash } from '@sveltia/utils/crypto';
+  import { untrack } from 'svelte';
 
   import CloudinaryPanel from '$lib/components/assets/browser/cloudinary-panel.svelte';
   import ExternalAssetsPanel from '$lib/components/assets/browser/external-assets-panel.svelte';
   import InternalAssetsPanel from '$lib/components/assets/browser/internal-assets-panel.svelte';
+  import LocationSelector from '$lib/components/assets/browser/location-selector.svelte';
+  import CreateSubfolderDialog from '$lib/components/assets/list/create-subfolder-dialog.svelte';
+  import NewFolderButton from '$lib/components/assets/list/new-folder-button.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
+  import { getPendingUploadAction } from '$lib/services/assets/browser/pending-uploads';
+  import {
+    getInitialLibraryName,
+    getInsertedResources,
+    getLocationResources,
+    getPickedFolderPublicPaths,
+    getStockAssetProviderEntries,
+    isFolderOffered,
+    sortServicesByName,
+  } from '$lib/services/assets/browser/select-assets-dialog.svelte';
+  import { fillLibraryPrefix } from '$lib/services/assets/external/prefix';
+  import { assetsLocked } from '$lib/services/assets/folders';
+  import { revokeBlobURLIfNeeded } from '$lib/services/assets/info';
+  import { isCmsFolderPath } from '$lib/services/assets/reserved';
+  import {
+    canBrowseSubfolders,
+    getRelativePath,
+    getSubfolders,
+    getTakenNames,
+  } from '$lib/services/assets/subfolders';
   import { selectAssetsView, showContentOverlay } from '$lib/services/contents/editor';
   import { checkDuplicates } from '$lib/services/contents/fields/file/duplicates.svelte';
-  import {
-    getTargetFolderPath,
-    hasSameAsset,
-    listAssets,
-  } from '$lib/services/contents/fields/file/helpers';
-  import {
-    convertFileItemToAsset,
-    getUnsavedAssets,
-  } from '$lib/services/contents/fields/file/process';
+  import { hasSameAsset } from '$lib/services/contents/fields/file/helpers';
+  import { createFolderAssetListing } from '$lib/services/contents/fields/file/listing.svelte';
+  import { convertFileItemToAsset } from '$lib/services/contents/fields/file/process';
   import { getMediaLibraryOptions } from '$lib/services/integrations/media-libraries';
-  import {
-    activated as cloudinaryActivated,
-    dialogOpen as cloudinaryDialogOpen,
-  } from '$lib/services/integrations/media-libraries/cloud/cloudinary';
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
-  import {
-    allStockAssetProviders,
-    getStockAssetMediaLibraryOptions,
-  } from '$lib/services/integrations/media-libraries/stock';
+  import { getPreferredLibraryNames } from '$lib/services/integrations/media-libraries/options';
+  import { allStockAssetProviders } from '$lib/services/integrations/media-libraries/stock';
   import { normalize } from '$lib/services/search/util';
+  import { getApiKey } from '$lib/services/user/api-keys';
   import { env } from '$lib/services/user/env.svelte';
-  import { prefs } from '$lib/services/user/prefs.svelte';
+  import { createPath, getDirName, getGitHash } from '$lib/services/utils/file';
   import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
 
   /**
@@ -50,13 +60,16 @@
    * Asset,
    * AssetLibraryFolderMap,
    * AssetLibraryFolderMapKey,
+   * AssetSubfolder,
    * EntryDraft,
+   * InternalLocaleCode,
    * MediaLibraryAssetKind,
    * MediaLibraryService,
    * SelectAssetsView,
    * SelectedResource,
    * } from '$lib/types/private';
-   * @import { MediaField, StockAssetProviderName } from '$lib/types/public';
+   * @import { MediaField, MediaLibraries, StockAssetProviderName } from '$lib/types/public';
+   * @import { FolderAssetListingOptions } from '$lib/services/contents/fields/file/listing.svelte';
    */
 
   /**
@@ -66,7 +79,13 @@
    * @property {MediaLibraryAssetKind} [kind] Asset kind.
    * @property {string | undefined} [accept] Accepted file type specifiers.
    * @property {boolean} [canEnterURL] Whether to allow entering a URL.
+   * @property {boolean} [selectFolder] Whether to select a folder instead of files, for a File
+   * field with the `select_folder` option. Only the repository folders that can be browsed by
+   * subfolder are offered, and the directory being browsed is what gets selected.
    * @property {EntryDraft | null | undefined} [draft] Associated entry draft.
+   * @property {InternalLocaleCode} [locale] Locale the assets are selected for. With the
+   * `multiple_folders` or `multiple_root_folders` i18n structure, each locale’s entry file has a
+   * folder of its own, which entry-relative assets are listed from.
    * @property {MediaField} [fieldConfig] Field configuration.
    * @property {AssetLibraryFolderMap} assetLibraryFolderMap Default asset library folder map.
    * @property {[string, MediaLibraryService][]} enabledCloudServiceEntries List of enabled cloud
@@ -82,59 +101,97 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     open = $bindable(false),
     multiple = false,
     kind,
     // svelte-ignore state_referenced_locally
     accept = kind === 'image' ? SUPPORTED_IMAGE_TYPES.join(',') : undefined,
     canEnterURL = true,
+    selectFolder = false,
     draft = undefined,
+    locale = undefined,
     fieldConfig,
     assetLibraryFolderMap,
     enabledCloudServiceEntries,
     onSelect = undefined,
     onClose = undefined,
     pendingFiles = $bindable([]),
-    /* eslint-enable prefer-const */
   } = $props();
 
   const elementIdPrefix = $props.id();
 
   let enteredURL = $state('');
   let rawSearchTerms = $state('');
-  let libraryName = $state('default-global');
+  /**
+   * Path of the subfolder being browsed below the selected folder, relative to it. Empty at the
+   * folder root.
+   */
+  let subfolderPath = $state('');
+  /**
+   * Paths of the subfolders selected when a folder is to be picked. Without any, the directory
+   * being browsed is what gets picked. A single selection is cleared on going to another directory,
+   * while a multiple selection is kept, like the selected assets, so folders can be picked from
+   * anywhere.
+   * @type {string[]}
+   */
+  let selectedSubfolderPaths = $state([]);
+  let showNewFolderDialog = $state(false);
   /** @type {Asset[]} */
   let droppedAssets = $state([]);
-  /** @type {Asset[]} */
-  let unsavedAssets = $state([]);
   /** @type {FilePicker | undefined} */
   let filePicker = $state();
   /** @type {SelectedResource[]} */
   let selectedResources = $state([]);
   /** @type {ExternalAssetsPanel | undefined} */
   let externalAssetsPanel = $state();
+  /** Whether the pending files have been rejected, as the location offered can’t take them. */
+  let pendingFilesRejected = $state(false);
 
   /**
-   * Sort services by their label in alphabetical order.
-   * @param {[string, { serviceLabel: string }]} a First service entry.
-   * @param {[string, { serviceLabel: string }]} b Second service entry.
-   * @returns {number} Sorting order value.
+   * View of the asset list, given to the view switcher, which is only rendered once it’s set.
    */
-  const sortServicesByName = (a, b) => {
-    const nameA = a[1].serviceLabel.toLowerCase();
-    const nameB = b[1].serviceLabel.toLowerCase();
-
-    return nameA.localeCompare(nameB);
-  };
+  const currentView = /** @type {{ current: SelectAssetsView }} */ (selectAssetsView);
 
   const title = $derived(
-    kind === 'image' ? _('assets_dialog.title.image') : _('assets_dialog.title.file'),
+    selectFolder
+      ? _('assets_dialog.title.folder')
+      : kind === 'image'
+        ? _('assets_dialog.title.image')
+        : _('assets_dialog.title.file'),
   );
   const searchTerms = $derived(normalize(rawSearchTerms));
   const isDefaultLibraryEnabled = $derived(
     getMediaLibraryOptions({ fieldConfig }) !== false &&
-      Object.values(assetLibraryFolderMap).some(({ enabled }) => enabled),
+      Object.values(assetLibraryFolderMap).some((entry) => isFolderOffered(entry, selectFolder)),
+  );
+  /** Whether the URL input is offered. A folder can only be picked from the repository. */
+  const showURLInput = $derived(canEnterURL && !selectFolder);
+  /** Cloud storage services offered in the dialog. */
+  const cloudServiceEntries = $derived(selectFolder ? [] : enabledCloudServiceEntries);
+  const enabledStockAssetProviderEntries = $derived(
+    getStockAssetProviderEntries({ fieldConfig, selectFolder, isDefaultLibraryEnabled }),
+  );
+  const enabledExternalServiceEntries = $derived(
+    [...cloudServiceEntries, ...enabledStockAssetProviderEntries].sort(sortServicesByName),
+  );
+  /** Names of the media libraries marked with the `default` option, in order of precedence. */
+  const preferredLibraryNames = $derived(getPreferredLibraryNames(fieldConfig));
+  /**
+   * Name of the selected location: the first location marked with the `default` option that’s
+   * offered, or else the first location offered, until the user picks another, and again whenever
+   * the locations offered change.
+   */
+  let libraryName = $derived(
+    getInitialLibraryName({
+      assetLibraryFolderMap,
+      isDefaultLibraryEnabled,
+      selectFolder,
+      // The files are taken over by the location, so their removal doesn’t change it
+      hasPendingFiles: untrack(() => !!pendingFiles.length),
+      cloudServiceEntries,
+      externalServiceEntries: enabledExternalServiceEntries,
+      preferredLibraryNames,
+    }),
   );
   const isDefaultLibrary = $derived(libraryName.startsWith('default-'));
   const selectedFolder = $derived.by(() => {
@@ -147,52 +204,138 @@
 
     return folder;
   });
-  const targetFolderPath = $derived(
-    getTargetFolderPath({ entry: draft?.originalEntry, folder: selectedFolder }),
-  );
-  const slugificationEnabled = $derived(
-    getDefaultMediaLibraryOptions({ fieldConfig }).config.slugify_filename,
-  );
-  const listedAssets = $derived(
-    listAssets({
-      kind,
+  // Existing files are limited to the accepted types, while the files dropped or picked here are
+  // only checked once inserted and processed, as a transformation can change their format
+  const assetListing = createFolderAssetListing(
+    /**
+     * Get the listing options.
+     * @returns {FolderAssetListingOptions} Options.
+     */
+    () => ({
+      draft,
       folder: selectedFolder,
-      folderPath: targetFolderPath,
-      unsavedAssets,
-      slugificationEnabled,
+      locale,
+      kind,
+      accept,
+      slugificationEnabled: getDefaultMediaLibraryOptions({ fieldConfig }).config.slugify_filename,
+      droppedAssets,
     }),
   );
-  const enabledStockAssetProviderEntries = $derived.by(() => {
-    const { providers = [] } = getStockAssetMediaLibraryOptions({ fieldConfig });
-
-    return Object.entries(allStockAssetProviders)
-      .filter(
-        ([serviceId, { hotlinking }]) =>
-          providers.includes(/** @type {StockAssetProviderName} */ (serviceId)) &&
-          // When hotlinking is not required, files are downloaded and then uploaded to the
-          // repository, so the default library has to be configured.
-          (hotlinking || isDefaultLibraryEnabled),
-      )
-      .sort(sortServicesByName);
-  });
+  const targetFolderPath = $derived(assetListing.targetFolderPath);
+  const listedAssets = $derived(assetListing.listedAssets);
+  /**
+   * Whether the selected folder is browsed by subfolder, like in the Asset Library. A search looks
+   * through the whole folder instead, listing the matches with their paths.
+   */
+  const browsingSubfolders = $derived(
+    canBrowseSubfolders(selectedFolder) && targetFolderPath !== undefined && !searchTerms,
+  );
+  /** Path of the directory being browsed, which is where uploaded files go. */
+  const browsedPath = $derived(createPath([targetFolderPath, subfolderPath]));
+  /**
+   * Whether the directory being browsed is, or is below, a folder the CMS itself is usually served
+   * from, such as `admin`, whose files are read-only. Nothing can be uploaded or created there.
+   */
+  const browsingCmsFolder = $derived(isDefaultLibrary && isCmsFolderPath(browsedPath));
+  /**
+   * Whether nothing can be uploaded to the directory being browsed: one the CMS is served from, or
+   * one in a read-only folder, such as a read-only asset collection offered to every field.
+   */
+  const uploadDisabled = $derived(browsingCmsFolder || !!selectedFolder?.readonly);
+  /**
+   * Assets right in the browsed directory. Dropped files go there, even during a search, so only
+   * these can be replaced by one.
+   */
+  const browsedDirAssets = $derived(
+    listedAssets.filter(({ path }) => getDirName(path) === browsedPath),
+  );
+  /** Assets shown in the panel: those right in the browsed directory, or every asset listed. */
+  const panelAssets = $derived(browsingSubfolders ? browsedDirAssets : listedAssets);
+  const subfolders = $derived(
+    browsingSubfolders ? getSubfolders({ dirPath: browsedPath, assets: listedAssets }) : [],
+  );
+  /**
+   * Names already taken in the browsed directory, which a new folder can’t be given, including the
+   * names of the folders leading to another asset folder nested in it.
+   */
+  const takenNames = $derived(
+    getTakenNames({
+      subfolders,
+      fileNames: panelAssets.map(({ name }) => name),
+      // Only read by the new folder dialog, which is there while subfolders are browsed
+      dirPath: browsedPath,
+    }),
+  );
+  /** Label of the selected folder, at the start of the breadcrumb. */
+  const selectedFolderLabel = $derived(
+    selectedFolder?.label || _(`assets_dialog.folder.${libraryName.replace('default-', '')}`),
+  );
   const isEnabledMediaService = $derived(
     enabledStockAssetProviderEntries.some(
       ([serviceId, { authType }]) =>
-        serviceId === libraryName && (authType === 'none' || !!prefs.apiKeys?.[libraryName]),
+        serviceId === libraryName && (authType === 'none' || !!getApiKey(libraryName)),
     ),
   );
-  const enabledExternalServiceEntries = $derived(
-    [...enabledCloudServiceEntries, ...enabledStockAssetProviderEntries].sort(sortServicesByName),
-  );
   const isCloudLibrary = $derived(
-    enabledCloudServiceEntries.map(([serviceId]) => serviceId).includes(libraryName),
+    cloudServiceEntries.map(([serviceId]) => serviceId).includes(libraryName),
+  );
+  /** Field configuration for the selected service, with its `prefix` option filled, if any. */
+  const filledPrefix = $derived(
+    fillLibraryPrefix({
+      serviceId: /** @type {keyof MediaLibraries} */ (libraryName),
+      fieldConfig,
+      draft,
+      locale,
+    }),
+  );
+  /** Whether the files on the selected cloud storage service can be browsed and uploaded here. */
+  const canBrowseCloudLibrary = $derived(
+    isCloudLibrary && libraryName !== 'cloudinary' && !filledPrefix.unresolved,
   );
   const isStockLibrary = $derived(
     enabledStockAssetProviderEntries
       .map(([serviceId]) => serviceId)
       .includes(/** @type {any} */ (libraryName)),
   );
-  const Selector = $derived(env.isSmallScreen ? Select : Listbox);
+  /**
+   * Public paths of the folders to be picked: the selected subfolders, or the directory being
+   * browsed. Empty unless a folder is to be picked from a folder that can be browsed.
+   */
+  const pickedFolderPublicPaths = $derived(
+    getPickedFolderPublicPaths({
+      selectFolder,
+      browsingSubfolders,
+      folder: selectedFolder,
+      basePath: targetFolderPath,
+      subfolderPath,
+      selectedSubfolderPaths,
+    }),
+  );
+
+  /**
+   * Select or deselect a subfolder when a folder is to be picked.
+   * @param {AssetSubfolder} subfolder Subfolder.
+   * @param {boolean} selected Whether the subfolder is now selected.
+   */
+  const onSelectSubfolder = ({ path }, selected) => {
+    const otherPaths = selectedSubfolderPaths.filter((p) => p !== path);
+
+    // The list box reports the folder that loses a single selection after the one that gets it, if
+    // it comes later in the list, so only the given folder is removed on deselection
+    selectedSubfolderPaths = selected ? [...(multiple ? otherPaths : []), path] : otherPaths;
+  };
+
+  /**
+   * Go to another directory within the selected folder, clearing a single subfolder selection.
+   * @param {string} path Subfolder path relative to the selected folder. Empty for its root.
+   */
+  const navigate = (path) => {
+    subfolderPath = path;
+
+    if (!multiple) {
+      selectedSubfolderPaths = [];
+    }
+  };
 
   /**
    * Process a dropped file.
@@ -202,14 +345,21 @@
    * exists.
    */
   const processFile = async (file, replace) => {
-    const hash = await getHash(file);
+    const sha = await getGitHash(file);
     const folder = selectedFolder;
 
-    if (await hasSameAsset({ hash, folder, unsavedAssets })) {
+    if (hasSameAsset({ sha, folder, unsavedAssets: assetListing.unsavedAssets })) {
       return undefined;
     }
 
-    const asset = await convertFileItemToAsset({ file, folder, targetFolderPath, replace });
+    const asset = await convertFileItemToAsset({
+      file,
+      folder,
+      targetFolderPath,
+      // The file goes to the subfolder being browsed, or the one the search started from
+      subfolderPath,
+      replace,
+    });
 
     droppedAssets.push(asset);
 
@@ -221,7 +371,14 @@
    * @param {File[]} files File list.
    */
   const onDrop = async (files) => {
-    const replace = await checkDuplicates({ files, listedAssets });
+    // The files in a read-only folder, or one the CMS itself is served from, can’t be changed. The
+    // drop zone and the Upload button are disabled there, so this is only a safeguard
+    /* v8 ignore next 3 -- unreachable, as explained above */
+    if (uploadDisabled) {
+      return;
+    }
+
+    const replace = await checkDuplicates({ files, listedAssets: browsedDirAssets });
 
     if (replace === undefined) {
       // User cancelled the dialog
@@ -239,54 +396,42 @@
   const resetValues = () => {
     enteredURL = '';
     rawSearchTerms = '';
+    subfolderPath = '';
+    selectedSubfolderPaths = [];
+    // The blob URLs of dropped files belong to the dialog, since the field takes the file itself on
+    // Insert
+    droppedAssets.forEach((asset) => revokeBlobURLIfNeeded(asset.blobURL));
     droppedAssets = [];
-    unsavedAssets = [];
+    assetListing.reset();
     selectedResources = [];
+    // Files that couldn’t be uploaded mustn’t go up the next time the dialog is opened
+    pendingFiles = [];
   };
 
   /**
    * Handle the OK button click.
    */
   const onOk = () => {
+    if (selectFolder) {
+      /* v8 ignore next 3 -- the Select button is disabled until a folder is browsed */
+      if (!pickedFolderPublicPaths.length) {
+        return;
+      }
+
+      onSelect?.(pickedFolderPublicPaths.map((folderPath) => ({ folderPath })));
+
+      return;
+    }
+
+    /* v8 ignore next 3 -- the Insert button is disabled until something is selected */
     if (!selectedResources.length) {
       return;
     }
 
-    const resources = $state.snapshot(selectedResources).map((resource) => {
-      const { asset: { unsaved, file, folder } = {}, replace } = resource;
-
-      return unsaved ? { file, folder, replace } : resource;
-    });
-
-    onSelect?.(resources);
+    // A stock asset service may need to know which of its assets have been used
+    externalAssetsPanel?.trackDownloads();
+    onSelect?.(getInsertedResources({ resources: selectedResources, targetFolderPath }));
   };
-
-  $effect.pre(() => {
-    const firstDefaultLibraryId = isDefaultLibraryEnabled
-      ? Object.entries(assetLibraryFolderMap).find(([, { enabled }]) => enabled)?.[0]
-      : undefined;
-
-    if (firstDefaultLibraryId) {
-      // Select the first enabled folder
-      libraryName = `default-${firstDefaultLibraryId}`;
-    } else {
-      // Select the first available external service
-      libraryName = enabledExternalServiceEntries[0]?.[0];
-    }
-  });
-
-  $effect(() => {
-    // Somehow we need to snapshot `droppedAssets` here to make Svelte aware of its changes
-    void $state.snapshot(droppedAssets);
-
-    (async () => {
-      unsavedAssets = [
-        // The draft’s files are read synchronously, so their changes are tracked as well
-        ...(draft?.files ? await getUnsavedAssets({ draft, targetFolderPath }) : []),
-        ...Object.values(droppedAssets),
-      ];
-    })();
-  });
 
   $effect(() => {
     if (!showContentOverlay.current) {
@@ -294,36 +439,76 @@
     }
   });
 
-  // Upload pending files (e.g. dropped on the file editor) to the cloud service panel once mounted
+  // Take the pending files (e.g. dropped on the file editor) to a cloud storage service: upload
+  // them once its panel can take them, select one that can, or report that none can
   $effect(() => {
-    if (externalAssetsPanel && pendingFiles.length) {
-      externalAssetsPanel.uploadFiles(pendingFiles);
+    const action = getPendingUploadAction({
+      open,
+      pendingFileCount: pendingFiles.length,
+      libraryName,
+      cloudServiceEntries,
+      canUpload: !!externalAssetsPanel?.canUpload(),
+      preferredLibraryNames,
+    });
+
+    if (action.type === 'upload') {
+      // The panel is there, as it says it can upload
+      /** @type {ExternalAssetsPanel} */ (externalAssetsPanel).uploadFiles(pendingFiles);
       pendingFiles = [];
+    } else if (action.type === 'switch') {
+      libraryName = action.serviceId;
+    } else if (action.type === 'reject') {
+      pendingFiles = [];
+      pendingFilesRejected = true;
     }
   });
 </script>
 
 {#snippet headerItems()}
-  {#if isDefaultLibrary || (isCloudLibrary && libraryName !== 'cloudinary') || (isStockLibrary && libraryName !== 'picsum')}
+  {#if isDefaultLibrary || canBrowseCloudLibrary || (isStockLibrary && libraryName !== 'picsum')}
     {#if selectAssetsView.current}
-      <ViewSwitcher
-        currentView={(() => /** @type {{ current: SelectAssetsView }} */ (selectAssetsView))()}
-        aria-controls="select-assets-grid"
+      <ViewSwitcher {currentView} aria-controls="select-assets-grid" />
+    {/if}
+    <!-- A search lists matching files rather than folders, so it’s not offered for a folder -->
+    {#if !selectFolder}
+      <SearchBar
+        dir="auto"
+        flex={env.isSmallScreen}
+        bind:value={rawSearchTerms}
+        debounce={!isDefaultLibrary}
+        disabled={selectedResources.some((r) => r.file)}
+        ariaLabel={_(`assets_dialog.search_for_${kind ?? 'file'}`)}
       />
     {/if}
-    <SearchBar
-      dir="auto"
-      flex={env.isSmallScreen}
-      bind:value={rawSearchTerms}
-      debounce={!isDefaultLibrary}
-      disabled={selectedResources.some((r) => r.file)}
-      aria-label={_(`assets_dialog.search_for_${kind ?? 'file'}`)}
+  {/if}
+  {#if browsingSubfolders}
+    <!--
+      Creating a folder commits straight to the configured branch rather than going through
+      review, so it’s not something an Open Authoring contributor or a user who can’t push to the
+      branch can do, nor anyone within a read-only folder
+    -->
+    <NewFolderButton
+      floating={false}
+      disabled={assetsLocked.current || uploadDisabled}
+      onclick={() => {
+        showNewFolderDialog = true;
+      }}
+    />
+  {:else if isCloudLibrary && externalAssetsPanel?.canCreateFolder()}
+    <!-- A folder on a cloud storage service is created by the service, not committed -->
+    <NewFolderButton
+      floating={false}
+      onclick={() => {
+        externalAssetsPanel?.showNewFolderDialog();
+      }}
     />
   {/if}
-  {#if isDefaultLibrary || (isCloudLibrary && libraryName !== 'cloudinary')}
+  {#if !selectFolder && (isDefaultLibrary || canBrowseCloudLibrary)}
+    <!-- A cloud storage service takes files once the user has provided the credentials -->
     <Button
       variant="primary"
       label={_('upload')}
+      disabled={uploadDisabled || (isCloudLibrary && !externalAssetsPanel?.canUpload())}
       onclick={() => {
         filePicker?.open();
       }}
@@ -338,8 +523,8 @@
 <Dialog
   {title}
   size="x-large"
-  okLabel={_('insert')}
-  okDisabled={!selectedResources.length}
+  okLabel={selectFolder ? _('select') : _('insert')}
+  okDisabled={selectFolder ? !pickedFolderPublicPaths.length : !selectedResources.length}
   focusInput={false}
   bind:open
   {onOk}
@@ -354,9 +539,20 @@
     {/if}
   {/snippet}
   {#snippet footerExtra()}
+    {#if pickedFolderPublicPaths.length}
+      <div role="status" class="selected-folder" dir="auto">
+        {#if pickedFolderPublicPaths.length === 1}
+          {_('assets_dialog.selected_folder', { values: { path: pickedFolderPublicPaths[0] } })}
+        {:else}
+          {_('assets_dialog.selected_folders', {
+            values: { count: pickedFolderPublicPaths.length },
+          })}
+        {/if}
+      </div>
+    {/if}
     {#if isEnabledMediaService}
       {@const { showServiceLink, serviceLabel, serviceURL } =
-        allStockAssetProviders[/** @type {StockAssetProviderName} */ (libraryName)] ?? {}}
+        allStockAssetProviders[/** @type {StockAssetProviderName} */ (libraryName)]}
       {#if showServiceLink}
         <a href={serviceURL} class="service-link">
           {_('prefs.media.stock_photos.credit', { values: { service: serviceLabel } })}
@@ -366,84 +562,61 @@
   {/snippet}
   <div role="none" class="wrapper">
     <div role="none" class="nav">
-      <Selector
-        class="tabs"
-        aria-label={_('assets_dialog.locations')}
-        aria-controls="{elementIdPrefix}-content-pane"
-        filterThreshold={-1}
-        onChange={(event) => {
-          libraryName = event.detail.name;
-          selectedResources = [];
+      <LocationSelector
+        {libraryName}
+        {assetLibraryFolderMap}
+        showRepository={isDefaultLibraryEnabled}
+        {selectFolder}
+        {cloudServiceEntries}
+        {showURLInput}
+        stockAssetProviderEntries={enabledStockAssetProviderEntries}
+        controlsId="{elementIdPrefix}-content-pane"
+        onChange={(name) => {
+          libraryName = name;
+          // Files dropped on the field were meant for the location first offered
+          pendingFiles = [];
+          subfolderPath = '';
+          selectedSubfolderPaths = [];
+          // The URL entered earlier is still in the text box, so it’s selected again
+          selectedResources = getLocationResources({ libraryName, enteredURL });
         }}
-      >
-        {#if isDefaultLibraryEnabled}
-          <OptionGroup label={_('asset_location.repository')}>
-            {#each Object.entries(assetLibraryFolderMap) as [id, { folder, enabled }] (id)}
-              {#if enabled}
-                {@const name = `default-${id}`}
-                <Option
-                  {name}
-                  label={folder?.label || _(`assets_dialog.folder.${id}`)}
-                  selected={libraryName === name}
-                />
-              {/if}
-            {/each}
-          </OptionGroup>
-        {/if}
-        {#if canEnterURL || !!Object.keys(enabledCloudServiceEntries).length}
-          <OptionGroup label={_('asset_location.external')}>
-            {#each enabledCloudServiceEntries as [, { serviceId, serviceLabel }] (serviceId)}
-              <Option
-                name={serviceId}
-                label={serviceLabel}
-                selected={libraryName === serviceId}
-                onclick={() => {
-                  if (serviceId === 'cloudinary' && cloudinaryActivated.current) {
-                    cloudinaryDialogOpen.current = true;
-                  }
-                }}
-              />
-            {/each}
-            {#if canEnterURL}
-              <Option
-                name="enter-url"
-                label={_('assets_dialog.enter_url')}
-                selected={libraryName === 'enter-url'}
-              />
-            {/if}
-          </OptionGroup>
-        {/if}
-        {#if enabledStockAssetProviderEntries.length}
-          <OptionGroup label={_('asset_location.stock_photos')}>
-            {#each enabledStockAssetProviderEntries as [serviceId, { serviceLabel }] (serviceId)}
-              <Option name={serviceId} label={serviceLabel} selected={libraryName === serviceId} />
-            {/each}
-          </OptionGroup>
-        {/if}
-      </Selector>
+      />
       {#if env.isSmallScreen}
         <div role="none" class="filter-tools">
           {@render headerItems()}
         </div>
       {/if}
     </div>
-    <div role="none" id="{elementIdPrefix}-content-pane" class="content-pane">
+    <!-- The focus is kept here while the folders being browsed are replaced -->
+    <div role="none" id="{elementIdPrefix}-content-pane" class="content-pane" data-focus-scope>
       {#if isDefaultLibrary && selectedFolder}
         <InternalAssetsPanel
           {accept}
           {multiple}
-          assets={listedAssets}
+          {kind}
+          {selectFolder}
+          {uploadDisabled}
+          assets={selectFolder ? [] : panelAssets}
           bind:selectedResources
           {searchTerms}
-          basePath={selectedFolder.internalPath}
+          basePath={browsingSubfolders ? browsedPath : selectedFolder.internalPath}
+          folderLabel={selectedFolderLabel}
+          subfolderPath={browsingSubfolders ? subfolderPath : ''}
+          {subfolders}
           onDrop={({ files }) => {
             onDrop(files);
           }}
+          {selectedSubfolderPaths}
+          onSelectSubfolder={selectFolder ? onSelectSubfolder : undefined}
+          onNavigate={navigate}
+          onOpenSubfolder={({ path }) => {
+            navigate(getRelativePath(path, /** @type {string} */ (targetFolderPath)));
+          }}
         />
       {/if}
-      {#if canEnterURL && libraryName === 'enter-url'}
+      {#if showURLInput && libraryName === 'enter-url'}
         <EmptyState>
-          <div role="none">
+          <div role="none" id="{elementIdPrefix}-url-label">
             {kind === 'image'
               ? _('assets_dialog.enter_image_url')
               : _('assets_dialog.enter_file_url')}
@@ -452,10 +625,9 @@
             dir="ltr"
             bind:value={enteredURL}
             flex
+            aria-labelledby="{elementIdPrefix}-url-label"
             oninput={() => {
-              const url = enteredURL.trim();
-
-              selectedResources = url ? [{ url }] : [];
+              selectedResources = getLocationResources({ libraryName, enteredURL });
             }}
           />
         </EmptyState>
@@ -474,10 +646,15 @@
               open = false;
             }}
           />
+        {:else if libraryName === serviceId && filledPrefix.unresolved}
+          <EmptyState>
+            <span role="alert">{_('assets_dialog.prefix_unresolved')}</span>
+          </EmptyState>
         {:else if libraryName === serviceId}
           <ExternalAssetsPanel
             {kind}
-            {fieldConfig}
+            fieldConfig={filledPrefix.fieldConfig}
+            {draft}
             {multiple}
             {searchTerms}
             {serviceProps}
@@ -490,6 +667,14 @@
     </div>
   </div>
 </Dialog>
+
+{#if browsingSubfolders}
+  <CreateSubfolderDialog bind:open={showNewFolderDialog} dirPath={browsedPath} {takenNames} />
+{/if}
+
+<Toast bind:show={pendingFilesRejected}>
+  <Alert status="error">{_('uploading_files_failed')}</Alert>
+</Toast>
 
 <FilePicker
   bind:this={filePicker}
@@ -528,9 +713,15 @@
       }
     }
 
-    :global(.listbox) {
-      flex: none;
-      background-color: transparent;
+    :global {
+      .listbox {
+        flex: none;
+        background-color: transparent;
+
+        .option button .icon:not(.check) {
+          display: block;
+        }
+      }
     }
 
     .content-pane {
@@ -539,8 +730,15 @@
     }
   }
 
-  .service-link {
+  .service-link,
+  .selected-folder {
     font-size: var(--sui-font-size-small);
+  }
+
+  .selected-folder {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .filter-tools {

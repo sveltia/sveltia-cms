@@ -1,3 +1,5 @@
+import { _ } from '@sveltia/i18n';
+import { isObject } from '@sveltia/utils/object';
 import { compare } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 
@@ -6,36 +8,166 @@ import { getRegex } from '$lib/services/utils/regex';
 import { createRootEffect } from '$lib/services/utils/state.svelte';
 
 /**
+ * @import { FilteringConditions, GroupingConditions } from '$lib/types/private';
+ * @import { ViewFilter, ViewGroup } from '$lib/types/public';
+ */
+
+/**
+ * Conditions of a view filter or group: the target field, and what its value is matched against.
+ * @typedef {FilteringConditions | GroupingConditions} ViewConditions
+ */
+
+/**
+ * Comparison operators a view filter or group can define in addition to, or instead of, `pattern`.
+ * Listed in the order the operators are written to a condition key by {@link getConditionKey}.
+ * @type {('eq' | 'ne' | 'lt' | 'lte' | 'gt' | 'gte' | 'in' | 'not_in' | 'empty')[]}
+ * @see https://sveltiacms.app/en/docs/collections/entries/views#filtering
+ */
+export const COMPARISON_OPERATORS = ['eq', 'ne', 'lt', 'lte', 'gt', 'gte', 'in', 'not_in', 'empty'];
+
+/**
+ * Get the conditions a view filter or group option defines, leaving out the `name` and `label`,
+ * which identify the option in the menu but not what it matches. This is what the view settings
+ * hold for an applied filter or group, so an option is applied by looking up its conditions with
+ * {@link getConditionKey}.
+ * @param {ViewFilter | ViewGroup} option View filter or group option.
+ * @returns {ViewConditions} Conditions, with only the properties the option defines.
+ */
+export const getViewConditions = (option) => {
+  const { field, pattern } = option;
+  /** @type {ViewConditions} */
+  const conditions = { field };
+
+  if (pattern !== undefined) {
+    conditions.pattern = pattern;
+  }
+
+  COMPARISON_OPERATORS.forEach((operator) => {
+    if (option[operator] !== undefined) {
+      conditions[operator] = /** @type {any} */ (option[operator]);
+    }
+  });
+
+  return conditions;
+};
+
+/**
+ * Check whether the conditions include a comparison operator, as opposed to a plain `pattern`, or
+ * nothing but the field in the case of a group.
+ * @param {ViewConditions | null | undefined} conditions Conditions.
+ * @returns {boolean} Whether at least one of the {@link COMPARISON_OPERATORS} is defined.
+ */
+export const hasComparison = (conditions) =>
+  !!conditions && COMPARISON_OPERATORS.some((operator) => conditions[operator] !== undefined);
+
+/**
+ * Get a key identifying the conditions of a view filter or group, so that an applied condition can
+ * be matched with the option it came from, and the collapsed groups of a view can be saved per
+ * condition. Two conditions get the same key when they match the same entries.
+ * @param {ViewConditions} conditions Conditions.
+ * @returns {string} JSON array of the field, the pattern if any, and the comparison operators if
+ * any, e.g. `["date","\\d{4}"]` or `["date",null,{"gte":"{{today}}"}]`. A pattern is a regular
+ * expression that can hold any character, so joining the parts with a separator could be
+ * ambiguous. A pattern given as a `RegExp` object is written as its string form, which is how the
+ * view settings saved before the object was supported hold it, and the operators are written in
+ * the order of {@link COMPARISON_OPERATORS} rather than the order they were configured in.
+ */
+export const getConditionKey = (conditions) => {
+  const { field, pattern } = conditions;
+  /** @type {any[]} */
+  const parts = [field];
+
+  const operators = Object.fromEntries(
+    COMPARISON_OPERATORS.filter((operator) => conditions[operator] !== undefined).map(
+      (operator) => [operator, conditions[operator]],
+    ),
+  );
+
+  if (pattern !== undefined) {
+    parts.push(String(pattern));
+  } else if (Object.keys(operators).length) {
+    parts.push(null);
+  }
+
+  if (Object.keys(operators).length) {
+    parts.push(operators);
+  }
+
+  return JSON.stringify(parts);
+};
+
+/**
+ * View settings with the properties that the group expanders read and write. Any other property,
+ * such as the view type, is carried over untouched.
+ * @typedef {{
+ * group?: GroupingConditions | null,
+ * collapsedGroups?: Record<string, string[]>,
+ * expandedGroups?: Record<string, string[]>,
+ * } & Record<string, unknown>} ViewWithGroups
+ */
+
+/**
+ * Name of the group holding the items that have no value for the grouping field, or no match for
+ * its pattern. A stable token rather than the localized “Other” label, so that anything keyed by
+ * the group name — the collapsed state saved in the view — survives a change of the UI locale.
+ * Display it with {@link getGroupLabel}.
+ */
+export const OTHER_GROUP_NAME = '*other';
+
+/**
+ * Get the label of a group as it’s shown in the list.
+ * @param {string} name Group name.
+ * @returns {string} The localized “Other” label for {@link OTHER_GROUP_NAME}, otherwise the name.
+ */
+export const getGroupLabel = (name) => (name === OTHER_GROUP_NAME ? _('other') : name);
+
+/**
  * Build a sorted group map from a list of items.
  * @template T
  * @param {T[]} items Items to group.
  * @param {string | RegExp | boolean | undefined} pattern Pattern to extract the group key from each
  * value. When provided, the first match is used as the key; unmatched items fall back to
- * `otherKey`.
+ * {@link OTHER_GROUP_NAME}.
  * @param {(item: T) => any} getValue Function to get the groupable field value from an item.
- * @param {string} otherKey Fallback key for items with a null/undefined value or no regex match.
- * @returns {[string, T[]][]} Sorted array of `[groupKey, items]` pairs.
+ * @returns {[string, T[]][]} Array of `[groupKey, items]` pairs, sorted by the group labels.
  */
-export const buildGroupMap = (items, pattern, getValue, otherKey) => {
+export const buildGroupMap = (items, pattern, getValue) => {
   const regex = getRegex(pattern);
-  /** @type {Record<string, T[]>} */
-  const groups = {};
 
-  items.forEach((item) => {
+  // Grouped into a `Map` rather than a plain object, as a value like `constructor` or `__proto__`
+  // would otherwise hit an inherited property
+  const groups = Map.groupBy(items, (item) => {
     const value = getValue(item);
 
-    const key =
-      value === null || value === undefined
-        ? otherKey
-        : regex
-          ? (String(value).match(regex)?.[0] ?? otherKey)
-          : String(value);
-
-    if (!(key in groups)) groups[key] = [];
-    groups[key].push(item);
+    return value === null || value === undefined
+      ? OTHER_GROUP_NAME
+      : regex
+        ? (String(value).match(regex)?.[0] ?? OTHER_GROUP_NAME)
+        : String(value);
   });
 
-  return Object.entries(groups).sort(([a], [b]) => compare(a, b));
+  return [...groups].sort(([a], [b]) => compare(getGroupLabel(a), getGroupLabel(b)));
+};
+
+/**
+ * Group the given items by a view group’s conditions.
+ * @template T
+ * @param {T[]} items Items to group.
+ * @param {GroupingConditions | null | undefined} conditions Grouping conditions.
+ * @param {(item: T, field: string) => any} getValue Function to get the groupable field value from
+ * an item.
+ * @returns {Record<string, T[]>} Grouped items, where the key is a group name, displayed with
+ * {@link getGroupLabel}, and the value is an item list. Without a field to group by, all the items
+ * are in a single group named `*`.
+ */
+export const groupItems = (items, conditions, getValue) => {
+  const { field, pattern } = conditions ?? {};
+
+  if (!field) {
+    return items.length ? { '*': items } : {};
+  }
+
+  return Object.fromEntries(buildGroupMap(items, pattern, (item) => getValue(item, field)));
 };
 
 /**
@@ -54,11 +186,27 @@ export const matchesFilter = (value, pattern, regex) => {
 };
 
 /**
- * Sort an array of items using a key function and apply ascending/descending order.
+ * Compare two sort keys in ascending order.
+ * @param {string | number} a First key.
+ * @param {string | number} b Second key.
+ * @param {boolean} isStringType Whether the keys should be compared as strings (locale-aware); if
+ * `false`, numeric subtraction is used instead.
+ * @returns {number} Negative if `a` comes first, positive if `b` comes first, `0` if they are
+ * equal.
+ */
+export const compareSortKeys = (a, b, isStringType) =>
+  isStringType
+    ? compare(/** @type {string} */ (a), /** @type {string} */ (b))
+    : /** @type {number} */ (a) - /** @type {number} */ (b);
+
+/**
+ * Sort an array of items using a key function and apply ascending/descending order. An item whose
+ * key is `undefined` has no value to sort by, so it goes last in either order, keeping its place
+ * among the other such items.
  * @template T
  * @param {T[]} items Items to sort in place.
- * @param {(item: T) => string | number} getKey Returns the sort key for an item. Called once per
- * item.
+ * @param {(item: T) => string | number | undefined} getKey Returns the sort key for an item, or
+ * `undefined` if the item has no value. Called once per item.
  * @param {boolean} isStringType Whether keys should be compared as strings (locale-aware); if
  * `false`, numeric subtraction is used instead.
  * @param {string | undefined} [order] Sort order; reverses the array when `'descending'`.
@@ -66,25 +214,159 @@ export const matchesFilter = (value, pattern, regex) => {
  */
 export const sortItemsByKey = (items, getKey, isStringType, order) => {
   const keyedItems = items.map((item) => ({ item, key: getKey(item) }));
+  const valuedItems = keyedItems.filter(({ key }) => key !== undefined);
+  const emptyItems = keyedItems.filter(({ key }) => key === undefined);
 
-  keyedItems.sort(({ key: aKey }, { key: bKey }) =>
-    isStringType
-      ? compare(/** @type {string} */ (aKey), /** @type {string} */ (bKey))
-      : /** @type {number} */ (aKey) - /** @type {number} */ (bKey),
+  valuedItems.sort(({ key: aKey }, { key: bKey }) =>
+    compareSortKeys(
+      /** @type {string | number} */ (aKey),
+      /** @type {string | number} */ (bKey),
+      isStringType,
+    ),
   );
 
   if (order === 'descending') {
-    keyedItems.reverse();
+    valuedItems.reverse();
   }
 
   // Write the order back in place. Spreading the list into `splice()` would pass every item as an
   // argument, which throws a `RangeError` once the list is large enough
-  keyedItems.forEach(({ item }, index) => {
+  [...valuedItems, ...emptyItems].forEach(({ item }, index) => {
     items[index] = item;
   });
 
   return items;
 };
+
+/**
+ * Get the names of the groups that can be collapsed. The `*` group, which holds every item when
+ * the list isn’t grouped, has no caption and so no expander.
+ * @param {string[]} names Names of all the groups in the list.
+ * @returns {string[]} Names of the captioned groups.
+ */
+export const getCollapsibleGroupNames = (names) => names.filter((name) => name !== '*');
+
+/**
+ * Get the key under which the collapsed groups of a view are saved. Each grouping condition
+ * produces its own set of groups, so the collapsed state is kept per condition.
+ * @param {GroupingConditions | null | undefined} conditions Grouping conditions.
+ * @returns {string | undefined} Condition key from {@link getConditionKey}, or `undefined` when
+ * the list isn’t grouped.
+ */
+export const getGroupingKey = (conditions) =>
+  conditions ? getConditionKey(conditions) : undefined;
+
+/**
+ * Check whether the groups produced by the given grouping conditions start collapsed, because the
+ * view group option they came from has the `collapsed` option enabled.
+ * @param {ViewGroup[] | undefined} options View group options.
+ * @param {GroupingConditions | null | undefined} conditions Grouping conditions of the view.
+ * @returns {boolean} Whether the groups are collapsed unless the user has expanded them.
+ * @see https://github.com/sveltia/sveltia-cms/issues/1151
+ */
+export const isCollapsedByDefault = (options, conditions) => {
+  const key = getGroupingKey(conditions);
+
+  return (
+    key !== undefined &&
+    !!options?.some(
+      (option) => option.collapsed === true && getConditionKey(getViewConditions(option)) === key,
+    )
+  );
+};
+
+/**
+ * Get the property of the view settings that holds the names of the groups the user has toggled
+ * from their default state, under each grouping condition’s key: the collapsed groups when groups
+ * start expanded, and the expanded groups when they start collapsed. Saving the exceptions rather
+ * than the full state means a group that appears later starts in the default state too.
+ * @param {boolean} collapsedByDefault Whether the groups start collapsed.
+ * @returns {'collapsedGroups' | 'expandedGroups'} Property name.
+ */
+const getToggledGroupsProp = (collapsedByDefault) =>
+  collapsedByDefault ? 'expandedGroups' : 'collapsedGroups';
+
+/**
+ * Check whether a group is collapsed in the given view.
+ * @param {ViewWithGroups} view View settings.
+ * @param {string} name Group name.
+ * @param {boolean} [collapsedByDefault] Whether the groups start collapsed. See
+ * {@link isCollapsedByDefault}.
+ * @returns {boolean} Whether the group’s items are hidden.
+ */
+export const isGroupCollapsed = (view, name, collapsedByDefault = false) => {
+  const key = getGroupingKey(view.group);
+
+  // The `*` group has no expander, so it’s always expanded
+  if (key === undefined || name === '*') {
+    return false;
+  }
+
+  const toggled = !!view[getToggledGroupsProp(collapsedByDefault)]?.[key]?.includes(name);
+
+  return toggled !== collapsedByDefault;
+};
+
+/**
+ * Get the view settings with the toggled groups of the current grouping condition replaced.
+ * @template {ViewWithGroups} T
+ * @param {T} view View settings.
+ * @param {string[]} names Names of the groups toggled from their default state. The condition is
+ * dropped from the saved state when there is none, and so is the whole property once it’s empty.
+ * @param {boolean} collapsedByDefault Whether the groups start collapsed.
+ * @returns {T} New view settings.
+ */
+const setToggledGroups = (view, names, collapsedByDefault) => {
+  const key = getGroupingKey(view.group);
+
+  // The list isn’t grouped, so there is nothing to collapse
+  if (key === undefined) {
+    return view;
+  }
+
+  const prop = getToggledGroupsProp(collapsedByDefault);
+  const { [key]: _current, ...others } = view[prop] ?? {};
+  const groups = names.length ? { ...others, [key]: names } : others;
+  const { [prop]: _previous, ...rest } = view;
+
+  return /** @type {T} */ (Object.keys(groups).length ? { ...rest, [prop]: groups } : rest);
+};
+
+/**
+ * Get the view settings with one group collapsed or expanded.
+ * @template {ViewWithGroups} T
+ * @param {T} view View settings.
+ * @param {string} name Group name.
+ * @param {boolean} collapsed Whether to hide the group’s items.
+ * @param {boolean} [collapsedByDefault] Whether the groups start collapsed. See
+ * {@link isCollapsedByDefault}.
+ * @returns {T} New view settings.
+ */
+export const setGroupCollapsed = (view, name, collapsed, collapsedByDefault = false) => {
+  const key = getGroupingKey(view.group);
+  const prop = getToggledGroupsProp(collapsedByDefault);
+  const current = key === undefined ? [] : (view[prop]?.[key] ?? []);
+  const names = current.filter((_name) => _name !== name);
+
+  if (collapsed !== collapsedByDefault) {
+    names.push(name);
+  }
+
+  return setToggledGroups(view, names, collapsedByDefault);
+};
+
+/**
+ * Get the view settings with all the given groups collapsed or expanded.
+ * @template {ViewWithGroups} T
+ * @param {T} view View settings.
+ * @param {string[]} names Names of the collapsible groups.
+ * @param {boolean} collapsed Whether to hide the groups’ items.
+ * @param {boolean} [collapsedByDefault] Whether the groups start collapsed. See
+ * {@link isCollapsedByDefault}.
+ * @returns {T} New view settings.
+ */
+export const setAllGroupsCollapsed = (view, names, collapsed, collapsedByDefault = false) =>
+  setToggledGroups(view, collapsed === collapsedByDefault ? [] : [...names], collapsedByDefault);
 
 /**
  * Initialize a view settings state backed by IndexedDB and persist any changes to it.
@@ -104,12 +386,23 @@ export const initViewSettingsStorage = async (
   { defaults = {} } = {},
 ) => {
   const settingsDB = getRepositoryDatabase(repository, 'ui-settings');
-  const initial = { ...defaults, ...(await settingsDB?.get(storageKey)) };
+  /** @type {any} */
+  let saved;
+
+  // The saved settings are optional, so an IndexedDB failure mustn’t leave the view unset
+  try {
+    saved = await settingsDB?.get(storageKey);
+  } catch {
+    //
+  }
+
+  const initial = { ...defaults, ...(isObject(saved) ? saved : {}) };
 
   settingsState.current = initial;
 
   // Track the last persisted value in memory so we can skip redundant IndexedDB reads and writes
   // every time the state changes (list views update this state frequently as users sort/filter).
+  /** @type {Record<string, any> | undefined} */
   let lastSaved = initial;
 
   return createRootEffect(() => {

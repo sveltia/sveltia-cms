@@ -4,6 +4,7 @@
   import { onMount } from 'svelte';
 
   import { getYouTubeEmbedURL } from '$lib/services/utils/media/video/youtube';
+  import { encodeURLSafely } from '$lib/services/utils/url';
 
   /**
    * @typedef {object} Props
@@ -11,11 +12,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    url,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { url } = $props();
 
   let embeddable = $state(true);
 
@@ -45,7 +42,7 @@
   {#if embeddable}
     <VisibilityObserver>
       <iframe
-        src={encodeURI(embedURL)}
+        src={encodeURLSafely(embedURL)}
         title={_('youtube_video_player')}
         frameborder="0"
         allow="autoplay; encrypted-media; picture-in-picture; clipboard-write"
@@ -55,7 +52,7 @@
       ></iframe>
     </VisibilityObserver>
   {:else}
-    <a href={encodeURI(url)}>{url}</a>
+    <a href={encodeURLSafely(url)}>{url}</a>
   {/if}
 </div>
 

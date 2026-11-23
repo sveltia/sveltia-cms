@@ -1,108 +1,52 @@
 import { getDateTimeParts } from '@sveltia/utils/datetime';
 import { truncate } from '@sveltia/utils/string';
 
-import { TEMPLATE_TAG_REGEX } from '$lib/services/common/template/constants';
+import { getSlugTimeZone, trimSlugEnd } from '$lib/services/common/slug';
 import { replaceTemplatePlaceholder } from '$lib/services/common/template/replacers';
+import { replaceTemplateTags } from '$lib/services/common/template/tags';
 import { cmsConfig } from '$lib/services/config';
-import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
+import { getEntriesInCollectionFolder } from '$lib/services/contents/collection/entries';
+import { getIdentifierFieldName } from '$lib/services/contents/collection/identifier';
+import { getNameInFolder } from '$lib/services/contents/collection/nested';
 import { renameIfNeeded } from '$lib/services/utils/file';
+import { getPullRequestEntries } from '$lib/services/workflow';
+import {
+  getMaxSlugBytes,
+  getSlugByteLength,
+  truncateSlugBytes,
+} from '$lib/services/workflow/branch';
 
 /**
  * @import { ReplaceContext } from '$lib/services/common/template/replacers';
- * @import { FillTemplateOptions } from '$lib/types/private';
+ * @import { FillTemplateOptions, InternalLocaleCode } from '$lib/types/private';
  */
 
 /**
- * Replace template tags in a string while leaving nested template tags inside transformation
- * arguments untouched. For example, this keeps `default('{{title}}')` from being treated as a
- * separate replacement target when the outer template is processed.
- * @param {string} str The string containing template tags.
- * @param {(match: string, placeholder: string) => string} replacer Replacement callback.
- * @returns {string} Result of the replacements.
- */
-export const replaceTemplateTags = (str, replacer) => {
-  let result = '';
-  let searchIndex = 0;
-
-  while (searchIndex < str.length) {
-    const openIndex = str.indexOf('{{', searchIndex);
-
-    if (openIndex === -1) {
-      result += str.slice(searchIndex);
-      break;
-    }
-
-    result += str.slice(searchIndex, openIndex);
-
-    let cursor = openIndex + 2;
-    let quoteState = false;
-
-    while (cursor < str.length) {
-      const char = str[cursor];
-      const nextChar = str[cursor + 1];
-
-      if (char === "'" && !quoteState) {
-        quoteState = true;
-      } else if (char === "'" && quoteState) {
-        quoteState = false;
-      }
-
-      if (!quoteState && char === '}' && nextChar === '}') {
-        const closeIndex = cursor;
-        const hasLeadingQuote = str[openIndex - 1] === "'";
-        const hasTrailingQuote = str[closeIndex + 2] === "'";
-        const openingDelimiter = str[openIndex - 2];
-        const closingDelimiter = str[closeIndex + 3];
-        const placeholder = str.slice(openIndex + 2, closeIndex);
-
-        /* v8 ignore next */
-        const isNestedTransformationArgument =
-          hasLeadingQuote &&
-          hasTrailingQuote &&
-          ['(', ',', '[', '|'].includes(openingDelimiter ?? '') &&
-          [')', ',', ']'].includes(closingDelimiter ?? '');
-
-        if (!placeholder) {
-          result += str.slice(openIndex, closeIndex + 2);
-        } else if (isNestedTransformationArgument) {
-          result += str.slice(openIndex, closeIndex + 2);
-        } else {
-          result += replacer(str.slice(openIndex, closeIndex + 2), placeholder);
-        }
-
-        searchIndex = closeIndex + 2;
-        break;
-      }
-
-      cursor += 1;
-    }
-
-    if (cursor >= str.length) {
-      result += str.slice(openIndex);
-      break;
-    }
-  }
-
-  return result;
-};
-
-/**
- * Checks if a string contains template tags.
- * @param {string} str The string to check.
- * @returns {boolean} True if the string contains template tags, false otherwise.
- */
-export const hasTemplateTags = (str) => TEMPLATE_TAG_REGEX.test(str);
-
-/**
- * Creates existing slugs list for uniqueness validation.
+ * Creates existing slugs list for uniqueness validation. With Editorial Workflow, the entries that
+ * are still in a pull request count as well: a new entry taking the slug of one of them would take
+ * its file path and its workflow branch too. So do the new entries riding along in the pull request
+ * of an entry of another collection, whose files would collide when it’s published. Every entry
+ * stored in the collection folder counts, including those the collection’s `filter` option leaves
+ * out, which can belong to another collection sharing the folder.
  * @param {string} collectionName Collection name.
  * @param {string | undefined} locale Locale string.
+ * @param {string} [dirPath] Folder within the collection folder the new entry goes to, as chosen
+ * with the path editor of a collection with nested entries. The slug of an entry there is its sub
+ * path, e.g. `docs/intro`, so only the entries directly in the folder are taken into account, by
+ * their file names.
  * @returns {string[]} List of existing slugs.
  */
-const getExistingSlugs = (collectionName, locale) =>
-  getEntriesByCollection(collectionName)
-    .map((e) => (locale ? e.locales[locale]?.slug : e.slug))
-    .filter(Boolean);
+const getExistingSlugs = (collectionName, locale, dirPath) => {
+  const slugs = /** @type {string[]} */ (
+    [...getEntriesInCollectionFolder(collectionName), ...getPullRequestEntries(collectionName)]
+      .map((e) => (locale ? e.locales[locale]?.slug : e.slug))
+      .filter(Boolean)
+  );
+
+  return dirPath === undefined
+    ? slugs
+    : slugs.flatMap((slug) => getNameInFolder(slug, dirPath) ?? []);
+};
 
 /**
  * Fills a template string with values from the given options.
@@ -112,41 +56,48 @@ const getExistingSlugs = (collectionName, locale) =>
  * @see https://decapcms.org/docs/configuration-options/#slug-type
  * @see https://decapcms.org/docs/configuration-options/#slug
  * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
- * @see https://sveltiacms.app/en/docs/collections/entries#managing-entry-slugs
+ * @see https://sveltiacms.app/en/docs/collections/entries/slugs#entry-slugs
  * @see https://sveltiacms.app/en/docs/media/internal#using-placeholders
  */
 export const fillTemplate = (template, options) => {
   const {
     collection,
+    collectionFile,
     content: valueMap,
     currentSlug,
     locale,
     dateTimeParts,
     isIndexFile = false,
+    dirPath,
+    numberedSlugs,
   } = options;
 
   const { _type, name: collectionName } = collection;
+  const identifierField = getIdentifierFieldName(_type === 'entry' ? collection : undefined);
 
-  const {
-    identifier_field: identifierField = 'title',
-    slug_length: legacySlugLength = undefined,
-    _file: { basePath } = {},
-  } = _type === 'entry' ? collection : {};
+  const { slug_length: legacySlugLength = undefined, _file: { basePath, fullPathRegEx } = {} } =
+    _type === 'entry' ? collection : {};
 
   const slugOptions = cmsConfig.current?.slug;
   // @todo Remove the legacy option prior to the 1.0 release.
   const maxlength = legacySlugLength ?? slugOptions?.maxlength;
-  const timeZone = slugOptions?.timezone === 'local' ? undefined : 'UTC';
 
   /** @type {ReplaceContext} */
   const context = {
     replaceSubContext: {
       ...options,
-      dateTimeParts: dateTimeParts ?? getDateTimeParts({ timeZone }),
+      dateTimeParts: dateTimeParts ?? getDateTimeParts({ timeZone: getSlugTimeZone() }),
       identifierField,
       basePath,
+      fullPathRegEx,
     },
-    getFieldArgs: { collectionName, keyPath: '', valueMap, isIndexFile },
+    getFieldArgs: {
+      collectionName,
+      fileName: collectionFile?.name,
+      keyPath: '',
+      valueMap,
+      isIndexFile,
+    },
   };
 
   // Use a negative lookahead assertion to support nested template tags in transformations like
@@ -163,10 +114,57 @@ export const fillTemplate = (template, options) => {
     return slug;
   }
 
-  // Truncate a long slug if needed
+  // A cut may leave the replacement character at the end, which is a hyphen by default but can be
+  // configured with `slug.sanitize_replacement`, and dots, which a branch name can’t end with; they
+  // go with `trimSlugEnd()`
+  let maxBytes = Infinity;
+
+  // Truncate a long slug if the `slug.maxlength` option is set. Leave the end alone if the slug
+  // isn’t cut
   if (typeof maxlength === 'number') {
-    slug = truncate(slug, maxlength, { ellipsis: '' }).replace(/-$/, '');
+    const truncated = truncate(slug, maxlength, { ellipsis: '' });
+
+    slug = truncated === slug ? slug : trimSlugEnd(truncated);
+  } else {
+    // Otherwise, cap the slug in bytes so the file name and the Editorial Workflow branch name stay
+    // valid. Existing entries are never renamed, since this only applies to a new slug
+    maxBytes = getMaxSlugBytes({ collectionName, dirPath });
+
+    if (getSlugByteLength(slug) > maxBytes) {
+      slug = trimSlugEnd(truncateSlugBytes(slug, maxBytes));
+    }
   }
 
-  return renameIfNeeded(slug, getExistingSlugs(collectionName, locale));
+  // `slugify` removes the trailing dots of a value, but the template may still end with one, as in
+  // `{{title}}.`, which a branch name can’t end with. A replacement character in front of it goes
+  // as well, like after a cut
+  if (slug.endsWith('.')) {
+    slug = trimSlugEnd(slug);
+  }
+
+  const existingSlugs = getExistingSlugs(collectionName, locale, dirPath);
+  /**
+   * Make the given slug unique. A dot in a slug is part of the name rather than a file extension,
+   * so a number goes at the end.
+   * @param {string} str Slug.
+   * @returns {string} Unique slug.
+   */
+  const rename = (str) => renameIfNeeded(str, existingSlugs, { hasExtension: false });
+  const filledSlug = slug;
+  let uniqueSlug = rename(slug);
+
+  // If the number pushes the slug over the cap, the slug in front of it gives way, so the number
+  // stays distinct, like Decap CMS. Another number may be needed then, so try again
+  while (maxBytes !== Infinity && getSlugByteLength(uniqueSlug) > maxBytes) {
+    const suffixBytes = getSlugByteLength(uniqueSlug) - getSlugByteLength(slug);
+
+    slug = trimSlugEnd(truncateSlugBytes(slug, maxBytes - suffixBytes));
+    uniqueSlug = rename(slug);
+  }
+
+  if (uniqueSlug !== filledSlug) {
+    numberedSlugs?.set(/** @type {InternalLocaleCode} */ (locale), filledSlug);
+  }
+
+  return uniqueSlug;
 };

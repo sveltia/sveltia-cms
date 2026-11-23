@@ -65,7 +65,10 @@ describe('Gemini Translator Service', () => {
     });
 
     it('should validate API key pattern', () => {
-      const validApiKey = 'AIzaSyAbCdEfGhIjKlMnOpQrStUvWxYz1234567';
+      const validApiKeys = [
+        'AIzaSyAbCdEfGhIjKlMnOpQrStUvWxYz1234567',
+        'AQ.Ab8RN6KxYz1234567890abcdefGHIJ-_klmnop.qrstuv',
+      ];
 
       const invalidApiKeys = [
         'AIza-invalid',
@@ -73,9 +76,14 @@ describe('Gemini Translator Service', () => {
         '',
         'AIzaShort',
         'BIzaSyAbCdEfGhIjKlMnOpQrStUvWxYz1234567',
+        'AQ.short',
+        'AQ-Ab8RN6KxYz1234567890abcdefGHIJ',
+        'AQ.Ab8RN6KxYz1234567890 abcdefGHIJ',
       ];
 
-      expect(geminiTranslator.apiKeyPattern.test(validApiKey)).toBe(true);
+      validApiKeys.forEach((key) => {
+        expect(geminiTranslator.apiKeyPattern.test(key)).toBe(true);
+      });
 
       invalidApiKeys.forEach((key) => {
         expect(geminiTranslator.apiKeyPattern.test(key)).toBe(false);
@@ -126,6 +134,7 @@ describe('Gemini Translator Service', () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'x-goog-api-key': 'AIzaSyAbCdEfGhIjKlMnOpQrStUvWxYz1234567',
           },
         }),
       );
@@ -427,25 +436,6 @@ describe('Gemini Translator Service', () => {
       ).rejects.toThrow('Network error');
     });
 
-    it('should wrap non-Error thrown values in a generic error', async () => {
-      const mockFetch = vi.mocked(fetch);
-
-      // Throw a non-Error (string) to trigger the `throw new Error('Failed to translate...')`
-      // branch
-      mockFetch.mockImplementationOnce(() => {
-        // eslint-disable-next-line no-throw-literal
-        throw 'non-error string thrown';
-      });
-
-      await expect(
-        geminiTranslator.translate(['Hello'], {
-          sourceLanguage: 'en',
-          targetLanguage: 'fr',
-          apiKey: 'AIzaSyAbCdEfGhIjKlMnOpQrStUvWxYz1234567',
-        }),
-      ).rejects.toThrow('Failed to translate text with Gemini API.');
-    });
-
     it('should make API request with correct payload structure', async () => {
       const mockResponse = {
         candidates: [
@@ -485,7 +475,7 @@ describe('Gemini Translator Service', () => {
         contents: expect.any(Array),
         generationConfig: {
           temperature: 0.3,
-          maxOutputTokens: 4000,
+          maxOutputTokens: 16_000,
           responseMimeType: 'application/json',
         },
       });

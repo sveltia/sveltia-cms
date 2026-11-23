@@ -1,0 +1,131 @@
+import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
+import { render } from 'vitest-browser-svelte';
+
+import { parseLocation } from '$lib/services/app/navigation';
+import { searchMode, searchTerms } from '$lib/services/search';
+
+import QuickSearchBar from './quick-search-bar.svelte';
+
+describe('QuickSearchBar', () => {
+  beforeEach(() => {
+    // Without a `hashchange` event, which would come in once the next test has started
+    window.history.replaceState(null, '', '#/collections');
+    searchTerms.current = '';
+  });
+
+  test('is hidden while there is nothing to search', async () => {
+    searchMode.current = null;
+
+    const { container } = await render(QuickSearchBar, {});
+
+    expect(container.querySelector('input')).toBeNull();
+  });
+
+  test('searches the contents as the user types, and goes back when cleared', async () => {
+    searchMode.current = 'contents';
+
+    await render(QuickSearchBar, {});
+
+    const input = page.getByRole('searchbox');
+
+    await expect.element(input).toHaveAttribute('placeholder', 'Search for contents…');
+    await expect.element(input).toHaveAccessibleName('Search for contents…');
+    await input.fill('hello');
+
+    await expect.poll(() => searchTerms.current).toBe('hello');
+    await expect.poll(() => window.location.hash).toBe('#/search/hello');
+
+    await page.getByRole('button', { name: 'Clear' }).click();
+    await expect.poll(() => searchTerms.current).toBe('');
+    await expect.poll(() => window.location.hash).toBe('#/collections');
+  });
+
+  test('goes back to the asset folder the search has started from when cleared', async () => {
+    searchMode.current = 'assets';
+    window.location.hash = '#/assets/static/uploads';
+
+    await render(QuickSearchBar, {});
+
+    await page.getByRole('searchbox').fill('photo');
+    await expect.poll(() => window.location.hash).toBe('#/search/photo');
+
+    await page.getByRole('button', { name: 'Clear' }).click();
+    await expect.poll(() => window.location.hash).toBe('#/assets/static/uploads');
+  });
+
+  test('keeps the special characters of the search terms in the URL', async () => {
+    searchMode.current = 'contents';
+
+    await render(QuickSearchBar, {});
+
+    await page.getByRole('searchbox').fill('50% off?#1');
+
+    await expect.poll(() => searchTerms.current).toBe('50% off?#1');
+    await expect.poll(() => window.location.hash).toBe('#/search/50%25%20off%3F%231');
+    expect(parseLocation().path).toBe('/search/50% off?#1');
+  });
+
+  test('searches for terms that look like dot segments of a path', async () => {
+    searchMode.current = 'contents';
+
+    await render(QuickSearchBar, {});
+
+    const input = page.getByRole('searchbox');
+
+    await input.fill('.');
+    await expect.poll(() => window.location.hash).toBe('#/search/.');
+    expect(parseLocation().path).toBe('/search/.');
+
+    await input.fill('..');
+    await expect.poll(() => window.location.hash).toBe('#/search/..');
+    expect(parseLocation().path).toBe('/search/..');
+    expect(searchTerms.current).toBe('..');
+
+    // The results page has been replaced as the terms changed, so clearing them goes back to
+    // where the search started
+    await page.getByRole('button', { name: 'Clear' }).click();
+    await expect.poll(() => window.location.hash).toBe('#/collections');
+  });
+
+  test('restores the current search terms', async () => {
+    const { origin, pathname } = window.location;
+
+    searchMode.current = 'assets';
+    searchTerms.current = 'photo';
+    // An asset opened from the search results
+    window.history.replaceState(
+      { from: `${origin}${pathname}#/search/photo` },
+      '',
+      '#/assets/static/uploads/a.png',
+    );
+
+    await render(QuickSearchBar, {});
+
+    await expect.element(page.getByRole('searchbox')).toHaveValue('photo');
+    await expect
+      .element(page.getByRole('searchbox'))
+      .toHaveAttribute('placeholder', 'Search for assets…');
+
+    // Clearing the terms away from the search page stays on the page
+    await page.getByRole('button', { name: 'Clear' }).click();
+    await expect.poll(() => searchTerms.current).toBe('');
+    expect(window.location.hash).toBe('#/assets/static/uploads/a.png');
+  });
+
+  test('forgets the search once the results have been left with the browser’s Back button', async () => {
+    searchMode.current = 'contents';
+
+    await render(QuickSearchBar, {});
+
+    const input = page.getByRole('searchbox');
+
+    await input.fill('hello');
+    await expect.poll(() => window.location.hash).toBe('#/search/hello');
+
+    window.history.back();
+    await expect.poll(() => window.location.hash).toBe('#/collections');
+    await expect.poll(() => searchTerms.current).toBe('');
+    await expect.element(input).toHaveValue('');
+  });
+});

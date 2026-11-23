@@ -1,6 +1,10 @@
+import { stripSlashes } from '@sveltia/utils/string';
+
 import { cmsConfig } from '$lib/services/config';
-import { allEntries, allEntryFolders } from '$lib/services/contents';
+import { allEntryFolders, findEntryByPaths } from '$lib/services/contents';
 import { getCollection, getValidCollections } from '$lib/services/contents/collection';
+import { getValidCollectionFiles } from '$lib/services/contents/collection/predicates';
+import { getLocalePath } from '$lib/services/contents/i18n';
 
 /**
  * @import {
@@ -9,27 +13,8 @@ import { getCollection, getValidCollections } from '$lib/services/contents/colle
  * InternalCollection,
  * InternalCollectionFile,
  * } from '$lib/types/private';
- * @import { CollectionDivider, CollectionFile } from '$lib/types/public';
+ * @import { CollectionFile } from '$lib/types/public';
  */
-
-/**
- * Check if the given collection file is valid. A valid file must have a string `file` property, not
- * be a `divider`, and have `fields` defined as an array.
- * @param {CollectionFile | CollectionDivider} file File definition or divider.
- * @returns {boolean} Whether the file is valid.
- */
-export const isValidCollectionFile = (file) =>
-  !('divider' in file) && typeof file.file === 'string' && Array.isArray(file.fields);
-
-/**
- * Get a list of valid collection files from the given file definitions. This filters out dividers
- * and invalid files that do not have a string `file` property or do not have `fields` defined as an
- * array.
- * @param {(CollectionFile | CollectionDivider)[]} files File definitions. May include dividers.
- * @returns {CollectionFile[]} List of valid collection files.
- */
-export const getValidCollectionFiles = (files) =>
-  /** @type {CollectionFile[]} */ (files.filter((file) => isValidCollectionFile(file)));
 
 /**
  * Get a file in a file/singleton collection by its name.
@@ -41,11 +26,41 @@ export const getCollectionFile = (collection, fileName) => {
   /** @type {InternalCollection | undefined} */
   const _collection = typeof collection === 'string' ? getCollection(collection) : collection;
 
-  if (!_collection || !('_fileMap' in _collection)) {
+  // The file name may come from the URL, so it may be the name of an `Object.prototype` member
+  if (
+    !_collection ||
+    !('_fileMap' in _collection) ||
+    !Object.hasOwn(_collection._fileMap, fileName)
+  ) {
     return undefined;
   }
 
   return _collection._fileMap[fileName];
+};
+
+/**
+ * Look up a collection and, if a file name is given, one of its files.
+ * @param {string} collectionName Collection name.
+ * @param {string | undefined} fileName File name. Given only for a file/singleton collection.
+ * @returns {{ collection: InternalCollection, collectionFile: InternalCollectionFile | undefined }
+ * | undefined} Collection and collection file, the latter `undefined` when no file name is given.
+ * `undefined` when the collection is not found, or a file name is given but the file is not found,
+ * which includes the case where the collection is an entry collection.
+ */
+export const resolveCollectionAndFile = (collectionName, fileName) => {
+  const collection = getCollection(collectionName);
+
+  if (!collection) {
+    return undefined;
+  }
+
+  const collectionFile = fileName ? getCollectionFile(collection, fileName) : undefined;
+
+  if (fileName && !collectionFile) {
+    return undefined;
+  }
+
+  return { collection, collectionFile };
 };
 
 /**
@@ -59,7 +74,8 @@ export const getCollectionFileLabel = (file) => file.label || file.name;
 /**
  * Get a file/singleton collection’s file configurations that matches the given entry. One file can
  * theoretically appear in multiple collections files depending on the configuration, so that the
- * result is an array.
+ * result is an array. A file is matched by the path of any locale of the entry, as the file of the
+ * default locale may not exist when the locales are stored in separate files.
  * @param {InternalCollection} collection Collection.
  * @param {Entry} entry Entry.
  * @returns {InternalCollectionFile[]} Collection files.
@@ -70,8 +86,14 @@ export const getCollectionFilesByEntry = (collection, entry) => {
     return [];
   }
 
-  return Object.values(collection._fileMap).filter(
-    ({ _file, _i18n }) => _file.fullPath === entry.locales[_i18n.defaultLocale]?.path,
+  return Object.values(collection._fileMap).filter(({ file, _file, _i18n }) =>
+    Object.entries(entry.locales).some(
+      ([locale, { path }]) =>
+        path ===
+        (locale === _i18n.defaultLocale
+          ? _file.fullPath
+          : getLocalePath({ _i18n, locale, path: stripSlashes(file) })),
+    ),
   );
 };
 
@@ -95,11 +117,9 @@ export const getCollectionFileEntry = (collectionName, fileName) => {
     return undefined;
   }
 
-  const validPaths = new Set(Object.values(folderInfo.filePathMap));
-
-  return allEntries.current.find((entry) =>
-    Object.values(entry.locales).some(({ path }) => validPaths.has(path)),
-  );
+  // Relation fields look this up for every option list they build, so the entries are found
+  // through the path index rather than by going through all of them
+  return findEntryByPaths(Object.values(folderInfo.filePathMap));
 };
 
 /**

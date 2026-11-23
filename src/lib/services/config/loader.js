@@ -1,7 +1,8 @@
+import deepmerge from '@fastify/deepmerge';
 import { _ } from '@sveltia/i18n';
 import { isObject } from '@sveltia/utils/object';
-import merge from 'deepmerge';
 
+import { DOCS_BASE_URL } from '$lib/services/app';
 import {
   DEV_CONFIG_PATH,
   DEV_SITE_URL,
@@ -19,10 +20,12 @@ import { makeLink } from '$lib/services/utils/string';
  * @property {string} [type] MIME type.
  */
 
-const LOAD_CONFIG_DOC_URL =
-  'https://sveltiacms.app/en/docs/api/initialization#providing-a-full-configuration';
-
-const SCHEMA_TIP_URL = 'https://sveltiacms.app/en/docs/config-basics#validation-and-autocomplete';
+const LOAD_CONFIG_DOC_URL = `${DOCS_BASE_URL}/api/initialization#providing-a-full-configuration`;
+const SCHEMA_TIP_URL = `${DOCS_BASE_URL}/config-basics#validation-and-autocomplete`;
+/**
+ * Deep merge any number of config objects, concatenating arrays.
+ */
+const mergeAll = deepmerge({ all: true });
 /**
  * Responses of config files requested ahead of time with {@link prefetchCmsConfig}, keyed by the
  * absolute file URL. Each is consumed once by {@link fetchFile}.
@@ -146,9 +149,14 @@ export const fetchFile = async (
  * correct path to the configuration file.
  * @param {string} path Current `location.pathname` starting with a slash, like `/admin/`, `/admin`,
  * or `/admin/index.html`.
- * @returns {string} Path to the configuration file.
+ * @returns {string} Path to the configuration file. It’s always on the same origin as the page.
  */
 export const getConfigPath = (path) => {
+  // Collapse leading slashes, because a path like `//evil.example/` would otherwise resolve to a
+  // protocol-relative URL on another host, where anyone could serve a config file that points the
+  // backend at their own server and receives the cached token when the CMS signs in automatically
+  path = path.replace(/^\/+/, '/');
+
   // If the path ends with a slash, like `/admin/`, we can safely assume it is a directory and
   // append `config.yml`.
   if (path.endsWith('/')) {
@@ -191,7 +199,11 @@ export const verifyLinksAreSecure = (links) => {
 export const getConfigLinks = () => {
   const links = /** @type {HTMLLinkElement[]} */ ([
     ...document.querySelectorAll('link[rel="cms-config-url"]'),
-  ]).map(({ href, type }) => /** @type {ConfigLink} */ ({ href, type }));
+  ]).map(
+    // A link element without the `type` attribute has an empty `type`, which has to fall back to
+    // the default type like a missing one
+    ({ href, type }) => /** @type {ConfigLink} */ ({ href, type: type || undefined }),
+  );
 
   if (!links.length) {
     links.push(
@@ -267,5 +279,5 @@ export const fetchCmsConfig = async ({ manualInit = false } = {}) => {
     return objects[0];
   }
 
-  return merge.all(objects);
+  return mergeAll(...objects);
 };

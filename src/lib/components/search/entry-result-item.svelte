@@ -3,7 +3,7 @@
   import { GridCell, GridRow, TruncatedText } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
 
-  import Image from '$lib/components/assets/shared/image.svelte';
+  import EntryThumbnail from '$lib/components/contents/shared/entry-thumbnail.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { getCollectionLabel } from '$lib/services/contents/collection';
   import { getListedCollections } from '$lib/services/contents/collection/entries';
@@ -11,9 +11,8 @@
     getCollectionFileLabel,
     getCollectionFilesByEntry,
   } from '$lib/services/contents/collection/files';
-  import { getEntryThumbnail } from '$lib/services/contents/entry/assets';
+  import { getEntryEditorPath } from '$lib/services/contents/editor/route';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
-  import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
 
   /**
    * @import {
@@ -36,62 +35,50 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    result,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { result } = $props();
 
   const { entry, locale, keyPath } = $derived(result);
-  const { locales, subPath } = $derived(entry);
+  const { subPath } = $derived(entry);
 </script>
 
 {#snippet resultRow(/** @type {RowArgs} */ { collection, collectionFile })}
-  {@const { defaultLocale } = (collectionFile ?? collection)._i18n ?? DEFAULT_I18N_CONFIG}
-  {@const { content } = locales[defaultLocale] ?? Object.values(locales)[0] ?? {}}
-  {#if content}
-    <GridRow
-      onclick={() => {
-        goto(`/collections/${collection.name}/entries/${collectionFile?.name || subPath}`, {
-          state: { highlight: { locale, keyPath } },
-          transitionType: 'forwards',
-        });
-      }}
-    >
-      <GridCell class="image">
-        {#if collection._type === 'entry'}
-          {#await getEntryThumbnail(collection, entry) then src}
-            {#if src}
-              <Image {src} variant="icon" cover />
+  <GridRow
+    onclick={() => {
+      goto(getEntryEditorPath(collection.name, collectionFile?.name || subPath), {
+        state: { highlight: { locale, keyPath } },
+        transitionType: 'forwards',
+      });
+    }}
+  >
+    <GridCell class="image">
+      {#if collection._type === 'entry'}
+        <EntryThumbnail {collection} {entry} variant="icon" />
+      {/if}
+    </GridCell>
+    <GridCell class="collection">
+      {#key appLocale.current}
+        <bdi>{getCollectionLabel(collection)}</bdi>
+      {/key}
+    </GridCell>
+    <GridCell class="title">
+      <div role="none" class="label">
+        <TruncatedText lines={2}>
+          <bdi>
+            {#if collectionFile}
+              {getCollectionFileLabel(collectionFile)}
+            {:else}
+              {#key appLocale.current}
+                {@html getEntrySummary(collection, entry, {
+                  useTemplate: true,
+                  allowMarkdown: true,
+                })}
+              {/key}
             {/if}
-          {/await}
-        {/if}
-      </GridCell>
-      <GridCell class="collection">
-        {#key appLocale.current}
-          <bdi>{getCollectionLabel(collection)}</bdi>
-        {/key}
-      </GridCell>
-      <GridCell class="title">
-        <div role="none" class="label">
-          <TruncatedText lines={2}>
-            <bdi>
-              {#if collectionFile}
-                {getCollectionFileLabel(collectionFile)}
-              {:else}
-                {#key appLocale.current}
-                  {@html getEntrySummary(collection, entry, {
-                    useTemplate: true,
-                    allowMarkdown: true,
-                  })}
-                {/key}
-              {/if}
-            </bdi>
-          </TruncatedText>
-        </div>
-      </GridCell>
-    </GridRow>
-  {/if}
+          </bdi>
+        </TruncatedText>
+      </div>
+    </GridCell>
+  </GridRow>
 {/snippet}
 
 {#each getListedCollections(entry) as collection (collection.name)}

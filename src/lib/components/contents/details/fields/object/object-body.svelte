@@ -1,0 +1,132 @@
+<!--
+  @component
+  Body of an Object field value or a complex List field item: the editors of its subfields when
+  expanded, a summary when collapsed, or a warning when its type isn’t defined.
+-->
+<script>
+  import { _ } from '@sveltia/i18n';
+  import { Alert, TruncatedText, VisibilityObserver } from '@sveltia/ui';
+
+  import Image from '$lib/components/assets/shared/image.svelte';
+  import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
+  import { getLocalizedOption } from '$lib/services/contents/i18n/options';
+  import { env } from '$lib/services/user/env.svelte';
+  import { sanitizeHelpText } from '$lib/services/utils/string';
+
+  /**
+   * @import { Snippet } from 'svelte';
+   * @import {
+   * FieldContext,
+   * InternalLocaleCode,
+   * MediaFieldSource,
+   * TypedFieldKeyPath,
+   * } from '$lib/types/private';
+   * @import { Field, FieldKeyPath, VariableFieldType } from '$lib/types/public';
+   */
+
+  /**
+   * @typedef {object} SubFieldProps
+   * @property {FieldKeyPath} keyPath Key path of the subfield.
+   * @property {TypedFieldKeyPath} typedKeyPath Typed key path of the subfield.
+   * @property {FieldContext} [context] Where the subfield is rendered.
+   */
+
+  /**
+   * @typedef {object} Props
+   * @property {InternalLocaleCode} locale Current pane’s locale.
+   * @property {Field[]} subFields Subfields of the value.
+   * @property {(subField: Field) => SubFieldProps} getSubFieldProps Function returning the key
+   * paths and context of a subfield.
+   * @property {boolean} expanded Whether the subfields are shown.
+   * @property {boolean} unknownType Whether the value has a type the field doesn’t define, in which
+   * case nothing can be edited.
+   * @property {() => string} getSummary Function returning the summary shown while collapsed.
+   * @property {() => MediaFieldSource | undefined} getThumbnail Function returning the thumbnail
+   * shown along with the summary.
+   * @property {Snippet} [summaryContent] Content drawn in place of the summary text while
+   * collapsed, e.g. by a custom field type’s summary component.
+   * @property {string} [summaryId] `id` of the summary, so the value can be labelled by it.
+   * @property {VariableFieldType} [typeConfig] Configuration of the value’s variable type, whose
+   * help message is shown above the subfields unless the field is read-only.
+   * @property {boolean} [readonly] Whether the field is read-only.
+   */
+
+  /** @type {Props} */
+  let {
+    locale,
+    subFields,
+    getSubFieldProps,
+    expanded,
+    unknownType,
+    getSummary,
+    getThumbnail,
+    summaryContent = undefined,
+    summaryId = undefined,
+    typeConfig = undefined,
+    readonly = false,
+  } = $props();
+
+  const hint = $derived(
+    readonly || !typeConfig
+      ? undefined
+      : getLocalizedOption({ config: typeConfig, option: 'hint', locale }),
+  );
+</script>
+
+{#if unknownType}
+  <Alert status="warning">{_('unknown_variable_type')}</Alert>
+{:else if expanded}
+  {#if hint}
+    <p class="type-hint">{@html sanitizeHelpText(hint)}</p>
+  {/if}
+  {#each subFields as subField (subField.name)}
+    <VisibilityObserver>
+      <FieldEditor {...getSubFieldProps(subField)} {locale} fieldConfig={subField} />
+    </VisibilityObserver>
+  {/each}
+{:else}
+  <!-- The summary is only worked out while it’s shown, and only if it’s not drawn otherwise -->
+  {@const summary = summaryContent ? '' : getSummary()}
+  {@const thumbnail = getThumbnail()}
+  {#if summaryContent || summary || thumbnail}
+    <div role="none" class="summary" id={summaryId}>
+      {#if thumbnail}
+        <Image asset={thumbnail.asset} src={thumbnail.url} variant="icon" cover />
+      {/if}
+      {#if summaryContent}
+        {@render summaryContent()}
+      {:else}
+        <TruncatedText lines={env.isSmallScreen ? 2 : 1}>
+          {summary}
+        </TruncatedText>
+      {/if}
+    </div>
+  {/if}
+{/if}
+
+<style>
+  /* The warning fills the Object field value or the List field item, which clips its corners */
+  :global(.object-unknown-type) {
+    overflow: hidden;
+
+    :global(.sui.alert) {
+      border-width: 0;
+      border-radius: 0;
+    }
+  }
+
+  .type-hint {
+    margin: 0 !important;
+    padding: 12px var(--field-editor-padding) 0;
+    font-size: var(--sui-font-size-small);
+    line-height: var(--sui-line-height-compact);
+    color: var(--sui-tertiary-foreground-color);
+  }
+
+  .summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+  }
+</style>

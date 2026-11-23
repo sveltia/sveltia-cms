@@ -1,0 +1,1092 @@
+import { moveCaretToEnd, selectText, toggleTaskListItem } from '../../fixtures/rich-text.js';
+import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
+
+/**
+ * @import { Locator, Page } from '@playwright/test';
+ * @import { CMS } from '../../fixtures/test.js';
+ */
+
+const NOTE_PATH = 'content/notes/note.md';
+
+/**
+ * Build a config with a Notes collection whose body is a rich text field with the given options.
+ * @param {Record<string, any>} options Options of the body field.
+ * @param {Record<string, any>} [rootOptions] Options at the root of the config, e.g.
+ * `field_defaults`.
+ * @returns {Record<string, any>} Config.
+ */
+const noteConfig = (options, rootOptions = {}) => ({
+  backend: { name: 'test-repo' },
+  media_folder: 'static/uploads',
+  public_folder: '/uploads',
+  ...rootOptions,
+  collections: [
+    {
+      name: 'notes',
+      label: 'Notes',
+      label_singular: 'Note',
+      folder: 'content/notes',
+      create: true,
+      fields: [
+        { name: 'title', label: 'Title' },
+        { name: 'body', label: 'Body', widget: 'richtext', ...options },
+      ],
+    },
+  ],
+});
+
+/**
+ * Build the file of a note with the given body, as the CMS writes it.
+ * @param {string} body Markdown body.
+ * @returns {string} File content.
+ */
+const noteFile = (body) => `---\ntitle: Note\n---\n\n${body}\n`;
+
+/**
+ * Seed a note with the given body, sign in and open it in the editor.
+ * @param {object} args Arguments.
+ * @param {CMS} args.cms CMS.
+ * @param {Page} args.page Page.
+ * @param {string} args.body Markdown body of the note.
+ * @returns {Promise<{ editor: Locator, field: Locator, body: Locator }>} The editor, the body
+ * field and its text box, which is the rich text editor or the Markdown source editor.
+ */
+const openNote = async ({ cms, page, body }) => {
+  await cms.open();
+  await cms.seed({ [NOTE_PATH]: noteFile(body) });
+  await cms.signIn();
+  await page.getByRole('row', { name: /Note/ }).click();
+
+  const editor = getEditor(page);
+  const field = editor.getByRole('group', { name: /Body.*Field/ });
+
+  // The first one, as an image in the body, once rendered, has a Title field too
+  await expect(editor.getByRole('textbox', { name: 'Title' }).first()).toHaveValue('Note');
+
+  return { editor, field, body: field.getByRole('textbox', { name: 'Body' }) };
+};
+
+/**
+ * Save the entry and wait for the note file to have been written with the given body.
+ * @param {object} args Arguments.
+ * @param {CMS} args.cms CMS.
+ * @param {Locator} args.editor Content editor.
+ * @param {string} args.body Markdown body expected in the file.
+ */
+const saveAndExpect = async ({ cms, editor, body }) => {
+  await editor.getByRole('button', { name: 'Save' }).click();
+  await expect.poll(async () => (await cms.readRepo())[NOTE_PATH]).toBe(noteFile(body));
+};
+
+test.describe('modes', () => {
+  test.describe('default', () => {
+    test.use({ config: noteConfig({}) });
+
+    test('opens in rich text, with a toggle to edit the Markdown', async ({ cms, page }) => {
+      const { field, body } = await openNote({ cms, page, body: '## Hello' });
+
+      await expect(body.getByRole('heading', { name: 'Hello' })).toBeVisible();
+      await expect(field.getByRole('button', { name: 'Edit in Markdown' })).toHaveAttribute(
+        'aria-pressed',
+        'false',
+      );
+    });
+  });
+
+  test.describe('rich text only', () => {
+    test.use({ config: noteConfig({ modes: ['rich_text'] }) });
+
+    test('offers no Markdown editor', async ({ cms, page }) => {
+      const { field, body } = await openNote({ cms, page, body: '## Hello' });
+
+      await expect(body.getByRole('heading', { name: 'Hello' })).toBeVisible();
+      await expect(field.getByRole('button', { name: 'Bold' })).toBeVisible();
+      await expect(field.getByRole('button', { name: 'Edit in Markdown' })).toHaveCount(0);
+    });
+  });
+
+  test.describe('Markdown only', () => {
+    test.use({ config: noteConfig({ widget: 'markdown', modes: ['raw'] }) });
+
+    test('edits the Markdown source, with the toolbar inserting Markdown', async ({
+      cms,
+      page,
+    }) => {
+      const { editor, field, body } = await openNote({ cms, page, body: '## Hello' });
+
+      // A single text box, holding the source, and no toggle
+      await expect(body).toHaveCount(1);
+      await expect(body).toHaveValue('## Hello');
+      await expect(field.getByRole('button', { name: 'Edit in Markdown' })).toHaveCount(0);
+
+      await body.fill('## Hello\n\nWorld\n\n');
+      // The image component inserts its Markdown at the caret, to be filled in
+      await body.evaluate((/** @type {HTMLTextAreaElement} */ textarea) => {
+        textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+      });
+      await field.getByRole('button', { name: 'Image', exact: true }).click();
+      await expect(body).toHaveValue('## Hello\n\nWorld\n\n![]()');
+      await body.fill('## Hello\n\nWorld\n\n![Dome](/uploads/dome.png)');
+
+      await saveAndExpect({ cms, editor, body: '## Hello\n\nWorld\n\n![Dome](/uploads/dome.png)' });
+    });
+  });
+
+  test.describe('Markdown first', () => {
+    test.use({ config: noteConfig({ modes: ['raw', 'rich_text'] }) });
+
+    test('opens in the Markdown editor, which can be switched to rich text', async ({
+      cms,
+      page,
+    }) => {
+      const { field, body } = await openNote({ cms, page, body: '## Hello' });
+      const toggle = field.getByRole('button', { name: 'Edit in Markdown' });
+
+      await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+      await expect(body).toHaveValue('## Hello');
+
+      await toggle.click();
+      await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+      await expect(body.getByRole('heading', { name: 'Hello' })).toBeVisible();
+    });
+  });
+});
+
+test.describe('buttons', () => {
+  test.describe('inline formatting only', () => {
+    test.use({
+      config: noteConfig({ buttons: ['bold', 'link'], editor_components: ['image'] }),
+    });
+
+    test('shows only the listed buttons, which format the text', async ({ cms, page }) => {
+      const { editor, field, body } = await openNote({ cms, page, body: 'The dome opens.' });
+
+      await expect(field.getByRole('button', { name: 'Bold' })).toBeVisible();
+      await expect(field.getByRole('button', { name: 'Link' })).toBeVisible();
+      await expect(field.getByRole('button', { name: 'Italic' })).toHaveCount(0);
+      await expect(field.getByRole('button', { name: 'Strikethrough' })).toHaveCount(0);
+      await expect(field.getByRole('button', { name: 'Code', exact: true })).toHaveCount(0);
+      // Without a block type to choose, there’s no text style menu
+      await expect(field.getByRole('button', { name: 'Show Text Style Options' })).toHaveCount(0);
+
+      await selectText(body, 'dome');
+      await field.getByRole('button', { name: 'Bold' }).click();
+      await expect(body.locator('strong')).toHaveText('dome');
+
+      await saveAndExpect({ cms, editor, body: 'The **dome** opens.' });
+    });
+  });
+
+  test.describe('block types only', () => {
+    test.use({
+      config: noteConfig({ buttons: ['heading-two', 'quote'], editor_components: [] }),
+    });
+
+    test('offers only the listed block types, which change the block', async ({ cms, page }) => {
+      const { editor, field, body } = await openNote({ cms, page, body: 'The dome opens.' });
+      const menuButton = field.getByRole('button', { name: 'Show Text Style Options' });
+
+      await expect(field.getByRole('button', { name: 'Bold' })).toHaveCount(0);
+      await expect(field.getByRole('button', { name: 'Link' })).toHaveCount(0);
+
+      await body.getByText('The dome opens.').click();
+      await cms.openPopup(menuButton, page.getByRole('menu', { name: 'Text Style Options' }));
+      await expect(
+        page.getByRole('menu', { name: 'Text Style Options' }).getByRole('menuitemcheckbox'),
+      ).toHaveText([/Paragraph/, /Heading 2/, /Block Quote/]);
+      await page.getByRole('menuitemcheckbox', { name: 'Block Quote' }).click();
+      await expect(body.locator('blockquote')).toHaveText('The dome opens.');
+
+      await saveAndExpect({ cms, editor, body: '> The dome opens.' });
+    });
+  });
+});
+
+test.describe('editor components', () => {
+  /**
+   * Open the text style menu of a field, which lists the block types it offers.
+   * @param {CMS} cms CMS.
+   * @param {Page} page Page.
+   * @param {Locator} field Field.
+   * @returns {Promise<Locator>} Menu.
+   */
+  const openBlockTypes = async (cms, page, field) => {
+    const menu = page.getByRole('menu', { name: 'Text Style Options' });
+
+    await cms.openPopup(field.getByRole('button', { name: 'Show Text Style Options' }), menu);
+
+    return menu;
+  };
+
+  test.describe('default', () => {
+    test.use({ config: noteConfig({}) });
+
+    test('offers the image and the code block, but not the table or the rule', async ({
+      cms,
+      page,
+    }) => {
+      const { field } = await openNote({ cms, page, body: 'The dome opens.' });
+
+      await expect(field.getByRole('button', { name: 'Image', exact: true })).toBeVisible();
+      await expect(field.getByRole('button', { name: 'Insert Table' })).toHaveCount(0);
+      await expect(field.getByRole('button', { name: 'Insert Horizontal Rule' })).toHaveCount(0);
+
+      const menu = await openBlockTypes(cms, page, field);
+
+      await expect(menu.getByRole('menuitemcheckbox', { name: 'Code Block' })).toBeVisible();
+    });
+  });
+
+  test.describe('image only', () => {
+    test.use({ config: noteConfig({ editor_components: ['image'] }) });
+
+    test('offers the image but not the code block', async ({ cms, page }) => {
+      const { field } = await openNote({ cms, page, body: 'The dome opens.' });
+
+      await expect(field.getByRole('button', { name: 'Image', exact: true })).toBeVisible();
+
+      const menu = await openBlockTypes(cms, page, field);
+
+      await expect(menu.getByRole('menuitemcheckbox', { name: 'Heading 2' })).toBeVisible();
+      await expect(menu.getByRole('menuitemcheckbox', { name: 'Code Block' })).toHaveCount(0);
+    });
+  });
+
+  test.describe('code block only', () => {
+    test.use({ config: noteConfig({ editor_components: ['code-block'] }) });
+
+    test('offers the code block but not the image', async ({ cms, page }) => {
+      const { editor, field, body } = await openNote({ cms, page, body: 'const x = 1;' });
+
+      await expect(field.getByRole('button', { name: 'Image', exact: true })).toHaveCount(0);
+
+      await body.getByText('const x = 1;').click();
+      await cms.chooseMenuItem(
+        field.getByRole('button', { name: 'Show Text Style Options' }),
+        page.getByRole('menuitemcheckbox', { name: 'Code Block' }),
+      );
+      await expect(field.getByRole('combobox', { name: 'Language' })).toBeVisible();
+      await expect(body.locator('code')).toHaveText('const x = 1;');
+
+      await editor.getByRole('button', { name: 'Save' }).click();
+      await expect
+        .poll(async () => (await cms.readRepo())[NOTE_PATH])
+        .toMatch(/\n```\w*\nconst x = 1;\n```\n$/);
+    });
+  });
+
+  test.describe('none', () => {
+    test.use({ config: noteConfig({ editor_components: [] }) });
+
+    test('offers no component', async ({ cms, page }) => {
+      const { field } = await openNote({ cms, page, body: 'The dome opens.' });
+
+      await expect(field.getByRole('button', { name: 'Bold' })).toBeVisible();
+      await expect(field.getByRole('button', { name: 'Image', exact: true })).toHaveCount(0);
+      await expect(field.getByRole('button', { name: 'Insert' })).toHaveCount(0);
+
+      const menu = await openBlockTypes(cms, page, field);
+
+      await expect(menu.getByRole('menuitemcheckbox', { name: 'Heading 2' })).toBeVisible();
+      await expect(menu.getByRole('menuitemcheckbox', { name: 'Code Block' })).toHaveCount(0);
+    });
+  });
+});
+
+test.describe('tables', () => {
+  test.use({ config: noteConfig({ editor_components: ['image', 'table'] }) });
+
+  test('inserts a table, which is saved as Markdown', async ({ cms, page }) => {
+    const { editor, field, body } = await openNote({ cms, page, body: 'Opening hours' });
+
+    await moveCaretToEnd(body);
+    await page.keyboard.press('Enter');
+    await field.getByRole('button', { name: 'Insert Table' }).click();
+
+    const dialog = page.getByRole('dialog', { name: 'Insert Table' });
+
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('spinbutton', { name: 'Rows' }).fill('2');
+    await dialog.getByRole('spinbutton', { name: 'Columns' }).fill('2');
+    await dialog.getByRole('button', { name: 'Insert' }).click();
+    await expect(dialog).toBeHidden();
+
+    // The caret is in the first cell, and the Tab key moves to the next one
+    await expect(body.locator('th')).toHaveCount(2);
+    await page.keyboard.type('Day');
+    await page.keyboard.press('Tab');
+    await page.keyboard.type('Hours');
+    await page.keyboard.press('Tab');
+    await page.keyboard.type('Monday');
+    await page.keyboard.press('Tab');
+    await page.keyboard.type('9–5');
+
+    await saveAndExpect({
+      cms,
+      editor,
+      body: 'Opening hours\n\n| Day | Hours |\n| --- | --- |\n| Monday | 9–5 |',
+    });
+  });
+
+  test('edits the rows and columns of a table from its menus', async ({ cms, page }) => {
+    const { editor, field, body } = await openNote({
+      cms,
+      page,
+      body: '| Day | Hours |\n| --- | --- |\n| Monday | 9–5 |',
+    });
+
+    // The menu button on the cell
+    await body.getByText('Monday').click();
+    await cms.chooseMenuItem(
+      field.locator('.table-cell-menu-button').getByRole('button', { name: 'Show Table Options' }),
+      page.getByRole('menuitem', { name: 'Insert Row Below' }),
+    );
+    await expect(body.locator('tr')).toHaveCount(3);
+    await body.locator('tr').nth(2).locator('td').first().click();
+    await page.keyboard.type('Tuesday');
+
+    // The same menu on the toolbar
+    await body.getByText('Hours').click();
+    await cms.chooseMenuItem(
+      field.getByRole('toolbar').getByRole('button', { name: 'Show Table Options' }),
+      page.getByRole('menuitem', { name: 'Delete Column' }),
+    );
+    await expect(body.locator('th')).toHaveCount(1);
+
+    await saveAndExpect({
+      cms,
+      editor,
+      body: '| Day |\n| --- |\n| Monday |\n| Tuesday |',
+    });
+  });
+});
+
+test.describe('horizontal rules', () => {
+  test.use({ config: noteConfig({ editor_components: ['image', 'hr'] }) });
+
+  test('inserts a horizontal rule, which is saved as Markdown', async ({ cms, page }) => {
+    const { editor, field, body } = await openNote({ cms, page, body: 'Part one' });
+
+    await moveCaretToEnd(body);
+    await field.getByRole('button', { name: 'Insert Horizontal Rule' }).click();
+    await expect(body.locator('hr')).toHaveCount(1);
+    // The caret is below the rule
+    await page.keyboard.type('Part two');
+
+    await saveAndExpect({ cms, editor, body: 'Part one\n\n***\n\nPart two' });
+  });
+});
+
+test.describe('text alignment', () => {
+  test.describe('HTML', () => {
+    test.use({ config: noteConfig({ format: 'html', buttons: ['bold', 'align'] }) });
+
+    test('aligns the paragraph, which is saved with the style', async ({ cms, page }) => {
+      const { editor, field, body } = await openNote({ cms, page, body: '<p>Opening hours</p>' });
+
+      await body.getByText('Opening hours').click();
+      await cms.chooseMenuItem(
+        field.getByRole('button', { name: 'Show Alignment Options' }),
+        page.getByRole('menuitemradio', { name: 'Center Align' }),
+      );
+      await expect(body.locator('p')).toHaveCSS('text-align', 'center');
+
+      await saveAndExpect({
+        cms,
+        editor,
+        body: '<p style="text-align: center;">Opening hours</p>',
+      });
+    });
+  });
+
+  test.describe('Markdown', () => {
+    test.use({ config: noteConfig({ buttons: ['bold', 'align'] }) });
+
+    test('offers no alignment, which Markdown can’t hold', async ({ cms, page }) => {
+      const { field } = await openNote({ cms, page, body: 'Opening hours' });
+
+      await expect(field.getByRole('button', { name: 'Bold' })).toBeVisible();
+      await expect(field.getByRole('button', { name: 'Show Alignment Options' })).toHaveCount(0);
+    });
+  });
+});
+
+test.describe('underline', () => {
+  test.describe('HTML', () => {
+    test.use({ config: noteConfig({ format: 'html', buttons: ['bold', 'underline'] }) });
+
+    test('underlines the selected text, which is saved with `<u>`', async ({ cms, page }) => {
+      const { editor, field, body } = await openNote({
+        cms,
+        page,
+        body: '<p>Register by 1 March</p>',
+      });
+
+      await selectText(body, '1 March');
+      await field.getByRole('button', { name: 'Underline' }).click();
+      await expect(body.locator('.underline')).toHaveText('1 March');
+
+      await saveAndExpect({ cms, editor, body: '<p>Register by <u>1 March</u></p>' });
+    });
+  });
+
+  test.describe('Markdown', () => {
+    test.use({ config: noteConfig({ buttons: ['bold', 'underline'] }) });
+
+    test('offers no underline, which Markdown can’t hold', async ({ cms, page }) => {
+      const { field } = await openNote({ cms, page, body: 'Register by 1 March' });
+
+      await expect(field.getByRole('button', { name: 'Bold' })).toBeVisible();
+      await expect(field.getByRole('button', { name: 'Underline' })).toHaveCount(0);
+    });
+  });
+});
+
+test.describe('task lists', () => {
+  test.describe('Markdown', () => {
+    test.use({ config: noteConfig({ buttons: ['bold', 'bulleted-list', 'task-list'] }) });
+
+    test('toggles an item with a click, and shows check boxes in the preview', async ({
+      cms,
+      page,
+    }) => {
+      const { editor, body } = await openNote({ cms, page, body: '- [ ] Hat\n- [x] Sunscreen' });
+      const preview = editor.getByRole('document', { name: 'Content Preview' });
+      const items = body.getByRole('checkbox');
+
+      await expect(items).toHaveCount(2);
+      await expect(items.first()).toHaveAttribute('aria-checked', 'false');
+      await expect(preview.getByRole('checkbox')).toHaveCount(2);
+      await expect(preview.getByRole('checkbox').first()).not.toBeChecked();
+      await expect(preview.getByRole('checkbox').first()).toBeDisabled();
+
+      await toggleTaskListItem(items.first());
+      await expect(items.first()).toHaveAttribute('aria-checked', 'true');
+      await expect(preview.getByRole('checkbox').first()).toBeChecked();
+
+      await saveAndExpect({ cms, editor, body: '- [x] Hat\n- [x] Sunscreen' });
+    });
+
+    test('turns a paragraph into a task list item from the text style menu', async ({
+      cms,
+      page,
+    }) => {
+      const { editor, field, body } = await openNote({ cms, page, body: 'Water bottle' });
+
+      await body.getByText('Water bottle').click();
+      await cms.chooseMenuItem(
+        field.getByRole('button', { name: 'Show Text Style Options' }),
+        page.getByRole('menuitemcheckbox', { name: 'Task List' }),
+      );
+      await expect(body.getByRole('checkbox')).toHaveCount(1);
+
+      await saveAndExpect({ cms, editor, body: '- [ ] Water bottle' });
+    });
+  });
+
+  test.describe('HTML', () => {
+    test.use({ config: noteConfig({ format: 'html', buttons: ['bold', 'task-list'] }) });
+
+    test('saves a task list the way GitHub renders it', async ({ cms, page }) => {
+      const { editor, body } = await openNote({
+        cms,
+        page,
+        body:
+          '<ul class="contains-task-list">' +
+          '<li class="task-list-item"><input type="checkbox" disabled=""> Hat</li></ul>',
+      });
+
+      await toggleTaskListItem(body.getByRole('checkbox'));
+      await saveAndExpect({
+        cms,
+        editor,
+        body:
+          '<ul class="contains-task-list">' +
+          '<li class="task-list-item"><input type="checkbox" disabled="" checked=""> Hat</li>' +
+          '</ul>',
+      });
+    });
+  });
+
+  test.describe('default', () => {
+    test.use({ config: noteConfig({}) });
+
+    test('offers no task list, keeping the items as text', async ({ cms, page }) => {
+      const { editor, field, body } = await openNote({ cms, page, body: '- [ ] Hat' });
+
+      await field.getByRole('button', { name: 'Show Text Style Options' }).click();
+      await expect(page.getByRole('menuitemcheckbox', { name: 'Bulleted List' })).toBeVisible();
+      await expect(page.getByRole('menuitemcheckbox', { name: 'Task List' })).toHaveCount(0);
+      await page.keyboard.press('Escape');
+      await expect(body.getByRole('checkbox')).toHaveCount(0);
+      await expect(body.getByRole('listitem')).toHaveText('[ ] Hat');
+
+      await moveCaretToEnd(body);
+      await page.keyboard.type('s');
+      await saveAndExpect({ cms, editor, body: '- [ ] Hats' });
+    });
+  });
+});
+
+test.describe('link targets', () => {
+  test.use({ config: noteConfig({ format: 'html' }) });
+
+  test('sets a link to open in a new tab, which is saved as `target`', async ({ cms, page }) => {
+    const { editor, body } = await openNote({
+      cms,
+      page,
+      body: '<p>See <a href="https://example.com/">Example</a></p>',
+    });
+
+    await body.getByText('Example').click();
+
+    const popup = page.getByRole('group', { name: 'Link' });
+
+    await popup.getByRole('button', { name: 'Edit Link' }).click();
+    await popup.getByRole('button', { name: 'Open in New Tab' }).click();
+    await expect(popup.getByRole('button', { name: 'Open in New Tab' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await popup.getByRole('button', { name: 'Update' }).click();
+
+    await saveAndExpect({
+      cms,
+      editor,
+      body: '<p>See <a href="https://example.com/" target="_blank">Example</a></p>',
+    });
+  });
+});
+
+test.describe('linked images', () => {
+  test.describe('default', () => {
+    test.use({ config: noteConfig({}) });
+
+    test('edits the link of an image, which is saved around it', async ({ cms, page }) => {
+      const { editor, field } = await openNote({
+        cms,
+        page,
+        body: '[![Dome](/uploads/dome.png)](https://example.com/dome)',
+      });
+
+      const component = field.getByRole('group', { name: 'Image', exact: true });
+      const link = component.getByRole('textbox', { name: 'Link' });
+
+      await expect(component.getByRole('textbox', { name: 'Alt Text' })).toHaveValue('Dome');
+      await expect(link).toHaveValue('https://example.com/dome');
+      await link.fill('https://example.com/night');
+
+      await saveAndExpect({
+        cms,
+        editor,
+        body: '[![Dome](/uploads/dome.png)](https://example.com/night)',
+      });
+    });
+  });
+
+  test.describe('turned off', () => {
+    test.use({ config: noteConfig({ linked_images: false }) });
+
+    test('offers no link for an image', async ({ cms, page }) => {
+      const { editor, field } = await openNote({
+        cms,
+        page,
+        body: '![Dome](/uploads/dome.png)',
+      });
+
+      const component = field.getByRole('group', { name: 'Image', exact: true });
+      const alt = component.getByRole('textbox', { name: 'Alt Text' });
+
+      await expect(alt).toHaveValue('Dome');
+      await expect(component.getByRole('textbox', { name: 'Link' })).toHaveCount(0);
+      await alt.fill('The dome');
+
+      await saveAndExpect({ cms, editor, body: '![The dome](/uploads/dome.png)' });
+    });
+  });
+});
+
+test.describe('captioned images', () => {
+  test.describe('default', () => {
+    test.use({ config: noteConfig({}) });
+
+    test('offers a caption for an image', async ({ cms, page }) => {
+      const { field } = await openNote({ cms, page, body: '![Dome](/uploads/dome.png)' });
+      const component = field.getByRole('group', { name: 'Image', exact: true });
+
+      await expect(component.getByRole('textbox', { name: 'Caption' })).toHaveCount(1);
+    });
+  });
+
+  test.describe('turned off', () => {
+    test.use({ config: noteConfig({ captioned_images: false }) });
+
+    test('offers no caption for an image', async ({ cms, page }) => {
+      const { editor, field } = await openNote({
+        cms,
+        page,
+        body: '[![Dome](/uploads/dome.png)](https://example.com/dome)',
+      });
+
+      const component = field.getByRole('group', { name: 'Image', exact: true });
+      const alt = component.getByRole('textbox', { name: 'Alt Text' });
+
+      await expect(alt).toHaveValue('Dome');
+      await expect(component.getByRole('textbox', { name: 'Link' })).toHaveValue(
+        'https://example.com/dome',
+      );
+      await expect(component.getByRole('textbox', { name: 'Caption' })).toHaveCount(0);
+      await alt.fill('The dome');
+
+      await saveAndExpect({
+        cms,
+        editor,
+        body: '[![The dome](/uploads/dome.png)](https://example.com/dome)',
+      });
+    });
+
+    test('leaves a figure as it is', async ({ cms, page }) => {
+      const figure =
+        '<figure><img src="/uploads/dome.png" alt="Dome"><figcaption>Photo</figcaption></figure>';
+
+      const { editor, field, body } = await openNote({ cms, page, body: `${figure}\n\nIntro.` });
+
+      await expect(field.getByRole('group', { name: 'Image', exact: true })).toHaveCount(0);
+      await expect(body.getByText('Intro.')).toBeVisible();
+      await moveCaretToEnd(body);
+      await page.keyboard.type(' More.');
+
+      await saveAndExpect({ cms, editor, body: `${figure}\n\nIntro. More.` });
+    });
+  });
+});
+
+test.describe('image captions in HTML', () => {
+  test.use({ config: noteConfig({ format: 'html' }), viewport: { width: 1280, height: 2000 } });
+
+  // The image component is inline, but a `<figure>` can’t be in a paragraph, so Sveltia UI splits
+  // the paragraph around it, and the figure is saved as it’s loaded
+  test('loads an image with a caption as a component', async ({ cms, page }) => {
+    const figure =
+      '<figure><a href="https://example.com/"><img src="/uploads/dome.png" alt="Dome"></a>' +
+      '<figcaption>Photo by <a href="https://example.com/jane">Jane</a></figcaption></figure>';
+
+    const { editor, field } = await openNote({ cms, page, body: `<p>Intro.</p>${figure}` });
+    const component = field.getByRole('group', { name: 'Image', exact: true });
+
+    await expect(component.getByRole('textbox', { name: 'Caption' })).toHaveValue(
+      'Photo by <a href="https://example.com/jane">Jane</a>',
+    );
+    await expect(component.getByRole('textbox', { name: 'Link' })).toHaveValue(
+      'https://example.com/',
+    );
+    await component.getByRole('textbox', { name: 'Alt Text' }).fill('The dome');
+
+    await saveAndExpect({
+      cms,
+      editor,
+      body: `<p>Intro.</p>${figure.replace('"Dome"', '"The dome"')}`,
+    });
+  });
+
+  // The paragraph the image was in is left out around the figure, as above
+  test('writes an image with a caption as a figure', async ({ cms, page }) => {
+    const { editor, field } = await openNote({
+      cms,
+      page,
+      body: '<p>Intro.</p><p><img src="/uploads/dome.png" alt="Dome"></p>',
+    });
+
+    await field
+      .getByRole('group', { name: 'Image', exact: true })
+      .getByRole('textbox', { name: 'Caption' })
+      .fill('The dome at <em>night</em>');
+
+    await saveAndExpect({
+      cms,
+      editor,
+      body:
+        '<p>Intro.</p><figure><img src="/uploads/dome.png" alt="Dome">' +
+        '<figcaption>The dome at <em>night</em></figcaption></figure>',
+    });
+  });
+});
+
+test.describe('minimal', () => {
+  const LONG_BODY = Array.from({ length: 30 }, (_, index) => `Paragraph ${index + 1}.`).join(
+    '\n\n',
+  );
+
+  test.describe('default', () => {
+    test.use({ config: noteConfig({}) });
+
+    test('grows the editor with its content', async ({ cms, page }) => {
+      const { body } = await openNote({ cms, page, body: LONG_BODY });
+
+      await expect(body).toContainText('Paragraph 30.');
+      expect((await body.boundingBox())?.height).toBeGreaterThan(240);
+    });
+  });
+
+  test.describe('turned on', () => {
+    test.use({ config: noteConfig({ minimal: true }) });
+
+    test('limits the editor height, scrolling the content', async ({ cms, page }) => {
+      const { body } = await openNote({ cms, page, body: LONG_BODY });
+
+      await expect(body).toContainText('Paragraph 30.');
+      expect((await body.boundingBox())?.height).toBeLessThanOrEqual(240);
+      expect(await body.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(
+        true,
+      );
+    });
+
+    test('starts with the height of a single line', async ({ cms, page }) => {
+      const { body } = await openNote({ cms, page, body: 'Short.' });
+
+      await expect(body).toContainText('Short.');
+      // One line plus the padding, well below the 120 pixels a multiline editor starts with
+      expect((await body.boundingBox())?.height).toBeLessThan(80);
+    });
+  });
+});
+
+test.describe('multiline', () => {
+  test.describe('turned off', () => {
+    test.use({
+      config: noteConfig({
+        multiline: false,
+        buttons: ['bold', 'italic', 'link', 'heading-one', 'quote'],
+      }),
+    });
+
+    test('keeps the text on one line as the user types and pastes', async ({ cms, page }) => {
+      const { editor, field, body } = await openNote({ cms, page, body: 'One line.' });
+
+      await expect(body).toHaveAttribute('aria-multiline', 'false');
+      await expect(field.getByRole('button', { name: 'Bold' })).toBeVisible();
+      // The block-level buttons are left out
+      await expect(field.getByRole('button', { name: 'Show Text Style Options' })).toHaveCount(0);
+
+      await moveCaretToEnd(body);
+      await page.keyboard.press('Enter');
+      await page.keyboard.press('Shift+Enter');
+      await page.keyboard.type(' Two.');
+      await body.evaluate((element) => {
+        const clipboardData = new DataTransfer();
+
+        clipboardData.setData('text/plain', ' Three.\n\nFour.\nFive.');
+        element.dispatchEvent(new ClipboardEvent('paste', { clipboardData, bubbles: true }));
+      });
+      await expect(body.locator('p')).toHaveCount(1);
+      await saveAndExpect({ cms, editor, body: 'One line. Two. Three. Four. Five.' });
+    });
+
+    test('keeps the Markdown source on one line too', async ({ cms, page }) => {
+      const { editor, field, body } = await openNote({ cms, page, body: 'One line.' });
+
+      await field.getByRole('button', { name: 'Edit in Markdown' }).click();
+      await expect(body).toHaveValue('One line.');
+      await body.evaluate((/** @type {HTMLTextAreaElement} */ textarea) => {
+        textarea.focus();
+        textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+      });
+      await page.keyboard.press('Enter');
+      await page.keyboard.type(' **Two.**');
+      await expect(body).toHaveValue('One line. **Two.**');
+      await saveAndExpect({ cms, editor, body: 'One line. **Two.**' });
+    });
+
+    test('keeps a stored value with several paragraphs until it’s edited', async ({
+      cms,
+      page,
+    }) => {
+      const { editor, body } = await openNote({ cms, page, body: 'One.\n\nTwo.' });
+
+      await expect(body.locator('p')).toHaveText('One. Two.');
+      await moveCaretToEnd(body);
+      await page.keyboard.type(' Three.');
+      await saveAndExpect({ cms, editor, body: 'One. Two. Three.' });
+    });
+  });
+});
+
+test.describe('pattern', () => {
+  /** Options of a Markdown field limited to inline formatting, as in issue #1118. */
+  const INLINE_OPTIONS = {
+    widget: 'markdown',
+    minimal: true,
+    buttons: ['bold', 'italic', 'strikethrough', 'code', 'link'],
+    editor_components: [],
+    required: false,
+  };
+
+  test.describe('single line', () => {
+    test.use({
+      config: noteConfig({ ...INLINE_OPTIONS, pattern: ['^[^\\n]*$', 'Enter a single line'] }),
+    });
+
+    test('rejects a second paragraph', async ({ cms, page }) => {
+      const { editor, field, body } = await openNote({ cms, page, body: 'One line.' });
+      const error = field.getByRole('alert');
+
+      await moveCaretToEnd(body);
+      await page.keyboard.press('Enter');
+      await page.keyboard.type('Second.');
+      await editor.getByRole('button', { name: 'Save' }).click();
+      await expect(error).toContainText('Enter a single line');
+      expect((await cms.readRepo())[NOTE_PATH]).toBe(noteFile('One line.'));
+
+      // Remove the second paragraph and its break, then add the text to the first one
+      await selectText(body, 'Second.');
+      await page.keyboard.press('Backspace');
+      await page.keyboard.press('Backspace');
+      await page.keyboard.type(' Second.');
+      await expect(error).toHaveCount(0);
+      await saveAndExpect({ cms, editor, body: 'One line. Second.' });
+    });
+  });
+
+  test.describe('any pattern', () => {
+    test.use({ config: noteConfig({ ...INLINE_OPTIONS, pattern: ['^[^a]*$', 'No letter a'] }) });
+
+    test('rejects a value that doesn’t match', async ({ cms, page }) => {
+      const { editor, field, body } = await openNote({ cms, page, body: 'Sun.' });
+
+      await moveCaretToEnd(body);
+      await page.keyboard.type(' Moon and stars.');
+      await editor.getByRole('button', { name: 'Save' }).click();
+      await expect(field.getByRole('alert')).toContainText('No letter a');
+      expect((await cms.readRepo())[NOTE_PATH]).toBe(noteFile('Sun.'));
+    });
+  });
+});
+
+test.describe('Markdown shortcuts', () => {
+  test.describe('default', () => {
+    test.use({ config: noteConfig({}) });
+
+    test('turns a Markdown prefix into a heading', async ({ cms, page }) => {
+      const { editor, body } = await openNote({ cms, page, body: 'The dome opens.' });
+
+      await moveCaretToEnd(body);
+      await page.keyboard.press('Enter');
+      await page.keyboard.type('## Hours');
+      await expect(body.getByRole('heading', { name: 'Hours' })).toBeVisible();
+
+      await saveAndExpect({ cms, editor, body: 'The dome opens.\n\n## Hours' });
+    });
+  });
+
+  test.describe('turned off', () => {
+    test.use({ config: noteConfig({ use_markdown_shortcuts: false }) });
+
+    test('keeps a Markdown prefix as text, saving it escaped', async ({ cms, page }) => {
+      const { editor, body } = await openNote({ cms, page, body: 'The dome opens.' });
+
+      await moveCaretToEnd(body);
+      await page.keyboard.press('Enter');
+      await page.keyboard.type('## Hours');
+      await expect(body.locator('p').last()).toHaveText('## Hours');
+      await expect(body.getByRole('heading')).toHaveCount(0);
+
+      // Escaped, so the paragraph isn’t read back as a heading the next time the entry is opened
+      await saveAndExpect({ cms, editor, body: 'The dome opens.\n\n\\## Hours' });
+    });
+  });
+});
+
+test.describe('escaped Markdown syntax', () => {
+  test.use({ config: noteConfig({}) });
+
+  test('keeps escaped block syntax as text when another paragraph changes', async ({
+    cms,
+    page,
+  }) => {
+    const { editor, body } = await openNote({
+      cms,
+      page,
+      body: '\\## Hours\n\n1\\. Daily\n\nThe dome opens.',
+    });
+
+    await expect(body.getByRole('heading')).toHaveCount(0);
+    await expect(body.getByRole('list')).toHaveCount(0);
+    await expect(body.locator('p').first()).toHaveText('## Hours');
+
+    await moveCaretToEnd(body);
+    await page.keyboard.type(' Weather permitting.');
+
+    // The escapes are written back, or the entry would get a heading and a list
+    await saveAndExpect({
+      cms,
+      editor,
+      body: '\\## Hours\n\n1\\. Daily\n\nThe dome opens. Weather permitting.',
+    });
+  });
+});
+
+test.describe('emoji autocomplete', () => {
+  test.describe('default', () => {
+    test.use({ config: noteConfig({}) });
+
+    test('suggests emojis for a word after a colon', async ({ cms, page }) => {
+      const { editor, body } = await openNote({ cms, page, body: 'The dome opens' });
+      const suggestions = page.getByRole('listbox', { name: 'Emoji Suggestions' });
+
+      await moveCaretToEnd(body);
+      await page.keyboard.type(' :tada');
+      await expect(suggestions.getByRole('option').first()).toBeVisible();
+      await page.keyboard.press('Enter');
+      await expect(suggestions).toBeHidden();
+
+      await saveAndExpect({ cms, editor, body: 'The dome opens 🎉' });
+    });
+  });
+
+  test.describe('turned off', () => {
+    test.use({ config: noteConfig({ use_emoji_autocomplete: false }) });
+
+    test('suggests nothing', async ({ cms, page }) => {
+      const { editor, body } = await openNote({ cms, page, body: 'The dome opens' });
+
+      await moveCaretToEnd(body);
+      await page.keyboard.type(' :tada');
+      await expect(body).toContainText('The dome opens :tada');
+      await page.keyboard.press('Enter');
+      await page.keyboard.type('Next');
+      await expect(page.getByRole('listbox', { name: 'Emoji Suggestions' })).toHaveCount(0);
+
+      await saveAndExpect({ cms, editor, body: 'The dome opens :tada\n\nNext' });
+    });
+  });
+});
+
+test.describe('preview sanitization', () => {
+  const BODY = 'Press <button type="button">Go</button> to start.';
+
+  test.describe('default', () => {
+    test.use({ config: noteConfig({}) });
+
+    test('removes unsafe HTML from the preview', async ({ cms, page }) => {
+      const { editor } = await openNote({ cms, page, body: BODY });
+      const preview = editor.getByRole('document', { name: 'Content Preview' });
+
+      await expect(preview).toContainText('to start.');
+      await expect(preview.getByRole('button', { name: 'Go' })).toHaveCount(0);
+    });
+  });
+
+  test.describe('turned off', () => {
+    test.use({ config: noteConfig({ sanitize_preview: false }) });
+
+    test('renders the HTML as is in the preview', async ({ cms, page }) => {
+      const { editor } = await openNote({ cms, page, body: BODY });
+      const preview = editor.getByRole('document', { name: 'Content Preview' });
+
+      await expect(preview).toContainText('to start.');
+      await expect(preview.getByRole('button', { name: 'Go' })).toBeVisible();
+    });
+
+    test('shows HTML given as a new entry’s body in the URL as text, without script links', async ({
+      cms,
+      page,
+    }) => {
+      // Character references, which a plain tag stripper decodes back into a tag
+      const html = '<img src="x" onerror="document.body.dataset.injected = 1">';
+      const body = html.replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+
+      await cms.open();
+      await cms.signIn();
+      await page.evaluate(
+        (query) => {
+          window.location.hash = `/collections/notes/new?body=${query}`;
+        },
+        encodeURIComponent(`${body} [Click me](javascript:document.body.dataset.injected=1) Done.`),
+      );
+
+      const editor = getEditor(page);
+      const preview = editor.getByRole('document', { name: 'Content Preview' });
+
+      await expect(preview).toContainText(`${html} Click me Done.`);
+      await expect(preview.locator('img')).toHaveCount(0);
+      await expect(preview.getByText('Click me')).not.toHaveAttribute('href');
+      await preview.getByText('Click me').click();
+      expect(await page.evaluate(() => document.body.dataset.injected)).toBeUndefined();
+    });
+  });
+
+  test.describe('turned off for the items of a list', () => {
+    test.use({
+      config: {
+        ...noteConfig({}),
+        collections: [
+          {
+            name: 'notes',
+            label: 'Notes',
+            folder: 'content/notes',
+            create: true,
+            fields: [
+              { name: 'title', label: 'Title' },
+              {
+                name: 'blocks',
+                label: 'Blocks',
+                widget: 'list',
+                field: { name: 'body', label: 'Body', widget: 'richtext', sanitize_preview: false },
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    test('shows HTML given as a new entry’s list items in the URL as text', async ({
+      cms,
+      page,
+    }) => {
+      const html = '<img src="x" onerror="document.body.dataset.injected = 1">';
+      const encoded = html.replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+
+      await cms.open();
+      await cms.signIn();
+      await page.evaluate(
+        (query) => {
+          window.location.hash = `/collections/notes/new?blocks=${query}`;
+        },
+        // A raw tag in one item, which is removed, and character references in another
+        encodeURIComponent(`${html}Raw, ${encoded} Done.`),
+      );
+
+      const preview = getEditor(page).getByRole('document', { name: 'Content Preview' });
+
+      await expect(preview).toContainText('Raw');
+      await expect(preview).toContainText(`${html} Done.`);
+      await expect(preview.locator('img')).toHaveCount(0);
+      expect(await page.evaluate(() => document.body.dataset.injected)).toBeUndefined();
+    });
+  });
+});
+
+test.describe('field defaults', () => {
+  test.use({
+    config: noteConfig(
+      { buttons: ['bold'] },
+      { field_defaults: { richtext: { modes: ['raw', 'rich_text'], buttons: ['italic'] } } },
+    ),
+  });
+
+  test('applies the global defaults, overridden by the field’s own options', async ({
+    cms,
+    page,
+  }) => {
+    const { field, body } = await openNote({ cms, page, body: 'The dome opens.' });
+
+    await expect(field.getByRole('button', { name: 'Edit in Markdown' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await expect(body).toHaveValue('The dome opens.');
+    await expect(field.getByRole('button', { name: 'Bold' })).toBeVisible();
+    await expect(field.getByRole('button', { name: 'Italic' })).toHaveCount(0);
+  });
+});

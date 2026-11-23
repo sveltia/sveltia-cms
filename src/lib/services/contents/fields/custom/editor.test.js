@@ -12,9 +12,10 @@ vi.doMock('$lib/services/api/registries', () => {
   };
 });
 
-vi.doMock('$lib/services/api/helpers', () => ({
+vi.doMock('$lib/services/api/preview-data', () => ({
   buildPreviewData: vi.fn(({ draft, locale }) => ({
     entryMap: { __entry: true, content: draft.currentValues[locale] },
+    getAsset: { __getAsset: true },
   })),
 }));
 
@@ -44,6 +45,15 @@ describe('contents/fields/custom/helpers', () => {
 
   it('resolves a function control directly', () => {
     const control = vi.fn();
+
+    expect(resolveControl(control)).toBe(control);
+  });
+
+  it('resolves a `forwardRef` control directly', () => {
+    const control = /** @type {any} */ ({
+      $$typeof: Symbol.for('react.forward_ref'),
+      render: vi.fn(),
+    });
 
     expect(resolveControl(control)).toBe(control);
   });
@@ -91,6 +101,27 @@ describe('contents/fields/custom/helpers', () => {
     mockRegistry.set('child-widget', { control });
 
     expect(resolveControl('parent-widget')).toBe(control);
+  });
+
+  it.each([
+    ['a field type naming itself', [['a', 'a']], 'a'],
+    [
+      'field types naming each other',
+      [
+        ['a', 'b'],
+        ['b', 'a'],
+      ],
+      'b',
+    ],
+  ])('returns undefined with a warning for %s as the control', (_label, types, control) => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    types.forEach(([name, ctrl]) => mockRegistry.set(name, { control: ctrl }));
+
+    expect(resolveControl(control)).toBeUndefined();
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringMatching(/^Custom field type "[ab]" references itself through its control\.$/),
+    );
   });
 
   it('builds props for the React widget with immutable field data', () => {
@@ -196,6 +227,8 @@ describe('contents/fields/custom/helpers', () => {
     });
 
     expect(props.entry).toEqual({ __entry: true, content: { 'groups.0.name': 'foo' } });
+    // The same asset getter as a preview’s, so a control can display a stored file
+    expect(props.getAsset).toEqual({ __getAsset: true });
   });
 
   it('omits the entry data when there is no draft', () => {
@@ -213,5 +246,6 @@ describe('contents/fields/custom/helpers', () => {
     });
 
     expect(props.entry).toBeUndefined();
+    expect(props.getAsset).toBeUndefined();
   });
 });

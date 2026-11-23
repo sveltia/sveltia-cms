@@ -5,7 +5,7 @@ import { deployments, productionSHA } from '$lib/services/deployments';
 import { DEPLOY_TTL } from '$lib/services/deployments/constants';
 import { prefs } from '$lib/services/user/prefs.svelte';
 import { createDerivedState } from '$lib/services/utils/state.svelte';
-import { unpublishedEntries } from '$lib/services/workflow';
+import { allUnpublishedEntries } from '$lib/services/workflow';
 
 /**
  * @import { BackendService, DeployStatus, DeployTarget } from '$lib/types/private';
@@ -69,13 +69,23 @@ export const getDeployTargets = () => {
     seen.add(prodSHA);
   }
 
-  unpublishedEntries.current.forEach(({ workflow: { pullRequest } }) => {
-    const { headSHA, branch: prBranch } = pullRequest;
+  allUnpublishedEntries.current.forEach(({ workflow: { pullRequest } }) => {
+    const { number, headSHA, branch: prBranch } = pullRequest;
 
-    if (headSHA && !seen.has(headSHA)) {
-      targets.push({ sha: headSHA, branch: prBranch, kind: 'preview' });
-      seen.add(headSHA);
+    // An Open Authoring draft with no number is a branch in the contributor’s fork that nothing
+    // has been opened for, so there’s no pull request for the service to have built a preview of.
+    // Its head is on record all the same, so a save can tell whether the branch has moved. A draft
+    // whose pull request was closed keeps its number and is still asked about, which costs one
+    // lookup that finds nothing: the state isn’t on record to tell the two apart.
+    // A contributor’s pull request, once opened, is asked about like any other: a service set up to
+    // build pull requests from forks does build it, and the commit is reachable from the configured
+    // repository because a fork shares its parent’s object store
+    if (number === undefined || !headSHA || seen.has(headSHA)) {
+      return;
     }
+
+    targets.push({ sha: headSHA, branch: prBranch, kind: 'preview' });
+    seen.add(headSHA);
   });
 
   return targets;
@@ -111,12 +121,12 @@ const isFresh = (status) =>
   !!status && status.state !== 'checking' && Date.now() - status.checkedTime < DEPLOY_TTL;
 
 /**
- * Record that a lookup is about to happen for any commit nothing is known about yet. This runs
- * synchronously, so the control reports the wait from the moment a save moves the tracked commit
- * rather than showing a live site link until the first result lands.
+ * Record that the given commits are about to be looked up. Only a commit with no result yet is
+ * marked; re-checking a known one in the background shouldn’t flip the UI back to a loading state
+ * on every poll.
+ * @param {DeployTarget[]} targets Commits about to be looked up.
  */
-export const markLookupPending = () => {
-  const targets = getDeployTargets();
+const markChecking = (targets) => {
   const map = deployments.current;
 
   /** @type {Record<string, DeployStatus>} */
@@ -126,10 +136,20 @@ export const markLookupPending = () => {
       .map(({ sha }) => [sha, /** @type {DeployStatus} */ ({ state: 'checking', checkedTime: 0 })]),
   );
 
-  // Leave the state alone when there’s nothing to add, so readers aren’t woken for nothing
+  // Leave the state alone when there’s nothing to add, so readers aren’t woken for nothing — an
+  // effect that took its reading while polling started would otherwise re-run on every lookup
   if (Object.keys(additions).length) {
     deployments.current = { ...map, ...additions };
   }
+};
+
+/**
+ * Record that a lookup is about to happen for any commit nothing is known about yet. This runs
+ * synchronously, so the control reports the wait from the moment a save moves the tracked commit
+ * rather than showing a live site link until the first result lands.
+ */
+export const markLookupPending = () => {
+  markChecking(getDeployTargets());
 };
 
 /**
@@ -192,16 +212,7 @@ export const resolveDeployments = async ({ force = false, pendingOnly = false } 
 
   const run = runCount;
 
-  // Only a commit with no result yet shows as being checked; re-checking a known one in the
-  // background shouldn’t flip the UI back to a loading state on every poll
-  deployments.current = {
-    ...deployments.current,
-    ...Object.fromEntries(
-      targets
-        .filter(({ sha }) => !deployments.current[sha])
-        .map(({ sha }) => [sha, { state: 'checking', checkedTime: 0 }]),
-    ),
-  };
+  markChecking(targets);
 
   /** @type {Record<string, DeployStatus>} */
   let results;
@@ -262,11 +273,20 @@ export const refreshProductionSHA = async () => {
  * The caller doesn’t await this, so nothing may escape: an unexpected failure would otherwise
  * surface as an unhandled rejection rather than something anyone can act on. The deploy state is a
  * convenience, and losing it shouldn’t be louder than that.
+ * @param {object} [options] Options.
+ * @param {string} [options.head] Head commit of the configured branch, if it has just been
+ * resolved along with the content, so it isn’t fetched again.
  * @returns {Promise<void>}
  */
-export const initDeployments = async () => {
+export const initDeployments = async ({ head } = {}) => {
   try {
-    await refreshProductionSHA();
+    if (head && backend.current?.fetchBranchHeadSHA) {
+      report('tracking the branch head', head);
+      productionSHA.current = head;
+    } else {
+      await refreshProductionSHA();
+    }
+
     await resolveDeployments();
   } catch (ex) {
     // eslint-disable-next-line no-console

@@ -27,7 +27,8 @@
       const target = document.createElement('div');
 
       mount(TextInput, { target });
-      cachedFieldClassName = target.querySelector('input')?.className ?? '';
+      cachedFieldClassName = /** @type {HTMLInputElement} */ (target.querySelector('input'))
+        .className;
     }
 
     return cachedFieldClassName;
@@ -35,34 +36,37 @@
 </script>
 
 <script>
-  import { isObject } from '@sveltia/utils/object';
   import { createElement } from 'react';
-  import { getContext, onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
 
   import AssetPicker from '$lib/components/contents/details/fields/custom/asset-picker.svelte';
+  import { assetURLUpdates } from '$lib/services/api/asset-proxy';
   import { fieldStateContext } from '$lib/services/api/field-state';
-  import { immutableLoaded, loadImmutable } from '$lib/services/api/immutable';
-  import { getReactDom, loadReactDom, reactDomLoaded } from '$lib/services/api/react-dom';
+  import { createReactRenderer } from '$lib/services/api/react-dom.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { updateNonPrimitiveValue } from '$lib/services/contents/draft/update';
+  import { updateFieldValue } from '$lib/services/contents/draft/update';
   import {
     registerCustomFieldInstance,
     triggerCustomFieldValidation,
     unregisterCustomFieldInstance,
   } from '$lib/services/contents/draft/validate/custom-fields';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import {
+    getFieldEditorContext,
+    isInEditorComponent,
+  } from '$lib/services/contents/editor/field-context';
   import { buildControlProps, resolveControl } from '$lib/services/contents/fields/custom/editor';
   import { addFileToDraft } from '$lib/services/contents/fields/custom/files';
 
   /**
-   * @import { Root } from 'react-dom/client';
-   * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
+   * @import { FieldEditorProps, InternalLocaleCode } from '$lib/types/private';
    * @import {
    * CustomField,
    * CustomFieldAddFileOptions,
    * CustomFieldControl,
    * CustomFieldPickFileOptions,
    * CustomFieldPickedFile,
+   * FieldKeyPath,
    * } from '$lib/types/public';
    */
 
@@ -75,17 +79,11 @@
 
   const entryDraft = getEntryDraftContext();
 
-  /** @type {FieldEditorContext} */
-  const {
-    valueStoreKey = 'currentValues',
-    fieldContext = undefined,
-    parentComponentNames = [],
-  } = getContext('field-editor') ?? {};
-  const inEditorComponent = fieldContext === 'rich-text-editor-component';
+  const { valueStoreKey = 'currentValues', parentComponentNames = [] } = getFieldEditorContext();
+  const inEditorComponent = isInEditorComponent(valueStoreKey);
 
   /** @type {FieldEditorProps & Props} */
   let {
-    /* eslint-disable prefer-const */
     locale,
     fieldId,
     keyPath,
@@ -96,17 +94,32 @@
     readonly = false,
     invalid = false,
     control,
-    /* eslint-enable prefer-const */
   } = $props();
 
   /** @type {HTMLDivElement | undefined} */
   let container = $state();
-  /** @type {Root | undefined} */
-  let reactRoot = $state();
-  /** @type {any | undefined} */
-  let componentInstance = $state();
+  /**
+   * Renderer of the control, which is a React component receiving Immutable Maps. Created before
+   * the `onMount()` below, so the control is unmounted, and its instance detached, before the
+   * instance is unregistered.
+   */
+  const reactRenderer = createReactRenderer(() => container);
+  /**
+   * Control instance, or the handle a function control exposes with `useImperativeHandle()`. Not
+   * proxied, as it belongs to React.
+   * @type {any | undefined}
+   */
+  let componentInstance = $state.raw();
   /** @type {AssetPicker | undefined} */
   let assetPicker = $state();
+  /**
+   * Plain copies of the {@link locale} and {@link keyPath} props for unregistering the instance,
+   * which also happens in the teardown. A prop read there makes Svelte walk the derived graph above
+   * it without memoizing, which takes exponentially longer with each level of nesting.
+   * @type {{ locale: InternalLocaleCode, keyPath: FieldKeyPath }}
+   */
+  // svelte-ignore state_referenced_locally
+  let registration = { locale, keyPath };
 
   const { i18n = false } = $derived(fieldConfig);
   const resolvedControl = $derived(resolveControl(control));
@@ -124,11 +137,7 @@
       return;
     }
 
-    if (Array.isArray(value) || isObject(value)) {
-      updateNonPrimitiveValue({ draft, valueStoreKey, locale, keyPath, i18n, value });
-    } else {
-      draft[valueStoreKey][locale][keyPath] = value;
-    }
+    updateFieldValue({ draft, valueStoreKey, locale, keyPath, i18n, value });
   };
 
   /**
@@ -149,6 +158,7 @@
       fieldConfig,
       typedKeyPath,
       componentName,
+      locale,
       file,
       options,
     });
@@ -164,6 +174,7 @@
    * @throws {Error} When no entry is being edited.
    */
   const handlePickFile = async (options) => {
+    /* v8 ignore next 3 -- the picker is mounted along with the control, which can’t call earlier */
     if (!assetPicker) {
       throw new Error('pickFile() can only be called while an entry is being edited');
     }
@@ -176,13 +187,15 @@
    * @param {any} instance The React component instance.
    */
   const handleRef = (instance) => {
+    const previousInstance = componentInstance;
+
     componentInstance = instance;
 
     if (instance) {
       // Register the instance for validation when it’s available
-      registerCustomFieldInstance({ locale, keyPath, instance });
+      registerCustomFieldInstance({ ...registration, instance });
     } else {
-      unregisterCustomFieldInstance({ locale, keyPath });
+      unregisterCustomFieldInstance({ ...registration, instance: previousInstance });
     }
   };
 
@@ -190,11 +203,10 @@
    * Render the React component with the current props.
    */
   const renderComponent = () => {
-    if (!container || !resolvedControl || !immutableLoaded.current || !reactDomLoaded.current) {
+    /* v8 ignore next 3 -- the effect below only calls this once everything is ready */
+    if (!reactRenderer.ready || !resolvedControl) {
       return;
     }
-
-    reactRoot ??= getReactDom().createRoot(container);
 
     const props = buildControlProps({
       fieldId,
@@ -211,7 +223,7 @@
 
     // Provide the state of this field to any built-in field control reused within the custom
     // control, which is typically given an ad hoc field configuration that doesn’t describe it
-    reactRoot.render(
+    reactRenderer.render(
       createElement(
         fieldStateContext.Provider,
         { value: { locale, keyPath, required, readonly, invalid } },
@@ -221,20 +233,25 @@
     container?.querySelector('input')?.setAttribute('aria-invalid', String(invalid));
   };
 
-  onMount(() => {
-    // The control is a React component receiving Immutable Maps. Both libraries are normally loaded
-    // by the time the editor opens, as `CMS.registerFieldType()` starts loading them, but wait for
-    // them in any case; the effect below renders the control once they’re there
-    Promise.all([loadImmutable(), loadReactDom()]).catch((/** @type {Error} */ error) => {
-      // eslint-disable-next-line no-console
-      console.error(error);
+  onMount(() => () => {
+    // Unregister the instance on unmount
+    unregisterCustomFieldInstance({ ...registration, instance: componentInstance });
+  });
+
+  // Move the registration along when the key path changes: the editor is kept when the list item
+  // it belongs to is moved, or an item before it is removed, so the instance would otherwise stay
+  // registered under the old key path, which may now belong to another item
+  $effect(() => {
+    const newRegistration = { locale, keyPath };
+
+    untrack(() => {
+      if (componentInstance) {
+        unregisterCustomFieldInstance({ ...registration, instance: componentInstance });
+        registerCustomFieldInstance({ ...newRegistration, instance: componentInstance });
+      }
     });
 
-    return () => {
-      reactRoot?.unmount();
-      // Unregister the instance on unmount
-      unregisterCustomFieldInstance({ locale, keyPath });
-    };
+    registration = newRegistration;
   });
 
   $effect(() => {
@@ -243,15 +260,24 @@
     // through a cache shared between controls when the props are built, so they have to be tracked
     // here
     void getValueMapSnapshot(entryDraft.current, locale, valueStoreKey);
+    // Render again once an asset the control got with `getAsset()` has a blob URL
+    void assetURLUpdates.current;
 
     // Render the component once the container and the library are ready, and update it when
     // currentValue changes externally (e.g., via revert or copy)
-    if (immutableLoaded.current && reactDomLoaded.current && container && resolvedControl) {
+    if (reactRenderer.ready && resolvedControl) {
       renderComponent();
     }
+  });
 
-    // Trigger async validation when value changes (if the component has `isValid` method). The
-    // result is cached; `awaitCustomFieldValidations()` lets a save attempt wait for it.
+  // Trigger async validation when any field in the locale changes (if the component has `isValid`
+  // method), as the method can check the value against other fields. The result is cached;
+  // `awaitCustomFieldValidations()` lets a save attempt wait for it. This is a separate effect, so
+  // that a function control exposing a new handle on every render doesn’t make the control render
+  // again and again
+  $effect(() => {
+    void getValueMapSnapshot(entryDraft.current, locale, valueStoreKey);
+
     if (typeof componentInstance?.isValid === 'function') {
       triggerCustomFieldValidation({ locale, keyPath, value: currentValue, fieldConfig });
     }
@@ -266,4 +292,5 @@
   {typedKeyPath}
   {componentName}
   {inEditorComponent}
+  {locale}
 />

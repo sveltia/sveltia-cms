@@ -265,7 +265,11 @@ describe('draft/validate/custom-fields', () => {
 
     expect(firstValidity.customErrorMessage).toBe('Stale message');
 
-    unregisterCustomFieldInstance({ locale: 'en', keyPath: 'test.reuse' });
+    unregisterCustomFieldInstance({
+      locale: 'en',
+      keyPath: 'test.reuse',
+      instance: firstInstance,
+    });
 
     const secondInstance = { isValid: vi.fn().mockResolvedValue(true) };
 
@@ -284,6 +288,43 @@ describe('draft/validate/custom-fields', () => {
     validateCustomField({ locale: 'en', keyPath: 'test.reuse', validity: secondValidity });
 
     expect(secondValidity).toEqual({ customError: false });
+  });
+
+  it('leaves an instance registered since under the same key path alone', async () => {
+    const firstInstance = { isValid: vi.fn().mockResolvedValue(true) };
+
+    const secondInstance = {
+      isValid: vi.fn().mockResolvedValue({ error: { message: 'Second is invalid' } }),
+    };
+
+    registerCustomFieldInstance({ locale: 'en', keyPath: 'list.0.x', instance: firstInstance });
+
+    // The editor of another list item has taken over the key path, e.g. when the first item is
+    // removed, before the first item’s editor is torn down
+    registerCustomFieldInstance({ locale: 'en', keyPath: 'list.0.x', instance: secondInstance });
+    await triggerCustomFieldValidation({
+      locale: 'en',
+      keyPath: 'list.0.x',
+      value: 'value',
+      fieldConfig,
+    });
+    unregisterCustomFieldInstance({ locale: 'en', keyPath: 'list.0.x', instance: firstInstance });
+
+    /** @type {EntryValidityState} */
+    const validity = {};
+
+    validateCustomField({ locale: 'en', keyPath: 'list.0.x', validity });
+    expect(validity).toEqual({ customError: true, customErrorMessage: 'Second is invalid' });
+
+    // An editor without an instance doesn’t unregister one either
+    unregisterCustomFieldInstance({ locale: 'en', keyPath: 'list.0.x', instance: undefined });
+    await triggerCustomFieldValidation({
+      locale: 'en',
+      keyPath: 'list.0.x',
+      value: 'value',
+      fieldConfig,
+    });
+    expect(secondInstance.isValid).toHaveBeenCalledTimes(2);
   });
 
   it('clears a previous error message once the field becomes valid', async () => {
@@ -379,7 +420,7 @@ describe('draft/validate/custom-fields', () => {
         fieldConfig,
       });
 
-      unregisterCustomFieldInstance({ locale: 'ja', keyPath: 'title' });
+      unregisterCustomFieldInstance({ locale: 'ja', keyPath: 'title', instance: jaInstance });
 
       /** @type {EntryValidityState} */
       const enValidity = {};
@@ -471,7 +512,7 @@ describe('draft/validate/custom-fields', () => {
         expect(resolve).toBeDefined();
       });
 
-      unregisterCustomFieldInstance({ locale: 'en', keyPath: 'test.late' });
+      unregisterCustomFieldInstance({ locale: 'en', keyPath: 'test.late', instance });
       resolve({ error: { message: 'Too late' } });
       await promise;
 

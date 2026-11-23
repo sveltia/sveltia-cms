@@ -13,6 +13,7 @@
    * @property {boolean} processing Whether the field is processing.
    * @property {boolean} isImageField Whether the field is an image field.
    * @property {boolean} multiple Whether the field allows multiple files.
+   * @property {boolean} [selectFolder] Whether the field takes a folder instead of files.
    * @property {boolean} showSelectAssetsDialog Whether to show the select assets dialog.
    * @property {boolean} replaceMode Whether the dialog is in replace mode.
    * @property {(file: File) => void} [onFilePaste] Callback invoked when an image is pasted from
@@ -21,27 +22,36 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     allowDrop,
     invalid,
     readonly,
     processing,
     isImageField,
     multiple,
+    selectFolder = false,
     showSelectAssetsDialog = $bindable(false),
     replaceMode = $bindable(false),
     onFilePaste = undefined,
-    /* eslint-enable prefer-const */
   } = $props();
 
   const toast = $state({ show: false, message: '' });
   const disabled = $derived(readonly || processing);
+  /** @type {HTMLButtonElement | undefined} */
+  let browseButton = $state();
+
+  /**
+   * Move the focus to the Browse button, e.g. once the file it replaces has been removed.
+   */
+  export const focus = () => {
+    browseButton?.focus();
+  };
 
   /**
    * Handle click on the paste button. If `onFilePaste` is provided, it will attempt to read an
    * image from the clipboard and invoke the callback with the pasted file.
    */
   const onPasteButtonClick = async () => {
+    /* v8 ignore next 3 -- the button is disabled, or not offered, in these cases */
     if (disabled || !onFilePaste) {
       return;
     }
@@ -89,6 +99,7 @@
 {#snippet buttons()}
   <div role="none" class="buttons">
     <Button
+      bind:element={browseButton}
       label={_('browse')}
       variant="tertiary"
       size="small"
@@ -114,13 +125,16 @@
   </div>
 {/snippet}
 
+<!-- The area is a drop target and, for mouse users, a large click target that opens the dialog.
+It isn’t a control of its own: the buttons inside are the keyboard path, and a focusable wrapper
+would nest them in a “button” that Enter does nothing with. The paste shortcut is handled here so it
+works while any of the buttons has focus. -->
 <div
-  role="button"
+  role="none"
   class="empty"
   class:invalid
   class:processing
-  aria-disabled={disabled || undefined}
-  tabindex={disabled ? -1 : 0}
+  class:disabled
   onclick={() => {
     if (env.hasMouse && !disabled) {
       replaceMode = false;
@@ -134,7 +148,7 @@
     }
   }}
 >
-  <Icon name="cloud_upload" />
+  <Icon name={selectFolder ? 'folder' : 'cloud_upload'} />
   <div role="none" class="label">
     {#if processing}
       <div role="status">
@@ -184,20 +198,14 @@
     cursor: pointer;
     transition: all 200ms;
 
-    &:focus-visible {
-      z-index: 1;
-      outline: var(--sui-focus-ring-width) solid var(--sui-focus-ring-color);
-      outline-offset: var(--sui-focus-ring-offset);
-    }
-
-    &:not([aria-disabled='true']):is(:hover, :focus-visible) {
+    &:not(.disabled):hover {
       background-color: var(
         --sui-button-tertiary-background-color-focus,
         var(--sui-hover-background-color)
       );
     }
 
-    &:not([aria-disabled='true']):active {
+    &:not(.disabled):active {
       background-color: var(
         --sui-button-tertiary-background-color-active,
         var(--sui-active-background-color)
@@ -209,7 +217,7 @@
       font-size: 48px;
     }
 
-    &[aria-disabled='true'] {
+    &.disabled {
       pointer-events: none !important;
 
       :global(*) {
@@ -220,8 +228,7 @@
     @media (pointer: coarse) {
       cursor: default;
 
-      &:active,
-      &:focus {
+      &:active {
         /* Reset the style because the element is non-interactive on touch devices */
         background-color: var(--sui-button-background-color) !important;
       }

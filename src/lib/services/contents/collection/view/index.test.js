@@ -1,7 +1,9 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { lockedBranch } from '$lib/services/backends/branch-access';
+import { cmsConfig } from '$lib/services/config/state';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { filterEntries, parseFilterConfig } from '$lib/services/contents/collection/view/filter';
@@ -16,15 +18,23 @@ import { getSortConfig } from '$lib/services/contents/collection/view/sort-keys'
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 import {
+  bulkEditedEntries,
+  bulkEditErrors,
+  bulkEditing,
+  bulkEdits,
   collectionState,
   entryGroups,
   listedEntries,
+  listedEntryCount,
   listedEntryIndexMap,
   listedUnpublishedEntries,
   reorderDirty,
   reorderedEntries,
   reordering,
+  setBulkEditMode,
   setReorderMode,
+  viewTime,
+  viewUsesTime,
 } from '.';
 
 /**
@@ -42,6 +52,7 @@ const {
   _entryListSettings,
   _currentView,
   _unpublishedEntries,
+  _viewBeforeReorder,
 } = await vi.hoisted(async () => {
   const { createRawState } = await import('$lib/services/utils/state.svelte');
 
@@ -64,6 +75,8 @@ const {
     _currentView: createRawState({ type: 'list' }),
     /** @type {{ current: any[] }} */
     _unpublishedEntries: createRawState([]),
+    /** @type {{ current: any }} */
+    _viewBeforeReorder: { current: undefined },
   };
 });
 
@@ -79,7 +92,11 @@ vi.mock('$lib/services/contents', () => ({
 vi.mock('$lib/services/contents/collection', () => ({
   selectedCollection: _selectedCollection,
   getCollection: vi.fn(),
-  // Used by the nested collection helpers, which the entry list runs through
+}));
+
+vi.mock('$lib/services/contents/collection/predicates', () => ({
+  isArrayFileCollection: vi.fn((collection) => !!collection?._file?.arrayFile),
+  // Used by the nested entry helpers, which the entry list runs through
   isEntryCollection: vi.fn(
     (collection) => typeof collection?.folder === 'string' && !Array.isArray(collection?.files),
   ),
@@ -88,6 +105,12 @@ vi.mock('$lib/services/contents/collection', () => ({
 vi.mock('$lib/services/contents/collection/entries', () => ({
   getEntriesByCollection: vi.fn(() => []),
   selectedEntries: _selectedEntries,
+  // The real one drops the collection’s index file, which it tells by the entry’s path; here a
+  // test marks that entry with `_isIndexFile` instead
+  countCollectionEntries: vi.fn(
+    (_collectionName, entries) =>
+      entries.filter((/** @type {any} */ { _isIndexFile }) => !_isIndexFile).length,
+  ),
 }));
 
 vi.mock('$lib/services/contents/collection/files', () => ({
@@ -130,6 +153,7 @@ vi.mock('$lib/services/contents/collection/view/settings', () => ({
   currentView: _currentView,
   entryListSettings: _entryListSettings,
   initSettings: vi.fn(),
+  viewBeforeReorder: _viewBeforeReorder,
 }));
 
 // Only the store is mocked; `swapUnpublishedEntries` is a pure helper and is used as is
@@ -162,6 +186,7 @@ describe('collection/view/index', () => {
     _unpublishedEntries.current = [];
     await wait();
     reordering.current = false;
+    bulkEditing.current = false;
     await wait();
     currentView.current = { type: 'list' };
     // `clearAllMocks()` only clears recorded calls, so reset the return value set by reorder tests
@@ -234,6 +259,75 @@ describe('collection/view/index', () => {
 
     // Should handle empty entries gracefully
     expect(entryGroups).toBeDefined();
+  });
+
+  test('entryGroups only reruns the steps whose view conditions have changed', async () => {
+    /** @type {any} */
+    const mockEntries = [
+      { id: '1', slug: 'post-1', locales: {}, sha: 'abc', collectionName: 'posts' },
+      { id: '2', slug: 'post-2', locales: {}, sha: 'def', collectionName: 'posts' },
+    ];
+
+    vi.mocked(getEntriesByCollection).mockReturnValue(mockEntries);
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+    vi.mocked(sortEntries).mockImplementation((entries) => [...entries]);
+    vi.mocked(filterEntries).mockImplementation((entries) => [...entries]);
+    vi.mocked(groupEntries).mockImplementation((entries) => [{ name: '*', entries }]);
+
+    _allEntries.current = mockEntries;
+    _selectedCollection.current = /** @type {any} */ ({ name: 'posts', _type: 'entry' });
+    await wait();
+
+    /** @type {any} */
+    const view = {
+      type: 'list',
+      sort: { key: 'title', order: 'ascending' },
+      filters: [{ field: 'status', pattern: 'published' }],
+      group: { field: 'category' },
+    };
+
+    currentView.current = view;
+
+    const groups = entryGroups.current;
+
+    expect(sortEntries).toHaveBeenCalledTimes(1);
+    expect(filterEntries).toHaveBeenCalledTimes(1);
+    expect(groupEntries).toHaveBeenCalledTimes(1);
+
+    // Switching to the grid view and collapsing a group leave the conditions as they were, even
+    // though the view is a new object with copies of them
+    currentView.current = {
+      ...structuredClone(view),
+      type: 'grid',
+      collapsedGroups: { category: ['news'] },
+    };
+
+    expect(entryGroups.current).toBe(groups);
+    expect(sortEntries).toHaveBeenCalledTimes(1);
+    expect(filterEntries).toHaveBeenCalledTimes(1);
+    expect(groupEntries).toHaveBeenCalledTimes(1);
+
+    // A new filter doesn’t sort the entries again
+    currentView.current = { ...view, filters: [{ field: 'status', pattern: 'draft' }] };
+
+    expect(entryGroups.current).not.toBe(groups);
+    expect(sortEntries).toHaveBeenCalledTimes(1);
+    expect(filterEntries).toHaveBeenCalledTimes(2);
+    expect(groupEntries).toHaveBeenCalledTimes(2);
+
+    // A new sort order reruns every step
+    currentView.current = { ...view, sort: { key: 'title', order: 'descending' } };
+    void entryGroups.current;
+
+    expect(sortEntries).toHaveBeenCalledTimes(2);
+    expect(filterEntries).toHaveBeenCalledTimes(3);
+    expect(groupEntries).toHaveBeenCalledTimes(3);
+    // The groups follow the sort order, which is passed in rather than read from the view, so
+    // that another change to the view doesn’t make the groups anew
+    expect(vi.mocked(groupEntries).mock.lastCall?.[4]).toEqual({
+      key: 'title',
+      order: 'descending',
+    });
   });
 
   test('entryGroups skips processing for file/singleton collections', async () => {
@@ -419,6 +513,35 @@ describe('collection/view/index', () => {
     expect(_selectedEntries.current).toEqual([]);
   });
 
+  test('resets selectedEntries when the filters change', async () => {
+    /** @type {any} */
+    const mockEntries = [{ id: '1', slug: 'post-1', locales: {}, collectionName: 'posts' }];
+
+    vi.mocked(getEntriesByCollection).mockReturnValue(mockEntries);
+    // The entry stays shown, so only the filter change clears the selection
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+    vi.mocked(sortEntries).mockImplementation((entries) => entries);
+    vi.mocked(filterEntries).mockImplementation((entries) => entries);
+    vi.mocked(groupEntries).mockImplementation((entries) => [{ name: '*', entries }]);
+    _allEntries.current = mockEntries;
+    _selectedCollection.current = /** @type {any} */ ({ name: 'posts' });
+    await wait();
+    _selectedEntries.current = mockEntries;
+    // Switching between list and grid doesn’t change the filters, so the selection is kept
+    currentView.current = /** @type {any} */ ({ type: 'grid' });
+    await wait();
+
+    expect(_selectedEntries.current).toEqual(mockEntries);
+
+    currentView.current = /** @type {any} */ ({
+      type: 'grid',
+      filters: [{ field: 'draft', pattern: true }],
+    });
+    await wait();
+
+    expect(_selectedEntries.current).toEqual([]);
+  });
+
   test('selectedCollection subscription logs in dev mode', async () => {
     const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 
@@ -451,29 +574,51 @@ describe('collection/view/index', () => {
     expect(getEntriesByCollection).toHaveBeenCalledWith('posts');
   });
 
-  test('listedEntryIndexMap maps each entry ID to its position in listedEntries', async () => {
+  test('listedEntryIndexMap maps each entry ID to its position in the displayed order', async () => {
     /** @type {any} */
     const mockEntries = [
       { id: 'a', slug: 'post-a', locales: {}, sha: 'a' },
       { id: 'b', slug: 'post-b', locales: {}, sha: 'b' },
       { id: 'c', slug: 'post-c', locales: {}, sha: 'c' },
+      { id: 'd', slug: 'post-d', locales: {}, sha: 'd' },
     ];
 
     vi.mocked(getEntriesByCollection).mockReturnValue(mockEntries);
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+    // Sorted in reverse, filtered without `b`, then split into two groups
+    vi.mocked(sortEntries).mockImplementation((entries) => [...entries].reverse());
+    vi.mocked(filterEntries).mockImplementation((entries) =>
+      entries.filter((/** @type {any} */ { id }) => id !== 'b'),
+    );
+    vi.mocked(groupEntries).mockImplementation((entries) => [
+      { name: 'first', entries: entries.slice(0, 1) },
+      { name: 'rest', entries: entries.slice(1) },
+    ]);
 
     _allEntries.current = mockEntries;
     await wait();
-    _selectedCollection.current = /** @type {any} */ ({ name: 'posts', folder: '_posts' });
+    _selectedCollection.current = /** @type {any} */ ({
+      name: 'posts',
+      folder: '_posts',
+      _type: 'entry',
+    });
     await wait();
+    currentView.current = /** @type {any} */ ({
+      type: 'list',
+      sort: { key: 'title', order: 'descending' },
+      filters: [{ field: 'status', pattern: 'published' }],
+      group: { field: 'category' },
+    });
 
     const indexMap = listedEntryIndexMap.current;
 
     expect([...indexMap]).toEqual([
-      ['a', 0],
-      ['b', 1],
-      ['c', 2],
+      ['d', 0],
+      ['c', 1],
+      ['a', 2],
     ]);
-    // Unknown entries are absent, so callers fall back to -1
+    // Filtered-out and unknown entries are absent, so callers omit the row index
+    expect(indexMap.get('b')).toBeUndefined();
     expect(indexMap.get('missing')).toBeUndefined();
   });
 
@@ -524,6 +669,7 @@ describe('collection/view/index', () => {
       // Restore the pass-through implementations, which earlier tests replace with fixed lists
       vi.mocked(sortEntries).mockImplementation((entries) => entries);
       vi.mocked(filterEntries).mockImplementation((entries) => entries);
+      vi.mocked(groupEntries).mockImplementation((entries) => [{ name: '*', entries }]);
       _allEntries.current = publishedEntries;
       await wait();
       _selectedCollection.current = /** @type {any} */ ({ name: 'posts', _type: 'entry' });
@@ -562,6 +708,16 @@ describe('collection/view/index', () => {
       expect(read(listedEntries)).toBe(publishedEntries);
     });
 
+    test('listedEntries doesn’t swap while bulk editing', async () => {
+      _unpublishedEntries.current = [createDraft('needed')];
+      await wait();
+      bulkEditing.current = true;
+      await wait();
+
+      // The bulk editor rewrites the published entries, so the draft version must not be listed
+      expect(read(listedEntries)).toBe(publishedEntries);
+    });
+
     test('listedEntries matches a draft that renamed the entry', async () => {
       const draft = createDraft('renamed');
 
@@ -588,10 +744,46 @@ describe('collection/view/index', () => {
       ]);
     });
 
+    test('listedEntryIndexMap puts the never-published drafts first', async () => {
+      _unpublishedEntries.current = [createDraft('needed'), createDraft('brand-new')];
+      await wait();
+
+      // They are listed in a separate group above the published entries
+      expect([...read(listedEntryIndexMap)]).toEqual([
+        ['draft-brand-new', 0],
+        ['draft-needed', 1],
+        ['p2', 2],
+      ]);
+    });
+
+    test('collectionState counts a never-published draft toward the quota', async () => {
+      _selectedCollection.current = /** @type {any} */ ({
+        name: 'posts',
+        _type: 'entry',
+        create: true,
+        limit: 3,
+      });
+      _unpublishedEntries.current = [createDraft('needed'), createDraft('brand-new')];
+      await wait();
+
+      // The draft for `needed` updates a published entry, so it doesn’t take up another slot
+      expect(read(collectionState).remaining).toBe(0);
+      expect(read(collectionState).creationDisabled).toBe(true);
+    });
+
     test('listedUnpublishedEntries is empty while reordering', async () => {
       _unpublishedEntries.current = [createDraft('brand-new')];
       await wait();
       reordering.current = true;
+      await wait();
+
+      expect(read(listedUnpublishedEntries)).toEqual([]);
+    });
+
+    test('listedUnpublishedEntries is empty while bulk editing', async () => {
+      _unpublishedEntries.current = [createDraft('brand-new')];
+      await wait();
+      bulkEditing.current = true;
       await wait();
 
       expect(read(listedUnpublishedEntries)).toEqual([]);
@@ -617,6 +809,18 @@ describe('collection/view/index', () => {
 
       expect(sortEntries).toHaveBeenCalled();
       expect(filterEntries).toHaveBeenCalled();
+    });
+
+    test('listedEntryCount counts the never-published drafts a filter hides', async () => {
+      _unpublishedEntries.current = [createDraft('needed'), createDraft('brand-new')];
+      await wait();
+      vi.mocked(filterEntries).mockReturnValue([]);
+      currentView.current = { type: 'list', filters: [{ field: 'draft', pattern: true }] };
+
+      // The filter hides the draft, but the list controls still need it counted, so the filter can
+      // be reset. The draft for `needed` replaces a published entry, so it’s only counted once
+      expect(read(listedUnpublishedEntries)).toEqual([]);
+      expect(read(listedEntryCount)).toBe(3);
     });
 
     test('listedUnpublishedEntries skips sorting when there is nothing to list', async () => {
@@ -972,9 +1176,11 @@ describe('collection/view/index', () => {
 
       expect(collectionState.current).toEqual({
         isEntryCollection: false,
+        readonly: false,
         canCreate: false,
         canDelete: false,
         canReorder: false,
+        canBulkEdit: false,
         quota: Infinity,
         remaining: Infinity,
         nearingQuota: false,
@@ -990,9 +1196,11 @@ describe('collection/view/index', () => {
 
       expect(collectionState.current).toEqual({
         isEntryCollection: false,
+        readonly: false,
         canCreate: false,
         canDelete: false,
         canReorder: false,
+        canBulkEdit: false,
         quota: Infinity,
         remaining: Infinity,
         nearingQuota: false,
@@ -1035,6 +1243,21 @@ describe('collection/view/index', () => {
       expect(collectionState.current.canReorder).toBe(true);
     });
 
+    test('allows reordering for a collection storing the entries in one file', async () => {
+      _selectedCollection.current = /** @type {any} */ ({
+        name: 'members',
+        _type: 'entry',
+        _file: { arrayFile: true },
+      });
+      await wait();
+
+      vi.mocked(getEntriesByCollection).mockReturnValue([]);
+      _allEntries.current = [];
+      await wait();
+
+      expect(collectionState.current.canReorder).toBe(true);
+    });
+
     test('blocks reordering for an Open Authoring contributor', async () => {
       _selectedCollection.current = /** @type {any} */ ({
         name: 'posts',
@@ -1052,6 +1275,148 @@ describe('collection/view/index', () => {
       expect(collectionState.current.canReorder).toBe(false);
 
       forkedRepository.current = undefined;
+    });
+
+    test('blocks reordering when the user can’t push to the branch', async () => {
+      _selectedCollection.current = /** @type {any} */ ({
+        name: 'posts',
+        _type: 'entry',
+        reorder: true,
+        publish_mode: 'editorial_workflow',
+      });
+      await wait();
+
+      vi.mocked(getEntriesByCollection).mockReturnValue([]);
+      _allEntries.current = [];
+      await wait();
+      lockedBranch.current = 'main';
+
+      // The collection itself isn’t read-only, as it goes through Editorial Workflow, but
+      // reordering commits straight to the configured branch
+      expect(collectionState.current.canCreate).toBe(true);
+      expect(collectionState.current.canReorder).toBe(false);
+
+      lockedBranch.current = undefined;
+    });
+
+    test('allows bulk editing when the collection is configured for it', async () => {
+      _selectedCollection.current = /** @type {any} */ ({
+        name: 'posts',
+        _type: 'entry',
+        bulk_edit: true,
+        fields: [{ name: 'title', widget: 'string' }],
+      });
+      await wait();
+
+      expect(collectionState.current.canBulkEdit).toBe(true);
+    });
+
+    test('blocks bulk editing when the option is not enabled', async () => {
+      _selectedCollection.current = /** @type {any} */ ({
+        name: 'posts',
+        _type: 'entry',
+        fields: [{ name: 'title', widget: 'string' }],
+      });
+      await wait();
+
+      expect(collectionState.current.canBulkEdit).toBe(false);
+    });
+
+    test('blocks bulk editing when no field can be edited in bulk', async () => {
+      _selectedCollection.current = /** @type {any} */ ({
+        name: 'posts',
+        _type: 'entry',
+        bulk_edit: true,
+        fields: [{ name: 'body', widget: 'markdown' }],
+      });
+      await wait();
+
+      expect(collectionState.current.canBulkEdit).toBe(false);
+    });
+
+    test('blocks bulk editing for an Open Authoring contributor', async () => {
+      _selectedCollection.current = /** @type {any} */ ({
+        name: 'posts',
+        _type: 'entry',
+        bulk_edit: true,
+        fields: [{ name: 'title', widget: 'string' }],
+      });
+      await wait();
+      forkedRepository.current = { owner: 'contributor', repo: 'repo' };
+
+      // Bulk editing commits straight to the configured branch, which a contributor can’t do
+      expect(collectionState.current.canBulkEdit).toBe(false);
+
+      forkedRepository.current = undefined;
+    });
+
+    test('blocks bulk editing when the user can’t push to the branch', async () => {
+      _selectedCollection.current = /** @type {any} */ ({
+        name: 'posts',
+        _type: 'entry',
+        bulk_edit: true,
+        publish_mode: 'editorial_workflow',
+        fields: [{ name: 'title', widget: 'string' }],
+      });
+      await wait();
+      lockedBranch.current = 'main';
+
+      expect(collectionState.current.canCreate).toBe(true);
+      expect(collectionState.current.canBulkEdit).toBe(false);
+
+      lockedBranch.current = undefined;
+    });
+
+    test('blocks bulk editing in a read-only collection', async () => {
+      _selectedCollection.current = /** @type {any} */ ({
+        name: 'posts',
+        _type: 'entry',
+        bulk_edit: true,
+        readonly: true,
+        fields: [{ name: 'title', widget: 'string' }],
+      });
+      await wait();
+
+      expect(collectionState.current.canBulkEdit).toBe(false);
+    });
+
+    test('blocks creating, deleting and reordering in a read-only collection', async () => {
+      _selectedCollection.current = /** @type {any} */ ({
+        name: 'posts',
+        _type: 'entry',
+        reorder: true,
+        readonly: true,
+      });
+      await wait();
+
+      vi.mocked(getEntriesByCollection).mockReturnValue([]);
+      _allEntries.current = [];
+      await wait();
+
+      const state = collectionState.current;
+
+      expect(state.readonly).toBe(true);
+      // `canCreate` still reflects the `create` option, while `creationDisabled` has the final say
+      expect(state.canCreate).toBe(true);
+      expect(state.creationDisabled).toBe(true);
+      expect(state.canDelete).toBe(false);
+      expect(state.canReorder).toBe(false);
+    });
+
+    test('treats every collection as read-only when the whole CMS is', async () => {
+      cmsConfig.current = /** @type {any} */ ({ readonly: true });
+      _selectedCollection.current = /** @type {any} */ ({ name: 'pages', _type: 'file' });
+      await wait();
+
+      expect(collectionState.current.readonly).toBe(true);
+
+      _selectedCollection.current = /** @type {any} */ ({ name: 'posts', _type: 'entry' });
+      await wait();
+
+      expect(collectionState.current.readonly).toBe(true);
+      expect(collectionState.current.creationDisabled).toBe(true);
+
+      cmsConfig.current = undefined;
     });
 
     test('defaults canCreate and canDelete to true when not set', async () => {
@@ -1106,7 +1471,7 @@ describe('collection/view/index', () => {
       expect(state.remaining).toBe(7);
     });
 
-    test('quota counts every entry in a nested collection, not just the listed folder', async () => {
+    test('quota counts every nested entry, not just the listed folder', async () => {
       const mockEntries = /** @type {any[]} */ ([
         { id: '1', slug: '_index', subPath: '_index' },
         { id: '2', slug: 'docs/_index', subPath: 'docs/_index' },
@@ -1128,6 +1493,53 @@ describe('collection/view/index', () => {
       // The root folder only lists two of the three entries
       expect(listedEntries.current).toHaveLength(2);
       expect(collectionState.current.remaining).toBe(7);
+    });
+
+    test('quota leaves out the collection’s index file', async () => {
+      const mockEntries = /** @type {any[]} */ ([
+        { id: '1', slug: '_index', _isIndexFile: true },
+        { id: '2', slug: 'a' },
+      ]);
+
+      vi.mocked(getEntriesByCollection).mockReturnValue(mockEntries);
+      _allEntries.current = mockEntries;
+      await wait();
+      _selectedCollection.current = /** @type {any} */ ({
+        name: 'posts',
+        _type: 'entry',
+        create: true,
+        index_file: true,
+        limit: 2,
+      });
+      await wait();
+
+      // Only `a` takes up a slot, so one is left rather than none
+      // @see https://github.com/sveltia/sveltia-cms/issues/1005
+      expect(collectionState.current.remaining).toBe(1);
+      expect(collectionState.current.creationDisabled).toBe(false);
+    });
+
+    test('quota leaves out the index file of a collection with nested entries', async () => {
+      const mockEntries = /** @type {any[]} */ ([
+        { id: '1', slug: '_index', subPath: '_index', _isIndexFile: true },
+        { id: '2', slug: 'docs/_index', subPath: 'docs/_index' },
+        { id: '3', slug: 'docs/intro/_index', subPath: 'docs/intro/_index' },
+      ]);
+
+      vi.mocked(getEntriesByCollection).mockReturnValue(mockEntries);
+      _allEntries.current = mockEntries;
+      await wait();
+      _selectedCollection.current = /** @type {any} */ ({
+        name: 'pages',
+        _type: 'entry',
+        folder: 'content/pages',
+        nested: {},
+        create: true,
+        index_file: true,
+        limit: 10,
+      });
+
+      expect(collectionState.current.remaining).toBe(8);
     });
 
     test('creationDisabled is false when canCreate is true and entries are under quota', async () => {
@@ -1159,6 +1571,25 @@ describe('collection/view/index', () => {
       await wait();
 
       expect(collectionState.current.creationDisabled).toBe(true);
+    });
+
+    test('canCreate is false when limit is 0', async () => {
+      const mockEntries = /** @type {any[]} */ ([{ id: '1', slug: 'a' }]);
+
+      vi.mocked(getEntriesByCollection).mockReturnValue(mockEntries);
+      _allEntries.current = mockEntries;
+      await wait();
+      _selectedCollection.current = /** @type {any} */ ({
+        name: 'posts',
+        _type: 'entry',
+        limit: 0,
+      });
+      await wait();
+
+      const state = collectionState.current;
+
+      expect(state.canCreate).toBe(false);
+      expect(state.creationDisabled).toBe(true);
     });
 
     test('creationDisabled is true when remaining is exactly 0 (quota reached)', async () => {
@@ -1304,13 +1735,13 @@ describe('collection/view/index', () => {
       });
       await wait();
 
-      vi.mocked(getEntriesByCollection).mockReturnValue(twoEntries);
+      // Like the real one, read the entry store, which the collection state then depends on
+      vi.mocked(getEntriesByCollection).mockImplementation(() => _allEntries.current);
       _allEntries.current = twoEntries;
       await wait();
       expect(collectionState.current.remaining).toBe(1);
       expect(collectionState.current.creationDisabled).toBe(false);
 
-      vi.mocked(getEntriesByCollection).mockReturnValue(threeEntries);
       _allEntries.current = threeEntries;
       await wait();
       expect(collectionState.current.remaining).toBe(0);
@@ -1654,6 +2085,205 @@ describe('collection/view/index', () => {
     // The snapshot is discarded first, so the previous collection’s view isn’t restored
     expect(currentView.current).not.toBe(view);
     expect(currentView.current.group).toBeNull();
+    expect(_viewBeforeReorder.current).toBeUndefined();
+  });
+
+  test('entering and exiting bulk edit mode resets the pending edits', () => {
+    const view = { type: /** @type {const} */ ('list'), sort: { key: 'title' } };
+
+    currentView.current = view;
+    bulkEdits.current = { a: { title: 'stale' } };
+    bulkEditErrors.current = { a: { title: ['stale'] } };
+    bulkEditedEntries.current = [/** @type {any} */ ({ id: 'stale' })];
+    setBulkEditMode(true);
+
+    expect(bulkEditing.current).toBe(true);
+    expect(bulkEdits.current).toEqual({});
+    expect(bulkEditErrors.current).toEqual({});
+    expect(bulkEditedEntries.current).toEqual([]);
+    // Unlike reorder mode, the view is kept as it is
+    expect(currentView.current).toBe(view);
+
+    bulkEdits.current = { a: { title: 'pending' } };
+    bulkEditErrors.current = { a: { title: ['error'] } };
+    bulkEditedEntries.current = [/** @type {any} */ ({ id: 'a' })];
+    setBulkEditMode(false);
+
+    expect(bulkEditing.current).toBe(false);
+    expect(bulkEdits.current).toEqual({});
+    expect(bulkEditErrors.current).toEqual({});
+    expect(bulkEditedEntries.current).toEqual([]);
+    expect(currentView.current).toBe(view);
+  });
+
+  test('switching collections exits bulk edit mode and discards the pending edits', async () => {
+    _selectedCollection.current = /** @type {any} */ ({ name: 'posts', _type: 'entry' });
+    await wait();
+    setBulkEditMode(true);
+    bulkEdits.current = { a: { title: 'pending' } };
+    bulkEditErrors.current = { a: { title: ['error'] } };
+    bulkEditedEntries.current = [/** @type {any} */ ({ id: 'a' })];
+
+    _selectedCollection.current = /** @type {any} */ ({ name: 'other', _type: 'entry' });
+    await wait();
+
+    expect(bulkEditing.current).toBe(false);
+    expect(bulkEdits.current).toEqual({});
+    expect(bulkEditErrors.current).toEqual({});
+    expect(bulkEditedEntries.current).toEqual([]);
+  });
+
+  test('entering reorder mode shares the view snapshot with the collection name', () => {
+    const view = { type: /** @type {const} */ ('list'), sort: { key: 'title' } };
+
+    _selectedCollection.current = /** @type {any} */ ({ name: 'posts', _type: 'entry' });
+    currentView.current = view;
+    setReorderMode(true);
+
+    // The settings save this view in place of the reorder view until the mode is exited
+    expect(_viewBeforeReorder.current).toEqual({ collectionName: 'posts', view });
+
+    setReorderMode(false);
+
+    expect(_viewBeforeReorder.current).toBeUndefined();
+    expect(currentView.current).toBe(view);
+  });
+
+  describe('time-based view', () => {
+    const start = new Date(2026, 8, 16, 23, 59, 30);
+    /** @type {any} */
+    const entries = [{ id: '1', slug: 'event-1', locales: {}, sha: 'abc' }];
+
+    beforeEach(async () => {
+      // Keep `setTimeout` real, which `wait()` relies on
+      vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'] });
+      vi.setSystemTime(start);
+      vi.mocked(getEntriesByCollection).mockReturnValue(entries);
+      vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+      vi.mocked(filterEntries).mockImplementation((_entries) => _entries);
+      vi.mocked(groupEntries).mockImplementation((_entries) => [{ name: '*', entries: _entries }]);
+      _allEntries.current = entries;
+      await wait();
+      _selectedCollection.current = /** @type {any} */ ({ name: 'events', _type: 'entry' });
+      await wait();
+    });
+
+    afterEach(async () => {
+      currentView.current = { type: 'list' };
+      await wait();
+      vi.useRealTimers();
+    });
+
+    test('viewUsesTime reflects the template tags in the applied filters and group', async () => {
+      expect(viewUsesTime.current).toBe(false);
+
+      currentView.current = { type: 'list', filters: [{ field: 'status', pattern: 'draft' }] };
+      expect(viewUsesTime.current).toBe(false);
+
+      currentView.current = { type: 'list', filters: [{ field: 'date', gte: '{{today}}' }] };
+      expect(viewUsesTime.current).toBe(true);
+
+      currentView.current = { type: 'list', filters: [{ field: 'date', pattern: '^{{year}}' }] };
+      expect(viewUsesTime.current).toBe(true);
+
+      currentView.current = { type: 'list', group: { field: 'date', lt: '{{now}}' } };
+      expect(viewUsesTime.current).toBe(true);
+
+      currentView.current = { type: 'list', group: { field: 'date', pattern: '\\d{4}' } };
+      expect(viewUsesTime.current).toBe(false);
+    });
+
+    test('recomputes the list every minute while a time-based filter is applied', async () => {
+      const filters = [{ field: 'date', gte: '{{today}}' }];
+      const collection = _selectedCollection.current;
+
+      currentView.current = { type: 'list', filters };
+      await wait();
+
+      // The time is reset when the filter is applied
+      expect(viewTime.current).toEqual(start);
+      expect(entryGroups.current).toEqual([{ name: '*', entries }]);
+      expect(filterEntries).toHaveBeenLastCalledWith(entries, collection, filters, start);
+      expect(groupEntries).toHaveBeenLastCalledWith(
+        entries,
+        collection,
+        undefined,
+        start,
+        undefined,
+      );
+
+      vi.clearAllMocks();
+      vi.advanceTimersByTime(60000);
+      await wait();
+
+      const tick = new Date(2026, 8, 17, 0, 0, 30);
+
+      expect(viewTime.current).toEqual(tick);
+      expect(entryGroups.current).toEqual([{ name: '*', entries }]);
+      expect(filterEntries).toHaveBeenLastCalledWith(entries, collection, filters, tick);
+      expect(groupEntries).toHaveBeenLastCalledWith(
+        entries,
+        collection,
+        undefined,
+        tick,
+        undefined,
+      );
+
+      // The timer is stopped once the filter is removed
+      currentView.current = { type: 'list', filters: [] };
+      await wait();
+      vi.advanceTimersByTime(60000);
+      await wait();
+
+      expect(viewTime.current).toEqual(tick);
+    });
+
+    test('drops an entry from the selection once a time-based filter hides it', async () => {
+      const filters = [{ field: 'date', gte: '{{now}}' }];
+      /** @type {any} */
+      const later = { id: '2', slug: 'event-2', locales: {}, sha: 'def' };
+      /** @type {any} */
+      const draft = { id: 'draft-1', workflow: { collectionName: 'events' }, locales: {} };
+      const end = new Date(2026, 8, 17, 0, 0, 0);
+
+      // The first event starts at midnight, and is hidden from then on; the other ones aren’t
+      vi.mocked(getEntriesByCollection).mockReturnValue([...entries, later]);
+      vi.mocked(sortEntries).mockImplementation((_entries) => _entries);
+      vi.mocked(filterEntries).mockImplementation((_entries, _collection, _filters, time) =>
+        _entries.filter((entry) => entry !== entries[0] || /** @type {Date} */ (time) < end),
+      );
+      _allEntries.current = [...entries, later];
+      _unpublishedEntries.current = [draft];
+      await wait();
+      currentView.current = { type: 'list', filters };
+      await wait();
+      _selectedEntries.current = [entries[0], later, draft];
+      await wait();
+
+      expect(_selectedEntries.current).toEqual([entries[0], later, draft]);
+
+      vi.advanceTimersByTime(60000);
+      await wait();
+
+      // Neither the listed entries nor the filters have changed, so the selection isn’t cleared,
+      // but the hidden entry is no longer in it, where Delete would remove it
+      expect(_selectedEntries.current).toEqual([later, draft]);
+    });
+
+    test('passes the time to the unpublished entry list', async () => {
+      const filters = [{ field: 'date', gte: '{{today}}' }];
+      const collection = _selectedCollection.current;
+      const draft = { id: 'draft-1', workflow: { collectionName: 'events' }, locales: {} };
+
+      vi.mocked(sortEntries).mockImplementation((_entries) => _entries);
+      _unpublishedEntries.current = [draft];
+      await wait();
+      currentView.current = { type: 'list', filters };
+      await wait();
+
+      expect(listedUnpublishedEntries.current).toEqual([draft]);
+      expect(filterEntries).toHaveBeenLastCalledWith([draft], collection, filters, start);
+    });
   });
 
   describe('view restoration', () => {
@@ -1679,8 +2309,8 @@ describe('collection/view/index', () => {
       _selectedCollection.current = collection;
       await wait();
 
+      // The view type is left unset until the user picks one, so the default applies
       expect(currentView.current).toEqual({
-        type: 'list',
         sort: { key: 'title', order: 'ascending' },
         filters: [{ field: 'draft', pattern: false }],
         group: { field: 'category' },
@@ -1688,6 +2318,10 @@ describe('collection/view/index', () => {
     });
 
     test('restores the saved view, keeping the saved options over the defaults', async () => {
+      vi.mocked(getSortConfig).mockReturnValue({
+        keys: ['title', 'date'],
+        default: { key: 'title', order: 'ascending' },
+      });
       _entryListSettings.current = {
         posts: {
           type: 'grid',
@@ -1703,6 +2337,111 @@ describe('collection/view/index', () => {
         type: 'grid',
         sort: { key: 'date', order: 'descending' },
         filters: [],
+        group: null,
+      });
+    });
+
+    test('keeps a saved sort key and group that are still configured', async () => {
+      vi.mocked(parseGroupConfig).mockReturnValue({
+        options: [{ name: 'year', label: 'Year', field: 'date', pattern: '\\d{4}' }],
+        default: { field: 'category' },
+      });
+      _entryListSettings.current = {
+        posts: {
+          type: 'list',
+          sort: { key: 'title', order: 'descending' },
+          group: { field: 'date', pattern: '\\d{4}' },
+        },
+      };
+      _selectedCollection.current = collection;
+      await wait();
+
+      expect(currentView.current.sort).toEqual({ key: 'title', order: 'descending' });
+      expect(currentView.current.group).toEqual({ field: 'date', pattern: '\\d{4}' });
+    });
+
+    test('drops a saved sort key and group removed from the configuration since', async () => {
+      // The commit metadata may arrive after the entries, so the keys depending on it are
+      // validated as if it were there
+      vi.mocked(getSortConfig).mockImplementation(({ isCommitDateAvailable }) => ({
+        keys: isCommitDateAvailable ? ['title', 'commit_date'] : ['title'],
+        default: { key: 'title', order: 'ascending' },
+      }));
+      _entryListSettings.current = {
+        posts: {
+          type: 'list',
+          sort: { key: 'author', order: 'descending' },
+          group: { field: 'year' },
+        },
+        drafts: { type: 'list', sort: { key: 'commit_date', order: 'descending' }, group: null },
+      };
+      _selectedCollection.current = collection;
+      await wait();
+
+      // The collection defaults apply instead, so the user isn’t stuck with a group the menu no
+      // longer offers to undo
+      expect(currentView.current).toEqual({
+        type: 'list',
+        sort: { key: 'title', order: 'ascending' },
+        filters: [{ field: 'draft', pattern: false }],
+        group: { field: 'category' },
+      });
+
+      _selectedCollection.current = { ...collection, name: 'drafts' };
+      await wait();
+
+      expect(currentView.current.sort).toEqual({ key: 'commit_date', order: 'descending' });
+      expect(currentView.current.group).toBeNull();
+    });
+
+    test('keeps the reorder view when the entries change while reordering', async () => {
+      _entryListSettings.current = {
+        posts: { type: 'list', sort: { key: 'title', order: 'descending' }, group: null },
+      };
+      _selectedCollection.current = collection;
+      await wait();
+      setReorderMode(true);
+
+      const reorderView = currentView.current;
+
+      expect(reorderView.sort).toEqual({ key: '_manual', order: 'ascending' });
+
+      // E.g. an asset upload or the commit metadata arriving reassigns all the entries, while the
+      // saved view is still the one from before reordering
+      _allEntries.current = [{ id: 'new' }];
+      await wait();
+
+      expect(currentView.current).toBe(reorderView);
+
+      setReorderMode(false);
+
+      expect(currentView.current.sort).toEqual({ key: 'title', order: 'descending' });
+
+      // Once the mode is exited, a change to the entries restores the view again
+      currentView.current = { type: 'grid' };
+      _allEntries.current = [];
+      await wait();
+
+      expect(currentView.current.sort).toEqual({ key: 'title', order: 'descending' });
+    });
+
+    test('restores the view of another entry collection selected while reordering', async () => {
+      _entryListSettings.current = {
+        drafts: { type: 'list', sort: { key: 'title', order: 'descending' }, group: null },
+      };
+      _selectedCollection.current = collection;
+      await wait();
+      setReorderMode(true);
+      _selectedCollection.current = { ...collection, name: 'drafts' };
+      await wait();
+
+      // The snapshot belongs to the collection being reordered, so it doesn’t keep the new one from
+      // getting its own view
+      expect(reordering.current).toBe(false);
+      expect(currentView.current).toEqual({
+        type: 'list',
+        sort: { key: 'title', order: 'descending' },
+        filters: [{ field: 'draft', pattern: false }],
         group: null,
       });
     });

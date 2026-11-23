@@ -7,7 +7,7 @@
 </script>
 
 <Select
-  aria-label={_('prefs.i18n.translators.default.select_service')}
+  ariaLabel={_('prefs.i18n.translators.default.select_service')}
   value={prefs.defaultTranslationService}
   onChange={(event) => {
     prefs.defaultTranslationService = event.detail.value;

@@ -1,6 +1,10 @@
 /coverage
+/playwright-report
+/test-results
+/bench-results
 /package
 /.vite
+/.vitest
 node_modules
 *.log
 *.local

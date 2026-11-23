@@ -11,6 +11,8 @@
 create: Tạo mới
 select: Chọn
 select_all: Chọn tất cả
+# Accessible name of the checkbox that selects a single entry or asset in a list
+select_item: Chọn {$name}
 upload: Tải lên
 copy: Sao chép
 download: Tải xuống
@@ -69,6 +71,10 @@ primary: Chính
 secondary: Phụ
 collection: Chuyên mục
 folder: Thư mục
+# Label of the subfolder list in the asset picker
+folders: Thư mục
+# Menu in a breadcrumb holding the folders that don’t fit
+more_folders: Thư mục khác
 
 # ==============================================================================
 # Miscellaneous Labels
@@ -113,6 +119,7 @@ welcome_message: Chào mừng đến với {$name}
 powered_by: Được cung cấp bởi {$name}
 
 # Shown during initial configuration and data loading
+unsupported_browser_error: Trình duyệt của bạn không được hỗ trợ. Vui lòng cập nhật lên phiên bản mới nhất hoặc sử dụng trình duyệt khác.
 loading_cms_config: Đang tải cấu hình CMS…
 loading_site_data: Đang tải dữ liệu trang web…
 loading_site_data_error: Đã xảy ra lỗi khi tải dữ liệu trang web.
@@ -125,6 +132,8 @@ sign_in_with_x: Đăng nhập bằng {$service}
 # Access token dialog: alternative authentication method
 sign_in_using_access_token: Đăng nhập bằng mã truy cập
 sign_in_using_access_token_description: Nhập mã truy cập của bạn dưới đây. Mã này phải có quyền đọc/ghi nội dung trong kho mã nguồn.
+# Shown after the description above when Editorial Workflow is enabled, which opens and merges pull requests
+sign_in_using_access_token_workflow_note: Vì Quy trình biên tập đang được bật, mã này cũng phải có quyền đọc/ghi pull request.
 # Inline link text with embedded HTML anchor tag
 # {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
 sign_in_using_access_token_link: Bạn có thể tạo mã truy cập trên trang cài đặt người dùng của <a>{$service}</a>.
@@ -143,6 +152,11 @@ work_with_local_repo_description: Khi được yêu cầu, hãy chọn thư mụ
 work_with_local_repo_description_no_repo: Khi được yêu cầu, hãy chọn thư mục gốc của kho mã nguồn Git.
 # Button label for demo/test repository
 work_with_test_repo: Làm việc với kho mã nguồn thử nghiệm
+# Button label for the test repository when sample content is seeded, e.g. on a demo site
+start_demo: Bắt đầu bản demo
+# Shown below the disabled test repository option in a browser that can’t save files to its
+# storage, e.g. Safari before version 26
+test_repo_unsupported_browser: Trình duyệt của bạn không thể lưu các tệp của kho mã nguồn thử nghiệm. Vui lòng cập nhật lên phiên bản mới nhất hoặc sử dụng trình duyệt khác.
 
 # Authentication errors
 # Error messages shown during sign-in failures
@@ -167,14 +181,28 @@ sign_in_error:
 backend_unsupported_version: Dịch vụ {$name} yêu cầu {$name} phiên bản {$version} trở lên.
 # {$repo} is the repository identifier, typically in owner/repo format
 repository_no_access: Bạn không có quyền truy cập vào kho mã nguồn “{$repo}”.
+# {$repo} is the repository identifier, typically in owner/repo format
+repository_no_write_access: Bạn không có quyền ghi vào kho mã nguồn “{$repo}”.
 repository_not_found: Kho mã nguồn “{$repo}” không tồn tại.
 repository_empty: Kho mã nguồn “{$repo}” không có nhánh nào.
 # {$repo} is the repository identifier, and {$branch} is the configured branch name
 branch_not_found: Kho mã nguồn “{$repo}” không có nhánh “{$branch}”.
+# {$repo} is the repository identifier, and {$dir} is the configured root directory
+root_dir_not_found: Thư mục gốc “{$dir}” không tồn tại trong kho mã nguồn “{$repo}”.
 
 # General errors
 # Fallback error dialog title for unexpected errors
 unexpected_error: Đã xảy ra lỗi
+# Shown in place of the page when an unexpected error stops it from being displayed
+# {$message} is the error message
+page_crashed: Đã xảy ra sự cố và không thể hiển thị trang này. {$message}
+# Shown in place of a field editor or preview when an unexpected error stops it from being displayed
+# {$message} is the error message
+field_crashed: Đã xảy ra sự cố và không thể hiển thị trường này. {$message}
+# Button label for displaying a part of the page again after an unexpected error
+try_again: Thử lại
+# Button label for reloading the CMS after an unexpected error
+reload_cms: Tải lại CMS
 
 # Entry file parsing errors
 # Toast notification when entry files fail to parse on initial load
@@ -203,6 +231,331 @@ sign_in: Đăng nhập
 sign_in_with_mobile: Đăng nhập bằng thiết bị di động
 # Instructions shown in the mobile sign-in dialog for passwordless authentication
 sign_in_with_mobile_instruction: Quét mã QR bên dưới bằng thiết bị di động để đăng nhập không cần mật khẩu. Các thiết lập của bạn sẽ được tự động đồng bộ.
+# Confirmation dialog shown when the CMS is opened with a sign-in link from the mobile sign-in
+# QR code. {$account} is the account name, {$service} is the Git service name, e.g. GitHub
+sign_in_with_link: Đăng nhập bằng liên kết
+sign_in_with_link_confirmation: Liên kết này sẽ đăng nhập bạn với tư cách {$account} trên {$service} và sao chép các thiết lập từ thiết bị đã tạo ra nó. Chỉ tiếp tục nếu chính bạn đã tạo liên kết này.
+
+# Sign-in with Sveltia CMS Additions, which manages its own user accounts instead of the Git
+# service’s. Don’t localize “Sveltia CMS Additions”
+additions:
+  username: Tên người dùng
+  password: Mật khẩu
+  sign_in: Đăng nhập
+  new_password_title: Chọn mật khẩu mới
+  new_password_description: Bạn đã đăng nhập bằng mật khẩu tạm thời. Hãy chọn mật khẩu mới để tiếp tục.
+  new_password: Mật khẩu mới
+  password_too_short: Mật khẩu quá ngắn. Hãy dùng ít nhất 12 ký tự.
+  change_password: Đổi mật khẩu
+  # {$name} is the user’s username, {$role} their role, e.g. Editor
+  signed_in_as_x_with_role: Đã đăng nhập với tư cách {$name} ({$role})
+  link_github: Liên kết tài khoản GitHub
+  link_github_error: Không thể liên kết tài khoản GitHub
+  current_password: Mật khẩu hiện tại
+  # {$username} is the username filled in from a magic link emailed to the user
+  filled_from_link: Tên người dùng và mật khẩu đã được điền từ một liên kết. Chỉ đăng nhập nếu “{$username}” là tên người dùng của bạn.
+  change_password_description: Bạn sẽ vẫn đăng nhập tại đây và bị đăng xuất trên các thiết bị khác.
+  password_changed: Mật khẩu của bạn đã được thay đổi.
+  # The Account settings panel of a Sveltia CMS Additions user
+  account:
+    profile: Hồ sơ
+    profile_description: Tên của bạn được hiển thị cho người dùng khác trong CMS, chẳng hạn trên khóa bài viết và bình luận, cũng như trong các commit của bạn.
+    username_description: Không thể thay đổi tên người dùng của bạn.
+    email: Email
+    email_description: Email này được dùng trong các commit bạn tạo để GitHub có thể liên kết chúng với tài khoản của bạn. Nếu không có, một địa chỉ giữ chỗ sẽ được sử dụng. Chỉ quản trị viên mới có thể thay đổi email này.
+    change_name: Đổi tên
+    name_changed: Tên của bạn đã được thay đổi.
+    password: Mật khẩu
+    no_password: Tài khoản của bạn chỉ đăng nhập bằng GitHub nên không có mật khẩu để thay đổi. Quản trị viên có thể cấp mật khẩu cho bạn bằng cách đặt lại mật khẩu.
+  setup:
+    use_admin_secret: Dùng mã bí mật quản trị
+    title: Thiết lập Sveltia CMS Additions
+    secret_description: Nhập mã bí mật quản trị đã đặt trong phần cài đặt của dịch vụ Sveltia CMS Additions. Mã này chỉ được giữ trong tab này trong khi bạn thiết lập.
+    admin_secret: Mã bí mật quản trị
+    continue: Tiếp tục
+    back: Quay lại đăng nhập
+    admin_title: Tài khoản quản trị
+    admin_create_description: Tạo tài khoản quản trị đầu tiên. Bạn sẽ đăng nhập bằng tài khoản này và quản lý những người dùng khác.
+    admin_reset_description: Đã có tài khoản quản trị. Để đăng nhập lại, hãy đặt lại mật khẩu của một quản trị viên tại đây hoặc tạo một tài khoản quản trị khác.
+    admin_saved: Tài khoản quản trị đã sẵn sàng. Hãy đăng nhập bằng mật khẩu bạn vừa nhập.
+    create_admin: Tạo quản trị viên
+    reset_password: Lưu quản trị viên
+    github_title: GitHub
+    # {$repo} is the repository, e.g. octocat/site
+    github_description: Tạo một GitHub App cho trang web này và cài đặt nó trên kho mã nguồn “{$repo}”. GitHub sẽ yêu cầu bạn xác nhận, sau đó đưa bạn trở lại đây.
+    # {$repo} is the repository, {$app} is the name of the GitHub App
+    github_connected: Đã kết nối với kho mã nguồn “{$repo}” bằng GitHub App “{$app}”.
+    connect_github: Kết nối với GitHub
+    # {$step} is the number of the current step, {$total} the number of steps
+    step_x_of_y: Bước {$step}/{$total}
+    admin_exists: Đã có tài khoản quản trị.
+    reset_admin_password: Đặt lại mật khẩu quản trị
+    setup_complete: Đã hoàn tất thiết lập. Hãy đăng nhập bằng tài khoản quản trị để quản lý người dùng và cài đặt. Bạn có thể quay lại đây bằng mã bí mật quản trị bất cứ lúc nào.
+    manage_sites: Quản lý các trang web khác
+    back_to_setup: Quay lại
+    sites_title: Các trang web khác
+    sites_description: Dịch vụ này cũng có thể phục vụ các trang web khác, mỗi trang có người dùng, cài đặt và GitHub App riêng. Đặt “base_url” trong cấu hình CMS của trang web thành URL của nó, sau đó thiết lập trang web tại đó bằng mã bí mật quản trị.
+    no_sites: Chưa có trang web nào khác.
+    site_id: ID trang web
+    site_id_description: Từ 1 đến 32 chữ cái thường, chữ số và dấu gạch ngang, ví dụ “acme”. ID này xuất hiện trong URL của trang web và không thể thay đổi.
+    site_name_optional: Tên (không bắt buộc)
+    add_site: Thêm trang web
+    # {$name} is the name of the site
+    site_added: Đã thêm “{$name}”. Đặt “base_url” trong cấu hình CMS của trang web đó thành URL của nó, sau đó mở trình hướng dẫn thiết lập tại đó.
+    # {$name} is the name of the site
+    copy_site_url: Sao chép URL của {$name}
+    delete_site: Xóa trang web
+    # {$name} is the name of the site
+    delete_site_x: Xóa {$name}
+    # {$name} is the name of the site, {$id} is its ID
+    delete_site_confirmation: Xóa “{$name}” cũng sẽ xóa người dùng, cài đặt và bình luận của trang web đó. Thao tác này không thể hoàn tác. GitHub App vẫn còn trên GitHub, nơi bạn có thể xóa nó. Nhập “{$id}” để xác nhận.
+    site_id_to_confirm: ID trang web để xác nhận
+    data_key_locked_title: Mã bí mật quản trị đã thay đổi
+    data_key_locked_description: Mã bí mật quản trị đã bị thay đổi nên không thể đọc các cài đặt đã lưu. Hãy nhập mã bí mật trước đó để giữ lại chúng, hoặc bắt đầu lại nếu bạn đã mất mã.
+    previous_secret: Mã bí mật quản trị trước đó
+    unlock: Mở khóa
+    rekey: Bắt đầu lại
+    rekey_confirmation: Bắt đầu lại sẽ xóa thông tin xác thực của GitHub App và các mã bí mật đã lưu khác, đồng thời đăng xuất tất cả mọi người. Mật khẩu vẫn được giữ lại. Tiếp tục?
+    result:
+      ok: Đã kết nối GitHub. Bây giờ bạn có thể đăng nhập.
+      github_app_not_created: GitHub App chưa được tạo. Hãy dùng mã bí mật quản trị để thử lại.
+      github_app_not_installed: GitHub App chưa được cài đặt. Hãy dùng mã bí mật quản trị để thử lại.
+      github_wrong_account: GitHub App đã được cài đặt trên một tài khoản không sở hữu kho mã nguồn. Hãy cài đặt nó trên tài khoản sở hữu kho mã nguồn và thử lại.
+      github_repository_not_included: GitHub App đã được cài đặt nhưng không có quyền truy cập vào kho mã nguồn. Hãy cấp cho nó quyền truy cập kho mã nguồn trên GitHub và thử lại.
+      unexpected: Kết nối với GitHub không thành công do lỗi không mong muốn. Vui lòng thử lại.
+  locks:
+    # {$name} is the name of the person editing the entry, {$time} when they started
+    being_edited: '{$name} đã chỉnh sửa bài viết này từ {$time} nên bạn chỉ có thể xem.'
+    being_edited_by_you: Bạn đang chỉnh sửa bài viết này trong một tab khác nên tại đây bạn chỉ có thể xem.
+    # {$name} is the name of the person who took over the entry
+    taken_over: '{$name} đã tiếp quản bài viết này nên giờ bạn chỉ có thể xem.'
+    take_over: Tiếp quản
+    unavailable: Không thể khóa bài viết, vì vậy người khác có thể đang chỉnh sửa bài viết này cùng lúc.
+    # {$name} is the name of the person editing the entry
+    being_edited_by_x: Đang được {$name} chỉnh sửa
+    # {$names} is a list of the other people who have the entry open in the editor
+    also_open_by_x: '{$names} cũng đang mở'
+    # {$names} is a list of the people who have the entry open, besides anyone editing it
+    open_by_x: Đang được {$names} mở
+  users:
+    title: Người dùng
+    add_user: Thêm người dùng
+    edit_user: Chỉnh sửa người dùng
+    add: Thêm
+    name: Tên
+    username_description: Không thể thay đổi tên người dùng sau khi người dùng đã được thêm.
+    email_optional: Email (không bắt buộc)
+    email_description: Email này được dùng trong các commit người này tạo để GitHub có thể liên kết chúng với tài khoản của họ. Nếu không có, một địa chỉ giữ chỗ sẽ được sử dụng.
+    role: Vai trò
+    status: Trạng thái
+    last_sign_in: Lần đăng nhập gần nhất
+    sign_in_column: Đăng nhập
+    methods:
+      password: Mật khẩu
+      # {$login} is a GitHub username
+      github: GitHub ({$login})
+    actions: Thao tác
+    you: (bạn)
+    never: Chưa bao giờ
+    roles:
+      admin: Quản trị viên
+      editor: Biên tập viên
+      viewer: Người xem
+    statuses:
+      active: Đang hoạt động
+      temporary_password: Mật khẩu tạm thời
+      waiting_for_sign_in: Đang chờ đăng nhập lần đầu
+      disabled: Đã tắt
+    # {$name} is the user’s name
+    show_options_for_x: Hiển thị tùy chọn cho {$name}
+    options: Tùy chọn người dùng
+    reset_password: Đặt lại mật khẩu
+    sign_out_everywhere: Đăng xuất khỏi mọi nơi
+    enable: Bật người dùng
+    disable: Tắt người dùng
+    delete: Xóa người dùng
+    # {$name} is the user’s name
+    reset_password_confirmation: Cấp mật khẩu tạm thời mới cho {$name}? Người này sẽ bị đăng xuất khỏi mọi nơi và phải chọn mật khẩu mới ở lần đăng nhập tiếp theo.
+    delete_confirmation: Xóa {$name}? Thao tác này không thể hoàn tác.
+    temporary_password: Mật khẩu tạm thời
+    # {$name} is the user’s name
+    temporary_password_description: Hãy gửi tên người dùng và mật khẩu tạm thời này cho {$name}. Thông tin này sẽ không được hiển thị lại, và người dùng sẽ tự chọn mật khẩu khi đăng nhập.
+    copy_username: Sao chép tên người dùng
+    copy_password: Sao chép mật khẩu
+    # {$name} is the user’s name
+    email_credentials: Gửi email cho {$name}
+    # The emails the admin sends from their own email app, with the sign-in details: `new` to a user
+    # who has just been added, `reset` to one whose password has been reset. Each line is a string of
+    # its own, as line breaks aren’t kept in these files
+    credentials_email:
+      # {$name} is the user’s name
+      greeting: Xin chào {$name},
+      # {$url} is a link to the CMS that fills in the username and the temporary password
+      sign_in_link: 'Liên kết đăng nhập: {$url}'
+      # {$username} is the username
+      username: 'Tên người dùng: {$username}'
+      # {$password} is the temporary password
+      password: 'Mật khẩu tạm thời: {$password}'
+      new:
+        # {$app} is the name of the CMS
+        subject: Thông tin đăng nhập của bạn cho {$app}
+        # {$app} is the name of the CMS
+        message: Giờ đây bạn có thể đăng nhập vào {$app}. Hãy mở liên kết bên dưới, liên kết này sẽ điền sẵn tên người dùng và mật khẩu tạm thời của bạn, rồi chọn mật khẩu riêng khi đăng nhập.
+      reset:
+        # {$app} is the name of the CMS
+        subject: Mật khẩu của bạn cho {$app} đã được đặt lại
+        # {$app} is the name of the CMS
+        message: Mật khẩu của bạn cho {$app} đã được đặt lại và bạn đã bị đăng xuất khỏi mọi nơi. Hãy mở liên kết bên dưới, liên kết này sẽ điền sẵn tên người dùng và mật khẩu tạm thời của bạn, rồi chọn mật khẩu mới khi đăng nhập.
+    allowed_domains: Tên miền được phép
+    allowed_domains_description: Các trang web có thể sử dụng Sveltia CMS Additions, mỗi dòng một tên máy chủ. Ký tự đại diện (*) khớp với mọi tên miền phụ, ví dụ *.example.com. Hãy liệt kê tên máy chủ chính xác khi có thể. Danh sách này chỉ áp dụng cho trang web này, kể cả khi cùng một phiên bản Sveltia CMS Additions cũng phục vụ các trang web khác.
+    save_allowed_domains: Lưu tên miền được phép
+    allowed_domains_saved: Đã lưu các tên miền được phép.
+    sign_in_tab: Đăng nhập
+    # {$latest} is the newest version of Sveltia CMS Additions, {$current} the one in use
+    update_available: Đã có Sveltia CMS Additions {$latest}. Bạn đang dùng phiên bản {$current}.
+    release_notes: Ghi chú phát hành
+    github_username_optional: Tên người dùng GitHub (không bắt buộc)
+    github_username_description: Khi có tên người dùng GitHub, người dùng sẽ đăng nhập bằng tài khoản GitHub đó thay vì mật khẩu.
+    # {$name} is the user’s name
+    github_required: '{$name} chỉ có thể đăng nhập bằng GitHub nên không thể xóa tên người dùng GitHub của họ. Hãy đặt lại mật khẩu của họ trước để cấp cho họ mật khẩu đăng nhập.'
+    adopt: Tiếp nhận tài khoản
+    sign_in:
+      github: Cho phép đăng nhập bằng GitHub
+      github_description: Người dùng đăng nhập bằng tài khoản GitHub của họ và nhận mã GitHub riêng, nhờ đó các thay đổi được commit dưới tên của chính họ. Quản trị viên cần thêm họ trước bằng tên người dùng GitHub, trừ khi họ thuộc phạm vi của một quy tắc đăng ký.
+      # Shown when signing in with GitHub is being turned off while {$count} users can only sign in
+      # with it
+      github_only_warning: |
+        .input {$count :integer}
+        .match $count
+          *   {{ {$count} người dùng chỉ có thể đăng nhập bằng GitHub và sẽ không thể đăng nhập khi tùy chọn này bị tắt, cho đến khi bạn đặt lại mật khẩu của họ. }}
+      rules: Quy tắc đăng ký
+      rules_description: Thành viên của tổ chức GitHub nơi ứng dụng được cài đặt có thể đăng nhập mà không cần được thêm trước. Tài khoản của họ sẽ nhận vai trò bạn chọn và bị tắt nếu họ rời khỏi tổ chức, trừ khi bạn tiếp nhận tài khoản đó.
+      org: Tổ chức GitHub
+      add_rule: Thêm quy tắc
+      # {$org} is the name of a GitHub organization
+      remove_rule: Gỡ bỏ quy tắc cho {$org}
+      # For a rule whose organization hasn’t been entered yet
+      remove_empty_rule: Gỡ bỏ quy tắc
+      save: Lưu cài đặt đăng nhập
+      saved: Đã lưu cài đặt đăng nhập.
+    domains_tab: Tên miền
+    github_tab: GitHub
+    github:
+      app: GitHub App
+      repository: Kho mã nguồn
+      not_installed: Chưa cài đặt
+      statuses:
+        ok: Ứng dụng đang hoạt động.
+        not_registered: Chưa thiết lập GitHub App nào. Hãy chạy trình hướng dẫn thiết lập từ trang đăng nhập bằng mã bí mật quản trị.
+        key_missing: Khóa riêng tư của ứng dụng đã bị mất khi mã bí mật quản trị được thay thế. Hãy tạo khóa riêng tư mới trong phần cài đặt ứng dụng trên GitHub và tải lên bên dưới.
+        key_rejected: GitHub không chấp nhận khóa riêng tư của ứng dụng, chẳng hạn vì khóa đã bị xóa trên đó. Hãy tạo khóa riêng tư mới trong phần cài đặt ứng dụng trên GitHub và tải lên bên dưới.
+        not_installed: Ứng dụng chưa được cài đặt trên kho mã nguồn. Hãy cài đặt lại từ trang của ứng dụng trên GitHub hoặc chạy trình hướng dẫn thiết lập.
+        suspended: Bản cài đặt của ứng dụng đang bị tạm ngưng. Hãy bỏ tạm ngưng trong phần cài đặt bản cài đặt trên GitHub.
+        unreachable: Không thể kết nối với GitHub. Vui lòng thử lại sau.
+      check_again: Kiểm tra lại
+      # {$branch} is the name of the repository’s default branch
+      branch_protected: Các bộ quy tắc đang bảo vệ nhánh “{$branch}” khỏi force push và bị xóa.
+      branch_bypassed: Các bộ quy tắc đang bảo vệ nhánh “{$branch}”, nhưng ứng dụng có thể bỏ qua chúng, vì vậy biên tập viên vẫn có thể force push lên nhánh hoặc xóa nhánh. Hãy gỡ ứng dụng khỏi danh sách bỏ qua của các bộ quy tắc đó.
+      branch_unprotected: Không có bộ quy tắc nào bảo vệ nhánh “{$branch}” khỏi force push và bị xóa, vì vậy biên tập viên có thể viết lại lịch sử hoặc xóa nhánh. Hãy thêm một bộ quy tắc trong cài đặt kho mã nguồn để chặn cả hai, và không đưa ứng dụng vào danh sách bỏ qua của nó.
+      repository_rules: Mở quy tắc kho mã nguồn
+      private_key: Khóa riêng tư
+      private_key_description: Để thay thế khóa riêng tư, hãy tạo khóa mới trong phần cài đặt ứng dụng trên GitHub, sau đó tải lên tệp .pem được tải xuống. Sau đó hãy xóa khóa cũ trên GitHub.
+      app_settings: Mở cài đặt ứng dụng
+      upload_private_key: Tải lên khóa riêng tư
+      replace_private_key: Thay thế khóa riêng tư
+      private_key_summary: Dịch vụ dùng khóa riêng tư của ứng dụng để truy cập kho mã nguồn trên GitHub. Hãy thay thế khóa nếu có khả năng nó đã bị lộ.
+      private_key_replaced: Đã thay thế khóa riêng tư.
+      commit_author: Tác giả commit
+      commit_author_description: Chọn người xuất hiện là tác giả của các thay đổi được lưu trong CMS. GitHub chỉ ký các commit do ứng dụng tạo, vì vậy hãy chọn ứng dụng nếu một bộ quy tắc yêu cầu commit có chữ ký. Những người dùng khác sẽ nhận được thay đổi này trong vòng một giờ.
+      commit_author_user: Người thực hiện thay đổi
+      commit_author_bot: GitHub App, với người thực hiện là đồng tác giả
+      commit_author_saved: Đã lưu tác giả commit.
+  # Administration section for the API keys and the deploy hook an admin shares with everyone
+  credentials:
+    title: Thông tin xác thực
+    description: Các khóa API và webhook triển khai nhập tại đây được dùng cho mọi người đăng nhập, trừ khi họ nhập thông tin riêng trong Cài đặt. Bất kỳ ai đã đăng nhập vào CMS đều có thể đọc chúng, vì vậy chỉ nhập những khóa bạn sẵn sàng chia sẻ với nhóm của mình.
+    save: Lưu thông tin xác thực
+    saved: Đã lưu thông tin xác thực.
+    # {$service} is the service name, e.g. DeepL
+    invalid_key: Khóa API cho {$service} có vẻ không đúng.
+  error:
+    unauthenticated: Phiên của bạn đã hết hạn. Vui lòng đăng nhập lại.
+    wrong_admin_secret: Mã bí mật quản trị không đúng.
+    admin_secret_missing: Mã bí mật quản trị chưa được đặt trong phần cài đặt của dịch vụ Sveltia CMS Additions.
+    admin_secret_too_short: Mã bí mật quản trị được đặt trong phần cài đặt của dịch vụ Sveltia CMS Additions quá ngắn. Hãy dùng ít nhất 32 ký tự ngẫu nhiên.
+    wrong_previous_secret: Mã bí mật quản trị trước đó không đúng.
+    not_an_admin: Người dùng này không phải là quản trị viên. Hãy chọn tên người dùng khác.
+    invalid_username: Tên người dùng gồm 3 đến 30 chữ cái thường, chữ số, dấu chấm, dấu gạch ngang hoặc dấu gạch dưới.
+    last_admin: Phải có ít nhất một quản trị viên.
+    cannot_disable_self: Bạn không thể tắt tài khoản của chính mình.
+    cannot_delete_self: Bạn không thể xóa tài khoản của chính mình.
+    username_taken: Tên người dùng này đã được một người dùng khác sử dụng.
+    email_taken: Địa chỉ email này đã được một người dùng khác sử dụng.
+    invalid_name: Tên phải có từ 1 đến 100 ký tự.
+    invalid_email: Địa chỉ email không hợp lệ.
+    invalid_domains: Một trong các tên miền được phép không phải là tên máy chủ hợp lệ.
+    current_origin_removed: Các tên miền được phép phải bao gồm trang web bạn đang sử dụng.
+    forbidden: Chỉ quản trị viên mới có thể thực hiện thao tác này.
+    invalid_credentials: Tên người dùng hoặc mật khẩu không đúng.
+    user_disabled: Tài khoản này đã bị tắt. Hãy liên hệ quản trị viên để được trợ giúp.
+    too_many_attempts: Quá nhiều lần thử. Vui lòng thử lại sau.
+    wrong_password: Mật khẩu hiện tại không đúng.
+    same_password: Hãy chọn mật khẩu mới khác với mật khẩu hiện tại.
+    invalid_github_login: Đây không phải là tên người dùng GitHub hợp lệ.
+    github_user_not_found: Không có người dùng GitHub nào có tên này.
+    github_account_taken: Một người dùng khác đang đăng nhập bằng tài khoản GitHub này.
+    invalid_rules: Quy tắc đăng ký cần có tên tổ chức GitHub.
+    invalid_rule_role: Quy tắc đăng ký chỉ có thể cấp vai trò biên tập viên hoặc người xem.
+    rule_org_not_installed: GitHub App phải được cài đặt trên tổ chức của quy tắc đăng ký.
+    not_invited: Bạn chưa có tài khoản tại đây. Hãy đề nghị quản trị viên thêm bạn.
+    method_disabled: Tính năng đăng nhập bằng GitHub đang bị tắt.
+    access_denied: Đăng nhập đã bị hủy.
+    github_app_not_set_up: Sveltia CMS Additions chưa được kết nối với GitHub. Hãy đề nghị quản trị viên hoàn tất thiết lập.
+    invalid_tenant_id: ID trang web phải gồm 1 đến 32 chữ cái thường, chữ số và dấu gạch ngang, và không được là “default”.
+    invalid_tenant_name: Tên trang web chỉ được dài tối đa 100 ký tự.
+    tenant_exists: Đã có một trang web với ID này.
+    github_app_missing: Chưa thiết lập GitHub App nào.
+    invalid_private_key: Tệp này không phải là khóa riêng tư hợp lệ.
+    private_key_mismatch: GitHub không chấp nhận khóa riêng tư này cho ứng dụng. Hãy đảm bảo bạn đã tạo khóa trong phần cài đặt của ứng dụng.
+    github_error: GitHub đã phản hồi với một lỗi. Vui lòng thử lại sau.
+    data_key_locked: Không thể sử dụng Sveltia CMS Additions cho đến khi quản trị viên hoàn tất việc thay đổi mã bí mật quản trị.
+    not_configured: Sveltia CMS Additions chưa được cấu hình đúng cách. Hãy liên hệ quản trị viên để được trợ giúp.
+    origin_not_allowed: Trang web này không được phép sử dụng Sveltia CMS Additions. Hãy đề nghị quản trị viên thêm trang web vào danh sách tên miền được phép.
+    not_set_up: Sveltia CMS Additions chưa được kết nối với GitHub. Hãy đề nghị quản trị viên hoàn tất thiết lập.
+    # A user whose password an admin has reset signs in another way, e.g. with GitHub
+    temporary_password: Mật khẩu của bạn đã được đặt lại. Hãy đăng nhập bằng tên người dùng và mật khẩu tạm thời mà quản trị viên đã cung cấp, sau đó chọn mật khẩu mới.
+    # {$url} is the URL of the service
+    incompatible: Phiên bản Sveltia CMS này không hoạt động với dịch vụ Sveltia CMS Additions tại {$url}.
+    unreachable: Không thể kết nối với Sveltia CMS Additions. Vui lòng thử lại sau.
+    insecure_connection: Sveltia CMS Additions phải được phục vụ qua HTTPS. Hãy kiểm tra `base_url` trong cấu hình CMS.
+    unexpected: Yêu cầu gửi tới Sveltia CMS Additions không thành công do lỗi không mong muốn. Vui lòng thử lại sau.
+
+  # Conversation panel: comments on the entry, kept by Sveltia CMS Additions
+  conversation:
+    title: Thảo luận
+    refresh: Làm mới thảo luận
+    empty: Chưa có bình luận nào.
+    # Button above a long conversation, which is loaded from its latest comments
+    show_older: Hiển thị bình luận cũ hơn
+    # Label of the list of comments
+    timeline: Bình luận
+    deleted_user: Người dùng đã bị xóa
+    you: Bạn
+    edited: đã chỉnh sửa
+    comment_label: Bình luận
+    placeholder: Viết bình luận (Markdown)
+    visible_to_cms_users: Chỉ người dùng CMS mới thấy
+    send: Bình luận
+    options: Tùy chọn bình luận
+    edit: Chỉnh sửa
+    delete: Xóa
+    save: Lưu
+    delete_confirmation: Xóa bình luận này? Thao tác này không thể hoàn tác.
+    send_failed: Không thể gửi bình luận.
+
+  # Placeholder of an API key or deploy hook field the user has left empty, while an admin of
+  # Sveltia CMS Additions has entered one for everyone
+  provided_by_admin: Do quản trị viên của bạn cung cấp
 
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
@@ -210,6 +563,15 @@ sign_in_with_mobile_instruction: Quét mã QR bên dưới bằng thiết bị d
 signed_in_as_x: Đã đăng nhập với tư cách {$name}
 working_with_local_repo: Đang làm việc với kho mã nguồn trên máy
 working_with_test_repo: Đang làm việc với kho mã nguồn thử nghiệm
+working_in_demo_mode: Chế độ demo
+
+# Demo welcome dialog: shown once after signing in to a demo site, where the test repository is
+# seeded with sample content and the changes are only stored in the browser
+demo_welcome:
+  title: Chào mừng đến với bản demo Sveltia CMS
+  description: Hãy thoải mái khám phá CMS và chỉnh sửa nội dung mẫu. Các thay đổi của bạn chỉ được lưu trong trình duyệt này. Không có gì được xuất bản trực tuyến và không ai khác có thể thấy chúng.
+  reset_hint: Để bắt đầu lại với nội dung ban đầu, hãy chọn Xóa toàn bộ dữ liệu trong Cài đặt > Quản lý dữ liệu.
+  button_label: Bắt đầu
 
 # Account menu: action items for sign-out and app installation
 sign_out: Đăng xuất
@@ -225,9 +587,14 @@ install_as_app: Cài đặt dưới dạng ứng dụng
 contents: Nội dung
 assets: Thư viện
 editorial_workflow: Quy trình biên tập
+# Name of the Editorial Workflow page when all the content uses Preview Workflow, which has no
+# review stages, so the page only lists the drafts
+drafts: Bản nháp
 cms_config: Cấu hình CMS
 # Mobile menu page title (shown only on small screens)
 menu: Trình đơn
+# Mobile menu page section heading listing the custom pages registered by the site
+custom_pages: Trang
 
 # Mobile promo infobar: encouraging users to try the mobile version
 mobile_promo_title: Sveltia CMS hiện đã có trên thiết bị di động!
@@ -238,10 +605,36 @@ mobile_promo_button: Hãy thử xem
 new_language_available: Sveltia CMS hiện có sẵn trong {$locale}!
 change_language: Thay đổi ngôn ngữ
 
+# Live reload infobar: shown when the CMS runs on a page that a framework’s development server (e.g.
+# Astro) reloads on every file change, instead of a static HTML file
+live_reload_warning: Máy chủ phát triển của bạn tải lại trang này mỗi khi có tệp thay đổi, điều này có thể làm gián đoạn việc lưu và khiến tệp của bạn bị hỏng. Thay vào đó, hãy phục vụ CMS từ một tệp HTML tĩnh. <a>Tìm hiểu thêm</a>
+
 # Toast notification shown while the translation for the selected language is being downloaded
 # {$locale} is the localized language name, e.g., “French”
 switching_language: Đang chuyển sang {$locale}…
 locale_load_failed: Không thể tải bản dịch {$locale}. Vui lòng thử lại sau.
+
+# Toast notification shown when changes saved with the local backend couldn’t be committed to Git
+# {$reason} is one of the `local_git_skip_reasons` strings below
+local_git_not_committed: Các thay đổi của bạn đã được lưu nhưng chưa được commit vào Git. {$reason} Để chỉ lưu tệp, hãy tắt commit Git trong Cài đặt > Nhà phát triển.
+local_git_skip_reasons:
+  unsupported_repository: Kho mã nguồn của bạn sử dụng một tính năng Git mà CMS không hỗ trợ, chẳng hạn như linked worktree, tên đối tượng SHA-256, định dạng reftable, sparse index hoặc index phiên bản 3 hay 4 (được tùy chọn feature.manyFiles và git add -N sử dụng).
+  missing_identity: Tên và địa chỉ email của bạn chưa được đặt trong cấu hình Git của kho mã nguồn, và CMS không thể đọc cấu hình toàn cục của bạn. Hãy đặt chúng trong kho mã nguồn bằng git config --local user.name "Your Name" và git config --local user.email "you@example.com".
+  locked: Một tiến trình Git khác đang sử dụng kho mã nguồn. Nếu không có tiến trình nào đang chạy, hãy xóa tệp .git/index.lock.
+  # The operation in progress, with how to finish or cancel it
+  operation_in_progress:
+    merge: Đang có một thao tác merge. Hoàn tất bằng git commit hoặc hủy bằng git merge --abort.
+    rebase: Đang có một thao tác rebase. Hoàn tất bằng git rebase --continue hoặc hủy bằng git rebase --abort. Nếu bạn đã chuyển sang việc khác, git rebase --quit sẽ bỏ thao tác này mà không thay đổi tệp của bạn.
+    cherry_pick: Đang có một thao tác cherry-pick. Hoàn tất bằng git cherry-pick --continue hoặc hủy bằng git cherry-pick --abort.
+    revert: Đang có một thao tác revert. Hoàn tất bằng git revert --continue hoặc hủy bằng git revert --abort.
+    am: Đang áp dụng bản vá bằng git am. Hoàn tất bằng git am --continue hoặc hủy bằng git am --abort.
+    conflict: Một số tệp đang bị xung đột. Hãy giải quyết xung đột và stage kết quả trước.
+  detached_head: Chưa checkout nhánh nào.
+  staged_changes: Bạn có các thay đổi khác đã được stage để commit. Hãy commit hoặc bỏ stage chúng trước.
+  # {$path} is the file path
+  lfs: '{$path} được theo dõi bằng Git LFS, CMS không thể commit vào đó.'
+  # {$message} is the error message
+  error: Đã xảy ra lỗi không mong muốn. {$message}
 
 # Site and page navigation
 # Toolbar button aria-label for visiting the live site
@@ -276,6 +669,10 @@ account: Tài khoản
 live_site: Trang web
 git_repository: Kho mã nguồn Git
 settings: Cài đặt
+
+# Page for the people who look after the CMS, apart from the personal settings: user management
+# and the CMS configuration
+administration: Quản trị
 
 # Help menu: button aria-labels and section headings
 show_help_menu: Hiển thị trình đơn trợ giúp
@@ -342,9 +739,9 @@ asset_list: Danh sách tệp
 # Collection and folder page titles
 # Used as aria-labels on page containers
 # {$collection} is the current collection label
-x_collection: Chuyên mục “{$collection}”
+x_collection: Chuyên mục {$collection}
 # {$folder} is the current asset folder label
-x_asset_folder: Thư mục tệp “{$folder}”
+x_asset_folder: Thư mục tệp {$folder}
 
 # Navigation announcements (ARIA live regions)
 # Announce page changes for screen reader users
@@ -369,6 +766,10 @@ viewing_x_asset_folder: |
 # Cloud storage service view announcement
 # {$service} is the cloud storage service name, e.g. Uploadcare
 viewing_x_external_location: Bạn hiện đang xem các tệp trên {$service}.
+# Administration page announcements
+viewing_admin_section_list: Bạn hiện đang xem danh sách các mục Quản trị.
+# {$section} is the section label, e.g. Users
+viewing_x_admin_section: Bạn hiện đang xem mục “{$section}” của trang Quản trị.
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
@@ -387,6 +788,7 @@ x_of_x_selected: Đã chọn {$selected} trên {$total} mục
 
 # View switcher: toggle between list and grid views
 switch_view: Chuyển đổi chế độ xem
+table_view: Chế độ xem bảng
 list_view: Chế độ xem danh sách
 grid_view: Chế độ xem lưới
 switch_to_list_view: Chuyển sang chế độ xem danh sách
@@ -400,6 +802,16 @@ switch_to_grid_view: Chuyển sang chế độ xem lưới
 # Sort menu: button labels and options
 sort: Sắp xếp
 sorting_options: Tùy chọn sắp xếp
+# Table view column labels for the entry metadata used as `{{…}}` template tags
+table_column_keys:
+  # The folder containing the entry file
+  dirname: Thư mục
+  # The entry file name without the extension
+  filename: Tên tệp
+  # The entry file extension
+  extension: Phần mở rộng
+  # The enabled locales of the entry
+  locales: Ngôn ngữ
 # Sort key option labels
 sort_keys:
   # No sorting; entries appear in their natural repository order
@@ -439,6 +851,8 @@ grouping_options: Tùy chọn nhóm
 # Asset type filter and group labels
 type: Loại
 all: Tất cả
+# Group option for the linked files, which can be hosted anywhere: the host name of the file’s URL
+domain: Tên miền
 # Asset type labels
 image: Ảnh
 video: Video
@@ -457,6 +871,9 @@ all_assets: Tất cả các tệp
 global_assets: Tệp dùng chung
 # Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
 linked_files: Tệp được liên kết
+# Badge and message shown on a linked file that couldn’t be loaded, e.g. because it has been deleted
+file_unavailable: Không khả dụng
+file_unavailable_description: Không thể tải tệp này. Có thể tệp đã bị di chuyển hoặc xóa.
 
 # ==============================================================================
 # Entry and Collection Actions
@@ -477,12 +894,29 @@ entry_not_found: Không tìm thấy bài viết.
 # Entry creation restrictions: tooltip and advisory messages
 creating_entries_disabled_by_admin: Quản trị viên đã tắt tính năng tạo bài viết mới trong chuyên mục này.
 # {$quota} is the collection’s maximum entry count
-creating_entries_disabled_by_quota: Bạn không thể thêm bài viết mới vì chuyên mục này đã đạt giới hạn {$quota} bài viết.
+creating_entries_disabled_by_quota: |
+  .input {$quota :integer}
+  .match $quota
+    *   {{ Bạn không thể thêm bài viết mới vì chuyên mục này đã đạt giới hạn {$quota} bài viết. }}
 # {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
 creating_entries_nearing_quota: |
+  .input {$quota :integer}
   .input {$remaining :integer}
-  .match $remaining
-    *   {{ Chuyên mục này sắp đạt giới hạn {$quota} bài viết. Bạn chỉ có thể tạo thêm {$remaining} bài viết. }}
+  .match $quota $remaining
+    *   *   {{ Chuyên mục này sắp đạt giới hạn {$quota} bài viết. Bạn chỉ có thể tạo thêm {$remaining} bài viết. }}
+
+# Read-only restrictions set with the `readonly` option: advisory messages
+readonly_cms: CMS đang ở chế độ chỉ đọc. Bạn có thể xem nội dung và tệp nhưng không thể thực hiện bất kỳ thay đổi nào.
+readonly_collection: Chuyên mục này ở chế độ chỉ đọc. Bạn có thể xem nội dung nhưng không thể thực hiện bất kỳ thay đổi nào.
+readonly_entry: Bài viết này ở chế độ chỉ đọc. Bạn có thể xem nhưng không thể thực hiện bất kỳ thay đổi nào.
+readonly_asset_folder: Thư mục này ở chế độ chỉ đọc. Bạn có thể xem các tệp trong đó nhưng không thể thực hiện bất kỳ thay đổi nào.
+readonly_branch: Bạn không có quyền push lên nhánh “{$branch}”. Bạn có thể xem nội dung này nhưng không thể thực hiện bất kỳ thay đổi nào.
+readonly_role: Bạn chỉ có quyền xem. Bạn có thể xem nội dung và tệp nhưng không thể thực hiện bất kỳ thay đổi nào.
+readonly_reference: Bài viết ở chế độ chỉ đọc nên không thể gỡ bỏ tham chiếu.
+# {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
+cannot_rename_referenced_entry: 'Không thể đổi tên bài viết này vì các bài viết chỉ đọc sau đang tham chiếu đến nó bằng tên hiện tại: {$entries}.'
+# {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
+cannot_move_referenced_asset: 'Không thể di chuyển hoặc đổi tên tệp này vì các bài viết chỉ đọc sau đang sử dụng nó: {$entries}.'
 
 # Navigation: back links and list labels
 back_to_collection: Quay lại chuyên mục
@@ -490,6 +924,8 @@ collection_list: Danh sách chuyên mục
 back_to_collection_list: Quay lại danh sách chuyên mục
 asset_folder_list: Danh sách thư mục tệp
 back_to_asset_folder_list: Quay lại danh sách thư mục tệp
+# Back button shown in place of the one above while browsing a subfolder of an asset folder
+back_to_parent_folder: Quay lại thư mục cha
 
 # ==============================================================================
 # Search
@@ -544,6 +980,53 @@ no_entries_found: Không tìm thấy bài viết nào.
 # Upload dialog: title and button label
 upload_assets: Tải tệp lên
 
+# New Folder button and dialog in the Asset Library
+new_folder: Thư mục mới
+new_folder_name: Tên thư mục
+new_folder_create: Tạo
+# {$folder} is the path of the folder the new one will be created in, starting with a slash
+new_folder_description: Thư mục mới sẽ được tạo trong “{$folder}”.
+# Validation errors for the new folder name
+new_folder_error:
+  empty: Tên thư mục không được để trống.
+  invalid: Tên thư mục không được chứa dấu gạch chéo hoặc bắt đầu bằng dấu chấm.
+  # A name the CMS itself is usually served from, e.g. `admin` or `cms`
+  reserved: Các tệp trong thư mục có tên này sẽ ở chế độ chỉ đọc, vì bản thân CMS thường được phục vụ từ thư mục đó.
+  duplicate: Đã có một thư mục hoặc tệp cùng tên ở đây.
+# Progress and error messages while the folder is being created
+creating_folder: Đang tạo thư mục…
+creating_folder_failed: Không thể tạo thư mục.
+
+# Menu on a folder in the Asset Library, and the Rename Folder and Delete Folder dialogs
+folder_options: Tùy chọn thư mục
+show_folder_options: Hiển thị tùy chọn thư mục
+rename_folder: Đổi tên thư mục
+delete_folder: Xóa thư mục
+# Rename Folder dialog body text
+# {$count} is the number of assets in the folder, which are moved along with it
+enter_new_name_for_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Nhập tên mới bên dưới. }}
+    1   {{ Nhập tên mới bên dưới. Tệp trong thư mục sẽ được di chuyển theo và bài viết đang sử dụng tệp đó sẽ được cập nhật. }}
+    *   {{ Nhập tên mới bên dưới. {$count} tệp trong thư mục sẽ được di chuyển theo và các bài viết đang sử dụng chúng sẽ được cập nhật. }}
+# Delete Folder confirmation
+# {$name} is the folder name and {$count} is the number of assets in the folder
+confirm_deleting_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Bạn có chắc chắn muốn xóa thư mục trống “{$name}” không? }}
+    1   {{ Bạn có chắc chắn muốn xóa thư mục “{$name}” và tệp bên trong không? }}
+    *   {{ Bạn có chắc chắn muốn xóa thư mục “{$name}” và {$count} tệp bên trong không? }}
+# Progress and error messages while the folder is being renamed or deleted
+renaming_folder: Đang đổi tên thư mục…
+renaming_folder_failed: Không thể đổi tên thư mục.
+deleting_folder: Đang xóa thư mục…
+deleting_folder_failed: Không thể xóa thư mục.
+# Asset Library and asset picker: notice shown when a cloud storage service holds more files than
+# are listed at once
+external_assets_truncated: Dịch vụ có quá nhiều tệp nên không thể liệt kê tất cả, một số tệp đã bị bỏ qua.
+
 # Edit options menu: button and item labels
 edit_options: Chỉnh sửa tùy chọn
 show_edit_options: Hiển thị tùy chọn chỉnh sửa
@@ -556,6 +1039,47 @@ edit_x: Chỉnh sửa {$name}
 
 # Asset text editor: switch for line wrapping
 wrap_long_lines: Ngắt dòng
+
+# Move assets: dialog for moving assets to another folder in the repository
+move: Di chuyển
+move_asset: Di chuyển tệp
+# Dialog title. {$name} is the asset name when a single asset is moved, and {$count} is the number of
+# assets being moved
+move_assets_title: |
+  .input {$count :integer}
+  .match $count
+    1   {{ Di chuyển {$name} }}
+    *   {{ Di chuyển {$count} tệp }}
+# Dialog body text. {$count} is the number of entries that currently use the assets
+select_asset_move_destination: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Chọn thư mục đích. }}
+    1   {{ Chọn thư mục đích. Bài viết đang sử dụng các tệp này cũng sẽ được cập nhật. }}
+    *   {{ Chọn thư mục đích. {$count} bài viết đang sử dụng các tệp này cũng sẽ được cập nhật. }}
+# Accessible label of the folder tree in the Move dialog
+asset_move_destination: Thư mục đích
+# Shown when the assets being moved are all in the selected folder already
+assets_already_in_folder: |
+  .input {$count :integer}
+  .match $count
+    1   {{ Tệp đã nằm trong thư mục này. }}
+    *   {{ Các tệp đã nằm trong thư mục này. }}
+# Shown when files with the same names exist in the selected folder. {$names} is a comma-separated
+# list of file names
+asset_move_conflict: 'Các tệp sau đã tồn tại trong thư mục này: {$names}.'
+moving_assets: Đang di chuyển tệp…
+moving_assets_failed: Không thể di chuyển tệp.
+# Warning shown when files have been moved off a cloud storage service, but the originals couldn’t
+# be deleted from it
+asset_move_cleanup_failed: Các tệp đã được di chuyển, nhưng không thể xóa bản gốc khỏi dịch vụ lưu trữ.
+# Shown when files on a cloud storage service can’t be renamed or moved, because the entries using
+# them can’t be updated, e.g. for an Open Authoring contributor. {$count} is the number of files
+cannot_change_used_external_files: |
+  .input {$count :integer}
+  .match $count
+    1   {{ Không thể đổi tên hoặc di chuyển tệp này vì không thể cập nhật các bài viết đang sử dụng nó. }}
+    *   {{ Không thể đổi tên hoặc di chuyển các tệp này vì không thể cập nhật các bài viết đang sử dụng chúng. }}
 
 # Rename asset: dialog and validation
 rename_asset: Đổi tên tệp
@@ -574,6 +1098,15 @@ enter_new_name_for_asset_error:
   empty: Tên tệp không được để trống.
   character: Tên tệp không được chứa ký tự đặc biệt.
   duplicate: Tên tệp này đang được một tệp khác sử dụng.
+  # A name starting with a dot hides the file, which the CMS wouldn’t list any more
+  leading_dot: Tên tệp không được bắt đầu bằng dấu chấm.
+  # The name of a file next to the asset that isn’t an asset, like an entry file
+  file_duplicate: Đã có một tệp khác cùng tên ở đây.
+  # The name of a folder next to the file
+  folder_duplicate: Đã có một thư mục cùng tên ở đây.
+# Shown while renaming a file whose name will be changed on saving, e.g. by the `slugify_filename`
+# media library option
+file_will_be_saved_as: Tệp sẽ được lưu với tên “{$name}”.
 # Confirmation dialog shown when the file extension is changed while renaming an asset
 change_file_extension: Thay đổi phần mở rộng
 # {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
@@ -587,6 +1120,11 @@ file_extension_change_warning: Tệp có thể không được hiển thị ho�
 replace_asset: Thay thế tệp
 # {$name} is the asset being replaced
 replace_x: Thay thế {$name}
+# File/Image field: labels of the Replace and Remove buttons
+replace_file: Thay thế tệp
+replace_image: Thay thế ảnh
+remove_file: Gỡ bỏ tệp
+remove_image: Gỡ bỏ ảnh
 
 # File selection prompts: drop zones and file pickers
 # Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
@@ -671,6 +1209,29 @@ confirm_deleting_selected_assets: |
     1   {{ Bạn có chắc chắn muốn xóa tệp đã chọn không? }}
     *   {{ Bạn có chắc chắn muốn xóa {$count} tệp đã chọn không? }}
 confirm_deleting_all_assets: Bạn có chắc chắn muốn xóa tất cả tệp không?
+# Note added to the confirmation when entries use the assets being deleted; the references are
+# removed in the same commit. {$count} is the number of entries using them
+deleting_referenced_assets_note: |
+  .input {$count :integer}
+  .match $count
+    1   {{ Tham chiếu đến tệp trong một bài viết cũng sẽ bị gỡ bỏ. }}
+    *   {{ Các tham chiếu đến tệp trong {$count} bài viết cũng sẽ bị gỡ bỏ. }}
+# Shown in place of the confirmation when removing the references would leave a field in an entry
+# invalid, e.g. a required Image field with nothing left, so the deletion is refused. The fields are
+# listed below the message, each with the validation error it would have. {$count} is the number of
+# assets being deleted
+cannot_delete_referenced_assets: |
+  .input {$count :integer}
+  .match $count
+    1   {{ Không thể xóa tệp này vì các trường sau trong những bài viết đang sử dụng nó sẽ không còn hợp lệ nếu thiếu tệp. Hãy cập nhật các bài viết đó trước. }}
+    *   {{ Không thể xóa các tệp này vì các trường sau trong những bài viết đang sử dụng chúng sẽ không còn hợp lệ nếu thiếu các tệp. Hãy cập nhật các bài viết đó trước. }}
+# Error shown in the asset deletion dialog when the entries using the assets couldn’t be looked up,
+# so the deletion can’t go ahead. {$count} is the number of assets being deleted
+checking_asset_references_failed: |
+  .input {$count :integer}
+  .match $count
+    1   {{ Không thể kiểm tra những bài viết nào đang sử dụng tệp này. Hãy đóng hộp thoại này và thử lại. }}
+    *   {{ Không thể kiểm tra những bài viết nào đang sử dụng các tệp này. Hãy đóng hộp thoại này và thử lại. }}
 
 # Delete entries: dialog titles and confirmation messages
 # {$count} is the number of entries targeted by the action
@@ -703,6 +1264,23 @@ confirm_deleting_selected_entries_with_assets: |
     *   {{ Bạn có chắc chắn muốn xóa {$count} bài viết đã chọn và các tệp liên quan không? }}
 confirm_deleting_all_entries: Bạn có chắc chắn muốn xóa tất cả bài viết?
 confirm_deleting_all_entries_with_assets: Bạn có chắc chắn muốn xóa tất cả bài viết và các tệp liên quan không?
+# Note added to the confirmation when other entries reference the entries being deleted through
+# Relation fields; the references are removed in the same commit. {$count} is the number of
+# referencing entries
+deleting_referenced_entries_note: |
+  .input {$count :integer}
+  .match $count
+    1   {{ Tham chiếu đến bài viết này trong một bài viết khác cũng sẽ bị gỡ bỏ. }}
+    *   {{ Các tham chiếu đến bài viết này trong {$count} bài viết khác cũng sẽ bị gỡ bỏ. }}
+# Shown in place of the confirmation when removing the references would leave a Relation field in
+# another entry invalid, e.g. a required field with nothing selected, so the deletion is refused.
+# The fields are listed below the message, each with the validation error it would have. {$count}
+# is the number of entries being deleted
+cannot_delete_referenced_entries: |
+  .input {$count :integer}
+  .match $count
+    1   {{ Không thể xóa bài viết này vì các trường sau trong những bài viết khác sẽ không còn hợp lệ nếu thiếu nó. Hãy cập nhật các bài viết đó trước. }}
+    *   {{ Không thể xóa các bài viết này vì các trường sau trong những bài viết khác sẽ không còn hợp lệ nếu thiếu chúng. Hãy cập nhật các bài viết đó trước. }}
 
 # ==============================================================================
 # Entry Reordering
@@ -716,6 +1294,39 @@ cancel_reordering_entries: Hủy sắp xếp lại bài viết
 
 # Reorder error message
 saving_reorder_failed: Không thể lưu thứ tự mới. Vui lòng thử lại.
+
+# ==============================================================================
+# Bulk Entry Editing
+# ==============================================================================
+# Strings for editing the fields of many entries at once in a table.
+
+# Bulk edit mode: toggle buttons
+bulk_edit_entries: Chỉnh sửa hàng loạt bài viết
+save_bulk_edits: Lưu chỉnh sửa hàng loạt
+cancel_bulk_edits: Hủy chỉnh sửa hàng loạt
+
+# Bulk edit table: column header of the entry titles
+bulk_edit_entry: Bài viết
+
+# Bulk edit table: label of the table
+bulk_edit_table: Trình chỉnh sửa hàng loạt
+
+# Bulk edit table: label of a cell input; {$field} is the field label, {$entry} is the entry title
+bulk_edit_cell: '{$field} của {$entry}'
+
+# Bulk edit status: number of changed fields
+bulk_edit_count: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Không có thay đổi }}
+    *   {{ {$count} thay đổi }}
+
+# Bulk edit error messages
+bulk_edit_invalid: Một số giá trị không hợp lệ. Hãy sửa các trường được đánh dấu và thử lại.
+saving_bulk_edits_failed: Không thể lưu các thay đổi. Vui lòng thử lại.
+
+# Bulk edit: confirmation shown when leaving the mode with unsaved changes
+discard_bulk_edits_confirm: Hủy bỏ các thay đổi đã thực hiện với các bài viết?
 
 # ==============================================================================
 # File Upload and Processing
@@ -765,6 +1376,20 @@ warning_invalid_files: |
   .match $count
     1   {{ Không thể tải tệp lên vì tệp bị hỏng hoặc nội dung không khớp với định dạng tệp. Điều này thường xảy ra khi ảnh chỉ được đổi tên thay vì chuyển đổi, chẳng hạn như đổi ảnh HEIC thành tệp JPEG. Vui lòng chuyển đổi tệp và thử lại. }}
     *   {{ Không thể tải lên {$count} tệp vì tệp bị hỏng hoặc nội dung không khớp với định dạng tệp. Điều này thường xảy ra khi ảnh chỉ được đổi tên thay vì chuyển đổi, chẳng hạn như đổi ảnh HEIC thành tệp JPEG. Vui lòng chuyển đổi tệp và thử lại. }}
+# {$count} is the number of files that are not of a type the field accepts, even once transformed
+# {$types} is the list of accepted file types, such as “.pdf or .txt”
+warning_unsupported_files: |
+  .input {$count :integer}
+  .match $count
+    1   {{ Không thể tải tệp này lên vì nó không thuộc một trong các loại sau: {$types}. }}
+    *   {{ Không thể tải các tệp này lên vì chúng không thuộc một trong các loại sau: {$types}. }}
+# {$count} is the number of files that are not of an image type the field accepts
+# {$types} is the list of accepted image formats, such as “PNG or WebP”
+warning_unsupported_image_files: |
+  .input {$count :integer}
+  .match $count
+    1   {{ Không thể tải tệp này lên vì chỉ chấp nhận ảnh thuộc các loại sau: {$types}. }}
+    *   {{ Không thể tải các tệp này lên vì chỉ chấp nhận ảnh thuộc các loại sau: {$types}. }}
 
 # File format validation when replacing an asset
 # Warning section for replacement files that are in a different format
@@ -800,6 +1425,8 @@ uploading_files_failed: Tải lên không thành công.
 # Errors shown when a file on a cloud storage service could not be deleted or renamed
 deleting_assets_failed: Xóa không thành công.
 renaming_asset_failed: Đổi tên không thành công.
+# Error shown when an edited text file in the Asset Library could not be saved
+saving_asset_failed: Lưu không thành công.
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
@@ -836,6 +1463,8 @@ entry_validation_errors: |
   .input {$count :integer}
   .match $count
     *   {{ Có {$count} trường bị lỗi. Vui lòng sửa lỗi để lưu bài viết. }}
+# Button on the validation error toast that opens the Validation panel listing the errors
+show_errors: Hiển thị lỗi
 
 # ==============================================================================
 # Success Notifications
@@ -912,6 +1541,18 @@ assets_deleted: |
   .match $count
     1   {{ Đã xóa tệp. }}
     *   {{ Đã xóa {$count} tệp. }}
+folder_created: Đã tạo thư mục.
+# Folder info panel in the Asset Library sidebar
+folder_path: Đường dẫn thư mục
+folder_contents: Nội dung
+# {$count} is the number of subfolders in the folder
+x_folders: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Không có thư mục nào }}
+    *   {{ {$count} thư mục }}
+folder_renamed: Đã đổi tên thư mục.
+folder_deleted: Đã xóa thư mục.
 
 # ==============================================================================
 # Content Editor
@@ -952,6 +1593,9 @@ edit_singleton_announcement: Bây giờ bạn đang chỉnh sửa trang đơn �
 # Shown when CI skip is enabled/disabled
 save_and_publish: Lưu và xuất bản
 save_without_publishing: Lưu mà không xuất bản
+# Shown disabled in place of `save_and_publish` while entries created or edited from a Relation
+# field are in a collection whose review can’t be skipped with the `direct_publish` option
+save_and_publish_needs_review: Lưu và xuất bản (bài viết liên quan cần được duyệt)
 
 # Editor options menu
 show_editor_options: Hiển thị tùy chọn trình chỉnh sửa
@@ -981,6 +1625,9 @@ swap_panes: Hoán đổi bảng
 # {$locale} is the localized language name for the current content pane, e.g., English
 edit_x_locale: Chỉnh sửa nội dung {$locale}
 preview_x_locale: Xem trước nội dung {$locale}
+# The content of a monolingual entry, which has no locale to name
+edit_content: Chỉnh sửa nội dung
+preview_content: Xem trước nội dung
 
 # Preview iframe labels
 content_preview: Xem trước nội dung
@@ -989,6 +1636,8 @@ content_preview: Xem trước nội dung
 # {$locale} is the localized language name for the content options menu, e.g., English
 show_content_options_x_locale: Hiển thị tùy chọn nội dung {$locale}
 content_options_x_locale: Tùy chọn nội dung {$locale}
+show_content_options: Hiển thị tùy chọn nội dung
+content_options: Tùy chọn nội dung
 
 # Field container labels
 # {$field} is the field’s display label
@@ -1027,8 +1676,9 @@ deploy_preview:
   view: Xem bản xem trước
   # Shown while the site is still being built, with or without a URL to open yet
   building: Bản xem trước vẫn đang được dựng.
-  # Shown when the build failed, so no preview is available
-  failed: Không thể dựng bản xem trước.
+  # Shown when the build failed, so no preview is available. The failure may lie in the site’s own
+  # code rather than the entry, so the editor is told not to assume it’s theirs, and who to ask
+  build_failed: Không thể dựng bản xem trước. Lỗi này không nhất thiết do các thay đổi của bạn gây ra. Nếu sự cố vẫn tiếp diễn, hãy liên hệ quản trị viên trang web.
   # Shown briefly while the CI/CD provider is being queried
   checking: Đang kiểm tra bản xem trước…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
@@ -1061,9 +1711,20 @@ translate_from: Dịch từ…
 # {$locale} is the localized language name of the source content being translated, e.g., English
 translate_from_x: Dịch từ {$locale}
 
-# Revert changes
+# Revert changes, restore the default values or clear the fields. The field options menu offers
+# them for a field, the content options menu of an editor pane for the locale it shows, and the
+# editor options menu for the whole entry, the latter two asking for confirmation first
 revert_changes: Hoàn tác thay đổi
 revert_all_changes: Hoàn tác tất cả thay đổi
+restore_default: Khôi phục mặc định
+clear_all: Xóa tất cả
+confirm_reverting_changes: Bạn có chắc chắn muốn hoàn tác tất cả thay đổi đã thực hiện với bài viết này không?
+# {$locale} is a locale name, e.g. French
+confirm_reverting_changes_x_locale: Bạn có chắc chắn muốn hoàn tác tất cả thay đổi đã thực hiện với nội dung {$locale} không?
+confirm_restoring_defaults: Bạn có chắc chắn muốn khôi phục giá trị mặc định của tất cả các trường trong bài viết này không? Các thay đổi của bạn sẽ bị mất.
+confirm_restoring_defaults_x_locale: Bạn có chắc chắn muốn khôi phục giá trị mặc định của tất cả các trường trong nội dung {$locale} không? Các thay đổi của bạn sẽ bị mất.
+confirm_clearing_fields: Bạn có chắc chắn muốn xóa nội dung của tất cả các trường trong bài viết này không? Các thay đổi của bạn sẽ bị mất.
+confirm_clearing_fields_x_locale: Bạn có chắc chắn muốn xóa nội dung của tất cả các trường trong nội dung {$locale} không? Các thay đổi của bạn sẽ bị mất.
 
 # Slug editing
 edit_slug: Chỉnh sửa đường dẫn tĩnh
@@ -1071,8 +1732,10 @@ edit_slug_error:
   empty: Đường dẫn tĩnh không được để trống.
   invalid: Đường dẫn tĩnh không được chứa ký tự đặc biệt, kể cả dấu gạch chéo và dấu cách.
   duplicate: Đường dẫn tĩnh này đang được một bài viết khác sử dụng.
+# {$slug} is the slug filled from the slug template, which a number is added to when another entry uses it
+slug_numbered: Đường dẫn tĩnh “{$slug}” đã được dùng cho một bài viết khác nên một số sẽ được thêm vào.
 
-# Entry path editing in a nested collection
+# Entry path editing for nested entries
 # Heading for the parent folder picker shown when the `meta.path` option is enabled
 entry_parent_folder: Thư mục cha
 new_parent_folder: Thư mục mới
@@ -1176,6 +1839,13 @@ validation:
     email: Vui lòng nhập một email hợp lệ.
     url: Vui lòng nhập một URL hợp lệ.
 
+  # Value used for the same field in another entry of the collection
+  value_not_unique: Giá trị này đã được dùng cho một bài viết khác.
+  # Key of a keyed List field item used for another item of the same list
+  key_not_unique: Khóa này đã được dùng cho một mục khác.
+  # Key of a keyed List field item that is a whole number, which doesn’t keep its order in a map
+  key_numeric: Khóa không được là số nguyên, vì các mục sẽ mất thứ tự.
+
   # Custom field validation error
   invalid_value: Giá trị không hợp lệ.
   unexpected_error: Đã xảy ra lỗi không mong muốn.
@@ -1197,6 +1867,12 @@ entry_sidebar:
     # Button in the panel header that validates the entry on demand
     validate: Kiểm tra
 
+  # Slug panel: shows the entry slug and lets the user edit it
+  slug:
+    title: Đường dẫn tĩnh
+    generated_on_save: Đường dẫn tĩnh được tạo từ nội dung bài viết khi lưu. Ngày và giờ trong đó (nếu có) sẽ là thời điểm lưu.
+    unavailable: Bài viết này không có đường dẫn tĩnh.
+
   # History panel: shows entry commit history
   history:
     title: Lịch sử
@@ -1208,11 +1884,55 @@ entry_sidebar:
     title: Được liên kết từ
     no_entries: Không có bài viết nào liên kết đến bài viết này.
 
+  # Tab label of a panel with a count, e.g. of comments. {$title} is the panel title
+  title_with_count: '{$title} ({$count})'
+
+# Status shown next to the Save button while an entry with many new files is being saved
+# {$done} and {$total} are the number of files prepared and to prepare, or the number of commits
+# made and the estimated number of commits in all
+save_progress:
+  preparing: 'Đang chuẩn bị tệp: {$done}/{$total}'
+  committing: 'Đang lưu lên GitHub: {$done}/khoảng {$total} commit'
+
 # Entry save error dialog
 saving_entry:
   error:
     title: Lỗi
     description: Đã xảy ra lỗi khi lưu bài viết. Vui lòng thử lại sau.
+
+# Dialog shown when saving the entry would overwrite a change someone else has made in the
+# repository since the entry was opened in the editor
+save_conflict:
+  title: Bài viết đã bị người khác thay đổi
+  # `{$name}` is the other person’s name, `{$date}` when they made the change
+  modified_by: '{$name} đã thay đổi bài viết này vào {$date}, sau khi bạn mở nó.'
+  # Shown instead of `modified_by` when the other person isn’t known
+  modified: Bài viết này đã bị thay đổi trong kho mã nguồn sau khi bạn mở nó.
+  deleted: Bài viết này đã bị xóa khỏi kho mã nguồn sau khi bạn mở nó.
+  # Follows `modified_by` or `modified`
+  overwrite_warning: Nếu bạn lưu bây giờ, các thay đổi của họ sẽ bị mất.
+  # Follows `deleted`
+  recreate_warning: Nếu bạn lưu bây giờ, bài viết sẽ được tạo lại.
+  # Follows `modified_by`, `modified` or `deleted` for an entry stored in the same file as the other
+  # entries of the collection, which can’t be saved over the change
+  reload_warning: Vì bài viết được lưu trong cùng một tệp với các bài viết khác nên không thể lưu đè lên thay đổi đó. Hãy hủy chỉnh sửa, sau đó mở lại bài viết từ danh sách và thực hiện chỉnh sửa.
+  # OK button label
+  save_anyway: Vẫn lưu
+  # Error shown when the repository was updated between the check above and the commit itself
+  branch_moved: Kho mã nguồn đã được người khác cập nhật trong khi lưu. Vui lòng thử lại.
+  # Error shown when saving would change an item in a file storing all the entries of a collection,
+  # which someone else has changed or moved since it was loaded
+  array_item_changed: Một bài viết được lưu trong cùng tệp đã bị người khác thay đổi. Vui lòng thử lại.
+  # {$path} is the file path
+  array_file_invalid: Không thể cập nhật tệp {$path} vì tệp không chứa danh sách bài viết hợp lệ.
+
+# Notice shown in the entry editor when someone else has changed or deleted the entry in the
+# repository while the user has it open. The change itself is described with the `save_conflict`
+# strings above
+remote_change:
+  reload_entry: Tải lại bài viết
+  # Confirmation shown before reloading when the user has unsaved changes
+  confirm_reloading_entry: Bạn có chắc chắn muốn tải lại bài viết không? Các thay đổi chưa lưu của bạn sẽ bị mất.
 
 # ==============================================================================
 # Asset Editor
@@ -1283,21 +2003,63 @@ map_lat_lng: Bản đồ hiển thị vĩ độ {$latitude}, kinh độ {$longit
 remove_this_item: Xóa mục này
 move_up: Di chuyển lên
 move_down: Di chuyển xuống
+# Menu of a list item or file with the extra reorder actions, shown in a list of 3 or more items
+reorder_options: Tùy chọn sắp xếp
+move_to_top: Di chuyển lên đầu
+move_to_bottom: Di chuyển xuống cuối
+# Opens a dialog asking for the position to move a list item to
+move_to: Di chuyển đến…
+# Dialog asking for the new position of an item. {$count} is the number of items in the list
+move_to_description: Nhập vị trí từ 1 đến {$count}.
+move_to_position: Vị trí
 # aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
 # or moved with the arrow keys while the handle has focus
 reorder_item: Sắp xếp lại mục
 # aria-label for the text input holding one item of a simple List field, which has no subfield to
 # take a label from
 list_item_value: Giá trị của mục
+# aria-label for each item of a List field, giving its position in the list
+# {$position} is the 1-based position of the item, {$count} is the number of items
+list_item_position: Mục {$position}/{$count}
+# Message shown in place of a removed List field item or Object field, next to a Restore button
+# that puts it back
+item_removed: Đã gỡ bỏ mục.
 
-# Add item button label
+# Add item button label, also used by the Relation field to create a new entry in the referenced
+# collection, with the collection’s singular label
 # Example: “Add Image”, “Add Author”
 # {$name} is the label of the item type that can be added
 add_x: Thêm {$name}
 
 # List item context menu
+# aria-label for the button opening the menu, and for the menu itself
+list_item_options: Tùy chọn mục danh sách
 add_item_above: Thêm mục ở trên
 add_item_below: Thêm mục bên dưới
+paste_item_above: Dán mục ở trên
+paste_item_below: Dán mục bên dưới
+paste_item_to_replace: Dán để thay thế
+
+# List item clipboard
+# Button in the list toolbar to paste a copied item, from any list in any entry, at the end of the
+# list, or at the start with the `add_to_top` option
+paste_item: Dán mục
+list_item_copied: Đã sao chép mục.
+# ⋮ stands for the icon of the item menu button; keep it, along with the button’s aria-label
+no_list_item_to_paste: Không có mục nào đã sao chép để dán. Để sao chép một mục, hãy mở trình đơn ⋮ (Tùy chọn mục danh sách) của mục đó và chọn Sao chép.
+list_item_not_compatible: Mục đã sao chép không phù hợp với danh sách này.
+# {$count} is the number of the values left out, as the list doesn’t have the fields
+list_item_pasted_without_values: |
+  .input {$count :integer}
+  .match $count
+    1   {{ Đã dán mục. Một giá trị mà danh sách này không hỗ trợ đã bị bỏ qua. }}
+    *   {{ Đã dán mục. {$count} giá trị mà danh sách này không hỗ trợ đã bị bỏ qua. }}
+# {$count} is the number of the files the pasted item references that couldn’t be found
+list_item_pasted_without_files: |
+  .input {$count :integer}
+  .match $count
+    1   {{ Đã dán mục, nhưng không tìm thấy một tệp mà mục sử dụng. Hãy kiểm tra các trường tệp trong mục. }}
+    *   {{ Đã dán mục, nhưng không tìm thấy {$count} tệp mà mục sử dụng. Hãy kiểm tra các trường tệp trong mục. }}
 
 # Variable-type list selector
 select_list_type: Chọn loại danh sách
@@ -1316,12 +2078,45 @@ opacity: Độ mờ
 # Select field: empty option placeholder
 unselected_option: (Không có)
 
+# Relation field: creating or editing a referenced entry without leaving the editor
+relation_field:
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  save_together_hint: '{$name} mới sẽ được lưu cùng với bài viết bạn đang chỉnh sửa.'
+  # Error shown when the entry couldn’t be prepared. {$name} is the singular label of the collection
+  add_failed: Không thể thêm {$name}. Kiểm tra bảng điều khiển của trình duyệt để biết chi tiết.
+  # Title of the dialog to edit an entry selected in the field. {$name} is the singular label of the
+  # referenced collection
+  edit_entry_title: Đang chỉnh sửa {$name}
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  edit_together_hint: Các thay đổi của bạn đối với {$name} sẽ được lưu cùng với bài viết bạn đang chỉnh sửa.
+  # Error shown when the changes couldn’t be prepared. {$name} is the singular label of the collection
+  edit_failed: Không thể áp dụng các thay đổi đối với {$name}. Kiểm tra bảng điều khiển của trình duyệt để biết chi tiết.
+  # Error shown when the changes would move the entry to another file path, e.g. through a path
+  # template using a field. {$name} is the singular label of the collection
+  move_unsupported: Các thay đổi này sẽ di chuyển {$name} sang vị trí khác, điều chỉ có thể thực hiện bằng cách chỉnh sửa riêng mục đó.
+  # Error shown when saving, if someone else has changed an entry edited from the field since. {$name}
+  # is the summary of that entry
+  edit_conflict: “{$name}” đã bị người khác thay đổi kể từ khi bạn chỉnh sửa. Hãy mở lại từ trường để xem xét các thay đổi của bạn so với phiên bản mới nhất.
+  # Error shown when saving, if someone else has deleted an entry edited from the field since.
+  # {$name} is the summary of that entry
+  edit_deleted: “{$name}” đã bị người khác xóa kể từ khi bạn chỉnh sửa. Hãy gỡ bỏ nó khỏi trường để lưu bài viết.
+  # Accessible label of the menu listing the selected entries that can be edited
+  select_entry_to_edit: Chọn bài viết để chỉnh sửa
+  # Warning shown in the editor of an entry that has been edited from a Relation field of another
+  # entry, while the changes wait in that entry’s pull request. {$name} is the summary of that
+  # entry
+  edited_with_entry: Các thay đổi đối với bài viết này đang chờ được xuất bản cùng với “{$name}”. Nếu bạn lưu bây giờ, hai nhóm thay đổi sẽ được kết hợp khi bài viết đó được xuất bản, điều này có thể thất bại nếu chúng chồng chéo nhau.
+  # Warning shown in the dialog when an entry edited from the field has been changed by someone else
+  # since. {$name} is the singular label of the collection
+  changed_since_edit: '{$name} này đã bị người khác thay đổi kể từ khi bạn chỉnh sửa. Các thay đổi của bạn được hiển thị trên phiên bản mới nhất. Hãy xem xét chúng trước khi cập nhật.'
+
 # Select Assets dialog
 assets_dialog:
   # Dialog titles for different selection modes
   title:
     file: Chọn tệp
     image: Chọn ảnh
+    folder: Chọn thư mục
 
   # Search input labels
   search_for_file: Tìm kiếm tệp
@@ -1329,6 +2124,17 @@ assets_dialog:
 
   # Locations panel aria-label
   locations: Vị trí
+
+  # Folder selection mode for a File field with the `select_folder` option. {$path} is the public
+  # path of the folder to be selected, and {$count} is the number of folders selected
+  selected_folder: 'Thư mục đã chọn: {$path}'
+  selected_folders: |
+    .input {$count :integer}
+    .match $count
+      *   {{ Đã chọn {$count} thư mục }}
+  no_subfolders: Thư mục này không có thư mục con.
+  # Shown for a cloud storage service whose `prefix` option depends on fields of the entry
+  prefix_unresolved: Hãy điền các trường mà vị trí này phụ thuộc vào để duyệt và tải lên tệp.
 
   # Asset folder options
   folder:
@@ -1346,6 +2152,7 @@ assets_dialog:
 
   # Stock photo panels
   available_images: Ảnh có sẵn
+  available_files: Tệp có sẵn
 
   # URL entry option
   enter_url: Nhập URL
@@ -1368,6 +2175,9 @@ assets_dialog:
   photo_credit:
     title: Ghi nguồn ảnh
     description: 'Hãy ghi nguồn như sau nếu có thể:'
+    # {$field} is the label of the Markdown field the credit is added to
+    insert_to_field: Chèn vào {$field}
+    copy_as_markdown: Sao chép dưới dạng Markdown
 
   # Unsaved asset badge
   unsaved: Chưa lưu
@@ -1407,6 +2217,7 @@ editor_components:
   alt: Văn bản thay thế
   title: Tiêu đề
   link: Liên kết
+  caption: Chú thích
 
 # Key-Value field: column headers and validation
 key_value:
@@ -1455,6 +2266,10 @@ cloud_storage:
       requested: Đang đăng nhập…
       error: Tên người dùng hoặc mật khẩu không chính xác. Vui lòng kiểm tra lại và thử lại.
 
+  # Shared by the S3-compatible services, unless overridden below
+  s3:
+    auth_key_label: Khóa truy cập bí mật
+
   # Service-specific configurations
   cloudinary:
     iframe_title: Thư viện phương tiện Cloudinary
@@ -1467,14 +2282,14 @@ cloud_storage:
   uploadcare:
     auth_key_label: Khóa API bí mật
 
-  aws_s3:
-    auth_key_label: Khóa truy cập bí mật
+  azure_blob_storage:
+    auth_key_label: Mã SAS
 
-  cloudflare_r2:
-    auth_key_label: Khóa truy cập bí mật
+  backblaze_b2:
+    auth_key_label: Khóa ứng dụng
 
-  digitalocean_spaces:
-    auth_key_label: Khóa truy cập bí mật
+  bunny_storage:
+    auth_key_label: Mật khẩu vùng lưu trữ
 
 # ==============================================================================
 # Configuration Validation
@@ -1528,16 +2343,42 @@ config:
     unsupported_backend_suggestion: Thay vào đó, hãy sử dụng một trong các <a>dịch vụ được hỗ trợ</a>.
     missing_repository: Chưa xác định kho mã nguồn.
     invalid_repository: Kho mã nguồn được cấu hình không hợp lệ. Giá trị phải có định dạng “chủ sở hữu/repo”.
+    # Don’t localize `api_root`
+    missing_api_root: Tùy chọn `api_root` chưa được xác định. Tùy chọn này là bắt buộc đối với dịch vụ Forgejo.
+    invalid_root_dir: Thư mục gốc không hợp lệ. Giá trị phải là một đường dẫn bên trong kho mã nguồn và không chứa “..”.
+    invalid_root_dir_branch: Không thể dùng thư mục gốc trong tên nhánh của các chế độ xuất bản `editorial_workflow` và `preview`. Không phần nào trong đường dẫn được bắt đầu bằng dấu chấm, kết thúc bằng “.lock” hoặc chứa dấu cách hay ký tự đặc biệt như dấu hai chấm hoặc dấu sao.
+    path_outside_root_dir: Đường dẫn “{$path}” dẫn ra ngoài thư mục gốc, nơi CMS không thể liệt kê tệp.
     oauth_implicit_flow: Sveltia CMS không hỗ trợ phương thức xác thực đã cấu hình (Implicit Flow). Hãy sử dụng <a>phương thức xác thực khác</a>.
     github_pkce_unsupported: Xác thực PKCE chưa được hỗ trợ do các hạn chế của GitHub. Thay vào đó, hãy sử dụng <a>phương thức xác thực khác</a>.
+    additions_no_base_url: Tùy chọn `base_url` phải là URL của dịch vụ Sveltia CMS Additions của bạn.
     oauth_no_app_id: ID ứng dụng OAuth không được xác định.
-    # Don’t localize `open_authoring` and `editorial_workflow`
-    open_authoring_no_workflow: Tùy chọn `open_authoring` yêu cầu chế độ xuất bản `editorial_workflow`. Xem <a>tài liệu</a> để biết chi tiết.
+    # Don’t localize `open_authoring`, `editorial_workflow` and `preview`
+    open_authoring_no_workflow: Tùy chọn `open_authoring` yêu cầu chế độ xuất bản `editorial_workflow` hoặc `preview`. Xem <a>tài liệu</a> để biết chi tiết.
     # Don’t localize `auth_methods`
     no_auth_methods: Tùy chọn `auth_methods` phải chứa ít nhất một phương thức.
+    # Don’t localize `auth_scope`, `repo` and `public_repo`
+    auth_scope_no_repo: Tùy chọn `auth_scope` phải bao gồm `repo` hoặc `public_repo`.
     missing_media_folder: Thư mục phương tiện không được xác định.
     public_folder_relative_path: Thư mục chung được cấu hình không hợp lệ. Giá trị phải là đường dẫn tuyệt đối bắt đầu bằng “/”.
     public_folder_absolute_url: URL tuyệt đối cho tùy chọn thư mục chung không được hỗ trợ trong Sveltia CMS.
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    unsupported_folder_template_tag: Tùy chọn `{$option}` chứa thẻ mẫu `{$tag}`, thẻ này không được hỗ trợ ở đó. Chỉ có thể dùng các thẻ mẫu của slug, chẳng hạn như `\{\{slug\}\}` và `\{\{year\}\}`, cùng các thẻ `\{\{dirname\}\}`, `\{\{filename\}\}`, `\{\{extension\}\}`, `\{\{media_folder\}\}` và `\{\{public_folder\}\}`.
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    global_folder_template_tag: Tùy chọn `{$option}` chứa thẻ mẫu `{$tag}`, thẻ này chỉ có thể được dùng trong tùy chọn của một chuyên mục, một tệp trong chuyên mục hoặc một trường, nơi có bài viết để điền giá trị vào.
+    # {$replacement} is the configured replacement string; Don’t localize `sanitize_replacement`
+    invalid_sanitize_replacement: Tùy chọn `sanitize_replacement` được đặt thành `{$replacement}`, nhưng giá trị này chứa ký tự không thể dùng trong slug nên không thể dùng để thay thế ký tự.
+    # {$option} is the option name (`site_url` or `display_url`) and {$url} is the configured value
+    invalid_url_option: Tùy chọn `{$option}` được đặt thành `{$url}`, nhưng giá trị phải là URL tuyệt đối bắt đầu bằng `https://` hoặc `http://`.
+    # Don’t localize `publish_mode`, `stages`, `draft`, `pending_review` and `pending_publish`
+    invalid_publish_mode_stages: Tùy chọn `stages` của `publish_mode` phải bắt đầu bằng `draft` và liệt kê các giai đoạn theo thứ tự `draft`, `pending_review`, `pending_publish`, không lặp lại giai đoạn nào.
+    # Don’t localize `i18n` and `locales`
+    i18n_no_locales: Tùy chọn `i18n.locales` phải liệt kê ít nhất một ngôn ngữ.
+    # {$locale} is the locale code from the configuration; Don’t localize `default_locale` and `locales`
+    i18n_invalid_default_locale: Tùy chọn `default_locale` được đặt thành `{$locale}`, nhưng giá trị này không nằm trong `locales`.
+    # {$locale} is the locale code from the configuration; Don’t localize `initial_locales` and `locales`
+    i18n_invalid_initial_locale: Tùy chọn `initial_locales` chứa `{$locale}`, nhưng giá trị này không nằm trong `locales`.
+    # Don’t localize `i18n`
+    i18n_no_collections: 'Tùy chọn `i18n` được cấu hình ở cấp cao nhất, nhưng không có chuyên mục hay trang đơn nào có tùy chọn `i18n`, vì vậy không có nội dung nào có thể được dịch. Hãy thêm `i18n: true` vào các chuyên mục và trang đơn cần dịch.'
     # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
     invalid_transformation_key: Tùy chọn `transformations` chứa khóa `{$key}` không được hỗ trợ. Khóa phải là `raster_image`, `svg` hoặc một định dạng ảnh raster được hỗ trợ.
     # {$key} is the transformation key; Don’t localize `quality`
@@ -1550,18 +2391,52 @@ config:
     invalid_asset_collection_name: Tên nhóm tệp `{$name}` không hợp lệ. Tên không được chứa ký tự đặc biệt.
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: Tên `{$name}` đã được dùng cho một nhóm tệp khác. Hãy chọn tên khác.
-    # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_no_options: Chuyên mục phải có tùy chọn `folder`, `files` hoặc `divider`.
-    # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_multiple_options: Chuyên mục không thể có các tùy chọn `folder`, `files` và `divider` cùng nhau.
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_no_options: Chuyên mục phải có tùy chọn `folder`, `file`, `files` hoặc `divider`.
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_multiple_options: Chuyên mục không thể có nhiều hơn một trong các tùy chọn `folder`, `file`, `files` và `divider`.
     # {$extension} is the file extension and {$format} is the configured content format
     file_format_mismatch: Phần mở rộng `{$extension}` không khớp với định dạng `{$format}`.
+    # {$name} is the field name from the configuration and {$widget} is its field type
+    front_matter_body_field_not_text: Trường `{$name}` được lưu làm phần thân bên dưới front matter, phần này chỉ có thể chứa văn bản, không thể chứa số, giá trị boolean, danh sách hay đối tượng như trường `{$widget}`. Hãy dùng loại trường chứa văn bản hoặc đổi tên trường.
+    # {$file} is the file path from the configuration; Don’t localize `file` and `locale`. The curly
+    # brackets are escaped with backslashes for MessageFormat 2
+    invalid_collection_data_file: Tùy chọn `file` `{$file}` không hợp lệ. Giá trị phải là đường dẫn đến một tệp JSON, không chứa trình giữ chỗ `\{\{locale\}\}`.
+    # {$prop} is the option name; Don’t localize `file`
+    unsupported_collection_data_file_option: Tùy chọn `{$prop}` không được hỗ trợ trong chuyên mục có tùy chọn `file`.
+    # Don’t localize `file`, `publish_mode` and `simple`
+    collection_data_file_workflow: Quy trình biên tập và Quy trình xem trước, bao gồm cả Đóng góp mở, không được hỗ trợ trong chuyên mục có tùy chọn `file`. Hãy đặt tùy chọn `publish_mode` của chuyên mục thành `simple`.
+    # {$prop} is the option name; Don’t localize `file` and `slug`. The curly brackets are escaped
+    # with backslashes for MessageFormat 2
+    collection_data_file_slug_tag: Tùy chọn `{$prop}` không được chứa thẻ `\{\{slug\}\}` trong chuyên mục có tùy chọn `file`, vì slug của bài viết là vị trí của nó, vốn sẽ thay đổi khi các bài viết được sắp xếp lại hoặc bị xóa. Hãy dùng một trường có giá trị duy nhất thay thế.
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
     invalid_slug_slash: Mẫu slug `{$slug}` không hợp lệ vì không được chứa dấu gạch chéo. Để sắp xếp các bài viết trong thư mục con, hãy sử dụng tùy chọn `path` thay cho `slug`.
+    # {$name} is the field name from the configuration; Don’t localize `identifier_field`
+    invalid_identifier_field: Tùy chọn `identifier_field` tham chiếu đến `{$name}`, nhưng không có trường nào như vậy được xác định trong chuyên mục.
+    # {$name} is the field name from the configuration; Don’t localize `filter`
+    invalid_filter_field: Tùy chọn `filter` tham chiếu đến `{$name}`, nhưng không có trường nào như vậy được xác định trong chuyên mục.
+    # Don’t localize `filter`, `value` and `pattern`
+    invalid_filter_no_condition: Tùy chọn `filter` phải có tùy chọn `value` hoặc `pattern` để so khớp bài viết.
+    # {$option} is an option name such as `slug` or `summary` and {$name} is the field name or template tag from the configuration
+    option_field_not_found: Tùy chọn `{$option}` tham chiếu đến `{$name}`, nhưng không có trường nào như vậy được xác định.
+    # {$name} is the field name from the configuration and {$widget} is its field type; Don’t localize `thumbnail`
+    thumbnail_field_not_media: Tùy chọn `thumbnail` tham chiếu đến `{$name}`, nhưng đó phải là trường Image hoặc File, không phải trường `{$widget}`.
+    # Don’t localize `inline` or `multiple`
+    invalid_inline_component_fields: Chế độ `inline` yêu cầu một trường Boolean, Color, DateTime, Number, Relation, Select hoặc String duy nhất. Trường Relation hoặc Select không được bật tùy chọn `multiple`.
+    # {$option} is an option name such as `pattern` or `filter` and {$pattern} is the configured pattern
+    invalid_regex: Tùy chọn `{$option}` chứa biểu thức chính quy không hợp lệ `{$pattern}`, biểu thức này sẽ bị bỏ qua.
     # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
     invalid_reorder_group: Tùy chọn `reorder` đề cập đến nhóm chế độ xem có tên `{$name}`, nhưng không có nhóm nào như vậy được xác định trong tùy chọn `view_groups`.
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit` and `fields`
+    invalid_bulk_edit_field: Danh sách `fields` của tùy chọn `bulk_edit` tham chiếu đến trường có tên `{$name}`, nhưng không có trường cấp cao nhất nào như vậy được xác định trong chuyên mục.
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit`, `fields` and `multiple`
+    unsupported_bulk_edit_field: Không thể chỉnh sửa hàng loạt trường `{$name}` trong danh sách `fields` của tùy chọn `bulk_edit`. Chỉ hỗ trợ trường Boolean, Color, DateTime, Number, Relation, Select hoặc String không ở chế độ chỉ đọc, không bật tùy chọn `multiple` và không được tự động đặt giá trị khi lưu.
     # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
     invalid_sortable_field: Tùy chọn `sortable_fields` đề cập đến trường có tên `{$name}`, nhưng không có trường nào như vậy trong chuyên mục.
+    # Don’t localize `sortable_fields` and `default_sort`
+    multiple_sortable_field_defaults: Chỉ một mục trong tùy chọn `sortable_fields` được có tùy chọn `default_sort`.
+    # {$option} is `table_columns` or `summary_fields`, and {$name} is the field name from the configuration
+    invalid_table_column_field: Tùy chọn `{$option}` tham chiếu đến trường có tên `{$name}`, nhưng không có trường nào như vậy được xác định trong chuyên mục.
     # {$name} is the field name from the configuration; Don’t localize `view_groups`
     invalid_view_group_field: Tùy chọn `view_groups` đề cập đến trường có tên `{$name}`, nhưng không có trường nào như vậy trong chuyên mục.
     # {$name} is the field name from the configuration; Don’t localize `view_filters`
@@ -1573,9 +2448,15 @@ config:
     duplicate_view_group_name: Tên nhóm chế độ xem `{$name}` đã tồn tại. Hãy chọn tên khác.
     # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
     missing_view_filter_name: Bộ lọc chế độ xem {$count} phải có tùy chọn `name` được xác định là một chuỗi không trống.
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `pattern`, `eq` and `gte`
+    invalid_view_filter_no_condition: Bộ lọc chế độ xem {$count} phải có tùy chọn `pattern` hoặc một tùy chọn so sánh như `eq` hay `gte` để so khớp bài viết.
     # {$name} is the invalid or duplicate view filter name
     invalid_view_filter_name: Tên bộ lọc chế độ xem `{$name}` không hợp lệ. Nó không được chứa các ký tự đặc biệt.
     duplicate_view_filter_name: Tên bộ lọc chế độ xem `{$name}` đã tồn tại. Hãy chọn tên khác.
+    # {$name} is the default view group name from the configuration; Don’t localize `default` and `view_groups`
+    invalid_view_group_default: Tùy chọn `default` của `view_groups` được đặt thành `{$name}`, nhưng không có nhóm chế độ xem nào có tên đó.
+    # {$name} is the default view filter name from the configuration; Don’t localize `default` and `view_filters`
+    invalid_view_filter_default: Tùy chọn `default` của `view_filters` được đặt thành `{$name}`, nhưng không có bộ lọc chế độ xem nào có tên đó.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: Chuyên mục {$count} phải có tùy chọn `name` là một chuỗi không trống.
     # {$name} is the invalid or duplicate collection name
@@ -1590,8 +2471,19 @@ config:
     collection_no_fields: Chuyên mục phải có tùy chọn `fields` chứa ít nhất một trường.
     # Don’t localize `fields`
     collection_file_no_fields: Tệp trong chuyên mục phải có tùy chọn `fields` chứa ít nhất một trường.
+    # Don’t localize `i18n`, `locale` and `folder`
+    collection_folder_i18n_required: Chuyên mục phải có tùy chọn `i18n` nếu trình giữ chỗ `locale` được dùng trong đường dẫn `folder`.
+    # {$folder} is the invalid folder path; Don’t localize `locale`, `folder` and the example path. The
+    # curly brackets in the example are escaped with backslashes for MessageFormat 2
+    invalid_collection_folder_locale: Đường dẫn `folder` `{$folder}` không hợp lệ. Trình giữ chỗ `locale` chỉ được dùng một lần và phải là toàn bộ tên một thư mục, ví dụ `content/\{\{locale\}\}/posts`.
     # Don’t localize `i18n`, `locale` and `file`
     collection_file_i18n_required: Tệp trong chuyên mục phải có tùy chọn `i18n` nếu trình giữ chỗ `locale` được dùng trong đường dẫn `file`.
+    # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
+    collection_i18n_no_fields: 'Chuyên mục có tùy chọn `i18n`, nhưng không có trường nào của nó có tùy chọn `i18n`, vì vậy không có trường nào có thể được dịch. Hãy thêm `i18n: true` hoặc `i18n: duplicate` vào các trường cần dịch.'
+    # Don’t localize `i18n` and `i18n: true`
+    collection_i18n_no_files: 'Chuyên mục có tùy chọn `i18n`, nhưng không có tệp nào của nó có tùy chọn `i18n`, vì vậy không có tệp nào có thể được dịch. Hãy thêm `i18n: true` vào các tệp cần dịch.'
+    # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
+    collection_file_i18n_no_fields: 'Tệp trong chuyên mục có tùy chọn `i18n`, nhưng không có trường nào của nó có tùy chọn `i18n`, vì vậy không có trường nào có thể được dịch. Hãy thêm `i18n: true` hoặc `i18n: duplicate` vào các trường cần dịch.'
     # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
     missing_field_name: Trường {$count} phải có tùy chọn `name` được xác định là một chuỗi không trống.
     # {$name} is the invalid or duplicate field name
@@ -1603,6 +2495,8 @@ config:
     invalid_variable_type: Tên loại biến `{$name}` không hợp lệ. Nó không được chứa các ký tự đặc biệt.
     duplicate_variable_type: Tên loại biến `{$name}` đã tồn tại. Hãy chọn tên khác.
     date_field_type: 'Loại trường Date đã lỗi thời và không được Sveltia CMS hỗ trợ. Hãy dùng trường DateTime với tùy chọn `type: date`.'
+    # curly brackets in the placeholder are escaped with backslashes for MessageFormat 2
+    hidden_field_locale_without_i18n: Tùy chọn `default` của trường Hidden sử dụng trình giữ chỗ `\{\{locale\}\}`, nhưng i18n chưa được bật cho chuyên mục, vì vậy nội dung không có ngôn ngữ để điền vào.
     # {$timeZone} is the invalid IANA timezone identifier from the configuration
     invalid_timezone: 'Múi giờ không hợp lệ: {$timeZone}. Phải là mã định danh múi giờ IANA hợp lệ như `America/New_York` hoặc `Asia/Tokyo`.'
     # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
@@ -1615,12 +2509,85 @@ config:
     invalid_list_variable_type: Loại biến của trường Danh sách không hợp lệ. Tùy chọn `widget` được đặt thành `{$widget}` nhưng phải là `object`.
     # Don’t localize `fields`, and `types`
     invalid_object_field: Trường Đối tượng không thể có các tùy chọn `fields` và `types` cùng nhau.
+    # {$min} and {$max} are option names such as `min` and `max` or `minlength` and `maxlength`
+    invalid_range_options: Tùy chọn `{$min}` không được lớn hơn tùy chọn `{$max}`.
+    # {$step} is the configured value; Don’t localize `step`
+    invalid_step: Tùy chọn `step` được đặt thành `{$step}`, nhưng giá trị phải lớn hơn 0, hoặc là `-1` để tắt bước nhảy.
+    # Don’t localize `options`
+    select_field_no_options: Trường Select phải có ít nhất một mục trong tùy chọn `options`.
+    # {$value} is the option value from the configuration; Don’t localize `options`
+    select_field_duplicate_option: Các giá trị `options` của trường Select phải là duy nhất, nhưng `{$value}` được dùng nhiều lần.
+    # {$value} is the default value from the configuration; Don’t localize `default` and `options`
+    select_field_invalid_default: Tùy chọn `default` của trường Select được đặt thành `{$value}`, nhưng giá trị này không nằm trong `options`.
+    # Don’t localize `fields` and `types`
+    list_field_no_subfields: Tùy chọn `fields` hoặc `types` của trường Danh sách phải có ít nhất một mục. Hãy bỏ tùy chọn này nếu muốn tạo danh sách các giá trị đơn giản.
+    # Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_object: Tùy chọn `default` của trường Danh sách chứa một đối tượng, nhưng mỗi mục phải là một giá trị đơn giản vì trường không có `fields` hoặc `types`.
+    # {$value} is the default item from the configuration; Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_item: Tùy chọn `default` của trường Danh sách chứa `{$value}`, nhưng mỗi mục phải là một đối tượng vì trường có `fields` hoặc `types`.
+    # {$key} is a property name of the default item from the configuration; Don’t localize `default`
+    list_field_invalid_default_key: Tùy chọn `default` của trường Danh sách chứa một mục có thuộc tính `{$key}`, nhưng không có trường con nào có tên đó.
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    list_field_default_missing_type: Tùy chọn `default` của trường Danh sách chứa một mục không có thuộc tính `{$typeKey}`, thuộc tính dùng để xác định một trong các `types`.
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default item; Don’t localize `default` and `types`
+    list_field_invalid_default_type: Tùy chọn `default` của trường Danh sách chứa một mục có thuộc tính `{$typeKey}` là `{$value}`, nhưng giá trị này không nằm trong `types`.
+    # Don’t localize `map_key_field`, `fields` and `types`
+    list_field_map_key_no_subfields: Tùy chọn `map_key_field` của trường Danh sách yêu cầu tùy chọn `fields` hoặc `types`, vì mỗi khóa được lấy từ một trường con.
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_not_found: Tùy chọn `map_key_field` của trường Danh sách tham chiếu đến `{$name}`, nhưng không có trường con nào có tên đó.
+    # {$name} is the subfield name, and {$type} is the variable type name; Don’t localize `map_key_field`
+    list_field_map_key_missing_in_type: Tùy chọn `map_key_field` của trường Danh sách tham chiếu đến `{$name}`, nhưng loại `{$type}` không có trường con nào có tên đó.
+    # {$name} is the subfield name, and {$widget} is its field type; Don’t localize `map_key_field`
+    list_field_map_key_invalid_type: Tùy chọn `map_key_field` của trường Danh sách tham chiếu đến `{$name}`, nhưng đó phải là trường String, Relation hoặc Select, không phải trường `{$widget}`.
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `multiple`
+    list_field_map_key_multiple: Tùy chọn `map_key_field` của trường Danh sách tham chiếu đến `{$name}`, nhưng trường con này không thể nhận nhiều giá trị vì mỗi mục cần một khóa duy nhất. Hãy xóa tùy chọn `multiple` của nó.
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_option_not_string: Tùy chọn `map_key_field` của trường Danh sách tham chiếu đến `{$name}`, nhưng các tùy chọn của trường con phải có giá trị chuỗi vì mỗi khóa được lưu dưới dạng chuỗi.
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `required`
+    list_field_map_key_not_required: Tùy chọn `map_key_field` của trường Danh sách tham chiếu đến `{$name}`, nhưng trường con không thể là không bắt buộc vì mỗi mục cần một khóa. Hãy xóa tùy chọn `required` của nó.
+    # {$name} is the subfield name; Don’t localize `map_key_field`, `i18n: false` and `i18n: duplicate`
+    list_field_map_key_not_localized: 'Tùy chọn `map_key_field` của trường Danh sách tham chiếu đến `{$name}`, nhưng trường con không thể có `i18n: false` vì các mục cần có khóa ở mọi ngôn ngữ. Hãy dùng `i18n: duplicate` hoặc xóa tùy chọn này.'
+    # Don’t localize `i18n`, `duplicate_if_empty`, `multiple` and `true`
+    duplicate_if_empty_multiple: 'Tùy chọn `i18n: duplicate_if_empty` không được hỗ trợ cho trường có tùy chọn `multiple`, vì vậy trường sẽ hoạt động như khi có `i18n: true`.'
+    # Don’t localize `default` and `multiple`
+    invalid_default_multiple: Tùy chọn `default` phải là một mảng vì tùy chọn `multiple` là `true`.
+    invalid_default_single: Tùy chọn `default` phải là một giá trị đơn, không phải mảng, vì tùy chọn `multiple` không phải là `true`.
+    # {$key} is a property name of the default object from the configuration; Don’t localize `default`
+    object_field_invalid_default_key: Tùy chọn `default` của trường Đối tượng có thuộc tính `{$key}`, nhưng không có trường con nào có tên đó.
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    object_field_default_missing_type: Tùy chọn `default` của trường Đối tượng không có thuộc tính `{$typeKey}`, thuộc tính dùng để xác định một trong các `types`.
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default object; Don’t localize `default` and `types`
+    object_field_invalid_default_type: Thuộc tính `{$typeKey}` trong tùy chọn `default` của trường Đối tượng là `{$value}`, nhưng giá trị này không nằm trong `types`.
+    # Don’t localize `default` and `output_code_only`
+    code_field_invalid_default_object: Tùy chọn `default` của trường Code phải là một chuỗi vì tùy chọn `output_code_only` là `true`.
+    # {$key} is a property name of the default object, {$code} and {$lang} are the configured property names; Don’t localize `default` and `keys`
+    code_field_invalid_default_key: Tùy chọn `default` của trường Code có thuộc tính `{$key}`, nhưng tùy chọn `keys` chỉ cho phép `{$code}` và `{$lang}`.
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_invalid_expression: Tùy chọn `value` của trường Compute phải là một biểu thức số học hợp lệ, chẳng hạn `\{\{fields.price\}\} * \{\{fields.quantity\}\}`, vì tùy chọn `value_type` là `{$valueType}`.
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_uuid_in_expression: Tùy chọn `value` của trường Compute không thể dùng thẻ UUID như `\{\{uuid\}\}` vì tùy chọn `value_type` là `{$valueType}`, khiến giá trị trở thành một biểu thức số học.
+    # {$value} is the default value and {$valueType} is the configured value type; Don’t localize `default` and `value_type`
+    number_field_default_not_integer: Tùy chọn `default` của trường Number được đặt thành `{$value}`, nhưng giá trị phải là số nguyên vì tùy chọn `value_type` là `{$valueType}`.
+    number_field_default_not_number: Tùy chọn `default` của trường Number được đặt thành `{$value}`, nhưng giá trị phải là một số vì tùy chọn `value_type` là `{$valueType}`.
+    # Don’t localize `fields` and `types`
+    object_field_no_subfields: Tùy chọn `fields` hoặc `types` của trường Đối tượng phải có ít nhất một mục.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: Chuyên mục `{$collection}` được tham chiếu không hợp lệ hoặc không được xác định.
     relation_field_invalid_collection_file: Tệp `{$file}` được tham chiếu không hợp lệ hoặc không được xác định.
     # Don’t localize `file`
     relation_field_missing_file_name: Phải xác định tùy chọn `file` cho quan hệ với chuyên mục dạng tệp.
     relation_field_invalid_value_field: Trường giá trị tham chiếu `{$field}` không hợp lệ hoặc không được xác định.
+    # {$collection} is the referenced collection name; Don’t localize `file`, `value_field` and `slug`.
+    # The curly brackets are escaped with backslashes for MessageFormat 2
+    relation_field_array_file_slug: Quan hệ với chuyên mục `{$collection}` không thể lưu giá trị `\{\{slug\}\}`, vì slug của bài viết trong chuyên mục có tùy chọn `file` là vị trí của nó, vốn sẽ thay đổi khi các bài viết được sắp xếp lại hoặc bị xóa. Hãy đặt tùy chọn `value_field` thành một trường có giá trị duy nhất.
+    # {$collection} is the referenced collection name; Don’t localize `file`
+    relation_field_array_file_workflow: Chuyên mục có tùy chọn `file` không thể có quan hệ với chuyên mục `{$collection}` đang dùng Quy trình biên tập hoặc Quy trình xem trước, vì không thể cập nhật trong tệp các tham chiếu đến bài viết bị đổi tên hoặc bị xóa ở đó.
+    relation_field_invalid_display_field: Trường hiển thị tham chiếu `{$field}` không hợp lệ hoặc không được xác định.
+    relation_field_invalid_search_field: Trường tìm kiếm tham chiếu `{$field}` không hợp lệ hoặc không được xác định.
+    relation_field_invalid_filter_field: Trường lọc tham chiếu `{$field}` không hợp lệ hoặc không được xác định.
+    relation_field_invalid_sort_field: Trường sắp xếp tham chiếu `{$field}` không hợp lệ hoặc không được xác định.
+    # Don’t localize `sort_by` and `file`
+    relation_field_sort_by_file_ignored: Tùy chọn `sort_by` không áp dụng cho quan hệ với một tệp, vì các tùy chọn của nó tuân theo thứ tự của các mục trong danh sách. Tùy chọn này sẽ bị bỏ qua.
     unexpected: Đã xảy ra lỗi
 
     # Schema validation errors, reported when the configuration doesn’t match the published JSON
@@ -1653,20 +2620,56 @@ config:
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: ID ứng dụng OAuth không được xác định. Người dùng được yêu cầu cung cấp mã truy cập để đăng nhập.
-    editorial_workflow_unsupported: Quy trình biên tập hiện chỉ hỗ trợ dịch vụ GitHub và GitLab.
-    open_authoring_unsupported_backend: Open Authoring hiện chỉ được hỗ trợ với dịch vụ GitHub.
+    # Don’t localize `prefix`
+    site_library_prefix_template: Tùy chọn `prefix` của một thư viện phương tiện chứa các thẻ mẫu, vốn chỉ được hỗ trợ ở cấp trường, vì ở cấp cao nhất không có bài viết nào để điền giá trị vào.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: Tùy chọn `{$prop}` không được hỗ trợ trong Sveltia CMS. Nó sẽ bị bỏ qua.
+    # Don’t localize `stages`, `publish_mode`, `editorial_workflow` and {$type}, which is `preview` or `simple`
+    publish_mode_stages_ignored: Tùy chọn `stages` của `publish_mode` chỉ áp dụng cho chế độ xuất bản `editorial_workflow`, vì vậy nó bị bỏ qua với `{$type}`.
+    # Don’t localize `pattern`, `m` and `s`
+    inline_component_multiline_pattern: '`pattern` của thành phần nội tuyến này có cờ `m` hoặc `s` hoặc khớp với ký tự xuống dòng, nhưng thành phần nội tuyến chỉ được so khớp trong phạm vi một đoạn văn.'
+    # {$name} is a button or component name and {$option} is `buttons` or `editor_components`; Don’t localize them and `multiline: false`
+    single_line_block_item: 'Mục `{$name}` của tùy chọn `{$option}` bị bỏ qua, vì trường có `multiline: false` chỉ có thể chứa nội dung nội tuyến.'
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: Cả hai tùy chọn `picker_utc` và múi giờ mới hơn (`input_timezone` hoặc `output_utc`) đều được đặt. Các tùy chọn mới được ưu tiên. Hãy cân nhắc xóa `picker_utc` khỏi cấu hình của bạn.
+    # Don’t localize `localize_format` and `format`
+    localize_format_without_format: Tùy chọn `localize_format` không có tác dụng vì trường không có tùy chọn `format` và giá trị của nó được lưu ở định dạng ISO 8601.
+    # {$name} is a template tag like `fields.lines.*.price`; Don’t localize `value`, `*` and `sum()`
+    compute_field_wildcard_without_item: Tùy chọn `value` của trường Compute tham chiếu đến `{$name}`, nhưng trường không nằm trong một mục của danh sách mà `*` đại diện, vì vậy giá trị sẽ trống. Chỉ hàm tổng hợp như `sum()` mới có thể dùng tất cả các mục của danh sách.
+    # {$name} is a template tag like `fields.lines.*.amount`; Don’t localize `value`
+    compute_field_self_reference: Tùy chọn `value` của trường Compute tham chiếu đến chính trường đó dưới dạng `{$name}`, vì vậy giá trị của nó thay đổi mỗi lần được tính và không bao giờ ổn định.
+    # {$name} is a template tag like `fields.total`; Don’t localize `value`
+    compute_field_reference_cycle: Tùy chọn `value` của trường Compute tham chiếu đến `{$name}`, một trường Compute khác tham chiếu ngược lại trường này, trực tiếp hoặc thông qua các trường khác, vì vậy giá trị của chúng không bao giờ ổn định.
+    # Don’t localize `localize_format`, `true` and `de`
+    localize_format_without_i18n: Tùy chọn `localize_format` là `true`, nhưng i18n chưa được bật cho chuyên mục, vì vậy giá trị được viết bằng tiếng Anh. Thay vào đó, hãy đặt tùy chọn thành một mã ngôn ngữ như `de`.
+    # {$locale} is the locale code from the configuration; Don’t localize `localize_format`
+    localize_format_unsupported_locale: Tùy chọn `localize_format` được đặt thành `{$locale}`, đây không phải là ngôn ngữ được hỗ trợ, vì vậy giá trị được viết bằng tiếng Anh.
     # Don’t localize `preview_path`
     preview_path_no_date_field: Tùy chọn `preview_path` sử dụng các thẻ ngày và giờ, nhưng chuyên mục không có trường DateTime nào để đọc chúng, vì vậy liên kết xem trước sẽ không được hiển thị.
     # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
     preview_path_date_field_not_found: Tùy chọn `preview_path_date_field` tham chiếu đến trường có tên `{$name}`, nhưng không có trường DateTime nào với tên đó được xác định, vì vậy liên kết xem trước sẽ không được hiển thị.
     # {$name} is the template tag from the configuration; Don’t localize `preview_path`
     preview_path_field_not_found: Tùy chọn `preview_path` tham chiếu đến `{$name}`, nhưng không có trường nào như vậy được xác định trong chuyên mục, vì vậy liên kết xem trước sẽ không được hiển thị.
+    # {$name} is the default identifier field name; Don’t localize `identifier_field` and `slug`
+    missing_identifier_field: Chuyên mục không có trường `{$name}` để đặt tên cho bài viết mới, vì vậy mỗi bài viết mới sẽ nhận một slug ngẫu nhiên. Hãy thêm trường `{$name}` hoặc đặt tùy chọn `identifier_field` hay `slug`.
+    # Don’t localize `slug`, `i18n`, `multiple_files`, `multiple_folders` and `multiple_root_folders`
+    slug_i18n_ineffective: Tùy chọn `i18n` của `slug` không có tác dụng vì chuyên mục không dùng cấu trúc i18n `multiple_files`, `multiple_folders` hoặc `multiple_root_folders`, trong đó mỗi ngôn ngữ có tệp riêng.
+    # Don’t localize `slug`, `template` and `auto_increment`
+    slug_template_ignored: Tùy chọn `template` của `slug` bị bỏ qua vì tùy chọn `auto_increment` sẽ đánh số các slug thay thế.
+    # {$file} is the file path; Don’t localize `file`, `locale`, `i18n`, `false`,
+    # `omit_default_locale_from_file_path` and the example paths. The curly brackets in the examples
+    # are escaped with backslashes for MessageFormat 2
+    locale_not_omitted_from_file_path: Không thể loại bỏ trình giữ chỗ `locale` khỏi đường dẫn `file` `{$file}`, vì vậy ngôn ngữ mặc định vẫn được giữ trong đó bất chấp tùy chọn i18n `omit_default_locale_from_file_path`. Để bỏ ngôn ngữ ra, hãy dùng trình giữ chỗ làm toàn bộ tên một thư mục, như `\{\{locale\}\}/about.md`, hoặc đặt giữa tên tệp và phần mở rộng, như `about.\{\{locale\}\}.md`. Để giữ lại, hãy đặt tùy chọn này thành `false` trong tùy chọn `i18n` của tệp.
+    # Don’t localize `i18n`
+    i18n_not_configured: Tùy chọn `i18n` đã được bật, nhưng i18n chưa được cấu hình ở cấp cao nhất của cấu hình hoặc trong chuyên mục, vì vậy tùy chọn này không có tác dụng.
+    # Don’t localize `public_folder` and `media_folder`
+    empty_public_folder: Tùy chọn `public_folder` là một chuỗi trống, vì vậy đường dẫn `media_folder` sẽ được dùng cho các đường dẫn tệp lưu trong bài viết. Hãy xóa tùy chọn này hoặc đặt nó thành đường dẫn bạn muốn dùng, chẳng hạn `/images`.
     # {$option} is an option path from the configuration, such as `filter.Regulation`
     schema_unknown_option: Tùy chọn `{$option}` không được xác định trong lược đồ cấu hình của Sveltia CMS. Nó sẽ bị bỏ qua. Hãy kiểm tra xem có lỗi chính tả hoặc lỗi cú pháp không.
+    # Don’t localize `default_localized`, `default` and `i18n`
+    default_localized_without_i18n: Tùy chọn `default_localized` không có tác dụng vì i18n chưa được bật cho chuyên mục. Hãy dùng tùy chọn `default` thay thế.
+    # {$locale} is a locale code from the configuration; Don’t localize `default_localized`
+    default_localized_unknown_locale: Tùy chọn `default_localized` có giá trị cho `{$locale}`, đây không phải là một trong các ngôn ngữ của chuyên mục, vì vậy giá trị này không bao giờ được sử dụng.
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'Xem ghi chú tương thích để biết chi tiết: {$link}'
@@ -1699,6 +2702,11 @@ viewing_editorial_workflow: 'Bạn hiện đang xem bảng Quy trình biên tậ
 # Same as above, for an Open Authoring contributor: their board has no Ready column, because only
 # a maintainer can publish
 viewing_open_authoring_workflow: 'Bạn hiện đang xem bảng quy trình biên tập. Bản nháp: {$draft}. Đang duyệt: {$review}. Chờ xóa: {$deletion}.'
+# Same as above, when the In Review stage is left out with the `stages` publish mode option
+viewing_editorial_workflow_without_review: 'Bạn hiện đang xem bảng Quy trình biên tập. Bản nháp: {$draft}. Sẵn sàng: {$ready}. Đang chờ xóa: {$deletion}.'
+# Same as above, when all the content uses Preview Workflow, which has no review stages, so the
+# page only lists the drafts
+viewing_preview_workflow: 'Bạn hiện đang xem trang Bản nháp. Bản nháp: {$draft}. Đang chờ xóa: {$deletion}.'
 
 # Workflow status names. `drafts` is the plural form used as a column heading,
 # while `draft` is the singular form used in the editor’s status button.
@@ -1710,6 +2718,10 @@ status:
   # A pending removal, which is a status of its own rather than a stage: it has no review to go
   # through, only the deletion itself to carry out or call off
   pending_deletion: Đang chờ xóa
+  # Merged changes the site hasn’t caught up with yet: it’s being rebuilt and deployed from the
+  # merge, so a published entry isn’t live and a deleted one is still up. Heading of the tray below
+  # the board that lists them until the site has caught up
+  deploying: Đang triển khai
 
 workflow:
   # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
@@ -1753,6 +2765,14 @@ workflow:
   status_updated: Đã cập nhật trạng thái.
   # Error notification when the status could not be changed
   status_change_failed: Không thể thay đổi trạng thái. Vui lòng thử lại.
+  # Workflow page: toolbar button that reads the pull requests again, to pick up the changes made
+  # by anyone else since the board was loaded, and the toast notifications shown while doing so and
+  # once done
+  refresh: Làm mới
+  refreshing: Đang làm mới…
+  refreshed: Bảng đã được cập nhật mới nhất.
+  # Error notification when the board could not be refreshed
+  refresh_failed: Không thể làm mới bảng. Vui lòng thử lại.
   # Error notification when the status can’t be changed because the entry is incomplete. Required
   # fields can be left empty while the entry is a draft, but not once it moves on from there
   status_change_blocked: Bài viết còn lỗi. Vui lòng sửa lỗi trước khi thay đổi trạng thái.
@@ -1763,6 +2783,10 @@ workflow:
   # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
   send_for_review: Gửi duyệt
   confirm_sending_for_review: Các thay đổi của bạn đã được lưu thành bản nháp. Bạn có muốn gửi bài viết đi duyệt để người khác xem xét và xuất bản không?
+  # Same as above, when the In Review stage is left out with the `stages` publish mode option, so
+  # the next step is to mark the entry as ready to be published
+  mark_as_ready: Đánh dấu là sẵn sàng
+  confirm_marking_as_ready: Các thay đổi của bạn đã được lưu thành bản nháp. Đánh dấu bài viết là sẵn sàng để có thể xuất bản?
   # Editor toolbar: button shown when the entry is ready to be published
   publish_entry: Xuất bản bài viết
   # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
@@ -1795,7 +2819,7 @@ workflow:
       1   {{ Một bài viết chưa được xuất bản nên các thay đổi chưa xuất bản sẽ bị hủy. Phiên bản đã xuất bản vẫn được giữ nguyên. }}
       *   {{ {$count} bài viết chưa được xuất bản nên các thay đổi chưa xuất bản sẽ bị hủy. Các phiên bản đã xuất bản vẫn được giữ nguyên. }}
   # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
-  confirm_publishing_entry: Bạn có chắc chắn muốn xuất bản bài viết này? Những thay đổi của bạn sẽ có hiệu lực ngay lập tức.
+  confirm_publishing_entry_after_build: Bạn có chắc chắn muốn xuất bản bài viết này không? Các thay đổi của bạn sẽ được đưa lên trang web sau khi trang web được dựng lại.
   # Workflow page: toast notifications shown while an entry is being published from a card, and
   # once publishing has completed
   publishing_entry: Đang xuất bản bài viết…
@@ -1807,10 +2831,55 @@ workflow:
   entry_deleted: Đã xóa bài viết.
   # Error notification when publishing fails
   publishing_entry_failed: Không thể xuất bản bài viết này. Vui lòng thử lại.
+  # Error notification when an entry can’t be published from the CMS, because its request also
+  # changes files that aren’t part of the entry and that the CMS doesn’t show, goes somewhere other
+  # than the site’s branch, or is too large to check. Keep the wording free of Git jargon
+  publish_refused_other_changes: Không thể xuất bản bài viết này tại đây vì nó đi kèm các thay đổi khác mà CMS không thể hiển thị cho bạn. Hãy đề nghị nhà phát triển xem xét.
+  # Error notification when an entry can’t be published because its branch has been committed to
+  # since the entry was opened, so what would be published isn’t what was reviewed
+  publish_refused_entry_changed: Bài viết đã bị thay đổi kể từ khi bạn mở nó. Hãy tải lại trang để xem phiên bản mới nhất trước khi xuất bản.
+  review_on_x: Xem xét trên {$service}
+  from_fork: Từ một bản fork
+  fork_entry_editable: Bài viết này đến từ pull request của một người đóng góp, được mở từ “{$fork}”. Các thay đổi của bạn sẽ được lưu vào nhánh của họ. Hãy xem xét và merge pull request trên dịch vụ Git.
+  fork_entry_locked: Bài viết này đến từ pull request của một người đóng góp, được mở từ “{$fork}”. Người đóng góp không cho phép người duy trì chỉnh sửa nên tại đây chỉ có thể xem.
+  fork_not_editable: Người đóng góp không cho phép người duy trì chỉnh sửa pull request này.
+  fork_entry_gone: Pull request của người đóng góp không còn mở nên không thể lưu các thay đổi vào đó.
+  # Error shown in the save error dialog when an entry can’t be saved for review, because a request
+  # the CMS doesn’t show is already open from the branch the entry would be saved to. `{$number}` is
+  # the request number, e.g. `#12` on GitHub or `!12` on GitLab. Keep the wording free of Git jargon
+  branch_in_use: Đã có một yêu cầu khác ({$number}) được mở cho bài viết này bên ngoài CMS. Hãy đề nghị nhà phát triển đóng yêu cầu đó trước.
   # Workflow page: empty column message
   no_entries: Không có bài viết nào.
   # Workflow page: aria-label for a draggable entry card
   drag_entry: Kéo để thay đổi trạng thái
+  # Workflow page: note on a card in the Deploying tray, marking an entry that’s being removed from
+  # the site rather than published to it
+  deploying_deletion: Xóa
+  # Workflow page: note on a card listing the new entries that were created from a Relation field
+  # of the entry and are published along with it, e.g. “Also adds Section: Getting Started”
+  companion_entries: Thêm cả {$entries}
+  # Workflow page: note on a card listing the existing entries that were edited from a Relation
+  # field of the entry and are published along with it, e.g. “Also changes Author: Ada Lovelace”
+  edited_companion_entries: Thay đổi cả {$entries}
+  # Workflow page: one of the entries listed by `companion_entries` or `edited_companion_entries`,
+  # named by its collection’s singular label and its title
+  companion_entry: '{$collection}: {$title}'
+
+# Dialog asking the user for a commit message every time changes are saved, when the site is
+# configured to. The message is recorded in the repository’s history along with the changes
+commit_message:
+  # Dialog title
+  title: Thông điệp commit
+  # Description when the user writes the whole message, which the text box is filled in with
+  description_replace: Mô tả các thay đổi của bạn. Thông điệp sẽ được ghi vào lịch sử cùng với các thay đổi.
+  # Description when the text the user enters is added before or after a message the CMS writes
+  description_addition: Thêm ghi chú vào thông điệp được ghi vào lịch sử cùng với các thay đổi của bạn, chẳng hạn như số issue. Có thể để trống.
+  # Accessible name of the text box when the user writes the whole message
+  message: Thông điệp commit
+  # Accessible name of the text box when the text is added before or after the message
+  addition: Ghi chú
+  # Preview of the message as it will be recorded. {$message} is the message
+  preview: 'Thông điệp: {$message}'
 
 # Open Authoring: a contributor without write access to the configured repository works in a fork
 # of it, and their changes reach the site through a pull request a maintainer merges
@@ -1824,6 +2893,10 @@ open_authoring:
   fork_declined: Bạn cần có một bản fork của kho mã nguồn trên tài khoản của mình để đề xuất thay đổi.
   # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
   fork_failed: Không thể tạo bản fork của kho mã nguồn “{$repo}” trên tài khoản của bạn.
+  # Error shown when the user’s fork doesn’t have the branch the CMS is configured with, so there’s
+  # nothing to start their changes from. {$fork} and {$repo} are repository identifiers in
+  # owner/repo format, {$branch} is the branch name
+  fork_branch_missing: Bản fork “{$fork}” của bạn không có nhánh “{$branch}”. Hãy cập nhật bản fork từ kho mã nguồn “{$repo}”, sau đó đăng nhập lại.
   # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
   # because the API rate limit is exhausted. {$repo} is the repository identifier
   permission_check_failed: Không thể kiểm tra quyền truy cập của bạn vào kho mã nguồn “{$repo}”. Vui lòng thử lại sau giây lát.
@@ -1838,6 +2911,10 @@ open_authoring:
   private_repo_scope_required: Phiên đăng nhập của bạn không bao gồm quyền truy cập các kho mã nguồn riêng tư, vì vậy không thể đọc kho mã nguồn “{$repo}”. Hãy đề nghị người quản trị kiểm tra cài đặt xác thực của CMS.
   # Error shown when a contributor tries to publish an entry, which only a maintainer can do
   publish_unsupported: Chỉ người quản trị mới có thể xuất bản thay đổi lên trang web này. Thay vào đó, hãy đánh dấu bài viết là “Đang duyệt” và sẽ có người xem xét.
+  # Error shown when a contributor changes the status of an entry whose request a maintainer has
+  # published since the page was loaded, leaving nothing to review. The entry then leaves the
+  # Editorial Workflow board and the editor closes. Keep the wording free of Git jargon
+  entry_already_published: Người duy trì đã xuất bản bài viết này nên không còn gì để duyệt.
   # Error shown when a change would go straight to the site instead of being reviewed, which a
   # contributor can’t do. It covers media library uploads and deletions, and entry reordering
   direct_commit_unsupported: Không thể thực hiện thay đổi này trực tiếp. Chỉ có thể đề xuất các chỉnh sửa bài viết để duyệt.
@@ -1853,11 +2930,10 @@ open_authoring:
 # Settings page aria-label
 categories: Danh mục
 
-# Site Configuration Editor
-site_configuration_editor: Trình chỉnh sửa cấu hình trang web
-
 # Preferences panels
 prefs:
+  account:
+    title: Tài khoản
   # API key management feedback messages
   changes:
     api_key_saved: Đã lưu khóa API.
@@ -1907,7 +2983,7 @@ prefs:
         select_service: Chọn công cụ
       api_keys:
         title: Khóa API công cụ dịch
-        description: Quản lý khóa API cho các <a>công cụ dịch</a>.
+        description: Quản lý khóa API cho các <a>công cụ dịch</a>. Khóa API cho các dịch vụ AI tổng quát có thể được quản lý trong cài đặt AI.
       # API key input label, e.g., “DeepL Key”
       # {$service} is the translation service name
       field_label: Khóa {$service}
@@ -1941,6 +3017,16 @@ prefs:
       field_label: Khóa API {$service}
       no_services: Chưa cấu hình <a>dịch vụ lưu trữ đám mây</a>.
 
+  # AI panel
+  ai:
+    title: AI
+    api_keys:
+      title: Khóa API dịch vụ AI
+      description: Quản lý khóa API cho các dịch vụ AI.
+    # API key input label, e.g., “OpenAI GPT API Key”
+    # {$service} is the AI service name
+    field_label: Khóa API {$service}
+
   # Accessibility panel
   accessibility:
     title: Trợ năng
@@ -1949,30 +3035,9 @@ prefs:
       description: Hiển thị gạch chân dưới các liên kết trong bản xem trước nội dung và trên giao diện.
       switch_label: Luôn gạch chân các liên kết
 
-  # Advanced panel
-  advanced:
-    title: Cài đặt nâng cao
-    beta:
-      title: Tính năng thử nghiệm
-      description: Bật một số tính năng thử nghiệm có thể chưa ổn định hoặc chưa được dịch đầy đủ.
-      switch_label: Bật tính năng thử nghiệm
-    developer_mode:
-      title: Chế độ nhà phát triển
-      description: Bật các tính năng dành cho nhà phát triển, bao gồm thông tin chi tiết trong nhật ký bảng điều khiển và trình đơn chuột phải mặc định.
-      switch_label: Bật chế độ nhà phát triển
-    deploy_hook:
-      title: Webhook triển khai
-      description: Nhập URL webhook sẽ được gọi khi bạn kích hoạt triển khai theo cách thủ công bằng cách chọn Xuất bản thay đổi. Phần này có thể để trống nếu bạn đang sử dụng Tác vụ GitHub.
-      # Hook URL input
-      url:
-        field_label: URL webhook
-        saved: Đã lưu URL webhook.
-        removed: Đã xóa URL webhook.
-      # Authorization header input
-      auth:
-        field_label: 'Header xác thực (ví dụ: Bearer <token>) (không bắt buộc)'
-        saved: Đã lưu header xác thực.
-        removed: Đã xóa header xác thực.
+  # Data Management panel
+  data:
+    title: Quản lý dữ liệu
     clear_data:
       title: Xóa dữ liệu
       # Clear File Cache button
@@ -1985,6 +3050,36 @@ prefs:
         description: Xóa mọi thứ mà CMS lưu trong trình duyệt này, bao gồm các tệp trong bộ nhớ đệm, bản nháp chưa lưu và cài đặt. Những gì đã lưu vào kho mã nguồn của bạn sẽ không bị ảnh hưởng.
         button_label: Xóa toàn bộ dữ liệu
         confirmation: Thao tác này sẽ xóa bộ nhớ đệm, bản nháp chưa lưu, cài đặt và trạng thái đăng nhập trong trình duyệt. Dữ liệu trong kho mã nguồn vẫn được giữ nguyên. CMS sẽ tải lại và bạn cần đăng nhập lại.
+
+  # Developer panel
+  developer:
+    title: Nhà phát triển
+    developer_mode:
+      title: Chế độ nhà phát triển
+      description: Bật các tính năng dành cho nhà phát triển, bao gồm thông tin chi tiết trong nhật ký bảng điều khiển và trình đơn chuột phải mặc định.
+      switch_label: Bật chế độ nhà phát triển
+    local_git:
+      title: Commit Git
+      description: Commit các thay đổi vào nhánh hiện tại của kho mã nguồn cục bộ mỗi khi bạn lưu, giống như CMS làm khi bạn làm việc với kho mã nguồn từ xa. Sau đó, bạn có thể xem xét và push các commit bằng công cụ Git quen thuộc của mình.
+      switch_label: Commit thay đổi vào Git
+      checking: Đang kiểm tra kho mã nguồn…
+      # {$branch} is the branch name, {$name} and {$email} are the commit author’s name and email address
+      ready: Các thay đổi sẽ được commit vào nhánh {$branch} với tư cách {$name} ({$email}).
+      # {$reason} is one of the `local_git_skip_reasons` strings
+      not_ready: Hiện không thể commit các thay đổi. {$reason}
+    deploy_hook:
+      title: Webhook triển khai
+      description: Nhập URL webhook sẽ được gọi khi bạn kích hoạt triển khai theo cách thủ công bằng cách chọn Xuất bản thay đổi. Phần này có thể để trống nếu bạn đang sử dụng GitHub Actions hoặc GitLab CI/CD.
+      # Hook URL input
+      url:
+        field_label: URL webhook
+        saved: Đã lưu URL webhook.
+        removed: Đã xóa URL webhook.
+      # Authorization header input
+      auth:
+        field_label: 'Header xác thực (ví dụ: Bearer <token>) (không bắt buộc)'
+        saved: Đã lưu header xác thực.
+        removed: Đã xóa header xác thực.
 
 # ==============================================================================
 # Keyboard Shortcuts
@@ -2009,6 +3104,8 @@ file_type_labels:
   avif: Ảnh AVIF
   bmp: Ảnh bitmap
   gif: Ảnh GIF
+  heic: Ảnh HEIC
+  heif: Ảnh HEIF
   ico: Tệp biểu tượng
   jpeg: Ảnh JPEG
   jpg: Ảnh JPEG

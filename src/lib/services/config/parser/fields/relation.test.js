@@ -1,8 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-/**
- * @import { ConfigParserCollectors } from '$lib/types/private';
- */
+import { createCollectors } from '$lib/test/config-parser';
 
 // Mock @sveltia/i18n
 /** @type {Record<string, string>} */
@@ -14,33 +12,16 @@ const mockI18nStrings = {
     'File name is required for collection: {collection}',
   'config.error.relation_field_invalid_collection_file': 'File not found: {file}',
   'config.error.relation_field_invalid_value_field': 'Value field not found: {field}',
+  'config.error.relation_field_invalid_display_field': 'Display field not found: {field}',
+  'config.error.relation_field_invalid_search_field': 'Search field not found: {field}',
+  'config.error.relation_field_invalid_filter_field': 'Filter field not found: {field}',
   'config.error_locator.field': 'Field: {field}',
 };
 
-/**
- * Mock translation function.
- * @param {string} key Message key.
- * @param {object & { values?: Record<string, string> }} [options] Options.
- * @returns {string} Translated string.
- */
-function mockTranslate(key, options) {
-  let message = mockI18nStrings[key] || key;
+vi.mock('@sveltia/i18n', async () =>
+  (await import('$lib/test/i18n')).createI18nMock({ strings: mockI18nStrings, locale: 'en-US' }),
+);
 
-  if (options?.values) {
-    Object.entries(options.values).forEach(([k, v]) => {
-      message = message.replace(`{${k}}`, v);
-    });
-  }
-
-  return message;
-}
-
-vi.mock('@sveltia/i18n', () => ({
-  _: mockTranslate,
-  locale: { current: 'en-US', set: vi.fn() },
-}));
-
-const mockGetStore = vi.fn();
 const mockAddMessage = vi.fn();
 const mockCheckUnsupportedOptions = vi.fn();
 
@@ -49,24 +30,9 @@ vi.mock('$lib/services/config/parser/utils/validator', () => ({
   checkUnsupportedOptions: mockCheckUnsupportedOptions,
 }));
 
-/**
- * Create a fresh collectors object for testing.
- * @returns {ConfigParserCollectors} Collectors instance.
- */
-function createCollectors() {
-  return {
-    errors: new Set(),
-    warnings: new Set(),
-    mediaFields: new Set(),
-    relationFields: new Set(),
-  };
-}
-
 describe('Relation Field Config Parser', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-
-    mockGetStore.mockImplementation((store) => store);
   });
 
   describe('relation field collection validation', () => {
@@ -479,6 +445,513 @@ describe('Relation Field Config Parser', () => {
     });
   });
 
+  describe('relation to a collection storing all the entries in one file', () => {
+    /**
+     * Parse a relation field referring to a `members` collection with the `file` option.
+     * @param {any} extraConfig Extra options for the relation field, e.g. its `value_field`.
+     * @param {any} [collectionOptions] Options for the referenced collection.
+     */
+    const parse = async (extraConfig, collectionOptions = { file: 'data/members.json' }) => {
+      const { parseRelationFieldConfig } = await import('./relation.js');
+
+      parseRelationFieldConfig({
+        config: /** @type {any} */ ({
+          name: 'member',
+          widget: 'relation',
+          collection: 'members',
+          ...extraConfig,
+        }),
+        context: /** @type {any} */ ({
+          cmsConfig: {
+            collections: [
+              {
+                name: 'members',
+                fields: [
+                  { name: 'id', widget: 'string' },
+                  { name: 'name', widget: 'string' },
+                ],
+                ...collectionOptions,
+              },
+            ],
+          },
+          collection: { name: 'posts' },
+          typedKeyPath: 'member',
+        }),
+        collectors: createCollectors(),
+      });
+    };
+
+    const expected = expect.objectContaining({
+      strKey: 'relation_field_array_file_slug',
+      values: { collection: 'members' },
+    });
+
+    it('should error when the value field defaults to the slug', async () => {
+      await parse({});
+
+      expect(mockAddMessage).toHaveBeenCalledWith(expected);
+    });
+
+    it('should error when the value field contains the slug tag', async () => {
+      await parse({ value_field: '{{slug}}' });
+      await parse({ value_field: '{{locale}}/{{slug}}' });
+
+      expect(mockAddMessage).toHaveBeenCalledTimes(2);
+      expect(mockAddMessage).toHaveBeenCalledWith(expected);
+    });
+
+    it('should not error when the value field refers to a field', async () => {
+      await parse({ value_field: 'id' });
+      await parse({ value_field: '{{fields.id}}' });
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+    });
+
+    it('should leave a value field of the wrong type to the JSON schema', async () => {
+      await parse({ value_field: 1 });
+
+      expect(mockAddMessage).not.toHaveBeenCalledWith(expected);
+    });
+
+    it('should not error for a collection with the `folder` option', async () => {
+      await parse({}, { folder: 'content/members' });
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('relation from a collection storing all the entries in one file', () => {
+    /**
+     * Parse a relation field in a `members` collection with the `file` option.
+     * @param {any} target Referenced collection.
+     * @param {any} [siteOptions] Site-level options.
+     * @param {any} [parentCollection] Collection holding the field.
+     */
+    const parse = async (
+      target,
+      siteOptions = {},
+      parentCollection = { name: 'members', file: 'data/members.json' },
+    ) => {
+      const { parseRelationFieldConfig } = await import('./relation.js');
+
+      parseRelationFieldConfig({
+        config: /** @type {any} */ ({
+          name: 'post',
+          widget: 'relation',
+          collection: target.name,
+          file: target.files ? 'about' : undefined,
+          value_field: 'title',
+        }),
+        context: /** @type {any} */ ({
+          cmsConfig: { collections: [target], ...siteOptions },
+          collection: parentCollection,
+          typedKeyPath: 'post',
+        }),
+        collectors: createCollectors(),
+      });
+    };
+
+    const posts = {
+      name: 'posts',
+      folder: 'content/posts',
+      fields: [{ name: 'title', widget: 'string' }],
+    };
+
+    const expected = expect.objectContaining({
+      strKey: 'relation_field_array_file_workflow',
+      values: { collection: 'posts' },
+    });
+
+    it('should error for a collection with Editorial Workflow', async () => {
+      await parse({ ...posts, publish_mode: 'editorial_workflow' });
+      await parse(posts, { publish_mode: 'editorial_workflow' });
+
+      expect(mockAddMessage).toHaveBeenCalledTimes(2);
+      expect(mockAddMessage).toHaveBeenCalledWith(expected);
+    });
+
+    it('should not error for a collection without Editorial Workflow', async () => {
+      await parse(posts);
+      await parse({ ...posts, publish_mode: 'simple' }, { publish_mode: 'editorial_workflow' });
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+    });
+
+    it('should not error for a file collection, whose entries can’t be renamed', async () => {
+      await parse(
+        {
+          name: 'pages',
+          files: [{ name: 'about', file: 'about.md', fields: [{ name: 'title' }] }],
+        },
+        { publish_mode: 'editorial_workflow' },
+      );
+
+      expect(mockAddMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({ strKey: 'relation_field_array_file_workflow' }),
+      );
+    });
+
+    it('should not error for a relation in another collection', async () => {
+      await parse({ ...posts, publish_mode: 'editorial_workflow' }, {}, { name: 'authors' });
+      await parse({ ...posts, publish_mode: 'editorial_workflow' }, {}, null);
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+    });
+
+    it('should skip a divider', async () => {
+      await parse({ name: 'posts', divider: true }, { publish_mode: 'editorial_workflow' });
+
+      expect(mockAddMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({ strKey: 'relation_field_array_file_workflow' }),
+      );
+    });
+  });
+
+  describe('relation field display and search field validation', () => {
+    /** @type {any} */
+    const authorFields = [
+      { name: 'userId', widget: 'string' },
+      { name: 'name', widget: 'object', fields: [{ name: 'first', widget: 'string' }] },
+      { name: 'cities', widget: 'list', fields: [{ name: 'id', widget: 'string' }] },
+    ];
+
+    /**
+     * Parse a relation field with the given options against an `authors` folder collection.
+     * @param {any} options The field options, e.g. `display_fields` and `search_fields`.
+     * @param {any} [collectionOptions] Extra options for the referenced collection, e.g. its
+     * `fields`.
+     */
+    const checkFields = async (options, collectionOptions = { fields: authorFields }) => {
+      const { parseRelationFieldConfig } = await import('./relation.js');
+
+      parseRelationFieldConfig({
+        config: /** @type {any} */ ({
+          name: 'author',
+          widget: 'relation',
+          collection: 'authors',
+          value_field: 'userId',
+          ...options,
+        }),
+        context: /** @type {any} */ ({
+          cmsConfig: {
+            i18n: { locales: ['en', 'fr'] },
+            collections: [{ name: 'authors', folder: 'content/authors', ...collectionOptions }],
+          },
+          collection: { name: 'posts' },
+          typedKeyPath: 'author',
+        }),
+        collectors: createCollectors(),
+      });
+    };
+
+    /**
+     * Assert which invalid field messages were added.
+     * @param {'display' | 'search'} kind Option kind.
+     * @param {string[]} fields Expected field names in the messages, if any.
+     */
+    const expectMessages = (kind, fields) => {
+      const strKey = `relation_field_invalid_${kind}_field`;
+
+      if (fields.length) {
+        fields.forEach((field) => {
+          expect(mockAddMessage).toHaveBeenCalledWith(
+            expect.objectContaining({ strKey, values: { field } }),
+          );
+        });
+      } else {
+        expect(mockAddMessage).not.toHaveBeenCalledWith(expect.objectContaining({ strKey }));
+      }
+    };
+
+    it('should accept display fields defined in the collection', async () => {
+      await checkFields({ display_fields: ['userId', 'name.first', 'cities.*.id'] });
+      expectMessages('display', []);
+    });
+
+    it('should error on a display field not defined in the collection', async () => {
+      await checkFields({ display_fields: ['userId', 'email'] });
+      expectMessages('display', ['email']);
+    });
+
+    it('should report every unknown display field', async () => {
+      await checkFields({ display_fields: ['email', 'twitter'] });
+      expectMessages('display', ['email', 'twitter']);
+    });
+
+    it('should validate the tags in a display field template', async () => {
+      await checkFields({ display_fields: ['{{name.first}} ({{role}})', '{{slug}}: {{locale}}'] });
+      expectMessages('display', ['role']);
+    });
+
+    it('should accept search fields defined in the collection', async () => {
+      await checkFields({ search_fields: ['userId', 'fields.name.first'] });
+      expectMessages('search', []);
+    });
+
+    it('should error on a search field not defined in the collection', async () => {
+      await checkFields({ search_fields: ['email'] });
+      expectMessages('search', ['email']);
+      expectMessages('display', []);
+    });
+
+    it('should report display and search fields separately', async () => {
+      await checkFields({ display_fields: ['email'], search_fields: ['email'] });
+      expectMessages('display', ['email']);
+      expectMessages('search', ['email']);
+      expect(mockAddMessage).toHaveBeenCalledTimes(2);
+    });
+
+    it('should accept the canonical slug key as a display or search field', async () => {
+      await checkFields(
+        { display_fields: ['translationKey'], search_fields: ['translationKey'] },
+        { fields: authorFields, i18n: { locales: ['en', 'fr'] } },
+      );
+
+      expectMessages('display', []);
+      expectMessages('search', []);
+    });
+
+    it('should skip an option that is not a list, which the schema reports', async () => {
+      await checkFields({ display_fields: 'email', search_fields: '[email]' });
+      expectMessages('display', []);
+      expectMessages('search', []);
+    });
+
+    it('should skip list items that are not field names', async () => {
+      await checkFields({ display_fields: ['', 123, null], search_fields: [undefined] });
+      expectMessages('display', []);
+      expectMessages('search', []);
+    });
+
+    it('should skip the check when the collection has no fields', async () => {
+      await checkFields({ display_fields: ['email'] }, {});
+      expectMessages('display', []);
+    });
+  });
+
+  describe('relation field filter validation', () => {
+    /** @type {any} */
+    const authorFields = [
+      { name: 'userId', widget: 'string' },
+      { name: 'role', widget: 'select', options: ['admin', 'editor'] },
+    ];
+
+    /**
+     * Parse a relation field with the given `filters` against an `authors` folder collection.
+     * @param {any} filters The `filters` option.
+     * @param {any} [collectionOptions] Extra options for the referenced collection.
+     */
+    const checkFilters = async (filters, collectionOptions = { fields: authorFields }) => {
+      const { parseRelationFieldConfig } = await import('./relation.js');
+
+      parseRelationFieldConfig({
+        config: /** @type {any} */ ({
+          name: 'author',
+          widget: 'relation',
+          collection: 'authors',
+          value_field: 'userId',
+          filters,
+        }),
+        context: /** @type {any} */ ({
+          cmsConfig: {
+            i18n: { locales: ['en', 'fr'] },
+            collections: [{ name: 'authors', folder: 'content/authors', ...collectionOptions }],
+          },
+          collection: { name: 'posts' },
+          typedKeyPath: 'author',
+        }),
+        collectors: createCollectors(),
+      });
+    };
+
+    /**
+     * Assert which invalid filter field messages were added.
+     * @param {string[]} fields Expected field names in the messages, if any.
+     */
+    const expectMessages = (fields) => {
+      const strKey = 'relation_field_invalid_filter_field';
+
+      if (fields.length) {
+        fields.forEach((field) => {
+          expect(mockAddMessage).toHaveBeenCalledWith(
+            expect.objectContaining({ strKey, values: { field } }),
+          );
+        });
+
+        expect(mockAddMessage).toHaveBeenCalledTimes(fields.length);
+      } else {
+        expect(mockAddMessage).not.toHaveBeenCalledWith(expect.objectContaining({ strKey }));
+      }
+    };
+
+    it('should accept filters on fields defined in the collection', async () => {
+      await checkFilters([
+        { field: 'role', values: ['admin'] },
+        { field: 'fields.userId', values: ['{{slug}}'], exclude: true },
+      ]);
+
+      expectMessages([]);
+    });
+
+    it('should accept a filter on the entry slug', async () => {
+      await checkFilters([{ field: 'slug', values: ['alice'] }]);
+      expectMessages([]);
+    });
+
+    it('should accept a filter on the canonical slug key', async () => {
+      await checkFilters([{ field: 'translationKey', values: ['x'] }], {
+        fields: authorFields,
+        i18n: true,
+      });
+
+      expectMessages([]);
+    });
+
+    it('should error on a filter field not defined in the collection', async () => {
+      await checkFilters([
+        { field: 'role', values: ['admin'] },
+        { field: 'team', values: ['a'] },
+        { field: 'fields.slug', values: ['b'] },
+      ]);
+
+      expectMessages(['team', 'fields.slug']);
+    });
+
+    it('should leave filters of the wrong shape to the schema', async () => {
+      await checkFilters('role');
+      await checkFilters(['role', null, { values: ['a'] }, { field: 1, values: ['a'] }]);
+      expectMessages([]);
+    });
+
+    it('should skip the check when the collection has no fields', async () => {
+      await checkFilters([{ field: 'team', values: ['a'] }], {});
+      expectMessages([]);
+    });
+  });
+
+  describe('relation field sort_by validation', () => {
+    /** @type {any} */
+    const authorFields = [
+      { name: 'name', widget: 'string' },
+      { name: 'meta', widget: 'object', fields: [{ name: 'joined', widget: 'datetime' }] },
+    ];
+
+    /**
+     * Parse a relation field with the given `sort_by` option against an `authors` folder
+     * collection, or the `members` file of a `data` file collection.
+     * @param {any} sortBy The `sort_by` option.
+     * @param {object} [options] Options.
+     * @param {any} [options.collectionOptions] Extra options for the referenced collection.
+     * @param {boolean} [options.file] Whether to refer to a file instead.
+     */
+    const checkSortBy = async (
+      sortBy,
+      { collectionOptions = { fields: authorFields }, file = false } = {},
+    ) => {
+      const { parseRelationFieldConfig } = await import('./relation.js');
+
+      parseRelationFieldConfig({
+        config: /** @type {any} */ ({
+          name: 'author',
+          widget: 'relation',
+          collection: file ? 'data' : 'authors',
+          ...(file ? { file: 'members', value_field: 'members.*.name' } : { value_field: 'name' }),
+          sort_by: sortBy,
+        }),
+        context: /** @type {any} */ ({
+          cmsConfig: {
+            i18n: { locales: ['en', 'fr'] },
+            collections: [
+              { name: 'authors', folder: 'content/authors', ...collectionOptions },
+              {
+                name: 'data',
+                files: [
+                  {
+                    name: 'members',
+                    file: 'data/members.yml',
+                    fields: [{ name: 'members', widget: 'list', fields: [{ name: 'name' }] }],
+                  },
+                ],
+              },
+            ],
+          },
+          collection: { name: 'posts' },
+          typedKeyPath: 'author',
+        }),
+        collectors: createCollectors(),
+      });
+    };
+
+    it('should accept a field defined in the collection', async () => {
+      await checkSortBy({ field: 'name' });
+      await checkSortBy({ field: 'meta.joined', direction: 'descending' });
+      expect(mockAddMessage).not.toHaveBeenCalled();
+    });
+
+    it('should accept the special sort keys and the canonical slug key', async () => {
+      await checkSortBy({ field: 'slug' });
+      await checkSortBy({ field: 'commit_author' });
+      await checkSortBy({ field: 'commit_date' });
+      await checkSortBy({ field: '_manual' });
+      await checkSortBy(
+        { field: 'translationKey' },
+        {
+          collectionOptions: { fields: authorFields, i18n: true },
+        },
+      );
+      expect(mockAddMessage).not.toHaveBeenCalled();
+    });
+
+    it('should accept the reorder field, which doesn’t have to be defined as a field', async () => {
+      await checkSortBy(
+        { field: 'weight' },
+        {
+          collectionOptions: { fields: authorFields, reorder: { key: 'weight' } },
+        },
+      );
+      expect(mockAddMessage).not.toHaveBeenCalled();
+    });
+
+    it('should error on a field not defined in the collection', async () => {
+      await checkSortBy({ field: 'date' });
+
+      expect(mockAddMessage).toHaveBeenCalledOnce();
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          strKey: 'relation_field_invalid_sort_field',
+          values: { field: 'date' },
+        }),
+      );
+    });
+
+    it('should leave an option of the wrong shape to the schema', async () => {
+      await checkSortBy('name');
+      await checkSortBy({ field: '' });
+      await checkSortBy({ field: 1 });
+      await checkSortBy({ direction: 'descending' });
+      expect(mockAddMessage).not.toHaveBeenCalled();
+    });
+
+    it('should skip the field check when the collection has no fields', async () => {
+      await checkSortBy({ field: 'date' }, { collectionOptions: {} });
+      expect(mockAddMessage).not.toHaveBeenCalled();
+    });
+
+    it('should warn that the option is ignored for a referenced file', async () => {
+      await checkSortBy({ field: 'members.*.name' }, { file: true });
+
+      expect(mockAddMessage).toHaveBeenCalledOnce();
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'warning', strKey: 'relation_field_sort_by_file_ignored' }),
+      );
+    });
+
+    it('should not warn about a referenced file without the option', async () => {
+      await checkSortBy(undefined, { file: true });
+      expect(mockAddMessage).not.toHaveBeenCalled();
+    });
+  });
+
   describe('canonical slug key as value field', () => {
     /** @type {any} */
     const authorFields = [{ name: 'name', widget: 'string' }];
@@ -799,6 +1272,48 @@ describe('Relation Field Config Parser', () => {
 
       expect(relationField.fieldConfig).toBe(fieldConfig);
       expect(relationField.context).toBe(context);
+    });
+  });
+
+  describe('default option', () => {
+    /** @type {any} */
+    const context = {
+      cmsConfig: {
+        collections: [{ name: 'authors', folder: 'content/authors', fields: [{ name: 'name' }] }],
+      },
+      collection: { name: 'posts' },
+      typedKeyPath: 'author',
+    };
+
+    it('should check the shape of the default against the multiple option', async () => {
+      const { parseRelationFieldConfig } = await import('./relation.js');
+      const collectors = createCollectors();
+
+      /**
+       * Parse a Relation field with the given options.
+       * @param {Record<string, any>} options Field options.
+       */
+      const check = (options) => {
+        parseRelationFieldConfig({
+          config: { name: 'author', widget: 'relation', collection: 'authors', ...options },
+          context,
+          collectors,
+        });
+      };
+
+      check({ default: 'alice' });
+      check({ default: ['alice'], multiple: true });
+      check({});
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+
+      check({ default: ['alice'] });
+      check({ default: 'alice', multiple: true });
+
+      expect(mockAddMessage.mock.calls.map(([args]) => args)).toEqual([
+        { strKey: 'invalid_default_single', context, collectors },
+        { strKey: 'invalid_default_multiple', context, collectors },
+      ]);
     });
   });
 });

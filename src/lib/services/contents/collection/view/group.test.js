@@ -1,10 +1,10 @@
 /* eslint-disable jsdoc/require-jsdoc */
 // @ts-nocheck
 
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { OTHER_GROUP_NAME } from '$lib/services/common/view';
 import { selectedCollection } from '$lib/services/contents/collection';
-import { currentView } from '$lib/services/contents/collection/view/settings';
 
 import { getReorderGroupingConditions, groupEntries, parseGroupConfig, viewGroups } from './group';
 
@@ -13,15 +13,15 @@ vi.mock('$lib/services/contents/collection', () => ({
   selectedCollection: { current: undefined },
 }));
 
-vi.mock('$lib/services/contents/collection/view/settings', () => ({
-  currentView: { current: { type: 'list' } },
-}));
-
 vi.mock('@sveltia/i18n', () => ({
   _: (key) => (key === 'other' ? 'Other' : key),
 }));
 
 vi.mock('$lib/services/contents/entry/fields', () => ({
+  getField: vi.fn(),
+}));
+
+vi.mock('$lib/services/contents/entry/values', () => ({
   getPropertyValue: vi.fn(),
 }));
 
@@ -33,7 +33,7 @@ vi.mock('$lib/services/contents/collection/entries/reorder/config', () => ({
   getReorderGroupName: vi.fn(),
 }));
 
-const { getPropertyValue } = await import('$lib/services/contents/entry/fields');
+const { getPropertyValue } = await import('$lib/services/contents/entry/values');
 
 const { getReorderGroupName } =
   await import('$lib/services/contents/collection/entries/reorder/config');
@@ -112,17 +112,29 @@ describe('getReorderGroupingConditions', () => {
       getReorderGroupingConditions({
         name: 'articles',
         folder: 'content/articles',
+        _type: 'entry',
         view_groups: [{ name: 'categories', label: 'Categories', field: 'category' }],
       }),
-    ).toEqual({ field: 'category', pattern: undefined });
+    ).toEqual({ field: 'category' });
+  });
+
+  test('should include the comparison operators when defined', () => {
+    vi.mocked(getReorderGroupName).mockReturnValue('upcoming');
+
+    expect(
+      getReorderGroupingConditions({
+        name: 'events',
+        folder: 'content/events',
+        _type: 'entry',
+        view_groups: [{ name: 'upcoming', label: 'Upcoming', field: 'date', gte: '{{today}}' }],
+      }),
+    ).toEqual({ field: 'date', gte: '{{today}}' });
   });
 });
 
 describe('groupEntries', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-
-    currentView.current = { sort: undefined };
   });
 
   test('should return ungrouped entries when no conditions', () => {
@@ -392,7 +404,63 @@ describe('groupEntries', () => {
 
     expect(result).toHaveLength(2);
     expect(result.find((g) => g.name === 'tech')?.entries).toHaveLength(1);
-    expect(result.find((g) => g.name === 'Other')?.entries).toHaveLength(1);
+    expect(result.find((g) => g.name === OTHER_GROUP_NAME)?.entries).toHaveLength(1);
+  });
+
+  test('should put an entry with an empty multi-value field in the Other group', () => {
+    const entries = ['none', 'blank', 'tagged'].map((slug) => ({
+      id: slug,
+      slug,
+      subPath: slug,
+      locales: { en: { path: `${slug}.md`, slug, content: {} } },
+    }));
+
+    const values = { none: [], blank: [null, ''], tagged: ['', 'tech'] };
+
+    const collection = {
+      _type: 'entry',
+      _i18n: { defaultLocale: 'en', allLocales: ['en'] },
+      name: 'posts',
+      folder: 'content/posts',
+    };
+
+    // @ts-ignore - Mock parameter types
+    vi.mocked(getPropertyValue).mockImplementation(({ entry }) => values[entry.slug]);
+
+    // @ts-ignore - Mock data for testing
+    const result = groupEntries(entries, collection, { field: 'tags' });
+
+    // Rather than a group named with an empty string, or `,tech`
+    expect(result).toHaveLength(2);
+    expect(result).toContainEqual({ name: 'tech', entries: [entries[2]] });
+    expect(result).toContainEqual({ name: OTHER_GROUP_NAME, entries: [entries[0], entries[1]] });
+  });
+
+  test('should read the value from another locale when the entry lacks the default one', () => {
+    // A multi-file i18n entry with only `hello.fr.md`, which is listed in French
+    const entry = {
+      id: 'hello',
+      slug: 'hello',
+      subPath: 'hello',
+      locales: { fr: { path: 'hello.fr.md', slug: 'hello', content: { category: 'tech' } } },
+    };
+
+    const collection = {
+      _type: 'entry',
+      _i18n: { defaultLocale: 'en', allLocales: ['en', 'fr'] },
+      name: 'posts',
+      folder: 'content/posts',
+    };
+
+    // @ts-ignore - Mock parameter types
+    vi.mocked(getPropertyValue).mockImplementation(
+      ({ entry: _entry, locale, key }) => _entry.locales[locale]?.content[key],
+    );
+
+    // @ts-ignore - Mock data for testing
+    expect(groupEntries([entry], collection, { field: 'category' })).toEqual([
+      { name: 'tech', entries: [entry] },
+    ]);
   });
 
   test('should handle regex patterns', async () => {
@@ -546,13 +614,15 @@ describe('groupEntries', () => {
     // @ts-ignore - Mock parameter types
     vi.mocked(getRegex).mockReturnValue(/^(\d{4})/);
 
-    // Mock currentView store to return descending sort on date field
-    currentView.current = { sort: { key: 'date', order: 'descending' } };
-
     // @ts-ignore - Mock data for testing
     const conditions = { field: 'date', pattern: '(\\d{4})' };
+
+    // The view is sorted in descending order on the date field
     // @ts-ignore - Mock data for testing
-    const result = groupEntries(entries, collection, conditions);
+    const result = groupEntries(entries, collection, conditions, undefined, {
+      key: 'date',
+      order: 'descending',
+    });
 
     // Groups should be reversed (descending order)
     expect(result[0].name).toBe('2024');
@@ -610,17 +680,166 @@ describe('groupEntries', () => {
     // Regex matches only strings starting with a 4-digit year
     vi.mocked(getRegex).mockReturnValue(/^\d{4}/);
 
-    currentView.current = { sort: { key: 'tag', order: 'ascending' } };
-
     // @ts-ignore
     const conditions = { field: 'tag', pattern: '^\\d{4}' };
+
     // @ts-ignore
-    const result = groupEntries(entries, collection, conditions);
+    const result = groupEntries(entries, collection, conditions, undefined, {
+      key: 'tag',
+      order: 'ascending',
+    });
+
     // '2023-tech' matches → group '2023'; 'no-year' does not match → falls back to 'Other'
     const groupNames = result.map((g) => g.name);
 
     expect(groupNames).toContain('2023');
-    expect(groupNames).toContain('Other');
+    expect(groupNames).toContain(OTHER_GROUP_NAME);
+  });
+
+  describe('with a comparison', async () => {
+    const { getField } = await import('$lib/services/contents/entry/fields');
+    const { getRegex } = await import('$lib/services/utils/regex');
+
+    /**
+     * Create an entry.
+     * @param {string} id Entry ID.
+     * @param {Record<string, any>} content Content.
+     * @returns {any} Entry.
+     */
+    const createEntry = (id, content) => ({
+      id,
+      sha: id,
+      slug: id,
+      subPath: '',
+      locales: { en: { path: id, slug: id, content } },
+    });
+
+    const entries = [
+      createEntry('past', { date: '2026-09-15', priority: 1 }),
+      createEntry('today', { date: '2026-09-16', priority: 5 }),
+      createEntry('future', { date: '2026-09-17', priority: 10 }),
+      createEntry('undated', { priority: 3 }),
+    ];
+
+    const collection = {
+      _file: { format: 'frontmatter', extension: 'md', formatOptions: {} },
+      _i18n: { defaultLocale: 'en' },
+      name: 'events',
+      label: 'Events',
+      folder: 'content/events',
+      fields: [
+        { name: 'date', widget: 'datetime', time_format: false },
+        { name: 'priority', widget: 'number' },
+      ],
+      view_groups: [
+        { label: 'Upcoming', field: 'date', gte: '{{today}}' },
+        { label: 'Past', field: 'date', lt: '{{today}}' },
+        { label: 'Important', field: 'priority', gte: 5 },
+      ],
+    };
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date(2026, 8, 16, 14, 5, 9));
+
+      vi.mocked(getPropertyValue).mockImplementation(
+        ({ entry, key }) => entry.locales.en.content[key],
+      );
+
+      vi.mocked(getField).mockImplementation(({ keyPath }) =>
+        collection.fields.find(({ name }) => name === keyPath),
+      );
+
+      vi.mocked(getRegex).mockReturnValue(undefined);
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    test('should group the matching entries under the label, then the rest under Other', () => {
+      expect(groupEntries(entries, collection, { field: 'date', gte: '{{today}}' })).toEqual([
+        { name: 'Upcoming', entries: [entries[1], entries[2]] },
+        { name: OTHER_GROUP_NAME, entries: [entries[0], entries[3]] },
+      ]);
+
+      expect(groupEntries(entries, collection, { field: 'date', lt: '{{today}}' })).toEqual([
+        { name: 'Past', entries: [entries[0]] },
+        { name: OTHER_GROUP_NAME, entries: [entries[1], entries[2], entries[3]] },
+      ]);
+
+      expect(groupEntries(entries, collection, { field: 'priority', gte: 5 })).toEqual([
+        { name: 'Important', entries: [entries[1], entries[2]] },
+        { name: OTHER_GROUP_NAME, entries: [entries[0], entries[3]] },
+      ]);
+    });
+
+    test('should parse the field configuration of the group field', () => {
+      groupEntries(entries, collection, { field: 'date', gte: '{{today}}' });
+
+      expect(getField).toHaveBeenCalledWith({ collectionName: 'events', keyPath: 'date' });
+    });
+
+    test('should keep the order regardless of the sort order', () => {
+      expect(
+        groupEntries(entries, collection, { field: 'date', gte: '{{today}}' }, undefined, {
+          key: 'date',
+          order: 'descending',
+        }).map((g) => g.name),
+      ).toEqual(['Upcoming', OTHER_GROUP_NAME]);
+    });
+
+    test('should leave out an empty group', () => {
+      expect(groupEntries([entries[0]], collection, { field: 'date', gte: '{{today}}' })).toEqual([
+        { name: OTHER_GROUP_NAME, entries: [entries[0]] },
+      ]);
+
+      expect(groupEntries([entries[2]], collection, { field: 'date', gte: '{{today}}' })).toEqual([
+        { name: 'Upcoming', entries: [entries[2]] },
+      ]);
+    });
+
+    test('should fall back to the field name when the group is not configured', () => {
+      expect(groupEntries(entries, collection, { field: 'date', gt: '{{today}}' })).toEqual([
+        { name: 'date', entries: [entries[2]] },
+        { name: OTHER_GROUP_NAME, entries: [entries[0], entries[1], entries[3]] },
+      ]);
+
+      expect(
+        groupEntries(
+          entries,
+          { ...collection, view_groups: undefined },
+          { field: 'date', gt: '{{today}}' },
+        ),
+      ).toEqual([
+        { name: 'date', entries: [entries[2]] },
+        { name: OTHER_GROUP_NAME, entries: [entries[0], entries[1], entries[3]] },
+      ]);
+
+      expect(
+        groupEntries(
+          entries,
+          { ...collection, view_groups: [{ field: 'date', gt: '{{today}}' }] },
+          { field: 'date', gt: '{{today}}' },
+        ),
+      ).toEqual([
+        { name: 'date', entries: [entries[2]] },
+        { name: OTHER_GROUP_NAME, entries: [entries[0], entries[1], entries[3]] },
+      ]);
+    });
+
+    test('should look up the label from the object format', () => {
+      const _collection = {
+        ...collection,
+        view_groups: {
+          groups: [{ name: 'upcoming', label: 'Coming up', field: 'date', gte: '{{today}}' }],
+        },
+      };
+
+      expect(
+        groupEntries(entries, _collection, { field: 'date', gte: '{{today}}' }).map((g) => g.name),
+      ).toEqual(['Coming up', OTHER_GROUP_NAME]);
+    });
   });
 });
 

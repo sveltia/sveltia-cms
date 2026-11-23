@@ -1,0 +1,66 @@
+import { isObject } from '@sveltia/utils/object';
+import { mount, unmount } from 'svelte';
+
+import RichTextPreview from '$lib/components/contents/details/fields/rich-text/rich-text-preview.svelte';
+import { assertOption } from '$lib/services/api/validate';
+
+/**
+ * @import { RenderRichTextOptions } from '../../../types/public';
+ */
+// Don’t use `$lib` in `from` above, or type declarations will not be exported
+
+/**
+ * Render a Markdown/rich text value into the given element with the same pipeline as the built-in
+ * RichText field preview: editor component previews (including nested components), Markdown
+ * parsing, syntax highlighting, image URL resolution and HTML sanitization. This is primarily
+ * intended for an editor component `toPreview()` that returns an `HTMLElement`, so the verbatim
+ * value of a nested RichText or Markdown field can be rendered recursively.
+ * @param {HTMLElement} target The element to render the preview into. The content is rendered
+ * asynchronously, and the element doesn’t have to be attached to the document yet.
+ * @param {string} value Markdown string.
+ * @param {RenderRichTextOptions} [options] Options.
+ * @returns {() => void} Function to remove the rendered preview and destroy any editor component
+ * previews within it. Call it when the target element is no longer needed, e.g. when the element
+ * preview receives an `Unmount` event.
+ * @throws {TypeError} If `target` is not an element, `value` is not a string, or `fieldConfig` is
+ * given but not an object.
+ * @see https://sveltiacms.app/en/docs/api/editor-components
+ */
+const renderRichText = (target, value, { fieldConfig } = {}) => {
+  assertOption(target instanceof Element, 'renderRichText', 'target', 'an element');
+  assertOption(typeof value === 'string', 'renderRichText', 'value', 'a string');
+
+  assertOption(
+    fieldConfig === undefined || isObject(fieldConfig),
+    'renderRichText',
+    'fieldConfig',
+    'an object',
+  );
+
+  const component = mount(RichTextPreview, {
+    target,
+    props: {
+      locale: '',
+      keyPath: '',
+      typedKeyPath: '',
+      fieldConfig: {
+        name: 'body',
+        // Always sanitize the output unless explicitly disabled by the developer, regardless of the
+        // `field_defaults` config, because the value typically comes from a nested field edited by
+        // other users
+        sanitize_preview: true,
+        ...fieldConfig,
+        widget: 'richtext',
+      },
+      currentValue: value,
+    },
+  });
+
+  return () => {
+    unmount(component);
+  };
+};
+
+// Export the function this way instead of `export const` to prevent the annotations from being
+// stripped in the generated `render-rich-text.d.ts` file
+export { renderRichText };

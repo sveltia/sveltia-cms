@@ -1,6 +1,7 @@
 import { isObject } from '@sveltia/utils/object';
 
 import { isFieldRequired } from '$lib/services/contents/entry/fields';
+import { escapeKeySegment } from '$lib/services/utils/object';
 
 /**
  * @import { GetDefaultValueMapFuncArgs } from '$lib/types/private';
@@ -55,6 +56,6 @@ export const getDefaultValueMap = (args) => {
   return Object.fromEntries(
     Object.entries(valueMap)
       .filter(([, val]) => typeof val === 'string')
-      .map(([key, val]) => [`${keyPath}.${key}`, val]),
+      .map(([key, val]) => [`${keyPath}.${escapeKeySegment(key)}`, val]),
   );
 };

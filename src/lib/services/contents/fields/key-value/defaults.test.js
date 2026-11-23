@@ -45,6 +45,17 @@ describe('Test getDefaultValueMap()', () => {
     });
   });
 
+  test('should escape the dots in the default keys', () => {
+    expect(
+      getDefaultValueMap({
+        fieldConfig: { ...baseFieldConfig, default: { 'example.com': 'a' } },
+        keyPath: 'metadata',
+        locale: '_default',
+        defaultLocale: '_default',
+      }),
+    ).toEqual({ 'metadata.example\uE000com': 'a' });
+  });
+
   test('should return empty key-value pair when required is true and no default', () => {
     /** @type {KeyValueField} */
     const fieldConfig = {

@@ -9,7 +9,9 @@ const awsS3 = new S3CompatibleService({
   serviceURL: 'https://aws.amazon.com/s3/',
   developerURL: 'https://docs.aws.amazon.com/s3/',
   apiKeyURL: 'https://console.aws.amazon.com/iam/home#/security_credentials',
-  apiKeyPattern: /^[A-Za-z0-9/+=]{40}$/,
+  // Amazon S3 keys are 40 characters long, but the integration also works with other S3-compatible
+  // services through the `endpoint` option, whose keys can be longer, e.g. 64 hex digits on Garage
+  apiKeyPattern: /^[A-Za-z0-9/+=]{40,}$/,
 });
 
 export default awsS3;

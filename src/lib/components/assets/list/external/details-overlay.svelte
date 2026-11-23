@@ -6,20 +6,18 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { EmptyState } from '@sveltia/ui';
-  import { isTextFileType } from '@sveltia/utils/file';
-  import mime from 'mime';
 
+  import AssetPreviewContent from '$lib/components/assets/list/asset-preview-content.svelte';
   import DeleteAssetsButton from '$lib/components/assets/list/delete-assets-button.svelte';
   import DetailsOverlay from '$lib/components/assets/list/details-overlay.svelte';
   import DownloadAssetsButton from '$lib/components/assets/list/download-assets-button.svelte';
   import CopyAssetsButton from '$lib/components/assets/list/external/copy-assets-button.svelte';
   import EditOptionsButton from '$lib/components/assets/list/external/edit-options-button.svelte';
   import InfoPanel from '$lib/components/assets/list/external/info-panel.svelte';
-  import TextPreview from '$lib/components/assets/list/text-preview.svelte';
-  import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import NotFound from '$lib/components/global/not-found.svelte';
   import { goBack, goto } from '$lib/services/app/navigation';
   import {
+    canPreviewExternalAsset,
     externalAssets,
     getCloudServicePath,
     getExternalAssetPath,
@@ -27,10 +25,10 @@
     selectedCloudService,
   } from '$lib/services/assets/external';
   import { deleteExternalAssets, fetchExternalAssetBlob } from '$lib/services/assets/external/data';
-  import { listedExternalAssets } from '$lib/services/assets/external/view';
-  import { isMediaKind } from '$lib/services/assets/kinds';
+  import { externalAssetGroups } from '$lib/services/assets/external/view';
   import { getAdjacentAssets } from '$lib/services/assets/view';
   import { env } from '$lib/services/user/env.svelte';
+  import mime from '$lib/services/utils/mime';
 
   /**
    * @import { ViewTransitionType } from '$lib/services/app/navigation';
@@ -46,13 +44,19 @@
   );
   const kind = $derived(asset?.kind);
   const fileName = $derived(asset?.fileName ?? '');
+  /* v8 ignore start -- only read while the asset is shown */
   const downloadURL = $derived(asset?.downloadURL ?? '');
+  /* v8 ignore stop */
   const type = $derived(mime.getType(fileName));
   const assets = $derived(asset ? [asset] : []);
   const backPath = $derived(getCloudServicePath(service));
   /** The assets right before and after the shown one in the list the overlay was opened from. */
   const { previous, next } = $derived(
-    getAdjacentAssets(listedExternalAssets.current, ({ id }) => id === asset?.id),
+    getAdjacentAssets(
+      externalAssetGroups.current,
+      ({ id }) => id === asset?.id,
+      canPreviewExternalAsset,
+    ),
   );
 
   /**
@@ -87,8 +91,6 @@
       <DeleteAssetsButton
         {assets}
         deleteAssets={deleteExternalAssets}
-        buttonDescription={_('delete_assets', { values: { count: 1 } })}
-        dialogDescription={_('confirm_deleting_this_asset')}
         onDelete={() => {
           goBack(backPath);
         }}
@@ -109,33 +111,14 @@
       </EmptyState>
     {:else if !asset || !kind}
       <NotFound message={_('file_not_found')} {backPath} />
-    {:else if isMediaKind(kind)}
-      <AssetPreview
-        {kind}
-        src={downloadURL}
-        blurBackground={['image', 'video'].includes(kind)}
-        checkerboard={kind === 'image'}
-        alt={kind === 'image' ? fileName : undefined}
-        controls={['audio', 'video'].includes(kind)}
-      />
-    {:else if type === 'application/pdf'}
-      <iframe src={downloadURL} title={fileName} sandbox="allow-scripts"></iframe>
-    {:else if type && isTextFileType(type)}
-      {#await fetchExternalAssetBlob(asset).then((blob) => blob.text())}
-        <EmptyState>
-          <span role="alert">{_('loading')}</span>
-        </EmptyState>
-      {:then text}
-        <TextPreview {text} name={fileName} />
-      {:catch}
-        <EmptyState>
-          <span role="alert">{_('preview_unavailable')}</span>
-        </EmptyState>
-      {/await}
     {:else}
-      <EmptyState>
-        <span role="alert">{_('preview_unavailable')}</span>
-      </EmptyState>
+      <AssetPreviewContent
+        {kind}
+        name={fileName}
+        {type}
+        src={downloadURL}
+        getText={() => fetchExternalAssetBlob(asset).then((blob) => blob.text())}
+      />
     {/if}
   {/snippet}
   {#snippet info()}

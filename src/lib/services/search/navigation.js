@@ -3,6 +3,13 @@ import { searchMode, searchTerms } from '$lib/services/search';
 const ROUTE_REGEX = /^\/search\/(?<terms>.+)$/;
 
 /**
+ * Check if the given URL path is the search results page, without navigating to it.
+ * @param {string} path URL path.
+ * @returns {boolean} Result.
+ */
+export const isSearchResultsPath = (path) => ROUTE_REGEX.test(path);
+
+/**
  * Navigate to the search results page with the given path. The path should be in the format of
  * `/search/{terms}`.
  * @param {string} path Path to navigate to.

@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { buildPreviewData } from '$lib/services/api/helpers';
+import { buildPreviewData } from '$lib/services/api/preview-data';
 
 import { getFieldConfigMap, getPreviewData } from './helpers';
 
 /** @import { CustomField } from '$lib/types/public'; */
 
-vi.mock('$lib/services/api/helpers', () => ({
+vi.mock('$lib/services/api/preview-data', () => ({
   buildPreviewData: vi.fn(({ draft, locale }) => ({ entryMap: { draft, locale } })),
 }));
 
@@ -92,6 +92,18 @@ describe('contents/fields/custom/helpers', () => {
       getPreviewData({ draft, locale: 'en' });
 
       expect(buildPreviewData).toHaveBeenCalledTimes(2);
+    });
+
+    it('builds the data from snapshots of the values, not from the value maps', () => {
+      getPreviewData({ draft, locale: 'en' });
+
+      const [{ draft: passedDraft }] = /** @type {any[]} */ (
+        vi.mocked(buildPreviewData).mock.lastCall
+      );
+
+      expect(passedDraft.collectionName).toBe('posts');
+      expect(passedDraft.currentValues).toEqual({ en: { title: 'Hello' } });
+      expect(passedDraft.currentValues.en).not.toBe(draft.currentValues.en);
     });
 
     it('does not share the data between locales', () => {

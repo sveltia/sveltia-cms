@@ -125,6 +125,11 @@ describe('OpenAI Translator Service', () => {
           },
         }),
       );
+
+      const body = JSON.parse(/** @type {string} */ (mockFetch.mock.calls[0][1]?.body));
+
+      // Low effort, so that reasoning doesn’t use up the output budget
+      expect(body.reasoning).toEqual({ effort: 'low' });
     });
 
     it('should handle markdown content in translation', async () => {
@@ -250,16 +255,6 @@ describe('OpenAI Translator Service', () => {
 
       await expect(openaiTranslator.translate(['Hello'], mockOptions)).rejects.toThrow(
         'Network error',
-      );
-    });
-
-    it('should handle unknown errors', async () => {
-      const mockFetch = vi.mocked(fetch);
-
-      mockFetch.mockRejectedValueOnce('Unknown error');
-
-      await expect(openaiTranslator.translate(['Hello'], mockOptions)).rejects.toThrow(
-        'Failed to translate text with OpenAI API.',
       );
     });
 
@@ -436,7 +431,7 @@ describe('OpenAI Translator Service', () => {
       expect(requestBody.instructions).toContain('markdown formatting');
       expect(requestBody.instructions).toContain('HTML tags');
       expect(requestBody.instructions).toContain('JSON array');
-      expect(requestBody.model).toBe('gpt-5.6-luna');
+      expect(requestBody.model).toBe('gpt-6-luna');
       expect(requestBody).not.toHaveProperty('temperature');
       expect(requestBody.store).toBe(false);
     });

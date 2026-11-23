@@ -1,0 +1,259 @@
+import { sleep } from '@sveltia/utils/misc';
+import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
+import { page, userEvent } from 'vitest/browser';
+import { render } from 'vitest-browser-svelte';
+
+import { getAssetDetails } from '$lib/services/assets/details';
+import {
+  assetMoveRequest,
+  editingAsset,
+  renamingAsset,
+  uploadingAssets,
+} from '$lib/services/assets/state';
+import { showUploadAssetsDialog } from '$lib/services/assets/view';
+import { backendName } from '$lib/services/backends';
+import { repository } from '$lib/services/backends/git/github/repository';
+import { prefs } from '$lib/services/user/prefs.svelte';
+import { openNewTab } from '$lib/services/utils/window';
+import { forkedRepository } from '$lib/services/workflow/open-authoring';
+import { createMockAsset, createMockImageFile, initTestConfig } from '$lib/test/config';
+
+import EditOptionsButton from './edit-options-button.svelte';
+
+vi.mock('$lib/services/utils/window', () => ({ openNewTab: vi.fn() }));
+
+vi.mock('$lib/services/assets/details', async (importOriginal) => {
+  const actual = /** @type {any} */ (await importOriginal());
+
+  return { ...actual, getAssetDetails: vi.fn(actual.getAssetDetails) };
+});
+
+const textAsset = createMockAsset({ name: 'notes.txt' });
+const imageAsset = createMockAsset({ name: 'photo.png' });
+
+/**
+ * Open the menu.
+ * @returns {Promise<void>}
+ */
+const openMenu = async () => {
+  // Wait for the previous popup to be unmounted
+  await expect.poll(() => document.querySelector('dialog.popup')).toBeNull();
+  await page.getByRole('button', { name: 'Show Edit Options' }).click();
+};
+
+describe('EditOptionsButton', () => {
+  beforeAll(async () => {
+    await initTestConfig({ site_url: 'https://example.com' });
+    imageAsset.file = await createMockImageFile();
+  });
+
+  beforeEach(() => {
+    backendName.current = undefined;
+    forkedRepository.current = undefined;
+    prefs.devModeEnabled = false;
+    editingAsset.current = undefined;
+    renamingAsset.current = undefined;
+    assetMoveRequest.current = undefined;
+    showUploadAssetsDialog.current = false;
+  });
+
+  test('starts editing, renaming, moving or replacing the asset', async () => {
+    await render(EditOptionsButton, { asset: textAsset });
+    await openMenu();
+
+    expect(
+      page
+        .getByRole('menuitem')
+        .elements()
+        .map((el) => el.textContent?.trim()),
+    ).toEqual(['Edit', 'Rename', 'Move', 'Replace', 'View on Live Site']);
+
+    await page.getByRole('menuitem', { name: 'Edit Asset' }).click();
+    expect(editingAsset.current).toBe(textAsset);
+
+    await openMenu();
+    await page.getByRole('menuitem', { name: 'Rename Asset' }).click();
+    expect(renamingAsset.current).toBe(textAsset);
+
+    await openMenu();
+    await page.getByRole('menuitem', { name: 'Move Asset' }).click();
+    expect(assetMoveRequest.current).toEqual({ assets: [textAsset] });
+
+    await openMenu();
+    await page.getByRole('menuitem', { name: 'Replace Asset' }).click();
+    expect(uploadingAssets.current).toEqual({
+      folder: undefined,
+      files: [],
+      originalAssets: [textAsset],
+    });
+    expect(showUploadAssetsDialog.current).toBe(true);
+
+    await openMenu();
+    await page.getByRole('menuitem', { name: 'View on Live Site' }).click();
+    await vi.waitFor(() =>
+      expect(openNewTab).toHaveBeenCalledWith('https://example.com/uploads/notes.txt'),
+    );
+  });
+
+  test('moves every asset selected in the list', async () => {
+    const assets = [textAsset, imageAsset];
+
+    await render(EditOptionsButton, { asset: textAsset, assets });
+    await openMenu();
+    await page.getByRole('menuitem', { name: 'Move Asset' }).click();
+    expect(assetMoveRequest.current).toEqual({ assets });
+    // The request holds its own copy of the list
+    expect(assetMoveRequest.current?.assets).not.toBe(assets);
+  });
+
+  test('moves the asset focused last when the assets aren’t given', async () => {
+    const { rerender } = await render(EditOptionsButton, { asset: textAsset });
+
+    await rerender({ asset: imageAsset });
+    await openMenu();
+    await page.getByRole('menuitem', { name: 'Move Asset' }).click();
+    expect(assetMoveRequest.current).toEqual({ assets: [imageAsset] });
+  });
+
+  test('can’t move the selection when one of the assets is read-only', async () => {
+    const readonlyAsset = { ...imageAsset, folder: { ...imageAsset.folder, readonly: true } };
+
+    await render(EditOptionsButton, { asset: textAsset, assets: [textAsset, readonlyAsset] });
+    await openMenu();
+
+    await expect.element(page.getByRole('menuitem', { name: 'Move Asset' })).toBeDisabled();
+    // The other actions only apply to the focused asset
+    await expect.element(page.getByRole('menuitem', { name: 'Rename Asset' })).toBeEnabled();
+  });
+
+  test('can’t edit a binary file', async () => {
+    await render(EditOptionsButton, { asset: imageAsset });
+    await openMenu();
+
+    await expect.element(page.getByRole('menuitem', { name: 'Edit Asset' })).toBeDisabled();
+    await expect.element(page.getByRole('menuitem', { name: 'Rename Asset' })).toBeEnabled();
+  });
+
+  test('disables everything without an asset', async () => {
+    await render(EditOptionsButton, { asset: undefined });
+    await openMenu();
+
+    expect(
+      page
+        .getByRole('menuitem')
+        .elements()
+        .every((el) => el.ariaDisabled === 'true'),
+    ).toBe(true);
+  });
+
+  test('disables the changes while contributing via a fork', async () => {
+    forkedRepository.current = /** @type {any} */ ({ owner: 'me', repo: 'site' });
+
+    await render(EditOptionsButton, { asset: textAsset });
+    await openMenu();
+
+    await expect.element(page.getByRole('menuitem', { name: 'Edit Asset' })).toBeDisabled();
+    await expect.element(page.getByRole('menuitem', { name: 'Rename Asset' })).toBeDisabled();
+    await expect.element(page.getByRole('menuitem', { name: 'Move Asset' })).toBeDisabled();
+    await expect.element(page.getByRole('menuitem', { name: 'Replace Asset' })).toBeDisabled();
+    await expect.element(page.getByRole('menuitem', { name: 'View on Live Site' })).toBeEnabled();
+  });
+
+  test('disables the changes to an asset in a read-only folder', async () => {
+    await render(EditOptionsButton, {
+      asset: { ...textAsset, folder: { ...textAsset.folder, readonly: true } },
+    });
+    await openMenu();
+
+    await expect.element(page.getByRole('menuitem', { name: 'Edit Asset' })).toBeDisabled();
+    await expect.element(page.getByRole('menuitem', { name: 'Rename Asset' })).toBeDisabled();
+    await expect.element(page.getByRole('menuitem', { name: 'Move Asset' })).toBeDisabled();
+    await expect.element(page.getByRole('menuitem', { name: 'Replace Asset' })).toBeDisabled();
+    await expect.element(page.getByRole('menuitem', { name: 'View on Live Site' })).toBeEnabled();
+  });
+
+  test('offers the repository link in developer mode', async () => {
+    prefs.devModeEnabled = true;
+
+    await render(EditOptionsButton, { asset: textAsset });
+    await openMenu();
+
+    // The test backend has no repository
+    await expect.element(page.getByRole('menuitem', { name: 'View in Repository' })).toBeDisabled();
+  });
+
+  test('opens the file in the repository', async () => {
+    prefs.devModeEnabled = true;
+    backendName.current = 'github';
+    Object.assign(repository, {
+      label: 'GitHub',
+      blobBaseURL: 'https://github.com/me/site/blob/main',
+    });
+
+    try {
+      await render(EditOptionsButton, { asset: textAsset });
+      await openMenu();
+      await page.getByRole('menuitem', { name: 'View on \u2068GitHub\u2069' }).click();
+      expect(openNewTab).toHaveBeenCalledWith(
+        'https://github.com/me/site/blob/main/static/uploads/notes.txt?plain=1',
+      );
+    } finally {
+      Object.assign(repository, { label: '', blobBaseURL: '' });
+    }
+  });
+
+  test('has a public URL for a file that can’t be read', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    // The test backend can’t download a file that isn’t held in memory
+    await render(EditOptionsButton, { asset: createMockAsset({ name: 'lost.png' }) });
+    await openMenu();
+
+    await vi.waitFor(() =>
+      expect(error).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Failed to retrieve blob' }),
+      ),
+    );
+    // The URL doesn’t depend on the file’s content
+    await expect.element(page.getByRole('menuitem', { name: 'View on Live Site' })).toBeEnabled();
+  });
+
+  test('ignores the details of an asset focused earlier that arrive late', async () => {
+    const { promise, resolve } = Promise.withResolvers();
+
+    vi.mocked(getAssetDetails).mockReturnValueOnce(/** @type {any} */ (promise));
+
+    const { rerender } = await render(EditOptionsButton, { asset: textAsset });
+
+    await rerender({ asset: imageAsset });
+    resolve({ publicURL: 'https://example.com/uploads/notes.txt' });
+    await sleep(50);
+    await openMenu();
+    await page.getByRole('menuitem', { name: 'View on Live Site' }).click();
+    expect(openNewTab).toHaveBeenLastCalledWith('https://example.com/uploads/photo.png');
+  });
+
+  test('drops the public URL of the previous asset while the next one loads, or fails to', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { rerender } = await render(EditOptionsButton, { asset: textAsset });
+
+    await openMenu();
+    await expect.element(page.getByRole('menuitem', { name: 'View on Live Site' })).toBeEnabled();
+    await userEvent.keyboard('{Escape}');
+
+    const { promise, reject } = Promise.withResolvers();
+
+    vi.mocked(getAssetDetails).mockReturnValueOnce(/** @type {any} */ (promise));
+    await rerender({ asset: imageAsset });
+    await openMenu();
+    await expect.element(page.getByRole('menuitem', { name: 'View on Live Site' })).toBeDisabled();
+    await userEvent.keyboard('{Escape}');
+
+    reject(new Error('Failed'));
+    await vi.waitFor(() =>
+      expect(error).toHaveBeenCalledWith(expect.objectContaining({ message: 'Failed' })),
+    );
+    await openMenu();
+    await expect.element(page.getByRole('menuitem', { name: 'View on Live Site' })).toBeDisabled();
+  });
+});

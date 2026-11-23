@@ -12,9 +12,13 @@ export const UPDATE_TOAST_DEFAULT_STATE = {
   moved: false,
   renamed: false,
   deleted: false,
+  folderCreated: false,
+  folderRenamed: false,
+  folderDeleted: false,
   deletionPending: false,
   discarded: false,
   deletionCancelled: false,
+  alreadyPublished: false,
   published: false,
   count: 1,
 };

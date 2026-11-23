@@ -6,8 +6,8 @@
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Alert, Button, Toast } from '@sveltia/ui';
 
+  import ListModeControls from '$lib/components/contents/list/list-mode-controls.svelte';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { reorderEntries } from '$lib/services/contents/collection/entries/reorder';
   import {
@@ -20,44 +20,39 @@
    * @import { InternalEntryCollection } from '$lib/types/private';
    */
 
-  let saving = $state(false);
-  let errorToast = $state(false);
+  /**
+   * @typedef {object} Props
+   * @property {() => void} [onExit] Called once the reorder mode has been left, so the parent can
+   * move the focus to the button that took the place of these.
+   */
+
+  /** @type {Props} */
+  const { onExit = undefined } = $props();
+
+  /** @type {ListModeControls | undefined} */
+  let controls = $state();
+
+  /**
+   * Move the focus to the Done button, or the Cancel button while there is nothing to save, e.g.
+   * once the reorder mode has been entered with the button these take the place of.
+   */
+  export const focus = () => {
+    /** @type {ListModeControls} */ (controls).focus();
+  };
 </script>
 
-<Button
-  variant="primary"
-  label={_('done')}
-  aria-label={_('done_reordering_entries')}
-  disabled={saving || !reorderDirty.current}
-  onclick={async () => {
-    const collection = /** @type {InternalEntryCollection} */ (selectedCollection.current);
-
-    saving = true;
-
-    try {
-      await reorderEntries(collection, reorderedEntries.current);
-      setReorderMode(false);
-    } catch (/** @type {any} */ ex) {
-      // eslint-disable-next-line no-console
-      console.error(ex);
-      errorToast = true;
-    }
-
-    saving = false;
-  }}
+<ListModeControls
+  bind:this={controls}
+  saveLabel={_('done')}
+  saveAriaLabel={_('done_reordering_entries')}
+  cancelAriaLabel={_('cancel_reordering_entries')}
+  savingFailedMessage={_('saving_reorder_failed')}
+  canSave={reorderDirty.current}
+  commit={() =>
+    reorderEntries(
+      /** @type {InternalEntryCollection} */ (selectedCollection.current),
+      reorderedEntries.current,
+    )}
+  exitMode={() => setReorderMode(false)}
+  {onExit}
 />
-<Button
-  variant="secondary"
-  label={_('cancel')}
-  aria-label={_('cancel_reordering_entries')}
-  disabled={saving}
-  onclick={() => {
-    setReorderMode(false);
-  }}
-/>
-
-<Toast bind:show={errorToast}>
-  <Alert status="error">
-    {_('saving_reorder_failed')}
-  </Alert>
-</Toast>

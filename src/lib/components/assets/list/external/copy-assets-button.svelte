@@ -7,12 +7,10 @@
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import { isTextFileType } from '@sveltia/utils/file';
 
   import CopyMenu from '$lib/components/assets/list/copy-menu.svelte';
   import { fetchExternalAssetBlob } from '$lib/services/assets/external/data';
-  import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
-  import { transformImage } from '$lib/services/utils/media/image/transform';
+  import { canCopyFileDataByName, copyFileData } from '$lib/services/utils/clipboard';
 
   /**
    * @import { ExternalAsset } from '$lib/types/private';
@@ -25,53 +23,18 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    assets = [],
-    useButton = true,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { assets = [], useButton = true } = $props();
 
   /**
-   * Whether the file data can be copied: a single plaintext or image file is selected. Unlike
-   * repository assets, the file has to be fetched from the service first, so the type is guessed
-   * from the kind and file name, and the fetch may still fail if the service doesn’t allow
-   * cross-origin requests.
+   * Whether the file data can be copied: a single plaintext file or an image the clipboard can take
+   * is selected. Unlike repository assets, the file has to be fetched from the service first, so
+   * the type is guessed from the file name, and the fetch may still fail if the service doesn’t
+   * allow cross-origin requests.
    */
-  const canCopyFileData = $derived.by(() => {
-    if (assets.length !== 1) {
-      return false;
-    }
-
-    const [{ kind, fileName }] = assets;
-
-    return kind === 'image' || /\.(?:css|csv|html?|js|json|md|svg|txt|xml|ya?ml)$/i.test(fileName);
-  });
-
-  /**
-   * Fetch the file and copy its data to clipboard. Given that browsers typically support only
-   * plaintext and PNG image, convert the file if necessary.
-   */
-  const copyFileData = async () => {
-    let blob = await fetchExternalAssetBlob(assets[0]);
-    const { type } = blob;
-
-    if (isTextFileType(type)) {
-      await navigator.clipboard.writeText(await blob.text());
-
-      return;
-    }
-
-    if (!SUPPORTED_IMAGE_TYPES.includes(type)) {
-      throw new Error('Unsupported type');
-    }
-
-    if (type !== 'image/png') {
-      blob = await transformImage(blob);
-    }
-
-    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-  };
+  const canCopyData = $derived(
+    assets.length === 1 &&
+      canCopyFileDataByName(assets[0].fileName, { isImage: assets[0].kind === 'image' }),
+  );
 
   /**
    * Copy the asset public URL(s) to clipboard.
@@ -117,8 +80,13 @@
       },
       {
         label: _('file_data'),
-        disabled: !canCopyFileData,
-        copy: copyFileData,
+        disabled: !canCopyData,
+        /**
+         * Fetch the file and copy its data to clipboard.
+         */
+        copy: async () => {
+          await copyFileData(await fetchExternalAssetBlob(assets[0]));
+        },
         toastKey: 'asset_data_copied',
       },
     ].filter((item) => !!item),

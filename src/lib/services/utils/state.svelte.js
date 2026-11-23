@@ -1,3 +1,4 @@
+import equal from 'fast-deep-equal';
 import { untrack } from 'svelte';
 
 /**
@@ -7,9 +8,36 @@ import { untrack } from 'svelte';
  * @template {object} T
  * @param {T} value Plain object to wrap. A value that is already a `$state` proxy is returned as
  * is.
+ * @param {string[]} [staticKeys] Properties holding data that never changes while the state
+ * object is alive, such as the collection configuration in an entry draft. Svelte’s proxy leaves a
+ * read-only property alone, so these are handed out as they are: the reader gets the original
+ * object rather than a proxy of it, and doesn’t depend on anything in it.
+ *
+ * This is not just an optimization. A proxy is created per state object, so two state objects
+ * built from the same configuration hand out two different proxies of it. Replacing one with the
+ * other — which is what saving an entry with the editor left open does — then looks like a new
+ * value to every keyed `{#each}` block iterating the fields, and Svelte answers a write made while
+ * an effect is running by walking the derived graph below it in search of the effect itself. That
+ * walk doesn’t memoize, so in a deeply nested entry editor, where every level multiplies the
+ * number of paths to the same derived, it takes exponentially longer with each level of nesting
+ * and eventually hangs the browser.
  * @returns {T} Reactive proxy.
+ * @see https://github.com/sveltia/sveltia-cms/issues/1006
  */
-export const createState = (value) => {
+export const createState = (value, staticKeys = []) => {
+  staticKeys.forEach((key) => {
+    // A key the object doesn’t carry is skipped rather than defined as `undefined`, so that one
+    // list can be shared by callers that assemble the object slightly differently
+    if (Object.hasOwn(value, key)) {
+      Object.defineProperty(value, key, {
+        value: /** @type {any} */ (value)[key],
+        writable: false,
+        enumerable: true,
+        configurable: true,
+      });
+    }
+  });
+
   const state = $state(value);
 
   return state;
@@ -92,6 +120,69 @@ export const createDerivedState = (getter) => {
 };
 
 /**
+ * Create a read-only reactive box like {@link createDerivedState}, but keep handing out the
+ * previous value as long as the new one is deeply equal to it. A derived value only notifies what
+ * depends on it when it’s a different object, so this stops a change that leaves the value as it
+ * was from rippling any further. For example, the sort conditions picked out of a view object stay
+ * the same object when the view is replaced to switch from list to grid, so the sorted list isn’t
+ * recomputed.
+ * @template T
+ * @param {() => T} getter Function computing the value.
+ * @returns {{ readonly current: T }} Reactive box.
+ */
+export const createStableDerivedState = (getter) => {
+  /** @type {T | undefined} */
+  let previous;
+
+  return createDerivedState(() => {
+    const value = getter();
+
+    if (!equal(value, previous)) {
+      previous = value;
+    }
+
+    return /** @type {T} */ (previous);
+  });
+};
+
+/**
+ * Put a request the UI answers, e.g. with a confirmation dialog, in the given box, and wait for the
+ * answer. The request gets a `respond` method that answers it and takes it down. An earlier request
+ * still in the box is answered with the fallback first, as leaving it unresolved would hang
+ * whatever awaits it.
+ * @template {{ respond: (answer: A) => void }} R
+ * @template A
+ * @param {{ current: R | undefined }} state Box holding the pending request.
+ * @param {Omit<R, 'respond'>} props Properties of the request other than `respond`.
+ * @param {A} fallback Answer given to an earlier request.
+ * @returns {Promise<A>} Answer.
+ */
+export const requestAnswer = (state, props, fallback) => {
+  state.current?.respond(fallback);
+
+  return new Promise((resolve) => {
+    const request = /** @type {R} */ ({
+      ...props,
+      /**
+       * Answer the request.
+       * @param {A} answer Answer.
+       */
+      respond: (answer) => {
+        // Only take down the dialog that belongs to this request, so answering a stale one can’t
+        // dismiss a newer one. Resolving an already settled promise does nothing
+        if (state.current === request) {
+          state.current = undefined;
+        }
+
+        resolve(answer);
+      },
+    });
+
+    state.current = request;
+  });
+};
+
+/**
  * Run the given function whenever the reactive state it reads has changed, like `$effect` in a
  * component, but for a service module that lives as long as the app. The function is first run
  * asynchronously, after the current task, and never synchronously on state changes, so a service
@@ -121,4 +212,122 @@ export const watch = (getDependencies, fn) => {
 
     return untrack(fn);
   });
+};
+
+/**
+ * Run an async function whenever the reactive state it reads before its first `await` has changed,
+ * like `$effect`, and pass the result on, unless the function has been run again in the meantime.
+ * This keeps the result of a slow run for an earlier state from replacing the result for a later
+ * one. Use it in a component.
+ * @template T
+ * @param {() => Promise<T> | undefined} fn Function to run. It can return `undefined` instead of a
+ * `Promise` to skip the run, e.g. while a required value is missing.
+ * @param {(result: T) => void} onResult Function receiving the result of the latest run.
+ * @param {(error: unknown) => void} [onError] Function receiving the error the latest run has been
+ * rejected with. An error of a run that has been superseded is ignored. Without this, the error is
+ * left unhandled.
+ */
+export const watchAsync = (fn, onResult, onError) => {
+  $effect(() => {
+    const promise = fn();
+
+    if (!promise) {
+      return undefined;
+    }
+
+    let stale = false;
+
+    promise.then(
+      (result) => {
+        if (!stale) {
+          onResult(result);
+        }
+      },
+      onError &&
+        ((error) => {
+          if (!stale) {
+            onError(error);
+          }
+        }),
+    );
+
+    return () => {
+      stale = true;
+    };
+  });
+};
+
+/**
+ * Keep a field value and the value of its input in sync in both directions, like a bindable prop
+ * and the local state bound to an input widget. A change to either side is converted and written to
+ * the other side, but only if the converted value is different, so that the other side’s watcher
+ * doesn’t set off an infinite loop. Each side is watched with {@link watch}, so the converters can
+ * read other state, e.g. the field configuration, without being rerun on changes to it. The
+ * arguments are positional because an arrow function in an object literal would need a JSDoc
+ * comment of its own at every call site.
+ *
+ * The field value is only written once the user has edited the input, so that it differs from what
+ * the field value was last converted to. A value the input can’t represent, like a decimal number
+ * in an integer field, converts to an input that doesn’t convert back to the same value, so writing
+ * it back right away would replace the stored value as soon as the editor is opened, without any
+ * user action, and the next save would lose it.
+ * @template V, I
+ * @param {() => V} getValue Function returning the field value.
+ * @param {(value: V) => void} setValue Function updating the field value.
+ * @param {() => I} getInput Function returning the input value.
+ * @param {(input: I) => void} setInput Function updating the input value.
+ * @param {(value: V) => I} [toInput] Function converting a field value to an input value. Defaults
+ * to returning the value as is.
+ * @param {(input: I) => V} [toValue] Function converting an input value to a field value. Defaults
+ * to returning the value as is.
+ * @returns {{ updateInput: () => void, updateValue: () => void }} Functions to sync the input
+ * value with the field value and vice versa on demand, e.g. when the input loses focus.
+ */
+export const syncValues = (
+  getValue,
+  setValue,
+  getInput,
+  setInput,
+  toInput = (value) => /** @type {I} */ (/** @type {unknown} */ (value)),
+  toValue = (input) => /** @type {V} */ (/** @type {unknown} */ (input)),
+) => {
+  /**
+   * Input value converted from the field value the last time the input was synced with it.
+   * @type {I | undefined}
+   */
+  let syncedInput;
+
+  /**
+   * Update the input value based on the field value.
+   */
+  const updateInput = () => {
+    const input = toInput(getValue());
+
+    if (getInput() !== input) {
+      setInput(input);
+    }
+
+    syncedInput = input;
+  };
+
+  /**
+   * Update the field value based on the input value.
+   */
+  const updateValue = () => {
+    const value = toValue(getInput());
+
+    if (getValue() !== value) {
+      setValue(value);
+    }
+  };
+
+  watch(getValue, updateInput);
+  watch(getInput, () => {
+    // Skip the input that merely reflects the field value, including the one set on the first run
+    if (getInput() !== syncedInput) {
+      updateValue();
+    }
+  });
+
+  return { updateInput, updateValue };
 };

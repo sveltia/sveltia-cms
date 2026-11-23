@@ -1,4 +1,6 @@
+import { isURL } from '@sveltia/utils/string';
 import { sanitize } from 'isomorphic-dompurify';
+import { parseInline } from 'marked';
 
 /**
  * Check if a value is a non-empty string.
@@ -6,6 +8,16 @@ import { sanitize } from 'isomorphic-dompurify';
  * @returns {value is string} Whether the value is a non-empty string.
  */
 export const isNonEmptyString = (value) => typeof value === 'string' && !!value.trim();
+
+/**
+ * Check if a value is an absolute URL starting with `https://` or `http://`, ignoring surrounding
+ * whitespace. `isURL()` alone accepts any scheme, so `localhost:8080/api` would pass as a URL with
+ * the `localhost:` scheme.
+ * @param {any} value Value to check.
+ * @returns {boolean} Result.
+ */
+export const isHttpURL = (value) =>
+  typeof value === 'string' && /^https?:\/\//i.test(value.trim()) && isURL(value.trim());
 
 /**
  * Escape a string for safe use as an HTML attribute value inside double quotes. Bare `&` characters
@@ -16,6 +28,20 @@ export const isNonEmptyString = (value) => typeof value === 'string' && !!value.
  */
 export const escapeAttr = (str) =>
   str.replace(/&(?![a-zA-Z0-9#]+;)/g, '&amp;').replaceAll('"', '&quot;');
+
+/**
+ * Characters that have to be escaped for plain text to be read as such within HTML.
+ * @type {Record<string, string>}
+ */
+const HTML_ESCAPE_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;' };
+
+/**
+ * Escape plain text so that it’s read as text rather than markup within HTML, e.g. a literal `<b>`
+ * or `&amp;`, for example by a translator taking HTML.
+ * @param {string} text Plain text.
+ * @returns {string} Escaped text.
+ */
+export const escapeHTML = (text) => text.replace(/[&<>]/g, (char) => HTML_ESCAPE_MAP[char]);
 
 /**
  * Sanitization options for anchor tag links.
@@ -36,3 +62,32 @@ export const makeLink = (str, href) =>
     str.replace('<a>', `<a href="${escapeAttr(href)}" target="_blank" rel="noopener noreferrer">`),
     LINK_SANITIZE_OPTIONS,
   );
+
+/**
+ * Parse the given string as inline Markdown and sanitize the result to only allow certain tags.
+ * @param {string} str Original string.
+ * @param {object} [options] Options.
+ * @param {string[]} [options.allowedTags] Allowed HTML tags. Defaults to the basic inline
+ * formatting tags and links.
+ * @param {string[]} [options.allowedAttr] Allowed HTML attributes. Defaults to `href`.
+ * @returns {string} Sanitized HTML string.
+ */
+export const sanitizeInlineMarkdown = (
+  str,
+  { allowedTags = ['strong', 'em', 'del', 'code', 'a'], allowedAttr = ['href'] } = {},
+) =>
+  sanitize(/** @type {string} */ (parseInline(str)), {
+    ALLOWED_TAGS: allowedTags,
+    ALLOWED_ATTR: allowedAttr,
+  });
+
+/**
+ * Parse the given help text from the configuration, such as a field’s `hint`, as inline Markdown
+ * and sanitize the result to only allow certain tags. A literal `\n` is turned into a line break.
+ * @param {string} str Original string.
+ * @returns {string} Sanitized HTML string.
+ */
+export const sanitizeHelpText = (str) =>
+  sanitizeInlineMarkdown(str.replaceAll('\\n', '<br>'), {
+    allowedTags: ['strong', 'em', 'del', 'code', 'a', 'br'],
+  });

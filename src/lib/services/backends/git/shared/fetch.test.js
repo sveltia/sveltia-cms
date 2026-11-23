@@ -2,38 +2,38 @@
 import { IndexedDB } from '@sveltia/utils/storage';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { allAssets } from '$lib/services/assets';
+import { allAssets } from '$lib/services/assets/state';
 import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
-import { createFileList } from '$lib/services/backends/process';
+import { dataGeneration, repositoryHead } from '$lib/services/backends/git/shared/head';
+import { createFileList, describeFileList } from '$lib/services/backends/process';
 import { cmsConfigVersion } from '$lib/services/config';
 import { allEntries, dataLoaded, entryParseErrors } from '$lib/services/contents';
 import { prepareEntries } from '$lib/services/contents/file/process';
-import { setLastCommitPublishHint } from '$lib/services/deployments/publish';
+import { setLastCommitPublishHint } from '$lib/services/deployments';
+import { createDebugLogger } from '$lib/services/utils/logging';
 
-import {
-  applyFileMetadata,
-  fetchAndParseFiles,
-  getFileList,
-  parseAssetFileInfo,
-  parseFileInfo,
-  restoreCachedFileData,
-  updateCache,
-  updateStores,
-} from './fetch';
+import { fetchAndParseFiles } from './fetch';
 
 // Mock dependencies
 vi.mock('@sveltia/utils/storage');
 vi.mock('$lib/services/assets', () => ({ allAssets: { current: [] } }));
 vi.mock('$lib/services/backends/git/shared/config', () => ({ gitConfigFiles: { current: [] } }));
 vi.mock('$lib/services/backends/process');
-vi.mock('$lib/services/config', () => ({ cmsConfigVersion: { current: undefined } }));
+vi.mock('$lib/services/config', () => ({
+  cmsConfig: { current: undefined },
+  cmsConfigVersion: { current: undefined },
+}));
 vi.mock('$lib/services/contents', () => ({
   allEntries: { current: [] },
   dataLoaded: { current: false },
   entryParseErrors: { current: [] },
 }));
 vi.mock('$lib/services/contents/file/process');
-vi.mock('$lib/services/deployments/publish');
+// No collection uses a multi-file i18n structure, so each entry is made of a single file
+vi.mock('$lib/services/contents/collection', () => ({ getCollection: vi.fn() }));
+vi.mock('$lib/services/contents/collection/files', () => ({ getCollectionFile: vi.fn() }));
+vi.mock('$lib/services/deployments');
+vi.mock('$lib/services/utils/logging');
 
 const lastConfigHash = 'config-hash-1';
 
@@ -43,10 +43,15 @@ describe('git/shared/fetch', () => {
 
   beforeEach(() => {
     cmsConfigVersion.current = lastConfigHash;
+    allEntries.current = [];
+    allAssets.current = [];
+    repositoryHead.current = '';
 
     mockMetaDB = {
       entries: vi.fn(),
       saveEntries: vi.fn(),
+      get: vi.fn(),
+      set: vi.fn(),
     };
 
     mockCacheDB = {
@@ -92,510 +97,6 @@ describe('git/shared/fetch', () => {
     vi.clearAllMocks();
   });
 
-  describe('getFileList', () => {
-    const mockFetchFileList = vi.fn();
-    const lastCommitHash = 'abc123';
-
-    global.IndexedDB = vi.fn();
-
-    const cachedFileEntries = [
-      ['file1.md', { sha: 'def456', size: 1024 }],
-      ['file2.md', { sha: 'ghi789', size: 2048 }],
-    ];
-
-    beforeEach(() => {
-      mockFetchFileList.mockResolvedValue([
-        { path: 'file1.md', name: 'file1.md', sha: 'def456' },
-        { path: 'file2.md', name: 'file2.md', sha: 'ghi789' },
-      ]);
-    });
-
-    it('should use cached file list when hashes match and cache exists', async () => {
-      const metaEntries = /** @type {[string, any][]} */ ([
-        ['last_config_hash', lastConfigHash],
-        ['last_commit_hash', lastCommitHash],
-        ['git_config_fetched', true],
-      ]);
-
-      const result = await getFileList({
-        metaDB: mockMetaDB,
-        metaEntries,
-        lastCommitHash,
-        cachedFileEntries,
-        fetchFileList: mockFetchFileList,
-      });
-
-      expect(mockFetchFileList).not.toHaveBeenCalled();
-      expect(createFileList).toHaveBeenCalledWith([
-        { path: 'file1.md', name: 'file1.md', sha: 'def456', size: 1024 },
-        { path: 'file2.md', name: 'file2.md', sha: 'ghi789', size: 2048 },
-      ]);
-      expect(result).toBeDefined();
-    });
-
-    it('should fetch new file list when commit hash does not match', async () => {
-      const metaEntries = /** @type {[string, any][]} */ ([
-        ['last_config_hash', lastConfigHash],
-        ['last_commit_hash', 'old-hash'],
-        ['git_config_fetched', true],
-      ]);
-
-      await getFileList({
-        metaDB: mockMetaDB,
-        metaEntries,
-        lastCommitHash,
-        cachedFileEntries,
-        fetchFileList: mockFetchFileList,
-      });
-
-      expect(mockFetchFileList).toHaveBeenCalledWith(lastCommitHash);
-      expect(mockMetaDB.saveEntries).toHaveBeenCalledWith(
-        Object.entries({
-          last_config_hash: lastConfigHash,
-          last_commit_hash: lastCommitHash,
-          git_config_fetched: true,
-        }),
-      );
-    });
-
-    it('should fetch new file list when config hash does not match', async () => {
-      const metaEntries = /** @type {[string, any][]} */ ([
-        ['last_config_hash', 'old-config-hash'],
-        ['last_commit_hash', lastCommitHash],
-        ['git_config_fetched', true],
-      ]);
-
-      await getFileList({
-        metaDB: mockMetaDB,
-        metaEntries,
-        lastCommitHash,
-        cachedFileEntries,
-        fetchFileList: mockFetchFileList,
-      });
-
-      expect(mockFetchFileList).toHaveBeenCalledWith(lastCommitHash);
-      expect(mockMetaDB.saveEntries).toHaveBeenCalledWith(
-        expect.arrayContaining([['last_config_hash', lastConfigHash]]),
-      );
-    });
-
-    it('should fetch new file list when cache is empty', async () => {
-      const metaEntries = /** @type {[string, any][]} */ ([
-        ['last_config_hash', lastConfigHash],
-        ['last_commit_hash', lastCommitHash],
-        ['git_config_fetched', true],
-      ]);
-
-      await getFileList({
-        metaDB: mockMetaDB,
-        metaEntries,
-        lastCommitHash,
-        cachedFileEntries: [], // Empty cache
-        fetchFileList: mockFetchFileList,
-      });
-
-      expect(mockFetchFileList).toHaveBeenCalledWith(lastCommitHash);
-    });
-  });
-
-  describe('restoreCachedFileData', () => {
-    it('should restore cached data to matching files', () => {
-      const allFiles = [
-        { path: 'file1.md', sha: 'abc123' },
-        { path: 'file2.md', sha: 'def456' },
-        { path: 'file3.md', sha: 'ghi789' },
-      ];
-
-      const cachedFiles = {
-        'file1.md': { sha: 'abc123', text: 'cached content 1', meta: { cached: true } },
-        'file2.md': { sha: 'old-sha', text: 'old content', meta: { cached: true } },
-        'file3.md': { sha: 'ghi789', text: 'cached content 3', meta: { cached: true } },
-      };
-
-      restoreCachedFileData({ allFiles, cachedFiles });
-
-      expect(allFiles[0]).toEqual({
-        path: 'file1.md',
-        sha: 'abc123',
-        text: 'cached content 1',
-        meta: { cached: true },
-      });
-
-      // File 2 should not be updated because SHA doesn't match
-      expect(allFiles[1]).toEqual({ path: 'file2.md', sha: 'def456' });
-
-      expect(allFiles[2]).toEqual({
-        path: 'file3.md',
-        sha: 'ghi789',
-        text: 'cached content 3',
-        meta: { cached: true },
-      });
-    });
-  });
-
-  describe('parseFileInfo', () => {
-    it('should merge file data with fetched data', () => {
-      const fileInfo = {
-        path: 'test.md',
-        sha: 'abc123',
-        name: 'test.md',
-      };
-
-      const fetchedFileMap = {
-        'test.md': {
-          size: 1024,
-          text: 'file content',
-          meta: { parsed: true },
-        },
-      };
-
-      const result = parseFileInfo({ fileInfo, fetchedFileMap });
-
-      expect(result).toEqual({
-        path: 'test.md',
-        sha: 'abc123',
-        name: 'test.md',
-        size: 1024,
-        text: 'file content',
-        meta: { parsed: true },
-      });
-    });
-
-    it('should preserve existing file data when not in fetched map', () => {
-      const fileInfo = {
-        path: 'test.md',
-        sha: 'abc123',
-        name: 'test.md',
-        size: 500,
-        text: 'existing content',
-        meta: { existing: true },
-      };
-
-      const fetchedFileMap = {};
-      const result = parseFileInfo({ fileInfo, fetchedFileMap });
-
-      expect(result).toEqual(fileInfo);
-    });
-  });
-
-  describe('parseAssetFileInfo', () => {
-    it('should parse asset file with image extension', () => {
-      const fileInfo = {
-        path: 'images/sample.jpg',
-        name: 'sample.jpg',
-        sha: 'abc123',
-        size: 2048,
-        text: undefined,
-      };
-
-      const result = parseAssetFileInfo(fileInfo);
-
-      expect(result).toEqual({
-        path: 'images/sample.jpg',
-        name: 'sample.jpg',
-        sha: 'abc123',
-        size: 2048,
-        text: undefined,
-        kind: 'image',
-      });
-    });
-
-    it('should parse asset file with video extension', () => {
-      const fileInfo = {
-        path: 'videos/sample.mp4',
-        name: 'sample.mp4',
-        sha: 'def456',
-        size: 10240,
-      };
-
-      const result = parseAssetFileInfo(fileInfo);
-
-      expect(result.kind).toBe('video');
-      expect(result.name).toBe('sample.mp4');
-      expect(result.sha).toBe('def456');
-    });
-
-    it('should parse asset file with audio extension', () => {
-      const fileInfo = {
-        path: 'audio/song.mp3',
-        name: 'song.mp3',
-        sha: 'ghi789',
-        size: 5120,
-      };
-
-      const result = parseAssetFileInfo(fileInfo);
-
-      expect(result.kind).toBe('audio');
-      expect(result.name).toBe('song.mp3');
-    });
-
-    it('should parse asset file with document extension', () => {
-      const fileInfo = {
-        path: 'docs/report.pdf',
-        name: 'report.pdf',
-        sha: 'jkl012',
-        size: 1024,
-      };
-
-      const result = parseAssetFileInfo(fileInfo);
-
-      expect(result.kind).toBe('document');
-      expect(result.name).toBe('report.pdf');
-    });
-
-    it('should parse asset file with unknown extension as "other"', () => {
-      const fileInfo = {
-        path: 'files/unknown.xyz',
-        name: 'unknown.xyz',
-        sha: 'mno345',
-        size: 512,
-      };
-
-      const result = parseAssetFileInfo(fileInfo);
-
-      expect(result.kind).toBe('other');
-      expect(result.name).toBe('unknown.xyz');
-    });
-
-    it('should preserve meta data if provided', () => {
-      const fileInfo = {
-        path: 'images/sample.png',
-        name: 'sample.png',
-        sha: 'pqr678',
-        size: 3072,
-        meta: { customField: 'customValue', exif: { width: 800, height: 600 } },
-      };
-
-      const result = parseAssetFileInfo(fileInfo);
-
-      expect(result).toEqual({
-        path: 'images/sample.png',
-        name: 'sample.png',
-        sha: 'pqr678',
-        size: 3072,
-        kind: 'image',
-        customField: 'customValue',
-        exif: { width: 800, height: 600 },
-      });
-    });
-
-    it('should handle asset file with various document types', () => {
-      const documentTypes = [
-        { name: 'file.pdf', expected: 'document' },
-        { name: 'file.docx', expected: 'document' },
-        { name: 'file.xlsx', expected: 'document' },
-        { name: 'file.csv', expected: 'document' },
-        { name: 'file.pptx', expected: 'document' },
-      ];
-
-      documentTypes.forEach(({ name, expected }) => {
-        const result = parseAssetFileInfo({ path: name, name, sha: 'test123' });
-
-        expect(result.kind).toBe(expected);
-      });
-    });
-
-    it('should extract name from fileInfo when parsing', () => {
-      const fileInfo = {
-        path: 'images/my-image.gif',
-        name: 'my-image.gif',
-        sha: 'stu901',
-      };
-
-      const result = parseAssetFileInfo(fileInfo);
-
-      expect(result.name).toBe('my-image.gif');
-      expect(result.kind).toBe('image');
-    });
-  });
-
-  describe('updateStores', () => {
-    it('should update all stores with provided data', () => {
-      const entries = [{ path: 'entry1.md' }];
-      const assets = [{ path: 'asset1.jpg' }];
-      const configFiles = [{ path: '.gitignore' }];
-      const errors = [new Error('Parse error')];
-
-      updateStores({ entries, assets, configFiles, errors });
-
-      expect(allEntries.current).toEqual(entries);
-      expect(allAssets.current).toEqual(assets);
-      expect(gitConfigFiles.current).toEqual(configFiles);
-      expect(entryParseErrors.current).toEqual(errors);
-      expect(dataLoaded.current).toEqual(true);
-    });
-
-    it('should update stores with empty errors array by default', () => {
-      const entries = [];
-      const assets = [];
-      const configFiles = [];
-
-      updateStores({ entries, assets, configFiles });
-
-      expect(entryParseErrors.current).toEqual([]);
-      expect(dataLoaded.current).toEqual(true);
-    });
-  });
-
-  describe('applyFileMetadata', () => {
-    const meta = {
-      commitAuthor: { name: 'Author', email: 'a@example.com', id: 1, login: 'author' },
-      commitDate: new Date('2024-01-01T00:00:00Z'),
-    };
-
-    beforeEach(() => {
-      allEntries.current = [];
-      allAssets.current = [];
-    });
-
-    it('should fill in the metadata of the fetched files, entries and assets', () => {
-      const fetchedFileMap = /** @type {any} */ ({
-        'posts/a.md': { sha: 'sha1', size: 1, text: '', meta: undefined },
-        'img/a.png': { sha: 'sha2', size: 1, meta: undefined },
-      });
-
-      const entry = /** @type {any} */ ({
-        id: 'a',
-        locales: { en: { path: 'posts/a.md' }, fr: { path: 'posts/a.fr.md' } },
-      });
-
-      const asset = /** @type {any} */ ({ path: 'img/a.png' });
-
-      allEntries.current = [entry];
-      allAssets.current = [asset];
-
-      applyFileMetadata({
-        fetchedFileMap,
-        metadataMap: { 'posts/a.md': meta, 'img/a.png': meta, 'other.md': meta },
-      });
-
-      // Cached along with the text, so the file isn’t fetched again next time
-      expect(fetchedFileMap['posts/a.md'].meta).toBe(meta);
-      expect(fetchedFileMap['img/a.png'].meta).toBe(meta);
-      expect(allEntries.current).toEqual([{ ...entry, ...meta }]);
-      expect(allAssets.current).toEqual([{ ...asset, ...meta }]);
-    });
-
-    it('should take the metadata from whichever file of an entry is known', () => {
-      const entry = /** @type {any} */ ({
-        id: 'a',
-        locales: { en: { path: 'posts/a.md' }, fr: { path: 'posts/a.fr.md' } },
-      });
-
-      allEntries.current = [entry];
-
-      applyFileMetadata({ fetchedFileMap: {}, metadataMap: { 'posts/a.fr.md': meta } });
-
-      expect(allEntries.current[0].commitDate).toBe(meta.commitDate);
-    });
-
-    it('should leave an entry or asset saved in the meantime alone', () => {
-      const newer = new Date('2024-06-01T00:00:00Z');
-
-      const entry = /** @type {any} */ ({
-        id: 'a',
-        locales: { en: { path: 'posts/a.md' } },
-        commitDate: newer,
-      });
-
-      const asset = /** @type {any} */ ({ path: 'img/a.png', commitDate: newer });
-      const entries = [entry];
-      const assets = [asset];
-
-      allEntries.current = entries;
-      allAssets.current = assets;
-
-      applyFileMetadata({
-        fetchedFileMap: {},
-        metadataMap: { 'posts/a.md': meta, 'img/a.png': meta },
-      });
-
-      // Nothing changed, so the store arrays aren’t even replaced
-      expect(allEntries.current).toBe(entries);
-      expect(allAssets.current).toBe(assets);
-      expect(entry.commitDate).toBe(newer);
-    });
-
-    it('should not touch the stores when nothing matches', () => {
-      const entries = [/** @type {any} */ ({ id: 'a', locales: { en: { path: 'posts/a.md' } } })];
-      const assets = [/** @type {any} */ ({ path: 'img/a.png' })];
-
-      allEntries.current = entries;
-      allAssets.current = assets;
-
-      applyFileMetadata({ fetchedFileMap: {}, metadataMap: { 'unrelated.md': meta } });
-
-      expect(allEntries.current).toBe(entries);
-      expect(allAssets.current).toBe(assets);
-    });
-  });
-
-  describe('updateCache', () => {
-    it('should save new entries and delete unused ones', async () => {
-      const allFiles = [{ path: 'file1.md' }, { path: 'file2.md' }, { path: 'file3.md' }];
-
-      const cachedFiles = {
-        'file1.md': { sha: 'abc123' },
-        'file2.md': { sha: 'def456' },
-        'old-file.md': { sha: 'old123' },
-      };
-
-      const fetchingFiles = [{ path: 'file3.md' }];
-
-      const fetchedFileMap = {
-        'file3.md': { sha: 'ghi789', text: 'new content' },
-      };
-
-      await updateCache({
-        cacheDB: mockCacheDB,
-        allFiles,
-        cachedFiles,
-        fetchingFiles,
-        fetchedFileMap,
-      });
-
-      expect(mockCacheDB.saveEntries).toHaveBeenCalledWith([
-        ['file3.md', { sha: 'ghi789', text: 'new content' }],
-      ]);
-
-      expect(mockCacheDB.deleteEntries).toHaveBeenCalledWith(['old-file.md']);
-    });
-
-    it('should not save entries when no files are being fetched', async () => {
-      const allFiles = [{ path: 'file1.md' }];
-      const cachedFiles = { 'file1.md': { sha: 'abc123' } };
-      const fetchingFiles = [];
-      const fetchedFileMap = {};
-
-      await updateCache({
-        cacheDB: mockCacheDB,
-        allFiles,
-        cachedFiles,
-        fetchingFiles,
-        fetchedFileMap,
-      });
-
-      expect(mockCacheDB.saveEntries).not.toHaveBeenCalled();
-    });
-
-    it('should not delete entries when no unused files exist', async () => {
-      const allFiles = [{ path: 'file1.md' }];
-      const cachedFiles = { 'file1.md': { sha: 'abc123' } };
-      const fetchingFiles = [];
-      const fetchedFileMap = {};
-
-      await updateCache({
-        cacheDB: mockCacheDB,
-        allFiles,
-        cachedFiles,
-        fetchingFiles,
-        fetchedFileMap,
-      });
-
-      expect(mockCacheDB.deleteEntries).not.toHaveBeenCalled();
-    });
-  });
-
   describe('fetchAndParseFiles', () => {
     const mockRepository = {
       databaseName: 'test-db',
@@ -611,6 +112,7 @@ describe('git/shared/fetch', () => {
 
     const mockFetchFileList = vi.fn().mockResolvedValue([]);
     const mockFetchFileContents = vi.fn().mockResolvedValue({});
+    const mockLog = vi.fn();
 
     beforeEach(() => {
       mockMetaDB.entries.mockResolvedValue([]);
@@ -622,6 +124,7 @@ describe('git/shared/fetch', () => {
         configFiles: [],
         allFiles: [],
       });
+      vi.mocked(createDebugLogger).mockReturnValue(mockLog);
     });
 
     it('should set branch name if not provided', async () => {
@@ -735,6 +238,33 @@ describe('git/shared/fetch', () => {
       expect(mockFetchFileList).toHaveBeenCalled();
     });
 
+    it('should check the branch access once the branch is known, before showing the data', async () => {
+      const { promise, resolve } = Promise.withResolvers();
+      const checkBranchAccess = vi.fn(() => promise);
+
+      const run = fetchAndParseFiles({
+        repository: { ...mockRepository, branch: '' },
+        checkBranchAccess,
+        fetchDefaultBranchName: mockFetchDefaultBranchName,
+        fetchLastCommit: mockFetchLastCommit,
+        fetchFileList: mockFetchFileList,
+        fetchFileContents: mockFetchFileContents,
+      });
+
+      // The check starts once the branch is resolved, and the file list isn’t held back by it…
+      await vi.waitFor(() => {
+        expect(mockFetchFileList).toHaveBeenCalled();
+      });
+      expect(mockFetchLastCommit).toHaveBeenCalledBefore(checkBranchAccess);
+      // …but the data isn’t shown until it’s done
+      expect(repositoryHead.current).toBe('');
+
+      resolve(undefined);
+      await run;
+
+      expect(repositoryHead.current).toBe('abc123');
+    });
+
     it('should report the access error when the branch request fails as well', async () => {
       mockFetchDefaultBranchName.mockRejectedValueOnce(new Error('Repository not found'));
 
@@ -842,19 +372,355 @@ describe('git/shared/fetch', () => {
       expect(allAssets.current).toEqual([]);
       expect(gitConfigFiles.current).toEqual([]);
       expect(dataLoaded.current).toEqual(true);
+      expect(repositoryHead.current).toEqual('abc123');
+      expect(mockLog).toHaveBeenLastCalledWith('The site data is ready: no files to load');
+    });
+
+    it('should record the head once the stores reflect the commit', async () => {
+      const entryFile = { path: 'posts/a.md', name: 'a.md', sha: 'sha1', size: 10, type: 'entry' };
+
+      vi.mocked(createFileList).mockReturnValue({
+        count: 1,
+        entryFiles: [entryFile],
+        assetFiles: [],
+        configFiles: [],
+        allFiles: [entryFile],
+      });
+      vi.mocked(prepareEntries).mockImplementation(async () => {
+        // Still the previous head while the files are being parsed
+        expect(repositoryHead.current).toBe('');
+
+        return { entries: [{ id: 'a', locales: { en: { path: 'posts/a.md' } } }], errors: [] };
+      });
+
+      await fetchAndParseFiles({
+        repository: mockRepository,
+        fetchDefaultBranchName: mockFetchDefaultBranchName,
+        fetchLastCommit: mockFetchLastCommit,
+        fetchFileList: mockFetchFileList,
+        fetchFileContents: mockFetchFileContents,
+      });
+
+      expect(repositoryHead.current).toBe('abc123');
+    });
+
+    it('should drop the data when it has been discarded while loading, e.g. on sign-out', async () => {
+      const entryFile = { path: 'posts/a.md', name: 'a.md', sha: 'sha1', size: 10, type: 'entry' };
+
+      dataLoaded.current = false;
+      vi.mocked(createFileList).mockReturnValue({
+        count: 1,
+        entryFiles: [entryFile],
+        assetFiles: [],
+        configFiles: [],
+        allFiles: [entryFile],
+      });
+      vi.mocked(prepareEntries).mockImplementation(async () => {
+        // The user signs out while the files are being parsed
+        dataGeneration.current += 1;
+
+        return { entries: [{ id: 'a', locales: { en: { path: 'posts/a.md' } } }], errors: [] };
+      });
+
+      await fetchAndParseFiles({
+        repository: mockRepository,
+        fetchDefaultBranchName: mockFetchDefaultBranchName,
+        fetchLastCommit: mockFetchLastCommit,
+        fetchFileList: mockFetchFileList,
+        fetchFileContents: mockFetchFileContents,
+      });
+
+      // Nothing is left for the next user: the stores and the head are as the sign-out left them,
+      // so the next sign-in loads from scratch, and nothing is cached for the discarded session
+      expect(allEntries.current).toEqual([]);
+      expect(dataLoaded.current).toBe(false);
+      expect(repositoryHead.current).toBe('');
+      expect(mockMetaDB.set).not.toHaveBeenCalled();
+      expect(mockCacheDB.saveEntries).not.toHaveBeenCalled();
+      expect(mockLog).toHaveBeenLastCalledWith('Discarded: the site data was reset while loading');
+    });
+
+    it('should not repeat the access check on a later fetch', async () => {
+      const mockCheckAccess = vi.fn().mockResolvedValue(undefined);
+
+      repositoryHead.current = 'abc123';
+
+      await fetchAndParseFiles({
+        repository: mockRepository,
+        checkAccess: mockCheckAccess,
+        fetchDefaultBranchName: mockFetchDefaultBranchName,
+        fetchLastCommit: mockFetchLastCommit,
+        fetchFileList: mockFetchFileList,
+        fetchFileContents: mockFetchFileContents,
+      });
+
+      expect(mockCheckAccess).not.toHaveBeenCalled();
+    });
+
+    it('should use the last commit the caller has just fetched, rather than fetch it again', async () => {
+      repositoryHead.current = 'abc123';
+
+      await fetchAndParseFiles({
+        repository: mockRepository,
+        fetchDefaultBranchName: mockFetchDefaultBranchName,
+        fetchLastCommit: mockFetchLastCommit,
+        lastCommit: { hash: 'def456', message: 'Newer commit' },
+        fetchFileList: mockFetchFileList,
+        fetchFileContents: mockFetchFileContents,
+      });
+
+      expect(mockFetchLastCommit).not.toHaveBeenCalled();
+      expect(repositoryHead.current).toBe('def456');
+    });
+
+    it('should fetch the last commit anyway while the branch is still unknown', async () => {
+      await fetchAndParseFiles({
+        repository: { ...mockRepository, branch: '' },
+        fetchDefaultBranchName: mockFetchDefaultBranchName,
+        fetchLastCommit: mockFetchLastCommit,
+        lastCommit: { hash: 'def456', message: 'Newer commit' },
+        fetchFileList: mockFetchFileList,
+        fetchFileContents: mockFetchFileContents,
+      });
+
+      expect(mockFetchLastCommit).toHaveBeenCalled();
+      expect(repositoryHead.current).toBe('abc123');
+    });
+
+    it('should not repeat the branch access check on a later fetch', async () => {
+      const checkBranchAccess = vi.fn().mockResolvedValue(undefined);
+
+      repositoryHead.current = 'abc123';
+
+      await fetchAndParseFiles({
+        repository: mockRepository,
+        checkBranchAccess,
+        fetchDefaultBranchName: mockFetchDefaultBranchName,
+        fetchLastCommit: mockFetchLastCommit,
+        fetchFileList: mockFetchFileList,
+        fetchFileContents: mockFetchFileContents,
+      });
+
+      expect(checkBranchAccess).not.toHaveBeenCalled();
+    });
+
+    it('should carry the unchanged entries and assets over on a later fetch', async () => {
+      const entryFile = { path: 'posts/a.md', name: 'a.md', sha: 'sha1', size: 10, type: 'entry' };
+
+      const changedFile = {
+        path: 'posts/b.md',
+        name: 'b.md',
+        sha: 'sha2-new',
+        size: 10,
+        type: 'entry',
+      };
+
+      const assetFile = { path: 'img/a.png', name: 'a.png', sha: 'sha3', size: 20, type: 'asset' };
+      const oldEntry = { id: 'a', locales: { en: { path: 'posts/a.md' } } };
+      const oldChangedEntry = { id: 'b', locales: { en: { path: 'posts/b.md' } } };
+      const oldAsset = { path: 'img/a.png', sha: 'sha3', blobURL: 'blob:1' };
+      const newEntry = { id: 'a2', locales: { en: { path: 'posts/a.md' } } };
+      const newChangedEntry = { id: 'b2', locales: { en: { path: 'posts/b.md' } } };
+
+      allEntries.current = [oldEntry, oldChangedEntry];
+      allAssets.current = [oldAsset];
+
+      vi.mocked(createFileList).mockReturnValue({
+        count: 3,
+        entryFiles: [entryFile, changedFile],
+        assetFiles: [assetFile],
+        configFiles: [],
+        allFiles: [entryFile, changedFile, assetFile],
+      });
+      vi.mocked(prepareEntries).mockResolvedValue({
+        entries: [newEntry, newChangedEntry],
+        errors: [],
+      });
+      // The cache stands for the previous fetch: `b.md` has a different SHA now
+      mockCacheDB.entries.mockResolvedValue([
+        ['posts/a.md', { sha: 'sha1', size: 10, text: 'a', meta: {} }],
+        ['posts/b.md', { sha: 'sha2-old', size: 10, text: 'b', meta: {} }],
+        ['img/a.png', { sha: 'sha3', size: 20, meta: {} }],
+      ]);
+      mockFetchFileContents.mockResolvedValue({
+        'posts/b.md': { sha: 'sha2-new', size: 10, text: 'b2', meta: {} },
+      });
+
+      await fetchAndParseFiles({
+        repository: mockRepository,
+        fetchDefaultBranchName: mockFetchDefaultBranchName,
+        fetchLastCommit: mockFetchLastCommit,
+        fetchFileList: mockFetchFileList,
+        fetchFileContents: mockFetchFileContents,
+      });
+
+      expect(mockFetchFileContents).toHaveBeenCalledWith([changedFile], 'abc123');
+      expect(allEntries.current[0]).toBe(oldEntry);
+      expect(allEntries.current[1]).toEqual({ ...newChangedEntry, id: 'b' });
+      expect(allAssets.current[0]).toBe(oldAsset);
+    });
+
+    describe('incremental parse on a later fetch', () => {
+      const fileA = {
+        path: 'posts/a.md',
+        name: 'a.md',
+        sha: 'sha1',
+        size: 10,
+        type: 'entry',
+        folder: { collectionName: 'posts' },
+      };
+
+      const fileB = {
+        path: 'posts/b.md',
+        name: 'b.md',
+        sha: 'sha2-new',
+        size: 10,
+        type: 'entry',
+        folder: { collectionName: 'posts' },
+      };
+
+      const oldEntryA = { id: 'a', locales: { _default: { path: 'posts/a.md' } } };
+      const oldEntryB = { id: 'b', locales: { _default: { path: 'posts/b.md' } } };
+      const newEntryA = { id: 'a2', locales: { _default: { path: 'posts/a.md' } } };
+      const newEntryB = { id: 'b2', locales: { _default: { path: 'posts/b.md' } } };
+
+      /**
+       * Run a fetch with the given repository.
+       * @param {object} [repository] Repository.
+       * @returns {Promise<void>} Result.
+       */
+      const run = (repository = mockRepository) =>
+        fetchAndParseFiles({
+          repository,
+          fetchDefaultBranchName: mockFetchDefaultBranchName,
+          fetchLastCommit: mockFetchLastCommit,
+          fetchFileList: mockFetchFileList,
+          fetchFileContents: mockFetchFileContents,
+        });
+
+      /**
+       * Load the site data for the first time, which records what the entries are parsed for, then
+       * set things up for a later fetch in which `b.md` has changed.
+       */
+      const loadThenPush = async () => {
+        vi.mocked(createFileList).mockReturnValue({
+          count: 1,
+          entryFiles: [fileA],
+          assetFiles: [],
+          configFiles: [],
+          allFiles: [fileA],
+        });
+        mockCacheDB.entries.mockResolvedValue([]);
+        mockFetchFileContents.mockResolvedValue({});
+        await run();
+        vi.mocked(prepareEntries).mockClear();
+
+        repositoryHead.current = 'old-head';
+        allEntries.current = [oldEntryA, oldEntryB];
+        vi.mocked(createFileList).mockReturnValue({
+          count: 2,
+          entryFiles: [fileA, fileB],
+          assetFiles: [],
+          configFiles: [],
+          allFiles: [fileA, fileB],
+        });
+        mockCacheDB.entries.mockResolvedValue([
+          ['posts/a.md', { sha: 'sha1', size: 10, text: 'a', meta: {} }],
+          ['posts/b.md', { sha: 'sha2-old', size: 10, text: 'b', meta: {} }],
+        ]);
+        mockFetchFileContents.mockResolvedValue({
+          'posts/b.md': { sha: 'sha2-new', size: 10, text: 'b2', meta: {} },
+        });
+      };
+
+      it('should only parse the changed files, keeping the other entries as they are', async () => {
+        await loadThenPush();
+        vi.mocked(prepareEntries).mockResolvedValue({
+          entries: [newEntryB],
+          errors: [new Error('b')],
+        });
+
+        await run();
+
+        expect(prepareEntries).toHaveBeenCalledOnce();
+        expect(vi.mocked(prepareEntries).mock.calls[0][0].map(({ path }) => path)).toEqual([
+          'posts/b.md',
+        ]);
+        expect(allEntries.current).toHaveLength(2);
+        expect(allEntries.current[0]).toBe(oldEntryA);
+        expect(allEntries.current[1]).toEqual({ ...newEntryB, id: 'b' });
+        expect(entryParseErrors.current).toEqual([new Error('b')]);
+      });
+
+      it('should parse every file again once the configuration has changed', async () => {
+        await loadThenPush();
+        cmsConfigVersion.current = 'config-hash-2';
+        vi.mocked(prepareEntries).mockResolvedValue({
+          entries: [newEntryA, newEntryB],
+          errors: [],
+        });
+
+        await run();
+
+        expect(vi.mocked(prepareEntries).mock.calls[0][0].map(({ path }) => path)).toEqual([
+          'posts/a.md',
+          'posts/b.md',
+        ]);
+        expect(allEntries.current[0]).toBe(oldEntryA);
+        expect(allEntries.current[1]).toEqual({ ...newEntryB, id: 'b' });
+      });
+
+      it('should parse every file for another repository', async () => {
+        await loadThenPush();
+        vi.mocked(prepareEntries).mockResolvedValue({
+          entries: [newEntryA, newEntryB],
+          errors: [],
+        });
+
+        await run({ ...mockRepository, databaseName: 'other-db' });
+
+        expect(vi.mocked(prepareEntries).mock.calls[0][0]).toHaveLength(2);
+      });
+
+      it('should parse every file on a fresh start, such as after signing in again', async () => {
+        await loadThenPush();
+        repositoryHead.current = '';
+        vi.mocked(prepareEntries).mockResolvedValue({
+          entries: [newEntryA, newEntryB],
+          errors: [],
+        });
+
+        await run();
+
+        expect(vi.mocked(prepareEntries).mock.calls[0][0]).toHaveLength(2);
+      });
+
+      it('should parse every file when the store holds no entries', async () => {
+        await loadThenPush();
+        allEntries.current = [];
+        vi.mocked(prepareEntries).mockResolvedValue({
+          entries: [newEntryA, newEntryB],
+          errors: [],
+        });
+
+        await run();
+
+        expect(vi.mocked(prepareEntries).mock.calls[0][0]).toHaveLength(2);
+        expect(allEntries.current).toEqual([newEntryA, newEntryB]);
+      });
     });
 
     it('should fetch and process entries, assets, and config files', async () => {
       const mockEntryFiles = [
-        { path: 'posts/post1.md', name: 'post1.md', sha: 'entry1', size: 1024 },
+        { path: 'posts/post1.md', name: 'post1.md', sha: 'entry1', size: 1024, type: 'entry' },
       ];
 
       const mockAssetFiles = [
-        { path: 'images/image1.jpg', name: 'image1.jpg', sha: 'asset1', size: 2048 },
+        { path: 'images/image1.jpg', name: 'image1.jpg', sha: 'asset1', size: 2048, type: 'asset' },
       ];
 
       const mockConfigFiles = [
-        { path: '.gitignore', name: '.gitignore', sha: 'config1', size: 512 },
+        { path: '.gitignore', name: '.gitignore', sha: 'config1', size: 512, type: 'config' },
       ];
 
       const allFilesArray = [...mockEntryFiles, ...mockAssetFiles, ...mockConfigFiles];
@@ -884,7 +750,10 @@ describe('git/shared/fetch', () => {
       });
 
       expect(prepareEntries).toHaveBeenCalled();
-      expect(mockFetchFileContents).toHaveBeenCalledWith(allFilesArray);
+      // The contents are read at the commit the file list comes from
+      expect(mockFetchFileContents).toHaveBeenCalledWith(allFilesArray, 'abc123');
+      // The asset is in the list for its metadata only; its contents are not downloaded
+      expect(mockLog).toHaveBeenCalledWith('Fetched the contents of 2 files');
     });
 
     describe('deferred metadata', () => {
@@ -993,9 +862,10 @@ describe('git/shared/fetch', () => {
         expect(mockFetchFileContents).not.toHaveBeenCalled();
         // The metadata is requested for both
         expect(fetchFileMetadata).toHaveBeenCalledWith([entryFile, assetFile]);
-        expect(prepareEntries).toHaveBeenCalledWith([
-          expect.objectContaining({ path: 'posts/a.md', text: 'cached text' }),
-        ]);
+        expect(prepareEntries).toHaveBeenCalledWith(
+          [expect.objectContaining({ path: 'posts/a.md', text: 'cached text' })],
+          { parsedFileMap: expect.any(Map) },
+        );
         expect(mockCacheDB.saveEntries).toHaveBeenLastCalledWith([
           ['posts/a.md', { sha: 'sha1', size: 10, text: 'cached text', meta }],
           ['img/a.png', { sha: 'sha2', size: 20, text: undefined, meta }],
@@ -1025,8 +895,73 @@ describe('git/shared/fetch', () => {
           ['posts/a.md', expect.objectContaining({ meta: undefined })],
           ['img/a.png', expect.objectContaining({ meta: undefined })],
         ]);
+        expect(mockLog).toHaveBeenLastCalledWith(
+          'Cached 2 files without their metadata; they are fetched again next time',
+        );
 
         consoleError.mockRestore();
+      });
+
+      it('should still fill in the metadata when the contents fail to be cached first', async () => {
+        const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+        // Something left from an earlier commit, whose deletion fails the first time only
+        mockCacheDB.entries.mockResolvedValue([['old.md', { sha: 'old', text: 'old' }]]);
+        mockCacheDB.deleteEntries.mockRejectedValueOnce(new Error('Delete failed'));
+
+        await fetchAndParseFiles({
+          repository: mockRepository,
+          fetchDefaultBranchName: mockFetchDefaultBranchName,
+          fetchLastCommit: mockFetchLastCommit,
+          fetchFileList: mockFetchFileList,
+          fetchFileContents: mockFetchFileContents,
+          fetchFileMetadata: vi.fn().mockResolvedValue({ 'posts/a.md': meta, 'img/a.png': meta }),
+        });
+
+        expect(consoleError).toHaveBeenCalledWith(
+          'Failed to cache the contents.',
+          expect.any(Error),
+        );
+        expect(allEntries.current[0].commitDate).toBe(meta.commitDate);
+        expect(allAssets.current[0].commitDate).toBe(meta.commitDate);
+        // Written again with the metadata, which succeeds this time, so the commit is recorded
+        expect(mockCacheDB.deleteEntries).toHaveBeenCalledTimes(2);
+        expect(mockMetaDB.saveEntries).toHaveBeenCalled();
+
+        consoleError.mockRestore();
+      });
+
+      it('should trace each step of the loading in the console', async () => {
+        const fetchFileMetadata = vi.fn().mockResolvedValue({
+          'posts/a.md': meta,
+          'img/a.png': meta,
+        });
+
+        vi.mocked(describeFileList).mockReturnValue('1 entry files, 1 asset files, 0 config files');
+
+        await fetchAndParseFiles({
+          repository: { ...mockRepository, service: 'github', owner: 'owner', repo: 'repo' },
+          fetchDefaultBranchName: mockFetchDefaultBranchName,
+          fetchLastCommit: mockFetchLastCommit,
+          fetchFileList: mockFetchFileList,
+          fetchFileContents: mockFetchFileContents,
+          fetchFileMetadata,
+        });
+
+        expect(createDebugLogger).toHaveBeenCalledWith('Loading site data');
+        expect(mockLog.mock.calls.map(([message]) => message)).toEqual([
+          'Started: github owner/repo',
+          'Fetched the last commit on main: abc123',
+          'Read the file cache: 0 files',
+          'Fetched the file list: 1 entry files, 1 asset files, 0 config files',
+          'Restored 0 files from the cache; fetching 2 files',
+          'Fetched the contents of 1 files',
+          'Parsed 1 entries (0 errors)',
+          'The site data is ready',
+          'Cached the contents of 2 files',
+          'Fetched the commit metadata of 2 files',
+          'Cached 2 files with their metadata',
+        ]);
       });
 
       it('should not request the metadata when every file was cached', async () => {
@@ -1204,7 +1139,63 @@ describe('git/shared/fetch', () => {
       expect(mockFetchFileContents).toHaveBeenCalled();
       expect(mockFetchFileContents).toHaveBeenCalledWith(
         expect.arrayContaining([expect.objectContaining({ path: 'posts/post2.md' })]),
+        'abc123',
       );
+    });
+
+    it('should cache the content parsed from the fetched and cached files', async () => {
+      const mockEntryFiles = [
+        { path: 'posts/post1.md', name: 'post1.md', sha: 'entry1', size: 1024 },
+        { path: 'posts/post2.md', name: 'post2.md', sha: 'entry2', size: 2048 },
+      ];
+
+      vi.mocked(createFileList).mockReturnValue({
+        count: 2,
+        entryFiles: mockEntryFiles,
+        assetFiles: [],
+        configFiles: [],
+        allFiles: mockEntryFiles.map((file) => ({ ...file })),
+      });
+
+      const parsed1 = { key: 'key', content: { title: 'Post 1' } };
+      const parsed2 = { key: 'key', content: { title: 'Post 2' } };
+
+      // Both files are parsed: post1 has been cached without its parsed content
+      vi.mocked(prepareEntries).mockImplementation(async (_files, { parsedFileMap } = {}) => {
+        parsedFileMap?.set('posts/post1.md', parsed1);
+        parsedFileMap?.set('posts/post2.md', parsed2);
+
+        return { entries: [], errors: [] };
+      });
+
+      const meta = { commitAuthor: undefined, commitDate: undefined };
+
+      mockCacheDB.entries.mockResolvedValue([
+        ['posts/post1.md', { sha: 'entry1', size: 1024, text: 'cached content', meta }],
+      ]);
+      mockMetaDB.entries.mockResolvedValue([]);
+      mockFetchFileContents.mockResolvedValue({
+        'posts/post2.md': { sha: 'entry2', size: 2048, text: 'new content', meta },
+      });
+
+      await fetchAndParseFiles({
+        repository: mockRepository,
+        fetchDefaultBranchName: mockFetchDefaultBranchName,
+        fetchLastCommit: mockFetchLastCommit,
+        fetchFileList: mockFetchFileList,
+        fetchFileContents: mockFetchFileContents,
+      });
+
+      expect(mockCacheDB.saveEntries).toHaveBeenCalledWith([
+        [
+          'posts/post2.md',
+          { sha: 'entry2', size: 2048, text: 'new content', meta, parsed: parsed2 },
+        ],
+        [
+          'posts/post1.md',
+          { sha: 'entry1', size: 1024, text: 'cached content', meta, parsed: parsed1 },
+        ],
+      ]);
     });
 
     it('should record the publish hint as true when the commit carries no skip marker', async () => {
@@ -1222,6 +1213,66 @@ describe('git/shared/fetch', () => {
       });
 
       expect(setLastCommitPublishHint).toHaveBeenCalledWith(true);
+    });
+
+    it('should not record the commit if the file contents fail to load', async () => {
+      const allFiles = [{ path: 'a.md', name: 'a.md', sha: 'new-sha', type: 'entry' }];
+
+      vi.mocked(createFileList).mockReturnValue({
+        count: 1,
+        entryFiles: allFiles,
+        assetFiles: [],
+        configFiles: [],
+        allFiles,
+      });
+      // The cache holds the previous commit’s version of the file
+      mockCacheDB.entries.mockResolvedValue([['a.md', { sha: 'old-sha', text: 'old', meta: {} }]]);
+      mockMetaDB.entries.mockResolvedValue([['last_commit_hash', 'old-hash']]);
+
+      await expect(
+        fetchAndParseFiles({
+          repository: mockRepository,
+          fetchDefaultBranchName: mockFetchDefaultBranchName,
+          fetchLastCommit: mockFetchLastCommit,
+          fetchFileList: mockFetchFileList,
+          fetchFileContents: vi.fn().mockRejectedValue(new Error('Network error')),
+        }),
+      ).rejects.toThrow('Network error');
+
+      // Otherwise the next fetch for the same commit would restore the stale cached file list
+      expect(mockMetaDB.saveEntries).not.toHaveBeenCalled();
+    });
+
+    it('should record the commit once the file contents have been cached', async () => {
+      const allFiles = [{ path: 'a.md', name: 'a.md', sha: 'new-sha', type: 'entry' }];
+
+      vi.mocked(createFileList).mockReturnValue({
+        count: 1,
+        entryFiles: allFiles,
+        assetFiles: [],
+        configFiles: [],
+        allFiles,
+      });
+      mockFetchLastCommit.mockResolvedValue({ hash: 'abc123', message: 'Test commit' });
+
+      await fetchAndParseFiles({
+        repository: mockRepository,
+        fetchDefaultBranchName: mockFetchDefaultBranchName,
+        fetchLastCommit: mockFetchLastCommit,
+        fetchFileList: mockFetchFileList,
+        fetchFileContents: vi.fn().mockResolvedValue({
+          'a.md': { sha: 'new-sha', text: 'new', meta: {} },
+        }),
+      });
+
+      expect(mockCacheDB.saveEntries).toHaveBeenCalledBefore(mockMetaDB.saveEntries);
+      expect(mockMetaDB.saveEntries).toHaveBeenCalledWith(
+        Object.entries({
+          last_config_hash: lastConfigHash,
+          last_commit_hash: 'abc123',
+          git_config_fetched: true,
+        }),
+      );
     });
 
     it('should cache meta database hash after fetching files', async () => {
@@ -1257,6 +1308,173 @@ describe('git/shared/fetch', () => {
           ['last_config_hash', lastConfigHash],
         ]),
       );
+    });
+
+    describe('files deleted from the repository', () => {
+      /**
+       * Fetch the files of the repository.
+       * @returns {Promise<void>} Result.
+       */
+      const runFetch = () =>
+        fetchAndParseFiles({
+          repository: mockRepository,
+          fetchDefaultBranchName: mockFetchDefaultBranchName,
+          fetchLastCommit: mockFetchLastCommit,
+          fetchFileList: mockFetchFileList,
+          fetchFileContents: vi.fn().mockResolvedValue({}),
+        });
+
+      beforeEach(() => {
+        // Created for each test, as the cached data is restored into the list in place
+        const allFiles = [{ path: 'a.md', name: 'a.md', sha: 'sha-a', type: 'entry' }];
+
+        mockFetchLastCommit.mockResolvedValue({ hash: 'abc123', message: 'Test commit' });
+        mockMetaDB.entries.mockResolvedValue([['last_commit_hash', 'old-hash']]);
+        // `b.md` has been deleted from the repository since it was cached
+        mockCacheDB.entries.mockResolvedValue([
+          ['a.md', { sha: 'sha-a', text: 'a', meta: {} }],
+          ['b.md', { sha: 'sha-b', text: 'b', meta: {} }],
+        ]);
+        vi.mocked(createFileList).mockReturnValue({
+          count: 1,
+          entryFiles: allFiles,
+          assetFiles: [],
+          configFiles: [],
+          allFiles,
+        });
+      });
+
+      it('should only record the commit once the deleted files are gone from the cache', async () => {
+        const { promise, resolve } = Promise.withResolvers();
+
+        mockCacheDB.deleteEntries.mockReturnValue(promise);
+
+        const run = runFetch();
+
+        await vi.waitFor(() => {
+          expect(mockCacheDB.deleteEntries).toHaveBeenCalledWith(['b.md']);
+        });
+        // The stores are up to date while the cache is still being updated
+        expect(repositoryHead.current).toBe('abc123');
+        await Promise.resolve();
+        await Promise.resolve();
+        expect(mockMetaDB.saveEntries).not.toHaveBeenCalled();
+
+        resolve(undefined);
+        await run;
+
+        expect(mockMetaDB.saveEntries).toHaveBeenCalledWith(
+          expect.arrayContaining([['last_commit_hash', 'abc123']]),
+        );
+      });
+
+      it('should not record the commit if the deleted files fail to leave the cache', async () => {
+        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+        mockCacheDB.deleteEntries.mockRejectedValue(new Error('Delete failed'));
+
+        // The site data is usable without the cache, so the load doesn’t fail
+        await expect(runFetch()).resolves.toBeUndefined();
+
+        expect(repositoryHead.current).toBe('abc123');
+        expect(dataLoaded.current).toBe(true);
+        // Otherwise the next fetch for the same commit would restore the deleted file
+        expect(mockMetaDB.saveEntries).not.toHaveBeenCalled();
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          'Failed to update the file cache.',
+          expect.any(Error),
+        );
+
+        consoleErrorSpy.mockRestore();
+      });
+
+      it('should not record the commit if the fetched files fail to be cached', async () => {
+        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+        mockCacheDB.entries.mockResolvedValue([]);
+        mockCacheDB.saveEntries.mockRejectedValue(new Error('Quota exceeded'));
+
+        await expect(runFetch()).resolves.toBeUndefined();
+
+        expect(mockMetaDB.saveEntries).not.toHaveBeenCalled();
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          'Failed to update the file cache.',
+          expect.any(Error),
+        );
+
+        consoleErrorSpy.mockRestore();
+      });
+
+      it('should still load if the commit fails to be recorded', async () => {
+        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+        mockMetaDB.saveEntries.mockRejectedValue(new Error('Quota exceeded'));
+
+        await expect(runFetch()).resolves.toBeUndefined();
+
+        expect(dataLoaded.current).toBe(true);
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          'Failed to update the file cache.',
+          expect.any(Error),
+        );
+
+        consoleErrorSpy.mockRestore();
+      });
+
+      it('should load without the cache if it can’t be read', async () => {
+        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+        mockCacheDB.entries.mockRejectedValue(new Error('Internal error opening backing store'));
+
+        await expect(runFetch()).resolves.toBeUndefined();
+
+        expect(repositoryHead.current).toBe('abc123');
+        expect(dataLoaded.current).toBe(true);
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          'Failed to read the file cache.',
+          expect.any(Error),
+        );
+
+        consoleErrorSpy.mockRestore();
+      });
+
+      it('should clear the cache before recording the commit when no files are left', async () => {
+        vi.mocked(createFileList).mockReturnValue({
+          count: 0,
+          entryFiles: [],
+          assetFiles: [],
+          configFiles: [],
+          allFiles: [],
+        });
+
+        await runFetch();
+
+        expect(mockCacheDB.deleteEntries).toHaveBeenCalledWith(['a.md', 'b.md']);
+        expect(mockCacheDB.deleteEntries).toHaveBeenCalledBefore(mockMetaDB.saveEntries);
+        expect(mockMetaDB.saveEntries).toHaveBeenCalledWith(
+          expect.arrayContaining([['last_commit_hash', 'abc123']]),
+        );
+      });
+
+      it('should not record the commit when no files are left and the cache fails to be cleared', async () => {
+        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+        vi.mocked(createFileList).mockReturnValue({
+          count: 0,
+          entryFiles: [],
+          assetFiles: [],
+          configFiles: [],
+          allFiles: [],
+        });
+        mockCacheDB.deleteEntries.mockRejectedValue(new Error('Delete failed'));
+
+        await expect(runFetch()).resolves.toBeUndefined();
+
+        expect(dataLoaded.current).toBe(true);
+        expect(mockMetaDB.saveEntries).not.toHaveBeenCalled();
+
+        consoleErrorSpy.mockRestore();
+      });
     });
   });
 });

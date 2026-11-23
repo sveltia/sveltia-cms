@@ -11,6 +11,11 @@
   import { Button, EmptyState, SecretInput, TextInput } from '@sveltia/ui';
   import { sanitize } from 'isomorphic-dompurify';
 
+  import {
+    getAuthKeyLabel,
+    getServiceDescription,
+  } from '$lib/services/integrations/service-description';
+  import { saveApiKey } from '$lib/services/user/api-keys';
   import { prefs } from '$lib/services/user/prefs.svelte';
   import { LINK_SANITIZE_OPTIONS } from '$lib/services/utils/string';
 
@@ -27,19 +32,14 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    serviceProps,
-    error = undefined,
-    onAuth = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { serviceProps, error = undefined, onAuth = undefined } = $props();
 
   const {
     serviceType = 'stock_assets',
     serviceId = '',
     serviceLabel = '',
     authType = 'api_key',
+    compatibleAPI,
     developerURL = '',
     apiKeyURL = '',
     apiKeyPattern,
@@ -59,18 +59,11 @@
   {/if}
   <p role="alert">
     {#if isStockAssets}
-      {@html sanitize(
-        _('prefs.media.stock_photos.description', {
-          values: {
-            service: serviceLabel,
-            homeHref: `href="${developerURL}"`,
-            apiKeyHref: `href="${apiKeyURL}"`,
-          },
-        })
-          // Remove invisible characters used for link detection in the locale string
-          .replace(/[\u2068\u2069]/g, ''),
-        LINK_SANITIZE_OPTIONS,
-      )}
+      {@html getServiceDescription('prefs.media.stock_photos.description', {
+        service: serviceLabel,
+        developerURL,
+        apiKeyURL,
+      })}
     {/if}
     {#if serviceType === 'cloud_storage'}
       {@html sanitize(
@@ -78,9 +71,7 @@
           default: _(`cloud_storage.auth.${authType}.${authState}`, {
             values: {
               service: serviceLabel,
-              key: _(`cloud_storage.${serviceId}.auth_key_label`, {
-                default: _(`cloud_storage.auth.${authType}.key_label`),
-              }),
+              key: getAuthKeyLabel({ serviceId, compatibleAPI, authType }),
             },
           }),
         }),
@@ -95,15 +86,13 @@
         flex
         monospace
         spellcheck="false"
-        aria-label={_('prefs.media.stock_photos.field_label', {
+        ariaLabel={_('prefs.media.stock_photos.field_label', {
           values: { service: serviceLabel },
         })}
         oninput={(event) => {
-          const _value = /** @type {HTMLInputElement} */ (event.target).value.trim();
+          const { value } = /** @type {HTMLInputElement} */ (event.target);
 
-          if (apiKeyPattern?.test(_value)) {
-            prefs.apiKeys ??= {};
-            prefs.apiKeys[serviceId] = _value;
+          if (saveApiKey(serviceId, value, apiKeyPattern) !== undefined) {
             onAuth?.();
           }
         }}
@@ -116,14 +105,14 @@
         dir="ltr"
         flex
         spellcheck="false"
-        aria-label={_('username')}
+        ariaLabel={_('username')}
         disabled={authState === 'requested'}
         bind:value={input.userName}
       />
     </div>
     <div role="none" class="input-outer">
       <SecretInput
-        aria-label={_('password')}
+        ariaLabel={_('password')}
         disabled={authState === 'requested'}
         bind:value={input.password}
       />

@@ -1,0 +1,414 @@
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+
+import { getDateTimeFieldDisplayValue } from '$lib/services/contents/fields/date-time/display';
+
+/**
+ * @import { DateTimeField } from '$lib/types/public';
+ */
+
+/** @type {Pick<DateTimeField, 'widget' | 'name'>} */
+const baseFieldConfig = {
+  widget: 'datetime',
+  name: 'test_datetime',
+};
+
+// Mock dependencies
+vi.mock('@sveltia/utils/datetime', () => ({
+  getDateTimeParts: vi.fn(({ date = new Date(), timeZone = undefined } = {}) => {
+    // Mirror the real implementation so tests get correct timezone-aware parts. With TZ=UTC set in
+    // the test env (vite.config.js), the default (no timeZone) is also UTC, keeping all tests
+    // deterministic across environments.
+    /** @type {Intl.DateTimeFormatOptions} */
+    const options = {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      timeZoneName: 'longOffset',
+    };
+
+    return Object.fromEntries(
+      new Intl.DateTimeFormat('en-US', { ...options, hour12: false, timeZone })
+        .formatToParts(date)
+        .filter(({ type }) => type in options)
+        .map(({ type, value }) => [type, type === 'hour' && value === '24' ? '00' : value]),
+    );
+  }),
+}));
+
+vi.mock('$lib/services/contents/i18n', () => ({
+  getCanonicalLocale: vi.fn((locale) => locale),
+}));
+
+vi.mock('$lib/services/utils/date', () => ({
+  DATE_FORMAT_OPTIONS: { year: 'numeric', month: '2-digit', day: '2-digit' },
+  DATE_REGEX: /^\d{4}-\d{2}-\d{2}$/,
+  TIME_FORMAT_OPTIONS: { hour: '2-digit', minute: '2-digit' },
+  TIME_SUFFIX_REGEX: /[+-]\d{2}:\d{2}$/,
+}));
+
+// Set up default mock return values
+beforeEach(() => {
+  vi.restoreAllMocks();
+  vi.clearAllMocks();
+});
+
+describe('getDateTimeFieldDisplayValue', () => {
+  test('should format the same way as the `Date` locale methods', () => {
+    /** @type {Intl.DateTimeFormatOptions} */
+    const dateOptions = { year: 'numeric', month: '2-digit', day: '2-digit' };
+    /** @type {Intl.DateTimeFormatOptions} */
+    const timeOptions = { hour: '2-digit', minute: '2-digit' };
+
+    expect(
+      getDateTimeFieldDisplayValue({
+        locale: 'en',
+        fieldConfig: baseFieldConfig,
+        currentValue: '2023-12-25T14:30:00',
+      }),
+    ).toBe(
+      new Date('2023-12-25T14:30:00').toLocaleString('en', { ...dateOptions, ...timeOptions }),
+    );
+    expect(
+      getDateTimeFieldDisplayValue({
+        locale: 'ja',
+        fieldConfig: { ...baseFieldConfig, time_format: false },
+        currentValue: '2023-12-25',
+      }),
+    ).toBe(new Date('2023-12-25').toLocaleDateString('ja', { ...dateOptions, timeZone: 'UTC' }));
+    expect(
+      getDateTimeFieldDisplayValue({
+        locale: 'en',
+        fieldConfig: { ...baseFieldConfig, date_format: false, picker_utc: true },
+        currentValue: '14:30',
+      }),
+    ).toBe(
+      new Date(`${new Date().toJSON().split('T')[0]}T14:30`).toLocaleTimeString('en', {
+        ...timeOptions,
+        timeZone: 'UTC',
+      }),
+    );
+  });
+
+  test('should reuse the formatter for the same locale and options', () => {
+    const spy = vi.spyOn(Intl, 'DateTimeFormat');
+    const args = { locale: 'fr', fieldConfig: { ...baseFieldConfig, picker_utc: true } };
+    const first = getDateTimeFieldDisplayValue({ ...args, currentValue: '2023-12-25T14:30:00Z' });
+    const second = getDateTimeFieldDisplayValue({ ...args, currentValue: '2024-01-02T03:04:00Z' });
+
+    expect(first).not.toBe(second);
+    expect(second).toBe(
+      new Date('2024-01-02T03:04:00Z').toLocaleString('fr', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'UTC',
+      }),
+    );
+    // Created once for the first value, then reused
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
+
+  test('should return empty string for empty value', () => {
+    const result = getDateTimeFieldDisplayValue({
+      locale: 'en',
+      fieldConfig: baseFieldConfig,
+      currentValue: '',
+    });
+
+    expect(result).toBe('');
+  });
+
+  test('should return empty string for non-string value', () => {
+    const result = getDateTimeFieldDisplayValue({
+      locale: 'en',
+      fieldConfig: baseFieldConfig,
+      currentValue: undefined,
+    });
+
+    expect(result).toBe('');
+  });
+
+  test('should format with custom format', () => {
+    const result = getDateTimeFieldDisplayValue({
+      locale: 'en',
+      fieldConfig: { ...baseFieldConfig, format: 'YYYY-MM-DD HH:mm' },
+      currentValue: '2023-12-25 14:30',
+    });
+
+    expect(typeof result).toBe('string');
+    expect(result.length).toBeGreaterThan(0);
+  });
+
+  test('should handle date only display', () => {
+    const result = getDateTimeFieldDisplayValue({
+      locale: 'en',
+      fieldConfig: { ...baseFieldConfig, time_format: false },
+      currentValue: '2023-12-25',
+    });
+
+    expect(typeof result).toBe('string');
+    expect(result.length).toBeGreaterThan(0);
+  });
+
+  test('should handle time only display', () => {
+    const result = getDateTimeFieldDisplayValue({
+      locale: 'en',
+      fieldConfig: { ...baseFieldConfig, date_format: false },
+      currentValue: '14:30',
+    });
+
+    expect(typeof result).toBe('string');
+    expect(result.length).toBeGreaterThan(0);
+  });
+
+  test('should handle full date-time display', () => {
+    const result = getDateTimeFieldDisplayValue({
+      locale: 'en',
+      fieldConfig: baseFieldConfig,
+      currentValue: '2023-12-25T14:30:00',
+    });
+
+    expect(typeof result).toBe('string');
+    expect(result.length).toBeGreaterThan(0);
+  });
+
+  test('should handle UTC display', () => {
+    const result = getDateTimeFieldDisplayValue({
+      locale: 'en',
+      fieldConfig: { ...baseFieldConfig, picker_utc: true },
+      currentValue: '2023-12-25T14:30:00Z',
+    });
+
+    expect(typeof result).toBe('string');
+    expect(result.length).toBeGreaterThan(0);
+  });
+
+  test('should return empty string for invalid date', () => {
+    const result = getDateTimeFieldDisplayValue({
+      locale: 'en',
+      fieldConfig: baseFieldConfig,
+      currentValue: 'invalid-date',
+    });
+
+    // Invalid dates should return empty string after error handling
+    expect(result).toBe('');
+  });
+
+  test('should handle format parsing errors', () => {
+    const result = getDateTimeFieldDisplayValue({
+      locale: 'en',
+      fieldConfig: { ...baseFieldConfig, format: 'INVALID-FORMAT' },
+      currentValue: '2023-12-25',
+    });
+
+    expect(typeof result).toBe('string');
+  });
+
+  test('should handle UTC timezone in display values', () => {
+    const result = getDateTimeFieldDisplayValue({
+      locale: 'en',
+      fieldConfig: { ...baseFieldConfig, picker_utc: true },
+      currentValue: '2023-12-25T14:30:00Z',
+    });
+
+    expect(typeof result).toBe('string');
+    expect(result.length).toBeGreaterThan(0);
+  });
+
+  test('should handle timezone offset in date regex matching', () => {
+    const result = getDateTimeFieldDisplayValue({
+      locale: 'en',
+      fieldConfig: { ...baseFieldConfig, time_format: false },
+      currentValue: '2023-12-25',
+    });
+
+    expect(typeof result).toBe('string');
+    expect(result.length).toBeGreaterThan(0);
+  });
+
+  test('should catch errors when format parsing fails in getDateTimeFieldDisplayValue', () => {
+    // Use a format and value combination that dayjs can't parse
+    const result = getDateTimeFieldDisplayValue({
+      locale: 'en',
+      fieldConfig: { ...baseFieldConfig, format: 'YYYY-MM-DD HH:mm:ss' },
+      currentValue: 'completely-invalid-format-value',
+    });
+
+    // When dayjs parsing fails in the try block, it falls to regular date parsing
+    expect(typeof result).toBe('string');
+  });
+
+  test('shows an ISO 8601 value with an offset in the time zone of a field in a custom format', () => {
+    const { TZ } = process.env;
+
+    process.env.TZ = 'America/Los_Angeles';
+
+    try {
+      /** @type {DateTimeField} */
+      const fieldConfig = { ...baseFieldConfig, format: 'YYYY-MM-DD HH:mm' };
+
+      /**
+       * Get the display value of a value in the field with the given options.
+       * @param {string} currentValue Stored value.
+       * @param {Partial<DateTimeField>} [options] Field options.
+       * @returns {string} Display value.
+       */
+      const getValue = (currentValue, options = {}) =>
+        getDateTimeFieldDisplayValue({
+          locale: 'en',
+          fieldConfig: { ...fieldConfig, ...options },
+          currentValue,
+        });
+
+      expect(getValue('2026-01-15T01:30:00Z', { input_timezone: 'Asia/Tokyo' })).toBe(
+        '2026-01-15 10:30',
+      );
+      expect(getValue('2026-01-15T01:30:00Z', { input_timezone: 'utc' })).toBe('2026-01-15 01:30');
+      expect(getValue('2026-01-15T01:30:00Z', { output_utc: true })).toBe('2026-01-15 01:30');
+      expect(getValue('2026-01-15T01:30:00Z')).toBe('2026-01-14 17:30');
+      // A value in the format is shown as written
+      expect(getValue('2026-01-15 10:30', { input_timezone: 'Asia/Tokyo' })).toBe(
+        '2026-01-15 10:30',
+      );
+      expect(getValue('2026-01-15 10:30', { output_utc: true })).toBe('2026-01-15 10:30');
+      expect(getValue('2026-01-15 10:30')).toBe('2026-01-15 10:30');
+      // A value with an offset that can’t be parsed
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      expect(getValue('invalid 10:30Z')).toBe('');
+      // A date in a format without a time is read as written
+      expect(getValue('2026-01-15T00:00:00Z', { format: 'YYYY/MM/DD', time_format: false })).toBe(
+        '2026/01/15',
+      );
+    } finally {
+      process.env.TZ = TZ;
+    }
+  });
+
+  test('shows the wall time of an ISO 8601 value in the browser’s DST gap in the field’s zone', () => {
+    const { TZ } = process.env;
+
+    // 2026-03-08 02:00–03:00 doesn’t exist in New York, where DST starts
+    process.env.TZ = 'America/New_York';
+
+    try {
+      [
+        ['2026-03-08T02:30:00+09:00', '2026-03-08 02:30'],
+        ['2026-03-08T04:30:00+09:00', '2026-03-08 04:30'],
+      ].forEach(([currentValue, displayValue]) => {
+        expect(
+          getDateTimeFieldDisplayValue({
+            locale: 'en',
+            fieldConfig: {
+              ...baseFieldConfig,
+              format: 'YYYY-MM-DD HH:mm',
+              input_timezone: 'Asia/Tokyo',
+            },
+            currentValue,
+          }),
+        ).toBe(displayValue);
+      });
+    } finally {
+      process.env.TZ = TZ;
+    }
+  });
+
+  test('shows a value in a custom format with an offset token as written or in the field’s zone', () => {
+    const { TZ } = process.env;
+
+    process.env.TZ = 'America/Los_Angeles';
+
+    try {
+      /** @type {DateTimeField} */
+      const fieldConfig = { ...baseFieldConfig, format: 'YYYY-MM-DDTHH:mm:ssZ' };
+
+      /**
+       * Get the display value of a value in the field with the given options.
+       * @param {string} currentValue Stored value.
+       * @param {Partial<DateTimeField>} [options] Field options.
+       * @returns {string} Display value.
+       */
+      const getValue = (currentValue, options = {}) =>
+        getDateTimeFieldDisplayValue({
+          locale: 'en',
+          fieldConfig: { ...fieldConfig, ...options },
+          currentValue,
+        });
+
+      // A value written in the format is shown as written, whatever its offset
+      [
+        '2026-01-15T10:30:00+09:00',
+        '2026-01-15T01:30:00+00:00',
+        '2026-01-15T05:30:00+05:30',
+      ].forEach((currentValue) => {
+        expect(getValue(currentValue, { input_timezone: 'Asia/Tokyo' })).toBe(currentValue);
+        expect(getValue(currentValue)).toBe(currentValue);
+      });
+      expect(
+        getValue('2026-01-15 10:30 +0900', {
+          format: 'YYYY-MM-DD HH:mm ZZ',
+          input_timezone: 'utc',
+        }),
+      ).toBe('2026-01-15 10:30 +0900');
+      // Any other value is shown in the field’s time zone, or the browser’s
+      expect(getValue('2026-01-15T01:30:00Z', { input_timezone: 'Asia/Tokyo' })).toBe(
+        '2026-01-15T10:30:00+09:00',
+      );
+      expect(getValue('2026-01-15T01:30:00Z', { output_utc: true })).toBe(
+        '2026-01-15T01:30:00+00:00',
+      );
+      expect(getValue('2026-01-15T01:30:00Z')).toBe('2026-01-14T17:30:00-08:00');
+      expect(getValue('2026-01-15T10:30:00.000+09:00', { input_timezone: 'Asia/Tokyo' })).toBe(
+        '2026-01-15T10:30:00+09:00',
+      );
+    } finally {
+      process.env.TZ = TZ;
+    }
+  });
+
+  test('shows a value in a custom format with advanced Day.js tokens as written', () => {
+    [
+      ['X', '1782865800'],
+      ['x', '1782865800000'],
+      ['MMMM Do, YYYY', 'July 1st, 2026'],
+    ].forEach(([format, currentValue]) => {
+      expect(
+        getDateTimeFieldDisplayValue({
+          locale: 'en',
+          fieldConfig: { ...baseFieldConfig, format },
+          currentValue,
+        }),
+      ).toBe(currentValue);
+    });
+  });
+
+  test('shows the stored date of a date-only field with a custom input time zone', () => {
+    const { TZ } = process.env;
+
+    ['UTC', 'America/New_York', 'Asia/Tokyo', 'Etc/GMT+12'].forEach((browserTimeZone) => {
+      process.env.TZ = browserTimeZone;
+
+      try {
+        ['America/New_York', 'Etc/GMT+12', 'Asia/Tokyo'].forEach((inputTimeZone) => {
+          expect(
+            getDateTimeFieldDisplayValue({
+              locale: 'en',
+              fieldConfig: {
+                ...baseFieldConfig,
+                time_format: false,
+                input_timezone: inputTimeZone,
+              },
+              currentValue: '2026-01-15',
+            }),
+          ).toBe('01/15/2026');
+        });
+      } finally {
+        process.env.TZ = TZ;
+      }
+    });
+  });
+});

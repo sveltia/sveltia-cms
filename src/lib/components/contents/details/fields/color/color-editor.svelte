@@ -3,12 +3,15 @@
   Implement the editor for a Color field.
   @see https://decapcms.org/docs/widgets/#color
   @see https://sveltiacms.app/en/docs/fields/color
-  @todo Replace the native `<input>` with a custom component.
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Button, Slider, TextInput } from '@sveltia/ui';
+  import { Button, ColorInput, Slider, TextInput } from '@sveltia/ui';
 
+  import {
+    getColorFieldInputValues,
+    getColorFieldValue,
+  } from '$lib/services/contents/fields/color/helpers';
   import { watch } from '$lib/services/utils/state.svelte';
 
   /**
@@ -24,14 +27,12 @@
 
   /** @type {FieldEditorProps & Props} */
   let {
-    /* eslint-disable prefer-const */
     fieldId,
     fieldConfig,
     currentValue = $bindable(),
     required = true,
     readonly = false,
     invalid = false,
-    /* eslint-enable prefer-const */
   } = $props();
 
   let inputValue = $state('');
@@ -40,44 +41,49 @@
   const { allowInput = false, enableAlpha = false } = $derived(fieldConfig);
 
   const id = $props.id();
-  const RGB_REGEX = /^#[0-9a-f]{6}$/i;
-  const RGBA_REGEX = /^(?<rgb>#[0-9a-f]{6})(?<a>[0-9a-f]{2})?$/i;
+
+  /**
+   * Values of the controls right after they were last synced with {@link currentValue}. The value
+   * is only written back once the user has changed a control from these, so a stored color the
+   * controls can’t represent, like `#fff` or `red`, isn’t replaced as soon as the editor is opened.
+   */
+  let syncedInputValues = { rgb: '', alpha: 255 };
 
   /**
    * Update {@link inputValue} and {@link inputAlphaValue} based on {@link currentValue}.
    */
   const setInputValue = () => {
-    if (typeof currentValue !== 'string') {
-      return;
-    }
+    const parts = getColorFieldInputValues({
+      currentValue,
+      rgb: inputValue,
+      alpha: inputAlphaValue,
+      enableAlpha,
+    });
 
-    const { rgb: newValue, a: newAlphaHexValue = 'ff' } =
-      currentValue.match(RGBA_REGEX)?.groups ?? {};
-
-    // Avoid a cycle dependency & infinite loop
-    if (newValue && inputValue !== newValue) {
-      inputValue = newValue;
-    }
-
-    if (newValue && enableAlpha) {
-      const newAlphaIntValue = Number.parseInt(`0x${newAlphaHexValue}`, 16);
-
+    if (parts) {
       // Avoid a cycle dependency & infinite loop
-      if (inputAlphaValue !== newAlphaIntValue) {
-        inputAlphaValue = newAlphaIntValue;
+      if (inputValue !== parts.rgb) {
+        inputValue = parts.rgb;
+      }
+
+      if (enableAlpha && inputAlphaValue !== parts.alpha) {
+        inputAlphaValue = parts.alpha;
       }
     }
+
+    syncedInputValues = { rgb: inputValue, alpha: inputAlphaValue };
   };
 
   /**
-   * Update {@link currentValue} based on {@link inputValue} and {@link inputAlphaValue}.
+   * Update {@link currentValue} based on {@link inputValue} and {@link inputAlphaValue}, if the
+   * user has changed either of them.
    */
   const setCurrentValue = () => {
-    let newValue = RGB_REGEX.test(inputValue) ? inputValue : '';
-
-    if (newValue && enableAlpha) {
-      newValue += inputAlphaValue.toString(16).padStart(2, '0');
+    if (inputValue === syncedInputValues.rgb && inputAlphaValue === syncedInputValues.alpha) {
+      return;
     }
+
+    const newValue = getColorFieldValue({ rgb: inputValue, alpha: inputAlphaValue, enableAlpha });
 
     // Avoid a cycle dependency & infinite loop
     if (currentValue !== newValue) {
@@ -101,14 +107,12 @@
 </script>
 
 <div role="none">
-  <input
+  <ColorInput
     id="{id}-picker"
-    type="color"
     bind:value={inputValue}
     {readonly}
-    aria-invalid={invalid}
-    aria-readonly={readonly}
-    aria-required={required}
+    {required}
+    {invalid}
     aria-labelledby="{fieldId}-label"
     aria-errormessage="{fieldId}-error"
   />
@@ -132,8 +136,9 @@
           min={0}
           max={255}
           disabled={!inputValue}
+          {readonly}
           bind:value={inputAlphaValue}
-          aria-label={_('opacity')}
+          sliderLabel={_('opacity')}
         />
       {/if}
     </span>
@@ -175,9 +180,5 @@
         }
       }
     }
-  }
-
-  input {
-    font-family: var(--sui-textbox-font-family);
   }
 </style>

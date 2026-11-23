@@ -1,6 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getDefaultMediaLibraryOptions, transformFile } from '.';
+import {
+  canConvertHEIC,
+  getAcceptedFileTypes,
+  getAcceptedImageTypes,
+  getDefaultMediaLibraryOptions,
+  isAcceptedFile,
+  transformFile,
+} from '.';
 
 // Mock all dependencies
 vi.mock('@sveltia/utils/object');
@@ -9,10 +16,29 @@ vi.mock('$lib/services/integrations/media-libraries', () => ({
 }));
 vi.mock('$lib/services/utils/media/image', () => ({
   RASTER_IMAGE_CONVERSION_FORMATS: ['webp', 'jpeg', 'png'],
-  RASTER_IMAGE_EXTENSION_REGEX: /\b(?:avif|gif|jfif|jpe?g|jpe|png|webp)$/i,
-  RASTER_IMAGE_FORMATS: ['jpeg', 'jpg', 'png', 'webp'],
+  RASTER_IMAGE_EXTENSION_REGEX: /\.(?:avif|gif|heic|heif|jfif|jpe?g|jpe|png|webp)$/i,
+  RASTER_IMAGE_FORMATS: ['heic', 'jpeg', 'jpg', 'png', 'webp'],
+  SUPPORTED_IMAGE_TYPES: ['image/jpeg', 'image/png', 'image/svg+xml'],
+  SUPPORTED_IMAGE_TYPES_WITH_HEIC: ['image/jpeg', 'image/png', 'image/svg+xml', 'image/heic'],
 }));
 vi.mock('$lib/services/utils/media/image/transform');
+
+/**
+ * Leading bytes of a HEIC file: an ISO BMFF `ftyp` box with the `heic` major brand.
+ * @type {Uint8Array<ArrayBuffer>}
+ */
+const HEIC_HEADER = new Uint8Array([
+  0, 0, 0, 24, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63, 0, 0, 0, 0, 0x6d, 0x69, 0x66, 0x31,
+  0x68, 0x65, 0x69, 0x63,
+]);
+
+/**
+ * Leading bytes of a JPEG file: the SOI marker and a JFIF segment.
+ * @type {Uint8Array<ArrayBuffer>}
+ */
+const JPEG_HEADER = new Uint8Array([
+  0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x00,
+]);
 
 describe('integrations/media-libraries/default', () => {
   beforeEach(async () => {
@@ -45,6 +71,31 @@ describe('integrations/media-libraries/default', () => {
         },
       });
     });
+
+    it('should keep a non-blank file name template, trimmed', async () => {
+      const { getMediaLibraryOptions } = await import('$lib/services/integrations/media-libraries');
+      const getMock = vi.mocked(getMediaLibraryOptions);
+
+      getMock.mockReturnValue({ config: { filename_template: ' {{slug}}-{{uuid_short}} ' } });
+
+      expect(getDefaultMediaLibraryOptions().config.filename_template).toBe(
+        '{{slug}}-{{uuid_short}}',
+      );
+    });
+
+    it.each([[''], ['  '], [true], [123]])(
+      'should ignore an invalid file name template: %j',
+      async (template) => {
+        const { getMediaLibraryOptions } =
+          await import('$lib/services/integrations/media-libraries');
+
+        const getMock = vi.mocked(getMediaLibraryOptions);
+
+        getMock.mockReturnValue({ config: { filename_template: template } });
+
+        expect(getDefaultMediaLibraryOptions().config.filename_template).toBeUndefined();
+      },
+    );
 
     it('should return field-level media library options', async () => {
       const { getMediaLibraryOptions } = await import('$lib/services/integrations/media-libraries');
@@ -445,6 +496,238 @@ describe('integrations/media-libraries/default', () => {
       expect(result).toBe(jpegFile);
     });
 
+    it('should upload an animated image as is, as only its first frame would be kept', async () => {
+      const { transformImage } = await import('$lib/services/utils/media/image/transform');
+
+      vi.mocked(transformImage).mockResolvedValue(new Blob(['still'], { type: 'image/webp' }));
+
+      // An animated WebP: the `VP8X` header with the animation flag
+      const animatedWebP = new File(
+        [
+          new Uint8Array([
+            ...[...'RIFF'].map((c) => c.charCodeAt(0)),
+            30,
+            0,
+            0,
+            0,
+            ...[...'WEBPVP8X'].map((c) => c.charCodeAt(0)),
+            10,
+            0,
+            0,
+            0,
+            0x02,
+            ...Array(9).fill(0),
+          ]),
+        ],
+        'loop.webp',
+        { type: 'image/webp' },
+      );
+
+      // An APNG: an `acTL` chunk before the image data
+      const animatedPNG = new File(
+        [
+          new Uint8Array([
+            0x89,
+            ...[...'PNG\r\n\x1a\n'].map((c) => c.charCodeAt(0)),
+            0,
+            0,
+            0,
+            8,
+            ...[...'acTL'].map((c) => c.charCodeAt(0)),
+            ...Array(12).fill(0),
+            0,
+            0,
+            0,
+            0,
+            ...[...'IDAT'].map((c) => c.charCodeAt(0)),
+            0,
+            0,
+            0,
+            0,
+          ]),
+        ],
+        'loop.png',
+        { type: 'image/png' },
+      );
+
+      await expect(transformFile(animatedWebP, { raster_image: {} })).resolves.toBe(animatedWebP);
+      await expect(transformFile(animatedPNG, { raster_image: {} })).resolves.toBe(animatedPNG);
+      expect(vi.mocked(transformImage)).not.toHaveBeenCalled();
+    });
+
+    describe('HEIC', () => {
+      /** @type {Blob} */
+      let webpBlob;
+
+      beforeEach(async () => {
+        const { transformImage } = await import('$lib/services/utils/media/image/transform');
+
+        webpBlob = new Blob(['transformed'], { type: 'image/webp' });
+        vi.mocked(transformImage).mockResolvedValue(webpBlob);
+      });
+
+      it('should not convert a HEIC image unless configured', async () => {
+        const { transformImage } = await import('$lib/services/utils/media/image/transform');
+        const file = new File([HEIC_HEADER], 'IMG_0001.HEIC', { type: 'image/heic' });
+
+        await expect(transformFile(file, {})).resolves.toBe(file);
+        await expect(transformFile(file, { jpeg: {}, png: {} })).resolves.toBe(file);
+        expect(vi.mocked(transformImage)).not.toHaveBeenCalled();
+      });
+
+      it('should convert a HEIC image to WebP by default', async () => {
+        const { transformImage } = await import('$lib/services/utils/media/image/transform');
+        const file = new File([HEIC_HEADER], 'IMG_0001.HEIC', { type: 'image/heic' });
+        const result = await transformFile(file, { heic: {} });
+
+        expect(vi.mocked(transformImage)).toHaveBeenCalledWith(file, {
+          format: 'webp',
+          quality: 85,
+          width: undefined,
+          height: undefined,
+        });
+        expect(result.name).toBe('IMG_0001.webp');
+        expect(result.type).toBe('image/webp');
+      });
+
+      it('should convert a HEIC image with a `.jpg` extension, detected by its content', async () => {
+        const { transformImage } = await import('$lib/services/utils/media/image/transform');
+        // A photo that was renamed rather than converted declares `image/jpeg`
+        const file = new File([HEIC_HEADER], 'IMG_0001.jpg', { type: 'image/jpeg' });
+        const transformations = /** @type {any} */ ({ jpeg: { quality: 50 }, heic: {} });
+        const result = await transformFile(file, transformations);
+
+        // The `jpeg` transformation doesn’t apply, as the image isn’t a JPEG
+        expect(vi.mocked(transformImage)).toHaveBeenCalledWith(file, {
+          format: 'webp',
+          quality: 85,
+          width: undefined,
+          height: undefined,
+        });
+        expect(result.name).toBe('IMG_0001.webp');
+      });
+
+      it.each([
+        ['image/heif', 'IMG_0001.heif'],
+        ['', 'IMG_0001.heic'],
+        ['application/octet-stream', 'IMG_0001.heic'],
+      ])('should detect a HEIC image declared as “%s”', async (type, name) => {
+        const { transformImage } = await import('$lib/services/utils/media/image/transform');
+        // The type isn’t set on every platform
+        const file = new File([HEIC_HEADER], name, { type });
+        const result = await transformFile(file, { raster_image: {} });
+
+        expect(vi.mocked(transformImage)).toHaveBeenCalledOnce();
+        expect(result.name).toBe('IMG_0001.webp');
+      });
+
+      it('should apply the `heic` transformation over `raster_image`', async () => {
+        const { transformImage } = await import('$lib/services/utils/media/image/transform');
+        const file = new File([HEIC_HEADER], 'IMG_0001.heic', { type: 'image/heic' });
+
+        const transformations = /** @type {any} */ ({
+          raster_image: { quality: 60 },
+          heic: { quality: 70, width: 2000 },
+        });
+
+        await transformFile(file, transformations);
+
+        expect(vi.mocked(transformImage)).toHaveBeenCalledWith(file, {
+          format: 'webp',
+          quality: 70,
+          width: 2000,
+          height: undefined,
+        });
+      });
+
+      it('should apply the `raster_image` transformation to a HEIC image', async () => {
+        const { transformImage } = await import('$lib/services/utils/media/image/transform');
+        const file = new File([HEIC_HEADER], 'IMG_0001.heic', { type: 'image/heic' });
+        const transformations = /** @type {any} */ ({ raster_image: { quality: 60 } });
+
+        await transformFile(file, transformations);
+
+        expect(vi.mocked(transformImage)).toHaveBeenCalledWith(file, {
+          format: 'webp',
+          quality: 60,
+          width: undefined,
+          height: undefined,
+        });
+      });
+
+      it('should throw when a HEIC image can’t be decoded', async () => {
+        const { transformImage } = await import('$lib/services/utils/media/image/transform');
+
+        vi.mocked(transformImage).mockRejectedValue(new Error('Decoding error'));
+
+        const file = new File([HEIC_HEADER], 'IMG_0001.heic', { type: 'image/heic' });
+
+        // Rather than uploading the file as is, which nothing could display
+        await expect(transformFile(file, { heic: {} })).rejects.toThrow(
+          'Failed to decode HEIC image',
+        );
+      });
+
+      it('should not treat a JPEG image with a `.heic` extension as HEIC', async () => {
+        const { transformImage } = await import('$lib/services/utils/media/image/transform');
+        const file = new File([JPEG_HEADER], 'IMG_0001.heic', { type: 'image/heic' });
+
+        // No transformation for JPEG or HEIC, so nothing happens
+        await expect(transformFile(file, { png: {} })).resolves.toBe(file);
+        expect(vi.mocked(transformImage)).not.toHaveBeenCalled();
+
+        // The `jpeg` transformation applies, with the `heic` one for the declared format as a
+        // fallback; either way the browser decodes it, and a decoding failure isn’t fatal
+        await Promise.all(
+          [{ jpeg: { quality: 50 } }, { heic: { quality: 50 } }].map(async (transformations) => {
+            const result = await transformFile(file, transformations);
+
+            expect(result.name).toBe('IMG_0001.webp');
+          }),
+        );
+        expect(vi.mocked(transformImage)).toHaveBeenCalledTimes(2);
+        expect(vi.mocked(transformImage)).toHaveBeenLastCalledWith(file, {
+          format: 'webp',
+          quality: 50,
+          width: undefined,
+          height: undefined,
+        });
+
+        vi.mocked(transformImage).mockRejectedValue(new Error('Corrupt'));
+        await expect(transformFile(file, { heic: {} })).resolves.toBe(file);
+      });
+
+      it('should fall back to the transformation for the declared format', async () => {
+        const { transformImage } = await import('$lib/services/utils/media/image/transform');
+        // A JPEG image saved with a `.png` extension, on a site with `png` options only
+        const file = new File([JPEG_HEADER], 'shot.png', { type: 'image/png' });
+        const result = await transformFile(file, { png: { quality: 60 } });
+
+        expect(vi.mocked(transformImage)).toHaveBeenCalledWith(file, {
+          format: 'webp',
+          quality: 60,
+          width: undefined,
+          height: undefined,
+        });
+        expect(result.name).toBe('shot.webp');
+
+        // The transformation for the actual format wins
+        vi.mocked(transformImage).mockClear();
+        await transformFile(file, { png: { quality: 60 }, jpeg: { quality: 70 } });
+        expect(vi.mocked(transformImage)).toHaveBeenCalledWith(
+          file,
+          expect.objectContaining({ quality: 70 }),
+        );
+      });
+
+      it('should not sniff a file that is neither an image nor named like one', async () => {
+        const file = new File([HEIC_HEADER], 'photo.bin', { type: '' });
+        const transformations = /** @type {any} */ ({ raster_image: {} });
+
+        await expect(transformFile(file, transformations)).resolves.toBe(file);
+      });
+    });
+
     it('should transform raster image with specific format transformation', async () => {
       const { transformImage } = await import('$lib/services/utils/media/image/transform');
       const mockBlob = new Blob(['transformed'], { type: 'image/webp' });
@@ -477,7 +760,7 @@ describe('integrations/media-libraries/default', () => {
     it('should return original file when the image cannot be decoded', async () => {
       const { transformImage } = await import('$lib/services/utils/media/image/transform');
 
-      // A HEIC image saved with a `.jpg` extension can’t be decoded, so the transformation fails
+      // A truncated JPEG image can’t be decoded, so the transformation fails
       vi.mocked(transformImage).mockRejectedValue(new Error('Failed to decode image'));
 
       const transformations = /** @type {any} */ ({ jpeg: { format: 'webp' } });
@@ -534,9 +817,10 @@ describe('integrations/media-libraries/default', () => {
       expect(result.name).toBe('image.webp');
     });
 
-    it('should keep original filename when transformation fails', async () => {
+    it('should name the file after the format actually produced', async () => {
       const { transformImage } = await import('$lib/services/utils/media/image/transform');
-      const mockBlob = new Blob(['transformed'], { type: 'application/octet-stream' });
+      // Safari without native WebP encoding and the fallback encoder exports PNG
+      const mockBlob = new Blob(['transformed'], { type: 'image/png' });
 
       vi.mocked(transformImage).mockResolvedValue(mockBlob);
 
@@ -546,8 +830,16 @@ describe('integrations/media-libraries/default', () => {
 
       const result = await transformFile(jpegFile, transformations);
 
-      expect(result.name).toBe('image.jpg'); // original name kept
-      expect(result.type).toBe('application/octet-stream');
+      // Rather than PNG bytes under a `.jpg` name
+      expect(result.name).toBe('image.png');
+      expect(result.type).toBe('image/png');
+
+      const heicFile = new File([HEIC_HEADER], 'IMG_0001.heic', { type: 'image/heic' });
+
+      await expect(transformFile(heicFile, { heic: {} })).resolves.toMatchObject({
+        name: 'IMG_0001.png',
+        type: 'image/png',
+      });
     });
 
     it('should add extension when file has no extension for raster image', async () => {
@@ -564,6 +856,18 @@ describe('integrations/media-libraries/default', () => {
       const result = await transformFile(noExtFile, transformations);
 
       expect(result.name).toBe('image.webp'); // extension appended with a dot
+    });
+
+    it('should add an extension to a name merely ending with a format name', async () => {
+      const { transformImage } = await import('$lib/services/utils/media/image/transform');
+      const mockBlob = new Blob(['transformed'], { type: 'image/webp' });
+      const file = new File(['content'], 'logo-png', { type: 'image/png' });
+
+      vi.mocked(transformImage).mockResolvedValue(mockBlob);
+
+      const result = await transformFile(file, /** @type {any} */ ({ png: { format: 'webp' } }));
+
+      expect(result.name).toBe('logo-png.webp');
     });
 
     it('should replace a JPEG alias extension when converting to WebP', async () => {
@@ -677,6 +981,87 @@ describe('integrations/media-libraries/default', () => {
         width: 1920,
         height: 1080,
       });
+    });
+  });
+
+  describe('getAcceptedImageTypes', () => {
+    it('should add the HEIC types only if HEIC images are converted', () => {
+      expect(getAcceptedImageTypes(undefined)).toEqual([
+        'image/jpeg',
+        'image/png',
+        'image/svg+xml',
+      ]);
+      expect(getAcceptedImageTypes({ jpeg: {} })).toEqual([
+        'image/jpeg',
+        'image/png',
+        'image/svg+xml',
+      ]);
+      expect(getAcceptedImageTypes({ raster_image: {} })).toEqual([
+        'image/jpeg',
+        'image/png',
+        'image/svg+xml',
+        'image/heic',
+      ]);
+      expect(getAcceptedImageTypes({ heic: {} })).toContain('image/heic');
+    });
+  });
+
+  describe('getAcceptedFileTypes', () => {
+    it('should prefer the configured types', () => {
+      expect(
+        getAcceptedFileTypes({ accept: 'image/png', image: true, transformations: undefined }),
+      ).toBe('image/png');
+    });
+
+    it('should give the image types when images are picked', () => {
+      expect(getAcceptedFileTypes({ image: true, transformations: undefined })).toBe(
+        'image/jpeg,image/png,image/svg+xml',
+      );
+      expect(getAcceptedFileTypes({ image: true, transformations: { heic: {} } })).toBe(
+        'image/jpeg,image/png,image/svg+xml,image/heic',
+      );
+    });
+
+    it('should accept any file otherwise', () => {
+      expect(getAcceptedFileTypes({ image: false, transformations: undefined })).toBeUndefined();
+    });
+  });
+
+  describe('isAcceptedFile', () => {
+    it('should accept any file without file types', () => {
+      expect(isAcceptedFile({ name: 'a.zip' }, undefined)).toBe(true);
+      expect(isAcceptedFile({ name: 'a.zip' }, ' , ')).toBe(true);
+    });
+
+    it('should match a file extension in any case', () => {
+      expect(isAcceptedFile({ name: 'guide.PDF' }, '.pdf, .txt')).toBe(true);
+      expect(isAcceptedFile({ name: 'kite.png', type: 'image/png' }, '.pdf, .txt')).toBe(false);
+    });
+
+    it('should match the MIME type of a file', () => {
+      expect(isAcceptedFile({ name: 'kite', type: 'image/webp' }, 'image/webp')).toBe(true);
+      expect(isAcceptedFile({ name: 'kite.png', type: 'image/png' }, 'image/*')).toBe(true);
+      expect(isAcceptedFile({ name: 'kite.png', type: 'image/png' }, 'image/webp')).toBe(false);
+    });
+
+    it('should give a file without a type the MIME type of its extension', () => {
+      expect(isAcceptedFile({ name: 'logo.svg' }, 'image/png,image/svg+xml')).toBe(true);
+      expect(isAcceptedFile({ name: 'logo.svg', type: '' }, 'image/png')).toBe(false);
+      expect(isAcceptedFile({ name: 'README' }, 'image/png')).toBe(false);
+    });
+  });
+
+  describe('canConvertHEIC', () => {
+    it('should be true with a HEIC or generic raster image transformation', () => {
+      expect(canConvertHEIC({ heic: {} })).toBe(true);
+      expect(canConvertHEIC({ raster_image: { format: 'webp' } })).toBe(true);
+      expect(canConvertHEIC({ raster_image: {}, jpeg: {} })).toBe(true);
+    });
+
+    it('should be false otherwise', () => {
+      expect(canConvertHEIC(undefined)).toBe(false);
+      expect(canConvertHEIC({})).toBe(false);
+      expect(canConvertHEIC({ jpeg: {}, png: {}, svg: { optimize: true } })).toBe(false);
     });
   });
 });

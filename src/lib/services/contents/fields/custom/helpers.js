@@ -1,5 +1,6 @@
-import { buildPreviewData } from '$lib/services/api/helpers';
 import { getImmutable } from '$lib/services/api/immutable';
+import { buildPreviewData } from '$lib/services/api/preview-data';
+import { getValueMapSnapshots } from '$lib/services/contents/draft/value-map.svelte';
 
 /**
  * @import { MapOf } from 'immutable';
@@ -68,7 +69,12 @@ export const getPreviewData = ({ draft, locale }) => {
     return cached;
   }
 
-  const data = buildPreviewData({ draft, locale: /** @type {any} */ (locale) });
+  // The shared snapshots are read rather than the value maps themselves, so a control only depends
+  // on their versions rather than on every value, and a locale that hasn’t changed isn’t copied
+  const data = buildPreviewData({
+    draft: { ...draft, currentValues: getValueMapSnapshots(draft) },
+    locale: /** @type {any} */ (locale),
+  });
 
   draftCache.set(locale, data);
   previewDataCache.set(draft, draftCache);

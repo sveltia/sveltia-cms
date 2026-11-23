@@ -1,6 +1,8 @@
 import { Validator } from '@cfworker/json-schema';
 import { isObject } from '@sveltia/utils/object';
 
+import { decodeSegment, getSegments, resolvePointer } from '$lib/services/config/schema/pointer';
+
 /**
  * @import { OutputUnit } from '@cfworker/json-schema';
  * @import { SchemaValidationError } from '$lib/types/private';
@@ -47,21 +49,6 @@ const CONSTRAINT_PARAMS = {
 };
 
 /**
- * Decode the escape sequences of a JSON pointer segment.
- * @param {string} segment Segment to decode.
- * @returns {string} Decoded segment.
- */
-const decodeSegment = (segment) => segment.replaceAll('~1', '/').replaceAll('~0', '~');
-
-/**
- * Split a location reported by the validator into JSON pointer segments.
- * @param {string} location Location, such as `#/properties/backend/$ref/properties/name/const`.
- * @returns {string[]} Segments.
- */
-const getSegments = (location) =>
-  location.replace(/^#/, '').split('/').filter(Boolean).map(decodeSegment);
-
-/**
  * Resolve a keyword location within the schema. A `$ref` segment means the reference at that point
  * was followed, so the pointer it holds is resolved before the walk continues.
  * @param {Record<string, any>} schema Root schema.
@@ -71,23 +58,11 @@ const getSegments = (location) =>
 const resolveKeyword = (schema, location) =>
   getSegments(location).reduce((/** @type {any} */ node, segment) => {
     if (segment === '$ref' && isObject(node) && typeof node.$ref === 'string') {
-      return getSegments(node.$ref).reduce(
-        (/** @type {any} */ target, key) => target?.[key],
-        schema,
-      );
+      return resolvePointer(schema, node.$ref);
     }
 
     return node?.[segment];
   }, schema);
-
-/**
- * Resolve an instance location within the configuration.
- * @param {any} config Raw CMS configuration.
- * @param {string} location Instance location.
- * @returns {any} Value at that location.
- */
-const resolveInstance = (config, location) =>
-  getSegments(location).reduce((/** @type {any} */ value, segment) => value?.[segment], config);
 
 /**
  * Convert one validator output unit into the errors the reporter works with. A unit says which
@@ -104,7 +79,7 @@ const normalizeUnit = ({ keyword, keywordLocation, instanceLocation }, schema, c
 
   if (keyword === 'required') {
     const required = resolveKeyword(schema, keywordLocation);
-    const value = resolveInstance(config, instanceLocation);
+    const value = resolvePointer(config, instanceLocation);
 
     /* v8 ignore next 3 -- the validator only reports `required` for an object, against a schema
     whose `required` is an array; the guard is here in case a location can’t be resolved */

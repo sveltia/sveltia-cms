@@ -330,15 +330,5 @@ describe('Mistral AI Translator Service', () => {
         'Failed to parse JSON response from Mistral AI API.',
       );
     });
-
-    it('should handle unknown non-Error exceptions', async () => {
-      const mockFetch = vi.mocked(fetch);
-
-      mockFetch.mockRejectedValueOnce('Unknown error');
-
-      await expect(mistralTranslator.translate(['test'], mockOptions)).rejects.toThrow(
-        'Failed to translate text with Mistral AI API.',
-      );
-    });
   });
 });

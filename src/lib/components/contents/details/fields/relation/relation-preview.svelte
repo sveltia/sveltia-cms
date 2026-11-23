@@ -5,9 +5,13 @@
   @see https://sveltiacms.app/en/docs/fields/relation
 -->
 <script>
-  import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
-  import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getOptions } from '$lib/services/contents/fields/relation/helpers';
+  import { getPreviewLabels } from '$lib/services/contents/fields/relation/helpers/preview';
+  import {
+    getRefEntriesWithPending,
+    getUnlistedEntries,
+  } from '$lib/services/contents/fields/relation/quick-add';
   import { getCanonicalLocale, getDirection, getListFormatter } from '$lib/services/contents/i18n';
 
   /**
@@ -21,46 +25,23 @@
    * @property {string | string[] | undefined} currentValue Field value.
    */
 
+  const entryDraft = getEntryDraftContext();
+
   /** @type {FieldPreviewProps & Props} */
-  let {
-    /* eslint-disable prefer-const */
-    locale,
-    fieldConfig,
-    currentValue,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { locale, fieldConfig, currentValue } = $props();
 
-  const {
-    // Field type-specific options
-    collection: collectionName,
-    file: fileName,
-    multiple = false,
-    value_field: valueField = '{{slug}}',
-  } = $derived(fieldConfig);
   const listFormatter = $derived(getListFormatter(locale));
-  const refEntries = $derived(
-    fileName
-      ? [getCollectionFileEntry(collectionName, fileName)].filter((entry) => !!entry)
-      : getEntriesByCollection(collectionName),
+  // The entries created from the editor are shown by their labels, like the saved ones
+  const refEntries = $derived(getRefEntriesWithPending({ draft: entryDraft.current, fieldConfig }));
+  const options = $derived(
+    getOptions({
+      locale,
+      fieldConfig,
+      refEntries,
+      pendingEntries: getUnlistedEntries(entryDraft.current),
+    }),
   );
-  const options = $derived(getOptions({ locale, fieldConfig, refEntries }));
-  const refValues = $derived(
-    (multiple ? /** @type {string[]} */ (currentValue) : /** @type {string[]} */ ([currentValue]))
-      .filter((value) => value !== undefined)
-      .map((value) => {
-        const label = options.find((option) => option.value === value)?.label;
-
-        if (label && label !== value) {
-          if (['slug', '{{slug}}', '{{fields.slug}}'].includes(valueField)) {
-            return label;
-          }
-
-          return `${label} (${value})`;
-        }
-
-        return value;
-      }),
-  );
+  const refValues = $derived(getPreviewLabels({ fieldConfig, currentValue, options }));
 </script>
 
 {#if refValues.length}

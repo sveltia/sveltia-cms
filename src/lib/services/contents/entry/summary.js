@@ -1,19 +1,33 @@
 import { locale as appLocale } from '@sveltia/i18n';
 import { getDateTimeParts } from '@sveltia/utils/datetime';
-import { stripSlashes } from '@sveltia/utils/string';
 import { sanitize } from 'isomorphic-dompurify';
 import { parseInline } from 'marked';
 import { parseEntities } from 'parse-entities';
 
-import { replaceTemplateTags } from '$lib/services/common/template';
 import { processNestedTemplates } from '$lib/services/common/template/nested';
+import { replaceTemplateTags } from '$lib/services/common/template/tags';
+import {
+  getFileNameLocaleSuffixes,
+  getFileNameParts,
+  stripFieldTagPrefix,
+} from '$lib/services/common/template/utils';
 import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
 import { allEntries } from '$lib/services/contents';
 import {
   getIndexFile,
   isCollectionIndexFile,
 } from '$lib/services/contents/collection/entries/index-file';
-import { getField, getFieldDisplayValue } from '$lib/services/contents/entry/fields';
+import {
+  getCollectionFile,
+  getCollectionFileEntry,
+  getCollectionFileLabel,
+} from '$lib/services/contents/collection/files';
+import { getIdentifierFieldName } from '$lib/services/contents/collection/identifier';
+import { getField } from '$lib/services/contents/entry/fields';
+import { getEntryDirName } from '$lib/services/contents/entry/paths';
+import { getFieldDisplayValue } from '$lib/services/contents/entry/values';
+import { getOrCreate } from '$lib/services/utils/cache';
+import { getCommitAuthorName } from '$lib/services/utils/commit-author';
 
 /**
  * @import {
@@ -21,9 +35,16 @@ import { getField, getFieldDisplayValue } from '$lib/services/contents/entry/fie
  * Entry,
  * FlattenedEntryContent,
  * InternalCollection,
+ * InternalCollectionFile,
  * InternalLocaleCode,
  * } from '$lib/types/private';
- * @import { RawEntryContent } from '$lib/types/public';
+ * @import {
+ * Field,
+ * ListFieldWithSubField,
+ * ListFieldWithSubFields,
+ * ListFieldWithTypes,
+ * RawEntryContent,
+ * } from '$lib/types/public';
  */
 
 /**
@@ -31,7 +52,11 @@ import { getField, getFieldDisplayValue } from '$lib/services/contents/entry/fie
  * @property {string} slug Entry slug.
  * @property {string} entryPath Entry path.
  * @property {string | undefined} basePath Base path for the entry.
+ * @property {RegExp} [fullPathRegEx] Entry collection’s entry path matcher, which tells the
+ * `{{dirname}}` tag where the locale folder is.
  * @property {string[]} locales Enabled locales for the entry.
+ * @property {string[]} [localeSuffixes] Locale codes that can follow the entry file name, with the
+ * `multiple_files` i18n structure.
  * @property {Date | undefined} commitDate Commit date.
  * @property {CommitAuthor | undefined} commitAuthor Commit author.
  */
@@ -40,35 +65,180 @@ import { getField, getFieldDisplayValue } from '$lib/services/contents/entry/fie
  * @typedef {object} ReplaceContext
  * @property {FlattenedEntryContent} content Entry content.
  * @property {string} collectionName Collection name.
+ * @property {string} [fileName] Collection file name, whose fields the tags refer to. File
+ * collection only.
+ * @property {boolean} [isIndexFile] Whether the tags refer to the fields of the collection’s index
+ * file.
  * @property {ReplacerSubContext} replaceSubContext Context for the `replaceSub` function.
- * @property {InternalLocaleCode} defaultLocale Default locale.
+ * @property {InternalLocaleCode} locale Locale of the content, which a field value is displayed
+ * and transformed in: a DateTime field value may be written in it.
  * @property {string | undefined} [fallbackSummary] Fallback summary for the entry.
  */
 
-const BODY_HEADER_REGEX = /^#+\s+(?<header>.+?)(?:\s+\{#.+?\})?\s*$/m;
+/**
+ * @typedef {object} CachedSummary
+ * @property {string} summary Formatted summary.
+ * @property {number} [generation] {@link entriesGeneration} the summary was formatted in, if it
+ * contains a Relation field label and has to be regenerated once other entries change.
+ */
+
+/**
+ * Regular expression to match each line of Markdown, so the lines can be read one by one until a
+ * heading is found.
+ */
+const LINE_REGEX = /^.*$/gm;
+/**
+ * Regular expression to match the start of an ATX heading line in Markdown: up to three spaces of
+ * indentation, one to six `#` characters, then spaces or tabs or the end of the line. The body is
+ * untrusted, so the heading text is read with string operations rather than captured; see
+ * {@link getBodyHeader}.
+ * @see https://spec.commonmark.org/0.31.2/#atx-headings
+ */
+const ATX_HEADING_START_REGEX = /^ {0,3}#{1,6}(?:[ \t]+|$)/;
+/**
+ * Regular expression to match the start of a code fence line in Markdown: up to three spaces of
+ * indentation, then three or more backticks or tildes, which are captured.
+ * @see https://spec.commonmark.org/0.31.2/#fenced-code-blocks
+ */
+const CODE_FENCE_START_REGEX = /^ {0,3}(`{3,}|~{3,})/;
+
+/**
+ * Remove the optional closing sequence of `#` characters at the end of the given ATX heading text,
+ * which has to be preceded by a space or tab unless it’s all the heading has, like `Title` in
+ * `## Title ##`.
+ * @param {string} text Heading text without leading and trailing whitespace.
+ * @returns {string} Heading text without the closing sequence.
+ * @see https://spec.commonmark.org/0.31.2/#atx-headings
+ */
+const removeClosingSequence = (text) => {
+  let end = text.length;
+
+  while (end > 0 && text[end - 1] === '#') {
+    end -= 1;
+  }
+
+  return end === 0 || /[ \t]/.test(text[end - 1]) ? text.slice(0, end).trimEnd() : text;
+};
+
+/**
+ * Remove a custom anchor like `{#my-anchor}` at the end of the given heading text.
+ * @param {string} text Heading text without leading and trailing whitespace.
+ * @returns {string} Heading text without the anchor.
+ * @see https://vitepress.dev/guide/markdown#custom-anchors
+ */
+const removeHeadingAnchor = (text) => {
+  if (!text.endsWith('}')) {
+    return text;
+  }
+
+  // The anchor starts at the first `{#` that follows whitespace and has a name before the last `}`
+  for (let index = text.indexOf('{#', 1); index > 0; index = text.indexOf('{#', index + 1)) {
+    if (index + 2 >= text.length - 1) {
+      break;
+    }
+
+    if (/\s/.test(text[index - 1])) {
+      return text.slice(0, index).trimEnd();
+    }
+  }
+
+  return text;
+};
+
+/**
+ * Get the text of the given line of Markdown if it’s an ATX heading.
+ * @param {string} line Line.
+ * @returns {string} Heading text without a closing sequence and a custom anchor, or an empty string
+ * if the line is not a heading or has no text.
+ */
+const getHeadingText = (line) => {
+  const [prefix] = line.match(ATX_HEADING_START_REGEX) ?? [];
+
+  return prefix ? removeHeadingAnchor(removeClosingSequence(line.slice(prefix.length).trim())) : '';
+};
+
+/**
+ * Find the first ATX heading with text in the given Markdown, skipping fenced code blocks, where a
+ * line starting with `#` is often a comment, like a shell one.
+ * @param {string} markdown Markdown string.
+ * @returns {string} Heading text without a closing sequence and a custom anchor, or an empty string
+ * if there is no heading.
+ */
+const getBodyHeader = (markdown) => {
+  /** @type {string | undefined} */
+  let openingFence;
+
+  return (
+    markdown
+      .matchAll(LINE_REGEX)
+      .map(([line]) => {
+        const fence = line.match(CODE_FENCE_START_REGEX);
+
+        if (openingFence) {
+          // A closing fence is at least as long as the opening one, uses the same character, and
+          // is followed only by spaces or tabs. An unclosed code block runs to the end
+          if (fence?.[1].startsWith(openingFence) && /^[ \t]*$/.test(line.slice(fence[0].length))) {
+            openingFence = undefined;
+          }
+
+          return '';
+        }
+
+        // The info string of a backtick fence can’t contain a backtick, or it’s inline code
+        if (fence && (fence[1][0] === '~' || !line.includes('`', fence[0].length))) {
+          [, openingFence] = fence;
+
+          return '';
+        }
+
+        return getHeadingText(line);
+      })
+      .find((header) => !!header) ?? ''
+  );
+};
+
+/**
+ * Character standing in for a `<` that doesn’t start one of the formatting tags a summary can
+ * contain, from the Private Use Area, so it’s neither parsed as Markdown nor as HTML.
+ */
+const LT_PLACEHOLDER = '\uE000';
+/**
+ * Match a `<` that doesn’t start a `strong`, `em` or `code` tag. Any other tag in a field value is
+ * text, like `<T>` in `Vec<T> in Rust` or `<script>` in a title about it, which would otherwise be
+ * sanitized away, and an unclosed one would take the rest of the summary with it.
+ */
+const NON_FORMATTING_TAG_REGEX = /<(?!\/?(?:strong|em|code)(?:\s[^>]*)?>)/g;
 
 /**
  * Parse the given entry summary as Markdown and sanitize HTML with a few exceptions if the Markdown
  * option is enabled. Also, parse HTML character references (entities).
+ * Without the Markdown option, the references are decoded after sanitizing, so the result can
+ * contain markup, e.g. `&lt;img&gt;` becomes `<img>`: it’s only safe as text, never with Svelte’s
+ * `@html` tag or `innerHTML`. A raw `<` that doesn’t start a formatting tag is kept as text.
  * @param {string} str Original string.
  * @param {object} [options] Options.
  * @param {boolean} [options.allowMarkdown] Whether to allow Markdown and return HTML string.
  * @returns {string} Parsed string.
  */
 export const sanitizeEntrySummary = (str, { allowMarkdown = false } = {}) => {
-  str = /** @type {string} */ (parseInline(str));
+  str = /** @type {string} */ (parseInline(str.replace(NON_FORMATTING_TAG_REGEX, LT_PLACEHOLDER)));
 
   if (allowMarkdown) {
     str = parseEntities(str);
   }
 
-  str = sanitize(str, { ALLOWED_TAGS: allowMarkdown ? ['strong', 'em', 'code'] : [] });
+  // Attributes are dropped, so an entry value cannot restyle the app with `style`, e.g. a title
+  // wrapped in `<strong style="position: fixed; inset: 0">` covering the whole page
+  str = sanitize(str, {
+    ALLOWED_TAGS: allowMarkdown ? ['strong', 'em', 'code'] : [],
+    ALLOWED_ATTR: [],
+  });
 
   if (!allowMarkdown) {
     str = parseEntities(str);
   }
 
-  return str.trim();
+  return str.replaceAll(LT_PLACEHOLDER, allowMarkdown ? '&lt;' : '<').trim();
 };
 
 /**
@@ -97,7 +267,7 @@ export const getEntrySummaryFromContent = (
   // Find a header in Markdown, excluding an anchor suffix
   // https://vitepress.dev/guide/markdown#custom-anchors
   if (useBody && typeof content.body === 'string') {
-    return content.body.match(BODY_HEADER_REGEX)?.groups?.header ?? '';
+    return getBodyHeader(content.body);
   }
 
   return '';
@@ -110,7 +280,16 @@ export const getEntrySummaryFromContent = (
  * @returns {string | Date | undefined} Replaced value or `undefined` if the tag is not recognized.
  */
 export const replaceSub = (tag, context) => {
-  const { slug, entryPath, basePath, locales, commitDate, commitAuthor } = context;
+  const {
+    slug,
+    entryPath,
+    basePath,
+    fullPathRegEx,
+    locales,
+    localeSuffixes,
+    commitDate,
+    commitAuthor,
+  } = context;
 
   if (tag === 'slug') {
     return slug;
@@ -121,28 +300,11 @@ export const replaceSub = (tag, context) => {
   }
 
   if (tag === 'dirname') {
-    let dirPath = entryPath.replace(/[^/]+$/, '');
-
-    if (basePath) {
-      // Remove basePath prefix with boundary awareness
-      const prefix = basePath.endsWith('/') ? basePath : `${basePath}/`;
-
-      if (dirPath.startsWith(prefix)) {
-        dirPath = dirPath.slice(prefix.length);
-      } else if (dirPath.startsWith(basePath)) {
-        dirPath = dirPath.slice(basePath.length);
-      }
-    }
-
-    return stripSlashes(dirPath);
+    return getEntryDirName(entryPath, { basePath, fullPathRegEx });
   }
 
-  if (tag === 'filename') {
-    return /** @type {string} */ (entryPath.split('/').pop()).split('.').shift();
-  }
-
-  if (tag === 'extension') {
-    return /** @type {string} */ (entryPath.split('/').pop()).split('.').pop();
+  if (tag === 'filename' || tag === 'extension') {
+    return getFileNameParts(entryPath, localeSuffixes)[tag];
   }
 
   if (tag === 'commit_date') {
@@ -150,10 +312,41 @@ export const replaceSub = (tag, context) => {
   }
 
   if (tag === 'commit_author') {
-    return commitAuthor?.name || commitAuthor?.login || commitAuthor?.email;
+    return getCommitAuthorName(commitAuthor);
   }
 
   return undefined;
+};
+
+/**
+ * Whether a Relation field label has been resolved since the flag was last reset. Set by
+ * {@link replace}, so {@link getEntrySummary} can tell whether the summary it has just formatted
+ * depends on other entries.
+ */
+let relationLabelResolved = false;
+
+/**
+ * Check whether the display value of the given field is resolved from other entries: a Relation
+ * field shows a label taken from the referenced entry, and so does each item of a List field with a
+ * Relation field as its single subfield, as {@link getFieldDisplayValue} resolves those items like
+ * the subfield itself.
+ * @param {Field | undefined} field Field configuration.
+ * @returns {boolean} Result.
+ */
+export const isDisplayValueFromOtherEntries = (field) => {
+  if (field?.widget === 'relation') {
+    return true;
+  }
+
+  if (field?.widget === 'list') {
+    const { field: subField } = /** @type {ListFieldWithSubField} */ (field);
+    const { fields } = /** @type {ListFieldWithSubFields} */ (field);
+    const { types } = /** @type {ListFieldWithTypes} */ (field);
+
+    return !fields && !types && isDisplayValueFromOtherEntries(subField);
+  }
+
+  return false;
 };
 
 /**
@@ -166,14 +359,16 @@ export const replace = (placeholder, context) => {
   const {
     content: valueMap,
     collectionName,
+    fileName,
+    isIndexFile,
     replaceSubContext,
-    defaultLocale,
+    locale,
     fallbackSummary,
   } = context;
 
   const { value: tag, transformations: parsedTransformations } = parseTransformations(placeholder);
-  const keyPath = tag.replace(/^fields\./, '');
-  const getFieldArgs = { collectionName, valueMap, keyPath };
+  const keyPath = stripFieldTagPrefix(tag);
+  const getFieldArgs = { collectionName, fileName, valueMap, keyPath, isIndexFile };
   let value = replaceSub(tag, replaceSubContext);
 
   // Process nested templates in transformation arguments
@@ -186,9 +381,16 @@ export const replace = (placeholder, context) => {
     // raw field value from the entry content. Otherwise, use the field display value. This is to
     // avoid applying the transformation to the display value, which leads to unexpected results.
     // Also use raw value for ternary transformations to preserve boolean truthiness.
-    value = transformations.some(({ method }) => method === 'date' || method === 'ternary')
-      ? valueMap[keyPath]
-      : getFieldDisplayValue({ ...getFieldArgs, locale: defaultLocale });
+    if (transformations.some(({ method }) => method === 'date' || method === 'ternary')) {
+      value = Object.hasOwn(valueMap, keyPath) ? valueMap[keyPath] : undefined;
+    } else {
+      // A Relation field is displayed with a label taken from the referenced entry
+      if (isDisplayValueFromOtherEntries(getField(getFieldArgs))) {
+        relationLabelResolved = true;
+      }
+
+      value = getFieldDisplayValue({ ...getFieldArgs, locale });
+    }
 
     // If the field is `title` and the value is empty, use the fallback summary if available
     if (keyPath === 'title' && !value) {
@@ -211,7 +413,7 @@ export const replace = (placeholder, context) => {
       fieldConfig: getField({ ...getFieldArgs }),
       value,
       transformations,
-      locale: defaultLocale,
+      locale,
     });
   }
 
@@ -224,7 +426,7 @@ export const replace = (placeholder, context) => {
  * invalidated for free: the entry store always receives freshly-built objects when entries are
  * loaded or saved, and {@link getCollection} returns a stable object per collection. The entries
  * are garbage-collected along with the objects they belong to.
- * @type {WeakMap<Entry, WeakMap<InternalCollection, Map<string, string>>>}
+ * @type {WeakMap<Entry, WeakMap<InternalCollection, Map<string, CachedSummary>>>}
  */
 const summaryCacheMap = new WeakMap();
 /**
@@ -233,9 +435,10 @@ const summaryCacheMap = new WeakMap();
  */
 let lastAllEntries;
 /**
- * Number of times `allEntries` has changed. Folded into the {@link summaryCacheMap} key so that a
- * summary containing a Relation field label is regenerated when the referenced entries change,
- * which does not necessarily replace the referencing entry itself.
+ * Number of times `allEntries` has changed. Recorded with a cached summary containing a Relation
+ * field label, so it’s regenerated when the referenced entries change, which does not necessarily
+ * replace the referencing entry itself. Other summaries only depend on their own entry, so they
+ * survive a change to the rest of the store, such as a save or a remote refresh.
  */
 let entriesGeneration = 0;
 
@@ -255,6 +458,34 @@ const getEntriesGeneration = () => {
 };
 
 /**
+ * Get the label and the `summary` template of the collection file or index file the given entry
+ * is, which are used in place of the collection’s.
+ * @param {InternalCollection} collection Entry’s collection.
+ * @param {Entry} entry Entry.
+ * @param {string} [fileName] Collection file name. File collection only.
+ * @returns {{ collectionFile?: InternalCollectionFile, isIndexFile: boolean, label?: string,
+ * template?: string }} The collection file, whether the entry is the index file, and its label and
+ * template. The label is `undefined` for a regular entry.
+ */
+const getOwnSummaryOptions = (collection, entry, fileName) => {
+  const collectionFile = fileName ? getCollectionFile(collection, fileName) : undefined;
+
+  if (collectionFile) {
+    return {
+      collectionFile,
+      isIndexFile: false,
+      label: getCollectionFileLabel(collectionFile),
+      template: collectionFile.summary,
+    };
+  }
+
+  const isIndexFile = isCollectionIndexFile(collection, entry);
+  const { label, summary: template } = (isIndexFile && getIndexFile(collection)) || {};
+
+  return { isIndexFile, label, template };
+};
+
+/**
  * Format the given entry’s summary. This is the uncached implementation of
  * {@link getEntrySummary}.
  * @param {InternalCollection} collection Entry’s collection.
@@ -267,37 +498,61 @@ const getEntriesGeneration = () => {
  * @param {boolean} [options.allowMarkdown] Whether to allow Markdown and return HTML string.
  * @param {string} [options.template] Summary template that overrides the collection’s `summary`
  * option.
+ * @param {boolean} [options.useIndexFileLabel] Whether to use the label of the collection’s index
+ * file as its summary. Default: `true`.
+ * @param {string} [options.fileName] Name of the collection file the entry belongs to. File
+ * collection only.
  * @returns {string} Formatted entry summary.
  */
 const formatEntrySummary = (
   collection,
   entry,
-  { locale, useTemplate = false, allowMarkdown = false, template } = {},
+  {
+    locale,
+    useTemplate = false,
+    allowMarkdown = false,
+    template,
+    useIndexFileLabel = true,
+    fileName,
+  } = {},
 ) => {
-  if (isCollectionIndexFile(collection, entry)) {
-    return /** @type {string} */ (getIndexFile(collection)?.label);
+  const { _type, name: collectionName } = collection;
+
+  const {
+    collectionFile,
+    isIndexFile,
+    label,
+    template: ownTemplate,
+  } = getOwnSummaryOptions(collection, entry, fileName);
+
+  const useOwnTemplate = useTemplate && template === undefined && !!ownTemplate;
+
+  // A collection file or index file is labelled unless its own summary template is requested. A
+  // given template, such as `nested.summary` for the tree folder labels, doesn’t apply to it
+  if ((collectionFile || (isIndexFile && useIndexFileLabel)) && !useOwnTemplate) {
+    return /** @type {string} */ (label);
   }
 
-  const {
-    _type,
-    name: collectionName,
-    _i18n: { defaultLocale },
-  } = collection;
+  // A collection file has an i18n configuration of its own
+  const { defaultLocale } = (collectionFile ?? collection)._i18n;
 
-  const {
-    _file: { basePath } = {},
-    identifier_field: identifierField = 'title',
-    summary: collectionSummaryTemplate,
-  } = _type === 'entry' ? collection : {};
+  const { _file: { basePath, fullPathRegEx } = {}, summary: collectionSummaryTemplate } =
+    _type === 'entry' ? collection : {};
 
-  const summaryTemplate = template ?? collectionSummaryTemplate;
+  const identifierField = getIdentifierFieldName(_type === 'entry' ? collection : undefined);
+  const summaryTemplate = template ?? ownTemplate ?? collectionSummaryTemplate;
   const { locales, slug, commitDate, commitAuthor } = entry;
+  const requestedLocale = locale ?? defaultLocale;
 
-  const { content = {}, path: entryPath = '' } =
-    locales[locale ?? defaultLocale] ?? Object.values(locales)[0] ?? {};
+  // An entry may lack the locale, e.g. one only written in another locale
+  const contentLocale = Object.hasOwn(locales, requestedLocale)
+    ? requestedLocale
+    : (Object.keys(locales)[0] ?? requestedLocale);
+
+  const { content = {}, path: entryPath = '' } = locales[contentLocale] ?? {};
 
   const fallbackSummary =
-    getEntrySummaryFromContent(content, { identifierField }) || slug.replaceAll('-', ' ');
+    getEntrySummaryFromContent(content, { identifierField }) || label || slug.replaceAll('-', ' ');
 
   if (!useTemplate || !summaryTemplate) {
     return sanitizeEntrySummary(fallbackSummary, { allowMarkdown });
@@ -307,15 +562,19 @@ const formatEntrySummary = (
   const replaceContext = {
     content,
     collectionName,
+    fileName: collectionFile?.name,
+    isIndexFile,
     replaceSubContext: {
       slug,
       entryPath,
       basePath,
+      fullPathRegEx,
       locales: Object.keys(locales),
+      localeSuffixes: getFileNameLocaleSuffixes(collectionFile ?? collection),
       commitDate,
       commitAuthor,
     },
-    defaultLocale,
+    locale: contentLocale,
     fallbackSummary,
   };
 
@@ -343,27 +602,34 @@ const formatEntrySummary = (
  * available.
  * @param {boolean} [options.allowMarkdown] Whether to allow Markdown and return HTML string.
  * @param {string} [options.template] Summary template that overrides the collection’s `summary`
- * option. Used for the folder labels in a nested collection’s tree, which have their own
- * `nested.summary` option.
+ * option. Used for the folder labels in the tree of nested entries, which have their own
+ * `nested.summary` option, and the template columns of the entry list’s table view.
+ * @param {boolean} [options.useIndexFileLabel] Whether to use the label of the collection’s index
+ * file as its summary, instead of formatting it. Default: `true`. A table view column showing a
+ * template, such as `{{filename}}`, formats it for the index file too. With `useTemplate`, the
+ * index file’s own `summary` template is used instead of the label if defined.
+ * @param {string} [options.fileName] Name of the collection file the entry belongs to. File
+ * collection only. The file’s label is returned, or with `useTemplate`, the file’s own `summary`
+ * template is formatted with its fields if defined.
  * @returns {string} Formatted entry summary.
  * @see https://decapcms.org/docs/configuration-options/#summary
- * @see https://sveltiacms.app/en/docs/collections/entries#summaries
+ * @see https://sveltiacms.app/en/docs/collections/entries/listings#summaries
  */
 export const getEntrySummary = (collection, entry, options = {}) => {
-  const { locale, useTemplate = false, allowMarkdown = false, template } = options;
-  let collectionCache = summaryCacheMap.get(entry);
+  const {
+    locale,
+    useTemplate = false,
+    allowMarkdown = false,
+    template,
+    useIndexFileLabel = true,
+    fileName,
+  } = options;
 
-  if (!collectionCache) {
-    collectionCache = new WeakMap();
-    summaryCacheMap.set(entry, collectionCache);
-  }
-
-  let optionCache = collectionCache.get(collection);
-
-  if (!optionCache) {
-    optionCache = new Map();
-    collectionCache.set(collection, optionCache);
-  }
+  const optionCache = getOrCreate(
+    getOrCreate(summaryCacheMap, entry, () => new WeakMap()),
+    collection,
+    () => new Map(),
+  );
 
   // The app locale is part of the key because a summary can contain a localized index file label
   // or Relation field label
@@ -372,20 +638,51 @@ export const getEntrySummary = (collection, entry, options = {}) => {
     useTemplate ? '1' : '0',
     allowMarkdown ? '1' : '0',
     template ?? '',
+    useIndexFileLabel ? '1' : '0',
+    fileName ?? '',
     // `Array.join()` turns an unset locale into an empty string
     appLocale.current,
-    getEntriesGeneration(),
   ].join('\n');
 
+  const generation = getEntriesGeneration();
   const cached = optionCache.get(cacheKey);
 
-  if (cached !== undefined) {
-    return cached;
+  if (cached && (cached.generation === undefined || cached.generation === generation)) {
+    return cached.summary;
   }
 
-  const summary = formatEntrySummary(collection, entry, options);
+  // Resolving a Relation field label may format a summary of the referenced entry, so the flag is
+  // saved and restored around this one, passing on whether it has been set
+  const outerFlag = relationLabelResolved;
 
-  optionCache.set(cacheKey, summary);
+  relationLabelResolved = false;
+
+  const summary = formatEntrySummary(collection, entry, options);
+  const dependsOnEntries = relationLabelResolved;
+
+  relationLabelResolved = outerFlag || dependsOnEntries;
+  optionCache.set(cacheKey, { summary, generation: dependsOnEntries ? generation : undefined });
 
   return summary;
+};
+
+/**
+ * Get the summary of a file in a file collection, formatted with the file’s own `summary` template
+ * to be displayed in the file list.
+ * @param {InternalCollection} collection File collection.
+ * @param {string} fileName Collection file name.
+ * @returns {string | undefined} Summary as HTML, which can contain Markdown formatting, or
+ * `undefined` if the file has no `summary` template or doesn’t exist in the repository yet, so the
+ * file label is displayed instead.
+ */
+export const getCollectionFileSummary = (collection, fileName) => {
+  if (!getCollectionFile(collection, fileName)?.summary) {
+    return undefined;
+  }
+
+  const entry = getCollectionFileEntry(collection.name, fileName);
+
+  return entry
+    ? getEntrySummary(collection, entry, { fileName, useTemplate: true, allowMarkdown: true })
+    : undefined;
 };

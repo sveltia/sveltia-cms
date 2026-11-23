@@ -1,0 +1,13 @@
+{
+  "path": ["src/lib"],
+  "formatsExts": {
+    "javascript": ["js"],
+    "markup": ["svelte"]
+  },
+  "ignore": ["**/*.test.js", "**/locales/**", "**/test/**"],
+  "minLines": 8,
+  "minTokens": 70,
+  "threshold": 5,
+  "gitignore": true,
+  "reporters": ["console"]
+}

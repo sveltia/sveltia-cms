@@ -24,7 +24,7 @@ export const parseXml = (xml) => {
       const key = child.tagName;
       const value = nodeToObject(child);
 
-      if (obj[key]) {
+      if (Object.hasOwn(obj, key)) {
         if (Array.isArray(obj[key])) {
           obj[key].push(value);
         } else {
@@ -40,3 +40,11 @@ export const parseXml = (xml) => {
 
   return nodeToObject(doc.documentElement);
 };
+
+/**
+ * Normalize a value parsed with {@link parseXml} to an array. An element that appears once is
+ * parsed as a single value, and one that is missing or empty as `undefined` or an empty string.
+ * @param {any} value Parsed value.
+ * @returns {any[]} Array.
+ */
+export const toArray = (value) => (value ? (Array.isArray(value) ? value : [value]) : []);

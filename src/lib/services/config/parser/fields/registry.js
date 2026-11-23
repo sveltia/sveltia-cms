@@ -1,3 +1,4 @@
+import { checkCommonFieldOptions } from '$lib/services/config/parser/fields/common';
 import { parseCustomFieldConfig } from '$lib/services/config/parser/fields/custom';
 import { addMessage, checkName } from '$lib/services/config/parser/utils/validator';
 import { BUILTIN_FIELD_TYPES } from '$lib/services/contents/fields';
@@ -42,6 +43,7 @@ export const parseFieldConfig = (args) => {
   const isBuiltIn = /** @type {string[]} */ (BUILTIN_FIELD_TYPES).includes(fieldType);
   const parser = fieldParsers[fieldType] ?? (isBuiltIn ? undefined : parseCustomFieldConfig);
 
+  checkCommonFieldOptions(newArgs);
   parser?.(newArgs);
 
   if (fieldType === 'date') {

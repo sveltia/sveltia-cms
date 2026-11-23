@@ -16,13 +16,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    node,
-    selectedPath,
-    onSelectPath,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { node, selectedPath, onSelectPath } = $props();
 
   const { path, label, children } = $derived(node);
   const selected = $derived(selectedPath === path);

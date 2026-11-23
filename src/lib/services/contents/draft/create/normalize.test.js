@@ -26,6 +26,17 @@ describe('contents/draft/create/normalize', () => {
       });
     });
 
+    it('should fill in a missing field named after an `Object.prototype` member', () => {
+      const fields = [
+        { name: 'constructor', widget: 'string', default: 'Ada' },
+        { name: 'toString', widget: 'string' },
+        { name: 'valueOf', widget: 'object', fields: [{ name: 'a', widget: 'string' }] },
+      ];
+
+      // The inherited members were taken as the field values and stringified
+      expect(normalize(fields, {})).toEqual({ constructor: 'Ada', toString: '', 'valueOf.a': '' });
+    });
+
     it('should not overwrite an empty string with a default value', () => {
       const fields = [{ name: 'title', widget: 'string', default: 'Untitled' }];
 
@@ -342,6 +353,38 @@ describe('contents/draft/create/normalize', () => {
         });
       });
 
+      it('should stringify the scalar items of a simple List field', () => {
+        const fields = [{ name: 'years', widget: 'list' }];
+        const content = { 'years.0': 2023, 'years.1': true, 'years.2': null, 'years.3': 'x' };
+
+        expect(normalize(fields, content)).toEqual({
+          'years.0': '2023',
+          'years.1': 'true',
+          'years.2': '',
+          'years.3': 'x',
+        });
+        // A single value turned into the sole item
+        expect(normalize(fields, { years: 2024 })).toEqual({ 'years.0': '2024' });
+      });
+
+      it('should stringify the scalar items of a multiple File or Image field', () => {
+        const fields = [
+          { name: 'images', widget: 'image', multiple: true },
+          { name: 'files', widget: 'file', multiple: true },
+          { name: 'tags', widget: 'select', multiple: true, options: [1, 2] },
+        ];
+
+        const content = { 'images.0': null, 'images.1': 'a.jpg', 'files.0': 123, 'tags.0': 1 };
+
+        // A Select field accepts numeric values, so its items are kept as they are
+        expect(normalize(fields, content)).toEqual({
+          'images.0': '',
+          'images.1': 'a.jpg',
+          'files.0': '123',
+          'tags.0': 1,
+        });
+      });
+
       it('should discard an object stored in a string field', () => {
         const fields = [{ name: 'title', widget: 'string' }];
 
@@ -388,15 +431,52 @@ describe('contents/draft/create/normalize', () => {
         expect(normalize(fields, { a: 'true', b: 'False' })).toEqual({ a: true, b: false });
       });
 
+      it('should coerce a YAML 1.1 boolean or a number in a Boolean field', () => {
+        const names = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k'];
+        const fields = names.map((name) => ({ name, widget: 'boolean', default: true }));
+
+        // A Jekyll site may have `featured: yes`, which the YAML 1.2 parser reads as a string. The
+        // value is kept rather than replaced with the default, so it doesn’t flip on save
+        expect(
+          normalize(fields, {
+            a: 'yes',
+            b: 'On',
+            c: 'Y',
+            d: 1,
+            e: '1',
+            f: 'no',
+            g: 'OFF',
+            h: 'n',
+            i: 0,
+            j: ' 0 ',
+            k: 'False',
+          }),
+        ).toEqual({
+          a: true,
+          b: true,
+          c: true,
+          d: true,
+          e: true,
+          f: false,
+          g: false,
+          h: false,
+          i: false,
+          j: false,
+          k: false,
+        });
+      });
+
       it('should fall back to the default value for an unusable Boolean value', () => {
         const fields = [
           { name: 'draft', widget: 'boolean', default: true },
           { name: 'featured', widget: 'boolean' },
+          { name: 'pinned', widget: 'boolean', default: true },
         ];
 
-        expect(normalize(fields, { draft: 'yes', featured: 1 })).toEqual({
+        expect(normalize(fields, { draft: 'maybe', featured: 2, pinned: null })).toEqual({
           draft: true,
           featured: false,
+          pinned: true,
         });
       });
 
@@ -654,6 +734,109 @@ describe('contents/draft/create/normalize', () => {
       expect(content).toEqual({ 'author.name': 'Me' });
     });
 
+    it('should copy a `sync` field missing in another locale from the default locale', () => {
+      // https://github.com/sveltia/sveltia-cms/issues/1128
+      const fields = [
+        { name: 'title', widget: 'string', i18n: 'sync', default: 'Untitled' },
+        { name: 'rank', widget: 'number', i18n: 'sync' },
+        { name: 'meta', widget: 'keyvalue', i18n: 'sync' },
+      ];
+
+      const content = normalizeContent({
+        fields,
+        // A value the locale already has is left alone, even if it differs
+        content: { rank: 2, 'meta.b': '2', 'meta.a': '1' },
+        locale: 'ja',
+        defaultLocale: 'en',
+        defaultLocaleContent: { title: 'Hello', rank: 1, 'meta.a': '1', 'meta.b': '2' },
+      });
+
+      expect(content).toEqual({ title: 'Hello', rank: 2, 'meta.a': '1', 'meta.b': '2' });
+      // The pairs are put in the default locale’s order
+      expect(Object.keys(content).filter((key) => key.startsWith('meta.'))).toEqual([
+        'meta.a',
+        'meta.b',
+      ]);
+    });
+
+    it('should copy a subfield missing in another locale along with a mirrored ancestor', () => {
+      // e.g. a subfield added to the configuration after the other locales were saved
+      const fields = ['duplicate', 'sync'].map((i18n) => ({
+        name: i18n,
+        widget: 'object',
+        i18n,
+        fields: [
+          { name: 'name', widget: 'string' },
+          { name: 'url', widget: 'string', default: 'https://example.com' },
+        ],
+      }));
+
+      const content = normalizeContent({
+        fields,
+        content: { 'duplicate.name': 'Me', 'sync.name': 'Me' },
+        locale: 'ja',
+        defaultLocale: 'en',
+        defaultLocaleContent: {
+          'duplicate.name': 'Me',
+          'duplicate.url': 'https://a',
+          'sync.name': 'Me',
+          'sync.url': 'https://b',
+        },
+      });
+
+      expect(content).toEqual({
+        'duplicate.name': 'Me',
+        'duplicate.url': 'https://a',
+        'sync.name': 'Me',
+        'sync.url': 'https://b',
+      });
+    });
+
+    it('should fill in a `duplicate_if_empty` field missing or empty in another locale', () => {
+      // https://github.com/sveltia/sveltia-cms/issues/120
+      const fields = [
+        { name: 'title', widget: 'string', i18n: 'duplicate_if_empty', default: 'Untitled' },
+        { name: 'summary', widget: 'text', i18n: 'duplicate_if_empty' },
+        { name: 'body', widget: 'markdown', i18n: 'duplicate_if_empty' },
+        { name: 'image', widget: 'image', i18n: 'duplicate_if_empty' },
+        { name: 'code', widget: 'code', i18n: 'duplicate_if_empty' },
+        { name: 'note', widget: 'string', i18n: 'duplicate_if_empty', default: 'n/a' },
+        { name: 'caption', widget: 'string', i18n: true },
+      ];
+
+      const content = normalizeContent({
+        fields,
+        content: { title: '', summary: 'Résumé', image: null, 'code.code': '', caption: '' },
+        locale: 'fr',
+        defaultLocale: 'en',
+        defaultLocaleContent: {
+          title: 'Hello',
+          summary: 'Summary',
+          body: 'Body',
+          image: '/a.png',
+          code: {},
+          'code.code': 'x = 1',
+          'code.lang': 'python',
+          note: '',
+          caption: 'Caption',
+        },
+      });
+
+      expect(content).toEqual({
+        title: 'Hello',
+        // A value of its own is kept
+        summary: 'Résumé',
+        body: 'Body',
+        image: '/a.png',
+        code: {},
+        'code.code': 'x = 1',
+        'code.lang': 'python',
+        // The default locale value is empty too, so the configured default is filled in
+        note: 'n/a',
+        caption: '',
+      });
+    });
+
     it('should localize a copied Relation value with a {{locale}} prefix', () => {
       // https://github.com/sveltia/sveltia-cms/issues/900
       const fields = [
@@ -701,6 +884,125 @@ describe('contents/draft/create/normalize', () => {
         // A `value_field` without the `{{locale}}` tag is copied as is
         author: 'me',
       });
+    });
+
+    it('should copy a duplicate-i18n subfield only from a list item of the same type', () => {
+      // https://github.com/sveltia/sveltia-cms/issues/1075
+      const fields = [
+        {
+          name: 'blocks',
+          widget: 'list',
+          i18n: true,
+          types: [
+            {
+              name: 'latest',
+              fields: [{ name: 'limit', widget: 'number', i18n: 'duplicate', default: 3 }],
+            },
+            {
+              name: 'featured',
+              fields: [{ name: 'limit', widget: 'number', i18n: 'duplicate', default: 1 }],
+            },
+          ],
+        },
+      ];
+
+      const content = normalizeContent({
+        fields,
+        content: {
+          'blocks.0.type': 'latest',
+          'blocks.1.type': 'latest',
+          'blocks.2.type': 'latest',
+        },
+        locale: 'en',
+        defaultLocale: 'fr',
+        defaultLocaleContent: {
+          'blocks.0.type': 'latest',
+          'blocks.0.limit': 5,
+          'blocks.1.type': 'featured',
+          'blocks.1.limit': 10,
+        },
+      });
+
+      // The item of the same type mirrors the default locale’s value, while the item of another
+      // type there, and the item missing there, get the configured default
+      expect(content).toEqual({
+        'blocks.0.type': 'latest',
+        'blocks.0.limit': 5,
+        'blocks.1.type': 'latest',
+        'blocks.1.limit': 3,
+        'blocks.2.type': 'latest',
+        'blocks.2.limit': 3,
+      });
+    });
+
+    it('should copy a duplicate-i18n subfield only from an object of the same type', () => {
+      const fields = [
+        {
+          name: 'hero',
+          widget: 'object',
+          i18n: true,
+          typeKey: 'kind',
+          types: [
+            { name: 'image', fields: [{ name: 'src', i18n: 'duplicate', default: 'a.png' }] },
+            { name: 'video', fields: [{ name: 'src', i18n: 'duplicate', default: 'a.mp4' }] },
+          ],
+        },
+      ];
+
+      expect(
+        normalizeContent({
+          fields,
+          content: { 'hero.kind': 'image' },
+          locale: 'en',
+          defaultLocale: 'fr',
+          defaultLocaleContent: { 'hero.kind': 'video', 'hero.src': 'b.mp4' },
+        }),
+      ).toEqual({ 'hero.kind': 'image', 'hero.src': 'a.png' });
+    });
+
+    it('should leave a duplicated KeyValue field alone in a list item of another type', () => {
+      const keyValueFields = [
+        { name: 'attrs', widget: 'keyvalue', i18n: 'duplicate_keys' },
+        { name: 'meta', widget: 'keyvalue', i18n: 'duplicate' },
+      ];
+
+      const fields = [
+        {
+          name: 'blocks',
+          widget: 'list',
+          i18n: true,
+          types: [
+            { name: 'a', fields: keyValueFields },
+            { name: 'b', fields: keyValueFields },
+          ],
+        },
+      ];
+
+      const content = normalizeContent({
+        fields,
+        content: {
+          'blocks.0.type': 'a',
+          'blocks.0.attrs.y': 'Y',
+          'blocks.0.meta.e': 'E',
+          'blocks.0.meta.c': 'C',
+        },
+        locale: 'en',
+        defaultLocale: 'fr',
+        defaultLocaleContent: {
+          'blocks.0.type': 'b',
+          'blocks.0.attrs.x': 'X',
+          'blocks.0.meta.c': 'C',
+          'blocks.0.meta.e': 'E',
+        },
+      });
+
+      // Neither the keys nor the order of the other type’s pairs are taken over
+      expect(Object.entries(content)).toEqual([
+        ['blocks.0.type', 'a'],
+        ['blocks.0.attrs.y', 'Y'],
+        ['blocks.0.meta.e', 'E'],
+        ['blocks.0.meta.c', 'C'],
+      ]);
     });
 
     it('should fall back to the default value when the default locale has nothing to copy', () => {
@@ -787,6 +1089,130 @@ describe('contents/draft/create/normalize', () => {
       expect(normalizeContentMap({ fields, contentMap, defaultLocale: 'en' })).toEqual({
         en: { title: 'Hello', category: 'blog' },
         ja: { title: 'こんにちは', category: 'blog' },
+      });
+    });
+
+    it('should put the pairs of a duplicated KeyValue field in the default locale’s order', () => {
+      const fields = [
+        { name: 'metadata', widget: 'keyvalue', i18n: 'duplicate' },
+        { name: 'labels', widget: 'keyvalue', i18n: true },
+        {
+          name: 'sections',
+          widget: 'list',
+          i18n: 'duplicate',
+          fields: [
+            { name: 'attrs', widget: 'keyvalue' },
+            { name: 'notes', widget: 'keyvalue', i18n: true },
+          ],
+        },
+      ];
+
+      const en = {
+        'metadata.a': '1',
+        'metadata.b': '2',
+        'labels.a': 'A',
+        'labels.b': 'B',
+        'sections.0.attrs.a': '1',
+        'sections.0.attrs.b': '2',
+        'sections.0.notes.a': 'A',
+        'sections.0.notes.b': 'B',
+      };
+
+      const ja = {
+        'metadata.b': '2',
+        'metadata.a': '1',
+        'labels.b': 'ビー',
+        'labels.a': 'エー',
+        'sections.0.attrs.b': '2',
+        'sections.0.attrs.a': '1',
+        'sections.0.notes.b': 'ビー',
+        'sections.0.notes.a': 'エー',
+      };
+
+      const contentMap = normalizeContentMap({
+        fields,
+        contentMap: { en, ja },
+        defaultLocale: 'en',
+      });
+
+      // A field duplicated on its own or along with its List field follows the default locale; a
+      // translatable one keeps its own order, which its editor leaves alone
+      expect(Object.keys(contentMap.ja)).toEqual([
+        'labels.b',
+        'labels.a',
+        'sections.0.notes.b',
+        'sections.0.notes.a',
+        'metadata.a',
+        'metadata.b',
+        'sections.0.attrs.a',
+        'sections.0.attrs.b',
+      ]);
+      expect(Object.keys(contentMap.en)).toEqual(Object.keys(en));
+    });
+
+    it('should give a required single-item list saved without its item one', () => {
+      const fields = [
+        {
+          name: 'author',
+          widget: 'list',
+          max: 1,
+          fields: [{ name: 'name', default: 'Anonymous' }],
+        },
+        {
+          name: 'sponsor',
+          widget: 'list',
+          max: 1,
+          required: false,
+          fields: [{ name: 'name', default: 'Acme' }],
+        },
+      ];
+
+      expect(
+        normalizeContentMap({
+          fields,
+          contentMap: { en: { author: [], sponsor: [] } },
+          defaultLocale: 'en',
+        }),
+      ).toEqual({ en: { author: [], 'author.0.name': 'Anonymous', sponsor: [] } });
+
+      // An item that’s there is left alone
+      expect(
+        normalizeContentMap({
+          fields,
+          contentMap: { en: { 'author.0.name': 'Melvin' } },
+          defaultLocale: 'en',
+        }),
+      ).toEqual({ en: { 'author.0.name': 'Melvin', sponsor: [] } });
+    });
+
+    it('should give a required single-item list its item in another locale', () => {
+      const fields = [
+        {
+          name: 'author',
+          widget: 'list',
+          i18n: true,
+          max: 1,
+          fields: [{ name: 'name', i18n: true, default: 'Anonymous' }],
+        },
+        {
+          name: 'venue',
+          widget: 'list',
+          i18n: 'duplicate',
+          max: 1,
+          fields: [{ name: 'name', default: 'Hall' }],
+        },
+      ];
+
+      // A translated list gets its own item, while a duplicated one takes the default locale’s
+      expect(
+        normalizeContentMap({
+          fields,
+          contentMap: { en: { 'venue.0.name': 'Arena' }, fr: {} },
+          defaultLocale: 'en',
+        }),
+      ).toEqual({
+        en: { author: [], 'author.0.name': 'Anonymous', 'venue.0.name': 'Arena' },
+        fr: { author: [], 'author.0.name': 'Anonymous', 'venue.0.name': 'Arena' },
       });
     });
 

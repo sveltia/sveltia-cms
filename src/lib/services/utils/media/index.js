@@ -37,7 +37,7 @@ const probeSource = ({ element, eventType, src, getInfo }) =>
  * @returns {Promise<SourceInfo>} Dimensions (width/height). `dimensions` is `undefined` if the
  * image cannot be decoded.
  */
-export const getImageSourceInfo = (src) => {
+const getImageSourceInfo = (src) => {
   const element = new Image();
 
   return probeSource({
@@ -58,7 +58,7 @@ export const getImageSourceInfo = (src) => {
  * @returns {Promise<SourceInfo>} Dimensions and duration of the media. Both are `undefined` if the
  * media cannot be decoded.
  */
-export const getMediaSourceInfo = async (src, kind) => {
+const getMediaSourceInfo = async (src, kind) => {
   const element = /** @type {HTMLMediaElement} */ (document.createElement(kind));
 
   return probeSource({
@@ -104,8 +104,10 @@ export const getSourceInfo = async (src, kind) => {
  * containing dimensions, duration, created date and coordinates.
  */
 export const getMediaMetadata = async (asset, src, kind) => {
-  const { dimensions, duration } = await getSourceInfo(src, kind);
-  const { createdDate, coordinates } = await extractExifData(asset, kind);
+  const [{ dimensions, duration }, { createdDate, coordinates }] = await Promise.all([
+    getSourceInfo(src, kind),
+    extractExifData(asset, kind),
+  ]);
 
   return { dimensions, duration, createdDate, coordinates };
 };

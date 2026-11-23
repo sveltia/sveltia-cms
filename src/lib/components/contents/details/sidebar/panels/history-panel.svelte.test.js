@@ -1,0 +1,241 @@
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
+
+import { backend, backendName } from '$lib/services/backends';
+import { getCommitMessagePromptMode } from '$lib/services/backends/commit-prompt';
+import { fetchEntryHistory } from '$lib/services/contents/entry/history';
+import { openNewTab } from '$lib/services/utils/window';
+import { createMockEntry } from '$lib/test/config';
+import { createMockDraft, renderWithDraft } from '$lib/test/draft';
+
+import HistoryPanel from './history-panel.svelte';
+
+vi.mock('$lib/services/contents/entry/history', () => ({
+  fetchEntryHistory: vi.fn(),
+  clearEntryHistoryCache: vi.fn(),
+}));
+vi.mock('$lib/services/utils/window', () => ({ openNewTab: vi.fn() }));
+
+vi.mock('$lib/services/backends/commit-prompt', async (importOriginal) => ({
+  .../** @type {object} */ (await importOriginal()),
+  getCommitMessagePromptMode: vi.fn(),
+}));
+
+const entry = createMockEntry({ slug: 'hello' });
+
+/**
+ * Render the panel.
+ * @returns {Promise<void>}
+ */
+const renderPanel = async () => {
+  await renderWithDraft(HistoryPanel, {
+    draft: createMockDraft({ draft: { isNew: false, originalEntry: entry } }),
+  });
+};
+
+describe('HistoryPanel', () => {
+  beforeEach(() => {
+    backendName.current = undefined;
+    // The commit messages are only shown with the `prompt_commit_messages` option
+    vi.mocked(getCommitMessagePromptMode).mockReturnValue('prefix');
+  });
+
+  test('lists the commits', async () => {
+    const { promise, resolve } = Promise.withResolvers();
+
+    vi.mocked(fetchEntryHistory).mockReturnValue(/** @type {any} */ (promise));
+
+    await renderPanel();
+
+    const panel = page.getByRole('group', { name: 'History' });
+
+    await expect.element(panel.getByText('Loading…')).toBeInTheDocument();
+    expect(fetchEntryHistory).toHaveBeenCalledWith(
+      entry,
+      expect.objectContaining({ collection: expect.any(Object) }),
+    );
+
+    resolve({
+      commits: [
+        {
+          sha: 'abc',
+          message: 'Update “Hello”',
+          authorName: 'Melvin',
+          authorAvatarURL: 'data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=',
+          date: new Date('2024-01-15T10:00:00Z'),
+        },
+        // A backend that returns no message
+        { sha: 'def', message: '', authorName: 'Elsie', date: new Date('2024-01-14T10:00:00Z') },
+        // An avatar that can’t be loaded
+        {
+          sha: 'ghi',
+          message: '',
+          authorName: 'Real Kohei',
+          authorAvatarURL: 'data:image/png;base64,AAAA',
+          date: new Date('2024-01-13T10:00:00Z'),
+        },
+      ],
+      error: false,
+    });
+
+    const links = panel.getByRole('list').getByRole('listitem').getByRole('link');
+
+    await expect.poll(() => links.elements().length).toBe(3);
+    // Without an avatar, the author’s initials are shown, hidden from screen readers
+    await expect
+      .poll(() => links.nth(2).element().querySelector('.initials')?.textContent)
+      .toBe('RK');
+    expect(
+      links.elements().map((el) => {
+        const clone = /** @type {HTMLElement} */ (el.cloneNode(true));
+
+        clone.querySelectorAll('[aria-hidden="true"]').forEach((hidden) => hidden.remove());
+
+        return clone.textContent?.replace(/\s+/g, ' ').trim();
+      }),
+    ).toEqual([
+      'Update “Hello” Melvin Jan 15, 2024, 10:00 AM',
+      'Elsie Jan 14, 2024, 10:00 AM',
+      'Real Kohei Jan 13, 2024, 10:00 AM',
+    ]);
+
+    // The message headline comes first, with the full text in a tooltip
+    const message = links.nth(0).element().querySelector('.message');
+
+    expect(message).toHaveTextContent('Update “Hello”');
+    expect(message).toHaveAttribute('title', 'Update “Hello”');
+    expect(message?.querySelector('bdi')).not.toBeNull();
+    expect(message?.nextElementSibling).toHaveClass('meta', 'secondary');
+    expect(message?.nextElementSibling).toHaveTextContent('Melvin Jan 15, 2024, 10:00 AM');
+    // Without a message, the author and the date are shown as before
+    expect(links.nth(1).element().querySelector('.message')).toBeNull();
+    expect(links.nth(1).element().querySelector('.meta')).not.toHaveClass('secondary');
+    expect(links.nth(0).element().querySelector('img')).toHaveAttribute(
+      'src',
+      'data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=',
+    );
+    expect(links.nth(1).element().querySelector('.initials')).toHaveTextContent('E');
+    // The test backend has no repository to link to
+    await expect.element(links.nth(0)).toBeDisabled();
+  });
+
+  test('hides the commit messages without the commit message prompt', async () => {
+    vi.mocked(getCommitMessagePromptMode).mockReturnValue(undefined);
+
+    vi.mocked(fetchEntryHistory).mockResolvedValue({
+      commits: [
+        {
+          sha: 'abc',
+          message: 'Update “Hello”',
+          authorName: 'Melvin',
+          date: new Date('2024-01-15T10:00:00Z'),
+        },
+      ],
+      loading: false,
+      error: false,
+    });
+
+    await renderPanel();
+
+    const link = page.getByRole('link');
+
+    await expect.element(link).toBeInTheDocument();
+    expect(link.element().querySelector('.meta')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+      'Melvin Jan 15, 2024, 10:00 AM',
+    );
+    expect(link.element().querySelector('.message')).toBeNull();
+    expect(link.element().querySelector('.meta')).not.toHaveClass('secondary');
+  });
+
+  test('links to the commits on the repository', async () => {
+    backendName.current = 'github';
+
+    // The repository info is filled in when the backend is initialized
+    const repository = /** @type {any} */ (backend.current?.repository);
+    const { commitBaseURL } = repository;
+
+    repository.commitBaseURL = 'https://github.com/me/site/commit';
+
+    vi.mocked(fetchEntryHistory).mockResolvedValue({
+      commits: [{ sha: 'abc', message: 'Add a post', authorName: 'Melvin', date: new Date() }],
+      loading: false,
+      error: false,
+    });
+
+    try {
+      await renderPanel();
+
+      const link = page.getByRole('link');
+
+      await expect.element(link).toBeEnabled();
+      await link.click();
+      expect(openNewTab).toHaveBeenCalledWith('https://github.com/me/site/commit/abc');
+    } finally {
+      repository.commitBaseURL = commitBaseURL;
+    }
+  });
+
+  test('reports an empty history or a failure', async () => {
+    vi.mocked(fetchEntryHistory).mockResolvedValue({ commits: [], loading: false, error: false });
+    await renderPanel();
+    await expect.element(page.getByText('No history found.')).toBeInTheDocument();
+
+    vi.mocked(fetchEntryHistory).mockResolvedValue({ commits: [], loading: false, error: true });
+    await renderPanel();
+    await expect.element(page.getByText('Failed to load history.')).toBeInTheDocument();
+  });
+
+  test('reloads the history once the draft is replaced, e.g. after a save', async () => {
+    const first = createMockEntry({ slug: 'first' });
+    const second = createMockEntry({ slug: 'second' });
+    /** @type {((value: any) => void)[]} */
+    const resolvers = [];
+
+    vi.mocked(fetchEntryHistory).mockImplementation(
+      (target) =>
+        new Promise((resolve) => {
+          resolvers.push(() =>
+            resolve({
+              commits: [
+                {
+                  sha: target.slug,
+                  message: '',
+                  authorName: `Author of ${target.slug}`,
+                  date: new Date('2024-01-15T10:00:00Z'),
+                },
+              ],
+              loading: false,
+              error: false,
+            }),
+          );
+        }),
+    );
+
+    const { entryDraft } = await renderWithDraft(HistoryPanel, {
+      draft: createMockDraft({ draft: { isNew: false, originalEntry: first } }),
+    });
+
+    const panel = page.getByRole('group', { name: 'History' });
+
+    await expect.poll(() => resolvers.length).toBe(1);
+
+    // Saving without closing the editor resets the draft to the saved entry while the panel stays
+    // mounted, before the first history has even arrived
+    entryDraft.current = createMockDraft({ draft: { isNew: false, originalEntry: second } });
+
+    await expect.poll(() => resolvers.length).toBe(2);
+    expect(fetchEntryHistory).toHaveBeenLastCalledWith(second, expect.any(Object));
+
+    // The stale result for the previous entry is discarded
+    resolvers[0](undefined);
+    await new Promise((resolve) => {
+      setTimeout(resolve, 50);
+    });
+    await expect.element(panel.getByText('Loading…')).toBeInTheDocument();
+    expect(panel.getByText('Author of first').query()).toBeNull();
+
+    resolvers[1](undefined);
+    await expect.element(panel.getByText('Author of second')).toBeInTheDocument();
+    expect(panel.getByText('Author of first').query()).toBeNull();
+  });
+});

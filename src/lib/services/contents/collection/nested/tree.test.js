@@ -2,16 +2,20 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { isEntryCollection } from '$lib/services/contents/collection';
 import {
   addFolderToTree,
   findNestedTreeNode,
+  getChildFolderNames,
+  getMaxParentFolderDepth,
+  getMovableFolderName,
   getNestedTree,
+  getParentFolderPickerTree,
   getParentFolderTree,
 } from '$lib/services/contents/collection/nested/tree';
+import { isEntryCollection } from '$lib/services/contents/collection/predicates';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 
-vi.mock('$lib/services/contents/collection', () => ({
+vi.mock('$lib/services/contents/collection/predicates', () => ({
   isEntryCollection: vi.fn(),
 }));
 
@@ -280,6 +284,85 @@ describe('getParentFolderTree()', () => {
   });
 });
 
+describe('getMaxParentFolderDepth()', () => {
+  const pages = {
+    name: 'pages',
+    folder: 'content/pages',
+    nested: { depth: 4 },
+    meta: { path: { index_file: 'index' } },
+  };
+
+  const entries = [
+    entry('about/index'),
+    entry('about/team/index'),
+    entry('about/team/alumni/index'),
+    entry('contact/index'),
+  ];
+
+  test('leaves room for the file of an entry that’s a file', () => {
+    const docs = { name: 'docs', folder: 'content/docs', nested: { depth: 2, subfolders: false } };
+
+    expect(getMaxParentFolderDepth({ collection: docs, entries })).toBe(1);
+  });
+
+  test('leaves room for the folder and the index file of a new entry in the subfolders mode', () => {
+    expect(getMaxParentFolderDepth({ collection: pages, entries })).toBe(2);
+  });
+
+  test('leaves room for the pages below an entry being moved', () => {
+    expect(getMaxParentFolderDepth({ collection: pages, entries, ownFolderPath: 'about' })).toBe(0);
+    expect(
+      getMaxParentFolderDepth({ collection: pages, entries, ownFolderPath: 'about/team' }),
+    ).toBe(1);
+    expect(getMaxParentFolderDepth({ collection: pages, entries, ownFolderPath: 'contact' })).toBe(
+      2,
+    );
+  });
+
+  test('sets no limit without a depth', () => {
+    expect(
+      getMaxParentFolderDepth({
+        collection: { ...pages, nested: {} },
+        entries,
+        ownFolderPath: 'about',
+      }),
+    ).toBe(Infinity);
+    expect(
+      getMaxParentFolderDepth({ collection: { name: 'posts', folder: 'content/posts' }, entries }),
+    ).toBe(Infinity);
+  });
+});
+
+describe('getParentFolderTree() with a depth', () => {
+  test('leaves out a folder an entry filed in would be too deep in', () => {
+    // @see https://decapcms.org/docs/collection-nested/
+    const collection = {
+      name: 'pages',
+      folder: 'content/pages',
+      nested: { depth: 4 },
+      meta: { path: { index_file: 'index' } },
+    };
+
+    const entries = [
+      entry('about/index', 'About'),
+      entry('about/team/index', 'Team'),
+      entry('about/team/alumni/index', 'Alumni'),
+    ];
+
+    expect(getParentFolderTree({ collection, entries })).toEqual([
+      {
+        path: 'about',
+        label: 'About',
+        children: [{ path: 'about/team', label: 'Team', children: [] }],
+      },
+    ]);
+    // The team page takes the alumni page along, which leaves room for nothing but the top level
+    expect(getParentFolderTree({ collection, entries, excludePath: 'about/team' })).toEqual([
+      { path: 'about', label: 'About', children: [] },
+    ]);
+  });
+});
+
 describe('findNestedTreeNode()', () => {
   /** @type {any} */
   const nodes = [
@@ -364,5 +447,82 @@ describe('addFolderToTree()', () => {
 
     expect(addFolderToTree({ nodes, path: '' })).toBe(nodes);
     expect(addFolderToTree({ nodes, path: '/' })).toBe(nodes);
+  });
+});
+
+describe('getMovableFolderName()', () => {
+  const collection = {
+    name: 'pages',
+    folder: 'content/pages',
+    nested: {},
+    meta: { path: { index_file: '_index' } },
+  };
+
+  test('returns the name of the folder a saved entry occupies', () => {
+    expect(getMovableFolderName({ collection, subPath: 'docs/guides/_index' })).toBe('guides');
+    expect(getMovableFolderName({ collection, subPath: 'about/_index' })).toBe('about');
+  });
+
+  test('returns nothing for the collection’s own index file', () => {
+    expect(getMovableFolderName({ collection, subPath: '_index' })).toBeUndefined();
+  });
+
+  test('returns nothing for a new entry or one without a folder of its own', () => {
+    expect(
+      getMovableFolderName({ collection, subPath: 'about/_index', isNew: true }),
+    ).toBeUndefined();
+    expect(getMovableFolderName({ collection, subPath: undefined })).toBeUndefined();
+    expect(
+      getMovableFolderName({ collection: undefined, subPath: 'about/_index' }),
+    ).toBeUndefined();
+    expect(
+      getMovableFolderName({
+        collection: { ...collection, nested: { subfolders: false } },
+        subPath: 'about/_index',
+      }),
+    ).toBeUndefined();
+  });
+});
+
+describe('getParentFolderPickerTree()', () => {
+  const collection = { name: 'pages', folder: 'content/pages', nested: {} };
+
+  test('adds the new folders to the parent folder tree below the collection folder', () => {
+    expect(
+      getParentFolderPickerTree({
+        collection,
+        label: 'Pages',
+        entries: [entry('about/_index', 'About'), entry('docs/_index', 'Docs')],
+        newFolderPaths: ['about/team'],
+        excludePath: 'docs',
+        locale: 'en',
+      }),
+    ).toEqual({
+      path: '',
+      label: 'Pages',
+      children: [
+        {
+          path: 'about',
+          label: 'About',
+          children: [{ path: 'about/team', label: 'team', children: [] }],
+        },
+      ],
+    });
+  });
+});
+
+describe('getChildFolderNames()', () => {
+  test('returns the names of the folders within the given one', () => {
+    expect(
+      getChildFolderNames({
+        path: 'about',
+        label: 'About',
+        children: [
+          { path: 'about/team', label: 'Team', children: [] },
+          { path: 'about/history', label: 'History', children: [] },
+        ],
+      }),
+    ).toEqual(['team', 'history']);
+    expect(getChildFolderNames(undefined)).toEqual([]);
   });
 });

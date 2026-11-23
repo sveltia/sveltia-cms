@@ -1,5 +1,5 @@
 /* eslint-disable jsdoc/require-jsdoc */
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 
 import { encodeBase64 } from '@sveltia/utils/file';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -29,7 +29,7 @@ vi.mock('$lib/services/config', async () => {
 });
 
 // Mock the mime library
-vi.mock('mime', () => ({
+vi.mock('$lib/services/utils/mime', () => ({
   default: {
     getType: vi.fn((url) => {
       if (url.endsWith('.png')) return 'image/png';
@@ -574,6 +574,46 @@ describe('branding', () => {
         expect(icon.type).toBe('image/webp');
         expect(icon.src).toContain('data:image/webp;base64,');
       });
+    });
+
+    it('uses the type of the transformed image where WebP cannot be encoded natively', async () => {
+      const mockBlob = new Blob(['fake-image-data'], { type: 'image/png' });
+      // The thumbnail options allow another format where WebP can’t be encoded natively (Safari)
+      const mockTransformedBlob = new Blob(['fake-png-data'], { type: 'image/png' });
+
+      // @ts-expect-error - partial mock of Response
+      vi.mocked(global.fetch).mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(mockBlob),
+      });
+
+      vi.mocked(transformImage).mockResolvedValue(mockTransformedBlob);
+      vi.mocked(encodeBase64).mockResolvedValue('base64-encoded-data');
+
+      cmsConfig.current = /** @type {any} */ ({ logo: { src: 'https://example.com/logo.png' } });
+
+      await vi.waitFor(() => {
+        expect(appManifestURL.current).toBeDefined();
+      });
+
+      expect(appIconURLs.current).toEqual({
+        small: 'data:image/png;base64,base64-encoded-data',
+        large: 'data:image/png;base64,base64-encoded-data',
+      });
+
+      const manifest = JSON.parse(
+        decodeURIComponent(
+          /** @type {string} */ (appManifestURL.current).replace(
+            'data:application/manifest+json,',
+            '',
+          ),
+        ),
+      );
+
+      expect(manifest.icons).toEqual([
+        { src: 'data:image/png;base64,base64-encoded-data', sizes: '192x192', type: 'image/png' },
+        { src: 'data:image/png;base64,base64-encoded-data', sizes: '512x512', type: 'image/png' },
+      ]);
     });
 
     it('uses DEFAULT_APP_TITLE when app_title is not configured', async () => {

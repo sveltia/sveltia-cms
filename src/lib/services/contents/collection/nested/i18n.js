@@ -6,21 +6,15 @@ import {
   DEFAULT_INDEX_FILE_NAMES,
   getEntryDirPath,
   getNestedIndexFileName,
-  isNestedCollection,
+  hasNestedEntries,
 } from '$lib/services/contents/collection/nested';
-import { hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
+import { hasLocalizedSlugs } from '$lib/services/contents/collection/slug';
+import { getBaseName } from '$lib/services/utils/file';
 import { mergeUnpublishedEntries, unpublishedEntries } from '$lib/services/workflow';
 
 /**
  * @import { Entry, InternalCollection, InternalLocaleCode } from '$lib/types/private';
  */
-
-/**
- * Get the name of the folder at the given path.
- * @param {string} dirPath Folder path relative to the collection folder.
- * @returns {string} Last path segment. An empty string for the collection folder itself.
- */
-export const getFolderName = (dirPath) => dirPath.slice(dirPath.lastIndexOf('/') + 1);
 
 /**
  * Get the name of the folder an entry occupies in the given locale, in a collection where every
@@ -30,19 +24,19 @@ export const getFolderName = (dirPath) => dirPath.slice(dirPath.lastIndexOf('/')
  * @returns {string} Folder name, e.g. `guides`. An empty string if the entry is directly in the
  * collection folder, which is the case for the collection’s own index file.
  */
-export const getOwnFolderName = (subPath) => getFolderName(getEntryDirPath(subPath));
+export const getOwnFolderName = (subPath) => getBaseName(getEntryDirPath(subPath));
 
 /**
- * Check whether the folders of a nested collection go by a different name in each locale. That’s
- * the case when the entry slugs are localized: a folder is named after the entry it belongs to,
- * which is stored either in it or beside it, so the folder chain above an entry is localized along
- * with the entry itself.
+ * Check whether the folders of a collection with nested entries go by a different name in each
+ * locale. That’s the case when the entry slugs are localized: a folder is named after the entry it
+ * belongs to, which is stored either in it or beside it, so the folder chain above an entry is
+ * localized along with the entry itself.
  * @param {InternalCollection} collection Collection.
  * @returns {boolean} Result.
  * @see https://github.com/sveltia/sveltia-cms/issues/962
  */
 export const hasLocalizedFolders = (collection) =>
-  isNestedCollection(collection) && hasLocalizedSlugs(collection);
+  hasNestedEntries(collection) && hasLocalizedSlugs(collection);
 
 /**
  * Find the entry a folder is named after, along with the folder name it has in the given locale.
@@ -81,10 +75,10 @@ const getLocalizedFolderName = ({ entries, dirPath, indexFileNames, locale }) =>
  * section can be started and filled in one sitting, so a folder that only exists as a draft has to
  * be recognized too, or the sub-pages filed under it would land in a folder with the default
  * locale’s name.
- * @param {InternalCollection} collection Collection.
+ * @param {Pick<InternalCollection, 'name'>} collection Collection.
  * @returns {Entry[]} Entries.
  */
-const getAllEntries = (collection) => {
+export const getAllEntries = (collection) => {
   const { name } = collection;
 
   return mergeUnpublishedEntries(
@@ -94,11 +88,12 @@ const getAllEntries = (collection) => {
 };
 
 /**
- * Get the given locale’s counterpart of a folder path within a nested collection. The path editor
- * chooses a folder once, in the default locale, and the folders go by localized names in the other
- * locales, so each locale’s file has to be stored below the localized chain instead. Each folder
- * takes its name from the entry it belongs to, as described in {@link getLocalizedFolderName}. A
- * folder without such an entry, or whose entry lacks the locale, keeps its name.
+ * Get the given locale’s counterpart of a folder path within a collection with nested entries. The
+ * path editor chooses a folder once, in the default locale, and the folders go by localized names
+ * in the other locales, so each locale’s file has to be stored below the localized chain instead.
+ * Each folder takes its name from the entry it belongs to, as described in {@link
+ * getLocalizedFolderName}. A folder without such an entry, or whose entry lacks the locale, keeps
+ * its name.
  * @param {object} args Arguments.
  * @param {InternalCollection} args.collection Collection.
  * @param {string} args.dirPath Folder path in the default locale, relative to the collection

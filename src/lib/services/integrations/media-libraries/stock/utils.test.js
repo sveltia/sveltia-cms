@@ -34,8 +34,36 @@ describe('getSupportedLocale()', () => {
     expect(getSupportedLocale(locales, 'en-US')).toBe('ja-JP');
   });
 
+  test('prefers a locale of the same language written in the same script', () => {
+    const unsplash = ['en', 'zh-Hans', 'zh-Hant', 'sr-Cyrl', 'sr-Latn'];
+    const pexels = ['en-US', 'zh-CN', 'zh-TW'];
+
+    ['zh-TW', 'zh-HK', 'zh-MO', 'zh-Hant', 'zh-Hant-HK'].forEach((locale) => {
+      mockLocale.current = locale;
+      expect(getSupportedLocale(unsplash, 'en')).toBe('zh-Hant');
+      expect(getSupportedLocale(pexels, 'en-US')).toBe('zh-TW');
+    });
+
+    ['zh', 'zh-CN', 'zh-SG', 'zh-Hans', 'zh-Hans-SG'].forEach((locale) => {
+      mockLocale.current = locale;
+      expect(getSupportedLocale(unsplash, 'en')).toBe('zh-Hans');
+      expect(getSupportedLocale(pexels, 'en-US')).toBe('zh-CN');
+    });
+
+    mockLocale.current = 'sr-Latn-RS';
+    expect(getSupportedLocale(unsplash, 'en')).toBe('sr-Latn');
+  });
+
+  test('falls back to the same language written in another script', () => {
+    mockLocale.current = 'zh-TW';
+    expect(getSupportedLocale(['en', 'zh'], 'en')).toBe('zh');
+  });
+
   test('falls back to the given locale', () => {
     mockLocale.current = 'fr-FR';
+    expect(getSupportedLocale(locales, 'en-US')).toBe('en-US');
+
+    mockLocale.current = 'unsupported-locale';
     expect(getSupportedLocale(locales, 'en-US')).toBe('en-US');
   });
 

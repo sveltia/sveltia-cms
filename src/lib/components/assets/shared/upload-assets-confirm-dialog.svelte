@@ -1,41 +1,36 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Alert, ConfirmationDialog, Radio, RadioGroup, Toast } from '@sveltia/ui';
+  import { Alert, ConfirmationDialog, Radio, RadioGroup } from '@sveltia/ui';
   import { getPathInfo } from '@sveltia/utils/file';
 
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
-  import {
-    getAssetsByDirName,
-    getDuplicateFiles,
-    processedAssets,
-    uploadingAssets,
-  } from '$lib/services/assets';
+  import { getAssetsByDirName, getDuplicateFiles } from '$lib/services/assets';
+  import { runAssetCommit } from '$lib/services/assets/data/commit';
   import { saveAssets } from '$lib/services/assets/data/create';
+  import { formatSize } from '$lib/services/assets/file-size';
+  import { processedAssets } from '$lib/services/assets/process';
+  import { uploadingAssets } from '$lib/services/assets/state';
+  import { getUploadDirPath } from '$lib/services/assets/subfolders';
   import { showAssetOverlay, showUploadAssetsConfirmDialog } from '$lib/services/assets/view';
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
-  import { formatSize, isEquivalentFileExtension } from '$lib/services/utils/file';
+  import { isEquivalentFileExtension } from '$lib/services/utils/file';
 
-  /** @type {File[]} */
-  let files = $state([]);
-  let replaceFiles = $state(true);
-  // Committing to a remote repository takes a few seconds, and the confirmation dialog is gone by
-  // then, so the upload would otherwise happen with nothing on screen to say it’s under way
-  let uploading = $state(false);
-  let uploadFailed = $state(false);
-
-  const { files: originalFiles, folder, originalAssets } = $derived(uploadingAssets.current);
+  const {
+    files: originalFiles,
+    folder,
+    subfolderPath,
+    originalAssets,
+  } = $derived(uploadingAssets.current);
   const originalAsset = $derived(originalAssets?.[0]);
   const { processing, validFiles, oversizedFiles, invalidFiles, transformedFileMap } = $derived(
     processedAssets.current,
   );
   const { max_file_size: maxSize } = $derived(getDefaultMediaLibraryOptions().config);
+  /** Path of the directory the files are saved to, named in the dialog and checked for dupes. */
+  const dirPath = $derived(getUploadDirPath(uploadingAssets.current));
   const assetsInSameFolder = $derived(
-    originalAsset || folder?.internalPath === undefined
-      ? []
-      : getAssetsByDirName(folder.internalPath),
+    originalAsset || dirPath === undefined ? [] : getAssetsByDirName(dirPath),
   );
-  const dupFiles = $derived(getDuplicateFiles(files, assetsInSameFolder));
-  const dupFileCount = $derived(dupFiles.length);
   // A replacement file keeps the name of the asset it replaces, so it has to be in the same
   // format: `cat.jpg` can be replaced with `cat2.jpeg`, which is that same format under another
   // extension, while a `cat.png` is a different thing that can’t be saved under the `.jpg` name.
@@ -54,10 +49,18 @@
       : [],
   );
 
-  $effect(() => {
-    files = validFiles.filter((file) => !mismatchedFiles.includes(file));
-    replaceFiles = true;
+  /** Files that can be saved. */
+  const uploadableFiles = $derived(validFiles.filter((file) => !mismatchedFiles.includes(file)));
+  /** Files to be saved, which the user can remove from the list. */
+  let files = $derived(uploadableFiles);
+  // Duplicates are replaced by default, again whenever another set of files comes in
+  let replaceFiles = $derived.by(() => {
+    void uploadableFiles;
+
+    return true;
   });
+  const dupFiles = $derived(getDuplicateFiles(files, assetsInSameFolder));
+  const dupFileCount = $derived(dupFiles.length);
 
   $effect(() => {
     if (!showAssetOverlay.current) {
@@ -72,26 +75,20 @@
   title={_(originalAsset ? 'replace_asset' : 'upload_assets')}
   okLabel={_(originalAsset ? 'replace' : 'upload')}
   okDisabled={!files.length}
-  onOk={async () => {
-    uploading = true;
+  onOk={() => {
+    const request = originalAsset
+      ? { files, folder, originalAssets }
+      : { files, folder, subfolderPath, replaceDuplicates: replaceFiles };
 
-    try {
-      await saveAssets(
-        originalAsset
-          ? { files, folder, originalAssets }
-          : { files, folder, replaceDuplicates: replaceFiles },
-        { commitType: 'uploadMedia' },
-      );
-    } catch (/** @type {any} */ ex) {
-      uploadFailed = true;
-      // eslint-disable-next-line no-console
-      console.error(ex);
-    } finally {
-      uploading = false;
-      // Clear the selection whatever happened, so a failed upload doesn’t leave the store holding
-      // files that no dialog is showing any more
-      uploadingAssets.current = { folder: undefined, files: [] };
-    }
+    // Clear the selection before the commit, which can take a while: files the user picks or drops
+    // meanwhile then open the dialog again rather than being swallowed by this upload, and a failed
+    // upload doesn’t leave the store holding files that no dialog is showing any more
+    uploadingAssets.current = { folder: undefined, files: [] };
+
+    runAssetCommit(() => saveAssets(request, { commitType: 'uploadMedia' }), {
+      progress: 'uploading_files_progress',
+      failure: 'uploading_files_failed',
+    });
   }}
   onCancel={() => {
     uploadingAssets.current = { folder: undefined, files: [] };
@@ -111,7 +108,7 @@
           })}
         {:else}
           {_('confirm_uploading_files', {
-            values: { count: files.length, folder: `/${folder?.internalPath}` },
+            values: { count: files.length, folder: `/${dirPath}` },
           })}
         {/if}
       </div>
@@ -154,7 +151,7 @@
     <div role="group" class="section">
       {_('file_name_conflict_confirmation', { values: { count: dupFileCount } })}
       <RadioGroup
-        aria-label={_('file_name_conflict_resolution')}
+        ariaLabel={_('file_name_conflict_resolution')}
         onChange={({ detail }) => {
           replaceFiles = detail.value === 'replace';
         }}
@@ -165,15 +162,6 @@
     </div>
   {/if}
 </ConfirmationDialog>
-
-<!-- `duration={0}` keeps this up until the upload settles, however long the commit takes -->
-<Toast bind:show={uploading} duration={0}>
-  <Alert status="info">{_('uploading_files_progress')}</Alert>
-</Toast>
-
-<Toast bind:show={uploadFailed}>
-  <Alert status="error">{_('uploading_files_failed')}</Alert>
-</Toast>
 
 <style>
   .section {

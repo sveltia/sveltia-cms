@@ -1,10 +1,21 @@
-import { _ } from '@sveltia/i18n';
 import { encodeBase64 } from '@sveltia/utils/file';
 
-import { repository } from '$lib/services/backends/git/gitea/repository';
+import { getBranchRepository } from '$lib/services/backends/git/gitea/fork';
+import { fetchBranch, repository } from '$lib/services/backends/git/gitea/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
-import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
+import {
+  assertBranchNotMoved,
+  createCommitMessage,
+  createLastCommitError,
+  fetchPerPathCommits,
+  MAX_FILE_COMMITS,
+  signOffCommitMessage,
+} from '$lib/services/backends/git/shared/commits';
+import { checkDirectCommitAllowed } from '$lib/services/backends/git/shared/fork';
+import { repositoryHead } from '$lib/services/backends/git/shared/head';
+import { getRepositoryPath } from '$lib/services/backends/git/shared/repository';
 import { user } from '$lib/services/user/account.svelte';
+import { encodePathSegments } from '$lib/services/utils/url';
 
 /**
  * @import { CommitOptions, CommitResults, FileChange, FileCommit, User } from '$lib/types/private';
@@ -15,6 +26,7 @@ import { user } from '$lib/services/user/account.svelte';
  * @property {object} commit Commit information, including the commit SHA and creation date.
  * @property {string} commit.sha Commit SHA.
  * @property {string} commit.created Commit creation date in ISO format.
+ * @property {{ sha: string }[]} [commit.parents] Parent commits, each with its SHA.
  * @property {({ path: string, sha: string } | null)[]} files List of saved files, each with its
  * path and SHA. It can be `null` if the file was deleted.
  */
@@ -22,25 +34,67 @@ import { user } from '$lib/services/user/account.svelte';
 /**
  * Fetch the last commit on the repository.
  * @returns {Promise<{ hash: string, message: string }>} Commit’s SHA-1 hash and message.
- * @throws {Error} When the branch could not be found.
+ * @throws {Error} When the branch could not be found, or the request failed.
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetSingleCommit
  */
 export const fetchLastCommit = async () => {
-  const { owner, repo, branch } = repository;
+  const { repo, branch } = repository;
 
   try {
     const {
       commit: { id: hash, message },
-    } = /** @type {{ commit: { id: string, message: string }}} */ (
-      await fetchAPI(`/repos/${owner}/${repo}/branches/${branch}`)
-    );
+    } = /** @type {{ commit: { id: string, message: string }}} */ (await fetchBranch());
 
     return { hash, message };
-  } catch {
-    throw new Error('Failed to retrieve the last commit hash.', {
-      cause: new Error(_('branch_not_found', { values: { repo, branch } })),
-    });
+  } catch (/** @type {any} */ ex) {
+    // Only a 404 means the branch is missing. Anything else, like an expired token or an outage,
+    // would be misreported as a missing branch, so pass it on as is
+    if (ex.cause?.status !== 404) {
+      throw ex;
+    }
+
+    throw createLastCommitError('branch_not_found', { repo, branch });
   }
+};
+
+/**
+ * Get the blob SHA of a file being updated, moved or deleted, as the user knows it. It normally
+ * comes with the change, taken from the file cache or the asset list, but it can be missing, e.g.
+ * while the cache is still being written after the site data is shown, or once it’s been cleared.
+ * Gitea accepts a change without one whatever the file is now, overwriting someone else’s change,
+ * so the SHA is then looked up as of the commit the site data reflects rather than the branch head,
+ * which keeps the guard working.
+ * @param {FileChange} change File change.
+ * @param {string} [workflowBranch] Workflow branch the commit lands on, if it isn’t the configured
+ * branch.
+ * @returns {Promise<string | undefined>} Blob SHA, or `undefined` for a new file.
+ * @throws {Error} When the site data hasn’t been loaded, or the lookup failed.
+ * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetContents
+ */
+const getKnownSha = async ({ action, path, previousPath, previousSha }, workflowBranch) => {
+  if (action === 'create' || previousSha) {
+    return previousSha;
+  }
+
+  // A workflow branch has moved on from the configured one, so the file is looked up on the branch
+  // the commit lands on, in the repository it lives in. The Editorial Workflow service resolves
+  // these ahead of the commit, so this is a fallback rather than the usual path
+  const target = workflowBranch ? getBranchRepository(workflowBranch) : undefined;
+  const repoPath = getRepositoryPath(target ?? repository);
+  const ref = target?.branch ?? repositoryHead.current;
+  const knownPath = (action === 'move' && previousPath) || path;
+
+  if (!ref) {
+    throw new Error(`The last known version of ${knownPath} could not be determined.`);
+  }
+
+  const filePath = encodePathSegments(knownPath);
+
+  const { sha } = /** @type {{ sha: string }} */ (
+    await fetchAPI(`${repoPath}/contents/${filePath}?ref=${encodeURIComponent(ref)}`)
+  );
+
+  return sha;
 };
 
 /**
@@ -51,38 +105,89 @@ export const fetchLastCommit = async () => {
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoChangeFiles
  */
 export const commitChanges = async (changes, options) => {
-  const { owner, repo, branch } = repository;
-  const commitMessage = createCommitMessage(changes, options);
+  checkDirectCommitAllowed(options);
+
+  // A workflow branch lives in the contributor’s fork with Open Authoring, or in the fork of the
+  // contributor whose pull request a maintainer is editing, while the configured branch is only
+  // ever committed to by someone who can write to the configured repository
+  const target = options.branch ? getBranchRepository(options.branch) : undefined;
+  const repoPath = getRepositoryPath(target ?? repository);
+  // An Editorial Workflow change lands on a workflow branch rather than the configured one
+  const branch = target?.branch ?? repository.branch;
+  const { startBranch } = options;
+  const commitMessage = signOffCommitMessage(createCommitMessage(changes, options));
   const { name, email } = /** @type {User} */ (user.account);
   const date = new Date().toJSON();
 
+  // The API has no branch-level guard like GitHub’s `expectedHeadOid`, but an update, a move or a
+  // deletion carries the blob SHA of the file as the user knows it, taken from the cached file list
+  // rather than looked up now, so the commit is refused if someone else has changed the file since.
+  // Gitea doesn’t insist on one, so it’s never left out
   const files = await Promise.all(
-    changes.map(async ({ action, path, previousPath, previousSha, data = '' }) => ({
-      operation: action === 'move' ? 'update' : action,
-      path,
-      content: await encodeBase64(data),
-      from_path: previousPath,
-      sha: previousSha,
-    })),
+    changes.map(async (change) => {
+      const { action, path, previousPath, data = '' } = change;
+
+      const [content, sha] = await Promise.all([
+        encodeBase64(data),
+        getKnownSha(change, options.branch),
+      ]);
+
+      return {
+        operation: action === 'move' ? 'update' : action,
+        path,
+        content,
+        from_path: previousPath,
+        sha,
+      };
+    }),
   );
 
-  const { commit, files: savedFiles } = /** @type {CommitResponse} */ (
-    await fetchAPI(`/repos/${owner}/${repo}/contents`, {
-      method: 'POST',
-      body: {
-        branch,
-        author: { name, email },
-        committer: { name, email },
-        dates: { author: date, committer: date },
-        message: commitMessage,
-        files,
-      },
-    })
-  );
+  // The guard is about the configured branch. A workflow branch is guarded by the Editorial
+  // Workflow service instead, which checks it for someone else’s commit before the save and reads
+  // the blob SHAs at the commit the entry was loaded or saved at
+  const expectedHead = options.branch ? undefined : repositoryHead.current;
+  /** @type {CommitResponse} */
+  let response;
+
+  try {
+    response = /** @type {CommitResponse} */ (
+      await fetchAPI(`${repoPath}/contents`, {
+        method: 'POST',
+        body: {
+          // `new_branch` creates the target branch from `branch` as part of the commit.
+          // Gitea/Forgejo rejects it outright once the branch exists. That’s left to the caller to
+          // sort out, because only the Editorial Workflow service can tell whether the branch is a
+          // leftover to start over from or someone’s work in progress to commit onto
+          ...(startBranch ? { branch: startBranch, new_branch: branch } : { branch }),
+          author: { name, email },
+          committer: { name, email },
+          dates: { author: date, committer: date },
+          message: commitMessage,
+          files,
+        },
+        // The commit can be sent again after a transient error: one that has already landed is
+        // refused, as a created file then exists and a changed file no longer has the given SHA
+        retryable: true,
+      })
+    );
+  } catch (/** @type {any} */ ex) {
+    // A changed file is refused with a 409 Conflict on Forgejo and a 422 Unprocessable Entity on
+    // Gitea, and a file someone else has created at the same path with a 422 on both
+    if (expectedHead && [409, 422].includes(ex.cause?.status)) {
+      await assertBranchNotMoved(expectedHead, fetchLastCommit);
+    }
+
+    throw ex;
+  }
+
+  const { commit, files: savedFiles } = response;
 
   return {
     sha: commit.sha,
     date: new Date(commit.created),
+    // Only the files being changed are checked, so the commit can land on top of someone else’s
+    // commit to another file; the caller tells that from the parent
+    parentSha: commit.parents?.[0]?.sha,
     files: Object.fromEntries(
       savedFiles.map((file, index) => [
         file?.path ?? changes[index].path,
@@ -93,42 +198,70 @@ export const commitChanges = async (changes, options) => {
 };
 
 /**
+ * Maximum number of pages to read from a file’s commit history, a safety net against a runaway
+ * loop on an instance configured with a tiny page size.
+ */
+const MAX_FILE_COMMIT_PAGES = 10;
+
+/**
+ * Fetch the commit history of a file, up to {@link MAX_FILE_COMMITS} commits. With a `path` filter,
+ * the instance ignores `limit` and returns `[git] COMMITS_RANGE_SIZE` commits per page, 50 by
+ * default, so the further pages are read while the `X-HasMore` header says there are any. The
+ * header is exposed to cross-origin requests; without it, only the first page is read.
+ * @param {string} path File path.
+ * @returns {Promise<any[]>} Raw commit list.
+ * @throws {Error} When the instance responded with an error.
+ * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetAllCommits
+ * @see https://docs.gitea.com/administration/config-cheat-sheet#git-git
+ */
+const fetchFileHistory = async (path) => {
+  const { branch } = repository;
+  /** @type {any[]} */
+  const commits = [];
+
+  for (let page = 1; page <= MAX_FILE_COMMIT_PAGES; page += 1) {
+    // The response is taken as is to read the paging headers
+    const response = /** @type {Response} */ (
+      // eslint-disable-next-line no-await-in-loop
+      await fetchAPI(
+        `${getRepositoryPath(repository)}/commits` +
+          `?sha=${encodeURIComponent(branch ?? '')}` +
+          `&path=${encodeURIComponent(path)}&limit=${MAX_FILE_COMMITS}&page=${page}`,
+        { responseType: 'raw' },
+      )
+    );
+
+    if (!response.ok) {
+      throw new Error('Server responded with an error', { cause: { status: response.status } });
+    }
+
+    // eslint-disable-next-line no-await-in-loop
+    commits.push(.../** @type {any[]} */ (await response.json()));
+
+    if (response.headers.get('X-HasMore') !== 'true' || commits.length >= MAX_FILE_COMMITS) {
+      break;
+    }
+  }
+
+  return commits.slice(0, MAX_FILE_COMMITS);
+};
+
+/**
  * Fetch commit history for the given file paths.
  * @param {string[]} paths File paths to fetch commit history for.
  * @returns {Promise<FileCommit[]>} Deduplicated and sorted list of commits.
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetAllCommits
  */
-export const fetchFileCommits = async (paths) => {
-  const { owner, repo, branch } = repository;
-
-  const results = await Promise.all(
-    paths.map(
-      (path) =>
-        /** @type {Promise<any[]>} */ (
-          fetchAPI(
-            `/repos/${owner}/${repo}/commits` +
-              `?sha=${encodeURIComponent(branch ?? '')}` +
-              `&path=${encodeURIComponent(path)}&limit=100`,
-          )
-        ),
-    ),
-  );
-
-  /** @type {Map<string, FileCommit>} */
-  const commitMap = new Map();
-
-  results.flat().forEach((commit) => {
-    if (!commitMap.has(commit.sha)) {
-      commitMap.set(commit.sha, {
-        sha: commit.sha,
-        authorName: commit.commit?.author?.name ?? '',
-        authorEmail: commit.commit?.author?.email,
-        authorAvatarURL: commit.author?.avatar_url,
-        authorLogin: commit.author?.login,
-        date: new Date(commit.commit?.author?.date ?? commit.created),
-      });
-    }
-  });
-
-  return [...commitMap.values()].sort((a, b) => b.date.getTime() - a.date.getTime());
-};
+export const fetchFileCommits = async (paths) =>
+  fetchPerPathCommits(paths, fetchFileHistory, (commit) => ({
+    sha: commit.sha,
+    // A message written on Windows can have CRLF line breaks
+    message: (commit.commit?.message ?? '').split(/\r?\n/)[0],
+    authorName: commit.commit?.author?.name ?? '',
+    authorEmail: commit.commit?.author?.email,
+    authorAvatarURL: commit.author?.avatar_url,
+    authorLogin: commit.author?.login,
+    // Date it by when it was committed, like GitHub and GitLab do, rather than authored, as a
+    // rebased or cherry-picked commit keeps its author date
+    date: new Date(commit.commit?.committer?.date ?? commit.created),
+  }));

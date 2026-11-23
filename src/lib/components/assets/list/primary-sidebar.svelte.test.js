@@ -1,0 +1,370 @@
+import { afterEach, beforeAll, beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
+import { render } from 'vitest-browser-svelte';
+
+import { ASSET_DRAG_TYPE } from '$lib/services/assets/drag';
+import { externalAssetCounts, selectedCloudService } from '$lib/services/assets/external';
+import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
+import { assetMoveRequest, draggedFiles } from '$lib/services/assets/state';
+import { selectedSubfolderPath } from '$lib/services/assets/subfolders';
+import { cmsConfig } from '$lib/services/config';
+import { allEntries } from '$lib/services/contents';
+import { searchMode } from '$lib/services/search';
+import { env } from '$lib/services/user/env.svelte';
+import { prefs } from '$lib/services/user/prefs.svelte';
+import {
+  createMockAsset,
+  createMockEntry,
+  initTestConfig,
+  setAssets,
+  setEntries,
+} from '$lib/test/config';
+
+import PrimarySidebar from './primary-sidebar.svelte';
+
+/**
+ * @import { AssetFolderInfo } from '$lib/types/private';
+ */
+
+describe('PrimarySidebar', () => {
+  beforeAll(async () => {
+    await initTestConfig({
+      media_folder: 'static/uploads',
+      media_libraries: { uploadcare: { config: { publicKey: 'abc' } } },
+      collections: [
+        {
+          name: 'posts',
+          label: 'Posts',
+          folder: 'content/posts',
+          media_folder: '/static/posts',
+          fields: [{ name: 'title', widget: 'string' }],
+        },
+        {
+          name: 'docs',
+          label: 'Docs',
+          folder: 'content/docs',
+          // Entry-relative, so assets can’t be dropped onto the folder
+          media_folder: '',
+          fields: [{ name: 'title', widget: 'string' }],
+        },
+        {
+          name: 'pages',
+          label: 'Pages',
+          files: [
+            {
+              name: 'about',
+              label: 'About Us',
+              file: 'content/about.md',
+              media_folder: '/static/about',
+              fields: [{ name: 'title', widget: 'string' }],
+            },
+          ],
+        },
+      ],
+      asset_collections: [{ name: 'gallery', label: 'Gallery', media_folder: 'static/gallery' }],
+    });
+
+    // The assets have to be in the configured folders to be counted
+    const globalFolder = /** @type {AssetFolderInfo} */ (
+      allAssetFolders.current.find(({ internalPath }) => internalPath === 'static/uploads')
+    );
+
+    const postsFolder = /** @type {AssetFolderInfo} */ (
+      allAssetFolders.current.find(({ internalPath }) => internalPath === 'static/posts')
+    );
+
+    setAssets([
+      createMockAsset({ name: 'a.png', asset: { folder: globalFolder } }),
+      createMockAsset({ name: 'b.png', asset: { folder: globalFolder } }),
+      createMockAsset({
+        name: 'c.png',
+        folderPath: 'static/posts',
+        asset: { folder: postsFolder },
+      }),
+    ]);
+    setEntries([
+      createMockEntry({
+        slug: 'hello',
+        content: { _default: { title: 'Hello', body: '![](https://example.com/x.png)' } },
+      }),
+    ]);
+  });
+
+  beforeEach(() => {
+    env.isSmallScreen = false;
+    selectedAssetFolder.current = undefined;
+    selectedSubfolderPath.current = '';
+    selectedCloudService.current = undefined;
+    externalAssetCounts.current = {};
+  });
+
+  afterEach(() => {
+    assetMoveRequest.current = undefined;
+    draggedFiles.current = undefined;
+  });
+
+  test('lists the asset folders and external locations with their counts', async () => {
+    externalAssetCounts.current = { uploadcare: 5 };
+
+    const listbox = page.getByRole('listbox', { name: 'Asset Folder List' });
+
+    await render(PrimarySidebar);
+    await expect.element(listbox).toHaveAttribute('aria-controls', 'assets-container');
+
+    /**
+     * Get the labels of the listed folders.
+     * @returns {(string | undefined)[]} Labels.
+     */
+    const getLabels = () =>
+      listbox
+        .getByRole('option')
+        .elements()
+        .map((el) => el.textContent?.replace(/\s+/g, ' ').trim());
+
+    await expect
+      .poll(getLabels)
+      .toEqual([
+        'folder All Assets 3',
+        'folder Global Assets 2',
+        'folder Posts 1',
+        'folder Docs 0',
+        'folder Pages › About Us 0',
+        'folder Gallery 0',
+        'cloud Uploadcare 5',
+        'link_2 Linked Files 0',
+      ]);
+
+    // The groups are separated: the global folders, the collection folders, then asset collections
+    expect(listbox.element().querySelectorAll('[role="separator"]')).toHaveLength(2);
+    expect(page.getByRole('group', { name: 'Your Site' }).elements()).toHaveLength(1);
+    expect(page.getByRole('group', { name: 'External Locations' }).elements()).toHaveLength(1);
+  });
+
+  test('lists the external locations alone without an asset folder', async () => {
+    const folders = allAssetFolders.current;
+
+    allAssetFolders.current = [];
+
+    try {
+      await render(PrimarySidebar);
+
+      const listbox = page.getByRole('listbox', { name: 'Asset Folder List' });
+
+      await expect.element(listbox.getByRole('option', { name: /Uploadcare/ })).toBeVisible();
+      expect(page.getByRole('group', { name: 'Your Site' }).elements()).toHaveLength(0);
+    } finally {
+      allAssetFolders.current = folders;
+    }
+  });
+
+  test('lists the Global Assets folder at the repository root', async () => {
+    const folders = allAssetFolders.current;
+    const [allAssets] = folders;
+
+    // The global `media_folder` option is an empty string, which only differs from the All Assets
+    // folder in the internal and public paths
+    allAssetFolders.current = [allAssets, { ...allAssets, internalPath: '', publicPath: '/' }];
+
+    try {
+      await render(PrimarySidebar);
+
+      const listbox = page.getByRole('listbox', { name: 'Asset Folder List' });
+
+      await expect.element(listbox.getByRole('option', { name: /^All Assets/ })).toBeVisible();
+      await expect.element(listbox.getByRole('option', { name: /^Global Assets/ })).toBeVisible();
+    } finally {
+      allAssetFolders.current = folders;
+    }
+  });
+
+  test('hides the external locations without a cloud service or linked file', async () => {
+    const config = cmsConfig.current;
+    const entries = allEntries.current;
+
+    cmsConfig.current = /** @type {any} */ ({ ...config, media_libraries: undefined });
+    setEntries([]);
+
+    try {
+      await render(PrimarySidebar);
+
+      const listbox = page.getByRole('listbox', { name: 'Asset Folder List' });
+
+      await expect.element(listbox.getByRole('option', { name: /^All Assets/ })).toBeVisible();
+      expect(page.getByRole('group', { name: 'External Locations' }).elements()).toHaveLength(0);
+    } finally {
+      cmsConfig.current = config;
+      setEntries(entries);
+    }
+  });
+
+  test('navigates to the selected folder or location', async () => {
+    window.location.hash = '#/assets';
+
+    await render(PrimarySidebar);
+
+    await page.getByRole('option', { name: /^Posts/ }).click();
+    await expect.poll(() => window.location.hash).toBe('#/assets/static/posts');
+    expect(window.history.state.folder.collectionName).toBe('posts');
+
+    await page.getByRole('option', { name: /^All Assets/ }).click();
+    await expect.poll(() => window.location.hash).toBe('#/assets/-/all');
+
+    await page.getByRole('option', { name: /^Uploadcare/ }).click();
+    await expect.poll(() => window.location.hash).toBe('#/assets/-/uploadcare');
+
+    await page.getByRole('option', { name: /^Linked Files/ }).click();
+    await expect.poll(() => window.location.hash).toBe('#/assets/-/linked');
+  });
+
+  test('leads back to the root of the selected folder from one of its subfolders', async () => {
+    const folder = allAssetFolders.current.find(
+      ({ internalPath }) => internalPath === 'static/uploads',
+    );
+
+    selectedAssetFolder.current = folder;
+    selectedSubfolderPath.current = '2024';
+    window.location.hash = '#/assets/static/uploads/2024';
+
+    await render(PrimarySidebar);
+
+    // The folder is selected already, so this is a plain click rather than a selection
+    await page.getByRole('option', { name: /^Global Assets/ }).click();
+    await expect.poll(() => window.location.hash).toBe('#/assets/static/uploads');
+    expect(window.history.state.folder).toEqual(folder);
+  });
+
+  test('highlights the selected folder unless searching', async () => {
+    selectedAssetFolder.current = allAssetFolders.current.find(
+      ({ internalPath }) => internalPath === 'static/uploads',
+    );
+
+    await render(PrimarySidebar);
+    await expect
+      .element(page.getByRole('option', { name: /^Global Assets/ }))
+      .toHaveAttribute('aria-selected', 'true');
+
+    const { container } = await render(PrimarySidebar, { isSearchPage: true });
+
+    await expect.poll(() => container.querySelectorAll('[role="option"]').length).toBe(8);
+    expect(container.querySelectorAll('[aria-selected="true"]')).toHaveLength(0);
+    // The search results replace the folder the list would control
+    expect(container.querySelector('[role="listbox"]')).not.toHaveAttribute('aria-controls');
+  });
+
+  test('adds a heading and a search bar on a small screen', async () => {
+    env.isSmallScreen = true;
+    searchMode.current = 'assets';
+    window.location.hash = '#/assets';
+
+    const { container } = await render(PrimarySidebar);
+
+    expect(container.querySelector('h2')).toHaveTextContent('Assets');
+    // The sidebar is a page of its own, without the folder it would control
+    expect(container.querySelector('[role="listbox"]')).not.toHaveAttribute('aria-controls');
+
+    await page.getByRole('searchbox').click();
+    await expect.poll(() => window.location.hash).toBe('#/search');
+  });
+
+  test('highlights a folder that can take the dragged assets, and takes them', async () => {
+    const globalFolder = /** @type {AssetFolderInfo} */ (
+      allAssetFolders.current.find(({ internalPath }) => internalPath === 'static/uploads')
+    );
+
+    const asset = createMockAsset({ name: 'a.png', asset: { folder: globalFolder } });
+
+    selectedAssetFolder.current = globalFolder;
+    draggedFiles.current = { assets: [asset] };
+
+    await render(PrimarySidebar);
+
+    /**
+     * Fire a drag event on the given option. The data transfer is a stand-in, as Chrome ignores a
+     * drop effect set on a real one outside a real drag.
+     * @param {string} name Option name.
+     * @param {string} type Event type.
+     * @param {object} [options] Options.
+     * @param {boolean} [options.assets] Whether the drag carries assets dragged from the list,
+     * rather than files from the desktop.
+     * @returns {{ event: Event, dataTransfer: { types: string[], dropEffect: string } }} Event and
+     * its data transfer, holding the resulting drop effect.
+     */
+    const drag = (name, type, { assets = true } = {}) => {
+      const dataTransfer = { types: [assets ? ASSET_DRAG_TYPE : 'Files'], dropEffect: '' };
+      const event = new Event(type, { bubbles: true, cancelable: true });
+
+      Object.defineProperty(event, 'dataTransfer', { value: dataTransfer });
+      page
+        .getByRole('option', { name: new RegExp(`^${name}`) })
+        .element()
+        .dispatchEvent(event);
+
+      return { event, dataTransfer };
+    };
+
+    await expect.element(page.getByRole('option', { name: /^Gallery/ })).toBeVisible();
+
+    const posts = page.getByRole('option', { name: /^Posts/ });
+
+    // Another folder can take the assets
+    expect(drag('Posts', 'dragover').dataTransfer.dropEffect).toBe('move');
+    await expect.element(posts).toHaveClass('dragover');
+    drag('Posts', 'dragleave');
+    await expect.element(posts).not.toHaveClass('dragover');
+    drag('Posts', 'dragover');
+    drag('Posts', 'drop');
+    await expect.element(posts).not.toHaveClass('dragover');
+    expect(assetMoveRequest.current).toEqual({ assets: [asset], dirPath: 'static/posts' });
+    expect(draggedFiles.current).toBeUndefined();
+
+    assetMoveRequest.current = undefined;
+    draggedFiles.current = { assets: [asset] };
+
+    // The folder the assets are in already can’t
+    expect(drag('Global Assets', 'dragover').dataTransfer.dropEffect).toBe('none');
+    await expect
+      .element(page.getByRole('option', { name: /^Global Assets/ }))
+      .not.toHaveClass('dragover');
+    drag('Global Assets', 'drop');
+    expect(assetMoveRequest.current).toBeUndefined();
+
+    draggedFiles.current = { assets: [asset] };
+
+    // Neither can a folder with entry-relative paths
+    expect(drag('Docs', 'dragover').dataTransfer.dropEffect).toBe('none');
+    await expect.element(page.getByRole('option', { name: /^Docs/ })).not.toHaveClass('dragover');
+
+    // The virtual All Assets folder isn’t a drop target at all
+    expect(drag('All Assets', 'dragover').event.defaultPrevented).toBe(false);
+    drag('All Assets', 'drop');
+    expect(assetMoveRequest.current).toBeUndefined();
+
+    // Files from the desktop are left to the upload drop zone
+    expect(drag('Posts', 'dragover', { assets: false }).event.defaultPrevented).toBe(false);
+    await expect.element(posts).not.toHaveClass('dragover');
+    expect(drag('Posts', 'drop', { assets: false }).event.defaultPrevented).toBe(false);
+    expect(assetMoveRequest.current).toBeUndefined();
+
+    const uploadcare = page.getByRole('option', { name: /^Uploadcare/ });
+    const { apiKeys } = prefs;
+
+    // A cloud storage service can’t take the assets until the credentials have been entered
+    prefs.apiKeys = {};
+    expect(drag('Uploadcare', 'dragover').dataTransfer.dropEffect).toBe('none');
+    await expect.element(uploadcare).not.toHaveClass('dragover');
+
+    try {
+      prefs.apiKeys = { uploadcare: 'secret' };
+      expect(drag('Uploadcare', 'dragover').dataTransfer.dropEffect).toBe('move');
+      await expect.element(uploadcare).toHaveClass('dragover');
+      drag('Uploadcare', 'drop');
+      expect(assetMoveRequest.current).toEqual({
+        assets: [asset],
+        dirPath: '',
+        serviceId: 'uploadcare',
+      });
+    } finally {
+      prefs.apiKeys = apiKeys;
+    }
+  });
+});

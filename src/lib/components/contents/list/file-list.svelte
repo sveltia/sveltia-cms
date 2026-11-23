@@ -1,15 +1,17 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { EmptyState, GridCell, GridRow, Icon, InfiniteScroll, TruncatedText } from '@sveltia/ui';
-  import { sleep } from '@sveltia/utils/misc';
 
   import ListContainer from '$lib/components/common/list-container.svelte';
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
   import StatusBadge from '$lib/components/workflow/status-badge.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { selectedCollection } from '$lib/services/contents/collection';
-  import { isValidCollectionFile } from '$lib/services/contents/collection/files';
+  import { isValidCollectionFile } from '$lib/services/contents/collection/predicates';
+  import { getEntryEditorPath } from '$lib/services/contents/editor/route';
+  import { getCollectionFileSummary } from '$lib/services/contents/entry/summary';
   import { unpublishedEntries } from '$lib/services/workflow';
+  import { getEntryStage } from '$lib/services/workflow/stages';
 
   /**
    * @import { CollectionFile } from '$lib/types/public';
@@ -23,7 +25,7 @@
   );
 
   /**
-   * Editorial Workflow status of each file that has an open pull request, keyed by file name. A
+   * Editorial Workflow stage of each file that has an open pull request, keyed by file name. A
    * file collection needs no Unpublished/Published sections like an entry collection, because every
    * file is published from the start and can only be updated, never added or removed.
    * @type {Record<string, WorkflowStatus>}
@@ -32,7 +34,10 @@
     Object.fromEntries(
       unpublishedEntries.current
         .filter(({ workflow }) => workflow.collectionName === selectedCollection.current?.name)
-        .map(({ workflow }) => [workflow.fileName, workflow.status]),
+        .map((entry) => [
+          entry.workflow.fileName,
+          getEntryStage(entry, selectedCollection.current),
+        ]),
     ),
   );
 </script>
@@ -42,31 +47,38 @@
     <ListingGrid viewType="list" aria-label={_('files')} aria-rowcount={files.length}>
       <InfiniteScroll items={files} itemKey="name">
         {#snippet renderItem(/** @type {CollectionFile} */ { name, label, icon })}
-          {#await sleep() then}
-            <GridRow
-              onclick={() => {
-                goto(`/collections/${selectedCollection.current?.name}/entries/${name}`, {
-                  transitionType: 'forwards',
-                });
-              }}
-            >
-              <GridCell class="title">
-                <div role="none" class="label">
-                  {#if icon}
-                    <Icon name={icon} />
-                  {/if}
-                  <TruncatedText lines={2}>
-                    {label || name}
-                  </TruncatedText>
-                </div>
-              </GridCell>
-              <GridCell class="status">
-                {#if statuses[name]}
-                  <StatusBadge status={statuses[name]} />
+          <!-- HTML, as the summary can contain Markdown, like an entry collection’s -->
+          {@const summary = getCollectionFileSummary(
+            /** @type {InternalFileCollection} */ (selectedCollection.current),
+            name,
+          )}
+          <GridRow
+            onclick={() => {
+              goto(getEntryEditorPath(`${selectedCollection.current?.name}`, name), {
+                transitionType: 'forwards',
+              });
+            }}
+          >
+            <GridCell class="title">
+              <div role="none" class="label">
+                {#if icon}
+                  <Icon name={icon} />
                 {/if}
-              </GridCell>
-            </GridRow>
-          {/await}
+                <TruncatedText lines={2}>
+                  {#if summary !== undefined}
+                    <bdi>{@html summary}</bdi>
+                  {:else}
+                    {label || name}
+                  {/if}
+                </TruncatedText>
+              </div>
+            </GridCell>
+            <GridCell class="status">
+              {#if statuses[name]}
+                <StatusBadge status={statuses[name]} />
+              {/if}
+            </GridCell>
+          </GridRow>
         {/snippet}
       </InfiniteScroll>
     </ListingGrid>

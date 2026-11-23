@@ -1,7 +1,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { EmptyState, InfiniteScroll } from '@sveltia/ui';
-  import { sleep } from '@sveltia/utils/misc';
+  import { EmptyState } from '@sveltia/ui';
   import { stripSlashes } from '@sveltia/utils/string';
 
   import AssetPath from '$lib/components/assets/browser/asset-path.svelte';
@@ -9,16 +8,25 @@
   import SimpleImageGrid from '$lib/components/assets/browser/simple-image-grid.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import { getAssetKey } from '$lib/services/assets';
-  import { normalize } from '$lib/services/search/util';
+  import { getSelectionWithResource } from '$lib/services/assets/browser/select-assets-dialog.svelte';
+  import { getNormalizedValueCache, hasAllMatches, tokenize } from '$lib/services/search/util';
   import { env } from '$lib/services/user/env.svelte';
 
   /**
-   * @import { Asset, SelectedResource, ViewType } from '$lib/types/private';
+   * @import {
+   * Asset,
+   * AssetSubfolder,
+   * MediaLibraryAssetKind,
+   * SelectedResource,
+   * ViewType,
+   * } from '$lib/types/private';
    */
 
   /**
    * @typedef {object} Props
    * @property {boolean} [multiple] Whether to allow selecting multiple assets.
+   * @property {MediaLibraryAssetKind} [kind] Kind of the assets being picked, which names the
+   * list: images, or files of any kind if `undefined`.
    * @property {Asset[]} [assets] Asset list.
    * @property {ViewType} [viewType] View type.
    * @property {string} [searchTerms] Search terms for filtering assets.
@@ -26,32 +34,47 @@
    * @property {string} [gridId] The `id` attribute of the inner listbox.
    * @property {boolean} [checkerboard] Whether to show a checkerboard background below a
    * transparent image.
+   * @property {string} [emptyMessage] Message shown when there is nothing to list, in place of the
+   * default “No files found” message.
    * @property {SelectedResource[]} [selectedResources] Selected resources.
+   * @property {AssetSubfolder[]} [subfolders] Subfolders of the folder being browsed, listed ahead
+   * of the assets.
    * @property {(detail: { asset: Asset }) => void} [onSelect] Custom `select` event handler.
+   * @property {(subfolder: AssetSubfolder) => void} [onOpenSubfolder] Called when a subfolder is
+   * opened.
+   * @property {string[]} [selectedSubfolderPaths] Paths of the selected subfolders.
+   * @property {(subfolder: AssetSubfolder, selected: boolean) => void} [onSelectSubfolder] Called
+   * with a subfolder and whether it’s now selected, when a folder is to be picked.
    */
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     multiple = false,
+    kind = undefined,
     assets = [],
     viewType = 'grid',
     searchTerms = '',
     basePath = undefined,
     gridId = undefined,
     checkerboard = false,
+    emptyMessage = undefined,
     selectedResources = $bindable([]),
+    subfolders = [],
     onSelect = undefined,
-    /* eslint-enable prefer-const */
+    onOpenSubfolder = undefined,
+    selectedSubfolderPaths = [],
+    onSelectSubfolder = undefined,
   } = $props();
 
-  // Split the search terms into an array of individual terms for filtering purposes. If no search
-  // terms are provided, use an empty array.
-  const searchTermsArray = $derived(searchTerms ? searchTerms.split(/\s+/).filter(Boolean) : []);
+  // Split the search terms into individual words for filtering purposes
+  const tokens = $derived(tokenize(searchTerms));
 
-  /** @type {(Asset & { relPath: string, key: string })[]} */
-  const filteredAssets = $derived.by(() => {
-    const _assets = assets.map((asset) => {
+  // The items are built separately from the filtering, so typing a search term reuses them instead
+  // of creating a new object for every asset. Each item wraps the asset rather than copying it, so
+  // the preview and the selection get the original asset object
+  /** @type {{ asset: Asset, relPath: string, key: string }[]} */
+  const listedItems = $derived(
+    assets.map((asset) => {
       const { folder, name, path } = asset;
 
       // Compute the relative path for display and filtering purposes. If the asset is in a folder,
@@ -62,26 +85,38 @@
 
       // An unsaved asset can share a path with the saved asset it’s going to overwrite, so each
       // item is identified by a unique key instead, avoiding Svelte `each` key conflicts
-      return { ...asset, relPath, key: getAssetKey(asset) };
-    });
+      return { asset, relPath, key: getAssetKey(asset) };
+    }),
+  );
 
-    if (searchTermsArray.length) {
-      // Filter assets by search terms in the relative path
-      return _assets.filter(({ relPath }) =>
-        searchTermsArray.every((term) => normalize(relPath).includes(term)),
-      );
-    }
+  const filteredItems = $derived(
+    tokens.length
+      ? // Filter assets by search terms in the relative path, keeping each normalized path for the
+        // next keystroke
+        listedItems.filter((item) =>
+          hasAllMatches({
+            value: item.relPath,
+            tokens,
+            normalizedValueCache: getNormalizedValueCache(item),
+          }),
+        )
+      : listedItems,
+  );
 
-    return _assets;
-  });
+  /**
+   * Keys of the selected assets, built once per selection change so that each listed item can check
+   * its own selection without going through the whole selection.
+   */
+  const selectedAssetKeys = $derived(
+    new Set(selectedResources.flatMap(({ asset }) => (asset ? [getAssetKey(asset)] : []))),
+  );
 
   /**
    * Check if the given asset is already selected.
    * @param {Asset} asset The asset to check.
    * @returns {boolean} `true` if the asset is selected, `false` otherwise.
    */
-  const isSelected = (asset) =>
-    selectedResources.some((r) => r.asset && getAssetKey(r.asset) === getAssetKey(asset));
+  const isSelected = (asset) => selectedAssetKeys.has(getAssetKey(asset));
 
   /**
    * Handle selection change of an asset.
@@ -90,56 +125,72 @@
    */
   const onSelectionChange = (asset, selected) => {
     const key = getAssetKey(asset);
-
-    const otherResources = selectedResources.filter(
-      (r) => !r.asset || getAssetKey(r.asset) !== key,
-    );
+    /**
+     * Check if a selected resource holds the given asset.
+     * @param {SelectedResource} resource Selected resource.
+     * @returns {boolean} Result.
+     */
+    const isSame = (resource) => !!resource.asset && getAssetKey(resource.asset) === key;
 
     if (selected) {
-      selectedResources = [...otherResources, { asset }];
+      selectedResources = getSelectionWithResource({
+        resources: selectedResources,
+        resource: { asset },
+        isSame,
+        multiple,
+      });
       onSelect?.({ asset });
     } else {
-      selectedResources = otherResources;
+      selectedResources = selectedResources.filter((r) => !isSame(r));
     }
   };
 </script>
 
-{#if filteredAssets.length}
+{#if filteredItems.length || subfolders.length}
   <div role="none" class="grid-wrapper">
-    <SimpleImageGrid {multiple} {gridId} {viewType}>
-      <InfiniteScroll items={filteredAssets} itemKey="key">
-        {#snippet renderItem(/** @type {Asset & { relPath: string, key: string }} */ asset)}
-          {#await sleep() then}
-            {@const { kind, unsaved, key, relPath } = asset}
-            <SimpleImageGridItem
-              value={key}
-              {viewType}
-              {multiple}
-              selected={isSelected(asset)}
-              onChange={({ detail: { selected } }) => {
-                onSelectionChange(asset, selected);
-              }}
-            >
-              {#if viewType === 'grid' && unsaved}
+    <SimpleImageGrid
+      {multiple}
+      {gridId}
+      {viewType}
+      {kind}
+      {subfolders}
+      {onOpenSubfolder}
+      {selectedSubfolderPaths}
+      {onSelectSubfolder}
+      items={filteredItems}
+      itemKey="key"
+    >
+      {#snippet renderItem(/** @type {{ asset: Asset, relPath: string, key: string }} */ item)}
+        {@const { asset, key, relPath } = item}
+        {@const { kind: assetKind, unsaved } = asset}
+        <SimpleImageGridItem
+          value={key}
+          ariaLabel={relPath}
+          {viewType}
+          {multiple}
+          selected={isSelected(asset)}
+          onChange={({ detail: { selected } }) => {
+            onSelectionChange(asset, selected);
+          }}
+        >
+          {#if viewType === 'grid' && unsaved}
+            <div role="none" class="unsaved">{_('assets_dialog.unsaved')}</div>
+          {/if}
+          <AssetPreview kind={assetKind} {asset} alt={relPath} variant="tile" {checkerboard} />
+          {#if !env.isSmallScreen || viewType === 'list'}
+            <AssetPath path={relPath}>
+              {#if viewType === 'list' && unsaved}
                 <div role="none" class="unsaved">{_('assets_dialog.unsaved')}</div>
               {/if}
-              <AssetPreview {kind} {asset} alt={relPath} variant="tile" {checkerboard} />
-              {#if !env.isSmallScreen || viewType === 'list'}
-                <AssetPath path={relPath}>
-                  {#if viewType === 'list' && unsaved}
-                    <div role="none" class="unsaved">{_('assets_dialog.unsaved')}</div>
-                  {/if}
-                </AssetPath>
-              {/if}
-            </SimpleImageGridItem>
-          {/await}
-        {/snippet}
-      </InfiniteScroll>
+            </AssetPath>
+          {/if}
+        </SimpleImageGridItem>
+      {/snippet}
     </SimpleImageGrid>
   </div>
 {:else}
   <EmptyState>
-    <span role="none">{_('no_files_found')}</span>
+    <span role="none">{emptyMessage ?? _('no_files_found')}</span>
   </EmptyState>
 {/if}
 

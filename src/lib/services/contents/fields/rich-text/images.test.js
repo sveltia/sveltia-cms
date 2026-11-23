@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -166,12 +166,42 @@ describe('getPastedImages()', () => {
     const images = await getPastedImages(event);
 
     expect(images).toHaveLength(1);
-    expect(images[0].file?.name).toBe('cat.jpg');
+    // The extension matches the pasted PNG data rather than the remote JPEG image
+    expect(images[0].file?.name).toBe('cat.png');
     expect(images[0].file?.type).toBe('image/png');
     expect(images[0].alt).toBe('A cat');
     expect(event.clipboardData.items.clear).toHaveBeenCalled();
     expect(event.stopPropagation).toHaveBeenCalled();
   });
+
+  test.each([
+    ['photo.jpg', 'image/jpeg', 'photo.jpg'],
+    ['photo.JPEG', 'image/jpeg', 'photo.JPEG'],
+    ['my%20photo.jpg', 'image/png', 'my photo.png'],
+    ['50%off.webp', 'image/webp', '50%off.webp'],
+    ['icon.svg', 'image/png', 'icon.png'],
+  ])(
+    'names the pasted file after the remote image `%s` of %s as `%s`',
+    async (name, type, expected) => {
+      const file = new File(['data'], 'image.png', { type });
+
+      const event = createPasteEvent({
+        items: [
+          createItem({ kind: 'file', type, file }),
+          createItem({
+            kind: 'string',
+            type: 'text/html',
+            string: `<img src="https://example.com/images/${name}" alt="">`,
+          }),
+        ],
+      });
+
+      const images = await getPastedImages(event);
+
+      expect(images[0].file?.name).toBe(expected);
+      expect(images[0].file?.type).toBe(type);
+    },
+  );
 
   test('keeps the original name when the remote image has no recognizable extension', async () => {
     const event = createPasteEvent({
@@ -300,6 +330,24 @@ describe('getDroppedImages()', () => {
     expect(images[0].alt).toBe('');
     expect(images[0].file?.name).toBe('20260912-103000.webp');
     expect(images[0].file?.type).toBe('image/webp');
+  });
+
+  test('names a downloaded SVG data URL image with the `svg` extension', async () => {
+    const src = 'data:image/svg+xml;base64,AAAA';
+    const blob = new Blob(['<svg></svg>'], { type: 'image/svg+xml' });
+
+    fetchMock.mockResolvedValue({
+      /**
+       * Get the body as a blob.
+       * @returns {Promise<Blob>} Blob.
+       */
+      blob: () => Promise.resolve(blob),
+    });
+
+    const images = await getDroppedImages(createDropEvent({ html: `<img src="${src}" alt="">` }));
+
+    expect(images[0].file?.name).toBe('20260912-103000.svg');
+    expect(images[0].file?.type).toBe('image/svg+xml');
   });
 
   test('links a data URL of an unsupported type without downloading it', async () => {

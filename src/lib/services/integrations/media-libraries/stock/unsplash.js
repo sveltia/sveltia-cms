@@ -1,6 +1,7 @@
+import { createAttributedCredit } from '$lib/services/integrations/media-libraries/stock/credit';
 import {
+  createStockFetchers,
   fetchJSON,
-  fetchPagedResults,
   getSupportedLocale,
 } from '$lib/services/integrations/media-libraries/stock/utils';
 
@@ -19,6 +20,8 @@ import {
  * @property {string} alt_description Alt description.
  * @property {{ regular: string, thumb: string }} urls Image URLs.
  * @property {{ username: string, name: string }} user User info.
+ * @property {{ download_location?: string }} [links] Links, including the endpoint to request once
+ * the photo is used.
  */
 
 /**
@@ -60,6 +63,7 @@ export const parseResults = (results) =>
       alt_description: alt,
       urls: { regular, thumb },
       user: { username, name },
+      links,
     }) => ({
       id: String(id),
       description: [description, alt].filter(Boolean).join(' — '),
@@ -67,66 +71,74 @@ export const parseResults = (results) =>
       downloadURL: regular,
       fileName: `${name.split(/\s+/).join('-').toLowerCase()}-${id}-unsplash.jpg`,
       kind: 'image',
-      credit:
-        `Photo by <a href="https://unsplash.com/@${username}?${CREDIT_LINK_PARAMS}">${name}</a> on ` +
-        `<a href="https://unsplash.com/?${CREDIT_LINK_PARAMS}">Unsplash</a>`,
+      credit: createAttributedCredit({
+        name,
+        profileURL: `https://unsplash.com/@${username}?${CREDIT_LINK_PARAMS}`,
+        serviceLabel: 'Unsplash',
+        serviceURL: `https://unsplash.com/?${CREDIT_LINK_PARAMS}`,
+      }),
+      downloadTrackingURL: links?.download_location,
     }),
   );
 
 /**
- * Fetch curated pictures.
- * @param {MediaLibraryFetchOptions} options Options.
- * @returns {Promise<ExternalAsset[]>} Assets.
- * @see https://unsplash.com/documentation
- * @todo Support video files.
+ * Get the request headers for the given API key.
+ * @param {string} apiKey API key.
+ * @returns {Record<string, string>} Headers.
  */
-export const list = async ({ apiKey }) => {
-  const headers = { Authorization: `Client-ID ${apiKey}` };
-  const params = new URLSearchParams(SEARCH_PARAMS);
-  /** @type {FetchResult[]} */
-  const results = await fetchJSON(`${ENDPOINT}/photos?${params}`, { headers });
-
-  return parseResults(results);
-};
+const getHeaders = (apiKey) => ({ Authorization: `Client-ID ${apiKey}` });
 
 /**
- * Search images or fetch curated pictures if no query is given.
- * @param {string} query Search query.
- * @param {MediaLibraryFetchOptions} options Options.
- * @returns {Promise<ExternalAsset[]>} Assets.
+ * Fetch curated pictures, or search images.
  * @see https://unsplash.com/documentation
  * @todo Support video files.
  */
-export const search = async (query, { apiKey }) => {
-  const headers = { Authorization: `Client-ID ${apiKey}` };
-  const params = new URLSearchParams({ ...SEARCH_PARAMS, query, lang: getLocale() });
-
+export const { list, search } = createStockFetchers({
+  listURL: `${ENDPOINT}/photos`,
+  searchURL: `${ENDPOINT}/search/photos`,
+  getHeaders,
   /**
-   * Fetch a page of search results.
-   * @param {number} page Page number.
-   * @returns {Promise<{ results: FetchResult[], total_pages: number }>} Response.
+   * Get the query parameters to list curated pictures.
+   * @returns {Record<string, any>} Parameters.
    */
-  const fetchPage = (page) => {
-    params.set('page', String(page));
-
-    return fetchJSON(`${ENDPOINT}/search/photos?${params}`, { headers });
-  };
-
+  getListParams: () => SEARCH_PARAMS,
   /**
-   * Extract the results from a page.
-   * @param {{ results: FetchResult[], total_pages: number }} response Response.
-   * @param {number} page Page number.
-   * @returns {{ results: FetchResult[], hasMore: boolean }} Results and whether another page
-   * follows.
+   * Get the query parameters to search images.
+   * @param {string} query Search query.
+   * @returns {Record<string, any>} Parameters.
    */
-  const parsePage = ({ results, total_pages: totalPages }, page) => ({
-    results,
-    hasMore: totalPages !== page,
-  });
+  getSearchParams: (query) => ({ ...SEARCH_PARAMS, query, lang: getLocale() }),
+  searchKey: 'results',
+  maxPages: 5,
+  /**
+   * Check whether another page of search results follows.
+   * @param {{ total_pages: number }} response Response.
+   * @param {number} page Page number.
+   * @returns {boolean} Result.
+   */
+  hasMore: ({ total_pages: totalPages }, page) => page < totalPages,
+  parseResults,
+});
 
-  const results = await fetchPagedResults({ maxPages: 5, fetchPage, parsePage });
+/**
+ * Let Unsplash know a photo has been used, as its API guidelines require. A failure is only logged,
+ * so it never gets in the way of the insertion.
+ * @param {ExternalAsset} asset Inserted photo.
+ * @param {MediaLibraryFetchOptions} options Options.
+ * @returns {Promise<void>}
+ * @see https://help.unsplash.com/en/articles/2511258-guideline-triggering-a-download
+ */
+export const trackDownload = async ({ downloadTrackingURL }, { apiKey }) => {
+  if (!downloadTrackingURL) {
+    return;
+  }
 
-  return parseResults(results);
+  try {
+    await fetchJSON(downloadTrackingURL, { headers: getHeaders(apiKey) });
+  } catch (ex) {
+    // eslint-disable-next-line no-console
+    console.error(ex);
+  }
 };
 
 /**
@@ -145,4 +157,5 @@ export default {
   apiKeyPattern: /^[a-zA-Z\d_-]{40,}$/,
   list,
   search,
+  trackDownload,
 };

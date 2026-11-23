@@ -1,78 +1,77 @@
 <!--
-  @component Edit options menu for a repository asset: Edit, Rename, Replace and links to the file.
+  @component
+  Edit options menu for a repository asset: Edit, Rename, Move, Replace and links to the file.
 -->
 <script>
   import { _ } from '@sveltia/i18n';
   import { MenuItem } from '@sveltia/ui';
 
   import EditOptionsMenu from '$lib/components/assets/list/edit-options-menu.svelte';
-  import { editingAsset, renamingAsset, uploadingAssets } from '$lib/services/assets';
-  import { defaultAssetDetails, getAssetDetails } from '$lib/services/assets/details';
+  import ViewInRepositoryItem from '$lib/components/common/view-in-repository-item.svelte';
+  import { createAssetDetailsState } from '$lib/services/assets/details-state.svelte';
+  import { assetsLocked, hasReadonlyAsset } from '$lib/services/assets/folders';
   import { canEditAsset } from '$lib/services/assets/kinds';
+  import { canMoveAssets } from '$lib/services/assets/movable';
+  import {
+    assetMoveRequest,
+    editingAsset,
+    renamingAsset,
+    uploadingAssets,
+  } from '$lib/services/assets/state';
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
   import { backend } from '$lib/services/backends';
-  import { prefs } from '$lib/services/user/prefs.svelte';
   import { openNewTab } from '$lib/services/utils/window';
-  import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
   /**
    * @import { Snippet } from 'svelte';
-   * @import { Asset, AssetDetails } from '$lib/types/private';
+   * @import { Asset } from '$lib/types/private';
    */
 
   /**
    * @typedef {object} Props
    * @property {Asset} [asset] Selected asset.
+   * @property {Asset[]} [assets] Assets the Move item applies to, as several can be selected in the
+   * list. Default: the selected asset.
    * @property {Snippet} [extraItems] Slot content.
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    asset,
-    extraItems = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { asset, assets = asset ? [asset] : [], extraItems = undefined } = $props();
 
-  /** @type {AssetDetails} */
-  let details = $state({ ...defaultAssetDetails });
+  // The menu stays mounted while the focus moves from one asset to another
+  const details = createAssetDetailsState(() => asset);
 
-  const { publicURL, repoBlobURL } = $derived(details);
-
-  /**
-   * Update the properties above.
-   */
-  const updateProps = async () => {
-    details = asset ? await getAssetDetails(asset) : { ...defaultAssetDetails };
-  };
-
-  $effect(() => {
-    void [asset];
-    updateProps();
-  });
+  const { publicURL, repoBlobURL } = $derived(details.current);
+  // A file in a read-only folder can’t be edited, renamed or replaced
+  const editable = $derived(!!asset && !hasReadonlyAsset([asset]));
 </script>
 
 <!--
   Editing, renaming or replacing a file in the media library commits straight to the configured
   branch rather than going through review, so none of it is available to an Open Authoring
-  contributor
+  contributor or a user who can’t push to the branch, nor for a file in a read-only folder
 -->
 <EditOptionsMenu
-  readOnly={openAuthoring.current}
-  canEdit={!!asset && canEditAsset(asset)}
-  canRename={!!asset}
-  canReplace={!!asset}
+  readOnly={assetsLocked.current}
+  canEdit={editable && canEditAsset(/** @type {Asset} */ (asset))}
+  canRename={editable}
+  canReplace={editable}
+  canMove={canMoveAssets(assets)}
   onEdit={() => {
     editingAsset.current = asset;
   }}
   onRename={() => {
     renamingAsset.current = asset;
   }}
+  onMove={() => {
+    assetMoveRequest.current = { assets: [...assets] };
+  }}
   onReplace={() => {
     uploadingAssets.current = {
       folder: undefined,
       files: [],
-      originalAssets: asset ? [asset] : [],
+      // The item is disabled without an asset
+      originalAssets: [/** @type {Asset} */ (asset)],
     };
     showUploadAssetsDialog.current = true;
   }}
@@ -86,17 +85,11 @@
         openNewTab(publicURL);
       }}
     />
-    {#if prefs.devModeEnabled}
-      <MenuItem
-        disabled={!backend.current?.repository || !repoBlobURL}
-        label={_('view_on_x', {
-          values: { service: backend.current?.repository?.label },
-          default: _('view_in_repository'),
-        })}
-        onclick={() => {
-          openNewTab(`${repoBlobURL}?plain=1`);
-        }}
-      />
-    {/if}
+    <ViewInRepositoryItem
+      disabled={!backend.current?.repository || !repoBlobURL}
+      onclick={() => {
+        openNewTab(`${repoBlobURL}?plain=1`);
+      }}
+    />
   {/snippet}
 </EditOptionsMenu>

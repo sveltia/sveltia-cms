@@ -6,10 +6,8 @@
 -->
 <script>
   import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
-  import {
-    getDate,
-    getDateTimeFieldDisplayValue,
-  } from '$lib/services/contents/fields/date-time/helpers';
+  import { getDateTimeFieldDisplayValue } from '$lib/services/contents/fields/date-time/display';
+  import { getDate } from '$lib/services/contents/fields/date-time/parse';
   import { getTimeZoneLabel } from '$lib/services/contents/fields/date-time/timezone';
   import { getCanonicalLocale, getDirection } from '$lib/services/contents/i18n';
 
@@ -25,13 +23,7 @@
    */
 
   /** @type {FieldPreviewProps & Props} */
-  let {
-    /* eslint-disable prefer-const */
-    locale,
-    fieldConfig,
-    currentValue,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { locale, fieldConfig, currentValue } = $props();
 
   const { utc, singleCustomTimeZone } = $derived(parseDateTimeConfig(fieldConfig));
   const displayValue = $derived(
@@ -43,7 +35,7 @@
   <p lang={getCanonicalLocale(locale)} dir={getDirection(locale)}>
     {displayValue}
     {#if singleCustomTimeZone}
-      — {getTimeZoneLabel(singleCustomTimeZone, getDate(currentValue, fieldConfig))}
+      — {getTimeZoneLabel(singleCustomTimeZone, getDate(currentValue, fieldConfig, locale))}
     {:else if utc}
       — UTC
     {/if}

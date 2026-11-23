@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
+import { getEntryPathRegEx } from '$lib/services/contents/file/config';
+
 import { handleDateTimeTag, handleFilePathTag, handleSlugTag, handleUuidTag } from './handlers';
 
 /**
@@ -87,6 +89,7 @@ describe('Template handler functions', () => {
       expect(handleUuidTag('slug')).toBeUndefined();
       expect(handleUuidTag('title')).toBeUndefined();
       expect(handleUuidTag('unknown')).toBeUndefined();
+      expect(handleUuidTag('toString')).toBeUndefined();
     });
   });
 
@@ -137,9 +140,10 @@ describe('Template handler functions', () => {
       ).toBe('');
     });
 
-    describe('nested collections', () => {
+    describe('nested entries', () => {
       /**
-       * Create a context for a nested collection whose entries all share one file name.
+       * Create a context for a collection with nested entries whose entries all share one file
+       * name.
        * @param {Record<string, any>} overrides Override values for the context.
        * @returns {Parameters<typeof handleSlugTag>[1]} The slug handler context.
        */
@@ -150,9 +154,10 @@ describe('Template handler functions', () => {
           collection: /** @type {any} */ ({
             name: 'pages',
             folder: 'content/pages',
+            fields: [],
             _type: 'entry',
             nested: {},
-            meta: { path: { widget: 'string', index_file: '_index' } },
+            meta: { path: { index_file: '_index' } },
           }),
         });
 
@@ -221,12 +226,81 @@ describe('Template handler functions', () => {
       ).toBe('nested/folder');
     });
 
+    test('should return dirname below a base path with the locale placeholder', () => {
+      const basePath = 'content/{{locale}}/posts';
+
+      // The locale folder is part of the base path, not of the returned folder
+      expect(handleFilePathTag('dirname', 'content/en/posts/2024/my-post.md', basePath)).toBe(
+        '2024',
+      );
+      expect(handleFilePathTag('dirname', 'content/fr/posts/a/b/my-post.md', basePath)).toBe('a/b');
+      expect(handleFilePathTag('dirname', 'content/fr/posts/my-post.md', basePath)).toBe('');
+      // The default locale may be omitted from the path
+      expect(handleFilePathTag('dirname', 'content/posts/2024/my-post.md', basePath)).toBe('2024');
+    });
+
+    test('should leave the locale folder out of dirname with a folder per locale', () => {
+      // With the `multiple_folders` and `multiple_root_folders` i18n structures, the locale folder
+      // is added to the entry path but not to the base path, which is the collection’s `folder`
+      // option. The entry path matcher tells where it is, so a preview path or media folder
+      // template using `{{dirname}}` is the same for every locale.
+      const basePath = 'content/posts';
+
+      /**
+       * Get the entry path matcher for the given i18n structure.
+       * @param {'i18nMultiFolder' | 'i18nMultiRootFolder'} structure I18n structure flag.
+       * @returns {RegExp} Matcher.
+       */
+      const getRegEx = (structure) =>
+        getEntryPathRegEx({
+          extension: 'md',
+          format: 'frontmatter',
+          basePath,
+          nestedDepth: Infinity,
+          _i18n: /** @type {any} */ ({
+            allLocales: ['en', 'fr'],
+            defaultLocale: 'en',
+            omitDefaultLocaleFromFilePath: false,
+            structureMap: { [structure]: true },
+          }),
+        });
+
+      const multiFolder = getRegEx('i18nMultiFolder');
+      const multiRootFolder = getRegEx('i18nMultiRootFolder');
+
+      // `multiple_folders`
+      expect(
+        handleFilePathTag('dirname', 'content/posts/en/2024/my-post.md', basePath, [], multiFolder),
+      ).toBe('2024');
+      expect(
+        handleFilePathTag('dirname', 'content/posts/fr/my-post.md', basePath, [], multiFolder),
+      ).toBe('');
+      // `multiple_root_folders`: the base path isn’t removed from the middle of the path
+      expect(
+        handleFilePathTag(
+          'dirname',
+          'en/content/posts/2024/my-post.md',
+          basePath,
+          [],
+          multiRootFolder,
+        ),
+      ).toBe('2024');
+      expect(
+        handleFilePathTag('dirname', 'fr/content/posts/my-post.md', basePath, [], multiRootFolder),
+      ).toBe('');
+    });
+
     test('should return filename without extension', () => {
       expect(handleFilePathTag('filename', 'content/posts/my-post.md', 'content/posts')).toBe(
         'my-post',
       );
       expect(handleFilePathTag('filename', 'path/to/article.html', 'path/to')).toBe('article');
-      expect(handleFilePathTag('filename', 'file.component.tsx', undefined)).toBe('file');
+      expect(handleFilePathTag('filename', 'file.component.tsx', undefined)).toBe('file.component');
+      expect(handleFilePathTag('filename', 'content/my.post.md', 'content')).toBe('my.post');
+      expect(handleFilePathTag('filename', 'content/README', 'content')).toBe('README');
+      expect(handleFilePathTag('filename', 'content/my.post.en.md', 'content', ['en'])).toBe(
+        'my.post',
+      );
     });
 
     test('should return file extension', () => {
@@ -235,6 +309,7 @@ describe('Template handler functions', () => {
       );
       expect(handleFilePathTag('extension', 'path/to/article.html', 'path/to')).toBe('html');
       expect(handleFilePathTag('extension', 'file.component.tsx', undefined)).toBe('tsx');
+      expect(handleFilePathTag('extension', 'content/README', 'content')).toBe('');
     });
 
     test('should return empty string when entry file path is undefined', () => {

@@ -1,16 +1,34 @@
 import { sortItemsByKey } from '$lib/services/common/view';
-import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
-import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
+import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
+import { isManualOrderKey } from '$lib/services/contents/collection/entries/reorder/config';
+import { getOrderValueGetter } from '$lib/services/contents/collection/entries/reorder/sort';
 import { getSortKeyType } from '$lib/services/contents/collection/view/sort-keys';
-import { getField, getPropertyValue } from '$lib/services/contents/entry/fields';
+import { SUMMARY_COLUMN_KEY } from '$lib/services/contents/collection/view/table-keys';
+import {
+  getListedEntryValue,
+  isEmptyValue,
+  normalizeMultiValue,
+} from '$lib/services/contents/collection/view/values';
+import { getField } from '$lib/services/contents/entry/fields';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
-import { getDate } from '$lib/services/contents/fields/date-time/helpers';
+import { RICH_TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
+import { getDate } from '$lib/services/contents/fields/date-time/parse';
 import { removeMarkdownSyntax } from '$lib/services/utils/markdown';
 
 /**
- * @import { Entry, InternalCollection, SortingConditions } from '$lib/types/private';
+ * @import {
+ * Entry,
+ * InternalCollection,
+ * InternalEntryCollection,
+ * SortingConditions,
+ * } from '$lib/types/private';
  * @import { DateTimeField } from '$lib/types/public';
  */
+
+/**
+ * Maximum length of a Markdown value used as a sort key, before its syntax is removed.
+ */
+const MARKDOWN_SORT_KEY_LENGTH = 1000;
 
 /**
  * List of fields that may contain Markdown syntax and should be stripped before sorting. This
@@ -22,7 +40,10 @@ export const MARKDOWN_FIELD_KEYS = ['title', 'summary', 'description'];
 /**
  * Get a function that computes the sort key for a single entry. Pre-computing this once (O(n))
  * instead of re-computing inside the comparator (O(n log n)) avoids re-parsing dates and stripping
- * Markdown syntax on every comparison.
+ * Markdown syntax on every comparison. An entry without a value gets `undefined`, which
+ * `sortItemsByKey()` puts last in either order, so empty numbers, dates and strings alike end up
+ * at the bottom, rather than among the negative numbers, at the epoch or before `a`. A Boolean
+ * field without a value is taken as `false`, as the editor shows it.
  * @param {object} args Arguments.
  * @param {string} args.key Sort key field path.
  * @param {StringConstructor | NumberConstructor | DateConstructor | BooleanConstructor} args.type
@@ -33,7 +54,7 @@ export const MARKDOWN_FIELD_KEYS = ['title', 'summary', 'description'];
  * @param {DateTimeField | undefined} args.dateFieldConfig DateTime field config, or `undefined` if
  * the field is not a DateTime field.
  * @param {boolean} args.isMarkdownField Whether the field may contain Markdown syntax.
- * @returns {(entry: Entry) => string | number} Sort key getter for one entry.
+ * @returns {(entry: Entry) => string | number | undefined} Sort key getter for one entry.
  */
 export const getSortKeyGetter = ({
   key,
@@ -45,33 +66,107 @@ export const getSortKeyGetter = ({
   isMarkdownField,
 }) => {
   // Special handling for summary, which uses a generated value instead of a raw field value
-  if (key === '_summary') {
+  if (key === SUMMARY_COLUMN_KEY) {
     return (/** @type {Entry} */ entry) =>
       getEntrySummary(collection, entry, { locale, useTemplate: true });
   }
 
   if (dateFieldConfig) {
     return (/** @type {Entry} */ entry) => {
-      const raw = getPropertyValue({ entry, locale, collectionName, key });
+      const raw = getListedEntryValue({ entry, locale, collectionName, key });
+      const time = getDate(raw, dateFieldConfig, locale)?.getTime() ?? NaN;
 
-      return raw ? Number(getDate(raw, dateFieldConfig) ?? 0) : 0;
+      // A date that can’t be parsed is no better than a missing one
+      return Number.isNaN(time) ? undefined : time;
     };
   }
 
   if (type === String) {
     return (/** @type {Entry} */ entry) => {
-      const raw = getPropertyValue({ entry, locale, collectionName, key });
-      const str = raw ? String(raw) : '';
+      const raw = normalizeMultiValue(getListedEntryValue({ entry, locale, collectionName, key }));
 
-      return isMarkdownField ? removeMarkdownSyntax(str) : str;
+      if (isEmptyValue(raw)) {
+        return undefined;
+      }
+
+      const str = String(raw);
+
+      // Only the beginning of a long Markdown value tells entries apart, and stripping the syntax
+      // takes time that grows faster than the length on a value crafted to be nested deeply
+      return isMarkdownField ? removeMarkdownSyntax(str.slice(0, MARKDOWN_SORT_KEY_LENGTH)) : str;
     };
   }
 
-  return (/** @type {Entry} */ entry) => {
-    const raw = getPropertyValue({ entry, locale, collectionName, key });
+  if (type === Boolean) {
+    return (/** @type {Entry} */ entry) => {
+      const raw = getListedEntryValue({ entry, locale, collectionName, key });
 
-    return Number(raw ?? 0);
+      return raw === true ? 1 : 0;
+    };
+  }
+
+  // A number, or the commit date, which is a `Date`
+  return (/** @type {Entry} */ entry) => {
+    const raw = normalizeMultiValue(getListedEntryValue({ entry, locale, collectionName, key }));
+    const num = isEmptyValue(raw) ? NaN : Number(raw);
+
+    return Number.isNaN(num) ? undefined : num;
   };
+};
+
+/**
+ * Get a function that computes the sort key of an entry for the given field, along with how the
+ * keys are compared. It doesn’t support the `_manual` key, which sorts by the reorder field.
+ * @param {object} args Arguments.
+ * @param {InternalCollection} args.collection Collection that the entries belong to.
+ * @param {string} args.key Sort key field path, or one of the special sort keys like `slug`.
+ * @param {string} args.locale Locale of the content to read the values from.
+ * @returns {{ getSortKey: (entry: Entry) => string | number | undefined, isStringType: boolean }}
+ * Sort key getter, and whether the keys are strings to be compared in a locale-aware manner rather
+ * than numbers.
+ */
+export const getEntrySortKeyGetter = ({ collection, key, locale }) => {
+  const { name: collectionName } = collection;
+  const fieldConfig = getField({ collectionName, keyPath: key });
+  const type = getSortKeyType({ key, fieldConfig });
+
+  const dateFieldConfig =
+    fieldConfig?.widget === 'datetime' ? /** @type {DateTimeField} */ (fieldConfig) : undefined;
+
+  // Check if the field is a Markdown-enabled field: we use both the field config and a hardcoded
+  // key list to determine this, as some fields may be text fields that contain Markdown syntax.
+  const isMarkdownField =
+    RICH_TEXT_FIELD_TYPES.includes(fieldConfig?.widget ?? '') || MARKDOWN_FIELD_KEYS.includes(key);
+
+  const getSortKey = getSortKeyGetter({
+    key,
+    type,
+    collection,
+    locale,
+    collectionName,
+    dateFieldConfig,
+    isMarkdownField,
+  });
+
+  return { getSortKey, isStringType: !dateFieldConfig && type === String };
+};
+
+/**
+ * Move the collection’s index file to the top of the sorted entries, where it should always be.
+ * It’s told by its path rather than by its slug, because another collection’s index file within
+ * this collection’s folder carries the same slug.
+ * @param {Entry[]} entries Sorted entries, which are modified in place.
+ * @param {InternalCollection} collection Collection that the entries belong to.
+ * @returns {Entry[]} The given entries.
+ */
+const moveIndexFileToTop = (entries, collection) => {
+  const index = entries.findIndex((entry) => isCollectionIndexFile(collection, entry));
+
+  if (index > -1) {
+    entries.unshift(entries.splice(index, 1)[0]);
+  }
+
+  return entries;
 };
 
 /**
@@ -81,7 +176,7 @@ export const getSortKeyGetter = ({
  * @param {SortingConditions} [conditions] Sorting conditions.
  * @returns {Entry[]} Sorted entry list.
  * @see https://decapcms.org/docs/configuration-options/#sortable_fields
- * @see https://sveltiacms.app/en/docs/collections/entries#sorting
+ * @see https://sveltiacms.app/en/docs/collections/entries/views#sorting
  */
 export const sortEntries = (entries, collection, { key, order } = {}) => {
   const _entries = [...entries];
@@ -91,53 +186,23 @@ export const sortEntries = (entries, collection, { key, order } = {}) => {
   }
 
   const {
-    name: collectionName,
     _i18n: { defaultLocale: locale },
   } = collection;
 
-  // The `_manual` special key sorts by the collection’s reorder field. Resolve it to the actual
-  // field key so value lookup works for entries.
-  const orderFieldKey = getOrderFieldKey(collection);
-  const resolvedKey = key === '_manual' ? (orderFieldKey ?? key) : key;
-  const fieldConfig = getField({ collectionName, keyPath: resolvedKey });
-  // The reorder field stores numeric values but may not be defined under the collection’s `fields`,
-  // so it would default to a string sort. Force a numeric sort for it.
-  const isOrderKey = key === '_manual' || resolvedKey === orderFieldKey;
-  const type = isOrderKey ? Number : getSortKeyType({ key, fieldConfig });
-
-  const dateFieldConfig =
-    fieldConfig?.widget === 'datetime' ? /** @type {DateTimeField} */ (fieldConfig) : undefined;
-
-  // Check if the field is a Markdown-enabled field: we use both the field config and a hardcoded
-  // key list to determine this, as some fields may be text fields that contain Markdown syntax.
-  const isMarkdownField =
-    fieldConfig?.widget === 'richtext' ||
-    fieldConfig?.widget === 'markdown' ||
-    MARKDOWN_FIELD_KEYS.includes(key);
-
-  const getSortKey = getSortKeyGetter({
-    key: resolvedKey,
-    type,
-    collection,
-    locale,
-    collectionName,
-    dateFieldConfig,
-    isMarkdownField,
-  });
+  // The `_manual` special key sorts by the collection’s reorder field, or by the position in the
+  // array. Either way, the entries are sorted the same as in the reorder UI and when they are
+  // renumbered: an entry without a valid number goes last in either order, keeping its place among
+  // the others, as with any other key. The field may not be defined under the collection’s
+  // `fields`, so it would otherwise default to a string sort, and a missing value would come first
+  const { getSortKey, isStringType } = isManualOrderKey(collection, key)
+    ? {
+        getSortKey: getOrderValueGetter(/** @type {InternalEntryCollection} */ (collection)),
+        isStringType: false,
+      }
+    : getEntrySortKeyGetter({ collection, key, locale });
 
   // `sortItemsByKey()` computes the key once per entry, so there’s no need for a lookup table here
-  sortItemsByKey(_entries, getSortKey, !dateFieldConfig && type === String, order);
+  sortItemsByKey(_entries, getSortKey, isStringType, order);
 
-  const indexFileName = getIndexFile(collection)?.name;
-
-  // Index file should always be at the top
-  if (indexFileName) {
-    const index = _entries.findIndex((entry) => entry.slug === indexFileName);
-
-    if (index > -1) {
-      _entries.unshift(_entries.splice(index, 1)[0]);
-    }
-  }
-
-  return _entries;
+  return moveIndexFileToTop(_entries, collection);
 };

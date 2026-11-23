@@ -18,6 +18,91 @@ import { isObject } from '@sveltia/utils/object';
  */
 
 /**
+ * Default maximum number of output tokens. A translation of a long entry needs a large budget, and
+ * a model that thinks spends part of it on reasoning, so this is well above the length of a typical
+ * answer while staying within the output limit of every default model used by the integrations.
+ */
+export const DEFAULT_MAX_TOKENS = 16_000;
+
+/**
+ * Create the error thrown when a response was cut off at the output token limit, so that the
+ * truncated, likely unparsable, text isn’t returned as if it were complete.
+ * @param {string} apiLabel API name, e.g. `Messages`, which is followed by `API`.
+ * @returns {Error} Error.
+ */
+export const createTruncationError = (apiLabel) =>
+  new Error(`The response from the ${apiLabel} API was cut off at the token limit.`);
+
+/**
+ * Join the text parts of a response, which can be split into several parts and include other
+ * kinds of parts, such as thinking blocks.
+ * @param {unknown} parts Parts of the response, expected to be an array.
+ * @param {(part: Record<string, any>) => boolean} isAnswer Function to check whether a part holds
+ * the answer rather than, e.g., a thought.
+ * @param {string} apiLabel API name, e.g. `Messages`, which is followed by `API`.
+ * @returns {string} Joined text, trimmed.
+ * @throws {Error} When the response has no text part.
+ */
+export const joinTextParts = (parts, isAnswer, apiLabel) => {
+  /** @type {string[]} */
+  const texts = Array.isArray(parts)
+    ? parts
+        .filter((part) => isObject(part) && isAnswer(part) && typeof part.text === 'string')
+        .map(({ text }) => text)
+    : [];
+
+  if (!texts.length) {
+    throw new Error(`Invalid response format from ${apiLabel} API.`);
+  }
+
+  return texts.join('').trim();
+};
+
+/**
+ * Get the request headers for an API that authenticates with a bearer token.
+ * @param {string} apiKey API key.
+ * @param {Record<string, string>} headers Additional headers, which take precedence.
+ * @returns {Record<string, string>} Headers.
+ */
+const getBearerHeaders = (apiKey, headers) => ({
+  'Content-Type': 'application/json',
+  Authorization: `Bearer ${apiKey}`,
+  ...headers,
+});
+
+/**
+ * Send a JSON request to an API endpoint and return the parsed response.
+ * @param {object} args Arguments.
+ * @param {string} args.endpoint API endpoint URL.
+ * @param {Record<string, string>} args.headers Request headers.
+ * @param {Record<string, any>} args.body Request body, serialized as JSON.
+ * @param {string} args.apiLabel API name to be used in an error message, e.g. `Messages`, which
+ * is followed by `API error`.
+ * @returns {Promise<Record<string, any>>} Parsed response body.
+ * @throws {Error} When the API returns a non-OK response.
+ */
+export const postJSON = async ({ endpoint, headers, body, apiLabel }) => {
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    // The services disagree on where they put the message, so both places are looked at
+    const errorMessage = errorData.error?.message || errorData.message || '';
+
+    throw new Error(
+      `${apiLabel} API error: ${response.status} ${response.statusText}` +
+        `${errorMessage ? ` - ${errorMessage}` : ''}`,
+    );
+  }
+
+  return response.json();
+};
+
+/**
  * Sends a message using the Chat Completions API format.
  * Used by: Mistral, DeepSeek, and compatible custom endpoints.
  * @param {AiCompletionOptions & RequestOptions} options Options.
@@ -32,21 +117,15 @@ export const chatCompletions = async ({
   systemPrompt,
   userMessage,
   temperature = 0.3,
-  maxTokens = 4000,
+  maxTokens = DEFAULT_MAX_TOKENS,
   reasoning = 'high',
   extraBody = {},
 }) => {
-  /** @type {Record<string, string>} */
-  const defaultHeaders = {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${apiKey}`,
-    ...headers,
-  };
-
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: defaultHeaders,
-    body: JSON.stringify({
+  const data = await postJSON({
+    endpoint,
+    headers: getBearerHeaders(apiKey, headers),
+    apiLabel: 'Chat Completions',
+    body: {
       model,
       messages: [
         { role: 'system', content: systemPrompt },
@@ -57,20 +136,13 @@ export const chatCompletions = async ({
       stream: false,
       reasoning_effort: reasoning,
       ...extraBody,
-    }),
+    },
   });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const errorMessage = errorData.message || errorData.error?.message || '';
-
-    throw new Error(
-      `Chat Completions API error: ${response.status} ${response.statusText}` +
-        `${errorMessage ? ` - ${errorMessage}` : ''}`,
-    );
+  // The content can be empty or cut off mid-way when the budget runs out, e.g. on reasoning
+  if (data.choices?.[0]?.finish_reason === 'length') {
+    throw createTruncationError('Chat Completions');
   }
-
-  const data = await response.json();
 
   if (!data.choices || !Array.isArray(data.choices) || !data.choices[0]?.message?.content) {
     throw new Error('Invalid response format from Chat Completions API.');
@@ -93,40 +165,31 @@ export const responses = async ({
   model,
   systemPrompt,
   userMessage,
-  maxTokens = 4000,
+  maxTokens = DEFAULT_MAX_TOKENS,
+  reasoning,
   extraBody = {},
 }) => {
-  /** @type {Record<string, string>} */
-  const defaultHeaders = {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${apiKey}`,
-    ...headers,
-  };
-
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: defaultHeaders,
-    body: JSON.stringify({
+  const data = await postJSON({
+    endpoint,
+    headers: getBearerHeaders(apiKey, headers),
+    apiLabel: 'Responses',
+    body: {
       model,
       instructions: systemPrompt,
       input: userMessage,
       store: false,
       max_output_tokens: maxTokens,
+      // Reasoning tokens count toward `max_output_tokens`; without this, the model’s default effort
+      // applies
+      ...(reasoning ? { reasoning: { effort: reasoning } } : {}),
       ...extraBody,
-    }),
+    },
   });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const errorMessage = errorData.error?.message || '';
-
-    throw new Error(
-      `Responses API error: ${response.status} ${response.statusText}` +
-        `${errorMessage ? ` - ${errorMessage}` : ''}`,
-    );
+  // An incomplete response can also be cut off by a content filter, which is reported as invalid
+  if (data.status === 'incomplete' && data.incomplete_details?.reason === 'max_output_tokens') {
+    throw createTruncationError('Responses');
   }
-
-  const data = await response.json();
 
   // Try to get output_text directly first (simpler response format)
   if (typeof data.output_text === 'string') {
@@ -184,8 +247,8 @@ export const messages = async ({
   model,
   systemPrompt,
   userMessage,
-  temperature = 0.3,
-  maxTokens = 4000,
+  maxTokens = DEFAULT_MAX_TOKENS,
+  reasoning,
   extraBody = {},
 }) => {
   /** @type {Record<string, string>} */
@@ -196,34 +259,29 @@ export const messages = async ({
     defaultHeaders['x-api-key'] = apiKey;
   }
 
-  const response = await fetch(endpoint, {
-    method: 'POST',
+  const data = await postJSON({
+    endpoint,
     headers: defaultHeaders,
-    body: JSON.stringify({
+    apiLabel: 'Messages',
+    body: {
       model,
       max_tokens: maxTokens,
-      temperature,
       system: systemPrompt,
       messages: [{ role: 'user', content: userMessage }],
+      // Other reasoning levels are left to the model’s default effort
+      ...(reasoning === 'none' ? { thinking: { type: 'disabled' } } : {}),
       ...extraBody,
-    }),
+    },
   });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const errorMessage = errorData.error?.message || errorData.message || '';
-
-    throw new Error(
-      `Messages API error: ${response.status} ${response.statusText}` +
-        `${errorMessage ? ` - ${errorMessage}` : ''}`,
-    );
+  if (data.stop_reason === 'refusal') {
+    throw new Error('The request was declined by the Messages API.');
   }
 
-  const data = await response.json();
-
-  if (!data.content || !Array.isArray(data.content) || !data.content[0]) {
-    throw new Error('Invalid response format from Messages API.');
+  if (data.stop_reason === 'max_tokens') {
+    throw createTruncationError('Messages');
   }
 
-  return data.content[0].text.trim();
+  // The response can begin with `thinking` blocks and split the answer into several text blocks
+  return joinTextParts(data.content, (block) => block.type === 'text', 'Messages');
 };

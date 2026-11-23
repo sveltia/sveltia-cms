@@ -1,13 +1,33 @@
 import { toRaw } from '@sveltia/utils/object';
 import { escapeRegExp } from '@sveltia/utils/string';
 import { parse as libParseTOML } from 'smol-toml';
-import { parse as libParseYAML } from 'yaml';
+import { parse as libParseYAML, parseDocument } from 'yaml';
 
 import { customFileFormatRegistry } from '$lib/services/api/registries';
 import { getCollection } from '$lib/services/contents/collection';
+import { isCollectionIndexFilePath } from '$lib/services/contents/collection/entries/index-file';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
-import { FRONTMATTER_FORMATS } from '$lib/services/contents/file';
-import { getFrontMatterDelimiters } from '$lib/services/contents/file/config';
+import { getFrontMatterDelimiters, resolveFileConfig } from '$lib/services/contents/file/config';
+import {
+  FRONTMATTER_DELIMITER_MAP,
+  FRONTMATTER_FORMATS,
+  getFormatSyntax,
+} from '$lib/services/contents/file/constants';
+import {
+  mayHaveUnsafeInteger,
+  replaceBigInts,
+  reviveUnsafeInteger,
+} from '$lib/services/contents/file/integers';
+import { rememberLeadingComment } from '$lib/services/contents/file/leading-comments';
+import { fileStates, updateFileState } from '$lib/services/contents/file/state';
+import { rememberTomlValueSources } from '$lib/services/contents/file/toml-sources';
+import {
+  collectJSONFloatSources,
+  collectYAMLFloatSources,
+  mayHaveWholeNumberFloat,
+  rememberValueSources,
+  reviveWholeNumberFloat,
+} from '$lib/services/contents/file/value-sources';
 import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
@@ -15,51 +35,185 @@ import { getOrCreate } from '$lib/services/utils/cache';
  * BaseEntryListItem,
  * InternalCollection,
  * InternalCollectionFile,
- * InternalEntryCollection,
  * } from '$lib/types/private';
- * @import { FrontMatterFormat } from '$lib/types/public';
+ * @import { FormatSyntax } from '$lib/services/contents/file/constants';
+ * @import { FileFormat, FrontMatterFormat } from '$lib/types/public';
  */
 
 /**
- * Parse a JSON document using the built-in method.
- * @param {string} str JSON document.
- * @returns {any} Parsed object.
+ * A `JSON.parse()` reviver combining {@link reviveUnsafeInteger} and
+ * {@link reviveWholeNumberFloat}.
+ * @param {string} key Property name.
+ * @param {any} value Parsed value.
+ * @param {{ source?: string }} [context] Context, which holds the source text of a primitive value.
+ * @returns {any} Value.
  */
-export const parseJSON = (str) => JSON.parse(str);
+const reviveNumber = (key, value, context) =>
+  reviveWholeNumberFloat(key, reviveUnsafeInteger(key, value, context), context);
+
+/**
+ * Parse a JSON document using the built-in method. An integer that a `number` can’t represent
+ * exactly is remembered, so it can be saved as it was. So is the source text of a float that is a
+ * whole number, e.g. `10.0`, if the document is read from a file.
+ * @param {string} str JSON document.
+ * @param {string} [path] Path of the file the document is read from.
+ * @returns {any} Parsed object.
+ * @see {@link reviveUnsafeInteger}
+ * @see {@link reviveWholeNumberFloat}
+ */
+export const parseJSON = (str, path) => {
+  if (path === undefined || !mayHaveWholeNumberFloat(str)) {
+    return mayHaveUnsafeInteger(str) ? JSON.parse(str, reviveUnsafeInteger) : JSON.parse(str);
+  }
+
+  const { value, sourceMap } = collectJSONFloatSources(JSON.parse(str, reviveNumber));
+
+  rememberValueSources(path, sourceMap);
+
+  return value;
+};
 
 /**
  * Parse a TOML document using a library. The TOML parser returns date fields as `Date` objects, but
- * we need strings to match the JSON and YAML parsers, so we have to parse twice.
+ * we need strings to match the JSON and YAML parsers, so we have to parse twice. An integer that a
+ * `number` can’t represent exactly, which the parser would otherwise reject, is remembered, so it
+ * can be saved as it was. So is the source text of a date, and of a float that is a whole number,
+ * e.g. `10.0`, if the document is read from a file.
  * @param {string} str TOML document.
+ * @param {string} [path] Path of the file the document is read from.
  * @returns {any} Parsed object.
+ * @see {@link replaceBigInts}
+ * @see {@link rememberTomlValueSources}
  */
-export const parseTOML = (str) => toRaw(libParseTOML(str));
+export const parseTOML = (str, path) => {
+  const parsed = replaceBigInts(libParseTOML(str, { integersAsBigInt: 'asNeeded' }));
+
+  if (path !== undefined) {
+    rememberTomlValueSources({ path, str, parsed });
+  }
+
+  return toRaw(parsed);
+};
 
 /**
- * Parse a YAML document using a library.
+ * Parse a YAML document using a library, like its `parse()` method, and remember the source text of
+ * the floats in it that are whole numbers.
+ * @param {string} str YAML document.
+ * @param {Record<string, any> | undefined} options Parsing options.
+ * @param {string} path Path of the file the document is read from.
+ * @returns {any} Parsed object.
+ * @throws {Error} When the document could not be parsed.
+ * @see https://github.com/eemeli/yaml/blob/main/src/public-api.ts
+ */
+const parseYAMLWithFloatSources = (str, options, path) => {
+  const doc = parseDocument(str, options);
+
+  // eslint-disable-next-line no-console
+  doc.warnings.forEach((warning) => console.warn(warning));
+
+  if (doc.errors.length) {
+    throw doc.errors[0];
+  }
+
+  rememberValueSources(path, collectYAMLFloatSources(doc));
+
+  return doc.toJS(options);
+};
+
+/**
+ * Parse a YAML document using a library. An integer that a `number` can’t represent exactly is
+ * remembered, so it can be saved as it was. So is the source text of a float that is a whole
+ * number, e.g. `10.0`, if the document is read from a file.
  * @param {string} str YAML document.
  * @param {object} [options] Parsing options.
+ * @param {string} [path] Path of the file the document is read from.
  * @returns {any} Parsed object.
+ * @see {@link replaceBigInts}
+ * @see {@link collectYAMLFloatSources}
  */
-export const parseYAML = (str, options) => libParseYAML(str, options);
+export const parseYAML = (str, options, path) => {
+  const hasUnsafeInteger = mayHaveUnsafeInteger(str);
+  const _options = hasUnsafeInteger ? { ...options, intAsBigInt: true } : options;
+
+  const parsed =
+    path !== undefined && mayHaveWholeNumberFloat(str)
+      ? parseYAMLWithFloatSources(str, _options, path)
+      : libParseYAML(str, _options);
+
+  return hasUnsafeInteger ? replaceBigInts(parsed) : parsed;
+};
 
 /**
- * Detect the Markdown front matter serialization format by checking a delimiter in the content.
+ * Detect the Markdown front matter serialization format by checking the first line of the content,
+ * which is the opening delimiter of a front matter block, as Netlify/Decap CMS does. A line that
+ * only starts with a delimiter, e.g. a Hugo shortcode like `{{< figure >}}`, doesn’t count.
  * @param {string} text File content.
  * @returns {FrontMatterFormat} Determined format.
  */
 export const detectFrontMatterFormat = (text) => {
-  if (text.startsWith('+++')) {
-    return 'toml-frontmatter';
-  }
+  const firstLine = text.split('\n', 1)[0].trim();
 
-  if (text.startsWith('{')) {
-    return 'json-frontmatter';
-  }
-
-  return 'yaml-frontmatter';
+  return (
+    FRONTMATTER_FORMATS.find((format) => firstLine === FRONTMATTER_DELIMITER_MAP[format][0]) ??
+    'yaml-frontmatter'
+  );
 };
 
+/**
+ * Regular expression to match JSON front matter written by an earlier version of Sveltia CMS, which
+ * wrapped a complete JSON object in the `{` and `}` delimiters, doubling the braces. The object is
+ * followed by the closing delimiter on a line of its own, then by the end of the file or a blank
+ * line and the body. A line break inside a JSON value is always escaped, so this can’t match
+ * within the object.
+ */
+const DOUBLE_BRACE_JSON_FRONT_MATTER_REGEX =
+  /^\{\n(?<head>\{[\s\S]*?\})\n\}(?:\n\n(?<body>[\s\S]*))?$/;
+
+/**
+ * Parse the head of JSON front matter. Like Netlify/Decap CMS, the formatter strips the outer
+ * braces of the object when they double as the delimiters, so add them back if they are missing. A
+ * complete object, which can come within custom delimiters, is parsed as is.
+ * @param {string} head Front matter head.
+ * @param {string} [path] Path of the file the front matter is read from.
+ * @returns {any} Parsed object.
+ */
+const parseJSONFrontMatterHead = (head, path) => {
+  const trimmedHead = head.trim();
+
+  return parseJSON(trimmedHead.startsWith('{') ? trimmedHead : `{${trimmedHead}}`, path);
+};
+
+/**
+ * Wrap the given parser so it also remembers the comments at the top of a document read from a
+ * file.
+ * @param {(str: string, path?: string) => any} parser YAML or TOML parser.
+ * @returns {(str: string, path?: string) => any} Parser.
+ */
+const withLeadingComment = (parser) => (str, path) => {
+  const parsed = parser(str, path);
+
+  if (path !== undefined) {
+    rememberLeadingComment(path, str);
+  }
+
+  return parsed;
+};
+
+/**
+ * Parser for each syntax, taking a document and the path of the file it’s read from.
+ * @type {Record<FormatSyntax, (str: string, path?: string) => any>}
+ */
+const PARSERS = {
+  yaml: withLeadingComment((str, path) => parseYAML(str, undefined, path)),
+  toml: withLeadingComment(parseTOML),
+  json: parseJSON,
+};
+
+/**
+ * Parser for the head of front matter in each syntax.
+ * @type {Record<FormatSyntax, (head: string, path?: string) => any>}
+ */
+const FRONT_MATTER_PARSERS = { ...PARSERS, json: parseJSONFrontMatterHead };
 /**
  * Cache for front matter regexes, keyed by `${sd}|${ed}` (escaped delimiter pair). Avoids
  * rebuilding the same regex for every entry in a collection (all entries share identical
@@ -69,81 +223,128 @@ export const detectFrontMatterFormat = (text) => {
 const frontMatterRegexCache = new Map();
 
 /**
- * Parse front matter from a Markdown file.
+ * Parse front matter from a Markdown file, and tell whether the file has a front matter block.
  * @param {object} args Arguments.
  * @param {InternalCollection} args.collection Collection.
  * @param {InternalCollectionFile} [args.collectionFile] Collection file. File/singleton collection
  * only.
+ * @param {boolean} [args.isIndexFile] Whether the file is the collection’s special index file,
+ * which can have a format of its own.
  * @param {FrontMatterFormat} args.format Front matter format.
  * @param {string} args.text File content.
- * @returns {Record<string, any>} Parsed front matter and body.
+ * @param {string} [args.path] File path, given to remember the source text of the floats that are
+ * whole numbers.
+ * @returns {{ content: Record<string, any>, hasFrontMatter: boolean }} Parsed front matter and
+ * body, and whether the file has a front matter block.
  * @throws {Error} When the front matter block could not be parsed.
  */
-export const parseFrontMatter = ({ collection, collectionFile, format, text }) => {
+const parseFrontMatterBlock = ({ collection, collectionFile, isIndexFile, format, text, path }) => {
   const {
     format: _format,
     fmDelimiters,
     bodyField: { key: bodyKey = 'body', inline: bodyInline = false } = {},
-  } = (collectionFile ?? /** @type {InternalEntryCollection} */ (collection))._file;
+  } = resolveFileConfig({ collection, collectionFile, isIndexFile });
 
-  const [startDelimiter, endDelimiter] = (_format === 'frontmatter'
-    ? getFrontMatterDelimiters({ format, delimiter: fmDelimiters })
-    : fmDelimiters) ?? ['---', '---'];
+  const [startDelimiter, endDelimiter] =
+    (_format === 'frontmatter'
+      ? getFrontMatterDelimiters({ format, delimiter: fmDelimiters })
+      : fmDelimiters) ?? FRONTMATTER_DELIMITER_MAP['yaml-frontmatter'];
 
   const sd = escapeRegExp(startDelimiter);
   const ed = escapeRegExp(endDelimiter);
   const cacheKey = `${sd}|${ed}`;
 
-  // Front matter matching: allow an empty head and only match a block at the start of the file.
+  // Front matter matching: allow an empty head, including no line at all between the delimiters
+  // (e.g. Jekyll’s `---\n---`), and only match a block at the start of the file. Trailing spaces or
+  // tabs after a delimiter are ignored, as other front matter parsers do.
   const regex = getOrCreate(
     frontMatterRegexCache,
     cacheKey,
-    () => new RegExp(`^${sd}\n(?:(?<head>[\\s\\S]*?))\n${ed}(?:\n(?<body>[\\s\\S]*))?$`, 's'),
+    () =>
+      new RegExp(
+        `^${sd}[ \t]*\n(?:(?<head>[\\s\\S]*?)\n)?${ed}[ \t]*(?:\n(?<body>[\\s\\S]*))?$`,
+        's',
+      ),
   );
 
-  const { head, body } = text.match(regex)?.groups ?? {};
+  // Blank lines or spaces before the front matter block are ignored
+  const trimmedText = text.trimStart();
 
-  if (!head && !body) {
-    // Support Markdown without a front matter block, particularly for VitePress
-    // The text can be an empty string, but it’s okay to return an empty body
-    return { [bodyKey]: text };
+  const groups =
+    (format === 'json-frontmatter' && startDelimiter === '{' && endDelimiter === '}'
+      ? trimmedText.match(DOUBLE_BRACE_JSON_FRONT_MATTER_REGEX)?.groups
+      : undefined) ?? trimmedText.match(regex)?.groups;
+
+  if (!groups) {
+    // Support Markdown without a front matter block, particularly for VitePress. The body keeps its
+    // leading whitespace, e.g. an indented code block. The text can be an empty string, but it’s
+    // okay to return an empty body
+    return { content: { [bodyKey]: text }, hasFrontMatter: false };
   }
 
-  let parsedHead = {};
+  const { head = '', body } = groups;
+  const syntax = FRONTMATTER_FORMATS.includes(format) ? getFormatSyntax(format) : undefined;
+  let parsedHead = syntax ? FRONT_MATTER_PARSERS[syntax](head, path) : {};
 
-  if (format === 'yaml-frontmatter') {
-    parsedHead = parseYAML(head);
-  }
+  // A Markdown file starting with blank lines or spaces before a delimiter line, e.g. a thematic
+  // break, could be saved without front matter by an earlier version, which only protected a body
+  // starting with the delimiter itself. What lies between that line and the next one is then text,
+  // which YAML reads as a string. A front matter block is a map, so such a file is read as having
+  // no front matter, as it was meant to
+  if (
+    text !== trimmedText &&
+    head.trim() &&
+    parsedHead !== null &&
+    parsedHead !== undefined &&
+    (typeof parsedHead !== 'object' || Array.isArray(parsedHead))
+  ) {
+    // Forget what parsing the text remembered about the file as its front matter, e.g. a heading
+    // taken as a comment, which would otherwise be written in a new front matter block on a save
+    if (path !== undefined) {
+      updateFileState(path, { leadingComment: undefined, valueSources: undefined });
+    }
 
-  if (format === 'toml-frontmatter') {
-    parsedHead = parseTOML(head);
-  }
-
-  if (format === 'json-frontmatter') {
-    // For JSON front matter, we need to add the braces back since the regex strips them
-    parsedHead = parseJSON(`{${head}}`);
+    return { content: { [bodyKey]: text }, hasFrontMatter: false };
   }
 
   if (!parsedHead || typeof parsedHead !== 'object' || Array.isArray(parsedHead)) {
     parsedHead = {};
   }
 
-  return {
+  const content = {
     ...parsedHead,
     // The formatter inserts a blank line between the closing delimiter and the body, so the regex
     // above leaves that blank line as a leading line break. Strip it to make the value a faithful
-    // round-trip of what was written; otherwise a freshly-opened draft looks modified.
-    ...(!bodyInline && !(bodyKey in parsedHead) ? { [bodyKey]: body?.replace(/^\n/, '') } : {}),
+    // round-trip of what was written; otherwise a freshly-opened draft looks modified. The front
+    // matter takes precedence over the text below it. With `body_field.inline` on, text below is
+    // still read when the front matter lacks the key, so it’s moved inline on a Save rather than
+    // lost, but no empty body is added to a file that has none.
+    ...(!Object.hasOwn(parsedHead, bodyKey) && (!bodyInline || body?.trim())
+      ? { [bodyKey]: body?.replace(/^\n/, '') }
+      : {}),
   };
+
+  return { content, hasFrontMatter: true };
 };
 
 /**
- * Parse raw content with given file details.
- * @param {BaseEntryListItem} entry Entry file list item.
- * @returns {Promise<any>} Parsed content.
- * @throws {Error} When the content could not be parsed.
+ * Parse front matter from a Markdown file.
+ * @param {Parameters<typeof parseFrontMatterBlock>[0]} args Arguments. See
+ * {@link parseFrontMatterBlock}.
+ * @returns {Record<string, any>} Parsed front matter and body.
+ * @throws {Error} When the front matter block could not be parsed.
  */
-export const parseEntryFile = async ({ text = '', path, folder: { collectionName, fileName } }) => {
+export const parseFrontMatter = (args) => parseFrontMatterBlock(args).content;
+
+/**
+ * Resolve the collection, collection file and format of the given entry file.
+ * @param {Pick<BaseEntryListItem, 'path' | 'folder'>} file Entry file list item.
+ * @returns {{ collection: InternalCollection, collectionFile: InternalCollectionFile | undefined,
+ * isIndexFile: boolean, format: FileFormat }} Collection, collection file, whether the file is the
+ * collection’s special index file, and the format.
+ * @throws {Error} When the collection or the collection file can’t be found.
+ */
+const resolveEntryFile = ({ path, folder: { collectionName, fileName } }) => {
   const collection = getCollection(collectionName);
 
   const collectionFile =
@@ -157,17 +358,53 @@ export const parseEntryFile = async ({ text = '', path, folder: { collectionName
     throw new Error('Collection file not found');
   }
 
-  // Normalize line breaks
-  text = text.trim().replace(/\r\n?/g, '\n');
+  // The collection’s special index file can have a format of its own
+  const isIndexFile = !collectionFile && isCollectionIndexFilePath(collection, path);
+  const { format } = resolveFileConfig({ collection, collectionFile, isIndexFile });
 
-  let {
-    _file: { format },
-  } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
+  return { collection, collectionFile, isIndexFile, format };
+};
 
+/**
+ * Check whether the given entry file is read with a parser registered with
+ * `CMS.registerCustomFormat()`. What such a parser returns can change from one load to the next
+ * without the configuration changing, so its results are never cached.
+ * @param {Pick<BaseEntryListItem, 'path' | 'folder'>} file Entry file list item.
+ * @returns {boolean} Result. `false` if the file’s collection can’t be found, as it’s then not
+ * parsed at all.
+ */
+export const hasCustomParser = (file) => {
+  try {
+    return !!customFileFormatRegistry.get(resolveEntryFile(file).format)?.parser;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Parse raw content with given file details.
+ * @param {BaseEntryListItem} entry Entry file list item.
+ * @returns {Promise<any>} Parsed content.
+ * @throws {Error} When the content could not be parsed.
+ */
+export const parseEntryFile = async ({ text = '', path, folder }) => {
+  const resolved = resolveEntryFile({ path, folder });
+  const { collection, collectionFile, isIndexFile } = resolved;
+  let { format } = resolved;
+
+  // Forget what was read from an earlier version of the file
+  fileStates.delete(path);
+
+  // Normalize line breaks. The leading whitespace is only dropped where it’s meaningless: the
+  // content of a raw file, and the body of a file without front matter, keep theirs, e.g. an
+  // indented code block at the start of a Markdown file, as a save keeps it
+  text = text.trimEnd().replace(/\r\n?/g, '\n');
+
+  const trimmedText = text.trimStart();
   const customParser = customFileFormatRegistry.get(format)?.parser;
 
   if (customParser) {
-    return customParser(text);
+    return customParser(trimmedText);
   }
 
   // Raw format: return the content as-is
@@ -176,32 +413,46 @@ export const parseEntryFile = async ({ text = '', path, folder: { collectionName
   }
 
   try {
-    if (format === 'yaml' || format === 'yml') {
-      return parseYAML(text);
-    }
+    const isDetected = format === 'frontmatter';
 
-    if (format === 'toml') {
-      return parseTOML(text);
-    }
-
-    if (format === 'json') {
-      return parseJSON(text);
-    }
-
-    if (format === 'frontmatter') {
-      format = detectFrontMatterFormat(text);
+    if (isDetected) {
+      format = detectFrontMatterFormat(trimmedText);
     }
 
     if (FRONTMATTER_FORMATS.includes(/** @type {any} */ (format))) {
-      return parseFrontMatter({
+      const { content, hasFrontMatter } = parseFrontMatterBlock({
         collection,
         collectionFile,
+        isIndexFile,
         format: /** @type {FrontMatterFormat} */ (format),
         text,
+        path,
       });
+
+      // Remembered, so the file is saved back in the same format. A file without a front matter
+      // block gets the default one, as a new file does
+      if (isDetected && hasFrontMatter) {
+        updateFileState(path, { format: /** @type {FrontMatterFormat} */ (format) });
+      }
+
+      return content;
+    }
+
+    // Any other format with a syntax is read as a whole
+    const syntax = getFormatSyntax(format);
+
+    if (syntax) {
+      return PARSERS[syntax](trimmedText, path);
     }
   } catch (/** @type {any} */ ex) {
     throw new Error(`${path} could not be parsed due to ${ex.name}: ${ex.message}`);
+  }
+
+  if (customFileFormatRegistry.has(format)) {
+    throw new Error(
+      `${path} could not be parsed, as no \`fromFile\` method was registered for the custom ` +
+        `“${format}” format with \`CMS.registerCustomFormat()\``,
+    );
   }
 
   throw new Error(`${path} could not be parsed due to an unknown format: ${format}`);

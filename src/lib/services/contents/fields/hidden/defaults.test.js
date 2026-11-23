@@ -100,6 +100,20 @@ describe('Test getDefaultValueMap()', () => {
     expect(result).toEqual({ identifier: 'prefix-en-suffix' });
   });
 
+  test('should keep an escaped template tag for another tool, without the backslash', () => {
+    /** @type {HiddenField} */
+    const fieldConfig = {
+      ...baseFieldConfig,
+      default: 'portfolio/\\{{ title | slugify }}/{{locale}}/index.html',
+    };
+
+    const keyPath = 'permalink';
+    const locale = 'en';
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
+
+    expect(result).toEqual({ permalink: 'portfolio/{{ title | slugify }}/en/index.html' });
+  });
+
   test('should replace {{datetime}} placeholder with formatted datetime', () => {
     /** @type {HiddenField} */
     const fieldConfig = {
@@ -595,6 +609,22 @@ describe('Test getDefaultValueMap()', () => {
       const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
 
       expect(result).toEqual({ email_with_default: 'john@example.com' });
+    });
+
+    test('should resolve the template tags in transformation arguments', () => {
+      user.account = { backendName: 'github', login: 'johndoe', name: '', email: '' };
+
+      /** @type {HiddenField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: "{{author-name | default('{{author-login | upper}} ({{locale}})')}}",
+      };
+
+      const keyPath = 'author';
+      const locale = 'en';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
+
+      expect(result).toEqual({ author: 'JOHNDOE (en)' });
     });
 
     test('should handle transformation with whitespace in placeholder', () => {

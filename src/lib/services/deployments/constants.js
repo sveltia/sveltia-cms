@@ -1,4 +1,8 @@
 /**
+ * @import { DeployState } from '$lib/types/private';
+ */
+
+/**
  * How long to wait between re-checks while a build is pending, in milliseconds. The interval is
  * fixed rather than widening: a build finishing is what the editor is waiting on, so noticing it
  * late is worse than the cost of asking, and one request per check keeps that cost small.
@@ -12,6 +16,15 @@ export const POLL_INTERVAL = 5000;
 export const POLL_MAX_DURATION = 10 * 60 * 1000;
 
 /**
+ * How long to keep waiting for a commit that has nothing reported against it, in milliseconds. A
+ * provider can take a moment to post its first status after a push — a CI job often sits in a queue
+ * for a while before it starts — so the loop doesn’t conclude from the first empty answers that
+ * there’s no build to wait for. It’s a duration rather than a number of checks, because a queue
+ * wait is measured in time, not in requests.
+ */
+export const UNKNOWN_GRACE_DURATION = 60 * 1000;
+
+/**
  * How long a resolved deployment stays fresh, in milliseconds. Reopening a view within this window
  * reuses the cached result instead of querying the backend again.
  */
@@ -19,3 +32,14 @@ export const DEPLOY_TTL = 30000;
 
 /** How long a page liveness result is cached per URL, in milliseconds. */
 export const PING_TTL = 30000;
+
+/**
+ * Map of deploy states to the i18n string keys of the sentences describing them, for the states an
+ * editor needs explained. A finished build needs no words, and an unknown state has nothing to say.
+ * @type {Partial<Record<DeployState, string>>}
+ */
+export const DEPLOY_STATE_MESSAGES = {
+  checking: 'deploy_preview.checking',
+  pending: 'deploy_preview.building',
+  error: 'deploy_preview.build_failed',
+};

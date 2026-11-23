@@ -4,9 +4,10 @@ import { getValidCollections } from '$lib/services/contents/collection';
 import {
   getValidCollectionFiles,
   isValidCollectionFile,
-} from '$lib/services/contents/collection/files';
+} from '$lib/services/contents/collection/predicates';
 import { getLocalePath } from '$lib/services/contents/i18n';
 import { normalizeI18nConfig } from '$lib/services/contents/i18n/config';
+import { hasLocalePlaceholder } from '$lib/services/contents/i18n/placeholder';
 
 /**
  * @import { EntryFolderInfo, InternalCmsConfig, InternalLocaleCode } from '$lib/types/private';
@@ -69,33 +70,58 @@ export const compareFilePath = (a, b) =>
 export const getEntryCollectionFolders = ({ collections }) =>
   getValidCollections({ collections, type: 'entry' })
     .map((collection) => {
-      const { name: collectionName, folder } = /** @type {EntryCollection} */ (collection);
+      const { name: collectionName, folder, file } = /** @type {EntryCollection} */ (collection);
+
+      // All the entries are stored in one file, which is matched by its path like a file
+      // collection’s file. A collection file name is not given, as the file is not one
+      if (typeof file === 'string') {
+        return { collectionName, filePathMap: { _default: stripSlashes(file) } };
+      }
+
       const folderPath = stripSlashes(/** @type {string} */ (folder));
+      const _i18n = normalizeI18nConfig(collection);
 
       const {
         allLocales,
         defaultLocale,
         omitDefaultLocaleFromFilePath,
         structureMap: { i18nMultiRootFolder },
-      } = normalizeI18nConfig(collection);
+      } = _i18n;
+
+      /**
+       * Get the folder path for the given locale.
+       * @param {InternalLocaleCode} locale Locale code.
+       * @returns {string} Folder path.
+       */
+      const getFolderPath = (locale) => {
+        // The `{{locale}}` placeholder says where the locale folder goes
+        if (hasLocalePlaceholder(folderPath)) {
+          return getLocalePath({ _i18n, locale, path: folderPath });
+        }
+
+        if (i18nMultiRootFolder) {
+          return omitDefaultLocaleFromFilePath && locale === defaultLocale
+            ? folderPath
+            : `${locale}/${folderPath}`;
+        }
+
+        return folderPath;
+      };
 
       return {
         collectionName,
         folderPath,
         folderPathMap: Object.fromEntries(
-          allLocales.map((locale) => [
-            locale,
-            i18nMultiRootFolder
-              ? omitDefaultLocaleFromFilePath && locale === defaultLocale
-                ? folderPath
-                : `${locale}/${folderPath}`
-              : folderPath,
-          ]),
+          allLocales.map((locale) => [locale, getFolderPath(locale)]),
         ),
       };
     })
     .sort((a, b) =>
-      compare(/** @type {string} */ (a.folderPath), /** @type {string} */ (b.folderPath)),
+      // A collection storing all the entries in one file has a file path instead of a folder path
+      compare(
+        a.folderPath ?? /** @type {Record<string, string>} */ (a.filePathMap)._default,
+        b.folderPath ?? /** @type {Record<string, string>} */ (b.filePathMap)._default,
+      ),
     );
 
 /**

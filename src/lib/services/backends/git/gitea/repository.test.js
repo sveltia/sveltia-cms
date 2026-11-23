@@ -1,26 +1,36 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { lockedBranch, mergeLockedBranch } from '$lib/services/backends/branch-access';
 import { REPOSITORY_INFO_PLACEHOLDER } from '$lib/services/backends/git/shared/repository';
 
 import {
+  _resetRepositoryInfoCache,
+  checkBranchAccess,
   checkRepositoryAccess,
+  fetchBranch,
   fetchDefaultBranchName,
+  fetchRepositoryAccess,
   getBaseURLs,
   getRepositoryInfo,
   repository,
-  resetRepositoryInfoCache,
 } from './repository.js';
 
 // Mock dependencies with vi.hoisted to ensure proper hoisting
 const getMock = vi.hoisted(() => vi.fn());
 const fetchAPIMock = vi.hoisted(() => vi.fn());
 
-vi.mock('@sveltia/i18n', () => ({
-  _: vi.fn((key) => key),
+const { mockUser } = vi.hoisted(() => ({
+  mockUser: { account: /** @type {{ id: number } | undefined} */ ({ id: 1 }) },
 }));
+
+vi.mock('@sveltia/i18n', async () => (await import('$lib/test/i18n')).createI18nMock());
 
 vi.mock('$lib/services/backends/git/shared/api', () => ({
   fetchAPI: fetchAPIMock,
+}));
+
+vi.mock('$lib/services/user/account.svelte', () => ({
+  user: mockUser,
 }));
 
 describe('Gitea Repository Service', () => {
@@ -32,7 +42,8 @@ describe('Gitea Repository Service', () => {
     vi.clearAllMocks();
 
     // Reset the repository info cache
-    resetRepositoryInfoCache();
+    _resetRepositoryInfoCache();
+    mockUser.account = { id: 1 };
 
     // Mock _ to return a translation function (following pattern from other tests)
     // @ts-ignore
@@ -76,6 +87,14 @@ describe('Gitea Repository Service', () => {
       });
     });
 
+    test('should encode a branch name with a character that ends a URL path', () => {
+      const repoURL = 'https://gitea.example.com/owner/repo';
+      const result = getBaseURLs(repoURL, 'cms/posts/c#');
+
+      expect(result.treeBaseURL).toBe(`${repoURL}/src/branch/cms/posts/c%23`);
+      expect(result.blobBaseURL).toBe(`${repoURL}/src/branch/cms/posts/c%23`);
+    });
+
     test('should generate correct URLs without branch', () => {
       const repoURL = 'https://gitea.example.com/owner/repo';
       const result = getBaseURLs(repoURL);
@@ -98,8 +117,23 @@ describe('Gitea Repository Service', () => {
     });
   });
 
+  describe('fetchRepositoryAccess', () => {
+    test('reports read and write access from the repository’s own permissions', async () => {
+      fetchAPIMock.mockResolvedValue({ permissions: { pull: true, push: true } });
+      await expect(fetchRepositoryAccess()).resolves.toEqual({ canRead: true, canWrite: true });
+
+      _resetRepositoryInfoCache();
+      fetchAPIMock.mockResolvedValue({ permissions: { pull: true } });
+      await expect(fetchRepositoryAccess()).resolves.toEqual({ canRead: true, canWrite: false });
+
+      _resetRepositoryInfoCache();
+      fetchAPIMock.mockResolvedValue({});
+      await expect(fetchRepositoryAccess()).resolves.toEqual({ canRead: false, canWrite: false });
+    });
+  });
+
   describe('checkRepositoryAccess', () => {
-    test('should pass when user has pull permissions', async () => {
+    test('should pass when user has push permissions', async () => {
       const mockRepoInfo = {
         permissions: {
           pull: true,
@@ -113,7 +147,7 @@ describe('Gitea Repository Service', () => {
       expect(fetchAPIMock).toHaveBeenCalledWith(`/repos/${mockOwner}/${mockRepo}`);
     });
 
-    test('should throw error when user has no pull permissions', async () => {
+    test('should report no access when user has no pull permissions', async () => {
       const mockRepoInfo = {
         permissions: {
           pull: false,
@@ -123,29 +157,146 @@ describe('Gitea Repository Service', () => {
 
       fetchAPIMock.mockResolvedValue(mockRepoInfo);
 
-      await expect(checkRepositoryAccess()).rejects.toThrow('Not a collaborator of the repository');
+      await expect(checkRepositoryAccess()).rejects.toMatchObject({
+        message: 'Not a collaborator of the repository',
+        cause: { message: 'repository_no_access' },
+      });
     });
 
-    test('should throw error when permissions are missing', async () => {
+    test('should say write access is missing when user can only read the repository', async () => {
+      fetchAPIMock.mockResolvedValue({ permissions: { pull: true, push: false } });
+
+      await expect(checkRepositoryAccess()).rejects.toMatchObject({
+        message: 'Not a collaborator of the repository',
+        cause: { message: 'repository_no_write_access' },
+      });
+    });
+
+    test('should report no access when permissions are missing', async () => {
       const mockRepoInfo = {};
 
       fetchAPIMock.mockResolvedValue(mockRepoInfo);
 
-      await expect(checkRepositoryAccess()).rejects.toThrow('Not a collaborator of the repository');
+      await expect(checkRepositoryAccess()).rejects.toMatchObject({
+        message: 'Not a collaborator of the repository',
+        cause: { message: 'repository_no_access' },
+      });
     });
 
-    test('should handle API fetch error', async () => {
-      fetchAPIMock.mockRejectedValue(new Error('Network error'));
+    // A private repository answers someone without access with a 404, as on GitHub
+    test.each([401, 403, 404])('should report no access on a %i', async (status) => {
+      fetchAPIMock.mockRejectedValue(new Error('Denied', { cause: { status } }));
 
-      await expect(checkRepositoryAccess()).rejects.toThrow('Failed to check repository access');
+      await expect(checkRepositoryAccess()).rejects.toMatchObject({
+        message: 'Not a collaborator of the repository',
+        cause: { message: 'repository_no_access' },
+      });
     });
 
-    test('should re-throw collaborator errors', async () => {
-      const collaboratorError = new Error('Not a collaborator of the repository');
+    test.each([
+      ['a server error', new Error('Server error', { cause: { status: 500 } })],
+      ['a rate limit', new Error('Too many requests', { cause: { status: 429 } })],
+      ['a network error', new Error('Failed to send the request', { cause: new TypeError() })],
+      ['a non-error rejection', undefined],
+    ])('should report a failed check rather than a missing repository on %s', async (_, error) => {
+      fetchAPIMock.mockRejectedValue(error);
 
-      fetchAPIMock.mockRejectedValue(collaboratorError);
+      await expect(checkRepositoryAccess()).rejects.toThrow(
+        'Failed to check the repository permission.',
+      );
+    });
+  });
 
-      await expect(checkRepositoryAccess()).rejects.toThrow('Not a collaborator of the repository');
+  describe('checkBranchAccess', () => {
+    beforeEach(() => {
+      Object.assign(repository, { owner: 'test-owner', repo: 'test-repo', branch: 'release/1.0' });
+    });
+
+    afterEach(() => {
+      lockedBranch.current = undefined;
+      mergeLockedBranch.current = undefined;
+    });
+
+    test('leaves the branch writable when the user can push and merge', async () => {
+      fetchAPIMock.mockResolvedValue({ user_can_push: true, user_can_merge: true });
+
+      await checkBranchAccess();
+
+      expect(lockedBranch.current).toBeUndefined();
+      expect(mergeLockedBranch.current).toBeUndefined();
+      expect(fetchAPIMock).toHaveBeenCalledWith('/repos/test-owner/test-repo/branches/release/1.0');
+    });
+
+    test('locks what the user can’t do on the branch', async () => {
+      fetchAPIMock.mockResolvedValue({ user_can_push: false, user_can_merge: true });
+
+      await checkBranchAccess();
+
+      expect(lockedBranch.current).toBe('release/1.0');
+      expect(mergeLockedBranch.current).toBeUndefined();
+
+      fetchAPIMock.mockResolvedValue({ user_can_push: true, user_can_merge: false });
+
+      await checkBranchAccess();
+
+      expect(lockedBranch.current).toBeUndefined();
+      expect(mergeLockedBranch.current).toBe('release/1.0');
+    });
+
+    test('leaves the branch writable when the request fails', async () => {
+      lockedBranch.current = 'release/1.0';
+      mergeLockedBranch.current = 'release/1.0';
+      fetchAPIMock.mockRejectedValue(new Error('Not Found'));
+
+      await expect(checkBranchAccess()).resolves.toBeUndefined();
+      expect(lockedBranch.current).toBeUndefined();
+      expect(mergeLockedBranch.current).toBeUndefined();
+    });
+
+    test('leaves the branch writable when the branch is unknown', async () => {
+      Object.assign(repository, { branch: undefined });
+
+      await checkBranchAccess();
+
+      expect(lockedBranch.current).toBeUndefined();
+      expect(fetchAPIMock).not.toHaveBeenCalled();
+    });
+
+    test('reads the permissions from the branch just fetched for the last commit, once', async () => {
+      fetchAPIMock.mockResolvedValue({ commit: { id: 'abc' }, user_can_push: false });
+
+      expect(await fetchBranch()).toEqual({ commit: { id: 'abc' }, user_can_push: false });
+      await checkBranchAccess();
+
+      expect(fetchAPIMock).toHaveBeenCalledTimes(1);
+      expect(lockedBranch.current).toBe('release/1.0');
+
+      // A later check asks again
+      fetchAPIMock.mockResolvedValue({ user_can_push: true });
+      await checkBranchAccess();
+
+      expect(fetchAPIMock).toHaveBeenCalledTimes(2);
+      expect(lockedBranch.current).toBeUndefined();
+    });
+
+    test('asks again when the branch was fetched for another branch or user', async () => {
+      fetchAPIMock.mockResolvedValue({ user_can_push: false });
+      await fetchBranch();
+      Object.assign(repository, { branch: 'main' });
+      fetchAPIMock.mockResolvedValue({ user_can_push: true });
+      await checkBranchAccess();
+
+      expect(fetchAPIMock).toHaveBeenLastCalledWith('/repos/test-owner/test-repo/branches/main');
+      expect(lockedBranch.current).toBeUndefined();
+
+      fetchAPIMock.mockResolvedValue({ user_can_push: false });
+      await fetchBranch();
+      mockUser.account = { id: 2 };
+      fetchAPIMock.mockResolvedValue({ user_can_push: true });
+      await checkBranchAccess();
+
+      expect(fetchAPIMock).toHaveBeenCalledTimes(4);
+      expect(lockedBranch.current).toBeUndefined();
     });
   });
 
@@ -174,7 +325,10 @@ describe('Gitea Repository Service', () => {
       fetchAPIMock.mockResolvedValue(mockRepoInfo);
 
       await expect(fetchDefaultBranchName()).rejects.toThrow(
-        'Failed to retrieve the default branch name.',
+        expect.objectContaining({
+          message: 'Failed to retrieve the default branch name.',
+          cause: expect.objectContaining({ message: 'repository_empty' }),
+        }),
       );
     });
 
@@ -184,7 +338,10 @@ describe('Gitea Repository Service', () => {
       fetchAPIMock.mockResolvedValue(mockRepoInfo);
 
       await expect(fetchDefaultBranchName()).rejects.toThrow(
-        'Failed to retrieve the default branch name.',
+        expect.objectContaining({
+          message: 'Failed to retrieve the default branch name.',
+          cause: expect.objectContaining({ message: 'repository_empty' }),
+        }),
       );
     });
 
@@ -192,7 +349,10 @@ describe('Gitea Repository Service', () => {
       fetchAPIMock.mockRejectedValue(new Error('Network error'));
 
       await expect(fetchDefaultBranchName()).rejects.toThrow(
-        'Failed to retrieve the default branch name.',
+        expect.objectContaining({
+          message: 'Failed to retrieve the default branch name.',
+          cause: expect.objectContaining({ message: 'repository_not_found' }),
+        }),
       );
     });
 
@@ -217,7 +377,7 @@ describe('Gitea Repository Service', () => {
   describe('repository caching', () => {
     test('should cache repository info between calls', async () => {
       const mockRepoInfo = {
-        permissions: { pull: true },
+        permissions: { pull: true, push: true },
         default_branch: 'main',
       };
 
@@ -229,6 +389,29 @@ describe('Gitea Repository Service', () => {
       await checkRepositoryAccess();
 
       // Should only call API once due to caching
+      expect(fetchAPIMock).toHaveBeenCalledTimes(1);
+    });
+
+    test('should fetch the permissions again for another user', async () => {
+      fetchAPIMock.mockResolvedValueOnce({ permissions: { pull: true, push: false } });
+
+      // A read-only user is refused
+      await expect(checkRepositoryAccess()).rejects.toThrow('Not a collaborator of the repository');
+
+      // Then a user with write access signs in on the same page
+      mockUser.account = { id: 2 };
+      fetchAPIMock.mockResolvedValueOnce({ permissions: { pull: true, push: true } });
+
+      await expect(checkRepositoryAccess()).resolves.toBeUndefined();
+      expect(fetchAPIMock).toHaveBeenCalledTimes(2);
+    });
+
+    test('should fetch the repository information while no user is signed in', async () => {
+      mockUser.account = undefined;
+      fetchAPIMock.mockResolvedValue({ default_branch: 'main' });
+
+      await expect(getRepositoryInfo()).resolves.toEqual({ default_branch: 'main' });
+      await expect(getRepositoryInfo()).resolves.toEqual({ default_branch: 'main' });
       expect(fetchAPIMock).toHaveBeenCalledTimes(1);
     });
   });
@@ -302,9 +485,49 @@ describe('Gitea Repository Service', () => {
       expect(fetchAPIMock).toHaveBeenCalledWith(`/repos/${mockOwner}/${mockRepo}`);
     });
 
+    test('should share one request between callers asking at the same time', async () => {
+      fetchAPIMock.mockResolvedValue({ default_branch: 'main' });
+
+      const [a, b] = await Promise.all([getRepositoryInfo(), getRepositoryInfo()]);
+
+      expect(a).toBe(b);
+      expect(fetchAPIMock).toHaveBeenCalledTimes(1);
+    });
+
+    test('should try again after a failure', async () => {
+      fetchAPIMock.mockRejectedValueOnce(new Error('Offline'));
+      await expect(getRepositoryInfo()).rejects.toThrow('Offline');
+
+      fetchAPIMock.mockResolvedValue({ default_branch: 'main' });
+
+      expect(await getRepositoryInfo()).toEqual({ default_branch: 'main' });
+      expect(fetchAPIMock).toHaveBeenCalledTimes(2);
+    });
+
+    test('should keep a newer request when an older one fails', async () => {
+      const { promise, reject } = Promise.withResolvers();
+
+      fetchAPIMock.mockReturnValueOnce(promise);
+
+      const older = getRepositoryInfo();
+
+      // Another user signs in meanwhile
+      mockUser.account = { id: 2 };
+      fetchAPIMock.mockResolvedValue({ default_branch: 'main' });
+
+      const newer = getRepositoryInfo();
+
+      reject(new Error('Offline'));
+      await expect(older).rejects.toThrow('Offline');
+      await newer;
+
+      expect(await getRepositoryInfo()).toEqual({ default_branch: 'main' });
+      expect(fetchAPIMock).toHaveBeenCalledTimes(2);
+    });
+
     test('should use cached data after successful fetch', async () => {
       // Reset cache first
-      resetRepositoryInfoCache();
+      _resetRepositoryInfoCache();
 
       const mockRepoInfo = {
         id: 456,

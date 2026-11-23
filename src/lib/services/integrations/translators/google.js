@@ -1,5 +1,11 @@
+import { postJSON } from '$lib/services/integrations/ai/api';
+import { createLanguageResolver } from '$lib/services/integrations/translators/ai-translation';
+import { splitIntoSizedChunks } from '$lib/services/utils/array';
+import { getByteSize } from '$lib/services/utils/file';
+import { getLikelyLocale } from '$lib/services/utils/locale';
+
 /**
- * @import { LanguagePair, TranslationOptions, TranslationService } from '$lib/types/private';
+ * @import { TranslationOptions, TranslationService } from '$lib/types/private';
  */
 
 const serviceId = 'google';
@@ -7,7 +13,9 @@ const serviceLabel = 'Google Cloud Translation';
 const apiLabel = 'Cloud Translation API';
 const developerURL = 'https://console.cloud.google.com/apis/library/translate.googleapis.com';
 const apiKeyURL = 'https://console.cloud.google.com/apis/api/translate.googleapis.com/credentials';
-const apiKeyPattern = /AIza[0-9A-Za-z-_]{35}/;
+// Anchored, so a key for another service entered while this one is selected isn’t accepted and sent
+// to the wrong API
+const apiKeyPattern = /^AIza[0-9A-Za-z-_]{35}$/;
 
 /**
  * Supported source/target languages for Google Cloud Translation API.
@@ -44,44 +52,97 @@ const SUPPORTED_LANGUAGES = [
   .split(',');
 
 /**
- * Normalize a locale code to a supported language code.
- * @param {string} locale Locale code, e.g., 'en', 'fr-FR', 'zh-CN'.
- * @returns {string | undefined} Normalized language code, e.g., 'en', 'fr-FR', 'zh-CN'.
+ * Language codes that Google Cloud Translation API knows under a different code.
+ * @type {Record<string, string>}
  */
-export const normalizeLanguage = (locale) => {
-  const normalizedLocale = locale.replace(
-    /^([a-z]{2,3})[-_]([a-z]{2,4})$/i,
-    (_match, lang, region) => `${lang.toLowerCase()}-${region.toUpperCase()}`,
-  );
-
-  if (SUPPORTED_LANGUAGES.includes(normalizedLocale)) {
-    return normalizedLocale;
-  }
-
-  // Traditional Chinese variants: We should not fall back to `zh` because it’s Simplified Chinese
-  if (['zh-HK', 'zh-MO'].includes(normalizedLocale)) {
-    return 'zh-TW';
-  }
-
-  const [lang] = normalizedLocale.split('-');
-
-  if (SUPPORTED_LANGUAGES.includes(lang)) {
-    return lang;
-  }
-
-  return undefined;
+const LANGUAGE_ALIASES = {
+  // Norwegian written standard, which Google calls Norwegian
+  nb: 'no',
 };
 
 /**
- * Check if the given source and target languages are supported.
- * @param {LanguagePair} languages Language pair.
- * @returns {Promise<boolean>} True if both source and target languages are supported.
+ * Normalize a locale code to a supported language code. A locale can have a script code, like
+ * `zh-Hant` or `pa-Arab`, and a region code, like `fr-FR`, in either case and separated with a
+ * hyphen or an underscore. Without a script code, the script is the one the region implies, e.g.
+ * the Arabic script for `pa-PK`.
+ * @param {string} locale Locale code, e.g., 'en', 'fr-FR', 'zh-CN', 'zh-Hant'.
+ * @returns {string | undefined} Normalized language code, e.g., 'en', 'fr-FR', 'zh-CN', 'zh-TW'.
  */
-export const availability = async ({ sourceLanguage, targetLanguage }) =>
-  !!normalizeLanguage(sourceLanguage) && !!normalizeLanguage(targetLanguage);
+export const normalizeLanguage = (locale) => {
+  const [language, ...parts] = locale.split(/[-_]/);
+  const lang = language.toLowerCase();
+  const scriptTag = parts.find((tag) => /^[a-z]{4}$/i.test(tag));
+  const regionTag = parts.find((tag) => /^(?:[a-z]{2}|\d{3})$/i.test(tag));
+  const region = regionTag?.toUpperCase();
+
+  const script = scriptTag
+    ? `${scriptTag[0].toUpperCase()}${scriptTag.slice(1).toLowerCase()}`
+    : region && getLikelyLocale(`${lang}-${region}`)?.script;
+
+  // Chinese: We should not fall back to `zh` for Traditional Chinese, because it’s Simplified
+  if (lang === 'zh') {
+    if (script === 'Hant') {
+      return 'zh-TW';
+    }
+
+    if (script === 'Hans') {
+      return 'zh-CN';
+    }
+  }
+
+  // The bare language code gives the text in the language’s usual script, so don’t fall back to it
+  // for another script, e.g. `sr` for `sr-Latn` or `sr-ME`, which Google writes in Cyrillic
+  if (
+    script &&
+    !SUPPORTED_LANGUAGES.includes(`${lang}-${script}`) &&
+    script !== getLikelyLocale(lang)?.script
+  ) {
+    return undefined;
+  }
+
+  const candidates = [
+    script ? `${lang}-${script}` : undefined,
+    region ? `${lang}-${region}` : undefined,
+    LANGUAGE_ALIASES[lang] ?? lang,
+  ];
+
+  return candidates.find((code) => !!code && SUPPORTED_LANGUAGES.includes(code));
+};
+
+/**
+ * Check if the given source and target languages are supported, or normalize them, throwing when
+ * either is not supported.
+ */
+export const { availability, resolveLanguages } = createLanguageResolver(normalizeLanguage);
+
+/**
+ * Maximum number of text segments the Cloud Translation API v2 accepts in a request.
+ */
+const MAX_SEGMENTS_PER_REQUEST = 128;
+/**
+ * Maximum total size of the texts in a request, in UTF-8 bytes. The API rejects a request larger
+ * than 100K bytes, so this leaves room for the rest of the JSON body.
+ * @see https://cloud.google.com/translate/quotas
+ */
+const MAX_BYTES_PER_REQUEST = 90_000;
+
+/**
+ * Split the given texts into chunks that each fit in a single API request: at most
+ * {@link MAX_SEGMENTS_PER_REQUEST} texts and {@link MAX_BYTES_PER_REQUEST} bytes. A text larger
+ * than the byte budget is given a chunk of its own, as a single text can’t be split.
+ * @param {string[]} texts Texts.
+ * @returns {string[][]} Chunks of texts in the original order.
+ */
+export const chunkTexts = (texts) =>
+  splitIntoSizedChunks(texts, {
+    maxItems: MAX_SEGMENTS_PER_REQUEST,
+    maxSize: MAX_BYTES_PER_REQUEST,
+    getSize: getByteSize,
+  });
 
 /**
  * Translate the given text with Google Cloud Translation API using the basic model and HTML format.
+ * The texts are sent in as many requests as the API limits require, one after another.
  * @param {string[]} texts Array of original texts.
  * @param {TranslationOptions} options Options.
  * @returns {Promise<string[]>} Translated strings in the original order.
@@ -91,60 +152,39 @@ export const availability = async ({ sourceLanguage, targetLanguage }) =>
  * @see https://cloud.google.com/docs/authentication/api-keys-use
  */
 const translate = async (texts, { sourceLanguage, targetLanguage, apiKey }) => {
-  sourceLanguage = normalizeLanguage(sourceLanguage) ?? '';
-  targetLanguage = normalizeLanguage(targetLanguage) ?? '';
-
-  if (!sourceLanguage) {
-    throw new Error('Source locale is not supported.');
-  }
-
-  if (!targetLanguage) {
-    throw new Error('Target locale is not supported.');
-  }
+  [sourceLanguage, targetLanguage] = resolveLanguages(sourceLanguage, targetLanguage);
 
   // Cloud Translation API v2 endpoint
   const url = 'https://translation.googleapis.com/language/translate/v2';
+  /** @type {string[]} */
+  const results = [];
 
-  const requestBody = {
-    q: texts,
-    source: sourceLanguage,
-    target: targetLanguage,
-    format: 'html',
-  };
-
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-goog-api-key': apiKey,
-      },
-      body: JSON.stringify(requestBody),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-
-      throw new Error(
-        `Google Translate API error: ${response.status} ${response.statusText}` +
-          `${errorData.error?.message ? ` - ${errorData.error.message}` : ''}`,
-      );
-    }
+  // Send the requests one after another rather than at once, not to burst the per-minute quota
+  // eslint-disable-next-line no-restricted-syntax
+  for (const chunk of chunkTexts(texts)) {
+    const requestBody = {
+      q: chunk,
+      source: sourceLanguage,
+      target: targetLanguage,
+      format: 'html',
+    };
 
     const { data } = /** @type {{ data: { translations: { translatedText: string }[] } }} */ (
-      await response.json()
+      // eslint-disable-next-line no-await-in-loop
+      await postJSON({
+        endpoint: url,
+        headers: { 'Content-Type': 'application/json', 'X-goog-api-key': apiKey },
+        apiLabel: 'Google Translate',
+        body: requestBody,
+      })
     );
 
     // cspell:disable-next-line
     // Decode apostrophes in translated text (e.g., "Aujourd&#39;hui" → "Aujourd'hui")
-    return data.translations.map((t) => t.translatedText.replace(/&#39;/g, "'"));
-  } catch (error) {
-    if (error instanceof Error) {
-      throw error;
-    }
-
-    throw new Error('Failed to translate text with Google Translate API.');
+    results.push(...data.translations.map((t) => t.translatedText.replace(/&#39;/g, "'")));
   }
+
+  return results;
 };
 
 /**

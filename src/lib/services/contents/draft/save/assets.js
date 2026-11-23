@@ -1,16 +1,24 @@
-import { getPathInfo } from '@sveltia/utils/file';
 import equal from 'fast-deep-equal';
 
-import { getAssetsByDirName } from '$lib/services/assets';
+import { getAssetsByDirName, getTakenNamesInDir } from '$lib/services/assets';
+import {
+  getEntryAssetFolderPath,
+  getOwnedEntryFolderPath,
+} from '$lib/services/assets/entry-folder';
+import { formatFileName, isSameFileName } from '$lib/services/assets/file-name';
 import { getAssetKind } from '$lib/services/assets/kinds';
+import { getPendingFileName } from '$lib/services/assets/name';
+import { assertOutsideCmsFolders } from '$lib/services/assets/reserved';
+import { advancePreparing } from '$lib/services/backends/commit-progress';
 import { fillTemplate } from '$lib/services/common/template';
-import { getSharedEntryFileName } from '$lib/services/contents/collection/nested';
 import { createEntryPath } from '$lib/services/contents/draft/save/entry-path';
 import { getFillSlugOptions } from '$lib/services/contents/draft/slugs';
+import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
 import {
   createPath,
   encodeFilePath,
-  formatFileName,
+  foldFileName,
+  getDirName,
   getGitHash,
   resolvePath,
 } from '$lib/services/utils/file';
@@ -19,12 +27,11 @@ import {
  * @import {
  * Asset,
  * AssetFolderInfo,
+ * AssetNameTemplate,
  * EntryDraft,
  * FileChange,
  * FillTemplateOptions,
  * FlattenedEntryContent,
- * InternalCollection,
- * InternalEntryCollection,
  * InternalLocaleCode,
  * } from '$lib/types/private';
  * @import { FieldKeyPath } from '$lib/types/public';
@@ -47,13 +54,6 @@ import {
  */
 
 /**
- * Regex to extract the folder path from an entry file path. For example, it extracts `blog/post`
- * from `blog/post.md` or `blog/post/index.md`.
- * @type {RegExp}
- */
-const FOLDER_PATH_REGEX = /(?<path>.+?)(?:\/[^/]+)?$/;
-
-/**
  * Fill a template string if it contains template tags, otherwise return as-is.
  * @param {string} pathString Path string that may contain template tags.
  * @param {FillTemplateOptions} fillSlugOptions Arguments for {@link fillTemplate}.
@@ -61,99 +61,6 @@ const FOLDER_PATH_REGEX = /(?<path>.+?)(?:\/[^/]+)?$/;
  */
 const fillTemplateIfNeeded = (pathString, fillSlugOptions) =>
   pathString.includes('{{') ? fillTemplate(pathString, fillSlugOptions) : pathString;
-
-/**
- * Check whether an entry file is the index file that every entry in a nested collection is stored
- * as, which makes the folder holding it the entry’s own.
- * @param {string} filePath Entry file path without its extension.
- * @param {string | undefined} indexFileName Shared index file name, if the collection has one.
- * @returns {boolean} Result.
- */
-const isSharedIndexFile = (filePath, indexFileName) => {
-  if (!indexFileName) {
-    return false;
-  }
-
-  const fileName = filePath.slice(filePath.lastIndexOf('/') + 1);
-
-  // The `multiple_files` i18n structure appends the locale to the file name, e.g. `_index.en`
-  return fileName === indexFileName || fileName.startsWith(`${indexFileName}.`);
-};
-
-/**
- * Get the path of the folder an entry occupies, which holds the entry’s relative assets along with
- * anything else stored below it. Only some file structures give an entry a folder of its own; in
- * the others, an entry is a file sharing a folder with the rest of the collection, so its relative
- * assets are shared as well.
- * @param {InternalCollection} collection Collection the entry belongs to.
- * @param {string} entryFilePath Entry file path, e.g. `content/blog/hello-world/index.md`.
- * @returns {string | undefined} Folder path, e.g. `content/blog/hello-world`. `undefined` if the
- * entry has no folder of its own.
- * @example
- * // A `path` option ending in a fixed file name gives the entry a folder
- * getOwnedEntryFolderPath(collection, 'content/blog/hello-world/index.md') // `{{slug}}/index`
- * // => 'content/blog/hello-world'
- * @example
- * // Every entry in a nested collection is an index file, with or without a `path` option
- * getOwnedEntryFolderPath(collection, 'content/pages/about/_index.md') // `index_file: _index`
- * // => 'content/pages/about'
- * @example
- * // The slug is the last segment here, so the entry file sits next to the folder named after it
- * // with a `{{year}}/{{month}}/{{slug}}` path option
- * getOwnedEntryFolderPath(collection, 'content/blog/2025/06/hello-world.md')
- * // => 'content/blog/2025/06/hello-world'
- * @example
- * // A plain file collection shares one folder, so there’s nothing the entry owns
- * getOwnedEntryFolderPath(collection, 'content/blog/hello-world.md') // no `path` option
- * // => undefined
- */
-export const getOwnedEntryFolderPath = (collection, entryFilePath) => {
-  if (collection._type !== 'entry') {
-    return undefined;
-  }
-
-  const { subPath } = /** @type {InternalEntryCollection} */ (collection)._file;
-  // Remove the file extension, which is always present
-  const filePath = entryFilePath.substring(0, entryFilePath.lastIndexOf('.'));
-  const lastSubPathSegment = subPath?.includes('/') ? subPath.split('/').at(-1) : undefined;
-
-  // The entry file has a fixed name within the folder holding it, either because the `path` option
-  // ends in one, or because the collection stores every entry as an index file. Either way the
-  // folder is the entry, so strip the file name off
-  if (
-    (!!lastSubPathSegment && !lastSubPathSegment.includes('{{')) ||
-    isSharedIndexFile(filePath, getSharedEntryFileName(collection))
-  ) {
-    return /** @type {string} */ (filePath.match(FOLDER_PATH_REGEX)?.groups?.path);
-  }
-
-  // The `path` option puts the entry in a folder of its own, such as `{{year}}/{{month}}/{{slug}}`,
-  // and the entry file is named after the slug, so a folder of the same name sits next to it. A
-  // locale folder doesn’t count: it holds every entry of that locale, not this one
-  if (subPath?.includes('/')) {
-    return filePath;
-  }
-
-  return undefined;
-};
-
-/**
- * Get the folder that holds an entry’s relative assets: the folder the entry occupies if it has one
- * of its own, and otherwise the folder its file is stored in, which it shares with the rest of the
- * collection. With a `multiple_folders` i18n structure that shared folder is the locale’s own, so
- * the assets sit beside the entry either way.
- * @param {object} args Arguments.
- * @param {InternalCollection} args.collection Collection the entry belongs to.
- * @param {string} args.entryFilePath Entry file path.
- * @param {string} args.internalPath Internal path from folder config.
- * @returns {string} Folder path.
- */
-const getEntryAssetFolderPath = ({ collection, entryFilePath, internalPath }) =>
-  getOwnedEntryFolderPath(collection, entryFilePath) ??
-  // A file collection has no folder of its own to fall back on
-  (collection._type === 'entry'
-    ? (getPathInfo(entryFilePath).dirname ?? internalPath)
-    : internalPath);
 
 /**
  * Resolve the internal asset path for entry-relative assets.
@@ -181,7 +88,8 @@ const resolveInternalPath = ({ internalSubPath, assetFolderPath, fillSlugOptions
 /**
  * Resolve the public asset path for entry-relative assets, which is the path the field value is
  * built from. The assets sit in the folder holding the entry, so the value is relative to the entry
- * itself and needs nothing but the configured `public_folder`.
+ * itself and needs nothing but the configured `public_folder`, unless that starts with `/`, which
+ * makes the value an absolute path, e.g. `/blog/hello/images/photo.jpg`.
  * @param {object} args Arguments.
  * @param {string} args.publicPath Public path from folder config.
  * @param {FillTemplateOptions} args.fillSlugOptions Arguments for template filling.
@@ -194,7 +102,10 @@ const resolvePublicPath = ({ publicPath, fillSlugOptions }) => {
     return publicPath;
   }
 
-  return resolvePath(fillTemplateIfNeeded(publicPath, fillSlugOptions));
+  const resolvedPath = resolvePath(fillTemplateIfNeeded(publicPath, fillSlugOptions));
+
+  // `resolvePath()` removes the leading slash, which an absolute public path has to keep
+  return publicPath.startsWith('/') ? `/${resolvedPath}` : resolvedPath;
 };
 
 /**
@@ -259,6 +170,8 @@ export const getAssetFolderPaths = ({ draft, locale, slug, defaultLocaleSlug, fo
     fillSlugOptions: {
       ...getFillSlugOptions({ draft }),
       type: 'media_folder',
+      // The date/time tags in a media folder stand for the time of the save, not the entry’s date
+      dateTimeParts: undefined,
       currentSlug: defaultLocaleSlug,
       // Resolve against the locale being edited: with a `multiple_folders` or
       // `multiple_root_folders` i18n structure each locale has a folder of its own, and an asset
@@ -284,6 +197,43 @@ export const createPublicURL = (publicPath, fileName) =>
   publicPath ? `${publicPath === '/' ? '' : publicPath}/${fileName}` : fileName;
 
 /**
+ * Get the folder that the assets in the given folder are moved from, when the save takes the entry
+ * to another folder of its own. The assets stored with an entry follow it to its new folder, which
+ * is empty until then, so a file added in the same save has to be named against the assets that
+ * are on their way there as well. Otherwise one of them would take the new file’s name, and the
+ * move would then drop it as replaced, along with what the entry used it for. The move itself is
+ * planned by `buildEntryAssetMoveChanges()` in `asset-move.js`.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {InternalLocaleCode} args.locale Locale the file is being added to.
+ * @param {string} args.entryFilePath Path the entry file is saved to in that locale.
+ * @param {string} args.folderPath Folder the file is saved to.
+ * @returns {string | undefined} Folder path, or `undefined` if no asset is moved to the folder.
+ */
+const getVacatedAssetFolderPath = ({ draft, locale, entryFilePath, folderPath }) => {
+  const { collection, isNew, originalEntry } = draft;
+  const previousPath = isNew ? undefined : originalEntry?.locales[locale]?.path;
+
+  if (!previousPath) {
+    return undefined;
+  }
+
+  const oldFolderPath = getOwnedEntryFolderPath(collection, previousPath);
+  const newFolderPath = getOwnedEntryFolderPath(collection, entryFilePath);
+
+  if (
+    !oldFolderPath ||
+    !newFolderPath ||
+    oldFolderPath === newFolderPath ||
+    !(folderPath === newFolderPath || folderPath.startsWith(`${newFolderPath}/`))
+  ) {
+    return undefined;
+  }
+
+  return `${oldFolderPath}${folderPath.slice(newFolderPath.length)}`;
+};
+
+/**
  * Get the information required to save an asset.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
@@ -292,17 +242,62 @@ export const createPublicURL = (publicPath, fileName) =>
  * @param {string} [args.slug] Entry slug for that locale.
  * @param {string} args.defaultLocaleSlug Default locale’s entry slug.
  * @param {AssetFolderInfo} args.folder Asset folder associated with a new file.
+ * @param {string} [args.subfolderPath] Subfolder below the folder the file is saved to, picked
+ * while browsing the folder in the asset picker.
  * @returns {{ assetFolderPaths: ResolvedAssetFolderPaths, assetNamesInSameFolder: string[],
- * savingAssetProps: SavingAsset }} Arguments.
+ * takenNamesInSameFolder: string[], assetNamesMovingIn: string[], savingAssetProps: SavingAsset }}
+ * Arguments. `takenNamesInSameFolder` adds the names of the other files and the subfolders there,
+ * which a new file can’t take or replace. `assetNamesMovingIn` lists the assets moved to the folder
+ * in the same save, which take their names with them. See {@link getVacatedAssetFolderPath}.
  */
-export const getAssetSavingInfo = ({ draft, locale, slug, defaultLocaleSlug, folder }) => {
+export const getAssetSavingInfo = ({
+  draft,
+  locale,
+  slug,
+  defaultLocaleSlug,
+  folder,
+  subfolderPath = '',
+}) => {
   const { collectionName } = draft;
-  const assetFolderPaths = getAssetFolderPaths({ draft, locale, slug, defaultLocaleSlug, folder });
+  let assetFolderPaths = getAssetFolderPaths({ draft, locale, slug, defaultLocaleSlug, folder });
+
+  if (subfolderPath) {
+    const { resolvedInternalPath, resolvedPublicPath } = assetFolderPaths;
+
+    assetFolderPaths = {
+      ...assetFolderPaths,
+      resolvedInternalPath: createPath([resolvedInternalPath, subfolderPath]),
+      resolvedPublicPath: createPublicURL(resolvedPublicPath, subfolderPath),
+    };
+  }
+
   const { resolvedInternalPath } = assetFolderPaths;
+  const _locale = locale ?? getDraftI18nConfig(draft).defaultLocale;
+
+  const vacatedFolderPath = folder.entryRelative
+    ? getVacatedAssetFolderPath({
+        draft,
+        locale: _locale,
+        entryFilePath: createEntryPath({ draft, locale: _locale, slug: slug ?? defaultLocaleSlug }),
+        folderPath: resolvedInternalPath,
+      })
+    : undefined;
+
+  /**
+   * Get the names of the assets stored in the given folder. A name is kept as it’s spelled in the
+   * repository, which may be in another Unicode normalization form than a name typed in the
+   * browser, e.g. a decomposed `café.jpg` saved on macOS, so a file replacing the asset is written
+   * to the same path rather than next to it. Names are compared with `foldFileName()`.
+   * @param {string} folderPath Folder path.
+   * @returns {string[]} Asset names.
+   */
+  const getNames = (folderPath) => getAssetsByDirName(folderPath).map((a) => a.name);
 
   return {
     assetFolderPaths,
-    assetNamesInSameFolder: getAssetsByDirName(resolvedInternalPath).map((a) => a.name.normalize()),
+    assetNamesInSameFolder: getNames(resolvedInternalPath),
+    takenNamesInSameFolder: getTakenNamesInDir(resolvedInternalPath),
+    assetNamesMovingIn: vacatedFolderPath ? getNames(vacatedFolderPath) : [],
     savingAssetProps: { collectionName, folder },
   };
 };
@@ -312,7 +307,9 @@ export const getAssetSavingInfo = ({ draft, locale, slug, defaultLocaleSlug, fol
  * @param {object} args Arguments.
  * @param {File} args.file Raw file.
  * @param {AssetFolderInfo} args.folder Asset folder associated with the new file.
+ * @param {string} [args.subfolderPath] Subfolder below the folder the file is saved to.
  * @param {boolean} args.replace Whether to replace an existing file.
+ * @param {AssetNameTemplate} [args.nameTemplate] Template to name the file with.
  * @param {string} args.blobURL Blob URL of the file.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {InternalLocaleCode} [args.locale] Locale the file is being added to. See
@@ -328,7 +325,9 @@ export const getAssetSavingInfo = ({ draft, locale, slug, defaultLocaleSlug, fol
 export const replaceBlobURL = async ({
   file,
   folder,
+  subfolderPath,
   replace,
+  nameTemplate,
   blobURL,
   draft,
   locale,
@@ -342,15 +341,30 @@ export const replaceBlobURL = async ({
 }) => {
   const sha = await getGitHash(file);
 
-  const dupFile = savingAssets.find(
-    (f) => f.sha === sha && (!folder.entryRelative || equal(f.folder, folder)),
-  );
+  advancePreparing();
 
   const {
     savingAssetProps,
     assetNamesInSameFolder,
+    takenNamesInSameFolder,
+    assetNamesMovingIn,
     assetFolderPaths: { resolvedInternalPath, resolvedPublicPath },
-  } = getAssetSavingInfo({ draft, locale, slug, defaultLocaleSlug, folder });
+  } = getAssetSavingInfo({ draft, locale, slug, defaultLocaleSlug, folder, subfolderPath });
+
+  // Files already being saved to the same folder in this save
+  const savingAssetsInSameFolder = savingAssets.filter(
+    (f) => getDirName(f.path) === resolvedInternalPath,
+  );
+
+  // The same file picked for another field or locale is saved once, as long as it goes to the same
+  // place: the same folder, and the same subfolder in it. A file replacing an existing one must
+  // keep its name, so an identical file saved under another name doesn’t count
+  const dupFile = savingAssetsInSameFolder.find(
+    (f) =>
+      f.sha === sha &&
+      (!folder.entryRelative || equal(f.folder, folder)) &&
+      (!replace || isSameFileName(f.name, file.name)),
+  );
 
   let fileName = '';
 
@@ -358,14 +372,59 @@ export const replaceBlobURL = async ({
   if (dupFile) {
     fileName = dupFile.name;
   } else {
-    fileName = formatFileName(file.name, replace ? {} : { assetNamesInSameFolder });
+    // A different file with the same name, e.g. two images pasted from the clipboard as
+    // `image.png`, may already be headed for this folder in the same save. It’s not in the asset
+    // store yet, so take its name into account too, or one file would overwrite the other. The
+    // code below runs without awaiting anything, so concurrent calls can’t pick the same name
+    const item = { file, folder, replace, nameTemplate };
+    const pendingFileName = getPendingFileName({ draft, item, defaultLocaleSlug });
+    const namesInSave = savingAssetsInSameFolder.map((f) => f.name);
+    const ownName = replace ? formatFileName(pendingFileName) : undefined;
+    /**
+     * Check if the given name is in the given list, ignoring case and the Unicode normalization
+     * form.
+     * @param {string[]} names Names.
+     * @param {string} name Name.
+     * @returns {boolean} Result.
+     */
+    const hasName = (names, name) => names.some((n) => foldFileName(n) === foldFileName(name));
 
-    const update = replace && assetNamesInSameFolder.includes(fileName);
+    // Only the first of the files with the same name in this save replaces the existing file;
+    // another one gets a name of its own, or it would overwrite the first one. Nor can a file
+    // replace anything but an asset, e.g. an entry file next to it
+    const replacing =
+      ownName !== undefined &&
+      !hasName(namesInSave, ownName) &&
+      (hasName(assetNamesInSameFolder, ownName) || !hasName(takenNamesInSameFolder, ownName));
+
+    fileName = replacing
+      ? ownName
+      : formatFileName(pendingFileName, {
+          assetNamesInSameFolder: [
+            ...takenNamesInSameFolder,
+            ...assetNamesMovingIn,
+            ...namesInSave,
+          ],
+        });
+
+    // A replacing file overwrites the existing asset whose name only differs in case or in the
+    // Unicode normalization form, e.g. `Photo.jpg` and `photo.jpg`, rather than being added next to
+    // it, as the two would clash on a case-insensitive file system
+    const replacedName = replacing
+      ? assetNamesInSameFolder.find((name) => foldFileName(name) === foldFileName(fileName))
+      : undefined;
+
+    const update = !!replacedName;
+
+    if (replacedName) {
+      fileName = replacedName;
+    }
+
     const assetPath = resolvedInternalPath ? `${resolvedInternalPath}/${fileName}` : fileName;
 
-    if (!update) {
-      assetNamesInSameFolder.push(fileName);
-    }
+    // A file picked in the editor can go to any subfolder the picker browsed to, but the files in a
+    // folder the CMS itself is served from are read-only, like they are in the Asset Library
+    assertOutsideCmsFolders([assetPath]);
 
     changes.push({
       action: update ? 'update' : 'create',
@@ -390,5 +449,5 @@ export const replaceBlobURL = async ({
     publicURL = encodeFilePath(publicURL);
   }
 
-  content[keyPath] = /** @type {string} */ (content[keyPath]).replaceAll(blobURL, publicURL);
+  content[keyPath] = /** @type {string} */ (content[keyPath]).replaceAll(blobURL, () => publicURL);
 };

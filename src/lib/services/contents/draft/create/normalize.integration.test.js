@@ -14,6 +14,7 @@ const collection = {
     { name: 'featured', widget: 'boolean', required: false, default: true },
   ],
   _i18n: {
+    structureMap: {},
     i18nEnabled: false,
     allLocales: ['_default'],
     initialLocales: ['_default'],
@@ -42,6 +43,12 @@ vi.mock('$lib/services/config', () => ({
 vi.mock('$lib/services/contents/draft/backup', () => ({
   restoreBackupIfNeeded: vi.fn(),
 }));
+
+// Load the collection files module before anything else imports it. It imports `getCollection` from
+// the collection module, which imports it back, so if the mocked collection module loaded first,
+// the files module would bind to the original `getCollection` pulled in by `importOriginal()` and
+// `resolveCollectionAndFile()` wouldn’t find the collection mocked above.
+await import('$lib/services/contents/collection/files');
 
 const { getCollection } = await import('$lib/services/contents/collection');
 const { fieldConfigCacheMap } = await import('$lib/services/contents/entry/fields');

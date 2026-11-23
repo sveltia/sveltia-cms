@@ -17,6 +17,8 @@ describe('env service', () => {
   /** @type {any} */
   let initUserEnvDetection;
   /** @type {any} */
+  let opensOnClick;
+  /** @type {any} */
   let mockMediaQueries;
 
   beforeEach(async () => {
@@ -48,7 +50,7 @@ describe('env service', () => {
       platform: '',
     });
 
-    ({ env, initUserEnvDetection } = await import('./env.svelte.js'));
+    ({ env, initUserEnvDetection, opensOnClick } = await import('./env.svelte.js'));
   });
 
   afterEach(() => {
@@ -59,12 +61,52 @@ describe('env service', () => {
     it('should export env with correct default values', () => {
       expect(env.isLocalHost).toBe(false);
       expect(env.isLocalBackendSupported).toBe(false);
+      expect(env.isTestBackendSupported).toBe(true);
       expect(env.isBrave).toBe(false);
       expect(env.isMacOS).toBe(false);
       expect(env.isSmallScreen).toBe(false);
       expect(env.isMediumScreen).toBe(false);
       expect(env.isLargeScreen).toBe(false);
       expect(env.hasMouse).toBe(true);
+    });
+  });
+
+  describe('opensOnClick', () => {
+    /**
+     * Create a mock `click` event.
+     * @param {object} [props] Event properties.
+     * @returns {any} Event.
+     */
+    const createEvent = (props = {}) => ({ detail: 1, pointerType: 'mouse', ...props });
+
+    it('should not open on a mouse click on a large screen', () => {
+      initUserEnvDetection();
+      expect(opensOnClick(createEvent())).toBe(false);
+    });
+
+    it('should open on a small or medium screen', () => {
+      mockMediaQueries.small.matches = true;
+      initUserEnvDetection();
+      expect(opensOnClick(createEvent())).toBe(true);
+
+      mockMediaQueries.small.matches = false;
+      mockMediaQueries.medium.matches = true;
+      initUserEnvDetection();
+      expect(opensOnClick(createEvent())).toBe(true);
+    });
+
+    it('should open on a tap or without a fine pointer', () => {
+      initUserEnvDetection();
+      expect(opensOnClick(createEvent({ pointerType: 'touch' }))).toBe(true);
+
+      mockMediaQueries.pointer.matches = false;
+      initUserEnvDetection();
+      expect(opensOnClick(createEvent({ pointerType: undefined }))).toBe(true);
+    });
+
+    it('should open on a click synthesized for the keyboard', () => {
+      initUserEnvDetection();
+      expect(opensOnClick(createEvent({ detail: 0, pointerType: undefined }))).toBe(true);
     });
   });
 
@@ -79,6 +121,14 @@ describe('env service', () => {
 
     it('should detect 127.0.0.1 and set isLocalHost', () => {
       vi.stubGlobal('location', { hostname: '127.0.0.1' });
+
+      initUserEnvDetection();
+
+      expect(env.isLocalHost).toBe(true);
+    });
+
+    it('should detect the IPv6 loopback address and set isLocalHost', () => {
+      vi.stubGlobal('location', { hostname: '[::1]' });
 
       initUserEnvDetection();
 
@@ -116,6 +166,31 @@ describe('env service', () => {
       initUserEnvDetection();
 
       expect(env.isLocalBackendSupported).toBe(false);
+    });
+
+    it('should set isTestBackendSupported when files in the OPFS can be written', () => {
+      vi.stubGlobal('FileSystemFileHandle', { prototype: { createWritable: vi.fn() } });
+
+      initUserEnvDetection();
+
+      expect(env.isTestBackendSupported).toBe(true);
+    });
+
+    it('should set isTestBackendSupported to false when files in the OPFS can’t be written', () => {
+      // Safari before version 26
+      vi.stubGlobal('FileSystemFileHandle', { prototype: {} });
+
+      initUserEnvDetection();
+
+      expect(env.isTestBackendSupported).toBe(false);
+    });
+
+    it('should set isTestBackendSupported when the OPFS is not available', () => {
+      vi.stubGlobal('FileSystemFileHandle', undefined);
+
+      initUserEnvDetection();
+
+      expect(env.isTestBackendSupported).toBe(true);
     });
 
     it('should detect Brave browser and set isBrave', () => {

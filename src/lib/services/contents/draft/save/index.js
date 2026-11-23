@@ -1,154 +1,323 @@
+import { _ } from '@sveltia/i18n';
+
 import { callEventHooks } from '$lib/services/api/events';
-import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
+import { getAdditions } from '$lib/services/app/additions';
+import { isCommitCancelled } from '$lib/services/backends/commit-prompt';
+import { isPublishingCommit } from '$lib/services/backends/git/shared/integration';
+import { checkForRemoteChanges } from '$lib/services/backends/refresh';
 import { saveChanges } from '$lib/services/backends/save';
+import { getReadonlyMessage, isDraftReadonly } from '$lib/services/config/readonly';
+import { allEntries } from '$lib/services/contents';
+import { getCollection } from '$lib/services/contents/collection';
 import {
   contentUpdatesToast,
   UPDATE_TOAST_DEFAULT_STATE,
 } from '$lib/services/contents/collection/data';
-import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
-import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { buildNestedMoveChanges } from '$lib/services/contents/collection/nested/move';
-import { deleteBackup } from '$lib/services/contents/draft/backup';
+import { cancelBackup, deleteBackup, getBackupSlug } from '$lib/services/contents/draft/backup';
+import {
+  getNewPendingEntriesByCollection,
+  getReferencedEditedEntries,
+  getReferencedPendingEntries,
+} from '$lib/services/contents/draft/pending-entries';
 import { buildEntryAssetMoveChanges } from '$lib/services/contents/draft/save/asset-move';
-import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
+import {
+  createSavingEntryData,
+  preparePendingEntryCommit,
+  removeDisabledLocales,
+} from '$lib/services/contents/draft/save/changes';
+import { detectEntryConflict } from '$lib/services/contents/draft/save/conflict';
+import { assignSaveTimeValues } from '$lib/services/contents/draft/save/save-time';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
-import { validateEntry } from '$lib/services/contents/draft/validate';
-import { awaitCustomFieldValidations } from '$lib/services/contents/draft/validate/custom-fields';
+import { updateComputedValues } from '$lib/services/contents/draft/update/compute';
 import { isRequiredEnforced } from '$lib/services/contents/draft/validate/required';
-import { expandInvalidFields } from '$lib/services/contents/editor/fields';
-import { awaitPendingFieldUpdates } from '$lib/services/contents/editor/pending';
+import { validateAndRevealErrors } from '$lib/services/contents/draft/validate/reveal';
+import { getEntryKey } from '$lib/services/contents/entry/entry-key';
 import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
-import { buildCascadeChanges } from '$lib/services/contents/entry/relations/cascade';
-import { setLastCommitPublishHint } from '$lib/services/deployments/publish';
-import { workflowEnabled } from '$lib/services/workflow';
+import { buildCascadeChanges } from '$lib/services/contents/entry/relations/cascade/update';
+import { getEntrySummary } from '$lib/services/contents/entry/summary';
+import { compareWithLatest } from '$lib/services/contents/fields/relation/quick-add';
+import {
+  getUnpublishedEntryByDraft,
+  isOrphanedForkDraft,
+  isWorkflowDraft,
+} from '$lib/services/workflow';
+import { detectWorkflowConflict } from '$lib/services/workflow/conflict';
 import { saveWorkflowChanges } from '$lib/services/workflow/save';
 
 /**
- * @import { ChangeResults, CommitOptions, Entry, EntryDraft } from '$lib/types/private';
+ * @import {
+ * Asset,
+ * ChangeResults,
+ * CommitOptions,
+ * Entry,
+ * EntryDraft,
+ * EntrySlugVariants,
+ * FileChange,
+ * InternalCollection,
+ * PendingEntry,
+ * } from '$lib/types/private';
+ * @import { EntryConflict } from '$lib/services/contents/draft/save/conflict';
  */
 
 /**
- * Update the application stores with deployment settings.
+ * Tell the user the entry has been saved, and whether it’s being published. What the commit is
+ * expected to do is recorded by {@link saveChanges}, which every commit to the branch goes through.
  * @param {object} args Arguments.
+ * @param {boolean} args.useWorkflow Whether the changes went to a pull request rather than the
+ * configured branch.
  * @param {boolean | undefined} args.skipCI Whether to disable automatic deployments for the change.
  * @param {number} args.count Number of entries saved, including any entry rewritten to keep its
  * references to the saved entry up to date.
  */
-const updateStores = ({ skipCI, count }) => {
-  // With Editorial Workflow, changes go to a pull request, so nothing is published yet
-  const published =
-    !workflowEnabled.current && skipCIConfigured.current && !(skipCI ?? skipCIEnabled.current);
-
+const updateStores = ({ useWorkflow, skipCI, count }) => {
   contentUpdatesToast.current = {
     ...UPDATE_TOAST_DEFAULT_STATE,
     saved: true,
-    published,
+    // With Editorial Workflow, changes go to a pull request, so nothing is published yet
+    published: !useWorkflow && isPublishingCommit({ skipCI }),
     count,
   };
-
-  setLastCommitPublishHint(published);
 };
 
 /**
- * For new entries in reorder-enabled entry collections, assign a fresh manual sort order to the
- * draft’s current values: highest existing order + 1, or 1 if no entries have one yet. Doing this
- * at save time (rather than draft creation) makes the assignment race-safe even when a draft has
- * been backed up and restored after another entry took the previously computed value. Callers must
- * gate on `draft.isNew` and `draft.collection._type === 'entry'` themselves.
- * @param {EntryDraft} draft Draft to mutate in place.
+ * Work out the file changes for saving the entry draft, including those of the entries and assets
+ * the save takes along. An entry file that can’t be formatted, e.g. in a custom format registered
+ * without a formatter, fails the save rather than being written empty.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Draft to save.
+ * @param {EntrySlugVariants} args.slugs Entry slugs.
+ * @param {boolean} args.recreate Whether to write the entry anew, because someone else has deleted
+ * it since the draft was opened. See {@link createSavingEntryData}.
+ * @returns {Promise<{ savingEntry: Entry, changes: FileChange[], savingAssets: Asset[],
+ * cascadeEntries: Entry[], movedEntries: Entry[] }>} Saving entry, file changes, assets, and the
+ * other entries rewritten in the same commit.
+ * @throws {Error} A `saving_failed` error when the changes could not be worked out, with the
+ * original error as its `cause`, so the message can be shown to the user.
  */
-const assignManualSortOrder = (draft) => {
-  const { collection, collectionFile, currentValues } = draft;
-  const orderKey = getOrderFieldKey(collection);
+const buildChanges = async ({ draft, slugs, recreate }) => {
+  const { collection, fileName, originalEntry } = draft;
 
-  if (!orderKey) {
+  try {
+    const { savingEntry, changes, savingAssets } = await createSavingEntryData({
+      draft,
+      slugs,
+      recreate,
+    });
+
+    // When the slug has been edited, the entries referencing this one through a Relation field have
+    // to be rewritten in the same commit, or they would be left pointing at an entry that no longer
+    // exists under that name
+    const { changes: cascadeChanges, savingEntries: cascadeEntries } = await buildCascadeChanges({
+      collection,
+      collectionFile: draft.collectionFile,
+      originalEntry,
+      savingEntry,
+    });
+
+    changes.push(...cascadeChanges);
+
+    // Moving an entry in a collection with nested entries takes everything below it to the new
+    // location
+    const { changes: moveChanges, savingEntries: movedEntries } = await buildNestedMoveChanges({
+      collection,
+      originalEntry,
+      savingEntry,
+    });
+
+    changes.push(...moveChanges);
+
+    // Assets stored next to the entry belong to it, so they follow it to its new folder. An entry
+    // someone else has deleted has taken its assets along, so there’s nothing left to move
+    const { changes: assetMoveChanges, savingAssets: movedAssets } =
+      await buildEntryAssetMoveChanges({
+        collection,
+        fileName,
+        originalEntry: recreate ? undefined : originalEntry,
+        savingEntry,
+        changes,
+      });
+
+    changes.push(...assetMoveChanges);
+    savingAssets.push(...movedAssets);
+
+    return {
+      // The locales turned off have served their purpose in the change plan, deleting their files
+      savingEntry: removeDisabledLocales(savingEntry),
+      changes,
+      savingAssets,
+      cascadeEntries,
+      movedEntries,
+    };
+  } catch (/** @type {any} */ ex) {
+    // eslint-disable-next-line no-console
+    console.error(ex);
+
+    throw new Error('saving_failed', { cause: ex });
+  }
+};
+
+/**
+ * Make sure no one else has changed the existing entries edited from a Relation field since the
+ * edits were made, which saving them would undo. With Editorial Workflow, an entry an earlier save
+ * has changed in the pull request is compared with its version there. Unlike the entry being
+ * edited, such an entry can’t be saved over the change: its edits are only reviewed in the
+ * quick-add dialog, which picks up the latest version of the entry when it’s opened again.
+ * @param {EntryDraft} draft Draft to save.
+ * @param {object} options Options.
+ * @param {boolean} options.remoteChecked Whether the repository has just been checked for changes,
+ * which then isn’t done again.
+ * @throws {Error} A `saving_failed` error naming the entry that has been changed or deleted.
+ */
+const checkPendingEntryConflicts = async (draft, { remoteChecked }) => {
+  // The entries are only read, so they’re not copied
+  const editedEntries = getReferencedEditedEntries(draft);
+
+  if (!editedEntries.length) {
     return;
   }
 
-  const { defaultLocale } = (collectionFile ?? collection)._i18n;
+  if (!remoteChecked) {
+    try {
+      await checkForRemoteChanges();
+    } catch (ex) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to check the repository for changes.', ex);
+    }
+  }
 
-  const maxOrder = getEntriesByCollection(collection.name).reduce((max, entry) => {
-    const value = Number(entry.locales[defaultLocale]?.content?.[orderKey]);
+  // eslint-disable-next-line no-restricted-syntax
+  for (const { collectionName, entry, baseEntry } of editedEntries) {
+    const conflict = compareWithLatest(draft, /** @type {Entry} */ (baseEntry));
 
-    return Number.isFinite(value) && value > max ? value : max;
-  }, 0);
+    if (conflict) {
+      const collection = /** @type {InternalCollection} */ (getCollection(collectionName));
+      const name = getEntrySummary(collection, entry);
 
-  const nextOrder = maxOrder + 1;
-
-  Object.values(currentValues).forEach((valueMap) => {
-    valueMap[orderKey] = nextOrder;
-  });
+      // A deleted entry can’t be edited again, so it has to be deselected instead
+      throw new Error('saving_failed', {
+        cause: new Error(
+          _(
+            conflict.type === 'deleted'
+              ? 'relation_field.edit_deleted'
+              : 'relation_field.edit_conflict',
+            { values: { name } },
+          ),
+        ),
+      });
+    }
+  }
 };
 
 /**
- * Save the entry draft.
+ * Make sure the entry draft can be saved: it’s editable, its values are valid, and no one else has
+ * changed the entry since the draft was opened, unless the user has said to save over it.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Draft to save.
- * @param {boolean} [args.skipCI] Whether to disable automatic deployments for the change.
- * @returns {Promise<Entry>} Saved entry.
- * @throws {Error} When the entry could not be validated or saved.
+ * @param {boolean} args.useWorkflow Whether the changes go to a pull request rather than the
+ * configured branch.
+ * @param {boolean} args.overwrite Whether to save even if someone else has changed the entry.
+ * @param {boolean} args.publish Whether the entry is published along with the save, in which case
+ * its required fields have to be filled in, even if it’s a workflow draft.
+ * @returns {Promise<EntryConflict | undefined>} Conflict found, if any, which the save overwrites.
+ * @throws {Error} When the entry is read-only, comes from a contributor’s pull request that is no
+ * longer open, could not be validated, or would overwrite someone else’s change.
  */
-export const saveEntry = async ({ draft, skipCI = undefined }) => {
-  const { isNew, collection, collectionName, fileName, originalEntry } = draft;
+const checkSavable = async ({ draft, useWorkflow, overwrite, publish }) => {
+  // The editor offers no way to save a read-only entry, but make sure nothing is written anyway
+  if (isDraftReadonly(draft)) {
+    const { collection, collectionFile } = draft;
 
-  // A rich text editor writes what was just typed to the draft with a short delay, so wait for such
-  // updates first. Otherwise a save right after typing would validate the field’s previous value,
-  // e.g. an empty required field, and the error would clear itself moments later
-  await awaitPendingFieldUpdates();
-  // Custom field validators can be async, so wait for any in-flight results before validating.
-  // Otherwise a field made invalid moments ago would be validated against a stale verdict.
-  await awaitCustomFieldValidations();
+    throw new Error('saving_failed', {
+      cause: new Error(getReadonlyMessage('entry', { collection, collectionFile })),
+    });
+  }
 
-  if (!validateEntry({ draft, enforceRequired: isRequiredEnforced(draft) })) {
-    expandInvalidFields({ draft });
+  if (isOrphanedForkDraft(draft)) {
+    throw new Error('saving_failed', { cause: new Error(_('workflow.fork_entry_gone')) });
+  }
 
+  // Wait for what was just typed to reach the draft first. Otherwise a save right after typing
+  // would validate the field’s previous value, e.g. an empty required field, and the error would
+  // clear itself moments later
+  const enforceRequired = publish || isRequiredEnforced(draft);
+
+  if (!(await validateAndRevealErrors({ draft, enforceRequired }))) {
     throw new Error('validation_failed');
   }
 
-  if (isNew && collection._type === 'entry') {
-    assignManualSortOrder(draft);
+  // Bring the site data up to date before the changes are worked out from it, and refuse to save
+  // over someone else’s change to this entry unless the user has said so. A workflow draft is
+  // compared with its own branch instead of the configured one: the branch is named after the
+  // entry, not the editor, so a colleague working on the same entry writes to it too
+  const conflict = useWorkflow
+    ? await detectWorkflowConflict(draft)
+    : await detectEntryConflict(draft);
+
+  if (conflict && !overwrite) {
+    throw new Error('save_conflict', { cause: conflict });
   }
 
-  const slugs = getSlugs({ draft });
-  const { defaultLocaleSlug } = slugs;
-  const { savingEntry, changes, savingAssets } = await createSavingEntryData({ draft, slugs });
-
-  // When the slug has been edited, the entries referencing this one through a Relation field have
-  // to be rewritten in the same commit, or they would be left pointing at an entry that no longer
-  // exists under that name
-  const { changes: cascadeChanges, savingEntries: cascadeEntries } = await buildCascadeChanges({
-    collection,
-    collectionFile: draft.collectionFile,
-    originalEntry,
-    savingEntry,
+  // `detectEntryConflict()` checks the repository for an existing entry saved on the branch
+  await checkPendingEntryConflicts(draft, {
+    remoteChecked: !useWorkflow && !draft.isNew && !!draft.originalEntry,
   });
 
-  changes.push(...cascadeChanges);
+  return conflict;
+};
 
-  // Moving an entry in a nested collection takes everything below it to the new location
-  const { changes: moveChanges, savingEntries: movedEntries } = await buildNestedMoveChanges({
-    collection,
-    originalEntry,
-    savingEntry,
-  });
+/**
+ * Prepare the commit of the entries created from a Relation field that the entry draft refers to.
+ * They go into the same commit as the entry referring to them, so neither can end up without the
+ * other.
+ * @param {EntryDraft} draft Draft to save.
+ * @returns {Promise<PendingEntry[]>} Pending entries, with their file changes and assets.
+ */
+const preparePendingEntries = async (draft) => {
+  /** @type {PendingEntry[]} */
+  const pendingEntries = [];
 
-  changes.push(...moveChanges);
+  // Call the `preSave` event hooks one entry after another, like for the hooks of a single entry
+  // eslint-disable-next-line no-restricted-syntax
+  for (const pendingEntry of getReferencedPendingEntries(draft)) {
+    // eslint-disable-next-line no-await-in-loop
+    pendingEntries.push(await preparePendingEntryCommit(pendingEntry));
+  }
 
-  // Assets stored next to the entry belong to it, so they follow it to its new folder
-  const { changes: assetMoveChanges, savingAssets: movedAssets } = await buildEntryAssetMoveChanges(
-    { collection, fileName, originalEntry, savingEntry, changes },
-  );
+  return pendingEntries;
+};
 
-  changes.push(...assetMoveChanges);
-  savingAssets.push(...movedAssets);
-
-  /** @type {ChangeResults} */
-  let results;
-  /** @type {CommitOptions} */
-  const options = { commitType: isNew ? 'create' : 'update', collection, skipCI };
+/**
+ * Commit the file changes, to a pull request or the configured branch.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Draft to save.
+ * @param {boolean} args.useWorkflow Whether the changes go to a pull request rather than the
+ * configured branch.
+ * @param {FileChange[]} args.changes File changes.
+ * @param {Entry} args.savingEntry Entry to save.
+ * @param {Entry[]} args.otherSavingEntries Other entries rewritten or created in the same commit.
+ * @param {PendingEntry[]} args.pendingEntries Entries created from a Relation field, among the
+ * other entries. With Editorial Workflow, they ride along in the entry’s pull request.
+ * @param {Asset[]} args.savingAssets Assets to save.
+ * @param {CommitOptions} args.options Commit options.
+ * @returns {Promise<ChangeResults>} Results.
+ * @throws {Error} A `saving_failed` error when the changes could not be saved, with the original
+ * error as its `cause`, or the cancellation error when the user has cancelled the commit.
+ */
+const commitChanges = async ({
+  draft,
+  useWorkflow,
+  changes,
+  savingEntry,
+  otherSavingEntries,
+  pendingEntries,
+  savingAssets,
+  options,
+}) => {
+  const { collectionName, fileName, originalEntry } = draft;
 
   try {
-    results = workflowEnabled.current
+    return useWorkflow
       ? await saveWorkflowChanges({
           changes,
           savingEntry,
@@ -156,20 +325,68 @@ export const saveEntry = async ({ draft, skipCI = undefined }) => {
           options,
           collectionName,
           fileName,
-          slug: defaultLocaleSlug,
+          // The slug the entry goes by, which is its path within the collection folder in a nested
+          // collection, so an entry doesn’t take the branch of another with the same file name
+          slug: savingEntry.slug,
           originalEntry,
+          companions: pendingEntries.map(({ collectionName: name, entry, baseEntry }) => ({
+            collectionName: name,
+            entry,
+            // A new entry an earlier save has committed to the pull request can be edited again
+            // too, but it’s still a new one
+            ...(baseEntry && allEntries.current.some(({ id }) => id === entry.id)
+              ? { edited: true }
+              : {}),
+          })),
         })
       : await saveChanges({
           changes,
-          savingEntries: [savingEntry, ...cascadeEntries, ...movedEntries],
+          savingEntries: [savingEntry, ...otherSavingEntries],
           savingAssets,
           options,
         });
   } catch (/** @type {any} */ ex) {
+    // Nothing has been saved if the user has cancelled the commit, which is not a failure
+    if (isCommitCancelled(ex)) {
+      throw ex;
+    }
+
     // eslint-disable-next-line no-console
     console.error(ex.cause ?? ex);
 
     throw new Error('saving_failed', { cause: ex.cause ?? ex });
+  }
+};
+
+/**
+ * Clean up after the entry draft has been saved: delete its backup, call the `postSave` event
+ * hooks and tell the user.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Saved draft.
+ * @param {Entry} args.savingEntry Saved entry.
+ * @param {PendingEntry[]} args.pendingEntries Entries created from a Relation field, saved along.
+ * @param {boolean} args.useWorkflow Whether the changes went to a pull request.
+ * @param {boolean | undefined} args.skipCI Whether automatic deployments were disabled.
+ * @param {number} args.count Number of entries saved.
+ */
+const finishSave = async ({ draft, savingEntry, pendingEntries, useWorkflow, skipCI, count }) => {
+  const { isNew, collection, collectionName, originalEntry } = draft;
+
+  // Delete the backup as soon as the changes are saved. A dev server that watches the content files
+  // may reload the page right after they’re written, e.g. Eleventy, and a backup that outlives the
+  // save would then offer to restore a draft that has already been saved. The changes are saved
+  // already, so a backup that can’t be deleted doesn’t fail the save. The backup is stored under
+  // the path the entry had when it was opened, which a rename leaves behind. A backup scheduled for
+  // a change made just before the save is dropped as well: the editor may stay open on the saved
+  // draft for a while, e.g. while asking whether to send it for review, and the backup made then
+  // would take the place of the one deleted here and be offered the next time the entry is opened
+  cancelBackup();
+
+  try {
+    await deleteBackup(collectionName, getBackupSlug(draft));
+  } catch (ex) {
+    // eslint-disable-next-line no-console
+    console.error(ex);
   }
 
   await callEventHooks({
@@ -180,12 +397,116 @@ export const saveEntry = async ({ draft, skipCI = undefined }) => {
     isNew,
   });
 
-  updateStores({ skipCI, count: 1 + cascadeEntries.length + movedEntries.length });
-  deleteBackup(collectionName, isNew ? '' : defaultLocaleSlug);
+  await Promise.all(
+    pendingEntries.map(({ collectionName: pendingCollectionName, entry, baseEntry }) =>
+      callEventHooks({
+        type: 'postSave',
+        entry,
+        collection: /** @type {InternalCollection} */ (getCollection(pendingCollectionName)),
+        isNew: !baseEntry,
+      }),
+    ),
+  );
 
-  if (originalEntry) {
-    clearEntryHistoryCache(originalEntry.id);
+  updateStores({ useWorkflow, skipCI, count });
+
+  [originalEntry, ...pendingEntries.map(({ baseEntry }) => baseEntry)].forEach((entry) => {
+    if (entry) {
+      clearEntryHistoryCache(entry.id);
+    }
+  });
+
+  // Comments kept by Sveltia CMS Additions follow an entry whose slug or path has changed. It runs
+  // in the background, as the save is done
+  if (originalEntry && originalEntry.subPath !== savingEntry.subPath) {
+    getAdditions()?.moveEntryConversation(
+      getEntryKey(collectionName, originalEntry.subPath),
+      getEntryKey(collectionName, savingEntry.subPath),
+    );
   }
+};
+
+/**
+ * Save the entry draft.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Draft to save.
+ * @param {boolean} [args.skipCI] Whether to disable automatic deployments for the change.
+ * @param {boolean} [args.overwrite] Whether to save even if someone else has changed the entry
+ * since the draft was opened. Without it, such a save is refused with a `save_conflict` error whose
+ * `cause` is the conflict found by {@link detectEntryConflict}, so the user can be asked first.
+ * An entry stored in a file with the other entries of the collection is still refused if its item
+ * has changed, as it’s told by its position, and the item at the position may now be another entry
+ * that has moved there.
+ * @param {boolean} [args.publish] Whether to publish the entry along with the save, bypassing the
+ * review: see the `direct_publish` publish mode option. A workflow draft without a pull request is
+ * then committed straight to the configured branch. One with a pull request is still saved to it,
+ * as the pull request may hold earlier changes too, and it’s up to the caller to merge it.
+ * @returns {Promise<Entry>} Saved entry.
+ * @throws {Error} When the entry is read-only, could not be validated or saved, or would overwrite
+ * someone else’s change.
+ */
+export const saveEntry = async ({
+  draft,
+  skipCI = undefined,
+  overwrite = false,
+  publish = false,
+}) => {
+  // A collection can opt in or out of Editorial Workflow on its own, but an entry that already has
+  // a pull request stays in it
+  const useWorkflow = publish ? !!getUnpublishedEntryByDraft(draft) : isWorkflowDraft(draft);
+  const conflict = await checkSavable({ draft, useWorkflow, overwrite, publish });
+
+  // The entries added to the same collection from a Relation field have already taken the orders
+  // and numbers after the highest ones, so the new entry comes after them
+  assignSaveTimeValues(draft, getNewPendingEntriesByCollection(draft, draft.collectionName).length);
+  // The values are copied for the save right away, while the Compute fields are otherwise only
+  // resolved again by the editor later, so resolve them now: one can refer to a value assigned
+  // above, e.g. `INV-{{fields.number}}` with an auto-increment `number`
+  updateComputedValues(draft);
+
+  const slugs = getSlugs({ draft });
+  // Saving over a deletion writes the entry anew, as its files and the assets stored with it are
+  // gone
+  const recreate = conflict?.type === 'deleted';
+
+  const { savingEntry, changes, savingAssets, cascadeEntries, movedEntries } = await buildChanges({
+    draft,
+    slugs,
+    recreate,
+  });
+
+  const pendingEntries = await preparePendingEntries(draft);
+
+  changes.push(...pendingEntries.flatMap((pendingEntry) => pendingEntry.changes));
+  savingAssets.push(...pendingEntries.flatMap((pendingEntry) => pendingEntry.savingAssets));
+
+  const results = await commitChanges({
+    draft,
+    useWorkflow,
+    changes,
+    savingEntry,
+    otherSavingEntries: [
+      ...cascadeEntries,
+      ...movedEntries,
+      ...pendingEntries.map((pendingEntry) => pendingEntry.entry),
+    ],
+    pendingEntries,
+    savingAssets,
+    options: {
+      commitType: draft.isNew || recreate ? 'create' : 'update',
+      collection: draft.collection,
+      skipCI,
+    },
+  });
+
+  await finishSave({
+    draft,
+    savingEntry,
+    pendingEntries,
+    useWorkflow,
+    skipCI,
+    count: 1 + cascadeEntries.length + movedEntries.length + pendingEntries.length,
+  });
 
   return results.savedEntries[0];
 };

@@ -3,34 +3,46 @@ import { toRaw } from '@sveltia/utils/object';
 
 import { callEventHooks } from '$lib/services/api/events';
 import { globalAssetFolder } from '$lib/services/assets/folders';
-import { backend } from '$lib/services/backends';
 import { cmsConfig } from '$lib/services/config';
-import { isNestedCollection } from '$lib/services/contents/collection/nested';
+import { allEntries } from '$lib/services/contents';
+import { getCollection } from '$lib/services/contents/collection';
+import { hasNestedEntries } from '$lib/services/contents/collection/nested';
+import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
+import { filterRealValues } from '$lib/services/contents/draft';
 import { addAlias } from '$lib/services/contents/draft/save/aliases';
+import { rewriteEntryAssetReferences } from '$lib/services/contents/draft/save/asset-references';
 import { replaceBlobURL } from '$lib/services/contents/draft/save/assets';
-import { buildSingleFileContent } from '$lib/services/contents/draft/save/content';
 import { createEntryPath } from '$lib/services/contents/draft/save/entry-path';
-import { serializeContent } from '$lib/services/contents/draft/save/serialize';
+import {
+  buildEntryFileChanges,
+  resolveCacheDB,
+} from '$lib/services/contents/draft/save/file-changes';
+import { setPermalink } from '$lib/services/contents/draft/save/permalink';
 import { getCanonicalSlug, getFillSlugOptions } from '$lib/services/contents/draft/slugs';
-import { getField } from '$lib/services/contents/entry/fields';
-import { formatEntryFile } from '$lib/services/contents/file/format';
-import { getRepositoryDatabase } from '$lib/services/utils/database';
+import { getDraftFieldArgs, getField } from '$lib/services/contents/entry/fields';
+import { RICH_TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
+import { resolveFileConfig } from '$lib/services/contents/file/config';
+import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
+import { isDuplicatedField } from '$lib/services/contents/i18n/shared-values';
 
 /**
- * @import { IndexedDB } from '@sveltia/utils/storage';
  * @import {
  * Asset,
+ * AssetFolderInfo,
  * Entry,
  * EntryDraft,
  * EntrySlugVariants,
  * FileChange,
+ * FlattenedEntryContent,
  * GetFieldArgs,
  * InternalCollectionFile,
  * InternalEntryCollection,
  * InternalLocaleCode,
  * LocalizedEntryMap,
- * RepositoryFileInfo,
+ * PendingEntry,
  * } from '$lib/types/private';
+ * @import { FieldKeyPath } from '$lib/types/public';
+ * @import { EntryFilePlan } from '$lib/services/contents/draft/save/file-changes';
  */
 
 /**
@@ -47,10 +59,11 @@ const getSubPath = ({ collection: { _file }, path, fallback }) =>
   _file.fullPathRegEx ? (path.match(_file.fullPathRegEx)?.groups?.subPath ?? fallback) : fallback;
 
 /**
- * Get the canonical slug for an entry in a nested collection, where an entry is identified by its
- * path within the collection folder rather than by a bare slug. Linking the localized files by the
- * slug alone would take two entries with the same slug in different folders for one entry once
- * they’re read back from the repository, so it’s the default locale’s sub path that links them.
+ * Get the canonical slug for an entry in a collection with nested entries, where an entry is
+ * identified by its path within the collection folder rather than by a bare slug. Linking the
+ * localized files by the slug alone would take two entries with the same slug in different folders
+ * for one entry once they’re read back from the repository, so it’s the default locale’s sub path
+ * that links them.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {EntrySlugVariants} args.slugs Entry slugs.
@@ -61,7 +74,7 @@ const getSubPath = ({ collection: { _file }, path, fallback }) =>
 const getNestedCanonicalSlug = ({ draft, slugs: { defaultLocaleSlug, localizedSlugs } }) => {
   const { collection, defaultLocale } = draft;
 
-  if (!localizedSlugs || !isNestedCollection(collection)) {
+  if (!localizedSlugs || !hasNestedEntries(collection)) {
     return undefined;
   }
 
@@ -82,6 +95,215 @@ const getNestedCanonicalSlug = ({ draft, slugs: { defaultLocaleSlug, localizedSl
 };
 
 /**
+ * Arguments shared by the normalization of an entry’s content in every locale.
+ * @typedef {object} NormalizeContentArgs
+ * @property {EntryDraft} draft Entry draft.
+ * @property {EntryDraft['files']} files Files attached to the draft, keyed by blob URL.
+ * @property {string} defaultLocaleSlug Default locale’s entry slug.
+ * @property {FileChange[]} changes File changeset, which saved assets are added to.
+ * @property {Asset[]} savingAssets List of assets to be saved.
+ * @property {GetFieldArgs} getFieldArgs Arguments to get a field configuration.
+ * @property {boolean} encodingEnabled Whether the file path encoding is enabled.
+ * @property {AssetFolderInfo | undefined} globalAssetFolder Global asset folder, which a file is
+ * saved to unless it’s associated with another folder. `undefined` without the global
+ * `media_folder` option.
+ */
+
+/**
+ * Replace the blob URLs found in a field value with the paths of the assets they point to.
+ * @param {NormalizeContentArgs & {
+ * locale: InternalLocaleCode, slug: string, content: FlattenedEntryContent, keyPath: FieldKeyPath,
+ * matches: RegExpExecArray[] }} args Arguments. `content` is modified in place, and `matches` are
+ * the blob URLs found in the value.
+ */
+const replaceBlobURLs = async ({
+  draft,
+  files,
+  defaultLocaleSlug,
+  changes,
+  savingAssets,
+  getFieldArgs,
+  encodingEnabled,
+  globalAssetFolder: _globalAssetFolder,
+  locale,
+  slug,
+  content,
+  keyPath,
+  matches,
+}) => {
+  const fieldArgs = { ...getFieldArgs, valueMap: content, keyPath };
+  const field = getField(fieldArgs);
+  const { defaultLocale } = getDraftI18nConfig(draft);
+
+  // A file in a field holding the same value in every locale, i.e. a `duplicate` or `sync` field,
+  // is stored once, in the default locale’s folder, rather than in each locale’s folder with the
+  // `multiple_folders` or `multiple_root_folders` i18n structure. Every locale refers to it by the
+  // same path. A file in a translatable field still goes to the folder of its own locale
+  // @see https://sveltiacms.app/en/docs/media/internal#multilingual-entries
+  const isMirrored =
+    locale !== defaultLocale &&
+    !!field &&
+    isDuplicatedField({ fieldConfig: field, getFieldArgs: fieldArgs });
+
+  const replaceBlobArgs = {
+    draft,
+    defaultLocaleSlug,
+    changes,
+    savingAssets,
+    // The default locale’s slug is used when the slug is omitted
+    locale: isMirrored ? defaultLocale : locale,
+    slug: isMirrored ? undefined : slug,
+    keyPath,
+    content,
+    // Enable encoding for markdown fields to support embedded images
+    encodingEnabled: RICH_TEXT_FIELD_TYPES.includes(field?.widget ?? '') || encodingEnabled,
+  };
+
+  // Replace blob URLs in File/Image fields with asset paths
+  await Promise.all(
+    matches.map(async ([blobURL]) => {
+      const {
+        file,
+        folder = _globalAssetFolder,
+        replace,
+        subfolderPath,
+        nameTemplate,
+      } = files[blobURL] ?? {};
+
+      // A blob URL only lives as long as the page, so one without the file it was made for, e.g.
+      // left by a backup whose file couldn’t be stored, would be saved as a broken link
+      if (!file) {
+        throw new Error(
+          `The file referenced in the "${field?.label ?? keyPath}" field is no longer available. ` +
+            'Select the file again.',
+        );
+      }
+
+      // A file can only be cached without a folder, and there is no global folder either, when
+      // only a cloud media library is configured. The file has nowhere to go in the repository
+      if (!folder) {
+        throw new Error(`There is no asset folder to save the file "${file.name}" to`);
+      }
+
+      await replaceBlobURL({
+        ...replaceBlobArgs,
+        file,
+        folder,
+        replace,
+        subfolderPath,
+        nameTemplate,
+        blobURL,
+      });
+    }),
+  );
+};
+
+/**
+ * Field types whose leading whitespace is part of the value: indentation in a Text field, or an
+ * indented code block at the start of Markdown. Their values only lose trailing whitespace.
+ */
+const MULTILINE_FIELD_TYPES = ['text', ...RICH_TEXT_FIELD_TYPES];
+
+/**
+ * Remove the whitespace from a string value that the field it belongs to doesn’t need. A Code
+ * field value is kept as is, as any whitespace can be significant in code, e.g. the indentation of
+ * the first line in YAML or Python and the final newline. A Text, Markdown or rich text field value
+ * keeps its leading whitespace. Any other value, including one that no field configuration
+ * describes, is trimmed on both ends.
+ * @param {object} args Arguments.
+ * @param {GetFieldArgs} args.getFieldArgs Arguments to get a field configuration.
+ * @param {FlattenedEntryContent} args.content Entry content.
+ * @param {FieldKeyPath} args.keyPath Key path of the value.
+ * @param {string} args.value Value.
+ * @returns {string} Trimmed value.
+ */
+const trimValue = ({ getFieldArgs, content, keyPath, value }) => {
+  const fieldArgs = { ...getFieldArgs, valueMap: content };
+  const field = getField({ ...fieldArgs, keyPath });
+  // A Code field that saves the language too stores the code below its own key path, e.g.
+  // `code.code`, which no field configuration describes
+  const parentKeyPath = keyPath.split('.').slice(0, -1).join('.');
+
+  const fieldType = field
+    ? (field.widget ?? 'string')
+    : parentKeyPath && getField({ ...fieldArgs, keyPath: parentKeyPath })?.widget;
+
+  if (fieldType === 'code') {
+    return value;
+  }
+
+  if (MULTILINE_FIELD_TYPES.includes(String(fieldType))) {
+    return value.trimEnd();
+  }
+
+  return value.trim();
+};
+
+/**
+ * Normalize a field value for saving: remove an undefined value, trim a string as the field needs
+ * with {@link trimValue}, and replace the blob URLs in it with asset paths.
+ * @param {NormalizeContentArgs & {
+ * locale: InternalLocaleCode, slug: string, content: FlattenedEntryContent, keyPath: FieldKeyPath,
+ * value: any }} args Arguments. `content` is modified in place.
+ */
+const normalizeFieldValue = async ({ keyPath, value, ...args }) => {
+  const { content } = args;
+
+  if (value === undefined) {
+    delete content[keyPath];
+
+    return;
+  }
+
+  if (typeof value !== 'string') {
+    return;
+  }
+
+  content[keyPath] = trimValue({ getFieldArgs: args.getFieldArgs, content, keyPath, value });
+
+  const matches = [...value.matchAll(getBlobRegex('g'))];
+
+  if (!matches.length) {
+    return;
+  }
+
+  await replaceBlobURLs({ ...args, keyPath, matches });
+};
+
+/**
+ * Normalize an entry’s content in a locale for saving: add the canonical slug and an alias,
+ * normalize each field value, then add the permalink.
+ * @param {NormalizeContentArgs & {
+ * locale: InternalLocaleCode, slug: string, path: string, content: FlattenedEntryContent,
+ * canonicalSlug: string | undefined, canonicalSlugKey: string }} args Arguments. `content` is
+ * modified in place.
+ */
+const normalizeLocaleContent = async ({ path, canonicalSlug, canonicalSlugKey, ...args }) => {
+  const { draft, locale, slug, content } = args;
+
+  // Add the canonical slug only when it’s defined; if it’s undefined (e.g. the slug template
+  // has no `| localize` filter), skip the assignment to avoid wiping a user-defined field
+  // that happens to share the same key (e.g. `translationKey`).
+  if (canonicalSlug !== undefined) {
+    content[canonicalSlugKey] = canonicalSlug;
+  }
+
+  // Keep links to the entry’s previous path working after the slug has been edited
+  addAlias({ draft, locale, content, slug, path });
+
+  // Normalize data
+  await Promise.all(
+    Object.entries(content).map(([keyPath, value]) =>
+      normalizeFieldValue({ ...args, keyPath, value }),
+    ),
+  );
+
+  // Store the entry’s path on the live site, if the collection asks for it. It comes last, as the
+  // path can contain a field value, which must no longer be a blob URL
+  setPermalink({ draft, locale, content, slug, path });
+};
+
+/**
  * Create base saving entry data.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
@@ -92,17 +314,7 @@ const getNestedCanonicalSlug = ({ draft, slugs: { defaultLocaleSlug, localizedSl
 export const createBaseSavingEntryData = async ({ draft, slugs }) => {
   const { defaultLocaleSlug, localizedSlugs } = slugs;
   const _globalAssetFolder = globalAssetFolder.current;
-
-  const {
-    collection,
-    collectionName,
-    collectionFile,
-    fileName,
-    isIndexFile,
-    currentLocales,
-    currentValues,
-    files,
-  } = draft;
+  const { collection, collectionFile, currentLocales, currentValues, files } = draft;
 
   const {
     _i18n: {
@@ -115,14 +327,31 @@ export const createBaseSavingEntryData = async ({ draft, slugs }) => {
   /** @type {Asset[]} */
   const savingAssets = [];
   const { encode_file_path: encodingEnabled = false } = cmsConfig.current?.output ?? {};
-  /** @type {GetFieldArgs} */
-  const getFieldArgs = { collectionName, fileName, keyPath: '', valueMap: {}, isIndexFile };
-  const replaceBlobBaseArgs = { draft, defaultLocaleSlug, changes, savingAssets };
+  const getFieldArgs = getDraftFieldArgs(draft, { keyPath: '', valueMap: {} });
   const canonicalSlug = getNestedCanonicalSlug({ draft, slugs }) ?? slugs.canonicalSlug;
+
+  /** @type {NormalizeContentArgs} */
+  const normalizeArgs = {
+    draft,
+    files,
+    defaultLocaleSlug,
+    changes,
+    savingAssets,
+    getFieldArgs,
+    encodingEnabled,
+    globalAssetFolder: _globalAssetFolder,
+  };
 
   const localizedEntryMap = Object.fromEntries(
     await Promise.all(
-      Object.entries(currentValues).map(async ([locale, content]) => {
+      Object.entries(currentValues).map(async ([locale, valueMap]) => {
+        // Normalize a copy, so the draft keeps its blob URLs until the save has gone through. If
+        // the commit fails, a retry then saves the files again, rather than committing the entry
+        // with paths to files that never reached the repository
+        // @see https://github.com/sveltia/sveltia-cms/issues/1012
+        // The internal properties the editor adds to list items, like `__sc_item_id`, are left out:
+        // they’re not part of the content, and would otherwise reach the event hooks and the stores
+        const content = filterRealValues(valueMap);
         const localizedSlug = localizedSlugs?.[locale];
         const slug = localizedSlug ?? defaultLocaleSlug;
         const path = createEntryPath({ draft, locale, slug });
@@ -131,65 +360,15 @@ export const createBaseSavingEntryData = async ({ draft, slugs }) => {
           return [locale, { path }];
         }
 
-        // Add the canonical slug only when it’s defined; if it’s undefined (e.g. the slug template
-        // has no `| localize` filter), skip the assignment to avoid wiping a user-defined field
-        // that happens to share the same key (e.g. `translationKey`).
-        if (canonicalSlug !== undefined) {
-          content[canonicalSlugKey] = canonicalSlug;
-        }
-
-        // Keep links to the entry’s previous path working after the slug has been edited
-        addAlias({ draft, locale, content, slug, path });
-
-        // Normalize data
-        await Promise.all(
-          Object.entries(content).map(async ([keyPath, value]) => {
-            if (value === undefined) {
-              delete content[keyPath];
-
-              return;
-            }
-
-            if (typeof value !== 'string') {
-              return;
-            }
-
-            // Remove leading & trailing whitespace
-            content[keyPath] = value.trim();
-
-            const matches = [...value.matchAll(getBlobRegex('g'))];
-
-            if (!matches.length) {
-              return;
-            }
-
-            const field = getField({ ...getFieldArgs, valueMap: content, keyPath });
-
-            const replaceBlobArgs = {
-              ...replaceBlobBaseArgs,
-              locale,
-              slug,
-              keyPath,
-              content,
-              // Enable encoding for markdown fields to support embedded images
-              encodingEnabled:
-                field?.widget === 'richtext' || field?.widget === 'markdown'
-                  ? true
-                  : encodingEnabled,
-            };
-
-            // Replace blob URLs in File/Image fields with asset paths
-            await Promise.all(
-              matches.map(async ([blobURL]) => {
-                const { file, folder = _globalAssetFolder, replace } = files[blobURL] ?? {};
-
-                if (file) {
-                  await replaceBlobURL({ ...replaceBlobArgs, file, folder, replace, blobURL });
-                }
-              }),
-            );
-          }),
-        );
+        await normalizeLocaleContent({
+          ...normalizeArgs,
+          locale,
+          slug,
+          path,
+          content,
+          canonicalSlug,
+          canonicalSlugKey,
+        });
 
         return [locale, { slug, path, content: toRaw(content) }];
       }),
@@ -200,41 +379,63 @@ export const createBaseSavingEntryData = async ({ draft, slugs }) => {
 };
 
 /**
- * Get the previous SHA of the file from the cache database.
- * @param {object} args Arguments.
- * @param {string | undefined} args.previousPath Previous file path.
- * @param {IndexedDB | undefined} args.cacheDB Cache database for file info.
- * @returns {Promise<string | undefined>} Previous SHA or `undefined` if not found.
+ * Remove the locales turned off in the draft from the saving entry, once the file changes have been
+ * worked out. Such a locale only carries the path of its file, so the change plan can delete the
+ * file, but the entry saved to the stores has no file in that locale anymore — or never had one, if
+ * the locale was turned on and off again before the first save. Left in, the path would count as
+ * one of the entry’s files: deleting the entry later in the same session would delete a file that
+ * no longer exists, which the Git services refuse, and the entry would look changed when compared
+ * with the same entry read back from the repository.
+ * @param {Entry} entry Saving entry.
+ * @returns {Entry} Entry with the locales that have content only.
  */
-export const getPreviousSha = async ({ previousPath, cacheDB }) => {
-  if (!previousPath) {
-    return undefined;
+export const removeDisabledLocales = (entry) => ({
+  ...entry,
+  locales: Object.fromEntries(
+    Object.entries(entry.locales).filter(([, { content }]) => content !== undefined),
+  ),
+});
+
+/**
+ * Get the item that a change to an entry applies to, if the entry is stored in a file with the
+ * other entries of an entry collection. The item is identified by its position, and by the content
+ * the user has seen, so that the change doesn’t apply to another item if the array has changed.
+ * The content is taken from the entry in the store, as the given entry can be a copy with the
+ * change already made to it, e.g. a reference to a renamed asset or entry. Without one, the given
+ * entry stands in, which the item then has to match.
+ * @param {Entry | undefined} entry Existing entry. `undefined` for a new entry, which is added to
+ * the end of the array.
+ * @returns {Pick<FileChange, 'arrayItem'>} Properties to add to the change.
+ */
+export const getArrayItemTarget = (entry) => {
+  if (entry?.arrayIndex === undefined) {
+    return {};
   }
 
-  const cache = /** @type {RepositoryFileInfo | undefined} */ (await cacheDB?.get(previousPath));
+  const { locales } = allEntries.current.find(({ id }) => id === entry.id) ?? entry;
 
-  return cache?.sha;
+  return { arrayItem: { index: entry.arrayIndex, locales } };
 };
 
 /**
- * Get file change information for the entry draft, specifically for a single-file entry.
+ * Plan the file change for the entry draft, specifically for a single-file entry.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {Entry} args.savingEntry Entry to be saved.
- * @param {IndexedDB | undefined} args.cacheDB Cache database for file info.
- * @returns {Promise<FileChange>} File change information.
+ * @param {boolean} [args.recreate] Whether to write the entry anew, because someone else has
+ * deleted it since the draft was opened. See {@link createSavingEntryData}.
+ * @returns {EntryFilePlan} Planned change.
  */
-export const getSingleFileChange = async ({ draft, savingEntry, cacheDB }) => {
-  const { collection, isNew, originalEntry, collectionFile } = draft;
-  const config = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
+export const planSingleFileChange = ({ draft, savingEntry, recreate = false }) => {
+  const { collection, originalEntry, collectionFile } = draft;
+  const isNew = draft.isNew || recreate;
 
   const {
-    _file,
     _i18n: { defaultLocale },
-  } = config;
+  } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
 
   const { slug, path } = savingEntry.locales[defaultLocale];
-  const previousPath = originalEntry?.locales[defaultLocale]?.path;
+  const previousPath = isNew ? undefined : originalEntry?.locales[defaultLocale]?.path;
   // Comparing the paths rather than the slugs also catches an entry moved with the path editor,
   // which leaves the slug alone
   const renamed = !isNew && !!previousPath && previousPath !== path;
@@ -244,31 +445,27 @@ export const getSingleFileChange = async ({ draft, savingEntry, cacheDB }) => {
     slug,
     path,
     previousPath: renamed ? previousPath : undefined,
-    previousSha: await getPreviousSha({ cacheDB, previousPath }),
-    data: await formatEntryFile({
-      content: buildSingleFileContent({ config, entry: savingEntry, draft }),
-      _file,
-    }),
+    currentPath: previousPath,
+    ...(isArrayFileCollection(collection) && !isNew ? getArrayItemTarget(originalEntry) : {}),
   };
 };
 
 /**
- * Get file change information for the entry draft, specifically for a multi-file entry.
+ * Plan the file change for the entry draft, specifically for a multi-file entry.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {Entry} args.savingEntry Entry to be saved.
- * @param {IndexedDB | undefined} args.cacheDB Cache database for file info.
  * @param {InternalLocaleCode} args.locale Locale code.
- * @returns {Promise<FileChange | undefined>} File change information.
+ * @param {boolean} [args.recreate] Whether to write the entry anew, because someone else has
+ * deleted it since the draft was opened. See {@link createSavingEntryData}.
+ * @returns {EntryFilePlan | undefined} Planned change, or `undefined` if there’s no file to save
+ * or delete for the locale.
  */
-export const getMultiFileChange = async ({ draft, savingEntry, cacheDB, locale }) => {
-  const { collection, isNew, originalLocales, currentLocales, originalEntry, collectionFile } =
-    draft;
-
-  const { _file } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
-  const { slug, path, content } = savingEntry.locales[locale] ?? {};
-  const previousPath = originalEntry?.locales[locale]?.path;
-  const previousSha = await getPreviousSha({ cacheDB, previousPath });
+export const planMultiFileChange = ({ draft, savingEntry, locale, recreate = false }) => {
+  const { originalLocales, currentLocales, originalEntry } = draft;
+  const isNew = draft.isNew || recreate;
+  const { slug, path } = savingEntry.locales[locale] ?? {};
+  const previousPath = isNew ? undefined : originalEntry?.locales[locale]?.path;
 
   if (currentLocales[locale]) {
     const renamed = !isNew && !!originalLocales[locale] && !!previousPath && previousPath !== path;
@@ -278,20 +475,18 @@ export const getMultiFileChange = async ({ draft, savingEntry, cacheDB, locale }
       slug,
       path,
       previousPath: renamed ? previousPath : undefined,
-      previousSha,
-      data: await formatEntryFile({
-        content: serializeContent({ draft, locale, valueMap: content }),
-        _file,
-      }),
+      currentPath: previousPath,
     };
   }
 
   if (!isNew && originalLocales[locale]) {
+    // Delete the file where it is now. The path built for the disabled locale follows the new slug
+    // and folder, so it points elsewhere once the entry is renamed or moved in the same save
     return {
       action: 'delete',
-      slug,
-      path,
-      previousSha,
+      slug: originalEntry?.locales[locale]?.slug ?? slug,
+      path: /** @type {string} */ (previousPath),
+      currentPath: previousPath,
     };
   }
 
@@ -303,47 +498,56 @@ export const getMultiFileChange = async ({ draft, savingEntry, cacheDB, locale }
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {EntrySlugVariants} args.slugs Entry slugs.
+ * @param {boolean} [args.recreate] Whether to write the entry anew, as if it were new, because
+ * someone else has deleted it since the draft was opened and the user has chosen to save anyway.
+ * Its files are then created rather than updated, moved or deleted, as none of them exists anymore.
+ * @param {boolean} [args.runPreSave] Whether to call the `preSave` event hooks. It’s `false` for an
+ * entry created from a Relation field, which is only saved along with the entry referring to it;
+ * the hooks are then called by {@link preparePendingEntryCommit} at that point.
  * @returns {Promise<{ savingEntry: Entry, savingAssets: Asset[], changes: FileChange[] }>} Saving
  * entry, assets and file changes.
  */
-export const createSavingEntryData = async ({ draft, slugs }) => {
+export const createSavingEntryData = async ({
+  draft,
+  slugs,
+  recreate = false,
+  runPreSave = true,
+}) => {
   const { id, collection, collectionFile } = draft;
   const { defaultLocaleSlug } = slugs;
-
-  const {
-    _i18n: {
-      i18nEnabled,
-      allLocales,
-      defaultLocale,
-      structureMap: { i18nSingleFile, i18nSingleFileDefaultRoot },
-    },
-  } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
+  // A file/singleton collection keeps its file configuration on the collection file
+  const entryCollection = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
+  const { defaultLocale } = entryCollection._i18n;
 
   const { localizedEntryMap, changes, savingAssets } = await createBaseSavingEntryData({
     draft,
     slugs,
   });
 
-  // A file/singleton collection keeps its file configuration on the collection file
-  const entryCollection = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
+  // An entry may have no file in the default locale, e.g. when only `hello.fr.md` exists. Another
+  // locale then stands in for it, just like when the entry is read from the repository
+  const { path } =
+    localizedEntryMap[defaultLocale] ??
+    Object.values(localizedEntryMap).find(({ content }) => content) ??
+    Object.values(localizedEntryMap)[0];
 
-  const subPath = getSubPath({
-    collection: entryCollection,
-    path: localizedEntryMap[defaultLocale].path,
-    fallback: defaultLocaleSlug,
-  });
-
-  // In a nested collection, an entry is identified by its path within the collection folder rather
-  // than by a file name, so that’s also the slug the entry gets when it’s read back from the
-  // repository. Use it here as well, or the entry saved in this session would differ from the same
-  // entry after a reload.
-  const nested = isNestedCollection(collection);
+  const subPath = getSubPath({ collection: entryCollection, path, fallback: defaultLocaleSlug });
+  // In a collection with nested entries, an entry is identified by its path within the collection
+  // folder rather than by a file name, so that’s also the slug the entry gets when it’s read back
+  // from the repository. Use it here as well, or the entry saved in this session would differ from
+  // the same entry after a reload.
+  const nested = hasNestedEntries(collection);
 
   /** @type {Entry} */
-  const savingEntry = {
+  let savingEntry = {
     id,
     slug: nested ? subPath : defaultLocaleSlug,
     subPath,
+    // An entry stored in a file with the other entries keeps its position, while a new one gets
+    // one once the file is saved
+    ...(draft.isNew || draft.originalEntry?.arrayIndex === undefined
+      ? {}
+      : { arrayIndex: draft.originalEntry.arrayIndex }),
     locales: Object.fromEntries(
       Object.entries(localizedEntryMap).map(([locale, localizedEntry]) => [
         locale,
@@ -361,30 +565,130 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
     ),
   };
 
-  await callEventHooks({
-    type: 'preSave',
-    entry: savingEntry,
+  // The references to the entry’s own assets by an absolute path filled with its values, e.g.
+  // `/blog/{{slug}}/images/photo.jpg`, follow a renamed slug or a move of the entry. An entry
+  // someone else has deleted is written anew, from references the user has seen
+  savingEntry = await rewriteEntryAssetReferences({
     collection,
     collectionFile,
-    isNew: draft.isNew,
+    isIndexFile: draft.isIndexFile,
+    originalEntry: draft.isNew || recreate ? undefined : draft.originalEntry,
+    savingEntry,
   });
 
-  const cacheDB = getRepositoryDatabase(backend.current?.repository, 'file-cache');
-  const getFileChangeArgs = { draft, savingEntry, cacheDB };
-
-  if (!i18nEnabled || i18nSingleFile || i18nSingleFileDefaultRoot) {
-    changes.push(await getSingleFileChange({ ...getFileChangeArgs }));
-  } else {
-    await Promise.all(
-      allLocales.map(async (locale) => {
-        const change = await getMultiFileChange({ ...getFileChangeArgs, locale });
-
-        if (change) {
-          changes.push(change);
-        }
-      }),
-    );
+  if (runPreSave) {
+    await callEventHooks({
+      type: 'preSave',
+      entry: savingEntry,
+      collection,
+      collectionFile,
+      isNew: draft.isNew,
+    });
   }
 
+  changes.push(
+    ...(await buildEntryFileChanges({
+      draft,
+      config: entryCollection,
+      _file: resolveFileConfig({ collection, collectionFile, isIndexFile: draft.isIndexFile }),
+      entry: savingEntry,
+      cacheDB: resolveCacheDB(),
+      /**
+       * Plan the change to a file of the entry.
+       * @param {InternalLocaleCode} [locale] Locale of the file, or `undefined` for the single
+       * file.
+       * @returns {EntryFilePlan | undefined} Planned change.
+       */
+      planChange: (locale) =>
+        locale === undefined
+          ? planSingleFileChange({ draft, savingEntry, recreate })
+          : planMultiFileChange({ draft, savingEntry, locale, recreate }),
+    })),
+  );
+
   return { savingEntry, savingAssets, changes };
+};
+
+/**
+ * Prepare an entry created or edited from a Relation field for the commit of the entry referring to
+ * it: call the `preSave` event hooks, which are held back until then, so they don’t run for an
+ * entry that is discarded along with the draft. If a hook updates the entry, its file changes are
+ * built again from the updated content, each the same way as before: created for a new entry, and
+ * updated for an existing one; the other changes, like the assets uploaded with the entry, are
+ * kept.
+ * The pending entry itself is left as is, so a retry after a failed commit starts over from it.
+ * @param {PendingEntry} pendingEntry Pending entry.
+ * @returns {Promise<PendingEntry>} Pending entry to commit.
+ */
+export const preparePendingEntryCommit = async (pendingEntry) => {
+  const { collectionName, entry, changes, baseEntry } = pendingEntry;
+  const isNew = !baseEntry;
+  // Quick-add only creates and edits entries in an entry collection, see `getCreatableCollection()`
+  // and `canEditEntry()`
+  const collection = /** @type {InternalEntryCollection} */ (getCollection(collectionName));
+
+  /** @type {Entry} */
+  const savingEntry = {
+    ...entry,
+    locales: Object.fromEntries(
+      Object.entries(entry.locales).map(([locale, localizedEntry]) => [
+        locale,
+        { ...localizedEntry },
+      ]),
+    ),
+  };
+
+  await callEventHooks({ type: 'preSave', entry: savingEntry, collection, isNew });
+
+  // A hook updating the entry replaces the content of the locales
+  const updated = Object.entries(savingEntry.locales).some(
+    ([locale, { content }]) => content !== entry.locales[locale].content,
+  );
+
+  if (!updated) {
+    return pendingEntry;
+  }
+
+  const { defaultLocale } = collection._i18n;
+  const entryPaths = new Set(Object.values(entry.locales).map(({ path }) => path));
+
+  const fileChanges = await buildEntryFileChanges({
+    // A synthetic draft holding the properties read by `formatEntryData()`
+    draft: { collection, collectionName, fields: collection.fields, isIndexFile: false },
+    config: collection,
+    _file: resolveFileConfig({ collection }),
+    entry: savingEntry,
+    cacheDB: resolveCacheDB(),
+    /**
+     * Plan the change to a file of the entry, the same as the one planned when the entry was added.
+     * @param {InternalLocaleCode} [locale] Locale of the file, or `undefined` for the single
+     * file.
+     * @returns {EntryFilePlan | undefined} Planned change, or `undefined` if the entry has no file
+     * in the locale.
+     */
+    planChange: (locale) => {
+      const localizedEntry = savingEntry.locales[locale ?? defaultLocale];
+
+      if (!localizedEntry) {
+        return undefined;
+      }
+
+      const { slug, path } = localizedEntry;
+
+      // An existing entry has a change planned for each of its files when it’s added: an update,
+      // or a creation for a locale turned on. It’s never a move, see `isPendingEntryMoved()`
+      const { action } = isNew
+        ? { action: /** @type {const} */ ('create') }
+        : /** @type {FileChange} */ (changes.find((change) => change.path === path));
+
+      // The file is looked up to update it, unless it’s to be created
+      return { action, slug, path, currentPath: action === 'create' ? undefined : path };
+    },
+  });
+
+  return {
+    ...pendingEntry,
+    entry: savingEntry,
+    changes: [...changes.filter(({ path }) => !entryPaths.has(path)), ...fileChanges],
+  };
 };

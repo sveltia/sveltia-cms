@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 
 import { describe, expect, it } from 'vitest';
 
@@ -7,9 +7,13 @@ import {
   createDerivedState,
   createRawState,
   createRootEffect,
+  createStableDerivedState,
   createState,
   getSnapshot,
+  requestAnswer,
+  syncValues,
   watch,
+  watchAsync,
 } from './state.svelte.js';
 
 /**
@@ -37,6 +41,34 @@ describe('utils/state', () => {
       const state = createState({ a: 1 });
 
       expect(createState(state)).toBe(state);
+    });
+
+    it('should hand out a static property as it is, rather than a proxy of it', () => {
+      const config = { nested: { b: 2 } };
+      const reactive = { nested: { b: 2 } };
+      const state = createState({ config, reactive }, ['config']);
+
+      expect(state.config).toBe(config);
+      // A reactive property, in contrast, is handed out as a proxy
+      expect(state.reactive).not.toBe(reactive);
+      expect(state.reactive).toEqual(reactive);
+    });
+
+    it('should skip a static key the object doesn’t carry', () => {
+      const state = createState({ a: 1 }, ['config']);
+
+      expect('config' in state).toBe(false);
+      expect(state.a).toBe(1);
+    });
+
+    it('should hand out the same static property to every state built from it', () => {
+      // Two proxies of the same configuration would look like a change to every reader
+      // @see https://github.com/sveltia/sveltia-cms/issues/1006
+      const config = { nested: { b: 2 } };
+
+      expect(createState({ config }, ['config']).config).toBe(
+        createState({ config }, ['config']).config,
+      );
     });
   });
 
@@ -78,6 +110,37 @@ describe('createDerivedState()', () => {
 
     state.current = 3;
     expect(derived.current).toBe(6);
+  });
+});
+
+describe('createStableDerivedState()', () => {
+  it('should keep the previous value while the new one is deeply equal', () => {
+    const state = createRawState({ sort: { key: 'title' }, type: 'list' });
+    const derived = createStableDerivedState(() => state.current.sort);
+    const dependent = createDerivedState(() => ({ sort: derived.current }));
+    const first = derived.current;
+    const firstDependent = dependent.current;
+
+    expect(first).toEqual({ key: 'title' });
+
+    // A different object with the same value is not passed on, so the dependent isn’t recomputed
+    state.current = { sort: { key: 'title' }, type: 'grid' };
+    expect(derived.current).toBe(first);
+    expect(dependent.current).toBe(firstDependent);
+
+    state.current = { sort: { key: 'date' }, type: 'grid' };
+    expect(derived.current).toEqual({ key: 'date' });
+    expect(dependent.current).not.toBe(firstDependent);
+  });
+
+  it('should hand out the first value even when it is undefined', () => {
+    const state = createRawState(/** @type {string | undefined} */ (undefined));
+    const derived = createStableDerivedState(() => state.current);
+
+    expect(derived.current).toBeUndefined();
+
+    state.current = 'a';
+    expect(derived.current).toBe('a');
   });
 });
 
@@ -144,6 +207,35 @@ describe('createDeepState()', () => {
   });
 });
 
+describe('requestAnswer()', () => {
+  it('puts the request in the box and resolves with the answer', async () => {
+    /** @type {{ current: any }} */
+    const state = createRawState();
+    const promise = requestAnswer(state, { repo: 'owner/repo' }, false);
+
+    expect(state.current.repo).toBe('owner/repo');
+    state.current.respond(true);
+    expect(state.current).toBeUndefined();
+    await expect(promise).resolves.toBe(true);
+  });
+
+  it('answers an earlier request with the fallback, which leaves the newer one up', async () => {
+    /** @type {{ current: any }} */
+    const state = createRawState();
+    const first = requestAnswer(state, { id: 1 }, false);
+    const firstRequest = state.current;
+    const second = requestAnswer(state, { id: 2 }, false);
+
+    await expect(first).resolves.toBe(false);
+    expect(state.current.id).toBe(2);
+    // Answering the stale request again doesn’t take down the newer one
+    firstRequest.respond(true);
+    expect(state.current.id).toBe(2);
+    state.current.respond(true);
+    await expect(second).resolves.toBe(true);
+  });
+});
+
 describe('watch()', () => {
   it('should run on the dependencies only, not on what the function reads', async () => {
     const dependency = createRawState(1);
@@ -175,6 +267,233 @@ describe('watch()', () => {
     dependency.current = 2;
     await wait();
     expect(log).toEqual(['run 1 a', 'cleanup', 'run 2 b']);
+
+    stop();
+  });
+});
+
+describe('watchAsync()', () => {
+  it('should pass on the result of the latest run only', async () => {
+    const input = /** @type {{ current: number | undefined }} */ (createRawState(1));
+    /** @type {Record<number, (value: string) => void>} */
+    const resolvers = {};
+    /** @type {string[]} */
+    const results = [];
+
+    const stop = createRootEffect(() => {
+      watchAsync(
+        () => {
+          const value = input.current;
+
+          return value === undefined
+            ? undefined
+            : new Promise((resolve) => {
+                resolvers[value] = resolve;
+              });
+        },
+        (result) => {
+          results.push(result);
+        },
+      );
+    });
+
+    await wait();
+    resolvers[1]('one');
+    await wait();
+    expect(results).toEqual(['one']);
+
+    // A slow run for an earlier value is answered after the run for a later value
+    input.current = 2;
+    await wait();
+    input.current = 3;
+    await wait();
+    resolvers[3]('three');
+    resolvers[2]('two');
+    await wait();
+    expect(results).toEqual(['one', 'three']);
+
+    // A skipped run doesn’t pass anything on
+    input.current = undefined;
+    await wait();
+    expect(results).toEqual(['one', 'three']);
+
+    stop();
+  });
+
+  it('should pass on the error of the latest run only', async () => {
+    const input = createRawState(1);
+    /** @type {Record<number, (reason: Error) => void>} */
+    const rejecters = {};
+    /** @type {string[]} */
+    const results = [];
+    /** @type {unknown[]} */
+    const errors = [];
+
+    const stop = createRootEffect(() => {
+      watchAsync(
+        () => {
+          const value = input.current;
+
+          return new Promise((_resolve, reject) => {
+            rejecters[value] = reject;
+          });
+        },
+        (result) => {
+          results.push(result);
+        },
+        (error) => {
+          errors.push(error);
+        },
+      );
+    });
+
+    await wait();
+    input.current = 2;
+    await wait();
+    rejecters[1](new Error('one'));
+    rejecters[2](new Error('two'));
+    await wait();
+    expect(results).toEqual([]);
+    expect(errors).toEqual([new Error('two')]);
+
+    stop();
+  });
+});
+
+describe('syncValues()', () => {
+  it('should sync the input value with the field value and vice versa', async () => {
+    const value = createRawState(/** @type {string | undefined} */ (undefined));
+    const input = createRawState('');
+    /** @type {string[]} */
+    const writes = [];
+    /** @type {{ updateInput: () => void, updateValue: () => void } | undefined} */
+    let sync;
+
+    const stop = createRootEffect(() => {
+      sync = syncValues(
+        () => value.current,
+        (newValue) => {
+          writes.push(`value ${newValue}`);
+          value.current = newValue;
+        },
+        () => input.current,
+        (newInput) => {
+          writes.push(`input ${newInput}`);
+          input.current = newInput;
+        },
+        (newValue) => newValue ?? '',
+        (newInput) => newInput.trim(),
+      );
+    });
+
+    await wait();
+    // The input is synced on the first run, but the converted value `''` equals the input, so it’s
+    // not written. The field value isn’t written either, even though the input `''` converts to a
+    // different value: the input merely reflects the field value, which the user hasn’t edited
+    expect(writes).toEqual([]);
+    expect(value.current).toBeUndefined();
+
+    value.current = 'a';
+    await wait();
+    expect(input.current).toBe('a');
+    // The input watcher then converts `a` back to `a`, which is equal, so it’s not written again
+    expect(writes).toEqual(['input a']);
+
+    writes.length = 0;
+    input.current = ' b ';
+    await wait();
+    expect(value.current).toBe('b');
+    // The value watcher then converts `b` to `b`, which is different from ` b `, so the input is
+    // normalized
+    expect(writes).toEqual(['value b', 'input b']);
+
+    writes.length = 0;
+    input.current = 'b';
+    await wait();
+    // Equal on both sides, so nothing is written
+    expect(writes).toEqual([]);
+
+    // The returned functions sync on demand
+    input.current = 'c';
+    sync?.updateInput();
+    expect(input.current).toBe('b');
+    input.current = 'c';
+    sync?.updateValue();
+    expect(value.current).toBe('c');
+    sync?.updateValue();
+    expect(writes).toEqual(['input b', 'value c']);
+
+    stop();
+  });
+
+  it('should keep a field value the input can’t represent until the input is edited', async () => {
+    const value = createRawState(/** @type {number | undefined} */ (4.5));
+    const input = createRawState('');
+    /** @type {string[]} */
+    const writes = [];
+
+    const stop = createRootEffect(() => {
+      syncValues(
+        () => value.current,
+        (newValue) => {
+          writes.push(`value ${newValue}`);
+          value.current = newValue;
+        },
+        () => input.current,
+        (newInput) => {
+          writes.push(`input ${newInput}`);
+          input.current = newInput;
+        },
+        (newValue) => String(newValue ?? ''),
+        (newInput) => Number.parseInt(newInput, 10),
+      );
+    });
+
+    await wait();
+    // The input shows the value, which converts back to `4`, but the stored value is kept
+    expect(writes).toEqual(['input 4.5']);
+    expect(value.current).toBe(4.5);
+    writes.length = 0;
+
+    // A value replaced from elsewhere is reflected in the input, and kept as well
+    value.current = 7.5;
+    await wait();
+    expect(writes).toEqual(['input 7.5']);
+    expect(value.current).toBe(7.5);
+    writes.length = 0;
+
+    // An edit is converted and written, and the input is normalized
+    input.current = '8.9';
+    await wait();
+    expect(writes).toEqual(['value 8', 'input 8']);
+    expect(value.current).toBe(8);
+
+    stop();
+  });
+
+  it('should pass the values as is without converters', async () => {
+    const value = createRawState('a');
+    const input = createRawState('');
+
+    const stop = createRootEffect(() => {
+      syncValues(
+        () => value.current,
+        (newValue) => {
+          value.current = newValue;
+        },
+        () => input.current,
+        (newInput) => {
+          input.current = newInput;
+        },
+      );
+    });
+
+    await wait();
+    expect(input.current).toBe('a');
+
+    input.current = 'b';
+    await wait();
+    expect(value.current).toBe('b');
 
     stop();
   });

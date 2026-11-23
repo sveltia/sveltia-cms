@@ -1,6 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { getChunkURLs, getUnpkgURL, loadChunk, loadModule } from './dependencies';
+import {
+  getChunkURLs,
+  getLeafletMarkerIconURL,
+  getScriptVersionSpec,
+  getUnpkgURL,
+  loadChunk,
+  loadModule,
+} from './dependencies';
 
 // Mock the dependencies import
 vi.mock('$lib/services/app', () => ({
@@ -94,6 +101,14 @@ describe('dependencies', () => {
     });
   });
 
+  describe('getLeafletMarkerIconURL', () => {
+    it('should point to the icon on UNPKG', async () => {
+      await expect(getLeafletMarkerIconURL()).resolves.toBe(
+        'https://unpkg.com/leaflet/dist/images/marker-icon-2x.png',
+      );
+    });
+  });
+
   describe('getChunkURLs', () => {
     it('should prefer the chunk next to the CMS script, then fall back to UNPKG', () => {
       expect(getChunkURLs('react-dom', 'https://example.com/admin/sveltia-cms.js')).toEqual([
@@ -106,6 +121,65 @@ describe('dependencies', () => {
       expect(
         getChunkURLs('react-dom', 'https://unpkg.com/@sveltia/cms@9.9.9/dist/sveltia-cms.js'),
       ).toEqual(['https://unpkg.com/@sveltia/cms@9.9.9/dist/chunks/react-dom.js']);
+    });
+
+    it('should pin the chunk to the running version when the CMS was loaded from UNPKG without it', () => {
+      // The unversioned URL serves the latest release, which may be newer than a cached script
+      expect(
+        getChunkURLs('react-dom', 'https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js'),
+      ).toEqual(['https://unpkg.com/@sveltia/cms@9.9.9/dist/chunks/react-dom.js']);
+      expect(getChunkURLs('git', 'https://unpkg.com/@sveltia/cms@^9/dist/sveltia-cms.js')).toEqual([
+        'https://unpkg.com/@sveltia/cms@9.9.9/dist/chunks/git.js',
+      ]);
+    });
+
+    it('should pin the chunk to the running version on jsDelivr', () => {
+      expect(
+        getChunkURLs('react-dom', 'https://cdn.jsdelivr.net/npm/@sveltia/cms/dist/sveltia-cms.js'),
+      ).toEqual([
+        'https://cdn.jsdelivr.net/npm/@sveltia/cms@9.9.9/dist/chunks/react-dom.js',
+        'https://unpkg.com/@sveltia/cms@9.9.9/dist/chunks/react-dom.js',
+      ]);
+      expect(
+        getChunkURLs(
+          'react-dom',
+          'https://cdn.jsdelivr.net/npm/@sveltia/cms@latest/dist/sveltia-cms.js',
+        ),
+      ).toEqual([
+        'https://cdn.jsdelivr.net/npm/@sveltia/cms@9.9.9/dist/chunks/react-dom.js',
+        'https://unpkg.com/@sveltia/cms@9.9.9/dist/chunks/react-dom.js',
+      ]);
+      expect(
+        getChunkURLs(
+          'react-dom',
+          'https://cdn.jsdelivr.net/npm/@sveltia/cms@9.9.9/dist/sveltia-cms.js',
+        ),
+      ).toEqual([
+        'https://cdn.jsdelivr.net/npm/@sveltia/cms@9.9.9/dist/chunks/react-dom.js',
+        'https://unpkg.com/@sveltia/cms@9.9.9/dist/chunks/react-dom.js',
+      ]);
+    });
+
+    it('should keep the host of a path starting with two slashes', () => {
+      expect(
+        getChunkURLs('git', 'https://example.com//evil.example/@sveltia/cms@latest/dist/cms.js'),
+      ).toEqual([
+        'https://example.com//evil.example/@sveltia/cms@9.9.9/dist/chunks/git.js',
+        'https://unpkg.com/@sveltia/cms@9.9.9/dist/chunks/git.js',
+      ]);
+    });
+
+    it('should keep a self-hosted copy of the package as it is', () => {
+      // No version in the path doesn’t mean the latest release outside a CDN
+      expect(
+        getChunkURLs(
+          'react-dom',
+          'https://example.com/node_modules/@sveltia/cms/dist/sveltia-cms.js',
+        ),
+      ).toEqual([
+        'https://example.com/node_modules/@sveltia/cms/dist/chunks/react-dom.js',
+        'https://unpkg.com/@sveltia/cms@9.9.9/dist/chunks/react-dom.js',
+      ]);
     });
 
     it('should only have UNPKG when the script’s URL is unknown', () => {
@@ -124,6 +198,42 @@ describe('dependencies', () => {
     });
   });
 
+  describe('getScriptVersionSpec', () => {
+    it('should return an empty string for a CDN URL without a version', () => {
+      expect(getScriptVersionSpec('https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js')).toBe('');
+      // The module version is just as unpinned
+      expect(getScriptVersionSpec('https://unpkg.com/@sveltia/cms/dist/sveltia-cms.mjs')).toBe('');
+      expect(
+        getScriptVersionSpec('https://cdn.jsdelivr.net/npm/@sveltia/cms/dist/sveltia-cms.mjs'),
+      ).toBe('');
+    });
+
+    it('should return the version range or tag in the URL', () => {
+      expect(getScriptVersionSpec('https://unpkg.com/@sveltia/cms@^1/dist/sveltia-cms.js')).toBe(
+        '%5E1',
+      );
+      expect(
+        getScriptVersionSpec('https://cdn.jsdelivr.net/npm/@sveltia/cms@0/dist/sveltia-cms.js'),
+      ).toBe('0');
+    });
+
+    it('should return nothing for a pinned, self-hosted or unknown URL', () => {
+      expect(
+        getScriptVersionSpec('https://unpkg.com/@sveltia/cms@9.9.9/dist/sveltia-cms.js'),
+      ).toBeUndefined();
+      expect(
+        getScriptVersionSpec('https://example.com/node_modules/@sveltia/cms/dist/sveltia-cms.js'),
+      ).toBeUndefined();
+      expect(getScriptVersionSpec('https://example.com/admin/sveltia-cms.js')).toBeUndefined();
+      expect(getScriptVersionSpec('')).toBeUndefined();
+    });
+
+    it('should default to the running script’s URL', () => {
+      // In the test environment, that’s the module’s own URL, which isn’t a CDN URL
+      expect(getScriptVersionSpec()).toBeUndefined();
+    });
+  });
+
   describe('loadChunk', () => {
     it('should import the source entry of a known chunk in development', async () => {
       // Vitest runs in development mode, so the entry is imported rather than a built chunk
@@ -131,6 +241,41 @@ describe('dependencies', () => {
 
       expect(module.createRoot).toBeTypeOf('function');
     });
+
+    it('should load the QR code chunk from its source entry in development', async () => {
+      const module = await loadChunk('qrcode');
+
+      expect(module.toCanvas).toBeTypeOf('function');
+    });
+
+    it('should load the Git chunk from its source entry in development', async () => {
+      const module = await loadChunk('git');
+
+      expect(module.commit).toBeTypeOf('function');
+      expect(module.Buffer).toBeTypeOf('function');
+    });
+
+    it('should load the Map field chunk from its source entry in development', async () => {
+      const module = await loadChunk('map');
+
+      expect(module.createMapDrawController).toBeTypeOf('function');
+      expect(module.parseGeoJSON).toBeTypeOf('function');
+    });
+
+    // The chunk is compiled from source on first import, its Svelte components included, which can
+    // take longer than the default timeout on a busy CI runner
+    it('should load the Sveltia CMS Additions chunk from its source entry in development', async () => {
+      const module = await loadChunk('additions');
+
+      expect(module.adminSections.map((/** @type {{ key: string }} */ { key }) => key)).toEqual([
+        'users',
+        'sign-in',
+        'domains',
+        'github',
+        'credentials',
+      ]);
+      expect(module.startSession).toBeTypeOf('function');
+    }, 30_000);
 
     it('should reject with the last error once every location has failed', async () => {
       // A `file:` URL can’t be imported here, and neither can the CDN

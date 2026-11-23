@@ -5,12 +5,11 @@
   @see https://sveltiacms.app/en/docs/fields/object
 -->
 <script>
-  import { VisibilityObserver } from '@sveltia/ui';
-
-  import Subsection from '$lib/components/contents/details/fields/object/subsection.svelte';
-  import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
+  import SubfieldPreviews from '$lib/components/contents/details/fields/object/subfield-previews.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { getKeysByPrefix } from '$lib/services/contents/entry/key-paths';
+  import { isValueEmpty } from '$lib/services/utils/object';
 
   /**
    * @import { FieldPreviewProps } from '$lib/types/private';
@@ -30,49 +29,27 @@
   const entryDraft = getEntryDraftContext();
 
   /** @type {FieldPreviewProps & Props} */
-  let {
-    /* eslint-disable prefer-const */
-    locale,
-    keyPath,
-    typedKeyPath,
-    fieldConfig,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { locale, keyPath, typedKeyPath, fieldConfig } = $props();
 
   const { fields } = $derived(/** @type {ObjectFieldWithSubFields} */ (fieldConfig));
   const { types, typeKey = 'type' } = $derived(/** @type {ObjectFieldWithTypes} */ (fieldConfig));
-  const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale));
+  const valueMap = $derived(getFieldValueMapSnapshot(entryDraft.current, locale, keyPath));
+  // Ask the shared key path index rather than scanning the whole value map, like the Object field
+  // editor does. Unlike the editor, which asks whether the object is there at all, this asks
+  // whether there’s anything to show: a number, `0` included, is, but `false`, which a Boolean
+  // field holds until it’s turned on, isn’t
   const hasValues = $derived(
-    Object.entries(valueMap).some(
-      ([_keyPath, value]) => !!_keyPath.startsWith(`${keyPath}.`) && !!value,
-    ),
+    getKeysByPrefix(valueMap, `${keyPath}.`).some((_keyPath) => {
+      const value = valueMap[_keyPath];
+
+      return value !== false && !isValueEmpty(value);
+    }),
   );
   const hasVariableTypes = $derived(Array.isArray(types));
   const typeKeyPath = $derived(`${keyPath}.${typeKey}`);
   const type = $derived(hasVariableTypes ? valueMap[typeKeyPath] : undefined);
-  const typeConfig = $derived(type ? types?.find(({ name }) => name === type) : undefined);
-  const label = $derived(typeConfig ? typeConfig.label || typeConfig.name : undefined);
-  const subFields = $derived((hasVariableTypes ? typeConfig?.fields : fields) ?? []);
 </script>
 
 {#if hasValues}
-  {#if hasVariableTypes && !typeConfig}
-    <!-- Unknown type: a warning is displayed in the editor -->
-  {:else}
-    <Subsection {label}>
-      {#each subFields as subField (subField.name)}
-        {@const subFieldKeyPath = `${keyPath}.${subField.name}`}
-        <VisibilityObserver>
-          <FieldPreview
-            keyPath={subFieldKeyPath}
-            typedKeyPath={hasVariableTypes && typeConfig?.name
-              ? `${typedKeyPath}<${typeConfig.name}>.${subField.name}`
-              : subFieldKeyPath}
-            {locale}
-            fieldConfig={subField}
-          />
-        </VisibilityObserver>
-      {/each}
-    </Subsection>
-  {/if}
+  <SubfieldPreviews {locale} {keyPath} {typedKeyPath} {types} {fields} {type} />
 {/if}

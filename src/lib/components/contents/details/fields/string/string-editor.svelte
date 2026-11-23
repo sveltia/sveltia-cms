@@ -1,31 +1,36 @@
 <!--
   @component
-  Implement the editor for a String field.
+  Implement the editor for a String field, and, with `multiline`, for a Text field.
   @see https://decapcms.org/docs/widgets/#String
   @see https://sveltiacms.app/en/docs/fields/string
 -->
 <script>
-  import { TextInput } from '@sveltia/ui';
-  import { getContext } from 'svelte';
+  import { TextArea, TextInput } from '@sveltia/ui';
 
   import CharacterCounter from '$lib/components/contents/details/fields/string/character-counter.svelte';
+  import { setExtraHint } from '$lib/services/contents/editor/extra-hint.svelte';
+  import {
+    getStringFieldValue,
+    getStringInputValue,
+  } from '$lib/services/contents/fields/string/helpers';
   import { getCanonicalLocale, getDirection } from '$lib/services/contents/i18n';
-  import { watch } from '$lib/services/utils/state.svelte';
+  import { syncValues } from '$lib/services/utils/state.svelte';
 
   /**
-   * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
-   * @import { StringField } from '$lib/types/public';
+   * @import { FieldEditorProps } from '$lib/types/private';
+   * @import { StringField, TextField } from '$lib/types/public';
    */
 
   /**
    * @typedef {object} Props
-   * @property {StringField} fieldConfig Field configuration.
+   * @property {StringField | TextField} fieldConfig Field configuration.
    * @property {string | undefined} currentValue Field value.
+   * @property {boolean} [multiline] Whether to edit a Text field in an auto-resizing text area,
+   * which takes the value as is, without the String field’s `type`, `prefix` and `suffix`.
    */
 
   /** @type {FieldEditorProps & Props} */
   let {
-    /* eslint-disable prefer-const */
     locale,
     fieldId,
     fieldConfig,
@@ -33,92 +38,74 @@
     required = true,
     readonly = false,
     invalid = false,
-    /* eslint-enable prefer-const */
+    multiline = false,
   } = $props();
-
-  /** @type {FieldEditorContext} */
-  const { extraHint } = getContext('field-editor') ?? {};
 
   let inputValue = $state('');
 
+  /** The configuration, with the String field options, which a Text field lacks. */
+  const stringFieldConfig = $derived(/** @type {StringField} */ (fieldConfig));
   const {
     type = 'text',
-    prefix = '',
-    suffix = '',
     // svelte-ignore state_referenced_locally
-    use_emoji_autocomplete: useEmojiAutocomplete = type === 'text',
-  } = $derived(fieldConfig);
+    use_emoji_autocomplete: useEmojiAutocomplete = multiline || type === 'text',
+  } = $derived(stringFieldConfig);
 
-  /**
-   * Update {@link inputValue} based on {@link currentValue}. Remove the suffix/prefix if needed.
-   */
-  const setInputValue = () => {
-    // Parse the currentValue to string if it’s not a string (e.g., number, boolean, etc.)
-    let newValue = typeof currentValue === 'string' ? currentValue : String(currentValue ?? '');
-
-    if (prefix && newValue.startsWith(prefix)) {
-      newValue = newValue.slice(prefix.length);
-    }
-
-    if (suffix && newValue.endsWith(suffix)) {
-      newValue = newValue.slice(0, -suffix.length);
-    }
-
-    // Avoid a cycle dependency & infinite loop
-    if (inputValue !== newValue) {
-      inputValue = newValue;
-    }
-  };
-
-  /**
-   * Update {@link currentValue} based on {@link inputValue}. Add the suffix/prefix if needed.
-   */
-  const setCurrentValue = () => {
-    let newValue = inputValue;
-
-    // Add affixes only if value is not empty
-    if (newValue.trim() && (prefix || suffix)) {
-      newValue = `${prefix}${newValue}${suffix}`;
-    }
-
-    // Avoid a cycle dependency & infinite loop
-    if (currentValue !== newValue) {
-      currentValue = newValue;
-    }
-  };
-
-  watch(
+  // Sync `inputValue` with `currentValue` in both directions
+  syncValues(
     () => currentValue,
-    () => {
-      setInputValue();
+    (value) => {
+      currentValue = value;
     },
-  );
-
-  watch(
     () => inputValue,
-    () => {
-      setCurrentValue();
+    (input) => {
+      inputValue = input;
     },
+    (value) => {
+      if (multiline) {
+        return typeof value === 'string' ? value : '';
+      }
+
+      return getStringInputValue({ currentValue: value, fieldConfig: stringFieldConfig });
+    },
+    (input) =>
+      multiline
+        ? input
+        : getStringFieldValue({ inputValue: input, fieldConfig: stringFieldConfig }),
   );
 
-  $effect(() => {
-    if (extraHint) {
-      extraHint.current = CharacterCounter;
-    }
-  });
+  setExtraHint(CharacterCounter);
 </script>
 
-<TextInput
-  lang={getCanonicalLocale(locale)}
-  dir={getDirection(locale)}
-  bind:value={inputValue}
-  {type}
-  inputmode={type}
-  flex
-  {readonly}
-  {required}
-  {invalid}
-  aria-labelledby="{fieldId}-label"
-  aria-errormessage="{fieldId}-error"
-  {useEmojiAutocomplete}
-/>
+<!-- The props are written out rather than spread from one object: a spread object recreated when
+  `invalid` changes makes the input report an `undefined` value back through the binding -->
+{#if multiline}
+  <TextArea
+    lang={getCanonicalLocale(locale)}
+    dir={getDirection(locale)}
+    flex
+    {readonly}
+    {required}
+    {invalid}
+    aria-labelledby="{fieldId}-label"
+    aria-errormessage="{fieldId}-error"
+    {useEmojiAutocomplete}
+    bind:value={inputValue}
+    autoResize={true}
+  />
+{:else}
+  <TextInput
+    lang={getCanonicalLocale(locale)}
+    dir={getDirection(locale)}
+    flex
+    {readonly}
+    {required}
+    {invalid}
+    aria-labelledby="{fieldId}-label"
+    aria-errormessage="{fieldId}-error"
+    {useEmojiAutocomplete}
+    bind:value={inputValue}
+    {type}
+    inputmode={type}
+  />
+{/if}

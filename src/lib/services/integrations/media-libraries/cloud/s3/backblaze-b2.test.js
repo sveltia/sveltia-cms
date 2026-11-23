@@ -41,11 +41,10 @@ describe('integrations/media-libraries/cloud/s3/backblaze-b2', () => {
   });
 
   describe('resolveConfig', () => {
-    it('should use path-style region endpoint, disable ACLs and derive virtual-hosted public_url', () => {
+    it('should use path-style region endpoint and derive virtual-hosted public_url', () => {
       expect(backblazeB2Service.resolveConfig(libOptions)).toEqual({
         ...libOptions,
         endpoint: 'https://s3.us-west-004.backblazeb2.com',
-        acl: false,
         public_url: 'https://my-bucket.s3.us-west-004.backblazeb2.com',
       });
     });

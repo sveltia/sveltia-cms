@@ -13,7 +13,7 @@ import {
   refreshProductionSHA,
   resolveDeployments,
 } from '$lib/services/deployments/resolve';
-import { unpublishedEntries } from '$lib/services/workflow';
+import { allUnpublishedEntries } from '$lib/services/workflow';
 
 vi.mock('$lib/services/backends', () => ({ backend: { current: undefined } }));
 vi.mock('$lib/services/backends/git/shared/integration', () => ({
@@ -22,7 +22,7 @@ vi.mock('$lib/services/backends/git/shared/integration', () => ({
 vi.mock('$lib/services/config', () => ({ cmsConfig: { current: undefined } }));
 vi.mock('$lib/services/user/prefs.svelte', () => ({ prefs: { devModeEnabled: false } }));
 
-vi.mock('$lib/services/workflow', () => ({ unpublishedEntries: { current: [] } }));
+vi.mock('$lib/services/workflow', () => ({ allUnpublishedEntries: { current: [] } }));
 
 /** @type {any} */
 let backendService;
@@ -41,7 +41,7 @@ describe('Deployment resolution', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-17T00:00:00Z'));
     resetDeployments();
-    unpublishedEntries.current = [];
+    allUnpublishedEntries.current = [];
     cmsConfig.current = /** @type {any} */ ({ show_preview_links: true });
     /** @type {any} */ (skipCIConfigured).current = false;
 
@@ -71,7 +71,7 @@ describe('Deployment resolution', () => {
 
     test('includes each pull request head commit', () => {
       productionSHA.current = 'prod';
-      unpublishedEntries.current = [
+      allUnpublishedEntries.current = [
         createEntry({ headSHA: 'a', branch: 'cms/posts/a' }),
         createEntry({ headSHA: 'b', branch: 'cms/posts/b' }),
       ];
@@ -84,7 +84,7 @@ describe('Deployment resolution', () => {
     });
 
     test('skips a duplicate and a pull request with no head commit', () => {
-      unpublishedEntries.current = [
+      allUnpublishedEntries.current = [
         createEntry({ headSHA: 'a' }),
         createEntry({ headSHA: 'a' }),
         createEntry(),
@@ -93,6 +93,17 @@ describe('Deployment resolution', () => {
       expect(getDeployTargets()).toEqual([
         { sha: 'a', branch: 'cms/posts/hello', kind: 'preview' },
       ]);
+    });
+
+    test('skips an Open Authoring draft, which has no pull request to have built a preview', () => {
+      // Its head is on record so a save can tell whether the branch has moved, but asking for a
+      // deployment would be asking about a pull request that doesn’t exist yet
+      allUnpublishedEntries.current = [
+        createEntry({ number: undefined, headSHA: 'a' }),
+        createEntry({ number: 2, headSHA: 'b', branch: 'cms/posts/b' }),
+      ];
+
+      expect(getDeployTargets()).toEqual([{ sha: 'b', branch: 'cms/posts/b', kind: 'preview' }]);
     });
 
     test('falls back to an empty branch without repository info', () => {
@@ -186,7 +197,10 @@ describe('Deployment resolution', () => {
     test('skips a finished build when only pending ones are wanted', async () => {
       // One entry still building shouldn’t drag every settled commit on the board along with it
       productionSHA.current = 'prod';
-      unpublishedEntries.current = [createEntry({ headSHA: 'a' }), createEntry({ headSHA: 'b' })];
+      allUnpublishedEntries.current = [
+        createEntry({ headSHA: 'a' }),
+        createEntry({ headSHA: 'b' }),
+      ];
 
       deployments.current = {
         prod: { state: 'ready', checkedTime: 0 },
@@ -276,6 +290,7 @@ describe('Deployment resolution', () => {
       productionSHA.current = 'prod';
       deployments.current = { prod: { state: 'pending', checkedTime: 0 } };
 
+      const before = deployments.current;
       // Settle the pending request by hand, so the test controls when the response lands
       /** @type {any} */
       let release;
@@ -288,7 +303,9 @@ describe('Deployment resolution', () => {
 
       const promise = resolveDeployments();
 
-      expect(deployments.current.prod.state).toBe('pending');
+      // The same object, so an effect that read the state isn’t re-run — and its hold on the poll
+      // loop released — by the very lookup it started
+      expect(deployments.current).toBe(before);
 
       release({});
       await promise;
@@ -533,6 +550,18 @@ describe('Deployment resolution', () => {
 
       expect(productionSHA.current).toBe('abc');
       expect(deployments.current.abc).toEqual({ state: 'ready', checkedTime: 1 });
+    });
+
+    test('takes the head the content has just been loaded from, without fetching it', async () => {
+      backendService.fetchDeployments.mockResolvedValue({
+        def: { state: 'building', checkedTime: 1 },
+      });
+
+      await initDeployments({ head: 'def' });
+
+      expect(backendService.fetchBranchHeadSHA).not.toHaveBeenCalled();
+      expect(productionSHA.current).toBe('def');
+      expect(deployments.current.def).toEqual({ state: 'building', checkedTime: 1 });
     });
   });
 });

@@ -12,11 +12,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    Panel,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { Panel } = $props();
 
   let toastMessage = $state('');
   /** @type {'success' | 'error'} */

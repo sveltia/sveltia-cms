@@ -1,4 +1,5 @@
 import { locale as appLocale, locales as appLocales, dictionary, waitLocale } from '@sveltia/i18n';
+import { isObject } from '@sveltia/utils/object';
 import { LocalStorage } from '@sveltia/utils/storage';
 import equal from 'fast-deep-equal';
 import { untrack } from 'svelte';
@@ -35,6 +36,18 @@ export const prefs = $state({});
  * Whether the stored locale preference has been applied to the app locale.
  */
 let storedLocaleApplied = false;
+/**
+ * Incremented as each locale switch starts. The strings of a locale fetched from the CDN can arrive
+ * after the user has picked another one, so only the latest switch is applied once loaded.
+ */
+let localeSwitchCount = 0;
+/**
+ * Language preference whose locale was last applied to the app, e.g. {@link AUTO_PREF_VALUE} or
+ * `ja`. A locale picked by the user that fails to load is reverted to it, so `auto` stays `auto`
+ * rather than becoming the locale it resolved to.
+ * @type {string | undefined}
+ */
+let appliedLocalePref;
 
 /**
  * Locale that best matches the browser’s language settings, used while the language preference is
@@ -49,15 +62,17 @@ $effect.root(() => {
     prefsError.current = undefined;
 
     try {
-      const _prefs = (await LocalStorage.get(PREFS_STORAGE_KEY)) ?? {};
+      const stored = await LocalStorage.get(PREFS_STORAGE_KEY);
+      // Corrupt or foreign data under the key is as good as none
+      const _prefs = isObject(stored) ? stored : {};
 
       _prefs.apiKeys ??= {};
       _prefs.useDraftBackup ??= true;
       _prefs.closeOnSave ??= true;
       _prefs.closeWithEscape ??= true;
       _prefs.underlineLinks ??= true;
-      _prefs.beta ??= false;
       _prefs.devModeEnabled ??= false;
+      _prefs.localGitCommits ??= false;
       _prefs.defaultTranslationService ??= 'google';
       _prefs.locale ??= AUTO_PREF_VALUE;
 
@@ -66,6 +81,9 @@ $effect.root(() => {
       if (_prefs.locale === 'en') {
         _prefs.locale = AUTO_PREF_VALUE;
       }
+
+      // Drop the legacy `beta` value, which was used by the removed Beta Features setting
+      delete _prefs.beta;
 
       Object.assign(prefs, _prefs);
     } catch {
@@ -90,7 +108,7 @@ $effect.root(() => {
       }
     })();
 
-    const { theme, underlineLinks = true, beta = false, devModeEnabled: devMode = false } = prefs;
+    const { theme, underlineLinks = true, devModeEnabled: devMode = false } = prefs;
     const autoTheming = !theme || theme === AUTO_PREF_VALUE;
     const autoTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 
@@ -98,7 +116,6 @@ $effect.root(() => {
       theme: autoTheming ? autoTheme : theme,
       autoTheming,
       underlineLinks,
-      beta,
       devMode,
     });
   });
@@ -123,16 +140,26 @@ $effect.root(() => {
     const switchedByUser = storedLocaleApplied && localePref !== AUTO_PREF_VALUE;
 
     storedLocaleApplied = true;
+    localeSwitchCount += 1;
+
+    const switchCount = localeSwitchCount;
 
     // Load the strings first if the locale is not bundled with the app, so the UI won’t briefly
     // fall back to the default locale. The loader is registered in `initAppLocale()`.
     waitLocale(locale).then(() => {
+      // Another locale has been picked in the meantime, which wins
+      if (switchCount !== localeSwitchCount) {
+        return;
+      }
+
       if (locale in dictionary) {
         appLocale.set(locale);
+        appliedLocalePref = localePref;
       } else if (switchedByUser && previousLocale) {
         // The strings couldn’t be loaded, so keep using the language the user already had instead
-        // of falling back to the default locale
-        prefs.locale = previousLocale;
+        // of falling back to the default locale. Restore the preference that brought it, or the
+        // locale itself if none has been applied yet, e.g. when the stored one failed to load too
+        prefs.locale = appliedLocalePref ?? previousLocale;
       }
     });
   });

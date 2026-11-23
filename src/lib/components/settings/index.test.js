@@ -1,5 +1,7 @@
 import { describe, expect, test, vi } from 'vitest';
 
+import { getAdditions } from '$lib/services/app/additions';
+import { backendName } from '$lib/services/backends';
 import { cmsConfig } from '$lib/services/config';
 
 import { panels } from '.';
@@ -9,13 +11,19 @@ import { panels } from '.';
 vi.mock('$lib/components/settings/panels/accessibility-panel.svelte', () => ({
   default: {},
 }));
-vi.mock('$lib/components/settings/panels/advanced-panel.svelte', () => ({
+vi.mock('$lib/components/settings/panels/ai-panel.svelte', () => ({
   default: {},
 }));
 vi.mock('$lib/components/settings/panels/appearance-panel.svelte', () => ({
   default: {},
 }));
 vi.mock('$lib/components/settings/panels/contents-panel.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/settings/panels/data-panel.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/settings/panels/developer-panel.svelte', () => ({
   default: {},
 }));
 vi.mock('$lib/components/settings/panels/i18n-panel.svelte', () => ({
@@ -27,6 +35,10 @@ vi.mock('$lib/components/settings/panels/language-panel.svelte', () => ({
 vi.mock('$lib/components/settings/panels/media-panel.svelte', () => ({
   default: {},
 }));
+
+// The Account panel comes from the Sveltia CMS Additions chunk, when it’s loaded
+vi.mock('$lib/services/app/additions', () => ({ getAdditions: vi.fn() }));
+vi.mock('$lib/services/backends', () => ({ backendName: { current: 'github' } }));
 
 describe('Settings panels', () => {
   test('should export panels store', () => {
@@ -60,15 +72,6 @@ describe('Settings panels', () => {
     expect(contentsPanel?.component).toBeDefined();
   });
 
-  test('should have i18n panel', () => {
-    const panelList = panels.current;
-    const i18nPanel = panelList.find((panel) => panel.key === 'i18n');
-
-    expect(i18nPanel).toBeDefined();
-    expect(i18nPanel?.icon).toBe('translate');
-    expect(i18nPanel?.component).toBeDefined();
-  });
-
   test('should have media panel', () => {
     const panelList = panels.current;
     const mediaPanel = panelList.find((panel) => panel.key === 'media');
@@ -76,6 +79,15 @@ describe('Settings panels', () => {
     expect(mediaPanel).toBeDefined();
     expect(mediaPanel?.icon).toBe('photo_library');
     expect(mediaPanel?.component).toBeDefined();
+  });
+
+  test('should have AI panel before accessibility panel', () => {
+    const panelList = panels.current;
+    const index = panelList.findIndex((panel) => panel.key === 'ai');
+
+    expect(panelList[index]?.icon).toBe('auto_awesome');
+    expect(panelList[index]?.component).toBeDefined();
+    expect(panelList[index + 1]?.key).toBe('accessibility');
   });
 
   test('should have accessibility panel', () => {
@@ -87,13 +99,21 @@ describe('Settings panels', () => {
     expect(accessibilityPanel?.component).toBeDefined();
   });
 
-  test('should have advanced panel', () => {
+  test('should have data management panel', () => {
     const panelList = panels.current;
-    const advancedPanel = panelList.find((panel) => panel.key === 'advanced');
+    const dataPanel = panelList.find((panel) => panel.key === 'data');
 
-    expect(advancedPanel).toBeDefined();
-    expect(advancedPanel?.icon).toBe('build');
-    expect(advancedPanel?.component).toBeDefined();
+    expect(dataPanel).toBeDefined();
+    expect(dataPanel?.icon).toBe('database');
+    expect(dataPanel?.component).toBeDefined();
+  });
+
+  test('should have developer panel', () => {
+    const developerPanel = panels.current.find((panel) => panel.key === 'developer');
+
+    expect(developerPanel).toBeDefined();
+    expect(developerPanel?.icon).toBe('code_xml');
+    expect(developerPanel?.component).toBeDefined();
   });
 
   test('should enable i18n panel when multiple locales configured', () => {
@@ -113,7 +133,12 @@ describe('Settings panels', () => {
     const panelList = panels.current;
     const i18nPanel = panelList.find((panel) => panel.key === 'i18n');
 
-    expect(i18nPanel?.enabled).toBe(true);
+    expect(i18nPanel?.icon).toBe('translate');
+    expect(i18nPanel?.component).toBeDefined();
+    // It’s listed right after the contents panel
+    expect(panelList.at(panelList.indexOf(/** @type {any} */ (i18nPanel)) - 1)?.key).toBe(
+      'contents',
+    );
   });
 
   test('should disable i18n panel when single locale configured', () => {
@@ -130,10 +155,7 @@ describe('Settings panels', () => {
       _baseURL: 'http://localhost',
     };
 
-    const panelList = panels.current;
-    const i18nPanel = panelList.find((panel) => panel.key === 'i18n');
-
-    expect(i18nPanel?.enabled).toBe(false);
+    expect(panels.current.find((panel) => panel.key === 'i18n')).toBeUndefined();
   });
 
   test('should disable i18n panel when no locales configured', () => {
@@ -145,9 +167,27 @@ describe('Settings panels', () => {
       _baseURL: 'http://localhost',
     };
 
-    const panelList = panels.current;
-    const i18nPanel = panelList.find((panel) => panel.key === 'i18n');
+    expect(panels.current.find((panel) => panel.key === 'i18n')).toBeUndefined();
+  });
 
-    expect(i18nPanel?.enabled).toBe(false);
+  test('should add the account panel first with Sveltia CMS Additions', () => {
+    const AccountPanel = {};
+
+    vi.mocked(getAdditions).mockReturnValue(/** @type {any} */ ({ AccountPanel }));
+
+    expect(panels.current[0]).toEqual({
+      key: 'account',
+      icon: 'account_circle',
+      component: AccountPanel,
+    });
+
+    // Not with a local repository, used without signing in to the service
+    backendName.current = 'local';
+    expect(panels.current.find((panel) => panel.key === 'account')).toBeUndefined();
+    backendName.current = 'github';
+
+    // Nor without Sveltia CMS Additions
+    vi.mocked(getAdditions).mockReturnValue(undefined);
+    expect(panels.current.find((panel) => panel.key === 'account')).toBeUndefined();
   });
 });

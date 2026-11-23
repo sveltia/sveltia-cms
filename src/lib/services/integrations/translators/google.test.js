@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import googleTranslator, { availability, normalizeLanguage } from './google.js';
+import googleTranslator, { availability, chunkTexts, normalizeLanguage } from './google.js';
 
 // Mock fetch globally
 global.fetch = vi.fn();
@@ -266,35 +266,11 @@ describe('Google Translator Service', () => {
       );
     });
 
-    it('should handle unknown errors', async () => {
-      const mockFetch = vi.mocked(fetch);
-
-      mockFetch.mockRejectedValueOnce('Unknown error');
-
-      await expect(googleTranslator.translate(['Hello'], mockOptions)).rejects.toThrow(
-        'Failed to translate text with Google Translate API.',
-      );
-    });
-
-    it('should handle empty text array', async () => {
-      const mockResponse = {
-        data: {
-          translations: [],
-        },
-      };
-
-      const mockFetch = vi.mocked(fetch);
-
-      mockFetch.mockResolvedValueOnce(
-        new Response(JSON.stringify(mockResponse), {
-          status: 200,
-          statusText: 'OK',
-        }),
-      );
-
+    it('should handle empty text array without sending a request', async () => {
       const result = await googleTranslator.translate([], mockOptions);
 
       expect(result).toEqual([]);
+      expect(fetch).not.toHaveBeenCalled();
     });
 
     it('should handle special locale cases', async () => {
@@ -524,6 +500,67 @@ describe('Google Translator Service', () => {
         expect(normalizeLanguage('zh_MO')).toBe('zh-TW'); // with underscore
       });
 
+      it('should map script codes to the matching Chinese variant', () => {
+        expect(normalizeLanguage('zh-Hant')).toBe('zh-TW');
+        expect(normalizeLanguage('zh-hant')).toBe('zh-TW');
+        expect(normalizeLanguage('zh_Hant_TW')).toBe('zh-TW');
+        expect(normalizeLanguage('zh-Hant-HK')).toBe('zh-TW');
+        expect(normalizeLanguage('zh-Hans')).toBe('zh-CN');
+        expect(normalizeLanguage('zh-Hans-SG')).toBe('zh-CN');
+        expect(normalizeLanguage('zh-SG')).toBe('zh-CN');
+      });
+
+      it('should match supported codes that have a script code', () => {
+        expect(normalizeLanguage('pa-Arab')).toBe('pa-Arab');
+        expect(normalizeLanguage('pa-arab')).toBe('pa-Arab');
+        expect(normalizeLanguage('ms-Arab')).toBe('ms-Arab');
+        expect(normalizeLanguage('mni-Mtei')).toBe('mni-Mtei');
+        expect(normalizeLanguage('mni-MTEI-IN')).toBe('mni-Mtei');
+      });
+
+      it('should fall back to the language code for its usual script', () => {
+        expect(normalizeLanguage('sr-Cyrl')).toBe('sr');
+        expect(normalizeLanguage('sr-Cyrl-RS')).toBe('sr');
+        expect(normalizeLanguage('uz-Latn')).toBe('uz');
+        expect(normalizeLanguage('pa-Guru')).toBe('pa');
+        expect(normalizeLanguage('pt-Latn-BR')).toBe('pt-BR');
+        expect(normalizeLanguage('nb-Latn')).toBe('no');
+      });
+
+      it('should not fall back to the language code for another script', () => {
+        // Google writes `sr` and `mn` in Cyrillic, `uz` in Latin and `zh` in Simplified Chinese, so
+        // these would be translated into the wrong script
+        expect(normalizeLanguage('sr-Latn')).toBeUndefined();
+        expect(normalizeLanguage('sr-Latn-RS')).toBeUndefined();
+        expect(normalizeLanguage('mn-Mong')).toBeUndefined();
+        expect(normalizeLanguage('uz-Cyrl')).toBeUndefined();
+        expect(normalizeLanguage('zh-Latn')).toBeUndefined();
+        // Not a valid language code
+        expect(normalizeLanguage('unsupported-Latn')).toBeUndefined();
+      });
+
+      it('should use the script a region implies when there is no script code', () => {
+        // Punjabi in Pakistan is written in the Arabic script, and Google’s `pa` in Gurmukhi
+        expect(normalizeLanguage('pa-PK')).toBe('pa-Arab');
+        expect(normalizeLanguage('pa_pk')).toBe('pa-Arab');
+        expect(normalizeLanguage('pa-IN')).toBe('pa');
+        // Serbian in Montenegro is written in Latin, and Google’s `sr` is Cyrillic
+        expect(normalizeLanguage('sr-ME')).toBeUndefined();
+        expect(normalizeLanguage('sr-RS')).toBe('sr');
+        expect(normalizeLanguage('az-IR')).toBeUndefined();
+        expect(normalizeLanguage('zh-US')).toBe('zh-TW');
+        expect(normalizeLanguage('zh-MY')).toBe('zh-CN');
+        expect(normalizeLanguage('es-419')).toBe('es');
+        // Not a valid language code
+        expect(normalizeLanguage('unsupported-US')).toBeUndefined();
+      });
+
+      it('should map the Norwegian nb code to no', () => {
+        expect(normalizeLanguage('nb')).toBe('no');
+        expect(normalizeLanguage('nb-NO')).toBe('no');
+        expect(normalizeLanguage('no-NO')).toBe('no');
+      });
+
       it('should fallback to language code when region is not supported', () => {
         expect(normalizeLanguage('en-XX')).toBe('en');
         expect(normalizeLanguage('fr-YY')).toBe('fr');
@@ -543,6 +580,73 @@ describe('Google Translator Service', () => {
         expect(normalizeLanguage('zh-')).toBe('zh'); // falls back to base language
         expect(normalizeLanguage('-CN')).toBeUndefined(); // incomplete
       });
+    });
+  });
+
+  describe('chunkTexts', () => {
+    it('should return no chunks for no texts', () => {
+      expect(chunkTexts([])).toEqual([]);
+    });
+
+    it('should split texts into chunks of at most 128 segments', () => {
+      const texts = Array.from({ length: 300 }, (_, index) => `Text ${index}`);
+      const chunks = chunkTexts(texts);
+
+      expect(chunks.map((chunk) => chunk.length)).toEqual([128, 128, 44]);
+      expect(chunks.flat()).toEqual(texts);
+    });
+
+    it('should split texts into chunks of at most 90,000 bytes', () => {
+      // 3 bytes per character in UTF-8
+      const texts = Array.from({ length: 4 }, () => 'あ'.repeat(10_000));
+      const chunks = chunkTexts(texts);
+
+      expect(chunks.map((chunk) => chunk.length)).toEqual([3, 1]);
+      expect(chunks.flat()).toEqual(texts);
+    });
+
+    it('should give a text larger than the byte budget a chunk of its own', () => {
+      const large = 'a'.repeat(100_000);
+
+      expect(chunkTexts(['a', large, 'b'])).toEqual([['a'], [large], ['b']]);
+    });
+  });
+
+  describe('Translation in multiple requests', () => {
+    it('should send more than 128 texts in several requests and keep the order', async () => {
+      const texts = Array.from({ length: 130 }, (_, index) => `Text ${index}`);
+      const mockFetch = vi.mocked(fetch);
+
+      mockFetch.mockImplementation(async (_url, init) => {
+        const { q } = JSON.parse(/** @type {string} */ (init?.body));
+
+        return new Response(
+          JSON.stringify({
+            data: {
+              translations: q.map((/** @type {string} */ t) => ({
+                translatedText: `${t.replace('Text', 'Texte')}&#39;`,
+              })),
+            },
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        );
+      });
+
+      const result = await googleTranslator.translate(texts, {
+        sourceLanguage: 'en',
+        targetLanguage: 'fr',
+        apiKey: 'AIzaSyB12345678901234567890123456789012',
+      });
+
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(JSON.parse(/** @type {string} */ (mockFetch.mock.calls[0][1]?.body)).q).toHaveLength(
+        128,
+      );
+      expect(JSON.parse(/** @type {string} */ (mockFetch.mock.calls[1][1]?.body)).q).toEqual([
+        'Text 128',
+        'Text 129',
+      ]);
+      expect(result).toEqual(texts.map((t) => `${t.replace('Text', 'Texte')}'`));
     });
   });
 });

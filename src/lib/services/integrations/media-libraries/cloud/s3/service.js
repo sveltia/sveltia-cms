@@ -1,27 +1,10 @@
-import { cmsConfig } from '$lib/services/config/state';
-import {
-  findLibraryOptions,
-  resolveLibraryOptions,
-} from '$lib/services/integrations/media-libraries/options';
+import { ObjectStorageService } from '$lib/services/integrations/media-libraries/cloud/shared/service';
 
-import {
-  deleteS3Objects,
-  isS3ObjectUrl,
-  listS3Objects,
-  renameS3Object,
-  replaceS3Object,
-  searchS3Objects,
-  uploadToS3,
-} from './core';
+import { isS3ObjectUrl, s3Operations } from './core';
 
 /**
- * @import {
- * ExternalAsset,
- * MediaLibraryFetchOptions,
- * MediaLibraryService,
- * S3Config,
- * } from '$lib/types/private';
- * @import { CmsConfig, MediaField, MediaLibraries, S3MediaLibrary } from '$lib/types/public';
+ * @import { S3Config } from '$lib/types/private';
+ * @import { MediaLibraries, S3MediaLibrary } from '$lib/types/public';
  */
 
 /**
@@ -29,7 +12,7 @@ import {
  * @typedef {object} S3CompatibleServiceOptions
  * @property {keyof MediaLibraries} serviceId Service identifier matching the `media_libraries`
  * key.
- * @property {string} serviceLabel Service label.
+ * @property {string} serviceLabel Default service label, overridden by the `label` library option.
  * @property {string} serviceURL Service URL.
  * @property {string} developerURL URL of the page that provides the API/developer service.
  * @property {string} apiKeyURL URL of the page that provides the secret access key.
@@ -39,158 +22,70 @@ import {
  * `account_id`. Default: `region`.
  * @property {(libOptions: S3MediaLibrary) => S3Config} [resolveConfig] Function to derive the S3
  * configuration from the library options, typically to add the service’s fixed API endpoint and
- * default public URL. Default: the library options are used as is.
+ * default public URL, or to fill in a default `access_key_id`. The result is also used to decide
+ * whether the service is enabled. Default: the library options are used as is, unless
+ * `regionalHost` is given.
+ * @property {(region: string | undefined) => string} [regionalHost] Function to get the host name
+ * of the service’s API endpoint in the given region, for a service that takes path-style API calls
+ * at the region endpoint and serves the public files virtual-hosted-style from a subdomain of it
+ * named after the bucket, unless a custom CDN `public_url` is configured.
+ * @property {string} [objectAcl] Canned ACL sent in the `x-amz-acl` header when creating an object,
+ * for a service where objects are private by default, even in a public bucket, such as DigitalOcean
+ * Spaces and Scaleway. It can’t be set in the library options. Default: none, as Amazon S3 rejects
+ * ACLs on buckets created since April 2023, and services without per-object ACLs don’t implement
+ * the header.
  */
 
 /**
  * Media library service for an S3-compatible object storage service. The S3 API calls are shared
- * in the `core` module; this class resolves the service’s configuration from the CMS or field
+ * in the `core` module; the base class resolves the service’s configuration from the CMS or field
  * configuration and delegates the operations to those functions.
- * @implements {MediaLibraryService}
+ * @augments {ObjectStorageService<S3Config>}
  */
-export class S3CompatibleService {
-  /** @type {'cloud_storage'} */
-  serviceType = 'cloud_storage';
-
-  showServiceLink = true;
-
-  hotlinking = true;
-
-  /** @type {'api_key'} */
-  authType = 'api_key';
+export class S3CompatibleService extends ObjectStorageService {
+  /** @type {'s3'} */
+  compatibleAPI = 's3';
 
   /**
    * Initialize an `S3CompatibleService` instance with the given service definition.
    * @param {S3CompatibleServiceOptions} options Service definition.
    */
   constructor({
-    serviceId,
-    serviceLabel,
-    serviceURL,
-    developerURL,
-    apiKeyURL,
-    apiKeyPattern,
     requiredOption = 'region',
-    resolveConfig = (libOptions) => libOptions,
+    objectAcl,
+    regionalHost,
+    resolveConfig = regionalHost
+      ? (libOptions) => {
+          const host = regionalHost(libOptions.region);
+
+          return {
+            ...libOptions,
+            endpoint: `https://${host}`,
+            public_url: libOptions.public_url ?? `https://${libOptions.bucket}.${host}`,
+          };
+        }
+      : (libOptions) => libOptions,
+    ...definition
   }) {
-    this.serviceId = serviceId;
-    this.serviceLabel = serviceLabel;
-    this.serviceURL = serviceURL;
-    this.developerURL = developerURL;
-    this.apiKeyURL = apiKeyURL;
-    this.apiKeyPattern = apiKeyPattern;
+    super({
+      ...definition,
+      /**
+       * Resolve the configuration, replacing any `acl` in the library options with the service’s
+       * own object ACL.
+       * @param {S3MediaLibrary} libOptions Library options.
+       * @returns {S3Config} Resolved configuration.
+       */
+      resolveConfig: (libOptions) => ({ ...resolveConfig(libOptions), acl: objectAcl }),
+      /**
+       * Check if the access key ID, the bucket and the service-specific option are all set.
+       * @param {S3Config} config Resolved configuration.
+       * @returns {boolean} Result.
+       */
+      isConfigured: (config) => !!(config.access_key_id && config.bucket && config[requiredOption]),
+      isConfigURL: isS3ObjectUrl,
+      operations: s3Operations,
+    });
+
     this.requiredOption = requiredOption;
-    this.resolveConfig = resolveConfig;
   }
-
-  /**
-   * Get the service’s library options from site config.
-   * @param {CmsConfig | MediaField} [config] CMS configuration or field configuration.
-   * @returns {S3MediaLibrary | false | undefined} Configuration object, or `false` if explicitly
-   * disabled.
-   */
-  getLibraryOptions(config = cmsConfig.current) {
-    return /** @type {S3MediaLibrary | false | undefined} */ (
-      findLibraryOptions(this.serviceId, config)
-    );
-  }
-
-  /**
-   * Get the resolved S3 configuration for the given field or global library options.
-   * @param {MediaLibraryFetchOptions} options Options containing the configuration.
-   * @returns {S3Config} Resolved configuration.
-   * @throws {Error} If the service is not configured.
-   */
-  getConfig({ fieldConfig }) {
-    const libOptions = /** @type {S3MediaLibrary | false | undefined} */ (
-      resolveLibraryOptions(this.serviceId, fieldConfig)
-    );
-
-    if (!libOptions) {
-      throw new Error(`${this.serviceLabel} configuration is not available`);
-    }
-
-    return this.resolveConfig(libOptions);
-  }
-
-  // The `MediaLibraryService` members below are arrow functions rather than prototype methods,
-  // because consumers destructure them from the service object, which would lose `this` otherwise.
-
-  /**
-   * Check if the service is enabled.
-   * @param {MediaField} [fieldConfig] Field configuration.
-   * @returns {boolean} True if enabled, false otherwise.
-   */
-  isEnabled = (fieldConfig) => {
-    const options = /** @type {S3MediaLibrary | false | undefined} */ (
-      resolveLibraryOptions(this.serviceId, fieldConfig)
-    );
-
-    return !!(options && options.access_key_id && options.bucket && options[this.requiredOption]);
-  };
-
-  /**
-   * Whether the given URL points to a file on the service.
-   * @param {string} url URL.
-   * @returns {boolean} Result.
-   */
-  isAssetURL = (url) => {
-    try {
-      return isS3ObjectUrl(this.getConfig(/** @type {any} */ ({})), url);
-    } catch {
-      // The service is not configured
-      return false;
-    }
-  };
-
-  /**
-   * List files on the service.
-   * @param {MediaLibraryFetchOptions} options Options containing the configuration.
-   * @returns {Promise<ExternalAsset[]>} Assets.
-   */
-  list = async (options) => listS3Objects(this.getConfig(options), options);
-
-  /**
-   * Search files on the service.
-   * @param {string} query Search query.
-   * @param {MediaLibraryFetchOptions} options Options containing the configuration.
-   * @returns {Promise<ExternalAsset[]>} Assets.
-   */
-  search = async (query, options) => searchS3Objects(query, this.getConfig(options), options);
-
-  /**
-   * Upload files to the service.
-   * @param {File[]} files Files to upload.
-   * @param {MediaLibraryFetchOptions} options Options containing the configuration.
-   * @returns {Promise<ExternalAsset[]>} Uploaded assets.
-   */
-  upload = async (files, options) => uploadToS3(files, this.getConfig(options), options);
-
-  /**
-   * Delete files from the service.
-   * @param {ExternalAsset[]} assets Assets to delete.
-   * @param {MediaLibraryFetchOptions} options Options containing the configuration.
-   * @returns {Promise<void>}
-   */
-  delete = async (assets, options) => deleteS3Objects(assets, this.getConfig(options), options);
-
-  /**
-   * Rename a file on the service.
-   * @param {ExternalAsset} asset Asset to rename.
-   * @param {string} newName New file name.
-   * @param {MediaLibraryFetchOptions} options Options containing the configuration.
-   * @returns {Promise<ExternalAsset>} Renamed asset.
-   */
-  rename = async (asset, newName, options) =>
-    renameS3Object(asset, newName, this.getConfig(options), options);
-
-  /**
-   * Replace a file on the service with a new file.
-   * @param {ExternalAsset} asset Asset to replace.
-   * @param {File} file New file.
-   * @param {MediaLibraryFetchOptions} options Options containing the configuration.
-   * @returns {Promise<ExternalAsset>} Replaced asset.
-   */
-  replace = async (asset, file, options) =>
-    replaceS3Object(asset, file, this.getConfig(options), options);
 }

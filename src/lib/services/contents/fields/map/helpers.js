@@ -10,22 +10,69 @@ import { toFixed } from '$lib/services/utils/number';
  */
 
 /**
+ * Check whether the given value is a `[lng, lat]` position.
+ * @param {any} value Value.
+ * @returns {boolean} Result.
+ */
+const isPosition = (value) =>
+  Array.isArray(value) &&
+  value.length >= 2 &&
+  value.every((coord) => typeof coord === 'number' && Number.isFinite(coord));
+
+/**
+ * Check whether the given value is a list of `[lng, lat]` positions.
+ * @param {any} value Value.
+ * @returns {boolean} Result.
+ */
+const isPositionList = (value) => Array.isArray(value) && value.every(isPosition);
+
+/**
+ * Check whether the coordinates have the shape of the given geometry type. The value may come from
+ * a file not written by the CMS, and the map would throw on a malformed position.
+ * @param {any} coordinates Coordinates.
+ * @param {MapField['type']} geometryType Geometry type.
+ * @returns {boolean} Result.
+ */
+const hasValidCoordinates = (coordinates, geometryType) => {
+  if (geometryType === 'Point') {
+    return isPosition(coordinates);
+  }
+
+  if (geometryType === 'LineString') {
+    return isPositionList(coordinates);
+  }
+
+  return Array.isArray(coordinates) && coordinates.every(isPositionList);
+};
+
+/**
+ * Parse a string as a GeoJSON geometry object of the given geometry type.
+ * @param {string} value Stringified GeoJSON geometry object.
+ * @param {MapField['type']} [geometryType] Expected geometry type. Default: `Point`.
+ * @returns {GeoJSONStoreGeometries | undefined} Geometry object, or `undefined` if the value is not
+ * valid JSON or not a well-formed geometry of the given type.
+ */
+export const parseGeoJSON = (value, geometryType = 'Point') => {
+  try {
+    const geometry = JSON.parse(value);
+
+    return isObject(geometry) &&
+      geometry.type === geometryType &&
+      hasValidCoordinates(geometry.coordinates, geometryType)
+      ? /** @type {GeoJSONStoreGeometries} */ (geometry)
+      : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+/**
  * Check whether a string is a valid GeoJSON geometry object for the given geometry type.
  * @param {string} value Stringified GeoJSON geometry object.
  * @param {MapField['type']} [geometryType] Expected geometry type. Default: `Point`.
  * @returns {boolean} Whether the value is valid.
  */
-export const isValidGeoJSON = (value, geometryType = 'Point') => {
-  try {
-    const geometry = JSON.parse(value);
-
-    return (
-      isObject(geometry) && geometry.type === geometryType && Array.isArray(geometry.coordinates)
-    );
-  } catch {
-    return false;
-  }
-};
+export const isValidGeoJSON = (value, geometryType) => !!parseGeoJSON(value, geometryType);
 
 /**
  * Round all coordinates in a GeoJSON geometry to the specified number of decimal places. Works for
@@ -61,7 +108,9 @@ export const getGeometryBounds = (geometry) => {
   // Polygon coordinates are nested one level deeper (`[[[lng, lat], ...]]`), so flatten first.
   const pairs = geometry.type === 'Polygon' ? geometry.coordinates.flat(1) : geometry.coordinates;
 
-  if (!pairs.every((c) => typeof c[0] === 'number' && typeof c[1] === 'number')) {
+  if (
+    !pairs.every((c) => Array.isArray(c) && typeof c[0] === 'number' && typeof c[1] === 'number')
+  ) {
     return null;
   }
 

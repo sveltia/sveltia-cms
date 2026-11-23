@@ -1,0 +1,205 @@
+import { _ } from '@sveltia/i18n';
+
+import { isConfigReadonly } from '$lib/services/config/readonly';
+import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
+import { resolveCacheDB } from '$lib/services/contents/draft/save/file-changes';
+import { validateAnyField } from '$lib/services/contents/draft/validate/fields';
+import { getFieldValidationMessages } from '$lib/services/contents/draft/validate/messages';
+import {
+  buildEntryUpdateChanges,
+  createSyntheticDraft,
+} from '$lib/services/contents/entry/changes';
+import { getListItemKeys } from '$lib/services/contents/entry/key-paths';
+import { refreshPermalinks } from '$lib/services/contents/entry/permalink';
+import { isEntryReadonly } from '$lib/services/contents/entry/readonly';
+import { getEntrySummary } from '$lib/services/contents/entry/summary';
+import { getFieldLabel } from '$lib/services/contents/i18n/options';
+
+/**
+ * @import { IndexedDB } from '@sveltia/utils/storage';
+ * @import {
+ * CascadeDeleteBlocker,
+ * CascadeTarget,
+ * Entry,
+ * FileChange,
+ * FlattenedEntryContent,
+ * InternalCollection,
+ * InternalCollectionFile,
+ * InternalLocaleCode,
+ * } from '$lib/types/private';
+ * @import { Field, FieldKeyPath } from '$lib/types/public';
+ */
+
+/**
+ * Remove some items from a multi-value field, which stores each of its values under its own index,
+ * and renumber the rest, so that the remaining items are stored under consecutive indexes again.
+ * @param {object} args Arguments.
+ * @param {FlattenedEntryContent} args.content Flattened entry content, modified in place.
+ * @param {FieldKeyPath} args.listKeyPath Key path of the multi-value field.
+ * @param {(key: FieldKeyPath, value: any) => boolean} args.isStale Whether the item stored under
+ * the given key path is to be removed.
+ */
+export const compactList = ({ content, listKeyPath, isStale }) => {
+  // The content is being rewritten, so its keys are scanned rather than read from an index
+  const itemKeys = getListItemKeys(content, listKeyPath, { live: true });
+
+  const remainingValues = itemKeys
+    .filter((key) => !isStale(key, content[key]))
+    .map((key) => content[key]);
+
+  itemKeys.forEach((key) => {
+    delete content[key];
+  });
+
+  if (remainingValues.length) {
+    remainingValues.forEach((value, index) => {
+      content[`${listKeyPath}.${index}`] = value;
+    });
+  } else {
+    // This is how an emptied multi-value field is stored in a draft
+    content[listKeyPath] = [];
+  }
+};
+
+/**
+ * Check the fields that lost a reference against their own validation rules, such as `required`
+ * and `min`, the way a save of the entry would, and describe each one that no longer passes. An
+ * entry that is read-only, because of its collection, its collection file or the whole CMS, can’t
+ * be rewritten at all, so every one of its fields is described instead. That includes an entry
+ * locked by another collection it also belongs to.
+ * @param {object} args Arguments.
+ * @param {any} args.draft Synthetic draft for the entry holding the fields, from
+ * {@link createSyntheticDraft}.
+ * @param {Entry} args.entry Entry holding the fields, as stored.
+ * @param {InternalCollection} args.collection Collection the entry is edited under.
+ * @param {InternalCollectionFile} [args.collectionFile] Collection file, for file/singleton
+ * collections.
+ * @param {InternalLocaleCode} args.locale Locale of the updated content.
+ * @param {FlattenedEntryContent} args.content Updated content.
+ * @param {Map<FieldKeyPath, Field>} args.fields Fields to check, keyed by key path — the field
+ * itself rather than an item within it, which is what the validator looks at.
+ * @returns {CascadeDeleteBlocker[]} Blockers, one per invalid or read-only field.
+ */
+export const getFieldBlockers = ({
+  draft,
+  entry,
+  collection,
+  collectionFile,
+  locale,
+  content,
+  fields,
+}) => {
+  // Only the `readonly` option counts, as explained in `isEntryReadonly()`
+  const readonly = isConfigReadonly({ collection, collectionFile }) || isEntryReadonly(entry);
+
+  return [...fields].flatMap(([keyPath, fieldConfig]) => {
+    /** @type {string[]} */
+    let messages;
+
+    if (readonly) {
+      messages = [_('readonly_reference')];
+    } else {
+      const validity = validateAnyField({
+        draft,
+        locale,
+        keyPath,
+        value: content[keyPath],
+        valueMap: content,
+        // A fresh map, so the field is validated rather than skipped as already validated
+        validities: { [locale]: {} },
+      });
+
+      // The validator declines a field it doesn’t validate in this locale, e.g. a non-i18n field
+      // in a non-default locale, in which case the field is fine by definition
+      if (!validity || validity.valid) {
+        return [];
+      }
+
+      messages = getFieldValidationMessages({ validity, fieldConfig });
+    }
+
+    const collectionName = collection.name;
+
+    return [
+      /** @type {CascadeDeleteBlocker} */ ({
+        collectionName,
+        collectionLabel: collection.label || collectionName,
+        fieldLabel: getFieldLabel({ config: fieldConfig }),
+        entry,
+        summary: getEntrySummary(collection, entry),
+        locale,
+        keyPath,
+        messages,
+      }),
+    ];
+  });
+};
+
+/**
+ * Report a field invalid in more than one locale once: the message is the same, and the editor
+ * shows the errors locale by locale once the entry is opened.
+ * @param {CascadeDeleteBlocker[]} blockers Blockers.
+ * @returns {CascadeDeleteBlocker[]} Blockers, without the duplicates.
+ */
+export const dedupeBlockers = (blockers) => {
+  /** @type {Set<string>} */
+  const seen = new Set();
+
+  return blockers.filter(({ entry, keyPath }) => {
+    const key = `${entry.id}\0${keyPath}`;
+
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+
+    return true;
+  });
+};
+
+/**
+ * Build the `update` file changes that write the given cascade targets back, one per file the
+ * entry occupies.
+ * @param {object} args Arguments.
+ * @param {CascadeTarget[]} args.targets Cascade targets.
+ * @param {IndexedDB} [args.cacheDB] Pre-opened file-cache database to reuse.
+ * @returns {Promise<{ changes: FileChange[], savingEntries: Entry[] }>} Collected changes and the
+ * entries to be saved.
+ */
+export const buildTargetChanges = async ({ targets, cacheDB }) => {
+  if (!targets.length) {
+    return { changes: [], savingEntries: [] };
+  }
+
+  const db = resolveCacheDB(cacheDB);
+
+  const savingTargets = targets.map(({ entry, collection, collectionFile }) => {
+    const isIndexFile = isCollectionIndexFile(collection, entry);
+
+    return {
+      collection,
+      collectionFile,
+      isIndexFile,
+      // A field referenced by the `preview_path` option may have changed
+      entry: refreshPermalinks({ collection, isIndexFile, entry }),
+    };
+  });
+
+  const perEntryChanges = await Promise.all(
+    savingTargets.map(({ entry, collection, collectionFile, isIndexFile }) =>
+      buildEntryUpdateChanges({
+        collection,
+        collectionFile,
+        entry,
+        draft: createSyntheticDraft({ collection, collectionFile, isIndexFile }),
+        cacheDB: db,
+      }),
+    ),
+  );
+
+  return {
+    changes: perEntryChanges.flat(),
+    savingEntries: savingTargets.map(({ entry }) => entry),
+  };
+};

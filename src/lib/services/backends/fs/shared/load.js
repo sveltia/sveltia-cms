@@ -1,0 +1,201 @@
+import { readAsText } from '@sveltia/utils/file';
+
+import { getAssetKind } from '$lib/services/assets/kinds';
+import { allAssets } from '$lib/services/assets/state';
+import { getAllFiles } from '$lib/services/backends/fs/shared/scan';
+import { mapConcurrently } from '$lib/services/backends/git/shared/concurrency';
+import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
+import { deferRejection } from '$lib/services/backends/git/shared/defer';
+import { createFileList, describeFileList } from '$lib/services/backends/process';
+import { allEntries, dataLoaded, entryParseErrors } from '$lib/services/contents';
+import { prepareEntries } from '$lib/services/contents/file/process';
+import { readCacheEntries, updateCacheEntries } from '$lib/services/utils/database';
+import { getGitHash } from '$lib/services/utils/file';
+import { createDebugLogger } from '$lib/services/utils/logging';
+
+/**
+ * @import { IndexedDB } from '@sveltia/utils/storage';
+ * @import {
+ * Asset,
+ * BaseAssetListItem,
+ * BaseConfigListItem,
+ * BaseEntryListItem,
+ * BaseFileListItem,
+ * } from '$lib/types/private';
+ */
+
+/**
+ * Cached Git object ID of an asset file, along with the file’s size and modification time at the
+ * time it was hashed. The hash is reused as long as both still match, so an unchanged file isn’t
+ * read again on the next load.
+ * @typedef {object} AssetHashCacheRecord
+ * @property {string} sha Git object ID (SHA-1 hash) of the file.
+ * @property {number} size File size in bytes.
+ * @property {number} lastModified Modification time of the file, in milliseconds since the epoch.
+ */
+
+/**
+ * Maximum file size in bytes to read content from. (10 MB).
+ */
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+/**
+ * Maximum number of files processed at the same time, to balance performance with memory safety.
+ * Unlike fixed batches, a new file is picked up as soon as a slot frees up, so one large file
+ * doesn’t stall the others.
+ * @see https://github.com/sveltia/sveltia-cms/issues/224
+ */
+const FILE_PROCESS_CONCURRENCY = 10;
+
+/**
+ * Parse text file info to create a complete entry or config file object.
+ * @param {BaseFileListItem} fileInfo Entry or config file info.
+ * @returns {Promise<BaseFileListItem>} Entry or config file with text content. We don’t populate
+ * `size` and `sha` for entries and config files, as they are not needed. The text is left out if
+ * the file is too large or can’t be read, rather than made empty, so the file isn’t loaded as an
+ * empty entry that would wipe its content when saved.
+ */
+export const parseTextFileInfo = async (fileInfo) => {
+  const { name, handle } = fileInfo;
+
+  // Skip `.gitkeep` file, as we don’t need to read its content
+  if (name === '.gitkeep') {
+    return fileInfo;
+  }
+
+  try {
+    const file = await /** @type {FileSystemFileHandle} */ (handle).getFile();
+
+    if (file.size > MAX_FILE_SIZE) {
+      // eslint-disable-next-line no-console
+      console.warn(`File ${name} is too large (${file.size} bytes), skipping content read`);
+
+      return fileInfo;
+    }
+
+    const text = await readAsText(file);
+
+    return { ...fileInfo, text };
+  } catch (ex) {
+    // eslint-disable-next-line no-console
+    console.error(ex);
+
+    return fileInfo;
+  }
+};
+
+/**
+ * Parse asset file info to create a complete asset object.
+ * @param {BaseAssetListItem} fileInfo Asset file info.
+ * @param {object} [options] Options.
+ * @param {Map<string, AssetHashCacheRecord>} [options.cachedHashes] Hashes from a previous load,
+ * keyed by file path. A file whose size and modification time still match its record is not read
+ * again; hashing means reading the whole file, which adds up with a lot of media.
+ * @param {Map<string, AssetHashCacheRecord>} [options.newHashes] Map to collect the hashes computed
+ * in this load in, keyed by file path, so they can be cached for the next one.
+ * @returns {Promise<Asset>} Asset object.
+ */
+export const parseAssetFileInfo = async (fileInfo, { cachedHashes, newHashes } = {}) => {
+  const { name, path, handle } = fileInfo;
+  const kind = getAssetKind(name);
+
+  try {
+    const file = await /** @type {FileSystemFileHandle} */ (handle).getFile();
+    const { size, lastModified } = file;
+    const cached = cachedHashes?.get(path);
+    /** @type {string} */
+    let sha;
+
+    if (cached && cached.size === size && cached.lastModified === lastModified) {
+      ({ sha } = cached);
+    } else {
+      sha = await getGitHash(file);
+      newHashes?.set(path, { sha, size, lastModified });
+    }
+
+    return { ...fileInfo, kind, size, sha };
+  } catch (ex) {
+    // eslint-disable-next-line no-console
+    console.error(ex);
+
+    return { ...fileInfo, kind };
+  }
+};
+
+/**
+ * Load file list and all the entry files from the file system, then cache them in the stores.
+ * @param {FileSystemDirectoryHandle} rootDirHandle Root directory handle.
+ * @param {object} [options] Options.
+ * @param {IndexedDB | null} [options.hashCacheDB] Store holding the asset hashes computed by
+ * previous loads, keyed by file path, so unchanged files don’t have to be read and hashed again.
+ * Without one, every asset file is read in full on every load.
+ */
+export const loadFiles = async (rootDirHandle, { hashCacheDB = null } = {}) => {
+  const log = createDebugLogger('Loading site data');
+
+  log(`Started: local repository ${rootDirHandle.name}`);
+
+  // Start reading the cache right away, as it’s only needed once the directory has been scanned
+  /** @type {Promise<Map<string, AssetHashCacheRecord>>} */
+  const cachedHashesPromise = readCacheEntries(hashCacheDB);
+  const fileList = createFileList(await getAllFiles(rootDirHandle));
+  const { entryFiles, assetFiles, configFiles } = fileList;
+
+  log(`Scanned the directory: ${describeFileList(fileList)}`);
+
+  /** @type {Map<string, AssetHashCacheRecord>} */
+  const newHashes = new Map();
+
+  // Each asset file is read in full to hash it, so this can take a while with large media, unless
+  // the hash is still cached from a previous load. It’s started now, so it goes on while the entry
+  // files are read and parsed rather than after
+  const assetsPromise = deferRejection(
+    cachedHashesPromise.then((cachedHashes) =>
+      mapConcurrently(
+        assetFiles,
+        (fileInfo) => parseAssetFileInfo(fileInfo, { cachedHashes, newHashes }),
+        { concurrency: FILE_PROCESS_CONCURRENCY },
+      ),
+    ),
+  );
+
+  const entryFileItems = /** @type {BaseEntryListItem[]} */ (
+    await mapConcurrently(entryFiles, parseTextFileInfo, { concurrency: FILE_PROCESS_CONCURRENCY })
+  );
+
+  log(`Read ${entryFileItems.length} entry files`);
+
+  const configFileItems = /** @type {BaseConfigListItem[]} */ (
+    await mapConcurrently(configFiles, parseTextFileInfo, { concurrency: FILE_PROCESS_CONCURRENCY })
+  );
+
+  log(`Read ${configFileItems.length} config files`);
+
+  const { entries, errors } = await prepareEntries(entryFileItems);
+
+  log(`Parsed ${entries.length} entries (${errors.length} errors)`);
+
+  /** @type {Asset[]} */
+  const assets = await assetsPromise;
+  const cachedHashes = await cachedHashesPromise;
+
+  log(`Hashed ${newHashes.size} of ${assets.length} asset files (${cachedHashes.size} cached)`);
+
+  allEntries.current = entries;
+  allAssets.current = assets;
+  gitConfigFiles.current = configFileItems;
+  entryParseErrors.current = errors;
+  dataLoaded.current = true;
+
+  log('The site data is ready');
+
+  // The app is usable at this point, so the cache is updated afterwards
+  // Save the hashes computed in this load, and drop the records of files that are gone. The records
+  // of unchanged files stay as they are, so a load that reused every hash writes nothing.
+  const currentPaths = new Set(assetFiles.map(({ path }) => path));
+
+  await updateCacheEntries(
+    hashCacheDB,
+    newHashes,
+    [...cachedHashes.keys()].filter((path) => !currentPaths.has(path)),
+  );
+};

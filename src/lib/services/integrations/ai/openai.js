@@ -11,10 +11,14 @@ import { responses } from './api.js';
 
 const endpoint = 'https://api.openai.com/v1/responses';
 
+export const serviceId = 'openai';
+export const serviceLabel = 'OpenAI GPT';
 export const apiLabel = 'OpenAI API';
 export const developerURL = 'https://platform.openai.com/docs/overview';
 export const apiKeyURL = 'https://platform.openai.com/api-keys';
-export const apiKeyPattern = /sk-[a-zA-Z0-9-_]{40,}/;
+// Anchored, and an Anthropic key (`sk-ant-…`) excluded, so a key for another service entered while
+// this one is selected isn’t accepted and sent to the wrong API
+export const apiKeyPattern = /^sk-(?!ant-)[a-zA-Z0-9-_]{40,}$/;
 
 /**
  * Send a message to the OpenAI Responses API and return the response text.

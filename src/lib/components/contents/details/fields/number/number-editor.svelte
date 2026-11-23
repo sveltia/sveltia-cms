@@ -7,7 +7,12 @@
 <script>
   import { NumberInput } from '@sveltia/ui';
 
-  import { watch } from '$lib/services/utils/state.svelte';
+  import {
+    getNumberFieldValue,
+    getNumberInputValue,
+    isFloatType,
+  } from '$lib/services/contents/fields/number/helpers';
+  import { syncValues } from '$lib/services/utils/state.svelte';
 
   /**
    * @import { FieldEditorProps } from '$lib/types/private';
@@ -22,90 +27,45 @@
 
   /** @type {FieldEditorProps & Props} */
   let {
-    /* eslint-disable prefer-const */
     fieldId,
     fieldConfig,
     currentValue = $bindable(),
     required = true,
     readonly = false,
     invalid = false,
-    /* eslint-enable prefer-const */
   } = $props();
 
   /** @type {number | undefined} */
   let inputValue = $state();
+  /**
+   * Text in the input, which `inputValue` is `undefined` for if it can’t be parsed as a number.
+   */
+  let inputText = $state('');
 
-  const { value_type: valueType = 'int', min, max, step = 1 } = $derived(fieldConfig);
-  const isStringOutput = $derived(!['int', 'float'].includes(valueType));
-  const isFloatType = $derived(['float', 'float/string'].includes(valueType));
+  const { min, max, step = 1 } = $derived(fieldConfig);
 
   /**
-   * Update {@link inputValue} based on {@link currentValue}.
+   * Get the input value, or the text in the input if it holds something other than a number, so
+   * that text is stored and reported as invalid rather than silently stored as an empty value.
+   * @returns {number | string | undefined} Input value.
    */
-  const setInputValue = () => {
-    let newValue = undefined;
+  const getInput = () => (inputValue === undefined && inputText.trim() ? inputText : inputValue);
 
-    if (currentValue !== undefined) {
-      if (typeof currentValue === 'number') {
-        newValue = currentValue;
-      } else if (typeof currentValue === 'string') {
-        if (!currentValue.trim()) {
-          newValue = NaN;
-        } else if (isFloatType) {
-          newValue = Number.parseFloat(currentValue);
-        } else {
-          newValue = Number.parseInt(currentValue, 10);
-        }
-
-        newValue = !Number.isNaN(newValue) ? newValue : undefined;
-      }
-    }
-
-    // Avoid a cycle dependency & infinite loop
-    if (inputValue !== newValue) {
-      inputValue = newValue;
-    }
-  };
-
-  /**
-   * Update {@link currentValue} based on {@link inputValue}. Cast the value according to the
-   * `value_type` configuration.
-   */
-  const setCurrentValue = () => {
-    let newValue;
-
-    if (inputValue === undefined) {
-      newValue = NaN;
-    } else if (isFloatType) {
-      newValue = Number.parseFloat(String(inputValue));
-    } else {
-      newValue = Number.parseInt(String(inputValue), 10);
-    }
-
-    if (isStringOutput) {
-      newValue = Number.isNaN(newValue) ? '' : String(newValue);
-    } else if (Number.isNaN(newValue)) {
-      newValue = null;
-    }
-
-    // Avoid a cycle dependency & infinite loop
-    if (currentValue !== newValue) {
-      currentValue = newValue;
-    }
-  };
-
-  watch(
+  // Sync `inputValue` with `currentValue` in both directions, casting the value according to the
+  // `value_type` configuration
+  const { updateInput } = syncValues(
     () => currentValue,
-    () => {
-      setInputValue();
+    (value) => {
+      currentValue = value;
     },
-  );
-
-  watch(
-    () => inputValue,
-    () => {
-      setCurrentValue();
+    getInput,
+    (input) => {
+      // A string, the text in the input, is only converted from the stored value when it’s the
+      // input already, so it never gets here
+      inputValue = /** @type {number | undefined} */ (input);
     },
+    (value) => getNumberInputValue({ currentValue: value, fieldConfig, inputValue: getInput() }),
+    (input) => getNumberFieldValue({ inputValue: input, fieldConfig }),
   );
 </script>
 
@@ -114,13 +74,17 @@
   {min}
   {max}
   {step}
+  fractional={isFloatType(fieldConfig)}
   {readonly}
   {required}
   {invalid}
   aria-labelledby="{fieldId}-label"
   aria-errormessage="{fieldId}-error"
+  oninput={(event) => {
+    inputText = /** @type {HTMLInputElement} */ (event.target).value;
+  }}
   onblur={() => {
     // Ensure synchronization on blur
-    setInputValue();
+    updateInput();
   }}
 />

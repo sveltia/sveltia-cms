@@ -1,19 +1,26 @@
-import mime from 'mime';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import mime from '$lib/services/utils/mime';
+import { createMockAssetFolder } from '$lib/test/factories';
 
 import {
   ASSET_KINDS,
+  canCreateThumbnail,
   canEditAsset,
   canPreviewAsset,
+  canPreviewFile,
   DOC_EXTENSION_REGEX,
   getAssetKind,
   getMediaKind,
+  getMediaKindFromPath,
+  getMediaKindFromType,
   isMediaKind,
+  isPDF,
   MEDIA_KINDS,
 } from './kinds';
 
 // Mock dependencies
-vi.mock('mime', () => ({
+vi.mock('$lib/services/utils/mime', () => ({
   default: {
     getType: vi.fn().mockReturnValue(null),
   },
@@ -53,6 +60,32 @@ describe('assets/kinds', () => {
     });
   });
 
+  describe('canCreateThumbnail', () => {
+    it('should create a thumbnail for an image, a video or a PDF document', () => {
+      expect(canCreateThumbnail(/** @type {any} */ ({ name: 'a.jpg', kind: 'image' }))).toBe(true);
+      expect(canCreateThumbnail(/** @type {any} */ ({ name: 'a.mp4', kind: 'video' }))).toBe(true);
+      expect(canCreateThumbnail(/** @type {any} */ ({ name: 'a.pdf', kind: 'document' }))).toBe(
+        true,
+      );
+    });
+
+    it('should not for any other file', () => {
+      expect(canCreateThumbnail(/** @type {any} */ ({ name: 'a.mp3', kind: 'audio' }))).toBe(false);
+      expect(canCreateThumbnail(/** @type {any} */ ({ name: 'a.docx', kind: 'document' }))).toBe(
+        false,
+      );
+    });
+  });
+
+  describe('isPDF', () => {
+    it('should match the extension case-insensitively', () => {
+      expect(isPDF('files/brochure.pdf')).toBe(true);
+      expect(isPDF('Brochure.PDF')).toBe(true);
+      expect(isPDF('brochure.pdf.zip')).toBe(false);
+      expect(isPDF('pdf')).toBe(false);
+    });
+  });
+
   describe('isMediaKind', () => {
     it('should return true for media kinds', () => {
       expect(isMediaKind('image')).toBe(true);
@@ -64,6 +97,46 @@ describe('assets/kinds', () => {
       expect(isMediaKind('document')).toBe(false);
       expect(isMediaKind('other')).toBe(false);
       expect(isMediaKind('unknown')).toBe(false);
+    });
+  });
+
+  describe('canPreviewFile', () => {
+    beforeEach(async () => {
+      const { isTextFileType } = await import('@sveltia/utils/file');
+
+      vi.mocked(isTextFileType).mockImplementation((type) => type.startsWith('text/'));
+    });
+
+    it('should preview a media file whatever its name', () => {
+      expect(canPreviewFile('image', 'photo')).toBe(true);
+      expect(canPreviewFile('video', 'clip.mp4')).toBe(true);
+      expect(canPreviewFile('audio', 'song.mp3')).toBe(true);
+    });
+
+    it('should preview a PDF document', () => {
+      vi.mocked(mime.getType).mockReturnValue('application/pdf');
+
+      expect(canPreviewFile('document', 'files/report.pdf')).toBe(true);
+      expect(mime.getType).toHaveBeenCalledWith('files/report.pdf');
+    });
+
+    it('should preview a plaintext file', () => {
+      vi.mocked(mime.getType).mockReturnValue('text/plain');
+
+      expect(canPreviewFile('document', 'notes.txt')).toBe(true);
+    });
+
+    it('should not preview another document', () => {
+      vi.mocked(mime.getType).mockReturnValue('application/zip');
+
+      expect(canPreviewFile('other', 'archive.zip')).toBe(false);
+    });
+
+    it('should not preview a file of an unknown type', async () => {
+      const { isTextFileType } = await import('@sveltia/utils/file');
+
+      expect(canPreviewFile('other', 'unknown')).toBe(false);
+      expect(isTextFileType).not.toHaveBeenCalled();
     });
   });
 
@@ -91,13 +164,11 @@ describe('assets/kinds', () => {
       name: path.split('/').pop() || '',
       sha: 'abc123',
       size: 1024,
-      folder: {
+      folder: createMockAssetFolder({
+        collectionName: 'test',
         internalPath: 'test',
         publicPath: 'test',
-        collectionName: 'test',
-        entryRelative: false,
-        hasTemplateTags: false,
-      },
+      }),
     });
 
     it('should return true for media assets', () => {
@@ -269,6 +340,41 @@ describe('assets/kinds', () => {
     });
   });
 
+  describe('getMediaKindFromType', () => {
+    it('should map a MIME type to a media kind', () => {
+      expect(getMediaKindFromType('image/png')).toBe('image');
+      expect(getMediaKindFromType('video/mp4')).toBe('video');
+      expect(getMediaKindFromType('audio/mpeg')).toBe('audio');
+      expect(getMediaKindFromType('application/pdf')).toBe(undefined);
+      expect(getMediaKindFromType('image/x-custom')).toBe(undefined);
+      expect(getMediaKindFromType('')).toBe(undefined);
+    });
+
+    it('should not throw on a malformed MIME type without a subtype', () => {
+      expect(getMediaKindFromType('image')).toBe(undefined);
+      expect(getMediaKindFromType('image/')).toBe(undefined);
+      expect(getMediaKindFromPath('data:image;base64,iVBORw0KGgo=')).toBe(undefined);
+    });
+  });
+
+  describe('getMediaKindFromPath', () => {
+    it('should read the MIME type of a data URL', () => {
+      expect(getMediaKindFromPath('data:image/png;base64,iVBORw0KGgo=')).toBe('image');
+      expect(getMediaKindFromPath('data:application/pdf;base64,JVBERi0=')).toBe(undefined);
+      expect(mime.getType).not.toHaveBeenCalled();
+    });
+
+    it('should use the extension of a path or URL', () => {
+      vi.mocked(mime.getType).mockReturnValue('image/jpeg');
+
+      expect(getMediaKindFromPath('https://example.com/photos/a.jpg?w=1')).toBe('image');
+      expect(mime.getType).toHaveBeenCalledWith('/photos/a.jpg');
+      expect(getMediaKindFromPath('a.jpg')).toBe('image');
+      expect(mime.getType).toHaveBeenCalledWith('a.jpg');
+      expect(getMediaKindFromPath('https://images.example.com/a')).toBe('image');
+    });
+  });
+
   describe('getAssetKind', () => {
     it('should return "image" for image files', () => {
       vi.mocked(mime.getType).mockReturnValue('image/jpeg');
@@ -326,13 +432,11 @@ describe('assets/kinds', () => {
       name: path.split('/').pop() || '',
       sha: 'abc123',
       size: 1024,
-      folder: {
+      folder: createMockAssetFolder({
+        collectionName: 'test',
         internalPath: 'test',
         publicPath: 'test',
-        collectionName: 'test',
-        entryRelative: false,
-        hasTemplateTags: false,
-      },
+      }),
     });
 
     it('should return true for text files', () => {

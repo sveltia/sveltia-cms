@@ -11,12 +11,14 @@
   import { Button, Icon, MenuItem } from '@sveltia/ui';
 
   import { deployments, deployPollTimedOut, productionSHA } from '$lib/services/deployments';
+  import { DEPLOY_STATE_MESSAGES } from '$lib/services/deployments/constants';
   import { getEntryPreviewLink, refineState } from '$lib/services/deployments/link';
   import { pageLiveness, pingURL } from '$lib/services/deployments/ping';
   import { openNewTab } from '$lib/services/utils/window';
 
   /**
    * @import {
+   * DeployState,
    * Entry,
    * InternalCollection,
    * InternalCollectionFile,
@@ -46,7 +48,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     entry,
     locale,
     collection,
@@ -56,7 +57,6 @@
     variant = 'ghost',
     size = 'medium',
     iconic = false,
-    /* eslint-enable prefer-const */
   } = $props();
 
   // `pageLiveness.current` is deliberately left out of this derivation. The effect below watches
@@ -76,6 +76,7 @@
     }),
   );
   const url = $derived(link?.url);
+  /* v8 ignore start -- only read while there’s a link, which always has a URL */
   const state = $derived(
     link ? refineState(link.state, url ? pageLiveness.current[url] : undefined) : undefined,
   );
@@ -84,6 +85,7 @@
   // The URL leads to the published version, or nowhere when the entry is new, so the control waits
   // rather than sending anyone there
   const awaitingPreview = $derived(link?.awaitingPreview ?? false);
+  /* v8 ignore stop */
   // A failed build’s URL is its log rather than a preview, so there’s nothing worth opening. A
   // link to the live site is always worth offering, whatever the build did
   const disabled = $derived(awaitingPreview || !url || (isDeployPreview && state === 'error'));
@@ -95,34 +97,31 @@
         : _('view_on_live_site'),
   );
   // The label says where the link goes, not what the build is doing, so anything other than a
-  // finished build needs the reason spelled out
-  const description = $derived(
-    state === 'error'
-      ? _('deploy_preview.failed')
-      : state === 'checking'
-        ? _('deploy_preview.checking')
-        : state === 'pending'
-          ? _('deploy_preview.building')
-          : undefined,
-  );
+  // finished build needs the reason spelled out. The cast is safe: `state` is only missing without
+  // a link, when nothing is rendered
+  const descriptionKey = $derived(DEPLOY_STATE_MESSAGES[/** @type {DeployState} */ (state)]);
+  const description = $derived(descriptionKey ? _(descriptionKey) : undefined);
 
   /**
    * Open the resolved preview page in a new browser tab.
    */
   const open = () => {
+    /* v8 ignore next 3 -- the control is disabled without a URL */
     if (url) {
       openNewTab(url);
     }
   };
 
   $effect(() => {
-    // Neither of these reads the liveness store this effect writes, so the check can’t retrigger
-    // itself however the URL is composed
+    // None of these reads the liveness store this effect writes, so the check can’t retrigger
+    // itself however the URL is composed. The build state reported by the provider is read, so a
+    // page found missing while it was building is checked again once the build has finished
     const canPing = pingable;
     const pageURL = url;
+    const buildFinished = link?.state === 'ready';
 
     if (canPing && pageURL) {
-      pingURL(pageURL);
+      pingURL(pageURL, { recheckPending: buildFinished });
     }
 
     return undefined;

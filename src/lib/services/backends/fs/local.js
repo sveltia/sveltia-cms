@@ -1,15 +1,32 @@
-import { allBackendServices } from '$lib/services/backends';
-import { loadFiles, saveChanges } from '$lib/services/backends/fs/shared/files';
+import {
+  clearLocalGitCache,
+  getLocalGitStatus,
+  saveAndCommitChanges,
+} from '$lib/services/backends/fs/git';
+import {
+  getScopedRootDirHandle,
+  isTypeMismatchError,
+  readFile,
+} from '$lib/services/backends/fs/shared/handles';
+import { loadFiles } from '$lib/services/backends/fs/shared/load';
+import { saveChanges } from '$lib/services/backends/fs/shared/save';
+import { gitBackendServices } from '$lib/services/backends/git/services';
+import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
+import { getRootDir } from '$lib/services/backends/root-dir';
 import { cmsConfig } from '$lib/services/config';
+import { prefs } from '$lib/services/user/prefs.svelte';
 import { getRepositoryDatabase } from '$lib/services/utils/database';
 
 /**
  * @import { IndexedDB } from '@sveltia/utils/storage';
  * @import {
+ * Asset,
  * BackendService,
+ * CommitOptions,
  * CommitResults,
  * FileChange,
  * InternalCmsConfig,
+ * LocalGitStatus,
  * RepositoryInfo,
  * SignInOptions,
  * User,
@@ -47,6 +64,20 @@ const ROOT_DIR_HANDLE_KEY = 'root_dir_handle';
  */
 let rootDirHandleDB = undefined;
 /**
+ * Store holding the Git object IDs of the asset files hashed by previous loads, so unchanged files
+ * don’t have to be read again. Like the other caches, it only exists when a remote repository is
+ * configured, as the database is named after it.
+ * @type {IndexedDB | null | undefined}
+ */
+let assetHashDB = undefined;
+/**
+ * Handle of the repository’s root directory, which the user has picked.
+ * @type {FileSystemDirectoryHandle | undefined}
+ */
+let repoRootDirHandle = undefined;
+/**
+ * Handle of the directory the files are read and written in: the configured root directory within
+ * the repository, or the repository’s root directory itself.
  * @type {FileSystemDirectoryHandle | undefined}
  */
 let rootDirHandle = undefined;
@@ -97,7 +128,7 @@ export const getRootDirHandle = async ({ forceReload = false, showPicker = true 
       try {
         await handle.getDirectoryHandle('.git');
       } catch (/** @type {any} */ ex) {
-        if (ex.name === 'TypeMismatchError') {
+        if (isTypeMismatchError(ex)) {
           // `.git` exists but is a file (git worktree), which is still a valid repo root
           await handle.getFileHandle('.git');
         } else {
@@ -120,9 +151,10 @@ export const getRootDirHandle = async ({ forceReload = false, showPicker = true 
 const init = () => {
   const { name: service } = /** @type {InternalCmsConfig} */ (cmsConfig.current).backend;
 
-  remoteRepository = allBackendServices[service]?.init?.();
+  remoteRepository = gitBackendServices[service]?.init?.();
 
   rootDirHandleDB = getRepositoryDatabase(remoteRepository, 'file-system-handles') ?? null;
+  assetHashDB = getRepositoryDatabase(remoteRepository, 'asset-hashes') ?? null;
 
   return repository;
 };
@@ -138,10 +170,20 @@ const init = () => {
 const signIn = async ({ auto = false }) => {
   const handle = await getRootDirHandle({ showPicker: !auto });
 
-  if (handle) {
-    rootDirHandle = handle;
-  } else {
+  if (!handle) {
     throw new Error('Directory handle could not be acquired');
+  }
+
+  // The user picks the repository root, which is verified by its `.git`, and the files are read and
+  // written in the configured root directory within it
+  try {
+    rootDirHandle = await getScopedRootDirHandle(handle);
+    repoRootDirHandle = handle;
+  } catch {
+    throw createLocalizedError('Failed to open the root directory.', 'root_dir_not_found', {
+      repo: `${repository.owner}/${repository.repo}`,
+      dir: getRootDir(),
+    });
   }
 
   return { backendName };
@@ -152,7 +194,14 @@ const signIn = async ({ auto = false }) => {
  * directory handle.
  */
 const signOut = async () => {
-  await rootDirHandleDB?.delete(ROOT_DIR_HANDLE_KEY);
+  try {
+    await rootDirHandleDB?.delete(ROOT_DIR_HANDLE_KEY);
+  } catch {
+    // The handle is only a convenience for the next sign-in, so an IndexedDB failure is ignored
+  }
+
+  // Free the memory the Git index takes in a large repository
+  clearLocalGitCache();
 };
 
 /**
@@ -160,16 +209,59 @@ const signOut = async () => {
  * {@link allEntries} and {@link allAssets} stores.
  */
 const fetchFiles = async () => {
-  await loadFiles(/** @type {FileSystemDirectoryHandle} */ (rootDirHandle));
+  await loadFiles(/** @type {FileSystemDirectoryHandle} */ (rootDirHandle), {
+    hashCacheDB: assetHashDB,
+  });
 };
 
 /**
- * Save entries or assets locally.
+ * Save entries or assets locally. If the user has turned it on, the changes are then committed to
+ * the current branch of the local Git repository.
  * @param {FileChange[]} changes File changes to be saved.
- * @returns {Promise<CommitResults>} Commit results, including a pseudo commit SHA, saved files, and
- * their blob SHAs.
+ * @param {CommitOptions} options Commit options.
+ * @returns {Promise<CommitResults>} Commit results, including the commit SHA, which is a pseudo SHA
+ * unless the changes have been committed, saved files, and their blob SHAs.
  */
-const commitChanges = async (changes) => saveChanges(rootDirHandle, changes);
+const commitChanges = async (changes, options) => {
+  /**
+   * Save the changes to the files.
+   * @returns {Promise<CommitResults>} Results.
+   */
+  const save = () => saveChanges(rootDirHandle, changes);
+
+  if (prefs.localGitCommits && repoRootDirHandle) {
+    return saveAndCommitChanges({ repoRootDirHandle, changes, options, save });
+  }
+
+  // Free the memory the Git index takes in a large repository, in case commits were turned off
+  clearLocalGitCache();
+
+  return save();
+};
+
+/**
+ * Check whether the saved changes can be committed to the local Git repository right now.
+ * @returns {Promise<LocalGitStatus | undefined>} Status, or `undefined` if the user hasn’t signed
+ * in with the local backend.
+ */
+export const checkLocalGitStatus = async () =>
+  repoRootDirHandle ? getLocalGitStatus(repoRootDirHandle) : undefined;
+
+/**
+ * Read an asset file from the file system. An asset uploaded or moved during the session has no
+ * file handle of its own, so once the object URL it was given is revoked, the file is read from the
+ * disk again.
+ * @param {Asset} asset Asset to be fetched.
+ * @returns {Promise<Blob>} Blob.
+ * @throws {Error} If the root directory handle is not available or the file doesn’t exist.
+ */
+const fetchBlob = async ({ path }) => {
+  if (!rootDirHandle) {
+    throw new Error('Root directory handle is not available');
+  }
+
+  return readFile(rootDirHandle, path);
+};
 
 /**
  * @type {BackendService}
@@ -183,5 +275,6 @@ export default {
   signIn,
   signOut,
   fetchFiles,
+  fetchBlob,
   commitChanges,
 };

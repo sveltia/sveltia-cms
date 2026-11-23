@@ -15,12 +15,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    preview = undefined,
-    children,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { preview = undefined, children } = $props();
 </script>
 
 <div role="none" class="detail">

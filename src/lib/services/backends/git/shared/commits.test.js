@@ -1,7 +1,20 @@
 // @ts-nocheck
+import { _ as translate } from '@sveltia/i18n';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createCommitMessage, hasSkipCIMarker } from './commits';
+import {
+  assertBranchNotMoved,
+  createBaseCommitMessage,
+  createCommitMessage,
+  createLastCommitError,
+  dedupeFileCommits,
+  fetchPerPathCommits,
+  formatPersonTrailer,
+  hasSkipCIMarker,
+  isDeployingCommit,
+  signOffCommitMessage,
+} from './commits';
+import { MAX_CONCURRENT_REQUESTS } from './concurrency';
 
 const mockCmsConfig = vi.hoisted(() => ({
   backend: {
@@ -15,6 +28,11 @@ const mockUser = vi.hoisted(() => ({
   name: 'Test User',
   email: '',
 }));
+
+// The signed-in user, whose account can be swapped for one of its own
+const mockAccount = vi.hoisted(() => ({ account: /** @type {any} */ (undefined) }));
+
+mockAccount.account = mockUser;
 
 // Whether the commit is being made by an Open Authoring contributor
 const mockState = vi.hoisted(() => ({ openAuthoring: false }));
@@ -40,7 +58,7 @@ vi.mock('$lib/services/contents/collection', () => ({
 }));
 
 vi.mock('$lib/services/user/account.svelte', () => ({
-  user: { account: mockUser },
+  user: mockAccount,
 }));
 
 describe('git/shared/commits', () => {
@@ -77,6 +95,57 @@ describe('git/shared/commits', () => {
       const message = createCommitMessage(changes, options);
 
       expect(message).toBe('Create Blog Post “my-post”');
+    });
+
+    it('should insert values containing replacement patterns as they are', () => {
+      // `String.prototype.replaceAll()` would read `$&` as the matched text, `$'` as what follows
+      // it, and `$$` as a single `$`
+      const message = createCommitMessage([{ slug: "$&-$'-$$", path: 'content/posts/$&.md' }], {
+        commitType: 'create',
+        collection: mockCollection,
+      });
+
+      expect(message).toBe("Create Blog Post “$&-$'-$$”");
+
+      mockCmsConfig.backend.commit_messages = { uploadMedia: 'Upload {{path}}' };
+
+      expect(createCommitMessage([{ path: 'static/$`.jpg' }], { commitType: 'uploadMedia' })).toBe(
+        'Upload static/$`.jpg',
+      );
+    });
+
+    it('should not expand a placeholder found in an inserted value', () => {
+      mockCmsConfig.backend.commit_messages = { create: 'Create {{slug}} by {{author-login}}' };
+
+      const message = createCommitMessage(
+        [{ slug: '{{author-email}}', path: 'content/posts/a.md' }],
+        { commitType: 'create', collection: mockCollection },
+      );
+
+      expect(message).toBe('Create {{author-email}} by test-user');
+    });
+
+    it('should leave a placeholder without a value as it is', () => {
+      mockCmsConfig.backend.commit_messages = { uploadMedia: 'Upload {{path}} for {{slug}}' };
+
+      expect(createCommitMessage([{ path: 'static/a.jpg' }], { commitType: 'uploadMedia' })).toBe(
+        'Upload static/a.jpg for {{slug}}',
+      );
+    });
+
+    it('should insert values containing replacement patterns in the openAuthoring template', () => {
+      mockState.openAuthoring = true;
+      mockUser.login = '$&';
+      mockCmsConfig.backend.commit_messages = {
+        openAuthoring: '{{message}} (by {{author-login}})',
+      };
+
+      const message = createCommitMessage([{ slug: '$`', path: 'content/posts/a.md' }], {
+        commitType: 'create',
+        collection: mockCollection,
+      });
+
+      expect(message).toBe('Create Blog Post “$`” (by $&)');
     });
 
     it('should create default update message', () => {
@@ -695,6 +764,133 @@ describe('git/shared/commits', () => {
     });
   });
 
+  describe('createCommitMessage with a user message', () => {
+    const changes = [{ slug: 'my-post', path: 'content/posts/my-post.md' }];
+    const collection = { name: 'blog', label: 'Blog' };
+
+    it('should replace the message with the user’s in the `true` mode', () => {
+      mockCmsConfig.backend.prompt_commit_messages = true;
+
+      expect(
+        createCommitMessage([...changes, { path: 'static/a.jpg' }], {
+          commitType: 'update',
+          collection,
+          userMessage: '  Fix the typo in the title  ',
+        }),
+      ).toBe('Fix the typo in the title');
+    });
+
+    it('should add the user’s text before the message in the `prefix` mode', () => {
+      mockCmsConfig.backend.prompt_commit_messages = 'prefix';
+
+      expect(
+        createCommitMessage([...changes, { path: 'static/a.jpg' }], {
+          commitType: 'update',
+          collection,
+          userMessage: 'JIRA-123:',
+        }),
+      ).toBe('JIRA-123: Update Blog Post “my-post” +1');
+    });
+
+    it('should add the user’s text after the message in the `suffix` mode', () => {
+      mockCmsConfig.backend.prompt_commit_messages = 'suffix';
+
+      expect(
+        createCommitMessage(changes, { commitType: 'create', collection, userMessage: '(#42)' }),
+      ).toBe('Create Blog Post “my-post” (#42)');
+    });
+
+    it('should use the message made from the template when the user’s text is empty', () => {
+      mockCmsConfig.backend.prompt_commit_messages = true;
+
+      expect(
+        createCommitMessage(changes, { commitType: 'create', collection, userMessage: ' ' }),
+      ).toBe('Create Blog Post “my-post”');
+    });
+
+    it('should ignore the user’s text when prompting is not configured', () => {
+      expect(
+        createCommitMessage(changes, { commitType: 'create', collection, userMessage: 'Note' }),
+      ).toBe('Create Blog Post “my-post”');
+
+      mockCmsConfig.backend = undefined;
+
+      expect(
+        createCommitMessage(changes, { commitType: 'create', collection, userMessage: 'Note' }),
+      ).toBe('Create Blog Post “my-post”');
+    });
+
+    it('should wrap the user’s message for Open Authoring and add the [skip ci] prefix', () => {
+      mockState.openAuthoring = true;
+      mockCmsConfig.backend = {
+        commit_messages: { openAuthoring: '{{message}} (by {{author-login}})' },
+        skip_ci: true,
+        prompt_commit_messages: 'prefix',
+      };
+
+      expect(
+        createCommitMessage(changes, { commitType: 'update', collection, userMessage: 'ABC-1' }),
+      ).toBe('[skip ci] ABC-1 Update Blog Post “my-post” (by test-user)');
+    });
+  });
+
+  describe('createBaseCommitMessage', () => {
+    it('should create the message from the template without the prefixes or wrapping', () => {
+      mockState.openAuthoring = true;
+      mockCmsConfig.backend = {
+        commit_messages: { openAuthoring: 'From {{author-login}}: {{message}}' },
+        skip_ci: true,
+        prompt_commit_messages: 'prefix',
+      };
+
+      expect(
+        createBaseCommitMessage(
+          [
+            { slug: 'my-post', path: 'content/posts/my-post.md' },
+            { path: 'static/a.jpg' },
+            { path: 'static/b.jpg' },
+          ],
+          { commitType: 'update', collection: { name: 'blog' }, userMessage: 'Ignored' },
+        ),
+      ).toBe('Update Blog Post “my-post” +2');
+    });
+
+    it('should default to the update type', () => {
+      expect(createBaseCommitMessage([{ slug: 'a', path: 'a.md' }], {})).toBe('Update  “a”');
+    });
+  });
+
+  describe('isDeployingCommit', () => {
+    it('follows the configuration when the commit doesn’t say', () => {
+      expect(isDeployingCommit({ commitType: 'update' })).toBe(true);
+      expect(isDeployingCommit({})).toBe(true);
+
+      mockCmsConfig.backend.skip_ci = true;
+      expect(isDeployingCommit({ commitType: 'uploadMedia' })).toBe(false);
+
+      mockCmsConfig.backend = { automatic_deployments: false };
+      expect(isDeployingCommit({ commitType: 'create' })).toBe(false);
+    });
+
+    it('lets the commit override the configuration', () => {
+      expect(isDeployingCommit({ commitType: 'update', skipCI: true })).toBe(false);
+
+      mockCmsConfig.backend.skip_ci = true;
+      expect(isDeployingCommit({ commitType: 'update', skipCI: false })).toBe(true);
+    });
+
+    it('always deploys a deletion, so deleted content doesn’t stay online', () => {
+      mockCmsConfig.backend.skip_ci = true;
+      expect(isDeployingCommit({ commitType: 'delete' })).toBe(true);
+      expect(isDeployingCommit({ commitType: 'deleteMedia', skipCI: true })).toBe(true);
+    });
+
+    it('deploys without a configuration', () => {
+      mockCmsConfig.backend = undefined;
+      expect(isDeployingCommit({ commitType: 'update' })).toBe(true);
+    });
+  });
+
   describe('hasSkipCIMarker', () => {
     it('should match the marker this CMS writes', () => {
       expect(hasSkipCIMarker('[skip ci] Update Post “hello”')).toBe(true);
@@ -728,5 +924,298 @@ describe('git/shared/commits', () => {
         },
       );
     });
+  });
+
+  describe('signOffCommitMessage', () => {
+    /**
+     * Enable the option for a user with an email.
+     */
+    const enableSignOff = () => {
+      mockCmsConfig.backend = { ...mockCmsConfig.backend, signoff_commits: true };
+      mockUser.email = 'test@example.com';
+    };
+
+    it('should leave the message as it is when the option is not enabled', () => {
+      mockUser.email = 'test@example.com';
+
+      expect(signOffCommitMessage('Update Post “hello”')).toBe('Update Post “hello”');
+
+      mockCmsConfig.backend = { ...mockCmsConfig.backend, signoff_commits: false };
+
+      expect(signOffCommitMessage('Update Post “hello”')).toBe('Update Post “hello”');
+    });
+
+    it('should leave the message as it is when there is no configuration', () => {
+      const { backend } = mockCmsConfig;
+
+      mockCmsConfig.backend = undefined;
+
+      expect(signOffCommitMessage('Update Post “hello”')).toBe('Update Post “hello”');
+
+      mockCmsConfig.backend = backend;
+    });
+
+    it('should add the trailer after a blank line', () => {
+      enableSignOff();
+
+      expect(signOffCommitMessage('[skip ci] Update Post “hello” +2')).toBe(
+        '[skip ci] Update Post “hello” +2\n\nSigned-off-by: Test User <test@example.com>',
+      );
+    });
+
+    it('should drop trailing white space before adding the trailer', () => {
+      enableSignOff();
+
+      expect(signOffCommitMessage('Update Post “hello”\n\n')).toBe(
+        'Update Post “hello”\n\nSigned-off-by: Test User <test@example.com>',
+      );
+    });
+
+    it('should add the trailer after a blank line to a one-paragraph message like a trailer', () => {
+      enableSignOff();
+
+      expect(signOffCommitMessage('Fix: typo')).toBe(
+        'Fix: typo\n\nSigned-off-by: Test User <test@example.com>',
+      );
+    });
+
+    it('should add the trailer to the trailer block the message ends with', () => {
+      enableSignOff();
+
+      expect(
+        signOffCommitMessage('Update Post “hello”\r\n\r\nCo-authored-by: Jane <jane@example.com>'),
+      ).toBe(
+        'Update Post “hello”\r\n\r\nCo-authored-by: Jane <jane@example.com>\n' +
+          'Signed-off-by: Test User <test@example.com>',
+      );
+    });
+
+    it('should add the trailer after a blank line when the last paragraph is not trailers', () => {
+      enableSignOff();
+
+      expect(signOffCommitMessage('Update Post “hello”\n\nSee: the guide\nfor details')).toBe(
+        'Update Post “hello”\n\nSee: the guide\nfor details\n\n' +
+          'Signed-off-by: Test User <test@example.com>',
+      );
+    });
+
+    it('should not duplicate a trailer the message already has', () => {
+      enableSignOff();
+
+      const message = 'Update Post “hello”\n\nsigned-off-by: Test User <TEST@example.com>  ';
+
+      expect(signOffCommitMessage(message)).toBe(message);
+    });
+
+    it('should fill a template with the same trailer only once', () => {
+      enableSignOff();
+      mockCmsConfig.backend.commit_messages = {
+        update: 'Update {{slug}}\n\nSigned-off-by: {{author-name}} <{{author-email}}>',
+      };
+
+      const message = createCommitMessage([{ path: 'a.md', slug: 'hello' }], {
+        commitType: 'update',
+      });
+
+      expect(signOffCommitMessage(message)).toBe(
+        'Update hello\n\nSigned-off-by: Test User <test@example.com>',
+      );
+    });
+
+    it('should not add a trailer when the message has a sign-off with the same email', () => {
+      enableSignOff();
+
+      const message = 'Update hello\n\nSigned-off-by: test-user <test@example.com>';
+
+      expect(signOffCommitMessage(message)).toBe(message);
+    });
+
+    it('should add the trailer to a message with a different sign-off', () => {
+      enableSignOff();
+
+      expect(signOffCommitMessage('Update\n\nSigned-off-by: Bot <bot@example.com>')).toBe(
+        'Update\n\nSigned-off-by: Bot <bot@example.com>\n' +
+          'Signed-off-by: Test User <test@example.com>',
+      );
+    });
+
+    it('should fall back to the login name, then to the email', () => {
+      enableSignOff();
+      mockUser.name = null;
+
+      expect(signOffCommitMessage('Update')).toBe(
+        'Update\n\nSigned-off-by: test-user <test@example.com>',
+      );
+
+      mockUser.login = '';
+
+      expect(signOffCommitMessage('Update')).toBe(
+        'Update\n\nSigned-off-by: test@example.com <test@example.com>',
+      );
+    });
+
+    it('should strip line breaks and angle brackets from the profile values', () => {
+      enableSignOff();
+      mockUser.name = 'Test\nUser <admin>';
+      mockUser.email = ' <test@example.com>\n';
+
+      expect(signOffCommitMessage('Update')).toBe(
+        'Update\n\nSigned-off-by: Test User admin <test@example.com>',
+      );
+    });
+
+    it.each([[''], [null], [undefined], [' <> ']])(
+      'should leave the trailer out with a warning when the email is %j',
+      (email) => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+        enableSignOff();
+        // Each case signs in with an account of its own, as the warning is shown once per account
+        mockAccount.account = { ...mockUser, email };
+
+        try {
+          expect(signOffCommitMessage('Update')).toBe('Update');
+          expect(warn).toHaveBeenCalledOnce();
+          expect(warn.mock.calls[0][0]).toContain('signoff_commits');
+
+          // Another commit by the same user isn’t warned about again
+          expect(signOffCommitMessage('Update again')).toBe('Update again');
+          expect(warn).toHaveBeenCalledOnce();
+        } finally {
+          mockAccount.account = mockUser;
+          warn.mockRestore();
+        }
+      },
+    );
+  });
+});
+
+describe('formatPersonTrailer()', () => {
+  it('keeps the name and email on one line, without breaking the brackets', () => {
+    expect(formatPersonTrailer('Co-authored-by', { name: 'Ada', email: 'ada@example.com' })).toBe(
+      'Co-authored-by: Ada <ada@example.com>',
+    );
+    expect(
+      formatPersonTrailer('Co-authored-by', {
+        name: 'Ada\nCo-authored-by: Eve',
+        email: ' <ada@example.com> ',
+      }),
+    ).toBe('Co-authored-by: Ada Co-authored-by: Eve <ada@example.com>');
+  });
+});
+
+describe('createLastCommitError()', () => {
+  it.each([
+    ['repository_not_found', { repo: 'repo' }],
+    ['branch_not_found', { repo: 'repo', branch: 'main' }],
+  ])('creates an error with the localized %s message', (key, values) => {
+    const error = createLastCommitError(key, values);
+
+    expect(error.message).toBe('Failed to retrieve the last commit hash.');
+    expect(error.cause.message).toBe(translate(key, { values }));
+  });
+});
+
+describe('assertBranchNotMoved()', () => {
+  it('throws if the head has moved', async () => {
+    await expect(
+      assertBranchNotMoved('abc', vi.fn().mockResolvedValue({ hash: 'def' })),
+    ).rejects.toThrow('The branch has moved since the site data was loaded.');
+  });
+
+  it('returns if the head is where it was expected', async () => {
+    await expect(
+      assertBranchNotMoved('abc', vi.fn().mockResolvedValue({ hash: 'abc' })),
+    ).resolves.toBeUndefined();
+  });
+
+  it('returns if the head can’t be looked up', async () => {
+    await expect(
+      assertBranchNotMoved('abc', vi.fn().mockRejectedValue(new Error('Network error'))),
+    ).resolves.toBeUndefined();
+  });
+});
+
+describe('dedupeFileCommits()', () => {
+  it('keeps the first occurrence of each commit and sorts them newest first', () => {
+    const older = { sha: 'a', authorName: 'A', date: new Date('2026-01-01') };
+    const newer = { sha: 'b', authorName: 'B', date: new Date('2026-02-01') };
+    const duplicate = { ...older, authorName: 'Duplicate' };
+
+    expect(dedupeFileCommits([older, newer, duplicate])).toEqual([newer, older]);
+  });
+});
+
+describe('fetchPerPathCommits()', () => {
+  /**
+   * Convert a raw commit to a file commit.
+   * @param {{ id: string, date: string }} commit Raw commit.
+   * @returns {import('$lib/types/private').FileCommit} File commit.
+   */
+  const parseCommit = (commit) => ({
+    sha: commit.id,
+    authorName: 'Alice',
+    date: new Date(commit.date),
+  });
+
+  it('merges the histories of all paths, keeping the first occurrence of each commit', async () => {
+    /** @type {Record<string, { id: string, date: string, from: string }[]>} */
+    const histories = {
+      'a.md': [
+        { id: 'shared', date: '2024-01-02T00:00:00Z', from: 'a.md' },
+        { id: 'a1', date: '2024-01-01T00:00:00Z', from: 'a.md' },
+      ],
+      'b.md': [
+        { id: 'b1', date: '2024-01-03T00:00:00Z', from: 'b.md' },
+        { id: 'shared', date: '2024-01-02T00:00:00Z', from: 'b.md' },
+      ],
+    };
+
+    // Resolve the first path last to make sure results are still ordered by path
+    const fetchHistory = vi.fn(
+      (path) =>
+        new Promise((resolve) => {
+          setTimeout(() => resolve(histories[path]), path === 'a.md' ? 10 : 0);
+        }),
+    );
+
+    const result = await fetchPerPathCommits(['a.md', 'b.md'], fetchHistory, (commit) => ({
+      ...parseCommit(commit),
+      authorLogin: commit.from,
+    }));
+
+    expect(fetchHistory).toHaveBeenCalledTimes(2);
+    expect(result.map(({ sha }) => sha)).toEqual(['b1', 'shared', 'a1']);
+    expect(result.find(({ sha }) => sha === 'shared')?.authorLogin).toBe('a.md');
+  });
+
+  it('returns an empty list when there are no paths', async () => {
+    const fetchHistory = vi.fn();
+
+    expect(await fetchPerPathCommits([], fetchHistory, parseCommit)).toEqual([]);
+    expect(fetchHistory).not.toHaveBeenCalled();
+  });
+
+  it('limits the number of requests in flight', async () => {
+    let inFlight = 0;
+    let maxInFlight = 0;
+    const paths = Array.from({ length: MAX_CONCURRENT_REQUESTS * 2 }, (_, i) => `${i}.md`);
+
+    const fetchHistory = vi.fn(async (path) => {
+      inFlight += 1;
+      maxInFlight = Math.max(maxInFlight, inFlight);
+      await new Promise((resolve) => {
+        setTimeout(resolve, 0);
+      });
+      inFlight -= 1;
+
+      return [{ id: path, date: '2024-01-01T00:00:00Z' }];
+    });
+
+    const result = await fetchPerPathCommits(paths, fetchHistory, parseCommit);
+
+    expect(fetchHistory).toHaveBeenCalledTimes(paths.length);
+    expect(maxInFlight).toBe(MAX_CONCURRENT_REQUESTS);
+    expect(result).toHaveLength(paths.length);
   });
 });

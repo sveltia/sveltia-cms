@@ -1,6 +1,7 @@
 import { isTextFileType } from '@sveltia/utils/file';
 import { isURL } from '@sveltia/utils/string';
-import mime from 'mime';
+
+import mime from '$lib/services/utils/mime';
 
 /**
  * @import { Asset, AssetKind } from '$lib/types/private';
@@ -17,6 +18,23 @@ export const MEDIA_KINDS = ['image', 'video', 'audio'];
  * @type {AssetKind[]}
  */
 export const THUMBNAIL_KINDS = ['image', 'video'];
+
+/**
+ * Whether the given file is a PDF document, judging by its extension, which is matched
+ * case-insensitively, as in `Brochure.PDF`.
+ * @param {string} fileName File name or path, e.g. `files/brochure.pdf`.
+ * @returns {boolean} Result.
+ */
+export const isPDF = (fileName) => /\.pdf$/i.test(fileName);
+
+/**
+ * Whether a thumbnail can be generated for the given asset: an image, a video, or a PDF document,
+ * whose first page is rendered with PDF.js.
+ * @param {Asset} asset Asset.
+ * @returns {boolean} Result.
+ */
+export const canCreateThumbnail = (asset) =>
+  THUMBNAIL_KINDS.includes(asset.kind) || isPDF(asset.name);
 
 /**
  * List of all asset kinds.
@@ -41,14 +59,69 @@ const MEDIA_TYPE_REGEX = /^(?<type>image|video|audio)\//;
 export const isMediaKind = (kind) => /** @type {string[]} */ (MEDIA_KINDS).includes(kind);
 
 /**
+ * Whether a file of the given kind and name can be previewed: a media file, a PDF document or a
+ * plaintext file.
+ * @param {string} kind Kind, e.g. `image` or `document`.
+ * @param {string} fileName File name or path, e.g. `images/photo.jpg`.
+ * @returns {boolean} Result.
+ */
+export const canPreviewFile = (kind, fileName) => {
+  const type = mime.getType(fileName);
+
+  return isMediaKind(kind) || type === 'application/pdf' || (!!type && isTextFileType(type));
+};
+
+/**
  * Whether the given asset is previewable.
  * @param {Asset} asset Asset.
  * @returns {boolean} Result.
  */
-export const canPreviewAsset = (asset) => {
-  const type = mime.getType(asset.path);
+export const canPreviewAsset = (asset) => canPreviewFile(asset.kind, asset.path);
 
-  return isMediaKind(asset.kind) || type === 'application/pdf' || (!!type && isTextFileType(type));
+/**
+ * Get the media kind of the given MIME type.
+ * @param {string} mimeType MIME type, e.g. `image/png`.
+ * @returns {AssetKind | undefined} Kind.
+ */
+export const getMediaKindFromType = (mimeType) => {
+  if (!mimeType) {
+    return undefined;
+  }
+
+  const [type, subType] = mimeType.split('/');
+
+  // A malformed type without a subtype, e.g. from `data:image;base64,…`, is not a media type
+  if (isMediaKind(type) && !!subType && !subType.startsWith('x-')) {
+    return /** @type {AssetKind} */ (type);
+  }
+
+  return undefined;
+};
+
+/**
+ * Get the media kind of the given path or URL from its extension, without loading anything.
+ * @param {string} source Asset path, complete URL or data URL.
+ * @returns {AssetKind | undefined} Kind.
+ */
+export const getMediaKindFromPath = (source) => {
+  // A data URL carries its own MIME type, e.g. `data:image/png;base64,…`
+  if (source.startsWith('data:')) {
+    return getMediaKindFromType(source.slice(5).split(/[;,]/)[0]);
+  }
+
+  if (isURL(source)) {
+    const { hostname, pathname } = new URL(source);
+
+    // Handle common image CDN hostnames, e.g. images.unsplash.com
+    if (hostname.startsWith('images.')) {
+      return 'image';
+    }
+
+    // Remove query string and hash
+    source = pathname;
+  }
+
+  return getMediaKindFromType(mime.getType(source) ?? '');
 };
 
 /**
@@ -57,42 +130,20 @@ export const canPreviewAsset = (asset) => {
  * @returns {Promise<AssetKind | undefined>} Kind.
  */
 export const getMediaKind = async (source) => {
-  let mimeType = '';
-
   if (typeof source === 'string') {
-    if (source.startsWith('blob:')) {
-      try {
-        mimeType = (await (await fetch(source)).blob()).type;
-      } catch {
-        //
-      }
-    } else {
-      if (isURL(source)) {
-        const { hostname, pathname } = new URL(source);
-
-        // Handle common image CDN hostnames, e.g. images.unsplash.com
-        if (hostname.startsWith('images.')) {
-          return 'image';
-        }
-
-        // Remove query string and hash
-        source = pathname;
-      }
-
-      mimeType = mime.getType(source) ?? '';
+    if (!source.startsWith('blob:')) {
+      return getMediaKindFromPath(source);
     }
-  } else if (source instanceof Blob) {
-    mimeType = source.type;
+
+    try {
+      return getMediaKindFromType((await (await fetch(source)).blob()).type);
+    } catch {
+      return undefined;
+    }
   }
 
-  if (!mimeType) {
-    return undefined;
-  }
-
-  const [type, subType] = mimeType.split('/');
-
-  if (isMediaKind(type) && !subType.startsWith('x-')) {
-    return /** @type {AssetKind} */ (type);
+  if (source instanceof Blob) {
+    return getMediaKindFromType(source.type);
   }
 
   return undefined;

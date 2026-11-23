@@ -9,54 +9,31 @@
   import { _ } from '@sveltia/i18n';
   import { Button, Infobar } from '@sveltia/ui';
 
-  import { getState, setState } from '$lib/services/app/onboarding';
+  import { createOneOffNotice } from '$lib/services/app/onboarding';
   import { backend } from '$lib/services/backends';
   import { openNewTab } from '$lib/services/utils/window';
-  import { forkedRepository } from '$lib/services/workflow/open-authoring';
+  import { forkedRepository, getForkPath, getForkURL } from '$lib/services/workflow/open-authoring';
 
-  /** Key the dismissal is stored under, alongside the other one-off notices. */
-  const STATE_KEY = 'openAuthoringNotice';
-
-  let showInfobar = $state(false);
+  // The dismissal is stored alongside the other one-off notices
+  const notice = createOneOffNotice('openAuthoringNotice');
 
   const fork = $derived(forkedRepository.current);
-  const repoPath = $derived(fork ? `${fork.owner}/${fork.repo}` : '');
-  // The fork lives on the same service as the configured repository, which can be a GitHub
-  // Enterprise Server instance rather than github.com
-  const forkURL = $derived.by(() => {
-    const { repoURL } = backend.current?.repository ?? {};
-
-    return fork && repoURL ? new URL(`/${repoPath}`, repoURL).href : '';
-  });
-
-  /**
-   * Show the infobar unless the contributor has already dismissed it.
-   */
-  const showInfobarIfNeeded = async () => {
-    showInfobar = !(await getState(STATE_KEY));
-  };
-
-  /**
-   * Hide the infobar and remember it, so it doesn’t come back on the next load.
-   */
-  const hideInfobar = () => {
-    showInfobar = false;
-    setState(STATE_KEY, true);
-  };
+  const repoPath = $derived(getForkPath(fork));
+  const forkURL = $derived(getForkURL(backend.current?.repository, fork));
 
   // Only a contributor sees this, so the stored state isn’t read for anyone else
   $effect(() => {
     if (fork) {
-      showInfobarIfNeeded();
+      notice.showIfNeeded();
     }
   });
 </script>
 
 {#if fork}
   <Infobar
-    show={showInfobar}
+    show={notice.show.current}
     onDismiss={() => {
-      hideInfobar();
+      notice.hide();
     }}
     --sui-infobar-message-justify-content="center"
   >
@@ -67,7 +44,7 @@
         label={_('open_authoring.view_fork')}
         onclick={() => {
           openNewTab(forkURL);
-          hideInfobar();
+          notice.hide();
         }}
       />
     {/if}

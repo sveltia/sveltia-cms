@@ -11,7 +11,9 @@ const mockGetField = vi.hoisted(() => vi.fn());
 vi.mock('$lib/services/contents/entry/fields', () => ({ getField: mockGetField }));
 
 vi.mock('$lib/services/contents/fields/rich-text', () => ({
-  COMPONENT_NAME_PREFIX_REGEX: /^__component__\./,
+  stripComponentNamePrefix: vi.fn((/** @type {string} */ keyPath) =>
+    keyPath.replace(/^__component__\./, ''),
+  ),
 }));
 
 /**
@@ -103,6 +105,31 @@ describe('validateKeyValueField()', () => {
     expect(result.keyPath).toBe('meta');
   });
 
+  test('resolves to its own keyPath for a KeyValue field nested in an Object field', () => {
+    mockGetField.mockImplementation(({ keyPath }) =>
+      keyPath === 'obj' ? { widget: 'object' } : { widget: 'keyvalue' },
+    );
+
+    // All the pairs have been removed, so the field holds `null`
+    const valueMap = { 'obj.meta': null };
+    const validity = freshValidity();
+    const validities = { _default: {} };
+
+    const result = validateKeyValueField({
+      keyPath: 'obj.meta',
+      getFieldArgs: { ...baseGetFieldArgs, keyPath: 'obj.meta', valueMap },
+      validity,
+      validities,
+      locale: '_default',
+      required: true,
+      min: 0,
+      max: Infinity,
+    });
+
+    expect(result).toEqual({ skip: false, keyPath: 'obj.meta', empty: true });
+    expect(validity.valueMissing).toBe(true);
+  });
+
   test('sets valueMissing when required and no pairs exist', async () => {
     mockGetField.mockReturnValue({ widget: 'keyvalue' });
 
@@ -121,6 +148,36 @@ describe('validateKeyValueField()', () => {
     });
 
     expect(validity.valueMissing).toBe(true);
+  });
+
+  test('doesn’t count a blank pair, but counts a pair with an empty key and a value', () => {
+    mockGetField.mockReturnValue({ widget: 'keyvalue' });
+
+    /**
+     * Validate the given value map as a required field.
+     * @param {Record<string, string>} valueMap Value map.
+     * @returns {EntryValidityState} Validity.
+     */
+    const validate = (valueMap) => {
+      const validity = freshValidity();
+
+      validateKeyValueField({
+        keyPath: 'meta.',
+        getFieldArgs: { ...baseGetFieldArgs, keyPath: 'meta', valueMap },
+        validity,
+        validities: { _default: {} },
+        locale: '_default',
+        required: true,
+        min: 0,
+        max: Infinity,
+      });
+
+      return validity;
+    };
+
+    // The blank pair of a required field’s default value, which isn’t saved
+    expect(validate({ 'meta.': '' }).valueMissing).toBe(true);
+    expect(validate({ 'meta.': 'value' }).valueMissing).toBe(false);
   });
 
   test('treats a missing value map as having no pairs', async () => {

@@ -1,6 +1,9 @@
 import { generateUUID } from '@sveltia/utils/crypto';
+import { getPathInfo } from '@sveltia/utils/file';
 
+import { customStringTransformationRegistry } from '$lib/services/api/registries';
 import { slugify } from '$lib/services/common/slug';
+import { UUID_TYPES } from '$lib/services/common/template/constants';
 import {
   handleDateTimeTag,
   handleFilePathTag,
@@ -8,8 +11,13 @@ import {
   handleUuidTag,
 } from '$lib/services/common/template/handlers';
 import { processNestedTemplates } from '$lib/services/common/template/nested';
+import {
+  getFileNameLocaleSuffixes,
+  stripFieldTagPrefix,
+} from '$lib/services/common/template/utils';
 import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
 import { getField } from '$lib/services/contents/entry/fields';
+import { getOrCreate } from '$lib/services/utils/cache';
 import { sanitizePath } from '$lib/services/utils/file';
 
 /**
@@ -20,6 +28,7 @@ import { sanitizePath } from '$lib/services/utils/file';
  * @typedef {object} ReplaceSubContextBase
  * @property {string} identifierField Field name to identify the title.
  * @property {string | undefined} basePath Base path for the entry file.
+ * @property {RegExp} [fullPathRegEx] Entry path matcher of the entry collection.
  */
 
 /**
@@ -33,13 +42,42 @@ import { sanitizePath } from '$lib/services/utils/file';
  */
 
 /**
+ * Get a random value, reusing the one generated earlier for the same key if the context carries a
+ * cache of them. A new entry’s slug is filled while it’s being edited to show what it will be, so a
+ * random ID has to stay the same from one fill to the next, and until the entry is saved.
+ * @param {ReplaceSubContext} context Replacement context.
+ * @param {string} key What the value stands for, e.g. a tag in a locale.
+ * @param {() => string} generate Function to generate a new value.
+ * @returns {string} Value.
+ */
+const getRandomValue = ({ randomValues }, key, generate) => {
+  if (!randomValues) {
+    return generate();
+  }
+
+  return getOrCreate(randomValues, key, generate);
+};
+
+/**
  * Template tag replacer subroutine.
  * @param {string} tag Field name or special tag.
  * @param {ReplaceSubContext} context Replacement context.
  * @returns {any} Replaced value.
  */
 export const replaceTemplateTag = (tag, context) => {
-  const { type, content, entryFilePath, locale, dateTimeParts, basePath } = context;
+  const {
+    type,
+    collection,
+    collectionFile,
+    content,
+    entryFilePath,
+    locale,
+    dateTimeParts,
+    basePath,
+    fullPathRegEx,
+    assetFileName,
+  } = context;
+
   // Handle date-time fields. Parts are pre-calculated in `fillTemplate` to avoid redundant
   // calculations for multiple date-time tags in the same template.
   const _dateTimeParts = /** @type {Record<string, string>} */ (dateTimeParts);
@@ -57,10 +95,17 @@ export const replaceTemplateTag = (tag, context) => {
   }
 
   // Handle UUID tags
-  const uuidValue = handleUuidTag(tag);
+  if (Object.hasOwn(UUID_TYPES, tag)) {
+    return getRandomValue(
+      context,
+      `${locale}:${tag}`,
+      () => /** @type {string} */ (handleUuidTag(tag)),
+    );
+  }
 
-  if (uuidValue !== undefined) {
-    return uuidValue;
+  // Handle the original file name tags when naming an asset file
+  if (assetFileName !== undefined && (tag === 'filename' || tag === 'extension')) {
+    return getPathInfo(assetFileName)[tag] ?? '';
   }
 
   // Handle locale tag for preview path
@@ -68,9 +113,16 @@ export const replaceTemplateTag = (tag, context) => {
     return locale;
   }
 
-  // Handle file path related tags
+  // Handle file path related tags. A collection file can be localized differently from its
+  // collection, e.g. as multiple files, so its own i18n configuration decides the locale suffix
   if (type === 'preview_path' || type === 'media_folder') {
-    const filePathValue = handleFilePathTag(tag, entryFilePath, basePath);
+    const filePathValue = handleFilePathTag(
+      tag,
+      entryFilePath,
+      basePath,
+      getFileNameLocaleSuffixes(collectionFile ?? collection),
+      fullPathRegEx,
+    );
 
     if (filePathValue !== undefined) {
       return filePathValue;
@@ -84,8 +136,11 @@ export const replaceTemplateTag = (tag, context) => {
     }
   }
 
-  // Handle field values
-  return content[tag.replace(/^fields\./, '')];
+  const keyPath = stripFieldTagPrefix(tag);
+
+  // Handle field values. A field named after an `Object.prototype` member, e.g. `constructor`,
+  // mustn’t resolve to that member when the content lacks the field
+  return Object.hasOwn(content, keyPath) ? content[keyPath] : undefined;
 };
 
 /**
@@ -104,17 +159,19 @@ export const replaceTemplatePlaceholder = (placeholder, context) => {
     String(replaceTemplateTag(innerTag, replaceSubContext) ?? ''),
   );
 
-  // Fall back with a random ID unless the `default` transformation is defined
-  const hasDefaultTransformation = parsedTransformations.some(
-    (tf) => tf.args.defaultValue !== undefined,
+  // Fall back with a random ID unless the `default` or `ternary` transformation, or a custom one,
+  // is defined, which may give a value for a missing one. `ternary` always gives one of its values,
+  // so a missing value, e.g. of a Boolean field added after the entry was saved, gets the falsy one
+  const hasValueTransformation = parsedTransformations.some(
+    (tf) => tf.args.defaultValue !== undefined || tf.method === 'ternary',
   );
 
-  const hasComplexNestedTemplateArgs = parsedTransformations.some((tf) =>
-    [tf.args.defaultValue, tf.args.truthyValue, tf.args.falsyValue].some(
-      (arg) => typeof arg === 'string' && arg.includes('{{') && !/^{{[^{}]+}}$/.test(arg),
-    ),
+  const hasCustomTransformation = parsedTransformations.some((tf) =>
+    customStringTransformationRegistry.has(tf.method),
   );
 
+  // An empty number field holds `null`, which mustn’t become the word `null`
+  const isMissingValue = value === undefined || value === null;
   const { type, locale } = replaceSubContext;
 
   // A random fallback keeps generated slugs and paths unique, but a `preview_path` is recomputed on
@@ -125,38 +182,57 @@ export const replaceTemplatePlaceholder = (placeholder, context) => {
   // @see https://github.com/sveltia/sveltia-cms/issues/943
   /**
    * Give up on a preview path whose tag resolves to nothing, so the caller can drop the link
-   * instead of building a URL around a value that changes on every render.
-   * @throws {Error} If the template is a `preview_path`.
+   * instead of building a URL around a value that changes on every render. A media library prefix
+   * also needs the real value: a random one would scatter the files in folders of their own.
+   * @throws {Error} If the template is a `preview_path` or a media library prefix.
    */
   const bailOnUnresolvableTag = () => {
-    if (type === 'preview_path') {
-      throw new Error(`Unresolvable template tag in preview path: ${tag}`);
+    if (type === 'preview_path' || type === 'library_prefix') {
+      throw new Error(`Unresolvable template tag: ${tag}`);
     }
   };
 
-  if (value === undefined && !hasDefaultTransformation) {
+  /**
+   * Get a random ID for an unresolvable tag, which is reused like the other random values.
+   * @returns {string} Random ID.
+   */
+  const getFallbackValue = () => {
     bailOnUnresolvableTag();
 
-    return generateUUID('short');
-  }
+    return getRandomValue(replaceSubContext, `${locale}:fallback:${placeholder}`, () =>
+      generateUUID('short'),
+    );
+  };
 
-  if (
-    (value === undefined || value === '') &&
-    hasDefaultTransformation &&
-    hasComplexNestedTemplateArgs
-  ) {
-    bailOnUnresolvableTag();
-
-    return `${generateUUID('short')}-${generateUUID('short')}`;
+  if (isMissingValue && !hasValueTransformation && !hasCustomTransformation) {
+    return getFallbackValue();
   }
 
   if (transformations.length) {
     value = applyTransformations({
-      fieldConfig: getField({ ...getFieldArgs, keyPath: tag }),
+      fieldConfig: getField({ ...getFieldArgs, keyPath: stripFieldTagPrefix(tag) }),
       value,
       transformations,
       locale,
     });
+  }
+
+  // A custom transformation may give nothing for a missing value after all. The result of `default`
+  // or `ternary` is kept as is, even if its nested template resolves to nothing
+  if (isMissingValue && !hasValueTransformation && value === '') {
+    return getFallbackValue();
+  }
+
+  // A value stands for a single folder of a media library prefix, so it can’t add path segments.
+  // Unlike a slug, an empty value doesn’t get a random ID
+  if (type === 'library_prefix') {
+    const slug = slugify(sanitizePath(String(value)), {
+      locale,
+      maxLength: Infinity,
+      fallback: false,
+    });
+
+    return slug || getFallbackValue();
   }
 
   // Sanitize path traversal attempts first by removing `.` and `..` segments to prevent writing
@@ -170,6 +246,12 @@ export const replaceTemplatePlaceholder = (placeholder, context) => {
   }
 
   // Slugify the value for a slug or filename. Don’t limit the length here; it will be handled later
-  // in `fillTemplate`.
-  return slugify(value, { locale, maxLength: Infinity });
+  // in `fillTemplate`. A value that leaves nothing, e.g. an empty field, falls back to a random ID,
+  // which is reused like the other random values
+  return (
+    slugify(value, { locale, maxLength: Infinity, fallback: false }) ||
+    getRandomValue(replaceSubContext, `${locale}:fallback:${placeholder}`, () =>
+      generateUUID('short'),
+    )
+  );
 };

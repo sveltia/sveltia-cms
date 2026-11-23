@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import unsplashService, { getLocale, list, parseResults, search } from './unsplash';
+import unsplashService, { getLocale, list, parseResults, search, trackDownload } from './unsplash';
 
 const mockLocale = vi.hoisted(() => ({ current: 'en', set: vi.fn() }));
 
@@ -178,6 +178,23 @@ describe('integrations/media-libraries/stock/unsplash', () => {
         expect(results[0].fileName).toBe('no-name-99999-unsplash.jpg');
       });
 
+      it('should escape the user name and the link in the credit', () => {
+        const [result] = parseResults(
+          /** @type {any} */ ([
+            {
+              id: '1',
+              description: 'Test photo',
+              alt_description: '',
+              urls: { regular: 'https://example.com/r.jpg', thumb: 'https://example.com/t.jpg' },
+              user: { username: 'smith"&', name: 'Smith & <Jones>' },
+            },
+          ]),
+        );
+
+        expect(result.credit).toContain('href="https://unsplash.com/@smith&quot;&amp;?');
+        expect(result.credit).toContain('>Smith &amp; &lt;Jones&gt;</a>');
+      });
+
       it('should properly format credit links', () => {
         const mockApiResults = /** @type {any} */ ([
           {
@@ -197,14 +214,74 @@ describe('integrations/media-libraries/stock/unsplash', () => {
 
         const results = parseResults(mockApiResults);
 
-        expect(results[0].credit).toContain('utm_source=sveltia-cms&utm_medium=referral');
+        expect(results[0].credit).toContain('utm_source=sveltia-cms&amp;utm_medium=referral');
         expect(results[0].credit).toContain(
-          'href="https://unsplash.com/@testuser?utm_source=sveltia-cms&utm_medium=referral"',
+          'href="https://unsplash.com/@testuser?utm_source=sveltia-cms&amp;utm_medium=referral"',
         );
         expect(results[0].credit).toContain(
-          'href="https://unsplash.com/?utm_source=sveltia-cms&utm_medium=referral"',
+          'href="https://unsplash.com/?utm_source=sveltia-cms&amp;utm_medium=referral"',
         );
       });
+    });
+  });
+
+  describe('download tracking', () => {
+    it('should keep the download location of a photo', () => {
+      const [asset] = parseResults(
+        /** @type {any} */ ([
+          {
+            id: '12345',
+            description: 'Sunset',
+            alt_description: '',
+            urls: {
+              regular: 'https://images.unsplash.com/a',
+              thumb: 'https://images.unsplash.com/b',
+            },
+            user: { username: 'johndoe', name: 'John Doe' },
+            links: { download_location: 'https://api.unsplash.com/photos/12345/download?ixid=x' },
+          },
+        ]),
+      );
+
+      expect(asset.downloadTrackingURL).toBe(
+        'https://api.unsplash.com/photos/12345/download?ixid=x',
+      );
+      // eslint-disable-next-line import-x/no-named-as-default-member
+      expect(unsplashService.trackDownload).toBe(trackDownload);
+    });
+
+    it('should request the download location with the API key', async () => {
+      vi.mocked(fetch).mockResolvedValue(
+        /** @type {any} */ ({ ok: true, json: vi.fn().mockResolvedValue({}) }),
+      );
+
+      await trackDownload(
+        /** @type {any} */ ({ downloadTrackingURL: 'https://api.unsplash.com/photos/1/download' }),
+        /** @type {any} */ ({ apiKey: mockApiKey }),
+      );
+
+      expect(fetch).toHaveBeenCalledWith('https://api.unsplash.com/photos/1/download', {
+        headers: { Authorization: `Client-ID ${mockApiKey}` },
+      });
+    });
+
+    it('should do nothing without a download location', async () => {
+      await trackDownload(/** @type {any} */ ({}), /** @type {any} */ ({ apiKey: mockApiKey }));
+
+      expect(fetch).not.toHaveBeenCalled();
+    });
+
+    it('should only log a failed request, without rejecting', async () => {
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const asset = /** @type {any} */ ({ downloadTrackingURL: 'https://api.unsplash.com/x' });
+      const options = /** @type {any} */ ({ apiKey: mockApiKey });
+
+      vi.mocked(fetch).mockResolvedValueOnce(/** @type {any} */ ({ ok: false, status: 403 }));
+      await expect(trackDownload(asset, options)).resolves.toBeUndefined();
+      vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+      await expect(trackDownload(asset, options)).resolves.toBeUndefined();
+
+      expect(consoleError).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -324,12 +401,12 @@ describe('integrations/media-libraries/stock/unsplash', () => {
 
       const results = await list({ apiKey: mockApiKey });
 
-      expect(results[0].credit).toContain('utm_source=sveltia-cms&utm_medium=referral');
+      expect(results[0].credit).toContain('utm_source=sveltia-cms&amp;utm_medium=referral');
       expect(results[0].credit).toContain(
-        'href="https://unsplash.com/@photographer?utm_source=sveltia-cms&utm_medium=referral"',
+        'href="https://unsplash.com/@photographer?utm_source=sveltia-cms&amp;utm_medium=referral"',
       );
       expect(results[0].credit).toContain(
-        'href="https://unsplash.com/?utm_source=sveltia-cms&utm_medium=referral"',
+        'href="https://unsplash.com/?utm_source=sveltia-cms&amp;utm_medium=referral"',
       );
     });
   });
@@ -432,6 +509,22 @@ describe('integrations/media-libraries/stock/unsplash', () => {
       const url = new URL(/** @type {string} */ (fetchCall?.[0]));
 
       expect(url.searchParams.get('query')).toBe('');
+      expect(results).toHaveLength(0);
+    });
+
+    it('should fetch only one page when there are no results', async () => {
+      const fetchMock = vi.mocked(fetch);
+
+      fetchMock.mockResolvedValue(
+        /** @type {any} */ ({
+          ok: true,
+          json: vi.fn().mockResolvedValue({ results: [], total_pages: 0 }),
+        }),
+      );
+
+      const results = await search('nothing', { apiKey: mockApiKey });
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(results).toHaveLength(0);
     });
 
@@ -569,12 +662,12 @@ describe('integrations/media-libraries/stock/unsplash', () => {
 
       const results = await search('test', { apiKey: mockApiKey });
 
-      expect(results[0].credit).toContain('utm_source=sveltia-cms&utm_medium=referral');
+      expect(results[0].credit).toContain('utm_source=sveltia-cms&amp;utm_medium=referral');
       expect(results[0].credit).toContain(
-        'href="https://unsplash.com/@johndoe?utm_source=sveltia-cms&utm_medium=referral"',
+        'href="https://unsplash.com/@johndoe?utm_source=sveltia-cms&amp;utm_medium=referral"',
       );
       expect(results[0].credit).toContain(
-        'href="https://unsplash.com/?utm_source=sveltia-cms&utm_medium=referral"',
+        'href="https://unsplash.com/?utm_source=sveltia-cms&amp;utm_medium=referral"',
       );
     });
 

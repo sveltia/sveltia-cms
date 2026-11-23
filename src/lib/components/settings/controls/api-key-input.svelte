@@ -3,10 +3,12 @@
   import { SecretInput } from '@sveltia/ui';
   import { onMount } from 'svelte';
 
+  import { isInvalidApiKey, isSharedApiKey, setApiKey } from '$lib/services/user/api-keys';
   import { prefs } from '$lib/services/user/prefs.svelte';
 
   /**
    * @import {
+   * AiService,
    * MediaLibraryService,
    * SettingsPanelOnChangeArgs,
    * TranslationService,
@@ -16,21 +18,14 @@
   /**
    * @typedef {object} Props
    * @property {string} serviceId The ID of the service for which the API key is being input.
-   * @property {MediaLibraryService | TranslationService} service The service for which the API key
-   * is being input.
+   * @property {AiService | MediaLibraryService | TranslationService} service The service for
+   * which the API key is being input.
    * @property {string} [ariaLabel] Custom aria-label for the input.
    * @property {(detail: SettingsPanelOnChangeArgs) => void} [onChange] `change` event handler.
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    serviceId,
-    service,
-    ariaLabel,
-    onChange = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { serviceId, service, ariaLabel, onChange = undefined } = $props();
 
   const { apiKeyPattern } = $derived(service);
 
@@ -41,10 +36,9 @@
    */
   const onchange = () => {
     const apiKey = value.trim();
-    const invalid = !!apiKey && !!apiKeyPattern && !apiKeyPattern.test(apiKey);
+    const invalid = isInvalidApiKey(apiKey, apiKeyPattern);
 
-    prefs.apiKeys ??= {};
-    prefs.apiKeys[serviceId] = invalid ? '' : apiKey;
+    setApiKey(serviceId, invalid ? '' : apiKey);
 
     onChange?.({
       message: invalid
@@ -61,11 +55,13 @@
   });
 </script>
 
+<!-- An admin’s key is used until the user enters their own, so say so rather than show it -->
 <SecretInput
   bind:value
   flex
   autocomplete="off"
   spellcheck="false"
-  aria-label={ariaLabel}
+  placeholder={isSharedApiKey(serviceId) ? _('additions.provided_by_admin') : undefined}
+  {ariaLabel}
   {onchange}
 />

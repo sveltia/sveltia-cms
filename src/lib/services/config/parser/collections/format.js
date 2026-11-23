@@ -1,11 +1,19 @@
-import {
-  ALLOWED_FRONTMATTER_EXTENSIONS,
-  MARKDOWN_EXTENSIONS,
-  TEMPLATE_ENGINE_EXTENSIONS,
-} from '$lib/services/contents/file';
+import { customFileFormatRegistry } from '$lib/services/api/registries';
+import { addMessage } from '$lib/services/config/parser/utils/validator';
+import { isFieldMultiple } from '$lib/services/contents/entry/fields';
+import { storesNumber } from '$lib/services/contents/fields/number/helpers';
+import { detectFileExtension, detectFileFormat } from '$lib/services/contents/file/config';
+import { EXTENSION_FORMAT_MAP, MARKDOWN_EXTENSIONS } from '$lib/services/contents/file/constants';
 
 /**
- * @import { Field, FileExtension, FileFormat } from '$lib/types/public';
+ * @import {
+ * BodyFieldOptions,
+ * Field,
+ * FileExtension,
+ * FileFormat,
+ * NumberField,
+ * } from '$lib/types/public';
+ * @import { ConfigParserCollectors, ConfigParserContext } from '$lib/types/private';
  */
 
 /**
@@ -26,7 +34,7 @@ const KNOWN_FORMATS = ['yaml', 'toml', 'json'];
  * @param {Field[]} [fields] Fields.
  * @returns {boolean} Whether there is a mismatch between the file extension and format.
  * @see https://decapcms.org/docs/configuration-options/#extension-and-format
- * @see https://sveltiacms.app/en/docs/collections/entries#file-format-and-extension
+ * @see https://sveltiacms.app/en/docs/collections/entries/formats
  */
 export const isFormatMismatch = (extension, format, fields = []) => {
   // If either is undefined, there’s no mismatch
@@ -34,8 +42,10 @@ export const isFormatMismatch = (extension, format, fields = []) => {
     return false;
   }
 
-  // Raw format never mismatches
-  if (format === 'raw') {
+  // Raw format never mismatches, and neither does a custom format registered with
+  // `CMS.registerCustomFormat()`, which can take any extension, including `md`. Custom formats are
+  // registered before the configuration is parsed
+  if (format === 'raw' || customFileFormatRegistry.has(format)) {
     return false;
   }
 
@@ -62,24 +72,17 @@ export const isFormatMismatch = (extension, format, fields = []) => {
     return !isFrontMatterFormat;
   }
 
-  // Check for front-matter format mismatches with non-markdown extensions
-  if (normalizedFormat.endsWith('-frontmatter')) {
-    // Front-matter format: yaml-frontmatter, toml-frontmatter, json-frontmatter
-    const fmFormatType = normalizedFormat.replace('-frontmatter', '');
+  // Any other extension, such as `html` or `njk`, works with every front-matter format, like in
+  // Decap CMS, where the `format` option takes precedence over the extension. The exceptions are
+  // the data file extensions (`yaml`, `toml`, `json`), which only work with the matching
+  // front-matter format, if any, and `astro`, whose front matter is JavaScript, not YAML
+  if (isFrontMatterFormat) {
+    const extensionFormat = EXTENSION_FORMAT_MAP[normalizedExtension];
 
-    // Template engines (njk) work with any front-matter format
-    if (TEMPLATE_ENGINE_EXTENSIONS.includes(normalizedExtension)) {
-      return false;
-    }
-
-    // For other extensions, front-matter only works with matching extension
-    return normalizedExtension !== fmFormatType;
-  }
-
-  // The 'frontmatter' auto-detect format works with markdown extensions and some template engines
-  // (already handled above), so reject it for other extensions
-  if (normalizedFormat === 'frontmatter') {
-    return !ALLOWED_FRONTMATTER_EXTENSIONS.includes(normalizedExtension);
+    return (
+      extensionFormat !== undefined &&
+      extensionFormat !== normalizedFormat.replace('-frontmatter', '')
+    );
   }
 
   // For known formats, ensure extension matches (yaml/toml/json)
@@ -91,4 +94,68 @@ export const isFormatMismatch = (extension, format, fields = []) => {
 
   // Unknown format - don’t enforce mismatch
   return false;
+};
+
+/**
+ * Field types whose value is never text, so it can’t be stored as the body below the front matter.
+ */
+const NON_TEXT_FIELD_TYPES = ['boolean', 'keyvalue', 'list', 'number', 'object'];
+
+/**
+ * Check whether the given field holds something other than text: an object, an array, a number or
+ * a boolean.
+ * @param {Field} field Field configuration.
+ * @returns {boolean} Result.
+ */
+const isNonTextField = (field) => {
+  const { widget = 'string' } = field;
+
+  // A Number field with a `*/string` value type stores what the user typed as a string
+  if (widget === 'number') {
+    // prettier-ignore
+    return !(/** @type {NumberField} */ (field).value_type ?? '').endsWith('/string');
+  }
+
+  // A Compute field holds a number with the `int` and `float` value types, and a string otherwise
+  if (widget === 'compute') {
+    return storesNumber(field);
+  }
+
+  return NON_TEXT_FIELD_TYPES.includes(widget) || isFieldMultiple(field);
+};
+
+/**
+ * Check that the field storing the body below the front matter, `body` by default, holds text. Only
+ * a string can be written there, so any other value would be lost on save.
+ * @param {object} args Arguments.
+ * @param {FileExtension} [args.extension] Developer-defined file extension.
+ * @param {FileFormat} [args.format] Developer-defined file format.
+ * @param {BodyFieldOptions} [args.bodyField] Developer-defined `body_field` option.
+ * @param {Field[]} [args.fields] Fields of the collection or collection file.
+ * @param {ConfigParserContext} args.context Context.
+ * @param {ConfigParserCollectors} args.collectors Collectors.
+ */
+export const checkBodyField = ({ extension, format, bodyField, fields, context, collectors }) => {
+  const { key = 'body', inline = false } = bodyField ?? {};
+  const field = Array.isArray(fields) ? fields.find(({ name }) => name === key) : undefined;
+
+  // The type of the options is checked against the JSON schema
+  if (inline || !field || typeof key !== 'string') {
+    return;
+  }
+
+  const _format = detectFileFormat({
+    extension: detectFileExtension({ extension, format }),
+    format,
+  });
+
+  if ((_format === 'frontmatter' || _format.endsWith('-frontmatter')) && isNonTextField(field)) {
+    addMessage({
+      strKey: 'front_matter_body_field_not_text',
+      // A field without the `widget` option is a String field, which holds text
+      values: { name: key, widget: /** @type {string} */ (field.widget) },
+      context: { ...context, typedKeyPath: key },
+      collectors,
+    });
+  }
 };

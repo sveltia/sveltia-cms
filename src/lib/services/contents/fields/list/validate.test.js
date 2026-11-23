@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { validateListField } from './validate';
+import { getListItems, validateListField } from './validate';
 
 /**
  * @import { EntryValidityState } from '$lib/types/private';
@@ -225,5 +225,76 @@ describe('validateListField()', () => {
     });
 
     expect(validity.rangeUnderflow).toBe(true);
+  });
+
+  test('counts only the items, not other keys under the list or keys of a sibling field', () => {
+    const validity = freshValidity();
+
+    const valueMap = {
+      'tags.0': 'a',
+      'tags.__sc_item_original_key_path': 'x',
+      'tagline.0': 'b',
+      'tags.1': 'c',
+    };
+
+    validateListField({
+      keyPath: 'tags',
+      value: undefined,
+      valueMap,
+      validity,
+      validities: { _default: {} },
+      locale: '_default',
+      required: false,
+      min: 0,
+      max: 1,
+    });
+
+    expect(validity.rangeOverflow).toBe(true);
+
+    const validity2 = freshValidity();
+
+    validateListField({
+      keyPath: 'tags',
+      value: undefined,
+      valueMap,
+      validity: validity2,
+      validities: { _default: {} },
+      locale: '_default',
+      required: false,
+      min: 0,
+      max: 2,
+    });
+
+    expect(validity2.rangeOverflow).toBe(false);
+  });
+});
+
+describe('getListItems()', () => {
+  test('returns the items stored under the list, in list order', () => {
+    expect(
+      getListItems({
+        keyPath: 'tags',
+        value: '',
+        valueMap: {
+          title: 'Title',
+          'tags.1': 'b',
+          'tags.0': 'a',
+          'tags.10': 'k',
+          'tags.2': 'c',
+          'tags_other.0': 'x',
+          'tags.3.name': 'y',
+        },
+      }),
+    ).toEqual(['a', 'b', 'c', 'k']);
+  });
+
+  test('returns the value itself when the list holds its items in an array', () => {
+    expect(
+      getListItems({ keyPath: 'tags', value: ['a', 'b'], valueMap: { tags: ['a', 'b'] } }),
+    ).toEqual(['a', 'b']);
+  });
+
+  test('returns an empty array when the list has no items', () => {
+    expect(getListItems({ keyPath: 'tags', value: [], valueMap: { tags: [] } })).toEqual([]);
   });
 });

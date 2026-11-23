@@ -1,18 +1,20 @@
 <script>
-  import { _, locale as appLocale } from '@sveltia/i18n';
+  import { _ } from '@sveltia/i18n';
   import { Icon, TreeItem } from '@sveltia/ui';
   import { untrack } from 'svelte';
 
   import NestedTreeItem from '$lib/components/contents/list/nested-tree-item.svelte';
+  import { appNumberFormatter } from '$lib/services/app/i18n';
   import { goto } from '$lib/services/app/navigation';
   import { getCollection, selectedCollection } from '$lib/services/contents/collection';
-  import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
+  import { countCollectionEntries } from '$lib/services/contents/collection/entries';
   import { nestedFilterPath } from '$lib/services/contents/collection/nested';
+  import { getAllEntries } from '$lib/services/contents/collection/nested/i18n';
   import { getNestedTree } from '$lib/services/contents/collection/nested/tree';
   import { env } from '$lib/services/user/env.svelte';
-  import { mergeUnpublishedEntries, unpublishedEntries } from '$lib/services/workflow';
 
   /**
+   * @import { InternalCollection } from '$lib/types/private';
    * @import { Collection } from '$lib/types/public';
    */
 
@@ -23,14 +25,8 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    collection,
-    isSearchPage = false,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { collection, isSearchPage = false } = $props();
 
-  const numberFormatter = $derived(Intl.NumberFormat(appLocale.current));
   const { name, label, icon } = $derived(collection);
   const isCurrentCollection = $derived(selectedCollection.current?.name === name);
 
@@ -46,22 +42,21 @@
    * browsed before it’s published. Without it, a draft filed below another draft is nowhere to be
    * found.
    */
-  const entries = $derived.by(() =>
-    'files' in collection
-      ? []
-      : mergeUnpublishedEntries(
-          getEntriesByCollection(name),
-          unpublishedEntries.current.filter(({ workflow }) => workflow.collectionName === name),
-        ),
+  const entries = $derived('files' in collection ? [] : getAllEntries(collection));
+
+  // Hugo’s special index file stands for the collection’s own page rather than for one of the
+  // entries in it, so it’s not counted here, while it’s still shown in the entry list
+  const entryCount = $derived(
+    'files' in collection ? collection.files.length : countCollectionEntries(name, entries),
   );
 
-  const entryCount = $derived('files' in collection ? collection.files.length : entries.length);
-
-  const treeNodes = $derived.by(() => {
-    const internalCollection = getCollection(name);
-
-    return internalCollection ? getNestedTree({ collection: internalCollection, entries }) : [];
-  });
+  // The collection comes from the configuration, which only has valid ones once it’s loaded
+  const treeNodes = $derived(
+    getNestedTree({
+      collection: /** @type {InternalCollection} */ (getCollection(name)),
+      entries,
+    }),
+  );
 
   let expanded = $state(false);
 
@@ -94,8 +89,11 @@
     <Icon name={icon || 'bookmark_manager'} />
   {/snippet}
   {#snippet endIcon()}
-    <span class="count" aria-label="({_('x_entries', { values: { count: entryCount } })})">
-      {numberFormatter.format(entryCount)}
+    <span
+      class="count"
+      aria-label={entryCount ? _('x_entries', { values: { count: entryCount } }) : undefined}
+    >
+      {appNumberFormatter.current.format(entryCount)}
     </span>
   {/snippet}
 </TreeItem>

@@ -2,33 +2,55 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { isEntryCollection } from '$lib/services/contents/collection';
-import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
-import { getSlugs, hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
+import {
+  getEntriesByCollection,
+  getEntriesInCollectionFolder,
+} from '$lib/services/contents/collection/entries';
+import { isEntryCollection } from '$lib/services/contents/collection/predicates';
+import { hasLocalizedSlugs } from '$lib/services/contents/collection/slug';
+import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { validatePath as _validatePath } from '$lib/services/contents/draft/validate/path';
-import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
+import { getCompanionEntries, getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
-vi.mock('$lib/services/contents/collection', () => ({
+vi.mock('$lib/services/contents/collection/predicates', () => ({
   isEntryCollection: vi.fn(),
 }));
 
 vi.mock('$lib/services/contents/collection/entries', () => ({
   getEntriesByCollection: vi.fn(() => []),
+  getEntriesInCollectionFolder: vi.fn(() => []),
 }));
 
-vi.mock('$lib/services/workflow', () => ({
-  getUnpublishedEntriesByCollection: vi.fn(() => []),
-  mergeUnpublishedEntries: vi.fn((entries) => entries),
-  unpublishedEntries: { current: [] },
-}));
+vi.mock('$lib/services/workflow', () => {
+  /** @type {import('vitest').Mock<(name: string) => any[]>} */
+  const companionEntries = vi.fn(() => []);
+  /** @type {import('vitest').Mock<(name: string) => any[]>} */
+  const unpublishedEntriesByCollection = vi.fn(() => []);
 
-vi.mock('$lib/services/contents/draft/slugs', () => ({
-  getSlugs: vi.fn(() => ({ defaultLocaleSlug: 'new-page' })),
+  return {
+    getCompanionEntries: companionEntries,
+    getUnpublishedEntriesByCollection: unpublishedEntriesByCollection,
+    // Mirror the real helper so the tests can drive it through the two it combines
+    getPullRequestEntries: vi.fn((/** @type {string} */ name) => [
+      ...unpublishedEntriesByCollection(name),
+      ...companionEntries(name),
+    ]),
+    mergeUnpublishedEntries: vi.fn((entries) => entries),
+    unpublishedEntries: { current: [] },
+  };
+});
+
+vi.mock('$lib/services/contents/collection/slug', async (importOriginal) => ({
+  ...(await importOriginal()),
   hasLocalizedSlugs: vi.fn(() => false),
+}));
+vi.mock('$lib/services/contents/draft/slugs', async (importOriginal) => ({
+  ...(await importOriginal()),
+  getSlugs: vi.fn(() => ({ defaultLocaleSlug: 'new-page' })),
 }));
 
 /**
- * Create a nested collection with the path editor enabled.
+ * Create a collection of nested entries with the path editor enabled.
  * @param {object} [options] Options.
  * @param {boolean} [options.subfolders] Whether the collection uses the `subfolders` mode.
  * @param {boolean} [options.metaPath] Whether the path editor is enabled.
@@ -39,7 +61,7 @@ const createCollection = ({ subfolders = true, metaPath = true, indexFile } = {}
   name: 'pages',
   folder: 'content/pages',
   nested: { subfolders },
-  meta: metaPath ? { path: { widget: 'string', index_file: indexFile } } : undefined,
+  meta: metaPath ? { path: { index_file: indexFile } } : undefined,
   _i18n: { defaultLocale: 'en', structureMap: {} },
 });
 
@@ -65,8 +87,14 @@ beforeEach(() => {
   vi.mocked(isEntryCollection).mockImplementation(
     (collection) => typeof collection?.folder === 'string' && !Array.isArray(collection?.files),
   );
-  vi.mocked(getEntriesByCollection).mockReturnValue([]);
+  // The localized folder names are looked up in the same entries
+  vi.mocked(getEntriesByCollection).mockImplementation((name) =>
+    getEntriesInCollectionFolder(name),
+  );
+  vi.mocked(getEntriesInCollectionFolder).mockReturnValue([]);
   vi.mocked(getUnpublishedEntriesByCollection).mockReturnValue([]);
+  vi.mocked(getSlugs).mockReturnValue({ defaultLocaleSlug: 'new-page' });
+  vi.mocked(hasLocalizedSlugs).mockReturnValue(false);
 });
 
 describe('validatePath()', () => {
@@ -198,7 +226,7 @@ describe('validatePath()', () => {
   });
   describe('duplicate destinations', () => {
     test('rejects moving an entry onto a folder that another entry owns', async () => {
-      vi.mocked(getEntriesByCollection).mockReturnValue(
+      vi.mocked(getEntriesInCollectionFolder).mockReturnValue(
         /** @type {any} */ ([{ id: 'other', subPath: 'docs/_index' }]),
       );
 
@@ -218,7 +246,7 @@ describe('validatePath()', () => {
     });
 
     test('rejects a new entry whose own folder is already taken', async () => {
-      vi.mocked(getEntriesByCollection).mockReturnValue(
+      vi.mocked(getEntriesInCollectionFolder).mockReturnValue(
         /** @type {any} */ ([{ id: 'other', subPath: 'docs/new-page/_index' }]),
       );
 
@@ -236,7 +264,7 @@ describe('validatePath()', () => {
 
     test('accepts a new entry in a folder that already holds an entry of its own', async () => {
       // The chosen folder is where the entry is created, so the folder’s own entry is no conflict
-      vi.mocked(getEntriesByCollection).mockReturnValue(
+      vi.mocked(getEntriesInCollectionFolder).mockReturnValue(
         /** @type {any} */ ([{ id: 'other', subPath: 'docs/_index' }]),
       );
 
@@ -254,7 +282,7 @@ describe('validatePath()', () => {
 
     test('rejects a destination already claimed by an unpublished entry', async () => {
       // The published tree is still clear, but a draft awaiting review has taken the folder
-      vi.mocked(getEntriesByCollection).mockReturnValue([]);
+      vi.mocked(getEntriesInCollectionFolder).mockReturnValue([]);
       vi.mocked(getUnpublishedEntriesByCollection).mockReturnValue(
         /** @type {any} */ ([{ id: 'other', subPath: 'docs/_index' }]),
       );
@@ -271,8 +299,28 @@ describe('validatePath()', () => {
       expect(validatePath().validities.en._path.duplicateError).toBe(true);
     });
 
+    test('rejects a destination already claimed by an entry riding along in a pull request', async () => {
+      // A new entry created from a Relation field of an entry of another collection has taken the
+      // folder in that entry’s pull request
+      vi.mocked(getCompanionEntries).mockReturnValueOnce(
+        /** @type {any} */ ([{ id: 'other', subPath: 'docs/_index' }]),
+      );
+
+      await setDraft({
+        collection: createCollection({ indexFile: '_index' }),
+        currentLocales: { en: true },
+        isNew: false,
+        originalEntry: { id: 'self', subPath: 'guides/_index' },
+        originalPath: 'guides',
+        currentPath: 'docs',
+      });
+
+      expect(validatePath().validities.en._path.duplicateError).toBe(true);
+      expect(getCompanionEntries).toHaveBeenCalledWith('pages');
+    });
+
     test('ignores the entry being edited', async () => {
-      vi.mocked(getEntriesByCollection).mockReturnValue(
+      vi.mocked(getEntriesInCollectionFolder).mockReturnValue(
         /** @type {any} */ ([{ id: 'self', subPath: 'docs/_index' }]),
       );
 
@@ -317,7 +365,7 @@ describe('validatePath()', () => {
         defaultLocaleSlug: 'history',
         localizedSlugs: { en: 'history', fr: 'equipe' },
       });
-      vi.mocked(getEntriesByCollection).mockReturnValue(
+      vi.mocked(getEntriesInCollectionFolder).mockReturnValue(
         /** @type {any} */ ([
           {
             id: 'parent',
@@ -362,7 +410,7 @@ describe('validatePath()', () => {
         locales: { en: { slug: 'about/team/_index' }, fr: { slug: 'about/equipe/_index' } },
       };
 
-      vi.mocked(getEntriesByCollection).mockReturnValue(
+      vi.mocked(getEntriesInCollectionFolder).mockReturnValue(
         /** @type {any} */ ([
           {
             id: 'parent',
@@ -390,8 +438,10 @@ describe('validatePath()', () => {
       expect(validatePath().validities.fr._path.duplicateError).toBe(false);
     });
 
-    test('skips the check when each entry has a file name of its own', async () => {
-      vi.mocked(getEntriesByCollection).mockReturnValue(
+    test('checks the file name in the folder when each entry has a file name of its own', async () => {
+      // A nested entry without a shared index file is a regular file named after its slug, so a
+      // file of the same name in the chosen folder would be overwritten
+      vi.mocked(getEntriesInCollectionFolder).mockReturnValue(
         /** @type {any} */ ([{ id: 'other', subPath: 'docs/_index' }]),
       );
 
@@ -405,6 +455,51 @@ describe('validatePath()', () => {
       });
 
       expect(validatePath().valid).toBe(true);
+
+      vi.mocked(getEntriesInCollectionFolder).mockReturnValue(
+        /** @type {any} */ ([{ id: 'other', subPath: 'docs/new-page' }]),
+      );
+
+      expect(validatePath().validities.en._path.duplicateError).toBe(true);
+    });
+
+    test('checks the destination of an entry moved to another folder', async () => {
+      vi.mocked(getSlugs).mockReturnValue({ defaultLocaleSlug: 'intro' });
+      vi.mocked(getEntriesInCollectionFolder).mockReturnValue(
+        /** @type {any} */ ([{ id: 'other', subPath: 'docs/intro' }]),
+      );
+
+      const self = { id: 'self', subPath: 'intro', locales: { en: { slug: 'intro' } } };
+
+      await setDraft({
+        id: 'self',
+        collection: createCollection({ subfolders: false }),
+        currentLocales: { en: true },
+        isNew: false,
+        originalEntry: self,
+        originalPath: '',
+        currentPath: 'docs',
+      });
+
+      expect(validatePath().validities.en._path.duplicateError).toBe(true);
+    });
+
+    test('checks entries left out by the collection filter', async () => {
+      vi.mocked(getEntriesByCollection).mockReturnValue([]);
+      vi.mocked(getEntriesInCollectionFolder).mockReturnValue(
+        /** @type {any} */ ([{ id: 'other', subPath: 'docs/new-page/_index' }]),
+      );
+
+      await setDraft({
+        collection: createCollection({ indexFile: '_index' }),
+        currentLocales: { en: true },
+        isNew: true,
+        originalEntry: undefined,
+        originalPath: '',
+        currentPath: 'docs',
+      });
+
+      expect(validatePath().valid).toBe(false);
     });
   });
 });

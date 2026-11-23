@@ -6,6 +6,7 @@
     EmptyState,
     Group,
     Icon,
+    Infobar,
     ResizableHandle,
     ResizablePane,
     ResizablePaneGroup,
@@ -15,50 +16,59 @@
   import { sleep } from '@sveltia/utils/misc';
   import { onMount, tick, untrack } from 'svelte';
 
-  import BackupFeedback from '$lib/components/contents/details/backup-feedback.svelte';
   import PaneBody from '$lib/components/contents/details/pane-body.svelte';
   import PaneHeader from '$lib/components/contents/details/pane-header.svelte';
+  import PendingEditInfobar from '$lib/components/contents/details/pending-edit-infobar.svelte';
+  import RemoteChangeInfobar from '$lib/components/contents/details/remote-change-infobar.svelte';
+  import SidebarSheet from '$lib/components/contents/details/sidebar/sidebar-sheet.svelte';
   import Sidebar from '$lib/components/contents/details/sidebar/sidebar.svelte';
   import Toolbar from '$lib/components/contents/details/toolbar.svelte';
+  import { getAdditions, requireAdditions } from '$lib/services/app/additions';
+  import { focusOverlay, rememberFocus } from '$lib/services/app/focus';
   import { goto } from '$lib/services/app/navigation';
+  import {
+    getReadonlyMessage,
+    isDraftConfigReadonly,
+    isDraftLockedByOthers,
+  } from '$lib/services/config/readonly';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { collectionState } from '$lib/services/contents/collection/view';
-  import {
-    resetBackupToastState,
-    scheduleBackup,
-    showBackupToastIfNeeded,
-  } from '$lib/services/contents/draft/backup';
-  import { getValueMapVersion } from '$lib/services/contents/draft/create/proxy.svelte';
-  import {
-    setEntryDraftContext,
-    setEntryDraftRoot,
-  } from '$lib/services/contents/draft/state.svelte';
-  import { updateComputedValues } from '$lib/services/contents/draft/update/compute';
+  import { resetBackupToastState, scheduleBackup } from '$lib/services/contents/draft/backup';
+  import { getValueMapVersion } from '$lib/services/contents/draft/create/versioned-map.svelte';
+  import { initEntryDraftEditor } from '$lib/services/contents/draft/editor.svelte';
+  import { setEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import {
     editorFirstPane,
     editorSecondPane,
     showContentOverlay,
     showDuplicateToast,
   } from '$lib/services/contents/editor';
-  import { getExpanderKeys, syncExpanderStates } from '$lib/services/contents/editor/fields';
+  import { revealEditorField } from '$lib/services/contents/editor/fields';
   import {
     getDefaultPanes,
+    getLocaleContentLabel,
     getPanesEditingLocale,
     getPaneSizes,
     getPaneStateKey,
     getRestoredPanes,
     savePaneState,
   } from '$lib/services/contents/editor/panes';
+  import {
+    afterPendingFieldUpdates,
+    awaitPendingFieldUpdates,
+  } from '$lib/services/contents/editor/pending';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
-  import { getLocaleLabel } from '$lib/services/contents/i18n';
-  import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
+  import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
   import { env } from '$lib/services/user/env.svelte';
   import { prefs } from '$lib/services/user/prefs.svelte';
+  import { createLatestGuard } from '$lib/services/utils/scheduling';
   import { watch } from '$lib/services/utils/state.svelte';
+  import { isOrphanedForkDraft } from '$lib/services/workflow';
+  import { getForkEntryNotice, isLockedForkEntry } from '$lib/services/workflow/forks';
 
   /**
    * @import { EntryDraftState } from '$lib/services/contents/draft/state.svelte';
-   * @import { EntryDraft, InternalLocaleCode } from '$lib/types/private';
+   * @import { EntryDraft, EntryEditorPane, InternalLocaleCode } from '$lib/types/private';
    * @import { FieldKeyPath } from '$lib/types/public';
    */
 
@@ -72,22 +82,25 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    entryDraft,
-    editorLocale = undefined,
-    loading = false,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { entryDraft, editorLocale = undefined, loading = false } = $props();
 
   // svelte-ignore state_referenced_locally
   setEntryDraftContext(entryDraft);
 
   let restoring = false;
   let switching = false;
-  let swapButtonPressed = false;
-  let swapDragStartX = 0;
-  let swapDragStartY = 0;
+  /**
+   * Guard for field highlight requests, so a request still looking for its field can tell whether a
+   * newer one has come in.
+   */
+  const highlightRequestGuard = createLatestGuard();
+  /**
+   * Width of the first pane in pixels, used to place the pane swap button over the gutter between
+   * the panes. The button sits next to the resize handle rather than inside it: the handle is a
+   * focusable `separator`, and a button nested in it is an interactive control inside another one.
+   * @type {number}
+   */
+  let firstPaneWidth = $state(0);
 
   let hidden = $state(true);
   /** @type {HTMLElement | undefined} */
@@ -101,19 +114,54 @@
   const {
     isNew = true,
     canPreview = true,
+    canShowSecondPane = true,
     collection,
     collectionName,
     collectionFile,
     fileName,
     isIndexFile,
-    currentValues,
   } = $derived(/** @type {EntryDraft} */ (entryDraft.current ?? {}));
-  const { showPreview, showSecondPane = true } = $derived(entryEditorSettings.current ?? {});
+  const { showPreview, showSecondPane: secondPaneShown = true } = $derived(
+    entryEditorSettings.current ?? {},
+  );
+  // The user’s choice only applies where the `editor.second_pane` option allows the second pane
+  const showSecondPane = $derived(canShowSecondPane && secondPaneShown);
   const { i18nEnabled, allLocales, defaultLocale } = $derived(
-    (collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG,
+    getDraftI18nConfig(entryDraft.current),
   );
   const paneStateKey = $derived(getPaneStateKey({ collection, collectionFile }));
-  const { canCreate, quota, creationDisabled } = $derived(collectionState.current);
+  const {
+    readonly: collectionReadonly,
+    canCreate,
+    quota,
+    creationDisabled,
+  } = $derived(collectionState.current);
+  // The entry can be viewed but not changed, which the editor says up front. It’s also read-only
+  // while the user is asked whether to restore a backup, which the dialog says itself
+  const readonly = $derived(isDraftConfigReadonly(entryDraft.current));
+  // An entry from a contributor’s pull request is edited in their branch, or only viewed if they
+  // don’t let maintainers push to it, which the editor says up front as well. Once the pull request
+  // is no longer open, there’s nowhere left to save it, which the editor says instead
+  const forkNotice = $derived(
+    isOrphanedForkDraft(entryDraft.current)
+      ? _('workflow.fork_entry_gone')
+      : getForkEntryNotice(entryDraft.current?.originalEntry),
+  );
+  // Sveltia CMS Additions, whose chunk is loaded along with the backend if it’s enabled
+  const additions = $derived(getAdditions());
+  // Sveltia CMS Additions entry lock, which tells others the entry is being edited
+  const lockKey = $derived(additions?.getDraftLockKey(entryDraft.current));
+  // A new entry that can’t be created gets the message in place of the editor instead, and someone
+  // else editing the entry is what the lock infobar says
+  const showReadonlyInfobar = $derived(
+    readonly &&
+      !loading &&
+      !(isNew && creationDisabled) &&
+      !isDraftLockedByOthers(entryDraft.current),
+  );
+  // Only someone who can edit the entry takes its lock, or they would keep those who can from
+  // editing it. A viewer, or anyone else who can’t, only sees whether someone else is editing it
+  const holdsLock = $derived(!readonly && !isLockedForkEntry(entryDraft.current?.originalEntry));
   const [firstPaneSize, secondPaneSize, minPaneSize] = $derived(
     getPaneSizes({ firstPane: editorFirstPane.current, secondPane: editorSecondPane.current }),
   );
@@ -123,11 +171,15 @@
    * @returns {Promise<boolean>} Whether the panes are restored.
    */
   const restorePanes = async () => {
+    // Guard against re-entrance while the panes are being applied, which the `await`s below leave
+    // room for
+    /* v8 ignore next 3 */
     if (restoring) {
       return false;
     }
 
     const panes = getRestoredPanes({
+      /* v8 ignore next -- there’s no key without a collection, and then no draft to restore for */
       savedPanes: entryEditorSettings.current?.paneStates?.[paneStateKey ?? ''],
       editorLocale,
       allLocales,
@@ -167,6 +219,7 @@
 
     if (!(await restorePanes())) {
       [editorFirstPane.current, editorSecondPane.current] = getDefaultPanes({
+        editorLocale,
         currentLocale: editorFirstPane.current?.locale,
         defaultLocale,
         allLocales,
@@ -194,49 +247,15 @@
   };
 
   /**
-   * Called when the user presses the pointer on the pane swap button. Remember the button and
-   * position, which are used to determine whether the following {@link onSwapHandleClick} call is a
-   * click or a drag to resize the panes.
-   * @param {PointerEvent} event `pointerdown` event.
+   * Swap the panes.
    */
-  const onSwapButtonPointerDown = (event) => {
-    swapButtonPressed = true;
-    swapDragStartX = event.clientX;
-    swapDragStartY = event.clientY;
-  };
-
-  /**
-   * Called when the user clicks on the resizable handle that holds the pane swap button. The handle
-   * captures the pointer to support dragging, so a `click` event triggered with a pointer is
-   * dispatched on the handle instead of the button, meaning a `click` event handler on the button
-   * itself is never called. Swap the panes only if the pointer was pressed on the button and not
-   * dragged. A `click` event triggered with the keyboard is dispatched on the button as usual, and
-   * has no associated pointer position.
-   * @param {MouseEvent} event `click` event.
-   */
-  const onSwapHandleClick = (event) => {
-    const { detail, target, clientX, clientY } = event;
-    const pressed = swapButtonPressed;
-
-    swapButtonPressed = false;
-
-    if (detail === 0) {
-      // Keyboard activation
-      if (!(/** @type {HTMLElement} */ (target).closest('.swap-button'))) {
-        return;
-      }
-    } else if (
-      !pressed ||
-      Math.abs(clientX - swapDragStartX) > 5 ||
-      Math.abs(clientY - swapDragStartY) > 5
-    ) {
-      return;
-    }
-
-    [editorFirstPane.current, editorSecondPane.current] = [
-      editorSecondPane.current,
-      editorFirstPane.current,
-    ];
+  const swapPanes = () => {
+    afterPendingFieldUpdates(() => {
+      [editorFirstPane.current, editorSecondPane.current] = [
+        editorSecondPane.current,
+        editorFirstPane.current,
+      ];
+    });
   };
 
   /**
@@ -250,23 +269,13 @@
   };
 
   /**
-   * Move focus to the wrapper once the overlay is loaded.
-   */
-  const moveFocus = async () => {
-    // Wait until `inert` is updated
-    await tick();
-
-    if (wrapper) {
-      wrapper.tabIndex = 0;
-      wrapper.focus();
-    }
-  };
-
-  /**
    * Ensure the given locale’s edit pane is visible, switching panes if needed.
    * @param {InternalLocaleCode} locale Locale code.
    */
   const ensureEditPaneVisible = async (locale) => {
+    // The panes are about to change, so let what was just typed reach the draft first
+    await awaitPendingFieldUpdates();
+
     const panes = getPanesEditingLocale({
       firstPane: editorFirstPane.current,
       secondPane: editorSecondPane.current,
@@ -285,58 +294,32 @@
   };
 
   /**
-   * Highlight the corresponding editor field by expanding the parent list/object(s), moving the
-   * element into the viewport, and focus any control within the field, such as a text input or
-   * button.
+   * Reveal the requested editor field: switch to an edit pane for the locale if needed, then expand
+   * the parent list/object(s), move the field into the viewport and focus a control within it.
    * @param {object} args Arguments.
    * @param {InternalLocaleCode} args.locale Locale code.
    * @param {FieldKeyPath} args.keyPath Key path of the field.
    */
-  const highlightEditorField = async ({ locale, keyPath }) => {
+  const revealRequestedField = async ({ locale, keyPath }) => {
+    const isLatest = highlightRequestGuard.next();
+
     await ensureEditPaneVisible(locale);
 
     const draft = entryDraft.current;
 
+    // The draft may have gone away while the pane was switched
+    /* v8 ignore next 3 */
     if (!draft) {
       return;
     }
 
-    const valueMap = currentValues?.[locale] ?? {};
+    /**
+     * Check whether a newer request has come in.
+     * @returns {boolean} Result.
+     */
+    const isOutdated = () => !isLatest();
 
-    const expanderKeys = getExpanderKeys({
-      collectionName,
-      fileName,
-      valueMap,
-      keyPath,
-      isIndexFile,
-    });
-
-    syncExpanderStates({
-      draft,
-      stateMap: Object.fromEntries(expanderKeys.map((key) => [key, true])),
-    });
-
-    window.requestAnimationFrame(() => {
-      const targetField = document.querySelector(
-        `.content-editor .pane[data-mode="edit"][data-locale="${CSS.escape(locale)}"] ` +
-          `.field[data-key-path="${CSS.escape(keyPath)}"]`,
-      );
-
-      if (targetField) {
-        if (typeof targetField.scrollIntoViewIfNeeded === 'function') {
-          targetField.scrollIntoViewIfNeeded();
-        } else {
-          targetField.scrollIntoView();
-        }
-
-        const widgetWrapper = targetField.querySelector('.field-wrapper');
-
-        /** @type {HTMLElement | null} */ (
-          widgetWrapper?.querySelector('[contenteditable="true"], [tabindex="0"]') ??
-            widgetWrapper?.querySelector('input, textarea, button')
-        )?.focus();
-      }
-    });
+    await revealEditorField({ draft, locale, keyPath, isOutdated });
   };
 
   /**
@@ -344,19 +327,19 @@
    * clicks a search result or validation error. Then clear the highlight state so that it doesn’t
    * trigger again on navigation.
    */
-  const highlightEditorFieldIfNeeded = async () => {
+  const revealRequestedFieldIfNeeded = async () => {
     const { state } = window.history;
     const { locale, keyPath } = state?.highlight ?? {};
 
     if (typeof locale === 'string' && typeof keyPath === 'string' && locale && keyPath) {
-      await highlightEditorField({ locale, keyPath });
+      await revealRequestedField({ locale, keyPath });
       window.history.replaceState({ ...state, highlight: null }, '');
     }
   };
 
   /**
    * Called when a message event is received. If the event is a highlight event, calls
-   * {@link highlightEditorField} with the event payload.
+   * {@link revealRequestedField} with the event payload.
    * @param {MessageEvent} event The message event.
    */
   const onmessage = (event) => {
@@ -366,7 +349,7 @@
     }
 
     if (event.data?.type === 'highlight-editor-field' && event.data.payload) {
-      highlightEditorField(event.data.payload);
+      revealRequestedField(event.data.payload);
     }
   };
 
@@ -375,49 +358,32 @@
       entryDraft.current = null;
     }
 
+    // The row or the New button that opened the editor gets the focus back once it closes
+    const restoreFocus = rememberFocus();
+
     window.addEventListener('message', onmessage);
 
     return () => {
       window.removeEventListener('message', onmessage);
+      restoreFocus();
     };
   });
 
   $effect(() => {
-    if (wrapper) {
-      // Rich text editor components are mounted outside the component tree, so they look the
-      // draft up through the DOM rather than the context
-      setEntryDraftRoot(wrapper, entryDraft);
-    }
-  });
-
-  $effect(() => {
     if (prefs.devModeEnabled) {
+      // Log a plain copy rather than the `$state` proxy. Taking it reads every value in the draft,
+      // so the draft is logged again whenever a value or its validity changes
       // eslint-disable-next-line no-console
-      console.info('entryDraft', entryDraft.current);
+      console.info('entryDraft', $state.snapshot(entryDraft.current));
     }
   });
 
-  $effect(() => {
-    const draft = entryDraft.current;
-
-    if (!draft) {
-      return;
-    }
-
-    // Depend on every field value at the cost of one dependency per locale, without walking the
-    // values: each value map proxy counts its writes
-    Object.values(draft.currentValues).forEach(getValueMapVersion);
-    // The extra values of rich text editor components are plain `$state` objects with no version,
-    // so they have to be read to be tracked. They are few, so the walk is cheap
-    Object.values(draft.extraValues).forEach((valueMap) => void $state.snapshot(valueMap));
-    void $state.snapshot(draft.currentLocales);
-
-    untrack(() => {
-      // Resolve the Compute fields here rather than in their own editors, which only run while
-      // they are rendered — a collapsed or off-screen list item renders none of its fields
-      updateComputedValues(draft);
-    });
-  });
+  // Register the editor root, which the rich text editor components look the draft up with, and
+  // resolve the Compute fields
+  initEntryDraftEditor(
+    () => entryDraft,
+    () => wrapper,
+  );
 
   $effect(() => {
     const draft = entryDraft.current;
@@ -429,11 +395,29 @@
       void $state.snapshot(draft.currentSlugs);
       // The files map holds `File` objects, which can’t be snapshotted; a file can be replaced
       Object.values(draft.files).forEach(({ file }) => void file);
+      // A pending entry opened again and changed takes the place of its earlier version
+      draft.pendingEntries.forEach((pendingEntry) => void pendingEntry);
       void draft.interacted;
     }
 
     // Back up the draft automatically whenever it changes, or drop a pending backup once it’s gone
     untrack(() => scheduleBackup(draft));
+  });
+
+  // Tell others the entry is open, read-only or not, so they can see who else is looking at it, and
+  // hold its lock while it’s open, if the user can edit it
+  $effect(() => {
+    const key = lockKey;
+    const hold = holdsLock;
+
+    if (!key) {
+      return undefined;
+    }
+
+    // There’s only a key with Sveltia CMS Additions
+    const { watchEntry } = requireAdditions();
+
+    return untrack(() => watchEntry(key, { hold }));
   });
 
   $effect(() => {
@@ -444,8 +428,11 @@
     }
   });
 
+  // The pane state key also changes between the files of a file/singleton collection, which share
+  // the collection
   watch(
     () => [
+      paneStateKey,
       collection,
       showSecondPane,
       showPreview,
@@ -464,15 +451,16 @@
   });
 
   $effect(() => {
+    /* v8 ignore next -- the wrapper is bound as long as the overlay is mounted */
     if (wrapper) {
       (async () => {
-        if (!showContentOverlay.current) {
-          await showBackupToastIfNeeded(entryDraft.current);
-        } else if (hidden) {
+        // The overlay is only rendered while it’s shown, so there is nothing to do once it’s
+        // closed; the page shows the backup toast then
+        if (hidden) {
           hidden = false;
           await switchPanes();
-          await moveFocus();
-          await highlightEditorFieldIfNeeded();
+          await focusOverlay(() => wrapper);
+          await revealRequestedFieldIfNeeded();
           resetBackupToastState();
         }
       })();
@@ -480,56 +468,40 @@
   });
 </script>
 
-{#snippet firstPane()}
-  {#if editorFirstPane.current}
-    {@const { locale, mode } = editorFirstPane.current}
-    <div class="pane-wrapper">
-      <Group
-        class="pane"
-        aria-label={_(mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale', {
-          values: { locale: getLocaleLabel(locale) ?? locale },
-        })}
-        data-locale={locale}
-        data-mode={mode}
-      >
-        <PaneHeader id="first-pane-header" thisPane={editorFirstPane} thatPane={editorSecondPane} />
+{#snippet pane(
+  /** @type {'first' | 'second'} */ position,
+  /** @type {EntryEditorPane} */ { locale, mode },
+)}
+  {@const thisPane = position === 'first' ? editorFirstPane : editorSecondPane}
+  {@const thatPane = position === 'first' ? editorSecondPane : editorFirstPane}
+  <div class="pane-wrapper">
+    <Group
+      class="pane"
+      ariaLabel={getLocaleContentLabel(
+        mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale',
+        locale,
+      )}
+      data-locale={locale}
+      data-mode={mode}
+    >
+      <PaneHeader id={`${position}-pane-header`} {thisPane} {thatPane} />
+      {#if position === 'first'}
         <PaneBody
           id="first-pane-body"
-          thisPane={editorFirstPane}
+          {thisPane}
           bind:thisPaneContentArea={firstPaneContentArea}
-          bind:thatPaneContentArea={secondPaneContentArea}
+          thatPaneContentArea={secondPaneContentArea}
         />
-      </Group>
-    </div>
-  {/if}
-{/snippet}
-
-{#snippet secondPane()}
-  {#if editorSecondPane.current}
-    {@const { locale, mode } = editorSecondPane.current}
-    <div class="pane-wrapper">
-      <Group
-        class="pane"
-        aria-label={_(mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale', {
-          values: { locale: getLocaleLabel(locale) ?? locale },
-        })}
-        data-locale={locale}
-        data-mode={mode}
-      >
-        <PaneHeader
-          id="second-pane-header"
-          thisPane={editorSecondPane}
-          thatPane={editorFirstPane}
-        />
+      {:else}
         <PaneBody
           id="second-pane-body"
-          thisPane={editorSecondPane}
+          {thisPane}
           bind:thisPaneContentArea={secondPaneContentArea}
-          bind:thatPaneContentArea={firstPaneContentArea}
+          thatPaneContentArea={firstPaneContentArea}
         />
-      </Group>
-    </div>
-  {/if}
+      {/if}
+    </Group>
+  </div>
 {/snippet}
 
 <div
@@ -539,6 +511,26 @@
   bind:this={wrapper}
 >
   {#key entryDraft.current?.id}
+    {#if additions}
+      <additions.EntryLockInfobar {lockKey} />
+    {/if}
+    {#if showReadonlyInfobar}
+      <Infobar
+        dismissible={false}
+        --sui-infobar-border-width="0 0 1px"
+        --sui-infobar-message-justify-content="center"
+      >
+        {getReadonlyMessage('entry', { collection, collectionFile })}
+      </Infobar>
+    {:else if forkNotice && !loading}
+      <Infobar
+        dismissible={false}
+        --sui-infobar-border-width="0 0 1px"
+        --sui-infobar-message-justify-content="center"
+      >
+        {forkNotice}
+      </Infobar>
+    {/if}
     <Toolbar disabled={loading || (isNew && creationDisabled)} />
     {#if loading}
       <EmptyState>
@@ -551,6 +543,8 @@
         <div role="none">
           {#if notFound}
             {_('entry_not_found')}
+          {:else if collectionReadonly}
+            {getReadonlyMessage('collection', { collection })}
           {:else if !canCreate}
             {_('creating_entries_disabled_by_admin')}
           {:else}
@@ -576,55 +570,61 @@
         </div>
       </EmptyState>
     {:else}
+      <RemoteChangeInfobar />
+      <PendingEditInfobar />
       <div role="none" class="body" onpointerdown={markInteracted} onkeydown={markInteracted}>
         {#key `${collectionName}|${fileName}|${isIndexFile}`}
           <div role="none" class="content-area">
             {#if editorFirstPane.current && editorSecondPane.current}
-              {#if firstPaneSize && secondPaneSize}
-                <ResizablePaneGroup
-                  onResize={({ sizes }) => {
-                    if (editorFirstPane.current && editorSecondPane.current) {
-                      const [firstWidth, secondWidth] = sizes;
+              <ResizablePaneGroup
+                onResize={({ sizes }) => {
+                  /* v8 ignore next -- the group is only rendered with both panes */
+                  if (editorFirstPane.current && editorSecondPane.current) {
+                    const [firstWidth, secondWidth] = sizes;
 
-                      // Replace the objects rather than mutating them, so the change is noticed
-                      editorFirstPane.current = { ...editorFirstPane.current, width: firstWidth };
-                      editorSecondPane.current = {
-                        ...editorSecondPane.current,
-                        width: secondWidth,
-                      };
-                    }
-                  }}
-                >
-                  <ResizablePane defaultSize={firstPaneSize} minSize={minPaneSize}>
-                    {@render firstPane()}
-                  </ResizablePane>
-                  <ResizableHandle onclick={onSwapHandleClick}>
-                    <Button
-                      class="swap-button"
-                      iconic
-                      size="small"
-                      variant="tertiary"
-                      aria-label={_('swap_panes')}
-                      onpointerdown={onSwapButtonPointerDown}
-                    >
-                      <Icon name="swap_horiz" />
-                    </Button>
-                  </ResizableHandle>
-                  <ResizablePane defaultSize={secondPaneSize} minSize={minPaneSize}>
-                    {@render secondPane()}
-                  </ResizablePane>
-                </ResizablePaneGroup>
-              {/if}
+                    // Replace the objects rather than mutating them, so the change is noticed
+                    editorFirstPane.current = { ...editorFirstPane.current, width: firstWidth };
+                    editorSecondPane.current = {
+                      ...editorSecondPane.current,
+                      width: secondWidth,
+                    };
+                  }
+                }}
+              >
+                <ResizablePane defaultSize={firstPaneSize} minSize={minPaneSize}>
+                  <div role="none" class="pane-measure" bind:clientWidth={firstPaneWidth}>
+                    {@render pane('first', editorFirstPane.current)}
+                  </div>
+                </ResizablePane>
+                <ResizableHandle />
+                <ResizablePane defaultSize={secondPaneSize} minSize={minPaneSize}>
+                  {@render pane('second', editorSecondPane.current)}
+                </ResizablePane>
+              </ResizablePaneGroup>
+              <Button
+                class="swap-button"
+                iconic
+                size="small"
+                variant="tertiary"
+                tooltip={_('swap_panes')}
+                aria-label={_('swap_panes')}
+                style="--gutter-position: {firstPaneWidth}px"
+                onclick={swapPanes}
+              >
+                <Icon name="swap_horiz" />
+              </Button>
             {:else if editorFirstPane.current}
-              {@render firstPane()}
+              {@render pane('first', editorFirstPane.current)}
             {:else if editorSecondPane.current}
-              {@render secondPane()}
+              {@render pane('second', editorSecondPane.current)}
             {:else}
               <Spacer flex />
             {/if}
           </div>
-          <!-- @todo Enable sidebar for mobile -->
-          {#if !env.isSmallScreen}
+          <!-- The sidebar doesn’t fit on a small screen, so its panels open in a bottom sheet -->
+          {#if env.isSmallScreen}
+            <SidebarSheet />
+          {:else}
             <Sidebar />
           {/if}
         {/key}
@@ -632,8 +632,6 @@
     {/if}
   {/key}
 </div>
-
-<BackupFeedback />
 
 <Toast bind:show={showDuplicateToast.current}>
   <Alert status="success">
@@ -672,30 +670,53 @@
   }
 
   .content-area {
+    position: relative;
     flex: auto;
+    border-block-start: var(--area-border); /* below the toolbar */
     background-color: var(--sui-primary-background-color);
 
     &:not(:only-child) {
-      border-start-end-radius: 16px; /* sidebar is present */
+      border-inline-end: var(--area-border); /* sidebar is present */
+      border-start-end-radius: 16px;
     }
 
     :global {
       .sui.resizable-handle {
+        border-inline: var(--area-border); /* between the panes */
         background-color: var(--sui-secondary-background-color); /* same as toolbar */
+      }
 
-        .swap-button {
-          position: absolute;
-          top: calc(50% - 12px);
-          margin: 0;
-          border-radius: 50%;
-          opacity: 0.5;
+      /* Centred over the gutter, whose position is the first pane’s width */
+      .swap-button {
+        position: absolute;
+        top: calc(50% - 12px);
+        inset-inline-start: calc(
+          var(--gutter-position) + var(--sui-resizable-handle-size, 4px) / 2
+        );
+        /* Above the handle’s hit area, a positioned `::before` pseudo-element at `z-index: 1` */
+        z-index: 2;
+        margin: 0;
+        border-radius: 50%;
+        opacity: 0.5;
+        translate: -50%;
+        /* Not `all`: the position would animate from the unmeasured width and lag behind a drag */
+        transition-property: opacity, color, background-color;
 
-          &:hover,
-          &:focus-visible {
-            opacity: 1;
-          }
+        &:dir(rtl) {
+          translate: 50%;
+        }
+
+        &:hover,
+        &:focus-visible {
+          opacity: 1;
         }
       }
     }
+  }
+
+  .pane-measure {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
   }
 </style>

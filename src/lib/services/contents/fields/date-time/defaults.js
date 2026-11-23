@@ -1,8 +1,4 @@
-import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
-import {
-  getCurrentDateTime,
-  getCurrentValue,
-} from '$lib/services/contents/fields/date-time/helpers';
+import { getCurrentStorableValue } from '$lib/services/contents/fields/date-time/value';
 
 /**
  * @import { GetDefaultValueMapFuncArgs } from '$lib/types/private';
@@ -14,7 +10,7 @@ import {
  * @param {GetDefaultValueMapFuncArgs} args Arguments.
  * @returns {string} Default value.
  */
-const getDefaultValue = ({ fieldConfig, dynamicValue }) => {
+const getDefaultValue = ({ fieldConfig, dynamicValue, locale }) => {
   const config = /** @type {DateTimeField} */ (fieldConfig);
   const defaultValue = config.default;
   const value = dynamicValue ?? defaultValue;
@@ -28,17 +24,7 @@ const getDefaultValue = ({ fieldConfig, dynamicValue }) => {
   // @see https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.3.0
   // @see https://github.com/decaporg/decap-website/commit/01e54d8392e368e5d7b9fec307f50af584b12c91
   if (value === '{{now}}') {
-    const { singleCustomTimeZone: timeZone, outputUTC } = parseDateTimeConfig(config);
-
-    return /** @type {string} */ (
-      getCurrentValue({
-        inputValue: getCurrentDateTime(config, timeZone),
-        currentValue: '',
-        fieldConfig: config,
-        timeZone,
-        outputUTC,
-      })
-    );
+    return getCurrentStorableValue(config, { locale });
   }
 
   return value;

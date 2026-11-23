@@ -1,0 +1,254 @@
+import { allAssets } from '$lib/services/assets/state';
+import { backend } from '$lib/services/backends';
+import { advanceRepositoryHead } from '$lib/services/backends/git/shared/file-cache';
+import { createStaleCheck, repositoryHead } from '$lib/services/backends/git/shared/head';
+import { getRootDir } from '$lib/services/backends/root-dir';
+import { allEntries } from '$lib/services/contents';
+import { productionSHA } from '$lib/services/deployments';
+
+/**
+ * @import {
+ * Asset,
+ * BackendService,
+ * Entry,
+ * RemoteChanges,
+ * RepositoryInfo,
+ * } from '$lib/types/private';
+ */
+
+/**
+ * Shortest gap between two checks made in passing, in milliseconds: the tab being focused, or an
+ * entry being opened, prompts a check, and doing either a few times in a row shouldn’t send a burst
+ * of requests. A save always checks.
+ */
+export const MIN_CHECK_GAP = 10 * 1000;
+
+/**
+ * The check in flight, if any. A second caller gets the same promise rather than a second round of
+ * requests.
+ * @type {Promise<RemoteChanges | undefined> | undefined}
+ */
+let pending;
+/** When the last check was started, as a Unix timestamp in milliseconds. `0` before the first. */
+let lastCheckTime = 0;
+/**
+ * Number of commits being made. A check isn’t started while one is: the commit is about to put its
+ * results into the stores, and a fetch landing after that would replace them with the state of the
+ * repository from before the commit.
+ */
+let commitCount = 0;
+/**
+ * The last commit queued, settled once it’s done, whether it succeeded or not. Commits are made one
+ * at a time, so each is made on top of the head the previous one left: GitHub refuses a commit made
+ * against a head other than the branch’s current one.
+ * @type {Promise<void>}
+ */
+let commitQueue = Promise.resolve();
+
+/**
+ * Work out what a fetch has changed. The fetch keeps every unchanged entry and asset as the same
+ * object and carries an entry’s ID over to its changed version, so the two lists can be compared
+ * directly.
+ * @param {object} args Arguments.
+ * @param {Entry[]} args.entriesBefore Entries before the fetch.
+ * @param {Asset[]} args.assetsBefore Assets before the fetch.
+ * @returns {RemoteChanges} What has changed.
+ */
+export const diffStores = ({ entriesBefore, assetsBefore }) => {
+  const entryIds = new Map(entriesBefore.map((entry) => [entry.id, entry]));
+  const assetPaths = new Map(assetsBefore.map((asset) => [asset.path, asset]));
+  const entriesAfter = allEntries.current;
+  const assetsAfter = allAssets.current;
+  const entryIdsAfter = new Set(entriesAfter.map(({ id }) => id));
+  const assetPathsAfter = new Set(assetsAfter.map(({ path }) => path));
+
+  return {
+    addedEntries: entriesAfter.filter(({ id }) => !entryIds.has(id)),
+    modifiedEntries: entriesAfter.filter((entry) => {
+      const before = entryIds.get(entry.id);
+
+      return !!before && before !== entry;
+    }),
+    deletedEntries: entriesBefore.filter(({ id }) => !entryIdsAfter.has(id)),
+    addedAssets: assetsAfter.filter(({ path }) => !assetPaths.has(path)),
+    modifiedAssets: assetsAfter.filter((asset) => {
+      const before = assetPaths.get(asset.path);
+
+      return !!before && before !== asset;
+    }),
+    deletedAssets: assetsBefore.filter(({ path }) => !assetPathsAfter.has(path)),
+  };
+};
+
+/**
+ * Whether the given changes contain anything.
+ * @param {RemoteChanges} changes Changes.
+ * @returns {boolean} Result.
+ */
+const hasChanges = (changes) => Object.values(changes).some((list) => list.length > 0);
+/**
+ * Tree SHA of the configured root directory at the commit it was last looked up for, so a check
+ * made after the branch has moved only has to look up the new head.
+ * @type {{ rootDir: string, commit: string, sha: string | undefined } | undefined}
+ */
+let rootDirTree;
+
+/**
+ * Forget the root directory tree looked up last. Used in tests.
+ */
+export const _resetRootDirTree = () => {
+  rootDirTree = undefined;
+};
+
+/**
+ * Check whether the configured root directory is the same at both commits, which means a commit
+ * made in between only changed the rest of the repository, such as another site in a monorepo.
+ * @param {BackendService} service Backend service.
+ * @param {string} from Commit the site data reflects.
+ * @param {string} to New head of the branch.
+ * @returns {Promise<boolean>} Result. It’s `false` without a root directory, for a backend that
+ * can’t tell, and when the lookup fails, so the files are fetched as usual.
+ */
+const isRootDirUnchanged = async ({ fetchDirSHA }, from, to) => {
+  const rootDir = getRootDir();
+
+  if (!rootDir || !fetchDirSHA) {
+    return false;
+  }
+
+  try {
+    // The tree at the commit the data reflects is usually known from the previous check
+    const [before, after] = await Promise.all([
+      rootDirTree?.rootDir === rootDir && rootDirTree.commit === from
+        ? rootDirTree.sha
+        : fetchDirSHA(from, rootDir),
+      fetchDirSHA(to, rootDir),
+    ]);
+
+    rootDirTree = { rootDir, commit: to, sha: after };
+
+    return !!before && before === after;
+  } catch (ex) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to look up the root directory.', ex);
+
+    return false;
+  }
+};
+
+/**
+ * Ask the backend for the branch head and, if it has moved since the site data was loaded, fetch
+ * what has changed into the stores.
+ * @param {BackendService} service Backend service.
+ * @returns {Promise<RemoteChanges | undefined>} What has changed, or `undefined` if nothing has.
+ */
+const check = async (service) => {
+  const { fetchLastCommit, fetchFiles } = service;
+  // The site data may be discarded while the requests are on their way, e.g. by signing out; the
+  // results then belong to the previous session and must not be written back
+  const isStale = createStaleCheck();
+  const lastCommit = await /** @type {NonNullable<typeof fetchLastCommit>} */ (fetchLastCommit)();
+
+  if (isStale() || lastCommit.hash === repositoryHead.current) {
+    return undefined;
+  }
+
+  // In a monorepo, most commits are likely made to the other sites. One that leaves the root
+  // directory as it is changes nothing the CMS shows, so nothing is fetched. The site isn’t taken
+  // to be rebuilt from the commit either, as a build for a commit that doesn’t touch it is
+  // typically skipped
+  if (await isRootDirUnchanged(service, repositoryHead.current, lastCommit.hash)) {
+    if (isStale()) {
+      return undefined;
+    }
+
+    await advanceRepositoryHead(
+      /** @type {RepositoryInfo} */ (service.repository),
+      repositoryHead.current,
+      lastCommit.hash,
+    );
+
+    return undefined;
+  }
+
+  const entriesBefore = allEntries.current;
+  const assetsBefore = allAssets.current;
+
+  await fetchFiles({ lastCommit });
+
+  if (isStale()) {
+    return undefined;
+  }
+
+  // The site is now being built from the new head, so that’s the deployment to watch
+  productionSHA.current = repositoryHead.current;
+
+  const changes = diffStores({ entriesBefore, assetsBefore });
+
+  return hasChanges(changes) ? changes : undefined;
+};
+
+/**
+ * Check whether someone else has pushed to the configured branch since the site data was loaded,
+ * and if so bring the stores up to date. The check costs one small request when nothing has
+ * changed; otherwise the files that have changed are fetched, and the entries and assets already in
+ * the stores are kept wherever they still apply, so the app doesn’t lose track of them.
+ *
+ * Nothing is checked while a commit is being made, or for a backend that can’t tell — the local
+ * backend has no commits to compare.
+ * @param {object} [options] Options.
+ * @param {number} [options.maxAge] Skip the check if one was started within this many milliseconds,
+ * whoever asked for it. A check made in passing uses {@link MIN_CHECK_GAP}.
+ * @returns {Promise<RemoteChanges | undefined>} The entries and assets that have changed, or
+ * `undefined` if nothing has, or if no check could be made.
+ * @throws {Error} When the backend couldn’t be reached.
+ */
+export const checkForRemoteChanges = async ({ maxAge = 0 } = {}) => {
+  const service = backend.current;
+
+  if (!service?.fetchLastCommit || !repositoryHead.current || commitCount) {
+    return undefined;
+  }
+
+  if (maxAge && !pending && Date.now() - lastCheckTime < maxAge) {
+    return undefined;
+  }
+
+  if (!pending) {
+    lastCheckTime = Date.now();
+    pending = check(service).finally(() => {
+      pending = undefined;
+    });
+  }
+
+  return pending;
+};
+
+/**
+ * Run a commit, holding off any check for remote changes until its results are in the stores. A
+ * check already in flight is waited for first, so it can’t land in the middle either. A commit
+ * queued while another is being made waits for that one to finish, so the user’s own commits don’t
+ * race each other; a failed commit doesn’t hold up the next one.
+ * @template T
+ * @param {() => Promise<T>} commit Function that makes the commit and updates the stores.
+ * @returns {Promise<T>} Whatever the function returns.
+ */
+export const suspendChecksWhile = async (commit) => {
+  const previousCommit = commitQueue;
+  const { promise, resolve } = Promise.withResolvers();
+
+  commitQueue = promise;
+  // Counted from the start, so no check is started while the commit is waiting for its turn
+  commitCount += 1;
+
+  try {
+    await previousCommit;
+    // Waiting for the promise is what matters; the result, or a failure, is the other caller’s
+    await pending?.catch(() => undefined);
+
+    return await commit();
+  } finally {
+    commitCount -= 1;
+    resolve(undefined);
+  }
+};

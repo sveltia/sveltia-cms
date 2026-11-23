@@ -1,0 +1,166 @@
+import {
+  canCreateThumbnail,
+  getMediaKindFromPath,
+  getMediaKindFromType,
+} from '$lib/services/assets/kinds';
+import { getMediaFieldSource } from '$lib/services/assets/media-field';
+import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
+import { getField } from '$lib/services/contents/entry/fields';
+import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
+import { getTypedKeyPath } from '$lib/services/contents/fields/object/helpers';
+import { isMultiple } from '$lib/services/integrations/media-libraries/multiple';
+
+/**
+ * @import {
+ * Entry,
+ * EntryDraft,
+ * EntryFileMap,
+ * FlattenedEntryContent,
+ * InternalLocaleCode,
+ * MediaFieldSource,
+ * TypedFieldKeyPath,
+ * } from '$lib/types/private';
+ * @import { FieldKeyPath, MediaField } from '$lib/types/public';
+ */
+
+/**
+ * Get the thumbnail of a collapsed Object field or List field item, which is the file held by the
+ * subfield named with the `thumbnail` option.
+ * @param {object} args Arguments.
+ * @param {string} [args.thumbnailFieldName] The `thumbnail` option: the name of a subfield, or the
+ * key path of a nested one like `mobile.src`, optionally prefixed with `fields.` like a summary
+ * template tag.
+ * @param {FieldKeyPath} args.keyPath Key path of the object, e.g. `hero` or `gallery.0`, or an
+ * empty string if the subfields are at the top level of {@link args.valueMap}, as with the values
+ * of a rich text editor component.
+ * @param {TypedFieldKeyPath} args.typedKeyPath Typed key path of the object, e.g. `hero`,
+ * `gallery.*` or `sections.*<hero>`, used to find a field-level media folder, or an empty string
+ * along with an empty `keyPath`.
+ * @param {boolean} [args.hasSingleSubField] Whether the object is an item of a List field with the
+ * `field` option, whose value is stored at the item key path itself rather than under the subfield
+ * name.
+ * @param {string} args.collectionName Collection name.
+ * @param {string} [args.fileName] Collection file name. File/singleton collection only.
+ * @param {string} [args.componentName] Custom editor component name, if the object is part of a
+ * rich text editor component.
+ * @param {FlattenedEntryContent} args.valueMap Entry content.
+ * @param {boolean} [args.isIndexFile] Whether the corresponding entry is the collection’s special
+ * index file used specifically in Hugo.
+ * @param {Entry} [args.entry] Entry being edited, used to locate an asset from a relative path.
+ * @param {EntryFileMap} [args.files] Files uploaded in the draft but not saved yet, keyed by the
+ * blob URL the field holds meanwhile.
+ * @param {InternalLocaleCode} [args.locale] Locale being edited, which an entry-relative path is
+ * relative to. Default: the default locale.
+ * @returns {MediaFieldSource | undefined} The file to preview, or `undefined` if the option is not
+ * set, the subfield is not an Image/File field, it’s empty, or the file has no thumbnail.
+ */
+export const getObjectThumbnail = ({
+  thumbnailFieldName,
+  keyPath,
+  typedKeyPath,
+  hasSingleSubField = false,
+  collectionName,
+  fileName,
+  componentName,
+  valueMap,
+  isIndexFile = false,
+  entry,
+  files,
+  locale,
+}) => {
+  if (!thumbnailFieldName) {
+    return undefined;
+  }
+
+  const [subFieldName, ...nestedFieldNames] = stripFieldTagPrefix(thumbnailFieldName).split('.');
+  const getFieldArgs = { collectionName, fileName, componentName, valueMap, isIndexFile };
+
+  // The single subfield of a list item is stored at the item key path itself, so the option has to
+  // name that subfield, which `getField()` traverses into on its own
+  if (hasSingleSubField && getField({ ...getFieldArgs, keyPath })?.name !== subFieldName) {
+    return undefined;
+  }
+
+  const fieldNames = hasSingleSubField ? nestedFieldNames : [subFieldName, ...nestedFieldNames];
+  const fieldKeyPath = [keyPath, ...fieldNames].filter(Boolean).join('.');
+
+  // The typed key path names the single subfield all the same, like `gallery.*.photo`, which the
+  // config parser registers a field-level media folder under
+  const fieldTypedKeyPath = [typedKeyPath, subFieldName, ...nestedFieldNames]
+    .filter(Boolean)
+    .join('.');
+
+  const fieldConfig = getField({ ...getFieldArgs, keyPath: fieldKeyPath });
+  const { widget: fieldType = 'string' } = fieldConfig ?? {};
+
+  if (!fieldConfig || !MEDIA_FIELD_TYPES.includes(fieldType)) {
+    return undefined;
+  }
+
+  const mediaFieldConfig = /** @type {MediaField} */ (fieldConfig);
+  // A field holding several files is previewed with the first one
+  const value = valueMap[isMultiple(mediaFieldConfig) ? `${fieldKeyPath}.0` : fieldKeyPath];
+
+  if (typeof value !== 'string' || !value) {
+    return undefined;
+  }
+
+  const source = getMediaFieldSource({
+    value,
+    entry,
+    collectionName,
+    fileName,
+    componentName,
+    fieldConfig: mediaFieldConfig,
+    typedKeyPath: fieldTypedKeyPath,
+    locale,
+  });
+
+  if (!source) {
+    return undefined;
+  }
+
+  const { asset, url } = source;
+
+  // A File field can hold anything, but only some files have a thumbnail generated
+  if (asset) {
+    return canCreateThumbnail(asset) ? source : undefined;
+  }
+
+  // A file elsewhere is shown as it is, so it has to be an image: a file uploaded in the draft is
+  // held as a blob URL until it’s saved, and its type is known; an external one has an extension
+  const kind = /** @type {string} */ (url).startsWith('blob:')
+    ? getMediaKindFromType(files?.[/** @type {string} */ (url)]?.file.type ?? '')
+    : getMediaKindFromPath(/** @type {string} */ (url));
+
+  return kind === 'image' ? source : undefined;
+};
+
+/**
+ * Get the thumbnail of a collapsed Object field or List field item in the entry editor, with the
+ * collection, entry and files taken from the draft.
+ * @param {object} args Arguments.
+ * @param {EntryDraft | null | undefined} args.draft Entry draft.
+ * @param {string} [args.thumbnailFieldName] The `thumbnail` option.
+ * @param {FieldKeyPath} args.keyPath Key path of the object.
+ * @param {TypedFieldKeyPath} args.typedKeyPath Typed key path of the object, without its type.
+ * @param {string} [args.type] Type of the object, if the field has variable types.
+ * @param {boolean} [args.hasSingleSubField] Whether the object is an item of a List field with the
+ * `field` option.
+ * @param {string} [args.componentName] Custom editor component name, if the object is part of a
+ * rich text editor component.
+ * @param {FlattenedEntryContent} args.valueMap Entry content.
+ * @param {InternalLocaleCode} args.locale Locale being edited.
+ * @returns {MediaFieldSource | undefined} The file to preview, if any.
+ * @see {@link getObjectThumbnail}
+ */
+export const getDraftObjectThumbnail = ({ draft, typedKeyPath, type, ...args }) =>
+  getObjectThumbnail({
+    ...args,
+    typedKeyPath: getTypedKeyPath(typedKeyPath, type),
+    collectionName: draft?.collectionName ?? '',
+    fileName: draft?.fileName,
+    isIndexFile: !!draft?.isIndexFile,
+    entry: draft?.originalEntry,
+    files: draft?.files,
+  });

@@ -16,13 +16,16 @@
  * @returns {any} Localized value.
  */
 export const getLocalizedRelationValue = ({ fieldConfig, value, sourceLocale, targetLocale }) => {
-  if (fieldConfig.widget !== 'relation' || typeof value !== 'string') {
-    return value;
-  }
+  // Check the option rather than the widget: the Relation editor renders its options with the
+  // Select editor, passing on its own configuration with the `widget` changed to `select`
+  const { value_field: valueField } = /** @type {RelationField} */ (fieldConfig);
 
-  const { value_field: valueField = '{{slug}}' } = /** @type {RelationField} */ (fieldConfig);
-
-  if (!valueField.startsWith('{{locale}}/') || !value.startsWith(`${sourceLocale}/`)) {
+  if (
+    typeof value !== 'string' ||
+    typeof valueField !== 'string' ||
+    !valueField.startsWith('{{locale}}/') ||
+    !value.startsWith(`${sourceLocale}/`)
+  ) {
     return value;
   }
 

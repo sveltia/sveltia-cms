@@ -1,6 +1,12 @@
 import { describe, expect, test } from 'vitest';
 
-import { getKeysByPrefix, getListItemKeys } from '$lib/services/contents/entry/key-paths';
+import {
+  getKeysByPrefix,
+  getListItemKeys,
+  getWildcardKeyPathPattern,
+  isKeyPathWithin,
+  ITEM_INDEX_SUFFIX_REGEX,
+} from '$lib/services/contents/entry/key-paths';
 
 describe('getKeysByPrefix()', () => {
   test('returns the keys under the prefix in the value map’s own order', () => {
@@ -112,5 +118,61 @@ describe('getListItemKeys()', () => {
       'authors.0',
       'authors.1',
     ]);
+  });
+});
+
+describe('isKeyPathWithin()', () => {
+  test('matches the root itself and its descendants', () => {
+    expect(isKeyPathWithin('tag', 'tag')).toBe(true);
+    expect(isKeyPathWithin('tag.0', 'tag')).toBe(true);
+    expect(isKeyPathWithin('authors.0.name', 'authors')).toBe(true);
+  });
+
+  test('doesn’t match a sibling whose name begins with the root’s', () => {
+    expect(isKeyPathWithin('tags', 'tag')).toBe(false);
+    expect(isKeyPathWithin('tagline', 'tag')).toBe(false);
+    expect(isKeyPathWithin('title_suffix', 'title')).toBe(false);
+  });
+});
+
+describe('getWildcardKeyPathPattern()', () => {
+  test('escapes a key path without wildcards', () => {
+    expect(getWildcardKeyPathPattern('title')).toBe('title');
+    expect(getWildcardKeyPathPattern('meta.title')).toBe('meta\\.title');
+  });
+
+  test('turns each wildcard into a list item index', () => {
+    expect(getWildcardKeyPathPattern('list.*.title')).toBe('list\\.\\d+\\.title');
+    expect(getWildcardKeyPathPattern('a.*.b.*')).toBe('a\\.\\d+\\.b\\.\\d+');
+  });
+
+  test('carries no anchors', () => {
+    const regex = new RegExp(getWildcardKeyPathPattern('list.*.title'));
+
+    expect(regex.test('list.0.title')).toBe(true);
+    expect(regex.test('page.list.12.title.en')).toBe(true);
+    expect(regex.test('list.x.title')).toBe(false);
+  });
+
+  test('keeps other regular expression syntax in a key literal', () => {
+    const regex = new RegExp(`^${getWildcardKeyPathPattern('a\\d+.*')}$`);
+
+    expect(regex.test('a\\d+.3')).toBe(true);
+    expect(regex.test('a5.3')).toBe(false);
+  });
+});
+
+describe('ITEM_INDEX_SUFFIX_REGEX', () => {
+  test('matches a list item key path', () => {
+    expect(ITEM_INDEX_SUFFIX_REGEX.test('field.0')).toBe(true);
+    expect(ITEM_INDEX_SUFFIX_REGEX.test('field.999')).toBe(true);
+    expect(ITEM_INDEX_SUFFIX_REGEX.test('nested.field.0')).toBe(true);
+    expect('blocks.0.images.1'.replace(ITEM_INDEX_SUFFIX_REGEX, '')).toBe('blocks.0.images');
+  });
+
+  test('doesn’t match any other key path', () => {
+    expect(ITEM_INDEX_SUFFIX_REGEX.test('field')).toBe(false);
+    expect(ITEM_INDEX_SUFFIX_REGEX.test('field.name')).toBe(false);
+    expect(ITEM_INDEX_SUFFIX_REGEX.test('field.0.subfield')).toBe(false);
   });
 });

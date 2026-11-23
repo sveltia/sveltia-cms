@@ -1,21 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
+import { createCollectors } from '$lib/test/config-parser';
+
 import { parseCustomFieldConfig } from './custom';
 
 /**
- * @import { ConfigParserCollectors, ConfigParserContext } from '$lib/types/private';
+ * @import { ConfigParserContext } from '$lib/types/private';
  */
-
-/**
- * Create a fresh collectors object for testing.
- * @returns {ConfigParserCollectors} Collectors instance.
- */
-const createCollectors = () => ({
-  errors: new Set(),
-  warnings: new Set(),
-  mediaFields: new Set(),
-  relationFields: new Set(),
-});
 
 /** @type {ConfigParserContext} */
 const context = {
@@ -39,6 +30,16 @@ describe('config/parser/fields/custom', () => {
     parseCustomFieldConfig({ config, context, collectors });
 
     expect([...collectors.mediaFields]).toEqual([{ fieldConfig: config, context }]);
+  });
+
+  it('checks the template tags in the field’s folder options', () => {
+    const collectors = createCollectors();
+    /** @type {any} */
+    const config = { name: 'photo', widget: 'derived-image', media_folder: '/static/{{title}}' };
+
+    parseCustomFieldConfig({ config, context, collectors });
+
+    expect(collectors.errors.size).toBe(1);
   });
 
   it('collects nothing when the field has no media folder', () => {

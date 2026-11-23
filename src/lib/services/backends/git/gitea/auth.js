@@ -7,14 +7,11 @@ import { signInToBackend } from '$lib/services/backends/git/shared/auth';
 
 /**
  * Get the URL of the page for creating a new Personal Access Token (PAT) on Gitea/Forgejo.
- * @param {string} repoURL Repository URL, e.g. `https://gitea.com/owner/repo`.
+ * @param {string} instanceURL Base URL of the Gitea/Forgejo instance, e.g. `https://gitea.com` or
+ * `https://example.com/gitea` for a self-hosted one under a subpath.
  * @returns {string} URL to create a new PAT.
  */
-export const getTokenPageURL = (repoURL) => {
-  const { origin } = new URL(repoURL);
-
-  return `${origin}/user/settings/applications`;
-};
+export const getTokenPageURL = (instanceURL) => `${instanceURL}/user/settings/applications`;
 
 /**
  * Sign in with the Gitea/Forgejo REST API.

@@ -1,55 +1,21 @@
-import { saveChanges } from '$lib/services/backends/save';
-import {
-  contentUpdatesToast,
-  UPDATE_TOAST_DEFAULT_STATE,
-} from '$lib/services/contents/collection/data';
+import { isConfigReadonly } from '$lib/services/config/readonly';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
-import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
+import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
+import { sortEntriesByOrderField } from '$lib/services/contents/collection/entries/reorder/sort';
+import { saveEntryUpdates } from '$lib/services/contents/collection/entries/save';
+import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
+import { resolveCacheDB } from '$lib/services/contents/draft/save/file-changes';
 import {
   buildEntryUpdateChanges,
   createSyntheticDraft,
-  resolveCacheDB,
 } from '$lib/services/contents/entry/changes';
+import { getEntryLocaleFile } from '$lib/services/contents/entry/paths';
 
 /**
  * @import { IndexedDB } from '@sveltia/utils/storage';
  * @import { Entry, FileChange, InternalEntryCollection } from '$lib/types/private';
  */
-
-/**
- * Sort entries by the collection’s `order` field. Entries lacking a valid numeric value are placed
- * at the end while preserving their relative input order.
- * @param {Entry[]} entries Entries to sort.
- * @param {InternalEntryCollection} collection Entry collection.
- * @returns {Entry[]} New, sorted array.
- */
-export const sortEntriesByOrderField = (entries, collection) => {
-  const orderKey = getOrderFieldKey(collection);
-
-  if (!orderKey) {
-    return [...entries];
-  }
-
-  const { defaultLocale } = collection._i18n;
-
-  // Pre-compute each entry’s numeric order value once so the comparator — which runs O(N log N)
-  // times — only does a cheap numeric comparison rather than re-walking the property chain.
-  const keyed = entries.map((entry) => {
-    const v = Number(entry.locales[defaultLocale]?.content?.[orderKey]);
-
-    return { entry, v, has: Number.isFinite(v) };
-  });
-
-  keyed.sort((a, b) => {
-    if (a.has && b.has) return a.v - b.v;
-    if (a.has) return -1;
-    if (b.has) return 1;
-    return 0;
-  });
-
-  return keyed.map(({ entry }) => entry);
-};
 
 /**
  * Apply a new order value to all locales of an entry that have content. Locales without content are
@@ -104,8 +70,11 @@ const buildReorderChanges = async (collection, orderedEntries, { cacheDB } = {})
   // eslint-disable-next-line no-restricted-syntax
   for (const [index, entry] of orderedEntries.entries()) {
     const newOrder = index + 1;
+    // The value is read like the entries are sorted, from another locale if the default one is
+    // missing
+    const currentOrder = getEntryLocaleFile(entry, { defaultLocale })?.content?.[orderKey];
 
-    if (Number(entry.locales[defaultLocale]?.content?.[orderKey]) !== newOrder) {
+    if (Number(currentOrder) !== newOrder) {
       savingEntries.push(withUpdatedOrder(entry, orderKey, newOrder));
     }
   }
@@ -124,39 +93,62 @@ const buildReorderChanges = async (collection, orderedEntries, { cacheDB } = {})
 };
 
 /**
+ * Build the change needed to reorder the entries of a collection storing all the entries in one
+ * file, which rewrites the file with the items in the new order.
+ * @param {InternalEntryCollection} collection Entry collection.
+ * @param {Entry[]} orderedEntries Entries in the desired display order.
+ * @returns {{ changes: FileChange[], savingEntries: Entry[] }} The change, if the order has
+ * changed, and the entries that have moved.
+ */
+const buildArrayFileReorderChanges = (collection, orderedEntries) => {
+  // The entries take the positions they occupy now, so an entry has moved if it doesn’t take its
+  // own position
+  const positions = orderedEntries
+    .map(({ arrayIndex }) => /** @type {number} */ (arrayIndex))
+    .sort((a, b) => a - b);
+
+  const savingEntries = orderedEntries.filter(
+    ({ arrayIndex }, index) => arrayIndex !== positions[index],
+  );
+
+  if (!savingEntries.length) {
+    return { changes: [], savingEntries: [] };
+  }
+
+  /** @type {FileChange} */
+  const change = {
+    action: 'update',
+    path: /** @type {string} */ (collection._file.fullPath),
+    arrayOrder: orderedEntries.map(({ arrayIndex, locales }) => ({
+      index: /** @type {number} */ (arrayIndex),
+      locales,
+    })),
+  };
+
+  return { changes: [change], savingEntries };
+};
+
+/**
  * Re-save entries in the given collection with updated order values. Entries whose order field
  * value is unchanged are skipped to avoid unnecessary commits. Files are written using the
  * collection’s configured format and i18n structure.
  * @param {InternalEntryCollection} collection Entry collection.
  * @param {Entry[]} orderedEntries Entries in the desired display order. The new order value
  * assigned to each entry is its 1-based index in this list.
- * @param {object} [options] Options.
- * @param {boolean} [options.silent] When `true`, do not update the {@link contentUpdatesToast}
- * store. Useful for follow-up renumbering done as part of another operation (e.g. delete).
  * @returns {Promise<number>} Number of entries actually updated.
  */
-export const reorderEntries = async (collection, orderedEntries, { silent = false } = {}) => {
-  const { changes, savingEntries } = await buildReorderChanges(collection, orderedEntries);
-
-  if (!changes.length) {
+export const reorderEntries = async (collection, orderedEntries) => {
+  // The collection could have been made read-only since the entries were put in reorder mode, e.g.
+  // by a configuration reload, in which case nothing is written, like with a bulk edit
+  if (isConfigReadonly({ collection })) {
     return 0;
   }
 
-  await saveChanges({
-    changes,
-    savingEntries,
-    options: { commitType: 'update', collection },
-  });
+  const { changes, savingEntries } = isArrayFileCollection(collection)
+    ? buildArrayFileReorderChanges(collection, orderedEntries)
+    : await buildReorderChanges(collection, orderedEntries);
 
-  if (!silent) {
-    contentUpdatesToast.current = {
-      ...UPDATE_TOAST_DEFAULT_STATE,
-      saved: true,
-      count: savingEntries.length,
-    };
-  }
-
-  return savingEntries.length;
+  return saveEntryUpdates({ collection, changes, savingEntries });
 };
 
 /**
@@ -167,16 +159,21 @@ export const reorderEntries = async (collection, orderedEntries, { silent = fals
  * @param {object} [options] Options.
  * @param {Set<string>} [options.excludeIds] IDs of entries to omit (e.g. entries about to be
  * deleted). The collection’s current entries are read from {@link getEntriesByCollection}.
+ * @param {Map<string, Entry>} [options.updatedEntries] Entries already rewritten by the same
+ * operation, keyed by ID, which stand in for their stored counterparts so that the renumbered file
+ * carries both updates.
  * @returns {Entry[]} Entries in the desired display order, with the index file removed.
  */
-const computeRenumberedEntries = (collection, { excludeIds } = {}) => {
-  const indexFileName = getIndexFile(collection)?.name;
-
+const computeRenumberedEntries = (collection, { excludeIds, updatedEntries } = {}) => {
   // The index file (e.g. Hugo `_index.md`) is always pinned to the top of the list by the sort
-  // pipeline regardless of its `order` value, so it should never participate in numbering.
-  const remaining = getEntriesByCollection(collection.name).filter(
-    (entry) => entry.slug !== indexFileName && !(excludeIds && excludeIds.has(entry.id)),
-  );
+  // pipeline regardless of its `order` value, so it should never participate in numbering. It’s
+  // told by its path, as another collection’s index file within this folder has the same slug
+  const remaining = getEntriesByCollection(collection.name)
+    .filter(
+      (entry) =>
+        !isCollectionIndexFile(collection, entry) && !(excludeIds && excludeIds.has(entry.id)),
+    )
+    .map((entry) => updatedEntries?.get(entry.id) ?? entry);
 
   return sortEntriesByOrderField(remaining, collection);
 };
@@ -188,31 +185,23 @@ const computeRenumberedEntries = (collection, { excludeIds } = {}) => {
  * @param {object} [options] Options.
  * @param {Set<string>} [options.excludeIds] IDs of entries to omit (e.g. entries about to be
  * deleted).
+ * @param {Map<string, Entry>} [options.updatedEntries] Entries already rewritten by the same
+ * operation, keyed by ID. See {@link computeRenumberedEntries}.
  * @param {IndexedDB} [options.cacheDB] Pre-opened file-cache database to reuse.
  * @returns {Promise<{ changes: FileChange[], savingEntries: Entry[] }>} Collected changes and the
  * entries to be saved. Empty when reordering is not enabled or nothing changed.
  */
-export const buildRenumberChanges = async (collection, { excludeIds, cacheDB } = {}) => {
+export const buildRenumberChanges = async (
+  collection,
+  { excludeIds, updatedEntries, cacheDB } = {},
+) => {
   if (!collection || collection._type !== 'entry' || !getOrderFieldKey(collection)) {
     return { changes: [], savingEntries: [] };
   }
 
-  return buildReorderChanges(collection, computeRenumberedEntries(collection, { excludeIds }), {
-    cacheDB,
-  });
-};
-
-/**
- * Renumber the remaining entries in a collection after one or more entries have been deleted, so
- * that the order field stays compact (1, 2, 3, …). Entries currently lacking a valid numeric order
- * are placed at the end. Does nothing if the collection does not have reordering enabled.
- * @param {InternalEntryCollection | undefined} collection Entry collection.
- * @returns {Promise<number>} Number of entries actually updated.
- */
-export const renumberCollectionEntries = async (collection) => {
-  if (!collection || collection._type !== 'entry' || !getOrderFieldKey(collection)) {
-    return 0;
-  }
-
-  return reorderEntries(collection, computeRenumberedEntries(collection), { silent: true });
+  return buildReorderChanges(
+    collection,
+    computeRenumberedEntries(collection, { excludeIds, updatedEntries }),
+    { cacheDB },
+  );
 };

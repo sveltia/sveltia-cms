@@ -52,12 +52,29 @@ describe('Test getRegex()', () => {
     expect(result?.flags).toBe('im');
   });
 
-  test('converts regex string with leading slash but no pattern delimiters', () => {
+  test('treats a leading slash without a closing delimiter as part of the pattern', () => {
     const result = getRegex('/pattern');
 
     expect(result).toBeInstanceOf(RegExp);
-    expect(result?.source).toBe('pattern');
+    expect(result?.source).toBe('\\/pattern');
     expect(result?.flags).toBe('');
+    expect(result?.test('/pattern')).toBe(true);
+    expect(result?.test('pattern')).toBe(false);
+  });
+
+  test('keeps a trailing slash of a pattern without delimiters', () => {
+    expect(getRegex('^https?://')?.test('https://example.com')).toBe(true);
+    expect(getRegex('^https?://')?.test('https:/example.com')).toBe(false);
+    expect(getRegex('^/blog/')?.test('/blog/post')).toBe(true);
+    expect(getRegex('^/blog/')?.test('/blogroll')).toBe(false);
+  });
+
+  test('does not treat a trailing `/flags` of a pattern without delimiters as flags', () => {
+    const result = getRegex('^[a-z]+/i');
+
+    expect(result?.flags).toBe('');
+    expect(result?.test('abc/i')).toBe(true);
+    expect(result?.test('ABC')).toBe(false);
   });
 
   test('handles regex string without leading slash', () => {
@@ -80,6 +97,29 @@ describe('Test getRegex()', () => {
     expect(result).toBeInstanceOf(RegExp);
     expect(result?.source).toBe('pattern');
     expect(result?.flags).toBe('');
+  });
+
+  test('uses a string with invalid flags as a pattern in its entirety', () => {
+    // `dummy` repeats the `m` flag
+    const result = getRegex('/posts/dummy');
+
+    expect(result).toBeInstanceOf(RegExp);
+    expect(result?.source).toBe('\\/posts\\/dummy');
+    expect(result?.flags).toBe('');
+    expect(result?.test('/posts/dummy/index.md')).toBe(true);
+    expect(result?.test('/posts/')).toBe(false);
+    // A duplicate stateful flag, which is dropped anyway, still makes the flags invalid
+    expect(getRegex('/a/gg')?.test('/a/gg')).toBe(true);
+    expect(getRegex('/a/gg')?.test('a')).toBe(false);
+    // The `u` and `v` flags can’t be combined
+    expect(getRegex('/a/uv')?.source).toBe('\\/a\\/uv');
+  });
+
+  test('rejects a string whose delimited pattern is invalid with valid flags', () => {
+    // An identity escape like `\-` is invalid with the `u` flag, which is a config error to report
+    // rather than a plain pattern to match literally
+    expect(getRegex('/a\\-b/u')).toBeUndefined();
+    expect(getRegex('/(/i')).toBeUndefined();
   });
 
   test('returns undefined for invalid regex pattern', () => {
@@ -111,6 +151,16 @@ describe('Test getRegex()', () => {
     expect(result).toBeInstanceOf(RegExp);
     expect(result?.source).toBe('test');
     expect(result?.flags).toBe('dimsu');
+  });
+
+  test('handles the unicodeSets (`v`) flag', () => {
+    const result = getRegex('/^\\p{Lu}/v');
+
+    expect(result).toBeInstanceOf(RegExp);
+    expect(result?.source).toBe('^\\p{Lu}');
+    expect(result?.flags).toBe('v');
+    expect(result?.test('Émile')).toBe(true);
+    expect(result?.test('émile')).toBe(false);
   });
 
   // A global or sticky regex advances `lastIndex` on every `test()` call, so reusing it across a

@@ -1,9 +1,10 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { stripSlashes } from '@sveltia/utils/string';
 
-import { isEntryCollection } from '$lib/services/contents/collection';
-import { EXTENSION_FORMAT_MAP, MARKDOWN_EXTENSIONS } from '$lib/services/contents/file';
+import { isEntryCollection } from '$lib/services/contents/collection/predicates';
+import { EXTENSION_FORMAT_MAP, MARKDOWN_EXTENSIONS } from '$lib/services/contents/file/constants';
 import { createRawState } from '$lib/services/utils/state.svelte';
+import { isNonEmptyString } from '$lib/services/utils/string';
 
 /**
  * @import { Entry, InternalCollection } from '$lib/types/private';
@@ -11,8 +12,8 @@ import { createRawState } from '$lib/services/utils/state.svelte';
  */
 
 /**
- * Normalized options for a nested collection.
- * @typedef {object} NestedCollectionConfig
+ * Normalized options for a collection with nested entries.
+ * @typedef {object} NestedEntryConfig
  * @property {number} depth Maximum number of path segments below the collection folder. Entries
  * deeper than this are not part of the collection. `Infinity` if unlimited.
  * @property {string | undefined} summary Summary template used for tree node labels, which
@@ -22,9 +23,8 @@ import { createRawState } from '$lib/services/utils/state.svelte';
  */
 
 /**
- * Normalized options for the `meta.path` entry path editor. The `widget` and `label` options are
- * accepted for compatibility with Netlify/Decap CMS but ignored: the editor is always a folder
- * picker with a built-in label.
+ * Normalized options for the `meta.path` entry path editor. The editor is always a folder picker
+ * with a built-in label, so the `widget` and `label` options of Netlify/Decap CMS aren’t supported.
  * @typedef {object} MetaPathConfig
  * @property {string | undefined} indexFileName File name, without an extension, used for every
  * entry in the collection, e.g. `_index`. If `undefined`, the entry’s own file name is used.
@@ -68,9 +68,9 @@ const normalizeIndexFileName = (name) => {
 export const nestedFilterPath = createRawState('');
 
 /**
- * Get the normalized options for a nested collection.
+ * Get the normalized options for a collection with nested entries.
  * @param {Collection | InternalCollection} collection Collection.
- * @returns {NestedCollectionConfig | undefined} Options, or `undefined` if the collection is not a
+ * @returns {NestedEntryConfig | undefined} Options, or `undefined` if the collection is not a
  * nested entry collection.
  * @see https://decapcms.org/docs/collection-nested/
  */
@@ -91,17 +91,17 @@ export const getNestedConfig = (collection) => {
 
   return {
     depth: typeof depth === 'number' && depth >= 1 ? Math.floor(depth) : Infinity,
-    summary: typeof summary === 'string' && !!summary.trim() ? summary : undefined,
+    summary: isNonEmptyString(summary) ? summary : undefined,
     subfolders: subfolders !== false,
   };
 };
 
 /**
- * Check if the given collection is a nested collection.
+ * Check if the given collection has nested entries.
  * @param {Collection | InternalCollection} collection Collection.
  * @returns {boolean} Result.
  */
-export const isNestedCollection = (collection) => !!getNestedConfig(collection);
+export const hasNestedEntries = (collection) => !!getNestedConfig(collection);
 
 /**
  * Get the normalized options for the `meta.path` entry path editor, which lets the user choose
@@ -114,7 +114,7 @@ export const isNestedCollection = (collection) => !!getNestedConfig(collection);
  * @see https://decapcms.org/docs/collection-nested/
  */
 export const getMetaPathConfig = (collection) => {
-  if (!isNestedCollection(collection)) {
+  if (!hasNestedEntries(collection)) {
     return undefined;
   }
 
@@ -128,16 +128,16 @@ export const getMetaPathConfig = (collection) => {
 };
 
 /**
- * Get the name of the index file a nested collection stores its entries as, e.g. `_index`. Unlike
- * the `index_file` collection option, which marks one special entry within a collection, this file
- * name is meaningful throughout a nested collection: it names every entry in the `subfolders` mode,
- * and each folder’s own entry otherwise.
+ * Get the name of the index file a collection with nested entries stores its entries as, e.g.
+ * `_index`. Unlike the `index_file` collection option, which marks one special entry within a
+ * collection, this file name is meaningful throughout a collection with nested entries: it names
+ * every entry in the `subfolders` mode, and each folder’s own entry otherwise.
  * @param {Collection | InternalCollection} collection Collection.
  * @returns {string | undefined} File name without an extension, or `undefined` if the collection
  * doesn’t use one.
  */
 export const getNestedIndexFileName = (collection) =>
-  isNestedCollection(collection) ? getMetaPathConfig(collection)?.indexFileName : undefined;
+  hasNestedEntries(collection) ? getMetaPathConfig(collection)?.indexFileName : undefined;
 
 /**
  * Get the file name that every entry in the collection is saved as, which is what makes a folder
@@ -155,10 +155,10 @@ export const getSharedEntryFileName = (collection) =>
     : getMetaPathConfig(collection)?.indexFileName;
 
 /**
- * Strip the file name shared by every entry in a nested collection from the given slug, which is
- * the entry’s path within the collection folder. That name is how the content folder stores an
- * entry, not part of how the entry is referred to — in a preview URL, or in another entry’s
- * Relation field — so it’s left out of both.
+ * Strip the file name shared by every entry in a collection with nested entries from the given
+ * slug, which is the entry’s path within the collection folder. That name is how the content folder
+ * stores an entry, not part of how the entry is referred to — in a preview URL, or in another
+ * entry’s Relation field — so it’s left out of both.
  * @param {Collection | InternalCollection} collection Collection the entry belongs to.
  * @param {string} slug Entry slug.
  * @returns {string} Slug without the trailing file name. The collection’s own index file is left
@@ -216,6 +216,22 @@ export const getEntryDirPath = (subPath) => {
 };
 
 /**
+ * Get the name of an entry within the given folder, which is what a new slug filed in that
+ * folder has to differ from: the slug of an entry in a collection with nested entries is its sub
+ * path, e.g. `docs/intro`, while a new slug is a bare name, e.g. `intro`.
+ * @param {string} subPath Entry’s sub path.
+ * @param {string} dirPath Folder path without leading and trailing slashes. An empty string for the
+ * collection folder.
+ * @returns {string | undefined} Name, or `undefined` if the entry isn’t directly in the folder.
+ */
+export const getNameInFolder = (subPath, dirPath) => {
+  const prefix = dirPath ? `${dirPath}/` : '';
+  const name = subPath.startsWith(prefix) ? subPath.slice(prefix.length) : undefined;
+
+  return name?.includes('/') ? undefined : name;
+};
+
+/**
  * Check if the given entry is stored in the given directory or one of its descendants.
  * @param {string} dirPath Directory path relative to the collection folder. An empty string matches
  * every entry.
@@ -225,9 +241,10 @@ export const getEntryDirPath = (subPath) => {
 export const isDescendantPath = (dirPath, subPath) => !dirPath || subPath.startsWith(`${dirPath}/`);
 
 /**
- * Check whether the given folder is part of a nested collection’s tree, which is what the folder
- * route browses. A folder is there as long as it holds an entry, directly or further down; the
- * collection’s root folder is always there, even while the collection is still empty.
+ * Check whether the given folder is part of the tree of a collection with nested entries, which is
+ * what the folder route browses. A folder is there as long as it holds an entry, directly or
+ * further down; the collection’s root folder is always there, even while the collection is still
+ * empty.
  * @param {object} args Arguments.
  * @param {Collection | InternalCollection} args.collection Collection.
  * @param {Entry[]} args.entries Entries in the collection.
@@ -237,7 +254,7 @@ export const isDescendantPath = (dirPath, subPath) => !dirPath || subPath.starts
  * folders to browse.
  */
 export const isNestedFolder = ({ collection, entries, dirPath }) => {
-  if (!isNestedCollection(collection)) {
+  if (!hasNestedEntries(collection)) {
     return false;
   }
 
@@ -248,8 +265,8 @@ export const isNestedFolder = ({ collection, entries, dirPath }) => {
 
 /**
  * Limit the given entries to those that should be listed while the user is browsing a folder of a
- * nested collection. Only the immediate children of the folder are listed, because the deeper
- * entries are reachable through the collection tree.
+ * collection with nested entries. Only the immediate children of the folder are listed, because the
+ * deeper entries are reachable through the collection tree.
  *
  * In the default `subfolders` mode, each entry is an index file within its own folder, so an
  * immediate child is two segments below the current folder, e.g. `about/_index` below the root. The
@@ -261,7 +278,7 @@ export const isNestedFolder = ({ collection, entries, dirPath }) => {
  * @param {string} args.dirPath Directory path relative to the collection folder. An empty string
  * for the collection’s root folder.
  * @returns {Entry[]} Filtered entries. The given entries are returned as is if the collection is
- * not a nested collection.
+ * not a collection with nested entries.
  */
 export const filterNestedEntries = ({ collection, entries, dirPath }) => {
   const config = getNestedConfig(collection);

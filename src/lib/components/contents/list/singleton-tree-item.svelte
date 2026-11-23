@@ -3,6 +3,7 @@
   import { Icon, TreeItem } from '@sveltia/ui';
 
   import { announcedPageStatus, goto } from '$lib/services/app/navigation';
+  import { getEntryEditorPath } from '$lib/services/contents/editor/route';
 
   /**
    * @import { CollectionFile } from '$lib/types/public';
@@ -14,13 +15,10 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    file,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { file } = $props();
 
-  const { name, label, icon } = $derived(file);
+  const { name, icon } = $derived(file);
+  const label = $derived(file.label || name);
 
   /** @type {boolean} */
   let selected = $state(false);
@@ -31,16 +29,18 @@
 <div class="wrapper" bind:this={wrapper}>
   <TreeItem
     bind:selected
-    label={label || name}
+    {label}
     onSelect={() => {
       // Announce the selected singleton file. The Content Editor will not open until
       // the user presses Enter.
       announcedPageStatus.current = _('singleton_selected_announcement', {
-        values: { file: label || name },
+        values: { file: label },
       });
     }}
     onclick={() => {
-      goto(`/collections/_singletons/entries/${name}`, { transitionType: 'forwards' });
+      goto(getEntryEditorPath('_singletons', name), {
+        transitionType: 'forwards',
+      });
       // Reset the selected state and remove the focused class from the option
       // @todo Handle this in Sveltia UI
       selected = false;

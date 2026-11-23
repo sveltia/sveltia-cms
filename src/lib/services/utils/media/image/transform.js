@@ -1,6 +1,9 @@
 import { loadModule } from '$lib/services/app/dependencies';
 import { exportCanvasAsBlob } from '$lib/services/utils/media/image/encode';
+import { decodeHEIC } from '$lib/services/utils/media/image/heic';
+import { resolveTransformOptions } from '$lib/services/utils/media/image/options';
 import { resizeCanvas } from '$lib/services/utils/media/image/resize';
+import { sniffRasterImageFormat } from '$lib/services/utils/media/image/sniff';
 
 /**
  * @import { InternalImageTransformationOptions } from '$lib/types/private';
@@ -8,7 +11,7 @@ import { resizeCanvas } from '$lib/services/utils/media/image/resize';
 
 /**
  * Options for transforming an image to a thumbnail, which is a WebP image with a maximum width and
- * height of 512 pixels, and a quality of 85.
+ * height of 512 pixels, and a quality of 85, or a JPEG or PNG image where WebP can’t be encoded.
  * @type {InternalImageTransformationOptions}
  */
 export const THUMBNAIL_TRANSFORM_OPTIONS = {
@@ -17,6 +20,9 @@ export const THUMBNAIL_TRANSFORM_OPTIONS = {
   width: 512,
   height: 512,
   fit: 'contain',
+  // A thumbnail is only shown in the CMS, so where WebP can’t be encoded natively, another format
+  // will do, rather than loading an encoder for every thumbnail
+  nativeOnly: true,
 };
 
 /**
@@ -134,6 +140,24 @@ export const createSource = async (blob) => {
 };
 
 /**
+ * Create an image bitmap from a Blob the browser can’t decode natively, by decoding it with a
+ * library if it’s a HEIC image, which only Safari decodes natively.
+ * @param {File | Blob} blob File or blob.
+ * @returns {Promise<ImageBitmap | undefined>} Bitmap, or `undefined` if the blob isn’t a HEIC
+ * image.
+ * @throws {Error} If the HEIC image can’t be decoded.
+ */
+const createFallbackImageBitmap = async (blob) => {
+  // Sniff the content rather than trust the type: a HEIC photo is often saved with a `.jpg`
+  // extension, and the `.heic` type isn’t set by every platform
+  if ((await sniffRasterImageFormat(blob)) !== 'heic') {
+    return undefined;
+  }
+
+  return createImageBitmap(await decodeHEIC(blob));
+};
+
+/**
  * Convert the given image file to another format.
  * @param {File | Blob} blob Source file.
  * @param {InternalImageTransformationOptions} [options] Options.
@@ -142,11 +166,17 @@ export const createSource = async (blob) => {
  * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/toBlob
  * @see https://stackoverflow.com/q/62909538
  */
-export const transformImage = async (
-  blob,
-  { format = 'png', quality = 85, width = undefined, height = undefined, fit = 'scale-down' } = {},
-) => {
-  /** @type {CanvasImageSource} */
+export const transformImage = async (blob, options = {}) => {
+  const {
+    format,
+    quality,
+    width: requestedWidth,
+    height: requestedHeight,
+    fit,
+    nativeOnly,
+  } = resolveTransformOptions(options);
+
+  /** @type {CanvasImageSource | undefined} */
   let source;
   /** @type {number} */
   let naturalWidth = 0;
@@ -155,15 +185,20 @@ export const transformImage = async (
 
   try {
     source = await createImageBitmap(blob);
-    ({ width: naturalWidth, height: naturalHeight } = source);
   } catch {
-    // Fall back to `<img>` or `<video>` when thrown; this includes SVG
+    // Not a format the browser decodes natively, or a video, or SVG
+    source = await createFallbackImageBitmap(blob);
+  }
+
+  if (source) {
+    ({ width: naturalWidth, height: naturalHeight } = source);
+  } else {
+    // Fall back to `<img>` or `<video>`; this includes SVG
     ({ source, naturalWidth, naturalHeight } = await createSource(blob));
   }
 
-  width ??= naturalWidth;
-  height ??= naturalHeight;
-
+  const width = requestedWidth ?? naturalWidth;
+  const height = requestedHeight ?? naturalHeight;
   const canvas = new OffscreenCanvas(512, 512);
   const context = /** @type {OffscreenCanvasRenderingContext2D} */ (canvas.getContext('2d'));
 
@@ -173,9 +208,13 @@ export const transformImage = async (
   // Clean up
   if (source instanceof HTMLVideoElement) {
     document.body.removeChild(source);
+  } else if ('close' in source) {
+    // An `ImageBitmap` holds the decoded pixels until it’s closed, and a batch of thumbnails would
+    // otherwise keep a full-size copy of every image around until the garbage collector gets to it
+    source.close();
   }
 
-  return exportCanvasAsBlob(canvas, { format, quality });
+  return exportCanvasAsBlob(canvas, { format, quality, nativeOnly });
 };
 
 /**

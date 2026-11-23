@@ -1,0 +1,174 @@
+import { getAssetByPath } from '$lib/services/assets';
+import {
+  createPendingFileAdder,
+  getAssetFile,
+  rewriteAssetReferences,
+} from '$lib/services/assets/copy';
+import { getOwnedEntryFolderPath } from '$lib/services/assets/entry-folder';
+import { getAssetFoldersByPath } from '$lib/services/assets/folders';
+import { getDraftFieldArgs, getField, getTypedKeyPath } from '$lib/services/contents/entry/fields';
+import { getEntryLocaleFile } from '$lib/services/contents/entry/paths';
+import { MEDIA_FIELD_TYPES, RICH_TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
+import { getFieldAssetFolder } from '$lib/services/contents/fields/file/helpers';
+import { getValueFormat } from '$lib/services/contents/fields/rich-text';
+import { getEntryAssetVersion } from '$lib/services/workflow/assets';
+
+/**
+ * @import {
+ * AssetFolderInfo,
+ * EntryDraft,
+ * EntryFileMap,
+ * FlattenedEntryContent,
+ * InternalLocaleCode,
+ * LocaleContentMap,
+ * TypedFieldKeyPath,
+ * } from '$lib/types/private';
+ * @import { FieldKeyPath, MarkdownField, RichTextField } from '$lib/types/public';
+ */
+
+/**
+ * Field types whose value can reference an asset.
+ * @type {string[]}
+ */
+const ASSET_FIELD_TYPES = [...MEDIA_FIELD_TYPES, ...RICH_TEXT_FIELD_TYPES];
+
+/**
+ * Copy the original entry’s own assets into a duplicate of the entry. Assets stored at an
+ * entry-relative path are referenced with a path relative to the entry, so a duplicate saved in a
+ * folder of its own, like a Hugo page bundle, would point at files that don’t exist there. Each
+ * such asset is turned into a pending upload cached in the draft, and the references to it in the
+ * given values are replaced with the blob URL of the copy, the same as if the user had picked the
+ * file for the field, so saving the duplicate writes the copy alongside it. Assets in a folder the
+ * entry shares with the rest of the collection are left alone, because the duplicate is saved there
+ * as well and the references keep resolving.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Draft of the original entry.
+ * @param {LocaleContentMap} args.currentValues Detached copies of the draft values, to be used for
+ * the duplicate. Updated in place.
+ * @returns {Promise<EntryFileMap>} Copied files, keyed by blob URL, to be added to the duplicate.
+ */
+export const copyEntryRelativeAssets = async ({ draft, currentValues }) => {
+  const { originalEntry: entry, collection, collectionName, fileName, isIndexFile } = draft;
+  /** @type {EntryFileMap} */
+  const files = {};
+
+  if (!entry) {
+    return files;
+  }
+
+  const { defaultLocale } = draft;
+  const entryFilePath = getEntryLocaleFile(entry, { defaultLocale })?.path;
+  const ownsFolder = !!entryFilePath && !!getOwnedEntryFolderPath(collection, entryFilePath);
+  // Copies are keyed by asset path, so an asset referenced more than once, from another locale or
+  // field, is copied once and shares the blob URL
+  const addPendingFile = createPendingFileAdder({ files });
+
+  /**
+   * Copy the asset referenced by the given value, if it’s the entry’s own.
+   * @param {object} args Arguments.
+   * @param {string} args.value Field value or image source: an asset path relative to the entry.
+   * @param {AssetFolderInfo} args.folder Folder the field saves a new file to.
+   * @param {TypedFieldKeyPath} args.typedKeyPath Typed key path of the field.
+   * @param {InternalLocaleCode} args.locale Locale the value is found in, which the path is
+   * relative to.
+   * @returns {Promise<string | undefined>} Blob URL of the copy, or `undefined` if there’s nothing
+   * to copy.
+   */
+  const copyAsset = async ({ value, folder, typedKeyPath, locale }) => {
+    // Only the version the source entry has: another pull request’s file isn’t copied along
+    const asset = getEntryAssetVersion(
+      getAssetByPath({ value, entry, collectionName, fileName, typedKeyPath, locale }),
+      entry,
+    );
+
+    if (!asset) {
+      return undefined;
+    }
+
+    if (
+      !getAssetFoldersByPath(asset.path).some(
+        (f) => f.collectionName === collectionName && f.fileName === fileName && f.entryRelative,
+      )
+    ) {
+      return undefined;
+    }
+
+    return addPendingFile(
+      asset.path,
+      async () => {
+        try {
+          return await getAssetFile(asset);
+        } catch {
+          // The reference is left as is, pointing at the original’s file, rather than failing the
+          // whole duplication
+          return undefined;
+        }
+      },
+      folder,
+    );
+  };
+
+  /**
+   * Copy the assets referenced by a field, and update its value.
+   * @param {object} args Arguments.
+   * @param {FlattenedEntryContent} args.valueMap Values of one locale.
+   * @param {InternalLocaleCode} args.locale Locale of the values.
+   * @param {FieldKeyPath} args.keyPath Key path of the field.
+   */
+  const copyFieldAssets = async ({ valueMap, locale, keyPath }) => {
+    const value = valueMap[keyPath];
+
+    if (typeof value !== 'string' || !value) {
+      return;
+    }
+
+    const getFieldArgs = getDraftFieldArgs(draft, { valueMap, keyPath });
+    const field = getField(getFieldArgs);
+    const { widget: fieldType = 'string' } = field ?? {};
+
+    if (!ASSET_FIELD_TYPES.includes(fieldType)) {
+      return;
+    }
+
+    const typedKeyPath = getTypedKeyPath(getFieldArgs);
+    // Where the field editor puts a newly picked file, so the copy ends up in the same place
+    const folder = getFieldAssetFolder({ collectionName, fileName, typedKeyPath, isIndexFile });
+
+    // The asset location is the entry’s own only if the entry has a folder of its own, or the
+    // folder is named after the entry with a template tag like `{{slug}}`. Otherwise the folder is
+    // shared with the rest of the collection, and the duplicate can keep referencing the asset.
+    // There’s no folder at all if only an external media library is configured
+    if (!folder?.entryRelative || !(ownsFolder || folder.hasTemplateTags)) {
+      return;
+    }
+
+    // The format is that of the Markdown or HTML body, where images and other media are embedded
+    const format = MEDIA_FIELD_TYPES.includes(fieldType)
+      ? undefined
+      : getValueFormat(/** @type {MarkdownField | RichTextField} */ (field));
+
+    // The value is replaced once every copy is ready
+    const newValue = await rewriteAssetReferences({
+      value,
+      format,
+      /**
+       * Copy the asset the reference points at.
+       * @param {string} src Reference.
+       * @returns {Promise<string | undefined>} Blob URL of the copy.
+       */
+      rewrite: (src) => copyAsset({ value: src, folder, typedKeyPath, locale }),
+    });
+
+    if (newValue !== undefined) {
+      valueMap[keyPath] = newValue;
+    }
+  };
+
+  await Promise.all(
+    Object.entries(currentValues).flatMap(([locale, valueMap]) =>
+      Object.keys(valueMap).map((keyPath) => copyFieldAssets({ valueMap, locale, keyPath })),
+    ),
+  );
+
+  return files;
+};

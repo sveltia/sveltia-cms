@@ -1,0 +1,119 @@
+import { DATE_TIME_FIELDS, UUID_TYPES } from '$lib/services/common/template/constants';
+import { checkFieldReferences } from '$lib/services/config/parser/utils/references';
+import { getConfiguredSlugTemplate } from '$lib/services/contents/collection/slug';
+
+/**
+ * @import { ConfigParserCollectors, ConfigParserContext } from '$lib/types/private';
+ * @import { EntryCollection, Field } from '$lib/types/public';
+ */
+
+/**
+ * Template tags a slug or path template can use that don’t refer to a field: the date and time of
+ * creation, a random ID, and the slug of the entry itself, which `{{slug}}` derives from the
+ * identifier field and the legacy `{{fields._slug}}` reads from the slug editor.
+ * @type {string[]}
+ */
+const SLUG_SPECIAL_TAGS = [
+  ...DATE_TIME_FIELDS,
+  ...Object.keys(UUID_TYPES),
+  'slug',
+  '_slug',
+  'fields._slug',
+];
+
+/**
+ * Template tags a summary template can use that don’t refer to a field: the entry’s slug, locales,
+ * file path parts and commit information. The `title` tag is included because it falls back to the
+ * entry’s summary whether or not a `title` field is defined.
+ * @type {string[]}
+ */
+export const SUMMARY_SPECIAL_TAGS = [
+  'slug',
+  'locales',
+  'dirname',
+  'filename',
+  'extension',
+  'commit_date',
+  'commit_author',
+  'title',
+  'fields.title',
+];
+
+/**
+ * Check the `summary` option of an entry collection, a collection file or an index file against
+ * the fields it can refer to. Nothing is checked without fields, which is reported separately.
+ * @param {object} args Arguments.
+ * @param {any} args.template The `summary` option value.
+ * @param {Field[] | undefined} args.fields Fields the template can refer to.
+ * @param {ConfigParserContext} args.context Context.
+ * @param {ConfigParserCollectors} args.collectors Collectors.
+ */
+export const checkSummaryTemplate = ({ template, fields, context, collectors }) => {
+  if (!fields?.length) {
+    return;
+  }
+
+  checkFieldReferences({
+    option: 'summary',
+    template,
+    specialTags: SUMMARY_SPECIAL_TAGS,
+    fields,
+    context,
+    collectors,
+  });
+};
+
+/**
+ * Check the templates of an entry collection that refer to its fields: the `slug`, `path` and
+ * `summary` options, along with the `thumbnail` option, which names fields directly. A tag that
+ * names no field isn’t reported at runtime — a slug or path tag falls back to a random ID, and a
+ * summary tag to nothing — so a typo only shows once entries have been saved under unexpected
+ * names.
+ *
+ * Every tag is checked, not just the ones with the explicit `fields.` prefix, because the set of
+ * special tags these templates support is known and small, unlike a `preview_path`.
+ * @param {object} args Arguments.
+ * @param {EntryCollection} args.collection Collection config to check.
+ * @param {ConfigParserContext} args.context Context.
+ * @param {ConfigParserCollectors} args.collectors Collectors.
+ */
+export const checkCollectionTemplates = ({ collection, context, collectors }) => {
+  const { fields, path, summary, thumbnail } = collection;
+
+  // A collection without fields is reported separately
+  if (!fields?.length) {
+    return;
+  }
+
+  const args = { fields, context, collectors };
+
+  checkFieldReferences({
+    ...args,
+    option: 'slug',
+    template: getConfiguredSlugTemplate(collection),
+    specialTags: SLUG_SPECIAL_TAGS,
+  });
+
+  checkFieldReferences({
+    ...args,
+    option: 'path',
+    template: path,
+    specialTags: SLUG_SPECIAL_TAGS,
+  });
+
+  checkSummaryTemplate({ ...args, template: summary });
+
+  // The `thumbnail` option lists key paths rather than a template; a boolean turns the thumbnails
+  // on or off
+  if (typeof thumbnail === 'string' || Array.isArray(thumbnail)) {
+    /** @type {any[]} */ (Array.isArray(thumbnail) ? thumbnail : [thumbnail]).forEach((item) => {
+      // A path starting with a slash is a template like `preview_path`, whose bare tags may be
+      // special ones such as `{{slug}}`, so only the tags with the `fields.` prefix are checked
+      if (typeof item === 'string' && item.startsWith('/')) {
+        checkFieldReferences({ ...args, option: 'thumbnail', template: item, prefixedOnly: true });
+      } else {
+        checkFieldReferences({ ...args, option: 'thumbnail', keyPaths: item });
+      }
+    });
+  }
+};

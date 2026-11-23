@@ -73,7 +73,7 @@ describe('integrations/media-libraries/stock/pexels', () => {
         expect(getLocale()).toBe('es-ES');
 
         mockLocale.current = 'zh';
-        expect(getLocale()).toBe('zh-TW'); // First match in the list
+        expect(getLocale()).toBe('zh-CN'); // Simplified Chinese, the script `zh` is written in
 
         mockLocale.current = 'fr';
         expect(getLocale()).toBe('fr-FR');
@@ -135,6 +135,24 @@ describe('integrations/media-libraries/stock/pexels', () => {
           credit:
             '<a href="https://www.pexels.com/photo/sample-123456/">Photo by John Doe on Pexels</a>',
         });
+      });
+
+      it('should escape the photographer name and the link in the credit', () => {
+        /** @type {any} */
+        const [result] = parseResults([
+          {
+            id: 1,
+            url: 'https://www.pexels.com/photo/sample-1/?a=1&b="2"',
+            alt: 'Sample',
+            src: { large2x: 'https://example.com/l.jpg', medium: 'https://example.com/m.jpg' },
+            photographer: 'Smith & <Jones>',
+          },
+        ]);
+
+        expect(result.credit).toBe(
+          '<a href="https://www.pexels.com/photo/sample-1/?a=1&amp;b=&quot;2&quot;">' +
+            'Photo by Smith &amp; &lt;Jones&gt; on Pexels</a>',
+        );
       });
 
       it('should handle missing alt text', () => {

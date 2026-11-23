@@ -9,9 +9,10 @@ import { getUserProfile } from './user.js';
 // Mock dependencies with vi.hoisted to ensure proper hoisting
 const fetchAPIMock = vi.hoisted(() => vi.fn());
 const mockUserState = vi.hoisted(() => ({ account: /** @type {any} */ (null) }));
+const mockRepository = vi.hoisted(() => ({ service: 'gitea' }));
 
-vi.mock('$lib/services/backends/git/gitea/constants', () => ({
-  BACKEND_NAME: 'gitea',
+vi.mock('$lib/services/backends/git/gitea/repository', () => ({
+  repository: mockRepository,
 }));
 
 vi.mock('$lib/services/backends/git/shared/api', () => ({
@@ -28,6 +29,7 @@ describe('Gitea User Service', () => {
 
     // Default: no user logged in
     mockUserState.account = null;
+    mockRepository.service = 'gitea';
   });
 
   afterEach(() => {
@@ -73,6 +75,15 @@ describe('Gitea User Service', () => {
       });
     });
 
+    test('should use the configured backend name', async () => {
+      mockRepository.service = 'forgejo';
+      fetchAPIMock.mockResolvedValue({ id: 1, login: 'johndoe' });
+
+      const result = await getUserProfile(/** @type {AuthTokens} */ ({ token: 'token' }));
+
+      expect(result.backendName).toBe('forgejo');
+    });
+
     test('should handle token renewal during fetch', async () => {
       const mockTokens = /** @type {AuthTokens} */ ({
         token: 'old-access-token',
@@ -88,13 +99,15 @@ describe('Gitea User Service', () => {
         html_url: 'https://gitea.example.com/janesmith',
       };
 
-      // Mock user store returning updated tokens
-      mockUserState.account = /** @type {any} */ ({
-        token: 'new-access-token',
-        refreshToken: 'new-refresh-token',
-      });
+      // The token is renewed in `refreshAccessToken` while the profile is being fetched
+      fetchAPIMock.mockImplementation(async () => {
+        mockUserState.account = /** @type {any} */ ({
+          token: 'new-access-token',
+          refreshToken: 'new-refresh-token',
+        });
 
-      fetchAPIMock.mockResolvedValue(mockApiResponse);
+        return mockApiResponse;
+      });
 
       const result = await getUserProfile(mockTokens);
 

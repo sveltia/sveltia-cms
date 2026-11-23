@@ -2,12 +2,12 @@
   import { untrack } from 'svelte';
 
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
-  import { getMediaFieldURL } from '$lib/services/assets/info';
-  import { getMediaKind } from '$lib/services/assets/kinds';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
+  import { getMediaFieldPreview } from '$lib/services/contents/fields/file/preview';
+  import { watchAsync } from '$lib/services/utils/state.svelte';
 
   /**
-   * @import { AssetKind } from '$lib/types/private';
+   * @import { AssetKind, InternalLocaleCode } from '$lib/types/private';
    * @import { MediaField } from '$lib/types/public';
    */
 
@@ -16,18 +16,14 @@
    * @property {string} value Field value, either a URL or a file path.
    * @property {MediaField} fieldConfig Field configuration.
    * @property {string} [typedKeyPath] Field key path for field-level media folders.
+   * @property {InternalLocaleCode} [locale] Locale being previewed, which an entry-relative path is
+   * relative to.
    */
 
   const entryDraft = getEntryDraftContext();
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    value,
-    fieldConfig,
-    typedKeyPath = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { value, fieldConfig, typedKeyPath = undefined, locale = undefined } = $props();
 
   /** @type {AssetKind | undefined} */
   let kind = $state();
@@ -37,43 +33,43 @@
   const { widget: fieldType } = $derived(fieldConfig);
   const isImageField = $derived(fieldType === 'image');
   const entry = $derived(entryDraft.current?.originalEntry);
+  /* v8 ignore start -- the preview is only rendered while the draft is there */
   const collectionName = $derived(entryDraft.current?.collectionName ?? '');
+  /* v8 ignore stop */
   const fileName = $derived(entryDraft.current?.fileName);
 
-  $effect(() => {
-    void [value];
+  // The lookup for an earlier value can be answered after the one for a later value, which
+  // `watchAsync` takes care of
+  watchAsync(
+    () => {
+      void [value];
 
-    untrack(async () => {
-      // Determine the kind and source URL of the media. Skip if it’s an image field because we
-      // already know it’s an image. It’s rather problematic if the path doesn’t have an extension.
-      kind = value ? (isImageField ? 'image' : await getMediaKind(value)) : undefined;
-      src = kind
-        ? await getMediaFieldURL({
-            value,
-            entry,
-            collectionName,
-            fileName,
-            fieldConfig,
-            typedKeyPath,
-          })
-        : undefined;
-    });
-  });
+      return untrack(async () =>
+        value
+          ? getMediaFieldPreview({
+              value,
+              // Skip the detection if it’s an Image field because we already know it’s an image
+              kind: isImageField ? 'image' : undefined,
+              entry,
+              collectionName,
+              fileName,
+              fieldConfig,
+              typedKeyPath,
+              locale,
+            })
+          : { kind: undefined, src: undefined },
+      );
+    },
+    (preview) => {
+      ({ kind, src } = preview);
+    },
+  );
 </script>
 
 {#if kind && src}
   <p>
     <AssetPreview {kind} {src} controls={['audio', 'video'].includes(kind)} />
   </p>
-{:else if value.trim() && !value.startsWith('blob:')}
+{:else if typeof value === 'string' && value.trim() && !value.startsWith('blob:')}
   <p>{value}</p>
 {/if}
-
-<style>
-  /* Remove the padding to make the image full-width on small screens */
-  @media (width < 768px) {
-    :global([role='document'] section) > p:has(:global(img)) {
-      margin-inline: calc(var(--entry-preview-padding-inline) * -1);
-    }
-  }
-</style>

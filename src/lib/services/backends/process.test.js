@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { getAssetFoldersByPath } from '$lib/services/assets/folders';
-import { getEntryFoldersByPath } from '$lib/services/contents';
 import { isIndexFile } from '$lib/services/contents/file/process';
+import { getEntryFoldersByPath } from '$lib/services/contents/folders';
+import { createMockAssetFolder } from '$lib/test/factories';
 
-import { createFileList } from './process.js';
+import { createFileList, describeFileList } from './process.js';
 
 /**
  * @import {
@@ -23,7 +24,7 @@ vi.mock('$lib/services/backends/git/shared/config', () => ({
   GIT_CONFIG_FILE_REGEX: /^\.git(attributes|keep)$/,
 }));
 
-vi.mock('$lib/services/contents', () => ({
+vi.mock('$lib/services/contents/folders', () => ({
   getEntryFoldersByPath: vi.fn(),
 }));
 
@@ -132,13 +133,10 @@ describe('Backend Process', () => {
       ];
 
       /** @type {AssetFolderInfo} */
-      const mockAssetFolder = {
-        collectionName: undefined,
+      const mockAssetFolder = createMockAssetFolder({
         internalPath: 'images',
         publicPath: '/images',
-        entryRelative: false,
-        hasTemplateTags: false,
-      };
+      });
 
       vi.mocked(getEntryFoldersByPath).mockReturnValue([]);
       vi.mocked(getAssetFoldersByPath).mockImplementation((path) => {
@@ -172,13 +170,10 @@ describe('Backend Process', () => {
       };
 
       /** @type {AssetFolderInfo} */
-      const mockAssetFolder = {
-        collectionName: undefined,
+      const mockAssetFolder = createMockAssetFolder({
         internalPath: 'content',
         publicPath: '/content',
-        entryRelative: false,
-        hasTemplateTags: false,
-      };
+      });
 
       vi.mocked(getEntryFoldersByPath).mockReturnValue([mockEntryFolder]);
       vi.mocked(getAssetFoldersByPath).mockReturnValue([mockAssetFolder]);
@@ -196,13 +191,10 @@ describe('Backend Process', () => {
       const files = [{ path: 'content/_index.md', name: '_index.md', size: 200, sha: 'hash1' }];
 
       /** @type {AssetFolderInfo} */
-      const mockAssetFolder = {
-        collectionName: undefined,
+      const mockAssetFolder = createMockAssetFolder({
         internalPath: 'content',
         publicPath: '/content',
-        entryRelative: false,
-        hasTemplateTags: false,
-      };
+      });
 
       vi.mocked(getEntryFoldersByPath).mockReturnValue([]);
       vi.mocked(getAssetFoldersByPath).mockReturnValue([mockAssetFolder]);
@@ -231,13 +223,10 @@ describe('Backend Process', () => {
       };
 
       /** @type {AssetFolderInfo} */
-      const mockAssetFolder = {
-        collectionName: undefined,
+      const mockAssetFolder = createMockAssetFolder({
         internalPath: 'images',
         publicPath: '/images',
-        entryRelative: false,
-        hasTemplateTags: false,
-      };
+      });
 
       vi.mocked(getEntryFoldersByPath).mockImplementation((path) => {
         if (path.startsWith('posts/')) return [mockEntryFolder];
@@ -338,6 +327,15 @@ describe('Backend Process', () => {
       const result = createFileList(files);
 
       expect(result.assetFiles).toEqual([]);
+    });
+  });
+
+  describe('describeFileList', () => {
+    test('should count the files of each type', () => {
+      /** @type {any} */
+      const fileList = { entryFiles: [{}, {}, {}], assetFiles: [{}, {}], configFiles: [{}] };
+
+      expect(describeFileList(fileList)).toBe('3 entry files, 2 asset files, 1 config files');
     });
   });
 });

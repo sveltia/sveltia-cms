@@ -136,13 +136,15 @@ describe('GitLab user service', () => {
         email: 'test@example.com',
       };
 
-      // Mock the user store to return updated tokens
-      mockUserState.account = /** @type {any} */ ({
-        token: 'new-access-token', // Renewed token
-        refreshToken: 'new-refresh-token',
-      });
+      // The token is renewed in `refreshAccessToken` while the profile is being fetched
+      vi.mocked(fetchAPI).mockImplementation(async () => {
+        mockUserState.account = /** @type {any} */ ({
+          token: 'new-access-token',
+          refreshToken: 'new-refresh-token',
+        });
 
-      vi.mocked(fetchAPI).mockResolvedValue(mockUserResponse);
+        return mockUserResponse;
+      });
 
       const result = await getUserProfile({
         token: 'old-access-token',

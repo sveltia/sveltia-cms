@@ -1,13 +1,38 @@
+import { isObject, toRaw } from '@sveltia/utils/object';
 import { stripSlashes } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
+
+import { getReferencedEditedEntries } from '$lib/services/contents/draft/pending-entries';
+import { getKeysByPrefix } from '$lib/services/contents/entry/key-paths';
+import { INTERNAL_PROP_PREFIX } from '$lib/services/contents/fields/internal-props';
+import { isPairOrderModified } from '$lib/services/contents/fields/key-value/order';
 
 /**
  * Regex to match internal properties added to list items, which should be excluded from output.
  */
-export const INTERNAL_PROP_REGEX = /\.__sc_\w+$/;
+export const INTERNAL_PROP_REGEX = new RegExp(`\\.${INTERNAL_PROP_PREFIX}\\w+$`);
 
 /**
- * @import { EntryDraft, FlattenedEntryContent, LocaleContentMap } from '$lib/types/private';
+ * Draft properties holding the collection configuration and the entry being edited, which are fixed
+ * for the lifetime of a draft. Every function building a draft hands these to `createState()` as
+ * static keys, so that all the drafts opened for one collection hand out the very same objects
+ * rather than a reactive proxy each.
+ * @see https://github.com/sveltia/sveltia-cms/issues/1006
+ */
+export const STATIC_DRAFT_KEYS = ['collection', 'collectionFile', 'fields', 'originalEntry'];
+
+/**
+ * @import {
+ * AssetFolderInfo,
+ * EntryDraft,
+ * EntryDraftValues,
+ * FlattenedEntryContent,
+ * InternalLocaleCode,
+ * LocaleContentMap,
+ * LocaleSlugMap,
+ * LocaleStateMap,
+ * } from '$lib/types/private';
+ * @import { FieldKeyPath } from '$lib/types/public';
  */
 
 /**
@@ -99,7 +124,51 @@ export const filterRealValues = (valueMap) =>
  * @param {string} key Key to check.
  * @returns {boolean} Whether the key counts.
  */
-const isRealKey = (valueMap, key) => !INTERNAL_PROP_REGEX.test(key) && valueMap[key] !== undefined;
+export const isRealKey = (valueMap, key) =>
+  !INTERNAL_PROP_REGEX.test(key) && valueMap[key] !== undefined;
+
+/**
+ * Collect the values stored at the given field key path and under it, leaving out the keys that
+ * {@link isRealKey} doesn’t count.
+ * @param {FlattenedEntryContent} valueMap Flattened content for a locale.
+ * @param {FieldKeyPath} keyPath Field key path.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.relative] Whether to key the values by their path relative to the
+ * field, in which case the field’s own value, if any, is keyed by an empty string. Otherwise they
+ * are keyed by their full key path.
+ * @param {boolean} [options.dropEmptyPlaceholders] Whether to leave out empty object/array
+ * placeholders as well. An Object or List field may or may not have one at its own key path,
+ * depending on how the value map was built, while the actual values are always flattened to their
+ * own key paths.
+ * @returns {FlattenedEntryContent} Collected values.
+ */
+export const collectFieldValues = (
+  valueMap,
+  keyPath,
+  { relative = false, dropEmptyPlaceholders = false } = {},
+) => {
+  const prefix = `${keyPath}.`;
+
+  // This runs for every field editor on every change, so the key paths under the field are looked
+  // up in the value map’s index rather than by walking all of them
+  return Object.fromEntries(
+    [...(Object.hasOwn(valueMap, keyPath) ? [keyPath] : []), ...getKeysByPrefix(valueMap, prefix)]
+      .filter((key) => {
+        if (!isRealKey(valueMap, key)) {
+          return false;
+        }
+
+        const value = valueMap[key];
+
+        return !(
+          dropEmptyPlaceholders &&
+          (isObject(value) || Array.isArray(value)) &&
+          !Object.keys(value).length
+        );
+      })
+      .map((key) => [relative ? key.slice(prefix.length) : key, valueMap[key]]),
+  );
+};
 
 /**
  * Compare a locale’s original and current value maps, ignoring internal properties in the current
@@ -109,7 +178,7 @@ const isRealKey = (valueMap, key) => !INTERNAL_PROP_REGEX.test(key) && valueMap[
  * @param {FlattenedEntryContent} currentValueMap Current values for the locale.
  * @returns {boolean} Whether the values differ.
  */
-const isValueMapModified = (originalValueMap, currentValueMap) => {
+export const isValueMapModified = (originalValueMap, currentValueMap) => {
   let realKeyCount = 0;
 
   const anyValueChanged = Object.keys(currentValueMap).some((key) => {
@@ -133,19 +202,33 @@ const isValueMapModified = (originalValueMap, currentValueMap) => {
 };
 
 /**
- * Compare the original and current values of every locale in the draft.
- * @param {LocaleContentMap} originalValues Original values.
- * @param {LocaleContentMap} currentValues Current values.
+ * Get the locales of the draft’s values that have to be compared to tell whether the draft has been
+ * modified. A locale disabled before and after the edit is not saved, so its values make no
+ * difference, e.g. the ones copied from the default locale when the locale was enabled and then
+ * disabled again.
+ * @param {EntryDraft} draft Entry draft.
+ * @param {LocaleContentMap} values Original or current values of the draft.
+ * @returns {InternalLocaleCode[]} Locales.
+ */
+const getComparedLocales = ({ originalLocales, currentLocales }, values) =>
+  Object.keys(values).filter(
+    (locale) => originalLocales[locale] !== false || currentLocales[locale] !== false,
+  );
+
+/**
+ * Compare the original and current values of the given locales in the draft.
+ * @param {EntryDraft} draft Entry draft.
+ * @param {InternalLocaleCode[]} locales Locales to compare, from {@link getComparedLocales}.
  * @returns {boolean} Whether the values differ.
  */
-const areValuesModified = (originalValues, currentValues) => {
-  const currentLocales = Object.keys(currentValues);
+const areValuesModified = (draft, locales) => {
+  const { originalValues, currentValues } = draft;
 
-  if (currentLocales.length !== Object.keys(originalValues).length) {
+  if (locales.length !== getComparedLocales(draft, originalValues).length) {
     return true;
   }
 
-  return currentLocales.some((locale) => {
+  return locales.some((locale) => {
     const originalValueMap = originalValues[locale];
 
     return !originalValueMap || isValueMapModified(originalValueMap, currentValues[locale]);
@@ -173,9 +256,9 @@ export const isDraftModified = (draft) => {
     currentSlugs,
     originalPath,
     currentPath,
-    originalValues,
-    currentValues,
   } = draft;
+
+  const locales = getComparedLocales(draft, draft.currentValues);
 
   return (
     !equal(originalLocales, currentLocales) ||
@@ -183,6 +266,55 @@ export const isDraftModified = (draft) => {
     // Moving an entry with the path editor is a change of its own, with no field to go with it
     stripSlashes(originalPath ?? '') !== stripSlashes(currentPath ?? '') ||
     // Internal properties are excluded from the value comparison
-    areValuesModified(originalValues, currentValues)
+    areValuesModified(draft, locales) ||
+    // Reordering the pairs of a KeyValue field changes no value, only the order they are saved in
+    isPairOrderModified({ draft, isRealKey, locales }) ||
+    // An existing entry edited from a Relation field is saved along with the entry, which may
+    // otherwise be left as it was, as long as the entry still refers to it
+    getReferencedEditedEntries(draft).length > 0
   );
 };
+
+/**
+ * Copy the values of the given draft that a backup restores to a plain object. The draft is a
+ * `$state` proxy, which IndexedDB can’t clone, so every part has to be copied. `File` objects are
+ * cloneable as they are.
+ * @param {EntryDraft} draft Draft.
+ * @returns {EntryDraftValues} Values.
+ */
+export const getDraftValues = ({
+  currentLocales = {},
+  currentPath,
+  currentSlugs = {},
+  currentValues = {},
+  files,
+}) => ({
+  currentLocales: /** @type {LocaleStateMap} */ (toRaw(currentLocales)),
+  currentSlugs: /** @type {LocaleSlugMap} */ (toRaw(currentSlugs)),
+  // The folder chosen with the path editor, which only a collection with `meta.path` has
+  ...(currentPath !== undefined ? { currentPath } : {}),
+  currentValues: /** @type {LocaleContentMap} */ (toRaw(currentValues)),
+  files: Object.fromEntries(
+    Object.entries(files).map(
+      ([blobURL, { file, folder, replace, subfolderPath, nameTemplate }]) => [
+        blobURL,
+        {
+          file,
+          folder: folder ? /** @type {AssetFolderInfo} */ (toRaw(folder)) : folder,
+          replace,
+          subfolderPath,
+          // The random values are kept in a `Map`, which a JSON round trip would lose
+          ...(nameTemplate
+            ? {
+                nameTemplate: {
+                  ...nameTemplate,
+                  randomValues: new Map(nameTemplate.randomValues),
+                  dateTimeParts: { ...nameTemplate.dateTimeParts },
+                },
+              }
+            : {}),
+        },
+      ],
+    ),
+  ),
+});

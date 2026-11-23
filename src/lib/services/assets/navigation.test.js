@@ -1,0 +1,622 @@
+// @vitest-environment happy-dom
+
+import { _, locale as appLocale } from '@sveltia/i18n';
+import { sleep } from '@sveltia/utils/misc';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+
+import { announcedPageStatus, goto, parseLocation } from '$lib/services/app/navigation';
+import {
+  enabledCloudServices,
+  getCloudService,
+  getCloudServicePath,
+  overlaidExternalAssetId,
+  resetExternalAssets,
+  selectedCloudService,
+} from '$lib/services/assets/external';
+import { linkedFilesService } from '$lib/services/assets/external/linked';
+import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
+import {
+  ASSETS_ROUTE_REGEX,
+  discardAssetsNavigation,
+  getAssetFolderHistoryState,
+  getSelectedAssetFolderLabel,
+  leaveMovedAsset,
+  replaceShownAssetPath,
+  resolveAssetsRoute,
+  showAssetDetails,
+} from '$lib/services/assets/navigation';
+import { allAssets, overlaidAsset } from '$lib/services/assets/state';
+import { resolveAssetFolderPath, selectedSubfolderPath } from '$lib/services/assets/subfolders';
+import {
+  getFolderLabelByCollection,
+  listedAssets,
+  showAssetOverlay,
+} from '$lib/services/assets/view';
+import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
+import { isSearchRoute } from '$lib/services/search/navigation';
+import { env } from '$lib/services/user/env.svelte';
+import { encodePathSegments } from '$lib/services/utils/url';
+
+/**
+ * Resolvers of the pending `sleep()` calls, in order.
+ * @type {(() => void)[]}
+ */
+const pendingSleeps = [];
+
+vi.mock('@sveltia/i18n', () => ({ _: vi.fn(), locale: { current: 'en' } }));
+vi.mock('@sveltia/utils/misc', () => ({ sleep: vi.fn() }));
+
+vi.mock('$lib/services/app/navigation', () => ({
+  announcedPageStatus: { current: '' },
+  goto: vi.fn(),
+  parseLocation: vi.fn(),
+}));
+
+vi.mock('$lib/services/assets/state', () => ({
+  allAssets: { current: [] },
+  overlaidAsset: { current: undefined },
+}));
+
+vi.mock('$lib/services/assets/external', () => ({
+  enabledCloudServices: { current: [] },
+  EXTERNAL_LOCATION_PATH_PREFIX: '-/',
+  getCloudService: vi.fn(),
+  getCloudServicePath: vi.fn(),
+  overlaidExternalAssetId: { current: undefined },
+  resetExternalAssets: vi.fn(),
+  selectedCloudService: { current: undefined },
+}));
+
+vi.mock('$lib/services/assets/external/linked', () => ({
+  linkedFilesService: { serviceId: 'linked' },
+}));
+
+vi.mock('$lib/services/assets/folders', () => ({
+  allAssetFolders: { current: [] },
+  selectedAssetFolder: { current: undefined },
+}));
+
+vi.mock('$lib/services/assets/subfolders', () => ({
+  resolveAssetFolderPath: vi.fn(),
+  selectedSubfolderPath: { current: '' },
+}));
+
+vi.mock('$lib/services/assets/view', () => ({
+  getFolderLabelByCollection: vi.fn(),
+  listedAssets: { current: [] },
+  showAssetOverlay: { current: false },
+}));
+
+vi.mock('$lib/services/backends/git/shared/config', () => ({ gitConfigFiles: { current: [] } }));
+vi.mock('$lib/services/search/navigation', () => ({ isSearchRoute: vi.fn() }));
+vi.mock('$lib/services/user/env.svelte', () => ({ env: { isSmallScreen: false } }));
+vi.mock('$lib/services/utils/url', async (importOriginal) => ({
+  .../** @type {object} */ (await importOriginal()),
+  encodePathSegments: vi.fn(),
+}));
+
+const allFolder = /** @type {any} */ ({ internalPath: undefined, label: 'All' });
+const postsFolder = /** @type {any} */ ({ internalPath: 'static/posts', collectionName: 'posts' });
+const uploadcare = /** @type {any} */ ({ serviceId: 'uploadcare', serviceLabel: 'Uploadcare' });
+const initial = { isIndexPage: false, isSearchPage: false, notFound: false };
+
+/**
+ * Point the router at the given path.
+ * @param {string} path Path.
+ */
+const visit = (path) => {
+  vi.mocked(parseLocation).mockReturnValue({ path, params: {} });
+};
+
+/**
+ * Let the pending `sleep()` calls finish, and wait for the code awaiting them to run.
+ */
+const finishSleeps = async () => {
+  pendingSleeps.splice(0).forEach((resolve) => resolve());
+  await Promise.resolve();
+  await Promise.resolve();
+};
+
+beforeEach(async () => {
+  vi.resetAllMocks();
+  // Settle a delayed announcement left over from the previous test
+  await finishSleeps();
+  vi.mocked(_).mockImplementation((key, options) =>
+    options ? `${key} ${JSON.stringify(options.values)}` : /** @type {string} */ (key),
+  );
+  vi.mocked(sleep).mockImplementation(
+    () =>
+      new Promise((resolve) => {
+        pendingSleeps.push(() => resolve(undefined));
+      }),
+  );
+  vi.mocked(encodePathSegments).mockImplementation((path) => `encoded:${path}`);
+  vi.mocked(getFolderLabelByCollection).mockImplementation((folder) => folder.label ?? 'Folder');
+  vi.mocked(getCloudServicePath).mockImplementation(({ serviceId }) => `/assets/-/${serviceId}`);
+  /** @type {any} */ (appLocale).current = 'en';
+  announcedPageStatus.current = '';
+  allAssets.current = [];
+  overlaidAsset.current = undefined;
+  /** @type {any} */ (enabledCloudServices).current = [];
+  overlaidExternalAssetId.current = undefined;
+  selectedCloudService.current = undefined;
+  allAssetFolders.current = [];
+  /** @type {any} */ (gitConfigFiles).current = [];
+  selectedAssetFolder.current = undefined;
+  selectedSubfolderPath.current = '';
+  /** @type {any} */ (listedAssets).current = [];
+  showAssetOverlay.current = false;
+  env.isSmallScreen = false;
+  window.history.replaceState(null, '');
+});
+
+describe('ASSETS_ROUTE_REGEX', () => {
+  test('matches the Asset Library routes', () => {
+    expect('/assets'.match(ASSETS_ROUTE_REGEX)?.groups).toEqual({
+      folderPath: undefined,
+      fileName: undefined,
+    });
+    expect('/assets/static/uploads'.match(ASSETS_ROUTE_REGEX)?.groups).toEqual({
+      folderPath: 'static/uploads',
+      fileName: undefined,
+    });
+    expect('/assets/static/uploads/a.png'.match(ASSETS_ROUTE_REGEX)?.groups).toEqual({
+      folderPath: 'static/uploads',
+      fileName: 'a.png',
+    });
+    expect('/collections/posts'.match(ASSETS_ROUTE_REGEX)).toBeNull();
+  });
+});
+
+describe('getSelectedAssetFolderLabel()', () => {
+  test('returns the label of the selected folder', () => {
+    selectedAssetFolder.current = postsFolder;
+    vi.mocked(getFolderLabelByCollection).mockReturnValue('Posts');
+
+    expect(getSelectedAssetFolderLabel()).toBe('Posts');
+    expect(getFolderLabelByCollection).toHaveBeenCalledWith(postsFolder);
+  });
+
+  test('returns an empty string without a folder or a locale', () => {
+    expect(getSelectedAssetFolderLabel()).toBe('');
+
+    selectedAssetFolder.current = postsFolder;
+    /** @type {any} */ (appLocale).current = undefined;
+
+    expect(getSelectedAssetFolderLabel()).toBe('');
+    expect(getFolderLabelByCollection).not.toHaveBeenCalled();
+  });
+});
+
+describe('replaceShownAssetPath()', () => {
+  test('updates the URL of the asset shown in the details view, keeping the folder', async () => {
+    selectedAssetFolder.current = allFolder;
+    vi.mocked(parseLocation).mockReturnValue(
+      /** @type {any} */ ({ path: '/assets/static/uploads/a b.png' }),
+    );
+
+    await replaceShownAssetPath('static/uploads/a b.png', 'static/projects/a b.png');
+
+    expect(goto).toHaveBeenCalledExactlyOnceWith('encoded:/assets/static/projects/a b.png', {
+      replaceState: true,
+      notifyChange: false,
+      state: { folder: allFolder },
+    });
+    selectedAssetFolder.current = undefined;
+  });
+
+  test('leaves the URL alone for another asset', async () => {
+    vi.mocked(parseLocation).mockReturnValue(/** @type {any} */ ({ path: '/assets/static/x.png' }));
+
+    await replaceShownAssetPath('static/uploads/a.png', 'static/projects/a.png');
+
+    expect(goto).not.toHaveBeenCalled();
+  });
+});
+
+describe('leaveMovedAsset()', () => {
+  test('shows the list the asset shown in the details view has been moved out of', async () => {
+    vi.mocked(parseLocation).mockReturnValue(
+      /** @type {any} */ ({ path: '/assets/static/uploads/a.png' }),
+    );
+
+    await leaveMovedAsset('/assets/static/uploads/a.png', '/assets/static/uploads');
+
+    expect(goto).toHaveBeenCalledExactlyOnceWith('encoded:/assets/static/uploads', {
+      replaceState: true,
+      transitionType: 'backwards',
+    });
+  });
+
+  test('stays on another page', async () => {
+    vi.mocked(parseLocation).mockReturnValue(/** @type {any} */ ({ path: '/assets/static' }));
+
+    await leaveMovedAsset('/assets/static/uploads/a.png', '/assets/static/uploads');
+
+    expect(goto).not.toHaveBeenCalled();
+  });
+});
+
+describe('getAssetFolderHistoryState()', () => {
+  test('carries the selected asset folder', () => {
+    selectedAssetFolder.current = allFolder;
+    expect(getAssetFolderHistoryState()).toEqual({ folder: allFolder });
+    selectedAssetFolder.current = undefined;
+    expect(getAssetFolderHistoryState()).toEqual({ folder: undefined });
+  });
+});
+
+describe('showAssetDetails()', () => {
+  const asset = /** @type {any} */ ({ name: 'a.png', path: 'static/posts/a.png' });
+
+  test('opens the asset within the selected folder, e.g. All Assets', () => {
+    selectedAssetFolder.current = allFolder;
+    showAssetDetails(asset);
+    expect(goto).toHaveBeenCalledWith('encoded:/assets/static/posts/a.png', {
+      transitionType: 'forwards',
+      replaceState: false,
+      state: { folder: allFolder },
+    });
+  });
+
+  test('can replace the history entry with another transition', () => {
+    selectedAssetFolder.current = postsFolder;
+    showAssetDetails(asset, { transitionType: 'next', replaceState: true });
+    expect(goto).toHaveBeenCalledWith('encoded:/assets/static/posts/a.png', {
+      transitionType: 'next',
+      replaceState: true,
+      state: { folder: postsFolder },
+    });
+  });
+});
+
+describe('resolveAssetsRoute()', () => {
+  test('hides the overlay on a different page', () => {
+    visit('/collections/posts');
+    showAssetOverlay.current = true;
+    vi.mocked(isSearchRoute).mockReturnValue(false);
+
+    expect(resolveAssetsRoute()).toEqual(initial);
+    expect(showAssetOverlay.current).toBe(false);
+  });
+
+  test('recognizes the search page', () => {
+    visit('/search/a');
+    vi.mocked(isSearchRoute).mockReturnValue(true);
+
+    expect(resolveAssetsRoute()).toEqual({ ...initial, isSearchPage: true });
+    expect(isSearchRoute).toHaveBeenCalledWith('/search/a');
+  });
+
+  describe('external locations', () => {
+    test('selects a cloud storage service', () => {
+      visit('/assets/-/uploadcare');
+      selectedAssetFolder.current = postsFolder;
+      showAssetOverlay.current = true;
+      overlaidExternalAssetId.current = 'old';
+      vi.mocked(getCloudService).mockReturnValue(uploadcare);
+
+      expect(resolveAssetsRoute()).toEqual(initial);
+      expect(getCloudService).toHaveBeenCalledWith('uploadcare');
+      expect(resetExternalAssets).toHaveBeenCalledOnce();
+      expect(selectedCloudService.current).toBe(uploadcare);
+      expect(selectedAssetFolder.current).toBeUndefined();
+      expect(overlaidExternalAssetId.current).toBeUndefined();
+      expect(showAssetOverlay.current).toBe(false);
+      expect(announcedPageStatus.current).toBe(
+        'viewing_x_external_location {"service":"Uploadcare"}',
+      );
+    });
+
+    test('keeps the assets of the service already selected', () => {
+      visit('/assets/-/uploadcare');
+      selectedCloudService.current = uploadcare;
+      vi.mocked(getCloudService).mockReturnValue(uploadcare);
+
+      resolveAssetsRoute();
+
+      expect(resetExternalAssets).not.toHaveBeenCalled();
+      expect(selectedCloudService.current).toBe(uploadcare);
+    });
+
+    test('shows the details of an asset whose ID has slashes', () => {
+      visit('/assets/-/linked/https://cdn.example.net/x.png');
+      vi.mocked(getCloudService).mockReturnValue(/** @type {any} */ ({ serviceId: 'linked' }));
+
+      expect(resolveAssetsRoute()).toEqual(initial);
+      expect(getCloudService).toHaveBeenCalledWith('linked');
+      expect(overlaidExternalAssetId.current).toBe('https://cdn.example.net/x.png');
+      expect(showAssetOverlay.current).toBe(true);
+      expect(announcedPageStatus.current).toBe('viewing_x_asset_details {"name":"x.png"}');
+    });
+
+    test('shows the details of an asset whose ID has no file extension', () => {
+      visit('/assets/-/uploadcare/abc-123');
+      vi.mocked(getCloudService).mockReturnValue(uploadcare);
+
+      resolveAssetsRoute();
+
+      expect(overlaidExternalAssetId.current).toBe('abc-123');
+      expect(announcedPageStatus.current).toBe('viewing_x_asset_details {"name":"abc-123"}');
+    });
+
+    test('reports an unknown service', () => {
+      visit('/assets/-/unknown');
+      selectedCloudService.current = uploadcare;
+      showAssetOverlay.current = true;
+
+      expect(resolveAssetsRoute()).toEqual({ ...initial, notFound: true });
+      expect(selectedCloudService.current).toBeUndefined();
+      expect(showAssetOverlay.current).toBe(false);
+      expect(announcedPageStatus.current).toBe('asset_folder_not_found');
+    });
+  });
+
+  describe('index', () => {
+    test('shows the folder list alone on a small screen', () => {
+      visit('/assets');
+      env.isSmallScreen = true;
+      selectedAssetFolder.current = postsFolder;
+      selectedCloudService.current = uploadcare;
+      showAssetOverlay.current = true;
+
+      expect(resolveAssetsRoute()).toEqual({ ...initial, isIndexPage: true });
+      expect(selectedCloudService.current).toBeUndefined();
+      expect(selectedAssetFolder.current).toBeUndefined();
+      expect(showAssetOverlay.current).toBe(false);
+      expect(announcedPageStatus.current).toBe('viewing_asset_folder_list');
+      expect(goto).not.toHaveBeenCalled();
+    });
+
+    test('selects All Assets and redirects to it on a large screen', () => {
+      visit('/assets');
+      allAssetFolders.current = [allFolder];
+      selectedSubfolderPath.current = 'foo';
+      vi.mocked(resolveAssetFolderPath).mockReturnValue({ folder: allFolder, subfolderPath: '' });
+
+      expect(resolveAssetsRoute()).toEqual(initial);
+      expect(resolveAssetFolderPath).toHaveBeenCalledWith('-/all');
+      expect(selectedAssetFolder.current).toBe(allFolder);
+      expect(selectedSubfolderPath.current).toBe('');
+      expect(goto).toHaveBeenCalledWith('/assets/-/all', { replaceState: true });
+    });
+
+    test('redirects to the first external location without a folder', () => {
+      visit('/assets');
+      /** @type {any} */ (enabledCloudServices).current = [uploadcare];
+
+      resolveAssetsRoute();
+
+      expect(getCloudServicePath).toHaveBeenCalledWith(uploadcare);
+      expect(goto).toHaveBeenCalledWith('/assets/-/uploadcare', { replaceState: true });
+    });
+
+    test('redirects to the linked files when nothing else is configured', () => {
+      visit('/assets');
+
+      resolveAssetsRoute();
+
+      expect(getCloudServicePath).toHaveBeenCalledWith(linkedFilesService);
+      expect(goto).toHaveBeenCalledWith('/assets/-/linked', { replaceState: true });
+    });
+  });
+
+  describe('folders', () => {
+    test('selects a folder and announces it after a moment', async () => {
+      visit('/assets/static/posts/sub');
+      selectedCloudService.current = uploadcare;
+      showAssetOverlay.current = true;
+      /** @type {any} */ (listedAssets).current = [{}, {}];
+      vi.mocked(resolveAssetFolderPath).mockReturnValue({
+        folder: postsFolder,
+        subfolderPath: 'sub',
+      });
+
+      expect(resolveAssetsRoute()).toEqual(initial);
+      expect(resolveAssetFolderPath).toHaveBeenCalledWith('static/posts/sub', undefined);
+      expect(selectedCloudService.current).toBeUndefined();
+      expect(selectedAssetFolder.current).toBe(postsFolder);
+      expect(selectedSubfolderPath.current).toBe('sub');
+      expect(sleep).toHaveBeenCalledWith(100);
+      expect(announcedPageStatus.current).toBe('');
+      expect(showAssetOverlay.current).toBe(true);
+
+      await finishSleeps();
+
+      expect(showAssetOverlay.current).toBe(false);
+      expect(announcedPageStatus.current).toBe(
+        'viewing_x_asset_folder {"folder":"Folder","count":2}',
+      );
+    });
+
+    test('prefers the folder passed as history state', () => {
+      visit('/assets/static/posts');
+      window.history.replaceState({ folder: postsFolder }, '');
+      vi.mocked(resolveAssetFolderPath).mockReturnValue({ folder: postsFolder, subfolderPath: '' });
+
+      resolveAssetsRoute();
+
+      expect(resolveAssetFolderPath).toHaveBeenCalledWith('static/posts', postsFolder);
+      expect(selectedSubfolderPath.current).toBe('');
+    });
+
+    test('keeps the selected folder object when it’s equal', () => {
+      const selected = { ...postsFolder };
+
+      visit('/assets/static/posts');
+      selectedAssetFolder.current = selected;
+      vi.mocked(resolveAssetFolderPath).mockReturnValue({ folder: postsFolder, subfolderPath: '' });
+
+      resolveAssetsRoute();
+
+      expect(selectedAssetFolder.current).toBe(selected);
+    });
+
+    test('ignores an announcement once a newer navigation has started', async () => {
+      visit('/assets/static/posts');
+      vi.mocked(resolveAssetFolderPath).mockReturnValue({ folder: postsFolder, subfolderPath: '' });
+      resolveAssetsRoute();
+
+      visit('/assets/-/uploadcare');
+      vi.mocked(getCloudService).mockReturnValue(uploadcare);
+      resolveAssetsRoute();
+      await finishSleeps();
+
+      expect(announcedPageStatus.current).toBe(
+        'viewing_x_external_location {"service":"Uploadcare"}',
+      );
+    });
+
+    test('ignores an announcement once the navigation has been discarded', async () => {
+      visit('/assets/static/posts');
+      vi.mocked(resolveAssetFolderPath).mockReturnValue({ folder: postsFolder, subfolderPath: '' });
+      resolveAssetsRoute();
+      showAssetOverlay.current = true;
+
+      discardAssetsNavigation();
+      await finishSleeps();
+
+      expect(announcedPageStatus.current).toBe('');
+      expect(showAssetOverlay.current).toBe(true);
+    });
+
+    test('browses a subfolder with a dot in its name', () => {
+      visit('/assets/static/posts/v1.2');
+      allAssets.current = [/** @type {any} */ ({ name: 'a.png', path: 'static/posts/v1.2/a.png' })];
+      vi.mocked(resolveAssetFolderPath).mockReturnValue({
+        folder: postsFolder,
+        subfolderPath: 'v1.2',
+      });
+
+      expect(resolveAssetsRoute()).toEqual(initial);
+      expect(resolveAssetFolderPath).toHaveBeenCalledWith('static/posts/v1.2', undefined);
+      expect(selectedSubfolderPath.current).toBe('v1.2');
+      expect(overlaidAsset.current).toBeUndefined();
+      expect(sleep).toHaveBeenCalledWith(100);
+    });
+
+    test('browses an empty subfolder or a configured folder with a dot in its name', () => {
+      visit('/assets/static/posts/v1.2');
+      /** @type {any} */ (gitConfigFiles).current = [{ path: 'static/posts/v1.2/.gitkeep' }];
+      vi.mocked(resolveAssetFolderPath).mockReturnValue({
+        folder: postsFolder,
+        subfolderPath: 'v1.2',
+      });
+
+      resolveAssetsRoute();
+      expect(resolveAssetFolderPath).toHaveBeenCalledWith('static/posts/v1.2', undefined);
+
+      const dottedFolder = /** @type {any} */ ({ internalPath: 'static/v1.2' });
+
+      visit('/assets/static/v1.2');
+      allAssetFolders.current = [dottedFolder];
+      vi.mocked(resolveAssetFolderPath).mockReturnValue({
+        folder: dottedFolder,
+        subfolderPath: '',
+      });
+
+      resolveAssetsRoute();
+      expect(resolveAssetFolderPath).toHaveBeenLastCalledWith('static/v1.2', undefined);
+      expect(selectedAssetFolder.current).toBe(dottedFolder);
+      expect(showAssetOverlay.current).toBe(false);
+    });
+
+    test('reports a missing folder', () => {
+      visit('/assets/missing');
+      selectedAssetFolder.current = postsFolder;
+      selectedSubfolderPath.current = 'sub';
+      showAssetOverlay.current = true;
+      vi.mocked(resolveAssetFolderPath).mockReturnValue(undefined);
+
+      expect(resolveAssetsRoute()).toEqual({ ...initial, notFound: true });
+      expect(selectedAssetFolder.current).toBeUndefined();
+      expect(selectedSubfolderPath.current).toBe('');
+      expect(showAssetOverlay.current).toBe(false);
+      expect(announcedPageStatus.current).toBe('asset_folder_not_found');
+      expect(sleep).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('asset details', () => {
+    const asset = /** @type {any} */ ({ name: 'a.png', path: 'static/posts/a.png' });
+
+    test('shows the details of an asset in a folder', () => {
+      visit('/assets/static/posts/a.png');
+      allAssets.current = [asset];
+      vi.mocked(resolveAssetFolderPath).mockReturnValue({ folder: postsFolder, subfolderPath: '' });
+
+      expect(resolveAssetsRoute()).toEqual(initial);
+      expect(selectedAssetFolder.current).toBe(postsFolder);
+      expect(overlaidAsset.current).toBe(asset);
+      expect(showAssetOverlay.current).toBe(true);
+      expect(announcedPageStatus.current).toBe('viewing_x_asset_details {"name":"a.png"}');
+      expect(sleep).not.toHaveBeenCalled();
+    });
+
+    test('looks up an asset outside a configured folder by its path', () => {
+      visit('/assets/static/posts/a.png');
+      allAssets.current = [asset];
+      selectedAssetFolder.current = allFolder;
+      selectedSubfolderPath.current = 'sub';
+      vi.mocked(resolveAssetFolderPath).mockReturnValue(undefined);
+
+      expect(resolveAssetsRoute()).toEqual(initial);
+      expect(selectedAssetFolder.current).toBeUndefined();
+      expect(selectedSubfolderPath.current).toBe('');
+      expect(overlaidAsset.current).toBe(asset);
+    });
+
+    test('shows the details of an asset without a file extension', () => {
+      const license = /** @type {any} */ ({ name: 'LICENSE', path: 'static/posts/LICENSE' });
+
+      visit('/assets/static/posts/LICENSE');
+      allAssets.current = [asset, license];
+      vi.mocked(resolveAssetFolderPath).mockReturnValue({ folder: postsFolder, subfolderPath: '' });
+
+      expect(resolveAssetsRoute()).toEqual(initial);
+      expect(resolveAssetFolderPath).toHaveBeenCalledWith('static/posts', undefined);
+      expect(overlaidAsset.current).toBe(license);
+      expect(showAssetOverlay.current).toBe(true);
+    });
+
+    test('leaves a path without a parent folder to the folder lookup', () => {
+      visit('/assets/LICENSE');
+      allAssets.current = [/** @type {any} */ ({ name: 'LICENSE', path: 'LICENSE' })];
+      vi.mocked(resolveAssetFolderPath).mockReturnValue(undefined);
+
+      expect(resolveAssetsRoute()).toEqual({ ...initial, notFound: true });
+      expect(resolveAssetFolderPath).toHaveBeenCalledWith('LICENSE', undefined);
+    });
+
+    test('shows the details of an asset in a root media folder', () => {
+      // `showAssetDetails()` navigates to `/assets/photo.jpg` for `photo.jpg` with
+      // `media_folder: /`
+      const rootFolder = /** @type {any} */ ({ internalPath: '' });
+      const photo = /** @type {any} */ ({ name: 'photo.jpg', path: 'photo.jpg' });
+
+      visit('/assets/photo.jpg');
+      allAssetFolders.current = [rootFolder];
+      allAssets.current = [photo];
+      vi.mocked(resolveAssetFolderPath).mockReturnValue({ folder: rootFolder, subfolderPath: '' });
+
+      expect(resolveAssetsRoute()).toEqual(initial);
+      expect(resolveAssetFolderPath).toHaveBeenCalledWith('', undefined);
+      expect(selectedAssetFolder.current).toBe(rootFolder);
+      expect(selectedSubfolderPath.current).toBe('');
+      expect(overlaidAsset.current).toBe(photo);
+      expect(showAssetOverlay.current).toBe(true);
+    });
+
+    test('reports a missing file', () => {
+      visit('/assets/static/posts/b.png');
+      allAssets.current = [asset];
+      vi.mocked(resolveAssetFolderPath).mockReturnValue({ folder: postsFolder, subfolderPath: '' });
+
+      resolveAssetsRoute();
+
+      expect(overlaidAsset.current).toBeUndefined();
+      expect(showAssetOverlay.current).toBe(true);
+      expect(announcedPageStatus.current).toBe('file_not_found');
+    });
+  });
+});

@@ -1,0 +1,261 @@
+import { cmsConfig } from '$lib/services/config/state';
+import {
+  findLibraryOptions,
+  resolveLibraryOptions,
+} from '$lib/services/integrations/media-libraries/options';
+
+/**
+ * @import {
+ * ExternalAsset,
+ * ExternalFolderListing,
+ * MediaLibraryFetchOptions,
+ * MediaLibraryService,
+ * } from '$lib/types/private';
+ * @import { CmsConfig, MediaField, MediaLibraries } from '$lib/types/public';
+ */
+
+/**
+ * Operations of an object storage service, which take the resolved service configuration.
+ * @template C Service configuration type.
+ * @typedef {object} ObjectStorageOperations
+ * @property {(config: C, options: MediaLibraryFetchOptions) => Promise<ExternalAsset[]>} list
+ * Function to list files.
+ * @property {(config: C, options: MediaLibraryFetchOptions) => Promise<ExternalFolderListing>}
+ * browse Function to list the files and the empty folders.
+ * @property {(dirPath: string, config: C, options: MediaLibraryFetchOptions) =>
+ * Promise<ExternalFolderListing>} listFolder Function to list every file and empty folder below a
+ * folder, at any depth.
+ * @property {(query: string, config: C, options: MediaLibraryFetchOptions) =>
+ * Promise<ExternalAsset[]>} search Function to search files.
+ * @property {(files: File[], config: C, options: MediaLibraryFetchOptions) =>
+ * Promise<ExternalAsset[]>} upload Function to upload files.
+ * @property {(assets: ExternalAsset[], config: C, options: MediaLibraryFetchOptions) =>
+ * Promise<void>} delete Function to delete files.
+ * @property {(asset: ExternalAsset, newName: string, config: C, options: MediaLibraryFetchOptions)
+ * => Promise<ExternalAsset>} rename Function to rename a file.
+ * @property {(asset: ExternalAsset, file: File, config: C, options: MediaLibraryFetchOptions) =>
+ * Promise<ExternalAsset>} replace Function to replace a file.
+ * @property {(asset: ExternalAsset, newPath: string, config: C, options: MediaLibraryFetchOptions)
+ * => Promise<ExternalAsset>} move Function to move a file.
+ * @property {(dirPath: string, config: C, options: MediaLibraryFetchOptions) => Promise<void>}
+ * createFolder Function to create an empty folder.
+ * @property {(dirPath: string, config: C, options: MediaLibraryFetchOptions) => Promise<void>}
+ * deleteFolder Function to remove the placeholder of a folder.
+ */
+
+/**
+ * Options to define an object storage media library service.
+ * @template C Service configuration type.
+ * @typedef {object} ObjectStorageServiceOptions
+ * @property {keyof MediaLibraries} serviceId Service identifier matching the `media_libraries`
+ * key.
+ * @property {string} serviceLabel Default service label, overridden by the `label` library option.
+ * @property {string} serviceURL Service URL.
+ * @property {string} developerURL URL of the page that provides the API/developer service.
+ * @property {string} apiKeyURL URL of the page that provides the API key.
+ * @property {RegExp} apiKeyPattern API key pattern.
+ * @property {(libOptions: any) => C} [resolveConfig] Function to derive the service configuration
+ * from the library options. Default: the library options are used as is.
+ * @property {(config: C) => boolean} isConfigured Function to check whether the resolved
+ * configuration has every option the service needs to be enabled.
+ * @property {(config: C, url: string) => boolean} isConfigURL Function to check whether the given
+ * URL points to a file on the service with the resolved configuration.
+ * @property {ObjectStorageOperations<C>} operations Operations of the service.
+ */
+
+/**
+ * Create a `MediaLibraryService` member that calls the given operation of an object storage
+ * service with the resolved configuration, inserted before the fetch options, which come last.
+ * @param {ObjectStorageService<any>} service Service.
+ * @param {keyof ObjectStorageOperations<any>} name Operation name.
+ * @returns {(...args: any[]) => Promise<any>} Member function.
+ */
+const withConfig =
+  (service, name) =>
+  async (...args) => {
+    const options = args.pop();
+
+    return /** @type {(...args: any[]) => Promise<any>} */ (service.operations[name])(
+      ...args,
+      service.getConfig(options),
+      options,
+    );
+  };
+
+/**
+ * Media library service for an object storage service, such as Azure Blob Storage or an
+ * S3-compatible service. It resolves the service’s configuration from the CMS or field
+ * configuration and delegates the operations to the given functions.
+ * @template C Service configuration type.
+ * @implements {MediaLibraryService}
+ */
+export class ObjectStorageService {
+  /** @type {'cloud_storage'} */
+  serviceType = 'cloud_storage';
+
+  showServiceLink = true;
+
+  hotlinking = true;
+
+  /** @type {'api_key'} */
+  authType = 'api_key';
+
+  /**
+   * Initialize an `ObjectStorageService` instance with the given service definition.
+   * @param {ObjectStorageServiceOptions<C>} options Service definition.
+   */
+  constructor({
+    serviceId,
+    serviceLabel,
+    serviceURL,
+    developerURL,
+    apiKeyURL,
+    apiKeyPattern,
+    resolveConfig = (libOptions) => libOptions,
+    isConfigured,
+    isConfigURL,
+    operations,
+  }) {
+    this.serviceId = serviceId;
+    this.defaultServiceLabel = serviceLabel;
+    this.serviceURL = serviceURL;
+    this.developerURL = developerURL;
+    this.apiKeyURL = apiKeyURL;
+    this.apiKeyPattern = apiKeyPattern;
+    this.resolveConfig = resolveConfig;
+    this.isConfigured = isConfigured;
+    this.isConfigURL = isConfigURL;
+    this.operations = operations;
+  }
+
+  /**
+   * Get the name to show for the service: the site-level `label` option, if any, which lets a
+   * self-hosted server reached through `endpoint` go by its own name, or the default label. It has
+   * to be read on demand, because the service is instantiated before the config is loaded.
+   * @returns {string} Service label.
+   */
+  get serviceLabel() {
+    return this.getLibraryOptions()?.label || this.defaultServiceLabel;
+  }
+
+  /**
+   * Get the service’s library options from site config.
+   * @param {CmsConfig | MediaField} [config] CMS configuration or field configuration.
+   * @returns {any} Configuration object, `false` if explicitly disabled, or `undefined` if not
+   * configured.
+   */
+  getLibraryOptions(config = cmsConfig.current) {
+    return findLibraryOptions(this.serviceId, config);
+  }
+
+  /**
+   * Get the resolved configuration for the given field or global library options.
+   * @param {MediaLibraryFetchOptions} options Options containing the configuration.
+   * @returns {C} Resolved configuration.
+   * @throws {Error} If the service is not configured.
+   */
+  getConfig({ fieldConfig }) {
+    const libOptions = resolveLibraryOptions(this.serviceId, fieldConfig);
+
+    if (!libOptions) {
+      throw new Error(`${this.serviceLabel} configuration is not available`);
+    }
+
+    return this.resolveConfig(libOptions);
+  }
+
+  // The `MediaLibraryService` members below are functions bound to the instance rather than
+  // prototype methods, because consumers destructure them from the service object, which would
+  // lose `this` otherwise.
+
+  /**
+   * Check if the service is enabled.
+   * @param {MediaField} [fieldConfig] Field configuration.
+   * @returns {boolean} True if enabled, false otherwise.
+   */
+  isEnabled = (fieldConfig) => {
+    const options = resolveLibraryOptions(this.serviceId, fieldConfig);
+
+    return !!options && this.isConfigured(this.resolveConfig(options));
+  };
+
+  /**
+   * Whether the given URL points to a file on the service.
+   * @param {string} url URL.
+   * @returns {boolean} Result.
+   */
+  isAssetURL = (url) => {
+    try {
+      return this.isConfigURL(this.getConfig(/** @type {any} */ ({})), url);
+    } catch {
+      // The service is not configured
+      return false;
+    }
+  };
+
+  /**
+   * List files on the service.
+   * @type {NonNullable<MediaLibraryService['list']>}
+   */
+  list = withConfig(this, 'list');
+
+  /**
+   * List the files and the empty folders on the service.
+   * @type {NonNullable<MediaLibraryService['browse']>}
+   */
+  browse = withConfig(this, 'browse');
+
+  /**
+   * List every file and empty folder below a folder on the service, at any depth.
+   * @type {NonNullable<MediaLibraryService['listFolder']>}
+   */
+  listFolder = withConfig(this, 'listFolder');
+
+  /**
+   * Search files on the service.
+   * @type {NonNullable<MediaLibraryService['search']>}
+   */
+  search = withConfig(this, 'search');
+
+  /**
+   * Upload files to the service.
+   * @type {NonNullable<MediaLibraryService['upload']>}
+   */
+  upload = withConfig(this, 'upload');
+
+  /**
+   * Delete files from the service.
+   * @type {NonNullable<MediaLibraryService['delete']>}
+   */
+  delete = withConfig(this, 'delete');
+
+  /**
+   * Rename a file on the service.
+   * @type {NonNullable<MediaLibraryService['rename']>}
+   */
+  rename = withConfig(this, 'rename');
+
+  /**
+   * Replace a file on the service with a new file.
+   * @type {NonNullable<MediaLibraryService['replace']>}
+   */
+  replace = withConfig(this, 'replace');
+
+  /**
+   * Move a file on the service to another path.
+   * @type {NonNullable<MediaLibraryService['move']>}
+   */
+  move = withConfig(this, 'move');
+
+  /**
+   * Create an empty folder on the service.
+   * @type {NonNullable<MediaLibraryService['createFolder']>}
+   */
+  createFolder = withConfig(this, 'createFolder');
+
+  /**
+   * Remove the placeholder of a folder on the service.
+   * @type {NonNullable<MediaLibraryService['deleteFolder']>}
+   */
+  deleteFolder = withConfig(this, 'deleteFolder');
+}

@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 
 import {
   deleteSubtree,
+  getMemoizedSubtree,
   getSubtree,
   getSubtreeEntries,
   isPlaceholder,
@@ -44,6 +45,13 @@ describe('getSubtreeEntries()', () => {
       meta: {},
       'meta.author.name': 'Kohei',
     });
+  });
+
+  test('should escape the dots in object keys', () => {
+    const entries = getSubtreeEntries('list', [{ kv: { 'example.com': 'a' } }]);
+
+    expect(entries).toEqual({ list: [], 'list.0.kv.example\uE000com': 'a' });
+    expect(getSubtree(entries, 'list')).toEqual([{ kv: { 'example.com': 'a' } }]);
   });
 
   test('should keep the placeholder for an empty value', () => {
@@ -155,5 +163,55 @@ describe('setSubtree()', () => {
 
     setSubtree(valueMap, 'meta', value);
     expect(getSubtree(valueMap, 'meta')).toEqual(value);
+  });
+});
+
+describe('getMemoizedSubtree()', () => {
+  /**
+   * Create a snapshot of a list with two items, as the value map is replaced on every change.
+   * @param {Record<string, any>} [changes] Values to change.
+   * @returns {Record<string, any>} Value map.
+   */
+  const createValueMap = (changes = {}) => ({
+    title: 'Page',
+    items: [],
+    'items.0.name': 'A',
+    'items.0.tags': [],
+    'items.1.name': 'B',
+    'items.1.details': {},
+    ...changes,
+  });
+
+  test('should hand back the same value while nothing under the key path has changed', () => {
+    const memo = {};
+    const first = getMemoizedSubtree(memo, createValueMap(), 'items');
+
+    expect(first).toEqual([
+      { name: 'A', tags: [] },
+      { name: 'B', details: {} },
+    ]);
+    // A value elsewhere changed, in a new snapshot whose placeholders are new, empty objects
+    expect(getMemoizedSubtree(memo, createValueMap({ title: 'Page 2' }), 'items')).toBe(first);
+  });
+
+  test('should assemble the value again once something under the key path has changed', () => {
+    const memo = {};
+    const first = getMemoizedSubtree(memo, createValueMap(), 'items');
+
+    expect(getMemoizedSubtree(memo, createValueMap({ 'items.1.name': 'C' }), 'items')).toEqual([
+      { name: 'A', tags: [] },
+      { name: 'C', details: {} },
+    ]);
+    // An item added or removed changes the key paths
+    expect(getMemoizedSubtree(memo, createValueMap({ 'items.2.name': 'D' }), 'items')).toHaveLength(
+      3,
+    );
+    expect(getMemoizedSubtree(memo, createValueMap(), 'items')).not.toBe(first);
+    // A placeholder that turns into a value, or another key path
+    expect(getMemoizedSubtree(memo, createValueMap({ 'items.0.tags': null }), 'items')).toEqual([
+      { name: 'A', tags: null },
+      { name: 'B', details: {} },
+    ]);
+    expect(getMemoizedSubtree(memo, createValueMap(), 'other')).toBeUndefined();
   });
 });

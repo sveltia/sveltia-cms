@@ -1,13 +1,13 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { PromptDialog, Spacer } from '@sveltia/ui';
-  import { sanitize } from 'isomorphic-dompurify';
 
   import TranslatorSelector from '$lib/components/settings/controls/translator-selector.svelte';
   import { showContentOverlay, translatorApiKeyDialogState } from '$lib/services/contents/editor';
+  import { getServiceDescription } from '$lib/services/integrations/service-description';
   import { translator } from '$lib/services/integrations/translators';
+  import { saveApiKey } from '$lib/services/user/api-keys';
   import { prefs } from '$lib/services/user/prefs.svelte';
-  import { LINK_SANITIZE_OPTIONS } from '$lib/services/utils/string';
 
   const { serviceId, apiLabel, developerURL, apiKeyURL, apiKeyPattern } = $derived(
     translator.current,
@@ -16,30 +16,46 @@
   // eslint-disable-next-line svelte/prefer-writable-derived
   let inputValue = $state('');
 
+  /**
+   * Whether the entered key matches the expected pattern, which is required to confirm the dialog.
+   */
+  const isKeyValid = $derived(!!apiKeyPattern?.test(inputValue.trim()));
+
   $effect(() => {
     // Update the input value when a different translator service is selected
     inputValue = prefs.apiKeys?.[serviceId] ?? '';
   });
 
+  /**
+   * Settle the promise the translation is waiting for, once. The dialog closes in any case: with a
+   * key saved, or cancelled or dismissed, which leaves the translation undone.
+   * @param {string} [apiKey] Saved API key.
+   */
+  const settle = (apiKey) => {
+    const { resolve } = translatorApiKeyDialogState.current;
+
+    translatorApiKeyDialogState.current.show = false;
+    translatorApiKeyDialogState.current.resolve = undefined;
+    resolve?.(apiKey);
+  };
+
   $effect(() => {
     if (!showContentOverlay.current && translatorApiKeyDialogState.current.show) {
       // Close the dialog when the Content Editor is closed
-      translatorApiKeyDialogState.current.show = false;
-      translatorApiKeyDialogState.current.resolve?.();
+      settle();
     }
   });
 
   /**
-   * Saves the API key to the user preferences if it matches the expected pattern.
+   * Saves the API key to the user preferences if it matches the expected pattern. It’s called when
+   * the dialog is confirmed or a key is pasted, not while a key is being typed, because a pattern
+   * without a maximum length would match a key cut short.
    */
   const saveKey = () => {
-    const apiKey = inputValue.trim();
+    const apiKey = saveApiKey(serviceId, inputValue, apiKeyPattern);
 
-    if (apiKeyPattern?.test(apiKey)) {
-      prefs.apiKeys ??= {};
-      prefs.apiKeys[serviceId] = apiKey;
-      translatorApiKeyDialogState.current.show = false;
-      translatorApiKeyDialogState.current.resolve?.(apiKey);
+    if (apiKey !== undefined) {
+      settle(apiKey);
     }
   };
 </script>
@@ -53,26 +69,28 @@
   textboxAttrs={{
     spellcheck: false,
     monospace: true,
-    'aria-label': _('api_key'),
+    ariaLabel: _('api_key'),
   }}
-  oninput={() => saveKey()}
+  oninput={(event) => {
+    if (/** @type {InputEvent} */ (event).inputType === 'insertFromPaste') {
+      saveKey();
+    }
+  }}
+  okDisabled={!isKeyValid}
   onOk={() => saveKey()}
-  onCancel={() => {
-    translatorApiKeyDialogState.current.resolve?.();
+  onClose={() => {
+    // Settle the translation when the dialog is closed without a key being saved, whether it’s
+    // cancelled or dismissed. An OK button click has already saved the key, as the button is
+    // disabled for an invalid one, and settled it. The dialog doesn’t call this when it has been
+    // opened again before it finished closing
+    settle();
   }}
 >
   <TranslatorSelector />
   <Spacer />
-  {@html sanitize(
-    _('prefs.i18n.translators.description', {
-      values: {
-        service: apiLabel,
-        homeHref: `href="${developerURL}"`,
-        apiKeyHref: `href="${apiKeyURL}"`,
-      },
-    })
-      // Remove invisible characters used for link detection in the locale string
-      .replace(/[\u2068\u2069]/g, ''),
-    LINK_SANITIZE_OPTIONS,
-  )}
+  {@html getServiceDescription('prefs.i18n.translators.description', {
+    service: apiLabel,
+    developerURL,
+    apiKeyURL,
+  })}
 </PromptDialog>

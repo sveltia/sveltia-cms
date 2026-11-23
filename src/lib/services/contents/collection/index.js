@@ -4,11 +4,16 @@ import { stripSlashes } from '@sveltia/utils/string';
 import { cmsConfig } from '$lib/services/config';
 import {
   getValidCollectionFiles,
+  isEntryCollection,
+  isFileCollection,
+  isSingletonCollection,
+  isValidCollection,
   isValidCollectionFile,
-} from '$lib/services/contents/collection/files';
+} from '$lib/services/contents/collection/predicates';
 import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getFileConfig } from '$lib/services/contents/file/config';
 import { normalizeI18nConfig } from '$lib/services/contents/i18n/config';
+import { isMultiple } from '$lib/services/integrations/media-libraries/multiple';
 import { createRawState } from '$lib/services/utils/state.svelte';
 
 /**
@@ -42,72 +47,8 @@ export const selectedCollection = createRawState();
 export const collectionCacheMap = new Map();
 
 /**
- * Check if the given collection is an entry collection. An entry collection is defined as one that
- * has the `folder` property that is a string and does not have the `files` property.
- * @param {Collection} collection Collection definition.
- * @returns {collection is EntryCollection} Whether the collection is an entry collection.
- */
-export const isEntryCollection = (collection) =>
-  // @ts-ignore
-  typeof collection.folder === 'string' && !Array.isArray(collection.files);
-
-/**
- * Check if the given collection is a file collection. A file collection is defined as one that has
- * the `files` property that is an array and does not have the `folder` property.
- * @param {Collection} collection Collection definition.
- * @returns {collection is FileCollection} Whether the collection is a file collection.
- */
-export const isFileCollection = (collection) =>
-  // @ts-ignore
-  collection.folder === undefined && Array.isArray(collection.files);
-
-/**
- * Check if the given collection is a singleton collection. A singleton collection is a special type
- * of file collection that has the name `_singletons`.
- * @param {Collection} collection Collection definition.
- * @returns {collection is FileCollection} Whether the collection is a singleton collection.
- */
-export const isSingletonCollection = (collection) =>
-  isFileCollection(collection) && collection.name === '_singletons';
-
-/**
- * Check if the given collection is a valid entry or file collection. A valid collection must have a
- * `folder` property for entry collections or a `files` property for file collections. It must not
- * be a divider.
- * @param {Collection | CollectionDivider} collection Collection definition or divider.
- * @param {object} [options] Filter options.
- * @param {boolean} [options.visible] Whether to filter out hidden collections. Defaults to `false`.
- * @param {CollectionType} [options.type] Type of collections to filter by. If provided, only
- * collections of this type will be returned.
- * @returns {collection is Collection} Whether the collection is valid.
- */
-export const isValidCollection = (collection, { visible = undefined, type = undefined } = {}) => {
-  if ('divider' in collection) {
-    return false;
-  }
-
-  if (visible && collection.hide) {
-    return false;
-  }
-
-  if (type === 'entry') {
-    return isEntryCollection(collection);
-  }
-
-  if (type === 'file') {
-    return isFileCollection(collection);
-  }
-
-  if (type === 'singleton') {
-    return isSingletonCollection(collection);
-  }
-
-  return isEntryCollection(collection) || isFileCollection(collection);
-};
-
-/**
  * Get a list of valid collections from the given collection definitions. This filters out dividers
- * and invalid collections that do not have a `folder` property for entry collections or a `files`
+ * and invalid collections that do not have a `fields` property for entry collections or a `files`
  * property for file collections.
  * @param {object} [options] Options.
  * @param {(Collection | CollectionDivider)[]} [options.collections] Collection definitions. May
@@ -134,12 +75,13 @@ export const getValidCollections = ({
 export const getFirstCollection = () => getValidCollections({ visible: true })[0];
 
 /**
- * Get a list of field key paths to be used to find an entry thumbnail.
+ * Get a list of field key paths, or file path templates starting with a slash, to be used to find
+ * an entry thumbnail.
  * @param {Collection} rawCollection Raw collection definition.
  * @returns {FieldKeyPath[]} Key path list.
  */
 export const getThumbnailFieldNames = (rawCollection) => {
-  if (!('folder' in rawCollection)) {
+  if (!isEntryCollection(rawCollection)) {
     return [];
   }
 
@@ -163,9 +105,10 @@ export const getThumbnailFieldNames = (rawCollection) => {
   if (fields?.length) {
     return /** @type {MediaField[]} */ (
       fields.filter(({ widget: fieldType = 'string' }) => MEDIA_FIELD_TYPES.includes(fieldType))
-    ).map(({ multiple, name }) =>
-      // If `multiple` is true, append `.*` to the name to indicate that it’s an array
-      multiple ? `${name}.*` : name,
+    ).map((field) =>
+      // If the field takes multiple files, append `.*` to the name to indicate that it’s an array.
+      // The option can also come from the media library configuration
+      isMultiple(field) ? `${field.name}.*` : field.name,
     );
   }
 
@@ -277,7 +220,13 @@ export const getCollection = (name) => {
 
   // Normalize folder/file paths by removing leading/trailing slashes
   if (entryCollection) {
-    entryCollection.folder = stripSlashes(entryCollection.folder);
+    if (typeof entryCollection.folder === 'string') {
+      entryCollection.folder = stripSlashes(entryCollection.folder);
+    }
+
+    if (typeof entryCollection.file === 'string') {
+      entryCollection.file = stripSlashes(entryCollection.file);
+    }
   } else {
     fileCollection?.files.forEach((f) => {
       if (f.file) {

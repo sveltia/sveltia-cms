@@ -2,7 +2,9 @@ import { _, locale as appLocale } from '@sveltia/i18n';
 import { isObject } from '@sveltia/utils/object';
 
 import { addMessage } from '$lib/services/config/parser/utils/validator';
+import { decodeSegment } from '$lib/services/config/schema/pointer';
 import { getListFormatter } from '$lib/services/contents/i18n';
+import { isNumeric } from '$lib/services/utils/number';
 
 /**
  * @import {
@@ -17,16 +19,6 @@ import { getListFormatter } from '$lib/services/contents/i18n';
  * Value types the schema uses, each with a localized name in `config.error.schema_value_type`.
  */
 const VALUE_TYPES = ['string', 'number', 'integer', 'boolean', 'array', 'object', 'null'];
-/**
- * Pattern matching a JSON pointer segment that indexes an array.
- */
-const INDEX_REGEX = /^\d+$/;
-/**
- * Decode the escape sequences of a JSON pointer segment.
- * @param {string} segment Segment to decode.
- * @returns {string} Decoded segment.
- */
-const decodeSegment = (segment) => segment.replaceAll('~1', '/').replaceAll('~0', '~');
 
 /**
  * Format the given items as a localized list of alternatives.
@@ -59,7 +51,7 @@ const formatType = (type) => _(`config.error.schema_value_type.${type}`);
  */
 const formatOption = (segments) =>
   segments.reduce((path, segment) => {
-    if (INDEX_REGEX.test(segment)) {
+    if (isNumeric(segment)) {
       return `${path}[${segment}]`;
     }
 
@@ -106,7 +98,7 @@ export const locateError = (config, instancePath) => {
   while (index < segments.length && structural) {
     const key = segments[index];
     const next = segments[index + 1];
-    const item = next !== undefined && INDEX_REGEX.test(next) ? node?.[key]?.[next] : undefined;
+    const item = next !== undefined && isNumeric(next) ? node?.[key]?.[next] : undefined;
 
     if (isObject(item) && node === config && (key === 'collections' || key === 'singletons')) {
       // A singleton is a file that doesn’t belong to a collection

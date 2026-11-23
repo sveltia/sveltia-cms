@@ -7,7 +7,7 @@ global.fetch = vi.fn();
 
 const defaultOptions = {
   apiKey: 'sk-proj-test-key-1234567890abcdef',
-  model: 'gpt-5.6-luna',
+  model: 'gpt-6-luna',
   systemPrompt: 'You are a helpful assistant.',
   userMessage: 'Hello!',
 };
@@ -104,7 +104,7 @@ describe('OpenAI AI Client', () => {
       const body = JSON.parse(/** @type {string} */ (vi.mocked(fetch).mock.calls[0][1]?.body));
 
       expect(body).not.toHaveProperty('temperature');
-      expect(body.max_output_tokens).toBe(4000);
+      expect(body.max_output_tokens).toBe(16_000);
     });
 
     it('should forward custom maxTokens without temperature', async () => {

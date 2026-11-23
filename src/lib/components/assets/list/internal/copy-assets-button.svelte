@@ -3,13 +3,12 @@
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import { isTextFileType } from '@sveltia/utils/file';
 
   import CopyMenu from '$lib/components/assets/list/copy-menu.svelte';
   import { getAssetDetails } from '$lib/services/assets/details';
   import { getAssetBlob } from '$lib/services/assets/info';
-  import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
-  import { transformImage } from '$lib/services/utils/media/image/transform';
+  import { canCopyFileData, copyFileData } from '$lib/services/utils/clipboard';
+  import { watchAsync } from '$lib/services/utils/state.svelte';
 
   /**
    * @import { Asset, AssetDetails } from '$lib/types/private';
@@ -22,16 +21,11 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    assets = [],
-    useButton = true,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { assets = [], useButton = true } = $props();
 
   /** @type {AssetDetails[]} */
   let assetsDetailList = $state([]);
-  let canCopyFileData = $state(false);
+  let canCopyData = $state(false);
 
   const publicURLs = $derived(
     assetsDetailList.filter(({ publicURL }) => !!publicURL).map(({ publicURL }) => publicURL),
@@ -39,61 +33,6 @@
 
   /** @type {Blob | undefined} */
   let assetBlob = undefined;
-
-  /**
-   * Check if the file data can be copied to clipboard. Since OSes usually support only one item,
-   * enable the menu only when one file is selected. Also check if the file type is plaintext or
-   * image and if the copy method is supported in the browser.
-   * @returns {Promise<boolean>} Result.
-   */
-  const checkCanCopyFileData = async () => {
-    assetBlob = undefined;
-
-    if (assets.length !== 1) {
-      return false;
-    }
-
-    const blob = await getAssetBlob(assets[0]);
-    const { type } = blob;
-
-    assetBlob = blob;
-
-    if (isTextFileType(type)) {
-      return true;
-    }
-
-    if (SUPPORTED_IMAGE_TYPES.includes(type)) {
-      return typeof navigator.clipboard.write === 'function';
-    }
-
-    return false;
-  };
-
-  /**
-   * Copy the file data to clipboard. Given that browsers typically support only plaintext and PNG
-   * image, convert the file if necessary.
-   */
-  const copyFileData = async () => {
-    let blob = /** @type {Blob} */ (assetBlob);
-    const { type } = blob;
-
-    if (isTextFileType(type)) {
-      await navigator.clipboard.writeText(await blob.text());
-
-      return;
-    }
-
-    if (!SUPPORTED_IMAGE_TYPES.includes(type)) {
-      throw new Error('Unsupported type');
-    }
-
-    if (type !== 'image/png') {
-      blob = await transformImage(blob);
-    }
-
-    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-  };
-
   const items = $derived([
     {
       label: _('public_urls', { values: { count: assets.length } }),
@@ -118,18 +57,48 @@
     },
     {
       label: _('file_data'),
-      disabled: !canCopyFileData,
-      copy: copyFileData,
+      disabled: !canCopyData,
+      /**
+       * Copy the file data to clipboard.
+       */
+      copy: async () => {
+        await copyFileData(/** @type {Blob} */ (assetBlob));
+      },
       toastKey: 'asset_data_copied',
     },
   ]);
 
-  $effect(() => {
-    (async () => {
-      assetsDetailList = await Promise.all(assets.map(getAssetDetails));
-      canCopyFileData = await checkCanCopyFileData();
-    })();
-  });
+  // The menu stays mounted while the focus moves from one asset to another, so a slow lookup for an
+  // asset focused earlier must not overwrite the details of the one focused now, which `watchAsync`
+  // takes care of
+  watchAsync(
+    () => {
+      const _assets = assets;
+
+      // Don’t copy the URLs or data of the assets selected before while the new ones are being
+      // looked up
+      assetsDetailList = [];
+      assetBlob = undefined;
+      canCopyData = false;
+
+      return Promise.all([
+        Promise.all(_assets.map(getAssetDetails)),
+        // Since OSes usually support only one item, the data can be copied only when one file is
+        // selected. The data may not be available, e.g. for a file that can’t be downloaded
+        _assets.length === 1 ? getAssetBlob(_assets[0]).catch(() => undefined) : undefined,
+      ]);
+    },
+    ([detailList, blob]) => {
+      assetsDetailList = detailList;
+      assetBlob = blob;
+      canCopyData = !!blob && canCopyFileData(blob.type);
+    },
+    (ex) => {
+      // The details couldn’t be retrieved, so the public URLs are unknown
+      // eslint-disable-next-line no-console
+      console.error(ex);
+    },
+  );
 </script>
 
 <CopyMenu {items} count={assets.length} {useButton} />

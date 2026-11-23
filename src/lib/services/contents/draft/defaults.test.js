@@ -1,5 +1,7 @@
 import { describe, expect, test, vi } from 'vitest';
 
+import { getDefaultValueMap as getObjectFieldDefaultValueMap } from '$lib/services/contents/fields/object/defaults';
+
 import { getDefaultValues, populateDefaultValue } from './defaults';
 
 /**
@@ -401,6 +403,26 @@ describe('Test populateDefaultValue()', () => {
     expect(content.custom_field).toBe('Custom Default');
   });
 
+  test.each([0, false])('should keep a falsy default value of %s', (defaultValue) => {
+    /** @type {FlattenedEntryContent} */
+    const content = {};
+
+    populateDefaultValue({
+      content,
+      keyPath: 'custom_field',
+      fieldConfig: /** @type {Field} */ ({
+        name: 'custom_field',
+        widget: 'custom',
+        default: defaultValue,
+      }),
+      locale: 'en',
+      defaultLocale: 'en',
+      dynamicValues: {},
+    });
+
+    expect(content.custom_field).toBe(defaultValue);
+  });
+
   test('should use empty string for unknown field without default', () => {
     /** @type {FlattenedEntryContent} */
     const content = {};
@@ -493,6 +515,20 @@ describe('Test populateDefaultValue()', () => {
 });
 
 describe('Test getDefaultValues()', () => {
+  test('should not take an `Object.prototype` member for a dynamic value', () => {
+    /** @type {Field[]} */
+    const fields = [
+      { name: 'constructor', widget: 'string', default: 'Ada' },
+      { name: 'toString', widget: 'string' },
+    ];
+
+    // Threw `dynamicValues[keyPath].trim is not a function`
+    expect(getDefaultValues({ fields, locale: 'en', defaultLocale: 'en' })).toEqual({
+      constructor: 'Ada',
+      toString: '',
+    });
+  });
+
   test('should return empty object for empty fields array', () => {
     const result = getDefaultValues({ fields: [], locale: 'en', defaultLocale: 'en' });
 
@@ -664,6 +700,42 @@ describe('Test getDefaultValues()', () => {
     expect(result).toEqual({
       title: 'Default Title',
     });
+  });
+
+  test('should pass the dynamic values down to the subfields of an Object field', () => {
+    // A subfield of an Object field can be given a dynamic value with the dot notation
+    vi.mocked(getObjectFieldDefaultValueMap).mockImplementationOnce(
+      ({ keyPath, locale, defaultLocale, populateDefault }) => {
+        /** @type {FlattenedEntryContent} */
+        const content = {};
+
+        populateDefault?.({
+          content,
+          keyPath: `${keyPath}.name`,
+          fieldConfig: { name: 'name', widget: 'string' },
+          locale,
+          defaultLocale,
+          dynamicValues: {},
+        });
+
+        return content;
+      },
+    );
+
+    /** @type {Field[]} */
+    const fields = [
+      { name: 'title', widget: 'string' },
+      { name: 'author', widget: 'object', fields: [{ name: 'name', widget: 'string' }] },
+    ];
+
+    const result = getDefaultValues({
+      fields,
+      locale: 'en',
+      defaultLocale: 'en',
+      dynamicValues: { title: 'My First Post', 'author.name': 'John Doe' },
+    });
+
+    expect(result).toEqual({ title: 'My First Post', 'author.name': 'John Doe' });
   });
 
   test('should handle different locale', () => {
@@ -937,5 +1009,74 @@ describe('Test getDefaultValues()', () => {
       title: 'Trimmed Title',
       description: 'Default Description',
     });
+  });
+});
+
+describe('Test localized default values', () => {
+  /** @type {Field[]} */
+  const fields = [
+    {
+      name: 'title',
+      widget: 'string',
+      i18n: true,
+      default: 'Untitled',
+      default_localized: { de: 'Ohne Titel' },
+    },
+    {
+      name: 'categories',
+      widget: 'list',
+      i18n: true,
+      default: ['car repair', 'tuning'],
+      default_localized: { de: ['autoreparatur', 'tuning'] },
+    },
+    {
+      name: 'date',
+      widget: 'string',
+      i18n: 'duplicate',
+      default: 'today',
+      default_localized: { en: 'Today', de: 'Heute' },
+    },
+  ];
+
+  test('should use the localized default value of the locale', () => {
+    expect(getDefaultValues({ fields, locale: 'de', defaultLocale: 'en' })).toEqual({
+      title: 'Ohne Titel',
+      categories: ['autoreparatur', 'tuning'],
+      date: 'Today',
+    });
+  });
+
+  test('should fall back to the default value without a localized one', () => {
+    expect(getDefaultValues({ fields, locale: 'en', defaultLocale: 'en' })).toEqual({
+      title: 'Untitled',
+      categories: ['car repair', 'tuning'],
+      date: 'Today',
+    });
+    expect(getDefaultValues({ fields, locale: 'fr', defaultLocale: 'en' })).toEqual({
+      title: 'Untitled',
+      categories: ['car repair', 'tuning'],
+      date: 'Today',
+    });
+  });
+
+  test('should prefer a dynamic value over the localized default value', () => {
+    expect(
+      getDefaultValues({
+        fields: [fields[0]],
+        locale: 'de',
+        defaultLocale: 'en',
+        dynamicValues: { title: 'Dynamisch' },
+      }),
+    ).toEqual({ title: 'Dynamisch' });
+  });
+
+  test('should not pass the localized default values on to the field type', async () => {
+    const { getDefaultValueMap } = await import('$lib/services/contents/fields/list/defaults');
+
+    getDefaultValues({ fields: [fields[1]], locale: 'de', defaultLocale: 'en' });
+
+    expect(vi.mocked(getDefaultValueMap).mock.calls[0][0].fieldConfig).not.toHaveProperty(
+      'default_localized',
+    );
   });
 });

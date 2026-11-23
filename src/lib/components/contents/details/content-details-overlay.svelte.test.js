@@ -1,0 +1,984 @@
+import { flushSync } from 'svelte';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
+import { render } from 'vitest-browser-svelte';
+
+import { entryLocks, getLockKey, watchEntry } from '$lib/services/additions/locks.svelte';
+import { loadAdditions } from '$lib/services/app/additions';
+import { lockedBranch } from '$lib/services/backends/branch-access';
+import { cmsConfig } from '$lib/services/config';
+import { getCollection, selectedCollection } from '$lib/services/contents/collection';
+import { getCollectionFile } from '$lib/services/contents/collection/files';
+import { EntryDraftState } from '$lib/services/contents/draft/state.svelte';
+import {
+  editorFirstPane,
+  editorSecondPane,
+  showContentOverlay,
+  showDuplicateToast,
+} from '$lib/services/contents/editor';
+import { entryEditorSettings } from '$lib/services/contents/editor/settings';
+import { sidebarSheetPanel } from '$lib/services/contents/editor/sidebar';
+import { user } from '$lib/services/user/account.svelte';
+import { env } from '$lib/services/user/env.svelte';
+import { prefs } from '$lib/services/user/prefs.svelte';
+import { allUnpublishedEntries } from '$lib/services/workflow';
+import {
+  createMockEntry,
+  createMockForkPullRequest,
+  createMockWorkflowEntry,
+  initTestConfig,
+  setEntries,
+} from '$lib/test/config';
+import { createMockDraft } from '$lib/test/draft';
+import { waitForToastsToHide } from '$lib/test/toast';
+
+import ContentDetailsOverlay from './content-details-overlay.svelte';
+
+/** Function that lets an entry go, returned by `watchEntry`. */
+const { stopWatching } = vi.hoisted(() => ({ stopWatching: vi.fn() }));
+
+// The lock state is real; watching an entry would talk to Sveltia CMS Additions
+vi.mock('$lib/services/additions/locks.svelte', async (importOriginal) => ({
+  ...(await importOriginal()),
+  watchEntry: vi.fn(() => stopWatching),
+}));
+
+vi.mock('$lib/services/deployments/poll', () => ({
+  retainDeployPolling: vi.fn(() => () => {}),
+  recheckDeployments: vi.fn(),
+}));
+vi.mock('$lib/services/contents/draft/backup', async () => {
+  const { createDeepState } = await import('$lib/services/utils/state.svelte');
+
+  return {
+    restoreDialogState: createDeepState({ show: false }),
+    cancelRestoreCheck: vi.fn(),
+    backupToastState: createDeepState({ saved: false, restored: false, deleted: false }),
+    cancelBackup: vi.fn(),
+    deleteBackup: vi.fn(),
+    getBackup: vi.fn(),
+    getBackupSlug: vi.fn(() => ''),
+    saveBackup: vi.fn(),
+    restoreBackup: vi.fn(),
+    restoreBackupIfNeeded: vi.fn(),
+    showBackupToastIfNeeded: vi.fn(),
+    resetBackupToastState: vi.fn(),
+    scheduleBackup: vi.fn(),
+  };
+});
+
+const fields = [
+  { name: 'title', label: 'Title', widget: 'string', i18n: true },
+  { name: 'body', label: 'Body', widget: 'text', i18n: true },
+  {
+    name: 'author',
+    label: 'Author',
+    widget: 'object',
+    i18n: true,
+    fields: [{ name: 'name', label: 'Name', widget: 'string', i18n: true }],
+  },
+];
+
+/**
+ * Render the overlay.
+ * @param {any} draft Draft, `undefined` for a missing entry.
+ * @param {Record<string, any>} [props] Props to override.
+ * @returns {Promise<{ entryDraft: EntryDraftState, container: HTMLElement }>} Draft state and
+ * container.
+ */
+const renderOverlay = async (draft, props = {}) => {
+  const entryDraft = new EntryDraftState();
+
+  entryDraft.current = draft;
+
+  const { container } = await render(ContentDetailsOverlay, { entryDraft, ...props });
+
+  return { entryDraft, container };
+};
+
+/**
+ * Create a draft of a new post.
+ * @param {Record<string, any>} [draftProps] Draft properties to override.
+ * @returns {any} Draft.
+ */
+const createDraft = (draftProps = {}) =>
+  createMockDraft({
+    fields,
+    i18n: {
+      i18nEnabled: true,
+      allLocales: ['en', 'fr', 'de'],
+      initialLocales: ['en', 'fr', 'de'],
+      defaultLocale: 'en',
+      structure: /** @type {const} */ ('multiple_folders'),
+    },
+    values: {
+      en: { title: 'Hello', body: '', 'author.name': 'Melvin' },
+      fr: { title: 'Bonjour', body: '', 'author.name': 'Melvin' },
+      de: { title: 'Hallo', body: '', 'author.name': 'Melvin' },
+    },
+    draft: { collection: getCollection('posts'), ...draftProps },
+  });
+
+describe('ContentDetailsOverlay', () => {
+  beforeEach(async () => {
+    await initTestConfig({
+      i18n: {
+        structure: /** @type {const} */ ('multiple_folders'),
+        locales: ['en', 'fr', 'de'],
+        default_locale: 'en',
+      },
+      collections: [
+        { name: 'posts', label: 'Posts', folder: 'content/posts', i18n: true, fields },
+        { name: 'locked', label: 'Locked', folder: 'content/locked', create: false, fields },
+        { name: 'limited', label: 'Limited', folder: 'content/limited', limit: 1, fields },
+        { name: 'frozen', label: 'Frozen', folder: 'content/frozen', readonly: true, fields },
+        { name: 'plain', label: 'Plain', folder: 'content/plain', fields },
+        {
+          name: 'pages',
+          label: 'Pages',
+          files: ['a', 'b'].map((name) => ({ name, file: `content/${name}.md`, fields })),
+        },
+      ],
+    });
+    env.isSmallScreen = false;
+    env.isMediumScreen = false;
+    env.isLargeScreen = true;
+    showContentOverlay.current = true;
+    showDuplicateToast.current = false;
+    editorFirstPane.current = null;
+    editorSecondPane.current = null;
+    entryEditorSettings.current = { showPreview: true, showSecondPane: true, syncScrolling: true };
+    selectedCollection.current = getCollection('posts');
+    prefs.devModeEnabled = false;
+    lockedBranch.current = undefined;
+    allUnpublishedEntries.current = [];
+    window.history.replaceState(null, '');
+  });
+
+  test('shows the editor and the preview side by side', async () => {
+    const { container } = await renderOverlay(createDraft());
+    const editor = page.getByRole('group', { name: 'Content Editor' });
+
+    await expect.element(editor.getByRole('toolbar', { name: 'Primary' })).toBeInTheDocument();
+
+    const editPane = editor.getByRole('group', { name: 'Edit \u2068English\u2069 Content' });
+    const previewPane = editor.getByRole('group', { name: 'Preview \u2068English\u2069 Content' });
+
+    await expect.element(editPane).toHaveAttribute('data-mode', 'edit');
+    await expect.element(previewPane).toHaveAttribute('data-mode', 'preview');
+    await expect.element(editPane.getByRole('textbox', { name: 'Title' })).toHaveValue('Hello');
+    await expect
+      .element(previewPane.getByRole('document', { name: 'Content Preview' }))
+      .toHaveTextContent('Title HelloBody Author Name Melvin');
+    await expect
+      .element(editor.getByRole('radiogroup', { name: 'Sidebar Panels' }))
+      .toBeInTheDocument();
+    // The editor takes the focus
+    await expect
+      .poll(() => document.activeElement)
+      .toBe(container.querySelector('.content-editor'));
+
+    // The panes can be swapped
+    await editor.getByRole('button', { name: 'Swap Panes' }).click();
+    expect(editorFirstPane.current).toEqual({ mode: 'preview', locale: 'en' });
+    expect(editorSecondPane.current).toEqual({ mode: 'edit', locale: 'en' });
+  });
+
+  test('shows the other locale in the second pane without the preview', async () => {
+    entryEditorSettings.current = { showPreview: false, showSecondPane: true };
+
+    await renderOverlay(createDraft());
+
+    await expect
+      .element(
+        page
+          .getByRole('group', { name: 'Edit \u2068French\u2069 Content' })
+          .getByRole('textbox', { name: 'Title' }),
+      )
+      .toHaveValue('Bonjour');
+  });
+
+  test('shows a single pane when the configuration turns the second pane off', async () => {
+    await renderOverlay(createDraft({ canShowSecondPane: false }));
+
+    const editor = page.getByRole('group', { name: 'Content Editor' });
+
+    await expect
+      .element(editor.getByRole('group', { name: 'Edit \u2068English\u2069 Content' }))
+      .toBeInTheDocument();
+    expect(editorSecondPane.current).toBeNull();
+    expect(editor.getByRole('button', { name: 'Swap Panes' }).elements()).toHaveLength(0);
+
+    // The preview takes turns with the editor in the only pane
+    await editor.getByRole('radio', { name: 'Preview' }).click();
+    await expect
+      .element(editor.getByRole('group', { name: 'Preview \u2068English\u2069 Content' }))
+      .toBeInTheDocument();
+  });
+
+  test('shows a single pane on a small screen, with the sidebar panels in a sheet', async () => {
+    env.isSmallScreen = true;
+    env.isLargeScreen = false;
+
+    await renderOverlay(createDraft());
+
+    await expect
+      .element(page.getByRole('group', { name: 'Edit \u2068English\u2069 Content' }))
+      .toBeInTheDocument();
+    expect(page.getByRole('group', { name: /Preview/ }).elements()).toHaveLength(0);
+    expect(page.getByRole('radiogroup', { name: 'Sidebar Panels' }).elements()).toHaveLength(0);
+
+    sidebarSheetPanel.current = 'validation';
+    await expect.element(page.getByRole('dialog', { name: 'Validation' })).toBeVisible();
+  });
+
+  test('starts with the requested locale', async () => {
+    await renderOverlay(createDraft(), { editorLocale: 'de' });
+
+    await expect
+      .element(page.getByRole('group', { name: 'Edit \u2068German\u2069 Content' }))
+      .toBeInTheDocument();
+    await expect
+      .element(page.getByRole('group', { name: 'Preview \u2068German\u2069 Content' }))
+      .toBeInTheDocument();
+  });
+
+  test('starts with the requested locale without the preview', async () => {
+    entryEditorSettings.current = { showPreview: false, showSecondPane: true };
+
+    await renderOverlay(createDraft(), { editorLocale: 'de' });
+
+    await expect.poll(() => editorFirstPane.current).toEqual({ mode: 'edit', locale: 'de' });
+    expect(editorSecondPane.current).toEqual({ mode: 'edit', locale: 'en' });
+  });
+
+  test('highlights a field on request', async () => {
+    await renderOverlay(createDraft());
+    await expect.element(page.getByRole('textbox', { name: 'Title' })).toBeInTheDocument();
+
+    window.postMessage(
+      { type: 'highlight-editor-field', payload: { locale: 'fr', keyPath: 'body' } },
+      window.location.origin,
+    );
+
+    // The French content is brought into an edit pane, and the field focused
+    await expect
+      .element(page.getByRole('group', { name: 'Edit \u2068French\u2069 Content' }))
+      .toBeInTheDocument();
+    await expect
+      .element(
+        page
+          .getByRole('group', { name: 'Edit \u2068French\u2069 Content' })
+          .getByRole('textbox', { name: 'Body' }),
+      )
+      .toHaveFocus();
+
+    // A field within a collapsed object is expanded first
+    await page
+      .getByRole('group', { name: 'Edit \u2068French\u2069 Content' })
+      .getByRole('button', { name: 'Collapse' })
+      .click();
+    window.postMessage(
+      { type: 'highlight-editor-field', payload: { locale: 'fr', keyPath: 'author.name' } },
+      window.location.origin,
+    );
+    await expect
+      .element(
+        page
+          .getByRole('group', { name: 'Edit \u2068French\u2069 Content' })
+          .getByRole('textbox', { name: 'Name' }),
+      )
+      .toHaveFocus();
+  });
+
+  test('marks the draft as interacted', async () => {
+    const { entryDraft } = await renderOverlay(createDraft());
+
+    expect(entryDraft.current?.interacted).toBe(false);
+
+    const title = page.getByRole('textbox', { name: 'Title' });
+
+    await expect.element(title).toBeInTheDocument();
+    // A synthetic event, like one from a script, doesn’t count as an interaction
+    title.element().dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    expect(entryDraft.current?.interacted).toBe(false);
+    await title.click();
+    expect(entryDraft.current?.interacted).toBe(true);
+  });
+
+  test('reports a missing entry', async () => {
+    window.location.hash = '#/collections/posts/entries/missing';
+    entryEditorSettings.current = undefined;
+
+    await renderOverlay(undefined);
+
+    await expect.element(page.getByText('Entry not found.')).toBeInTheDocument();
+    await page.getByRole('button', { name: 'Back to Collection' }).click();
+    await expect.poll(() => window.location.hash).toBe('#/collections/posts');
+
+    // Without a collection to go back to, the collection list is shown
+    selectedCollection.current = undefined;
+    await renderOverlay(undefined);
+    await page.getByRole('button', { name: 'Back to Collection' }).nth(1).click();
+    await expect.poll(() => window.location.hash).toBe('#/collections');
+  });
+
+  test('shows a loading state', async () => {
+    await renderOverlay(createDraft(), { loading: true });
+
+    await expect.element(page.getByText('Loading entry…')).toBeInTheDocument();
+    await expect.element(page.getByRole('button', { name: 'Save' })).toBeDisabled();
+  });
+
+  test('refuses to create an entry when disabled', async () => {
+    selectedCollection.current = getCollection('locked');
+
+    await renderOverlay(
+      createMockDraft({
+        collectionName: 'locked',
+        fields,
+        draft: { collection: getCollection('locked') },
+      }),
+    );
+
+    await expect
+      .element(
+        page.getByText('Creating new entries in this collection is disabled by the administrator.'),
+      )
+      .toBeInTheDocument();
+    await expect.element(page.getByRole('button', { name: 'Save' })).toBeDisabled();
+  });
+
+  test('refuses to create an entry in a read-only collection', async () => {
+    selectedCollection.current = getCollection('frozen');
+
+    await renderOverlay(
+      createMockDraft({
+        collectionName: 'frozen',
+        fields,
+        draft: { collection: getCollection('frozen') },
+      }),
+    );
+
+    await expect
+      .element(
+        page.getByText(
+          'This collection is read-only. You can view its content but cannot make any changes.',
+        ),
+      )
+      .toBeInTheDocument();
+    expect(page.getByRole('button', { name: 'Save' }).elements()).toHaveLength(0);
+    // The message is given once, in place of the editor
+    expect(page.getByRole('status').elements()).toHaveLength(0);
+  });
+
+  test.each([
+    [true, /Your changes are saved to their branch/],
+    [false, /The contributor doesn’t allow maintainers to edit it/],
+  ])(
+    'says where an entry from a contributor’s pull request is saved (editable: %s)',
+    async (editable, message) => {
+      const entry = createMockWorkflowEntry({
+        status: 'pending_review',
+        pullRequest: createMockForkPullRequest({ editable }),
+      });
+
+      // The pull request is still open, so the board has its entry
+      allUnpublishedEntries.current = [entry];
+
+      await renderOverlay(
+        createMockDraft({
+          fields,
+          values: { _default: { title: 'Hello', body: '', 'author.name': 'Melvin' } },
+          draft: { isNew: false, originalEntry: entry },
+        }),
+      );
+
+      await expect.element(page.getByRole('status')).toMatchTextContent(message);
+      await expect
+        .element(page.getByRole('textbox', { name: 'Title' }))
+        .toHaveAttribute('aria-readonly', String(!editable));
+    },
+  );
+
+  test('says an entry from a contributor’s pull request that has gone can’t be saved', async () => {
+    // The pull request was merged or closed since the editor was opened, so it’s off the store
+    allUnpublishedEntries.current = [];
+
+    await renderOverlay(
+      createMockDraft({
+        fields,
+        values: { _default: { title: 'Hello', body: '', 'author.name': 'Melvin' } },
+        draft: {
+          isNew: false,
+          originalEntry: createMockWorkflowEntry({
+            status: 'pending_review',
+            pullRequest: createMockForkPullRequest(),
+          }),
+        },
+      }),
+    );
+
+    await expect
+      .element(page.getByRole('status'))
+      .toMatchTextContent(/pull request is no longer open/);
+  });
+
+  test('shows an existing entry of a read-only collection for reference', async () => {
+    selectedCollection.current = getCollection('frozen');
+
+    await renderOverlay(
+      createMockDraft({
+        collectionName: 'frozen',
+        fields,
+        values: { _default: { title: 'Hello', body: '', 'author.name': 'Melvin' } },
+        draft: {
+          collection: getCollection('frozen'),
+          isNew: false,
+          originalEntry: createMockEntry({ slug: 'hello', folder: 'content/frozen' }),
+        },
+      }),
+    );
+
+    await expect
+      .element(page.getByRole('status'))
+      .toHaveTextContent(
+        'info Information This entry is read-only. You can view it but cannot make any changes.',
+      );
+    await expect.element(page.getByRole('textbox', { name: 'Title' })).toHaveValue('Hello');
+    await expect
+      .element(page.getByRole('textbox', { name: 'Title' }))
+      .toHaveAttribute('aria-readonly', 'true');
+    expect(page.getByRole('button', { name: 'Save' }).elements()).toHaveLength(0);
+  });
+
+  test('refuses to create an entry when the user can’t push to the branch', async () => {
+    selectedCollection.current = getCollection('plain');
+    lockedBranch.current = 'main';
+
+    await renderOverlay(
+      createMockDraft({
+        collectionName: 'plain',
+        fields,
+        draft: { collection: getCollection('plain') },
+      }),
+    );
+
+    await expect
+      .element(
+        page.getByText(
+          'You don’t have permission to push to the “\u2068main\u2069” branch. You can view this ' +
+            'content but cannot make any changes.',
+        ),
+      )
+      .toBeInTheDocument();
+    expect(page.getByRole('button', { name: 'Save' }).elements()).toHaveLength(0);
+    expect(page.getByRole('status').elements()).toHaveLength(0);
+  });
+
+  test('shows an existing entry for reference when the user can’t push to the branch', async () => {
+    selectedCollection.current = getCollection('plain');
+    lockedBranch.current = 'main';
+
+    await renderOverlay(
+      createMockDraft({
+        collectionName: 'plain',
+        fields,
+        values: { _default: { title: 'Hello', body: '', 'author.name': 'Melvin' } },
+        draft: {
+          collection: getCollection('plain'),
+          isNew: false,
+          originalEntry: createMockEntry({ slug: 'hello', folder: 'content/plain' }),
+        },
+      }),
+    );
+
+    await expect
+      .element(page.getByRole('status'))
+      .toHaveTextContent(
+        'info Information You don’t have permission to push to the “\u2068main\u2069” branch. ' +
+          'You can view this content but cannot make any changes.',
+      );
+    await expect
+      .element(page.getByRole('textbox', { name: 'Title' }))
+      .toHaveAttribute('aria-readonly', 'true');
+    expect(page.getByRole('button', { name: 'Save' }).elements()).toHaveLength(0);
+  });
+
+  test('holds the entry’s lock and tells others it’s open, and says who else holds it', async () => {
+    selectedCollection.current = getCollection('plain');
+    user.account = /** @type {any} */ ({ backendName: 'github', role: 'editor' });
+
+    /**
+     * Create a draft of an existing entry, which can be locked.
+     * @returns {any} Draft.
+     */
+    const createLockedDraft = () =>
+      createMockDraft({
+        collectionName: 'plain',
+        fields,
+        values: { _default: { title: 'Hello', body: '', 'author.name': 'Melvin' } },
+        draft: {
+          collection: getCollection('plain'),
+          isNew: false,
+          originalEntry: createMockEntry({ slug: 'hello', folder: 'content/plain' }),
+        },
+      });
+
+    const key = getLockKey('plain', 'hello');
+    const config = cmsConfig.current;
+
+    try {
+      // Locks are only taken with Sveltia CMS Additions
+      const { entryDraft: draftWithoutAdditions } = await renderOverlay(createLockedDraft());
+
+      expect(watchEntry).not.toHaveBeenCalled();
+      draftWithoutAdditions.current = null;
+      flushSync();
+
+      cmsConfig.current = /** @type {any} */ ({
+        ...config,
+        backend: { name: 'github', repo: 'me/site', auth_type: 'additions' },
+      });
+      await loadAdditions();
+
+      const { entryDraft } = await renderOverlay(createLockedDraft());
+
+      // Others are told the entry is open, and its lock is held, until it’s closed
+      expect(watchEntry).toHaveBeenCalledWith(key, { hold: true });
+      expect(stopWatching).not.toHaveBeenCalled();
+      entryDraft.current = null;
+      flushSync();
+      expect(stopWatching).toHaveBeenCalledOnce();
+
+      // Someone else holds it: the lock infobar says so instead of the generic message
+      Object.assign(entryLocks, {
+        connection: 'mine',
+        locks: { [key]: { key, user_id: 'u2', name: 'Bob', since: '', connection: 'theirs' } },
+      });
+      vi.mocked(watchEntry).mockClear();
+      user.account = /** @type {any} */ ({ backendName: 'github', role: 'viewer' });
+
+      const { entryDraft: viewerDraft } = await renderOverlay(createLockedDraft());
+
+      await expect.element(page.getByText(/has been editing this entry/)).toBeVisible();
+      await expect
+        .element(page.getByRole('textbox', { name: 'Title' }))
+        .toHaveAttribute('aria-readonly', 'true');
+      expect(page.getByText(/You can view this/).elements()).toHaveLength(0);
+      // A viewer never acquires a lock, but others still see them looking at the entry
+      expect(watchEntry).toHaveBeenCalledWith(key, { hold: false });
+
+      // Nor does anyone else who can’t edit the entry, e.g. without access to the branch, which
+      // would keep those who can from editing it
+      viewerDraft.current = null;
+      flushSync();
+      Object.assign(entryLocks, { connection: '', locks: {} });
+      user.account = /** @type {any} */ ({ backendName: 'github', role: 'editor' });
+      lockedBranch.current = 'main';
+      vi.mocked(watchEntry).mockClear();
+
+      await renderOverlay(createLockedDraft());
+
+      await expect
+        .element(page.getByRole('textbox', { name: 'Title' }))
+        .toHaveAttribute('aria-readonly', 'true');
+      expect(watchEntry).toHaveBeenCalledWith(key, { hold: false });
+    } finally {
+      cmsConfig.current = config;
+      Object.assign(entryLocks, { connection: '', locks: {} });
+      user.account = undefined;
+    }
+  });
+
+  test('drops the draft when the overlay is closed', async () => {
+    showContentOverlay.current = false;
+
+    const { entryDraft } = await renderOverlay(createDraft());
+
+    expect(entryDraft.current).toBeNull();
+  });
+
+  test('reports a duplicated entry', async () => {
+    await renderOverlay(createDraft());
+
+    showDuplicateToast.current = true;
+    await expect
+      .element(page.getByRole('status'))
+      .toHaveTextContent('check_circle Success Entry duplicated as a new draft.');
+    // The toast goes away on its own, resetting the state
+    await waitForToastsToHide();
+    expect(showDuplicateToast.current).toBe(false);
+  });
+
+  test('swaps the panes with a button placed over the gutter, outside the handle', async () => {
+    await renderOverlay(createDraft());
+
+    const button = page.getByRole('button', { name: 'Swap Panes' });
+
+    await expect.element(button).toBeInTheDocument();
+
+    const handle = /** @type {HTMLElement} */ (document.querySelector('.sui.resizable-handle'));
+
+    // The handle is a focusable separator, so the button must not be nested in it
+    expect(handle.contains(button.element())).toBe(false);
+    // The button is centred over the handle
+    await expect
+      .poll(() => {
+        const { left, right } = button.element().getBoundingClientRect();
+        const handleRect = handle.getBoundingClientRect();
+
+        return Math.abs((left + right) / 2 - (handleRect.left + handleRect.right) / 2);
+      })
+      .toBeLessThan(2);
+
+    await button.click();
+    expect(editorFirstPane.current).toEqual({ mode: 'preview', locale: 'en' });
+
+    // Activating the handle itself does nothing
+    handle.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 }));
+    expect(editorFirstPane.current).toEqual({ mode: 'preview', locale: 'en' });
+
+    await button.click();
+    expect(editorFirstPane.current).toEqual({ mode: 'edit', locale: 'en' });
+  });
+
+  test('remembers the pane widths once resized', async () => {
+    await renderOverlay(createDraft());
+
+    await expect.element(page.getByRole('button', { name: 'Swap Panes' })).toBeInTheDocument();
+
+    const handle = /** @type {HTMLElement} */ (document.querySelector('.sui.resizable-handle'));
+
+    handle.setPointerCapture = vi.fn();
+    handle.releasePointerCapture = vi.fn();
+
+    // Drag the handle to the right
+    handle.dispatchEvent(
+      new PointerEvent('pointerdown', { bubbles: true, pointerId: 1, screenX: 100, screenY: 10 }),
+    );
+    document.dispatchEvent(
+      new PointerEvent('pointermove', { bubbles: true, pointerId: 1, screenX: 140, screenY: 10 }),
+    );
+    document.dispatchEvent(
+      new PointerEvent('pointerup', { bubbles: true, pointerId: 1, screenX: 140, screenY: 10 }),
+    );
+
+    await expect.poll(() => editorFirstPane.current?.width).toBeGreaterThan(50);
+    expect(editorSecondPane.current?.width).toBeLessThan(50);
+  });
+
+  test('restores the saved panes', async () => {
+    entryEditorSettings.current = {
+      showPreview: true,
+      showSecondPane: true,
+      paneStates: {
+        posts: [
+          { mode: 'edit', locale: 'fr' },
+          { mode: 'edit', locale: 'de' },
+        ],
+      },
+    };
+
+    await renderOverlay(createDraft());
+
+    await expect
+      .element(page.getByRole('group', { name: 'Edit \u2068French\u2069 Content' }))
+      .toBeInTheDocument();
+    await expect
+      .element(page.getByRole('group', { name: 'Edit \u2068German\u2069 Content' }))
+      .toBeInTheDocument();
+  });
+
+  test('shows only the requested locale on a small screen', async () => {
+    env.isSmallScreen = true;
+    env.isLargeScreen = false;
+
+    await renderOverlay(createDraft(), { editorLocale: 'de' });
+
+    await expect
+      .element(page.getByRole('group', { name: 'Edit \u2068German\u2069 Content' }))
+      .toBeInTheDocument();
+    expect(editorSecondPane.current).toBeNull();
+  });
+
+  test('highlights the path editor on request', async () => {
+    // Nested entries with the path editor, and a folder to choose from
+    await initTestConfig({
+      i18n: {
+        structure: /** @type {const} */ ('multiple_folders'),
+        locales: ['en', 'fr', 'de'],
+        default_locale: 'en',
+      },
+      collections: [
+        {
+          name: 'guides',
+          label: 'Guides',
+          folder: 'content/guides',
+          i18n: true,
+          nested: { depth: 3 },
+          meta: { path: { index_file: 'index' } },
+          fields,
+        },
+      ],
+    });
+    // With the `multiple_folders` structure, each locale is stored in a folder of its own
+    setEntries(
+      ['docs', 'docs/start'].map((dirPath) => {
+        const slug = `${dirPath}/index`;
+
+        return createMockEntry({
+          slug,
+          folder: 'content/guides',
+          entry: {
+            locales: Object.fromEntries(
+              ['en', 'fr', 'de'].map((locale) => [
+                locale,
+                { slug, path: `content/guides/${locale}/${slug}.md`, content: { title: dirPath } },
+              ]),
+            ),
+          },
+        });
+      }),
+    );
+
+    await renderOverlay(createDraft({ collection: getCollection('guides'), currentPath: 'docs' }));
+
+    const button = page
+      .getByRole('group', { name: 'Edit \u2068English\u2069 Content' })
+      .getByRole('button', { name: 'Parent Folder' });
+
+    await expect.element(button).toBeInTheDocument();
+
+    // The path editor isn’t a field, but the validation panel lists its error as `_path`
+    window.postMessage(
+      { type: 'highlight-editor-field', payload: { locale: 'en', keyPath: '_path' } },
+      window.location.origin,
+    );
+    await expect.element(button).toHaveFocus();
+  });
+
+  test('highlights the field named in the history state', async () => {
+    window.history.replaceState({ highlight: { locale: 'de', keyPath: 'body' } }, '');
+
+    await renderOverlay(createDraft());
+
+    await expect
+      .element(
+        page
+          .getByRole('group', { name: 'Edit \u2068German\u2069 Content' })
+          .getByRole('textbox', { name: 'Body' }),
+      )
+      .toHaveFocus();
+    expect(window.history.state.highlight).toBeNull();
+  });
+
+  test('highlights a field that is already visible, ignoring foreign messages', async () => {
+    await renderOverlay(createDraft());
+
+    const title = page
+      .getByRole('group', { name: 'Edit \u2068English\u2069 Content' })
+      .getByRole('textbox', { name: 'Title' });
+
+    await expect.element(title).toBeInTheDocument();
+
+    // A message from another window is ignored
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        data: { type: 'highlight-editor-field', payload: { locale: 'en', keyPath: 'title' } },
+        source: null,
+      }),
+    );
+    await expect.element(title).not.toHaveFocus();
+
+    window.postMessage(
+      { type: 'highlight-editor-field', payload: { locale: 'en', keyPath: 'title' } },
+      window.location.origin,
+    );
+    await expect.element(title).toHaveFocus();
+
+    // Other messages, and a field that isn’t there, are ignored
+    title.element().blur();
+    window.postMessage({ type: 'something-else' }, window.location.origin);
+    window.postMessage(
+      { type: 'highlight-editor-field', payload: { locale: 'en', keyPath: 'missing' } },
+      window.location.origin,
+    );
+    window.postMessage(
+      { type: 'highlight-editor-field', payload: { locale: 'xx', keyPath: 'title' } },
+      window.location.origin,
+    );
+    await new Promise((resolve) => {
+      setTimeout(resolve, 200);
+    });
+    await expect.element(title).not.toHaveFocus();
+  });
+
+  test('leaves an earlier highlight request to a newer one', async () => {
+    await renderOverlay(createDraft());
+
+    const title = page
+      .getByRole('group', { name: 'Edit \u2068English\u2069 Content' })
+      .getByRole('textbox', { name: 'Title' });
+
+    await expect.element(title).toBeInTheDocument();
+
+    // The French content has to be brought into an edit pane first, which takes a while
+    window.postMessage(
+      { type: 'highlight-editor-field', payload: { locale: 'fr', keyPath: 'body' } },
+      window.location.origin,
+    );
+    window.postMessage(
+      { type: 'highlight-editor-field', payload: { locale: 'en', keyPath: 'title' } },
+      window.location.origin,
+    );
+    await expect.element(title).toHaveFocus();
+
+    const frenchBody = page
+      .getByRole('group', { name: 'Edit \u2068French\u2069 Content' })
+      .getByRole('textbox', { name: 'Body' });
+
+    await expect.element(frenchBody).toBeInTheDocument();
+    await new Promise((resolve) => {
+      setTimeout(resolve, 300);
+    });
+    await expect.element(title).toHaveFocus();
+  });
+
+  test('renders no pane until the panes are set up', async () => {
+    const { container } = await renderOverlay(createDraft());
+
+    await expect.element(page.getByRole('textbox', { name: 'Title' })).toBeInTheDocument();
+    editorFirstPane.current = null;
+    editorSecondPane.current = null;
+    await expect.poll(() => container.querySelectorAll('.pane').length).toBe(0);
+  });
+
+  test('logs the draft in developer mode', async () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {});
+    const warn = vi.spyOn(console, 'warn');
+
+    prefs.devModeEnabled = true;
+
+    const draft = createDraft({
+      files: { 'blob:x': { file: new File(['x'], 'x.png'), folder: undefined } },
+    });
+
+    const { entryDraft } = await renderOverlay(draft);
+
+    expect(info).toHaveBeenCalledWith('entryDraft', draft);
+    // Logging the `$state` proxy itself would make Svelte warn
+    expect(warn.mock.calls.some(([message]) => message.includes('console_log_state'))).toBe(false);
+
+    // The draft is logged again when a value or a validity in it changes
+    info.mockClear();
+    /** @type {any} */ (entryDraft.current).currentValues.en.title = 'Hi';
+    flushSync();
+    expect(info).toHaveBeenLastCalledWith(
+      'entryDraft',
+      expect.objectContaining({
+        currentValues: expect.objectContaining({ en: expect.objectContaining({ title: 'Hi' }) }),
+      }),
+    );
+
+    info.mockClear();
+    /** @type {any} */ (entryDraft.current).validities.en.title = { valid: false };
+    flushSync();
+    expect(info).toHaveBeenLastCalledWith(
+      'entryDraft',
+      expect.objectContaining({
+        validities: expect.objectContaining({ en: { title: { valid: false } } }),
+      }),
+    );
+  });
+
+  test('refuses to create an entry over the limit', async () => {
+    selectedCollection.current = getCollection('limited');
+    setEntries([createMockEntry({ slug: 'only', folder: 'content/limited' })]);
+
+    try {
+      await renderOverlay(
+        createMockDraft({
+          collectionName: 'limited',
+          fields,
+          draft: { collection: getCollection('limited') },
+        }),
+      );
+
+      await expect
+        .element(
+          page.getByText(
+            'You cannot add new entries to this collection because it has reached its limit of 1 entry.',
+          ),
+        )
+        .toBeInTheDocument();
+    } finally {
+      setEntries([]);
+    }
+  });
+
+  test('sets up the panes again for another file of the same collection', async () => {
+    const collection = getCollection('pages');
+
+    /**
+     * Create a draft of a page file.
+     * @param {string} fileName File name.
+     * @returns {any} Draft.
+     */
+    const createFileDraft = (fileName) =>
+      createMockDraft({
+        collectionName: 'pages',
+        fields,
+        values: { _default: { title: fileName.toUpperCase(), body: '', 'author.name': '' } },
+        draft: {
+          isNew: false,
+          collection,
+          collectionFile: getCollectionFile(/** @type {any} */ (collection), fileName),
+          fileName,
+        },
+      });
+
+    selectedCollection.current = collection;
+
+    const { entryDraft } = await renderOverlay(createFileDraft('a'));
+
+    await expect.element(page.getByRole('textbox', { name: 'Title' })).toHaveValue('A');
+
+    // The overlay stays open when a link leads to another file of the collection
+    entryDraft.current = createFileDraft('b');
+
+    await expect.element(page.getByRole('textbox', { name: 'Title' })).toHaveValue('B');
+  });
+
+  test('backs up the draft when a pending entry is changed', async () => {
+    const { scheduleBackup } = await import('$lib/services/contents/draft/backup');
+    const pendingEntry = { collectionName: 'plain', entry: { id: 'x' }, values: ['x'] };
+    const { entryDraft } = await renderOverlay(createDraft({ pendingEntries: [pendingEntry] }));
+    const draft = /** @type {any} */ (entryDraft.current);
+
+    await expect.element(page.getByRole('textbox', { name: 'Title' })).toBeInTheDocument();
+    vi.mocked(scheduleBackup).mockClear();
+
+    // An entry opened again and updated replaces its earlier version
+    draft.pendingEntries[0] = { ...pendingEntry, values: ['y'] };
+    flushSync();
+    expect(scheduleBackup).toHaveBeenCalledOnce();
+
+    vi.mocked(scheduleBackup).mockClear();
+    draft.pendingEntries.push({ ...pendingEntry, entry: { id: 'z' } });
+    flushSync();
+    expect(scheduleBackup).toHaveBeenCalledOnce();
+  });
+
+  test('shows the second pane alone', async () => {
+    await renderOverlay(createDraft());
+    await expect.element(page.getByRole('button', { name: 'Swap Panes' })).toBeInTheDocument();
+
+    editorFirstPane.current = null;
+    editorSecondPane.current = { mode: 'preview', locale: 'fr' };
+    await expect
+      .element(page.getByRole('group', { name: 'Preview \u2068French\u2069 Content' }))
+      .toBeInTheDocument();
+    expect(page.getByRole('button', { name: 'Swap Panes' }).elements()).toHaveLength(0);
+  });
+});

@@ -3,7 +3,6 @@
 
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import PathEditor from '$lib/components/contents/details/editor/path-editor.svelte';
-  import SlugEditor from '$lib/components/contents/details/editor/slug-editor.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
 
   /**
@@ -18,11 +17,7 @@
   const entryDraft = getEntryDraftContext();
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    locale,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { locale } = $props();
 
   const fields = $derived(entryDraft.current?.fields ?? []);
   const showPathEditor = $derived(
@@ -31,9 +26,6 @@
 </script>
 
 <VisibilityObserver>
-  {#if !!entryDraft.current?.slugEditor[locale]}
-    <SlugEditor {locale} />
-  {/if}
   {#if showPathEditor}
     <PathEditor {locale} />
   {/if}

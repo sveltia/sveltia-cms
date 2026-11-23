@@ -1,10 +1,10 @@
 <script>
   import { _ } from '@sveltia/i18n';
 
-  import ApiKeyInput from '$lib/components/settings/controls/api-key-input.svelte';
+  import ApiKeySection from '$lib/components/settings/controls/api-key-section.svelte';
   import TranslatorSelector from '$lib/components/settings/controls/translator-selector.svelte';
-  import { allTranslationServices } from '$lib/services/integrations/translators';
-  import { makeLink } from '$lib/services/utils/string';
+  import { DOCS_BASE_URL } from '$lib/services/app';
+  import { machineTranslationServices } from '$lib/services/integrations/translators';
 
   /**
    * @import { SettingsPanelOnChangeArgs } from '$lib/types/private';
@@ -16,11 +16,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    onChange = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { onChange = undefined } = $props();
 </script>
 
 <section>
@@ -30,26 +26,11 @@
   </div>
 </section>
 
-<section>
-  <h3>{_('prefs.i18n.translators.api_keys.title')}</h3>
-  <p>
-    {@html makeLink(
-      _('prefs.i18n.translators.api_keys.description'),
-      'https://sveltiacms.app/en/docs/integrations/translations',
-    )}
-  </p>
-  {#each Object.entries(allTranslationServices) as [serviceId, service] (serviceId)}
-    {@const label = service.serviceLabel}
-    <section>
-      <h4>{label}</h4>
-      <div role="none">
-        <ApiKeyInput
-          {serviceId}
-          {service}
-          ariaLabel={_('prefs.i18n.translators.field_label', { values: { service: label } })}
-          {onChange}
-        />
-      </div>
-    </section>
-  {/each}
-</section>
+<ApiKeySection
+  title={_('prefs.i18n.translators.api_keys.title')}
+  description={_('prefs.i18n.translators.api_keys.description')}
+  docsURL="{DOCS_BASE_URL}/integrations/translations"
+  entries={Object.entries(machineTranslationServices)}
+  getFieldLabel={(service) => _('prefs.i18n.translators.field_label', { values: { service } })}
+  {onChange}
+/>

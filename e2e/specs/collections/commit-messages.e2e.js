@@ -1,0 +1,349 @@
+import {
+  COLLECTION_OPTIONS_CONFIG,
+  COLLECTION_OPTIONS_FILES,
+} from '../../fixtures/configs/collection-options.js';
+import { createPNG } from '../../fixtures/files.js';
+import { expect, GITHUB_CONFIG, test } from '../../fixtures/test.js';
+import { getEditor, openCollection } from '../../fixtures/ui.js';
+
+/**
+ * @import { Locator, Page } from '@playwright/test';
+ * @import { MockGitHub } from '../../fixtures/github.js';
+ */
+
+test.use({
+  config: {
+    ...COLLECTION_OPTIONS_CONFIG,
+    backend: {
+      ...GITHUB_CONFIG.backend,
+      commit_messages: {
+        create: 'content: add {{collection}} “{{slug}}” by {{author-login}}',
+        update: 'content: edit {{path}}',
+        delete: 'content: remove {{collection}} “{{slug}}” ({{author-name}})',
+        uploadMedia: 'media: add {{path}} by {{author-email}}',
+      },
+    },
+  },
+});
+
+test.beforeEach(async ({ cms, github, page }) => {
+  github.commit(COLLECTION_OPTIONS_FILES, { message: 'Plant the garden' });
+  await cms.open();
+  await openCollection(page, 'FAQs');
+});
+
+/**
+ * Get the headlines of the commits the CMS has made.
+ * @param {MockGitHub} github GitHub mock.
+ * @returns {string[]} Headlines, the oldest first.
+ */
+const getHeadlines = (github) => github.received.map(({ message }) => message.headline);
+
+/**
+ * Open an FAQ in the entry editor.
+ * @param {Page} page Page.
+ * @param {RegExp} question Question.
+ * @returns {Promise<Locator>} Editor.
+ */
+const openFAQ = async (page, question) => {
+  const editor = getEditor(page);
+
+  await page.getByRole('row', { name: question }).click();
+  await expect(editor.getByRole('textbox', { name: 'Question' })).toHaveValue(question);
+
+  return editor;
+};
+
+test('fills the templates for a new entry', async ({ github, page }) => {
+  await page.getByRole('button', { name: 'Create New Entry' }).click();
+
+  const editor = getEditor(page);
+
+  await editor.getByRole('textbox', { name: 'Question' }).fill('Is there parking?');
+  await editor.getByRole('textbox', { name: 'Answer' }).fill('On the street.');
+  await editor.getByRole('button', { name: 'Save' }).click();
+
+  await expect
+    .poll(() => getHeadlines(github))
+    .toEqual(['content: add FAQ “is-there-parking” by mona']);
+  expect(github.readFile('content/faqs/is-there-parking.md')).toBe(
+    '---\norder: 4\nquestion: Is there parking?\nanswer: On the street.\n---\n',
+  );
+});
+
+test('fills the templates for an updated entry', async ({ github, page }) => {
+  const editor = await openFAQ(page, /Who can join\?/);
+
+  await editor.getByRole('textbox', { name: 'Answer' }).fill('Anyone in the neighborhood.');
+  await editor.getByRole('button', { name: 'Save' }).click();
+
+  await expect
+    .poll(() => getHeadlines(github))
+    .toEqual(['content: edit content/faqs/who-can-join.md']);
+});
+
+test('counts the other files a commit changes', async ({ github, page }) => {
+  await page.getByRole('button', { name: 'Reorder Entries' }).click();
+  await page
+    .getByRole('row', { name: /Are tools provided/ })
+    .getByRole('button', { name: 'Move Up' })
+    .click();
+  await page.getByRole('button', { name: 'Done Reordering Entries' }).click();
+
+  // Two entries are renumbered in one commit, which is named after the first
+  await expect
+    .poll(() => getHeadlines(github))
+    .toEqual([expect.stringMatching(/^content: edit content\/faqs\/[\w-]+\.md \+1$/)]);
+  expect(github.readFile('content/faqs/are-tools-provided.md')).toMatch(/^---\norder: 2\n/);
+  expect(github.readFile('content/faqs/who-can-join.md')).toMatch(/^---\norder: 3\n/);
+});
+
+test('fills the templates for a deleted entry', async ({ cms, github, page }) => {
+  await openFAQ(page, /Are tools provided\?/);
+  await cms.chooseMenuItem(
+    page.getByRole('button', { name: 'Show Editor Options' }),
+    page.getByRole('menuitem', { name: 'Delete Entry' }),
+  );
+  await page
+    .getByRole('alertdialog', { name: 'Delete Entry' })
+    .getByRole('button', { name: 'Delete' })
+    .click();
+
+  await expect
+    .poll(() => getHeadlines(github))
+    .toEqual(['content: remove FAQ “are-tools-provided” (Mona Lisa)']);
+  expect(github.readFile('content/faqs/are-tools-provided.md')).toBeUndefined();
+});
+
+test('fills the templates for uploaded files', async ({ github, page }) => {
+  await page.getByRole('radio', { name: 'Assets' }).click();
+  // The empty asset list has an Upload button of its own
+  await page.getByRole('button', { name: 'Upload New Assets' }).first().click();
+
+  const [chooser] = await Promise.all([
+    page.waitForEvent('filechooser'),
+    page
+      .getByRole('dialog', { name: 'Upload New Assets' })
+      .getByRole('button', { name: 'Choose Files' })
+      .click(),
+  ]);
+
+  await chooser.setFiles([
+    { name: 'kale.png', mimeType: 'image/png', buffer: createPNG({ color: [0, 128, 0] }) },
+    { name: 'leek.png', mimeType: 'image/png', buffer: createPNG({ color: [128, 255, 128] }) },
+  ]);
+  await page
+    .getByRole('alertdialog', { name: 'Upload New Assets' })
+    .getByRole('button', { name: 'Upload' })
+    .click();
+
+  await expect
+    .poll(() => getHeadlines(github))
+    .toEqual(['media: add static/uploads/kale.png by mona@example.com +1']);
+});
+
+test.describe('with `skip_ci` on', () => {
+  test.use({
+    config: {
+      ...COLLECTION_OPTIONS_CONFIG,
+      backend: { ...GITHUB_CONFIG.backend, skip_ci: true },
+    },
+  });
+
+  test('marks a commit to skip the CI, except a deletion', async ({ cms, github, page }) => {
+    const editor = await openFAQ(page, /Who can join\?/);
+
+    await editor.getByRole('textbox', { name: 'Answer' }).fill('Anyone in the neighborhood.');
+    await editor.getByRole('button', { name: 'Save' }).click();
+    await expect.poll(() => github.received).toHaveLength(1);
+
+    // Saving closes the editor
+    await openFAQ(page, /Who can join\?/);
+    await cms.chooseMenuItem(
+      page.getByRole('button', { name: 'Show Editor Options' }),
+      page.getByRole('menuitem', { name: 'Delete Entry' }),
+    );
+    await page
+      .getByRole('alertdialog', { name: 'Delete Entry' })
+      .getByRole('button', { name: 'Delete' })
+      .click();
+
+    // Deleting the entry renumbers the one after it in the same commit
+    await expect
+      .poll(() => getHeadlines(github))
+      .toEqual(['[skip ci] Update FAQ “who-can-join”', 'Delete FAQ “who-can-join” +1']);
+  });
+});
+
+test.describe('with `signoff_commits` on', () => {
+  test.use({
+    config: {
+      ...COLLECTION_OPTIONS_CONFIG,
+      backend: {
+        ...GITHUB_CONFIG.backend,
+        signoff_commits: true,
+        commit_messages: {
+          update: 'Update {{path}}\n\nRefs: #12',
+          delete: 'Delete {{slug}}\n\nSigned-off-by: Mona <MONA@example.com>',
+        },
+      },
+    },
+  });
+
+  test('adds a sign-off trailer, joining the trailers of the template', async ({
+    cms,
+    github,
+    page,
+  }) => {
+    const editor = await openFAQ(page, /Who can join\?/);
+
+    await editor.getByRole('textbox', { name: 'Answer' }).fill('Anyone in the neighborhood.');
+    await editor.getByRole('button', { name: 'Save' }).click();
+    await expect.poll(() => github.received).toHaveLength(1);
+    expect(github.received[0].message).toEqual({
+      headline: 'Update content/faqs/who-can-join.md',
+      body: 'Refs: #12\nSigned-off-by: Mona Lisa <mona@example.com>',
+    });
+
+    // A template that already signs off with the user’s email is left as it is
+    await openFAQ(page, /Are tools provided\?/);
+    await cms.chooseMenuItem(
+      page.getByRole('button', { name: 'Show Editor Options' }),
+      page.getByRole('menuitem', { name: 'Delete Entry' }),
+    );
+    await page
+      .getByRole('alertdialog', { name: 'Delete Entry' })
+      .getByRole('button', { name: 'Delete' })
+      .click();
+    await expect.poll(() => github.received).toHaveLength(2);
+    expect(github.received[1].message).toEqual({
+      headline: 'Delete are-tools-provided',
+      body: 'Signed-off-by: Mona <MONA@example.com>',
+    });
+  });
+});
+
+test.describe('with `signoff_commits` on and no public email', () => {
+  test.use({
+    config: {
+      ...COLLECTION_OPTIONS_CONFIG,
+      backend: { ...GITHUB_CONFIG.backend, signoff_commits: true },
+    },
+  });
+
+  test('commits without the trailer and warns about it', async ({ github, page }) => {
+    // The user is fetched again on the reload
+    github.user = { ...github.user, email: null };
+
+    const warnings = /** @type {string[]} */ ([]);
+
+    page.on('console', (message) => {
+      if (message.type() === 'warning') {
+        warnings.push(message.text());
+      }
+    });
+    await page.reload();
+    await openCollection(page, 'FAQs');
+
+    const editor = await openFAQ(page, /Who can join\?/);
+
+    await editor.getByRole('textbox', { name: 'Answer' }).fill('Anyone in the neighborhood.');
+    await editor.getByRole('button', { name: 'Save' }).click();
+    await expect.poll(() => github.received).toHaveLength(1);
+    expect(github.received[0].message).toEqual({ headline: 'Update FAQ “who-can-join”' });
+    expect(warnings).toContainEqual(expect.stringContaining('`signoff_commits`'));
+  });
+});
+
+test.describe('with `prompt_commit_messages` set to `prefix`', () => {
+  test.use({
+    config: {
+      ...COLLECTION_OPTIONS_CONFIG,
+      backend: { ...GITHUB_CONFIG.backend, prompt_commit_messages: 'prefix' },
+    },
+  });
+
+  test('adds the note the user enters before the message', async ({ github, page }) => {
+    const editor = await openFAQ(page, /Who can join\?/);
+
+    await editor.getByRole('textbox', { name: 'Answer' }).fill('Anyone in the neighborhood.');
+    await editor.getByRole('button', { name: 'Save' }).click();
+
+    const dialog = page.getByRole('alertdialog', { name: 'Commit Message' });
+
+    await dialog.getByRole('textbox', { name: 'Note' }).fill('JIRA-7:');
+    await expect(dialog).toContainText('Message: \u2068JIRA-7: Update FAQ “who-can-join”\u2069');
+    await dialog.getByRole('button', { name: 'OK' }).click();
+
+    await expect.poll(() => getHeadlines(github)).toEqual(['JIRA-7: Update FAQ “who-can-join”']);
+
+    // The note is offered again for the next commit, which usually belongs to the same issue
+    await openFAQ(page, /Who can join\?/);
+    await editor.getByRole('textbox', { name: 'Answer' }).fill('Anyone nearby.');
+    await editor.getByRole('button', { name: 'Save' }).click();
+    await expect(dialog.getByRole('textbox', { name: 'Note' })).toHaveValue('JIRA-7:');
+    await dialog.getByRole('textbox', { name: 'Note' }).press('Enter');
+
+    await expect
+      .poll(() => getHeadlines(github))
+      .toEqual(['JIRA-7: Update FAQ “who-can-join”', 'JIRA-7: Update FAQ “who-can-join”']);
+  });
+
+  test('saves nothing when the user cancels, and uses the template for an empty note', async ({
+    github,
+    page,
+  }) => {
+    const editor = await openFAQ(page, /Who can join\?/);
+    const dialog = page.getByRole('alertdialog', { name: 'Commit Message' });
+
+    await editor.getByRole('textbox', { name: 'Answer' }).fill('Anyone in the neighborhood.');
+    await editor.getByRole('button', { name: 'Save' }).click();
+    await dialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(dialog).toBeHidden();
+
+    // The editor stays open with the changes, and no error is shown
+    await expect(editor.getByRole('textbox', { name: 'Answer' })).toHaveValue(
+      'Anyone in the neighborhood.',
+    );
+    await expect(page.getByRole('alert')).toHaveCount(0);
+    expect(github.received).toHaveLength(0);
+
+    await editor.getByRole('button', { name: 'Save' }).click();
+    await dialog.getByRole('button', { name: 'OK' }).click();
+
+    await expect.poll(() => getHeadlines(github)).toEqual(['Update FAQ “who-can-join”']);
+  });
+});
+
+test.describe('with `prompt_commit_messages` set to `true`', () => {
+  test.use({
+    config: {
+      ...COLLECTION_OPTIONS_CONFIG,
+      backend: { ...GITHUB_CONFIG.backend, prompt_commit_messages: true },
+    },
+  });
+
+  test('replaces the message with the one the user writes', async ({ cms, github, page }) => {
+    await openFAQ(page, /Are tools provided\?/);
+    await cms.chooseMenuItem(
+      page.getByRole('button', { name: 'Show Editor Options' }),
+      page.getByRole('menuitem', { name: 'Delete Entry' }),
+    );
+    await page
+      .getByRole('alertdialog', { name: 'Delete Entry' })
+      .getByRole('button', { name: 'Delete' })
+      .click();
+
+    const textbox = page
+      .getByRole('alertdialog', { name: 'Commit Message' })
+      .getByRole('textbox', { name: 'Commit message' });
+
+    // The message made from the template is there to edit
+    await expect(textbox).toHaveValue('Delete FAQ “are-tools-provided”');
+    await textbox.fill('Retire the tools FAQ');
+    await textbox.press('Enter');
+
+    await expect.poll(() => getHeadlines(github)).toEqual(['Retire the tools FAQ']);
+    expect(github.readFile('content/faqs/are-tools-provided.md')).toBeUndefined();
+  });
+});

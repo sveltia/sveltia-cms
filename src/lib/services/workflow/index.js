@@ -1,26 +1,87 @@
+import { unique } from '@sveltia/utils/array';
+
 import { backend } from '$lib/services/backends';
+import { lockedBranch, mergeLockedBranch } from '$lib/services/backends/branch-access';
+import { getDeletionGroup } from '$lib/services/backends/git/shared/pull-requests';
 import { cmsConfig } from '$lib/services/config';
-import { allEntries } from '$lib/services/contents';
+import { isDraftReadonly } from '$lib/services/config/readonly';
+import { allEntries, findEntryByPaths } from '$lib/services/contents';
+import { getCollection } from '$lib/services/contents/collection';
+import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
 import { isEntryBranch } from '$lib/services/workflow/branch';
+import {
+  getPublishMode,
+  isWorkflowConfigured,
+  isWorkflowMode,
+} from '$lib/services/workflow/config';
+import { isForkEntry } from '$lib/services/workflow/forks';
+import { openAuthoring } from '$lib/services/workflow/open-authoring';
+import { getCollectionPublishModeOptions, isLastStage } from '$lib/services/workflow/stages';
 
 /**
- * @import { Entry, UnpublishedEntry } from '$lib/types/private';
+ * @import {
+ * CompanionEntry,
+ * Entry,
+ * EntryDraft,
+ * InternalCollection,
+ * UnpublishedEntry,
+ * UnpublishedEntryProps,
+ * WorkflowPullRequest,
+ * } from '$lib/types/private';
+ * @import { Collection } from '$lib/types/public';
  */
 
 /**
- * Whether Editorial Workflow is enabled. It requires both the `editorial_workflow` publish mode in
- * the site configuration and a backend service that implements the feature.
+ * Whether Editorial Workflow is enabled for any content. It requires both the `editorial_workflow`
+ * publish mode — for the whole site or for at least one collection — and a backend service that
+ * implements the feature. This decides whether the feature is set up at all: the pull requests are
+ * listed and the Editorial Workflow page is offered. Whether a particular entry goes through the
+ * workflow is up to {@link isWorkflowEnabled}, because a collection can opt in or out on its own.
  */
 export const workflowEnabled = createDerivedState(
-  () => cmsConfig.current?.publish_mode === 'editorial_workflow' && !!backend.current?.workflow,
+  () => isWorkflowConfigured(cmsConfig.current) && !!backend.current?.workflow,
 );
 
 /**
- * List of unpublished entries retrieved from the backend’s open pull requests.
+ * Check whether the entries in the given collection go through Editorial Workflow. The
+ * collection-level `publish_mode` option overrides the site-level one. A contributor working on a
+ * fork with Open Authoring can’t write to the configured repository, so their changes always go
+ * through a pull request, whatever the collection says.
+ * @param {Collection | undefined} collection Collection. `undefined` falls back to the site-level
+ * publish mode.
+ * @returns {boolean} `true` if a change to an entry in the collection is saved to a pull request
+ * rather than committed to the configured branch.
+ * @see https://github.com/decaporg/decap-cms/issues/1571
+ */
+export const isWorkflowEnabled = (collection) =>
+  !!backend.current?.workflow &&
+  (openAuthoring.current ||
+    isWorkflowMode(getPublishMode({ cmsConfig: cmsConfig.current, collection })));
+
+/**
+ * List of all the unpublished entries retrieved from the backend’s open pull requests, including
+ * those from the pull requests contributors have opened from their forks. Only the Editorial
+ * Workflow board and the code that loads, stores and acts on a pull request read this list; the
+ * rest of the CMS reads {@link unpublishedEntries}.
  * @type {{ current: UnpublishedEntry[] }}
  */
-export const unpublishedEntries = createRawState([]);
+export const allUnpublishedEntries = createRawState([]);
+
+/**
+ * List of the unpublished entries the CMS shows in place of the published ones, in the entry list,
+ * the search results and the editor: all of {@link allUnpublishedEntries} but those from the pull
+ * requests contributors have opened from their forks, which are only reached from the Editorial
+ * Workflow board. Leaving them out here rather than where they’re read means new code doesn’t take
+ * untrusted entries in without meaning to. See {@link isForkEntry}.
+ * @type {{ readonly current: UnpublishedEntry[] }}
+ */
+export const unpublishedEntries = createDerivedState(() =>
+  // Keep the same array when there’s nothing to leave out, to avoid needless recomputation
+  allUnpublishedEntries.current.some(isForkEntry)
+    ? allUnpublishedEntries.current.filter((entry) => !isForkEntry(entry))
+    : allUnpublishedEntries.current,
+);
 
 /**
  * Whether the unpublished entry list is being loaded or updated.
@@ -31,6 +92,15 @@ export const unpublishedEntriesLoading = createRawState(false);
  * Whether the unpublished entries have been loaded at least once, successfully or not.
  */
 export const unpublishedEntriesLoaded = createRawState(false);
+
+/**
+ * Workflow branches of the entries being published, which is to say whose pull request is being
+ * merged. A merge can take minutes when the Git service waits for a pipeline, and the view that
+ * started it is created afresh each time it opens, so the wait is recorded here rather than in that
+ * view: any view can then show the entry as busy.
+ * @type {{ current: string[] }}
+ */
+export const publishingBranches = createRawState([]);
 
 /**
  * Whether everything needed to resolve an entry is available. The unpublished entries are fetched
@@ -55,6 +125,109 @@ export const getUnpublishedEntriesByCollection = (collectionName) =>
     : [];
 
 /**
+ * Get the entries in the given collection that ride along in the pull requests of the given
+ * unpublished entries, either the new ones or the existing ones changed there.
+ * @param {string} collectionName Collection name.
+ * @param {UnpublishedEntry[]} entries Unpublished entries to look in.
+ * @param {boolean} edited Whether to get the existing entries rather than the new ones.
+ * @returns {Entry[]} Entries.
+ */
+const filterCompanionEntries = (collectionName, entries, edited) =>
+  entries.flatMap(({ workflow }) =>
+    (workflow.companions ?? []).flatMap((companion) =>
+      companion.collectionName === collectionName && !!companion.edited === edited
+        ? [companion.entry]
+        : [],
+    ),
+  );
+
+/**
+ * Get the new entries in the given collection that ride along in the pull request of an entry of
+ * another collection. See {@link UnpublishedEntryProps.companions}. The existing entries changed in
+ * such a pull request are left out: see {@link getEditedCompanionEntries}.
+ * @param {string} collectionName Collection name.
+ * @param {UnpublishedEntry[]} [entries] Unpublished entries to look in. Defaults to all of them.
+ * @returns {Entry[]} Entries.
+ */
+export const getCompanionEntries = (collectionName, entries = unpublishedEntries.current) =>
+  filterCompanionEntries(collectionName, entries, false);
+
+/**
+ * Get the existing entries in the given collection that have been changed in the pull request of an
+ * entry of another collection, as they stand on its branch. See
+ * {@link UnpublishedEntryProps.companions}.
+ * @param {string} collectionName Collection name.
+ * @param {UnpublishedEntry[]} [entries] Unpublished entries to look in. Defaults to all of them.
+ * @returns {Entry[]} Entries.
+ */
+export const getEditedCompanionEntries = (collectionName, entries = unpublishedEntries.current) =>
+  filterCompanionEntries(collectionName, entries, true);
+
+/**
+ * Get the paths of the existing entries a pull request changes along with its entry: those they
+ * have on its branch, and those their published versions have on the configured branch, where the
+ * pull request can only change or remove a file. A published version is found by ID, which an
+ * edited companion keeps, so one the pull request has renamed is found as well.
+ * @param {CompanionEntry[]} companions Entries riding along in the pull request.
+ * @returns {{ paths: string[], publishedPaths: Set<string> }} Paths on the branch, and those on the
+ * configured branch.
+ */
+export const getEditedCompanionPaths = (companions) => {
+  const editedEntries = companions.flatMap(({ entry, edited }) => (edited ? [entry] : []));
+
+  return {
+    paths: unique(editedEntries.flatMap((entry) => getEntryPaths(entry))),
+    publishedPaths: new Set(
+      editedEntries.flatMap(({ id }) => {
+        const publishedEntry = allEntries.current.find((entry) => entry.id === id);
+
+        return publishedEntry ? getEntryPaths(publishedEntry) : [];
+      }),
+    ),
+  };
+};
+
+/**
+ * Find the unpublished entry whose pull request changes the given existing entry along with it,
+ * the entry having been edited from a Relation field.
+ * @param {Entry} entry Published entry.
+ * @returns {UnpublishedEntry | undefined} Unpublished entry.
+ */
+export const findEditingUnpublishedEntry = (entry) =>
+  unpublishedEntries.current.find(({ workflow }) =>
+    (workflow.companions ?? []).some(
+      (companion) => companion.edited && companion.entry.id === entry.id,
+    ),
+  );
+
+/**
+ * Get the entries in the given collection that pull requests hold: its unpublished entries, and the
+ * new entries riding along in the pull request of an entry of another collection. They take up a
+ * slug, a file path or a number as much as the published entries do.
+ * @param {string} collectionName Collection name.
+ * @returns {Entry[]} Entries.
+ */
+export const getPullRequestEntries = (collectionName) => [
+  ...getUnpublishedEntriesByCollection(collectionName),
+  ...getCompanionEntries(collectionName),
+];
+
+/**
+ * Check whether the given unpublished entry is the one an editor route addresses.
+ * @param {UnpublishedEntry} entry Unpublished entry.
+ * @param {object} args Arguments.
+ * @param {string} args.collectionName Collection name.
+ * @param {string} args.subPath Entry sub path, or collection file name.
+ * @returns {boolean} Result.
+ */
+const isAddressedEntry = (entry, { collectionName, subPath }) =>
+  entry.workflow.collectionName === collectionName &&
+  // A collection file is addressed by its name, while its `subPath` is the whole file path
+  (entry.workflow.fileName !== undefined
+    ? entry.workflow.fileName === subPath
+    : entry.subPath === subPath);
+
+/**
  * Find the unpublished entry that matches the given collection name and entry sub path. This is
  * used to open the entry editor with the pull request’s version of the entry rather than the
  * published version.
@@ -64,28 +237,139 @@ export const getUnpublishedEntriesByCollection = (collectionName) =>
  * @returns {UnpublishedEntry | undefined} Unpublished entry.
  */
 export const getUnpublishedEntry = ({ collectionName, subPath }) =>
-  unpublishedEntries.current.find(
+  unpublishedEntries.current.find((entry) => isAddressedEntry(entry, { collectionName, subPath }));
+
+/**
+ * Find the unpublished entry that matches the given collection name and entry sub path in the pull
+ * request with the given number, which a contributor has opened from their fork. Such an entry is
+ * only opened from the Editorial Workflow board, which names the pull request in the editor’s URL,
+ * as several pull requests can hold the same entry. See {@link unpublishedEntries}.
+ * @param {object} args Arguments.
+ * @param {string} args.collectionName Collection name.
+ * @param {string} args.subPath Entry sub path, or collection file name.
+ * @param {number} args.number Pull request number.
+ * @returns {UnpublishedEntry | undefined} Unpublished entry.
+ */
+export const getForkUnpublishedEntry = ({ collectionName, subPath, number }) =>
+  allUnpublishedEntries.current.find(
     (entry) =>
-      entry.workflow.collectionName === collectionName &&
-      // A collection file is addressed by its name, while its `subPath` is the whole file path
-      (entry.workflow.fileName !== undefined
-        ? entry.workflow.fileName === subPath
-        : entry.subPath === subPath),
+      isForkEntry(entry) &&
+      entry.workflow.pullRequest.number === number &&
+      isAddressedEntry(entry, { collectionName, subPath }),
   );
 
 /**
  * Find the unpublished entry whose workflow branch addresses the given entry. This is the entry the
  * branch was opened for, which stays the same after the slug has been edited, unlike the result of
- * {@link getUnpublishedEntry}.
+ * {@link getUnpublishedEntry}. A branch name says nothing about what the pull request holds, so the
+ * unpublished entry also has to be the given one: one of its files, or of the files it vacates, is
+ * one of the entry’s. Without that, anyone who can push could open a pull request under an entry’s
+ * branch name that holds another entry, and the editor of the first would offer to publish it.
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
  * @param {string} args.slug Entry slug, or collection file name.
+ * @param {Entry | undefined} args.entry Entry the branch would hold, as it stands before the
+ * changes. `undefined` for a new entry, which has no pull request yet.
  * @returns {UnpublishedEntry | undefined} Unpublished entry.
  */
-export const getUnpublishedEntryBySlug = ({ collectionName, slug }) =>
-  unpublishedEntries.current.find(({ workflow }) =>
-    isEntryBranch({ branch: workflow.pullRequest.branch, collectionName, slug }),
+export const getUnpublishedEntryBySlug = ({ collectionName, slug, entry }) => {
+  if (!entry) {
+    return undefined;
+  }
+
+  const paths = new Set(getEntryPaths(entry));
+
+  return unpublishedEntries.current.find(
+    (unpublishedEntry) =>
+      isEntryBranch({
+        branch: unpublishedEntry.workflow.pullRequest.branch,
+        collectionName,
+        slug,
+      }) &&
+      getEntryPaths(unpublishedEntry, { includePrevious: true }).some((path) => paths.has(path)),
   );
+};
+
+/**
+ * Find the unpublished entry with the given ID in the store. The pull requests are read again from
+ * time to time, which can replace an entry while a card is being dragged or a confirmation dialog
+ * is open, or take it off the board altogether if its pull request has been merged or closed in the
+ * meantime; acting on a copy held since then would put stale content back.
+ * @param {string | undefined} id Entry ID, e.g. of the entry as it was when an action started.
+ * @returns {UnpublishedEntry | undefined} Current entry, or `undefined` if there’s none.
+ */
+export const getUnpublishedEntryById = (id) =>
+  id ? allUnpublishedEntries.current.find((entry) => entry.id === id) : undefined;
+
+/**
+ * Find the unpublished entry that corresponds to the given workflow branch.
+ * @param {string} branch Branch name.
+ * @returns {UnpublishedEntry | undefined} Unpublished entry.
+ */
+export const getUnpublishedEntryByBranch = (branch) =>
+  allUnpublishedEntries.current.find(({ workflow }) => workflow.pullRequest.branch === branch);
+
+/**
+ * Find the unpublished entry that the given draft is editing. The draft holds the entry as it was
+ * when the editor opened it, and the entry can change while the editor stays open — its status from
+ * the status menu or the Editorial Workflow page, its head commit with each save — so the entry is
+ * read from the store rather than from that snapshot. The branch the entry is already associated
+ * with is preferred over the one derived from the slug: the branch keeps the slug the pull request
+ * was opened with, so an entry whose slug has been edited since no longer matches it by slug.
+ * @param {object} args Arguments. A draft can be passed as is.
+ * @param {string} args.collectionName Collection name.
+ * @param {string} [args.fileName] Collection file name, if the entry is a collection file.
+ * @param {Entry} [args.originalEntry] Entry being edited, before the changes. `undefined` for a new
+ * entry, which has no pull request yet.
+ * @returns {UnpublishedEntry | undefined} Unpublished entry.
+ */
+export const getUnpublishedEntryByDraft = ({ collectionName, fileName, originalEntry }) => {
+  if (!originalEntry) {
+    return undefined;
+  }
+
+  const branch = /** @type {UnpublishedEntry} */ (originalEntry).workflow?.pullRequest?.branch;
+
+  return (
+    (branch ? getUnpublishedEntryByBranch(branch) : undefined) ??
+    getUnpublishedEntryBySlug({
+      collectionName,
+      slug: fileName ?? originalEntry.slug,
+      entry: originalEntry,
+    })
+  );
+};
+
+/**
+ * Check whether the given draft edits an entry from a contributor’s pull request that is no longer
+ * open, e.g. merged or closed on the Git service since the editor was opened. There’s nothing left
+ * to save it to: the changes must not go to the configured branch, or to a pull request of the
+ * maintainers’ own, without anyone meaning to put them there, which is where a save would otherwise
+ * take them now that the entry is no longer in the store.
+ * @param {Pick<EntryDraft, 'collectionName' | 'fileName' | 'originalEntry'> | null} [draft] Draft,
+ * if any.
+ * @returns {boolean} Result.
+ */
+export const isOrphanedForkDraft = (draft) =>
+  !!draft && isForkEntry(draft.originalEntry) && !getUnpublishedEntryByDraft(draft);
+
+/**
+ * Check whether the changes made in the given draft go to a pull request rather than the configured
+ * branch. That’s the case when the draft’s collection uses Editorial Workflow, but also when the
+ * entry already has a pull request: a contributor working on a fork always opens one, whatever the
+ * collection’s publish mode, and a maintainer editing that entry has to keep working in it — saving
+ * the pull request’s unreviewed content straight to the configured branch would bypass the review
+ * and leave the pull request open.
+ * @param {object} args Arguments. A draft can be passed as is.
+ * @param {Collection} [args.collection] Collection.
+ * @param {string} args.collectionName Collection name.
+ * @param {string} [args.fileName] Collection file name, if the entry is a collection file.
+ * @param {Entry} [args.originalEntry] Entry being edited, before the changes.
+ * @returns {boolean} `true` if the draft is saved through Editorial Workflow.
+ */
+export const isWorkflowDraft = ({ collection, collectionName, fileName, originalEntry }) =>
+  isWorkflowEnabled(collection) ||
+  !!getUnpublishedEntryByDraft({ collectionName, fileName, originalEntry });
 
 /**
  * Check whether the given entry is awaiting removal from the site. Such an entry can’t be edited:
@@ -95,6 +379,156 @@ export const getUnpublishedEntryBySlug = ({ collectionName, slug }) =>
  */
 export const isPendingDeletion = (entry) =>
   /** @type {UnpublishedEntry | undefined} */ (entry)?.workflow?.status === 'pending_deletion';
+
+/**
+ * Check whether an entry draft is shown for reference only, which is when it’s read-only (see
+ * {@link isDraftReadonly}) or awaiting deletion (see {@link isPendingDeletion}). Its content can’t
+ * be changed then, nor can its locales be enabled.
+ * @param {EntryDraft | null | undefined} draft Entry draft.
+ * @returns {boolean} Result.
+ */
+export const isDraftLocked = (draft) =>
+  isDraftReadonly(draft) || isPendingDeletion(draft?.originalEntry);
+
+/**
+ * Get the entries deleted along with the given unpublished entry. A selection of entries is deleted
+ * with the same reference rewrite in each pull request, so the other entries awaiting deletion in
+ * the pull requests recording the same selection count as part of it. A selection is recorded per
+ * collection, or collection file, so they all belong to the same one as the entry. An entry deleted
+ * on its own, or by a pull request opened before the selection was recorded, rewrites only the
+ * references to itself. The entry is matched by ID, as the store may have replaced it with a copy
+ * since it was read.
+ * @param {UnpublishedEntry} entry Unpublished entry awaiting deletion.
+ * @returns {UnpublishedEntry[]} The entry, followed by the others deleted with it.
+ */
+export const getDeletionSelection = (entry) => {
+  const deletionGroup = getDeletionGroup(entry.workflow.pullRequest);
+
+  if (!deletionGroup) {
+    return [entry];
+  }
+
+  return [
+    entry,
+    ...unpublishedEntries.current.filter(
+      (e) =>
+        e.id !== entry.id &&
+        isPendingDeletion(e) &&
+        getDeletionGroup(e.workflow.pullRequest) === deletionGroup,
+    ),
+  ];
+};
+
+/**
+ * Check whether the signed-in user can merge the given pull request, which is what publishing an
+ * unpublished entry does. A protected branch may let a user push to the workflow branches, but not
+ * merge into the configured branch. When the backend doesn’t tell, the merge is left to it to allow
+ * or refuse. A pull request a contributor opened from their fork is never merged here: the CMS only
+ * shows the entry, while anything else on the contributor’s branch would be merged along with it,
+ * so it’s reviewed and merged on the Git service instead.
+ * @param {WorkflowPullRequest} pullRequest Pull request.
+ * @returns {boolean} Result.
+ */
+export const canMergePullRequest = (pullRequest) =>
+  !pullRequest.fork && pullRequest.canMerge !== false && !mergeLockedBranch.current;
+
+/**
+ * Check whether the publish controls are offered at all: an Open Authoring contributor can’t
+ * publish anything, and the collection’s `publish` option can hide them.
+ * @param {InternalCollection | undefined} collection Collection the entry belongs to.
+ * @returns {boolean} Result.
+ */
+const isPublishVisible = (collection) => !openAuthoring.current && collection?.publish !== false;
+
+/**
+ * Check whether the review can be skipped for the entries saved or published along with an entry:
+ * those created or edited from its Relation fields. An entry of another collection under Editorial
+ * Workflow is reviewed along with the entry it rides along with, so it can only skip the review if
+ * its own collection lets it with the `direct_publish` option as well. This is the publishing side
+ * of the rule `canSaveAlongHost()` in the Relation field’s quick-add service applies to saving.
+ * @param {{ collectionName: string }[]} entries Entries saved or published along with the entry.
+ * @returns {boolean} Result.
+ */
+export const canSkipReviewAlong = (entries) =>
+  entries.every(({ collectionName }) => {
+    const collection = getCollection(collectionName);
+
+    return (
+      !isWorkflowEnabled(collection) || getCollectionPublishModeOptions(collection).directPublish
+    );
+  });
+
+/**
+ * Check whether the given unpublished entry is at a stage it can be published from, and the
+ * publish controls are offered at all. See {@link isPublishAllowed}.
+ * @param {UnpublishedEntry} entry Unpublished entry.
+ * @param {InternalCollection | undefined} collection Collection the entry belongs to.
+ * @returns {boolean} Result.
+ */
+const isPublishStage = (entry, collection) =>
+  isPublishVisible(collection) &&
+  (isPendingDeletion(entry) ||
+    isLastStage(entry, collection) ||
+    // Direct publishing bypasses the review, so an entry can be published from any stage, as long
+    // as the entries riding along with it can skip theirs
+    (getCollectionPublishModeOptions(collection).directPublish &&
+      canSkipReviewAlong(entry.workflow.companions ?? [])));
+
+/**
+ * Check whether the signed-in user gets the control to publish the given unpublished entry, or to
+ * carry out its pending deletion. The entry can only be published from the last stage — the
+ * drafting stage with Preview Workflow — unless the `direct_publish` publish mode option lets it
+ * skip the review. The collection’s `publish` option can hide the control altogether, so an editor
+ * can move an entry through the review stages but leave the actual publishing to someone else. An
+ * Open Authoring contributor can’t merge a pull request on the configured repository, and neither
+ * can a user who can push to the entry’s branch but not merge into the configured branch.
+ * @param {UnpublishedEntry} entry Unpublished entry.
+ * @param {InternalCollection | undefined} collection Collection the entry belongs to.
+ * @returns {boolean} Result.
+ */
+export const isPublishAllowed = (entry, collection) =>
+  canMergePullRequest(entry.workflow.pullRequest) && isPublishStage(entry, collection);
+
+/**
+ * Get the control the signed-in user gets in the place of the Publish button for the given
+ * unpublished entry: the Publish button itself when they can publish the entry (see
+ * {@link isPublishAllowed}), or a link to review its pull request on the Git service when it’s one
+ * a contributor opened from their fork, at a stage it could otherwise be published from. Such a
+ * pull request is never merged from the CMS: see {@link canMergePullRequest}.
+ * @param {UnpublishedEntry} entry Unpublished entry.
+ * @param {InternalCollection | undefined} collection Collection the entry belongs to.
+ * @returns {'publish' | 'review' | undefined} Control, or `undefined` if there’s none.
+ */
+export const getPublishAction = (entry, collection) => {
+  if (isPublishAllowed(entry, collection)) {
+    return 'publish';
+  }
+
+  if (isForkEntry(entry) && !!entry.workflow.pullRequest.url && isPublishStage(entry, collection)) {
+    return 'review';
+  }
+
+  return undefined;
+};
+
+/**
+ * Check whether the signed-in user gets the option to save the entry being edited and publish it in
+ * one go, bypassing the review, as enabled with the `direct_publish` publish mode option. The
+ * collection’s `publish` option hides it just like the Publish button, and an Open Authoring
+ * contributor can’t publish anything. Without a pull request, the change is committed straight to
+ * the configured branch, so the user has to be able to push there; with one, the pull request is
+ * merged, so the user has to be able to merge it.
+ * @param {InternalCollection | undefined} collection Collection the entry belongs to.
+ * @param {UnpublishedEntry | undefined} entry Unpublished entry, if the entry has a pull request.
+ * @returns {boolean} Result.
+ * @see https://github.com/sveltia/sveltia-cms/issues/980
+ * @see https://github.com/decaporg/decap-cms/issues/4054
+ */
+export const isDirectPublishAllowed = (collection, entry) =>
+  !!collection &&
+  isPublishVisible(collection) &&
+  getCollectionPublishModeOptions(collection).directPublish &&
+  (entry ? canMergePullRequest(entry.workflow.pullRequest) : !lockedBranch.current);
 
 /**
  * Replace each published entry that has an open pull request with its unpublished version, so a
@@ -115,10 +549,7 @@ export const swapUnpublishedEntries = (entries, drafts) => {
   const draftMap = new Map();
 
   drafts.forEach((entry) => {
-    [
-      ...Object.values(entry.locales).map(({ path }) => path),
-      ...(entry.workflow.previousPaths ?? []),
-    ].forEach((path) => draftMap.set(path, entry));
+    getEntryPaths(entry, { includePrevious: true }).forEach((path) => draftMap.set(path, entry));
   });
 
   return entries.map(
@@ -150,10 +581,32 @@ export const mergeUnpublishedEntries = (entries, drafts) => {
 };
 
 /**
+ * Get the entry on the production branch that the given unpublished entry updates. Files are
+ * matched by path, because an entry keeps its slug when updated.
+ * @param {Entry} entry Entry, which is only looked up when it’s an unpublished one.
+ * @returns {Entry | undefined} Published version, or `undefined` if the entry isn’t unpublished, or
+ * is an entirely new one that has never been published.
+ */
+export const getPublishedVersion = (entry) => {
+  const { workflow } = /** @type {UnpublishedEntry} */ (entry);
+
+  if (!workflow) {
+    return undefined;
+  }
+
+  // The pull request may have renamed the entry, in which case the published version is still at
+  // one of the previous paths
+  const paths = new Set(getEntryPaths(entry, { includePrevious: true }));
+
+  // `allEntries` only holds published entries; an unpublished one lives in `unpublishedEntries`
+  // until it’s merged
+  return findEntryByPaths(paths);
+};
+
+/**
  * Check if the given unpublished entry updates an entry that already exists on the production
- * branch, rather than being an entirely new one. Files are matched by path, because an entry keeps
- * its slug when updated. The result decides whether the pull request can be discarded, leaving the
- * published version behind, or the entry has to be deleted outright.
+ * branch, rather than being an entirely new one. The result decides whether the pull request can be
+ * discarded, leaving the published version behind, or the entry has to be deleted outright.
  * @param {UnpublishedEntry} entry Unpublished entry.
  * @returns {boolean} `true` if a published version of the entry exists.
  */
@@ -164,16 +617,39 @@ export const hasPublishedVersion = (entry) => {
     return true;
   }
 
-  const paths = new Set([
-    ...Object.values(entry.locales).map(({ path }) => path),
-    // The pull request may have renamed the entry, in which case the published version is still at
-    // one of the previous paths
-    ...(entry.workflow.previousPaths ?? []),
-  ]);
-
-  // `allEntries` only holds published entries; an unpublished one lives in `unpublishedEntries`
-  // until it’s merged
-  return allEntries.current.some((publishedEntry) =>
-    Object.values(publishedEntry.locales).some(({ path }) => paths.has(path)),
-  );
+  return !!getPublishedVersion(entry);
 };
+
+/**
+ * Check if the given unpublished entry has a published version, like {@link hasPublishedVersion},
+ * for use in a derived state. The entry can be published from another view, e.g. from the content
+ * editor while the Editorial Workflow page is open, so {@link allEntries} is read here to make the
+ * derived state depend on it. On its own, `hasPublishedVersion()` doesn’t always read the store: it
+ * returns early for a collection file.
+ * @param {UnpublishedEntry | undefined} entry Unpublished entry.
+ * @returns {boolean} `true` if a published version of the entry exists, `false` if it doesn’t or
+ * no entry is given.
+ */
+export const checkPublishedVersion = (entry) => {
+  if (!entry) {
+    return false;
+  }
+
+  // Create a dependency on the store
+  void allEntries.current;
+
+  return hasPublishedVersion(entry);
+};
+
+/**
+ * Check if deleting the given entry only discards its draft: an entry with a pull request that has
+ * never been published. Any other entry is taken off the site instead, through a pull request with
+ * Editorial Workflow, as discarding its pull request would leave the published version on the
+ * site. The entry list shows a pull request’s entry in place of the published one it changes, so
+ * both the entry editor and the entry list tell the two apart this way. Like
+ * {@link checkPublishedVersion}, it can be used in a derived state.
+ * @param {Entry | UnpublishedEntry | undefined} entry Entry.
+ * @returns {boolean} Result.
+ */
+export const isDiscardableDraft = (entry) =>
+  !!entry && 'workflow' in entry && !checkPublishedVersion(/** @type {UnpublishedEntry} */ (entry));

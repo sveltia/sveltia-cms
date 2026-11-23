@@ -30,20 +30,22 @@ describe('config/constants', () => {
 
     test('should contain all required MIME types', () => {
       expect(SUPPORTED_TYPES).toContain('text/yaml');
+      expect(SUPPORTED_TYPES).toContain('application/x-yaml');
       expect(SUPPORTED_TYPES).toContain('application/yaml');
       expect(SUPPORTED_TYPES).toContain('application/toml');
       expect(SUPPORTED_TYPES).toContain('application/json');
     });
 
-    test('should have exactly 4 MIME types', () => {
-      expect(SUPPORTED_TYPES).toHaveLength(4);
+    test('should have exactly 5 MIME types', () => {
+      expect(SUPPORTED_TYPES).toHaveLength(5);
     });
 
     test('should have MIME types in the expected order', () => {
       expect(SUPPORTED_TYPES[0]).toBe('text/yaml');
-      expect(SUPPORTED_TYPES[1]).toBe('application/yaml');
-      expect(SUPPORTED_TYPES[2]).toBe('application/toml');
-      expect(SUPPORTED_TYPES[3]).toBe('application/json');
+      expect(SUPPORTED_TYPES[1]).toBe('application/x-yaml');
+      expect(SUPPORTED_TYPES[2]).toBe('application/yaml');
+      expect(SUPPORTED_TYPES[3]).toBe('application/toml');
+      expect(SUPPORTED_TYPES[4]).toBe('application/json');
     });
 
     test('should not be modifiable (immutability check)', () => {

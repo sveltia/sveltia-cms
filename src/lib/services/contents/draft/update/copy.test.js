@@ -2,13 +2,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { loadModule } from '$lib/services/app/dependencies';
-import { getField } from '$lib/services/contents/entry/fields';
+import { getDraftFieldArgs, getField } from '$lib/services/contents/entry/fields';
 
 import {
   copyFields,
   copyFromLocale,
   getCopyingFieldMap,
+  getListItemStates,
   getTurndownService,
+  isSameListItems,
+  isTranslationPending,
   translateFields,
   updateToast,
 } from './copy';
@@ -70,11 +73,11 @@ describe('draft/update/copy', () => {
 
     vi.mocked(getField).mockImplementation(({ keyPath }) => {
       if (keyPath === 'title') {
-        return { name: 'title', widget: 'string' };
+        return { name: 'title', i18n: true, widget: 'string' };
       }
 
       if (keyPath === 'body') {
-        return { name: 'body', widget: 'markdown' };
+        return { name: 'body', i18n: true, widget: 'markdown' };
       }
 
       return undefined;
@@ -124,7 +127,7 @@ describe('draft/update/copy', () => {
 
       vi.mocked(getField).mockImplementation(({ keyPath }) => {
         if (keyPath === 'count') {
-          return { name: 'count', widget: 'number' };
+          return { name: 'count', i18n: true, widget: 'number' };
         }
 
         return undefined;
@@ -263,9 +266,31 @@ describe('draft/update/copy', () => {
       });
 
       expect(result).toHaveProperty('title');
-      expect(result.title).toEqual({ value: 'English Title', isMarkdown: false });
+      expect(result.title).toEqual({ value: 'English Title', format: 'plain' });
       expect(result).toHaveProperty('body');
-      expect(result.body).toEqual({ value: 'English Body', isMarkdown: true });
+      expect(result.body).toEqual({ value: 'English Body', format: 'markdown' });
+    });
+
+    it('should tell the format of a RichText field', () => {
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'title') {
+          return { name: 'title', i18n: true, widget: 'richtext' };
+        }
+
+        if (keyPath === 'body') {
+          return { name: 'body', i18n: true, widget: 'richtext', format: 'html' };
+        }
+
+        return undefined;
+      });
+
+      const result = getCopyingFieldMap({
+        draft: mockEntryDraft,
+        options: { sourceLanguage: 'en', targetLanguage: 'ja', translate: false },
+      });
+
+      expect(result.title).toEqual({ value: 'English Title', format: 'markdown' });
+      expect(result.body).toEqual({ value: 'English Body', format: 'html' });
     });
 
     it('should filter by keyPath when provided', () => {
@@ -285,17 +310,41 @@ describe('draft/update/copy', () => {
       expect(result).not.toHaveProperty('body');
     });
 
+    it('should not copy a sibling whose name begins with the key path', () => {
+      mockEntryDraft.currentValues.en.title_suffix = 'English Suffix';
+      mockEntryDraft.currentValues.ja.title_suffix = '';
+
+      vi.mocked(getField).mockImplementation(() => ({
+        name: 'title',
+        i18n: true,
+        widget: 'string',
+      }));
+
+      const result = getCopyingFieldMap({
+        draft: mockEntryDraft,
+        options: {
+          sourceLanguage: 'en',
+          targetLanguage: 'ja',
+          keyPath: 'title',
+          translate: false,
+        },
+      });
+
+      expect(result).toHaveProperty('title');
+      expect(result).not.toHaveProperty('title_suffix');
+    });
+
     it('should skip non-string fields', () => {
       mockEntryDraft.currentValues.en.count = 42;
       mockEntryDraft.currentValues.ja.count = 0;
 
       vi.mocked(getField).mockImplementation(({ keyPath }) => {
         if (keyPath === 'count') {
-          return { name: 'count', widget: 'number' };
+          return { name: 'count', i18n: true, widget: 'number' };
         }
 
         if (keyPath === 'title') {
-          return { name: 'title', widget: 'string' };
+          return { name: 'title', i18n: true, widget: 'string' };
         }
 
         return undefined;
@@ -319,7 +368,7 @@ describe('draft/update/copy', () => {
 
       vi.mocked(getField).mockImplementation(({ keyPath }) => {
         if (keyPath === 'empty') {
-          return { name: 'empty', widget: 'string' };
+          return { name: 'empty', i18n: true, widget: 'string' };
         }
 
         return undefined;
@@ -352,16 +401,50 @@ describe('draft/update/copy', () => {
       expect(result).not.toHaveProperty('title');
     });
 
+    it('should translate a `duplicate_if_empty` field still holding the source value', () => {
+      vi.mocked(getField).mockImplementation(({ keyPath }) =>
+        keyPath === 'title'
+          ? { name: 'title', i18n: 'duplicate_if_empty', widget: 'string' }
+          : undefined,
+      );
+
+      mockEntryDraft.currentValues.ja.title = mockEntryDraft.currentValues.en.title;
+
+      const options = { sourceLanguage: 'en', targetLanguage: 'ja', translate: true };
+
+      expect(getCopyingFieldMap({ draft: mockEntryDraft, options })).toHaveProperty('title');
+
+      // A value of the locale’s own is kept
+      mockEntryDraft.currentValues.ja.title = 'Japanese Title';
+
+      expect(getCopyingFieldMap({ draft: mockEntryDraft, options })).not.toHaveProperty('title');
+    });
+
+    it('should skip a populated List field with the `duplicate_if_empty` option', () => {
+      // A List field doesn’t support the strategy, so it works like a translatable field
+      vi.mocked(getField).mockImplementation(({ keyPath }) =>
+        keyPath === 'title'
+          ? { name: 'title', i18n: 'duplicate_if_empty', widget: 'list' }
+          : undefined,
+      );
+
+      mockEntryDraft.currentValues.ja.title = mockEntryDraft.currentValues.en.title;
+
+      const options = { sourceLanguage: 'en', targetLanguage: 'ja', translate: true };
+
+      expect(getCopyingFieldMap({ draft: mockEntryDraft, options })).not.toHaveProperty('title');
+    });
+
     it('should mark richtext fields as markdown', () => {
       const draft = mockEntryDraft;
 
       vi.mocked(getField).mockImplementation(({ keyPath }) => {
         if (keyPath === 'title') {
-          return { name: 'title', widget: 'string' };
+          return { name: 'title', i18n: true, widget: 'string' };
         }
 
         if (keyPath === 'body') {
-          return { name: 'body', widget: 'richtext' };
+          return { name: 'body', i18n: true, widget: 'richtext' };
         }
 
         return undefined;
@@ -377,7 +460,7 @@ describe('draft/update/copy', () => {
       });
 
       expect(result).toHaveProperty('body');
-      expect(result.body).toEqual({ value: 'English Body', isMarkdown: true });
+      expect(result.body).toEqual({ value: 'English Body', format: 'markdown' });
     });
 
     it('should skip list fields that have sub-fields (fieldType list + hasSubFields true)', () => {
@@ -386,11 +469,16 @@ describe('draft/update/copy', () => {
 
       vi.mocked(getField).mockImplementation(({ keyPath }) => {
         if (keyPath === 'tags') {
-          return { name: 'tags', widget: 'list', fields: [{ name: 'tag', widget: 'string' }] };
+          return {
+            name: 'tags',
+            i18n: true,
+            widget: 'list',
+            fields: [{ name: 'tag', widget: 'string' }],
+          };
         }
 
         if (keyPath === 'title') {
-          return { name: 'title', widget: 'string' };
+          return { name: 'title', i18n: true, widget: 'string' };
         }
 
         return undefined;
@@ -411,7 +499,7 @@ describe('draft/update/copy', () => {
 
       vi.mocked(getField).mockImplementation(({ keyPath }) => {
         if (keyPath === 'tags') {
-          return { name: 'tags', widget: 'list' }; // no fields/types/field
+          return { name: 'tags', i18n: true, widget: 'list' }; // no fields/types/field
         }
 
         return undefined;
@@ -422,9 +510,161 @@ describe('draft/update/copy', () => {
         options: { sourceLanguage: 'en', targetLanguage: 'ja', translate: false },
       });
 
-      // List field without sub-fields should be included, isMarkdown = false
+      // List field without sub-fields should be included, format = 'plain'
       expect(result).toHaveProperty('tags');
-      expect(result.tags).toEqual({ value: 'tag1 tag2', isMarkdown: false });
+      expect(result.tags).toEqual({ value: 'tag1 tag2', format: 'plain' });
+    });
+
+    it('should skip the fields that are not translatable', () => {
+      mockEntryDraft.currentValues.en = {
+        title: 'English Title',
+        author: 'Jane',
+        date: 'Monday',
+        note: 'Hello',
+        'links.0.label': 'Home',
+        'links.0.url': 'https://example.com',
+        'links.0.title': 'Homepage',
+        'tags.0': 'food',
+        'note.0': 'Hi',
+        extra: 'Unknown',
+      };
+      // The list item exists in the target locale
+      mockEntryDraft.currentValues.ja = { 'links.0.url': 'https://example.com' };
+
+      /** @type {Record<string, any>} */
+      const fields = {
+        title: { name: 'title', i18n: true, widget: 'string' },
+        // Only saved in the default locale
+        author: { name: 'author', i18n: false, widget: 'string' },
+        // Copied from the default locale, and read-only in the other locales
+        date: { name: 'date', i18n: 'duplicate', widget: 'string' },
+        // No option means no i18n
+        note: { name: 'note', widget: 'string' },
+        links: {
+          name: 'links',
+          i18n: 'translate',
+          widget: 'list',
+          fields: [{ name: 'label' }, { name: 'url' }, { name: 'title' }],
+        },
+        // A subfield goes by its own option, like the editor, rather than inheriting the option
+        // of its parent, as it used to: without one, it’s hidden in the other locales
+        'links.0.label': { name: 'label', widget: 'string' },
+        'links.0.url': { name: 'url', i18n: 'duplicate', widget: 'string' },
+        'links.0.title': { name: 'title', i18n: true, widget: 'string' },
+        // An item of a List field without subfields has no configuration of its own, so it takes
+        // the option of the List field
+        tags: { name: 'tags', i18n: true, widget: 'list' },
+        // The same goes for a key path that only looks like a list item
+        'note.0': undefined,
+      };
+
+      vi.mocked(getField).mockImplementation(({ keyPath }) => fields[keyPath]);
+
+      const result = getCopyingFieldMap({
+        draft: mockEntryDraft,
+        options: { sourceLanguage: 'en', targetLanguage: 'ja', translate: false },
+      });
+
+      // A key without a field isn’t copied either
+      expect(Object.keys(result)).toEqual(['title', 'links.0.title', 'tags.0']);
+    });
+
+    it('should not copy into a list item the target locale lacks or has of another type', () => {
+      const quoteText = { name: 'text', i18n: true, widget: 'string' };
+      const imageAlt = { name: 'alt', i18n: true, widget: 'string' };
+
+      const blocks = {
+        name: 'blocks',
+        i18n: true,
+        widget: 'list',
+        types: [
+          { name: 'quote', fields: [quoteText] },
+          { name: 'image', fields: [imageAlt] },
+        ],
+      };
+
+      const tags = { name: 'tags', i18n: true, widget: 'list' };
+
+      mockEntryDraft.currentValues.en = {
+        'blocks.0.type': 'quote',
+        'blocks.0.text': 'Hello',
+        'blocks.0.tags.0': 'food',
+        'blocks.1.type': 'quote',
+        'blocks.1.text': 'World',
+        'blocks.1.tags.0': 'drink',
+      };
+      mockEntryDraft.currentValues.fr = {
+        'blocks.0.type': 'image',
+        'blocks.0.alt': 'Chat',
+      };
+
+      vi.mocked(getDraftFieldArgs).mockImplementation((draft, args) => ({ ...args }));
+      // A variable type item resolves to the subfields of its own type
+      vi.mocked(getField).mockImplementation(({ keyPath, valueMap }) => {
+        if (keyPath === 'blocks') {
+          return blocks;
+        }
+
+        const [, index, name] = keyPath.match(/^blocks\.(\d+)\.(\w+)$/) ?? [];
+        const type = valueMap?.[`blocks.${index}.type`];
+
+        if (name === 'tags' && type === 'quote') {
+          return tags;
+        }
+
+        if (name === 'text' && type === 'quote') {
+          return quoteText;
+        }
+
+        if (name === 'alt' && type === 'image') {
+          return imageAlt;
+        }
+
+        return undefined;
+      });
+
+      const options = { sourceLanguage: 'en', targetLanguage: 'fr', translate: false };
+
+      // The first item is an image in the target locale, and the second one is missing there
+      expect(getCopyingFieldMap({ draft: mockEntryDraft, options })).toEqual({});
+
+      // Once the target locale has matching items, the values are copied, including the items of
+      // a List field without subfields, which don’t have to exist yet
+      mockEntryDraft.currentValues.fr = {
+        'blocks.0.type': 'quote',
+        'blocks.1.type': 'quote',
+      };
+
+      expect(Object.keys(getCopyingFieldMap({ draft: mockEntryDraft, options }))).toEqual([
+        'blocks.0.text',
+        'blocks.0.tags.0',
+        'blocks.1.text',
+        'blocks.1.tags.0',
+      ]);
+    });
+
+    it('should not copy into a subfield the editor hides in the target locale', () => {
+      mockEntryDraft.currentValues.en = { 'links.0.label': 'Home' };
+      mockEntryDraft.currentValues.ja = {};
+
+      /** @type {Record<string, any>} */
+      const fields = {
+        links: { name: 'links', i18n: true, widget: 'list', fields: [{ name: 'label' }] },
+        // No option of its own
+        'links.0.label': { name: 'label', widget: 'string' },
+      };
+
+      vi.mocked(getField).mockImplementation(({ keyPath }) => fields[keyPath]);
+
+      const result = getCopyingFieldMap({
+        draft: mockEntryDraft,
+        options: { sourceLanguage: 'en', targetLanguage: 'ja', translate: true },
+      });
+
+      // Copy and Translate used to inherit the List field’s `i18n` option, writing a Japanese
+      // value the user can’t see or edit, as the editor (`getFieldLocaleAccess()`), the validator
+      // and the default values go by the subfield’s own option, which defaults to `false`
+      expect(result).toEqual({});
     });
   });
 
@@ -453,8 +693,8 @@ describe('draft/update/copy', () => {
       };
 
       const copingFieldMap = {
-        title: { value: 'English Title', isMarkdown: false },
-        body: { value: 'English Body', isMarkdown: true },
+        title: { value: 'English Title', format: 'plain' },
+        body: { value: 'English Body', format: 'markdown' },
       };
 
       copyFields({
@@ -468,6 +708,135 @@ describe('draft/update/copy', () => {
 
       expect(currentValues.ja.title).toBe('English Title');
       expect(currentValues.ja.body).toBe('English Body');
+    });
+  });
+
+  describe('translation in flight', () => {
+    /** @type {ReturnType<typeof Promise.withResolvers<string[]>>} */
+    let request;
+    let mockTranslate;
+
+    beforeEach(async () => {
+      const { translator } = await import('$lib/services/integrations/translators');
+      const { prefs } = await import('$lib/services/user/prefs.svelte');
+
+      request = Promise.withResolvers();
+      mockTranslate = vi.fn(() => request.promise);
+      prefs.apiKeys = { google: 'test-api-key' };
+      translator.current = {
+        serviceId: 'google',
+        markdownSupported: true,
+        translate: mockTranslate,
+      };
+    });
+
+    it('should not overwrite a field filled in while translating all the fields', async () => {
+      const { copyFromLocaleToast } = await import('$lib/services/contents/editor');
+
+      const promise = copyFromLocaleUpdate({
+        sourceLanguage: 'en',
+        targetLanguage: 'ja',
+        translate: true,
+      });
+
+      await vi.waitFor(() => expect(mockTranslate).toHaveBeenCalled());
+      mockEntryDraft.currentValues.ja.title = 'Typed by the user';
+      request.resolve(['Japanese Title', 'Japanese Body']);
+      await promise;
+
+      expect(mockEntryDraft.currentValues.ja.title).toBe('Typed by the user');
+      expect(mockEntryDraft.currentValues.ja.body).toBe('Japanese Body');
+      expect(copyFromLocaleToast.current).toEqual(
+        expect.objectContaining({ status: 'success', message: 'translation.complete', count: 1 }),
+      );
+    });
+
+    it('should overwrite the field when translating that field', async () => {
+      const promise = copyFromLocaleUpdate({
+        sourceLanguage: 'en',
+        targetLanguage: 'ja',
+        keyPath: 'title',
+        translate: true,
+      });
+
+      await vi.waitFor(() => expect(mockTranslate).toHaveBeenCalled());
+      mockEntryDraft.currentValues.ja.title = 'Typed by the user';
+      request.resolve(['Japanese Title']);
+      await promise;
+
+      expect(mockEntryDraft.currentValues.ja.title).toBe('Japanese Title');
+    });
+
+    it('should drop the results once another entry has been opened', async () => {
+      const { copyFromLocaleToast } = await import('$lib/services/contents/editor');
+      const entryDraft = { current: mockEntryDraft };
+
+      const promise = copyFromLocale({
+        draft: mockEntryDraft,
+        options: { sourceLanguage: 'en', targetLanguage: 'ja', translate: true },
+        entryDraft,
+      });
+
+      await vi.waitFor(() => expect(mockTranslate).toHaveBeenCalled());
+      copyFromLocaleToast.current = undefined;
+      entryDraft.current = { currentValues: { en: {}, ja: {} } };
+      request.resolve(['Japanese Title', 'Japanese Body']);
+      await promise;
+
+      expect(mockEntryDraft.currentValues.ja).toEqual({ title: '', body: '' });
+      expect(entryDraft.current.currentValues.ja).toEqual({});
+      expect(copyFromLocaleToast.current).toBeUndefined();
+    });
+
+    it('should not report a failure once another entry has been opened', async () => {
+      const { copyFromLocaleToast } = await import('$lib/services/contents/editor');
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const entryDraft = { current: mockEntryDraft };
+
+      const promise = copyFromLocale({
+        draft: mockEntryDraft,
+        options: { sourceLanguage: 'en', targetLanguage: 'ja', translate: true },
+        entryDraft,
+      });
+
+      await vi.waitFor(() => expect(mockTranslate).toHaveBeenCalled());
+      copyFromLocaleToast.current = undefined;
+      entryDraft.current = null;
+      request.reject(new Error('Translation API failed'));
+      await promise;
+
+      expect(copyFromLocaleToast.current).toBeUndefined();
+      expect(consoleSpy).toHaveBeenCalledWith(expect.any(Error));
+      consoleSpy.mockRestore();
+    });
+
+    it('should not send the same request again until it’s settled', async () => {
+      const options = { sourceLanguage: 'en', targetLanguage: 'ja', translate: true };
+      const pendingArgs = { draft: mockEntryDraft, targetLanguage: 'ja' };
+
+      expect(isTranslationPending(pendingArgs)).toBe(false);
+
+      const first = copyFromLocaleUpdate(options);
+
+      expect(isTranslationPending(pendingArgs)).toBe(true);
+      // Another field, or another draft, can be translated meanwhile
+      expect(isTranslationPending({ ...pendingArgs, keyPath: 'title' })).toBe(false);
+      expect(isTranslationPending({ ...pendingArgs, draft: {} })).toBe(false);
+      await vi.waitFor(() => expect(mockTranslate).toHaveBeenCalledTimes(1));
+      await copyFromLocaleUpdate(options);
+      expect(mockTranslate).toHaveBeenCalledTimes(1);
+
+      request.resolve(['Japanese Title', 'Japanese Body']);
+      await first;
+      expect(isTranslationPending(pendingArgs)).toBe(false);
+
+      // A failed request can be sent again
+      mockEntryDraft.currentValues.ja = { title: '', body: '' };
+      mockTranslate.mockRejectedValueOnce(new Error('Translation API failed'));
+      vi.spyOn(console, 'error').mockImplementationOnce(() => {});
+      await copyFromLocaleUpdate(options);
+      expect(mockTranslate).toHaveBeenCalledTimes(2);
+      expect(isTranslationPending(pendingArgs)).toBe(false);
     });
   });
 
@@ -490,6 +859,11 @@ describe('draft/update/copy', () => {
       Object.defineProperty(translatorApiKeyDialogState, 'current', {
         configurable: true,
         /**
+         * Get the dialog state, which no earlier request is waiting on.
+         * @returns {any} Dialog state.
+         */
+        get: () => ({ show: false, multiple: false }),
+        /**
          * Resolve the dialog right away.
          * @param {any} state Dialog state.
          */
@@ -506,7 +880,7 @@ describe('draft/update/copy', () => {
       };
 
       const copingFieldMap = {
-        title: { value: 'English Title', isMarkdown: false },
+        title: { value: 'English Title', format: 'plain' },
       };
 
       await translateFields({
@@ -520,6 +894,44 @@ describe('draft/update/copy', () => {
 
       // Should not translate without API key
       expect(currentValues.ja.title).toBe('');
+    });
+
+    it('should settle an earlier request still waiting for an API key', async () => {
+      const { translator } = await import('$lib/services/integrations/translators');
+      const { prefs } = await import('$lib/services/user/prefs.svelte');
+      const { translatorApiKeyDialogState } = await import('$lib/services/contents/editor');
+      const earlierResolve = vi.fn();
+      /** @type {any} */
+      let state = { show: false, multiple: false, resolve: earlierResolve };
+
+      prefs.apiKeys = {};
+      translator.current = { serviceId: 'google', markdownSupported: false, translate: vi.fn() };
+
+      Object.defineProperty(translatorApiKeyDialogState, 'current', {
+        configurable: true,
+        /**
+         * Get the dialog state.
+         * @returns {any} Dialog state.
+         */
+        get: () => state,
+        /**
+         * Store the dialog state, cancelling the new request right away.
+         * @param {any} newState Dialog state.
+         */
+        set: (newState) => {
+          state = newState;
+          newState.resolve?.(undefined);
+        },
+      });
+
+      await translateFields({
+        currentValues: { en: { title: 'English Title' }, ja: { title: '' } },
+        options: { sourceLanguage: 'en', targetLanguage: 'ja' },
+        copingFieldMap: { title: { value: 'English Title', format: 'plain' } },
+      });
+
+      // The dialog answers the new request only, so the earlier one is settled without a key
+      expect(earlierResolve).toHaveBeenCalledWith();
     });
 
     it('should handle translation API errors gracefully', async () => {
@@ -541,7 +953,7 @@ describe('draft/update/copy', () => {
       };
 
       const copingFieldMap = {
-        title: { value: 'English Title', isMarkdown: false },
+        title: { value: 'English Title', format: 'plain' },
       };
 
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -582,7 +994,7 @@ describe('draft/update/copy', () => {
       };
 
       const copingFieldMap = {
-        body: { value: '# English Title', isMarkdown: true },
+        body: { value: '# English Title', format: 'markdown' },
       };
 
       await translateFields({
@@ -617,8 +1029,8 @@ describe('draft/update/copy', () => {
       };
 
       const copingFieldMap = {
-        title: { value: 'English Title', isMarkdown: false },
-        body: { value: 'English Body', isMarkdown: true },
+        title: { value: 'English Title', format: 'plain' },
+        body: { value: 'English Body', format: 'markdown' },
       };
 
       await translateFields({
@@ -662,7 +1074,7 @@ describe('draft/update/copy', () => {
       };
 
       const copingFieldMap = {
-        body: { value: '# English Title', isMarkdown: true },
+        body: { value: '# English Title', format: 'markdown' },
       };
 
       await translateFields({
@@ -678,6 +1090,280 @@ describe('draft/update/copy', () => {
       // turndown converts HTML back to markdown
       expect(mockTurndown).toHaveBeenCalledWith('<h1>Japanese Title</h1>');
       expect(currentValues.ja.body).toBe('# Japanese Title');
+    });
+
+    it('should pass an HTML value as is when the translator takes HTML', async () => {
+      const { translator } = await import('$lib/services/integrations/translators');
+      const { prefs } = await import('$lib/services/user/prefs.svelte');
+      const { parse } = await import('marked');
+      const mockTranslate = vi.fn().mockResolvedValue(['<p>日本語の&amp;本文</p>']);
+
+      prefs.apiKeys = { google: 'test-api-key' };
+
+      translator.current = {
+        serviceId: 'google',
+        markdownSupported: false,
+        translate: mockTranslate,
+      };
+
+      const currentValues = {
+        en: { body: '<p>English &amp; Body</p>' },
+        ja: { body: '' },
+      };
+
+      await translateFields({
+        currentValues,
+        options: { sourceLanguage: 'en', targetLanguage: 'ja' },
+        copingFieldMap: { body: { value: '<p>English &amp; Body</p>', format: 'html' } },
+      });
+
+      expect(vi.mocked(parse)).not.toHaveBeenCalled();
+      expect(mockTranslate).toHaveBeenCalledWith(['<p>English &amp; Body</p>'], expect.any(Object));
+      expect(mockTurndown).not.toHaveBeenCalled();
+      expect(currentValues.ja.body).toBe('<p>日本語の&amp;本文</p>');
+    });
+
+    it('should send plain text as HTML and decode the result when the translator takes HTML', async () => {
+      const { translator } = await import('$lib/services/integrations/translators');
+      const { prefs } = await import('$lib/services/user/prefs.svelte');
+
+      // What an HTML-format translator such as Google hands back: special characters as entities,
+      // including those it has added itself
+      const mockTranslate = vi
+        .fn()
+        .mockResolvedValue([
+          'Q&amp;A &lt;b&gt; &quot;x&quot; &#39;y&#39; &apos;z&apos; &#x263A; &#9731; &amp;amp; &copy; &#x110000;',
+        ]);
+
+      prefs.apiKeys = { google: 'test-api-key' };
+
+      translator.current = {
+        serviceId: 'google',
+        markdownSupported: false,
+        translate: mockTranslate,
+      };
+
+      const currentValues = { en: { title: '' }, ja: { title: '' } };
+
+      await translateFields({
+        currentValues,
+        options: { sourceLanguage: 'en', targetLanguage: 'ja' },
+        copingFieldMap: { title: { value: 'Q&A <b> &amp; "x"', format: 'plain' } },
+      });
+
+      // The plain text is escaped, so its `<b>` and `&amp;` are sent as text rather than markup
+      expect(mockTranslate).toHaveBeenCalledWith(
+        ['Q&amp;A &lt;b&gt; &amp;amp; "x"'],
+        expect.any(Object),
+      );
+      // Each entity is decoded exactly once; an unknown or invalid one is left as is
+      expect(currentValues.ja.title).toBe(
+        "Q&A <b> \"x\" 'y' 'z' \u263A \u2603 &amp; &copy; &#x110000;",
+      );
+    });
+
+    it('should leave plain text alone when the translator supports Markdown', async () => {
+      const { translator } = await import('$lib/services/integrations/translators');
+      const { prefs } = await import('$lib/services/user/prefs.svelte');
+      const mockTranslate = vi.fn().mockResolvedValue(['Q&amp;A']);
+
+      prefs.apiKeys = { openai: 'test-api-key' };
+
+      translator.current = {
+        serviceId: 'openai',
+        markdownSupported: true,
+        translate: mockTranslate,
+      };
+
+      const currentValues = { en: { title: '' }, ja: { title: '' } };
+
+      await translateFields({
+        currentValues,
+        options: { sourceLanguage: 'en', targetLanguage: 'ja' },
+        copingFieldMap: { title: { value: 'Q&amp;A', format: 'plain' } },
+      });
+
+      expect(mockTranslate).toHaveBeenCalledWith(['Q&amp;A'], expect.any(Object));
+      expect(currentValues.ja.title).toBe('Q&amp;A');
+    });
+
+    describe('list items changed while the request is in flight', () => {
+      /** @type {(values: string[]) => void} */
+      let respond;
+
+      beforeEach(async () => {
+        const { translator } = await import('$lib/services/integrations/translators');
+        const { prefs } = await import('$lib/services/user/prefs.svelte');
+
+        prefs.apiKeys = { openai: 'test-api-key' };
+
+        translator.current = {
+          serviceId: 'openai',
+          markdownSupported: true,
+          translate: vi.fn(
+            () =>
+              new Promise((resolve) => {
+                respond = resolve;
+              }),
+          ),
+        };
+      });
+
+      /**
+       * Translate `faq.1.q` into Japanese, changing the Japanese values while the request is in
+       * flight.
+       * @param {Record<string, any>} ja Japanese values before the request.
+       * @param {(ja: Record<string, any>) => void} change Function changing the values.
+       * @returns {Promise<Record<string, any>>} Japanese values after the response.
+       */
+      const translateWhile = async (ja, change) => {
+        const currentValues = { en: { 'faq.0.q': 'One', 'faq.1.q': 'Two' }, ja };
+
+        const promise = translateFields({
+          currentValues,
+          options: { sourceLanguage: 'en', targetLanguage: 'ja', keyPath: 'faq.1.q' },
+          copingFieldMap: { 'faq.1.q': { value: 'Two', format: 'plain' } },
+        });
+
+        await vi.waitFor(() => expect(respond).toBeTypeOf('function'));
+        change(currentValues.ja);
+        respond(['Ni']);
+        await promise;
+
+        return currentValues.ja;
+      };
+
+      beforeEach(() => {
+        respond = undefined;
+      });
+
+      it('should not bring back an item removed in the meantime', async () => {
+        const ja = await translateWhile({ 'faq.0.q': '', 'faq.1.q': '' }, (values) => {
+          delete values['faq.1.q'];
+        });
+
+        expect(ja).toEqual({ 'faq.0.q': '' });
+      });
+
+      it('should not write into another item moved to the position', async () => {
+        const ja = await translateWhile({ 'faq.0.q': 'A', 'faq.1.q': 'B' }, (values) => {
+          // The items are tagged with an ID and their original key paths before they’re swapped
+          Object.assign(values, {
+            'faq.0.q': 'B',
+            'faq.0.__sc_item_id': 'id-b',
+            'faq.0.__sc_item_original_key_path': 'faq.1',
+            'faq.1.q': 'A',
+            'faq.1.__sc_item_id': 'id-a',
+            'faq.1.__sc_item_original_key_path': 'faq.0',
+          });
+        });
+
+        expect(ja['faq.1.q']).toBe('A');
+        expect(ja['faq.0.q']).toBe('B');
+      });
+
+      it('should not write into a new item inserted at the position', async () => {
+        const ja = await translateWhile({ 'faq.0.q': '', 'faq.1.q': '' }, (values) => {
+          Object.assign(values, {
+            'faq.0.__sc_item_original_key_path': 'faq.0',
+            'faq.1.q': '',
+            'faq.1.__sc_item_id': 'id-new',
+            'faq.2.q': '',
+            'faq.2.__sc_item_original_key_path': 'faq.1',
+          });
+        });
+
+        expect(ja['faq.1.q']).toBe('');
+      });
+
+      it('should still write into the item once its list is tagged for another change', async () => {
+        const ja = await translateWhile({ 'faq.0.q': '', 'faq.1.q': '' }, (values) => {
+          // Another item is added at the end, so the existing items are tagged where they are
+          Object.assign(values, {
+            'faq.0.__sc_item_original_key_path': 'faq.0',
+            'faq.1.__sc_item_id': 'id-1',
+            'faq.1.__sc_item_original_key_path': 'faq.1',
+            'faq.2.q': '',
+            'faq.2.__sc_item_id': 'id-new',
+          });
+        });
+
+        expect(ja['faq.1.q']).toBe('Ni');
+      });
+
+      it('should still write into a tagged item that keeps its ID', async () => {
+        const ja = await translateWhile(
+          { 'faq.0.q': '', 'faq.1.q': '', 'faq.1.__sc_item_id': 'id-1' },
+          (values) => {
+            values['faq.0.q'] = 'edited';
+          },
+        );
+
+        expect(ja['faq.1.q']).toBe('Ni');
+      });
+    });
+  });
+
+  describe('getListItemStates()', () => {
+    it('should return the state of each list item a key path is in', () => {
+      const content = {
+        'blocks.0.__sc_item_id': 'id-0',
+        'blocks.0.__sc_item_original_key_path': 'blocks.1',
+        'blocks.0.faq.2.q': 'Question',
+      };
+
+      expect(getListItemStates(content, 'blocks.0.faq.2.q')).toEqual([
+        { exists: true, id: 'id-0', originalKeyPath: 'blocks.1' },
+        { exists: true, id: undefined, originalKeyPath: undefined },
+      ]);
+      expect(getListItemStates(content, 'blocks.1.faq.0.q')).toEqual([
+        { exists: false, id: undefined, originalKeyPath: undefined },
+        { exists: false, id: undefined, originalKeyPath: undefined },
+      ]);
+      // A list item without subfields is found by its own key path
+      expect(getListItemStates({ 'tags.0': 'a', 'tags.1': 'b' }, 'tags.1')).toEqual([
+        { exists: true, id: undefined, originalKeyPath: undefined },
+      ]);
+      expect(getListItemStates(content, 'title')).toEqual([]);
+    });
+  });
+
+  describe('isSameListItems()', () => {
+    const state = { exists: true, id: undefined, originalKeyPath: undefined };
+
+    it('should compare the IDs of items tagged before', () => {
+      const before = [{ ...state, id: 'a', originalKeyPath: 'faq.0' }];
+
+      expect(
+        isSameListItems(before, [{ ...state, id: 'a', originalKeyPath: 'faq.0' }], 'faq.1.q'),
+      ).toBe(true);
+      expect(
+        isSameListItems(before, [{ ...state, id: 'b', originalKeyPath: 'faq.0' }], 'faq.1.q'),
+      ).toBe(false);
+    });
+
+    it('should compare the original key paths of items untagged before', () => {
+      expect(isSameListItems([state], [state], 'faq.1.q')).toBe(true);
+      expect(
+        isSameListItems([state], [{ ...state, id: 'a', originalKeyPath: 'faq.1' }], 'faq.1.q'),
+      ).toBe(true);
+      expect(
+        isSameListItems([state], [{ ...state, id: 'a', originalKeyPath: 'faq.0' }], 'faq.1.q'),
+      ).toBe(false);
+      // A new item has an ID but no original key path
+      expect(isSameListItems([state], [{ ...state, id: 'a' }], 'faq.1.q')).toBe(false);
+      expect(isSameListItems([state], [{ ...state, exists: false }], 'faq.1.q')).toBe(false);
+    });
+
+    it('should check every level of nested lists', () => {
+      expect(
+        isSameListItems(
+          [state, state],
+          [state, { ...state, originalKeyPath: 'blocks.0.faq.0' }],
+          'blocks.0.faq.1.q',
+        ),
+      ).toBe(false);
+      expect(isSameListItems([state, state], [state, state], 'blocks.0.faq.1.q')).toBe(true);
     });
   });
 });

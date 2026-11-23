@@ -17,12 +17,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    allItems,
-    selectedItems,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { allItems, selectedItems } = $props();
 
   const totalCount = $derived(allItems.length);
   const selectedCount = $derived(selectedItems.current.length);
@@ -33,7 +28,7 @@
 <div role="none" class="wrapper">
   <Checkbox
     disabled={!totalCount}
-    aria-label={_('select_all')}
+    ariaLabel={_('select_all')}
     checked={anySelected && !allSelected ? 'mixed' : anySelected}
     onChange={() => {
       selectedItems.current = allSelected ? [] : [...allItems];

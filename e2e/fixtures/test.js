@@ -1,0 +1,657 @@
+import { mkdtemp, readFile, rm, writeFile } from 'fs/promises';
+import { tmpdir } from 'os';
+import { join } from 'path';
+
+import { test as base, expect } from '@playwright/test';
+import { stringify } from 'yaml';
+
+import { MockGitea } from './gitea.js';
+import { MockGitHub } from './github.js';
+import { MockGitLab } from './gitlab.js';
+
+/**
+ * @import { BrowserContext, Locator, Page } from '@playwright/test';
+ */
+
+/**
+ * URL of the installed Sveltia UI entry point, in the package manager’s store, where the Shiki
+ * packages it depends on sit next to it.
+ */
+const SVELTIA_UI_URL = new URL(import.meta.resolve('@sveltia/ui'));
+
+/**
+ * Name of the directory in the origin private file system (OPFS) where the `test-repo` backend
+ * stores the repository files. Keep it in sync with `TEST_BACKEND_ROOT_DIR_NAME` in
+ * `src/lib/services/backends/fs/test.js`.
+ */
+export const TEST_REPO_DIR_NAME = 'sveltia-cms-test';
+
+/**
+ * Default CMS config: a blog on the `test-repo` backend, which needs no authentication and keeps
+ * the files in OPFS. Every test runs in a fresh browser context, so it starts with an empty
+ * repository.
+ */
+export const BASE_CONFIG = {
+  backend: { name: 'test-repo' },
+  media_folder: 'static/images',
+  public_folder: '/images',
+  collections: [
+    {
+      name: 'posts',
+      label: 'Posts',
+      label_singular: 'Post',
+      folder: 'content/posts',
+      create: true,
+      fields: [
+        { name: 'title', label: 'Title' },
+        { name: 'body', label: 'Body', widget: 'text' },
+      ],
+    },
+  ],
+};
+
+/**
+ * CMS config for a GitHub repository, which the `github` fixture mocks. Use it with
+ * `test.use({ config: GITHUB_CONFIG })` and the `github` fixture in the test.
+ */
+export const GITHUB_CONFIG = {
+  ...BASE_CONFIG,
+  backend: { name: 'github', repo: 'sveltia/e2e-site', branch: 'main' },
+};
+
+/**
+ * CMS config for a Gitea or Forgejo repository, which the `gitea` fixture mocks.
+ */
+export const GITEA_CONFIG = {
+  ...BASE_CONFIG,
+  backend: { name: 'gitea', repo: 'sveltia/e2e-site', branch: 'main' },
+};
+
+/**
+ * CMS config for a GitLab project, which the `gitlab` fixture mocks.
+ */
+export const GITLAB_CONFIG = {
+  ...BASE_CONFIG,
+  backend: { name: 'gitlab', repo: 'sveltia/e2e-site', branch: 'main' },
+};
+
+/**
+ * Version of the CMS being tested, which the update check is told is the latest.
+ */
+const { version: CMS_VERSION } = JSON.parse(
+  await readFile(new URL('../../package.json', import.meta.url), 'utf8'),
+);
+
+/**
+ * The CMS on the test page.
+ */
+export class CMS {
+  /**
+   * Create a handle for the CMS on a page.
+   * @param {Page} page Page.
+   * @param {string} adminPath Path of the admin page.
+   * @param {string} [siteOrigin] Origin to serve the admin page from instead of the test server.
+   */
+  constructor(page, adminPath, siteOrigin) {
+    this.page = page;
+    this.adminPath = adminPath;
+    this.siteOrigin = siteOrigin;
+    /**
+     * Temporary directories holding the files dropped with {@link dropFiles}.
+     * @type {string[]}
+     */
+    this.tempDirs = [];
+  }
+
+  /**
+   * Remove the temporary files the test has created.
+   */
+  async cleanUp() {
+    await Promise.all(this.tempDirs.map((dir) => rm(dir, { recursive: true, force: true })));
+  }
+
+  /**
+   * Open the admin page.
+   */
+  async open() {
+    await this.page.goto(`${this.siteOrigin ?? ''}${this.adminPath}`);
+  }
+
+  /**
+   * Write files to the test repository. Call this after {@link open}, as OPFS is per origin, and
+   * before {@link signIn}, which is when the backend reads them.
+   * @param {Record<string, string | Buffer>} files File content keyed by path, e.g.
+   * `content/posts/a.md`: text, or a `Buffer` for a binary file such as an image.
+   */
+  async seed(files) {
+    await this.page.evaluate(
+      async ({ rootDirName, entries }) => {
+        const rootDir = await (
+          await navigator.storage.getDirectory()
+        ).getDirectoryHandle(rootDirName, { create: true });
+
+        await Promise.all(
+          entries.map(async ([path, content]) => {
+            const segments = path.split('/');
+            const fileName = /** @type {string} */ (segments.pop());
+
+            const dir = await segments.reduce(
+              async (parent, segment) =>
+                (await parent).getDirectoryHandle(segment, { create: true }),
+              Promise.resolve(rootDir),
+            );
+
+            const writable = await (
+              await dir.getFileHandle(fileName, { create: true })
+            ).createWritable();
+
+            await writable.write(
+              typeof content === 'string'
+                ? content
+                : Uint8Array.from(atob(content.base64), (char) => char.charCodeAt(0)),
+            );
+            await writable.close();
+          }),
+        );
+      },
+      {
+        rootDirName: TEST_REPO_DIR_NAME,
+        // A `Buffer` can’t be passed to the page as is, so send binary content as Base64
+        entries: Object.entries(files).map(([path, content]) => [
+          path,
+          typeof content === 'string' ? content : { base64: content.toString('base64') },
+        ]),
+      },
+    );
+  }
+
+  /**
+   * Sign in with the test backend and wait for the main UI.
+   */
+  async signIn() {
+    await this.page.getByRole('button', { name: 'Work with Test Repository' }).click();
+    await expect(this.page.getByRole('button', { name: 'Show Account Menu' })).toBeVisible();
+  }
+
+  /**
+   * Open the admin page, seed the repository with the given files, if any, and sign in.
+   * @param {Record<string, string | Buffer>} [files] Files to seed. See {@link seed}.
+   */
+  async start(files) {
+    await this.open();
+
+    if (files) {
+      await this.seed(files);
+    }
+
+    await this.signIn();
+  }
+
+  /**
+   * Open a popup, e.g. a menu or a dropdown list, and wait until it’s shown.
+   * @param {Locator} trigger Element that opens the popup, e.g. a button or a combobox.
+   * @param {Locator} popup Popup, or an element in it.
+   */
+  async openPopup(trigger, popup) {
+    await trigger.click();
+    await expect(popup).toBeVisible();
+  }
+
+  /**
+   * Open a menu and choose one of its items.
+   * @param {Locator} button Button that opens the menu.
+   * @param {Locator} item Menu item.
+   */
+  async chooseMenuItem(button, item) {
+    await this.openPopup(button, item);
+    await item.click();
+  }
+
+  /**
+   * Change the Editorial Workflow status of the entry open in the editor with its status menu.
+   * @param {RegExp} current Name of the status menu button, showing the current status, e.g.
+   * `/Status: .*Draft/`.
+   * @param {string} status New status, e.g. `In Review`.
+   */
+  async changeStatus(current, status) {
+    await this.chooseMenuItem(
+      this.page.getByRole('button', { name: current }),
+      this.page.getByRole('menuitemradio', { name: status }),
+    );
+  }
+
+  /**
+   * Start dragging files from the file manager over an element: the files are written to disk, as
+   * a drag dispatched from the page carries no files that can be read as file system entries, and
+   * the browser drags them in.
+   * @param {Locator} target Element to drag the files over.
+   * @param {{ name: string, buffer: Buffer }[]} files Files to drag.
+   * @returns {Promise<(type: string) => Promise<any>>} Function to send a drag event of the given
+   * type at the same point, e.g. `dragOver` or `drop`.
+   */
+  async #startDrag(target, files) {
+    const dir = await mkdtemp(join(tmpdir(), 'sveltia-cms-e2e-'));
+
+    this.tempDirs.push(dir);
+
+    const paths = await Promise.all(
+      files.map(async ({ name, buffer }) => {
+        const path = join(dir, name);
+
+        await writeFile(path, buffer);
+
+        return path;
+      }),
+    );
+
+    const box = /** @type {{ x: number, y: number, width: number, height: number }} */ (
+      await target.boundingBox()
+    );
+
+    const cdp = await this.page.context().newCDPSession(this.page);
+    const x = box.x + box.width / 2;
+    const y = box.y + box.height / 2;
+    const data = { items: [], files: paths, dragOperationsMask: 1 }; // copy
+
+    await cdp.send('Input.dispatchDragEvent', { type: 'dragEnter', x, y, data });
+
+    return async (type) => {
+      await cdp.send('Input.dispatchDragEvent', { type, x, y, data });
+
+      if (type === 'drop' || type === 'dragCancel') {
+        await cdp.detach();
+      }
+    };
+  }
+
+  /**
+   * Drop files on an element, as a user does from the file manager.
+   * @param {Locator} target Element to drop the files on.
+   * @param {{ name: string, buffer: Buffer }[]} files Files to drop.
+   */
+  async dropFiles(target, files) {
+    const sendDragEvent = await this.#startDrag(target, files);
+
+    // Chromium only drops once the page has accepted the drag in a `dragover` handler, which is
+    // when the drop zone shows its indicator; a drop sent before that is lost. The page doesn’t
+    // always get the first `dragover`, so send it until the indicator shows up
+    await expect(async () => {
+      await sendDragEvent('dragOver');
+      await expect(this.page.getByText(/^Drop (a file|files) here$/)).toBeVisible({
+        timeout: 200,
+      });
+    }).toPass();
+    await sendDragEvent('drop');
+  }
+
+  /**
+   * Drag files over an element and check that it doesn’t take them: no drop indicator shows up.
+   * @param {Locator} target Element to drag the files over.
+   * @param {{ name: string, buffer: Buffer }[]} files Files to drag.
+   */
+  async expectNoDrop(target, files) {
+    const sendDragEvent = await this.#startDrag(target, files);
+
+    // Send `dragover` a few times, as the page doesn’t always get the first one
+    for (let i = 0; i < 5; i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await sendDragEvent('dragOver');
+      // eslint-disable-next-line no-await-in-loop
+      await this.page.waitForTimeout(100);
+    }
+
+    await expect(this.page.getByText(/^Drop (a file|files) here$/)).toBeHidden();
+    await sendDragEvent('dragCancel');
+  }
+
+  /**
+   * Read all the files in the test repository, to check what the CMS has written. The CMS may be
+   * writing while the files are read: Chrome shows a `.crswap` file next to a file being written,
+   * and removes it once the write is done, so those are left out, as is any file removed while the
+   * files are read, rather than returning only the files read until then. A file written again
+   * while it’s read is read again.
+   * @returns {Promise<Record<string, string>>} File content keyed by path.
+   */
+  async readRepo() {
+    return this.page.evaluate(async (rootDirName) => {
+      /** @type {Record<string, string>} */
+      const files = {};
+
+      /**
+       * Read a file. A `File` is a snapshot, which can’t be read once the file has been written
+       * again, so it’s read again then.
+       * @param {FileSystemFileHandle} handle File handle.
+       * @returns {Promise<string>} Content.
+       */
+      const readText = async (handle) => {
+        for (let attempt = 1; ; attempt += 1) {
+          try {
+            // eslint-disable-next-line no-await-in-loop
+            return await (await handle.getFile()).text();
+          } catch (ex) {
+            if (/** @type {Error} */ (ex).name !== 'NotReadableError' || attempt === 10) {
+              throw ex;
+            }
+          }
+        }
+      };
+
+      /**
+       * Walk a directory recursively.
+       * @param {FileSystemDirectoryHandle} dir Directory handle.
+       * @param {string} prefix Path of the directory, with a trailing slash.
+       */
+      const walk = async (dir, prefix) => {
+        /** @type {(FileSystemDirectoryHandle | FileSystemFileHandle)[]} */
+        // @ts-ignore `values()` is missing from the TypeScript DOM library
+        const handles = await Array.fromAsync(dir.values());
+
+        await Promise.all(
+          handles
+            .filter((handle) => !handle.name.endsWith('.crswap'))
+            .map(async (handle) => {
+              try {
+                if (handle.kind === 'directory') {
+                  await walk(handle, `${prefix}${handle.name}/`);
+                } else {
+                  files[`${prefix}${handle.name}`] = await readText(handle);
+                }
+              } catch (ex) {
+                if (/** @type {Error} */ (ex).name !== 'NotFoundError') {
+                  throw ex;
+                }
+              }
+            }),
+        );
+      };
+
+      /** @type {FileSystemDirectoryHandle} */
+      let rootDirHandle;
+
+      try {
+        rootDirHandle = await (
+          await navigator.storage.getDirectory()
+        ).getDirectoryHandle(rootDirName);
+      } catch {
+        // The repository is empty
+        return files;
+      }
+
+      await walk(rootDirHandle, '');
+
+      return files;
+    }, TEST_REPO_DIR_NAME);
+  }
+
+  /**
+   * Read a binary file in the test repository, e.g. an uploaded image, which {@link readRepo}
+   * can’t return intact as text.
+   * @param {string} path File path, e.g. `static/images/photo.png`.
+   * @returns {Promise<Buffer | undefined>} File content, or `undefined` if the file doesn’t exist.
+   */
+  async readRepoFile(path) {
+    const bytes = await this.page.evaluate(
+      async ({ rootDirName, segments }) => {
+        try {
+          const fileName = /** @type {string} */ (segments.pop());
+
+          const dir = await segments.reduce(
+            async (parent, segment) => (await parent).getDirectoryHandle(segment),
+            (await navigator.storage.getDirectory()).getDirectoryHandle(rootDirName),
+          );
+
+          const file = await (await dir.getFileHandle(fileName)).getFile();
+
+          return [...new Uint8Array(await file.arrayBuffer())];
+        } catch {
+          return undefined;
+        }
+      },
+      { rootDirName: TEST_REPO_DIR_NAME, segments: path.split('/') },
+    );
+
+    return bytes ? Buffer.from(bytes) : undefined;
+  }
+}
+
+/**
+ * Answer the requests the CMS makes for its site in a browser context: the config, the admin page
+ * at another origin if any, and what it asks the CDN for. The `cms` fixture does this for the test
+ * page; call it for another browser context, e.g. a phone.
+ * @param {BrowserContext} context Browser context.
+ * @param {object} args Arguments.
+ * @param {object | string} args.config CMS config, as an object or a YAML string.
+ * @param {string} [args.siteOrigin] Origin to serve the admin page from, passing its requests on to
+ * the test server.
+ * @param {string} [args.baseURL] URL of the test server.
+ */
+export const serveSite = async (context, { config, siteOrigin, baseURL }) => {
+  if (siteOrigin) {
+    await context.route(
+      (url) => url.origin === siteOrigin,
+      async (route) => {
+        const { pathname, search } = new URL(route.request().url());
+
+        await route.fulfill({
+          response: await route.fetch({ url: `${baseURL}${pathname}${search}` }),
+        });
+      },
+    );
+  }
+
+  // The CMS checks for a newer version on the CDN: it’s the one being tested
+  await context.route('https://unpkg.com/@sveltia/cms/package.json', (route) =>
+    route.fulfill({ json: { version: CMS_VERSION } }),
+  );
+  // The production bundle only includes the English strings and fetches the others from the CDN,
+  // so answer that request with the file the build has generated
+  await context.route('https://unpkg.com/@sveltia/cms@*/locales/*.json', async (route) =>
+    route.fulfill({
+      contentType: 'application/json',
+      body: await readFile(
+        new URL(`../../package/locales/${route.request().url().split('/').pop()}`, import.meta.url),
+      ),
+    }),
+  );
+  // The code editor loads the syntax highlighting engine, grammars and themes from the CDN on
+  // demand; serve the copies installed with Sveltia UI instead, so a slow CDN can’t hold up a test
+  await context.route(
+    /^https:\/\/unpkg\.com\/(?:@sveltia\/ui@[^/]+\/dist\/shiki-engine|@shikijs\/(?:langs|themes)@)/,
+    async (route) => {
+      const { pathname } = new URL(route.request().url());
+
+      // A grammar imports the ones it embeds by relative path, which resolves to the same layout
+      const path = pathname.startsWith('/@sveltia/ui@')
+        ? 'dist/shiki-engine.js'
+        : pathname.replace(/^\/@shikijs\/(\w+)@[^/]+\//, '../../@shikijs/$1/');
+
+      await route.fulfill({
+        contentType: 'text/javascript',
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        body: await readFile(new URL(`../${path}`, SVELTIA_UI_URL)),
+      });
+    },
+  );
+  // A DateTime field with the `localize_format` option loads its Day.js locale from the CDN; serve
+  // the installed copy. A locale module imports Day.js by a relative path without the extension,
+  // which the CDN resolves to the `.js` file
+  await context.route(/^https:\/\/unpkg\.com\/dayjs@[^/]+\/esm\//, async (route) => {
+    const path = new URL(route.request().url()).pathname
+      .replace(/^\/dayjs@[^/]+\//, '')
+      .replace(/(?<!\.js)$/, '.js');
+
+    await route.fulfill({
+      contentType: 'text/javascript',
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      body: await readFile(new URL(`../../node_modules/dayjs/${path}`, import.meta.url)),
+    });
+  });
+  // The CMS adds a cache-busting query to the URL, hence the trailing wildcard. A sign-in popup
+  // opens the CMS as well, so the config is served to every page of the browser context. Routes
+  // added later take precedence, so this one is answered rather than passed on to the server
+  await context.route('**/admin/config.yml?*', (route) =>
+    route.fulfill({
+      contentType: 'application/yaml',
+      body: typeof config === 'string' ? config : stringify(config),
+    }),
+  );
+};
+
+/**
+ * @typedef {{
+ * config: object | string, signedIn: boolean, siteOrigin: string | undefined, cms: CMS,
+ * github: MockGitHub, gitlab: MockGitLab, gitea: MockGitea
+ * }} TestFixtures
+ * @typedef {{ adminPath: string }} WorkerFixtures
+ */
+
+/**
+ * Playwright `test` with the CMS fixtures. A test file can set its own config with
+ * `test.use({ config })`; it’s served as the `config.yml` next to the admin page.
+ * @type {ReturnType<typeof base.extend<TestFixtures, WorkerFixtures>>}
+ */
+export const test = base.extend({
+  adminPath: ['/admin/', { option: true, scope: 'worker' }],
+  config: [BASE_CONFIG, { option: true }],
+  // Whether the `github`, `gitlab` and `gitea` fixtures store a session for the user, so the CMS
+  // signs in on its own; a test of the sign-in itself turns it off
+  signedIn: [true, { option: true }],
+  // An HTTPS origin like `https://cms.example.com` to serve the admin page from, for a feature the
+  // CMS only offers off localhost. The requests to it are passed on to the test server
+  siteOrigin: [undefined, { option: true }],
+  // eslint-disable-next-line jsdoc/require-jsdoc
+  cms: async ({ page, adminPath, config, siteOrigin, baseURL }, use) => {
+    const context = page.context();
+
+    await serveSite(context, { config, siteOrigin, baseURL });
+
+    const cms = new CMS(page, adminPath, siteOrigin);
+
+    await use(cms);
+    await cms.cleanUp();
+  },
+  // A test that asks for this fixture signs in to a mocked GitHub repository when the page opens
+  // eslint-disable-next-line jsdoc/require-jsdoc
+  github: async ({ page, signedIn }, use) => {
+    const github = new MockGitHub();
+
+    await github.install(page, { signedIn });
+    await use(github);
+
+    expect(github.unhandled, 'Requests the GitHub mock couldn’t answer').toEqual([]);
+  },
+  // A test that asks for this fixture signs in to a mocked GitLab project when the page opens
+  // eslint-disable-next-line jsdoc/require-jsdoc
+  gitlab: async ({ page, signedIn }, use) => {
+    const gitlab = new MockGitLab();
+
+    await gitlab.install(page, { signedIn });
+    await use(gitlab);
+
+    expect(gitlab.unhandled, 'Requests the GitLab mock couldn’t answer').toEqual([]);
+  },
+  // A test that asks for this fixture signs in to a mocked Gitea repository when the page opens
+  // eslint-disable-next-line jsdoc/require-jsdoc
+  gitea: async ({ page, signedIn }, use) => {
+    const gitea = new MockGitea();
+
+    await gitea.install(page, { signedIn });
+    await use(gitea);
+
+    expect(gitea.unhandled, 'Requests the Gitea mock couldn’t answer').toEqual([]);
+  },
+});
+
+/**
+ * Session cookie {@link recordCookies} sets, as a `Cookie` request header carries it.
+ */
+export const PROXY_COOKIE = 'proxy_session=e2e';
+
+/**
+ * Give the browser context a session cookie for a host, as a proxy in front of a self-hosted Git
+ * service would set, and record the cookies each request matching a filter carries, to check the
+ * `include_credentials` backend option.
+ * @param {Page} page Page.
+ * @param {object} args Arguments.
+ * @param {string} args.hostname Host the cookie is set for.
+ * @param {(url: URL) => boolean} args.filter Function telling whether a request is recorded.
+ * @returns {Promise<() => Promise<(string | undefined)[]>>} Function returning the `Cookie` header
+ * of each recorded request sent so far.
+ */
+export const recordCookies = async (page, { hostname, filter }) => {
+  /** @type {Promise<string | undefined | null>[]} */
+  const cookies = [];
+  const context = page.context();
+  const [name, value] = PROXY_COOKIE.split('=');
+
+  await context.addCookies([
+    {
+      name,
+      value,
+      domain: hostname,
+      path: '/',
+      secure: true,
+      // The CMS is served from another site, so the cookie has to allow cross-site requests
+      sameSite: 'None',
+    },
+  ]);
+
+  context.on('request', (request) => {
+    if (filter(new URL(request.url()))) {
+      cookies.push(
+        request.allHeaders().then(
+          ({ cookie }) => cookie,
+          // A request sent as the test ends, e.g. a scheduled check, can’t be read once the page
+          // has closed; it’s left out rather than failing the test after it’s over
+          () => null,
+        ),
+      );
+    }
+  });
+
+  return async () =>
+    /** @type {(string | undefined)[]} */ (
+      (await Promise.all(cookies)).filter((cookie) => cookie !== null)
+    );
+};
+
+/**
+ * Add scripts to the admin page, the way a site extends the CMS: after the CMS `<script>`, and
+ * optionally before it. A single route has to add both, as a later route would fetch the original
+ * page again. The dev server’s admin page loads the CMS as a module, which runs once the page is
+ * parsed, so the script after it is a module too, to run after the CMS all the same.
+ * @param {Page} page Page.
+ * @param {object} scripts Scripts.
+ * @param {string} [scripts.before] Script to run before the CMS is loaded.
+ * @param {string} [scripts.after] Script to run after the CMS is loaded.
+ */
+export const addScripts = async (page, { before, after }) => {
+  const { adminPath } = /** @type {{ adminPath: string }} */ (test.info().project.use);
+
+  await page.route(
+    (url) => url.pathname === adminPath,
+    async (route) => {
+      const response = await route.fetch();
+      let html = await response.text();
+      const isModule = /<script type="module" src=/.test(html);
+
+      if (before) {
+        html = html.replace(
+          /<script (?:type="module" )?src=/,
+          (tag) => `<script>${before}</script>${tag}`,
+        );
+      }
+
+      if (after) {
+        html = html.replace(
+          '</body>',
+          `<script${isModule ? ' type="module"' : ''}>${after}</script></body>`,
+        );
+      }
+
+      await route.fulfill({ response, body: html });
+    },
+  );
+};
+
+export { expect };

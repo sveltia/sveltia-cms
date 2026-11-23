@@ -23,19 +23,27 @@ ignorePaths:
   - data/**/*.json
   - package/**
   - src/**/*.test.js
+  - e2e/**/*.e2e.js
+  - e2e/fixtures/configs/**
   - src/lib/locales/*.yaml
-  - '!src/lib/locales/en-*.yaml'
   - .claude/**
+  # Non-English locales; negative globs are not supported, so match everything but `en-*.yaml`
+  - src/lib/locales/{[^e]*,e[^n]*}.yaml
 words:
   - analyzing
   - appinstalled
   - astrolicious
   - astros
   - Backblaze
+  - backblazeb
   - backlink
   - backlinks
+  - basehead
   - beforeinstallprompt
+  - bindable
+  - BMFF
   - brotlied
+  - bunnycdn
   - BYOK
   - camelcase
   - cfworker
@@ -44,6 +52,7 @@ words:
   - cmaps
   - Codeberg
   - cooldown
+  - crswap
   - CVEs
   - danurbanowicz
   - Decap
@@ -51,32 +60,50 @@ words:
   - deepmerge
   - DeepSeek
   - dialogs
+  - digitaloceanspaces
+  - DIRC
+  - discardable
   - dompurify
+  - Draggability
   - embeddable
   - esbuild
   - esrap
   - exif
   - exifr
+  - fanout
+  - fastify
   - FedRAMP
+  - filechooser
   - Flavored
   - Forgejo
   - frontmatter
+  - ftyp
   - GHSA
   - Ghsas
   - gitdir
   - Gitea
+  - gitlink
   - goldmark
   - groupable
+  - heim
+  - heis
+  - heix
+  - hevm
+  - hevs
+  - hevx
   - hotlinked
   - hotlinking
   - hugolify
   - husenunicorn
   - iarna
   - iccs
+  - iids
   - IIFE
   - indexeddb
   - infobar
   - infobars
+  - Jaccard
+  - jbig
   - jfif
   - jsdoc
   - jSquash
@@ -84,54 +111,73 @@ words:
   - keyvalue
   - Kohei
   - kyoshino
+  - latlng
+  - libheif
   - llms
+  - longtask
   - Lume
   - lvml
   - maxresults
   - mdwn
   - messageformat
   - mkdn
+  - mstrl
   - Mtei
   - Mullvad
   - notranslate
+  - objectformat
+  - oids
+  - onclickcapture
   - ondragovercapture
   - ondropcapture
   - onkeydowncapture
   - onpastecapture
   - onwheelcapture
+  - openjpeg
   - OPFS
   - oxlint
   - parseable
   - passwordless
   - pexels
-  - pingable
   - Photoshop
   - Picsum
+  - pingable
   - Pixabay
   - PKCE
+  - plainify
   - plusplus
   - pnpm
   - popups
   - postcss
   - prefs
+  - prehash
   - previewable
   - privatemaker
   - programmatically
   - proxified
   - proxify
+  - qcms
   - qrcode
   - Ragdoll
   - rearchitect
   - rebranded
+  - recentupdate
+  - reflog
+  - reflogs
+  - refstorage
+  - reftable
   - reimagined
+  - reparsed
   - rescanning
   - restype
   - Roadmap
   - safesearch
   - sandboxing
   - Scaleway
+  - sdir
   - sebousan
   - Shiki
+  - shikijs
   - sindresorhus
   - singleline
   - slugification
@@ -143,12 +189,16 @@ words:
   - stylelint
   - subfolders
   - subschema
+  - subtags
   - Supabase
   - sveltejs
   - Sveltia
   - templatized
   - Typecheck
+  - ucarecd
   - unadded
+  - unapprove
+  - uncaptioned
   - unflatten
   - unflattened
   - unflattening
@@ -156,8 +206,11 @@ words:
   - unlocalised
   - unlocalized
   - unpatched
+  - unproject
   - unproxify
+  - unreviewed
   - unrs
+  - unsets
   - unsubscribers
   - Uploadcare
   - videoseries
@@ -167,6 +220,7 @@ words:
   - weba
   - webformat
   - whitespaces
+  - wikilink
   - worktree
   - worktrees
   - xhigh

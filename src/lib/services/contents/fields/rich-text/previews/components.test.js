@@ -1,0 +1,1158 @@
+// @vitest-environment happy-dom
+/* eslint-disable jsdoc/require-jsdoc */
+
+import { fromJS, isList } from 'immutable';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { getBuiltInComponentDefs } from '$lib/services/contents/fields/rich-text/components/definitions';
+import { IMAGE_OR_LINKED_IMAGE_REGEX } from '$lib/services/contents/fields/rich-text/constants';
+
+import {
+  buildMarkdownWithPreviews,
+  encodeImageSrc,
+  getComponentFieldList,
+  getNoAsset,
+} from './components.js';
+
+const { immutableLoaded } = vi.hoisted(() => ({
+  immutableLoaded: { current: false },
+}));
+
+vi.mock('$lib/services/api/immutable', () => ({
+  getImmutable: () => ({ fromJS }),
+  immutableLoaded,
+}));
+
+describe('encodeImageSrc', () => {
+  it('should encode spaces in image URLs without title', () => {
+    // Simulate regex match args with groups for alt and src
+    const args = [
+      '![alt text](my image.png)',
+      'alt text',
+      'my image.png',
+      '',
+      {
+        alt: 'alt text',
+        src: 'my image.png',
+        title: undefined,
+      },
+    ];
+
+    const result = encodeImageSrc(...args);
+
+    expect(result).toBe('![alt text](my%20image.png)');
+  });
+
+  it('should keep a title in single quotes apart from the URL', () => {
+    const markdown = "![a](my image.png 'Say \"hi\"') [![b](c d.png 't')](e)";
+
+    expect(
+      markdown.replace(new RegExp(IMAGE_OR_LINKED_IMAGE_REGEX, 'g'), (...args) =>
+        encodeImageSrc(...args),
+      ),
+    ).toBe("![a](my%20image.png 'Say \"hi\"') [![b](c%20d.png 't')](e)");
+  });
+
+  it('should encode spaces in image URLs with title', () => {
+    // Simulate regex match args with groups for alt, src, and title
+    const args = [
+      '![alt text](my image.png "Image Title")',
+      'alt text',
+      'my image.png',
+      'Image Title',
+      {
+        alt: 'alt text',
+        src: 'my image.png',
+        title: 'Image Title',
+      },
+    ];
+
+    const result = encodeImageSrc(...args);
+
+    expect(result).toBe('![alt text](my%20image.png "Image Title")');
+  });
+
+  it('should encode multiple spaces in image URLs', () => {
+    const args = [
+      '![test](folder name/sub folder/image file.jpg)',
+      'test',
+      'folder name/sub folder/image file.jpg',
+      '',
+      {
+        alt: 'test',
+        src: 'folder name/sub folder/image file.jpg',
+        title: undefined,
+      },
+    ];
+
+    const result = encodeImageSrc(...args);
+
+    expect(result).toBe('![test](folder%20name/sub%20folder/image%20file.jpg)');
+  });
+
+  it('should handle URLs without spaces', () => {
+    const args = [
+      '![no spaces](image.png)',
+      'no spaces',
+      'image.png',
+      '',
+      {
+        alt: 'no spaces',
+        src: 'image.png',
+        title: undefined,
+      },
+    ];
+
+    const result = encodeImageSrc(...args);
+
+    expect(result).toBe('![no spaces](image.png)');
+  });
+
+  it('should handle URLs without spaces but with title', () => {
+    const args = [
+      '![no spaces](image.png "Title")',
+      'no spaces',
+      'image.png',
+      'Title',
+      {
+        alt: 'no spaces',
+        src: 'image.png',
+        title: 'Title',
+      },
+    ];
+
+    const result = encodeImageSrc(...args);
+
+    expect(result).toBe('![no spaces](image.png "Title")');
+  });
+
+  it('should handle empty alt text', () => {
+    const args = [
+      '![](my image.png)',
+      '',
+      'my image.png',
+      '',
+      {
+        alt: '',
+        src: 'my image.png',
+        title: undefined,
+      },
+    ];
+
+    const result = encodeImageSrc(...args);
+
+    expect(result).toBe('![](my%20image.png)');
+  });
+
+  it('should handle URLs with already encoded spaces', () => {
+    const args = [
+      '![test](my%20image.png)',
+      'test',
+      'my%20image.png',
+      '',
+      {
+        alt: 'test',
+        src: 'my%20image.png',
+        title: undefined,
+      },
+    ];
+
+    const result = encodeImageSrc(...args);
+
+    expect(result).toBe('![test](my%20image.png)');
+  });
+
+  it('should handle complex alt text with special characters', () => {
+    const args = [
+      '![Alt with "quotes" & symbols](my image.png)',
+      'Alt with "quotes" & symbols',
+      'my image.png',
+      '',
+      {
+        alt: 'Alt with "quotes" & symbols',
+        src: 'my image.png',
+        title: undefined,
+      },
+    ];
+
+    const result = encodeImageSrc(...args);
+
+    expect(result).toBe('![Alt with "quotes" & symbols](my%20image.png)');
+  });
+
+  it('should handle title with special characters', () => {
+    const args = [
+      '![test](my image.png "Title with "quotes"")',
+      'test',
+      'my image.png',
+      'Title with "quotes"',
+      {
+        alt: 'test',
+        src: 'my image.png',
+        title: 'Title with "quotes"',
+      },
+    ];
+
+    const result = encodeImageSrc(...args);
+
+    expect(result).toBe('![test](my%20image.png "Title with "quotes"")');
+  });
+
+  it('should handle absolute file paths with spaces', () => {
+    const args = [
+      '![test](/path/to/my image.png)',
+      'test',
+      '/path/to/my image.png',
+      '',
+      {
+        alt: 'test',
+        src: '/path/to/my image.png',
+        title: undefined,
+      },
+    ];
+
+    const result = encodeImageSrc(...args);
+
+    expect(result).toBe('![test](/path/to/my%20image.png)');
+  });
+
+  it('should handle URLs with query parameters containing spaces', () => {
+    const args = [
+      '![test](image.png?param=value with space)',
+      'test',
+      'image.png?param=value with space',
+      '',
+      {
+        alt: 'test',
+        src: 'image.png?param=value with space',
+        title: undefined,
+      },
+    ];
+
+    const result = encodeImageSrc(...args);
+
+    expect(result).toBe('![test](image.png?param=value%20with%20space)');
+  });
+});
+
+describe('buildMarkdownWithPreviews', () => {
+  it('should return the original markdown when there are no component defs', () => {
+    const { markdown, previewMap } = buildMarkdownWithPreviews('Hello **world**', []);
+
+    expect(markdown).toBe('Hello **world**');
+    expect(previewMap.size).toBe(0);
+  });
+
+  it('should return empty string when currentValue is undefined', () => {
+    const { markdown, previewMap } = buildMarkdownWithPreviews(undefined, []);
+
+    expect(markdown).toBe('');
+    expect(previewMap.size).toBe(0);
+  });
+
+  describe('with the HTML format', () => {
+    /** @type {import('$lib/types/public').EditorComponentDefinition[]} */
+    const componentDefs = [
+      {
+        id: 'note',
+        label: 'Note',
+        fields: [],
+        pattern: /\[note\](?<content>.*?)\[\/note\]/s,
+        toBlock: ({ content }) => `[note]${content}[/note]`,
+        toPreview: ({ content }) => `<div class="preview">${content}</div>`,
+        htmlSelector: 'aside',
+        fromBlockHTML: (element) =>
+          element.classList.contains('note') ? { content: element.innerHTML } : undefined,
+        toBlockHTML: ({ content }) => `<aside class="note">${content}</aside>`,
+      },
+      {
+        // A component without HTML support is left out
+        id: 'markdown-only',
+        label: 'Markdown Only',
+        fields: [],
+        pattern: /<p>/,
+        toBlock: () => '',
+        toPreview: () => '<b>should not be used</b>',
+      },
+    ];
+
+    /**
+     * Build the preview of an HTML value.
+     * @param {string | undefined} html HTML.
+     * @param {import('$lib/types/public').EditorComponentDefinition[]} [defs] Definitions.
+     * @param {Map<string, any>} [previousPreviewMap] Previous preview map.
+     * @returns {ReturnType<typeof buildMarkdownWithPreviews>} Result.
+     */
+    const build = (html, defs = componentDefs, previousPreviewMap = undefined) =>
+      buildMarkdownWithPreviews(html, defs, previousPreviewMap, undefined, 'html');
+
+    it('should find the components with the HTML syntax, outermost first', () => {
+      const { markdown, previewMap } = build(
+        '<p>[note]Not a note[/note]</p><section><aside class="note">Hi <aside class="note">' +
+          'nested</aside></aside></section><aside>Not a note either</aside>',
+      );
+
+      expect(markdown).toBe(
+        '<p>[note]Not a note[/note]</p><section><div class="preview">Hi <aside class="note">' +
+          'nested</aside></div></section><aside>Not a note either</aside>',
+      );
+      expect(previewMap.size).toBe(1);
+    });
+
+    it('should replace an element preview with a placeholder, with unique keys', () => {
+      const element = document.createElement('div');
+      const defs = [{ ...componentDefs[0], toPreview: () => element }];
+
+      const { markdown, previewMap } = build(
+        '<aside class="note">Hi</aside><aside class="note">Hi</aside>',
+        defs,
+      );
+
+      const keys = [...previewMap.keys()];
+
+      expect(keys).toHaveLength(2);
+      expect(keys[1]).toBe(`${keys[0]}-1`);
+      expect(markdown).toBe(
+        keys.map((key) => `<span data-component-key="${key}"></span>`).join(''),
+      );
+      expect([...previewMap.values()]).toEqual([element, element]);
+    });
+
+    it('should reuse a preview from the previous run', () => {
+      const toPreview = vi.fn(() => '<b>preview</b>');
+      const defs = [{ ...componentDefs[0], toPreview }];
+      const { previewMap } = build('<aside class="note">Hi</aside>', defs);
+      const { markdown } = build('<p>New</p><aside class="note">Hi</aside>', defs, previewMap);
+
+      expect(toPreview).toHaveBeenCalledOnce();
+      expect(markdown).toBe('<p>New</p><b>preview</b>');
+    });
+
+    it('should leave the HTML of a component without a preview as is', () => {
+      const html = '<p><aside class="note">Hi</aside></p>';
+      const { markdown, previewMap } = build(html, [{ ...componentDefs[0], toPreview: undefined }]);
+
+      expect(markdown).toBe(html);
+      expect(previewMap.size).toBe(0);
+    });
+
+    it('should return an empty string for an undefined value', () => {
+      expect(build(undefined).markdown).toBe('');
+    });
+  });
+
+  it('should inline a string preview directly in the markdown', () => {
+    /** @type {import('$lib/types/public').EditorComponentDefinition[]} */
+    const componentDefs = [
+      {
+        id: 'note',
+        label: 'Note',
+        fields: [],
+        pattern: /\[note\](?<content>.*?)\[\/note\]/gs,
+        toBlock: ({ content }) => `[note]${content}[/note]`,
+        toPreview: ({ content }) => `<div class="note">${content}</div>`,
+      },
+    ];
+
+    const { markdown, previewMap } = buildMarkdownWithPreviews('[note]Hello[/note]', componentDefs);
+
+    expect(previewMap.size).toBe(1);
+    expect(markdown).toBe('<div class="note">Hello</div>');
+
+    const [key] = previewMap.keys();
+
+    expect(previewMap.get(key)).toBe('<div class="note">Hello</div>');
+  });
+
+  it('should replace a React element preview with a placeholder span', () => {
+    /** @type {import('$lib/types/public').EditorComponentDefinition[]} */
+    const componentDefs = [
+      {
+        id: 'note',
+        label: 'Note',
+        fields: [],
+        pattern: /\[note\](?<content>.*?)\[\/note\]/gs,
+        toBlock: ({ content }) => `[note]${content}[/note]`,
+        // Simulate a React element (non-string) preview
+        toPreview: ({ content }) =>
+          /** @type {import('react').ReactElement} */ (
+            /** @type {unknown} */ ({ type: 'div', props: { children: content } })
+          ),
+      },
+    ];
+
+    const { markdown, previewMap } = buildMarkdownWithPreviews('[note]Hello[/note]', componentDefs);
+
+    expect(previewMap.size).toBe(1);
+    expect(markdown).toMatch(/^<span data-component-key="[^"]+"><\/span>$/);
+
+    const [key] = previewMap.keys();
+
+    expect(previewMap.get(key)).toEqual({ type: 'div', props: { children: 'Hello' } });
+  });
+
+  it('should use fromBlock to resolve field props when provided', () => {
+    /** @type {import('$lib/types/public').EditorComponentDefinition[]} */
+    const componentDefs = [
+      {
+        id: 'badge',
+        label: 'Badge',
+        fields: [],
+        pattern: /\[badge color="(\w+)"\]/g,
+        fromBlock: (match) => ({ color: match[1] }),
+        toBlock: ({ color }) => `[badge color="${color}"]`,
+        toPreview: ({ color }) => `<span class="badge ${color}"></span>`,
+      },
+    ];
+
+    const { previewMap } = buildMarkdownWithPreviews('[badge color="red"]', componentDefs);
+    const [key] = previewMap.keys();
+
+    expect(previewMap.get(key)).toBe('<span class="badge red"></span>');
+  });
+
+  it('should fall back to named groups when fromBlock is not provided', () => {
+    /** @type {import('$lib/types/public').EditorComponentDefinition[]} */
+    const componentDefs = [
+      {
+        id: 'tag',
+        label: 'Tag',
+        fields: [],
+        pattern: /\[tag (?<name>\w+)\]/g,
+        toBlock: ({ name }) => `[tag ${name}]`,
+        toPreview: ({ name }) => `<span class="tag">${name}</span>`,
+      },
+    ];
+
+    const { previewMap } = buildMarkdownWithPreviews('[tag foo]', componentDefs);
+    const [key] = previewMap.keys();
+
+    expect(previewMap.get(key)).toBe('<span class="tag">foo</span>');
+  });
+
+  it('should only match a pattern-based inline component where its trigger is found', () => {
+    /** @type {import('$lib/types/private').ResolvedEditorComponentDefinition[]} */
+    const componentDefs = [
+      {
+        id: 'x-mention',
+        label: 'Mention',
+        fields: [],
+        // Without the trigger, any word would be a mention
+        pattern: /@?(?<user>[a-z]+)/,
+        toBlock: ({ user }) => `@${user}`,
+        toPreview: ({ user }) => `<b>${user}</b>`,
+        inlinePattern: { trigger: '@' },
+      },
+    ];
+
+    const { markdown } = buildMarkdownWithPreviews('hi @bob, `@code`', componentDefs);
+
+    expect(markdown).toBe('hi <b>bob</b>, `@code`');
+  });
+
+  it('should handle multiple instances of the same component', () => {
+    /** @type {import('$lib/types/public').EditorComponentDefinition[]} */
+    const componentDefs = [
+      {
+        id: 'note',
+        label: 'Note',
+        fields: [],
+        pattern: /\[note\](?<content>.*?)\[\/note\]/gs,
+        toBlock: ({ content }) => `[note]${content}[/note]`,
+        toPreview: ({ content }) => `<div>${content}</div>`,
+      },
+    ];
+
+    const { markdown, previewMap } = buildMarkdownWithPreviews(
+      '[note]A[/note] [note]B[/note]',
+      componentDefs,
+    );
+
+    expect(previewMap.size).toBe(2);
+    expect(markdown).toBe('<div>A</div> <div>B</div>');
+  });
+
+  it('should replace an HTML element preview with a placeholder span', () => {
+    // Simulate an element with a Svelte component mounted on it
+    const element = /** @type {HTMLElement} */ (
+      /** @type {unknown} */ ({ nodeType: 1, localName: 'aside' })
+    );
+
+    /** @type {import('$lib/types/public').EditorComponentDefinition[]} */
+    const componentDefs = [
+      {
+        id: 'warning',
+        label: 'Warning',
+        fields: [],
+        pattern: /\[warning\](?<content>.*?)\[\/warning\]/gs,
+        toBlock: ({ content }) => `[warning]${content}[/warning]`,
+        toPreview: () => element,
+      },
+    ];
+
+    const { markdown, previewMap } = buildMarkdownWithPreviews(
+      '[warning]Hello[/warning]',
+      componentDefs,
+    );
+
+    expect(markdown).toMatch(/^<span data-component-key="[^"]+"><\/span>$/);
+
+    const [key] = previewMap.keys();
+
+    expect(previewMap.get(key)).toBe(element);
+  });
+
+  it('should reuse a preview from the previous map when the component is unchanged', () => {
+    // Simulate an element with a Svelte component mounted on it
+    const toPreview = vi.fn(
+      ({ content }) =>
+        /** @type {HTMLElement} */ (
+          /** @type {unknown} */ ({ nodeType: 1, localName: 'aside', content })
+        ),
+    );
+
+    /** @type {import('$lib/types/public').EditorComponentDefinition[]} */
+    const componentDefs = [
+      {
+        id: 'warning',
+        label: 'Warning',
+        fields: [],
+        pattern: /\[warning\](?<content>.*?)\[\/warning\]/gs,
+        toBlock: ({ content }) => `[warning]${content}[/warning]`,
+        toPreview,
+      },
+    ];
+
+    const { previewMap: firstMap } = buildMarkdownWithPreviews(
+      '[warning]Hello[/warning]',
+      componentDefs,
+    );
+
+    expect(toPreview).toHaveBeenCalledTimes(1);
+
+    // The component is unchanged, so the same preview object must be kept
+    const { previewMap: secondMap } = buildMarkdownWithPreviews(
+      '[warning]Hello[/warning]\n\nMore text',
+      componentDefs,
+      firstMap,
+    );
+
+    const [key] = secondMap.keys();
+
+    expect(toPreview).toHaveBeenCalledTimes(1);
+    expect(secondMap.get(key)).toBe(firstMap.get(key));
+
+    // The component has changed, so a new preview must be computed
+    const { previewMap: thirdMap } = buildMarkdownWithPreviews(
+      '[warning]Bye[/warning]',
+      componentDefs,
+      secondMap,
+    );
+
+    const [newKey] = thirdMap.keys();
+
+    expect(toPreview).toHaveBeenCalledTimes(2);
+    expect(thirdMap.get(newKey)).not.toBe(firstMap.get(key));
+  });
+
+  it('should compute a preview again when the previous map has no value for the key', () => {
+    const toPreview = vi.fn(() => '<hr>');
+
+    /** @type {import('$lib/types/public').EditorComponentDefinition[]} */
+    const componentDefs = [
+      {
+        id: 'hr',
+        label: 'HR',
+        fields: [],
+        pattern: /\[hr\]/g,
+        toBlock: () => '[hr]',
+        toPreview,
+      },
+    ];
+
+    const { markdown } = buildMarkdownWithPreviews('[hr]', componentDefs, new Map());
+
+    expect(toPreview).toHaveBeenCalledTimes(1);
+    expect(markdown).toBe('<hr>');
+  });
+
+  it('should encode image src spaces in the markdown', () => {
+    const { markdown } = buildMarkdownWithPreviews('![alt](my image.png)', []);
+
+    expect(markdown).toBe('![alt](my%20image.png)');
+  });
+
+  it('should encode the spaces in a linked image, but not in code', () => {
+    const { markdown } = buildMarkdownWithPreviews(
+      '[![a](my image.png "A title")](my page.html) `![b](my image.png)`\n\n```\n![c](d e.png)\n```',
+      [],
+    );
+
+    expect(markdown).toBe(
+      '[![a](my%20image.png "A title")](my%20page.html) `![b](my image.png)`\n\n```\n![c](d e.png)\n```',
+    );
+  });
+
+  it('should leave a link with a title as is, so Marked takes the title apart', () => {
+    const markdown = '[![a](my image.png)](https://example.com "Home") [![b](c.png)](d \'e\')';
+
+    expect(buildMarkdownWithPreviews(markdown, []).markdown).toBe(
+      '[![a](my%20image.png)](https://example.com "Home") [![b](c.png)](d \'e\')',
+    );
+  });
+
+  it('should leave the built-in images to Marked', () => {
+    const markdown = '![a](b.png)\nSome **bold** caption\n\n[![c](d.png)](e.html) `![f](g.png)`';
+    const result = buildMarkdownWithPreviews(markdown, getBuiltInComponentDefs());
+
+    expect(result.markdown).toBe(markdown);
+    expect(result.previewMap.size).toBe(0);
+  });
+
+  describe('component syntax in code', () => {
+    /** @type {import('$lib/types/public').EditorComponentDefinition[]} */
+    const componentDefs = [
+      {
+        id: 'note',
+        label: 'Note',
+        fields: [],
+        pattern: /\[note\](?<content>.*?)\[\/note\]/gs,
+        toBlock: ({ content }) => `[note]${content}[/note]`,
+        toPreview: ({ content }) => `<b>${content}</b>`,
+      },
+      {
+        id: 'mermaid',
+        label: 'Mermaid',
+        fields: [],
+        pattern: /^```mermaid\n(?<code>[\s\S]*?)\n```$/m,
+        toBlock: ({ code }) => `\`\`\`mermaid\n${code}\n\`\`\``,
+        toPreview: ({ code }) => `<i>${code}</i>`,
+      },
+    ];
+
+    it('should leave a component within a code span or fenced code block as is', () => {
+      const { markdown } = buildMarkdownWithPreviews(
+        'Use `[note]A[/note]` for [note]B[/note]\n\n~~~\n[note]C[/note]\n~~~',
+        componentDefs,
+      );
+
+      expect(markdown).toBe('Use `[note]A[/note]` for <b>B</b>\n\n~~~\n[note]C[/note]\n~~~');
+    });
+
+    it('should substitute a component made of an indented fenced code block', () => {
+      const { markdown } = buildMarkdownWithPreviews('- Item\n\n  ```mermaid\ngraph\n```', [
+        { ...componentDefs[1], pattern: /```mermaid\n(?<code>[\s\S]*?)\n```/ },
+      ]);
+
+      expect(markdown).toBe('- Item\n\n  <i>graph</i>');
+    });
+
+    it('should substitute a component made of a fenced code block', () => {
+      const { markdown } = buildMarkdownWithPreviews(
+        '```mermaid\ngraph\n```\n\n```js\n[note]A[/note]\n```',
+        componentDefs,
+      );
+
+      expect(markdown).toBe('<i>graph</i>\n\n```js\n[note]A[/note]\n```');
+    });
+  });
+
+  describe('string preview starting an HTML block', () => {
+    /**
+     * Build the Markdown with a component whose preview is the given HTML.
+     * @param {string} markdown Markdown.
+     * @param {(text: string) => string} toPreview Preview builder.
+     * @returns {string} Result.
+     */
+    const build = (markdown, toPreview = (text) => `<div class="note">${text}</div>`) =>
+      buildMarkdownWithPreviews(markdown, [
+        {
+          id: 'note',
+          label: 'Note',
+          fields: [],
+          pattern: /:::note (?<text>\w+)/,
+          toBlock: ({ text }) => `:::note ${text}`,
+          toPreview: ({ text }) => toPreview(text),
+        },
+      ]).markdown;
+
+    it('should end the block before the next line, so it’s still parsed as Markdown', () => {
+      expect(build(':::note A\nSome **bold** text')).toBe(
+        '<div class="note">A</div>\n\nSome **bold** text',
+      );
+      expect(build('Text\n   :::note A tail\nNext\n\n:::note B\nNext')).toBe(
+        'Text\n   <div class="note">A</div> tail\n\nNext\n\n<div class="note">B</div>\n\nNext',
+      );
+      // A lone tag of another element, unless it follows a paragraph
+      expect(
+        build(':::note A\nNext\nText\n:::note B\nNext', (text) => `<x-note a="${text}">`),
+      ).toBe('<x-note a="A">\n\nNext\nText\n<x-note a="B">\nNext');
+      // A multi-line preview
+      expect(build(':::note A\nNext', (text) => `<figure>\n${text}\n</figure>`)).toBe(
+        '<figure>\nA\n</figure>\n\nNext',
+      );
+    });
+
+    it('should leave the following lines as is where the block doesn’t change them', () => {
+      // Not at the start of a line, or indented as code
+      expect(build('Text :::note A\nNext')).toBe('Text <div class="note">A</div>\nNext');
+      expect(build('    :::note A\nNext')).toBe('    <div class="note">A</div>\nNext');
+      // No following line with text
+      expect(build(':::note A\n\nNext')).toBe('<div class="note">A</div>\n\nNext');
+      expect(build(':::note A')).toBe('<div class="note">A</div>');
+      // Not an HTML block
+      expect(build(':::note A\nNext', (text) => `<b>${text}</b>`)).toBe('<b>A</b>\nNext');
+      // Within an HTML block of the Markdown already
+      expect(build('<div>\n:::note A\nNext\n</div>')).toBe(
+        '<div>\n<div class="note">A</div>\nNext\n</div>',
+      );
+      // A preview with a blank line ends the block itself
+      expect(build(':::note A\nNext', (text) => `<div>${text}\n\n</div>`)).toBe(
+        '<div>A\n\n</div>\nNext',
+      );
+    });
+
+    it('should end the block after the line of a later match on the same line', () => {
+      expect(build(':::note A :::note B\nNext')).toBe(
+        '<div class="note">A</div> <div class="note">B</div>\n\nNext',
+      );
+    });
+
+    it('should end the block after the next component when it spans the line end', () => {
+      const { markdown } = buildMarkdownWithPreviews(':::note A [x]\n[/x]\nNext', [
+        {
+          id: 'note',
+          label: 'Note',
+          fields: [],
+          pattern: /:::note (?<text>\w+)/,
+          toBlock: ({ text }) => `:::note ${text}`,
+          toPreview: ({ text }) => `<div>${text}</div>`,
+        },
+        {
+          id: 'x',
+          label: 'X',
+          fields: [],
+          pattern: /\[x\]\n\[\/x\]/,
+          toBlock: () => '[x]\n[/x]',
+          toPreview: () => '<hr>',
+        },
+      ]);
+
+      expect(markdown).toBe('<div>A</div> <hr>\n\nNext');
+    });
+  });
+
+  it('should assign a suffix key to duplicate component matches', () => {
+    /** @type {import('$lib/types/public').EditorComponentDefinition[]} */
+    const componentDefs = [
+      {
+        id: 'hr',
+        label: 'HR',
+        fields: [],
+        // Two identical matches → second gets a `-1` suffix key
+        pattern: /\[hr\]/g,
+        toBlock: () => '[hr]',
+        toPreview: () => '<hr>',
+      },
+    ];
+
+    const { previewMap } = buildMarkdownWithPreviews('[hr] [hr]', componentDefs);
+    const keys = [...previewMap.keys()];
+
+    expect(keys).toHaveLength(2);
+    expect(keys[1]).toBe(`${keys[0]}-1`);
+  });
+
+  it('should fall back to empty object when there is no fromBlock and no named groups', () => {
+    let receivedProps;
+
+    /** @type {import('$lib/types/public').EditorComponentDefinition[]} */
+    const componentDefs = [
+      {
+        id: 'ping',
+        label: 'Ping',
+        fields: [],
+        // positional groups only — match.groups is undefined
+        pattern: /\[ping (\w+)\]/g,
+        toBlock: () => '[ping]',
+        toPreview: (props) => {
+          receivedProps = props;
+          return '<span>ping</span>';
+        },
+      },
+    ];
+
+    buildMarkdownWithPreviews('[ping world]', componentDefs);
+    expect(receivedProps).toEqual({});
+  });
+
+  it('should work with a non-global pattern by promoting it to global', () => {
+    /** @type {import('$lib/types/public').EditorComponentDefinition[]} */
+    const componentDefs = [
+      {
+        id: 'note',
+        label: 'Note',
+        fields: [],
+        // no `g` flag intentionally
+        pattern: /\[note\](?<content>.*?)\[\/note\]/s,
+        toBlock: ({ content }) => `[note]${content}[/note]`,
+        toPreview: ({ content }) => `<div class="note">${content}</div>`,
+      },
+    ];
+
+    const { markdown, previewMap } = buildMarkdownWithPreviews(
+      '[note]A[/note] [note]B[/note]',
+      componentDefs,
+    );
+
+    expect(previewMap.size).toBe(2);
+    expect(markdown).toBe('<div class="note">A</div> <div class="note">B</div>');
+  });
+
+  it('should reuse the cached global pattern across calls (globalPatternCache)', () => {
+    /** @type {import('$lib/types/public').EditorComponentDefinition[]} */
+    const componentDefs = [
+      {
+        id: 'tip',
+        label: 'Tip',
+        fields: [],
+        // Non-global pattern intentionally — exercises the globalPatternCache code path
+        pattern: /\[tip\](?<text>.*?)\[\/tip\]/s,
+        toBlock: ({ text }) => `[tip]${text}[/tip]`,
+        toPreview: ({ text }) => `<aside class="tip">${text}</aside>`,
+      },
+    ];
+
+    const input = '[tip]First[/tip] and [tip]Second[/tip]';
+    // First call — creates and caches the globalised pattern
+    const { markdown: md1 } = buildMarkdownWithPreviews(input, componentDefs);
+    // Second call — reuses the cached pattern; result must be identical
+    const { markdown: md2 } = buildMarkdownWithPreviews(input, componentDefs);
+
+    expect(md1).toBe('<aside class="tip">First</aside> and <aside class="tip">Second</aside>');
+    expect(md2).toBe(md1);
+  });
+
+  describe('nested components', () => {
+    const nested = '<A>\n\nouter\n\n<B>\n\ninner\n\n</B>\n\n</A>';
+
+    /**
+     * Create a definition with an element preview that records the props it receives.
+     * @param {string} name Tag name.
+     * @returns {import('$lib/types/public').EditorComponentDefinition & { toPreview: any }} Def.
+     */
+    const elementDef = (name) => ({
+      id: name,
+      label: name,
+      fields: [{ name: 'body', widget: 'richtext' }],
+      pattern: new RegExp(`<${name}>\\s*(?<body>[\\s\\S]*?)\\s*<\\/${name}>`),
+      toBlock: ({ body }) => `<${name}>${body}</${name}>`,
+      toPreview: vi.fn(
+        () =>
+          /** @type {HTMLElement} */ (/** @type {unknown} */ ({ nodeType: 1, localName: name })),
+      ),
+    });
+
+    it('should pass the raw nested content to the outer component (outer registered first)', () => {
+      const A = elementDef('A');
+      const B = elementDef('B');
+      const { markdown, previewMap } = buildMarkdownWithPreviews(nested, [A, B]);
+
+      expect(A.toPreview).toHaveBeenCalledWith(
+        { body: 'outer\n\n<B>\n\ninner\n\n</B>' },
+        expect.any(Function),
+        undefined,
+      );
+      expect(B.toPreview).not.toHaveBeenCalled();
+      expect(previewMap.size).toBe(1);
+      expect(markdown).toMatch(/^<span data-component-key="[^"]+"><\/span>$/);
+    });
+
+    it('should pass the raw nested content to the outer component (inner registered first)', () => {
+      const A = elementDef('A');
+      const B = elementDef('B');
+      const { markdown, previewMap } = buildMarkdownWithPreviews(nested, [B, A]);
+
+      expect(A.toPreview).toHaveBeenCalledWith(
+        { body: 'outer\n\n<B>\n\ninner\n\n</B>' },
+        expect.any(Function),
+        undefined,
+      );
+      expect(B.toPreview).not.toHaveBeenCalled();
+      expect(previewMap.size).toBe(1);
+      expect(markdown).toMatch(/^<span data-component-key="[^"]+"><\/span>$/);
+    });
+
+    it('should substitute a component exposed by a string preview regardless of order', () => {
+      /** @type {import('$lib/types/public').EditorComponentDefinition} */
+      const A = {
+        ...elementDef('A'),
+        toPreview: ({ body }) => `<div class="a">${body}</div>`,
+      };
+
+      const B = elementDef('B');
+      const expected = /^<div class="a">outer\n\n<span data-component-key="[^"]+"><\/span><\/div>$/;
+      const first = buildMarkdownWithPreviews(nested, [A, B]);
+
+      expect(first.markdown).toMatch(expected);
+      expect(first.previewMap.size).toBe(2);
+      expect(B.toPreview).toHaveBeenCalledWith({ body: 'inner' }, expect.any(Function), undefined);
+
+      const second = buildMarkdownWithPreviews(nested, [B, A]);
+
+      expect(second.markdown).toMatch(expected);
+      expect(second.previewMap.size).toBe(2);
+    });
+
+    it('should reuse nested previews from the previous map across passes', () => {
+      /** @type {import('$lib/types/public').EditorComponentDefinition} */
+      const A = {
+        ...elementDef('A'),
+        toPreview: ({ body }) => `<div class="a">${body}</div>`,
+      };
+
+      const B = elementDef('B');
+      const { previewMap } = buildMarkdownWithPreviews(nested, [A, B]);
+      const { previewMap: secondMap } = buildMarkdownWithPreviews(nested, [A, B], previewMap);
+      const [, keyB] = previewMap.keys();
+
+      expect(B.toPreview).toHaveBeenCalledTimes(1);
+      expect(secondMap.get(keyB)).toBe(previewMap.get(keyB));
+    });
+
+    it('should prefer the longest match when two patterns start at the same index', () => {
+      const short = elementDef('A');
+
+      /** @type {import('$lib/types/public').EditorComponentDefinition} */
+      const long = {
+        ...elementDef('A'),
+        id: 'long',
+        pattern: /<A>[\s\S]*<\/A> tail/,
+      };
+
+      const input = '<A>x</A> tail';
+      const { markdown } = buildMarkdownWithPreviews(input, [short, long]);
+
+      expect(long.toPreview).toHaveBeenCalledTimes(1);
+      expect(short.toPreview).not.toHaveBeenCalled();
+      expect(markdown).toMatch(/^<span data-component-key="[^"]+"><\/span>$/);
+    });
+
+    it('should prefer the earliest definition when two patterns match the same range', () => {
+      const first = elementDef('A');
+      const second = { ...elementDef('A'), id: 'second' };
+      const { previewMap } = buildMarkdownWithPreviews('<A>x</A>', [first, second]);
+
+      expect(first.toPreview).toHaveBeenCalledTimes(1);
+      expect(second.toPreview).not.toHaveBeenCalled();
+      expect(previewMap.size).toBe(1);
+    });
+
+    it('should ignore zero-length matches', () => {
+      /** @type {import('$lib/types/public').EditorComponentDefinition} */
+      const def = {
+        id: 'empty',
+        label: 'Empty',
+        fields: [],
+        pattern: /x*/g,
+        toBlock: () => '',
+        toPreview: vi.fn(() => '<hr>'),
+      };
+
+      const { markdown, previewMap } = buildMarkdownWithPreviews('abc', [def]);
+
+      expect(markdown).toBe('abc');
+      expect(previewMap.size).toBe(0);
+      expect(def.toPreview).not.toHaveBeenCalled();
+    });
+
+    it('should not substitute a preview that reproduces its own syntax', () => {
+      // A component with HTML syntax, whose preview mirrors `toBlock()` and matches the pattern
+      /** @type {import('$lib/types/public').EditorComponentDefinition} */
+      const def = {
+        id: 'note',
+        label: 'Note',
+        fields: [
+          { name: 'summary', widget: 'string' },
+          { name: 'content', widget: 'richtext' },
+        ],
+        pattern:
+          /^<details>\s*<summary>(?<summary>.+?)<\/summary>\s*(?<content>[\s\S]+?)\s*<\/details>/m,
+        toBlock: ({ summary, content }) =>
+          `<details>\n<summary>${summary}</summary>\n${content}\n</details>`,
+        toPreview: vi.fn(
+          ({ summary, content }) =>
+            `<details>\n<summary>${summary}</summary>\n<p>${content}</p>\n</details>`,
+        ),
+      };
+
+      const input = '<details>\n<summary>Sum</summary>\nFirst line\n</details>';
+      const { markdown, previewMap } = buildMarkdownWithPreviews(input, [def]);
+
+      expect(def.toPreview).toHaveBeenCalledTimes(1);
+      expect(previewMap.size).toBe(1);
+      expect(markdown).toBe('<details>\n<summary>Sum</summary>\n<p>First line</p>\n</details>');
+    });
+
+    it('should not substitute a preview that wraps its own syntax in other markup', () => {
+      /** @type {import('$lib/types/public').EditorComponentDefinition} */
+      const def = {
+        id: 'loop',
+        label: 'Loop',
+        fields: [],
+        pattern: /\[loop\]/,
+        toBlock: () => '[loop]',
+        // The preview contains the component syntax again, but it doesn’t come from a field value
+        toPreview: vi.fn(() => '<b>[loop]</b>'),
+      };
+
+      const { markdown, previewMap } = buildMarkdownWithPreviews('[loop]', [def]);
+
+      expect(def.toPreview).toHaveBeenCalledTimes(1);
+      expect(previewMap.size).toBe(1);
+      expect(markdown).toBe('<b>[loop]</b>');
+    });
+
+    it('should substitute a component that a preview exposes through a nested value', () => {
+      /** @type {import('$lib/types/public').EditorComponentDefinition} */
+      const A = {
+        ...elementDef('A'),
+        // The preview mirrors the syntax itself, but the nested component is still substituted
+        toPreview: ({ body }) => `<A>${body}</A>`,
+      };
+
+      const B = elementDef('B');
+      const { markdown, previewMap } = buildMarkdownWithPreviews(nested, [A, B]);
+
+      expect(markdown).toMatch(/^<A>outer\n\n<span data-component-key="[^"]+"><\/span><\/A>$/);
+      expect(previewMap.size).toBe(2);
+      expect(B.toPreview).toHaveBeenCalledWith({ body: 'inner' }, expect.any(Function), undefined);
+    });
+
+    it('should substitute a component that a preview exposes through a list item', () => {
+      /** @type {import('$lib/types/public').EditorComponentDefinition} */
+      const A = {
+        ...elementDef('A'),
+        fields: [{ name: 'items', widget: 'list', field: { name: 'body', widget: 'richtext' } }],
+        // Values that aren’t strings, like the count and the missing title, are simply skipped
+        fromBlock: ({ groups }) => ({
+          count: 1,
+          title: undefined,
+          items: [{ body: groups?.body }],
+        }),
+        toPreview: ({ items }) =>
+          items.map((/** @type {{ body: string }} */ { body }) => `<li>${body}</li>`).join(''),
+      };
+
+      const B = elementDef('B');
+      const { markdown } = buildMarkdownWithPreviews(nested, [A, B]);
+
+      expect(markdown).toMatch(/^<li>outer\n\n<span data-component-key="[^"]+"><\/span><\/li>$/);
+      expect(B.toPreview).toHaveBeenCalledWith({ body: 'inner' }, expect.any(Function), undefined);
+    });
+
+    it('should stop after a bounded number of passes when a value reproduces its syntax', () => {
+      /** @type {import('$lib/types/public').EditorComponentDefinition} */
+      const def = {
+        id: 'loop',
+        label: 'Loop',
+        fields: [{ name: 'body', widget: 'richtext' }],
+        pattern: /\[loop\]/,
+        toBlock: () => '[loop]',
+        // The value carries the component syntax into the preview, which would otherwise never
+        // settle
+        fromBlock: () => ({ body: '[loop]' }),
+        toPreview: vi.fn(({ body }) => `<b>${body}</b>`),
+      };
+
+      const { markdown, previewMap } = buildMarkdownWithPreviews('[loop]', [def]);
+
+      expect(def.toPreview).toHaveBeenCalledTimes(10);
+      expect(previewMap.size).toBe(10);
+      expect(markdown).toBe(`${'<b>'.repeat(10)}[loop]${'</b>'.repeat(10)}`);
+    });
+  });
+});
+
+describe('toPreview arguments', () => {
+  /**
+   * Create a definition whose preview records the arguments it receives.
+   * @returns {import('$lib/types/public').EditorComponentDefinition & { toPreview: any }} Def.
+   */
+  const imageDef = () => ({
+    id: 'figure',
+    label: 'Figure',
+    fields: [{ name: 'src', widget: 'image' }],
+    pattern: /^:::figure (?<src>.+)$/m,
+    toBlock: ({ src }) => `:::figure ${src}`,
+    toPreview: vi.fn((/** @type {any} */ { src }, /** @type {any} */ getAsset) => {
+      const asset = getAsset(src);
+
+      return `<img src="${asset ?? ''}" alt="">`;
+    }),
+  });
+
+  afterEach(() => {
+    immutableLoaded.current = false;
+  });
+
+  it('should never find an asset without a getter', () => {
+    expect(getNoAsset('photo.jpg')).toBeUndefined();
+
+    const { markdown } = buildMarkdownWithPreviews(':::figure photo.jpg', [imageDef()]);
+
+    expect(markdown).toBe('<img src="" alt="">');
+  });
+
+  it('should pass the given asset getter', () => {
+    const getAsset = vi.fn(() => /** @type {any} */ ({ toString: () => 'blob:photo' }));
+    const def = imageDef();
+
+    const { markdown, previewMap, assetMap } = buildMarkdownWithPreviews(
+      ':::figure photo.jpg\n\n:::figure none.jpg',
+      [def],
+      undefined,
+      (path) => (path === 'photo.jpg' ? getAsset() : undefined),
+    );
+
+    expect(getAsset).toHaveBeenCalledOnce();
+    expect(def.toPreview).toHaveBeenCalledWith(
+      { src: 'photo.jpg' },
+      expect.any(Function),
+      undefined,
+    );
+
+    // The assets each preview has got are reported, so the preview can be computed again once
+    // their URL changes, but only for the previews computed in this run
+    const [photoKey] = previewMap.keys();
+
+    expect([...assetMap.keys()]).toEqual([photoKey]);
+    expect(assetMap.get(photoKey)).toEqual([getAsset.mock.results[0].value]);
+    expect(buildMarkdownWithPreviews(':::figure photo.jpg', [def], previewMap).assetMap.size).toBe(
+      0,
+    );
+    expect(markdown).toBe('<img src="blob:photo" alt="">\n\n<img src="" alt="">');
+  });
+
+  it('should pass the fields as an Immutable List once Immutable.js is loaded', () => {
+    const def = imageDef();
+
+    expect(getComponentFieldList(def)).toBeUndefined();
+
+    immutableLoaded.current = true;
+
+    const fields = getComponentFieldList(def);
+
+    expect(isList(fields)).toBe(true);
+    expect(fields?.toJS()).toEqual(def.fields);
+    // The list is created once per component
+    expect(getComponentFieldList(def)).toBe(fields);
+
+    buildMarkdownWithPreviews(':::figure photo.jpg', [def]);
+
+    expect(def.toPreview).toHaveBeenCalledWith({ src: 'photo.jpg' }, expect.any(Function), fields);
+    expect(
+      def.toPreview.mock.calls[0][2].find((/** @type {any} */ f) => f.get('widget') === 'image'),
+    ).toBeDefined();
+  });
+});

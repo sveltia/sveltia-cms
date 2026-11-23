@@ -1,11 +1,17 @@
 import { isObjectArray } from '@sveltia/utils/array';
+import { isObject } from '@sveltia/utils/object';
 
 import { getListItemKeys } from '$lib/services/contents/entry/key-paths';
-import { getOrCreateBounded } from '$lib/services/utils/cache';
+import { getOrCreate, getOrCreateBounded } from '$lib/services/utils/cache';
 
 /**
  * @import { FlattenedEntryContent } from '$lib/types/private';
- * @import { FieldKeyPath, SelectField } from '$lib/types/public';
+ * @import {
+ * FieldKeyPath,
+ * SelectField,
+ * SelectFieldOption,
+ * SelectFieldValue,
+ * } from '$lib/types/public';
  */
 
 /**
@@ -31,16 +37,8 @@ const optionsKeyCache = new WeakMap();
  * @param {any[]} options Field options.
  * @returns {string} Cache key.
  */
-const getOptionsKey = (options) => {
-  let key = optionsKeyCache.get(options);
-
-  if (key === undefined) {
-    key = JSON.stringify(options);
-    optionsKeyCache.set(options, key);
-  }
-
-  return key;
-};
+const getOptionsKey = (options) =>
+  getOrCreate(optionsKeyCache, options, () => JSON.stringify(options));
 
 /**
  * Get the display value for an option.
@@ -63,10 +61,10 @@ export const getOptionLabel = ({ fieldConfig, valueMap, keyPath }) => {
   }
 
   const optionsKey = getOptionsKey(options);
-
-  const cacheKey = multiple
-    ? `${keyPath}|${optionsKey}|${JSON.stringify(rawValues)}`
-    : `${keyPath}|${optionsKey}|${String(valueMap[keyPath])}`;
+  // Serialize the value with its type, so `1` and `'1'`, which can be options with different
+  // labels, don’t share a cache entry
+  const valueKey = JSON.stringify(multiple ? rawValues : valueMap[keyPath]);
+  const cacheKey = `${keyPath}|${optionsKey}|${valueKey}`;
 
   /**
    * Get the label by value.
@@ -92,3 +90,81 @@ export const getOptionLabel = ({ fieldConfig, valueMap, keyPath }) => {
     MAX_LABEL_CACHE_SIZE,
   );
 };
+
+/**
+ * Get the value of a Select field option, which is either a plain value or an object with the
+ * `label` and `value` properties. A `default` option can be given in either form too, as
+ * documented by Decap CMS.
+ * @param {SelectFieldValue | SelectFieldOption | undefined} option Option or default value.
+ * `undefined` is passed through.
+ * @returns {SelectFieldValue | undefined} Value.
+ */
+export const getOptionValue = (option) => (isObject(option) ? option.value : option);
+
+/**
+ * Check whether a value is one of the options of a Select field. `null`, `false` and an empty
+ * string can be valid choices, so this tells a selected option apart from a missing value.
+ * @param {object} args Arguments.
+ * @param {SelectField} args.fieldConfig Field configuration.
+ * @param {any} args.value Stored value.
+ * @returns {boolean} Whether the value is one of the options.
+ */
+export const isOptionValue = ({ fieldConfig, value }) =>
+  fieldConfig.options.some((option) => getOptionValue(option) === value);
+
+/**
+ * Get the labels to be shown in the preview of a Select field. A value is shown by its label if
+ * the options have labels; otherwise, or if the value is not found in the options, it’s shown as
+ * is.
+ * @param {object} args Arguments.
+ * @param {SelectField} args.fieldConfig Field configuration.
+ * @param {SelectFieldValue | SelectFieldValue[] | undefined} args.currentValue Stored value(s).
+ * @returns {string[]} Labels, sorted if there are multiple values. Empty if there is no value,
+ * including `null` unless it’s one of the options.
+ */
+export const getPreviewLabels = ({ fieldConfig, currentValue }) => {
+  const { options, multiple = false } = fieldConfig;
+  const hasLabels = isObjectArray(options);
+
+  /**
+   * Get the label by value.
+   * @param {SelectFieldValue} value Stored value.
+   * @returns {string} Label.
+   */
+  const getLabel = (value) =>
+    hasLabels
+      ? /** @type {{ label: string, value: SelectFieldValue }[]} */ (options).find(
+          (o) => o.value === value,
+        )?.label || String(value)
+      : String(value);
+
+  if (multiple) {
+    return Array.isArray(currentValue) ? currentValue.map(getLabel).sort() : [];
+  }
+
+  return currentValue === undefined ||
+    (currentValue === null && !isOptionValue({ fieldConfig, value: null }))
+    ? []
+    : [getLabel(/** @type {SelectFieldValue} */ (currentValue))];
+};
+
+/**
+ * Get the data type of a Select field option value, which `@sveltia/ui` uses to cast the value
+ * read from the option element’s `data-value` attribute back to the original type. `null` is typed
+ * as a number: the attribute is omitted for `null`, and a missing number is cast to `null`.
+ * @param {SelectFieldValue} value Option value.
+ * @returns {string} Data type.
+ */
+export const getOptionValueType = (value) => (value === null ? 'number' : typeof value);
+
+/**
+ * Get the value that clears a single Select field, which the “unselected” option holds and a new
+ * entry starts with: an empty string if the options are strings, or `null` if they are another
+ * type, e.g. numbers or booleans, for which an empty string would be a type mismatch. The type is
+ * taken from the first option.
+ * @param {SelectFieldValue | undefined} firstValue Value of the first option, or `undefined` if
+ * there are no options.
+ * @returns {'' | null} Empty value.
+ */
+export const getEmptyOptionValue = (firstValue) =>
+  firstValue === undefined || typeof firstValue === 'string' ? '' : null;

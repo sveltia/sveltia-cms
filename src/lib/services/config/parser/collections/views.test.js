@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createCollectors } from '$lib/test/config-parser';
+
 import { checkViewOptions } from './views';
 
 /**
- * @import { ConfigParserCollectors } from '$lib/types/private';
  * @import { Field } from '$lib/types/public';
  */
 
@@ -18,23 +19,13 @@ vi.mock('$lib/services/config/parser/utils/validator', () => ({
 }));
 
 /**
- * Create a fresh collectors object for testing.
- * @returns {ConfigParserCollectors} Collectors instance.
- */
-const createCollectors = () => ({
-  errors: new Set(),
-  warnings: new Set(),
-  mediaFields: new Set(),
-  relationFields: new Set(),
-});
-
-/**
  * Call {@link checkViewOptions} with the given collection options.
  * @param {Record<string, any>} collection Partial collection config.
+ * @param {Record<string, any>} [cmsConfig] Partial site config.
  */
-const check = (collection) => {
+const check = (collection, cmsConfig = {}) => {
   checkViewOptions(
-    /** @type {any} */ ({ cmsConfig: {}, collection: { name: 'posts', ...collection } }),
+    /** @type {any} */ ({ cmsConfig, collection: { name: 'posts', ...collection } }),
     createCollectors(),
   );
 };
@@ -138,11 +129,196 @@ describe('Test checkViewOptions()', () => {
     );
   });
 
+  it('should validate sortable fields in the Decap CMS object format', () => {
+    check({
+      fields,
+      sortable_fields: ['title', { field: 'author.name', label: 'Author', default_sort: 'desc' }],
+    });
+
+    expect(mockAddMessage).not.toHaveBeenCalled();
+
+    check({ fields, sortable_fields: ['title', { field: 'published_date', default_sort: true }] });
+
+    expect(mockAddMessage).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({
+        strKey: 'invalid_sortable_field',
+        values: { name: 'published_date' },
+      }),
+    );
+  });
+
+  it('should add an error when more than one sortable field has `default_sort`', () => {
+    check({
+      fields,
+      sortable_fields: [
+        { field: 'title', default_sort: 'asc' },
+        { field: 'author.name', default_sort: false },
+        { field: 'images.0.src', default_sort: 'desc' },
+      ],
+    });
+
+    expect(mockAddMessage).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ strKey: 'multiple_sortable_field_defaults' }),
+    );
+  });
+
   it('should accept entry metadata and internal sort keys', () => {
     check({
       fields,
       sortable_fields: ['slug', 'commit_author', 'commit_date', '_summary', '_manual'],
     });
+
+    expect(mockAddMessage).not.toHaveBeenCalled();
+  });
+
+  it('should accept the reorder field, which may not be defined under the fields', () => {
+    check({ fields, reorder: true, sortable_fields: ['title', 'order'] });
+    check({ fields, reorder: { key: 'weight' }, sortable_fields: ['weight'] });
+
+    expect(mockAddMessage).not.toHaveBeenCalled();
+
+    check({ fields, sortable_fields: ['order'] });
+
+    expect(mockAddMessage).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ strKey: 'invalid_sortable_field', values: { name: 'order' } }),
+    );
+  });
+
+  it('should accept the canonical slug key when i18n is enabled', () => {
+    const cmsConfig = { i18n: { locales: ['en', 'fr'] } };
+
+    check(
+      {
+        fields,
+        i18n: true,
+        sortable_fields: ['translationKey'],
+        view_groups: [{ label: 'Key', field: 'translationKey' }],
+        view_filters: [{ label: 'Key', field: 'translationKey', pattern: '^post-' }],
+      },
+      cmsConfig,
+    );
+
+    check(
+      {
+        fields,
+        i18n: { canonical_slug: { key: 'translation_id' } },
+        sortable_fields: ['translation_id'],
+        view_groups: [{ label: 'Key', field: 'translation_id' }],
+        view_filters: [{ label: 'Key', field: 'translation_id', pattern: '^post-' }],
+      },
+      cmsConfig,
+    );
+
+    expect(mockAddMessage).not.toHaveBeenCalled();
+  });
+
+  it('should report the canonical slug key when i18n is not enabled for the collection', () => {
+    check(
+      {
+        fields,
+        sortable_fields: ['translationKey'],
+        view_groups: [{ label: 'Key', field: 'translationKey' }],
+        view_filters: [{ label: 'Key', field: 'translationKey', pattern: '^post-' }],
+      },
+      { i18n: { locales: ['en', 'fr'] } },
+    );
+
+    expect(mockAddMessage).toHaveBeenCalledTimes(3);
+
+    ['sortable', 'view_group', 'view_filter'].forEach((type) => {
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          strKey: `invalid_${type}_field`,
+          values: { name: 'translationKey' },
+        }),
+      );
+    });
+  });
+
+  it('should accept table columns defined in the collection', () => {
+    check({
+      fields,
+      table_columns: ['title', 'author.name', { field: 'images.0.src', label: 'Image' }],
+    });
+
+    expect(mockAddMessage).not.toHaveBeenCalled();
+  });
+
+  it('should add an error for an undefined table column field', () => {
+    check({ fields, table_columns: ['title', 'category', { field: 'tags', label: 'Tags' }] });
+
+    expect(mockAddMessage).toHaveBeenCalledTimes(2);
+    expect(mockAddMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        strKey: 'invalid_table_column_field',
+        values: { option: 'table_columns', name: 'category' },
+      }),
+    );
+    expect(mockAddMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        strKey: 'invalid_table_column_field',
+        values: { option: 'table_columns', name: 'tags' },
+      }),
+    );
+  });
+
+  it('should add an error for an undefined summary field', () => {
+    check({ fields, summary_fields: ['summary', 'title', 'category'] });
+
+    expect(mockAddMessage).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({
+        strKey: 'invalid_table_column_field',
+        values: { option: 'summary_fields', name: 'category' },
+      }),
+    );
+  });
+
+  it('should accept entry metadata keys and the canonical slug key as table columns', () => {
+    check(
+      {
+        fields,
+        i18n: true,
+        table_columns: ['slug', { field: 'commit_author' }, 'commit_date', 'translationKey'],
+        summary_fields: ['category'],
+      },
+      { i18n: { locales: ['en', 'fr'] } },
+    );
+
+    check({ fields, summary_fields: ['summary', 'slug', 'commit_author', 'commit_date'] });
+
+    expect(mockAddMessage).not.toHaveBeenCalled();
+  });
+
+  it('should check the field references in a template column like a summary template', () => {
+    check({
+      fields,
+      table_columns: [
+        '{{locales}}',
+        '{{dirname}}/{{filename}}.{{extension}}',
+        '{{fields.author.name}} ({{commit_date}})',
+        { field: '{{missing | upper}}', label: 'Missing' },
+      ],
+    });
+
+    expect(mockAddMessage).toHaveBeenCalledOnce();
+    expect(mockAddMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        strKey: 'option_field_not_found',
+        values: { option: 'table_columns', name: 'missing' },
+      }),
+    );
+  });
+
+  it('should accept the entry summary column in `table_columns`', () => {
+    check({ fields, table_columns: ['_summary', { field: '_summary', label: 'Summary' }] });
+
+    expect(mockAddMessage).not.toHaveBeenCalled();
+  });
+
+  it('should ignore table columns that are not non-empty strings', () => {
+    check({ fields, table_columns: ['', 1, null, { label: 'No Field' }, { field: '' }] });
+    check({ fields, summary_fields: ['', 1] });
+    check({ fields, table_columns: 'title', summary_fields: 'title' });
 
     expect(mockAddMessage).not.toHaveBeenCalled();
   });
@@ -190,6 +366,49 @@ describe('Test checkViewOptions()', () => {
       expect.objectContaining({
         strKey: 'invalid_view_filter_field',
         values: { name: 'draft' },
+      }),
+    );
+  });
+
+  it('should accept a view filter or group with a comparison option', () => {
+    check({
+      fields,
+      view_groups: [{ label: 'Recent', field: 'title', gte: '{{year}}' }],
+      view_filters: [
+        { label: 'Upcoming', field: 'title', gte: '{{today}}' },
+        { label: 'Some', field: 'title', in: ['a', 'b'] },
+        { label: 'Range', field: 'title', pattern: '^2', lt: '3' },
+        { label: 'Untitled', field: 'title', empty: true },
+      ],
+    });
+
+    expect(mockAddMessage).not.toHaveBeenCalled();
+  });
+
+  it('should report a view filter without a pattern or comparison option', () => {
+    check({
+      fields,
+      // A group without a pattern groups the entries by the field value
+      view_groups: [{ label: 'Title', field: 'title' }],
+      view_filters: [
+        { label: 'Titled', field: 'title' },
+        { label: 'Upcoming', field: 'title', gte: '{{today}}' },
+        { label: 'Empty', field: 'title', eq: undefined },
+        'invalid',
+      ],
+    });
+
+    expect(mockAddMessage).toHaveBeenCalledTimes(2);
+    expect(mockAddMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        strKey: 'invalid_view_filter_no_condition',
+        values: { count: '1' },
+      }),
+    );
+    expect(mockAddMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        strKey: 'invalid_view_filter_no_condition',
+        values: { count: '3' },
       }),
     );
   });
@@ -265,5 +484,53 @@ describe('Test checkViewOptions()', () => {
         required: false,
       }),
     );
+  });
+
+  it('should accept a default that names a group or filter in the object format', () => {
+    check({
+      fields,
+      view_groups: { groups: [{ name: 'by_author', field: 'author.name' }], default: 'by_author' },
+      view_filters: {
+        filters: [{ name: 'titled', field: 'title', pattern: '.' }],
+        default: 'titled',
+      },
+    });
+
+    expect(mockAddMessage).not.toHaveBeenCalled();
+  });
+
+  it('should add an error for a default that names no group or filter', () => {
+    check({
+      fields,
+      view_groups: { groups: [{ name: 'by_author', field: 'author.name' }], default: 'by_title' },
+      view_filters: {
+        filters: [{ name: 'titled', field: 'title', pattern: '.' }],
+        default: 'drafts',
+      },
+    });
+
+    expect(mockAddMessage).toHaveBeenCalledTimes(2);
+    expect(mockAddMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        strKey: 'invalid_view_group_default',
+        values: { name: 'by_title' },
+      }),
+    );
+    expect(mockAddMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        strKey: 'invalid_view_filter_default',
+        values: { name: 'drafts' },
+      }),
+    );
+  });
+
+  it('should leave a default of the wrong type or none to the schema', () => {
+    check({
+      fields,
+      view_groups: { groups: [{ name: 'by_author', field: 'author.name' }] },
+      view_filters: { filters: [{ name: 'titled', field: 'title', pattern: '.' }], default: 1 },
+    });
+
+    expect(mockAddMessage).not.toHaveBeenCalled();
   });
 });

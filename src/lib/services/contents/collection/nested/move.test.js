@@ -3,20 +3,26 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { fillTemplate } from '$lib/services/common/template';
-import { isEntryCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { buildNestedMoveChanges } from '$lib/services/contents/collection/nested/move';
-import { getPreviousSha } from '$lib/services/contents/draft/save/changes';
-import { buildSingleFileContent } from '$lib/services/contents/draft/save/content';
+import { isEntryCollection } from '$lib/services/contents/collection/predicates';
+import { rewriteEntryAssetReferences } from '$lib/services/contents/draft/save/asset-references';
+import {
+  buildSingleFileContent,
+  getFieldComments,
+  getSingleFileComments,
+} from '$lib/services/contents/draft/save/content';
+import { resolveCacheDB } from '$lib/services/contents/draft/save/file-changes';
 import { serializeContent } from '$lib/services/contents/draft/save/serialize';
-import { createSyntheticDraft, resolveCacheDB } from '$lib/services/contents/entry/changes';
+import { createSyntheticDraft } from '$lib/services/contents/entry/changes';
+import { refreshPermalinks } from '$lib/services/contents/entry/permalink';
 import { formatEntryFile } from '$lib/services/contents/file/format';
 
 vi.mock('$lib/services/common/template', () => ({
   fillTemplate: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/collection', () => ({
+vi.mock('$lib/services/contents/collection/predicates', () => ({
   isEntryCollection: vi.fn(),
 }));
 
@@ -24,20 +30,30 @@ vi.mock('$lib/services/contents/collection/entries', () => ({
   getEntriesByCollection: vi.fn(() => []),
 }));
 
-vi.mock('$lib/services/contents/draft/save/changes', () => ({
-  getPreviousSha: vi.fn(async () => 'sha'),
+vi.mock('$lib/services/contents/draft/save/asset-references', () => ({
+  rewriteEntryAssetReferences: vi.fn(async ({ savingEntry }) => savingEntry),
 }));
 
 vi.mock('$lib/services/contents/draft/save/content', () => ({
   buildSingleFileContent: vi.fn(() => ({ title: 'Single' })),
+  getFieldComments: vi.fn(() => ({})),
+  getSingleFileComments: vi.fn(() => ({})),
 }));
 
 vi.mock('$lib/services/contents/draft/save/serialize', () => ({
   serializeContent: vi.fn(() => ({ title: 'Serialized' })),
 }));
 
+vi.mock('$lib/services/contents/entry/permalink', () => ({
+  refreshPermalinks: vi.fn(({ entry: _entry }) => _entry),
+}));
+
 vi.mock('$lib/services/contents/entry/changes', () => ({
   createSyntheticDraft: vi.fn(() => ({ synthetic: true })),
+}));
+
+vi.mock('$lib/services/contents/draft/save/file-changes', async (importOriginal) => ({
+  .../** @type {Record<string, any>} */ (await importOriginal()),
   resolveCacheDB: vi.fn(() => undefined),
 }));
 
@@ -60,11 +76,15 @@ const entry = (id, subPath) => ({
   },
 });
 
+/** File cache database the previous SHA of each file is looked up in. */
+const cacheDB = { get: vi.fn() };
+
 /** @type {any} */
 const collection = {
   name: 'pages',
   folder: 'content/pages',
   nested: {},
+  meta: { path: { index_file: '_index' } },
   _file: { extension: 'md' },
   _i18n: {
     i18nEnabled: false,
@@ -79,9 +99,9 @@ beforeEach(() => {
   vi.mocked(isEntryCollection).mockImplementation(
     (_collection) => typeof _collection?.folder === 'string' && !Array.isArray(_collection?.files),
   );
-  vi.mocked(getPreviousSha).mockResolvedValue('sha');
+  cacheDB.get.mockResolvedValue({ sha: 'sha' });
   vi.mocked(createSyntheticDraft).mockReturnValue({ synthetic: true });
-  vi.mocked(resolveCacheDB).mockReturnValue(undefined);
+  vi.mocked(resolveCacheDB).mockReturnValue(cacheDB);
   vi.mocked(buildSingleFileContent).mockReturnValue({ title: 'Single' });
   vi.mocked(serializeContent).mockReturnValue({ title: 'Serialized' });
   vi.mocked(formatEntryFile).mockResolvedValue('formatted');
@@ -112,6 +132,39 @@ describe('buildNestedMoveChanges()', () => {
     expect(
       await buildNestedMoveChanges({
         collection: { ...collection, nested: { subfolders: false } },
+        originalEntry: entry('1', 'docs/intro'),
+        savingEntry: entry('1', 'guides/intro'),
+      }),
+    ).toEqual({ changes: [], savingEntries: [] });
+  });
+
+  test('returns nothing when the collection has no index file', async () => {
+    // Without `meta.path.index_file`, entries are regular files sharing a folder with siblings
+    vi.mocked(getEntriesByCollection).mockReturnValue([
+      entry('1', 'docs/intro'),
+      entry('2', 'docs/other'),
+      entry('3', 'docs/deep/x'),
+    ]);
+
+    expect(
+      await buildNestedMoveChanges({
+        collection: { ...collection, meta: { path: {} } },
+        originalEntry: entry('1', 'docs/intro'),
+        savingEntry: entry('1', 'guides/intro'),
+      }),
+    ).toEqual({ changes: [], savingEntries: [] });
+  });
+
+  test('returns nothing when the entry is not stored as the index file', async () => {
+    vi.mocked(getEntriesByCollection).mockReturnValue([
+      entry('1', 'docs/intro'),
+      entry('2', 'docs/_index'),
+      entry('3', 'docs/deep/_index'),
+    ]);
+
+    expect(
+      await buildNestedMoveChanges({
+        collection,
         originalEntry: entry('1', 'docs/intro'),
         savingEntry: entry('1', 'guides/intro'),
       }),
@@ -161,6 +214,7 @@ describe('buildNestedMoveChanges()', () => {
   });
 
   test('moves every entry below the folder', async () => {
+    vi.mocked(getSingleFileComments).mockReturnValue({ title: 'Title' });
     vi.mocked(getEntriesByCollection).mockReturnValue([
       entry('1', 'docs/_index'),
       entry('2', 'docs/intro/_index'),
@@ -197,6 +251,57 @@ describe('buildNestedMoveChanges()', () => {
       'guides/manual/intro/_index',
       'guides/manual/intro/deep/_index',
     ]);
+
+    // The field comments are written to the moved files as well
+    expect(vi.mocked(formatEntryFile)).toHaveBeenCalledWith(
+      expect.objectContaining({ comments: { title: 'Title' } }),
+    );
+  });
+
+  test('refreshes the permalink of every moved entry', async () => {
+    vi.mocked(getEntriesByCollection).mockReturnValue([
+      entry('1', 'docs/_index'),
+      entry('2', 'docs/intro/_index'),
+    ]);
+    vi.mocked(refreshPermalinks).mockImplementationOnce(({ entry: moved }) => ({
+      ...moved,
+      refreshed: true,
+    }));
+
+    const { savingEntries } = await buildNestedMoveChanges({
+      collection,
+      originalEntry: entry('1', 'docs/_index'),
+      savingEntry: entry('1', 'guides/_index'),
+    });
+
+    expect(refreshPermalinks).toHaveBeenCalledExactlyOnceWith({
+      collection,
+      entry: expect.objectContaining({ subPath: 'guides/intro/_index' }),
+    });
+    expect(savingEntries[0].refreshed).toBe(true);
+  });
+
+  test('rewrites the references to the assets of every moved entry', async () => {
+    const intro = entry('2', 'docs/intro/_index');
+
+    vi.mocked(getEntriesByCollection).mockReturnValue([entry('1', 'docs/_index'), intro]);
+    vi.mocked(rewriteEntryAssetReferences).mockImplementationOnce(async ({ savingEntry }) => ({
+      ...savingEntry,
+      rewritten: true,
+    }));
+
+    const { savingEntries } = await buildNestedMoveChanges({
+      collection,
+      originalEntry: entry('1', 'docs/_index'),
+      savingEntry: entry('1', 'guides/_index'),
+    });
+
+    expect(rewriteEntryAssetReferences).toHaveBeenCalledExactlyOnceWith({
+      collection,
+      originalEntry: intro,
+      savingEntry: expect.objectContaining({ subPath: 'guides/intro/_index' }),
+    });
+    expect(savingEntries[0].rewritten).toBe(true);
   });
 
   test('moves the entries up to the collection folder', async () => {
@@ -212,6 +317,54 @@ describe('buildNestedMoveChanges()', () => {
     });
 
     expect(changes[0].path).toBe('content/pages/intro/_index.md');
+  });
+
+  test('moves a single-file i18n entry missing the default locale', async () => {
+    /** @type {any} */
+    const i18nCollection = {
+      ...collection,
+      _i18n: {
+        i18nEnabled: true,
+        allLocales: ['en', 'fr'],
+        defaultLocale: 'en',
+        structureMap: { i18nSingleFile: true },
+      },
+    };
+
+    /**
+     * Create an entry with the French content only.
+     * @param {string} id Entry ID.
+     * @param {string} subPath Entry’s sub path.
+     * @returns {any} Entry.
+     */
+    const frEntry = (id, subPath) => ({
+      id,
+      slug: subPath,
+      subPath,
+      locales: {
+        fr: { slug: subPath, path: `content/pages/${subPath}.md`, content: { title: 'FR' } },
+      },
+    });
+
+    vi.mocked(getEntriesByCollection).mockReturnValue([
+      frEntry('1', 'docs/_index'),
+      frEntry('2', 'docs/intro/_index'),
+    ]);
+
+    const { changes } = await buildNestedMoveChanges({
+      collection: i18nCollection,
+      originalEntry: frEntry('1', 'docs/_index'),
+      savingEntry: frEntry('1', 'guides/_index'),
+    });
+
+    expect(changes).toEqual([
+      expect.objectContaining({
+        action: 'move',
+        slug: 'guides/intro/_index',
+        path: 'content/pages/guides/intro/_index.md',
+        previousPath: 'content/pages/docs/intro/_index.md',
+      }),
+    ]);
   });
 
   test('moves one file per locale with a file-per-locale i18n structure', async () => {
@@ -242,6 +395,7 @@ describe('buildNestedMoveChanges()', () => {
       },
     });
 
+    vi.mocked(getFieldComments).mockReturnValue({ title: 'Title' });
     vi.mocked(getEntriesByCollection).mockReturnValue([
       i18nEntry('1', 'docs/_index'),
       i18nEntry('2', 'docs/intro/_index'),
@@ -252,6 +406,10 @@ describe('buildNestedMoveChanges()', () => {
       originalEntry: i18nEntry('1', 'docs/_index'),
       savingEntry: i18nEntry('1', 'guides/_index'),
     });
+
+    expect(vi.mocked(formatEntryFile)).toHaveBeenCalledWith(
+      expect.objectContaining({ comments: { title: 'Title' } }),
+    );
 
     // The French file has no content, so it’s left out
     expect(changes).toEqual([
@@ -481,6 +639,102 @@ describe('buildNestedMoveChanges()', () => {
           valueMap: expect.objectContaining({ translationKey: 'company/team/_index' }),
         }),
       );
+    });
+
+    test('rewrites a file that stays put when its canonical slug changes', async () => {
+      // @see https://github.com/sveltia/sveltia-cms/issues/984
+      const localizedCollection = {
+        ...i18nCollection,
+        _type: 'entry',
+        slug: '{{title | localize}}',
+        _i18n: {
+          ...i18nCollection._i18n,
+          canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+        },
+      };
+
+      const original = i18nEntry('2', { en: 'about/team/_index', fr: 'a-propos/equipe/_index' });
+
+      original.locales.en.content.translationKey = 'about/team/_index';
+      original.locales.fr.content.translationKey = 'about/team/_index';
+      vi.mocked(getEntriesByCollection).mockReturnValue([
+        i18nEntry('1', { en: 'about/_index', fr: 'a-propos/_index' }),
+        original,
+      ]);
+
+      const { changes, savingEntries } = await buildNestedMoveChanges({
+        collection: localizedCollection,
+        originalEntry: i18nEntry('1', { en: 'about/_index', fr: 'a-propos/_index' }),
+        // The folder is renamed in English only
+        savingEntry: i18nEntry('1', { en: 'company/_index', fr: 'a-propos/_index' }),
+      });
+
+      // The French file keeps its place but has to pick up the new key, or it would no longer be
+      // linked to the English file once the entries are loaded again
+      expect(changes).toEqual([
+        expect.objectContaining({
+          action: 'move',
+          slug: 'company/team/_index',
+          path: 'content/pages/en/company/team/_index.md',
+          previousPath: 'content/pages/en/about/team/_index.md',
+        }),
+        {
+          action: 'update',
+          slug: 'a-propos/equipe/_index',
+          path: 'content/pages/fr/a-propos/equipe/_index.md',
+          previousPath: undefined,
+          previousSha: 'sha',
+          data: 'formatted',
+        },
+      ]);
+      expect(cacheDB.get).toHaveBeenCalledWith('content/pages/fr/a-propos/equipe/_index.md');
+      expect(vi.mocked(serializeContent)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          locale: 'fr',
+          valueMap: { title: '2', translationKey: 'company/team/_index' },
+        }),
+      );
+      expect(savingEntries[0].locales.fr).toEqual({
+        slug: 'a-propos/equipe/_index',
+        path: 'content/pages/fr/a-propos/equipe/_index.md',
+        content: { title: '2', translationKey: 'company/team/_index' },
+      });
+    });
+
+    test('leaves a file that stays put when its canonical slug is unchanged', async () => {
+      const localizedCollection = {
+        ...i18nCollection,
+        _type: 'entry',
+        slug: '{{title | localize}}',
+        _i18n: {
+          ...i18nCollection._i18n,
+          canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+        },
+      };
+
+      const original = i18nEntry('2', { en: 'about/team/_index', fr: 'a-propos/equipe/_index' });
+
+      original.locales.en.content.translationKey = 'about/team/_index';
+      original.locales.fr.content.translationKey = 'about/team/_index';
+      vi.mocked(getEntriesByCollection).mockReturnValue([
+        i18nEntry('1', { en: 'about/_index', fr: 'a-propos/_index' }),
+        original,
+      ]);
+
+      const { changes } = await buildNestedMoveChanges({
+        collection: localizedCollection,
+        originalEntry: i18nEntry('1', { en: 'about/_index', fr: 'a-propos/_index' }),
+        // The folder is renamed in French only, so the key, which is the English sub path, stays
+        savingEntry: i18nEntry('1', { en: 'about/_index', fr: 'entreprise/_index' }),
+      });
+
+      expect(changes).toEqual([
+        expect.objectContaining({
+          action: 'move',
+          path: 'content/pages/fr/entreprise/equipe/_index.md',
+          previousPath: 'content/pages/fr/a-propos/equipe/_index.md',
+        }),
+      ]);
     });
 
     test('fills a custom canonical slug template', async () => {

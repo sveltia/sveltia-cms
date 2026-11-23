@@ -1,0 +1,527 @@
+import { AssetProxy } from '$lib/services/api/asset-proxy';
+import { ExternalAssetProxy } from '$lib/services/api/external-asset-proxy';
+import { getImmutable } from '$lib/services/api/immutable';
+import { UnsavedAssetProxy } from '$lib/services/api/unsaved-asset-proxy';
+import { isAssetInFolder } from '$lib/services/assets';
+import { getAssetFolder } from '$lib/services/assets/folders';
+import { getMediaFieldSource, getRichTextMediaSource } from '$lib/services/assets/media-field';
+import { allAssets } from '$lib/services/assets/state';
+import { warnDeprecation } from '$lib/services/config/deprecations';
+import { getCollection } from '$lib/services/contents/collection';
+import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
+import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
+import { filterRealValues } from '$lib/services/contents/draft';
+import { getField } from '$lib/services/contents/entry/fields';
+import { ITEM_INDEX_SUFFIX_REGEX } from '$lib/services/contents/entry/key-paths';
+import { getEntryOptions } from '$lib/services/contents/fields/relation/helpers';
+import { getOrCreate, memoizeOnSource } from '$lib/services/utils/cache';
+import { isNumeric } from '$lib/services/utils/number';
+import { unflattenMap } from '$lib/services/utils/object';
+
+/**
+ * @import { MapOf } from 'immutable';
+ * @import {
+ * Asset,
+ * AssetFolderInfo,
+ * Entry,
+ * EntryDraft,
+ * EntryFileMap,
+ * FlattenedEntryContent,
+ * GetFieldArgs,
+ * InternalLocaleCode,
+ * TypedFieldKeyPath,
+ * } from '$lib/types/private';
+ * @import {
+ * ApiAsset,
+ * ApiEntry,
+ * FieldKeyPath,
+ * GetAsset,
+ * ListFieldWithSubField,
+ * RelationField,
+ * } from '$lib/types/public';
+ */
+
+/**
+ * @typedef {object} PreviewData
+ * @property {MapOf<ApiEntry>} entryMap Immutable Map of entry data for the current locale.
+ * @property {FlattenedEntryContent} valueMap Flattened content values for the current locale.
+ * @property {Omit<GetFieldArgs, 'keyPath'>} getFieldArgs Arguments for getField function.
+ * @property {MapOf<any>} fieldsMetaData Metadata for fields in the current locale.
+ * @property {GetAsset} getAsset Function to get asset URLs.
+ */
+
+/**
+ * Create an Immutable.js Map representing the entry data, compatible with Netlify/Decap CMS event
+ * hook handlers.
+ * @param {object} args Arguments.
+ * @param {FlattenedEntryContent} args.content Entry content for the default locale.
+ * @param {string[]} args.otherLocales Other locale keys.
+ * @param {Entry['locales']} args.locales All locale data keyed by locale.
+ * @param {string} args.slug Entry slug.
+ * @param {string} args.path Entry file path.
+ * @param {boolean} args.isNew Whether the entry is new.
+ * @param {string} args.collectionName Collection name.
+ * @param {Asset[]} args.associatedAssets Assets associated with the entry.
+ * @returns {MapOf<ApiEntry>} Immutable Map of the entry data.
+ * @see https://immutable-js.com/docs/v5/Map/
+ */
+export const createEntryMap = ({
+  content,
+  otherLocales,
+  locales,
+  slug,
+  path,
+  isNew,
+  collectionName,
+  associatedAssets,
+}) =>
+  // @ts-ignore
+  getImmutable().fromJS({
+    // Entry data for the default locale
+    data: unflattenMap(content),
+    // Entry data for other locales
+    // @see https://github.com/decaporg/decap-cms/issues/4729
+    i18n: Object.fromEntries(
+      otherLocales.map((locale) => [locale, { data: unflattenMap(locales[locale].content) }]),
+    ),
+    // Other entry properties
+    slug,
+    path,
+    newRecord: isNew,
+    collection: collectionName,
+    mediaFiles: associatedAssets.map(({ sha, file, size, blobURL, ...asset }) => ({
+      id: sha,
+      name: asset.name,
+      path: asset.path,
+      file,
+      size,
+      url: blobURL,
+      displayURL: blobURL,
+    })),
+    // Additional properties included for compatibility with Netlify/Decap CMS
+    meta: { path },
+    isModification: null,
+    label: null,
+    partial: false,
+    author: '',
+    raw: '',
+    status: '',
+    updatedOn: '',
+  });
+
+/**
+ * Convert an entry to an Immutable Map for preview templates.
+ * @param {object} args Arguments.
+ * @param {Entry | undefined} args.entry Entry object to convert.
+ * @param {InternalLocaleCode} args.locale Locale to use for content and path extraction.
+ * @param {string} args.collectionName Collection name.
+ * @param {Asset[]} args.associatedAssets Associated assets to include.
+ * @param {FlattenedEntryContent} [args.content] Optional content override (if not provided,
+ * extracted from entry).
+ * @returns {MapOf<ApiEntry>} Immutable Map of entry data.
+ */
+export const convertEntryToMap = ({ entry, locale, collectionName, associatedAssets, content }) => {
+  const entryContent = content ?? entry?.locales?.[locale]?.content ?? {};
+
+  return /** @type {MapOf<ApiEntry>} */ (
+    createEntryMap({
+      content: entryContent,
+      otherLocales: Object.keys(entry?.locales ?? {}).filter((l) => l !== locale),
+      locales: entry?.locales ?? {},
+      slug: entry?.slug ?? '',
+      path: entry?.locales?.[locale]?.path ?? '',
+      isNew: false,
+      collectionName,
+      associatedAssets,
+    })
+  );
+};
+
+/**
+ * Create an asset getter function for React components (preview templates and custom field types)
+ * and editor component previews, compatible with the `getAsset` function of Netlify/Decap CMS.
+ * @param {object} args Arguments.
+ * @param {Entry} [args.entry] Entry object. Can be `undefined` when editing a new draft.
+ * @param {string} args.collectionName Collection name.
+ * @param {string} [args.fileName] File name.
+ * @param {EntryFileMap} [args.files] Files added to the entry draft but not saved yet, keyed by the
+ * blob URLs the field values refer to them with.
+ * @param {TypedFieldKeyPath} [args.typedKeyPath] Key path of the RichText field, when the getter is
+ * used by editor component previews.
+ * @param {string[]} [args.componentNames] Names or IDs of the editor components the RichText field
+ * can contain, whose field-level media folders are also searched.
+ * @param {InternalLocaleCode} [args.locale] Locale being previewed, which an entry-relative path is
+ * relative to. Default: the default locale.
+ * @returns {GetAsset} Function that gets asset URLs.
+ */
+export const createGetAsset =
+  ({ entry, collectionName, fileName, files, typedKeyPath, componentNames, locale }) =>
+  /**
+   * Get the asset for a given asset path.
+   * @param {string} path Path to the asset, the blob URL of a file that hasn’t been saved yet, or
+   * the URL of a file on an external location.
+   * @returns {ApiAsset | undefined} Asset item.
+   */
+  (path) => {
+    const unsavedFile = files?.[path]?.file;
+
+    if (unsavedFile) {
+      return new UnsavedAssetProxy(path, unsavedFile);
+    }
+
+    const args = { value: path, entry, collectionName, fileName, typedKeyPath, locale };
+
+    const { asset, url } =
+      (componentNames
+        ? getRichTextMediaSource({ ...args, componentNames })
+        : getMediaFieldSource(args)) ?? {};
+
+    if (asset) {
+      return new AssetProxy(asset);
+    }
+
+    if (url) {
+      return new ExternalAssetProxy(url);
+    }
+
+    return undefined;
+  };
+
+/**
+ * Cache of {@link getReferencedEntryLookup} results, keyed by the entry list they index, then by
+ * the Relation field config, then by locale.
+ * @type {WeakMap<Entry[], WeakMap<RelationField, Map<InternalLocaleCode, Map<any, Entry>>>>}
+ */
+const referencedEntryLookupCache = new WeakMap();
+
+/**
+ * Get a lookup table of the given referenced entries by the value a Relation field stores. The
+ * values are resolved with the field’s `value_field` template the same way as the field’s options,
+ * so a template like `{{locale}}/{{slug}}` or `{{fields.name.first}}` matches the stored values.
+ * The table is built once per entry list, field and locale, instead of the list being scanned for
+ * every value — the metadata is rebuilt whenever the entry draft is updated.
+ * @param {Entry[]} entries Referenced entries.
+ * @param {InternalLocaleCode} locale Locale code.
+ * @param {RelationField} fieldConfig Relation field config.
+ * @returns {Map<any, Entry>} Entries by value. When several entries share a value, the first one
+ * is kept.
+ */
+const getReferencedEntryLookup = (entries, locale, fieldConfig) =>
+  getOrCreate(
+    getOrCreate(
+      getOrCreate(referencedEntryLookupCache, entries, () => new WeakMap()),
+      fieldConfig,
+      () => new Map(),
+    ),
+    locale,
+    () => {
+      /** @type {Map<any, Entry>} */
+      const lookup = new Map();
+
+      entries.forEach((refEntry) => {
+        // A `value_field` referencing a list field gives one value per list item
+        getEntryOptions({ locale, fieldConfig, refEntry }).forEach(({ value }) => {
+          if (!lookup.has(value)) {
+            lookup.set(value, refEntry);
+          }
+        });
+      });
+
+      return lookup;
+    },
+  );
+
+/**
+ * Get the path of a field’s metadata in `fieldsMetaData`, the way Netlify/Decap CMS nests it: each
+ * Object or List field passes the metadata of its subfields up under its own name, merging the
+ * metadata of all the List items. A List item index is therefore dropped, along with the index of a
+ * multi-value field like a Relation field with the `multiple` option, except that a List field with
+ * a single `field` passes the subfield’s metadata up under the subfield’s name. A numeric segment
+ * is only an index if it doesn’t name a subfield of an Object field, e.g. `years.2024`.
+ * @param {object} args Arguments.
+ * @param {Omit<GetFieldArgs, 'keyPath'>} args.getFieldArgs Arguments for getField function.
+ * @param {FieldKeyPath} args.keyPath Field key path, e.g. `books.0.author` or `tags.0`.
+ * @returns {string[]} Metadata path, e.g. `['books', 'author']` or `['tags', 'tag']`.
+ */
+export const getMetaDataPath = ({ getFieldArgs, keyPath }) => {
+  const segments = keyPath.split('.');
+
+  return segments.flatMap((segment, index) => {
+    // A top-level segment is always a field name
+    if (!index || !isNumeric(segment)) {
+      return [segment];
+    }
+
+    const parentField = getField({
+      ...getFieldArgs,
+      keyPath: /** @type {FieldKeyPath} */ (segments.slice(0, index).join('.')),
+    });
+
+    if (parentField?.widget === 'object') {
+      return [segment];
+    }
+
+    const { field: subField } = /** @type {ListFieldWithSubField} */ (parentField ?? {});
+
+    return parentField?.widget === 'list' && subField ? [subField.name] : [];
+  });
+};
+
+/**
+ * Warn when one of the given keys of an Immutable Map is read. `getIn()` goes through `get()`, so
+ * replacing that method on the instance covers both. A copy made with `set()` and the like loses
+ * the warning, which is fine for a Map that’s only meant to be read. Comparing the Map with
+ * `Immutable.is()` reads every key, so that can warn as well.
+ * @param {MapOf<any>} map Immutable Map.
+ * @param {Set<string>} keys Deprecated keys.
+ */
+const warnOnRead = (map, keys) => {
+  const { get } = map;
+
+  /**
+   * Read a key of the Map, warning if it’s a deprecated one.
+   * @param {string} key Key.
+   * @param {any} [notSetValue] Value to return if the key is not found.
+   * @returns {any} Value.
+   */
+  const getWithWarning = (key, notSetValue) => {
+    if (keys.has(key)) {
+      warnDeprecation('flat_metadata_keys');
+    }
+
+    return get.call(map, key, notSetValue);
+  };
+
+  /** @type {any} */ (map).get = getWithWarning;
+};
+
+/**
+ * Get metadata for fields. For relation fields, looks up and stores the referenced entry content
+ * keyed by collection name and value, matching the `fieldsMetaData` structure of Netlify/Decap CMS
+ * preview templates and custom field types: the metadata of a field nested in an Object or List
+ * field is found under the parent field’s name, as {@link getMetaDataPath} describes, e.g.
+ * `fieldsMetaData.getIn(['books', 'author', 'authors', 'jane'])`. For backward compatibility, it’s
+ * also stored under the flattened key path of a nested field, e.g. `books.0.author`, with any
+ * trailing List item index removed.
+ * @param {object} args Arguments.
+ * @param {InternalLocaleCode} args.locale Current locale.
+ * @param {Omit<GetFieldArgs, 'keyPath'>} args.getFieldArgs Arguments for getField function.
+ * @returns {import('immutable').MapOf<any>} Immutable Map of entry metadata.
+ * @see https://decapcms.org/docs/customization/#accessing-metadata
+ */
+export const getMetaData = ({ locale, getFieldArgs }) => {
+  const { valueMap = {} } = getFieldArgs;
+  // Use null-prototype objects, so a name or value like `constructor` or `__proto__` is an own key
+  /** @type {Record<string, any>} */
+  const metaData = Object.create(null);
+  /** @type {Map<string, Entry[]>} */
+  const refEntriesCache = new Map();
+  /**
+   * Flat key paths at the top level.
+   * @type {Set<string>}
+   */
+  const legacyKeys = new Set();
+  /**
+   * Collection names right under a List field’s name, for a List field with a single `field`.
+   * @type {Map<string, Set<string>>}
+   */
+  const legacyListKeys = new Map();
+
+  Object.entries(valueMap).forEach(([key, value]) => {
+    const keyPath = /** @type {FieldKeyPath} */ (key);
+    const field = getField({ ...getFieldArgs, keyPath });
+
+    // Populate metadata for relation fields by looking up referenced entries
+    if (field?.widget === 'relation') {
+      const { collection: refCollection, file: refFile } = field;
+
+      const refEntries = (() => {
+        const cacheKey = `${refCollection}:${refFile ?? ''}`;
+        const cache = refEntriesCache.get(cacheKey);
+
+        if (cache) {
+          return cache;
+        }
+
+        // The collection’s entry list is used as is, rather than copied, so that it keeps the same
+        // identity across calls and its lookup table in `getReferencedEntryLookup()` can be reused
+        const entries = refFile
+          ? [getCollectionFileEntry(refCollection, refFile)].filter((entry) => !!entry)
+          : getEntriesByCollection(refCollection);
+
+        refEntriesCache.set(cacheKey, entries);
+
+        return entries;
+      })();
+
+      // The option values are strings, while a value written by hand may be a number, e.g. `1`
+      const refEntry = getReferencedEntryLookup(
+        refEntries,
+        locale,
+        /** @type {RelationField} */ (field),
+      ).get(String(value));
+
+      const defaultLocale = getCollection(refCollection)?._i18n.defaultLocale;
+
+      // Fall back to the referenced collection’s default locale, then `_default` (no i18n), the
+      // same way the field’s options are looked up
+      const flatContent = (
+        refEntry?.locales[locale] ??
+        (defaultLocale ? refEntry?.locales[defaultLocale] : undefined) ??
+        refEntry?.locales._default
+      )?.content;
+
+      // The referenced entry’s data is nested like that of the entry itself, as in Netlify/Decap
+      // CMS, so a subfield is read with `getIn(['author', 'authors', 'jane', 'name', 'first'])`
+      const content = flatContent ? unflattenMap(flatContent) : undefined;
+      const metaDataPath = getMetaDataPath({ getFieldArgs, keyPath });
+
+      // The legacy key drops a trailing index, but not a numeric subfield name, which the metadata
+      // path keeps
+      const legacyKey =
+        metaDataPath.at(-1) === key.split('.').at(-1)
+          ? key
+          : key.replace(ITEM_INDEX_SUFFIX_REGEX, '');
+
+      // Keep the legacy key unless it’s the same as the metadata path, as for a top-level field. It
+      // differs for a nested field, e.g. `books.0.author`, and for the single subfield of a List
+      // field, e.g. `tags`, whose metadata path is `['tags', 'tag']`
+      const paths =
+        metaDataPath.length === 1 && metaDataPath[0] === legacyKey
+          ? [metaDataPath]
+          : [metaDataPath, [legacyKey]];
+
+      if (paths.length > 1) {
+        // A field name can’t contain a dot, so a key with one is always a flat key path. Otherwise
+        // it’s the List field’s own name, under which the single subfield’s name is the current
+        // path, even if the subfield is named after the collection
+        if (legacyKey.includes('.')) {
+          legacyKeys.add(legacyKey);
+        } else if (metaDataPath[1] !== refCollection) {
+          getOrCreate(legacyListKeys, legacyKey, () => new Set()).add(refCollection);
+        }
+      }
+
+      paths.forEach((path) => {
+        const fieldMetaData = [...path, refCollection].reduce((parent, name) => {
+          parent[name] ??= Object.create(null);
+
+          return parent[name];
+        }, metaData);
+
+        fieldMetaData[value] = content;
+      });
+    }
+  });
+
+  const metaDataMap = /** @type {MapOf<any>} */ (getImmutable().fromJS(metaData));
+
+  // Without any key to watch, leave the Map alone: an empty one is Immutable.js’s shared instance
+  if (legacyKeys.size) {
+    warnOnRead(metaDataMap, legacyKeys);
+  }
+
+  legacyListKeys.forEach((keys, name) => {
+    warnOnRead(/** @type {any} */ (metaDataMap).get(name), keys);
+  });
+
+  return metaDataMap;
+};
+
+/**
+ * Build a synthetic entry object with current values for live preview updates. The internal
+ * properties the editor adds to list items, like `__sc_item_id`, are left out, as they’re not part
+ * of the content.
+ * @param {object} args Arguments.
+ * @param {Entry | undefined} args.originalEntry The original entry object.
+ * @param {Record<InternalLocaleCode, FlattenedEntryContent>} args.currentValues Object with locale
+ * keys mapping to current content values.
+ * @returns {Entry} A new entry object with updated locale content while preserving original slugs
+ * and paths.
+ */
+export const buildEntry = ({ originalEntry, currentValues }) =>
+  /** @type {Entry} */ ({
+    ...originalEntry,
+    locales: Object.fromEntries(
+      Object.entries(currentValues).map(([locale, content]) => [
+        locale,
+        {
+          slug: originalEntry?.locales[locale]?.slug ?? originalEntry?.slug,
+          path: originalEntry?.locales[locale]?.path ?? originalEntry?.subPath,
+          content: filterRealValues(content),
+        },
+      ]),
+    ),
+  });
+
+/**
+ * Cache of {@link getAssociatedPreviewAssets} results, keyed by the asset folder and dropped when
+ * `allAssets` is replaced. The preview data is rebuilt whenever the entry draft is updated, so
+ * without it every keystroke would walk the whole asset library.
+ */
+const getPreviewAssetCache = memoizeOnSource(
+  () => allAssets.current,
+  () => /** @type {WeakMap<AssetFolderInfo, Asset[]>} */ (new WeakMap()),
+);
+
+/**
+ * Get assets associated with a collection or entry folder.
+ * @param {object} args Arguments.
+ * @param {string} [args.collectionName] Collection name.
+ * @param {string} [args.fileName] File name.
+ * @returns {Asset[]} Assets filtered to the relevant folder.
+ */
+export const getAssociatedPreviewAssets = ({ collectionName, fileName }) => {
+  const assetFolder = getAssetFolder({ collectionName, fileName });
+
+  if (!assetFolder) {
+    return [];
+  }
+
+  return getOrCreate(getPreviewAssetCache(), assetFolder, () =>
+    allAssets.current.filter((asset) => isAssetInFolder(asset, assetFolder)),
+  );
+};
+
+/**
+ * Build shared preview data used by both preview templates and custom field types.
+ *
+ * {@link PreviewData.fieldsMetaData} is computed only when it’s read, and the result is kept for
+ * subsequent reads. Building it walks every value in the entry and scans the referenced collection
+ * for each Relation field value, while a custom field control only needs
+ * {@link PreviewData.entryMap}. Given that the data is rebuilt whenever the draft is updated, doing
+ * that work upfront would cost a collection scan on every keystroke.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft being previewed.
+ * @param {InternalLocaleCode} args.locale Current locale.
+ * @returns {PreviewData} Object containing computed preview data.
+ */
+export const buildPreviewData = ({ draft, locale }) => {
+  const { collectionName, fileName, isIndexFile, originalEntry, currentValues, files } = draft;
+  const entry = buildEntry({ originalEntry, currentValues });
+  /* v8 ignore next */
+  const valueMap = entry.locales[locale].content ?? {};
+  /** @type {Omit<GetFieldArgs, 'keyPath'>} */
+  const getFieldArgs = { collectionName, fileName, valueMap, isIndexFile };
+  /** @type {MapOf<any> | undefined} */
+  let fieldsMetaData;
+
+  return {
+    entryMap: convertEntryToMap({
+      entry,
+      locale,
+      collectionName,
+      associatedAssets: getAssociatedPreviewAssets({ collectionName, fileName }),
+      content: valueMap,
+    }),
+    valueMap,
+    getFieldArgs,
+    // eslint-disable-next-line jsdoc/require-jsdoc
+    get fieldsMetaData() {
+      fieldsMetaData ??= getMetaData({ locale, getFieldArgs });
+
+      return fieldsMetaData;
+    },
+    getAsset: createGetAsset({ entry, collectionName, fileName, files, locale }),
+  };
+};

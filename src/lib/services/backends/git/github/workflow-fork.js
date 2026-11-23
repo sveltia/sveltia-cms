@@ -1,23 +1,29 @@
-import { _ } from '@sveltia/i18n';
-
 import { getWorkflowRepository } from '$lib/services/backends/git/github/fork';
+import { fetchAliasedBatch } from '$lib/services/backends/git/github/graphql';
 import {
   createPullRequest,
   deleteBranch,
+  fetchBranchHead,
   fetchPullRequestFileList,
   fetchPullRequestFiles,
   MAX_ITEMS,
-  reopenPullRequest,
+  parseFileNodes,
   updateDraftState,
 } from '$lib/services/backends/git/github/pull-requests';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
-import { getBranchPrefix } from '$lib/services/workflow/branch';
+import { pruneForkBranches, updateForkStatusWith } from '$lib/services/backends/git/shared/fork';
+import { parseRestFiles } from '$lib/services/backends/git/shared/pull-requests';
+import { getRepositoryPath } from '$lib/services/backends/git/shared/repository';
+import { applyForkPullRequestStatus } from '$lib/services/backends/git/shared/workflow';
+import { user } from '$lib/services/user/account.svelte';
+import { encodePathSegments } from '$lib/services/utils/url';
+import { getBranchListPrefix } from '$lib/services/workflow/branch';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 /**
- * @import { WorkflowPullRequest, WorkflowStatus } from '$lib/types/private';
+ * @import { ForkRequestState, WorkflowPullRequest, WorkflowStatus } from '$lib/types/private';
  */
 
 /**
@@ -55,53 +61,76 @@ const getFetchForkBranchesQuery = () => `
 `;
 
 /**
- * Build the query to fetch the pull request each of the given fork branches has, if any. A ref in
+ * Number of fork branches whose pull requests are looked up per GraphQL query. Each one carries
+ * the file lists of its candidate pull requests, so a long list is split to keep a query within the
+ * API’s limits.
+ */
+const BRANCH_PULL_REQUESTS_CHUNK_SIZE = 50;
+
+/**
+ * Build the field selection to fetch the pull request the given fork branch has, if any. A ref in
  * the fork doesn’t report the pull requests opened from it against the configured repository, so
- * they’re looked up from that repository instead, matched by head branch name. One aliased sub-
- * query per branch keeps it to a single request.
- * @param {string[]} branches Branch names to look up.
- * @returns {string} GraphQL query.
+ * they’re looked up from that repository instead, matched by head branch name. The base branch is
+ * matched as well: a pull request the contributor opened from the same branch to somewhere other
+ * than the configured branch isn’t the one the CMS manages, and acting on it would relabel, rename
+ * or close a request that isn’t the entry’s. The author is read too, as anyone can open a pull
+ * request from a branch of a public fork.
+ * @param {string} branch Branch name to look up.
+ * @returns {string} Field selection on the `Repository` type.
  * @see https://docs.github.com/en/graphql/reference/objects#repository
  */
-const getFetchForkPullRequestsQuery = (branches) => `
-  query($owner: String!, $repo: String!) {
-    repository(owner: $owner, name: $repo) {
-      ${branches
-        .map(
-          (branch, index) => `
-            pr_${index}: pullRequests(
-              headRefName: ${JSON.stringify(branch)}
-              states: [OPEN, CLOSED, MERGED]
-              first: ${MAX_ITEMS.branchPullRequests}
-              orderBy: { field: CREATED_AT, direction: DESC }
-            ) {
-              nodes {
-                id
-                number
-                title
-                url
-                state
-                isDraft
-                createdAt
-                updatedAt
-                headRefOid
-                headRepositoryOwner {
-                  login
-                }
-                files(first: ${MAX_ITEMS.files}) {
-                  nodes {
-                    path
-                    changeType
-                  }
-                }
-              }
-            }
-          `,
-        )
-        .join('')}
+const getForkPullRequestsFragment = (branch) => `
+  pullRequests(
+    headRefName: ${JSON.stringify(branch)}
+    baseRefName: ${JSON.stringify(repository.branch)}
+    states: [OPEN, CLOSED, MERGED]
+    first: ${MAX_ITEMS.branchPullRequests}
+    orderBy: { field: CREATED_AT, direction: DESC }
+  ) {
+    nodes {
+      id
+      number
+      title
+      url
+      state
+      isDraft
+      createdAt
+      updatedAt
+      headRefOid
+      headRepositoryOwner {
+        login
+      }
+      author {
+        login
+      }
+      files(first: ${MAX_ITEMS.files}) {
+        nodes {
+          path
+          changeType
+        }
+      }
     }
   }
 `;
+
+/**
+ * Check whether the given pull request is one the CMS manages for the contributor: opened by them,
+ * from the fork the CMS is working in. The configured repository can have a branch of the same
+ * name, whose pull request isn’t the contributor’s. Nor is one someone else opened from the
+ * contributor’s branch: it would put their title on the entry, and the contributor can’t convert,
+ * reopen or close it, nor open their own while it’s open.
+ * @param {Record<string, any>} pr Pull request node.
+ * @returns {boolean} Result.
+ */
+const isForkPullRequest = (pr) => {
+  const login = user.account?.login?.toLowerCase();
+
+  return (
+    pr.headRepositoryOwner?.login === forkedRepository.current?.owner &&
+    !!login &&
+    pr.author?.login?.toLowerCase() === login
+  );
+};
 
 /**
  * Fetch the pull request each of the given fork branches has on the configured repository.
@@ -117,18 +146,15 @@ export const fetchForkBranchPullRequests = async (branches) => {
     return map;
   }
 
-  const fork = forkedRepository.current;
-
-  const { repository: result } = /** @type {{ repository: Record<string, any> }} */ (
-    await fetchGraphQL(getFetchForkPullRequestsQuery(branches))
-  );
+  const results = await fetchAliasedBatch({
+    items: branches,
+    alias: 'pr',
+    getFragment: getForkPullRequestsFragment,
+    chunkSize: BRANCH_PULL_REQUESTS_CHUNK_SIZE,
+  });
 
   branches.forEach((branch, index) => {
-    const [node] = (result?.[`pr_${index}`]?.nodes ?? []).filter(
-      // The configured repository can have a branch of the same name, whose pull request isn’t the
-      // contributor’s
-      (/** @type {any} */ pr) => pr.headRepositoryOwner?.login === fork?.owner,
-    );
+    const [node] = (results[index]?.nodes ?? []).filter(isForkPullRequest);
 
     if (node) {
       map.set(branch, node);
@@ -168,6 +194,9 @@ export const parseForkBranch = (node, branch, pullRequest) => {
     title: current?.title ?? message ?? '',
     url: current?.url,
     branch,
+    // The branch head, rather than the pull request’s: a save compares it with the branch to find
+    // out whether anything has been committed since, and a closed pull request’s head is stale
+    headSHA: node.target?.oid,
     status: inReview ? 'pending_review' : 'draft',
     createdDate: new Date(current?.createdAt ?? committedDate),
     updatedDate: new Date(current?.updatedAt ?? committedDate),
@@ -179,17 +208,7 @@ export const parseForkBranch = (node, branch, pullRequest) => {
     // branch without one, but it answers with a diff of every file, so it’s worth avoiding where
     // the paths are already at hand. A closed pull request is left to the comparison as well: its
     // diff is no longer a reliable account of a branch that has moved on since
-    files: isOpen
-      ? (current.files?.nodes ?? []).map((/** @type {any} */ { path, changeType }) => ({
-          path,
-          sha: '',
-          size: 0,
-          deleted: changeType === 'DELETED',
-          // The previous path of a renamed file isn’t available here; it’s filled in by
-          // {@link fetchPullRequestFileList}
-          renamed: changeType === 'RENAMED',
-        }))
-      : [],
+    files: isOpen ? parseFileNodes(current.files?.nodes ?? []) : [],
   };
 };
 
@@ -199,7 +218,7 @@ export const parseForkBranch = (node, branch, pullRequest) => {
  */
 export const fetchForkBranches = async () => {
   const { owner, repo } = getWorkflowRepository();
-  const prefix = getBranchPrefix();
+  const prefix = getBranchListPrefix();
 
   const { repository: result } = /** @type {{ repository: Record<string, any> }} */ (
     await fetchGraphQL(getFetchForkBranchesQuery(), {
@@ -224,32 +243,19 @@ export const fetchForkBranches = async () => {
 
   const branches = nodes.map(({ name }) => `${prefix}${name}`);
   const pullRequests = await fetchForkBranchPullRequests(branches);
-  /** @type {string[]} */
-  const leftover = [];
-  /** @type {WorkflowPullRequest[]} */
-  const pending = [];
 
-  nodes.forEach((node, index) => {
-    const branch = branches[index];
-    const pullRequest = pullRequests.get(branch);
+  return pruneForkBranches(
+    nodes,
+    (node, index) => {
+      const branch = branches[index];
+      const pullRequest = pullRequests.get(branch);
 
-    // A merged pull request whose head the branch still points at has nothing left on it. Tidying
-    // it up keeps the fork from collecting a branch per published entry, and saves comparing each
-    // one with the configured branch on every load just to find out it holds nothing. A branch the
-    // contributor has committed to since the merge has a different head, so it survives and shows
-    // up as a fresh draft
-    if (pullRequest?.state === 'MERGED' && pullRequest.headRefOid === node.target?.oid) {
-      leftover.push(branch);
-    } else {
-      pending.push(parseForkBranch(node, branch, pullRequest));
-    }
-  });
-
-  // Deleting a branch is best effort: `deleteBranch` logs a failure rather than raising it, and a
-  // branch that outlives this is picked up on the next load
-  await runConcurrently(leftover, deleteBranch);
-
-  return pending;
+      return pullRequest?.state === 'MERGED' && pullRequest.headRefOid === node.target?.oid
+        ? { leftover: branch }
+        : { pending: parseForkBranch(node, branch, pullRequest) };
+    },
+    deleteBranch,
+  );
 };
 
 /**
@@ -260,25 +266,19 @@ export const fetchForkBranches = async () => {
  * @see https://docs.github.com/en/rest/commits/commits#compare-two-commits
  */
 export const fetchForkBranchFileList = async (pullRequest) => {
-  const { owner, repo, branch: baseBranch } = repository;
+  const { branch: baseBranch } = repository;
   // A comparison across repositories identifies the head branch by the fork’s owner
   const { owner: headOwner } = getWorkflowRepository();
-  const head = `${headOwner}:${pullRequest.branch}`;
+  const base = encodePathSegments(/** @type {string} */ (baseBranch));
+  const head = `${encodeURIComponent(headOwner)}:${encodePathSegments(pullRequest.branch)}`;
 
   const { files = [] } = /** @type {{ files?: Record<string, any>[] }} */ (
     await fetchAPI(
-      `/repos/${owner}/${repo}/compare/${encodeURI(`${baseBranch}...${head}`)}` +
-        `?per_page=${MAX_ITEMS.files}`,
+      `${getRepositoryPath(repository)}/compare/${base}...${head}?per_page=${MAX_ITEMS.files}`,
     )
   );
 
-  pullRequest.files = files.map(({ filename, status, previous_filename: previousPath }) => ({
-    path: filename,
-    sha: '',
-    size: 0,
-    deleted: status === 'removed',
-    previousPath,
-  }));
+  pullRequest.files = parseRestFiles(files, { removedStatus: 'removed' });
 };
 
 /**
@@ -317,10 +317,55 @@ const FETCH_PULL_REQUEST_STATE_QUERY = `
       ... on PullRequest {
         state
         isDraft
+        baseRefName
+        headRefOid
+        headRepositoryOwner {
+          login
+        }
+        author {
+          login
+        }
       }
     }
   }
 `;
+
+/**
+ * Read the current state of the pull request an Open Authoring entry has, for
+ * {@link updateForkStatusWith}.
+ * @param {WorkflowPullRequest} pullRequest Pull request.
+ * @returns {Promise<ForkRequestState | undefined>} State, or `undefined` if the pull request can’t
+ * be found, in which case the entry carries on with what it knows.
+ */
+const fetchForkRequestState = async ({ nodeId }) => {
+  const { node } = /** @type {{ node?: Record<string, any> }} */ (
+    await fetchGraphQL(FETCH_PULL_REQUEST_STATE_QUERY, { id: nodeId })
+  );
+
+  if (!node) {
+    return undefined;
+  }
+
+  return {
+    merged: node.state === 'MERGED',
+    isEntryRequest: node.baseRefName === repository.branch && isForkPullRequest(node),
+    /**
+     * Read the head commit the pull request was merged at.
+     * @returns {Promise<string>} Commit SHA.
+     */
+    getMergedSHA: async () => node.headRefOid,
+    state: node.state,
+    draft: node.isDraft,
+  };
+};
+
+/**
+ * Bring a pull request in line with the given status, for {@link updateForkStatusWith}.
+ * @param {Parameters<typeof applyForkPullRequestStatus>[0]} args Arguments.
+ * @returns {Promise<void>}
+ */
+const applyForkStatus = (args) =>
+  applyForkPullRequestStatus(args, { repository, updateDraftState });
 
 /**
  * Move an Open Authoring entry between the drafting and review stages. A contributor can’t label a
@@ -329,49 +374,19 @@ const FETCH_PULL_REQUEST_STATE_QUERY = `
  * while an entry in review has a pull request waiting for a maintainer.
  * @param {WorkflowPullRequest} pullRequest Pull request.
  * @param {WorkflowStatus} status New status.
- * @returns {Promise<WorkflowPullRequest>} Updated pull request.
- * @throws {Error} When the entry is being marked ready to publish, which a contributor can’t do.
+ * @returns {Promise<WorkflowPullRequest>} Updated pull request, or a new one if the known one is no
+ * longer the entry’s.
+ * @throws {Error} When the entry is being marked ready to publish, which a contributor can’t do, or
+ * has been published since the board was loaded: see {@link updateForkStatusWith}.
  */
-export const updateForkStatus = async (pullRequest, status) => {
-  if (status === 'pending_publish') {
-    throw new Error('Cannot mark an entry ready to publish as an Open Authoring contributor', {
-      cause: new Error(_('open_authoring.publish_unsupported')),
-    });
-  }
-
-  const { nodeId, branch, title } = pullRequest;
-
-  // Nothing has been opened yet, so moving out of the drafting stage is what creates the pull
-  // request. Moving within the drafting stage leaves the branch as it is
-  if (nodeId === undefined) {
-    return status === 'draft'
-      ? { ...pullRequest, status, updatedDate: new Date() }
-      : createPullRequest({ branch, title, status });
-  }
-
-  // The pull request may have been closed or reopened outside the CMS, so read the current state
-  // rather than inferring it from the status the entry was last seen with
-  const { node } = /** @type {{ node?: { state: string, isDraft: boolean } }} */ (
-    await fetchGraphQL(FETCH_PULL_REQUEST_STATE_QUERY, { id: nodeId })
-  );
-
-  const { state, isDraft } = node ?? {};
-
-  if (status === 'draft') {
-    // Converting the pull request to a draft keeps it — and the discussion on it — in place while
-    // taking it out of the maintainers’ review queue
-    if (state === 'OPEN' && !isDraft) {
-      await updateDraftState(pullRequest, true);
-    }
-  } else {
-    if (state === 'CLOSED') {
-      await reopenPullRequest(pullRequest);
-    }
-
-    if (isDraft) {
-      await updateDraftState(pullRequest, false);
-    }
-  }
-
-  return { ...pullRequest, status, updatedDate: new Date() };
-};
+export const updateForkStatus = async (pullRequest, status) =>
+  updateForkStatusWith({
+    pullRequest,
+    status,
+    requestKey: 'nodeId',
+    createRequest: createPullRequest,
+    fetchRequest: fetchForkRequestState,
+    applyStatus: applyForkStatus,
+    fetchBranchHead,
+    deleteBranch,
+  });

@@ -1,34 +1,15 @@
-/* eslint-disable no-await-in-loop */
-
-import { getHash } from '@sveltia/utils/crypto';
-import { sleep } from '@sveltia/utils/misc';
 import { isObject } from '@sveltia/utils/object';
 
 import { cmsConfig } from '$lib/services/config/state';
-import { findLibraryOptions } from '$lib/services/integrations/media-libraries/options';
+import {
+  findLibraryOptions,
+  resolveLibraryOptions,
+} from '$lib/services/integrations/media-libraries/options';
 import { createRawState } from '$lib/services/utils/state.svelte';
 
 /**
- * @import {
- * ExternalAsset,
- * MediaLibraryFetchOptions,
- * MediaLibraryService,
- * } from '$lib/types/private';
+ * @import { MediaLibraryService } from '$lib/types/private';
  * @import { CloudinaryMediaLibrary, CmsConfig, MediaField } from '$lib/types/public';
- */
-
-/**
- * @typedef {object} CloudinaryResource
- * @property {string} asset_id Asset ID.
- * @property {string} filename Filename without extension.
- * @property {string} format File format/extension.
- * @property {string} resource_type Resource type (image, video, raw).
- * @property {string} type Upload type.
- * @property {string} secure_url Secure URL.
- * @property {number} bytes File size in bytes.
- * @property {string} created_at Creation timestamp.
- * @property {number} [width] Image width in pixels.
- * @property {number} [height] Image height in pixels.
  */
 
 /**
@@ -45,12 +26,6 @@ export const consoleLoaded = createRawState(false);
  * Whether the Cloudinary Media Library dialog is open.
  */
 export const dialogOpen = createRawState(false);
-
-/**
- * @typedef {object} CloudinaryListResponse
- * @property {CloudinaryResource[]} resources List of resources.
- * @property {string} [next_cursor] Next page cursor.
- */
 
 /**
  * Cloudinary Media Library console URL. Used for the popup and iframe src.
@@ -103,22 +78,8 @@ export const CONFIG_PROPS = [
  * @returns {CloudinaryMediaLibrary | false | undefined} Configuration object, or `false` if
  * explicitly disabled.
  */
-export const getLibraryOptions = (config = cmsConfig.current) => {
-  const options = findLibraryOptions('cloudinary', config);
-
-  if (options !== undefined) {
-    return options;
-  }
-
-  // A field-level legacy `media_library` without a name inherits the site-level library
-  const { media_library: fieldOptions } = config ?? {};
-
-  return fieldOptions &&
-    !fieldOptions.name &&
-    cmsConfig.current?.media_library?.name === 'cloudinary'
-    ? /** @type {CloudinaryMediaLibrary} */ (fieldOptions)
-    : undefined;
-};
+export const getLibraryOptions = (config = cmsConfig.current) =>
+  findLibraryOptions('cloudinary', config);
 
 /**
  * @type {Map<string, CloudinaryMediaLibrary>}
@@ -139,17 +100,11 @@ export const getMergedLibraryOptions = (fieldConfig) => {
     return cache;
   }
 
-  const siteOptions = getLibraryOptions() || { config: {} };
-  const fieldOptions = getLibraryOptions(fieldConfig) || { config: {} };
+  const resolved = /** @type {CloudinaryMediaLibrary} */ (
+    resolveLibraryOptions('cloudinary', fieldConfig) || {}
+  );
 
-  const options = {
-    ...siteOptions,
-    ...fieldOptions,
-    config: {
-      ...siteOptions.config,
-      ...fieldOptions.config,
-    },
-  };
+  const options = { ...resolved, config: { ...resolved.config } };
 
   optionCacheMap.set(cacheKey, options);
 
@@ -157,11 +112,12 @@ export const getMergedLibraryOptions = (fieldConfig) => {
 };
 
 /**
- * Get Cloudinary configuration from site config.
+ * Get Cloudinary configuration from the site config, with the given field config merged.
+ * @param {MediaField} [fieldConfig] Field configuration.
  * @returns {{ cloudName?: string; apiKey?: string }} Cloudinary configuration.
  */
-export const getCloudConfig = () => {
-  const options = getLibraryOptions();
+export const getCloudConfig = (fieldConfig) => {
+  const options = resolveLibraryOptions('cloudinary', fieldConfig);
   const { cloud_name: cloudName, api_key: apiKey } = (options ? options.config : undefined) ?? {};
 
   return { cloudName, apiKey };
@@ -173,343 +129,9 @@ export const getCloudConfig = () => {
  * @returns {boolean} True if enabled, false otherwise.
  */
 export const isEnabled = (fieldConfig) => {
-  const options = getLibraryOptions(fieldConfig) ?? getLibraryOptions();
-  const { cloud_name: cloudName, api_key: apiKey } = (options ? options.config : undefined) ?? {};
+  const { cloudName, apiKey } = getCloudConfig(fieldConfig);
 
   return !!(cloudName && apiKey);
-};
-
-/**
- * Convert transformation object to Cloudinary transformation string.
- * @param {Record<string, any>} transformation Transformation object. E.g. `{ width: 400, crop:
- * 'scale' }`.
- * @returns {string} Transformation string. E.g. `w_400,c_scale`.
- * @see https://cloudinary.com/documentation/transformation_reference
- * @see https://decapcms.org/docs/cloudinary/#image-transformations
- * @see https://sveltiacms.app/en/docs/media/cloudinary#image-transformations
- */
-export const transformationToString = (transformation) => {
-  // Mapping from full parameter names to Cloudinary URL abbreviations
-  /** @type {Record<string, string>} */
-  const parameterMap = {
-    angle: 'a',
-    audio_codec: 'ac',
-    audio_frequency: 'af',
-    aspect_ratio: 'ar',
-    background: 'b',
-    border: 'bo',
-    color: 'co',
-    crop: 'c',
-    default_image: 'd',
-    delay: 'dl',
-    density: 'dn',
-    dpr: 'dpr',
-    duration: 'du',
-    effect: 'e',
-    end_offset: 'eo',
-    fetch_format: 'f',
-    flags: 'fl',
-    fps: 'fps',
-    gravity: 'g',
-    height: 'h',
-    overlay: 'l',
-    opacity: 'o',
-    page: 'pg',
-    quality: 'q',
-    radius: 'r',
-    start_offset: 'so',
-    streaming_profile: 'sp',
-    transformation: 't',
-    underlay: 'u',
-    video_codec: 'vc',
-    video_sampling: 'vs',
-    width: 'w',
-    x: 'x',
-    y: 'y',
-    zoom: 'z',
-  };
-
-  /** @type {string[]} */
-  const parts = [];
-
-  // Process each key in the transformation object
-  Object.keys(transformation).forEach((key) => {
-    const value = transformation[key];
-    const abbreviation = parameterMap[key] || key;
-
-    // Skip undefined/null values
-    if (value === undefined || value === null) {
-      return;
-    }
-
-    // Handle different value types
-    if (typeof value === 'boolean') {
-      // For boolean flags, only include if true
-      if (value) {
-        parts.push(abbreviation);
-      }
-    } else if (Array.isArray(value)) {
-      // For arrays, join with dots (e.g., for flags)
-      parts.push(`${abbreviation}_${value.join('.')}`);
-    } else {
-      // For all other values, use key_value format
-      parts.push(`${abbreviation}_${value}`);
-    }
-  });
-
-  // Join all parts with commas
-  return parts.join(',');
-};
-
-/**
- * Parse API results into ExternalAsset format.
- * @param {CloudinaryResource[]} results API results.
- * @param {object} [options] Additional options.
- * @param {MediaField} [options.fieldConfig] Field configuration for custom handling.
- * @returns {ExternalAsset[]} Assets.
- * @see https://decapcms.org/docs/cloudinary/#decap-cms-configuration-options
- * @see https://sveltiacms.app/en/docs/media/cloudinary#configuration
- */
-export const parseResults = (results, { fieldConfig } = {}) => {
-  const {
-    output_filename_only: fileNameOnly = false,
-    use_transformations: useTransformations = true,
-    config: { default_transformations: defaultTransformations = [] } = {},
-  } = (getLibraryOptions(fieldConfig) ?? getLibraryOptions()) || {};
-
-  const transformation = /** @type {Record<string, any>[][]} */ (defaultTransformations)?.[0]?.[0];
-  const hasTransformation = useTransformations && isObject(transformation);
-
-  return results.map((result) => {
-    const {
-      asset_id: assetId,
-      resource_type: resourceType,
-      secure_url: url,
-      created_at: timestamp,
-      bytes: size,
-    } = result;
-
-    const fileName = /** @type {string} */ (url.split('/').pop());
-
-    return {
-      id: assetId,
-      description: fileName,
-      previewURL: url.replace('/upload/', '/upload/w_400,c_limit/'),
-      downloadURL: fileNameOnly
-        ? fileName
-        : hasTransformation
-          ? url.replace('/upload/', `/upload/${transformationToString(transformation)}/`)
-          : url,
-      fileName,
-      lastModified: new Date(timestamp),
-      size,
-      kind: resourceType === 'image' ? 'image' : resourceType === 'video' ? 'video' : 'other',
-    };
-  });
-};
-
-/**
- * Generate Basic Auth header for Cloudinary API.
- * @param {string} apiKey API key.
- * @param {string} apiSecret API secret.
- * @returns {string} Basic Auth header value.
- */
-export const generateAuthHeader = (apiKey, apiSecret) => {
-  const credentials = `${apiKey}:${apiSecret}`;
-  const encoded = btoa(credentials);
-
-  return `Basic ${encoded}`;
-};
-
-/**
- * Fetch resources from Cloudinary API with pagination.
- * @param {MediaLibraryFetchOptions} options Options containing the API secret (apiKey).
- * @param {object} [config] Additional configuration.
- * @param {number} [config.maxPages] Maximum number of pages to fetch. Default: 10.
- * @param {string} [config.expression] Search expression for filtering.
- * @returns {Promise<ExternalAsset[]>} Assets.
- * @see https://cloudinary.com/documentation/admin_api#search_for_resources
- */
-export const fetchResources = async (options, { maxPages = 10, expression } = {}) => {
-  const { cloudName, apiKey } = getCloudConfig();
-
-  if (!cloudName) {
-    return Promise.reject(new Error('Cloudinary cloud name is not configured'));
-  }
-
-  if (!apiKey) {
-    return Promise.reject(new Error('Cloudinary API key is not configured'));
-  }
-
-  const { kind, fieldConfig, apiKey: apiSecret } = options;
-
-  if (!apiSecret) {
-    return Promise.reject(new Error('Cloudinary API secret is not provided'));
-  }
-
-  const authHeader = generateAuthHeader(apiKey, apiSecret);
-  const endpoint = `https://api.cloudinary.com/v1_1/${cloudName}/resources/search`;
-
-  const headers = {
-    'Content-Type': 'application/json',
-    Authorization: authHeader,
-  };
-
-  /** @type {CloudinaryResource[]} */
-  const allResources = [];
-  /** @type {string | undefined} */
-  let nextCursor;
-
-  // Fetch up to maxPages pages
-  for (let page = 0; page < maxPages; page += 1) {
-    // Build expression with kind filter if specified
-    let filterExpression = expression;
-
-    if (kind === 'image' && !expression) {
-      filterExpression = 'resource_type:image';
-    } else if (kind === 'image' && expression) {
-      filterExpression = `(${expression}) AND resource_type:image`;
-    }
-
-    const params = new URLSearchParams({
-      max_results: '100',
-      ...(filterExpression && { expression: filterExpression }),
-      ...(nextCursor && { next_cursor: nextCursor }),
-    });
-
-    const response = await fetch(`${endpoint}?${params}`, { headers });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-
-      return Promise.reject(new Error(`Failed to fetch resources: ${errorText}`));
-    }
-
-    /** @type {CloudinaryListResponse} */
-    const data = await response.json();
-
-    allResources.push(...data.resources);
-    nextCursor = data.next_cursor;
-
-    if (!nextCursor) {
-      break;
-    }
-
-    // Wait for a bit before requesting the next page
-    await sleep(50);
-  }
-
-  return parseResults(allResources, { fieldConfig });
-};
-
-/**
- * List resources from Cloudinary.
- * @param {MediaLibraryFetchOptions} options Options containing the API secret (apiKey).
- * @returns {Promise<ExternalAsset[]>} Assets.
- */
-export const list = async (options) => fetchResources(options);
-
-/**
- * Search resources in Cloudinary using the Search API.
- * @param {string} query Search query.
- * @param {MediaLibraryFetchOptions} options Options containing the API secret (apiKey).
- * @returns {Promise<ExternalAsset[]>} Assets.
- */
-export const search = async (query, options) => {
-  // Build a search expression that searches in public_id and filename
-  const expression = `public_id:*${query}* OR filename:*${query}*`;
-
-  return fetchResources(options, { expression });
-};
-
-/**
- * Generate signature for Cloudinary upload.
- * @param {Record<string, string | number>} params Parameters to sign.
- * @param {string} apiSecret API secret.
- * @returns {Promise<string>} Signature.
- * @see https://cloudinary.com/documentation/upload_images#generating_authentication_signatures
- */
-export const generateSignature = async (params, apiSecret) => {
-  // Sort parameters alphabetically and create string to sign
-  const sortedParams = Object.keys(params)
-    .sort()
-    .map((key) => `${key}=${params[key]}`)
-    .join('&');
-
-  return getHash(`${sortedParams}${apiSecret}`, { algorithm: 'SHA-256' });
-};
-
-/**
- * Upload files to Cloudinary.
- * @param {File[]} files Files to upload.
- * @param {MediaLibraryFetchOptions} options Options containing the API secret (apiKey).
- * @returns {Promise<ExternalAsset[]>} Uploaded assets.
- * @see https://cloudinary.com/documentation/image_upload_api_reference
- */
-export const upload = async (files, options) => {
-  if (files.length === 0) {
-    return [];
-  }
-
-  const { cloudName, apiKey } = getCloudConfig();
-
-  if (!cloudName) {
-    return Promise.reject(new Error('Cloudinary cloud name is not configured'));
-  }
-
-  if (!apiKey) {
-    return Promise.reject(new Error('Cloudinary API key is not configured'));
-  }
-
-  const { fieldConfig, apiKey: apiSecret } = options;
-
-  if (!apiSecret) {
-    return Promise.reject(new Error('Cloudinary API secret is not provided'));
-  }
-
-  const endpoint = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
-  const timestamp = Math.floor(Date.now() / 1000);
-  /** @type {CloudinaryResource[]} */
-  const uploadedResources = [];
-
-  // Upload files one by one (Cloudinary doesn’t support batch uploads in the same way)
-  // eslint-disable-next-line no-restricted-syntax
-  for (const file of files) {
-    const params = {
-      timestamp,
-    };
-
-    const signature = await generateSignature(params, apiSecret);
-    const formData = new FormData();
-
-    formData.append('file', file);
-    formData.append('api_key', apiKey);
-    formData.append('timestamp', String(timestamp));
-    formData.append('signature', signature);
-
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-
-      throw new Error(`Failed to upload file ${file.name}: ${errorText}`);
-    }
-
-    /** @type {CloudinaryResource} */
-    const data = await response.json();
-
-    uploadedResources.push(data);
-
-    // Wait a bit between uploads to avoid rate limiting
-    if (files.length > 1) {
-      await sleep(50);
-    }
-  }
-
-  return parseResults(uploadedResources, { fieldConfig });
 };
 
 /**
@@ -524,10 +146,32 @@ export const isAssetURL = (url) => {
 };
 
 /**
- * Cloudinary media library service integration. The `list`, `search`, and `upload` methods are not
- * used at this time because Cloudinary has a CORS restriction that prevents direct API access from
- * the browser. Instead, the Cloudinary Media Library widget is used for authentication and file
- * selection/uploading.
+ * Parse a message from the Cloudinary Media Library console, which sends a JSON string.
+ * @param {MessageEvent} event The message event.
+ * @returns {Record<string, any> | undefined} Message data, or `undefined` if the message comes
+ * from elsewhere or is in an unknown format.
+ */
+export const parseMessage = ({ origin, data }) => {
+  if (origin !== FRAME_ORIGIN) {
+    return undefined;
+  }
+
+  if (typeof data === 'string') {
+    try {
+      data = JSON.parse(data);
+    } catch {
+      return undefined;
+    }
+  }
+
+  return isObject(data) ? data : undefined;
+};
+
+/**
+ * Cloudinary media library service integration. Cloudinary has a CORS restriction that prevents
+ * direct API access from the browser, so the service has no `list`, `search` or `upload` method:
+ * the Cloudinary Media Library widget is used for authentication and file selection/uploading
+ * instead.
  * @type {MediaLibraryService}
  */
 export default {

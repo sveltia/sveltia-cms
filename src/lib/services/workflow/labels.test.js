@@ -7,6 +7,7 @@ import {
   getLabelPrefix,
   getStatusFromLabels,
   getStatusLabel,
+  replaceStatusLabel,
 } from '$lib/services/workflow/labels';
 
 vi.mock('$lib/services/config', () => ({ cmsConfig: { current: undefined } }));
@@ -101,6 +102,37 @@ describe('workflow/labels', () => {
       });
       expect(getAllStatusLabels()).toContain('cms/draft');
       expect(getAllStatusLabels()).toContain('sveltia-cms/draft');
+    });
+  });
+
+  describe('replaceStatusLabel', () => {
+    test('replaces the status label while preserving any other label', () => {
+      expect(replaceStatusLabel(['bug', 'sveltia-cms/draft', 'docs'], 'pending_review')).toEqual([
+        'bug',
+        'docs',
+        'sveltia-cms/pending_review',
+      ]);
+    });
+
+    test('drops legacy status labels', () => {
+      expect(
+        replaceStatusLabel(['decap-cms/draft', 'netlify-cms/pending_review'], 'pending_publish'),
+      ).toEqual(['sveltia-cms/pending_publish']);
+    });
+
+    test('adds the status label to a pull request without labels', () => {
+      expect(replaceStatusLabel([], 'draft')).toEqual(['sveltia-cms/draft']);
+    });
+
+    test('migrates a default-prefixed label to a custom prefix', () => {
+      cmsConfig.current = /** @type {any} */ ({
+        backend: { name: 'github', cms_label_prefix: 'cms/' },
+      });
+
+      expect(replaceStatusLabel(['bug', 'sveltia-cms/draft'], 'pending_review')).toEqual([
+        'bug',
+        'cms/pending_review',
+      ]);
     });
   });
 

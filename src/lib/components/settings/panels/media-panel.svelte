@@ -1,17 +1,15 @@
 <script>
   import { _ } from '@sveltia/i18n';
 
-  import ApiKeyInput from '$lib/components/settings/controls/api-key-input.svelte';
-  import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
+  import ApiKeySection from '$lib/components/settings/controls/api-key-section.svelte';
+  import { DOCS_BASE_URL } from '$lib/services/app';
   import {
-    allStockAssetProviders,
-    getStockAssetMediaLibraryOptions,
-  } from '$lib/services/integrations/media-libraries/stock';
-  import { makeLink } from '$lib/services/utils/string';
+    getCloudStorageServiceEntries,
+    getStockPhotoServiceEntries,
+  } from '$lib/services/integrations/api-key-services';
 
   /**
-   * @import { MediaLibraryService, SettingsPanelOnChangeArgs } from '$lib/types/private';
-   * @import { StockAssetProviderName } from '$lib/types/public';
+   * @import { SettingsPanelOnChangeArgs } from '$lib/types/private';
    */
 
   /**
@@ -20,74 +18,29 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    onChange = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { onChange = undefined } = $props();
 
-  const enabledStockAssetProviderEntries = $derived.by(() => {
-    const { providers = [] } = getStockAssetMediaLibraryOptions();
-
-    return /** @type {[StockAssetProviderName, MediaLibraryService][]} */ (
-      Object.entries(allStockAssetProviders)
-    ).filter(([serviceId, { authType }]) => providers.includes(serviceId) && authType !== 'none');
-  });
-
-  const enabledCloudServiceEntries = $derived(
-    Object.entries(allCloudStorageServices).filter(
-      ([, { isEnabled, authType }]) => (isEnabled?.() ?? true) && authType !== 'widget',
-    ),
-  );
+  const enabledStockAssetProviderEntries = $derived(getStockPhotoServiceEntries());
+  const enabledCloudServiceEntries = $derived(getCloudStorageServiceEntries());
 </script>
 
-<section>
-  <h3>{_('prefs.media.cloud_storage.api_keys.title')}</h3>
-  <p>
-    {@html makeLink(
-      enabledCloudServiceEntries.length
-        ? _('prefs.media.cloud_storage.api_keys.description')
-        : _('prefs.media.cloud_storage.no_services'),
-      'https://sveltiacms.app/en/docs/media',
-    )}
-  </p>
-  {#each enabledCloudServiceEntries as [serviceId, service] (serviceId)}
-    {@const label = service.serviceLabel}
-    <section>
-      <h4>{label}</h4>
-      <div role="none">
-        <ApiKeyInput
-          {serviceId}
-          {service}
-          ariaLabel={_('prefs.media.cloud_storage.field_label', { values: { service: label } })}
-          {onChange}
-        />
-      </div>
-    </section>
-  {/each}
-</section>
-<section>
-  <h3>{_('prefs.media.stock_photos.api_keys.title')}</h3>
-  <p>
-    {@html makeLink(
-      enabledStockAssetProviderEntries.length
-        ? _('prefs.media.stock_photos.api_keys.description')
-        : _('prefs.media.stock_photos.no_services'),
-      'https://sveltiacms.app/en/docs/integrations/stock-photos',
-    )}
-  </p>
-  {#each enabledStockAssetProviderEntries as [serviceId, service] (serviceId)}
-    {@const label = service.serviceLabel}
-    <section>
-      <h4>{label}</h4>
-      <div role="none">
-        <ApiKeyInput
-          {serviceId}
-          {service}
-          ariaLabel={_('prefs.media.stock_photos.field_label', { values: { service: label } })}
-          {onChange}
-        />
-      </div>
-    </section>
-  {/each}
-</section>
+<ApiKeySection
+  title={_('prefs.media.cloud_storage.api_keys.title')}
+  description={enabledCloudServiceEntries.length
+    ? _('prefs.media.cloud_storage.api_keys.description')
+    : _('prefs.media.cloud_storage.no_services')}
+  docsURL="{DOCS_BASE_URL}/media"
+  entries={enabledCloudServiceEntries}
+  getFieldLabel={(service) => _('prefs.media.cloud_storage.field_label', { values: { service } })}
+  {onChange}
+/>
+<ApiKeySection
+  title={_('prefs.media.stock_photos.api_keys.title')}
+  description={enabledStockAssetProviderEntries.length
+    ? _('prefs.media.stock_photos.api_keys.description')
+    : _('prefs.media.stock_photos.no_services')}
+  docsURL="{DOCS_BASE_URL}/integrations/stock-photos"
+  entries={enabledStockAssetProviderEntries}
+  getFieldLabel={(service) => _('prefs.media.stock_photos.field_label', { values: { service } })}
+  {onChange}
+/>

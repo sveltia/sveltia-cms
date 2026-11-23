@@ -21,12 +21,7 @@
    */
 
   /** @type {FieldPreviewProps & Props} */
-  let {
-    /* eslint-disable prefer-const */
-    fieldConfig: config,
-    ...rest
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { fieldConfig: config, ...rest } = $props();
 </script>
 
 {#if getListFieldInfo(config).hasSubFields}

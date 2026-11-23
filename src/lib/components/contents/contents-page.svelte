@@ -1,10 +1,10 @@
 <script>
   import { _, locale as appLocale } from '@sveltia/i18n';
-  import { Alert, Toast } from '@sveltia/ui';
   import { onMount, untrack } from 'svelte';
 
   import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
   import PageContainer from '$lib/components/common/page-container.svelte';
+  import BackupFeedback from '$lib/components/contents/details/backup-feedback.svelte';
   import ContentDetailsOverlay from '$lib/components/contents/details/content-details-overlay.svelte';
   import EntryList from '$lib/components/contents/list/entry-list.svelte';
   import FileList from '$lib/components/contents/list/file-list.svelte';
@@ -16,12 +16,13 @@
   import SearchMainArea from '$lib/components/search/search-main-area.svelte';
   import { updateContentFromHashChange } from '$lib/services/app/navigation';
   import { getCollectionLabel, selectedCollection } from '$lib/services/contents/collection';
-  import { contentUpdatesToast } from '$lib/services/contents/collection/data';
-  import { listedEntries } from '$lib/services/contents/collection/view';
+  import { listedEntryCount } from '$lib/services/contents/collection/view';
+  import { showBackupToastIfNeeded } from '$lib/services/contents/draft/backup';
   import { EntryDraftState } from '$lib/services/contents/draft/state.svelte';
   import { showContentOverlay } from '$lib/services/contents/editor';
   import { CONTENTS_ROUTE_REGEX, resolveContentsRoute } from '$lib/services/contents/navigation';
   import { env } from '$lib/services/user/env.svelte';
+  import { watch } from '$lib/services/utils/state.svelte';
   import { workflowDataReady } from '$lib/services/workflow';
 
   /**
@@ -61,6 +62,17 @@
     };
   });
 
+  watch(
+    () => showContentOverlay.current,
+    () => {
+      if (!showContentOverlay.current) {
+        // The draft is kept once the editor is closed, so its backup can be looked up. There is no
+        // draft before an entry has been opened
+        showBackupToastIfNeeded(entryDraft.current);
+      }
+    },
+  );
+
   $effect(() => {
     if (awaitingDrafts && workflowDataReady.current) {
       // Opening an entry reads and replaces the draft, which is no reason to navigate again
@@ -85,13 +97,14 @@
     {#if isSearchPage}
       <SearchMainArea />
     {:else if notFoundKey}
-      <PageContainerMainArea aria-label={_('content_library')}>
+      <PageContainerMainArea id="collection-container" aria-label={_('content_library')}>
         {#snippet mainContent()}
           <NotFound message={_(notFoundKey)} />
         {/snippet}
       </PageContainerMainArea>
     {:else if !env.isSmallScreen || !isIndexPage}
       <PageContainerMainArea
+        id="collection-container"
         aria-label={_('x_collection', {
           values: {
             collection:
@@ -108,7 +121,8 @@
           <PrimaryToolbar />
         {/snippet}
         {#snippet secondaryToolbar()}
-          {#if selectedCollection.current?._type === 'entry' && listedEntries.current.length}
+          <!-- The count includes the entries hidden by a filter, so the filter can be reset -->
+          {#if selectedCollection.current?._type === 'entry' && listedEntryCount.current}
             <SecondaryToolbar />
           {/if}
         {/snippet}
@@ -127,31 +141,5 @@
   <ContentDetailsOverlay {entryDraft} {editorLocale} loading={awaitingDrafts} />
 {/if}
 
-<Toast bind:show={contentUpdatesToast.current.saved}>
-  <Alert status="success">
-    {_(contentUpdatesToast.current.published ? 'entry_saved_and_published' : 'entry_saved', {
-      values: { count: contentUpdatesToast.current.count },
-    })}
-  </Alert>
-</Toast>
-
-<Toast bind:show={contentUpdatesToast.current.deletionCancelled}>
-  <Alert status="success">{_('workflow.deletion_cancelled')}</Alert>
-</Toast>
-
-<Toast bind:show={contentUpdatesToast.current.discarded}>
-  <Alert status="success">
-    {_('workflow.changes_discarded', { values: { count: contentUpdatesToast.current.count } })}
-  </Alert>
-</Toast>
-
-<Toast bind:show={contentUpdatesToast.current.deleted}>
-  <Alert status="success">
-    {_(
-      contentUpdatesToast.current.deletionPending ? 'workflow.deletion_pending' : 'entries_deleted',
-      {
-        values: { count: contentUpdatesToast.current.count },
-      },
-    )}
-  </Alert>
-</Toast>
+<!-- Outside the overlay, so the toast can tell the user about the backup once it’s closed -->
+<BackupFeedback />

@@ -1,5 +1,3 @@
-/* eslint-disable jsdoc/require-jsdoc */
-
 import { describe, expect, test, vi } from 'vitest';
 
 import { allEntries } from '$lib/services/contents';
@@ -11,6 +9,7 @@ import {
   getSortConfig,
   getSortKeyLabel,
   getSortKeyType,
+  resolveSortFieldKey,
   sortKeys,
   SPECIAL_SORT_KEY_TYPES,
   SPECIAL_SORT_KEYS,
@@ -20,15 +19,18 @@ import {
  * @import { InternalEntryCollection } from '$lib/types/private';
  */
 
-vi.mock('@sveltia/i18n', () => ({
-  _: (/** @type {string} */ key) => key,
-  locale: { current: 'en', set: vi.fn() },
-}));
+vi.mock('@sveltia/i18n', async () =>
+  (await import('$lib/test/i18n')).createI18nMock({ locale: 'en' }),
+);
 
 vi.mock('$lib/services/config');
 vi.mock('$lib/services/contents', () => ({ allEntries: { current: [] } }));
 vi.mock('$lib/services/contents/collection', () => ({
   selectedCollection: { current: undefined },
+}));
+
+vi.mock('$lib/services/contents/collection/predicates', () => ({
+  isArrayFileCollection: vi.fn((collection) => !!collection?._file?.arrayFile),
 }));
 vi.mock('$lib/services/contents/entry/fields');
 
@@ -189,6 +191,44 @@ describe('Test getSortConfig()', async () => {
     });
   });
 
+  test('Decap CMS sortable_fields with objects', () => {
+    expect(
+      getSortConfig({
+        collection: {
+          ...collectionBase,
+          sortable_fields: [
+            'title',
+            { field: 'date', label: 'Publish date', default_sort: 'desc' },
+            { field: 'description' },
+          ],
+        },
+        isCommitAuthorAvailable: false,
+        isCommitDateAvailable: false,
+      }),
+    ).toStrictEqual({
+      keys: ['title', 'date', 'description'],
+      labels: { date: 'Publish date' },
+      default: { key: 'date', order: 'descending' },
+    });
+  });
+
+  test('does not modify the configured sortable_fields', () => {
+    const simpleFields = ['title'];
+    const advancedFields = ['title'];
+
+    [{ sortable_fields: simpleFields }, { sortable_fields: { fields: advancedFields } }].forEach(
+      (options) => {
+        const collection = { ...collectionBase, ...options, summary: '{{title}}' };
+
+        getSortConfig({ collection, isCommitAuthorAvailable: true, isCommitDateAvailable: true });
+        getSortConfig({ collection, isCommitAuthorAvailable: true, isCommitDateAvailable: true });
+      },
+    );
+
+    expect(simpleFields).toEqual(['title']);
+    expect(advancedFields).toEqual(['title']);
+  });
+
   test('handles special sort keys', () => {
     expect(
       getSortConfig({
@@ -201,6 +241,52 @@ describe('Test getSortConfig()', async () => {
       }),
     ).toEqual({
       keys: ['title', 'slug', 'commit_author', 'commit_date'],
+      default: { key: 'title', order: 'ascending' },
+    });
+  });
+
+  test('handles the canonical slug key', () => {
+    const args = { isCommitAuthorAvailable: false, isCommitDateAvailable: false };
+    const i18n = { ...collectionBase._i18n, i18nEnabled: true, allLocales: ['en', 'fr'] };
+
+    // Part of the content when i18n is enabled, even though it’s not a field
+    expect(
+      getSortConfig({
+        ...args,
+        collection: {
+          ...collectionBase,
+          _i18n: i18n,
+          sortable_fields: ['title', 'translationKey'],
+        },
+      }),
+    ).toEqual({
+      keys: ['title', 'translationKey'],
+      default: { key: 'title', order: 'ascending' },
+    });
+
+    // A custom key
+    expect(
+      getSortConfig({
+        ...args,
+        collection: {
+          ...collectionBase,
+          _i18n: { ...i18n, canonicalSlug: { key: 'translation_id', value: '{{slug}}' } },
+          sortable_fields: ['title', 'translationKey', 'translation_id'],
+        },
+      }),
+    ).toEqual({
+      keys: ['title', 'translation_id'],
+      default: { key: 'title', order: 'ascending' },
+    });
+
+    // Not part of the content when i18n is disabled
+    expect(
+      getSortConfig({
+        ...args,
+        collection: { ...collectionBase, sortable_fields: ['title', 'translationKey'] },
+      }),
+    ).toEqual({
+      keys: ['title'],
       default: { key: 'title', order: 'ascending' },
     });
   });
@@ -221,6 +307,20 @@ describe('Test getSortConfig()', async () => {
     ).toEqual({
       keys: ['title', 'name', 'date', 'author', 'description'],
       default: { key: 'title', order: 'ascending' },
+    });
+  });
+
+  test('adds the commit date and author when the default `date` and `author` keys aren’t fields', () => {
+    // The `pages` collection has none of the default fields, which used to hide the commit options
+    expect(
+      getSortConfig({
+        collection: { ...collectionBase, name: 'pages' },
+        isCommitAuthorAvailable: true,
+        isCommitDateAvailable: true,
+      }),
+    ).toEqual({
+      keys: ['commit_author', 'commit_date'],
+      default: { key: 'commit_author', order: 'ascending' },
     });
   });
 
@@ -853,6 +953,39 @@ describe('Test getSortConfig()', async () => {
     });
   });
 
+  test('prepends the _manual key for a collection storing the entries in one file', () => {
+    expect(
+      getSortConfig({
+        collection: {
+          ...collectionBase,
+          file: 'data/posts.json',
+          _file: { ...collectionBase._file, arrayFile: true },
+        },
+        isCommitAuthorAvailable: false,
+        isCommitDateAvailable: false,
+      }),
+    ).toEqual({
+      keys: ['_manual', 'title', 'name', 'date', 'author', 'description'],
+      default: { key: '_manual', order: 'ascending' },
+    });
+  });
+
+  test('leaves out the commit keys for a collection storing the entries in one file', () => {
+    // Every entry carries the commit of the whole file, so it doesn’t tell them apart
+    expect(
+      getSortConfig({
+        collection: {
+          ...collectionBase,
+          file: 'data/posts.json',
+          sortable_fields: ['title', 'commit_author', 'commit_date'],
+          _file: { ...collectionBase._file, arrayFile: true },
+        },
+        isCommitAuthorAvailable: true,
+        isCommitDateAvailable: true,
+      }).keys,
+    ).toEqual(['_manual', 'title']);
+  });
+
   test('replaces the default order field key with _manual when listed in sortable_fields', () => {
     expect(
       getSortConfig({
@@ -970,6 +1103,15 @@ describe('Test getSortKeyType()', () => {
     expect(getSortKeyType({ key: 'commit_date', fieldConfig: undefined })).toBe(Date);
   });
 
+  test('does not take a field named after an `Object.prototype` member for a special key', () => {
+    const fieldConfig = { name: 'constructor', widget: 'string' };
+
+    expect(getSortKeyType({ key: 'constructor', fieldConfig })).toBe(String);
+    expect(
+      getSortKeyType({ key: 'valueOf', fieldConfig: { ...fieldConfig, name: 'valueOf' } }),
+    ).toBe(String);
+  });
+
   test('returns Boolean for boolean fields', () => {
     const booleanField = { name: 'published', widget: 'boolean' };
 
@@ -984,6 +1126,25 @@ describe('Test getSortKeyType()', () => {
     expect(getSortKeyType({ key: 'count', fieldConfig: intField })).toBe(Number);
     expect(getSortKeyType({ key: 'rating', fieldConfig: floatField })).toBe(Number);
     expect(getSortKeyType({ key: 'price', fieldConfig: defaultNumberField })).toBe(Number);
+  });
+
+  test('returns Number for a Compute field yielding a number', () => {
+    /**
+     * Get a Compute field configuration with the given value type.
+     * @param {any} [valueType] Value type.
+     * @returns {any} Field configuration.
+     */
+    const compute = (valueType) => ({
+      name: 'total',
+      widget: 'compute',
+      value: '',
+      value_type: valueType,
+    });
+
+    expect(getSortKeyType({ key: 'total', fieldConfig: compute('int') })).toBe(Number);
+    expect(getSortKeyType({ key: 'total', fieldConfig: compute('float') })).toBe(Number);
+    expect(getSortKeyType({ key: 'total', fieldConfig: compute('float/string') })).toBe(String);
+    expect(getSortKeyType({ key: 'total', fieldConfig: compute() })).toBe(String);
   });
 
   test('returns String for string fields and unknown fields', () => {
@@ -1006,6 +1167,40 @@ describe('Test getSortKeyType()', () => {
     };
 
     expect(getSortKeyType({ key: 'weird', fieldConfig: unknownNumberField })).toBe(String);
+  });
+});
+
+describe('Test resolveSortFieldKey()', () => {
+  /** @type {any} */
+  const collection = { name: 'faq', _type: 'entry', reorder: { key: 'weight' } };
+
+  test('resolves _manual to a configured order field', async () => {
+    const { getField } = await import('$lib/services/contents/entry/fields');
+
+    vi.mocked(getField).mockReturnValueOnce({ name: 'weight', widget: 'number' });
+    expect(resolveSortFieldKey(collection, '_manual')).toBe('weight');
+    expect(getField).toHaveBeenCalledWith({ collectionName: 'faq', keyPath: 'weight' });
+  });
+
+  test('keeps _manual when the order field is not configured', async () => {
+    const { getField } = await import('$lib/services/contents/entry/fields');
+
+    vi.mocked(getField).mockReturnValueOnce(undefined);
+    expect(resolveSortFieldKey(collection, '_manual')).toBe('_manual');
+  });
+
+  test('keeps _manual when reordering is not enabled', async () => {
+    const { getField } = await import('$lib/services/contents/entry/fields');
+
+    expect(resolveSortFieldKey({ ...collection, reorder: undefined }, '_manual')).toBe('_manual');
+    expect(getField).not.toHaveBeenCalled();
+  });
+
+  test('keeps any other key', async () => {
+    const { getField } = await import('$lib/services/contents/entry/fields');
+
+    expect(resolveSortFieldKey(collection, 'title')).toBe('title');
+    expect(getField).not.toHaveBeenCalled();
   });
 });
 
@@ -1142,6 +1337,7 @@ describe('Test sortKeys state', () => {
       _type: 'entry',
       folder: 'content/posts',
       fields: [{ name: 'title', widget: 'string' }],
+      _i18n: { i18nEnabled: false },
     };
 
     allEntries.current = /** @type {any[]} */ ([
@@ -1155,12 +1351,164 @@ describe('Test sortKeys state', () => {
     ]);
     selectedCollection.current = folderCollection;
 
-    // The default `author` and `date` keys take precedence over the commit author and date, and
-    // they are dropped because the collection has no such fields
-    expect(sortKeys.current).toEqual([{ key: 'title', label: 'title' }]);
+    // The default `author` and `date` keys are dropped because the collection has no such fields,
+    // so the commit author and date are offered instead
+    expect(sortKeys.current).toEqual([
+      { key: 'title', label: 'title' },
+      { key: 'commit_author', label: 'sort_keys.commit_author' },
+      { key: 'commit_date', label: 'sort_keys.commit_date' },
+    ]);
 
     // Clean up
     selectedCollection.current = undefined;
     allEntries.current = [];
+  });
+
+  test('marks a Number field key as a number, so the menu words its orders for one', async () => {
+    const { getField } = await import('$lib/services/contents/entry/fields');
+
+    /** @type {Record<string, any>} */
+    const fields = {
+      title: { name: 'title', widget: 'string' },
+      price: { name: 'price', label: 'Price', widget: 'number' },
+      code: { name: 'code', label: 'Code', widget: 'number', value_type: 'int/string' },
+    };
+
+    vi.mocked(getField).mockImplementation(({ keyPath }) => fields[keyPath]);
+
+    allEntries.current = [];
+    selectedCollection.current = /** @type {any} */ ({
+      name: 'products',
+      _type: 'entry',
+      folder: 'content/products',
+      sortable_fields: ['title', 'price', 'code'],
+      fields: Object.values(fields),
+      _i18n: { i18nEnabled: false },
+    });
+
+    // A Number field saving its value as a string is sorted as a string
+    expect(sortKeys.current).toEqual([
+      { key: 'title', label: 'title' },
+      { key: 'price', label: 'Price', type: 'number' },
+      { key: 'code', label: 'Code' },
+    ]);
+
+    // Clean up
+    selectedCollection.current = undefined;
+  });
+
+  test('words the manual order like a configured Number order field', async () => {
+    const { getField } = await import('$lib/services/contents/entry/fields');
+
+    /** @type {Record<string, any>} */
+    const fields = {
+      title: { name: 'title', label: 'Title', widget: 'string' },
+      weight: { name: 'weight', label: 'Weight', widget: 'number' },
+    };
+
+    vi.mocked(getField).mockImplementation(({ keyPath }) => fields[keyPath]);
+
+    allEntries.current = [];
+    selectedCollection.current = /** @type {any} */ ({
+      name: 'faq',
+      _type: 'entry',
+      folder: 'content/faq',
+      reorder: { key: 'weight' },
+      sortable_fields: ['weight', 'title'],
+      fields: Object.values(fields),
+      _i18n: { i18nEnabled: false },
+    });
+
+    // @see https://github.com/sveltia/sveltia-cms/issues/1169
+    expect(sortKeys.current).toEqual([
+      { key: '_manual', label: 'Weight', type: 'number' },
+      { key: 'title', label: 'Title' },
+    ]);
+
+    // The order field isn’t configured
+    selectedCollection.current = /** @type {any} */ ({
+      name: 'faq',
+      _type: 'entry',
+      folder: 'content/faq',
+      reorder: { key: 'position' },
+      sortable_fields: ['title'],
+      fields: [fields.title],
+      _i18n: { i18nEnabled: false },
+    });
+
+    expect(sortKeys.current).toEqual([
+      { key: '_manual', label: 'sort_keys._manual' },
+      { key: 'title', label: 'Title' },
+    ]);
+
+    // Clean up
+    selectedCollection.current = undefined;
+  });
+
+  test('labels the manual order with a custom label given in sortable_fields', async () => {
+    const { getField } = await import('$lib/services/contents/entry/fields');
+    /** @type {Record<string, any>} */
+    const fields = { weight: { name: 'weight', label: 'Weight', widget: 'number' } };
+
+    vi.mocked(getField).mockImplementation(({ keyPath }) => fields[keyPath]);
+
+    allEntries.current = [];
+
+    /** @type {any} */
+    const collection = {
+      name: 'faq',
+      _type: 'entry',
+      folder: 'content/faq',
+      reorder: { key: 'weight' },
+      sortable_fields: [{ field: 'weight', label: 'Position' }],
+      fields: Object.values(fields),
+      _i18n: { i18nEnabled: false },
+    };
+
+    selectedCollection.current = collection;
+    expect(sortKeys.current).toEqual([{ key: '_manual', label: 'Position', type: 'number' }]);
+
+    // A label given to `_manual` comes first
+    selectedCollection.current = {
+      ...collection,
+      sortable_fields: [
+        { field: '_manual', label: 'Custom' },
+        { field: 'weight', label: 'Position' },
+      ],
+    };
+    expect(sortKeys.current).toEqual([{ key: '_manual', label: 'Custom', type: 'number' }]);
+
+    // Clean up
+    selectedCollection.current = undefined;
+  });
+
+  test('uses the labels given in the Decap CMS format', async () => {
+    const { getField } = await import('$lib/services/contents/entry/fields');
+
+    /** @type {Record<string, any>} */
+    const fields = {
+      title: { name: 'title', label: 'Title', widget: 'string' },
+      date: { name: 'date', label: 'Date', widget: 'datetime' },
+    };
+
+    vi.mocked(getField).mockImplementation(({ keyPath }) => fields[keyPath]);
+
+    allEntries.current = [];
+    selectedCollection.current = /** @type {any} */ ({
+      name: 'posts',
+      _type: 'entry',
+      folder: 'content/posts',
+      sortable_fields: ['title', { field: 'date', label: 'Publish date', default_sort: 'desc' }],
+      fields: Object.values(fields),
+      _i18n: { i18nEnabled: false },
+    });
+
+    expect(sortKeys.current).toEqual([
+      { key: 'title', label: 'Title' },
+      { key: 'date', label: 'Publish date' },
+    ]);
+
+    // Clean up
+    selectedCollection.current = undefined;
   });
 });

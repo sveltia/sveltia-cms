@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { getKeyValueField, getPairsFromContent, setPairs } from './pairs';
+import { alignPairOrder, getKeyValueField, getPairsFromContent, setPairs } from './pairs';
 
 /**
  * @import { Field } from '$lib/types/public';
@@ -38,8 +38,54 @@ describe('Test getPairsFromContent()', () => {
     ]);
   });
 
+  test('should read the pairs from the key path index of a value map that isn’t mutated', () => {
+    const content = { title: 'Hello', 'metadata.b': '2', 'metadata.a': '1', 'other.a': 'x' };
+
+    expect(getPairsFromContent(content, 'metadata', { live: false })).toEqual([
+      ['b', '2'],
+      ['a', '1'],
+    ]);
+  });
+
   test('should return an empty array when the field holds no pairs', () => {
     expect(getPairsFromContent({ title: 'Hello', metadata: null }, 'metadata')).toEqual([]);
+  });
+});
+
+describe('Test pairs with a dot in the key', () => {
+  test('should unescape the keys stored escaped', () => {
+    const content = { 'metadata.example\uE000com': 'a', 'metadata.v1\uE0002': 'b' };
+
+    expect(getPairsFromContent(content, 'metadata')).toEqual([
+      ['example.com', 'a'],
+      ['v1.2', 'b'],
+    ]);
+  });
+
+  test('should store the keys escaped, so they aren’t split into nested objects on save', () => {
+    /** @type {Record<string, any>} */
+    const content = { title: 'Hello', metadata: null };
+
+    setPairs(content, 'metadata', [
+      ['example.com', 'a'],
+      ['v1.2', 'b'],
+    ]);
+
+    expect(content).toEqual({
+      title: 'Hello',
+      'metadata.example\uE000com': 'a',
+      'metadata.v1\uE0002': 'b',
+    });
+    expect(getPairsFromContent(content, 'metadata')).toEqual([
+      ['example.com', 'a'],
+      ['v1.2', 'b'],
+    ]);
+  });
+
+  test('should resolve the KeyValue field a pair with an escaped key belongs to', () => {
+    expect(
+      getKeyValueField({ collectionName: 'posts', keyPath: 'metadata.example\uE000com' }),
+    ).toEqual(fields[1]);
   });
 });
 
@@ -86,6 +132,56 @@ describe('Test setPairs()', () => {
     setPairs(content, 'metadata', [['a', '1']]);
 
     expect(content).toEqual({ metadata: {}, 'metadata.a': '1' });
+  });
+});
+
+describe('Test alignPairOrder()', () => {
+  test('should put the pairs in the reference order, keeping their values', () => {
+    const content = { title: 'Salut', 'metadata.b': 'deux', 'metadata.a': 'un' };
+
+    alignPairOrder({
+      content,
+      referenceContent: { 'metadata.a': '1', 'metadata.b': '2' },
+      keyPath: 'metadata',
+    });
+
+    expect(Object.entries(content)).toEqual([
+      ['title', 'Salut'],
+      ['metadata.a', 'un'],
+      ['metadata.b', 'deux'],
+    ]);
+  });
+
+  test('should put the keys the reference lacks last, adding none of its own', () => {
+    const content = { 'metadata.c': 'trois', 'metadata.b': 'deux' };
+
+    alignPairOrder({
+      content,
+      referenceContent: { 'metadata.a': '1', 'metadata.b': '2', 'metadata.c': '3' },
+      keyPath: 'metadata',
+    });
+    expect(Object.entries(content)).toEqual([
+      ['metadata.b', 'deux'],
+      ['metadata.c', 'trois'],
+    ]);
+
+    alignPairOrder({ content, referenceContent: { 'metadata.c': '3' }, keyPath: 'metadata' });
+    expect(Object.entries(content)).toEqual([
+      ['metadata.c', 'trois'],
+      ['metadata.b', 'deux'],
+    ]);
+  });
+
+  test('should leave the content alone if the order is already right', () => {
+    const content = { 'metadata.a': 'un', title: 'Salut', 'metadata.b': 'deux' };
+
+    alignPairOrder({
+      content,
+      referenceContent: { 'metadata.a': '1', 'metadata.b': '2' },
+      keyPath: 'metadata',
+    });
+
+    expect(Object.keys(content)).toEqual(['metadata.a', 'title', 'metadata.b']);
   });
 });
 

@@ -1,14 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getCollection } from '$lib/services/contents/collection';
-
 import {
   allEntries,
   allEntryFolders,
   dataLoaded,
   dataLoadedProgress,
   entryParseErrors,
-  getEntryFoldersByPath,
+  findEntryByPaths,
 } from '.';
 
 vi.mock('$lib/services/contents/collection', () => ({
@@ -48,291 +46,47 @@ describe('contents/index', () => {
     });
   });
 
-  describe('getEntryFoldersByPath', () => {
-    it('should return empty array when no folders match', () => {
-      allEntryFolders.current = [
-        /** @type {any} */ ({
-          collectionName: 'posts',
-          folderPath: 'content/posts',
-          filePathMap: undefined,
-        }),
-      ];
-
-      const result = getEntryFoldersByPath('content/pages/about.md');
-
-      expect(result).toEqual([]);
+  describe('findEntryByPaths()', () => {
+    /**
+     * Create an entry with a file per locale.
+     * @param {string} id Entry ID.
+     * @param {Record<string, string>} paths File path by locale.
+     * @returns {any} Entry.
+     */
+    const createEntry = (id, paths) => ({
+      id,
+      locales: Object.fromEntries(
+        Object.entries(paths).map(([locale, path]) => [locale, { path, content: {} }]),
+      ),
     });
 
-    it('should return matching folders with filePathMap', () => {
-      allEntryFolders.current = [
-        /** @type {any} */ ({
-          collectionName: 'posts',
-          folderPath: 'content/posts',
-          filePathMap: {
-            en: 'content/posts/en/post.md',
-            fr: 'content/posts/fr/post.md',
-          },
-        }),
-        /** @type {any} */ ({
-          collectionName: 'pages',
-          folderPath: 'content/pages',
-          filePathMap: {
-            en: 'content/pages/about.md',
-          },
-        }),
-      ];
+    it('should find the entry holding a file at any of the given paths', () => {
+      const post = createEntry('post', { en: 'posts/en/a.md', ja: 'posts/ja/a.md' });
 
-      const result = getEntryFoldersByPath('content/posts/en/post.md');
+      allEntries.current = [createEntry('page', { en: 'pages/b.md' }), post];
 
-      expect(result).toHaveLength(1);
-      expect(result[0].collectionName).toBe('posts');
+      expect(findEntryByPaths(new Set(['missing.md', 'posts/ja/a.md']))).toBe(post);
+      expect(findEntryByPaths(['missing.md'])).toBeUndefined();
     });
 
-    it('should return entry folders sorted by folderPath descending', () => {
-      vi.mocked(getCollection).mockImplementation(
-        (name) =>
-          /** @type {any} */ ({
-            _file: {
-              fullPathRegEx:
-                name === 'blog' ? /^content\/posts\/blog\/.+\.md$/ : /^content\/posts\/.+\.md$/,
-              extension: 'md',
-              format: 'yaml-frontmatter',
-            },
-          }),
-      );
+    it('should prefer the entry that comes first in the store', () => {
+      const first = createEntry('first', { en: 'a.md', ja: 'shared.md' });
+      const second = createEntry('second', { en: 'b.md', ja: 'shared.md' });
 
-      allEntryFolders.current = [
-        /** @type {any} */ ({
-          collectionName: 'posts',
-          folderPath: 'content/posts',
-          filePathMap: undefined,
-        }),
-        /** @type {any} */ ({
-          collectionName: 'blog',
-          folderPath: 'content/posts/blog',
-          filePathMap: undefined,
-        }),
-      ];
+      allEntries.current = [first, second];
 
-      const result = getEntryFoldersByPath('content/posts/blog/test.md');
-
-      expect(result).toHaveLength(2);
-      expect(result[0].collectionName).toBe('blog');
-      expect(result[1].collectionName).toBe('posts');
+      // Found by its own path, but the other entry comes first
+      expect(findEntryByPaths(['b.md', 'a.md'])).toBe(first);
+      // Two entries share a path, and the first one wins
+      expect(findEntryByPaths(['shared.md'])).toBe(first);
     });
 
-    it('should match using fullPathRegEx when filePathMap is not provided', () => {
-      vi.mocked(getCollection).mockReturnValue(
-        /** @type {any} */ ({
-          _file: {
-            fullPathRegEx: /^content\/posts\/.+\.md$/,
-            extension: 'md',
-            format: 'yaml-frontmatter',
-          },
-        }),
-      );
+    it('should index the store again once it is replaced', () => {
+      allEntries.current = [createEntry('old', { en: 'a.md' })];
+      expect(findEntryByPaths(['a.md'])?.id).toBe('old');
 
-      allEntryFolders.current = [
-        /** @type {any} */ ({
-          collectionName: 'posts',
-          folderPath: 'content/posts',
-          filePathMap: undefined,
-        }),
-      ];
-
-      const result = getEntryFoldersByPath('content/posts/hello.md');
-
-      expect(result).toHaveLength(1);
-      expect(result[0].collectionName).toBe('posts');
-    });
-
-    it('should return empty array when fullPathRegEx does not match', () => {
-      vi.mocked(getCollection).mockReturnValue(
-        /** @type {any} */ ({
-          _file: {
-            fullPathRegEx: /^content\/posts\/.+\.md$/,
-            extension: 'md',
-            format: 'yaml-frontmatter',
-          },
-        }),
-      );
-
-      allEntryFolders.current = [
-        /** @type {any} */ ({
-          collectionName: 'posts',
-          folderPath: 'content/posts',
-          filePathMap: undefined,
-        }),
-      ];
-
-      const result = getEntryFoldersByPath('content/pages/about.md');
-
-      expect(result).toEqual([]);
-    });
-
-    it('should handle folder without folderPath', () => {
-      allEntryFolders.current = [
-        /** @type {any} */ ({
-          collectionName: 'posts',
-          folderPath: undefined,
-          filePathMap: {
-            en: 'content/posts/test.md',
-          },
-        }),
-      ];
-
-      const result = getEntryFoldersByPath('content/posts/test.md');
-
-      expect(result).toHaveLength(1);
-    });
-
-    it('should prioritize a file collection over an entry collection containing the file', () => {
-      // Hugo’s special index file can be declared as a file collection item while it also lives in
-      // an entry collection’s folder. The explicit `file` declaration must win
-      vi.mocked(getCollection).mockReturnValue(
-        /** @type {any} */ ({
-          _file: {
-            fullPathRegEx: /^content\/updates\/news\/(?<subPath>[^/]+?)\.md$/,
-            extension: 'md',
-            format: 'yaml-frontmatter',
-          },
-        }),
-      );
-
-      allEntryFolders.current = [
-        /** @type {any} */ ({
-          collectionName: 'news',
-          folderPath: 'content/updates/news',
-          filePathMap: undefined,
-        }),
-        /** @type {any} */ ({
-          collectionName: 'pages',
-          fileName: 'news',
-          folderPath: undefined,
-          filePathMap: { _default: 'content/updates/news/_index.md' },
-        }),
-      ];
-
-      const result = getEntryFoldersByPath('content/updates/news/_index.md');
-
-      expect(result).toHaveLength(2);
-      expect(result[0].collectionName).toBe('pages');
-      expect(result[0].fileName).toBe('news');
-      expect(result[1].collectionName).toBe('news');
-    });
-
-    it('should return every file folder that declares the same path', () => {
-      allEntryFolders.current = [
-        /** @type {any} */ ({
-          collectionName: 'alpha',
-          folderPath: undefined,
-          filePathMap: { en: 'content/shared.md' },
-        }),
-        /** @type {any} */ ({
-          collectionName: 'beta',
-          folderPath: undefined,
-          filePathMap: { en: 'content/shared.md' },
-        }),
-      ];
-
-      const result = getEntryFoldersByPath('content/shared.md');
-
-      expect(result).toHaveLength(2);
-      expect(result[0].collectionName).toBe('alpha');
-      expect(result[1].collectionName).toBe('beta');
-    });
-
-    it('should sort stably when multiple entry folders have undefined folderPath', () => {
-      vi.mocked(getCollection).mockReturnValue(
-        /** @type {any} */ ({
-          _file: {
-            fullPathRegEx: /^content\/.+\.md$/,
-            extension: 'md',
-            format: 'yaml-frontmatter',
-          },
-        }),
-      );
-
-      allEntryFolders.current = [
-        /** @type {any} */ ({
-          collectionName: 'alpha',
-          folderPath: undefined,
-          filePathMap: undefined,
-        }),
-        /** @type {any} */ ({
-          collectionName: 'beta',
-          folderPath: undefined,
-          filePathMap: undefined,
-        }),
-      ];
-
-      const result = getEntryFoldersByPath('content/shared.md');
-
-      // Both folders match; both folderPaths are undefined so the ?? '' fallback is hit on
-      // both sides of the comparator in the same sort call.
-      expect(result).toHaveLength(2);
-    });
-
-    it('should handle collection without _file property', () => {
-      vi.mocked(getCollection).mockReturnValue(undefined);
-
-      allEntryFolders.current = [
-        /** @type {any} */ ({
-          collectionName: 'posts',
-          folderPath: 'content/posts',
-          filePathMap: undefined,
-        }),
-      ];
-
-      const result = getEntryFoldersByPath('content/posts/hello.md');
-
-      expect(result).toEqual([]);
-    });
-
-    it('should handle multiple matches from filePathMap', () => {
-      allEntryFolders.current = [
-        /** @type {any} */ ({
-          collectionName: 'posts',
-          folderPath: 'content/posts',
-          filePathMap: {
-            en: 'content/posts/test.md',
-            fr: 'content/posts/test.md',
-          },
-        }),
-      ];
-
-      const result = getEntryFoldersByPath('content/posts/test.md');
-
-      expect(result).toHaveLength(1);
-      expect(result[0].collectionName).toBe('posts');
-    });
-
-    it('should handle empty allEntryFolders', () => {
-      allEntryFolders.current = [];
-
-      const result = getEntryFoldersByPath('content/posts/test.md');
-
-      expect(result).toEqual([]);
-    });
-
-    it('should reuse cache when allEntryFolders has not changed', () => {
-      allEntryFolders.current = [
-        /** @type {any} */ ({
-          collectionName: 'posts',
-          folderPath: 'content/posts',
-          filePathMap: { en: 'content/posts/test.md' },
-        }),
-      ];
-
-      // First call populates the cache.
-      const result1 = getEntryFoldersByPath('content/posts/test.md');
-      // Second call with the same store reference should hit the cache.
-      const result2 = getEntryFoldersByPath('content/posts/test.md');
-
-      expect(result1).toHaveLength(1);
-      expect(result2).toHaveLength(1);
-      expect(result1[0].collectionName).toBe('posts');
-      expect(result2[0].collectionName).toBe('posts');
+      allEntries.current = [createEntry('new', { en: 'a.md' })];
+      expect(findEntryByPaths(['a.md'])?.id).toBe('new');
     });
   });
 });

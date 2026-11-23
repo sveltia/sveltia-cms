@@ -1,13 +1,22 @@
 // @ts-nocheck
 import { describe, expect, it, vi } from 'vitest';
 
+import { isPairOrderModified } from '$lib/services/contents/fields/key-value/order';
+
 import {
+  collectFieldValues,
   filterRealValues,
   isAutoDuplicationEnabled,
   isDraftModified,
+  isRealKey,
+  isValueMapModified,
   revokeDraftFileURLs,
   suspendAutoDuplication,
 } from '.';
+
+vi.mock('$lib/services/contents/fields/key-value/order', () => ({
+  isPairOrderModified: vi.fn(() => false),
+}));
 
 describe('draft/index', () => {
   describe('filterRealValues', () => {
@@ -56,6 +65,98 @@ describe('draft/index', () => {
       const valueMap = { __sc_toplevel: 'kept', 'a.__sc_middle.b': 'kept' };
 
       expect(filterRealValues(valueMap)).toEqual(valueMap);
+    });
+  });
+
+  describe('isRealKey', () => {
+    it('should count a key holding a value', () => {
+      expect(isRealKey({ title: '' }, 'title')).toBe(true);
+    });
+
+    it('should not count an internal property or an `undefined` value', () => {
+      const valueMap = { 'items.0.__sc_item_id': 'abc', title: undefined };
+
+      expect(isRealKey(valueMap, 'items.0.__sc_item_id')).toBe(false);
+      expect(isRealKey(valueMap, 'title')).toBe(false);
+      expect(isRealKey(valueMap, 'missing')).toBe(false);
+    });
+  });
+
+  describe('isValueMapModified', () => {
+    it('should not report identical maps', () => {
+      expect(isValueMapModified({ title: 'A', 'tags.0': 'x' }, { title: 'A', 'tags.0': 'x' })).toBe(
+        false,
+      );
+      expect(isValueMapModified({}, {})).toBe(false);
+    });
+
+    it('should report a changed value', () => {
+      expect(isValueMapModified({ title: 'A' }, { title: 'B' })).toBe(true);
+    });
+
+    it('should compare the values deeply', () => {
+      expect(isValueMapModified({ list: [] }, { list: [] })).toBe(false);
+      expect(isValueMapModified({ obj: { a: 1 } }, { obj: { a: 2 } })).toBe(true);
+    });
+
+    it('should report a key added or removed', () => {
+      expect(isValueMapModified({ title: 'A' }, { title: 'A', body: '' })).toBe(true);
+      expect(isValueMapModified({ title: 'A', body: '' }, { title: 'A' })).toBe(true);
+    });
+
+    it('should report a key renamed with the same number of keys', () => {
+      expect(isValueMapModified({ 'tags.0': 'x' }, { 'tags.1': 'x' })).toBe(true);
+    });
+
+    it('should ignore the internal properties on either side', () => {
+      expect(
+        isValueMapModified({ title: 'A' }, { title: 'A', 'items.0.__sc_item_id': 'abc' }),
+      ).toBe(false);
+      expect(
+        isValueMapModified({ title: 'A', 'items.0.__sc_item_id': 'abc' }, { title: 'A' }),
+      ).toBe(false);
+    });
+
+    it('should treat a key holding `undefined` as missing', () => {
+      expect(isValueMapModified({ title: 'A', body: undefined }, { title: 'A' })).toBe(false);
+      expect(isValueMapModified({ title: 'A' }, { title: 'A', body: undefined })).toBe(false);
+      expect(isValueMapModified({ body: undefined }, { body: '' })).toBe(true);
+    });
+  });
+
+  describe('collectFieldValues', () => {
+    const valueMap = {
+      title: 'Hello',
+      items: [],
+      'items.0': {},
+      'items.0.label': 'A',
+      'items.0.__sc_item_id': 'abc',
+      'items.1.label': undefined,
+      itemsX: 'other',
+    };
+
+    it('should collect the field’s own and nested values keyed by full key path', () => {
+      expect(collectFieldValues(valueMap, 'items')).toEqual({
+        items: [],
+        'items.0': {},
+        'items.0.label': 'A',
+      });
+    });
+
+    it('should not collect an `Object.prototype` member for a missing field', () => {
+      // `Object` was collected
+      expect(collectFieldValues(valueMap, 'constructor')).toEqual({});
+    });
+
+    it('should key the values by relative key path and drop empty placeholders', () => {
+      expect(
+        collectFieldValues(valueMap, 'items', { relative: true, dropEmptyPlaceholders: true }),
+      ).toEqual({ '0.label': 'A' });
+      expect(collectFieldValues(valueMap, 'title', { relative: true })).toEqual({ '': 'Hello' });
+    });
+
+    it('should return an empty object for a missing field', () => {
+      expect(collectFieldValues(valueMap, 'missing')).toEqual({});
     });
   });
 
@@ -154,6 +255,59 @@ describe('draft/index', () => {
       };
 
       expect(isDraftModified(draft)).toBe(false);
+    });
+
+    it('should return true when an existing entry has been edited from a Relation field', () => {
+      const draft = {
+        originalLocales: { en: true },
+        currentLocales: { en: true },
+        originalSlugs: { en: 'test' },
+        currentSlugs: { en: 'test' },
+        originalValues: { en: { tag: 'svelte' } },
+        currentValues: { en: { tag: 'svelte' } },
+        extraValues: { en: {} },
+        pendingEntries: [{ collectionName: 'tags', entry: { locales: {} }, values: ['react'] }],
+      };
+
+      // A new entry is only added along with a change to the field selecting it
+      expect(isDraftModified(draft)).toBe(false);
+
+      // Not referenced anymore, so it’s left out of the save
+      draft.pendingEntries.push({
+        collectionName: 'tags',
+        entry: { locales: {} },
+        values: ['vue'],
+        baseEntry: {},
+      });
+      expect(isDraftModified(draft)).toBe(false);
+
+      draft.pendingEntries.push({
+        collectionName: 'tags',
+        entry: { locales: {} },
+        values: ['svelte'],
+        baseEntry: {},
+      });
+      expect(isDraftModified(draft)).toBe(true);
+    });
+
+    it('should return true when the pairs of a KeyValue field are reordered', () => {
+      vi.mocked(isPairOrderModified).mockReturnValueOnce(true);
+
+      const draft = {
+        originalLocales: { en: true },
+        currentLocales: { en: true },
+        originalSlugs: { en: 'test' },
+        currentSlugs: { en: 'test' },
+        originalValues: { en: { 'meta.a': '1', 'meta.b': '2' } },
+        currentValues: { en: { 'meta.b': '2', 'meta.a': '1' } },
+      };
+
+      expect(isDraftModified(draft)).toBe(true);
+      expect(isPairOrderModified).toHaveBeenCalledWith({
+        draft,
+        isRealKey: expect.any(Function),
+        locales: ['en'],
+      });
     });
 
     it('should return true when the entry path is modified', () => {
@@ -360,6 +514,47 @@ describe('draft/index', () => {
       };
 
       expect(isDraftModified(draft)).toBe(true);
+    });
+
+    it('should ignore the values of a locale disabled before and after the edit', () => {
+      // A locale enabled and then disabled again keeps the values copied from the default locale,
+      // which are not saved
+      const draft = {
+        originalLocales: { en: true, ja: false },
+        currentLocales: { en: true, ja: false },
+        originalSlugs: { en: 'test' },
+        currentSlugs: { en: 'test' },
+        originalValues: { en: { title: 'Test', image: 'a.jpg' }, ja: { title: '' } },
+        currentValues: { en: { title: 'Test', image: 'a.jpg' }, ja: { title: '', image: 'a.jpg' } },
+      };
+
+      expect(isDraftModified(draft)).toBe(false);
+      // The pair order is only checked for the compared locales
+      expect(isPairOrderModified).toHaveBeenCalledWith({
+        draft,
+        isRealKey: expect.any(Function),
+        locales: ['en'],
+      });
+
+      // Even when only one of the value maps has the locale
+      expect(
+        isDraftModified({ ...draft, originalValues: { en: { title: 'Test', image: 'a.jpg' } } }),
+      ).toBe(false);
+    });
+
+    it('should compare the values of a locale disabled only before the edit', () => {
+      const draft = {
+        originalLocales: { en: true, ja: false },
+        currentLocales: { en: true, ja: true },
+        originalSlugs: { en: 'test' },
+        currentSlugs: { en: 'test' },
+        originalValues: { en: { title: 'Test' }, ja: { title: '' } },
+        currentValues: { en: { title: 'Test' }, ja: { title: 'Test' } },
+      };
+
+      expect(isDraftModified(draft)).toBe(true);
+      // The values are compared even if the locale states are equal
+      expect(isDraftModified({ ...draft, originalLocales: { en: true, ja: true } })).toBe(true);
     });
 
     it('should return true when a locale is missing from originalValues', () => {

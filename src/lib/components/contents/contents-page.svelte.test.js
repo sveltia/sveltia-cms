@@ -1,0 +1,297 @@
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
+import { render } from 'vitest-browser-svelte';
+
+import { announcedPageStatus, mainAreaTitle } from '$lib/services/app/navigation';
+import { backendName } from '$lib/services/backends';
+import { selectedCollection } from '$lib/services/contents/collection';
+import { entryListSettings } from '$lib/services/contents/collection/view/settings';
+import { backupToastState, showBackupToastIfNeeded } from '$lib/services/contents/draft/backup';
+import { showContentOverlay } from '$lib/services/contents/editor';
+import { entryEditorSettings } from '$lib/services/contents/editor/settings';
+import { searchMode, searchTerms } from '$lib/services/search';
+import { env } from '$lib/services/user/env.svelte';
+import { allUnpublishedEntries, unpublishedEntriesLoaded } from '$lib/services/workflow';
+import { createMockEntry, initTestConfig, setEntries } from '$lib/test/config';
+import { waitForToastsToHide } from '$lib/test/toast';
+
+import ContentsPage from './contents-page.svelte';
+
+vi.mock('$lib/services/deployments/poll', () => ({
+  retainDeployPolling: vi.fn(() => () => {}),
+  recheckDeployments: vi.fn(),
+}));
+vi.mock('$lib/services/contents/draft/backup', async () => {
+  const { createDeepState } = await import('$lib/services/utils/state.svelte');
+
+  return {
+    restoreDialogState: createDeepState({ show: false }),
+    cancelRestoreCheck: vi.fn(),
+    backupToastState: createDeepState({ saved: false, restored: false, deleted: false }),
+    cancelBackup: vi.fn(),
+    deleteBackup: vi.fn(),
+    getBackup: vi.fn(),
+    getBackupSlug: vi.fn(() => ''),
+    saveBackup: vi.fn(),
+    restoreBackup: vi.fn(),
+    restoreBackupIfNeeded: vi.fn(),
+    showBackupToastIfNeeded: vi.fn(),
+    resetBackupToastState: vi.fn(),
+    scheduleBackup: vi.fn(),
+  };
+});
+
+const fields = [{ name: 'title', widget: 'string' }];
+
+describe('ContentsPage', () => {
+  beforeEach(async () => {
+    await initTestConfig({
+      collections: [
+        { name: 'posts', label: 'Posts', folder: 'content/posts', fields },
+        {
+          name: 'pages',
+          label: 'Pages',
+          files: [{ name: 'about', label: 'About Us', file: 'content/about.md', fields }],
+        },
+      ],
+    });
+    setEntries([
+      createMockEntry({ slug: 'hello', content: { _default: { title: 'Hello' } } }),
+      createMockEntry({ slug: 'world', content: { _default: { title: 'World' } } }),
+    ]);
+    env.isSmallScreen = false;
+    env.isMediumScreen = false;
+    env.isLargeScreen = true;
+    entryListSettings.current = { posts: { type: 'list' } };
+    entryEditorSettings.current = { showPreview: true, showSecondPane: true };
+    selectedCollection.current = undefined;
+    showContentOverlay.current = false;
+    backendName.current = undefined;
+  });
+
+  test('lists the entries of the collection in the URL', async () => {
+    window.location.hash = '#/collections/posts';
+
+    await render(ContentsPage);
+
+    const library = page.getByRole('group', { name: 'Content Library' });
+
+    await expect.element(library.getByRole('tree', { name: 'Collection List' })).toBeVisible();
+
+    const area = library.getByRole('main', { name: '\u2068Posts\u2069 Collection' });
+
+    // The landmark name doubles as the document title, so it carries no quotes
+    expect(mainAreaTitle.current).toBe('\u2068Posts\u2069 Collection');
+
+    await expect
+      .poll(() => area.getByRole('grid', { name: 'Entries' }).getByRole('row').elements().length)
+      .toBe(2);
+    await expect.element(area.getByRole('toolbar', { name: 'Entry List' })).toBeInTheDocument();
+    expect(announcedPageStatus.current).toBe(
+      'You’re now viewing the “\u2068Posts\u2069” collection, which has 2 entries.',
+    );
+
+    // Following the URL to a file collection
+    window.location.hash = '#/collections/pages';
+    await expect
+      .element(page.getByRole('main', { name: '\u2068Pages\u2069 Collection' }))
+      .toBeInTheDocument();
+    expect(selectedCollection.current?.name).toBe('pages');
+  });
+
+  test('shows the entry list toolbar for a collection holding only drafts', async () => {
+    setEntries([]);
+    allUnpublishedEntries.current = [
+      /** @type {any} */ ({
+        ...createMockEntry({ slug: 'draft', content: { _default: { title: 'Draft' } } }),
+        workflow: {
+          status: 'draft',
+          collectionName: 'posts',
+          pullRequest: { number: 1, branch: 'cms/posts/draft' },
+        },
+      }),
+    ];
+    window.location.hash = '#/collections/posts';
+
+    try {
+      await render(ContentsPage);
+
+      const area = page.getByRole('main', { name: '\u2068Posts\u2069 Collection' });
+
+      await expect.element(area.getByRole('row', { name: 'Draft' })).toBeVisible();
+      await expect.element(area.getByRole('toolbar', { name: 'Entry List' })).toBeInTheDocument();
+    } finally {
+      allUnpublishedEntries.current = [];
+    }
+  });
+
+  test('keeps the entry list toolbar while a filter hides every draft', async () => {
+    await initTestConfig({
+      collections: [
+        {
+          name: 'posts',
+          label: 'Posts',
+          folder: 'content/posts',
+          fields,
+          view_filters: [{ label: 'Hello', field: 'title', pattern: 'Hello' }],
+        },
+      ],
+    });
+    setEntries([]);
+    allUnpublishedEntries.current = [
+      /** @type {any} */ ({
+        ...createMockEntry({ slug: 'draft', content: { _default: { title: 'Draft' } } }),
+        workflow: {
+          status: 'draft',
+          collectionName: 'posts',
+          pullRequest: { number: 1, branch: 'cms/posts/draft' },
+        },
+      }),
+    ];
+    entryListSettings.current = {
+      posts: { type: 'list', filters: [{ field: 'title', pattern: 'Hello' }] },
+    };
+    window.location.hash = '#/collections/posts';
+
+    try {
+      await render(ContentsPage);
+
+      const area = page.getByRole('main', { name: '\u2068Posts\u2069 Collection' });
+
+      // The toolbar holding the filter stays, so the filter can be reset
+      await expect.element(area.getByRole('toolbar', { name: 'Entry List' })).toBeInTheDocument();
+      expect(area.getByRole('row', { name: 'Draft' }).elements()).toHaveLength(0);
+    } finally {
+      allUnpublishedEntries.current = [];
+    }
+  });
+
+  test('redirects the index to the first collection on a large screen', async () => {
+    window.location.hash = '#/collections';
+
+    await render(ContentsPage);
+    await expect.poll(() => window.location.hash).toBe('#/collections/posts');
+  });
+
+  test('shows the collection list alone on a small screen', async () => {
+    env.isSmallScreen = true;
+    env.isLargeScreen = false;
+    window.location.hash = '#/collections';
+
+    await render(ContentsPage);
+
+    await expect.element(page.getByRole('tree', { name: 'Collection List' })).toBeVisible();
+    expect(announcedPageStatus.current).toBe('You’re now viewing the collection list.');
+    expect(page.getByRole('grid').elements()).toHaveLength(0);
+  });
+
+  test('opens the editor for an entry', async () => {
+    window.location.hash = '#/collections/posts/entries/hello';
+
+    await render(ContentsPage);
+
+    const editor = page.getByRole('group', { name: 'Content Editor' });
+
+    await expect.element(editor).toBeInTheDocument();
+    await expect.element(editor.getByRole('textbox', { name: 'title' })).toHaveValue('Hello');
+    expect(showContentOverlay.current).toBe(true);
+
+    // Closing the editor
+    await editor.getByRole('button', { name: 'Cancel Editing' }).click();
+    await expect.poll(() => window.location.hash).toBe('#/collections/posts');
+    await expect.poll(() => showContentOverlay.current).toBe(false);
+  });
+
+  test('tells the user about the draft backup once the editor is closed', async () => {
+    vi.mocked(showBackupToastIfNeeded).mockImplementationOnce(async () => {
+      backupToastState.current.saved = true;
+    });
+    window.location.hash = '#/collections/posts/entries/hello';
+
+    await render(ContentsPage);
+
+    const editor = page.getByRole('group', { name: 'Content Editor' });
+
+    await expect.element(editor.getByRole('textbox', { name: 'title' })).toHaveValue('Hello');
+    // Nothing to tell while the entry is open
+    expect(showBackupToastIfNeeded).not.toHaveBeenCalled();
+
+    await editor.getByRole('button', { name: 'Cancel Editing' }).click();
+    await expect.poll(() => showContentOverlay.current).toBe(false);
+    expect(showBackupToastIfNeeded).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ collectionName: 'posts' }),
+    );
+    // The toast outlives the overlay
+    await expect.element(page.getByRole('status')).toMatchTextContent('Draft backup saved.');
+    await waitForToastsToHide();
+    expect(backupToastState.current.saved).toBe(false);
+  });
+
+  test('waits for the drafts before opening a deep link with Editorial Workflow', async () => {
+    await initTestConfig({
+      backend: { name: 'github', repo: 'me/site' },
+      publish_mode: 'editorial_workflow',
+      collections: [{ name: 'posts', label: 'Posts', folder: 'content/posts', fields }],
+    });
+    setEntries([createMockEntry({ slug: 'hello', content: { _default: { title: 'Hello' } } })]);
+    backendName.current = 'github';
+    allUnpublishedEntries.current = [];
+    unpublishedEntriesLoaded.current = false;
+    window.location.hash = '#/collections/posts/entries/hello';
+
+    try {
+      await render(ContentsPage);
+      await expect.poll(() => announcedPageStatus.current).toBe('Loading entry…');
+
+      // The entry is resolved once the drafts are in
+      unpublishedEntriesLoaded.current = true;
+      await expect
+        .element(page.getByRole('group', { name: 'Content Editor' }).getByRole('textbox'))
+        .toHaveValue('Hello');
+    } finally {
+      unpublishedEntriesLoaded.current = false;
+    }
+  });
+
+  test('opens the editor for a new entry, and a collection file', async () => {
+    window.location.hash = '#/collections/posts/new';
+
+    const { container } = await render(ContentsPage);
+
+    await expect.element(page.getByRole('group', { name: 'Content Editor' })).toBeInTheDocument();
+    expect(container.querySelector('.content-editor h2')).toHaveTextContent(
+      'Creating \u2068Posts\u2069',
+    );
+
+    // The collection file hasn’t been created yet, so it’s a new entry as well
+    window.location.hash = '#/collections/pages/entries/about';
+    await expect
+      .poll(() => container.querySelector('.content-editor h2')?.textContent)
+      .toBe('Creating \u2068Pages\u2069');
+    expect(selectedCollection.current?.name).toBe('pages');
+  });
+
+  test('reports a missing collection or page', async () => {
+    window.location.hash = '#/collections/missing';
+
+    await render(ContentsPage);
+    await expect.element(page.getByText('Collection not found.')).toBeInTheDocument();
+    expect(announcedPageStatus.current).toBe('Collection not found.');
+
+    window.location.hash = '#/collections/posts/foo/bar';
+    await expect.element(page.getByText('Page not found.')).toBeInTheDocument();
+  });
+
+  test('shows the search results', async () => {
+    searchMode.current = 'contents';
+    searchTerms.current = 'hello';
+    window.location.hash = '#/search/hello';
+
+    await render(ContentsPage);
+
+    await expect.element(page.getByRole('toolbar')).toHaveTextContent('Search Results');
+    await expect
+      .element(page.getByRole('grid', { name: 'Entries' }).getByRole('row', { name: /Hello/ }))
+      .toBeInTheDocument();
+  });
+});

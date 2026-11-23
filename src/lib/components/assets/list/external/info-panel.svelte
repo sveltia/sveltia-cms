@@ -1,19 +1,19 @@
 <script>
   import { _, locale as appLocale } from '@sveltia/i18n';
-  import { getPathInfo } from '@sveltia/utils/file';
-  import mime from 'mime';
+  import { Alert } from '@sveltia/ui';
 
+  import FileInfoSections from '$lib/components/assets/list/file-info-sections.svelte';
   import InfoPanelLayout from '$lib/components/assets/list/info-panel-layout.svelte';
   import UsedEntries from '$lib/components/assets/list/used-entries.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
+  import { externalAssetAvailability } from '$lib/services/assets/external/availability';
   import {
     getExternalAssetDetails,
     getExternalAssetUsedEntries,
   } from '$lib/services/assets/external/details';
   import { isMediaKind } from '$lib/services/assets/kinds';
   import { formatDate } from '$lib/services/utils/date';
-  import { formatSize } from '$lib/services/utils/file';
-  import { formatDuration } from '$lib/services/utils/media/video';
+  import { createLatestGuard } from '$lib/services/utils/scheduling';
 
   /**
    * @import { ExternalAssetDetails } from '$lib/services/assets/external/details';
@@ -26,11 +26,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    asset,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { asset } = $props();
 
   /** @type {ExternalAssetDetails} */
   let details = $state({});
@@ -40,8 +36,16 @@
   const { fileName, description, previewURL, downloadURL, kind, size, lastModified } =
     $derived(asset);
   const { dimensions, duration } = $derived(details);
-  const { extension = '' } = $derived(getPathInfo(fileName));
   const canPreview = $derived(isMediaKind(kind));
+  /** Only a file linked from an entry is checked, so this is never `true` on a cloud service. */
+  const unavailable = $derived(externalAssetAvailability.current[asset.id] === false);
+
+  /**
+   * Guard for {@link updateProps}. The panel stays mounted while the focus moves from one asset
+   * to another, so a slow lookup for an asset focused earlier must not overwrite the details of the
+   * one focused now.
+   */
+  const requestGuard = createLatestGuard();
 
   /**
    * Update the properties above.
@@ -50,16 +54,38 @@
    * resize, while this is still awaiting the service.
    */
   const updateProps = async (_asset) => {
+    const isLatest = requestGuard.next();
+
     details = {};
     usedEntries = undefined;
 
     try {
-      details = await getExternalAssetDetails(_asset);
+      const _details = await getExternalAssetDetails(_asset);
+
+      if (!isLatest()) {
+        return;
+      }
+
+      details = _details;
     } catch {
       // The file could not be loaded; leave the media info out
     }
 
-    usedEntries = await getExternalAssetUsedEntries(_asset);
+    try {
+      const _usedEntries = await getExternalAssetUsedEntries(_asset);
+
+      if (isLatest()) {
+        usedEntries = _usedEntries;
+      }
+    } catch (/** @type {any} */ ex) {
+      // eslint-disable-next-line no-console
+      console.error(ex);
+
+      if (isLatest()) {
+        // Stop showing the used entries as being loaded
+        usedEntries = [];
+      }
+    }
   };
 
   $effect(() => {
@@ -79,37 +105,13 @@
 {/snippet}
 
 <InfoPanelLayout preview={canPreview ? preview : undefined}>
-  <section>
-    <h4>{_('kind')}</h4>
-    <p>
-      <!-- A linked file may have no extension, e.g. an avatar URL, so fall back to the kind -->
-      {_(`file_type_labels.${extension}`, {
-        default: mime.getType(fileName) ?? (extension ? extension.toUpperCase() : _(kind)),
-      })}
-    </p>
-  </section>
-  {#if !!size}
-    <section>
-      <h4>{_('size')}</h4>
-      <p>
-        {#key appLocale.current}
-          {formatSize(size)}
-        {/key}
-      </p>
-    </section>
+  {#if unavailable}
+    <div role="none" class="unavailable">
+      <!-- Not announced on focus: the badge in the list has already told the user -->
+      <Alert status="error" ariaLive="off">{_('file_unavailable_description')}</Alert>
+    </div>
   {/if}
-  {#if canPreview}
-    <section>
-      <h4>{_('dimensions')}</h4>
-      <p>{dimensions ? `${dimensions.width}×${dimensions.height}` : '–'}</p>
-    </section>
-  {/if}
-  {#if ['audio', 'video'].includes(kind)}
-    <section>
-      <h4>{_('duration')}</h4>
-      <p>{duration ? formatDuration(duration) : '–'}</p>
-    </section>
-  {/if}
+  <FileInfoSections {fileName} {kind} {size} hasDimensions={canPreview} {dimensions} {duration} />
   <section>
     <h4>{_('public_urls', { values: { count: 1 } })}</h4>
     <p>
@@ -131,3 +133,9 @@
     </section>
   {/if}
 </InfoPanelLayout>
+
+<style>
+  .unavailable {
+    margin: 0 0 16px;
+  }
+</style>

@@ -23,19 +23,19 @@
    */
 
   /** @type {FieldEditorProps & Props} */
-  let {
-    /* eslint-disable prefer-const */
-    fieldConfig: config,
-    ...rest
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { fieldConfig: config, ...rest } = $props();
 
   const fieldId = $props.id();
+  const summaryId = `list-${fieldId}-summary`;
+  const { hasSubFields } = $derived(getListFieldInfo(config));
 </script>
 
-<Group aria-labelledby="list-{fieldId}-summary">
-  {#if getListFieldInfo(config).hasSubFields}
-    <ListEditorComplex {...{ ...rest, fieldConfig: /** @type {ComplexListField} */ (config) }} />
+<!-- Only a list with subfields shows the item count that labels it -->
+<Group aria-labelledby={hasSubFields ? summaryId : undefined}>
+  {#if hasSubFields}
+    <ListEditorComplex
+      {...{ ...rest, fieldConfig: /** @type {ComplexListField} */ (config), summaryId }}
+    />
   {:else}
     <ListEditorSimple {...{ ...rest, fieldConfig: /** @type {SimpleListField} */ (config) }} />
   {/if}

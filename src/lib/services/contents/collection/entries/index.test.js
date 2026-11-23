@@ -2,26 +2,20 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { cmsConfig } from '$lib/services/config';
 import { allEntries, allEntryFolders } from '$lib/services/contents';
 import {
   _resetEntriesByCollectionCache,
   canCreateIndexFile,
-  getEntriesByAssetURL,
+  countCollectionEntries,
   getEntriesByCollection,
+  getEntriesInCollectionFolder,
   getListedCollections,
-  hasAsset,
-  MARKDOWN_IMAGE_REGEX,
   matchesCollectionFilter,
   selectedEntries,
   selectedEntryIdSet,
 } from '$lib/services/contents/collection/entries';
 
 // Mock dependencies
-vi.mock('$lib/services/assets/info', () => ({
-  getMediaFieldURL: vi.fn(),
-}));
-
 vi.mock('$lib/services/config', () => ({
   cmsConfig: { current: undefined },
 }));
@@ -35,21 +29,17 @@ vi.mock('$lib/services/contents/collection', () => ({
   getCollection: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/collection/files', () => ({
-  getCollectionFilesByEntry: vi.fn(),
-}));
-
 vi.mock('$lib/services/contents/collection/entries/index-file', () => ({
   getIndexFile: vi.fn(),
+  getIndexFileName: vi.fn(),
   isCollectionIndexFile: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/entry', () => ({
+vi.mock('$lib/services/contents/entry/collections', () => ({
   getAssociatedCollections: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/entry/fields', () => ({
-  getField: vi.fn(),
+vi.mock('$lib/services/contents/entry/values', () => ({
   getPropertyValue: vi.fn(),
 }));
 
@@ -64,48 +54,6 @@ describe('selectedEntryIdSet', () => {
 
     selectedEntries.current = [];
     expect(selectedEntryIdSet.current).toEqual(new Set());
-  });
-});
-
-describe('MARKDOWN_IMAGE_REGEX', () => {
-  test('matches simple markdown image', () => {
-    const text = '![alt text](image.jpg)';
-    const matches = [...text.matchAll(MARKDOWN_IMAGE_REGEX)];
-
-    expect(matches).toHaveLength(1);
-    expect(matches[0][1]).toBe('image.jpg');
-  });
-
-  test('matches markdown image with title', () => {
-    const text = '![alt text](image.jpg "Title")';
-    const matches = [...text.matchAll(MARKDOWN_IMAGE_REGEX)];
-
-    expect(matches).toHaveLength(1);
-    expect(matches[0][1]).toBe('image.jpg');
-  });
-
-  test('matches multiple images', () => {
-    const text = '![first](img1.jpg) and ![second](img2.png "Title")';
-    const matches = [...text.matchAll(MARKDOWN_IMAGE_REGEX)];
-
-    expect(matches).toHaveLength(2);
-    expect(matches[0][1]).toBe('img1.jpg');
-    expect(matches[1][1]).toBe('img2.png');
-  });
-
-  test('matches images with paths', () => {
-    const text = '![alt](/assets/images/photo.jpg)';
-    const matches = [...text.matchAll(MARKDOWN_IMAGE_REGEX)];
-
-    expect(matches).toHaveLength(1);
-    expect(matches[0][1]).toBe('/assets/images/photo.jpg');
-  });
-
-  test('does not match incomplete images', () => {
-    const text = '![alt text]';
-    const matches = [...text.matchAll(MARKDOWN_IMAGE_REGEX)];
-
-    expect(matches).toHaveLength(0);
   });
 });
 
@@ -128,7 +76,7 @@ describe('getEntriesByCollection()', () => {
 
   test('filters entries by collection', async () => {
     const { getCollection } = await import('$lib/services/contents/collection');
-    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
 
     // Create a minimal collection mock with required properties
     const collection = {
@@ -161,8 +109,8 @@ describe('getEntriesByCollection()', () => {
 
   test('filters entries by field pattern', async () => {
     const { getCollection } = await import('$lib/services/contents/collection');
-    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-    const { getPropertyValue } = await import('$lib/services/contents/entry/fields');
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
+    const { getPropertyValue } = await import('$lib/services/contents/entry/values');
     const { getRegex } = await import('$lib/services/utils/regex');
 
     const collection = {
@@ -199,8 +147,8 @@ describe('getEntriesByCollection()', () => {
 
   test('filters entries by field value array', async () => {
     const { getCollection } = await import('$lib/services/contents/collection');
-    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-    const { getPropertyValue } = await import('$lib/services/contents/entry/fields');
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
+    const { getPropertyValue } = await import('$lib/services/contents/entry/values');
     const { getRegex } = await import('$lib/services/utils/regex');
 
     const collection = {
@@ -242,8 +190,8 @@ describe('getEntriesByCollection()', () => {
 
   test('filters entries by single field value', async () => {
     const { getCollection } = await import('$lib/services/contents/collection');
-    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-    const { getPropertyValue } = await import('$lib/services/contents/entry/fields');
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
+    const { getPropertyValue } = await import('$lib/services/contents/entry/values');
     const { getRegex } = await import('$lib/services/utils/regex');
 
     const collection = {
@@ -287,8 +235,8 @@ describe('getEntriesByCollection()', () => {
     const { getCollection } = await import('$lib/services/contents/collection');
     const indexFileModule = await import('$lib/services/contents/collection/entries/index-file');
     const { isCollectionIndexFile } = indexFileModule;
-    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-    const { getPropertyValue } = await import('$lib/services/contents/entry/fields');
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
+    const { getPropertyValue } = await import('$lib/services/contents/entry/values');
     const { getRegex } = await import('$lib/services/utils/regex');
 
     const collection = {
@@ -325,165 +273,48 @@ describe('getEntriesByCollection()', () => {
     expect(getPropertyValue).toHaveBeenCalledTimes(2);
   });
 
-  test('filters entries using fullPathRegEx when collection has _file.fullPathRegEx', async () => {
+  test('sorts the entries into their collections, keeping the store order', async () => {
     const { getCollection } = await import('$lib/services/contents/collection');
-    const fullPathRegEx = /^posts\/[^/]+\.md$/;
-
-    const collection = {
-      name: 'posts',
-      _type: 'entry',
-      _i18n: { defaultLocale: 'en' },
-      _file: { fullPathRegEx },
-    };
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
 
     const entries = [
       { id: '1', locales: { en: { path: 'posts/hello.md', content: {} } } },
       { id: '2', locales: { en: { path: 'pages/about.md', content: {} } } },
       { id: '3', locales: { en: { path: 'posts/world.md', content: {} } } },
+      { id: '4', locales: { en: { path: 'other/file.md', content: {} } } },
     ];
 
-    vi.mocked(getCollection).mockReturnValue(collection);
-    allEntries.current = entries;
-
-    const result = getEntriesByCollection('posts');
-
-    expect(result).toHaveLength(2);
-    expect(result[0].id).toBe('1');
-    expect(result[1].id).toBe('3');
-  });
-
-  test('handles entry with undefined path when using fullPathRegEx (falls back to empty string)', async () => {
-    const { getCollection } = await import('$lib/services/contents/collection');
-    const fullPathRegEx = /^posts\/.+\.md$/;
-
-    const collection = {
-      name: 'posts',
+    vi.mocked(getCollection).mockImplementation((name) => ({
+      name,
       _type: 'entry',
       _i18n: { defaultLocale: 'en' },
-      _file: { fullPathRegEx },
-    };
+    }));
+    // A collection can match an entry through more than one of its folders, and an entry can
+    // belong to more than one collection
+    vi.mocked(getAssociatedCollections).mockImplementation((entry) => {
+      const { path } = entry.locales.en;
 
-    const entries = [
-      // path is undefined — locales[0]?.path ?? '' gives '' which fails the regex
-      { id: '1', locales: { en: { path: undefined, content: {} } } },
-      { id: '2', locales: { en: { path: 'posts/hello.md', content: {} } } },
-    ];
+      if (path.startsWith('posts/')) {
+        return [{ name: 'posts' }, { name: 'posts' }, { name: 'all' }];
+      }
 
-    vi.mocked(getCollection).mockReturnValue(collection);
+      return path.startsWith('pages/') ? [{ name: 'all' }] : [];
+    });
     allEntries.current = entries;
 
-    const result = getEntriesByCollection('posts');
-
-    expect(result).toHaveLength(1);
-    expect(result[0].id).toBe('2');
-  });
-
-  test('filters entries for a file collection using validPaths', async () => {
-    const { getCollection } = await import('$lib/services/contents/collection');
-
-    const collection = {
-      name: 'singleton',
-      _type: 'file',
-      _i18n: { defaultLocale: 'en' },
-    };
-
-    const folders = [
-      {
-        collectionName: 'singleton',
-        fileName: 'about',
-        filePathMap: { en: 'content/singleton/about.md', fr: 'content/singleton/about.fr.md' },
-      },
-      {
-        collectionName: 'other',
-        fileName: 'contact',
-        filePathMap: { en: 'content/other/contact.md' },
-      },
-    ];
-
-    const entries = [
-      { id: '1', locales: { en: { path: 'content/singleton/about.md', content: {} } } },
-      { id: '2', locales: { en: { path: 'content/other/contact.md', content: {} } } },
-      { id: '3', locales: { en: { path: 'content/singleton/about.fr.md', content: {} } } },
-    ];
-
-    vi.mocked(getCollection).mockReturnValue(collection);
-    // Dispatch on the store rather than call order: `getEntriesByCollection()` reads both stores
-    // up front to validate its cache.
-    allEntryFolders.current = folders;
-    allEntries.current = entries;
-
-    const result = getEntriesByCollection('singleton');
-
-    expect(result).toHaveLength(2);
-    expect(result[0].id).toBe('1');
-    expect(result[1].id).toBe('3');
-  });
-
-  test('handles file collection folder with no filePathMap (flatMap returns [])', async () => {
-    const { getCollection } = await import('$lib/services/contents/collection');
-
-    const collection = {
-      name: 'pages',
-      _type: 'file',
-      _i18n: { defaultLocale: 'en' },
-    };
-
-    const folders = [
-      { collectionName: 'pages', fileName: 'home', filePathMap: { en: 'content/home.md' } },
-      { collectionName: 'pages', fileName: 'missing', filePathMap: undefined }, // no filePathMap
-    ];
-
-    const entries = [
-      { id: '1', locales: { en: { path: 'content/home.md', content: {} } } },
-      { id: '2', locales: { en: { path: 'content/other.md', content: {} } } },
-    ];
-
-    vi.mocked(getCollection).mockReturnValue(collection);
-    allEntryFolders.current = folders;
-    allEntries.current = entries;
-
-    const result = getEntriesByCollection('pages');
-
-    // Only entry 1 matches the validPaths (content/home.md)
-    expect(result).toHaveLength(1);
-    expect(result[0].id).toBe('1');
-  });
-
-  test('excludes file collection entry with undefined path from validPaths', async () => {
-    const { getCollection } = await import('$lib/services/contents/collection');
-
-    const collection = {
-      name: 'pages',
-      _type: 'file',
-      _i18n: { defaultLocale: 'en' },
-    };
-
-    const folders = [
-      { collectionName: 'pages', fileName: 'home', filePathMap: { en: 'content/home.md' } },
-    ];
-
-    const entries = [
-      { id: '1', locales: { en: { path: undefined, content: {} } } }, // no path
-      { id: '2', locales: { en: { path: 'content/home.md', content: {} } } },
-    ];
-
-    vi.mocked(getCollection).mockReturnValue(collection);
-    allEntryFolders.current = folders;
-    allEntries.current = entries;
-
-    const result = getEntriesByCollection('pages');
-
-    // Entry 1 has undefined path so !!entryPath is false, excluded
-    expect(result).toHaveLength(1);
-    expect(result[0].id).toBe('2');
+    expect(getEntriesByCollection('posts').map(({ id }) => id)).toEqual(['1', '3']);
+    expect(getEntriesByCollection('all').map(({ id }) => id)).toEqual(['1', '2', '3']);
+    expect(getEntriesByCollection('empty')).toEqual([]);
+    // The entry list is scanned once for every collection
+    expect(getAssociatedCollections).toHaveBeenCalledTimes(entries.length);
   });
 
   test('uses null fallback when getPropertyValue returns undefined (line 95 branch 1)', async () => {
     // When getPropertyValue returns undefined, `?? null` converts it to null.
     // Then `filterValues.includes(null)` determines inclusion.
     const { getCollection } = await import('$lib/services/contents/collection');
-    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-    const { getPropertyValue } = await import('$lib/services/contents/entry/fields');
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
+    const { getPropertyValue } = await import('$lib/services/contents/entry/values');
     const { getRegex } = await import('$lib/services/utils/regex');
 
     const collection = {
@@ -514,7 +345,7 @@ describe('getEntriesByCollection()', () => {
 
   test('reuses the same array for repeated calls', async () => {
     const { getCollection } = await import('$lib/services/contents/collection');
-    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
     const collection = { name: 'posts', _type: 'entry', _i18n: { defaultLocale: 'en' } };
     const entries = [{ id: '1', locales: { en: { content: {} } } }];
 
@@ -533,7 +364,7 @@ describe('getEntriesByCollection()', () => {
 
   test('keeps separate results per collection', async () => {
     const { getCollection } = await import('$lib/services/contents/collection');
-    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
 
     const entries = [
       { id: '1', locales: { en: { content: {} } } },
@@ -556,7 +387,7 @@ describe('getEntriesByCollection()', () => {
 
   test('rescans when the entry store is replaced', async () => {
     const { getCollection } = await import('$lib/services/contents/collection');
-    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
     const collection = { name: 'posts', _type: 'entry', _i18n: { defaultLocale: 'en' } };
     const before = [{ id: '1', locales: { en: { content: {} } } }];
     const after = [...before, { id: '2', locales: { en: { content: {} } } }];
@@ -573,6 +404,7 @@ describe('getEntriesByCollection()', () => {
 
   test('rescans when the entry folder store is replaced', async () => {
     const { getCollection } = await import('$lib/services/contents/collection');
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
     const collection = { name: 'pages', _type: 'file', _i18n: { defaultLocale: 'en' } };
 
     const entries = [
@@ -580,24 +412,162 @@ describe('getEntriesByCollection()', () => {
       { id: '2', locales: { en: { path: 'content/about.md', content: {} } } },
     ];
 
-    const before = [
-      { collectionName: 'pages', fileName: 'home', filePathMap: { en: 'content/home.md' } },
-    ];
-
-    const after = [
-      ...before,
-      { collectionName: 'pages', fileName: 'about', filePathMap: { en: 'content/about.md' } },
-    ];
-
     vi.mocked(getCollection).mockReturnValue(collection);
+    vi.mocked(getAssociatedCollections).mockImplementation((entry) =>
+      entry.id === '1' ? [collection] : [],
+    );
 
-    allEntryFolders.current = before;
+    allEntryFolders.current = [];
     allEntries.current = entries;
     expect(getEntriesByCollection('pages')).toHaveLength(1);
 
-    allEntryFolders.current = after;
-    allEntries.current = entries;
+    // A new configuration adds a file to the collection
+    vi.mocked(getAssociatedCollections).mockReturnValue([collection]);
+    allEntryFolders.current = [];
     expect(getEntriesByCollection('pages')).toHaveLength(2);
+  });
+});
+
+describe('getEntriesInCollectionFolder()', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    _resetEntriesByCollectionCache();
+  });
+
+  test('returns every entry in the collection folder, including those filtered out', async () => {
+    const { getCollection } = await import('$lib/services/contents/collection');
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
+    const { getPropertyValue } = await import('$lib/services/contents/entry/values');
+    const { getRegex } = await import('$lib/services/utils/regex');
+
+    const fr = {
+      name: 'fr',
+      _type: 'entry',
+      _i18n: { defaultLocale: '_default' },
+      filter: { field: 'lang', value: 'fr' },
+    };
+
+    const en = { name: 'en', _type: 'entry', filter: { field: 'lang', value: 'en' } };
+
+    const entries = [
+      { id: 'hello', locales: { _default: { content: { lang: 'en' } } } },
+      { id: 'bonjour', locales: { _default: { content: { lang: 'fr' } } } },
+    ];
+
+    vi.mocked(getCollection).mockReturnValue(fr);
+    vi.mocked(getRegex).mockReturnValue(undefined);
+    // Both collections share the folder
+    vi.mocked(getAssociatedCollections).mockReturnValue([en, fr]);
+    vi.mocked(getPropertyValue).mockImplementation(({ entry }) =>
+      entry.id === 'hello' ? 'en' : 'fr',
+    );
+    allEntries.current = entries;
+    allEntryFolders.current = [];
+
+    expect(getEntriesByCollection('fr').map(({ id }) => id)).toEqual(['bonjour']);
+    expect(getEntriesInCollectionFolder('fr').map(({ id }) => id)).toEqual(['hello', 'bonjour']);
+    expect(getEntriesInCollectionFolder('missing')).toEqual([]);
+
+    // The cache is dropped once the entries are replaced
+    allEntries.current = [entries[0]];
+    expect(getEntriesInCollectionFolder('fr').map(({ id }) => id)).toEqual(['hello']);
+  });
+});
+
+describe('getEntriesInCollectionFolder() with files claimed by another collection', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    _resetEntriesByCollectionCache();
+  });
+
+  test('adds them with the slugs the collection would give them', async () => {
+    const { getCollection } = await import('$lib/services/contents/collection');
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
+
+    const blog = {
+      name: 'blog',
+      _type: 'entry',
+      _i18n: { defaultLocale: 'en' },
+      _file: {
+        fullPathRegEx: /^content\/blog\/(?<subPath>[^/]+?)(?:\.(?<locale>fr))?\.md$/,
+        subPath: undefined,
+      },
+    };
+
+    const first = {
+      id: 'first',
+      slug: 'first',
+      locales: { en: { slug: 'first', path: 'content/blog/first.md' } },
+    };
+
+    // Hugo’s section page, declared as a file collection’s file
+    const index = {
+      id: 'index',
+      slug: 'blog-index',
+      locales: {
+        en: { slug: 'blog-index', path: 'content/blog/_index.md' },
+        fr: { slug: 'blog-index', path: 'content/blog/_index.fr.md' },
+      },
+    };
+
+    // Stored elsewhere, in a locale stored outside the folder too
+    const about = {
+      id: 'about',
+      slug: 'about',
+      locales: {
+        en: { slug: 'about', path: 'content/about.md' },
+        fr: { slug: 'about', path: 'content/blog/about.fr.md' },
+      },
+    };
+
+    const other = {
+      id: 'other',
+      slug: 'other',
+      locales: { en: { slug: 'other', path: 'content/other.md' } },
+    };
+
+    vi.mocked(getCollection).mockImplementation((name) => (name === 'blog' ? blog : undefined));
+    vi.mocked(getAssociatedCollections).mockImplementation((entry) =>
+      entry === first ? [blog] : [{ name: 'pages' }],
+    );
+    allEntries.current = [first, index, about, other];
+    allEntryFolders.current = [];
+
+    const entries = getEntriesInCollectionFolder('blog');
+
+    expect(entries).toEqual([
+      first,
+      {
+        ...index,
+        slug: '_index',
+        subPath: '_index',
+        locales: {
+          en: { slug: '_index', path: 'content/blog/_index.md' },
+          fr: { slug: '_index', path: 'content/blog/_index.fr.md' },
+        },
+      },
+      {
+        ...about,
+        slug: 'about',
+        subPath: 'about',
+        locales: { fr: { slug: 'about', path: 'content/blog/about.fr.md' } },
+      },
+    ]);
+    // The result is cached
+    expect(getEntriesInCollectionFolder('blog')).toBe(entries);
+    expect(getEntriesInCollectionFolder('missing')).toEqual([]);
+  });
+
+  test('adds none to a collection without a folder', async () => {
+    const { getCollection } = await import('$lib/services/contents/collection');
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
+
+    vi.mocked(getCollection).mockReturnValue({ name: 'pages', _type: 'file', _i18n: {} });
+    vi.mocked(getAssociatedCollections).mockReturnValue([]);
+    allEntries.current = [{ id: 'a', locales: { _default: { path: 'a.md' } } }];
+    allEntryFolders.current = [];
+
+    expect(getEntriesInCollectionFolder('pages')).toEqual([]);
   });
 });
 
@@ -628,7 +598,7 @@ describe('matchesCollectionFilter()', () => {
   });
 
   test('compares the field value with the filter value', async () => {
-    const { getPropertyValue } = await import('$lib/services/contents/entry/fields');
+    const { getPropertyValue } = await import('$lib/services/contents/entry/values');
 
     const collection = {
       name: 'posts',
@@ -649,11 +619,32 @@ describe('matchesCollectionFilter()', () => {
       locale: 'en',
       collectionName: 'posts',
       key: 'status',
+      // A Relation field is matched by its stored value, not by the referenced entry’s label
+      resolveRef: false,
     });
   });
 
+  test('reads the value from another locale when the entry lacks the default one', async () => {
+    const { getPropertyValue } = await import('$lib/services/contents/entry/values');
+
+    const collection = {
+      name: 'posts',
+      _type: 'entry',
+      _i18n: { defaultLocale: 'en' },
+      filter: { field: 'published', value: true },
+    };
+
+    // A multi-file i18n entry with only `hello.fr.md`, which is listed in French
+    const entry = { id: '1', locales: { fr: { content: { published: true } } } };
+
+    vi.mocked(getPropertyValue).mockReturnValue(true);
+
+    expect(matchesCollectionFilter(collection, entry)).toBe(true);
+    expect(getPropertyValue).toHaveBeenCalledWith(expect.objectContaining({ locale: 'fr' }));
+  });
+
   test('matches the field value against the filter pattern', async () => {
-    const { getPropertyValue } = await import('$lib/services/contents/entry/fields');
+    const { getPropertyValue } = await import('$lib/services/contents/entry/values');
     const { getRegex } = await import('$lib/services/utils/regex');
 
     const collection = {
@@ -672,6 +663,87 @@ describe('matchesCollectionFilter()', () => {
     expect(matchesCollectionFilter(collection, entry)).toBe(false);
     // The condition is cached, so the pattern is compiled once per collection
     expect(getRegex).toHaveBeenCalledTimes(1);
+  });
+
+  test('passes an entry when any item of a multi-value field matches', async () => {
+    const { getPropertyValue } = await import('$lib/services/contents/entry/values');
+    const { getRegex } = await import('$lib/services/utils/regex');
+    const _i18n = { defaultLocale: 'en' };
+    const entry = { id: '1', locales: { en: { content: {} } } };
+
+    const valueCollection = {
+      name: 'news',
+      _type: 'entry',
+      _i18n,
+      filter: { field: 'tags', value: 'news' },
+    };
+
+    const patternCollection = {
+      name: 'updates',
+      _type: 'entry',
+      _i18n,
+      filter: { field: 'tags', pattern: '^updates$' },
+    };
+
+    vi.mocked(getRegex).mockReturnValue(/^updates$/);
+
+    vi.mocked(getPropertyValue)
+      .mockReturnValueOnce(['news', 'updates'])
+      .mockReturnValueOnce(['events'])
+      .mockReturnValueOnce(['news', 'updates'])
+      .mockReturnValueOnce(['events'])
+      .mockReturnValueOnce([]);
+
+    expect(matchesCollectionFilter(valueCollection, entry)).toBe(true);
+    expect(matchesCollectionFilter(valueCollection, entry)).toBe(false);
+    expect(matchesCollectionFilter(patternCollection, entry)).toBe(true);
+    expect(matchesCollectionFilter(patternCollection, entry)).toBe(false);
+    expect(matchesCollectionFilter(patternCollection, entry)).toBe(false);
+  });
+
+  test('never matches a missing value against the filter pattern', async () => {
+    const { getPropertyValue } = await import('$lib/services/contents/entry/values');
+    const { getRegex } = await import('$lib/services/utils/regex');
+
+    const collection = {
+      name: 'translated',
+      _type: 'entry',
+      _i18n: { defaultLocale: 'en' },
+      filter: { field: 'lang', pattern: '^n' },
+    };
+
+    const entry = { id: '1', locales: { en: { content: {} } } };
+
+    vi.mocked(getRegex).mockReturnValue(/^n/);
+
+    vi.mocked(getPropertyValue)
+      .mockReturnValueOnce(undefined)
+      .mockReturnValueOnce(null)
+      .mockReturnValueOnce([null, undefined])
+      .mockReturnValueOnce('nl');
+
+    expect(matchesCollectionFilter(collection, entry)).toBe(false);
+    expect(matchesCollectionFilter(collection, entry)).toBe(false);
+    expect(matchesCollectionFilter(collection, entry)).toBe(false);
+    expect(matchesCollectionFilter(collection, entry)).toBe(true);
+  });
+
+  test('treats a missing value as null', async () => {
+    const { getPropertyValue } = await import('$lib/services/contents/entry/values');
+
+    const collection = {
+      name: 'untagged',
+      _type: 'entry',
+      _i18n: { defaultLocale: 'en' },
+      filter: { field: 'status', value: [null] },
+    };
+
+    const entry = { id: '1', locales: { en: { content: {} } } };
+
+    vi.mocked(getPropertyValue).mockReturnValueOnce(undefined).mockReturnValueOnce('draft');
+
+    expect(matchesCollectionFilter(collection, entry)).toBe(true);
+    expect(matchesCollectionFilter(collection, entry)).toBe(false);
   });
 
   test('exempts Hugo’s special index file from the filter', async () => {
@@ -700,8 +772,8 @@ describe('getListedCollections()', () => {
   });
 
   test('omits the collections that filter the entry out', async () => {
-    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-    const { getPropertyValue } = await import('$lib/services/contents/entry/fields');
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
+    const { getPropertyValue } = await import('$lib/services/contents/entry/values');
     const listed = { name: 'posts', _type: 'entry', _i18n: { defaultLocale: 'en' } };
 
     const filtered = {
@@ -719,8 +791,19 @@ describe('getListedCollections()', () => {
     expect(getListedCollections(entry)).toEqual([listed]);
   });
 
+  test('omits the hidden collections, which can’t be opened', async () => {
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
+    const listed = { name: 'posts', _type: 'entry', _i18n: { defaultLocale: 'en' } };
+    const hidden = { name: 'archive', _type: 'entry', _i18n: { defaultLocale: 'en' }, hide: true };
+    const entry = { id: '1', locales: { en: { content: {} } } };
+
+    vi.mocked(getAssociatedCollections).mockReturnValue([hidden, listed]);
+
+    expect(getListedCollections(entry)).toEqual([listed]);
+  });
+
   test('returns an empty array when the entry belongs to no collection', async () => {
-    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
 
     vi.mocked(getAssociatedCollections).mockReturnValue([]);
 
@@ -728,1150 +811,74 @@ describe('getListedCollections()', () => {
   });
 });
 
-describe('hasAsset()', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    vi.resetAllMocks();
-  });
-
-  test('returns false when field not found', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-
-    vi.mocked(getField).mockReturnValue(undefined);
-
-    const args = {
-      assetURL: 'image.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {},
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-      content: {},
-      keyPath: 'image',
-      value: 'image.jpg',
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    expect(result).toBe(false);
-  });
-
-  test('matches image field with direct URL', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldURL } = await import('$lib/services/assets/info');
-
-    vi.mocked(getField).mockReturnValue({
-      name: 'image',
-      widget: 'image',
-    });
-    vi.mocked(getMediaFieldURL).mockResolvedValue('image.jpg');
-
-    const args = {
-      assetURL: 'image.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {},
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-      content: {},
-      keyPath: 'image',
-      value: 'image.jpg',
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    expect(result).toBe(true);
-  });
-
-  test('matches images in markdown content', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldURL } = await import('$lib/services/assets/info');
-
-    vi.mocked(getField).mockReturnValue({
-      name: 'body',
-      widget: 'markdown',
-    });
-    vi.mocked(getMediaFieldURL).mockResolvedValue('image.jpg');
-
-    const content = {};
-
-    const args = {
-      assetURL: 'image.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {},
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-      content,
-      keyPath: 'body',
-      value: 'Here is an image: ![alt](image.jpg)',
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    expect(result).toBe(true);
-  });
-
-  test('returns false for non-string values', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-
-    vi.mocked(getField).mockReturnValue({
-      name: 'number_field',
-      widget: 'number',
-    });
-
-    const args = {
-      assetURL: 'image.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {},
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-      content: {},
-      keyPath: 'number_field',
-      value: 123, // Non-string value
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    expect(result).toBe(false);
-  });
-
-  test('returns false for empty string values', async () => {
-    const args = {
-      assetURL: 'image.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {},
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-      content: {},
-      keyPath: 'empty_field',
-      value: '', // Empty string
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    expect(result).toBe(false);
-  });
-
-  test('handles newURL parameter for image fields', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldURL } = await import('$lib/services/assets/info');
-
-    vi.mocked(getField).mockReturnValue({
-      name: 'image',
-      widget: 'image',
-    });
-    vi.mocked(getMediaFieldURL).mockResolvedValue('image.jpg');
-
-    const content = {};
-
-    const args = {
-      assetURL: 'image.jpg',
-      newURL: 'new-image.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {},
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-      content,
-      keyPath: 'image',
-      value: 'image.jpg',
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    expect(result).toBe(true);
-    expect(content.image).toBe('new-image.jpg');
-  });
-
-  test('handles newURL parameter for markdown content', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldURL } = await import('$lib/services/assets/info');
-
-    vi.mocked(getField).mockReturnValue({
-      name: 'body',
-      widget: 'markdown',
-    });
-    vi.mocked(getMediaFieldURL).mockResolvedValue('image.jpg');
-
-    const content = { body: 'Here is an image: ![alt](image.jpg)' };
-
-    const args = {
-      assetURL: 'image.jpg',
-      newURL: 'new-image.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {},
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-      content,
-      keyPath: 'body',
-      value: 'Here is an image: ![alt](image.jpg)',
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    expect(result).toBe(true);
-    expect(content.body).toBe('Here is an image: ![alt](new-image.jpg)');
-  });
-
-  test('handles markdown with multiple images', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldURL } = await import('$lib/services/assets/info');
-
-    vi.mocked(getField).mockReturnValue({
-      name: 'body',
-      widget: 'markdown',
-    });
-    vi.mocked(getMediaFieldURL)
-      .mockResolvedValueOnce('image1.jpg')
-      .mockResolvedValueOnce('image2.jpg');
-
-    const content = { body: 'First: ![alt](image1.jpg) Second: ![alt](image2.jpg)' };
-
-    const args = {
-      assetURL: 'image1.jpg',
-      newURL: 'new-image1.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {},
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-      content,
-      keyPath: 'body',
-      value: 'First: ![alt](image1.jpg) Second: ![alt](image2.jpg)',
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    expect(result).toBe(true);
-    expect(content.body).toBe('First: ![alt](new-image1.jpg) Second: ![alt](image2.jpg)');
-  });
-
-  test('handles markdown with no matching images', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldURL } = await import('$lib/services/assets/info');
-
-    vi.mocked(getField).mockReturnValue({
-      name: 'body',
-      widget: 'markdown',
-    });
-    vi.mocked(getMediaFieldURL).mockResolvedValue('other.jpg');
-
-    const args = {
-      assetURL: 'target.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {},
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-      content: {},
-      keyPath: 'body',
-      value: 'Here is an image: ![alt](other.jpg)',
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    expect(result).toBe(false);
-  });
-
-  test('handles blob URLs in image fields', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldURL } = await import('$lib/services/assets/info');
-
-    vi.mocked(getField).mockReturnValue({
-      name: 'image',
-      widget: 'image',
-    });
-
-    // For blob URLs, getMediaFieldURL should return the value as-is
-    vi.mocked(getMediaFieldURL).mockResolvedValue('blob:image.jpg');
-
-    const args = {
-      assetURL: 'blob:image.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {},
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-      content: {},
-      keyPath: 'image',
-      value: 'blob:image.jpg',
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    expect(result).toBe(true);
-  });
-
-  test('handles blob URLs in markdown content', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldURL } = await import('$lib/services/assets/info');
-
-    vi.mocked(getField).mockReturnValue({
-      name: 'body',
-      widget: 'markdown',
-    });
-
-    // For blob URLs, getMediaFieldURL should return the value as-is
-    vi.mocked(getMediaFieldURL).mockResolvedValue('blob:image.jpg');
-
-    const args = {
-      assetURL: 'blob:image.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {},
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-      content: {},
-      keyPath: 'body',
-      value: 'Here is an image: ![alt](blob:image.jpg)',
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    expect(result).toBe(true);
-  });
-
-  test('matches images in richtext content', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldURL } = await import('$lib/services/assets/info');
-
-    vi.mocked(getField).mockReturnValue({
-      name: 'body',
-      widget: 'richtext',
-    });
-    vi.mocked(getMediaFieldURL).mockResolvedValue('image.jpg');
-
-    const content = {};
-
-    const args = {
-      assetURL: 'image.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {},
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-      content,
-      keyPath: 'body',
-      value: 'Here is an image: ![alt](image.jpg)',
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    expect(result).toBe(true);
-  });
-
-  test('handles newURL parameter for richtext content', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldURL } = await import('$lib/services/assets/info');
-
-    vi.mocked(getField).mockReturnValue({
-      name: 'body',
-      widget: 'richtext',
-    });
-    vi.mocked(getMediaFieldURL).mockResolvedValue('image.jpg');
-
-    const content = { body: 'Here is an image: ![alt](image.jpg)' };
-
-    const args = {
-      assetURL: 'image.jpg',
-      newURL: 'new-image.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {},
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-      content,
-      keyPath: 'body',
-      value: 'Here is an image: ![alt](image.jpg)',
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    expect(result).toBe(true);
-    expect(content.body).toBe('Here is an image: ![alt](new-image.jpg)');
-  });
-
-  test('handles richtext with multiple images', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldURL } = await import('$lib/services/assets/info');
-
-    vi.mocked(getField).mockReturnValue({
-      name: 'body',
-      widget: 'richtext',
-    });
-    vi.mocked(getMediaFieldURL)
-      .mockResolvedValueOnce('image1.jpg')
-      .mockResolvedValueOnce('image2.jpg');
-
-    const content = { body: 'First: ![alt](image1.jpg) Second: ![alt](image2.jpg)' };
-
-    const args = {
-      assetURL: 'image1.jpg',
-      newURL: 'new-image1.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {},
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-      content,
-      keyPath: 'body',
-      value: 'First: ![alt](image1.jpg) Second: ![alt](image2.jpg)',
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    expect(result).toBe(true);
-    expect(content.body).toBe('First: ![alt](new-image1.jpg) Second: ![alt](image2.jpg)');
-  });
-
-  test('handles richtext with no matching images', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldURL } = await import('$lib/services/assets/info');
-
-    vi.mocked(getField).mockReturnValue({
-      name: 'body',
-      widget: 'richtext',
-    });
-    vi.mocked(getMediaFieldURL).mockResolvedValue('other.jpg');
-
-    const args = {
-      assetURL: 'target.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {},
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-      content: {},
-      keyPath: 'body',
-      value: 'Here is an image: ![alt](other.jpg)',
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    expect(result).toBe(false);
-  });
-
-  test('handles blob URLs in richtext content', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldURL } = await import('$lib/services/assets/info');
-
-    vi.mocked(getField).mockReturnValue({
-      name: 'body',
-      widget: 'richtext',
-    });
-
-    // For blob URLs, getMediaFieldURL should return the value as-is
-    vi.mocked(getMediaFieldURL).mockResolvedValue('blob:image.jpg');
-
-    const args = {
-      assetURL: 'blob:image.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {},
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-      content: {},
-      keyPath: 'body',
-      value: 'Here is an image: ![alt](blob:image.jpg)',
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    expect(result).toBe(true);
-  });
-
-  test('returns false for richtext field with no image syntax (line 159 false branch)', async () => {
-    // When the markdown body has no images, `matches.length` = 0 → the if block
-    // is NOT taken → falls through to `return false` at line 178.
-    const { getField } = await import('$lib/services/contents/entry/fields');
-
-    vi.mocked(getField).mockReturnValue({
-      name: 'body',
-      widget: 'richtext',
-    });
-
-    const args = {
-      assetURL: 'target.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: { content: {}, slug: 'test', path: 'posts/test.md' },
-        },
-      },
-      content: {},
-      keyPath: 'body',
-      value: 'Just plain text, no image syntax here.',
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    // matches.length = 0 (no markdown image syntax) → if block skipped → returns false
-    expect(result).toBe(false);
-  });
-});
-
-describe('getEntriesByAssetURL()', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  test('finds entries with asset URL', async () => {
-    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-
-    const { isCollectionIndexFile } =
-      await import('$lib/services/contents/collection/entries/index-file');
-
-    const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldURL } = await import('$lib/services/assets/info');
-
-    const mockEntries = [
-      {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: { image: 'test.jpg', body: 'Hello world' },
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-    ];
-
-    const mockCollection = {
-      name: 'posts',
-      _type: 'entry',
-    };
-
-    cmsConfig.current = { _baseURL: 'https://example.com' };
-    vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
-    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
-    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
-    vi.mocked(getField).mockReturnValue({ name: 'image', widget: 'image' });
-    vi.mocked(getMediaFieldURL).mockResolvedValue('test.jpg');
-
-    const result = await getEntriesByAssetURL('test.jpg', { entries: mockEntries });
-
-    expect(result).toHaveLength(1);
-    expect(result[0].id).toBe('1');
-  });
-
-  test('returns empty array when no entries match', async () => {
-    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-
-    const { isCollectionIndexFile } =
-      await import('$lib/services/contents/collection/entries/index-file');
-
-    const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldURL } = await import('$lib/services/assets/info');
-
-    const mockEntries = [
-      {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: { image: 'other.jpg' },
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-    ];
-
-    const mockCollection = {
-      name: 'posts',
-      _type: 'entry',
-    };
-
-    cmsConfig.current = { _baseURL: 'https://example.com' };
-    vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
-    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
-    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
-    vi.mocked(getField).mockReturnValue({ name: 'image', widget: 'image' });
-    vi.mocked(getMediaFieldURL).mockResolvedValue('other.jpg');
-
-    const result = await getEntriesByAssetURL('test.jpg', { entries: mockEntries });
-
-    expect(result).toHaveLength(0);
-  });
-
-  test('handles blob URLs correctly', async () => {
-    cmsConfig.current = { _baseURL: 'https://example.com' };
-
-    const result = await getEntriesByAssetURL('blob:test.jpg', { entries: [] });
-
-    expect(result).toHaveLength(0);
-  });
-
-  test('handles baseURL replacement', async () => {
-    cmsConfig.current = { _baseURL: 'https://example.com/' };
-
-    const result = await getEntriesByAssetURL('https://example.com/test.jpg', { entries: [] });
-
-    expect(result).toHaveLength(0);
-  });
-
-  test('skips entries with non-string content values', async () => {
-    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-
-    const { isCollectionIndexFile } =
-      await import('$lib/services/contents/collection/entries/index-file');
-
-    const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldURL } = await import('$lib/services/assets/info');
-
-    const mockEntries = [
-      {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {
-              image: 'test.jpg',
-              count: 42, // Non-string value
-              enabled: true, // Non-string value
-            },
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-    ];
-
-    const mockCollection = {
-      name: 'posts',
-      _type: 'entry',
-    };
-
-    cmsConfig.current = { _baseURL: 'https://example.com' };
-    vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
-    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
-    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
-    vi.mocked(getField).mockReturnValue({ name: 'image', widget: 'image' });
-    vi.mocked(getMediaFieldURL).mockResolvedValue('test.jpg');
-
-    const result = await getEntriesByAssetURL('test.jpg', { entries: mockEntries });
-
-    expect(result).toHaveLength(1);
-    expect(result[0].id).toBe('1');
-  });
-
-  test('skips entries with empty string content values', async () => {
-    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-
-    const { isCollectionIndexFile } =
-      await import('$lib/services/contents/collection/entries/index-file');
-
-    const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldURL } = await import('$lib/services/assets/info');
-
-    const mockEntries = [
-      {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {
-              image: 'test.jpg',
-              emptyField: '', // Empty string - should be skipped
-              anotherEmpty: '', // Another empty string
-            },
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-    ];
-
-    const mockCollection = {
-      name: 'posts',
-      _type: 'entry',
-    };
-
-    cmsConfig.current = { _baseURL: 'https://example.com' };
-    vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
-    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
-    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
-    vi.mocked(getField).mockReturnValue({ name: 'image', widget: 'image' });
-    vi.mocked(getMediaFieldURL).mockResolvedValue('test.jpg');
-
-    const result = await getEntriesByAssetURL('test.jpg', { entries: mockEntries });
-
-    expect(result).toHaveLength(1);
-    expect(result[0].id).toBe('1');
-  });
-
-  test('handles file collections with collectionFiles', async () => {
-    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-
-    const { isCollectionIndexFile } =
-      await import('$lib/services/contents/collection/entries/index-file');
-
-    const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldURL } = await import('$lib/services/assets/info');
-
-    const mockEntries = [
-      {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: { image: 'test.jpg' },
-            slug: 'test',
-            path: 'config/main.yml',
-          },
-        },
-      },
-    ];
-
-    const mockCollection = {
-      name: 'config',
-      _type: 'file',
-    };
-
-    const mockCollectionFile = {
-      name: 'main',
-      file: 'config/main.yml',
-    };
-
-    cmsConfig.current = { _baseURL: 'https://example.com' };
-    vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
-    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
-    vi.mocked(getCollectionFilesByEntry).mockReturnValue([mockCollectionFile]);
-    vi.mocked(getField).mockReturnValue({ name: 'image', widget: 'image' });
-    vi.mocked(getMediaFieldURL).mockResolvedValue('test.jpg');
-
-    const result = await getEntriesByAssetURL('test.jpg', { entries: mockEntries });
-
-    expect(result).toHaveLength(1);
-    expect(result[0].id).toBe('1');
-  });
-
-  test('handles multiple locales with different content', async () => {
-    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-
-    const { isCollectionIndexFile } =
-      await import('$lib/services/contents/collection/entries/index-file');
-
-    const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldURL } = await import('$lib/services/assets/info');
-
-    const mockEntries = [
-      {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: { image: 'test.jpg', title: 'English title' },
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-          ja: {
-            content: { image: 'other.jpg', title: '日本語タイトル' },
-            slug: 'test',
-            path: 'posts/test.ja.md',
-          },
-        },
-      },
-    ];
-
-    const mockCollection = {
-      name: 'posts',
-      _type: 'entry',
-    };
-
-    cmsConfig.current = { _baseURL: 'https://example.com' };
-    vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
-    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
-    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
-    vi.mocked(getField).mockReturnValue({ name: 'image', widget: 'image' });
-    vi.mocked(getMediaFieldURL).mockResolvedValue('test.jpg');
-
-    const result = await getEntriesByAssetURL('test.jpg', { entries: mockEntries });
-
-    expect(result).toHaveLength(1);
-    expect(result[0].id).toBe('1');
-  });
-
-  test('pre-filters fields that cannot contain the asset URL', async () => {
-    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-
-    const { isCollectionIndexFile } =
-      await import('$lib/services/contents/collection/entries/index-file');
-
-    const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
-    const { getField } = await import('$lib/services/contents/entry/fields');
-
-    const mockEntries = [
-      {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: { image: 'test.jpg', title: 'My post', body: 'Some long body text' },
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-    ];
-
-    const mockCollection = { name: 'posts', _type: 'entry' };
-
-    cmsConfig.current = { _baseURL: '' };
-    vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
-    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
-    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
-    vi.mocked(getField).mockReturnValue({ name: 'image', widget: 'image' });
-
-    const result = await getEntriesByAssetURL('test.jpg', { entries: mockEntries });
-
-    expect(result).toHaveLength(1);
-    // getField should only be called for the 'image' field, not 'title' or 'body'
-    expect(vi.mocked(getField)).toHaveBeenCalledTimes(1);
-  });
-
-  test('short-circuits after first match when not replacing', async () => {
-    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-
-    const { isCollectionIndexFile } =
-      await import('$lib/services/contents/collection/entries/index-file');
-
-    const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
-    const { getField } = await import('$lib/services/contents/entry/fields');
-
-    const mockEntries = [
-      {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            // Two fields both containing the URL – hasAsset should only be called once
-            content: { image1: 'test.jpg', image2: 'test.jpg' },
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-    ];
-
-    const mockCollection = { name: 'posts', _type: 'entry' };
-
-    cmsConfig.current = { _baseURL: '' };
-    vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
-    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
-    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
-    vi.mocked(getField).mockReturnValue({ name: 'image', widget: 'image' });
-
-    const result = await getEntriesByAssetURL('test.jpg', { entries: mockEntries });
-
-    expect(result).toHaveLength(1);
-    // Short-circuits after the first matching field, so getField is only called once
-    expect(vi.mocked(getField)).toHaveBeenCalledTimes(1);
-  });
-
-  test('does not short-circuit when replacing (processes all matching fields)', async () => {
-    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-
-    const { isCollectionIndexFile } =
-      await import('$lib/services/contents/collection/entries/index-file');
-
-    const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const content = { image1: 'test.jpg', image2: 'test.jpg' };
-
-    const mockEntries = [
-      {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: { content, slug: 'test', path: 'posts/test.md' },
-        },
-      },
-    ];
-
-    const mockCollection = { name: 'posts', _type: 'entry' };
-
-    cmsConfig.current = { _baseURL: '' };
-    vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
-    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
-    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
-    vi.mocked(getField).mockReturnValue({ name: 'image', widget: 'image' });
-
-    await getEntriesByAssetURL('test.jpg', { entries: mockEntries, newURL: 'new.jpg' });
-
-    // Both matching fields must be processed so both get replaced
-    expect(vi.mocked(getField)).toHaveBeenCalledTimes(2);
-    expect(content.image1).toBe('new.jpg');
-    expect(content.image2).toBe('new.jpg');
-  });
-
-  test('skips non-string values that come first (line 206 branch 0)', async () => {
-    // When a non-string value is the FIRST key in content, it triggers line 206’s continue
-    // before the loop can break early. The numeric `count` key is processed first,
-    // which forces `typeof 42 !== 'string'` = true → continue (branch 0).
-    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-
-    const { isCollectionIndexFile } =
-      await import('$lib/services/contents/collection/entries/index-file');
-
-    const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
-    const { getField } = await import('$lib/services/contents/entry/fields');
-
-    const mockEntries = [
-      {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            // count (non-string) is inserted FIRST so it’s iterated before image
-            content: { count: 42, image: 'target.jpg' },
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-    ];
-
-    const mockCollection = { name: 'posts', _type: 'entry' };
-
-    cmsConfig.current = { _baseURL: '' };
-    vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
-    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
-    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
-    vi.mocked(getField).mockReturnValue({ name: 'image', widget: 'image' });
-
-    const result = await getEntriesByAssetURL('target.jpg', { entries: mockEntries });
-
-    // count:42 → continue (line 206 branch 0); image:‘target.jpg’ → found
-    expect(result).toHaveLength(1);
-    expect(result[0].id).toBe('1');
-  });
-
-  test('processes fields where hasAsset returns false before a matching field (line 238 false branch)', async () => {
-    // A string field whose value contains the asset URL passes the pre-filter at
-    // line 209, but `hasAsset` returns false for a non-asset widget (line 178),
-    // causing `matched = false` → `if (matched)` false branch at line 238.
-    // The second field (image) matches and sets found = true.
-    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-
-    const { isCollectionIndexFile } =
-      await import('$lib/services/contents/collection/entries/index-file');
-
-    const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
-    const { getField } = await import('$lib/services/contents/entry/fields');
-
-    const mockEntries = [
-      {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            // description contains the URL but is a string field (not image)
-            content: { description: 'See target.jpg for more', image: 'target.jpg' },
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-    ];
-
-    const mockCollection = { name: 'posts', _type: 'entry' };
-
-    cmsConfig.current = { _baseURL: '' };
-    vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
-    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
-    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
-    vi.mocked(getField).mockImplementation(({ keyPath }) => {
-      if (keyPath === 'description') return { name: 'description', widget: 'string' };
-      if (keyPath === 'image') return { name: 'image', widget: 'image' };
-
-      return undefined;
-    });
-
-    const result = await getEntriesByAssetURL('target.jpg', { entries: mockEntries });
-
-    // description → hasAsset returns false (string widget), matched=false (line 238 false branch)
-    // image → hasAsset returns true, found=true
-    expect(result).toHaveLength(1);
-    expect(result[0].id).toBe('1');
-  });
-});
-
 describe('selectedEntries', () => {
   test('is exported as reactive state', () => {
     selectedEntries.current = [];
     expect(selectedEntries.current).toEqual([]);
+  });
+});
+
+describe('countCollectionEntries()', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  /**
+   * Entries in a `pages` collection on `content`, which holds its own index file, another
+   * collection’s index file and a regular entry.
+   */
+  const entries = [
+    { id: '1', slug: '_index', locales: { en: { path: 'content/_index.md', content: {} } } },
+    { id: '2', slug: 'about', locales: { en: { path: 'content/about/_index.md', content: {} } } },
+    {
+      id: '3',
+      slug: '_index',
+      locales: { en: { path: 'content/posts/_index.md', content: {} } },
+    },
+  ];
+
+  test('leaves out the collection’s own index file', async () => {
+    const { getCollection } = await import('$lib/services/contents/collection');
+
+    const { getIndexFileName, isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
+    vi.mocked(getCollection).mockReturnValue({ name: 'pages', _type: 'entry' });
+    vi.mocked(getIndexFileName).mockReturnValue('_index');
+    // `content/posts/_index.md` belongs to a collection below `content`, so it’s an ordinary entry
+    // as far as `pages` is concerned
+    // @see https://github.com/sveltia/sveltia-cms/issues/1005
+    vi.mocked(isCollectionIndexFile).mockImplementation(
+      (_collection, { locales }) => locales.en?.path === 'content/_index.md',
+    );
+
+    expect(countCollectionEntries('pages', entries)).toBe(2);
+  });
+
+  test('skips the pass entirely when the collection has no index file', async () => {
+    const { getCollection } = await import('$lib/services/contents/collection');
+
+    const { getIndexFileName, isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
+    vi.mocked(getCollection).mockReturnValue({ name: 'pages', _type: 'entry' });
+    vi.mocked(getIndexFileName).mockReturnValue(undefined);
+
+    expect(countCollectionEntries('pages', entries)).toBe(3);
+    // Nothing can be left out, so the entries aren’t walked at all
+    expect(isCollectionIndexFile).not.toHaveBeenCalled();
+  });
+
+  test('counts every entry when the collection is gone', async () => {
+    const { getCollection } = await import('$lib/services/contents/collection');
+
+    const { getIndexFileName } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
+    vi.mocked(getCollection).mockReturnValue(undefined);
+
+    expect(countCollectionEntries('pages', entries)).toBe(3);
+    expect(getIndexFileName).not.toHaveBeenCalled();
   });
 });
 
@@ -1896,7 +903,7 @@ describe('canCreateIndexFile()', () => {
   test('returns true when index file does not yet exist in collection entries', async () => {
     const { getIndexFile } = await import('$lib/services/contents/collection/entries/index-file');
     const { getCollection } = await import('$lib/services/contents/collection');
-    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
 
     const collection = {
       name: 'posts',
@@ -1924,9 +931,11 @@ describe('canCreateIndexFile()', () => {
   });
 
   test('returns false when index file already exists in collection entries', async () => {
-    const { getIndexFile } = await import('$lib/services/contents/collection/entries/index-file');
+    const { getIndexFile, isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
     const { getCollection } = await import('$lib/services/contents/collection');
-    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
 
     const collection = {
       name: 'posts',
@@ -1936,6 +945,9 @@ describe('canCreateIndexFile()', () => {
 
     vi.mocked(getIndexFile).mockReturnValue({ name: '_index' });
     vi.mocked(getCollection).mockReturnValue(collection);
+    vi.mocked(isCollectionIndexFile).mockImplementation(
+      (_collection, { slug }) => slug === '_index',
+    );
 
     const entries = [
       { id: '1', slug: '_index', locales: { en: { content: {} } } },
@@ -1954,9 +966,11 @@ describe('canCreateIndexFile()', () => {
   });
 
   test('returns false when custom-named index file already exists', async () => {
-    const { getIndexFile } = await import('$lib/services/contents/collection/entries/index-file');
+    const { getIndexFile, isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
     const { getCollection } = await import('$lib/services/contents/collection');
-    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
 
     const collection = {
       name: 'posts',
@@ -1966,6 +980,7 @@ describe('canCreateIndexFile()', () => {
 
     vi.mocked(getIndexFile).mockReturnValue({ name: 'home' });
     vi.mocked(getCollection).mockReturnValue(collection);
+    vi.mocked(isCollectionIndexFile).mockImplementation((_collection, { slug }) => slug === 'home');
 
     const entries = [
       { id: '1', slug: 'home', locales: { en: { content: {} } } },
@@ -1981,5 +996,46 @@ describe('canCreateIndexFile()', () => {
     const result = canCreateIndexFile(collection);
 
     expect(result).toBe(false);
+  });
+
+  test('ignores the index file of nested entries listed in the collection', async () => {
+    const { getIndexFile, isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
+    const { getCollection } = await import('$lib/services/contents/collection');
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
+
+    const collection = {
+      name: 'pages',
+      _type: 'entry',
+      _i18n: { defaultLocale: 'en' },
+    };
+
+    vi.mocked(getIndexFile).mockReturnValue({ name: '_index' });
+    vi.mocked(getCollection).mockReturnValue(collection);
+
+    // `content/posts/_index.md` belongs to a `posts` collection below `content`, which gave it the
+    // slug `_index`, but it isn’t the `pages` collection’s own index file
+    // @see https://github.com/sveltia/sveltia-cms/issues/1005
+    vi.mocked(isCollectionIndexFile).mockImplementation(
+      (_collection, { locales }) => locales.en?.path === 'content/_index.md',
+    );
+
+    const entries = [
+      {
+        id: '1',
+        slug: '_index',
+        locales: { en: { path: 'content/posts/_index.md', content: {} } },
+      },
+      { id: '2', slug: 'about', locales: { en: { path: 'content/about/_index.md', content: {} } } },
+    ];
+
+    allEntries.current = entries;
+    vi.mocked(getAssociatedCollections)
+      .mockReturnValueOnce([{ name: 'pages' }])
+      .mockReturnValueOnce([{ name: 'pages' }]);
+
+    // @ts-ignore - Intentionally incomplete for testing
+    expect(canCreateIndexFile(collection)).toBe(true);
   });
 });

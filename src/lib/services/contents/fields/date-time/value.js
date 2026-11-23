@@ -1,0 +1,451 @@
+import { getDateTimeParts } from '@sveltia/utils/datetime';
+import dayjs from 'dayjs';
+import dayjsAdvancedFormat from 'dayjs/plugin/advancedFormat';
+import dayjsCustomParseFormat from 'dayjs/plugin/customParseFormat';
+import dayjsLocalizedFormat from 'dayjs/plugin/localizedFormat';
+import dayjsTimeZone from 'dayjs/plugin/timezone';
+import dayjsUTC from 'dayjs/plugin/utc';
+
+import { parseDateTimeConfig } from './config.js';
+import { getFormatLocale } from './locales.js';
+import {
+  formatInLocale,
+  getDate,
+  getParser,
+  getStoredValueTimeZone,
+  parseWithFormatFallback,
+} from './parse.js';
+import { getTimeZoneForStoredValue } from './timezone.js';
+
+/**
+ * @import { DateTimeFieldNormalizedProps, InternalLocaleCode } from '$lib/types/private';
+ * @import { DateTimeField, Field } from '$lib/types/public';
+ */
+
+dayjs.extend(dayjsAdvancedFormat);
+dayjs.extend(dayjsCustomParseFormat);
+dayjs.extend(dayjsLocalizedFormat);
+dayjs.extend(dayjsUTC);
+dayjs.extend(dayjsTimeZone);
+
+/**
+ * Match a date, alone or at UTC midnight. The entry list shows such a value as the date it’s
+ * written with, and any other value as an instant in the browser’s time zone, like the input does.
+ */
+const DATE_ONLY_MATCH_REGEX = /^(?<date>\d{4}-[01]\d-[0-3]\d)(?:T00:00(?::00)?(?:\.000)?Z)?$/;
+const TIME_SUFFIX_MATCH_REGEX = /(?:^|T)(?<time>[0-2]\d:[0-5]\d)(?!\d)/;
+const TIME_WITH_SECONDS_REGEX = /(?:^|T)[0-2]\d:[0-5]\d:[0-5]\d/;
+
+/**
+ * Build the display-ready date/time strings from the current parts.
+ * @param {object} args Arguments.
+ * @param {Date} [args.date] Date to derive parts from.
+ * @param {string} [args.timeZone] IANA timezone name.
+ * @param {DateTimeFieldNormalizedProps['inputTimeZone']} [args.inputTimeZone] Input timezone
+ * setting.
+ * @param {boolean} [args.dateOnly] Whether the field is date-only.
+ * @param {boolean} [args.timeOnly] Whether the field is time-only.
+ * @param {boolean} [args.includeUTCSeconds] Whether to append UTC seconds/milliseconds.
+ * @param {boolean} [args.includeSeconds] Whether to include the actual seconds rather than
+ * truncating the time to the minute, as the input does with its default `step`.
+ * @returns {string} Formatted display string.
+ */
+const formatDateTimeValue = ({
+  date,
+  timeZone,
+  inputTimeZone,
+  dateOnly,
+  timeOnly,
+  includeUTCSeconds = false,
+  includeSeconds = false,
+}) => {
+  const tz = timeZone || (inputTimeZone === 'utc' ? 'UTC' : undefined);
+  const { year, month, day, hour, minute, second } = getDateTimeParts({ date, timeZone: tz });
+  const dateStr = `${year}-${month}-${day}`;
+  const timeStr = `${hour}:${minute}${includeSeconds ? `:${second}` : ''}`;
+
+  if (dateOnly) {
+    return dateStr;
+  }
+
+  if (timeOnly) {
+    return timeStr;
+  }
+
+  if (includeUTCSeconds && tz === 'UTC') {
+    return `${dateStr}T${timeStr}${includeSeconds ? '' : ':00'}.000Z`;
+  }
+
+  return `${dateStr}T${timeStr}`;
+};
+
+/**
+ * Whether the value the editor derived from its input should replace the stored value. It shouldn’t
+ * when both resolve to the same instant: a user editing an existing entry in a different location
+ * than where it was originally written gets an input value shifted to their own time zone, but the
+ * epoch doesn’t change. The dates are compared rather than the epochs, because {@link getDate}
+ * returns `undefined` for a value it can’t parse, and `NaN !== NaN` would report every such value
+ * as a change.
+ * @param {object} args Arguments.
+ * @param {string | undefined} args.newValue Value derived from the input.
+ * @param {string | undefined} args.currentValue Value in the entry draft datastore.
+ * @param {DateTimeField} args.fieldConfig Field configuration.
+ * @param {InternalLocaleCode} [args.locale] Locale of the content the value belongs to.
+ * @returns {boolean} `true` if the stored value should be replaced.
+ */
+export const shouldUpdateValue = ({ newValue, currentValue, fieldConfig, locale }) => {
+  if (newValue === undefined || newValue === currentValue) {
+    return false;
+  }
+
+  const newDate = getDate(newValue, fieldConfig, locale);
+  const oldDate = getDate(currentValue, fieldConfig, locale);
+
+  if (newDate !== undefined && oldDate !== undefined) {
+    return newDate.getTime() !== oldDate.getTime();
+  }
+
+  // Neither value resolves to a date, so there’s no epoch to compare and nothing to tell the two
+  // apart. Writing one unusable string over another would let the editor’s effects syncing the
+  // input and the stored value keep waking each other. Clearing the field is the exception: an
+  // empty value settles on the next run
+  if (newDate === undefined && oldDate === undefined && newValue !== '') {
+    return false;
+  }
+
+  return true;
+};
+
+/**
+ * Get the current date/time.
+ * @param {DateTimeField} fieldConfig Field configuration.
+ * @param {string} [timeZone] IANA timezone name.
+ * @param {object} [options] Options.
+ * @param {Date} [options.date] Date to use instead of the current date/time.
+ * @param {boolean} [options.includeSeconds] Whether to include the seconds.
+ * @returns {string} Current date/time in the ISO 8601 format.
+ */
+export const getCurrentDateTime = (
+  fieldConfig,
+  timeZone,
+  { date = undefined, includeSeconds = false } = {},
+) => {
+  const { dateOnly, timeOnly, inputTimeZone } = parseDateTimeConfig(fieldConfig);
+
+  return formatDateTimeValue({
+    date,
+    timeZone,
+    inputTimeZone,
+    dateOnly,
+    timeOnly,
+    includeUTCSeconds: true,
+    includeSeconds,
+  });
+};
+
+/**
+ * Format an instant in a time zone, as returned by `dayjs.tz()`, with its wall time and offset in
+ * the zone. Day.js keeps such an instance as a `Date` in the browser’s time zone shifted by the
+ * offsets, so formatting it directly shifts a wall time in the browser’s DST gap by an hour. The
+ * wall time is therefore read as UTC, and the offset applied without converting it again. The
+ * Unix timestamp tokens would read that shifted wall time, so the instant’s timestamp is written in
+ * their place.
+ * @param {dayjs.Dayjs} instant Instant in a time zone.
+ * @param {string} format Format string.
+ * @param {string} [localeKey] Day.js locale, as returned by `getFormatLocale()`.
+ * @returns {string} Formatted value.
+ */
+export const formatInTimeZone = (instant, format, localeKey) => {
+  const epoch = instant.valueOf();
+  const offset = instant.utcOffset();
+  const wallTime = dayjs.utc(epoch + offset * 60_000);
+
+  const _format = format.replaceAll(/\[[^\]]+]|X|x/g, (token) =>
+    token === 'X' ? `[${Math.floor(epoch / 1000)}]` : token === 'x' ? `[${epoch}]` : token,
+  );
+
+  return (localeKey ? wallTime.locale(localeKey) : wallTime)
+    .utcOffset(offset, true)
+    .format(_format);
+};
+
+/**
+ * Format an instant in the time zone a stored value is read in, so it’s shown with the wall time
+ * and offset the field’s input has. See `getStoredValueTimeZone()`. Only the zone’s offset is taken
+ * from `.tz()`, which creates its instance from the wall time in the browser’s time zone, shifting
+ * one in the browser’s DST gap by an hour.
+ * @param {dayjs.Dayjs} instant Instant.
+ * @param {string} format Format string.
+ * @param {DateTimeField} fieldConfig Field configuration.
+ * @param {string} [localeKey] Day.js locale, as returned by `getFormatLocale()`.
+ * @returns {string} Formatted value.
+ */
+export const formatInFieldTimeZone = (instant, format, fieldConfig, localeKey) => {
+  const timeZone = getStoredValueTimeZone(fieldConfig);
+
+  return timeZone
+    ? formatInTimeZone(instant.utcOffset(instant.tz(timeZone).utcOffset()), format, localeKey)
+    : formatInLocale(instant, format, localeKey);
+};
+
+/**
+ * Get the final storable value from the input value.
+ * @param {object} args Arguments.
+ * @param {string | undefined} args.inputValue Raw value from the input field.
+ * @param {string | undefined} args.currentValue Current value in the entry.
+ * @param {DateTimeField} args.fieldConfig Field configuration.
+ * @param {string | undefined} [args.timeZone] IANA timezone name.
+ * @param {boolean} [args.outputUTC] Whether to output UTC time.
+ * @param {InternalLocaleCode} [args.locale] Locale of the content the value belongs to, which a
+ * value in a custom format is written in with `localize_format: true`.
+ * @returns {string | undefined} The final value.
+ */
+export const getCurrentValue = ({
+  inputValue,
+  currentValue,
+  fieldConfig,
+  timeZone,
+  outputUTC,
+  locale,
+}) => {
+  const {
+    format,
+    dateOnly,
+    timeOnly,
+    inputTimeZone,
+    outputUTC: configOutputUTC,
+  } = parseDateTimeConfig(fieldConfig);
+
+  const _outputUTC = outputUTC ?? configOutputUTC;
+  // Check for a seconds component. The input element omits it with the default `step` of 60,
+  // yielding `HH:mm` or `YYYY-MM-DDTHH:mm`
+  const hasSeconds = !!inputValue && TIME_WITH_SECONDS_REGEX.test(inputValue);
+  const timeFormat = hasSeconds ? 'HH:mm:ss' : 'HH:mm';
+  const inputFormat = dateOnly ? 'YYYY-MM-DD' : timeOnly ? timeFormat : `YYYY-MM-DDT${timeFormat}`;
+
+  const effectiveTimeZone =
+    inputTimeZone === 'utc'
+      ? 'UTC'
+      : inputTimeZone === 'local'
+        ? _outputUTC
+          ? timeZone
+          : undefined
+        : timeZone || inputTimeZone;
+
+  if (inputValue === '') {
+    return '';
+  }
+
+  if (!inputValue) {
+    return undefined;
+  }
+
+  if (format) {
+    const localeKey = getFormatLocale(fieldConfig, locale);
+    // Parse the wall time as UTC when the input is in UTC or in a time zone it’s converted from
+    // below, so a time in the browser’s DST gap isn’t shifted; otherwise parse it as local
+    const parse = getParser(!!effectiveTimeZone);
+    let parsed = parse(inputValue, inputFormat);
+
+    if (!parsed.isValid()) {
+      parsed = parse(inputValue);
+    }
+
+    // Return empty string for invalid dates to avoid storing 'Invalid Date'
+    if (!parsed.isValid()) {
+      return '';
+    }
+
+    // A date has no time zone, so store it as is: converting the midnight it was parsed as would
+    // shift it to the previous day east of UTC
+    if (dateOnly) {
+      return formatInLocale(parsed, format, localeKey);
+    }
+
+    if (!effectiveTimeZone) {
+      return formatInLocale(_outputUTC ? parsed.utc() : parsed, format, localeKey);
+    }
+
+    // Read the wall time in the zone rather than keeping it with `.tz(zone, true)`, which uses the
+    // zone’s offset at the instant the time was parsed as in the browser’s zone, a different one
+    // around a DST change; then optionally convert to UTC
+    const instant = dayjs.tz(parsed.format('YYYY-MM-DDTHH:mm:ss'), effectiveTimeZone);
+
+    return _outputUTC
+      ? formatInLocale(instant.utc(), format, localeKey)
+      : formatInTimeZone(instant, format, localeKey);
+  }
+
+  if (dateOnly) {
+    return inputValue;
+  }
+
+  // Append seconds (and milliseconds) for data format & framework compatibility
+  const timeSuffix = currentValue ? `:00${currentValue.endsWith('.000') ? '.000' : ''}` : ':00';
+
+  if (timeOnly) {
+    const timeValue = hasSeconds ? inputValue : `${inputValue}${timeSuffix}`;
+
+    // Input is already in UTC; store with a `Z` suffix (no conversion needed)
+    return inputTimeZone === 'utc' ? `${timeValue}Z` : timeValue;
+  }
+
+  if (inputTimeZone === 'utc') {
+    // Input is already in UTC; store with `Z` suffix (no conversion needed)
+    return dayjs.utc(inputValue).format();
+  }
+
+  if (_outputUTC) {
+    // Convert the local/custom-timezone input to UTC for storage.
+    const dt = timeZone ? dayjs.tz(inputValue, timeZone) : dayjs(inputValue);
+
+    return dt.utc().format();
+  }
+
+  if (timeZone && inputTimeZone !== 'local') {
+    // Preserve the configured custom timezone offset when output_utc is false.
+    return formatInTimeZone(dayjs.tz(inputValue, timeZone), 'YYYY-MM-DDTHH:mm:ssZ');
+  }
+
+  return hasSeconds ? inputValue : `${inputValue}${timeSuffix}`;
+};
+
+/**
+ * Get the current date/time as a value to be stored in the given field, formatted the same way as
+ * the field’s input would store it. Used for the `{{now}}` default value and the `auto_now` option.
+ * @param {DateTimeField} fieldConfig Field configuration.
+ * @param {object} [options] Options.
+ * @param {Date} [options.date] Date to use instead of the current date/time.
+ * @param {boolean} [options.includeSeconds] Whether to keep the seconds, which the input drops
+ * with its default `step`. The `{{now}}` default value is filled in the input, so it doesn’t, while
+ * a timestamp set on save does.
+ * @param {InternalLocaleCode} [options.locale] Locale of the content the value is stored in.
+ * @returns {string} Current date/time.
+ */
+export const getCurrentStorableValue = (
+  fieldConfig,
+  { date = undefined, includeSeconds = false, locale = undefined } = {},
+) => {
+  const { singleCustomTimeZone: timeZone, outputUTC } = parseDateTimeConfig(fieldConfig);
+
+  return /** @type {string} */ (
+    getCurrentValue({
+      inputValue: getCurrentDateTime(fieldConfig, timeZone, { date, includeSeconds }),
+      currentValue: '',
+      fieldConfig,
+      timeZone,
+      outputUTC,
+      locale,
+    })
+  );
+};
+
+/**
+ * Get the input value given the current value.
+ * @param {object} args Arguments.
+ * @param {string | undefined} args.currentValue Value in the entry draft datastore.
+ * @param {DateTimeField} args.fieldConfig Field configuration.
+ * @param {string} [args.timeZone] IANA timezone name.
+ * @param {InternalLocaleCode} [args.locale] Locale of the content the value belongs to.
+ * @returns {string | undefined} New value.
+ */
+export const getInputValue = ({ currentValue, fieldConfig, timeZone, locale }) => {
+  const { dateOnly, timeOnly, inputTimeZone, format } = parseDateTimeConfig(fieldConfig);
+  const displayTimeZone = getTimeZoneForStoredValue(currentValue, fieldConfig) ?? timeZone;
+  const localeKey = format ? getFormatLocale(fieldConfig, locale) : undefined;
+
+  // If the default value is an empty string, the input will be blank by default
+  if (!currentValue) {
+    return '';
+  }
+
+  // If the current value is the standard format, return it as is. A value in the custom format has
+  // to be parsed with it instead: a 12-hour time like `02:30 PM` starts with the same digits as
+  // `02:30` but means `14:30`
+  const value =
+    format && dayjs(currentValue, format, localeKey, true).isValid()
+      ? undefined
+      : dateOnly
+        ? currentValue.match(DATE_ONLY_MATCH_REGEX)?.groups?.date
+        : timeOnly
+          ? // Match both `YYYY-MM-DDTHH:mm(:ss)` and `HH:mm(:ss)` formats
+            currentValue.match(TIME_SUFFIX_MATCH_REGEX)?.groups?.time
+          : undefined;
+
+  if (value) {
+    return value;
+  }
+
+  // A date stored in the custom format has no time zone either, so read it as is. Parsing it as UTC
+  // midnight with `output_utc` and showing it in a time zone west of UTC would shift it to the
+  // previous day
+  if (dateOnly && format) {
+    const parsed = parseWithFormatFallback({
+      value: currentValue,
+      format,
+      parseAsUTC: false,
+      localeKey,
+    });
+
+    return parsed.isValid() ? parsed.format('YYYY-MM-DD') : '';
+  }
+
+  // `getDate()` reads a value without an offset in the field’s time zone, which the input shows
+  const dateForParts = getDate(currentValue, fieldConfig, locale);
+
+  // If `getDate` returned `undefined` (parsing failed), return empty string
+  if (!dateForParts) {
+    return '';
+  }
+
+  return formatDateTimeValue({
+    date: dateForParts,
+    timeZone: displayTimeZone,
+    inputTimeZone,
+    dateOnly,
+    timeOnly,
+  });
+};
+
+/**
+ * Localize a DateTime field value copied from another locale. With `localize_format: true`, a value
+ * in a custom format is written in the locale of the content it belongs to, so it’s parsed in the
+ * source locale and written again in the target locale. The wall-clock time is read as UTC, so the
+ * value is written with the same date and time whatever the field’s time zone; a value with a UTC
+ * offset is written in UTC. Any other value, including one that can’t be parsed, is returned as is.
+ * @param {object} args Arguments.
+ * @param {Field} args.fieldConfig Field configuration.
+ * @param {any} args.value Value copied from the source locale.
+ * @param {InternalLocaleCode} args.sourceLocale Source locale.
+ * @param {InternalLocaleCode} args.targetLocale Target locale.
+ * @returns {any} Localized value.
+ */
+export const getLocalizedDateTimeValue = ({ fieldConfig, value, sourceLocale, targetLocale }) => {
+  if (
+    fieldConfig.widget !== 'datetime' ||
+    /** @type {DateTimeField} */ (fieldConfig).localize_format !== true ||
+    typeof value !== 'string' ||
+    !value
+  ) {
+    return value;
+  }
+
+  const config = /** @type {DateTimeField} */ (fieldConfig);
+  const { format } = parseDateTimeConfig(config);
+  const sourceLocaleKey = getFormatLocale(config, sourceLocale);
+  const targetLocaleKey = getFormatLocale(config, targetLocale);
+
+  if (!format || sourceLocaleKey === targetLocaleKey) {
+    return value;
+  }
+
+  const parsed = parseWithFormatFallback({
+    value,
+    format,
+    parseAsUTC: true,
+    localeKey: sourceLocaleKey,
+  });
+
+  // English is Day.js’ default locale, which has to be set explicitly on a value parsed in another
+  return parsed.isValid() ? formatInLocale(parsed, format, targetLocaleKey ?? 'en') : value;
+};

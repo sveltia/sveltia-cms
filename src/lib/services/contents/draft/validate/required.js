@@ -1,47 +1,38 @@
-import {
-  getUnpublishedEntryBySlug,
-  unpublishedEntries,
-  workflowEnabled,
-} from '$lib/services/workflow';
+import { getUnpublishedEntryByDraft, isWorkflowDraft } from '$lib/services/workflow';
+import { getCollectionPublishModeOptions, getEntryStage } from '$lib/services/workflow/stages';
 
 /**
  * @import { EntryDraft, UnpublishedEntry, WorkflowStatus } from '$lib/types/private';
  */
 
 /**
- * Get the current Editorial Workflow status of the entry the given draft is editing. The draft
- * holds the entry as it was when the editor opened it, and the status can change while the editor
- * stays open — from the status menu, or on the Editorial Workflow page — so the status is read from
- * the store rather than from that snapshot. The branch the entry is already associated with is
- * preferred over the one derived from the slug, which an edited slug would no longer match.
+ * Get the Editorial Workflow stage of the entry the given draft is editing. The status can change
+ * while the editor stays open — from the status menu, or on the Editorial Workflow page — so it’s
+ * read from the store rather than from the draft’s snapshot of the entry.
  * @param {EntryDraft} draft Draft being edited.
- * @returns {WorkflowStatus | undefined} Status, or `undefined` if the entry has no pull request.
+ * @returns {WorkflowStatus} Stage. An entry that has no pull request yet starts as a draft.
  */
-const getWorkflowStatus = ({ collectionName, fileName, originalEntry }) => {
-  if (!originalEntry) {
-    return undefined;
-  }
+const getWorkflowStage = (draft) => {
+  const entry =
+    getUnpublishedEntryByDraft(draft) ??
+    /** @type {UnpublishedEntry | undefined} */ (draft.originalEntry);
 
-  const { workflow } = /** @type {UnpublishedEntry} */ (originalEntry);
-  const branch = workflow?.pullRequest?.branch;
-
-  const unpublishedEntry = branch
-    ? unpublishedEntries.current.find((entry) => entry.workflow.pullRequest.branch === branch)
-    : getUnpublishedEntryBySlug({ collectionName, slug: fileName ?? originalEntry.slug });
-
-  return unpublishedEntry?.workflow.status ?? workflow?.status;
+  return entry?.workflow ? getEntryStage(entry, draft.collection) : 'draft';
 };
 
 /**
  * Check whether the required fields of the given draft have to be filled in for it to be saved.
- * With Editorial Workflow an entry lives in a pull request until it’s published, so one that’s
- * still in the drafting stage can be saved incomplete, and the fields left empty aren’t marked as
- * errors. Anywhere else a save puts the entry straight on the site, and a workflow entry that has
- * moved on from the drafting stage is on its way there too.
+ * With a workflow an entry lives in a pull request until it’s published, so one that’s still in the
+ * drafting stage can be saved incomplete, and the fields left empty aren’t marked as errors, unless
+ * the `allow_incomplete_drafts` publish mode option is turned off. Anywhere else a save puts the
+ * entry straight on the site, and a workflow entry that has moved on from the drafting stage is on
+ * its way there too.
  * @param {EntryDraft} draft Draft to check.
  * @returns {boolean} `true` if an empty required field is an error.
  * @see https://github.com/decaporg/decap-cms/issues/464
+ * @see https://github.com/decaporg/decap-cms/issues/5013
  */
 export const isRequiredEnforced = (draft) =>
-  // An entry that has no pull request yet starts as a draft
-  !workflowEnabled.current || (getWorkflowStatus(draft) ?? 'draft') !== 'draft';
+  !isWorkflowDraft(draft) ||
+  !getCollectionPublishModeOptions(draft.collection).allowIncompleteDrafts ||
+  getWorkflowStage(draft) !== 'draft';

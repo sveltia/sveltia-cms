@@ -1,0 +1,171 @@
+import { flushSync } from 'svelte';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
+import { render } from 'vitest-browser-svelte';
+
+import { missingBrowserFeatures } from '$lib/services/app/browser-support';
+import { announcedPageStatus } from '$lib/services/app/navigation';
+import { inAuthPopup } from '$lib/services/backends/git/shared/auth';
+import { cmsConfig, cmsConfigErrors } from '$lib/services/config';
+import { dataLoaded, dataLoadedProgress } from '$lib/services/contents';
+import { user } from '$lib/services/user/account.svelte';
+import { auth, signInAutomatically } from '$lib/services/user/auth.svelte';
+import { prefs, prefsError } from '$lib/services/user/prefs.svelte';
+
+import EntrancePage from './entrance-page.svelte';
+
+vi.mock('$lib/services/user/auth.svelte', async () => {
+  const { createRawState, createState } = await import('$lib/services/utils/state.svelte');
+
+  return {
+    auth: createState({
+      signInError: { message: '', context: 'authentication' },
+      unauthenticated: true,
+      signingIn: false,
+    }),
+    magicLinkConfirmation: createRawState(),
+    resetError: vi.fn(),
+    logError: vi.fn(),
+    parseMagicLink: vi.fn(),
+    getUserCache: vi.fn(),
+    getBackend: vi.fn(),
+    signInAutomatically: vi.fn(),
+    signInManually: vi.fn(),
+    signInWithNewPassword: vi.fn(),
+    signOut: vi.fn(),
+  };
+});
+
+describe('EntrancePage', () => {
+  beforeEach(() => {
+    missingBrowserFeatures.current = [];
+    cmsConfig.current = /** @type {any} */ ({
+      backend: { name: 'github', repo: 'acme/site' },
+      app_title: 'Acme CMS',
+    });
+    cmsConfigErrors.current = [];
+    prefs.locale = 'auto';
+    prefsError.current = undefined;
+    inAuthPopup.current = false;
+    user.account = undefined;
+    auth.unauthenticated = true;
+    auth.signInError = { message: '', context: 'authentication' };
+    dataLoaded.current = false;
+    dataLoadedProgress.current = undefined;
+  });
+
+  test('welcomes the user with the sign-in options', async () => {
+    await render(EntrancePage, {});
+
+    await expect.element(page.getByRole('heading', { name: 'Acme CMS' })).toBeVisible();
+    await expect
+      .element(page.getByRole('button', { name: 'Sign In with \u2068GitHub\u2069' }))
+      .toBeVisible();
+    await expect.element(page.getByText('Powered by \u2068Sveltia CMS\u2069')).toBeVisible();
+    expect(announcedPageStatus.current).toBe('Welcome to \u2068Acme CMS\u2069');
+  });
+
+  test('asks the user to update an unsupported browser', async () => {
+    missingBrowserFeatures.current = ['Iterator helpers'];
+    cmsConfig.current = undefined;
+
+    await render(EntrancePage, {});
+
+    await expect.element(page.getByRole('heading', { name: 'Sveltia CMS' })).toBeVisible();
+    expect(document.querySelector('.logo')).toHaveAttribute(
+      'src',
+      expect.stringMatching(/^data:image\/svg\+xml;base64,/),
+    );
+    await expect
+      .element(page.getByRole('alert'))
+      .toHaveTextContent(
+        'Your browser is not supported. Please update it to the latest version or use another ' +
+          'browser.',
+      );
+    expect(page.getByRole('button').elements()).toHaveLength(0);
+  });
+
+  test('lists the configuration errors', async () => {
+    cmsConfig.current = undefined;
+    cmsConfigErrors.current = ['The `backend` option is missing.', 'Bad `collections`'];
+
+    await render(EntrancePage, {});
+
+    const alert = page.getByRole('alert');
+
+    await expect.element(alert).toBeVisible();
+    expect(alert.element().querySelectorAll('li')).toHaveLength(2);
+    expect(alert.element().querySelector('code')).toHaveTextContent('backend');
+  });
+
+  test('reports the loading progress once signed in', async () => {
+    user.account = /** @type {any} */ ({ backendName: 'github', login: 'octocat' });
+    auth.unauthenticated = false;
+    dataLoadedProgress.current = 42;
+
+    await render(EntrancePage, {});
+
+    await expect.element(page.getByRole('alert')).toHaveTextContent('Loading Site Data…');
+    await expect.element(page.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '42');
+  });
+
+  test('reports a data loading error along with the sign-in options', async () => {
+    auth.signInError = { message: 'Repository not found', context: 'dataFetch' };
+
+    await render(EntrancePage, {});
+
+    await expect
+      .element(page.getByRole('alert'))
+      .toHaveTextContent('There was an error while loading site data. Repository not found');
+    await expect.element(page.getByRole('button', { name: /Sign In with/ })).toBeVisible();
+  });
+
+  test('keeps the sign-in form when a manual sign-in clears the data loading error', async () => {
+    // An authentication error while loading data clears the user cache as well
+    auth.signInError = { message: 'Bad credentials', context: 'dataFetch' };
+
+    await render(EntrancePage, {});
+
+    const button = page.getByRole('button', { name: /Sign In with/ });
+
+    await expect.element(button).toBeVisible();
+
+    const element = button.element();
+
+    // `signInManually()` resets the error before the user picks a directory
+    auth.signInError = { message: '', context: 'authentication' };
+    flushSync();
+
+    await expect
+      .element(page.getByText('There was an error while loading site data.'))
+      .not.toBeInTheDocument();
+    // The same form is kept, rather than another one starting an automatic sign-in on mount
+    expect(button.element()).toBe(element);
+    expect(signInAutomatically).not.toHaveBeenCalled();
+  });
+
+  test('reports while the configuration or preferences load, or authorization is pending', async () => {
+    cmsConfig.current = undefined;
+    await render(EntrancePage, {});
+    await expect.element(page.getByRole('alert')).toHaveTextContent('Loading CMS Configuration…');
+
+    cmsConfig.current = /** @type {any} */ ({ backend: { name: 'github' } });
+    inAuthPopup.current = true;
+    await expect.element(page.getByRole('alert')).toHaveTextContent('Authorizing…');
+  });
+
+  test('reports a preferences storage error', async () => {
+    prefsError.current = { type: 'permission_denied' };
+
+    try {
+      await render(EntrancePage, {});
+      await expect
+        .element(page.getByRole('alert'))
+        .toHaveTextContent(
+          'Cookie storage access has been denied. Please check your browser permissions and try again.',
+        );
+    } finally {
+      prefsError.current = undefined;
+    }
+  });
+});

@@ -80,7 +80,7 @@
           {:else if notFound}
             <NotFound message={_('page_not_found')} backPath="/settings" />
           {:else}
-            <Menu aria-label={_('settings')}>
+            <Menu ariaLabel={_('settings')}>
               {#each panels.current as { key, icon } (key)}
                 <MenuItem
                   label={_(`prefs.${key}.title`)}

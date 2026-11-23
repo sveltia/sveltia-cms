@@ -17,24 +17,23 @@
 
   /**
    * @typedef {object} Props
-   * @property {Asset | ExternalAsset | undefined} asset Focused asset. An empty state is shown
-   * when there is none.
+   * @property {Asset | ExternalAsset | undefined} asset Focused asset. The fallback, or an empty
+   * state, is shown when there is none.
    * @property {Snippet<[any]>} children Info panel, given the focused asset.
+   * @property {Snippet} [fallback] What to show while no asset is focused, e.g. the info of the
+   * folder being browsed.
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    asset,
-    children,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { asset, children, fallback = undefined } = $props();
 </script>
 
 {#if env.isLargeScreen && currentView.current.showInfo}
-  <Group id="asset-info" class="secondary-sidebar" aria-label={_('asset_info')}>
+  <Group id="asset-info" class="secondary-sidebar" ariaLabel={_('asset_info')}>
     {#if asset}
       {@render children(asset)}
+    {:else if fallback}
+      {@render fallback()}
     {:else}
       <EmptyState>
         <span role="none">{_('select_asset_show_info')}</span>

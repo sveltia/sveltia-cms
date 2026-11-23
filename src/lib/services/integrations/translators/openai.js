@@ -1,34 +1,19 @@
-import {
-  apiKeyPattern,
-  apiKeyURL,
-  apiLabel,
-  complete,
-  developerURL,
-} from '$lib/services/integrations/ai/openai';
+import * as ai from '$lib/services/integrations/ai/openai';
 
-import { availability, createAiTranslate } from './shared.js';
+import { createAiTranslationService } from './ai-translation.js';
 
 /**
  * @import { TranslationService } from '$lib/types/private';
  */
 
-const serviceId = 'openai';
-const serviceLabel = 'OpenAI GPT';
-const model = 'gpt-5.6-luna';
-
 /**
- * Translation service using GPT-5.6 Luna. Supports markdown content and preserves formatting.
+ * Translation service using GPT-6 Luna. Supports markdown content and preserves formatting.
  * @type {TranslationService}
  * @see https://developers.openai.com/api/reference/resources/responses/methods/create
  */
-export default {
-  serviceId,
-  serviceLabel,
-  apiLabel,
-  developerURL,
-  apiKeyURL,
-  apiKeyPattern,
-  markdownSupported: true,
-  availability,
-  translate: createAiTranslate(complete, model, apiLabel),
-};
+export default createAiTranslationService({
+  ai,
+  model: 'gpt-6-luna',
+  // Keep the reasoning short, as its tokens are taken from the output budget the translation needs
+  extraOptions: { reasoning: 'low' },
+});

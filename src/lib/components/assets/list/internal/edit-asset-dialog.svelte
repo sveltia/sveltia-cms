@@ -1,10 +1,12 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { Dialog, Switch, TextArea } from '@sveltia/ui';
+  import { untrack } from 'svelte';
 
-  import { editingAsset } from '$lib/services/assets';
+  import { runAssetCommit } from '$lib/services/assets/data/commit';
   import { saveAssets } from '$lib/services/assets/data/create';
   import { getAssetBlob } from '$lib/services/assets/info';
+  import { editingAsset } from '$lib/services/assets/state';
   import { showAssetOverlay } from '$lib/services/assets/view';
 
   /**
@@ -21,11 +23,20 @@
   let currentValue = $state();
   /** @type {boolean | 'mixed'} */
   let wrap = $state(false);
+  /** Whether the edited text is being saved, during which the state is kept for a retry. */
+  let saving = false;
+  /**
+   * Whether the dialog was opened from the asset details overlay rather than from the asset list.
+   * The dialog closes along with that overlay.
+   */
+  let openedFromOverlay = false;
 
   /**
    * Initialize the state.
    */
   const initState = async () => {
+    // Called from an effect, which shouldn’t rerun when the overlay is opened or closed
+    openedFromOverlay = untrack(() => showAssetOverlay.current);
     blob = await getAssetBlob(/** @type {Asset} */ (asset));
     originalValue = await blob.text();
     currentValue = originalValue;
@@ -43,20 +54,51 @@
   };
 
   /**
-   * Save the edited asset.
+   * Save the edited asset. If saving fails, the dialog is opened again with the edited text, so the
+   * user can retry without losing it.
    */
   const saveAsset = async () => {
-    if (asset && blob && typeof currentValue === 'string') {
-      await saveAssets(
-        {
-          folder: asset.folder,
-          files: [new File([currentValue], asset.name, { type: blob.type })],
-          originalAssets: [asset],
-        },
-        { commitType: 'uploadMedia' },
-      );
+    /* v8 ignore next 3 -- the dialog is only shown once the asset is loaded */
+    if (!asset || !blob || typeof currentValue !== 'string') {
+      return;
     }
+
+    saving = true;
+
+    const { folder, name } = asset;
+    const text = currentValue;
+    const { type } = blob;
+
+    const { ok } = await runAssetCommit(
+      () =>
+        saveAssets(
+          {
+            folder,
+            files: [new File([text], name, { type })],
+            originalAssets: [asset],
+          },
+          { commitType: 'uploadMedia' },
+        ),
+      { failure: 'saving_asset_failed' },
+    );
+
+    saving = false;
+
+    if (!ok) {
+      // The asset details overlay the dialog was opened from may have been closed in the meantime
+      if (!openedFromOverlay || showAssetOverlay.current) {
+        open = true;
+
+        return;
+      }
+    }
+
+    resetState();
   };
+
+  /* v8 ignore start -- the title is only read while the dialog is open, for an asset */
+  const title = $derived(_('edit_x', { values: { name: asset?.name ?? '' } }));
+  /* v8 ignore stop */
 
   $effect(() => {
     if (asset && blob === undefined) {
@@ -65,7 +107,7 @@
   });
 
   $effect(() => {
-    if (!showAssetOverlay.current) {
+    if (!showAssetOverlay.current && openedFromOverlay) {
       open = false;
     }
   });
@@ -73,7 +115,7 @@
 
 <Dialog
   size="x-large"
-  title={_('edit_x', { values: { name: asset?.name ?? '' } })}
+  {title}
   bind:open
   okLabel={_('save')}
   okDisabled={currentValue === originalValue}
@@ -82,11 +124,14 @@
     saveAsset();
   }}
   onClose={() => {
-    resetState();
+    // Keep the state while saving, in case the dialog has to be reopened
+    if (!saving) {
+      resetState();
+    }
   }}
 >
   <div role="none" class="wrapper" class:wrap>
-    <TextArea dir="auto" bind:value={currentValue} flex />
+    <TextArea dir="auto" bind:value={currentValue} flex aria-label={title} />
   </div>
   {#snippet footerExtra()}
     <Switch label={_('wrap_long_lines')} bind:checked={wrap} />

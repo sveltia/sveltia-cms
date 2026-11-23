@@ -3,26 +3,26 @@
   Implement the preview for a Compute field.
 -->
 <script>
+  import { formatComputedValue } from '$lib/services/contents/fields/compute/helpers';
   import { getCanonicalLocale, getDirection } from '$lib/services/contents/i18n';
 
   /**
    * @import { FieldPreviewProps } from '$lib/types/private';
-   * @import { StringField } from '$lib/types/public';
+   * @import { ComputeField } from '$lib/types/public';
    */
 
   /**
    * @typedef {object} Props
-   * @property {StringField} fieldConfig Field configuration.
-   * @property {string | number | undefined} currentValue Field value.
+   * @property {ComputeField} fieldConfig Field configuration.
+   * @property {string | number | null | undefined} currentValue Field value.
    */
 
   /** @type {FieldPreviewProps & Props} */
-  let {
-    /* eslint-disable prefer-const */
-    locale,
-    currentValue,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { locale, fieldConfig, currentValue } = $props();
+
+  const canonicalLocale = $derived(getCanonicalLocale(locale));
 </script>
 
-<p lang={getCanonicalLocale(locale)} dir={getDirection(locale)}>{currentValue}</p>
+<p lang={canonicalLocale} dir={getDirection(locale)}>
+  {formatComputedValue({ value: currentValue, fieldConfig, canonicalLocale })}
+</p>

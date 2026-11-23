@@ -335,15 +335,5 @@ describe('DeepSeek Translator Service', () => {
         'Failed to parse JSON response from DeepSeek API.',
       );
     });
-
-    it('should handle unknown non-Error exceptions', async () => {
-      const mockFetch = vi.mocked(fetch);
-
-      mockFetch.mockRejectedValueOnce('Unknown error');
-
-      await expect(deepseekTranslator.translate(['test'], mockOptions)).rejects.toThrow(
-        'Failed to translate text with DeepSeek API.',
-      );
-    });
   });
 });

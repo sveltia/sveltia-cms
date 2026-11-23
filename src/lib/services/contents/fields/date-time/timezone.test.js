@@ -1,6 +1,15 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { getInitialTimeZone, getTimeZoneForStoredValue, getTimeZoneLabel } from './timezone';
+/**
+ * @import * as TimeZoneModule from './timezone';
+ */
+
+/** @type {typeof TimeZoneModule.getInitialTimeZone} */
+let getInitialTimeZone;
+/** @type {typeof TimeZoneModule.getTimeZoneForStoredValue} */
+let getTimeZoneForStoredValue;
+/** @type {typeof TimeZoneModule.getTimeZoneLabel} */
+let getTimeZoneLabel;
 
 /**
  * @import { DateTimeField } from '$lib/types/public';
@@ -12,9 +21,13 @@ const baseFieldConfig = {
   name: 'test_datetime',
 };
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.restoreAllMocks();
   vi.clearAllMocks();
+  // Load the module afresh, as it caches the formatters some tests mock `Intl.DateTimeFormat` for
+  vi.resetModules();
+  ({ getInitialTimeZone, getTimeZoneForStoredValue, getTimeZoneLabel } =
+    await import('./timezone'));
 });
 
 describe('getTimeZoneForStoredValue', () => {
@@ -99,13 +112,14 @@ describe('getTimeZoneForStoredValue', () => {
       },
     );
 
+    // A time zone no other test uses, as the formatter is cached for it
     /** @type {DateTimeField} */
     const fieldConfig = {
       ...baseFieldConfig,
-      input_timezone: 'Asia/Tokyo',
+      input_timezone: 'Asia/Kathmandu',
     };
 
-    expect(getTimeZoneForStoredValue('2026-06-12T13:17:00+09:00', fieldConfig)).toBeUndefined();
+    expect(getTimeZoneForStoredValue('2026-06-12T13:17:00+05:45', fieldConfig)).toBeUndefined();
   });
 
   test('should return undefined when the stored value does not match the configured timezone offset', () => {
@@ -407,6 +421,20 @@ describe('getTimeZoneLabel', () => {
       expect(label).toBeTruthy();
       expect(typeof label).toBe('string');
     });
+  });
+
+  test('should create the formatter of a time zone only once', () => {
+    const spy = vi.spyOn(Intl, 'DateTimeFormat');
+
+    getTimeZoneLabel('Asia/Tokyo');
+    getTimeZoneLabel('Asia/Tokyo');
+    expect(
+      getTimeZoneForStoredValue('2024-01-15T10:30:00+09:00', {
+        ...baseFieldConfig,
+        input_timezone: 'Asia/Tokyo',
+      }),
+    ).toBe('Asia/Tokyo');
+    expect(spy).toHaveBeenCalledTimes(1);
   });
 
   test('should use fallback value when Intl throws exception', () => {

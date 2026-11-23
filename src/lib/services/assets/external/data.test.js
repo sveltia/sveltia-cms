@@ -1,24 +1,35 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { assetUpdatesToast } from '$lib/services/assets/data';
+import { saveReferenceChanges } from '$lib/services/assets/data/move';
 import {
   externalAssetCounts,
   externalAssets,
   externalAssetsError,
+  externalAssetsTruncated,
+  externalFolders,
   focusedExternalAsset,
+  focusedExternalSubfolder,
   selectedCloudService,
   selectedExternalAssets,
+  selectedExternalDirPath,
 } from '$lib/services/assets/external';
+import { planExternalReferenceRewrite } from '$lib/services/assets/external/move';
 import { processFile } from '$lib/services/assets/process';
 import { cmsConfig } from '$lib/services/config';
 
 import {
+  createExternalFolder,
   deleteExternalAssets,
+  deleteExternalFolder,
   externalAssetsToast,
   fetchExternalAssetBlob,
+  getExternalSubfolderAssets,
   getSharedMediaLibraryOptions,
   loadExternalAssets,
+  prepareExternalUploads,
   renameExternalAsset,
+  renameExternalFolder,
   uploadExternalAssets,
   uploadingExternalAssets,
 } from './data';
@@ -27,22 +38,55 @@ vi.mock('$lib/services/assets/data', () => ({
   assetUpdatesToast: { current: {} },
 }));
 
-vi.mock('$lib/services/assets/external', () => ({
-  externalAssetCounts: { current: {} },
-  externalAssets: { current: undefined },
-  externalAssetsError: { current: undefined },
-  focusedExternalAsset: { current: undefined },
-  selectedCloudService: { current: undefined },
-  selectedExternalAssets: { current: [] },
-  getFetchOptions: vi.fn(() => ({ apiKey: 'secret' })),
+vi.mock('$lib/services/assets/external', async (importOriginal) => {
+  /** @type {any} */
+  const original = await importOriginal();
+
+  return {
+    // The selection helper works on the real state, so the selection and the focus are real too
+    mergeUploadedExternalAssets: original.mergeUploadedExternalAssets,
+    pruneExternalAssetSelection: original.pruneExternalAssetSelection,
+    focusedExternalAsset: original.focusedExternalAsset,
+    selectedExternalAssets: original.selectedExternalAssets,
+    externalAssetCounts: { current: {} },
+    externalAssets: { current: undefined },
+    externalAssetsError: { current: undefined },
+    externalAssetsTruncated: { current: false },
+    externalFolders: { current: [] },
+    focusedExternalSubfolder: { current: undefined },
+    selectedCloudService: { current: undefined },
+    selectedExternalDirPath: { current: '' },
+    getFetchOptions: vi.fn(() => ({ apiKey: 'secret' })),
+  };
+});
+
+// The references are found and rewritten for real, but nothing is committed
+vi.mock('$lib/services/assets/data/move', async (importOriginal) => ({
+  ...(await importOriginal()),
+  saveReferenceChanges: vi.fn(),
 }));
 
-vi.mock('$lib/services/assets/process', () => ({
+vi.mock('$lib/services/assets/external/move', async (importOriginal) => {
+  /** @type {any} */
+  const original = await importOriginal();
+
+  return {
+    ...original,
+    planExternalReferenceRewrite: vi.fn(original.planExternalReferenceRewrite),
+  };
+});
+
+vi.mock('$lib/services/assets/process', async (importOriginal) => ({
+  ...(await importOriginal()),
   processFile: vi.fn(async (file) => ({ file, oversized: false, invalid: false })),
 }));
 
 vi.mock('$lib/services/config', () => ({
   cmsConfig: { current: undefined },
+}));
+
+vi.mock('$lib/services/contents/draft/slugs', () => ({
+  getSlugs: vi.fn(() => ({ defaultLocaleSlug: 'hello' })),
 }));
 
 /**
@@ -84,8 +128,12 @@ describe('assets/external/data', () => {
     externalAssets.current = [a, b];
     externalAssetCounts.current = {};
     externalAssetsError.current = undefined;
+    externalAssetsTruncated.current = false;
+    externalFolders.current = [];
+    selectedExternalDirPath.current = '';
     selectedExternalAssets.current = [a];
     focusedExternalAsset.current = a;
+    focusedExternalSubfolder.current = undefined;
     externalAssetsToast.current = { show: false, status: 'info', message: '' };
     assetUpdatesToast.current = /** @type {any} */ ({});
     uploadingExternalAssets.current = { files: [] };
@@ -100,6 +148,18 @@ describe('assets/external/data', () => {
       });
 
       expect(getSharedMediaLibraryOptions()).toEqual({ max_file_size: 1024 });
+    });
+
+    it('should merge the field-level `all` options into the global ones', () => {
+      cmsConfig.current = /** @type {any} */ ({
+        media_libraries: { all: { max_file_size: 1024, transformations: { raster_image: {} } } },
+      });
+
+      expect(
+        getSharedMediaLibraryOptions(
+          /** @type {any} */ ({ media_libraries: { all: { max_file_size: 2048 } } }),
+        ),
+      ).toEqual({ max_file_size: 2048, transformations: { raster_image: {} } });
     });
   });
 
@@ -241,6 +301,100 @@ describe('assets/external/data', () => {
     });
   });
 
+  describe('prepareExternalUploads', () => {
+    it('should process the files with the given options and sort out the rejected ones', async () => {
+      const valid = new File(['x'], 'ok.png', { type: 'image/png' });
+      const oversized = new File(['x'], 'big.png', { type: 'image/png' });
+      const invalid = new File(['x'], 'bad.png', { type: 'image/png' });
+      const options = { max_file_size: 1 };
+
+      vi.mocked(processFile).mockImplementation(async (f) => ({
+        file: f,
+        originalFile: undefined,
+        oversized: f === oversized,
+        invalid: f === invalid,
+      }));
+
+      const result = await prepareExternalUploads([valid, oversized, invalid], options);
+
+      expect(processFile).toHaveBeenCalledWith(valid, options, { nameTemplate: undefined });
+      expect(result).toEqual({
+        validFiles: [valid],
+        oversizedFileNames: ['big.png'],
+        invalidFileNames: ['bad.png'],
+      });
+    });
+
+    it('should rename the files with the normalized file name template', async () => {
+      const file = new File(['x'], 'ok.png', { type: 'image/png' });
+      const options = { filename_template: ' {{filename}}-{{uuid_short}} ' };
+
+      await prepareExternalUploads([file], options);
+
+      expect(processFile).toHaveBeenCalledWith(file, options, {
+        nameTemplate: '{{filename}}-{{uuid_short}}',
+      });
+    });
+
+    it('should fill the file name template with the values of the entry draft', async () => {
+      const file = new File(['x'], 'ok.png', { type: 'image/png' });
+      const options = { filename_template: 'guestpic{{release}}' };
+      const content = { release: 521 };
+      const collection = { name: 'posts' };
+
+      const draft = /** @type {any} */ ({
+        collection,
+        fileName: undefined,
+        isIndexFile: false,
+        defaultLocale: 'en',
+        currentValues: { en: content, fr: {} },
+      });
+
+      await prepareExternalUploads([file], options, { draft });
+
+      expect(processFile).toHaveBeenCalledWith(file, options, {
+        nameTemplate: 'guestpic{{release}}',
+        nameContext: {
+          collection,
+          collectionFileName: undefined,
+          content,
+          slug: 'hello',
+          isIndexFile: false,
+        },
+      });
+    });
+
+    it('should work out no entry values without a file name template', async () => {
+      const file = new File(['x'], 'ok.png', { type: 'image/png' });
+      const options = {};
+
+      await prepareExternalUploads([file], options, { draft: /** @type {any} */ ({}) });
+
+      expect(processFile).toHaveBeenCalledWith(file, options, {
+        nameTemplate: undefined,
+        nameContext: undefined,
+      });
+    });
+
+    it('should not rename a file replacing an existing asset', async () => {
+      const file = new File(['x'], 'ok.png', { type: 'image/png' });
+      const options = { filename_template: '{{filename}}-{{uuid_short}}' };
+
+      await prepareExternalUploads([file], options, { replacing: true });
+
+      expect(processFile).toHaveBeenCalledWith(file, options, { nameTemplate: undefined });
+    });
+
+    it('should ignore a blank file name template', async () => {
+      const file = new File(['x'], 'ok.png', { type: 'image/png' });
+      const options = { filename_template: '  ' };
+
+      await prepareExternalUploads([file], options);
+
+      expect(processFile).toHaveBeenCalledWith(file, options, { nameTemplate: undefined });
+    });
+  });
+
   describe('uploadExternalAssets', () => {
     const file = new File(['x'], 'c.png', { type: 'image/png' });
 
@@ -251,8 +405,8 @@ describe('assets/external/data', () => {
 
       const result = await uploadExternalAssets([file]);
 
-      expect(processFile).toHaveBeenCalledWith(file, {});
-      expect(service.upload).toHaveBeenCalledWith([file], fetchOptions);
+      expect(processFile).toHaveBeenCalledWith(file, {}, { nameTemplate: undefined });
+      expect(service.upload).toHaveBeenCalledWith([file], { ...fetchOptions, dirPath: '' });
       // An asset uploaded under an existing name replaces the old one
       expect(externalAssets.current).toEqual([c, replaced, a]);
       expect(externalAssetCounts.current).toEqual({ test: 3 });
@@ -287,17 +441,20 @@ describe('assets/external/data', () => {
       expect(result).toEqual({ oversizedFileNames: ['big.png'], invalidFileNames: ['bad.png'] });
     });
 
-    it('should report an upload failure', async () => {
+    it('should report an upload failure and reload the list, as some files may be uploaded', async () => {
+      // The first file made it before the second one failed
       service.upload.mockRejectedValue(new Error('fail'));
+      service.list.mockResolvedValue([c, a, b]);
 
-      await uploadExternalAssets([file]);
+      await uploadExternalAssets([file, new File(['y'], 'd.png', { type: 'image/png' })]);
 
       expect(externalAssetsToast.current).toEqual({
         show: true,
         status: 'error',
         message: 'uploading_files_failed',
       });
-      expect(externalAssets.current).toEqual([a, b]);
+      expect(service.list).toHaveBeenCalledWith(fetchOptions);
+      expect(externalAssets.current).toEqual([c, a, b]);
     });
 
     it('should replace an existing asset', async () => {
@@ -307,7 +464,8 @@ describe('assets/external/data', () => {
 
       await uploadExternalAssets([file], { originalAsset: a });
 
-      expect(service.replace).toHaveBeenCalledWith(a, file, fetchOptions);
+      expect(processFile).toHaveBeenCalledWith(file, {}, { nameTemplate: undefined });
+      expect(service.replace).toHaveBeenCalledWith(a, file, { ...fetchOptions, dirPath: '' });
       expect(service.upload).not.toHaveBeenCalled();
       expect(externalAssets.current).toEqual([replaced, b]);
       expect(selectedExternalAssets.current).toEqual([replaced]);
@@ -332,6 +490,320 @@ describe('assets/external/data', () => {
       await uploadExternalAssets([file]);
 
       expect(service.upload).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('folders', () => {
+    /** @type {import('$lib/types/private').ExternalAsset} */
+    const nested = { ...createAsset('2024/summer/beach.png'), fileName: 'beach.png' };
+    /** @type {import('$lib/types/private').ExternalAsset} */
+    const spring = { ...createAsset('2024/spring.png'), fileName: 'spring.png' };
+
+    beforeEach(() => {
+      service.browse = vi.fn(async () => ({
+        assets: [a, spring, nested],
+        folders: ['2024/empty'],
+      }));
+      service.move = vi.fn(async (asset, newPath) => ({
+        ...asset,
+        id: newPath,
+        description: newPath,
+      }));
+      service.createFolder = vi.fn();
+      service.deleteFolder = vi.fn();
+      externalAssets.current = [a, spring, nested];
+      externalFolders.current = ['2024/empty', 'other'];
+    });
+
+    it('should load the folders along with the assets from a service with folder support', async () => {
+      // A focused folder that is still there stays focused; one that is gone is let go of
+      focusedExternalSubfolder.current = { name: 'empty', path: '2024/empty' };
+      await loadExternalAssets(service);
+      expect(focusedExternalSubfolder.current).toEqual({ name: 'empty', path: '2024/empty' });
+
+      focusedExternalSubfolder.current = { name: 'summer', path: '2024/summer' };
+      await loadExternalAssets(service);
+      expect(focusedExternalSubfolder.current).toEqual({ name: 'summer', path: '2024/summer' });
+
+      focusedExternalSubfolder.current = { name: 'gone', path: '2024/gone' };
+      await loadExternalAssets(service);
+      expect(focusedExternalSubfolder.current).toBeUndefined();
+
+      await loadExternalAssets(service);
+
+      expect(service.browse).toHaveBeenCalledWith(fetchOptions);
+      expect(service.list).not.toHaveBeenCalled();
+      expect(externalAssets.current).toEqual([a, spring, nested]);
+      expect(externalFolders.current).toEqual(['2024/empty']);
+
+      // The folders go along with the assets when the listing fails
+      vi.mocked(service.browse).mockRejectedValue(new Error('offline'));
+      await loadExternalAssets(service);
+      expect(externalAssets.current).toEqual([]);
+      expect(externalFolders.current).toEqual([]);
+    });
+
+    it('should tell whether the listing was cut short', async () => {
+      vi.mocked(service.browse).mockResolvedValueOnce({
+        assets: [a],
+        folders: [],
+        truncated: true,
+      });
+      await loadExternalAssets(service);
+      expect(externalAssetsTruncated.current).toBe(true);
+
+      // A complete listing, or a failed one, clears the flag
+      await loadExternalAssets(service);
+      expect(externalAssetsTruncated.current).toBe(false);
+
+      externalAssetsTruncated.current = true;
+      vi.mocked(service.browse).mockRejectedValueOnce(new Error('offline'));
+      await loadExternalAssets(service);
+      expect(externalAssetsTruncated.current).toBe(false);
+    });
+
+    it('should upload files to the folder being browsed', async () => {
+      const file = new File(['x'], 'x.png');
+
+      selectedExternalDirPath.current = '2024';
+      vi.mocked(service.upload).mockResolvedValue([createAsset('2024/x.png')]);
+
+      await uploadExternalAssets([file]);
+
+      expect(service.upload).toHaveBeenCalledWith([file], { ...fetchOptions, dirPath: '2024' });
+    });
+
+    it('should list the assets below a folder at any depth', () => {
+      expect(getExternalSubfolderAssets('2024')).toEqual([spring, nested]);
+      expect(getExternalSubfolderAssets('2024/summer')).toEqual([nested]);
+      expect(getExternalSubfolderAssets('202')).toEqual([]);
+
+      externalAssets.current = undefined;
+      expect(getExternalSubfolderAssets('2024')).toEqual([]);
+    });
+
+    it('should create a folder in the folder being browsed', async () => {
+      selectedExternalDirPath.current = '2024';
+
+      expect(await createExternalFolder('autumn')).toBe(true);
+      expect(service.createFolder).toHaveBeenCalledWith('2024/autumn', fetchOptions);
+      expect(externalFolders.current).toEqual(['2024/empty', 'other', '2024/autumn']);
+      expect(assetUpdatesToast.current).toEqual(expect.objectContaining({ folderCreated: true }));
+
+      selectedExternalDirPath.current = '';
+      await createExternalFolder('root');
+      expect(service.createFolder).toHaveBeenLastCalledWith('root', fetchOptions);
+    });
+
+    it('should report a failure to create a folder', async () => {
+      vi.mocked(service.createFolder).mockRejectedValue(new Error('denied'));
+
+      expect(await createExternalFolder('autumn')).toBe(false);
+      expect(externalFolders.current).toEqual(['2024/empty', 'other']);
+      expect(externalAssetsToast.current).toEqual({
+        show: true,
+        status: 'error',
+        message: 'creating_folder_failed',
+      });
+
+      delete service.createFolder;
+      expect(await createExternalFolder('autumn')).toBe(false);
+    });
+
+    it('should rename a folder by moving its assets and placeholders, then reload', async () => {
+      focusedExternalSubfolder.current = { name: '2024', path: '2024' };
+      // The service lists the files at their new paths once they’ve been moved, so nothing is left
+      // under the old folder when the list is reloaded
+      vi.mocked(service.browse).mockResolvedValueOnce({
+        assets: [
+          a,
+          { ...spring, id: '2025/spring.png', description: '2025/spring.png' },
+          { ...nested, id: '2025/summer/beach.png', description: '2025/summer/beach.png' },
+        ],
+        folders: ['2025/empty'],
+      });
+
+      expect(await renameExternalFolder({ name: '2024', path: '2024' }, '2025')).toBe(true);
+
+      expect(service.move).toHaveBeenNthCalledWith(1, spring, '2025/spring.png', fetchOptions);
+      expect(service.move).toHaveBeenNthCalledWith(
+        2,
+        nested,
+        '2025/summer/beach.png',
+        fetchOptions,
+      );
+      expect(service.createFolder).toHaveBeenCalledExactlyOnceWith('2025/empty', fetchOptions);
+      expect(service.deleteFolder).toHaveBeenCalledExactlyOnceWith('2024/empty', fetchOptions);
+      expect(service.browse).toHaveBeenCalledOnce();
+      expect(focusedExternalSubfolder.current).toEqual({ name: '2025', path: '2025' });
+      expect(assetUpdatesToast.current).toEqual(expect.objectContaining({ folderRenamed: true }));
+    });
+
+    it('should rename an empty folder by replacing its placeholder', async () => {
+      focusedExternalSubfolder.current = { name: '2024', path: '2024' };
+
+      await renameExternalFolder({ name: 'other', path: 'other' }, 'else');
+
+      expect(service.move).not.toHaveBeenCalled();
+      expect(service.createFolder).toHaveBeenCalledExactlyOnceWith('else', fetchOptions);
+      expect(service.deleteFolder).toHaveBeenCalledExactlyOnceWith('other', fetchOptions);
+      // Another folder stays focused
+      expect(focusedExternalSubfolder.current).toEqual({ name: '2024', path: '2024' });
+    });
+
+    it('should refuse to rename a folder onto an existing one', async () => {
+      // `other` is an empty folder kept by a placeholder, and `2024` holds files
+      expect(await renameExternalFolder({ name: '2024', path: '2024' }, 'other')).toBe(false);
+      expect(await renameExternalFolder({ name: 'other', path: 'other' }, '2024')).toBe(false);
+      expect(service.move).not.toHaveBeenCalled();
+      expect(service.createFolder).not.toHaveBeenCalled();
+      expect(service.deleteFolder).not.toHaveBeenCalled();
+      expect(externalAssetsToast.current.message).toBe('renaming_folder_failed');
+    });
+
+    it('should point the entries at the files’ new URLs, or move the files back', async () => {
+      vi.mocked(saveReferenceChanges).mockRejectedValueOnce(new Error('Commit failed'));
+
+      expect(await renameExternalFolder({ name: '2024', path: '2024' }, '2025')).toBe(false);
+
+      expect(planExternalReferenceRewrite).toHaveBeenCalledWith([spring, nested]);
+      expect(vi.mocked(saveReferenceChanges).mock.calls[0][0].newURLs).toHaveLength(2);
+      // Moved there and back, and the placeholders are left alone
+      expect(service.move).toHaveBeenNthCalledWith(
+        3,
+        expect.objectContaining({ id: '2025/spring.png' }),
+        '2024/spring.png',
+        fetchOptions,
+      );
+      expect(service.createFolder).not.toHaveBeenCalled();
+      expect(externalAssetsToast.current.message).toBe('renaming_folder_failed');
+    });
+
+    it('should report a failure to rename a folder and reload the list', async () => {
+      vi.mocked(service.move).mockRejectedValue(new Error('denied'));
+
+      expect(await renameExternalFolder({ name: '2024', path: '2024' }, '2025')).toBe(false);
+      expect(service.browse).toHaveBeenCalledOnce();
+      expect(externalAssetsToast.current).toEqual({
+        show: true,
+        status: 'error',
+        message: 'renaming_folder_failed',
+      });
+
+      delete service.move;
+      expect(await renameExternalFolder({ name: '2024', path: '2024' }, '2025')).toBe(false);
+    });
+
+    it('should delete a folder along with its assets and placeholders', async () => {
+      selectedExternalAssets.current = [a, spring];
+      focusedExternalAsset.current = nested;
+
+      expect(await deleteExternalFolder({ name: '2024', path: '2024' })).toBe(true);
+
+      expect(service.delete).toHaveBeenCalledWith([spring, nested], fetchOptions);
+      expect(service.deleteFolder).toHaveBeenCalledWith('2024/empty', fetchOptions);
+      expect(service.deleteFolder).not.toHaveBeenCalledWith('other', fetchOptions);
+      expect(externalAssets.current).toEqual([a]);
+      expect(externalFolders.current).toEqual(['other']);
+      expect(selectedExternalAssets.current).toEqual([a]);
+      expect(focusedExternalAsset.current).toBeUndefined();
+      expect(assetUpdatesToast.current).toEqual(expect.objectContaining({ folderDeleted: true }));
+    });
+
+    it('should take the focus off a deleted folder and delete its own placeholder', async () => {
+      focusedExternalSubfolder.current = { name: 'other', path: 'other' };
+
+      await deleteExternalFolder({ name: 'other', path: 'other' });
+
+      expect(service.delete).toHaveBeenCalledWith([], fetchOptions);
+      expect(service.deleteFolder).toHaveBeenCalledExactlyOnceWith('other', fetchOptions);
+      expect(focusedExternalSubfolder.current).toBeUndefined();
+    });
+
+    describe('on a service that lists a folder in full', () => {
+      // A file the asset list left out, as the service holds more files than it lists at once
+      const unlisted = { ...createAsset('2024/unlisted.png'), fileName: 'unlisted.png' };
+
+      beforeEach(() => {
+        // Only the folder being renamed or deleted holds anything
+        service.listFolder = vi.fn(async (dirPath) =>
+          dirPath === '2024'
+            ? { assets: [spring, nested, unlisted], folders: ['2024/empty', '2024/unlisted-empty'] }
+            : { assets: [], folders: [] },
+        );
+      });
+
+      it('should rename every file below the folder, listed or not', async () => {
+        expect(await renameExternalFolder({ name: '2024', path: '2024' }, '2025')).toBe(true);
+
+        expect(service.listFolder).toHaveBeenCalledWith('2024', fetchOptions);
+        expect(service.move).toHaveBeenCalledTimes(3);
+        expect(service.move).toHaveBeenCalledWith(unlisted, '2025/unlisted.png', fetchOptions);
+        expect(service.createFolder).toHaveBeenCalledWith('2025/unlisted-empty', fetchOptions);
+        expect(service.deleteFolder).toHaveBeenCalledWith('2024/unlisted-empty', fetchOptions);
+      });
+
+      it('should refuse to rename a folder onto an existing one the list left out', async () => {
+        // A file or an empty folder kept by a placeholder at the destination, which the list the
+        // new name was picked against doesn’t have
+        const existing = { ...createAsset('2025/x.png'), fileName: 'x.png' };
+
+        vi.mocked(service.listFolder).mockImplementation(async (/** @type {string} */ dirPath) =>
+          dirPath === '2025'
+            ? { assets: [existing], folders: [] }
+            : { assets: [spring], folders: dirPath === 'else' ? ['else'] : [] },
+        );
+
+        expect(await renameExternalFolder({ name: '2024', path: '2024' }, '2025')).toBe(false);
+        expect(service.listFolder).toHaveBeenCalledWith('2025', fetchOptions);
+        expect(externalAssetsToast.current.message).toBe('renaming_folder_failed');
+
+        expect(await renameExternalFolder({ name: '2024', path: '2024' }, 'else')).toBe(false);
+        expect(service.listFolder).toHaveBeenCalledWith('else', fetchOptions);
+
+        expect(service.move).not.toHaveBeenCalled();
+        expect(service.createFolder).not.toHaveBeenCalled();
+        expect(service.deleteFolder).not.toHaveBeenCalled();
+        // The list is reloaded either way
+        expect(service.browse).toHaveBeenCalledTimes(2);
+      });
+
+      it('should delete every file below the folder, listed or not', async () => {
+        expect(await deleteExternalFolder({ name: '2024', path: '2024' })).toBe(true);
+
+        expect(service.listFolder).toHaveBeenCalledWith('2024', fetchOptions);
+        expect(service.delete).toHaveBeenCalledWith([spring, nested, unlisted], fetchOptions);
+        expect(service.deleteFolder).toHaveBeenCalledWith('2024/unlisted-empty', fetchOptions);
+        expect(externalAssets.current).toEqual([a]);
+        expect(externalFolders.current).toEqual(['other']);
+      });
+
+      it('should report a failure to list the folder without touching any file', async () => {
+        vi.mocked(service.listFolder).mockRejectedValue(new Error('denied'));
+
+        expect(await deleteExternalFolder({ name: '2024', path: '2024' })).toBe(false);
+        expect(service.delete).not.toHaveBeenCalled();
+        expect(externalAssetsToast.current.message).toBe('deleting_folder_failed');
+
+        expect(await renameExternalFolder({ name: '2024', path: '2024' }, '2025')).toBe(false);
+        expect(service.move).not.toHaveBeenCalled();
+        expect(externalAssetsToast.current.message).toBe('renaming_folder_failed');
+      });
+    });
+
+    it('should report a failure to delete a folder and reload the list', async () => {
+      vi.mocked(service.delete).mockRejectedValue(new Error('denied'));
+
+      expect(await deleteExternalFolder({ name: '2024', path: '2024' })).toBe(false);
+      expect(service.browse).toHaveBeenCalledOnce();
+      expect(externalAssetsToast.current).toEqual({
+        show: true,
+        status: 'error',
+        message: 'deleting_folder_failed',
+      });
+
+      delete service.deleteFolder;
+      expect(await deleteExternalFolder({ name: '2024', path: '2024' })).toBe(false);
     });
   });
 
@@ -400,6 +872,56 @@ describe('assets/external/data', () => {
       expect(assetUpdatesToast.current).toEqual(
         expect.objectContaining({ renamed: true, count: 1 }),
       );
+    });
+
+    it('should point the entries using the asset at its new URL', async () => {
+      const renamed = { ...createAsset('z.png'), downloadURL: 'https://cdn/z.png' };
+
+      service.rename.mockResolvedValue(renamed);
+
+      await renameExternalAsset(a, 'z.png');
+
+      expect(planExternalReferenceRewrite).toHaveBeenCalledWith([a]);
+      expect(saveReferenceChanges).toHaveBeenCalledWith({
+        plan: expect.objectContaining({ targets: [{ url: a.downloadURL }] }),
+        newURLs: ['https://cdn/z.png'],
+        commitType: 'uploadMedia',
+      });
+    });
+
+    it('should rename the asset back when the entries can’t be saved', async () => {
+      const renamed = createAsset('z.png');
+
+      service.rename.mockResolvedValueOnce(renamed);
+      vi.mocked(saveReferenceChanges).mockRejectedValueOnce(new Error('Commit failed'));
+
+      expect(await renameExternalAsset(a, 'z.png')).toBeUndefined();
+
+      expect(service.rename).toHaveBeenLastCalledWith(renamed, 'a.png', fetchOptions);
+      expect(externalAssets.current).toEqual([a, b]);
+      expect(externalAssetsToast.current.message).toBe('renaming_asset_failed');
+    });
+
+    it('should leave the asset renamed when it can’t be renamed back', async () => {
+      const renamed = createAsset('z.png');
+
+      service.rename.mockResolvedValueOnce(renamed).mockRejectedValueOnce(new Error('Gone'));
+      vi.mocked(saveReferenceChanges).mockRejectedValueOnce(new Error('Commit failed'));
+
+      expect(await renameExternalAsset(a, 'z.png')).toBeUndefined();
+
+      // eslint-disable-next-line no-console
+      expect(console.error).toHaveBeenCalledWith(new Error('Gone'));
+      expect(externalAssetsToast.current.message).toBe('renaming_asset_failed');
+    });
+
+    it('should refuse when the entries using the asset can’t be updated', async () => {
+      vi.mocked(planExternalReferenceRewrite).mockRejectedValueOnce(new Error('Read-only'));
+
+      expect(await renameExternalAsset(a, 'z.png')).toBeUndefined();
+
+      expect(service.rename).not.toHaveBeenCalled();
+      expect(externalAssetsToast.current.message).toBe('renaming_asset_failed');
     });
 
     it('should do nothing when the service cannot rename', async () => {

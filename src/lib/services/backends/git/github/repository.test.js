@@ -1,21 +1,22 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { lockedBranch } from '$lib/services/backends/branch-access';
 import {
+  checkBranchAccess,
   checkRepositoryAccess,
   fetchDefaultBranchName,
   getBaseURLs,
+  isRateLimited,
   repository,
 } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 
 // Mock dependencies
 vi.mock('$lib/services/backends/git/shared/api');
-vi.mock('$lib/services/user/account.svelte', () => ({
-  user: { account: { login: 'test-user' } },
-}));
-vi.mock('@sveltia/i18n', () => ({
-  _: vi.fn(() => 'Translation message'),
-}));
+vi.mock('@sveltia/i18n', async () =>
+  (await import('$lib/test/i18n')).createI18nMock({ values: true }),
+);
+
 describe('GitHub repository service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -41,6 +42,14 @@ describe('GitHub repository service', () => {
       });
     });
 
+    test('encodes a branch name with a character that ends a URL path', () => {
+      const repoURL = 'https://github.com/owner/repo';
+      const result = getBaseURLs(repoURL, 'cms/posts/c#');
+
+      expect(result.treeBaseURL).toBe(`${repoURL}/tree/cms/posts/c%23`);
+      expect(result.blobBaseURL).toBe(`${repoURL}/blob/cms/posts/c%23`);
+    });
+
     test('handles undefined branch', () => {
       const repoURL = 'https://github.com/owner/repo';
       const result = getBaseURLs(repoURL, undefined);
@@ -53,20 +62,45 @@ describe('GitHub repository service', () => {
     });
   });
 
+  describe('isRateLimited', () => {
+    /**
+     * Create a response with the given status and headers.
+     * @param {number} status HTTP status.
+     * @param {Record<string, string>} [headers] Headers.
+     * @returns {Response} Response.
+     */
+    const createResponse = (status, headers = {}) => new Response(null, { status, headers });
+
+    test('detects a secondary rate limit', () => {
+      expect(isRateLimited(createResponse(429))).toBe(true);
+      expect(isRateLimited(createResponse(403, { 'Retry-After': '60' }))).toBe(true);
+    });
+
+    test('detects an exhausted primary rate limit', () => {
+      expect(isRateLimited(createResponse(403, { 'X-RateLimit-Remaining': '0' }))).toBe(true);
+    });
+
+    test('ignores a refusal with requests remaining', () => {
+      expect(isRateLimited(createResponse(403, { 'X-RateLimit-Remaining': '42' }))).toBe(false);
+      expect(isRateLimited(createResponse(403))).toBe(false);
+      expect(isRateLimited(createResponse(404))).toBe(false);
+    });
+  });
+
   describe('checkRepositoryAccess', () => {
-    test('succeeds when user is a collaborator', async () => {
-      Object.assign(repository, {
-        owner: 'test-owner',
-        repo: 'test-repo',
+    beforeEach(() => {
+      Object.assign(repository, { owner: 'test-owner', repo: 'test-repo' });
+    });
+
+    test('succeeds when the user can push to the repository', async () => {
+      vi.mocked(fetchAPI).mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue({ permissions: { pull: true, push: true } }),
       });
-
-      const mockResponse = { ok: true };
-
-      vi.mocked(fetchAPI).mockResolvedValue(mockResponse);
 
       await expect(checkRepositoryAccess()).resolves.toBeUndefined();
       expect(fetchAPI).toHaveBeenCalledWith(
-        '/repos/test-owner/test-repo/collaborators/test-user',
+        '/repos/test-owner/test-repo',
         expect.objectContaining({
           headers: { Accept: 'application/json' },
           responseType: 'raw',
@@ -74,17 +108,112 @@ describe('GitHub repository service', () => {
       );
     });
 
-    test('throws error when user is not a collaborator', async () => {
-      Object.assign(repository, {
-        owner: 'test-owner',
-        repo: 'test-repo',
+    test('says write access is missing when the user can only read the repository', async () => {
+      vi.mocked(fetchAPI).mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue({ permissions: { pull: true, push: false } }),
       });
 
-      const mockResponse = { ok: false };
+      await expect(checkRepositoryAccess()).rejects.toMatchObject({
+        message: 'Not a collaborator of the repository',
+        cause: { message: 'repository_no_write_access:{"repo":"test-repo"}' },
+      });
+    });
 
-      vi.mocked(fetchAPI).mockResolvedValue(mockResponse);
+    test('says there is no access when the repository reports no permissions', async () => {
+      vi.mocked(fetchAPI).mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue({}),
+      });
 
-      await expect(checkRepositoryAccess()).rejects.toThrow('Not a collaborator of the repository');
+      await expect(checkRepositoryAccess()).rejects.toMatchObject({
+        message: 'Not a collaborator of the repository',
+        cause: { message: 'repository_no_access:{"repo":"test-repo"}' },
+      });
+    });
+
+    test.each([401, 403, 404])(
+      'throws error when the repository is not visible to the user (%i)',
+      async (status) => {
+        const mockResponse = { ok: false, status, headers: new Headers(), json: vi.fn() };
+
+        vi.mocked(fetchAPI).mockResolvedValue(mockResponse);
+
+        await expect(checkRepositoryAccess()).rejects.toMatchObject({
+          message: 'Not a collaborator of the repository',
+          cause: { message: 'repository_no_access:{"repo":"test-repo"}' },
+        });
+        expect(mockResponse.json).not.toHaveBeenCalled();
+      },
+    );
+
+    test.each([
+      ['a server error', 500, {}],
+      ['a 429 rate limit', 429, {}],
+      ['a 403 rate limit', 403, { 'x-ratelimit-remaining': '0' }],
+      ['a 403 secondary rate limit', 403, { 'retry-after': '60' }],
+    ])('keeps the credentials on %s', async (_label, status, headers) => {
+      vi.mocked(fetchAPI).mockResolvedValue({ ok: false, status, headers: new Headers(headers) });
+
+      // Not the no-access error, which signs the user out
+      await expect(checkRepositoryAccess()).rejects.toThrow(
+        'Failed to check the repository permission.',
+      );
+    });
+  });
+
+  describe('checkBranchAccess', () => {
+    beforeEach(() => {
+      Object.assign(repository, { owner: 'test-owner', repo: 'test-repo', branch: 'main' });
+      lockedBranch.current = undefined;
+    });
+
+    test('leaves a branch without protection writable', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({ repository: { ref: { refUpdateRule: null } } });
+
+      await checkBranchAccess();
+
+      expect(lockedBranch.current).toBeUndefined();
+      expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('viewerCanPush'), {
+        qualifiedName: 'refs/heads/main',
+      });
+    });
+
+    test('leaves a protected branch writable when the user can push to it', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({
+        repository: { ref: { refUpdateRule: { viewerCanPush: true } } },
+      });
+
+      await checkBranchAccess();
+
+      expect(lockedBranch.current).toBeUndefined();
+    });
+
+    test('locks a protected branch the user can’t push to', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({
+        repository: { ref: { refUpdateRule: { viewerCanPush: false } } },
+      });
+
+      await checkBranchAccess();
+
+      expect(lockedBranch.current).toBe('main');
+    });
+
+    test('leaves the branch writable when the query fails', async () => {
+      lockedBranch.current = 'main';
+      vi.mocked(fetchGraphQL).mockRejectedValue(new Error('Something went wrong'));
+
+      await expect(checkBranchAccess()).resolves.toBeUndefined();
+      expect(lockedBranch.current).toBeUndefined();
+    });
+
+    test('leaves the branch writable when the branch is unknown', async () => {
+      Object.assign(repository, { branch: undefined });
+
+      await checkBranchAccess();
+
+      expect(lockedBranch.current).toBeUndefined();
+      expect(fetchGraphQL).not.toHaveBeenCalled();
     });
   });
 

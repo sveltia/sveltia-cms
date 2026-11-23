@@ -1,8 +1,21 @@
+import { getPathInfo } from '@sveltia/utils/file';
+
 import { sortItemsByKey } from '$lib/services/common/view';
+import { getCommitAuthorName } from '$lib/services/utils/commit-author';
 
 /**
  * @import { Asset, SortingConditions } from '$lib/types/private';
  */
+
+/**
+ * Get the value to sort a file by its name. The file extension is excluded to sort numbered files
+ * properly, e.g. `hero.png`, `hero-1.png`, `hero-2.png` instead of `hero-1.png`, `hero-2.png`,
+ * `hero.png`. Only the extension is removed, so dots in the rest of the name, e.g. `v1.10.png`,
+ * still count.
+ * @param {string} name File name.
+ * @returns {string} Name without the extension.
+ */
+export const getNameSortValue = (name) => getPathInfo(name).filename;
 
 /**
  * Get an asset’s property value.
@@ -12,20 +25,18 @@ import { sortItemsByKey } from '$lib/services/common/view';
  * @returns {any} Value.
  */
 export const getValue = (asset, key) => {
-  const { commitAuthor: { name, login, email } = {}, commitDate } = asset;
+  const { commitAuthor, commitDate } = asset;
 
   if (key === 'commit_author') {
-    return name || login || email;
+    return getCommitAuthorName(commitAuthor);
   }
 
   if (key === 'commit_date') {
     return commitDate;
   }
 
-  // Exclude the file extension when sorting by name to sort numbered files properly, e.g.
-  // `hero.png`, `hero-1.png`, `hero-2.png` instead of `hero-1.png`, `hero-2.png`, `hero.png`
   if (key === 'name') {
-    return asset.name.split('.')[0];
+    return getNameSortValue(asset.name);
   }
 
   return /** @type {Record<string, any>} */ (asset)[key] ?? '';

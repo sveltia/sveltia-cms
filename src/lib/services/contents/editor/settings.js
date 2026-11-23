@@ -17,6 +17,18 @@ import { createRawState, createRootEffect } from '$lib/services/utils/state.svel
 export const entryEditorSettings = createRawState();
 
 /**
+ * Turn the given entry editor setting on or off.
+ * @param {'showSecondPane' | 'showPreview' | 'syncScrolling'} key Setting name.
+ * @param {boolean} [defaultValue] Value the setting has when it hasn’t been stored yet.
+ */
+export const toggleEntryEditorSetting = (key, defaultValue = false) => {
+  entryEditorSettings.current = {
+    ...entryEditorSettings.current,
+    [key]: !(entryEditorSettings.current?.[key] ?? defaultValue),
+  };
+};
+
+/**
  * Functions to stop the effects created by {@link initSettings}, so that they don’t pile up when
  * the settings are initialized again.
  * @type {{ entryEditorSettings?: () => void, selectAssetsView?: () => void }}

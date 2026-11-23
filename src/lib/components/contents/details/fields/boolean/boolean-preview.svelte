@@ -19,11 +19,7 @@
    */
 
   /** @type {FieldPreviewProps & Props} */
-  let {
-    /* eslint-disable prefer-const */
-    currentValue = false,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { currentValue = false } = $props();
 </script>
 
 {#if typeof currentValue === 'boolean'}

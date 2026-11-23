@@ -1,5 +1,8 @@
 import { locale as appLocale, isRTL } from '@sveltia/i18n';
 
+import { fillLocalePlaceholder } from '$lib/services/contents/i18n/placeholder';
+import { getOrCreate } from '$lib/services/utils/cache';
+
 /**
  * @import { InternalI18nOptions, InternalLocaleCode, } from '$lib/types/private';
  * @import { LocaleCode } from '$lib/types/public';
@@ -76,18 +79,13 @@ export const getLocaleLabel = (
     return undefined;
   }
 
-  let formatter;
-
-  if (displayLocale) {
-    formatter = displayNamesCache.get(displayLocale);
-
-    if (!formatter) {
-      formatter = new Intl.DisplayNames(displayLocale, formatterOptions);
-      displayNamesCache.set(displayLocale, formatter);
-    }
-  } else {
-    formatter = new Intl.DisplayNames(undefined, formatterOptions);
-  }
+  const formatter = displayLocale
+    ? getOrCreate(
+        displayNamesCache,
+        displayLocale,
+        () => new Intl.DisplayNames(displayLocale, formatterOptions),
+      )
+    : new Intl.DisplayNames(undefined, formatterOptions);
 
   try {
     const label = formatter.of(canonicalLocale);
@@ -109,16 +107,23 @@ export const getLocaleLabel = (
 };
 
 /**
- * Cache of {@link Intl.ListFormat} instances, keyed by `"${locale}|${serializedOptions}"`.
- * @type {Map<string, Intl.ListFormat>}
+ * List formatter that, unlike {@link Intl.ListFormat}, accepts items of any type.
+ * @typedef {{ format: (list: Iterable<any>) => string }} ListFormatter
+ */
+
+/**
+ * Cache of list formatters, keyed by `"${locale}|${serializedOptions}"`.
+ * @type {Map<string, ListFormatter>}
  */
 const listFormatterCache = new Map();
 
 /**
- * Get a simple list formatter.
+ * Get a simple list formatter. `Intl.ListFormat` throws on any item that isn’t a string, while a
+ * value read from a file, e.g. a Select or Relation field value, may be a number or `null`, so the
+ * items are stringified, and `null` and `undefined` dropped, before they are formatted.
  * @param {InternalLocaleCode} locale Locale code.
  * @param {Partial<Intl.ListFormatOptions>} options Format options.
- * @returns {Intl.ListFormat} Formatter.
+ * @returns {ListFormatter} Formatter.
  */
 export const getListFormatter = (locale, options = {}) => {
   const effectiveOptions = /** @type {Intl.ListFormatOptions} */ ({
@@ -128,34 +133,39 @@ export const getListFormatter = (locale, options = {}) => {
   });
 
   const cacheKey = `${locale}|${effectiveOptions.style}|${effectiveOptions.type}`;
-  let formatter = listFormatterCache.get(cacheKey);
 
-  if (!formatter) {
-    formatter = new Intl.ListFormat(getCanonicalLocale(locale), effectiveOptions);
-    listFormatterCache.set(cacheKey, formatter);
-  }
+  return getOrCreate(listFormatterCache, cacheKey, () => {
+    const formatter = new Intl.ListFormat(getCanonicalLocale(locale), effectiveOptions);
 
-  return formatter;
+    return {
+      /**
+       * Format the given list.
+       * @param {Iterable<any>} list List items.
+       * @returns {string} Formatted list.
+       */
+      format: (list) =>
+        formatter.format(
+          [...list].filter((item) => item !== null && item !== undefined).map((item) => `${item}`),
+        ),
+    };
+  });
 };
 
 /**
- * Get the complete path for the given entry folder, including the locale.
+ * Get the complete path for the given collection folder or file, including the locale.
  * @param {object} args Arguments.
  * @param {InternalI18nOptions} args._i18n I18n configuration.
  * @param {InternalLocaleCode} args.locale Locale code.
- * @param {string} args.path Collection file path with `{{locale}}` placeholder.
+ * @param {string} args.path Collection folder or file path with the `{{locale}}` placeholder.
  * @returns {string} Complete path, including the locale.
  */
 export const getLocalePath = ({ _i18n, locale, path }) => {
   const { defaultLocale, omitDefaultLocaleFromFilePath } = _i18n;
 
-  // Remove the default locale from the file name (for Zola compatibility)
-  // @see https://github.com/sveltia/sveltia-cms/discussions/394
-  if (omitDefaultLocaleFromFilePath && locale === defaultLocale) {
-    path = path.replace(/{{locale}}[./]/, '');
-  }
-
-  // Replace the placeholder with the actual locale. The placeholder may appear multiple times
-  // @see https://github.com/sveltia/sveltia-cms/issues/462
-  return path.replaceAll('{{locale}}', locale);
+  return fillLocalePlaceholder({
+    path,
+    locale,
+    // Remove the default locale from the path (for Zola compatibility)
+    omitLocale: omitDefaultLocaleFromFilePath && locale === defaultLocale,
+  });
 };

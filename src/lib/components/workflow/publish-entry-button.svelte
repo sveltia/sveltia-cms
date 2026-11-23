@@ -6,12 +6,14 @@
   import { _ } from '@sveltia/i18n';
   import { Alert, Button, ConfirmationDialog, Toast } from '@sveltia/ui';
 
-  import { goBack } from '$lib/services/app/navigation';
+  import ExternalReviewButton from '$lib/components/workflow/external-review-button.svelte';
   import { getCollection } from '$lib/services/contents/collection';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { openAuthoring } from '$lib/services/workflow/open-authoring';
-  import { publishWorkflowEntry } from '$lib/services/workflow/save';
-  import { validateWorkflowEntry } from '$lib/services/workflow/validate';
+  import { getPublishAction, publishingBranches } from '$lib/services/workflow';
+  import { getPublishDialogStrings } from '$lib/services/workflow/dialogs';
+  import { runWorkflowEditorAction } from '$lib/services/workflow/editor';
+  import { publishReviewedEntry } from '$lib/services/workflow/save';
+  import { canPublish } from '$lib/services/workflow/validate';
 
   /**
    * @import { UnpublishedEntry } from '$lib/types/private';
@@ -29,90 +31,81 @@
   const entryDraft = getEntryDraftContext();
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    entry,
-    disabled = false,
-    modified = false,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { entry, disabled = false, modified = false } = $props();
 
-  let publishing = $state(false);
   let showPublishDialog = $state(false);
   let showErrorToast = $state(false);
+  /** Message the error toast shows, which says why publishing has failed if it can. */
+  let errorMessage = $state('');
   let showValidationToast = $state(false);
 
   // Publishing a removal is what deletes the entry, so the control is presented as Delete
   const deletion = $derived(entry.workflow.status === 'pending_deletion');
-  // The collection’s `publish` option can hide the control, so an editor can move an entry through
-  // the review stages but leave the actual publishing to someone else. An Open Authoring
-  // contributor can’t merge a pull request on the configured repository, so they never see it
-  const visible = $derived(
-    !openAuthoring.current &&
-      (entry.workflow.status === 'pending_publish' || deletion) &&
-      getCollection(entry.workflow.collectionName)?.publish !== false,
+  const dialogStrings = $derived(getPublishDialogStrings({ deletion }));
+  // The service records the merge in flight, rather than this component: a merge can take minutes
+  // and outlive the editor, and the control stays disabled when the entry is reopened meanwhile
+  const publishing = $derived(
+    publishingBranches.current.includes(entry.workflow.pullRequest.branch),
+  );
+  // Only a user who can merge the pull request gets the control, once the entry is ready. A pull
+  // request a contributor has opened from their fork is merged on the Git service instead
+  const publishAction = $derived(
+    getPublishAction(entry, getCollection(entry.workflow.collectionName)),
   );
 
   /**
    * Publish the entry by merging the pull request, then go back to the entry list.
    */
   const publish = async () => {
-    // A pull request labelled ready elsewhere — by another CMS, or by hand — may never have been
-    // checked, and an entry can be saved as a draft with its required fields left empty. A removal
-    // has no content to check; publishing it is what carries the deletion out
-    if (!deletion && !validateWorkflowEntry({ entry, draft: entryDraft.current })) {
+    const { blocked, errorMessage: message } = await runWorkflowEditorAction({
+      entry,
+      entryDraft,
+      valid: canPublish({ entry, draft: entryDraft.current }),
+      /**
+       * Merge the pull request, pinned to the version the editor shows.
+       * @returns {Promise<void>} Result.
+       */
+      action: () => publishReviewedEntry(entry, entryDraft.current?.originalEntry),
+      failure: 'workflow.publishing_entry_failed',
+      closeOnSuccess: true,
+    });
+
+    if (blocked) {
       showValidationToast = true;
-
-      return;
-    }
-
-    // Read the collection name up front: publishing takes the entry out of `unpublishedEntries`,
-    // and the `entry` prop is derived from that store, so it’s `undefined` once the merge resolves
-    const { collectionName } = entry.workflow;
-
-    publishing = true;
-
-    try {
-      await publishWorkflowEntry(entry);
-      entryDraft.current = null;
-      goBack(`/collections/${collectionName}`);
-    } catch (/** @type {any} */ ex) {
+    } else if (message) {
+      errorMessage = message;
       showErrorToast = true;
-      // eslint-disable-next-line no-console
-      console.error(ex);
-    } finally {
-      publishing = false;
     }
   };
 </script>
 
-{#if visible}
+{#if publishAction === 'publish'}
   <Button
     variant="primary"
-    label={_(deletion ? 'delete' : publishing ? 'publishing' : 'publish')}
-    aria-label={deletion
-      ? _('delete_entries', { values: { count: 1 } })
-      : _('workflow.publish_entry')}
+    label={publishing && !deletion ? _('publishing') : dialogStrings.label}
+    aria-label={dialogStrings.title}
     disabled={disabled || (modified && !deletion) || publishing}
     onclick={() => {
       showPublishDialog = true;
     }}
   />
+{:else if publishAction === 'review'}
+  <ExternalReviewButton {entry} {disabled} />
 {/if}
 
 <ConfirmationDialog
   bind:open={showPublishDialog}
-  title={deletion ? _('delete_entries', { values: { count: 1 } }) : _('workflow.publish_entry')}
-  okLabel={_(deletion ? 'delete' : 'publish')}
+  title={dialogStrings.title}
+  okLabel={dialogStrings.label}
   onOk={() => {
     publish();
   }}
 >
-  {_(deletion ? 'workflow.confirm_completing_deletion' : 'workflow.confirm_publishing_entry')}
+  {dialogStrings.message}
 </ConfirmationDialog>
 
 <Toast bind:show={showErrorToast}>
-  <Alert status="error">{_('workflow.publishing_entry_failed')}</Alert>
+  <Alert status="error">{errorMessage}</Alert>
 </Toast>
 
 <Toast bind:show={showValidationToast}>

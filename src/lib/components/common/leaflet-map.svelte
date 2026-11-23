@@ -5,9 +5,9 @@
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
 
-  import { getUnpkgURL, loadModule } from '$lib/services/app/dependencies';
+  import { getLeafletMarkerIconURL, loadModule } from '$lib/services/app/dependencies';
 
   /**
    * @import Leaflet from 'leaflet';
@@ -25,17 +25,53 @@
 
   /** @type {Props & Record<string, any>} */
   let {
-    /* eslint-disable prefer-const */
     coordinates,
     class: className = '',
     mapElement = $bindable(),
     onReady = undefined,
     ...rest
-    /* eslint-enable prefer-const */
   } = $props();
 
   /** @type {ResizeObserver | undefined} */
   let resizeObserver;
+  /** Whether the component has been destroyed, possibly before the map is initialized. */
+  let destroyed = false;
+  /**
+   * Leaflet library, map instance and marker icon, once the map is initialized.
+   * @type {{ leaflet: Leaflet, map: Leaflet.Map, iconUrl: string } | undefined}
+   */
+  let instance = $state.raw();
+  /** @type {Leaflet.Marker | undefined} */
+  let marker;
+  /** @type {GeoCoordinates | undefined} */
+  let shownCoordinates;
+
+  /**
+   * Show a marker at the current coordinates, and centre the map on them. The component can stay
+   * mounted while the coordinates change, e.g. in the info panel of the Asset Library as the focus
+   * moves from one photo to another, so the previous marker is removed first.
+   */
+  const showLocation = () => {
+    const { latitude, longitude } = coordinates ?? {};
+
+    if (latitude === shownCoordinates?.latitude && longitude === shownCoordinates?.longitude) {
+      return;
+    }
+
+    // Only called once the map is initialized
+    const { leaflet, map, iconUrl } = /** @type {NonNullable<typeof instance>} */ (instance);
+
+    shownCoordinates = coordinates;
+    marker?.remove();
+    marker = undefined;
+
+    if (coordinates) {
+      const icon = leaflet.icon({ iconUrl, iconSize: [25, 41] });
+
+      marker = leaflet.marker([coordinates.latitude, coordinates.longitude], { icon }).addTo(map);
+      map.setView([coordinates.latitude, coordinates.longitude], 12);
+    }
+  };
 
   /**
    * Load the Leaflet library and initialize the map. We don’t bundle the library because of the
@@ -43,13 +79,20 @@
    * Maps and Here Maps, may be supported in the future.
    */
   const init = async () => {
+    /* v8 ignore next 3 -- called once mounted, when the element is bound */
     if (!mapElement) {
       return;
     }
 
     /** @type {Leaflet} */
     const leaflet = await loadModule('leaflet', 'dist/leaflet-src.esm.js');
-    const iconUrl = `${getUnpkgURL('leaflet')}/dist/images/marker-icon-2x.png`;
+    const iconUrl = await getLeafletMarkerIconURL();
+
+    // The component may have been destroyed while the library was being loaded
+    if (destroyed) {
+      return;
+    }
+
     const map = leaflet.map(mapElement, { center: [0, 0], zoom: 2 });
 
     leaflet
@@ -63,13 +106,8 @@
       })
       .addTo(map);
 
-    if (coordinates) {
-      const { latitude, longitude } = coordinates;
-      const icon = leaflet.icon({ iconUrl, iconSize: [25, 41] });
-
-      leaflet.marker([latitude, longitude], { icon }).addTo(map);
-      map.setView([latitude, longitude], 12);
-    }
+    instance = { leaflet, map, iconUrl };
+    showLocation();
 
     mapElement.querySelectorAll('a[href^="https:"]').forEach((a) => {
       a.setAttribute('target', '_blank');
@@ -85,11 +123,31 @@
     onReady?.({ leaflet, map });
   };
 
+  // Move the marker when the coordinates change
+  $effect(() => {
+    void [instance, coordinates?.latitude, coordinates?.longitude];
+
+    untrack(() => {
+      if (instance) {
+        showLocation();
+      }
+    });
+  });
+
   onMount(() => {
     init();
 
     return () => {
+      destroyed = true;
       resizeObserver?.disconnect();
+
+      // Remove the map, along with the window resize listener Leaflet keeps until then
+      if (instance) {
+        // Leaflet ends a zoom animation with a timer that `remove()` doesn’t clear, and that then
+        // throws on the removed map, so mark the animation as over first
+        /** @type {any} */ (instance.map)._animatingZoom = false;
+        instance.map.remove();
+      }
     };
   });
 </script>

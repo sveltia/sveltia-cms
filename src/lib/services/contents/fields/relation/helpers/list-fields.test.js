@@ -55,6 +55,7 @@ describe('Test processSingleSubfieldList()', () => {
       'skills.0': 'JavaScript',
       'skills.1': 'React',
       'skills.2': 'Node.js',
+      id: 123,
     };
 
     /** @type {TemplateStrings} */
@@ -103,11 +104,68 @@ describe('Test processSingleSubfieldList()', () => {
     result.forEach((option) => expect(option.value).toBe('123'));
   });
 
+  test('should insert list item values containing `$` patterns verbatim', () => {
+    const content = { 'skills.0': 'Save $$$ now', 'skills.1': 'A $& B' };
+
+    /** @type {TemplateStrings} */
+    const templates = {
+      _displayField: '{{skills.*}}',
+      _valueField: '{{skills.*}}',
+      _searchField: '{{skills.*}}',
+      allFieldNames: ['skills.*'],
+      hasListFields: true,
+    };
+
+    const result = processSingleSubfieldList({
+      baseFieldName: 'skills',
+      groupEntries: [['skills.*', { baseFieldName: 'skills' }]],
+      content,
+      templates,
+      allFieldNames: ['skills.*'],
+      context: { slug: 'test-slug', locale: 'en', getDisplayValue: vi.fn(() => '') },
+      fallbackContext: { content, locales: {}, defaultLocale: 'en', identifierField: 'title' },
+    });
+
+    expect(result.map((option) => option.label)).toEqual(['Save $$$ now', 'A $& B']);
+    expect(result.map((option) => option.value)).toEqual(['Save $$$ now', 'A $& B']);
+  });
+
+  test('should not take a sibling field whose name starts with the list name as an item', () => {
+    // `photos_2` is a separate field, not the third item of the `photos` list
+    const content = {
+      'photos.0': 'a.jpg',
+      'photos.1': 'b.jpg',
+      photos_2: 'cover.jpg',
+    };
+
+    /** @type {TemplateStrings} */
+    const templates = {
+      _displayField: '{{photos.*}}',
+      _valueField: '{{photos.*}}',
+      _searchField: '{{photos.*}}',
+      allFieldNames: ['photos.*'],
+      hasListFields: true,
+    };
+
+    const result = processSingleSubfieldList({
+      baseFieldName: 'photos',
+      groupEntries: [['photos.*', { baseFieldName: 'photos' }]],
+      content,
+      templates,
+      allFieldNames: ['photos.*'],
+      context: { slug: 'test-slug', locale: 'en', getDisplayValue: vi.fn(() => '') },
+      fallbackContext: { content, locales: {}, defaultLocale: 'en', identifierField: 'title' },
+    });
+
+    expect(result.map(({ value }) => value)).toEqual(['a.jpg', 'b.jpg']);
+  });
+
   test('should handle list items with empty values', () => {
     const content = {
       'skills.0': '',
       'skills.1': 'React',
       'skills.2': '',
+      id: 123,
     };
 
     /** @type {TemplateStrings} */
@@ -202,17 +260,19 @@ describe('Test processSingleSubfieldList()', () => {
     expect(result1).toHaveLength(2);
   });
 
-  test('should use context.slug as value fallback when item value is empty string (line 441)', () => {
-    // When the list item value is '' the substituted _valueField also becomes '',
-    // triggering the `value || context.slug` fallback.
-    const content = { 'tags.0': '' };
+  test('should leave the value empty when an item value in the value template is empty', () => {
+    // The item value is a part of the value template, which would leave a value like
+    // `entry-slug#` that doesn’t identify the item. An empty or missing item value leaves the
+    // whole value empty instead, so `processEntry()` leaves the option out. The slug used to be
+    // the fallback for an empty value, which was stored as a reference to the item.
+    const content = { 'tags.0': '', 'tags.1': null, 'tags.2': 0, 'tags.3': 'news' };
 
     /** @type {TemplateStrings} */
     const templates = {
       _displayField: '{{tags.*}}',
-      _valueField: '{{tags.*}}',
+      _valueField: '{{slug}}#{{tags.*}}',
       _searchField: '{{tags.*}}',
-      allFieldNames: ['tags.*'],
+      allFieldNames: ['tags.*', 'slug'],
       hasListFields: true,
     };
 
@@ -220,7 +280,7 @@ describe('Test processSingleSubfieldList()', () => {
     const groupEntries = [['tags.*', { baseFieldName: 'tags', isComplexListField: false }]];
 
     const context = {
-      slug: 'fallback-slug',
+      slug: 'entry-slug',
       locale: 'en',
       getDisplayValue: vi.fn(() => ''),
     };
@@ -237,14 +297,12 @@ describe('Test processSingleSubfieldList()', () => {
       groupEntries,
       content,
       templates,
-      allFieldNames: ['tags.*'],
+      allFieldNames: ['tags.*', 'slug'],
       context,
       fallbackContext,
     });
 
-    expect(result).toHaveLength(1);
-    // Empty item value → value = '' → falls back to context.slug
-    expect(result[0].value).toBe('fallback-slug');
+    expect(result.map(({ value }) => value)).toEqual(['', '', 'entry-slug#0', 'entry-slug#news']);
   });
 });
 
@@ -348,7 +406,7 @@ describe('Test processComplexListField()', () => {
     expect(result1[1]).toEqual({ label: 'Milan', value: 'milan', searchValue: 'Milan' });
   });
 
-  test('should handle missing list items with empty value fallback to slug', () => {
+  test('should leave the value of a list item without a value empty', () => {
     const content = {
       'cities.0.id': '',
       'cities.0.name': '',
@@ -396,11 +454,49 @@ describe('Test processComplexListField()', () => {
     });
 
     expect(result).toHaveLength(2);
-    // First item has empty value/label, should fall back to slug
-    expect(result[0].value).toBe('test-slug');
+    // First item has an empty value and label: the label falls back to the slug, while the value
+    // is left empty, so `processEntry()` leaves the option out instead of storing the entry slug
+    // as a reference to the list item
+    expect(result[0].label).toBe('test-slug');
+    expect(result[0].value).toBe('');
     // Second item has values
     expect(result[1].label).toBe('Boston');
     expect(result[1].value).toBe('city2');
+  });
+
+  test('should keep a list item value of `0` or `false`', () => {
+    const content = {
+      'levels.0.id': 0,
+      'levels.0.name': 'Beginner',
+      'levels.1.id': false,
+      'levels.1.name': 'None',
+    };
+
+    /** @type {TemplateStrings} */
+    const templates = {
+      _displayField: '{{levels.*.name}}',
+      _valueField: '{{levels.*.id}}',
+      _searchField: '{{levels.*.name}}',
+      allFieldNames: ['levels.*.name', 'levels.*.id'],
+      hasListFields: true,
+    };
+
+    const result = processComplexListField({
+      groupEntries: [
+        ['levels.*.name', { baseFieldName: 'levels' }],
+        ['levels.*.id', { baseFieldName: 'levels' }],
+      ],
+      content,
+      templates,
+      allFieldNames: templates.allFieldNames,
+      context: { slug: 'test-slug', locale: 'en', getDisplayValue: vi.fn(() => '') },
+      fallbackContext: { content, locales: {}, defaultLocale: 'en', identifierField: 'title' },
+    });
+
+    expect(result.map(({ label, value }) => ({ label, value }))).toEqual([
+      { label: 'Beginner', value: '0' },
+      { label: 'None', value: 'false' },
+    ]);
   });
 
   test('should return empty array when no valid pattern found', () => {

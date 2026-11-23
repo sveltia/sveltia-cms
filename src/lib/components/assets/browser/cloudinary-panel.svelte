@@ -9,7 +9,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { Button, EmptyState } from '@sveltia/ui';
-  import { isObject } from '@sveltia/utils/object';
   import { onMount } from 'svelte';
 
   import {
@@ -20,6 +19,7 @@
     dialogOpen,
     FRAME_ORIGIN,
     getMergedLibraryOptions,
+    parseMessage,
   } from '$lib/services/integrations/media-libraries/cloud/cloudinary';
   import { openNewTab } from '$lib/services/utils/window';
 
@@ -38,18 +38,14 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    fieldConfig,
-    kind,
-    multiple = false,
-    hidden = false,
-    onSelect,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { fieldConfig, kind, multiple = false, hidden = false, onSelect } = $props();
 
-  /** @type {CloudinaryMediaLibrary} */
-  const libOptions = $derived(getMergedLibraryOptions(fieldConfig) ?? {});
+  // The merged options always have the `config` object
+  const libOptions = $derived(
+    /** @type {CloudinaryMediaLibrary & { config: Record<string, any> }} */ (
+      getMergedLibraryOptions(fieldConfig)
+    ),
+  );
 
   /** @type {HTMLIFrameElement | null} */
   let iframe = null;
@@ -58,15 +54,20 @@
    * Send configuration message to the Cloudinary Media Library iframe.
    */
   const sendMessage = () => {
+    const { folder } = libOptions.config;
+
     const config = {
       ...Object.fromEntries(
-        Object.entries(libOptions.config ?? {}).filter(([k]) => CONFIG_PROPS.includes(k)),
+        Object.entries(libOptions.config).filter(([k]) => CONFIG_PROPS.includes(k)),
       ),
       multiple,
-      max_files: fieldConfig?.max ?? libOptions.config?.max_files ?? 20,
+      max_files: fieldConfig?.max ?? libOptions.config.max_files ?? 20,
       folder: {
-        path: libOptions.config?.folder?.path ?? '',
-        resource_type: kind ?? 'raw',
+        path: folder?.path ?? '',
+        // The resource type filters the view. The configured one wins; otherwise an Image field
+        // shows images only, while a File field shows every type, as a PDF file is an image and a
+        // video file a video on Cloudinary. An `undefined` type is left out of the message
+        resource_type: folder?.resource_type ?? kind,
       },
     };
 
@@ -83,8 +84,8 @@
 
   /**
    * Handle asset insertion from the Cloudinary Media Library.
-   * @param {{ assets: { secure_url: string; derived?: { secure_url: string }[] }[] }} assets The
-   * inserted assets data.
+   * @param {{ assets: { public_id: string; format?: string; secure_url: string; derived?: {
+   * secure_url: string }[] }[] }} assets The inserted assets data.
    */
   const onInsert = ({ assets }) => {
     const {
@@ -97,7 +98,11 @@
       const url = asset.secure_url;
 
       if (outputFilenameOnly) {
-        return { url: /** @type {string} */ (url.split('/').pop()) };
+        // Like Decap CMS, output the public ID, which includes the folder, with the format as the
+        // extension. A raw file has no format, as its public ID ends with the extension already
+        const { public_id: publicId, format } = asset;
+
+        return { url: format ? `${publicId}.${format}` : publicId };
       }
 
       if (useTransformations) {
@@ -111,23 +116,14 @@
   };
 
   /**
-   * Handle messages received from the Cloudinary Media Library iframe.
+   * Handle messages received from the Cloudinary Media Library iframe. The `consoleLoaded` message
+   * is handled by the iframe component instead, as it can arrive before this panel is mounted.
    * @param {MessageEvent} event The message event.
    */
-  const onMessage = ({ origin, data }) => {
-    if (origin !== FRAME_ORIGIN) {
-      return;
-    }
+  const onMessage = (event) => {
+    const data = parseMessage(event);
 
-    if (typeof data === 'string') {
-      try {
-        data = JSON.parse(data);
-      } catch {
-        return;
-      }
-    }
-
-    if (!isObject(data)) {
+    if (!data) {
       return;
     }
 
@@ -137,10 +133,6 @@
     if (data.type === 'login' && data.consoleDomain) {
       activated.current = true;
       dialogOpen.current = true;
-    }
-
-    if (data.type === 'consoleLoaded') {
-      consoleLoaded.current = true;
     }
 
     if (data.type === 'ML_WIDGET_INSERT_DATA') {

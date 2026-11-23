@@ -1,0 +1,149 @@
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
+import { render } from 'vitest-browser-svelte';
+
+import { backupToastState, restoreDialogState } from '$lib/services/contents/draft/backup';
+import { showContentOverlay } from '$lib/services/contents/editor';
+import { waitForToastsToHide } from '$lib/test/toast';
+
+import BackupFeedback from './backup-feedback.svelte';
+
+describe('BackupFeedback', () => {
+  beforeEach(() => {
+    showContentOverlay.current = true;
+    restoreDialogState.current = { show: false };
+    backupToastState.current = { saved: false, restored: false, deleted: false };
+  });
+
+  test('asks whether to restore a backup made today', async () => {
+    const resolve = vi.fn();
+    const timestamp = new Date();
+
+    timestamp.setUTCHours(10, 30, 0, 0);
+
+    await render(BackupFeedback);
+
+    restoreDialogState.current = { show: true, timestamp, resolve };
+
+    const dialog = page.getByRole('alertdialog', { name: 'Restore Draft' });
+
+    await expect
+      .element(dialog)
+      .toHaveTextContent(
+        'Restore Draft This entry has a backup from \u206810:30 AM\u2069. Do you want to restore the edited draft? Restore Discard',
+      );
+
+    await dialog.getByRole('button', { name: 'Restore' }).click();
+    await vi.waitFor(() => expect(resolve).toHaveBeenCalledWith(true));
+  });
+
+  test('shows the date of an older backup, and can discard it', async () => {
+    const resolve = vi.fn();
+    const timestamp = new Date(Date.UTC(new Date().getUTCFullYear() - 1, 0, 15, 10, 30));
+
+    await render(BackupFeedback);
+
+    restoreDialogState.current = { show: true, timestamp, resolve };
+
+    const dialog = page.getByRole('alertdialog', { name: 'Restore Draft' });
+    const datetime = `Jan 15, ${timestamp.getUTCFullYear()}, 10:30 AM`;
+
+    await expect
+      .element(dialog)
+      .toHaveTextContent(
+        `Restore Draft This entry has a backup from \u2068${datetime}\u2069. ` +
+          'Do you want to restore the edited draft? Restore Discard',
+      );
+
+    await dialog.getByRole('button', { name: 'Discard' }).click();
+    await vi.waitFor(() => expect(resolve).toHaveBeenCalledWith(false));
+  });
+
+  test('compares the backup time with the time the dialog is opened', async () => {
+    const resolve = vi.fn();
+    const dialog = page.getByRole('alertdialog', { name: 'Restore Draft' });
+
+    vi.useFakeTimers({ toFake: ['Date'] });
+
+    try {
+      await render(BackupFeedback);
+
+      vi.setSystemTime(new Date('2026-11-06T20:00:00Z'));
+      restoreDialogState.current = {
+        show: true,
+        timestamp: new Date('2026-11-06T10:30:00Z'),
+        resolve,
+      };
+      await expect
+        .element(dialog)
+        .toMatchTextContent('This entry has a backup from \u206810:30 AM\u2069.');
+      await dialog.getByRole('button', { name: 'Discard' }).click();
+      await vi.waitFor(() => expect(resolve).toHaveBeenCalledWith(false));
+
+      // The component stays mounted with the Content Library, maybe until the next day
+      vi.setSystemTime(new Date('2026-11-07T20:00:00Z'));
+      restoreDialogState.current = {
+        show: true,
+        timestamp: new Date('2026-11-07T09:15:00Z'),
+        resolve,
+      };
+      await expect
+        .element(dialog)
+        .toMatchTextContent('This entry has a backup from \u20689:15 AM\u2069.');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('leaves the page usable and lets the dialog be moved', async () => {
+    // @see https://github.com/sveltia/sveltia-cms/issues/566
+    await render(BackupFeedback);
+
+    restoreDialogState.current = { show: true, timestamp: new Date(), resolve: vi.fn() };
+
+    const dialog = page.getByRole('alertdialog', { name: 'Restore Draft' });
+
+    await expect.element(dialog).toBeVisible();
+    expect(dialog.element().matches(':modal')).toBe(false);
+    // The editor is dimmed, but not blocked
+    expect(dialog.element().classList.contains('backdrop')).toBe(true);
+    expect(dialog.element().querySelector('.header')?.classList.contains('movable')).toBe(true);
+  });
+
+  test('closes the dialog along with the editor', async () => {
+    const resolve = vi.fn();
+
+    await render(BackupFeedback);
+
+    restoreDialogState.current = { show: true, timestamp: new Date(), resolve };
+    await expect.element(page.getByRole('alertdialog')).toBeInTheDocument();
+
+    showContentOverlay.current = false;
+    await vi.waitFor(() => expect(resolve).toHaveBeenCalledWith());
+    expect(restoreDialogState.current.show).toBe(false);
+  });
+
+  test('reports a saved, restored or deleted backup', async () => {
+    await render(BackupFeedback);
+
+    backupToastState.current.saved = true;
+    await expect
+      .element(page.getByRole('status'))
+      .toHaveTextContent('info Information Draft backup saved.');
+    // The toast goes away on its own, resetting the state
+    await waitForToastsToHide();
+    expect(backupToastState.current.saved).toBe(false);
+
+    backupToastState.current = { saved: false, restored: true, deleted: false };
+    await expect
+      .element(page.getByRole('status'))
+      .toHaveTextContent('check_circle Success Draft backup restored.');
+    await waitForToastsToHide();
+
+    backupToastState.current = { saved: false, restored: false, deleted: true };
+    await expect
+      .element(page.getByRole('status'))
+      .toHaveTextContent('info Information Draft backup deleted.');
+    await waitForToastsToHide();
+  }, 30000);
+});

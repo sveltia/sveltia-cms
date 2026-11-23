@@ -1,0 +1,256 @@
+import { expect } from '@playwright/test';
+
+/**
+ * @import { Locator, Page } from '@playwright/test';
+ * @import { CMS } from './test.js';
+ */
+
+/**
+ * Get the content editor.
+ * @param {Page} page Page.
+ * @returns {Locator} Editor.
+ */
+export const getEditor = (page) => page.getByRole('group', { name: 'Content Editor' });
+
+/**
+ * Save the entry open in the editor, which takes us back to the entry list.
+ * @param {Locator} editor Content editor.
+ */
+export const saveEntry = async (editor) => {
+  await editor.getByRole('button', { name: 'Save' }).click();
+  await expect(editor).toBeHidden();
+};
+
+/**
+ * Wait for a file to be written with the given content, and check that the old one is gone.
+ * @param {CMS} cms CMS fixture.
+ * @param {string} path Path of the file to wait for.
+ * @param {string} content Expected content.
+ * @param {string} [oldPath] Path of the file that should be gone.
+ */
+export const expectFile = async (cms, path, content, oldPath) => {
+  await expect.poll(async () => (await cms.readRepo())[path]).toBe(content);
+
+  if (oldPath) {
+    expect(await cms.readRepo()).not.toHaveProperty(oldPath);
+  }
+};
+
+/**
+ * Get the group of a field in the editor.
+ * @param {Page | Locator} scope Page, to look in the content editor, or an element to look in, such
+ * as the editor or one of its panes.
+ * @param {string} label Field label.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.exact] Whether to match the whole group name, `“label” Field` with the
+ * label wrapped in bidi isolates, rather than any name with the label followed by `Field`.
+ * @returns {Locator} Field group.
+ */
+export const getField = (scope, label, { exact = false } = {}) =>
+  ('goto' in scope ? getEditor(scope) : scope).getByRole(
+    'group',
+    exact
+      ? { name: `“\u2068${label}\u2069” Field`, exact: true }
+      : { name: new RegExp(`${label}.*Field`) },
+  );
+
+/**
+ * Get the radio buttons of a field, which a Select or Relation field with a few options shows.
+ * @param {Page} page Page.
+ * @param {string} label Field label.
+ * @returns {Locator} Radio buttons.
+ */
+export const getRadioOptions = (page, label) =>
+  getEditor(page).getByRole('radiogroup', { name: label, exact: true }).getByRole('radio');
+
+/**
+ * Check the options a field shows as radio buttons, in order. A radio button’s label is its
+ * accessible name, not its text content.
+ * @param {Page} page Page.
+ * @param {string} label Field label.
+ * @param {string[]} names Option labels.
+ */
+export const expectRadioOptions = async (page, label, names) => {
+  const options = getRadioOptions(page, label);
+
+  await expect(options).toHaveCount(names.length);
+  await Promise.all(
+    names.map((name, index) => expect(options.nth(index)).toHaveAccessibleName(name)),
+  );
+};
+
+/**
+ * Pick an option of a field that shows its options as radio buttons.
+ * @param {Page} page Page.
+ * @param {string} label Field label.
+ * @param {string} name Option label.
+ */
+export const pickRadioOption = async (page, label, name) => {
+  await getRadioOptions(page, label)
+    .and(page.getByRole('radio', { name, exact: true }))
+    .click();
+};
+
+/**
+ * Open a collection from the sidebar.
+ * @param {Page} page Page.
+ * @param {string} name Collection label.
+ * @returns {Promise<Locator>} Collection.
+ */
+export const openCollection = async (page, name) => {
+  const collection = page.getByRole('main', { name: new RegExp(`${name}.*Collection`) });
+
+  await page
+    .getByRole('tree', { name: 'Collection List' })
+    .getByRole('treeitem', { name: new RegExp(`^${name}\\b`) })
+    .click();
+  await expect(collection).toBeVisible();
+
+  return collection;
+};
+
+/**
+ * Get the grid in a collection’s entry list.
+ * @param {Page} page Page.
+ * @returns {Locator} Grid.
+ */
+export const getEntryList = (page) =>
+  page.getByRole('group', { name: 'Entry List' }).getByRole('grid');
+
+/**
+ * Get the rows of a collection’s entry list, leaving out the header row of the table view. The
+ * captions of the row groups, such as “Unpublished Entries”, are rows too, and included.
+ * @param {Page | Locator} scope Page, to look in the entry list, or an element to look in, such as
+ * the collection or a row group.
+ * @returns {Locator} Rows.
+ */
+export const getEntryRows = (scope) => {
+  const page = 'goto' in scope ? scope : scope.page();
+
+  return ('goto' in scope ? getEntryList(scope) : scope)
+    .getByRole('row')
+    .and(page.locator(':not(.grid-head) > [role="row"]'));
+};
+
+/**
+ * Get the row groups of a collection’s entry list, leaving out the header of the table view.
+ * @param {Page} page Page.
+ * @returns {Locator} Row groups.
+ */
+export const getEntryGroups = (page) =>
+  getEntryList(page).getByRole('rowgroup').and(page.locator(':not(.grid-head)'));
+
+/**
+ * Open an entry in the editor by clicking its row, and wait until its title is shown.
+ * @param {Page} page Page.
+ * @param {string} title Entry title.
+ * @param {object} [options] Options.
+ * @param {string} [options.collection] Label of the collection to open from the sidebar first.
+ * @param {boolean} [options.exact] Whether the row name is the title alone, rather than starting
+ * with it.
+ * @param {boolean} [options.checkTitle] Whether to wait until the Title field shows the title.
+ * Turn it off for an entry whose title is in another field.
+ * @returns {Promise<Locator>} Editor.
+ */
+export const openEntry = async (
+  page,
+  title,
+  { collection, exact = false, checkTitle = true } = {},
+) => {
+  if (collection) {
+    await openCollection(page, collection);
+  }
+
+  await page
+    .getByRole('row', exact ? { name: title, exact: true } : { name: new RegExp(`^${title}`) })
+    .click();
+
+  const editor = getEditor(page);
+
+  if (checkTitle) {
+    await expect(editor.getByRole('textbox', { name: 'Title', exact: true })).toHaveValue(title);
+  }
+
+  return editor;
+};
+
+/**
+ * Open the “First Post” entry the Git backend mocks start with, and wait until its body is shown.
+ * @param {Page} page Page.
+ * @returns {Promise<Locator>} Editor.
+ */
+export const openFirstPost = async (page) => {
+  const editor = getEditor(page);
+
+  await page.getByRole('row', { name: /First Post/ }).click();
+  await expect(editor.getByRole('textbox', { name: 'Body' })).toHaveValue('Hello, world!');
+
+  return editor;
+};
+
+/**
+ * Click a control and get the URL of the tab it opens, once loaded. Answer the request for the URL
+ * with `page.route()`, so no real site is loaded.
+ * @param {Page} page Page.
+ * @param {Locator | (() => Promise<void>)} control Control to click, or a function clicking it.
+ * @returns {Promise<string>} URL.
+ */
+export const getOpenedURL = async (page, control) => {
+  const [popup] = await Promise.all([
+    page.waitForEvent('popup'),
+    typeof control === 'function' ? control() : control.click(),
+  ]);
+
+  await popup.waitForLoadState();
+
+  const url = popup.url();
+
+  await popup.close();
+
+  return url;
+};
+
+/**
+ * Get the names of the assets listed in the Asset Library, in order.
+ * @param {Page} page Page.
+ * @returns {Promise<string[]>} File names.
+ */
+export const listedAssets = (page) =>
+  page
+    .getByRole('grid', { name: 'Assets' })
+    .getByRole('row')
+    .evaluateAll((rows) => rows.map((row) => row.getAttribute('aria-label') ?? ''));
+
+/**
+ * Open an asset folder from the folder list in the Asset Library.
+ * @param {Page} page Page.
+ * @param {RegExp} name Folder name, followed by the number of assets.
+ */
+export const openFolder = async (page, name) => {
+  const option = page.getByRole('listbox', { name: 'Asset Folder List' }).getByRole('option', {
+    name,
+  });
+
+  await option.click();
+  await expect(option).toHaveAttribute('aria-selected', 'true');
+};
+
+/**
+ * Open the Editorial Workflow board.
+ * @param {Page} page Page.
+ * @returns {Promise<Locator>} Board.
+ */
+export const openBoard = async (page) => {
+  await page.getByRole('radio', { name: 'Editorial Workflow' }).click();
+
+  return page.getByRole('group', { name: 'Editorial Workflow' });
+};
+
+/**
+ * Get the card of an entry on the Editorial Workflow board.
+ * @param {Locator} board Board, or one of its columns.
+ * @param {string} title Entry title.
+ * @returns {Locator} Card.
+ */
+export const getCard = (board, title) =>
+  board.getByRole('listitem').filter({ has: board.page().getByRole('button', { name: title }) });

@@ -23,13 +23,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    items,
-    count,
-    useButton = true,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { items, count, useButton = true } = $props();
 
   /** @type {{ show: boolean, text: string, status: 'success' | 'error' }} */
   const toast = $state({ show: false, text: '', status: 'success' });
@@ -69,7 +63,7 @@
 {#if useButton}
   <MenuButton variant="ghost" disabled={!count} label={_('copy')} popupPosition="bottom-right">
     {#snippet popup()}
-      <Menu aria-label={_('copy_options')}>
+      <Menu ariaLabel={_('copy_options')}>
         {@render menuItems()}
       </Menu>
     {/snippet}

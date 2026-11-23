@@ -17,18 +17,13 @@
    */
 
   /**
-   * Options for {@link sanitize}.
+   * Options for {@link sanitize}. Attributes are dropped, so a file name like
+   * `<wbr style="position: fixed; inset: 0">.png` cannot restyle the app.
    */
-  const SANITIZE_OPTIONS = { ALLOWED_TAGS: ['wbr'] };
+  const SANITIZE_OPTIONS = { ALLOWED_TAGS: ['wbr'], ALLOWED_ATTR: [] };
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    path,
-    caption,
-    children = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { path, caption, children = undefined } = $props();
 
   const segments = $derived(path ? stripSlashes(path).split('/') : caption ? [caption] : []);
 

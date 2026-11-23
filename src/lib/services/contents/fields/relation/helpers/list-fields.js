@@ -49,7 +49,6 @@ const LIST_KEY_PATH_MATCH_REGEX = /\.(\d+)$/;
  */
 export const analyzeListFields = (allFieldNames, getFieldArgs) => {
   const listFieldConfigs = new Map();
-  const baseFieldGroups = new Map();
 
   // Analyze all list fields and get their configurations
   allFieldNames
@@ -66,17 +65,7 @@ export const analyzeListFields = (allFieldNames, getFieldArgs) => {
     });
 
   // Group entries by base field name
-  [...listFieldConfigs.entries()].forEach(([fieldName, config]) => {
-    const { baseFieldName } = config;
-
-    if (!baseFieldGroups.has(baseFieldName)) {
-      baseFieldGroups.set(baseFieldName, []);
-    }
-
-    baseFieldGroups.get(baseFieldName).push([fieldName, config]);
-  });
-
-  return baseFieldGroups;
+  return Map.groupBy(listFieldConfigs.entries(), ([, { baseFieldName }]) => baseFieldName);
 };
 
 /**
@@ -106,7 +95,7 @@ const buildListItemOption = ({
    */
   const replaceWildcards = (template) =>
     replacements.reduce(
-      (result, [fieldName, itemValue]) => result.replaceAll(`{{${fieldName}}}`, itemValue),
+      (result, [fieldName, itemValue]) => result.replaceAll(`{{${fieldName}}}`, () => itemValue),
       template,
     );
 
@@ -121,10 +110,16 @@ const buildListItemOption = ({
     fallbackContext,
   );
 
+  // Like an empty field, an empty list item value can’t identify the item
+  const hasEmptyValueTag = replacements.some(
+    ([fieldName, itemValue]) =>
+      _valueField.includes(`{{${fieldName}}}`) && String(itemValue ?? '') === '',
+  );
+
   return {
-    label: label || '',
-    value: value || context.slug,
-    searchValue: searchValue || label || '',
+    label,
+    value: hasEmptyValueTag ? '' : value,
+    searchValue: searchValue || label,
   };
 };
 
@@ -133,6 +128,25 @@ const buildListItemOption = ({
  * @type {Map<string, RegExp>}
  */
 const singleSubfieldRegexCache = new Map();
+
+/**
+ * Collect the values of an indexed list from the flattened entry content, in list order.
+ * @param {FlattenedEntryContent} content Entry content.
+ * @param {RegExp} filterRegex Regular expression matching the key paths of the list’s items.
+ * @param {RegExp} [indexRegex] Regular expression whose first capture group is the item index,
+ * when it differs from {@link filterRegex}.
+ * @returns {{ index: number, value: any }[]} Values, sorted by index.
+ */
+const collectIndexedValues = (content, filterRegex, indexRegex = filterRegex) =>
+  Object.entries(content)
+    .filter(([k]) => filterRegex.test(k))
+    .map(([k, v]) => {
+      // The filter above guarantees the regex matches, so `indexMatch` is always non-null
+      const indexMatch = /** @type {RegExpMatchArray} */ (k.match(indexRegex));
+
+      return { index: parseInt(indexMatch[1], 10), value: v };
+    })
+    .sort((a, b) => a.index - b.index);
 
 /**
  * Process single subfield list fields (e.g., `skills.*`).
@@ -158,19 +172,10 @@ export const processSingleSubfieldList = ({
   const regex = getOrCreate(
     singleSubfieldRegexCache,
     baseFieldName,
-    () => new RegExp(`^${escapeRegExp(baseFieldName)}.\\d+$`),
+    () => new RegExp(`^${escapeRegExp(baseFieldName)}\\.\\d+$`),
   );
 
-  const items = Object.entries(content)
-    .filter(([k]) => regex.test(k))
-    .map(([k, v]) => {
-      // The filter above guarantees the regex matches, so `indexMatch` is always non-null
-      const indexMatch = /** @type {RegExpMatchArray} */ (k.match(LIST_KEY_PATH_MATCH_REGEX));
-
-      return { index: parseInt(indexMatch[1], 10), value: v };
-    })
-    .sort((a, b) => a.index - b.index);
-
+  const items = collectIndexedValues(content, regex, LIST_KEY_PATH_MATCH_REGEX);
   const staticFieldNames = allFieldNames.filter((name) => !name.includes('*'));
 
   return items.map(({ value: itemValue }) =>
@@ -249,19 +254,10 @@ export const processComplexListField = ({
 
     // indexRegex subsumes the old filter-only `regex` (same semantics; `[0-9]+` ≡ `\d+` in JS
     // without the `u` flag), so one regex construction per call is saved.
-    return new RegExp(`^${escapedBase}.([0-9]+).${escapedSub}$`);
+    return new RegExp(`^${escapedBase}\\.([0-9]+)\\.${escapedSub}$`);
   });
 
-  const listValues = Object.entries(content)
-    .filter(([k]) => indexRegex.test(k))
-    .map(([k, v]) => {
-      // The filter above guarantees `indexRegex` matches, so `indexMatch` is always non-null
-      const indexMatch = /** @type {RegExpMatchArray} */ (k.match(indexRegex));
-
-      return { index: parseInt(indexMatch[1], 10), value: v };
-    })
-    .sort((a, b) => a.index - b.index);
-
+  const listValues = collectIndexedValues(content, indexRegex);
   const staticFieldNames = allFieldNames.filter((name) => !name.includes('*'));
 
   return listValues.map(({ index }) =>
@@ -273,7 +269,7 @@ export const processComplexListField = ({
           wildcardFieldName.match(COMPLEX_LIST_FIELD_REGEX) ?? [];
 
         return baseFieldName
-          ? [[wildcardFieldName, content[`${baseFieldName}.${index}.${subFieldKey}`] || '']]
+          ? [[wildcardFieldName, content[`${baseFieldName}.${index}.${subFieldKey}`] ?? '']]
           : [];
       }),
       staticFieldNames,

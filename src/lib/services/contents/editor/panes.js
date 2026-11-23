@@ -1,12 +1,39 @@
+import { _ } from '@sveltia/i18n';
 import { untrack } from 'svelte';
 
 import { MIN_PANE_SIZE } from '$lib/services/contents/editor';
 import { entryEditorSettings } from '$lib/services/contents/editor/settings';
+import { getLocaleLabel } from '$lib/services/contents/i18n';
+import { DEFAULT_LOCALE_KEY } from '$lib/services/contents/i18n/config/constants';
 
 /**
  * @import { EntryEditorPane, InternalCollection, InternalCollectionFile, InternalLocaleCode }
  * from '$lib/types/private';
  */
+
+/**
+ * I18n keys of the strings naming a locale’s content in the editor, e.g. “Edit English Content”,
+ * mapped to the keys of the same strings without the locale, for the content of a monolingual
+ * entry, e.g. “Edit Content”.
+ */
+const LOCALE_CONTENT_KEYS = {
+  edit_x_locale: 'edit_content',
+  preview_x_locale: 'preview_content',
+  show_content_options_x_locale: 'show_content_options',
+  content_options_x_locale: 'content_options',
+};
+
+/**
+ * Localize a string naming a locale’s content in the editor. The content of a monolingual entry
+ * has no locale to name, so the string without it is used rather than the internal locale key.
+ * @param {keyof LOCALE_CONTENT_KEYS} key I18n key of the string with the locale.
+ * @param {InternalLocaleCode} locale Locale code.
+ * @returns {string} Localized string.
+ */
+export const getLocaleContentLabel = (key, locale) =>
+  locale === DEFAULT_LOCALE_KEY
+    ? _(LOCALE_CONTENT_KEYS[key])
+    : _(key, { values: { locale: getLocaleLabel(locale) ?? locale } });
 
 /**
  * Get the key under which the pane state of the given collection or collection file is saved.
@@ -91,8 +118,9 @@ export const getRestoredPanes = ({
     ((!showPreview || !canPreview) &&
       (firstPane.mode === 'preview' || secondPane.mode === 'preview')) ||
     // If there are only 2 locales and the first pane is not in the default locale, don’t restore
-    // the panes so that the default locale is always shown in the first pane
-    (allLocales.length === 2 && firstPane.locale !== defaultLocale)
+    // the saved panes so that the default locale is always shown in the first pane. The locale
+    // given in the URL is what the user asked for, so it’s shown anyway
+    (!editorLocale && allLocales.length === 2 && firstPane.locale !== defaultLocale)
   ) {
     return undefined;
   }
@@ -102,9 +130,11 @@ export const getRestoredPanes = ({
 
 /**
  * Work out the default panes for an entry, when nothing is restored: the first pane edits the
- * current or default locale, and the second one holds the preview, or another locale when there’s
- * no preview to show, or nothing at all when there’s no room for it.
+ * locale given in the URL, or the current or default locale, and the second one holds the preview,
+ * or another locale when there’s no preview to show, or nothing at all when there’s no room for
+ * it.
  * @param {object} args Arguments.
+ * @param {string} [args.editorLocale] Locale given in the URL, which is used if the entry has it.
  * @param {InternalLocaleCode} [args.currentLocale] Locale of the current first pane, if any.
  * @param {InternalLocaleCode} args.defaultLocale Default locale of the entry.
  * @param {InternalLocaleCode[]} args.allLocales Locales of the entry.
@@ -116,6 +146,7 @@ export const getRestoredPanes = ({
  * @returns {[EntryEditorPane, ?EntryEditorPane]} Panes.
  */
 export const getDefaultPanes = ({
+  editorLocale,
   currentLocale,
   defaultLocale,
   allLocales,
@@ -125,7 +156,11 @@ export const getDefaultPanes = ({
   showSecondPane,
   singlePane,
 }) => {
-  const locale = currentLocale ?? defaultLocale;
+  const locale =
+    (editorLocale && allLocales.includes(editorLocale) ? editorLocale : undefined) ??
+    currentLocale ??
+    defaultLocale;
+
   /** @type {EntryEditorPane} */
   const firstPane = { mode: 'edit', locale };
 

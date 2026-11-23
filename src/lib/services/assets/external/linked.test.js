@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { checkExternalAssetsAvailability } from '$lib/services/assets/external/availability';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
-import { getAssociatedCollections } from '$lib/services/contents/entry';
+import { getAssociatedCollections } from '$lib/services/contents/entry/collections';
 import { getField } from '$lib/services/contents/entry/fields';
 
 import {
@@ -17,6 +18,10 @@ import {
 
 vi.mock('@sveltia/i18n', () => ({
   _: vi.fn((/** @type {string} */ key) => `[${key}]`),
+}));
+
+vi.mock('$lib/services/assets/external/availability', () => ({
+  checkExternalAssetsAvailability: vi.fn(),
 }));
 
 vi.mock('$lib/services/config', () => ({
@@ -35,7 +40,7 @@ vi.mock('$lib/services/contents/collection/files', () => ({
   getCollectionFilesByEntry: vi.fn(() => []),
 }));
 
-vi.mock('$lib/services/contents/entry', () => ({
+vi.mock('$lib/services/contents/entry/collections', () => ({
   getAssociatedCollections: vi.fn(() => [{ name: 'posts' }]),
 }));
 
@@ -194,6 +199,14 @@ describe('assets/external/linked', () => {
       expect(linkedFilesService.delete).toBeUndefined();
       expect(linkedAssets.current).toHaveLength(1);
       expect(await linkedFilesService.list?.({ apiKey: '' })).toEqual(linkedAssets.current);
+    });
+
+    it('should check whether the listed files can be loaded', async () => {
+      allEntries.current = [createEntry({ hero: 'https://cdn.example.com/hero.png' })];
+
+      const assets = await linkedFilesService.list?.({ apiKey: '' });
+
+      expect(checkExternalAssetsAvailability).toHaveBeenCalledWith(assets);
     });
   });
 });

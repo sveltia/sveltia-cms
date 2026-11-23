@@ -1,35 +1,42 @@
-import { stripSlashes } from '@sveltia/utils/string';
-
 import {
   normalizeGraphQLBaseURL,
   normalizeRestBaseURL,
 } from '$lib/services/backends/git/github/api';
 import { getTokenPageURL, signIn, signOut } from '$lib/services/backends/git/github/auth';
-import { commitChanges, fetchFileCommits } from '$lib/services/backends/git/github/commits';
+import {
+  commitChanges,
+  fetchFileCommits,
+  fetchLastCommit,
+} from '$lib/services/backends/git/github/commits';
 import {
   BACKEND_LABEL,
   BACKEND_NAME,
   DEFAULT_API_ROOT,
   DEFAULT_AUTH_PATH,
   DEFAULT_AUTH_ROOT,
-  DEFAULT_PKCE_AUTH_PATH,
-  DEFAULT_PKCE_AUTH_ROOT,
 } from '$lib/services/backends/git/github/constants';
 import {
   fetchBranchHeadSHA,
   fetchDeployments,
   triggerDeployment,
 } from '$lib/services/backends/git/github/deployment';
-import { fetchBlob, fetchFiles } from '$lib/services/backends/git/github/files';
+import { fetchBlob, fetchDirSHA, fetchFiles } from '$lib/services/backends/git/github/files';
 import { getBaseURLs, repository } from '$lib/services/backends/git/github/repository';
 import { checkStatus, STATUS_DASHBOARD_URL } from '$lib/services/backends/git/github/status';
 import workflow from '$lib/services/backends/git/github/workflow';
-import { apiConfig, graphqlVars } from '$lib/services/backends/git/shared/api';
-import { initRepositoryInfo } from '$lib/services/backends/git/shared/repository';
+import { graphqlVars } from '$lib/services/backends/git/shared/api';
+import { initGitBackend } from '$lib/services/backends/git/shared/init';
+import { toRepositoryPath } from '$lib/services/backends/git/shared/repository';
 import { cmsConfig } from '$lib/services/config';
 
 /**
- * @import { ApiEndpointConfig, BackendService, RepositoryInfo } from '$lib/types/private';
+ * Path of the Sveltia CMS Additions endpoint whose `/authorize` part is replaced with `/token` to
+ * make the token URL.
+ */
+const ADDITIONS_AUTH_PATH = 'v1/auth/authorize';
+
+/**
+ * @import { BackendService, RepositoryInfo } from '$lib/types/private';
  */
 
 /**
@@ -47,11 +54,8 @@ export const init = () => {
   const {
     repo: projectPath,
     branch,
-    auth_type: authType = '',
-    // @ts-ignore PKCE is not yet supported
-    base_url: authRoot = authType === 'pkce' ? DEFAULT_PKCE_AUTH_ROOT : DEFAULT_AUTH_ROOT,
-    // @ts-ignore PKCE is not yet supported
-    auth_endpoint: authPath = authType === 'pkce' ? DEFAULT_PKCE_AUTH_PATH : DEFAULT_AUTH_PATH,
+    base_url: authRoot = DEFAULT_AUTH_ROOT,
+    auth_endpoint: authPath = DEFAULT_AUTH_PATH,
     app_id: clientId = '',
     // GitHub Enterprise Server: https://HOSTNAME/api/v3
     api_root: restApiRoot = DEFAULT_API_ROOT,
@@ -59,14 +63,15 @@ export const init = () => {
     graphql_api_root: graphqlApiRoot = restApiRoot,
     include_credentials: includeCredentials = false,
     // Open Authoring on a public repository only needs `public_repo`, which is a narrower grant to
-    // ask a contributor for than full `repo` access
+    // ask a contributor for than full `repo` access. A list can add `workflow`, which keeps a fork
+    // in sync when the repository’s GitHub Actions workflow files change
     auth_scope: authScope = 'repo',
+    auth_type: authType,
   } = backend;
 
-  const [owner, repo] = /** @type {string} */ (projectPath).split('/');
-  const authURL = `${stripSlashes(authRoot)}/${stripSlashes(authPath)}`;
+  const { owner, repo } = toRepositoryPath(/** @type {string} */ (projectPath));
 
-  initRepositoryInfo(repository, {
+  initGitBackend(repository, {
     service: BACKEND_NAME,
     label: BACKEND_LABEL,
     owner,
@@ -76,20 +81,19 @@ export const init = () => {
     defaultApiRoot: DEFAULT_API_ROOT,
     getTokenPageURL,
     getBaseURLs,
-  });
-
-  Object.assign(
-    apiConfig,
-    /** @type {ApiEndpointConfig} */ ({
+    authRoot,
+    // Sveltia CMS Additions exchanges the session token for a GitHub token at `/v1/auth/token`,
+    // which the usual refresh on a 401 response calls
+    authPath: authType === 'additions' ? ADDITIONS_AUTH_PATH : authPath,
+    tokenPath: authType === 'additions' ? '/token' : '/access_token',
+    api: {
       clientId,
-      authScope: `${authScope},user`,
-      authURL,
-      tokenURL: authURL.replace('/authorize', '/access_token'),
+      authScope: [authScope, 'user'].flat().join(','),
       restBaseURL: normalizeRestBaseURL(restApiRoot),
       graphqlBaseURL: normalizeGraphQLBaseURL(graphqlApiRoot),
       includeCredentials,
-    }),
-  );
+    },
+  });
 
   Object.assign(graphqlVars, { owner, repo, branch });
 
@@ -110,7 +114,9 @@ export default {
   signIn,
   signOut,
   fetchFiles,
+  fetchLastCommit,
   fetchBlob,
+  fetchDirSHA,
   commitChanges,
   fetchFileCommits,
   triggerDeployment,

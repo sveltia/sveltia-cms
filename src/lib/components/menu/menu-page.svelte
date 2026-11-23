@@ -1,12 +1,18 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Spacer, Toolbar } from '@sveltia/ui';
+  import { Icon, Menu, MenuItem, Spacer, Toolbar } from '@sveltia/ui';
 
   import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
   import PageContainer from '$lib/components/common/page-container.svelte';
   import AccountMenu from '$lib/components/global/toolbar/items/account-menu.svelte';
   import HelpMenu from '$lib/components/global/toolbar/items/help-menu.svelte';
+  import { getAdminSectionPath, getAdminSections } from '$lib/services/app/admin';
+  import { customPages, openCustomPage } from '$lib/services/app/custom-pages';
+  import { goto } from '$lib/services/app/navigation';
   import { prefs } from '$lib/services/user/prefs.svelte';
+
+  // Listed here rather than in the bottom navigation, which has little room
+  const adminSections = $derived(getAdminSections());
 </script>
 
 <PageContainer aria-label={_('menu')}>
@@ -20,6 +26,44 @@
       {/snippet}
       {#snippet mainContent()}
         <div role="none" class="wrapper">
+          {#if customPages.current.length}
+            <section>
+              <h3>{_('custom_pages')}</h3>
+              <Menu ariaLabel={_('custom_pages')}>
+                {#each customPages.current as page (page.id)}
+                  <MenuItem
+                    label={page.label}
+                    onclick={() => {
+                      openCustomPage(page);
+                    }}
+                  >
+                    {#snippet startIcon()}
+                      <Icon name={page.icon} />
+                    {/snippet}
+                  </MenuItem>
+                {/each}
+              </Menu>
+            </section>
+          {/if}
+          {#if adminSections.length}
+            <section>
+              <h3>{_('administration')}</h3>
+              <Menu ariaLabel={_('administration')}>
+                {#each adminSections as { key, labelKey, icon } (key)}
+                  <MenuItem
+                    label={_(labelKey)}
+                    onclick={() => {
+                      goto(getAdminSectionPath(key), { transitionType: 'forwards' });
+                    }}
+                  >
+                    {#snippet startIcon()}
+                      <Icon name={icon} />
+                    {/snippet}
+                  </MenuItem>
+                {/each}
+              </Menu>
+            </section>
+          {/if}
           <section>
             <h3>{_('account')}</h3>
             <AccountMenu />

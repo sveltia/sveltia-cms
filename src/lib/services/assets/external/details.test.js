@@ -1,15 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getEntriesByAssetURL } from '$lib/services/contents/collection/entries';
+import { getEntriesByAssetURL, getEntriesUsingTargets } from '$lib/services/assets/references';
 import { getSourceInfo } from '$lib/services/utils/media';
 
 import {
   _resetExternalAssetDetailsCache,
   getExternalAssetDetails,
+  getExternalAssetsUsedEntries,
   getExternalAssetUsedEntries,
 } from './details';
 
-vi.mock('$lib/services/contents/collection/entries', () => ({
+vi.mock('$lib/services/assets/references', () => ({
+  getEntriesUsingTargets: vi.fn(),
   getEntriesByAssetURL: vi.fn(),
 }));
 
@@ -77,6 +79,22 @@ describe('assets/external/details', () => {
 
       expect(await getExternalAssetUsedEntries(asset)).toBe(entries);
       expect(getEntriesByAssetURL).toHaveBeenCalledWith(asset.downloadURL);
+    });
+  });
+
+  describe('getExternalAssetsUsedEntries', () => {
+    it('should find the entries by the assets’ download URLs', async () => {
+      /** @type {any[]} */
+      const entries = [{ id: 'e1' }, { id: 'e2' }];
+      const assets = [createAsset('image'), createAsset('video')];
+
+      vi.mocked(getEntriesUsingTargets).mockResolvedValue(entries);
+
+      expect(await getExternalAssetsUsedEntries(assets)).toBe(entries);
+      expect(getEntriesUsingTargets).toHaveBeenCalledWith([
+        { url: assets[0].downloadURL },
+        { url: assets[1].downloadURL },
+      ]);
     });
   });
 });

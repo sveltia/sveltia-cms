@@ -1,24 +1,18 @@
 <script>
   import { _, locale as appLocale } from '@sveltia/i18n';
-  import { getPathInfo } from '@sveltia/utils/file';
-  import mime from 'mime';
 
+  import FileInfoSections from '$lib/components/assets/list/file-info-sections.svelte';
   import InfoPanelLayout from '$lib/components/assets/list/info-panel-layout.svelte';
   import UsedEntries from '$lib/components/assets/list/used-entries.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import LeafletMap from '$lib/components/common/leaflet-map.svelte';
-  import {
-    defaultAssetDetails,
-    getAssetDetails,
-    getAssetUsedEntries,
-  } from '$lib/services/assets/details';
-  import { isMediaKind } from '$lib/services/assets/kinds';
+  import { createAssetDetailsState } from '$lib/services/assets/details-state.svelte';
+  import { isMediaKind, isPDF } from '$lib/services/assets/kinds';
+  import { getCommitAuthorName } from '$lib/services/utils/commit-author';
   import { formatDate } from '$lib/services/utils/date';
-  import { formatSize } from '$lib/services/utils/file';
-  import { formatDuration } from '$lib/services/utils/media/video';
 
   /**
-   * @import { Asset, AssetDetails } from '$lib/types/private';
+   * @import { Asset } from '$lib/types/private';
    */
 
   /**
@@ -28,35 +22,16 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    asset,
-    showPreview = false,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { asset, showPreview = false } = $props();
 
-  /** @type {AssetDetails} */
-  let details = $state({ ...defaultAssetDetails });
+  // The panel stays mounted while the focus moves from one asset to another
+  const details = createAssetDetailsState(() => asset, { withUsedEntries: true });
 
   // @todo Fetch file size and commit info on demand for GitLab
   const { path, size, kind, commitAuthor, commitDate } = $derived(asset);
   const { publicURL, repoBlobURL, dimensions, duration, createdDate, coordinates, usedEntries } =
-    $derived(details);
-  const { extension = '' } = $derived(getPathInfo(path));
-  const canPreview = $derived(isMediaKind(kind) || path.endsWith('.pdf'));
-
-  /**
-   * Update the properties above.
-   */
-  const updateProps = async () => {
-    details = asset ? await getAssetDetails(asset) : { ...defaultAssetDetails };
-    details.usedEntries = asset ? await getAssetUsedEntries(asset) : [];
-  };
-
-  $effect(() => {
-    void [asset];
-    updateProps();
-  });
+    $derived(details.current);
+  const canPreview = $derived(isMediaKind(kind) || isPDF(path));
 </script>
 
 {#snippet preview()}
@@ -70,36 +45,14 @@
 {/snippet}
 
 <InfoPanelLayout preview={showPreview && canPreview ? preview : undefined}>
-  <section>
-    <h4>{_('kind')}</h4>
-    <p>
-      {_(`file_type_labels.${extension}`, {
-        default: mime.getType(path) ?? extension.toUpperCase(),
-      })}
-    </p>
-  </section>
-  {#if !!size}
-    <section>
-      <h4>{_('size')}</h4>
-      <p>
-        {#key appLocale.current}
-          {formatSize(size)}
-        {/key}
-      </p>
-    </section>
-  {/if}
-  {#if canPreview}
-    <section>
-      <h4>{_('dimensions')}</h4>
-      <p>{dimensions ? `${dimensions.width}×${dimensions.height}` : '–'}</p>
-    </section>
-  {/if}
-  {#if ['audio', 'video'].includes(kind)}
-    <section>
-      <h4>{_('duration')}</h4>
-      <p>{duration ? formatDuration(duration) : '–'}</p>
-    </section>
-  {/if}
+  <FileInfoSections
+    fileName={path}
+    {kind}
+    {size}
+    hasDimensions={canPreview}
+    {dimensions}
+    {duration}
+  />
   <section>
     <h4>{_('public_urls', { values: { count: 1 } })}</h4>
     <p>
@@ -124,7 +77,7 @@
   {#if commitAuthor}
     <section>
       <h4>{_('sort_keys.commit_author')}</h4>
-      <p>{commitAuthor.name || commitAuthor.login || commitAuthor.email}</p>
+      <p>{getCommitAuthorName(commitAuthor)}</p>
     </section>
   {/if}
   {#if commitDate}

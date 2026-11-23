@@ -5,9 +5,10 @@
   import { onMount } from 'svelte';
 
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
+  import { isAssetDrag } from '$lib/services/assets/drag';
   import { getListFormatter } from '$lib/services/contents/i18n';
   import { env } from '$lib/services/user/env.svelte';
-  import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
+  import { getAcceptedImageFormatLabels } from '$lib/services/utils/media/image';
 
   /**
    * @import { Snippet } from 'svelte';
@@ -29,7 +30,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     accept = undefined,
     disabled = false,
     multiple = false,
@@ -38,7 +38,6 @@
     filterDroppedFiles = true,
     onDrop = undefined,
     children = undefined,
-    /* eslint-enable prefer-const */
   } = $props();
 
   /** @type {HTMLElement | undefined} */
@@ -52,6 +51,8 @@
   let files = $state([]);
 
   const showDefaultContent = $derived(showUploadButton || (showFilePreview && files.length));
+  // Named formats for the mismatch message, if `accept` is one of the image type lists
+  const acceptedImageFormats = $derived(getAcceptedImageFormatLabels(accept));
 
   /**
    * Open the file picker to let the user choose file(s).
@@ -114,10 +115,8 @@
 </script>
 
 {#snippet typeMismatchAlert()}
-  {#if accept === SUPPORTED_IMAGE_TYPES.join(',')}
-    {_('dropped_image_type_mismatch', {
-      values: { types: formatList(['GIF', 'JPEG', 'PNG', 'WebP', 'SVG']) },
-    })}
+  {#if acceptedImageFormats}
+    {_('dropped_image_type_mismatch', { values: { types: formatList(acceptedImageFormats) } })}
   {:else}
     {_('dropped_file_type_mismatch', {
       values: { types: formatList(/** @type {string} */ (accept).split(/,\s*/)) },
@@ -130,6 +129,11 @@
   role="none"
   class="drop-target"
   ondragover={(event) => {
+    // Assets dragged from the list are moved by dropping them on a folder, not uploaded
+    if (isAssetDrag(event)) {
+      return;
+    }
+
     event.preventDefault();
 
     if (disabled || !event.dataTransfer) {
@@ -159,6 +163,10 @@
     dragging = false;
   }}
   ondrop={async (event) => {
+    if (isAssetDrag(event)) {
+      return;
+    }
+
     event.preventDefault();
 
     if (disabled || !event.dataTransfer) {
@@ -167,13 +175,17 @@
 
     dragging = false;
 
+    // A drop without any file, like text or a link, is ignored. Check this before the scan, as the
+    // items are no longer available once the event has been handled
+    const hasFiles = Array.from(event.dataTransfer.items).some(({ kind }) => kind === 'file');
+
     const filteredFileList = await scanFiles(event.dataTransfer, {
       accept: filterDroppedFiles ? accept : undefined,
     });
 
     if (filteredFileList.length) {
       updateFileList(filteredFileList);
-    } else if (filterDroppedFiles) {
+    } else if (filterDroppedFiles && accept && hasFiles) {
       typeMismatch = true;
     }
   }}

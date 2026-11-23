@@ -20,18 +20,25 @@
 
   /** @type {FieldEditorProps & Props} */
   let {
-    /* eslint-disable prefer-const */
     fieldId,
     currentValue = $bindable(),
     required = true,
     readonly = false,
     invalid = false,
-    /* eslint-enable prefer-const */
   } = $props();
 </script>
 
+<!--
+  A field that has never been set has no value yet, but a Sveltia UI `<Switch>` falls back to
+  `false` and refuses an `undefined` binding, so the value goes through a getter and setter instead
+-->
 <Switch
-  bind:checked={currentValue}
+  bind:checked={
+    () => currentValue ?? false,
+    (checked) => {
+      currentValue = checked;
+    }
+  }
   {readonly}
   {required}
   {invalid}

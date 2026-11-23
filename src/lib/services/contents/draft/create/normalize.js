@@ -7,10 +7,20 @@ import {
   indexContent,
 } from '$lib/services/contents/entry/content-index';
 import { getFieldKind, isFieldMultiple } from '$lib/services/contents/entry/fields';
-import { STRING_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
+import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
+import { deleteSubtree, isPlaceholder } from '$lib/services/contents/entry/subtree';
+import { MEDIA_FIELD_TYPES, STRING_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
 import { syncDuplicateKeys } from '$lib/services/contents/fields/key-value/duplicate-keys';
+import { alignPairOrder } from '$lib/services/contents/fields/key-value/pairs';
+import { hasRequiredSingleItem } from '$lib/services/contents/fields/list/defaults';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
-import { getLocalizedRelationValue } from '$lib/services/contents/fields/relation/helpers/locale';
+import { getFlatSubFields } from '$lib/services/contents/fields/list/subfields';
+import { getLocalizedFieldValue } from '$lib/services/contents/fields/locale';
+import {
+  isDuplicateIfEmptyField,
+  isFieldEmpty,
+} from '$lib/services/contents/i18n/duplicate-if-empty';
+import { isFieldMirrored } from '$lib/services/contents/i18n/fields';
 
 /**
  * @import {
@@ -41,6 +51,12 @@ import { getLocalizedRelationValue } from '$lib/services/contents/fields/relatio
  * @property {FlattenedEntryContent} [defaultLocaleContent] Already normalized content for the
  * default locale, used as the source for fields with the `duplicate` i18n strategy.
  * @property {boolean} [fillDefaults] Whether to fill in the values missing from the content.
+ * @property {Field['i18n']} [inheritedI18n] `i18n` option of the nearest ancestor field that has
+ * one, which applies to a field without the option of its own.
+ * @property {Record<FieldKeyPath, string>} [variableTypes] Type names of the variable type objects
+ * and list items along the key path, keyed by the key path of their type key, e.g.
+ * `{ 'blocks.1.type': 'latest' }`. The field resolves to the same configuration in the default
+ * locale only if it holds the same types there.
  */
 
 /**
@@ -57,31 +73,16 @@ import { getLocalizedRelationValue } from '$lib/services/contents/fields/relatio
  * types are up to the developer.
  */
 const OPAQUE_FIELD_TYPES = ['code', 'hidden', 'keyvalue'];
-
 /**
- * Check whether the value is an empty object or array. The `flat` library uses these as
- * placeholders that its `unflatten()` fills in from the child key paths, so unlike any other value
- * stored alongside children, they are harmless.
- * @param {any} value Value to check.
- * @returns {boolean} Result.
+ * Values read as `true` in a Boolean field, in lowercase. Besides `true`, a YAML 1.1 parser, which
+ * tools like Jekyll still use, reads `yes`, `on` and `y` as `true`, while the YAML 1.2 parser gives
+ * them as strings. A number is converted to a string first, so `1` is included too.
  */
-const isPlaceholder = (value) =>
-  (Array.isArray(value) && !value.length) || (isObject(value) && !Object.keys(value).length);
-
+const TRUTHY_BOOLEAN_STRINGS = ['true', 'yes', 'on', 'y', '1'];
 /**
- * Delete a value stored at the given key path along with everything below it.
- * @param {FlattenedEntryContent} content Flattened entry content, modified in place.
- * @param {FieldKeyPath} keyPath Key path.
+ * Values read as `false` in a Boolean field, in lowercase. See {@link TRUTHY_BOOLEAN_STRINGS}.
  */
-const discardValue = (content, keyPath) => {
-  const prefix = `${keyPath}.`;
-
-  Object.keys(content).forEach((key) => {
-    if (key === keyPath || key.startsWith(prefix)) {
-      delete content[key];
-    }
-  });
-};
+const FALSY_BOOLEAN_STRINGS = ['false', 'no', 'off', 'n', '0'];
 
 /**
  * Drop a value stored at a key path that also has children. `unflatten()` lets such a value win and
@@ -91,7 +92,7 @@ const discardValue = (content, keyPath) => {
  * @param {FieldKeyPath} keyPath Key path.
  */
 const discardConflictingValue = (content, keyPath) => {
-  if (keyPath in content && !isPlaceholder(content[keyPath])) {
+  if (Object.hasOwn(content, keyPath) && !isPlaceholder(content[keyPath])) {
     delete content[keyPath];
   }
 };
@@ -111,11 +112,11 @@ const reconcileScalarValue = ({ field, fieldType, keyPath, content, index }) => 
     if (firstItemIndex !== undefined) {
       const firstItem = content[`${keyPath}.${firstItemIndex}`];
 
-      discardValue(content, keyPath);
+      deleteSubtree(content, keyPath);
       content[keyPath] = firstItem;
     } else {
       // The file holds an object where a single value is expected; there is nothing to salvage
-      discardValue(content, keyPath);
+      deleteSubtree(content, keyPath);
 
       return false;
     }
@@ -125,7 +126,7 @@ const reconcileScalarValue = ({ field, fieldType, keyPath, content, index }) => 
 
   // An empty object or array is as good as no value at all
   if (isObject(value) || Array.isArray(value)) {
-    discardValue(content, keyPath);
+    deleteSubtree(content, keyPath);
 
     return false;
   }
@@ -142,13 +143,14 @@ const reconcileScalarValue = ({ field, fieldType, keyPath, content, index }) => 
 
   if (fieldType === 'boolean') {
     if (typeof value !== 'boolean') {
-      const normalized = typeof value === 'string' ? value.trim().toLowerCase() : value;
+      const normalized = typeof value === 'string' ? value.trim().toLowerCase() : String(value);
+      const isTrue = TRUTHY_BOOLEAN_STRINGS.includes(normalized);
 
-      if (normalized !== 'true' && normalized !== 'false') {
+      if (!isTrue && !FALSY_BOOLEAN_STRINGS.includes(normalized)) {
         return false;
       }
 
-      content[keyPath] = normalized === 'true';
+      content[keyPath] = isTrue;
     }
 
     return true;
@@ -193,7 +195,7 @@ const reconcileListValue = ({ keyPath, content, index, hasSubFields }) => {
 
   // Non-numeric children: the file holds an object where a list is expected
   if (hasChildKeys(index, keyPath)) {
-    discardValue(content, keyPath);
+    deleteSubtree(content, keyPath);
 
     return false;
   }
@@ -214,9 +216,40 @@ const reconcileListValue = ({ keyPath, content, index, hasSubFields }) => {
     return true;
   }
 
-  discardValue(content, keyPath);
+  deleteSubtree(content, keyPath);
 
   return false;
+};
+
+/**
+ * Types of the scalar values, other than strings and `null`, a file can hold.
+ */
+const SCALAR_TYPES = ['number', 'boolean', 'bigint'];
+
+/**
+ * Stringify the scalar items of a list whose items are always strings: a simple List field, or a
+ * File or Image field with `multiple`. A number, boolean or `null` read from the file would
+ * otherwise reach an editor calling string methods on it. An item that isn’t a scalar is left
+ * alone, as it’s not stored at the item key path itself and so never makes it to the editor.
+ * @param {FlattenedEntryContent} content Flattened entry content, modified in place.
+ * @param {FieldKeyPath} keyPath Key path of the list.
+ * @param {ContentIndex} index Index of the content as it was before normalization.
+ */
+const stringifyListItems = (content, keyPath, index) => {
+  const itemIndexes = getItemIndexes(index, keyPath);
+
+  // A single value turned into the sole item by `reconcileListValue()` isn’t in the index
+  (itemIndexes.length ? itemIndexes : [0]).forEach((itemIndex) => {
+    const itemKeyPath = `${keyPath}.${itemIndex}`;
+    const value = content[itemKeyPath];
+
+    if (
+      Object.hasOwn(content, itemKeyPath) &&
+      (value === null || SCALAR_TYPES.includes(typeof value))
+    ) {
+      content[itemKeyPath] = String(value ?? '');
+    }
+  });
 };
 
 /**
@@ -237,7 +270,7 @@ const reconcileObjectValue = ({ keyPath, content, index }) => {
   }
 
   // A scalar or an empty object where sub-values are expected
-  discardValue(content, keyPath);
+  deleteSubtree(content, keyPath);
 
   return false;
 };
@@ -306,17 +339,14 @@ const copyFromDefaultLocale = ({
   locale,
   defaultLocale,
 }) => {
-  const prefix = `${keyPath}.`;
-
-  const keys = Object.keys(defaultLocaleContent).filter(
-    (key) => key === keyPath || key.startsWith(prefix),
-  );
+  const keys = Object.keys(defaultLocaleContent).filter((key) => isKeyPathWithin(key, keyPath));
 
   keys.forEach((key) => {
     // The copied value may be a Relation field value holding the source locale as a prefix, which
-    // has to be replaced with the target locale. A `multiple` Relation field stores each value
-    // under a numbered key path, so every copied key is localized the same way
-    content[key] = getLocalizedRelationValue({
+    // has to be replaced with the target locale, or a DateTime field value written in the source
+    // locale. A `multiple` Relation field stores each value under a numbered key path, so every
+    // copied key is localized the same way
+    content[key] = getLocalizedFieldValue({
       fieldConfig: field,
       value: defaultLocaleContent[key],
       sourceLocale: defaultLocale,
@@ -328,17 +358,48 @@ const copyFromDefaultLocale = ({
 };
 
 /**
- * Get the variable type configuration that matches the type name stored in the content.
+ * Check if the default locale holds the same variable types along the key path, so that a value
+ * copied from it belongs to the same field. A translatable List field’s items are paired by index
+ * across locales, and the item at the same index may well be of another type in the default locale.
  * @param {object} args Arguments.
- * @param {Field} args.field Field configuration with the `types` option.
+ * @param {FlattenedEntryContent} args.defaultLocaleContent Content for the default locale.
+ * @param {Record<FieldKeyPath, string>} args.variableTypes Type names along the key path.
+ * @returns {boolean} Result.
+ * @see https://github.com/sveltia/sveltia-cms/issues/1075
+ */
+const hasSameVariableTypes = ({ defaultLocaleContent, variableTypes }) =>
+  Object.entries(variableTypes).every(
+    ([typeKeyPath, typeName]) => defaultLocaleContent[typeKeyPath] === typeName,
+  );
+
+/**
+ * Get the sub-fields of an Object field or List field item, along with the variable types leading
+ * to them.
+ * @param {object} args Arguments.
+ * @param {Field} args.field Object or List field configuration.
  * @param {FlattenedEntryContent} args.content Flattened entry content.
  * @param {FieldKeyPath} args.keyPath Key path of the object or list item.
- * @returns {Field[] | undefined} Sub-fields of the matching type, if any.
+ * @param {Record<FieldKeyPath, string>} args.variableTypes Type names along the key path.
+ * @returns {{ fields: Field[] | undefined, variableTypes: Record<FieldKeyPath, string> }} Result:
+ * the sub-fields, or those of the variable type matching the type name stored in the content, if
+ * any, and the type names along their key path.
  */
-const getVariableTypeFields = ({ field, content, keyPath }) => {
-  const { types, typeKey = 'type' } = /** @type {FieldWithTypes} */ (field);
+const getSubFields = ({ field, content, keyPath, variableTypes }) => {
+  const { fields } = /** @type {FieldWithSubFields} */ (field);
 
-  return types?.find(({ name }) => name === content[`${keyPath}.${typeKey}`])?.fields;
+  if (fields) {
+    return { fields, variableTypes };
+  }
+
+  const { typeKey = 'type' } = /** @type {FieldWithTypes} */ (field);
+  const typeKeyPath = `${keyPath}.${typeKey}`;
+  const typeName = content[typeKeyPath];
+  const typeFields = getFlatSubFields(field, content, keyPath);
+
+  return {
+    fields: typeFields,
+    variableTypes: typeFields ? { ...variableTypes, [typeKeyPath]: typeName } : variableTypes,
+  };
 };
 
 /**
@@ -353,18 +414,24 @@ const getVariableTypeFields = ({ field, content, keyPath }) => {
  */
 const normalizeField = (args) => {
   const { field, keyPath, content, index, locale, defaultLocale, defaultLocaleContent } = args;
-  const { fillDefaults = true } = args;
+  const { fillDefaults = true, inheritedI18n, variableTypes = {} } = args;
+  const i18n = field.i18n ?? inheritedI18n;
+
+  // Content of the default locale a duplicated field mirrors. The value at the same key path there
+  // belongs to another field if a variable type object or list item along the way is of another
+  // type, in which case the field is left to its own value or the configured default
+  const sourceContent =
+    locale !== defaultLocale &&
+    defaultLocaleContent &&
+    hasSameVariableTypes({ defaultLocaleContent, variableTypes })
+      ? defaultLocaleContent
+      : undefined;
 
   // A `duplicate_keys` KeyValue field mirrors the default locale’s keys, so line its pairs up with
   // them whether or not the locale holds any, keeping the values it does have
-  if (
-    locale !== defaultLocale &&
-    field.widget === 'keyvalue' &&
-    field.i18n === 'duplicate_keys' &&
-    defaultLocaleContent
-  ) {
+  if (field.widget === 'keyvalue' && field.i18n === 'duplicate_keys' && sourceContent) {
     syncDuplicateKeys({
-      valueStore: { [defaultLocale]: defaultLocaleContent, [locale]: content },
+      valueStore: { [defaultLocale]: sourceContent, [locale]: content },
       defaultLocale,
       keyPath,
     });
@@ -372,22 +439,50 @@ const normalizeField = (args) => {
     return;
   }
 
-  const occupied = keyPath in content || hasChildKeys(index, keyPath);
+  // A `duplicate_if_empty` field takes the default locale’s value where it’s missing or empty
+  if (
+    fillDefaults &&
+    sourceContent &&
+    isDuplicateIfEmptyField(field) &&
+    isFieldEmpty({ content, fieldConfig: field, keyPath }) &&
+    !isFieldEmpty({ content: sourceContent, fieldConfig: field, keyPath })
+  ) {
+    copyFromDefaultLocale({
+      content,
+      defaultLocaleContent: sourceContent,
+      field,
+      keyPath,
+      locale,
+      defaultLocale,
+    });
 
-  if (!occupied || !reconcileValue(args)) {
+    return;
+  }
+
+  const occupied = Object.hasOwn(content, keyPath) || hasChildKeys(index, keyPath);
+
+  if (
+    !occupied ||
+    !reconcileValue(args) ||
+    // A required single-item list saved without its item gets one, like a new entry does
+    (field.widget === 'list' &&
+      hasRequiredSingleItem({ fieldConfig: /** @type {ListField} */ (field), locale }) &&
+      !getItemIndexes(index, keyPath).length)
+  ) {
     if (!fillDefaults) {
       return;
     }
 
-    // A `duplicate` field mirrors the default locale, so take the value from there rather than
-    // filling in the configured default, which may not be what the default locale actually holds
+    // A `duplicate` or `sync` field mirrors the default locale, so take the value from there rather
+    // than filling in the configured default, which may not be what the default locale actually
+    // holds. That includes a subfield duplicated along with its Object or List field, e.g. one
+    // added to the configuration after the other locales were saved
     if (
-      locale !== defaultLocale &&
-      field.i18n === 'duplicate' &&
-      defaultLocaleContent &&
+      isFieldMirrored(i18n) &&
+      sourceContent &&
       copyFromDefaultLocale({
         content,
-        defaultLocaleContent,
+        defaultLocaleContent: sourceContent,
         field,
         keyPath,
         locale,
@@ -411,17 +506,39 @@ const normalizeField = (args) => {
 
   const { widget: fieldType = 'string' } = field;
 
+  if (MEDIA_FIELD_TYPES.includes(fieldType) && isFieldMultiple(field)) {
+    stringifyListItems(content, keyPath, index);
+
+    return;
+  }
+
+  // A duplicated KeyValue field holds the default locale’s pairs, and its editor writes them to the
+  // other locales in that order as soon as it’s rendered. Put them in that order now, so merely
+  // opening an entry whose locales list the pairs in different orders doesn’t count as a change
+  if (fieldType === 'keyvalue') {
+    if (isFieldMirrored(i18n) && sourceContent) {
+      alignPairOrder({ content, referenceContent: sourceContent, keyPath });
+    }
+
+    return;
+  }
+
   if (fieldType === 'object') {
     // A `null` value means the optional Object field is collapsed, so it has no sub-values to fill
     if (content[keyPath] === null) {
       return;
     }
 
-    const { fields: subFields } = /** @type {FieldWithSubFields} */ (field);
-    const fields = subFields ?? getVariableTypeFields({ field, content, keyPath });
+    const subFieldInfo = getSubFields({ field, content, keyPath, variableTypes });
 
-    fields?.forEach((subField) => {
-      normalizeField({ ...args, field: subField, keyPath: `${keyPath}.${subField.name}` });
+    subFieldInfo.fields?.forEach((subField) => {
+      normalizeField({
+        ...args,
+        field: subField,
+        keyPath: `${keyPath}.${subField.name}`,
+        inheritedI18n: i18n,
+        variableTypes: subFieldInfo.variableTypes,
+      });
     });
 
     return;
@@ -435,8 +552,10 @@ const normalizeField = (args) => {
   const { fields: subFields } = /** @type {FieldWithSubFields} */ (field);
   const { types } = /** @type {FieldWithTypes} */ (field);
 
-  // A simple List field holds scalars only, so there is nothing to recurse into
+  // A simple List field holds strings only, so there is nothing to recurse into
   if (!subField && !subFields && !types) {
+    stringifyListItems(content, keyPath, index);
+
     return;
   }
 
@@ -446,7 +565,7 @@ const normalizeField = (args) => {
     // A single-subfield List field stores the item itself at the item key path, so hand the item
     // over to the sub-field as-is; it recurses further only if the sub-field is an Object or List
     if (subField) {
-      normalizeField({ ...args, field: subField, keyPath: itemKeyPath });
+      normalizeField({ ...args, field: subField, keyPath: itemKeyPath, inheritedI18n: i18n });
 
       return;
     }
@@ -455,10 +574,16 @@ const normalizeField = (args) => {
     // place would make `unflatten()` drop every sub-field value on save
     discardConflictingValue(content, itemKeyPath);
 
-    const fields = subFields ?? getVariableTypeFields({ field, content, keyPath: itemKeyPath });
+    const itemFieldInfo = getSubFields({ field, content, keyPath: itemKeyPath, variableTypes });
 
-    fields?.forEach((itemField) => {
-      normalizeField({ ...args, field: itemField, keyPath: `${itemKeyPath}.${itemField.name}` });
+    itemFieldInfo.fields?.forEach((itemField) => {
+      normalizeField({
+        ...args,
+        field: itemField,
+        keyPath: `${itemKeyPath}.${itemField.name}`,
+        inheritedI18n: i18n,
+        variableTypes: itemFieldInfo.variableTypes,
+      });
     });
   });
 };

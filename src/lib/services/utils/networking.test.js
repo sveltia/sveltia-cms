@@ -1,6 +1,14 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { isSecureURL, sendRequest } from './networking';
+import {
+  assertResponseOK,
+  fetchOK,
+  getRetryDelay,
+  isLocalHostname,
+  isSecureURL,
+  MAX_RETRY_DELAY,
+  sendRequest,
+} from './networking';
 
 vi.mock('@sveltia/utils/misc', () => ({ sleep: vi.fn().mockResolvedValue(undefined) }));
 
@@ -8,6 +16,22 @@ vi.mock('@sveltia/utils/misc', () => ({ sleep: vi.fn().mockResolvedValue(undefin
 const mockFetch = vi.fn();
 
 global.fetch = mockFetch;
+
+describe('isLocalHostname', () => {
+  test('should accept localhost, its subdomains and the loopback addresses', () => {
+    ['localhost', 'mysite.localhost', '127.0.0.1', '[::1]'].forEach((hostname) => {
+      expect(isLocalHostname(hostname)).toBe(true);
+    });
+  });
+
+  test('should reject other hostnames', () => {
+    ['example.com', 'localhost.example.com', 'notlocalhost', '192.168.0.1', '::1'].forEach(
+      (hostname) => {
+        expect(isLocalHostname(hostname)).toBe(false);
+      },
+    );
+  });
+});
 
 describe('isSecureURL', () => {
   test('should allow HTTPS URLs', () => {
@@ -17,6 +41,11 @@ describe('isSecureURL', () => {
   test('should allow localhost HTTP URLs', () => {
     expect(isSecureURL('http://localhost:3000/hook')).toBe(true);
     expect(isSecureURL('http://127.0.0.1:3000/hook')).toBe(true);
+  });
+
+  test('should allow HTTP URLs on a subdomain of localhost', () => {
+    expect(isSecureURL('http://mysite.localhost:4321/admin/config.yml')).toBe(true);
+    expect(isSecureURL('http://localhost.example.com/hook')).toBe(false);
   });
 
   test('should reject non-local HTTP URLs', () => {
@@ -167,6 +196,78 @@ describe('sendRequest', () => {
     const result = await sendRequest('https://api.example.com/data', {}, { responseType: 'raw' });
 
     expect(result).toBe(mockResponse);
+  });
+
+  test('should refresh the token on 401 for a raw response', async () => {
+    const mockRefreshFunction = vi.fn().mockResolvedValue({ token: 'new-token' });
+    const mockSuccessResponse = { ok: true, status: 200 };
+
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 401 });
+    mockFetch.mockResolvedValueOnce(mockSuccessResponse);
+
+    const result = await sendRequest(
+      'https://api.example.com/data',
+      { headers: { Authorization: 'Bearer old-token' } },
+      { responseType: 'raw', refreshAccessToken: mockRefreshFunction },
+    );
+
+    expect(mockRefreshFunction).toHaveBeenCalledOnce();
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(mockFetch.mock.calls[1][1].headers.get('Authorization')).toBe('Bearer new-token');
+    expect(result).toBe(mockSuccessResponse);
+  });
+
+  test('should return a raw 401 response as is after the token has been refreshed', async () => {
+    const mockRefreshFunction = vi.fn().mockResolvedValue({ token: 'new-token' });
+    const mockErrorResponse = { ok: false, status: 401 };
+
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 401 });
+    mockFetch.mockResolvedValueOnce(mockErrorResponse);
+
+    const result = await sendRequest(
+      'https://api.example.com/data',
+      { headers: { Authorization: 'token old-token' } },
+      { responseType: 'raw', refreshAccessToken: mockRefreshFunction },
+    );
+
+    expect(mockRefreshFunction).toHaveBeenCalledOnce();
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(result).toBe(mockErrorResponse);
+  });
+
+  test('should retry once on 502 for a raw response', async () => {
+    const { sleep } = await import('@sveltia/utils/misc');
+    const mockErrorResponse = { ok: false, status: 502 };
+    const mockSuccessResponse = { ok: true, status: 200 };
+
+    mockFetch.mockResolvedValueOnce(mockErrorResponse);
+    mockFetch.mockResolvedValueOnce(mockSuccessResponse);
+
+    const result = await sendRequest('https://api.example.com/data', {}, { responseType: 'raw' });
+
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(sleep).toHaveBeenCalledWith(1000);
+    expect(result).toBe(mockSuccessResponse);
+
+    // The retry is made once only
+    mockFetch.mockResolvedValueOnce(mockErrorResponse);
+    mockFetch.mockResolvedValueOnce(mockErrorResponse);
+
+    expect(await sendRequest('https://api.example.com/data', {}, { responseType: 'raw' })).toBe(
+      mockErrorResponse,
+    );
+    expect(mockFetch).toHaveBeenCalledTimes(4);
+  });
+
+  test('should return a raw 401 response as is without a token refresh function', async () => {
+    const mockErrorResponse = { ok: false, status: 401 };
+
+    mockFetch.mockResolvedValueOnce(mockErrorResponse);
+
+    const result = await sendRequest('https://api.example.com/data', {}, { responseType: 'raw' });
+
+    expect(mockFetch).toHaveBeenCalledOnce();
+    expect(result).toBe(mockErrorResponse);
   });
 
   test('should throw error when fetch fails', async () => {
@@ -322,6 +423,247 @@ describe('sendRequest', () => {
     expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 
+  test('should not retry a request with side effects on 502', async () => {
+    const mockErrorResponse = {
+      ok: false,
+      status: 502,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.resolve({ message: 'Bad Gateway' }),
+    };
+
+    mockFetch.mockResolvedValue(mockErrorResponse);
+
+    // A REST request that writes data, which may have taken effect behind the gateway
+    await expect(
+      sendRequest('https://api.example.com/dispatches', {
+        method: 'POST',
+        body: /** @type {any} */ ({ ref: 'main' }),
+      }),
+    ).rejects.toThrow('Server responded with an error');
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+
+    await expect(sendRequest('https://api.example.com/data', { method: 'DELETE' })).rejects.toThrow(
+      'Server responded with an error',
+    );
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+
+    // A GraphQL mutation
+    await expect(
+      sendRequest('https://api.example.com/graphql', {
+        method: 'POST',
+        body: /** @type {any} */ ({
+          query: ' mutation($input: CreateCommitOnBranchInput!) { x }',
+          variables: {},
+        }),
+      }),
+    ).rejects.toThrow('Server responded with an error');
+    expect(mockFetch).toHaveBeenCalledTimes(3);
+
+    // A body that isn’t JSON
+    await expect(
+      sendRequest('https://api.example.com/upload', { method: 'PUT', body: 'raw data' }),
+    ).rejects.toThrow('Server responded with an error');
+    expect(mockFetch).toHaveBeenCalledTimes(4);
+
+    // A raw response
+    expect(
+      await sendRequest(
+        'https://api.example.com/pipeline',
+        { method: 'POST', body: /** @type {any} */ ({ ref: 'main' }) },
+        { responseType: 'raw' },
+      ),
+    ).toBe(mockErrorResponse);
+    expect(mockFetch).toHaveBeenCalledTimes(5);
+  });
+
+  test('should retry a request with side effects on 502 when it opts in', async () => {
+    const mockErrorResponse = {
+      ok: false,
+      status: 502,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.resolve({ message: 'Bad Gateway' }),
+    };
+
+    mockFetch.mockResolvedValueOnce(mockErrorResponse);
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.resolve({ id: 'commit-sha' }),
+    });
+
+    // A commit that the server refuses to apply twice
+    expect(
+      await sendRequest(
+        'https://api.example.com/commits',
+        { method: 'POST', body: /** @type {any} */ ({ branch: 'main' }) },
+        { retryable: true },
+      ),
+    ).toEqual({ id: 'commit-sha' });
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+
+    // A read that opts out
+    mockFetch.mockResolvedValueOnce(mockErrorResponse);
+
+    await expect(
+      sendRequest('https://api.example.com/data', {}, { retryable: false }),
+    ).rejects.toThrow('Server responded with an error');
+    expect(mockFetch).toHaveBeenCalledTimes(3);
+  });
+
+  test.each([429, 503, 504])(
+    'should retry a request without side effects on %i',
+    async (status) => {
+      const { sleep } = await import('@sveltia/utils/misc');
+
+      mockFetch.mockResolvedValueOnce(
+        new Response('busy', { status, headers: { 'Retry-After': '3' } }),
+      );
+      mockFetch.mockResolvedValueOnce(Response.json({ data: 'success' }));
+
+      expect(await sendRequest('https://api.example.com/data')).toEqual({ data: 'success' });
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(sleep).toHaveBeenLastCalledWith(3000);
+    },
+  );
+
+  test('should retry a GraphQL query and a raw response on a transient error', async () => {
+    const { sleep } = await import('@sveltia/utils/misc');
+
+    mockFetch.mockResolvedValueOnce(new Response('busy', { status: 503 }));
+    mockFetch.mockResolvedValueOnce(Response.json({ data: { viewer: {} } }));
+    expect(
+      await sendRequest('https://api.example.com/graphql', {
+        method: 'POST',
+        body: /** @type {any} */ ({ query: '{ viewer { login } }' }),
+      }),
+    ).toEqual({ data: { viewer: {} } });
+
+    const okResponse = new Response('ok');
+
+    mockFetch.mockResolvedValueOnce(
+      new Response('busy', { status: 429, headers: { 'Retry-After': '1' } }),
+    );
+    mockFetch.mockResolvedValueOnce(okResponse);
+    expect(await sendRequest('https://api.example.com/data', {}, { responseType: 'raw' })).toBe(
+      okResponse,
+    );
+    expect(mockFetch).toHaveBeenCalledTimes(4);
+    expect(sleep).toHaveBeenLastCalledWith(1000);
+  });
+
+  test('should not retry a request the server asks to send again much later', async () => {
+    const response = new Response('busy', { status: 429, headers: { 'Retry-After': '60' } });
+
+    mockFetch.mockResolvedValue(response);
+
+    await expect(sendRequest('https://api.example.com/data')).rejects.toMatchObject({
+      cause: { status: 429 },
+    });
+    expect(await sendRequest('https://api.example.com/data', {}, { responseType: 'raw' })).toBe(
+      response,
+    );
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  // A gateway can time out after a large commit has landed, and the repeat would be refused
+  test.each([429, 503, 504])(
+    'should not retry a request with side effects on %i, even when it opts in',
+    async (status) => {
+      mockFetch.mockResolvedValue(new Response('busy', { status }));
+
+      await expect(
+        sendRequest(
+          'https://api.example.com/commits',
+          { method: 'POST', body: /** @type {any} */ ({ branch: 'main' }) },
+          { retryable: true },
+        ),
+      ).rejects.toMatchObject({ cause: { status } });
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  test('should keep a request retryable after refreshing the token', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.resolve({ message: 'Unauthorized' }),
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 502,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.resolve({ message: 'Bad Gateway' }),
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.resolve({ id: 'commit-sha' }),
+    });
+
+    const refreshAccessToken = vi.fn().mockResolvedValue({ token: 'new-token' });
+
+    expect(
+      await sendRequest(
+        'https://api.example.com/commits',
+        {
+          method: 'POST',
+          headers: { Authorization: 'token old-token' },
+          body: /** @type {any} */ ({ branch: 'main' }),
+        },
+        { retryable: true, refreshAccessToken },
+      ),
+    ).toEqual({ id: 'commit-sha' });
+    expect(mockFetch).toHaveBeenCalledTimes(3);
+  });
+
+  test('should retry a GraphQL query on 502', async () => {
+    const mockSuccessResponse = { data: { viewer: { login: 'me' } } };
+
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 502,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.resolve({ message: 'Bad Gateway' }),
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.resolve(mockSuccessResponse),
+    });
+
+    const result = await sendRequest('https://api.example.com/graphql', {
+      method: 'POST',
+      body: /** @type {any} */ ({ query: 'query { viewer { login } }', variables: {} }),
+    });
+
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(result).toEqual(mockSuccessResponse);
+
+    // The serialized body is sent again as is
+    expect(mockFetch.mock.calls[1][1].body).toBe(mockFetch.mock.calls[0][1].body);
+  });
+
+  test('should retry a HEAD request on 502 for a raw response', async () => {
+    const mockSuccessResponse = { ok: true, status: 200 };
+
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 502 });
+    mockFetch.mockResolvedValueOnce(mockSuccessResponse);
+
+    expect(
+      await sendRequest(
+        'https://api.example.com/data',
+        { method: 'head' },
+        { responseType: 'raw' },
+      ),
+    ).toBe(mockSuccessResponse);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
   test('should handle server errors with message', async () => {
     const mockErrorResponse = {
       message: 'Server error message',
@@ -384,5 +726,175 @@ describe('sendRequest', () => {
     await expect(sendRequest('https://api.example.com/data')).rejects.toThrow(
       'Server responded with an error',
     );
+  });
+
+  // A gateway typically answers a 502 with an HTML page rather than JSON
+  test('should retry on 502 with a non-JSON body', async () => {
+    const mockSuccessResponse = { data: 'success' };
+
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 502,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.reject(new SyntaxError('Unexpected token <')),
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.resolve(mockSuccessResponse),
+    });
+
+    const result = await sendRequest('https://api.example.com/data');
+
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(result).toEqual(mockSuccessResponse);
+  });
+
+  test('should refresh the token on 401 with a non-JSON body', async () => {
+    const mockRefreshFunction = vi.fn().mockResolvedValue({ token: 'new-token' });
+    const mockSuccessResponse = { data: 'success' };
+
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.reject(new SyntaxError('Unexpected end of JSON input')),
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.resolve(mockSuccessResponse),
+    });
+
+    const result = await sendRequest(
+      'https://api.example.com/data',
+      { headers: { Authorization: 'token old-token' } },
+      { refreshAccessToken: mockRefreshFunction },
+    );
+
+    expect(mockRefreshFunction).toHaveBeenCalled();
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(result).toEqual(mockSuccessResponse);
+  });
+
+  test('should report the status of an error response with a non-JSON body', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.reject(new SyntaxError('Unexpected token <')),
+    });
+
+    await expect(sendRequest('https://api.example.com/data')).rejects.toMatchObject({
+      message: 'Server responded with an error',
+      cause: { status: 404 },
+    });
+  });
+
+  test('should report the status of a blob request error with a non-JSON body', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 403,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.reject(new SyntaxError('Unexpected token <')),
+    });
+
+    await expect(
+      sendRequest('https://api.example.com/file', {}, { responseType: 'blob' }),
+    ).rejects.toMatchObject({
+      message: 'Server responded with an error',
+      cause: { status: 403 },
+    });
+  });
+});
+
+describe('getRetryDelay', () => {
+  test('should read a number of seconds', () => {
+    expect(getRetryDelay(503, new Headers({ 'Retry-After': '2' }))).toBe(2000);
+    expect(getRetryDelay(429, new Headers({ 'Retry-After': ' 0 ' }))).toBe(0);
+  });
+
+  test('should read an HTTP date', () => {
+    vi.useFakeTimers({ now: new Date('2026-11-08T12:00:00Z') });
+
+    try {
+      expect(
+        getRetryDelay(503, new Headers({ 'Retry-After': 'Sun, 08 Nov 2026 12:00:05 GMT' })),
+      ).toBe(5000);
+      // A date in the past means the request can be sent again right away
+      expect(
+        getRetryDelay(503, new Headers({ 'Retry-After': 'Sun, 08 Nov 2026 11:00:00 GMT' })),
+      ).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('should not retry sooner than the server asks', () => {
+    expect(getRetryDelay(503, new Headers({ 'Retry-After': '10' }))).toBe(MAX_RETRY_DELAY);
+    expect(getRetryDelay(503, new Headers({ 'Retry-After': '11' }))).toBeUndefined();
+    expect(getRetryDelay(429, new Headers({ 'Retry-After': '60' }))).toBeUndefined();
+  });
+
+  test('should wait a second without a valid header, except for a rate limit', () => {
+    expect(getRetryDelay(503, undefined)).toBe(1000);
+    expect(getRetryDelay(504, new Headers())).toBe(1000);
+    expect(getRetryDelay(502, new Headers({ 'Retry-After': 'soon' }))).toBe(1000);
+    // A rate limit without a delay typically lasts until the limit resets, a minute or more later
+    expect(getRetryDelay(429, new Headers())).toBeUndefined();
+    expect(getRetryDelay(429, new Headers({ 'Retry-After': 'soon' }))).toBeUndefined();
+  });
+});
+
+describe('assertResponseOK', () => {
+  test('should resolve when the response is OK', async () => {
+    await expect(
+      assertResponseOK(new Response('ok', { status: 200 }), 'Failed'),
+    ).resolves.toBeUndefined();
+  });
+
+  test('should throw with the response body appended to the message', async () => {
+    await expect(
+      assertResponseOK(new Response('Access Denied', { status: 403 }), 'Failed to list objects'),
+    ).rejects.toThrow(new Error('Failed to list objects: Access Denied'));
+  });
+
+  test('should throw on a 404 response unless it’s allowed', async () => {
+    await expect(
+      assertResponseOK(new Response('Not Found', { status: 404 }), 'Failed'),
+    ).rejects.toThrow('Failed: Not Found');
+    await expect(
+      assertResponseOK(new Response('Not Found', { status: 404 }), 'Failed', {
+        allowNotFound: true,
+      }),
+    ).resolves.toBeUndefined();
+  });
+});
+
+describe('fetchOK', () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
+
+  test('should pass the arguments through and return an OK response', async () => {
+    const response = new Response('ok', { status: 200 });
+    const init = { headers: { Accept: 'image/*' } };
+
+    mockFetch.mockResolvedValueOnce(response);
+    await expect(fetchOK('https://example.com/a.jpg', init)).resolves.toBe(response);
+    expect(mockFetch).toHaveBeenCalledWith('https://example.com/a.jpg', init);
+
+    mockFetch.mockResolvedValueOnce(response);
+    await fetchOK('https://example.com/b.jpg');
+    expect(mockFetch).toHaveBeenLastCalledWith('https://example.com/b.jpg');
+  });
+
+  test('should throw when the response status is not OK', async () => {
+    mockFetch.mockResolvedValueOnce(new Response('Not Found', { status: 404 }));
+    await expect(fetchOK('https://example.com/a.jpg')).rejects.toThrow(new Error('HTTP 404'));
   });
 });

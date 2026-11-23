@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { awaitPendingFieldUpdates, trackPendingFieldUpdate } from './pending.js';
+import {
+  afterPendingFieldUpdates,
+  awaitPendingFieldUpdates,
+  fieldUpdatePending,
+  trackPendingFieldUpdate,
+} from './pending.js';
 
 describe('editor/pending', () => {
   it('resolves immediately when nothing is pending', async () => {
@@ -24,10 +29,12 @@ describe('editor/pending', () => {
 
     await Promise.resolve();
     expect(done).toBe(false);
+    expect(fieldUpdatePending.current).toBe(true);
 
     resolve();
     await waiting;
     expect(done).toBe(true);
+    expect(fieldUpdatePending.current).toBe(false);
   });
 
   it('tolerates a rejected update', async () => {
@@ -64,5 +71,31 @@ describe('editor/pending', () => {
 
     await awaitPendingFieldUpdates();
     expect(secondDone).toBe(true);
+  });
+
+  it('runs a function once the tracked updates have settled', async () => {
+    /** @type {any} */
+    let resolve;
+    /** @type {string[]} */
+    const calls = [];
+
+    trackPendingFieldUpdate(
+      new Promise((_resolve) => {
+        resolve = _resolve;
+      }).then(() => {
+        calls.push('update');
+      }),
+    );
+
+    const running = afterPendingFieldUpdates(() => {
+      calls.push('fn');
+    });
+
+    await Promise.resolve();
+    expect(calls).toEqual([]);
+
+    resolve();
+    await running;
+    expect(calls).toEqual(['update', 'fn']);
   });
 });

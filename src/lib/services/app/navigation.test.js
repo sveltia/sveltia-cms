@@ -3,17 +3,49 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { showAssetOverlay } from '$lib/services/assets/view';
 import { cmsConfig } from '$lib/services/config';
 import { showContentOverlay } from '$lib/services/contents/editor';
+import { encodePathSegments } from '$lib/services/utils/url';
 
 import {
+  getEntryEditorBackPath,
   goBack,
   goto,
   hasOverlay,
+  holdViewTransition,
   openProductionSite,
   parseLocation,
   redirectLegacyEntryLink,
+  resolveRoute,
   startViewTransition,
   updateContentFromHashChange,
+  VIEW_TRANSITION_HOLD_LIMIT,
 } from './navigation';
+
+// The module listens to `keydown` as it’s loaded, before the tests can set anything up
+const { keydownListeners } = vi.hoisted(() => {
+  /** @type {EventListener[]} */
+  const listeners = [];
+
+  /**
+   * Collect the `keydown` listeners, as Node has no global event target.
+   * @param {string} type Event type.
+   * @param {any} listener Listener.
+   */
+  // @ts-ignore - Node has no global event target
+  globalThis.addEventListener = (type, listener) => {
+    if (type === 'keydown') {
+      listeners.push(listener);
+    }
+  };
+
+  return { keydownListeners: listeners };
+});
+
+/**
+ * Press a key, as far as the module’s listeners are concerned.
+ */
+const pressKey = () => {
+  keydownListeners.forEach((listener) => listener(new Event('keydown')));
+};
 
 /**
  * Mock HashChangeEvent class for testing.
@@ -109,6 +141,7 @@ describe('navigation', () => {
         href: 'https://example.com/#/collections',
         origin: 'https://example.com',
         pathname: '/',
+        search: '',
         hash: '#/collections',
       },
       writable: true,
@@ -199,6 +232,39 @@ describe('navigation', () => {
       });
     });
 
+    it('should handle a hash that doesn’t start with a slash', () => {
+      expect(parseLocation('https://example.com/#%2Fcollections%2Fposts')).toEqual({
+        path: '//collections/posts',
+        params: {},
+      });
+      expect(parseLocation('https://example.com/#:abc?x=1').params).toEqual({ x: '1' });
+      expect(parseLocation('https://example.com/#[x]').path).toBe('/[x]');
+    });
+
+    it('should keep dot segments in the path rather than resolving them', () => {
+      expect(parseLocation('https://example.com/#/search/.').path).toBe('/search/.');
+      expect(parseLocation('https://example.com/#/search/..').path).toBe('/search/..');
+      expect(parseLocation('https://example.com/#/search/%2E%2E').path).toBe('/search/..');
+      expect(parseLocation('https://example.com/#/collections/../assets').path).toBe(
+        '/collections/../assets',
+      );
+    });
+
+    it('should end the path and the query at a second hash', () => {
+      expect(parseLocation('https://example.com/#/collections#x')).toEqual({
+        path: '/collections',
+        params: {},
+      });
+      expect(parseLocation('https://example.com/#/assets?a=1?2#b=3')).toEqual({
+        path: '/assets',
+        params: { a: '1?2' },
+      });
+    });
+
+    it('should keep a hash starting with two slashes in the path', () => {
+      expect(parseLocation('https://example.com/#//example.org/a').path).toBe('//example.org/a');
+    });
+
     it('should handle complex query parameters', () => {
       const result = parseLocation('https://example.com/#/search?q=test&sort=date&tags=tag1,tag2');
 
@@ -220,6 +286,29 @@ describe('navigation', () => {
     it('should keep the root path as is', () => {
       expect(parseLocation('https://example.com/#/').path).toEqual('/');
       expect(parseLocation('https://example.com/#//').path).toEqual('/');
+    });
+
+    it('should not throw on a malformed escape sequence, decoding the valid ones only', () => {
+      // A link to a `50%off.jpg` file built before route paths were encoded
+      expect(parseLocation('https://example.com/#/assets/50%off.jpg').path).toEqual(
+        '/assets/50%off.jpg',
+      );
+      // `%E9` alone is not valid UTF-8, so it’s left as is
+      expect(parseLocation('https://example.com/#/assets/50%off%20sale%E9.jpg').path).toEqual(
+        '/assets/50%off sale%E9.jpg',
+      );
+    });
+
+    it('should decode an encoded route path back to the original path', () => {
+      const path = '/assets/images/50%off #1?.jpg';
+      const encoded = encodePathSegments(path);
+
+      expect(encoded).toEqual('/assets/images/50%25off%20%231%3F.jpg');
+      expect(parseLocation(`https://example.com/#${encoded}`)).toEqual({ path, params: {} });
+      // An already-encoded name is kept as is, rather than being decoded to another name
+      expect(
+        parseLocation(`https://example.com/#${encodePathSegments('/assets/a%20b.jpg')}`).path,
+      ).toEqual('/assets/a%20b.jpg');
     });
 
     it('should join duplicate keys with commas', () => {
@@ -564,6 +653,26 @@ describe('navigation', () => {
       expect(document.startViewTransition).toHaveBeenCalled();
     });
 
+    it('should keep the query string the page was opened with', async () => {
+      window.location.href = 'https://example.com/admin/?site=a#/collections';
+      window.location.pathname = '/admin/';
+      window.location.search = '?site=a';
+
+      await goto('/collections/posts');
+
+      expect(window.history.pushState).toHaveBeenCalledWith(
+        { from: 'https://example.com/admin/?site=a#/collections' },
+        '',
+        'https://example.com/admin/?site=a#/collections/posts',
+      );
+      expect(window.dispatchEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          oldURL: 'https://example.com/admin/?site=a#/collections',
+          newURL: 'https://example.com/admin/?site=a#/collections/posts',
+        }),
+      );
+    });
+
     it('should replace state when replaceState is true, keeping the previous entry’s URL', async () => {
       /** @type {any} */ (window.history).state = { from: 'https://example.com/#/' };
 
@@ -630,6 +739,15 @@ describe('navigation', () => {
       // Should not push state or trigger transition
       expect(window.history.pushState).not.toHaveBeenCalled();
       expect(document.startViewTransition).not.toHaveBeenCalled();
+    });
+
+    it('should skip navigation when already on the same encoded path', async () => {
+      window.location.href = 'https://example.com/#/assets/50%25off.jpg';
+      window.location.hash = '#/assets/50%25off.jpg';
+
+      await goto(encodePathSegments('/assets/50%off.jpg'));
+
+      expect(window.history.pushState).not.toHaveBeenCalled();
     });
 
     it('should navigate when on same path but with custom state', async () => {
@@ -718,6 +836,19 @@ describe('navigation', () => {
       );
     });
 
+    it('should keep special characters in the sub path encoded', () => {
+      window.location.href = 'https://example.com/#/edit/posts/50%25off%20%231';
+      window.location.hash = '#/edit/posts/50%25off%20%231';
+
+      expect(redirectLegacyEntryLink()).toBe(true);
+
+      expect(window.history.replaceState).toHaveBeenCalledWith(
+        expect.any(Object),
+        '',
+        'https://example.com/#/collections/posts/entries/50%25off%20%231',
+      );
+    });
+
     it('should carry the query string over', () => {
       window.location.href = 'https://example.com/#/edit/posts/hello?_locale=fr';
       window.location.hash = '#/edit/posts/hello?_locale=fr';
@@ -749,6 +880,72 @@ describe('navigation', () => {
       });
 
       expect(window.history.replaceState).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('resolveRoute', () => {
+    const pageNames = ['collections', 'assets', 'search', 'workflow', 'admin', 'menu', 'settings'];
+
+    it('should redirect the root path to the content library', () => {
+      expect(resolveRoute('/', pageNames)).toEqual({ redirect: '#/collections' });
+    });
+
+    it('should report an unknown path as not found', () => {
+      expect(resolveRoute('/unknown', pageNames)).toEqual({ notFound: true });
+      expect(resolveRoute('', pageNames)).toEqual({ notFound: true });
+      // The page name has to fill the whole first path segment
+      expect(resolveRoute('/collections-foo', pageNames)).toEqual({ notFound: true });
+      expect(resolveRoute('/not-found', pageNames)).toEqual({ notFound: true });
+    });
+
+    it('should report a standalone page followed by a sub path as not found', () => {
+      expect(resolveRoute('/workflow/foo', pageNames)).toEqual({ notFound: true });
+      expect(resolveRoute('/menu/foo', pageNames)).toEqual({ notFound: true });
+    });
+
+    it('should send the former CMS configuration page to the Administration page', () => {
+      expect(resolveRoute('/config', pageNames)).toEqual({ redirect: '#/admin/config' });
+      expect(resolveRoute('/config/foo', pageNames)).toEqual({ notFound: true });
+    });
+
+    it('should let the Administration page take a section', () => {
+      expect(resolveRoute('/admin/users', pageNames)).toEqual({
+        pageName: 'admin',
+        searchMode: null,
+      });
+    });
+
+    it('should set the search mode for the content and asset libraries', () => {
+      expect(resolveRoute('/collections', pageNames)).toEqual({
+        pageName: 'collections',
+        searchMode: 'contents',
+      });
+      expect(resolveRoute('/collections/posts/entries/hello', pageNames)).toEqual({
+        pageName: 'collections',
+        searchMode: 'contents',
+      });
+      expect(resolveRoute('/assets/images', pageNames)).toEqual({
+        pageName: 'assets',
+        searchMode: 'assets',
+      });
+    });
+
+    it('should keep the search mode on the search page', () => {
+      expect(resolveRoute('/search/foo', pageNames)).toEqual({
+        pageName: 'search',
+        searchMode: undefined,
+      });
+    });
+
+    it('should clear the search mode on any other page', () => {
+      expect(resolveRoute('/workflow', pageNames)).toEqual({
+        pageName: 'workflow',
+        searchMode: null,
+      });
+      expect(resolveRoute('/settings/appearance', pageNames)).toEqual({
+        pageName: 'settings',
+        searchMode: null,
+      });
     });
   });
 
@@ -785,6 +982,28 @@ describe('navigation', () => {
       expect(mockNavigationBack).toHaveBeenCalled();
     });
 
+    it('should go back when the previous entry matches the encoded fallback path', () => {
+      Object.defineProperty(window, 'navigation', {
+        value: {
+          currentEntry: { index: 1 },
+          entries: vi.fn(() => [
+            { sameDocument: true, url: 'https://example.com/#/assets/a/50%25off%20%231' },
+          ]),
+          back: vi.fn(),
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      goBack(encodePathSegments('/assets/a/50%off #1'));
+
+      expect(window.history.pushState).not.toHaveBeenCalled();
+      expect(document.startViewTransition).toHaveBeenCalledWith({
+        types: ['backwards'],
+        update: expect.any(Function),
+      });
+    });
+
     it('should fall back to goto when the previous navigation entry does not match the target path', () => {
       Object.defineProperty(window, 'navigation', {
         value: {
@@ -797,6 +1016,53 @@ describe('navigation', () => {
       });
 
       goBack('/default');
+
+      expect(window.history.pushState).toHaveBeenCalledWith(
+        { from: 'https://example.com/#/collections' },
+        '',
+        'https://example.com/#/default',
+      );
+    });
+
+    it('should use window.navigation.back() for a previous entry that `returnTo` accepts', () => {
+      const mockNavigationBack = vi.fn();
+      const mockStartViewTransition = vi.fn();
+
+      Object.defineProperty(window, 'navigation', {
+        value: {
+          currentEntry: { index: 1 },
+          entries: vi.fn(() => [{ sameDocument: true, url: 'https://example.com/#/assets' }]),
+          back: mockNavigationBack,
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      document.startViewTransition = mockStartViewTransition;
+
+      const returnTo = vi.fn((path) => path === '/assets');
+
+      goBack('/default', { returnTo });
+
+      expect(returnTo).toHaveBeenCalledWith('/assets');
+
+      expect(window.history.pushState).not.toHaveBeenCalled();
+      /** @type {any} */ (mockStartViewTransition).mock.calls[0][0].update();
+      expect(mockNavigationBack).toHaveBeenCalled();
+    });
+
+    it('should fall back to goto when `returnTo` rejects the previous entry', () => {
+      Object.defineProperty(window, 'navigation', {
+        value: {
+          currentEntry: { index: 1 },
+          entries: vi.fn(() => [{ sameDocument: true, url: 'https://example.com/#/assets' }]),
+          back: vi.fn(),
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      goBack('/default', { returnTo: vi.fn((path) => path.startsWith('/search/')) });
 
       expect(window.history.pushState).toHaveBeenCalledWith(
         { from: 'https://example.com/#/collections' },
@@ -1068,6 +1334,30 @@ describe('navigation', () => {
       expect(mockUpdateContent).toHaveBeenCalled();
     });
 
+    it('should skip the running transition when a key is pressed', async () => {
+      const { promise: finished, resolve } = Promise.withResolvers();
+
+      const mockTransition = {
+        ready: Promise.resolve(),
+        finished,
+        skipTransition: vi.fn(),
+      };
+
+      // @ts-ignore - Simplified mock for testing
+      document.startViewTransition = vi.fn().mockReturnValue(mockTransition);
+
+      startViewTransition('forwards', vi.fn());
+      pressKey();
+      expect(mockTransition.skipTransition).toHaveBeenCalledTimes(1);
+
+      // Nothing to skip once the transition is over
+      resolve(undefined);
+      await finished;
+      await Promise.resolve();
+      pressKey();
+      expect(mockTransition.skipTransition).toHaveBeenCalledTimes(1);
+    });
+
     it('should observe a rejected ready promise when the transition is skipped', async () => {
       const mockUpdateContent = vi.fn();
       const unhandled = vi.fn();
@@ -1170,6 +1460,183 @@ describe('navigation', () => {
     });
   });
 
+  describe('holdViewTransition', () => {
+    /**
+     * Start a transition whose `update` callback the test runs itself, and make `sleep` resolve at
+     * once, except for the hold time limit, which resolves when the test says so.
+     * @param {() => void} updateContent Function to update the content.
+     * @returns {Promise<{ update: () => Promise<void>, expireLimit: () => void, finish: () =>
+     * Promise<void>, sleep: any }>} Controls.
+     */
+    const setUp = async (updateContent) => {
+      const { sleep } = await import('@sveltia/utils/misc');
+      const { flushSync } = await import('svelte');
+      const limit = Promise.withResolvers();
+      const finished = Promise.withResolvers();
+      /** @type {any} */
+      let options;
+
+      vi.mocked(sleep).mockImplementation((ms) =>
+        ms === VIEW_TRANSITION_HOLD_LIMIT ? limit.promise : Promise.resolve(),
+      );
+      vi.mocked(flushSync).mockImplementation((fn) => {
+        if (fn) fn();
+      });
+
+      // @ts-ignore - Simplified mock for testing
+      document.startViewTransition = vi.fn((config) => {
+        options = config;
+
+        return { ready: Promise.resolve(), finished: finished.promise, skipTransition: vi.fn() };
+      });
+
+      startViewTransition('next', updateContent);
+
+      return {
+        /**
+         * Run the `update` callback of the transition.
+         * @returns {Promise<void>} Result.
+         */
+        update: () => options.update(),
+        /**
+         * Let the hold time limit pass.
+         * @returns {void}
+         */
+        expireLimit: () => limit.resolve(undefined),
+        /**
+         * Finish the transition.
+         */
+        finish: async () => {
+          finished.resolve(undefined);
+          await finished.promise;
+          await Promise.resolve();
+        },
+        sleep,
+      };
+    };
+
+    /**
+     * Check whether the given promise has settled after the pending microtasks have run.
+     * @param {Promise<any>} promise Promise.
+     * @returns {Promise<boolean>} Result.
+     */
+    const hasSettled = async (promise) => {
+      let settled = false;
+
+      promise.then(() => {
+        settled = true;
+      });
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, 0);
+      });
+
+      return settled;
+    };
+
+    it('should make the transition wait for the hold before capturing the new state', async () => {
+      const hold = Promise.withResolvers();
+      const { update, finish } = await setUp(() => holdViewTransition(hold.promise));
+      const updating = update();
+
+      expect(await hasSettled(updating)).toBe(false);
+
+      hold.resolve(undefined);
+
+      expect(await hasSettled(updating)).toBe(true);
+
+      await finish();
+    });
+
+    it('should count a rejected hold as settled', async () => {
+      const hold = Promise.withResolvers();
+      const { update, finish } = await setUp(() => holdViewTransition(hold.promise));
+      const updating = update();
+
+      hold.reject(new Error('Failed'));
+
+      expect(await hasSettled(updating)).toBe(true);
+
+      await finish();
+    });
+
+    it('should stop waiting for the hold once the time limit has passed', async () => {
+      const { update, expireLimit, finish } = await setUp(() =>
+        holdViewTransition(new Promise(() => {})),
+      );
+
+      const updating = update();
+
+      expect(await hasSettled(updating)).toBe(false);
+
+      expireLimit();
+
+      expect(await hasSettled(updating)).toBe(true);
+
+      await finish();
+    });
+
+    it('should stop waiting for the hold once the transition is skipped with a key', async () => {
+      const { update, finish } = await setUp(() => holdViewTransition(new Promise(() => {})));
+      const updating = update();
+
+      expect(await hasSettled(updating)).toBe(false);
+
+      pressKey();
+
+      expect(await hasSettled(updating)).toBe(true);
+
+      // Nothing is left to stop once the wait is over
+      pressKey();
+      await finish();
+    });
+
+    it('should not wait for the hold once the transition has been skipped before', async () => {
+      const { update, finish } = await setUp(() => {
+        holdViewTransition(new Promise(() => {}));
+        // Pressed while the content is still being updated, before the wait has started
+        pressKey();
+      });
+
+      expect(await hasSettled(update())).toBe(true);
+
+      await finish();
+    });
+
+    it('should not wait without a hold', async () => {
+      const { update, finish, sleep } = await setUp(vi.fn());
+
+      expect(await hasSettled(update())).toBe(true);
+      expect(sleep).not.toHaveBeenCalledWith(VIEW_TRANSITION_HOLD_LIMIT);
+
+      await finish();
+    });
+
+    it('should ignore a hold added while no transition is running', async () => {
+      holdViewTransition(new Promise(() => {}));
+
+      const { update, finish } = await setUp(vi.fn());
+
+      expect(await hasSettled(update())).toBe(true);
+
+      await finish();
+    });
+
+    it('should drop a hold added once the transition has captured the new state', async () => {
+      const first = await setUp(vi.fn());
+
+      await first.update();
+      holdViewTransition(new Promise(() => {}));
+      await first.finish();
+
+      const second = await setUp(vi.fn());
+
+      expect(await hasSettled(second.update())).toBe(true);
+
+      await second.finish();
+    });
+  });
+
   describe('hasOverlay derived state', () => {
     it('should be true if either overlay is shown', () => {
       showContentOverlay.current = false;
@@ -1218,6 +1685,27 @@ describe('navigation', () => {
       expect(mockHistoryBack).toHaveBeenCalled();
 
       await mockTransition.finished;
+    });
+  });
+
+  describe('getEntryEditorBackPath', () => {
+    it('returns the collections list for a singleton file', () => {
+      expect(getEntryEditorBackPath({ collectionName: '_singletons', dirPath: 'a' })).toBe(
+        '/collections',
+      );
+    });
+
+    it('returns the collection entries list', () => {
+      expect(getEntryEditorBackPath({ collectionName: 'posts' })).toBe('/collections/posts');
+      expect(getEntryEditorBackPath({ collectionName: 'posts', dirPath: '' })).toBe(
+        '/collections/posts',
+      );
+    });
+
+    it('returns the folder being browsed in a collection with nested entries, encoded', () => {
+      expect(
+        getEntryEditorBackPath({ collectionName: 'docs', dirPath: 'guides/getting started' }),
+      ).toBe('/collections/docs/filter/guides/getting%20started');
     });
   });
 });

@@ -41,12 +41,19 @@ describe('integrations/media-libraries/cloud/s3/digitalocean-spaces', () => {
   });
 
   describe('resolveConfig', () => {
-    it('should use path-style region endpoint and derive virtual-hosted public_url', () => {
+    it('should derive the endpoint and public_url, and make objects public', () => {
       expect(digitalOceanSpacesService.resolveConfig(libOptions)).toEqual({
         ...libOptions,
         endpoint: 'https://nyc3.digitaloceanspaces.com',
         public_url: 'https://my-space.nyc3.digitaloceanspaces.com',
+        acl: 'public-read',
       });
+    });
+
+    it('should ignore an ACL set in the library options', () => {
+      const options = /** @type {any} */ ({ ...libOptions, acl: 'private' });
+
+      expect(digitalOceanSpacesService.resolveConfig(options).acl).toBe('public-read');
     });
 
     it('should use explicit public_url when set in config', () => {

@@ -5,47 +5,60 @@
   @see https://sveltiacms.app/en/docs/fields/richtext
 -->
 <script>
-  import { TextEditor } from '@sveltia/ui';
+  import { _ } from '@sveltia/i18n';
+  import { Alert, TextEditor, Toast } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import {
     $createParagraphNode as createParagraphNode,
     getNearestEditorFromDOMNode,
     $insertNodes as insertNodes,
   } from 'lexical';
-  import { getContext, tick } from 'svelte';
 
-  import { customComponentRegistry } from '$lib/services/api/registries';
+  import SelectAssetsDialog from '$lib/components/assets/browser/select-assets-dialog.svelte';
+  import { EditorComponent } from '$lib/components/contents/details/fields/rich-text/custom-node-features';
   import { cmsConfig } from '$lib/services/config';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
-  import { trackPendingFieldUpdate } from '$lib/services/contents/editor/pending';
-  import { getField } from '$lib/services/contents/entry/fields';
+  import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import {
-    getAssetLibraryFolderMap,
-    getDefaultAssetFolder,
-  } from '$lib/services/contents/fields/file/helpers';
+    getFieldEditorContext,
+    isInEditorComponent,
+  } from '$lib/services/contents/editor/field-context';
+  import { trackPendingWhile } from '$lib/services/contents/editor/pending.svelte';
+  import { getField } from '$lib/services/contents/entry/fields';
   import { processResource } from '$lib/services/contents/fields/file/process';
   import {
-    BUILTIN_COMPONENTS,
-    BUTTON_NAME_MAP,
-    COMPONENT_NAME_PREFIX_REGEX,
+    getMediaFieldAssetOptions,
+    processResources,
+  } from '$lib/services/contents/fields/file/resources';
+  import {
     DEFAULT_BUTTONS,
     DEFAULT_MODES,
+    getValueFormat,
     NODE_NAME_MAP,
   } from '$lib/services/contents/fields/rich-text';
-  import { EditorComponent } from '$lib/services/contents/fields/rich-text/components';
-  import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';
+  import { IMAGE_COMPONENT_IDS } from '$lib/services/contents/fields/rich-text/components/definitions';
+  import {
+    getImageSrcFieldConfig,
+    sortDroppedImages,
+  } from '$lib/services/contents/fields/rich-text/image-uploads';
   import {
     getDroppedImages,
     getPastedImages,
   } from '$lib/services/contents/fields/rich-text/images';
+  import {
+    getAvailableComponentDefs,
+    getEditorComponentNames,
+    getRootFieldName,
+    getStaleExtraValueKeys,
+    getToolbarButtons,
+    resolveAllowNestedComponents,
+  } from '$lib/services/contents/fields/rich-text/options';
   import { getCanonicalLocale, getDirection } from '$lib/services/contents/i18n';
-  import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
-  import { watch } from '$lib/services/utils/state.svelte';
+  import { syncValues, watch } from '$lib/services/utils/state.svelte';
 
   /**
    * @import { ImageEntry } from '$lib/services/contents/fields/rich-text/images';
-   * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
+   * @import { FieldEditorProps, SelectedResource } from '$lib/types/private';
    * @import {
    * EditorComponentDefinition,
    * ImageField,
@@ -63,14 +76,14 @@
   const entryDraft = getEntryDraftContext();
 
   const defaultConfig = cmsConfig.current?.field_defaults?.richtext ?? {};
-  /** @type {FieldEditorContext} */
-  const { fieldContext, parentComponentNames, valueStoreKey } = getContext('field-editor') ?? {};
-  const inEditorComponent = fieldContext === 'rich-text-editor-component';
+  /* v8 ignore start -- the editor is always rendered within a field editor */
+  const { parentComponentNames, valueStoreKey } = getFieldEditorContext();
+  /* v8 ignore stop */
+  const inEditorComponent = isInEditorComponent(valueStoreKey);
   const componentName = parentComponentNames.at(-1);
 
   /** @type {FieldEditorProps & Props} */
   let {
-    /* eslint-disable prefer-const */
     locale,
     keyPath,
     typedKeyPath,
@@ -80,7 +93,6 @@
     required = true,
     readonly = false,
     invalid = false,
-    /* eslint-enable prefer-const */
   } = $props();
 
   /** @type {HTMLElement | undefined} */
@@ -89,90 +101,94 @@
 
   let cleanupTimeout = 0;
   /**
-   * Function to settle the update registered with {@link trackPendingFieldUpdate}, while the user
-   * has changed the content but the editor hasn’t written the new value back yet.
-   * @type {(() => void) | undefined}
+   * Whether the editor has yet to write a change made by the user back to {@link inputValue}.
    */
-  let settlePendingUpdate;
+  let pending = $state(false);
+  /**
+   * Number of dropped or pasted image batches being processed before they’re inserted.
+   */
+  let processingImages = $state(0);
+  let showSelectAssetsDialog = $state(false);
+  /**
+   * Files dropped or pasted into the editor, to be uploaded to a cloud storage service in the
+   * Select Assets dialog.
+   * @type {File[]}
+   */
+  let pendingFiles = $state([]);
+  /**
+   * Inserts the images uploaded in the Select Assets dialog into the editor the files were dropped
+   * or pasted into.
+   * @type {((resources: SelectedResource[]) => Promise<void>) | undefined}
+   */
+  let insertUploadedImages = undefined;
+  /** Whether dropped or pasted files have been rejected, as no location can take them. */
+  let filesRejected = $state(false);
 
   const {
     // Field type-specific options
     modes: _modes = defaultConfig.modes ?? [...DEFAULT_MODES],
     buttons: _buttons = defaultConfig.buttons ?? [...DEFAULT_BUTTONS],
-    editor_components: _editorComponents = defaultConfig.editor_components ??
-      // Include all built-in and custom components by default
-      [...BUILTIN_COMPONENTS, ...customComponentRegistry.keys()],
-    allow_nested_components: _allowNestedComponents,
-    linked_images: linkedImagesEnabled = defaultConfig.linked_images ?? true,
     use_emoji_autocomplete: useEmojiAutocomplete = defaultConfig.use_emoji_autocomplete ?? true,
     use_markdown_shortcuts: useMarkdownShortcuts = defaultConfig.use_markdown_shortcuts ?? true,
     minimal = defaultConfig.minimal ?? false,
+    multiline = defaultConfig.multiline ?? true,
   } = $derived(fieldConfig);
+  const format = $derived(getValueFormat(fieldConfig));
   const modes = $derived(_modes.map((name) => NODE_NAME_MAP[name]).filter(Boolean));
+  /* v8 ignore start -- the editor is only rendered while the draft is there */
   const isIndexFile = $derived(entryDraft.current?.isIndexFile ?? false);
   const collectionName = $derived(entryDraft.current?.collectionName ?? '');
+  /* v8 ignore stop */
   const fileName = $derived(entryDraft.current?.fileName);
-  const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale, valueStoreKey));
-  const buttons = $derived(
-    [
-      ..._buttons,
-      // Include `code-block` implemented as a block type
-      ...(_editorComponents.includes('code-block') ? ['code-block'] : []),
-    ]
-      // @ts-ignore
-      .map((name) => BUTTON_NAME_MAP[name])
-      .filter(Boolean),
+  const valueMap = $derived(
+    getFieldValueMapSnapshot(entryDraft.current, locale, keyPath, valueStoreKey),
   );
-  const allowNestedComponents = $derived.by(() => {
-    let nested = _allowNestedComponents;
-
-    if (inEditorComponent) {
-      // Retrieve the parent Markdown or RichText field config
-      nested = /** @type {MarkdownField | RichTextField} */ (
-        getField({
-          collectionName,
-          fileName,
-          isIndexFile,
-          valueMap,
-          // Extract the parent field name, e.g. `body:c55:content` -> `body`
-          keyPath: /** @type {string} */ (keyPath.match(/^[^:]+/)?.[0]),
-        })
-      )?.allow_nested_components;
-    }
-
-    return nested ?? defaultConfig.allow_nested_components ?? true;
-  });
-  const components = $derived.by(() => {
-    if (inEditorComponent && !allowNestedComponents) {
-      return [];
-    }
-
-    return _editorComponents
-      .filter((name) =>
-        allowNestedComponents === 'exclude_self' ? !parentComponentNames.includes(name) : true,
-      )
-      .map((name) =>
-        getComponentDef(name === 'image' && linkedImagesEnabled ? 'linked-image' : name),
-      )
-      .filter((def) => !!def)
-      .map(
-        (def) =>
-          /** @type {import('@sveltia/ui').TextEditorComponent} */ (new EditorComponent(def)),
-      );
-  });
-  const imageComponent = $derived(
-    components.find(({ id }) => id === 'image' || id === 'linked-image'),
-  );
-  const targetAssetFolder = $derived(
-    getDefaultAssetFolder(
-      getAssetLibraryFolderMap({
-        collectionName,
-        fileName,
-        componentName,
-        typedKeyPath,
-        isIndexFile,
-      }),
+  const componentNames = $derived(getEditorComponentNames(fieldConfig));
+  const buttons = $derived(getToolbarButtons(_buttons, componentNames));
+  const allowNestedComponents = $derived(
+    resolveAllowNestedComponents(
+      inEditorComponent
+        ? // Retrieve the parent Markdown or RichText field config
+          /** @type {MarkdownField | RichTextField | undefined} */ (
+            getField({
+              collectionName,
+              fileName,
+              isIndexFile,
+              valueMap,
+              keyPath: getRootFieldName(keyPath),
+            })
+          )
+        : fieldConfig,
     ),
+  );
+  const components = $derived(
+    getAvailableComponentDefs({
+      fieldConfig,
+      format,
+      allowNestedComponents,
+      inEditorComponent,
+      parentComponentNames,
+    }).map(
+      (def) => /** @type {import('@sveltia/ui').TextEditorComponent} */ (new EditorComponent(def)),
+    ),
+  );
+  const imageComponent = $derived(components.find(({ id }) => IMAGE_COMPONENT_IDS.includes(id)));
+  const srcFieldConfig = $derived(
+    getImageSrcFieldConfig(
+      /** @type {import('@sveltia/ui').TextEditorComponent & EditorComponentDefinition} */ (
+        imageComponent
+      ),
+    ),
+  );
+  const assetOptions = $derived(
+    getMediaFieldAssetOptions({
+      collectionName,
+      fileName,
+      isIndexFile,
+      componentName,
+      typedKeyPath,
+      fieldConfig: /** @type {ImageField} */ (srcFieldConfig),
+    }),
   );
 
   /**
@@ -189,82 +205,143 @@
       return;
     }
 
-    const srcFieldConfig =
-      /** @type {import('@sveltia/ui').TextEditorComponent & EditorComponentDefinition} */ (
-        imageComponent
-      ).fields?.find(({ name }) => name === 'src');
+    const { folder, libraryConfig } = assetOptions;
+    const draft = entryDraft.current;
+    const _locale = locale;
+    const component = imageComponent;
 
-    const { config: libraryConfig } = getDefaultMediaLibraryOptions({
-      fieldConfig: /** @type {ImageField} */ (srcFieldConfig),
+    const { inlineImages, uploadFiles, rejected } = sortDroppedImages({
+      images,
+      srcFieldConfig,
+      assetOptions,
     });
 
-    const draft = entryDraft.current;
-    const folder = targetAssetFolder;
+    /**
+     * Whether the editor still shows the content the images were dropped in. The editor is reused
+     * when the pane switches to another locale or another entry is opened, so the image would be
+     * inserted into the content it shows now, with a path resolved for the one it was dropped in.
+     * @returns {boolean} Result.
+     */
+    const isSameContent = () => entryDraft.current === draft && locale === _locale;
 
-    // eslint-disable-next-line no-restricted-syntax
-    for (const { file, src: externalSrc, alt = '' } of images) {
-      let src = externalSrc;
+    /**
+     * Insert an image.
+     * @param {string} src Image URL.
+     * @param {string} alt Alternative text.
+     */
+    const insertImage = (src, alt) => {
+      editor.update(() => {
+        const node = component.createNode({ src, alt });
 
-      if (file) {
-        // eslint-disable-next-line no-await-in-loop
-        const { value } = await processResource({
+        // Start a new paragraph after the image, unless the field holds a single one
+        insertNodes(multiline ? [node, createParagraphNode()] : [node]);
+      });
+    };
+
+    processingImages += 1;
+
+    try {
+      // eslint-disable-next-line no-restricted-syntax
+      for (const { file, src: externalSrc, alt = '' } of inlineImages) {
+        let src = externalSrc;
+
+        if (file) {
+          // eslint-disable-next-line no-await-in-loop
+          const { value } = await processResource({
+            draft,
+            resource: { file, folder },
+            libraryConfig,
+            locale: _locale,
+          });
+
+          if (!isSameContent()) {
+            return;
+          }
+
+          src = value;
+        }
+
+        if (src) {
+          insertImage(src, alt);
+        }
+      }
+    } finally {
+      processingImages -= 1;
+    }
+
+    if (rejected) {
+      filesRejected = true;
+    }
+
+    if (!uploadFiles.length) {
+      return;
+    }
+
+    /**
+     * Insert the images the user has selected in the Select Assets dialog, which uploads the files
+     * to the cloud storage service, asking for the credentials if needed.
+     * @param {SelectedResource[]} resources Selected resources.
+     */
+    insertUploadedImages = async (resources) => {
+      // A save made right after the images have been selected waits for them to be inserted
+      processingImages += 1;
+
+      try {
+        const results = await processResources({
           draft,
-          resource: { file, folder },
+          resources,
+          folder,
           libraryConfig,
+          locale: _locale,
         });
 
-        src = value;
+        if (isSameContent()) {
+          results.forEach(({ value }) => {
+            if (value) {
+              insertImage(value, '');
+            }
+          });
+        }
+      } finally {
+        processingImages -= 1;
       }
+    };
 
-      if (!src) {
-        // eslint-disable-next-line no-continue
-        continue;
-      }
-
-      const _src = src;
-
-      editor.update(() => {
-        insertNodes([imageComponent.createNode({ src: _src, alt }), createParagraphNode()]);
-      });
-    }
+    pendingFiles = uploadFiles;
+    showSelectAssetsDialog = true;
   };
 
   /**
-   * Handle pasted content. If it includes images, insert them to the editor content.
-   * @param {ClipboardEvent} event `paste` event.
+   * Create a handler for pasted or dropped content. If it includes images, they’re inserted to the
+   * editor content.
+   * @template {ClipboardEvent | DragEvent} E
+   * @param {(event: E) => Promise<ImageEntry[]>} getImages Function getting the images from the
+   * event.
+   * @returns {(event: E) => Promise<void>} Event handler.
    */
-  const onPaste = async (event) => {
+  const createImageHandler = (getImages) => async (event) => {
+    // Lexical applies an update even while the editor isn’t editable, so nothing is inserted to a
+    // read-only field, nor is the file added to the draft
+    if (readonly) {
+      return;
+    }
+
     const { target } = event;
-    const images = await getPastedImages(event);
+    const images = await getImages(event);
 
     if (images.length) {
       await insertImages({ target, images });
     }
   };
 
-  /**
-   * Handle dropped content. If it includes images, insert them to the editor content.
-   * @param {DragEvent} event `drop` event.
-   */
-  const onDrop = async (event) => {
-    const { target } = event;
-    const images = await getDroppedImages(event);
-
-    if (images.length) {
-      await insertImages({ target, images });
-    }
-  };
+  const onPaste = createImageHandler(getPastedImages);
+  const onDrop = createImageHandler(getDroppedImages);
 
   /**
-   * Update {@link inputValue} based on {@link currentValue} while avoiding a cycle dependency.
+   * Remove the extra values of the components that are no longer present in the editor, shortly
+   * after {@link currentValue} has changed.
    */
-  const setInputValue = () => {
-    const newValue = typeof currentValue === 'string' ? currentValue : '';
-
-    if (inputValue !== newValue) {
-      inputValue = newValue;
-    }
-
+  const scheduleExtraValueCleanup = () => {
     // Skip cleanup when used as a nested component editor
     const draft = entryDraft.current;
 
@@ -277,41 +354,34 @@
     // Remove values that are not present in the editor anymore. Otherwise, they will trigger
     // validation errors when the entry is saved.
     cleanupTimeout = window.setTimeout(() => {
-      Object.keys(draft.extraValues[locale] ?? {}).forEach((key) => {
-        const [prefix] = key.match(COMPONENT_NAME_PREFIX_REGEX) ?? [];
-
-        if (
-          prefix?.startsWith(`${keyPath}:`) &&
-          !wrapper?.querySelector(`[data-key-path-prefix="${prefix}"]`)
-        ) {
-          delete draft.extraValues[locale][key];
-        }
+      getStaleExtraValueKeys(
+        draft.extraValues[locale],
+        keyPath,
+        (prefix) => !!wrapper?.querySelector(`[data-key-path-prefix="${prefix}"]`),
+      ).forEach((key) => {
+        delete draft.extraValues[locale][key];
       });
     }, 500);
   };
 
-  /**
-   * Update {@link currentValue} based on {@link inputValue} while avoiding a cycle dependency.
-   */
-  const setCurrentValue = () => {
-    const newValue = inputValue;
+  // Sync `inputValue` with `currentValue` in both directions
+  syncValues(
+    () => currentValue,
+    (value) => {
+      currentValue = value;
+    },
+    () => inputValue,
+    (input) => {
+      inputValue = input;
+    },
+    (value) => (typeof value === 'string' ? value : ''),
+  );
 
-    if (currentValue !== newValue) {
-      currentValue = newValue;
-    }
-  };
-
+  // Registered after the sync above, so it runs right after the input value has been updated
   watch(
     () => currentValue,
     () => {
-      setInputValue();
-    },
-  );
-
-  watch(
-    () => inputValue,
-    () => {
-      setCurrentValue();
+      scheduleExtraValueCleanup();
     },
   );
 
@@ -322,65 +392,15 @@
     window.clearTimeout(cleanupTimeout);
   });
 
-  /**
-   * Register a pending update when the user is about to change the content. The editor converts
-   * the content to Markdown with a short delay, so a save right after typing would otherwise
-   * validate the previous value.
-   */
-  const onBeforeInput = () => {
-    if (settlePendingUpdate) {
-      return;
-    }
-
-    trackPendingFieldUpdate(
-      new Promise((resolve) => {
-        // The editor doesn’t write the value back when the Markdown is unchanged, e.g. when a
-        // trailing space is typed, so give up after a while rather than blocking a save forever
-        const timeout = window.setTimeout(() => settlePendingUpdate?.(), 1000);
-
-        /**
-         * Settle the update and forget it, so the next change registers a new one.
-         */
-        settlePendingUpdate = () => {
-          window.clearTimeout(timeout);
-          settlePendingUpdate = undefined;
-          resolve();
-        };
-      }),
-    );
-  };
-
-  /**
-   * Settle the pending update once the editor has written the new value back. The value reaches
-   * {@link currentValue} through a few bindings and effects, so wait for them to be flushed first.
-   */
-  const onUpdate = async () => {
-    await tick();
-    settlePendingUpdate?.();
-  };
-
-  $effect(() => {
-    if (!wrapper) {
-      return undefined;
-    }
-
-    const target = wrapper;
-
-    // The `Update` event is dispatched on the editor’s root element without bubbling, so it can
-    // only be caught in the capture phase
-    target.addEventListener('beforeinput', onBeforeInput, true);
-    target.addEventListener('Update', onUpdate, true);
-
-    return () => {
-      target.removeEventListener('beforeinput', onBeforeInput, true);
-      target.removeEventListener('Update', onUpdate, true);
-      // Don’t hold up a save when the editor goes away
-      settlePendingUpdate?.();
-    };
-  });
+  // While the editor holds a change made by the user, register it as a pending update: the editor
+  // converts the content to Markdown with a short delay, so a save right after a change would
+  // otherwise validate and write the previous value. A dropped or pasted image is only inserted
+  // once it has been processed, which can take a while, e.g. converting a large HEIC photo, so a
+  // save or a locale switch has to wait for that as well
+  trackPendingWhile(() => pending || !!processingImages);
 </script>
 
-<div role="none" class="wrapper" class:minimal bind:this={wrapper}>
+<div role="none" class="wrapper" bind:this={wrapper}>
   {#await sleep() then}
     <!--
       Reset the editor when the configuration changes. It happens when fields are reordered or
@@ -390,12 +410,16 @@
       <TextEditor
         lang={getCanonicalLocale(locale)}
         dir={getDirection(locale)}
+        {format}
         {modes}
         {buttons}
         {components}
         {useEmojiAutocomplete}
         {useMarkdownShortcuts}
+        {minimal}
+        {multiline}
         bind:value={inputValue}
+        bind:pending
         flex
         {readonly}
         {required}
@@ -415,19 +439,34 @@
   {/await}
 </div>
 
+{#if srcFieldConfig}
+  <SelectAssetsDialog
+    kind="image"
+    multiple
+    draft={entryDraft.current}
+    {locale}
+    fieldConfig={srcFieldConfig}
+    assetLibraryFolderMap={assetOptions.folderMap}
+    enabledCloudServiceEntries={assetOptions.cloudServiceEntries}
+    bind:open={showSelectAssetsDialog}
+    bind:pendingFiles
+    onSelect={(resources) => {
+      insertUploadedImages?.(resources);
+    }}
+    onClose={() => {
+      insertUploadedImages = undefined;
+    }}
+  />
+{/if}
+
+<Toast bind:show={filesRejected}>
+  <Alert status="error">{_('uploading_files_failed')}</Alert>
+</Toast>
+
 <style>
   .wrapper {
     --sui-paragraph-margin: 20px;
     display: contents;
-
-    &.minimal {
-      :global {
-        :is([role='textbox'], textarea) {
-          overflow: auto;
-          max-height: 240px;
-        }
-      }
-    }
 
     :global {
       @media (width < 768px) {

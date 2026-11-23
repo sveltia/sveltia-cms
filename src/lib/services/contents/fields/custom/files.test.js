@@ -69,7 +69,7 @@ const libraryConfig = { max_file_size: 1024, transformations: undefined };
 /**
  * Call `addFileToDraft()` with the common arguments.
  * @param {File | Blob} file File to be added.
- * @param {{ name?: string }} [options] Options.
+ * @param {import('$lib/types/public').CustomFieldAddFileOptions} [options] Options.
  * @returns {Promise<string>} Blob URL.
  */
 const addFile = (file, options) =>
@@ -116,8 +116,21 @@ describe('contents/fields/custom/files', () => {
     expect(getDefaultMediaLibraryOptions).toHaveBeenCalledWith({ fieldConfig });
     expect(processResource).toHaveBeenCalledWith({
       draft,
-      resource: { file, folder },
+      resource: { file, folder, replace: false },
       libraryConfig,
+    });
+  });
+
+  it('processes the file for the locale being edited', async () => {
+    const file = new File(['x'], 'photo.webp', { type: 'image/webp' });
+
+    await addFileToDraft({ draft, fieldConfig, typedKeyPath: 'photo', locale: 'fr', file });
+
+    expect(processResource).toHaveBeenCalledWith({
+      draft,
+      resource: { file, folder, replace: false },
+      libraryConfig,
+      locale: 'fr',
     });
   });
 
@@ -162,6 +175,14 @@ describe('contents/fields/custom/files', () => {
     expect(file?.type).toBe('image/webp');
   });
 
+  it('passes the replace option on, so the file overwrites an asset with the same name', async () => {
+    const blob = new Blob(['x'], { type: 'image/webp' });
+
+    await addFile(blob, { name: 'thumb.webp', replace: true });
+
+    expect(vi.mocked(processResource).mock.calls[0][0].resource.replace).toBe(true);
+  });
+
   it('rejects a Blob given without a name', async () => {
     await expect(addFile(new Blob(['x']))).rejects.toThrow(TypeError);
     expect(processResource).not.toHaveBeenCalled();
@@ -171,6 +192,16 @@ describe('contents/fields/custom/files', () => {
     await expect(addFile(/** @type {any} */ ('photo.webp'))).rejects.toThrow(TypeError);
     await expect(addFile(/** @type {any} */ (undefined), { name: 'a.webp' })).rejects.toThrow(
       TypeError,
+    );
+    expect(processResource).not.toHaveBeenCalled();
+  });
+
+  it('rejects a file when there is no asset folder to upload it to', async () => {
+    // Only a cloud media library is configured, and the field has no `media_folder` of its own
+    vi.mocked(getDefaultAssetFolder).mockReturnValue(/** @type {any} */ (undefined));
+
+    await expect(addFile(new File(['x'], 'photo.webp'))).rejects.toThrow(
+      'There is no asset folder to upload the file "photo.webp" to',
     );
     expect(processResource).not.toHaveBeenCalled();
   });
@@ -273,6 +304,7 @@ describe('contents/fields/custom/files', () => {
         files: [{ value: '/photos/a.webp', file: blob, credit: undefined }],
         oversizedFileNames: [],
         invalidFileNames: [],
+        mismatchedFileNames: [],
       });
 
       expect(processResource).toHaveBeenCalledWith({ draft, resource: { asset }, libraryConfig });
@@ -351,9 +383,13 @@ describe('contents/fields/custom/files', () => {
         fieldConfig,
         typedKeyPath: 'photo',
         componentName: 'gallery',
+        locale: 'fr',
         resources: [{ file }],
       });
 
+      // The file is processed and looked up for the locale being edited, which an entry-relative
+      // path is relative to
+      expect(processResource).toHaveBeenCalledWith(expect.objectContaining({ locale: 'fr' }));
       expect(getAssetByPath).toHaveBeenCalledWith({
         value: '/photos/photo.webp',
         entry: draft.originalEntry,
@@ -361,6 +397,7 @@ describe('contents/fields/custom/files', () => {
         fileName: undefined,
         componentName: 'gallery',
         typedKeyPath: 'photo',
+        locale: 'fr',
       });
       expect(files).toEqual([{ value: '/photos/photo.webp', file: blob, credit: undefined }]);
     });
@@ -417,6 +454,7 @@ describe('contents/fields/custom/files', () => {
         files: [{ value: 'https://example.com/a.png', file: undefined, credit: undefined }],
         oversizedFileNames: [],
         invalidFileNames: [],
+        mismatchedFileNames: [],
       });
       expect(getAssetBlob).not.toHaveBeenCalled();
     });
@@ -454,7 +492,38 @@ describe('contents/fields/custom/files', () => {
         files: [{ value: 'blob:good.webp', file: undefined, credit: undefined }],
         oversizedFileNames: ['big.webp'],
         invalidFileNames: ['bad.webp'],
+        mismatchedFileNames: [],
       });
+    });
+
+    it('checks the files against the accepted types and reports the mismatched ones', async () => {
+      const kite = new File(['x'], 'kite.png', { type: 'image/png' });
+
+      vi.mocked(processResource).mockResolvedValue({
+        value: undefined,
+        credit: '',
+        oversizedFileName: undefined,
+        invalidFileName: undefined,
+        mismatchedFileName: 'kite.png',
+      });
+
+      await expect(
+        resolvePickedResources({
+          draft,
+          fieldConfig,
+          typedKeyPath: 'photo',
+          resources: [{ file: kite }],
+          accept: '.pdf',
+        }),
+      ).resolves.toEqual({
+        files: [],
+        oversizedFileNames: [],
+        invalidFileNames: [],
+        mismatchedFileNames: ['kite.png'],
+      });
+      expect(processResource).toHaveBeenCalledWith(
+        expect.objectContaining({ libraryConfig, accept: '.pdf' }),
+      );
     });
 
     it('rejects when the bytes of a picked asset cannot be retrieved', async () => {

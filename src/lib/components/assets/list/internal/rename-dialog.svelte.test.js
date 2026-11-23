@@ -1,0 +1,348 @@
+import { sleep } from '@sveltia/utils/misc';
+import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
+import { render } from 'vitest-browser-svelte';
+
+import AssetUpdatesToast from '$lib/components/assets/shared/asset-updates-toast.svelte';
+import { moveAssets } from '$lib/services/assets/data/move';
+import { getAssetUsedEntries } from '$lib/services/assets/details';
+import { selectedAssetFolder } from '$lib/services/assets/folders';
+import { renamingAsset } from '$lib/services/assets/state';
+import { showAssetOverlay } from '$lib/services/assets/view';
+import { isEntryReadonly } from '$lib/services/contents/entry/readonly';
+import {
+  createMockAsset,
+  createMockEntry,
+  initTestConfig,
+  setAssets,
+  setEntries,
+} from '$lib/test/config';
+import { expectFileNameSelected } from '$lib/test/dialog';
+import { getShownToastAlert, getShownToastText, waitForToastsToHide } from '$lib/test/toast';
+
+import RenameDialog from './rename-dialog.svelte';
+
+vi.mock('$lib/services/assets/data/move', async (importOriginal) => ({
+  // The message is worked out by the real function, with the mocked read-only checks below
+  getMoveBlockedMessage: /** @type {any} */ (await importOriginal()).getMoveBlockedMessage,
+  getDraftBaseProps: vi.fn(),
+  addSavingEntryData: vi.fn(),
+  collectEntryChanges: vi.fn(),
+  collectEntryChangesFromAssets: vi.fn(),
+  updateStores: vi.fn(),
+  moveAssets: vi.fn(),
+}));
+
+vi.mock('$lib/services/assets/details', async (importOriginal) => {
+  const actual = /** @type {any} */ (await importOriginal());
+
+  return { ...actual, getAssetUsedEntries: vi.fn(actual.getAssetUsedEntries) };
+});
+
+vi.mock('$lib/services/contents/entry/readonly', () => ({
+  isEntryReadonly: vi.fn(() => false),
+  getReadonlyEntryLabel: vi.fn((entry) => `Archive › ${entry.slug}`),
+}));
+
+const assets = [createMockAsset({ name: 'a.png' }), createMockAsset({ name: 'b.png' })];
+const [firstAsset, secondAsset] = assets;
+
+describe('RenameDialog', () => {
+  beforeAll(async () => {
+    await initTestConfig({ site_url: 'https://example.com' });
+    setAssets(assets);
+  });
+
+  beforeEach(() => {
+    showAssetOverlay.current = true;
+    renamingAsset.current = undefined;
+    selectedAssetFolder.current = undefined;
+    vi.mocked(moveAssets).mockResolvedValue(undefined);
+  });
+
+  test('opens for the asset being renamed and moves it', async () => {
+    window.location.hash = '#/assets/static/uploads/a.png';
+
+    // The asset was opened from All Assets
+    const allAssetsFolder = { internalPath: undefined, publicPath: undefined };
+
+    selectedAssetFolder.current = /** @type {any} */ (allAssetsFolder);
+
+    await render(RenameDialog);
+
+    expect(page.getByRole('dialog').elements()).toHaveLength(0);
+
+    renamingAsset.current = firstAsset;
+
+    const dialog = page.getByRole('dialog', { name: 'Rename \u2068a.png\u2069' });
+
+    await expect.element(dialog).toBeInTheDocument();
+    await expectFileNameSelected(dialog.getByRole('textbox'), 'a.png');
+
+    // The name of another asset in the folder is rejected
+    await dialog.getByRole('textbox').fill('b.png');
+    await expect.element(dialog.getByRole('button', { name: 'Rename' })).toBeDisabled();
+
+    await dialog.getByRole('textbox').fill('c.png');
+    await dialog.getByRole('button', { name: 'Rename' }).click();
+
+    await vi.waitFor(() =>
+      expect(moveAssets).toHaveBeenCalledWith('rename', [
+        { asset: firstAsset, path: 'static/uploads/c.png' },
+      ]),
+    );
+    // The details overlay of the asset stays open
+    await expect.poll(() => window.location.hash).toBe('#/assets/static/uploads/c.png');
+    // The folder the asset was opened from still travels as history state
+    expect(window.history.state.folder).toEqual(allAssetsFolder);
+    await expect.poll(() => renamingAsset.current).toBeUndefined();
+  });
+
+  test('refuses the name of another asset in another case, or of a subfolder', async () => {
+    setAssets([...assets, createMockAsset({ name: 'c.png', folderPath: 'static/uploads/sub' })]);
+
+    try {
+      renamingAsset.current = firstAsset;
+
+      await render(RenameDialog);
+
+      const dialog = page.getByRole('dialog', { name: 'Rename \u2068a.png\u2069' });
+      const textbox = dialog.getByRole('textbox');
+      const button = dialog.getByRole('button', { name: 'Rename' });
+
+      await expectFileNameSelected(textbox, 'a.png');
+
+      await textbox.fill('B.png');
+      await expect
+        .element(dialog.getByText('This file name is used for another asset.'))
+        .toBeInTheDocument();
+      await expect.element(button).toBeDisabled();
+
+      await textbox.fill('sub');
+      await expect
+        .element(dialog.getByText('A folder with this name already exists here.'))
+        .toBeInTheDocument();
+      await expect.element(button).toBeDisabled();
+
+      await textbox.fill('.a.png');
+      await expect
+        .element(dialog.getByText('File name cannot start with a dot.'))
+        .toBeInTheDocument();
+      await expect.element(button).toBeDisabled();
+    } finally {
+      setAssets(assets);
+    }
+  });
+
+  test('slugifies the new name with the `slugify_filename` option', async () => {
+    const config = { site_url: 'https://example.com' };
+
+    await initTestConfig({
+      ...config,
+      media_libraries: { default: { config: { slugify_filename: true } } },
+    });
+
+    try {
+      await render(RenameDialog);
+
+      renamingAsset.current = firstAsset;
+
+      const dialog = page.getByRole('dialog', { name: 'Rename \u2068a.png\u2069' });
+
+      await expectFileNameSelected(dialog.getByRole('textbox'), 'a.png');
+      await dialog.getByRole('textbox').fill('Blog Photo 1.png');
+      await expect
+        .element(dialog.getByRole('status'))
+        .toHaveTextContent('The file will be saved as “\u2068blog-photo-1.png\u2069”.');
+      await dialog.getByRole('button', { name: 'Rename' }).click();
+
+      await vi.waitFor(() =>
+        expect(moveAssets).toHaveBeenCalledWith('rename', [
+          { asset: firstAsset, path: 'static/uploads/blog-photo-1.png' },
+        ]),
+      );
+    } finally {
+      await initTestConfig(config);
+    }
+  });
+
+  test('refuses the name of an entry file next to the asset', async () => {
+    setEntries([createMockEntry({ slug: 'index', folder: 'static/uploads' })]);
+
+    try {
+      await render(RenameDialog);
+
+      renamingAsset.current = firstAsset;
+
+      const dialog = page.getByRole('dialog', { name: 'Rename \u2068a.png\u2069' });
+
+      await expectFileNameSelected(dialog.getByRole('textbox'), 'a.png');
+      await dialog.getByRole('textbox').fill('index.md');
+      await expect.element(dialog.getByRole('button', { name: 'Rename' })).toBeDisabled();
+      await expect
+        .element(dialog.getByText('Another file with this name already exists here.'))
+        .toBeInTheDocument();
+    } finally {
+      setEntries([]);
+    }
+  });
+
+  test('renames an asset at the root of the repository', async () => {
+    const rootAsset = { ...firstAsset, path: 'a.png', folder: { ...firstAsset.folder } };
+
+    rootAsset.folder.internalPath = '';
+    setAssets([rootAsset]);
+
+    try {
+      await render(RenameDialog);
+
+      renamingAsset.current = rootAsset;
+
+      const dialog = page.getByRole('dialog', { name: 'Rename \u2068a.png\u2069' });
+
+      await expectFileNameSelected(dialog.getByRole('textbox'), 'a.png');
+      await dialog.getByRole('textbox').fill('c.png');
+      await dialog.getByRole('button', { name: 'Rename' }).click();
+
+      await vi.waitFor(() =>
+        expect(moveAssets).toHaveBeenCalledWith('rename', [{ asset: rootAsset, path: 'c.png' }]),
+      );
+    } finally {
+      setAssets(assets);
+    }
+  });
+
+  test('refuses to rename an asset a read-only entry uses', async () => {
+    const entry = /** @type {any} */ ({ id: 'old', slug: 'old-post', locales: {} });
+
+    vi.mocked(getAssetUsedEntries).mockResolvedValueOnce([entry]);
+    vi.mocked(isEntryReadonly).mockReturnValue(true);
+
+    try {
+      await render(RenameDialog);
+
+      renamingAsset.current = firstAsset;
+
+      const dialog = page.getByRole('dialog', { name: 'Rename \u2068a.png\u2069' });
+
+      await expect
+        .element(dialog.getByRole('alert'))
+        .toHaveTextContent(
+          'This asset can’t be moved or renamed, because the following read-only entries use it: ' +
+            '\u2068Archive › old-post\u2069.',
+        );
+      await expect.element(dialog.getByRole('button', { name: 'Rename' })).toBeDisabled();
+      expect(isEntryReadonly).toHaveBeenCalledWith(entry);
+    } finally {
+      vi.mocked(isEntryReadonly).mockReturnValue(false);
+    }
+  });
+
+  test('ignores the entries of the asset renamed before, when they’re found late', async () => {
+    const entry = /** @type {any} */ ({ id: 'old', slug: 'old-post', locales: {} });
+    const { promise, resolve } = Promise.withResolvers();
+
+    vi.mocked(getAssetUsedEntries)
+      .mockReturnValueOnce(/** @type {Promise<any>} */ (promise))
+      .mockResolvedValueOnce([]);
+    vi.mocked(isEntryReadonly).mockReturnValue(true);
+
+    try {
+      await render(RenameDialog);
+
+      renamingAsset.current = firstAsset;
+      await vi.waitFor(() => expect(getAssetUsedEntries).toHaveBeenCalledOnce());
+      renamingAsset.current = secondAsset;
+
+      const dialog = page.getByRole('dialog');
+
+      await expectFileNameSelected(dialog.getByRole('textbox'), 'b.png');
+      // The entries using the first asset are found after that
+      resolve([entry]);
+      await promise;
+      await sleep(50);
+
+      expect(dialog.getByRole('alert').elements()).toHaveLength(0);
+    } finally {
+      vi.mocked(isEntryReadonly).mockReturnValue(false);
+    }
+  });
+
+  test('leaves the URL alone when the asset isn’t shown', async () => {
+    window.location.hash = '#/assets';
+
+    await render(RenameDialog);
+
+    renamingAsset.current = secondAsset;
+
+    const dialog = page.getByRole('dialog');
+
+    await expectFileNameSelected(dialog.getByRole('textbox'), 'b.png');
+    await dialog.getByRole('textbox').fill('c.png');
+    await dialog.getByRole('button', { name: 'Rename' }).click();
+
+    await vi.waitFor(() => expect(moveAssets).toHaveBeenCalledOnce());
+    expect(window.location.hash).toBe('#/assets');
+  });
+
+  test('reports a failure to rename the asset, leaving the URL alone', async () => {
+    // The toasts reporting the commit are rendered by the shared component
+    await render(AssetUpdatesToast, {});
+
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    window.location.hash = '#/assets/static/uploads/a.png';
+    vi.mocked(moveAssets).mockRejectedValueOnce(new Error('offline'));
+
+    try {
+      await render(RenameDialog);
+
+      renamingAsset.current = firstAsset;
+
+      const dialog = page.getByRole('dialog');
+
+      await expectFileNameSelected(dialog.getByRole('textbox'), 'a.png');
+      await dialog.getByRole('textbox').fill('c.png');
+      await dialog.getByRole('button', { name: 'Rename' }).click();
+
+      await vi.waitFor(() => expect(moveAssets).toHaveBeenCalledOnce());
+      await expect.poll(() => getShownToastText('error')).toBe('error Error Rename failed.');
+      expect(error).toHaveBeenCalledWith(new Error('offline'));
+      // The asset keeps its name, so the URL isn’t updated
+      expect(window.location.hash).toBe('#/assets/static/uploads/a.png');
+      await waitForToastsToHide();
+    } finally {
+      error.mockRestore();
+    }
+  }, 15000);
+
+  test('leaves the URL alone when the commit is cancelled, without reporting a failure', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    window.location.hash = '#/assets/static/uploads/a.png';
+    vi.mocked(moveAssets).mockRejectedValueOnce(new Error('commit_cancelled'));
+
+    try {
+      await render(RenameDialog);
+
+      renamingAsset.current = firstAsset;
+
+      const dialog = page.getByRole('dialog');
+
+      await expectFileNameSelected(dialog.getByRole('textbox'), 'a.png');
+      await dialog.getByRole('textbox').fill('c.png');
+      await dialog.getByRole('button', { name: 'Rename' }).click();
+
+      await vi.waitFor(() => expect(moveAssets).toHaveBeenCalledOnce());
+      // Let the rejection settle
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
+      expect(getShownToastAlert('error')).toBeNull();
+      expect(error).not.toHaveBeenCalled();
+      expect(window.location.hash).toBe('#/assets/static/uploads/a.png');
+    } finally {
+      error.mockRestore();
+    }
+  }, 15000);
+});

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { getListedCollections } from '$lib/services/contents/collection/entries';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
+import { getEntrySummary } from '$lib/services/contents/entry/summary';
 
 import { scanEntry, searchEntries } from './entries';
 
@@ -133,6 +134,8 @@ describe('searchEntries basic functionality', () => {
     expect(result).toHaveProperty('points');
     expect(typeof result.points).toBe('number');
     expect(result.points).toBeGreaterThanOrEqual(0);
+    // The result is keyed by the entry ID in the list
+    expect(result.id).toBe(entry.id);
   });
 
   it('should normalize the entry’s own values through a cache tied to the entry', async () => {
@@ -350,6 +353,26 @@ describe('searchEntries basic functionality', () => {
     const result = scanEntry({ entry, terms: 'summary' });
 
     expect(result.points).toBeGreaterThan(0);
+  });
+
+  it('should match the plain-text summary, not the HTML one rendered from Markdown', () => {
+    const entry = createEntry('markdown-summary-entry', { title: '**Bold** title' });
+
+    /**
+     * Return the HTML summary when Markdown is allowed, and the plain-text one otherwise.
+     * @type {typeof getEntrySummary}
+     */
+    const mockSummary = (_collection, _entry, options) =>
+      options?.allowMarkdown ? '<strong>Bold</strong> title' : 'Bold title';
+
+    vi.mocked(getEntrySummary)
+      .mockImplementationOnce(mockSummary)
+      .mockImplementationOnce(mockSummary);
+
+    // The tag name is not part of the summary a user sees
+    expect(scanEntry({ entry, terms: 'strong' }).points).toBe(0);
+    // The visible text still matches the summary
+    expect(scanEntry({ entry, terms: 'bold title' }).points).toBe(10);
   });
 
   it('should return the matching locale and key path for content matches', () => {

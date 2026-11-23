@@ -1,8 +1,84 @@
 import { serializeContent } from '$lib/services/contents/draft/save/serialize';
+import { hasRootField } from '$lib/services/contents/entry/fields';
+import { isNonEmptyString } from '$lib/services/utils/string';
 
 /**
  * @import { Entry, InternalCollection, InternalCollectionFile } from '$lib/types/private';
+ * @import { Field, FieldKeyPath, FileFormat } from '$lib/types/public';
  */
+
+/**
+ * Collect the `comment` option of the given fields, and of the subfields of Object fields.
+ * @param {Field[]} fields Fields.
+ * @param {string} prefix Key path prefix.
+ * @returns {Record<FieldKeyPath, string>} Comments keyed by field key path.
+ */
+const collectFieldComments = (fields, prefix) =>
+  Object.fromEntries(
+    fields.flatMap((field) => {
+      const { name, widget = 'string', comment } = field;
+      const keyPath = `${prefix}${name}`;
+      /** @type {[FieldKeyPath, string][]} */
+      const entries = isNonEmptyString(comment) ? [[keyPath, comment]] : [];
+
+      if (widget === 'object' && 'fields' in field && Array.isArray(field.fields)) {
+        entries.push(...Object.entries(collectFieldComments(field.fields, `${keyPath}.`)));
+      }
+
+      return entries;
+    }),
+  );
+
+/**
+ * Collect the `comment` option of the given fields, and of the subfields of Object fields, to be
+ * written before the keys in a YAML file, like Netlify/Decap CMS does. The subfields of a List
+ * field are left out, as the comment would have to be repeated on every item. A top-level List or
+ * KeyValue field is saved without its own key, so its comment has nowhere to go, and could
+ * otherwise land on a list item or pair of the same name.
+ * @param {Field[]} [fields] Fields.
+ * @param {string} [prefix] Key path prefix, e.g. a locale key followed by a period.
+ * @returns {Record<FieldKeyPath, string>} Comments keyed by field key path.
+ * @see https://decapcms.org/docs/configuration-options/#fields
+ */
+export const getFieldComments = (fields = [], prefix = '') =>
+  hasRootField(fields, 'list') || hasRootField(fields, 'keyvalue')
+    ? {}
+    : collectFieldComments(fields, prefix);
+
+/**
+ * Collect the field comments for a single-file entry, taking i18n single-file structures into
+ * account the same way as {@link buildSingleFileContent}: the fields of each locale are nested
+ * under its locale key, except for the default locale with `single_file_default_root`.
+ * @param {object} args Arguments.
+ * @param {InternalCollection | InternalCollectionFile} args.config Collection or collection file
+ * holding the i18n configuration.
+ * @param {Field[]} [args.fields] Fields of the entry.
+ * @returns {Record<FieldKeyPath, string>} Comments keyed by field key path.
+ */
+export const getSingleFileComments = ({ config, fields }) => {
+  const {
+    _i18n: {
+      i18nEnabled,
+      allLocales,
+      defaultLocale,
+      structureMap: { i18nSingleFileDefaultRoot } = {},
+    },
+  } = config;
+
+  if (!i18nEnabled) {
+    return getFieldComments(fields);
+  }
+
+  return Object.assign(
+    {},
+    ...allLocales.map((locale) =>
+      getFieldComments(
+        fields,
+        i18nSingleFileDefaultRoot && locale === defaultLocale ? '' : `${locale}.`,
+      ),
+    ),
+  );
+};
 
 /**
  * Build the file content for a single-file entry, taking i18n single-file structures into account.
@@ -14,9 +90,10 @@ import { serializeContent } from '$lib/services/contents/draft/save/serialize';
  * @param {Entry} args.entry Entry whose locales have already been updated.
  * @param {any} args.draft Entry draft, or a synthetic draft holding the properties read by
  * {@link serializeContent}.
+ * @param {FileFormat} [args.format] Format of the file being saved. See {@link serializeContent}.
  * @returns {Record<string, any>} Serializable content object passed to `formatEntryFile()`.
  */
-export const buildSingleFileContent = ({ config, entry, draft }) => {
+export const buildSingleFileContent = ({ config, entry, draft, format }) => {
   const {
     _i18n: { i18nEnabled, defaultLocale, structureMap: { i18nSingleFileDefaultRoot } = {} },
   } = config;
@@ -26,13 +103,17 @@ export const buildSingleFileContent = ({ config, entry, draft }) => {
       draft,
       locale: '_default',
       valueMap: entry.locales[defaultLocale].content,
+      format,
     });
   }
 
   const localeContents = Object.fromEntries(
     Object.entries(entry.locales)
       .filter(([, le]) => !!le.content)
-      .map(([locale, le]) => [locale, serializeContent({ draft, locale, valueMap: le.content })]),
+      .map(([locale, le]) => [
+        locale,
+        serializeContent({ draft, locale, valueMap: le.content, format }),
+      ]),
   );
 
   if (i18nSingleFileDefaultRoot) {

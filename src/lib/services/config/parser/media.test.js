@@ -1,8 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-/**
- * @import { ConfigParserCollectors } from '$lib/types/private';
- */
+import { createCollectors } from '$lib/test/config-parser';
 
 // Mock @sveltia/i18n
 /** @type {Record<string, string>} */
@@ -10,58 +8,25 @@ const mockI18nStrings = {
   'config.error.missing_media_folder': 'Missing media_folder',
   'config.error.public_folder_relative_path': 'Public folder cannot use relative paths',
   'config.error.public_folder_absolute_url': 'Public folder cannot be an absolute URL',
+  'config.warning.empty_public_folder': 'Empty public_folder',
   'config.error.missing_asset_collection_name': 'Missing asset collection name at index {count}',
   'config.error.invalid_asset_collection_name': 'Invalid asset collection name: {name}',
   'config.error.duplicate_asset_collection_name': 'Duplicate asset collection name: {name}',
+  'config.error.unsupported_folder_template_tag': 'Unsupported tag {tag} in {option}',
+  'config.error.global_folder_template_tag': 'Global tag {tag} in {option}',
 };
 
-/**
- * Mock translation function.
- * @param {string} key Message key.
- * @param {object & { values?: Record<string, string> }} [options] Options.
- * @returns {string} Translated string.
- */
-function mockTranslate(key, options) {
-  let message = mockI18nStrings[key] || key;
-
-  if (options?.values) {
-    Object.entries(options.values).forEach(([k, v]) => {
-      message = message.replace(`{${k}}`, v);
-    });
-  }
-
-  return message;
-}
-
-vi.mock('@sveltia/i18n', () => ({
-  _: mockTranslate,
-  locale: { current: 'en-US', set: vi.fn() },
-}));
-
-const mockGetStore = vi.fn();
+vi.mock('@sveltia/i18n', async () =>
+  (await import('$lib/test/i18n')).createI18nMock({ strings: mockI18nStrings, locale: 'en-US' }),
+);
 
 vi.mock('$lib/services/integrations/media-libraries/cloud', () => ({
   CLOUD_MEDIA_LIBRARY_NAMES: ['cloudinary', 'uploadcare'],
 }));
 
-/**
- * Create a fresh collectors object for testing.
- * @returns {ConfigParserCollectors} Collectors instance.
- */
-function createCollectors() {
-  return {
-    errors: new Set(),
-    warnings: new Set(),
-    mediaFields: new Set(),
-    relationFields: new Set(),
-  };
-}
-
 describe('parseMediaConfig', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-
-    mockGetStore.mockImplementation((store) => store);
   });
 
   describe('media_folder validation', () => {
@@ -352,6 +317,44 @@ describe('parseMediaConfig', () => {
     });
   });
 
+  describe('empty public_folder', () => {
+    it('should warn when public_folder is an empty string', async () => {
+      const { parseMediaConfig } = await import('./media.js');
+      const collectors = createCollectors();
+      /** @type {any} */
+      const config = { media_folder: 'static/images', public_folder: '' };
+
+      parseMediaConfig(config, collectors);
+
+      expect([...collectors.errors]).toEqual([]);
+      expect([...collectors.warnings]).toEqual(['Empty public_folder']);
+    });
+
+    it('should not warn when media_folder is undefined', async () => {
+      const { parseMediaConfig } = await import('./media.js');
+      const collectors = createCollectors();
+      /** @type {any} */
+      const config = { media_library: { name: 'cloudinary' }, public_folder: '' };
+
+      parseMediaConfig(config, collectors);
+
+      expect([...collectors.warnings]).toEqual([]);
+    });
+
+    it('should not warn when public_folder is undefined or non-empty', async () => {
+      const { parseMediaConfig } = await import('./media.js');
+      const collectors = createCollectors();
+
+      parseMediaConfig(/** @type {any} */ ({ media_folder: 'static/images' }), collectors);
+      parseMediaConfig(
+        /** @type {any} */ ({ media_folder: 'static/images', public_folder: '/images' }),
+        collectors,
+      );
+
+      expect([...collectors.warnings]).toEqual([]);
+    });
+  });
+
   describe('combined validation', () => {
     it('should error for both missing media_folder and invalid public_folder', async () => {
       const { parseMediaConfig } = await import('./media.js');
@@ -521,5 +524,83 @@ describe('parseMediaConfig', () => {
       expect(errors.some((e) => e.includes('Invalid asset collection name'))).toBe(true);
       expect(errors.some((e) => e.includes('Duplicate asset collection name'))).toBe(true);
     });
+  });
+});
+
+describe('checkFolderTemplateTags', () => {
+  /**
+   * Check the given folder options and get the errors.
+   * @param {Record<string, any>} config Configuration holding the options.
+   * @param {boolean} [isGlobal] Whether the configuration is the site configuration.
+   * @returns {Promise<string[]>} Errors.
+   */
+  const check = async (config, isGlobal) => {
+    const { checkFolderTemplateTags } = await import('./media.js');
+    const collectors = createCollectors();
+
+    checkFolderTemplateTags({ config, isGlobal, context: {}, collectors });
+
+    return [...collectors.errors];
+  };
+
+  it('should accept the tags a collection, a collection file or a field supports', async () => {
+    expect(
+      await check({
+        media_folder: '{{media_folder}}/{{year}}/{{month}}/{{day}}/{{slug}}',
+        public_folder:
+          '{{public_folder}}/{{ slug | upper }}/{{dirname}}/{{filename}}.{{extension}}',
+      }),
+    ).toEqual([]);
+    expect(
+      await check({ media_folder: '/static/{{uuid}}/{{uuid_short}}/{{uuid_shorter}}' }),
+    ).toEqual([]);
+    expect(await check({ media_folder: 'static', public_folder: '' })).toEqual([]);
+    // A value of another type is reported against the JSON schema
+    expect(await check({ media_folder: 1 })).toEqual([]);
+  });
+
+  it('should report a tag that a collection, a collection file or a field doesn’t support', async () => {
+    // These resolved to a random ID that changed with every entry draft
+    expect(
+      await check({
+        media_folder: '/static/{{title}}/{{fields.title}}/{{locale}}',
+        public_folder: '/{{nope | default("x")}}',
+      }),
+    ).toEqual([
+      'Unsupported tag {{title}} in media_folder',
+      'Unsupported tag {{fields.title}} in media_folder',
+      'Unsupported tag {{locale}} in media_folder',
+      'Unsupported tag {{nope | default("x")}} in public_folder',
+    ]);
+    // The global folder tags are replaced as they are, without spaces or transformations
+    expect(await check({ media_folder: '{{ media_folder }}/a' })).toEqual([
+      'Unsupported tag {{ media_folder }} in media_folder',
+    ]);
+  });
+
+  it('should report any tag in the global options', async () => {
+    // The tags were used literally
+    expect(
+      await check({ media_folder: 'static/{{year}}', public_folder: '/{{slug}}' }, true),
+    ).toEqual(['Global tag {{year}} in media_folder', 'Global tag {{slug}} in public_folder']);
+    expect(await check({ media_folder: 'static/images' }, true)).toEqual([]);
+  });
+
+  it('should be called for the global options and each asset collection', async () => {
+    const { parseMediaConfig } = await import('./media.js');
+    const collectors = createCollectors();
+
+    parseMediaConfig(
+      /** @type {any} */ ({
+        media_folder: 'static/{{year}}',
+        asset_collections: [{ name: 'images', media_folder: 'assets/{{slug}}' }],
+      }),
+      collectors,
+    );
+
+    expect([...collectors.errors]).toEqual([
+      'Global tag {{year}} in media_folder',
+      'Global tag {{slug}} in media_folder',
+    ]);
   });
 });

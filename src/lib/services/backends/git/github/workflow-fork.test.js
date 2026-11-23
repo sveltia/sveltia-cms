@@ -10,6 +10,7 @@ import {
 } from '$lib/services/backends/git/github/workflow-fork';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { cmsConfig } from '$lib/services/config';
+import { user } from '$lib/services/user/account.svelte';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 vi.mock('$lib/services/backends/git/github/commits');
@@ -31,6 +32,7 @@ vi.mock('$lib/services/config', () => ({ cmsConfig: { current: undefined } }));
  */
 const mockStores = ({ backend = { name: 'github' }, fork = undefined } = {}) => {
   forkedRepository.current = /** @type {any} */ (fork);
+  user.account = /** @type {any} */ ({ login: 'Contributor' });
   cmsConfig.current = /** @type {any} */ (backend ? { backend } : undefined);
 };
 
@@ -84,6 +86,7 @@ describe('GitHub Open Authoring workflow', () => {
       updatedAt: '2026-01-02T00:00:00Z',
       headRefOid: 'branch-head',
       headRepositoryOwner: { login: 'contributor' },
+      author: { login: 'contributor' },
       files: { nodes: [{ path: 'content/posts/hello.md', changeType: 'ADDED' }] },
       ...overrides,
     });
@@ -103,6 +106,9 @@ describe('GitHub Open Authoring workflow', () => {
           title: 'Create Post “hello”',
           url: undefined,
           branch: BRANCH,
+          // The branch head is on record even without a pull request, so a save can tell whether
+          // anything has been committed to the branch since the draft was opened
+          headSHA: 'branch-head',
           status: 'draft',
           createdDate: new Date('2026-01-03T00:00:00Z'),
           updatedDate: new Date('2026-01-03T00:00:00Z'),
@@ -217,11 +223,55 @@ describe('GitHub Open Authoring workflow', () => {
 
         const result = await fetchForkBranchPullRequests([BRANCH]);
 
+        // No `owner` or `repo` variables are given, so the configured repository is used
         expect(fetchGraphQL).toHaveBeenCalledWith(
           expect.stringContaining(`headRefName: "${BRANCH}"`),
+          {},
         );
 
         expect(result.get(BRANCH)).toEqual(expect.objectContaining({ number: 1 }));
+      });
+
+      test('asks only for the pull requests to the configured branch', async () => {
+        // A pull request the contributor opened from the same branch to another branch isn’t the
+        // entry’s, and acting on it would relabel, rename or close a request that isn’t the CMS’s
+        await fetchForkBranchPullRequests([BRANCH]);
+
+        expect(fetchGraphQL).toHaveBeenCalledWith(
+          expect.stringContaining('baseRefName: "main"'),
+          {},
+        );
+      });
+
+      test('ignores a pull request someone else opened from the contributor’s branch', async () => {
+        // Anyone can open a pull request from a branch of a public fork. Taking it for the
+        // contributor’s would put the other user’s title on the entry, and the contributor could
+        // neither convert, reopen nor close it, nor open their own while it’s open
+        vi.mocked(fetchGraphQL).mockResolvedValue({
+          repository: {
+            pr_0: {
+              nodes: [
+                createBranchPullRequest({ number: 9, author: { login: 'someone-else' } }),
+                createBranchPullRequest({ number: 8, author: null }),
+                createBranchPullRequest(),
+              ],
+            },
+          },
+        });
+
+        const result = await fetchForkBranchPullRequests([BRANCH]);
+
+        // The contributor’s own is picked, whatever the case of the login
+        expect(result.get(BRANCH)).toMatchObject({ author: { login: 'contributor' } });
+        expect(vi.mocked(fetchGraphQL).mock.calls[0][0]).toContain('author {');
+
+        // Nothing matches without a signed-in user
+        user.account = undefined;
+        vi.mocked(fetchGraphQL).mockResolvedValue({
+          repository: { pr_0: { nodes: [createBranchPullRequest()] } },
+        });
+
+        expect((await fetchForkBranchPullRequests([BRANCH])).size).toBe(0);
       });
 
       test('ignores a pull request from a branch of the same name elsewhere', async () => {
@@ -360,6 +410,20 @@ describe('GitHub Open Authoring workflow', () => {
     });
 
     describe('fetchForkBranchFileList', () => {
+      test('encodes the branch names in the comparison', async () => {
+        vi.mocked(fetchAPI).mockResolvedValue({ files: [] });
+
+        await fetchForkBranchFileList(
+          /** @type {any} */ ({ branch: 'cms/contributor/repo/posts/c#-tips' }),
+        );
+
+        // Left as is, `#` would start a fragment and cut the head branch short
+        expect(fetchAPI).toHaveBeenCalledWith(
+          '/repos/owner/repo/compare/main...contributor:cms/contributor/repo/posts/c%23-tips' +
+            '?per_page=100',
+        );
+      });
+
       test('compares the fork branch with the configured branch', async () => {
         vi.mocked(fetchAPI).mockResolvedValue({
           files: [
@@ -530,6 +594,39 @@ describe('GitHub Open Authoring workflow', () => {
     });
 
     describe('updateForkStatus', () => {
+      /**
+       * Create a pull request node as returned by the state query.
+       * @param {object} [overrides] Properties to override.
+       * @returns {any} Node.
+       */
+      const createStateNode = (overrides = {}) => ({
+        state: 'OPEN',
+        isDraft: false,
+        baseRefName: 'main',
+        headRepositoryOwner: { login: 'contributor' },
+        author: { login: 'contributor' },
+        ...overrides,
+      });
+
+      /** A pull request the board loaded for the entry. */
+      const knownPullRequest = /** @type {any} */ ({
+        nodeId: 'PR_1',
+        number: 1,
+        url: 'https://github.com/owner/repo/pull/1',
+        branch: 'cms/contributor/repo/posts/hello',
+        title: 'x',
+      });
+
+      /** The pull request the REST API answers with once one is opened. */
+      const createdPullRequest = {
+        number: 5,
+        node_id: 'PR_5',
+        title: 'x',
+        html_url: 'https://github.com/owner/repo/pull/5',
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
+      };
+
       test('refuses to mark an entry ready to publish', async () => {
         await expect(
           updateForkStatus(/** @type {any} */ ({ branch: 'b' }), 'pending_publish'),
@@ -568,7 +665,9 @@ describe('GitHub Open Authoring workflow', () => {
       });
 
       test('converts an open pull request to a draft', async () => {
-        vi.mocked(fetchGraphQL).mockResolvedValue({ node: { state: 'OPEN', isDraft: false } });
+        vi.mocked(fetchGraphQL).mockResolvedValue({
+          node: createStateNode({ state: 'OPEN', isDraft: false }),
+        });
 
         await updateForkStatus(
           /** @type {any} */ ({ nodeId: 'PR_1', number: 1, branch: 'b', title: 'x' }),
@@ -582,7 +681,9 @@ describe('GitHub Open Authoring workflow', () => {
       });
 
       test('leaves a pull request that is already a draft alone', async () => {
-        vi.mocked(fetchGraphQL).mockResolvedValue({ node: { state: 'OPEN', isDraft: true } });
+        vi.mocked(fetchGraphQL).mockResolvedValue({
+          node: createStateNode({ state: 'OPEN', isDraft: true }),
+        });
 
         await updateForkStatus(
           /** @type {any} */ ({ nodeId: 'PR_1', number: 1, branch: 'b', title: 'x' }),
@@ -593,7 +694,9 @@ describe('GitHub Open Authoring workflow', () => {
       });
 
       test('reopens a closed pull request and marks it ready for review', async () => {
-        vi.mocked(fetchGraphQL).mockResolvedValue({ node: { state: 'CLOSED', isDraft: true } });
+        vi.mocked(fetchGraphQL).mockResolvedValue({
+          node: createStateNode({ state: 'CLOSED', isDraft: true }),
+        });
 
         await updateForkStatus(
           /** @type {any} */ ({ nodeId: 'PR_1', number: 1, branch: 'b', title: 'x' }),
@@ -609,6 +712,164 @@ describe('GitHub Open Authoring workflow', () => {
           expect.stringContaining('markPullRequestReadyForReview'),
           { input: { pullRequestId: 'PR_1' } },
         );
+      });
+
+      test('opens a new pull request when the known one was aimed at another branch', async () => {
+        // Retargeted on GitHub since the board was loaded, so it’s no longer the entry’s review,
+        // and reopening it would hand a request for that other branch to the maintainers
+        // @see https://github.com/sveltia/sveltia-cms/security/advisories/GHSA-8h97-74c4-g246
+        vi.mocked(fetchGraphQL).mockResolvedValue({
+          node: createStateNode({ state: 'CLOSED', isDraft: true, baseRefName: 'develop' }),
+        });
+        vi.mocked(fetchAPI).mockResolvedValue(createdPullRequest);
+
+        const result = await updateForkStatus(knownPullRequest, 'pending_review');
+
+        expect(vi.mocked(fetchGraphQL).mock.calls[0][0]).toContain('baseRefName');
+        expect(fetchGraphQL).toHaveBeenCalledTimes(1);
+        expect(fetchAPI).toHaveBeenCalledTimes(1);
+        expect(fetchAPI).toHaveBeenCalledWith(
+          '/repos/owner/repo/pulls',
+          expect.objectContaining({
+            method: 'POST',
+            body: expect.objectContaining({ head: 'contributor:cms/contributor/repo/posts/hello' }),
+          }),
+        );
+        expect(result).toMatchObject({ number: 5, nodeId: 'PR_5', status: 'pending_review' });
+      });
+
+      /**
+       * Answer the state query with a pull request merged at `merged-head`, and the branch head
+       * query with the given commit.
+       * @param {string | undefined} head Commit the branch points at, `undefined` if it’s gone.
+       * @param {object} [overrides] Properties to override on the state node.
+       */
+      const mockMergedPullRequest = (head, overrides = {}) => {
+        vi.mocked(fetchGraphQL).mockImplementation(async (query) =>
+          query.includes('branchHead')
+            ? { repository: { branchHead: head ? { target: { oid: head } } : null } }
+            : {
+                node: createStateNode({ state: 'MERGED', headRefOid: 'merged-head', ...overrides }),
+              },
+        );
+      };
+
+      test('opens a new pull request when the known one was merged and edited since', async () => {
+        // The contributor committed to the branch after the merge, which makes the entry a fresh
+        // draft. Moving it to review would otherwise do nothing, yet report it as in review
+        mockMergedPullRequest('branch-head');
+        vi.mocked(fetchAPI).mockResolvedValue(createdPullRequest);
+
+        const result = await updateForkStatus(knownPullRequest, 'pending_review');
+
+        expect(vi.mocked(fetchGraphQL).mock.calls[0][0]).toContain('headRefOid');
+        expect(fetchGraphQL).toHaveBeenLastCalledWith(expect.stringContaining('branchHead'), {
+          owner: 'contributor',
+          repo: 'repo',
+          branch: `refs/heads/${BRANCH}`,
+        });
+        expect(fetchAPI).toHaveBeenCalledTimes(1);
+        expect(fetchAPI).toHaveBeenCalledWith(
+          '/repos/owner/repo/pulls',
+          expect.objectContaining({ method: 'POST' }),
+        );
+        expect(result).toMatchObject({ number: 5, nodeId: 'PR_5', status: 'pending_review' });
+      });
+
+      test('reports an entry merged since as published, rather than opening an empty request', async () => {
+        // The branch still points at the commit the pull request was merged at, so it holds
+        // nothing that isn’t on the configured branch already
+        mockMergedPullRequest('merged-head');
+
+        await expect(updateForkStatus(knownPullRequest, 'pending_review')).rejects.toThrow(
+          'entry_already_published',
+        );
+
+        // The leftover branch is deleted from the fork, the way the next load would
+        expect(fetchAPI).toHaveBeenCalledTimes(1);
+        expect(fetchAPI).toHaveBeenCalledWith(
+          `/repos/contributor/repo/git/refs/heads/${BRANCH}`,
+          expect.objectContaining({ method: 'DELETE' }),
+        );
+      });
+
+      test('reports an entry merged since as published when it goes back to draft', async () => {
+        mockMergedPullRequest('merged-head');
+
+        await expect(
+          updateForkStatus({ ...knownPullRequest, status: 'pending_review' }, 'draft'),
+        ).rejects.toThrow('entry_already_published');
+      });
+
+      test('reports an entry as published when its branch went with the merge', async () => {
+        mockMergedPullRequest(undefined);
+
+        await expect(updateForkStatus(knownPullRequest, 'pending_review')).rejects.toThrow(
+          'entry_already_published',
+        );
+
+        // Nothing is left to delete, nor to open a pull request from
+        expect(fetchAPI).not.toHaveBeenCalled();
+      });
+
+      test('opens a new pull request when the known one was merged into another branch', async () => {
+        // Retargeted and merged elsewhere: nothing of the entry reached the configured branch, so
+        // the branch is kept, the way the load would keep it
+        mockMergedPullRequest('merged-head', { baseRefName: 'develop' });
+        vi.mocked(fetchAPI).mockResolvedValue(createdPullRequest);
+
+        const result = await updateForkStatus(knownPullRequest, 'pending_review');
+
+        expect(fetchGraphQL).toHaveBeenCalledTimes(1);
+        expect(fetchAPI).toHaveBeenCalledTimes(1);
+        expect(fetchAPI).toHaveBeenCalledWith(
+          '/repos/owner/repo/pulls',
+          expect.objectContaining({ method: 'POST' }),
+        );
+        expect(result.number).toBe(5);
+      });
+
+      test.each([
+        ['from another repository', { headRepositoryOwner: { login: 'someone-else' } }],
+        ['by someone else', { author: { login: 'someone-else' } }],
+        ['by a deleted account', { author: null }],
+      ])('leaves alone a pull request opened %s', async (_label, overrides) => {
+        vi.mocked(fetchGraphQL).mockResolvedValue({
+          node: createStateNode({ state: 'CLOSED', isDraft: true, ...overrides }),
+        });
+        vi.mocked(fetchAPI).mockResolvedValue(createdPullRequest);
+
+        const result = await updateForkStatus(knownPullRequest, 'pending_review');
+
+        // Neither reopened nor taken out of draft, but replaced with a new one
+        expect(fetchGraphQL).toHaveBeenCalledTimes(1);
+        expect(fetchAPI).toHaveBeenCalledTimes(1);
+        expect(fetchAPI).toHaveBeenCalledWith(
+          '/repos/owner/repo/pulls',
+          expect.objectContaining({ method: 'POST' }),
+        );
+        expect(result.number).toBe(5);
+      });
+
+      test('lets go of a merged pull request when the entry goes back to draft', async () => {
+        // Edited again since the merge, so the branch has moved on from it
+        mockMergedPullRequest('branch-head');
+
+        const result = await updateForkStatus(
+          { ...knownPullRequest, status: 'pending_review' },
+          'draft',
+        );
+
+        // A merged pull request can’t be converted to a draft, nor does it say anything about the
+        // entry, which is left a branch-only draft
+        expect(fetchGraphQL).toHaveBeenCalledTimes(2);
+        expect(fetchAPI).not.toHaveBeenCalled();
+        expect(result).toMatchObject({
+          number: undefined,
+          nodeId: undefined,
+          url: undefined,
+          status: 'draft',
+        });
       });
 
       test('copes with a pull request that can no longer be read', async () => {

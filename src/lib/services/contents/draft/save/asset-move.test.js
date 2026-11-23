@@ -2,10 +2,13 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { allAssets } from '$lib/services/assets';
 import { getAssetFolder } from '$lib/services/assets/folders';
 import { getAssetBlob } from '$lib/services/assets/info';
-import { buildEntryAssetMoveChanges } from '$lib/services/contents/draft/save/asset-move';
+import { allAssets } from '$lib/services/assets/state';
+import {
+  buildEntryAssetMoveChanges,
+  getPathInMovedFolder,
+} from '$lib/services/contents/draft/save/asset-move';
 
 vi.mock('$lib/services/assets', () => ({ allAssets: { current: undefined } }));
 
@@ -56,6 +59,24 @@ beforeEach(async () => {
   setAssets([]);
 });
 
+describe('getPathInMovedFolder()', () => {
+  test('should swap the folder for the new one', () => {
+    expect(getPathInMovedFolder('content/hello/photo.jpg', 'content/hello', 'content/bye')).toBe(
+      'content/bye/photo.jpg',
+    );
+    expect(
+      getPathInMovedFolder('content/hello/images/photo.jpg', 'content/hello', 'content/a/bye'),
+    ).toBe('content/a/bye/images/photo.jpg');
+  });
+
+  test('should return undefined for a file outside the folder', () => {
+    expect(getPathInMovedFolder('content/hello-world/photo.jpg', 'content/hello', 'x')).toBe(
+      undefined,
+    );
+    expect(getPathInMovedFolder('content/hello', 'content/hello', 'x')).toBe(undefined);
+  });
+});
+
 describe('buildEntryAssetMoveChanges()', () => {
   test('moves the assets stored in the entry’s folder', async () => {
     setAssets([
@@ -91,6 +112,38 @@ describe('buildEntryAssetMoveChanges()', () => {
     expect(savingAssets.map(({ path }) => path)).toEqual([
       'content/pages/guides/our-history/photo.jpg',
       'content/pages/guides/our-history/images/logo.svg',
+    ]);
+  });
+
+  test('leaves out a file another pull request put in the entry’s folder', async () => {
+    const published = createAsset('content/pages/about/our-history/photo.jpg');
+
+    setAssets([
+      // Someone else’s pull request replaced the published photo and added a file of its own
+      {
+        ...createAsset('content/pages/about/our-history/photo.jpg'),
+        sha: 'pending',
+        workflow: { branch: 'cms/pages/other', replacedAsset: published },
+      },
+      {
+        ...createAsset('content/pages/about/our-history/extra.js'),
+        workflow: { branch: 'cms/pages/other' },
+      },
+    ]);
+
+    const { changes } = await buildEntryAssetMoveChanges({
+      collection,
+      originalEntry: createEntry({ _default: 'content/pages/about/our-history/_index.md' }),
+      savingEntry: createEntry({ _default: 'content/pages/guides/our-history/_index.md' }),
+      changes: [],
+    });
+
+    // Only the published version of the photo is moved
+    expect(changes).toEqual([
+      expect.objectContaining({
+        path: 'content/pages/guides/our-history/photo.jpg',
+        previousSha: 'sha-content/pages/about/our-history/photo.jpg',
+      }),
     ]);
   });
 
@@ -193,6 +246,7 @@ describe('buildEntryAssetMoveChanges()', () => {
       collection: {
         ...collection,
         folder: 'content/pages',
+        fields: [],
         nested: { subfolders: true },
         meta: { path: { index_file: '_index' } },
         _file: { subPath: undefined },

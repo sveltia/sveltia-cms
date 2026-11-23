@@ -1,6 +1,9 @@
 import { _, locale as appLocale } from '@sveltia/i18n';
 
+import { COMPATIBILITY_URL } from '$lib/services/api/compatibility';
+import { DOCS_BASE_URL } from '$lib/services/app';
 import { getListFormatter } from '$lib/services/contents/i18n';
+import { getRegex } from '$lib/services/utils/regex';
 import { makeLink } from '$lib/services/utils/string';
 
 /**
@@ -11,11 +14,8 @@ import { makeLink } from '$lib/services/utils/string';
  * } from '$lib/types/private';
  */
 
-const INVALID_FIELD_NAME_DOC_URL =
-  'https://sveltiacms.app/en/docs/troubleshooting#using-proper-naming-conventions';
-
-const COMPATIBILITY_DOC_URL =
-  'https://sveltiacms.app/en/docs/migration/netlify-decap-cms#features-not-to-be-implemented';
+// eslint-disable-next-line @stylistic/max-len
+const INVALID_FIELD_NAME_DOC_URL = `${DOCS_BASE_URL}/troubleshooting#using-proper-naming-conventions`;
 
 /**
  * Add an error or warning message to the error collector with context information.
@@ -83,7 +83,7 @@ export const addMessage = ({
 
   const extraMessage = extraStrKey
     ? _(`config.${extraStrKey}`, {
-        values: { link: extraStrKey === 'compatibility_link' ? COMPATIBILITY_DOC_URL : undefined },
+        values: { link: extraStrKey === 'compatibility_link' ? COMPATIBILITY_URL : undefined },
       })
     : '';
 
@@ -121,14 +121,16 @@ export const checkUnsupportedOptions = ({ UNSUPPORTED_OPTIONS, config, context, 
  * asterisks are used for wildcard matching for relation fields, colons are used for editor
  * component identification, and angle brackets are used for variable type placeholders.
  */
-export const VALID_NAME_REGEX = /^[^\s.*:<>]+$/;
+const VALID_NAME_REGEX = /^[^\s.*:<>]+$/;
 
 /**
- * Checks if the given name is valid.
+ * Checks if the given name is valid. `__proto__` is also invalid: a value can’t be stored under
+ * that key in a plain object, which is how entry content and many lookups keyed by name are held,
+ * so a field with the name would silently lose its value.
  * @param {string} name Name to check.
  * @returns {boolean} `true` if the name is valid, `false` otherwise.
  */
-export const isValidName = (name) => VALID_NAME_REGEX.test(name);
+export const isValidName = (name) => VALID_NAME_REGEX.test(name) && name !== '__proto__';
 
 /**
  * Check if the given collection name, collection file name, field name or variable type name is
@@ -176,14 +178,35 @@ export const checkName = ({
     return false;
   }
 
-  // Check for duplicates, the second occurrence will be caught here
-  if (nameCounts[name] === 1) {
+  // Check for duplicates, the second occurrence will be caught here. A name like `constructor`
+  // mustn’t pick up the `Object.prototype` member of the same name
+  const count = Object.hasOwn(nameCounts, name) ? nameCounts[name] : 0;
+
+  if (count === 1) {
     addMessage({ strKey: `duplicate_${strKeyBase}`, context, values: { name }, collectors });
 
     return false;
   }
 
-  nameCounts[name] = (nameCounts[name] ?? 0) + 1;
+  nameCounts[name] = count + 1;
 
   return true;
+};
+
+/**
+ * Check that a pattern option holds a regular expression that can be compiled. The runtime uses
+ * `getRegex()`, which returns `undefined` for a pattern it can’t compile, so a mistyped expression
+ * doesn’t fail loudly: a validation `pattern` stops validating, and a collection `filter` stops
+ * matching. A `RegExp` object, which the JS API accepts, is valid by construction, and a value of
+ * another type is reported against the JSON schema.
+ * @param {object} args Arguments.
+ * @param {string} args.option Name of the option holding the pattern, for the message.
+ * @param {any} args.pattern Pattern to check.
+ * @param {ConfigParserContext} args.context Context.
+ * @param {ConfigParserCollectors} args.collectors Collectors.
+ */
+export const checkRegex = ({ option, pattern, context, collectors }) => {
+  if (typeof pattern === 'string' && getRegex(pattern) === undefined) {
+    addMessage({ strKey: 'invalid_regex', values: { option, pattern }, context, collectors });
+  }
 };

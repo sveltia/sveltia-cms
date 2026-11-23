@@ -1,6 +1,44 @@
 import { describe, expect, test } from 'vitest';
 
-import { getGeometryBounds, isValidGeoJSON, roundCoordinates } from './helpers';
+import { getGeometryBounds, isValidGeoJSON, parseGeoJSON, roundCoordinates } from './helpers';
+
+describe('Test parseGeoJSON()', () => {
+  test('returns the geometry object of the given type', () => {
+    expect(parseGeoJSON('{"type":"Point","coordinates":[-122.4194,37.7749]}')).toEqual({
+      type: 'Point',
+      coordinates: [-122.4194, 37.7749],
+    });
+    expect(
+      parseGeoJSON(
+        '{"type":"LineString","coordinates":[[-122.4,37.7],[-122.3,37.8]]}',
+        'LineString',
+      ),
+    ).toEqual({
+      type: 'LineString',
+      coordinates: [
+        [-122.4, 37.7],
+        [-122.3, 37.8],
+      ],
+    });
+  });
+
+  test('returns `undefined` for an invalid value', () => {
+    expect(parseGeoJSON('')).toBeUndefined();
+    expect(parseGeoJSON('not json')).toBeUndefined();
+    expect(parseGeoJSON('null')).toBeUndefined();
+    expect(parseGeoJSON('{"type":"Point","coordinates":"invalid"}')).toBeUndefined();
+    expect(parseGeoJSON('{"type":"Point","coordinates":[1,null]}')).toBeUndefined();
+    expect(parseGeoJSON('{"type":"LineString","coordinates":[null]}', 'LineString')).toBe(
+      undefined,
+    );
+    expect(parseGeoJSON('{"type":"Polygon","coordinates":[[[1,2],"x"]]}', 'Polygon')).toBe(
+      undefined,
+    );
+    expect(parseGeoJSON('{"type":"Point","coordinates":[-122.4194,37.7749]}', 'Polygon')).toBe(
+      undefined,
+    );
+  });
+});
 
 describe('Test isValidGeoJSON()', () => {
   describe('Point (default geometry type)', () => {
@@ -170,6 +208,9 @@ describe('Test getGeometryBounds()', () => {
           [-73.9857, 40.7484],
         ]),
       }),
+    ).toBeNull();
+    expect(
+      getGeometryBounds({ type: 'LineString', coordinates: /** @type {any} */ ([null]) }),
     ).toBeNull();
   });
 });

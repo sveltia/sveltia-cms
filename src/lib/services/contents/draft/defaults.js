@@ -1,4 +1,6 @@
 import { GET_DEFAULT_VALUE_MAP_FUNCTIONS } from '$lib/services/contents/fields/defaults';
+import { isFieldI18nDisabled } from '$lib/services/contents/i18n/fields';
+import { localizeDefaultValue } from '$lib/services/contents/i18n/options';
 
 /**
  * @import {
@@ -11,23 +13,24 @@ import { GET_DEFAULT_VALUE_MAP_FUNCTIONS } from '$lib/services/contents/fields/d
 
 /**
  * Populate the default value for the given field. Check if a dynamic default value is specified,
- * then look for the field configuration’s `default` property.
+ * then look for the field configuration’s `default_localized` and `default` properties.
  * @param {PopulateDefaultValueArgs} args Arguments.
  * @returns {void} The `content` object is modified in place.
  */
 export const populateDefaultValue = ({
   content,
   keyPath,
-  fieldConfig,
+  fieldConfig: _fieldConfig,
   locale,
   defaultLocale,
   dynamicValues,
 }) => {
+  const fieldConfig = localizeDefaultValue({ fieldConfig: _fieldConfig, locale, defaultLocale });
   // @ts-ignore `default` is not defined in the Compute and custom field types
   const { widget: fieldType = 'string', default: defaultValue, i18n = false } = fieldConfig;
 
   // For non-default locales, only set the default value if the field is i18n-enabled
-  if (locale !== defaultLocale && [false, 'none'].includes(i18n)) {
+  if (locale !== defaultLocale && isFieldI18nDisabled(i18n)) {
     return;
   }
 
@@ -42,13 +45,23 @@ export const populateDefaultValue = ({
   const dynamicValue =
     // Ignore the dynamic value if the key path looks like an array item, e.g. `tags.0` or
     // `tags.0.name`, because lists are complicated to handle
-    keyPath in dynamicValues && !/\.\d+(?:\.|$)/.test(keyPath)
+    Object.hasOwn(dynamicValues, keyPath) && !/\.\d+(?:\.|$)/.test(keyPath)
       ? dynamicValues[keyPath].trim() || undefined
       : undefined;
 
   const getDefaultValue = GET_DEFAULT_VALUE_MAP_FUNCTIONS[fieldType];
 
   if (getDefaultValue) {
+    /**
+     * Populate the default value of a subfield. A subfield of an Object field can have a dynamic
+     * value of its own, given with the dot notation, e.g. `?author.name=John`, so the dynamic
+     * values are passed down. Those of a List field item, e.g. `links.0.url`, are ignored above.
+     * @param {PopulateDefaultValueArgs} subfieldArgs Arguments for the subfield.
+     * @returns {void} The `content` object is modified in place.
+     */
+    const populateDefault = (subfieldArgs) =>
+      populateDefaultValue({ ...subfieldArgs, dynamicValues });
+
     Object.assign(
       content,
       getDefaultValue({
@@ -57,7 +70,8 @@ export const populateDefaultValue = ({
         locale,
         defaultLocale,
         dynamicValue,
-        populateDefault: populateDefaultValue,
+        dynamicValues,
+        populateDefault,
       }),
     );
 
@@ -65,8 +79,8 @@ export const populateDefaultValue = ({
   }
 
   // Handle simple string-type fields, including the built-in `color`, `uuid`, `string` and `text`
-  // field types as well as custom field types
-  content[keyPath] = dynamicValue || defaultValue || '';
+  // field types as well as custom field types. A falsy default like `0` or `false` is kept
+  content[keyPath] = dynamicValue ?? defaultValue ?? '';
 };
 
 /**

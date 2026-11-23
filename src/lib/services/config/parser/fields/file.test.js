@@ -1,17 +1,15 @@
-/* eslint-disable jsdoc/require-jsdoc */
-
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createCollectors } from '$lib/test/config-parser';
+
 /**
- * @import { ConfigParserCollectors, ConfigParserContext } from '$lib/types/private';
+ * @import { ConfigParserContext } from '$lib/types/private';
  */
 
-vi.mock('@sveltia/i18n', () => ({
-  _: (/** @type {string} */ key) => key,
-  locale: { current: 'en-US', set: vi.fn() },
-}));
+vi.mock('@sveltia/i18n', async () =>
+  (await import('$lib/test/i18n')).createI18nMock({ locale: 'en-US' }),
+);
 
-const mockGetStore = vi.fn();
 const mockAddMessage = vi.fn();
 const mockCheckUnsupportedOptions = vi.fn();
 
@@ -19,19 +17,6 @@ vi.mock('$lib/services/config/parser/utils/validator', () => ({
   addMessage: mockAddMessage,
   checkUnsupportedOptions: mockCheckUnsupportedOptions,
 }));
-
-/**
- * Create a fresh collectors object for testing.
- * @returns {ConfigParserCollectors} Collectors instance.
- */
-function createCollectors() {
-  return {
-    errors: new Set(),
-    warnings: new Set(),
-    mediaFields: new Set(),
-    relationFields: new Set(),
-  };
-}
 
 /**
  * Create a fresh context object for testing.
@@ -48,11 +33,25 @@ function createContext() {
 describe('File Field Parser', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-
-    mockGetStore.mockImplementation((store) => store);
   });
 
   describe('parseFileFieldConfig', () => {
+    it('should check the template tags in the field’s folder options', async () => {
+      const { parseFileFieldConfig } = await import('./file.js');
+      const context = createContext();
+      const collectors = createCollectors();
+      const config = { name: 'image', widget: 'image', media_folder: '/static/{{fields.title}}' };
+
+      parseFileFieldConfig({ config, context, collectors });
+
+      expect(mockAddMessage).toHaveBeenCalledWith({
+        strKey: 'unsupported_folder_template_tag',
+        values: { option: 'media_folder', tag: '{{fields.title}}' },
+        context,
+        collectors,
+      });
+    });
+
     it('should parse file field', async () => {
       const { parseFileFieldConfig } = await import('./file.js');
       const context = createContext();
@@ -157,6 +156,66 @@ describe('File Field Parser', () => {
 
       // Should handle without errors
       expect(collectors.errors.size).toBe(0);
+    });
+  });
+
+  describe('default option', () => {
+    it('should check the default against an explicit multiple option', async () => {
+      const { parseFileFieldConfig } = await import('./file.js');
+      const context = createContext();
+      const collectors = createCollectors();
+
+      parseFileFieldConfig({
+        config: { name: 'document', widget: 'file', multiple: false, default: '/a.pdf' },
+        context,
+        collectors,
+      });
+
+      parseFileFieldConfig({
+        config: { name: 'document', widget: 'file', multiple: true, default: ['/a.pdf'] },
+        context,
+        collectors,
+      });
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+
+      parseFileFieldConfig({
+        config: { name: 'document', widget: 'file', multiple: false, default: ['/a.pdf'] },
+        context,
+        collectors,
+      });
+
+      parseFileFieldConfig({
+        config: { name: 'document', widget: 'file', multiple: true, default: '/a.pdf' },
+        context,
+        collectors,
+      });
+
+      expect(mockAddMessage.mock.calls.map(([args]) => args)).toEqual([
+        { strKey: 'invalid_default_single', context, collectors },
+        { strKey: 'invalid_default_multiple', context, collectors },
+      ]);
+    });
+
+    it('should leave the default alone without an explicit multiple option', async () => {
+      const { parseFileFieldConfig } = await import('./file.js');
+      const context = createContext();
+      const collectors = createCollectors();
+
+      // The media library options can make the field multiple, which is only known at runtime
+      parseFileFieldConfig({
+        config: { name: 'document', widget: 'file', default: ['/a.pdf'] },
+        context,
+        collectors,
+      });
+
+      parseFileFieldConfig({
+        config: { name: 'document', widget: 'file', default: '/a.pdf' },
+        context,
+        collectors,
+      });
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
     });
   });
 });

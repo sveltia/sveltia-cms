@@ -95,7 +95,7 @@ describe('Mistral AI Client', () => {
       const body = JSON.parse(/** @type {string} */ (vi.mocked(fetch).mock.calls[0][1]?.body));
 
       expect(body.temperature).toBe(0.3);
-      expect(body.max_tokens).toBe(4000);
+      expect(body.max_tokens).toBe(16_000);
       expect(body.reasoning_effort).toBe('high');
     });
 

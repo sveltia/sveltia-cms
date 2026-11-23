@@ -1,14 +1,17 @@
 // @ts-nocheck
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 
 import { cmsConfig } from '$lib/services/config';
 
 import {
   addSavingEntryData,
   collectEntryChanges,
-  collectEntryChangesFromAsset,
+  collectEntryChangesFromAssets,
+  collectReferenceChanges,
   getDraftBaseProps,
   moveAssets,
+  planReferenceRewrite,
+  saveReferenceChanges,
   updateStores,
 } from './move.js';
 
@@ -23,13 +26,17 @@ vi.mock('$lib/services/contents/collection/files', () => ({
 }));
 
 vi.mock('$lib/services/assets', () => ({
-  allAssets: { current: undefined },
-  focusedAsset: { current: undefined },
-  overlaidAsset: { current: undefined },
   getAssetByInternalPath: vi.fn(),
 }));
 
-vi.mock('$lib/services/assets/data', () => ({
+vi.mock('$lib/services/assets/state', () => ({
+  allAssets: { current: undefined },
+  focusedAsset: { current: undefined },
+  overlaidAsset: { current: undefined },
+}));
+
+vi.mock('$lib/services/assets/data', async (importOriginal) => ({
+  .../** @type {Record<string, any>} */ (await importOriginal()),
   assetUpdatesToast: {
     set: vi.fn(),
   },
@@ -64,8 +71,27 @@ vi.mock('$lib/services/contents/collection/data', () => ({
   },
 }));
 
-vi.mock('$lib/services/contents/collection/entries', () => ({
-  getEntriesByAssetURL: vi.fn(),
+// Matched by the public URL the `getAssetPublicURL` mock gives, or else by the asset. A plain
+// function, so `vi.resetAllMocks()` leaves it as it is
+vi.mock('$lib/services/assets/reference-target', async () => {
+  const { getAssetPublicURL } = await import('$lib/services/assets/info');
+
+  return {
+    /**
+     * Get what the references to an asset are matched by.
+     * @param {any} asset Asset.
+     * @returns {{ url: string } | { asset: any }} Target.
+     */
+    getAssetReferenceTarget: (asset) => {
+      const url = getAssetPublicURL(asset);
+
+      return url ? { url } : { asset };
+    },
+  };
+});
+
+vi.mock('$lib/services/assets/references', () => ({
+  getEntriesByAssets: vi.fn(async (targets) => targets.map(() => [])),
 }));
 
 vi.mock('$lib/services/contents/collection/entries/index-file', () => ({
@@ -81,8 +107,13 @@ vi.mock('$lib/services/contents/draft/slugs', () => ({
   getSlugs: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/entry', () => ({
+vi.mock('$lib/services/contents/entry/collections', () => ({
   getAssociatedCollections: vi.fn(),
+}));
+
+vi.mock('$lib/services/contents/entry/readonly', () => ({
+  isEntryReadonly: vi.fn(() => false),
+  getReadonlyEntryLabel: vi.fn((entry) => `Archive › ${entry.id}`),
 }));
 
 vi.mock('@sveltia/utils/file', () => ({
@@ -391,7 +422,7 @@ describe('assets/data/move', () => {
     });
 
     it('should collect changes for associated collections', async () => {
-      const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+      const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
       const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
 
       const { isCollectionIndexFile, getIndexFile } =
@@ -432,7 +463,7 @@ describe('assets/data/move', () => {
     });
 
     it('should handle collection files', async () => {
-      const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+      const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
       const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
 
       const { isCollectionIndexFile } =
@@ -477,7 +508,7 @@ describe('assets/data/move', () => {
     });
 
     it('should call getIndexFile when entry is an index file (line 111 true branch)', async () => {
-      const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+      const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
       const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
 
       const { isCollectionIndexFile, getIndexFile } =
@@ -520,489 +551,588 @@ describe('assets/data/move', () => {
     });
   });
 
-  describe('collectEntryChangesFromAsset', () => {
+  describe('collectEntryChangesFromAssets', () => {
     beforeEach(() => {
       vi.clearAllMocks();
     });
 
-    it('should collect changes for asset with entries', async () => {
-      const { getAssetPublicURL } = await import('$lib/services/assets/info');
-      const { getEntriesByAssetURL } = await import('$lib/services/contents/collection/entries');
-      const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
+    const mockAsset = {
+      path: 'assets/image.jpg',
+      folder: { internalPath: 'assets' },
+      blobURL: undefined,
+    };
 
-      const mockAsset = {
-        path: 'assets/image.jpg',
-        folder: { internalPath: 'assets' },
-        blobURL: undefined,
-      };
+    it('should do nothing without assets', async () => {
+      const { getEntriesByAssets } = await import('$lib/services/assets/references');
+      const updatingEntryMap = new Map();
 
-      const mockFolder = {
-        collectionName: 'posts',
-        publicPath: '/images',
-      };
-
-      vi.mocked(getAssetPublicURL).mockReturnValue('https://example.com/assets/image.jpg');
-      vi.mocked(getEntriesByAssetURL).mockResolvedValue([]);
-      vi.mocked(getAssetFoldersByPath).mockReturnValue([mockFolder]);
-
-      const savingEntries = [];
-      const changes = [];
-      const _cmsConfig = {};
-      const _globalAssetFolder = { publicPath: '/global' };
-
-      // Test that the function completes without error
-      await expect(
-        collectEntryChangesFromAsset({
-          _cmsConfig,
-          _globalAssetFolder,
-          newPath: 'new-assets/image.jpg',
-          asset: mockAsset,
-          savingEntries,
-          changes,
-        }),
-      ).resolves.not.toThrow();
-
-      expect(getAssetPublicURL).toHaveBeenCalledWith(mockAsset);
-    });
-
-    it('should handle asset without URL', async () => {
-      const { getAssetPublicURL } = await import('$lib/services/assets/info');
-
-      const mockAsset = {
-        path: 'assets/image.jpg',
-        folder: { internalPath: 'assets' },
-        blobURL: undefined,
-      };
-
-      vi.mocked(getAssetPublicURL).mockReturnValue(undefined);
-
-      const savingEntries = [];
-      const changes = [];
-
-      await collectEntryChangesFromAsset({
-        _cmsConfig: {},
+      await collectEntryChangesFromAssets({
         _globalAssetFolder: {},
-        newPath: 'new-path.jpg',
-        asset: mockAsset,
-        savingEntries,
-        changes,
+        movingAssets: [],
+        updatingEntryMap,
       });
 
-      // Should return early without making further calls
-      expect(savingEntries).toHaveLength(0);
-      expect(changes).toHaveLength(0);
+      expect(getEntriesByAssets).not.toHaveBeenCalled();
+      expect(updatingEntryMap.size).toBe(0);
     });
 
-    it('should handle asset with used entries but no updating entries', async () => {
+    it('should do nothing for assets no entry uses', async () => {
       const { getAssetPublicURL } = await import('$lib/services/assets/info');
-      const { getEntriesByAssetURL } = await import('$lib/services/contents/collection/entries');
-      const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
+      const { getEntriesByAssets } = await import('$lib/services/assets/references');
 
-      const mockAsset = {
-        path: 'assets/image.jpg',
-        folder: { internalPath: 'assets' },
-        blobURL: undefined,
-      };
-
-      const mockFolder = {
-        collectionName: 'posts',
-        publicPath: '/images',
-      };
-
-      const mockUsedEntry = { id: 'entry1', title: 'Test' };
-
-      // First call returns used entries, second call returns empty (no updating entries)
       vi.mocked(getAssetPublicURL).mockReturnValue('https://example.com/assets/image.jpg');
-      vi.mocked(getEntriesByAssetURL)
-        .mockResolvedValueOnce([mockUsedEntry])
+      vi.mocked(getEntriesByAssets).mockResolvedValue([[]]);
+
+      const updatingEntryMap = new Map();
+
+      await collectEntryChangesFromAssets({
+        _globalAssetFolder: {},
+        movingAssets: [{ asset: mockAsset, path: 'new-assets/image.jpg' }],
+        updatingEntryMap,
+      });
+
+      expect(getEntriesByAssets).toHaveBeenCalledOnce();
+      expect(updatingEntryMap.size).toBe(0);
+    });
+
+    it('should match an asset without a public URL by the asset, even if it’s not loaded', async () => {
+      const { getAssetPublicURL } = await import('$lib/services/assets/info');
+      const { getEntriesByAssets } = await import('$lib/services/assets/references');
+      const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
+      const entry = { id: 'entry1', locales: { en: { content: { image: 'image.jpg' } } } };
+
+      // An entry-relative asset: no public URL, and no blob URL either, as it’s never been loaded
+      vi.mocked(getAssetPublicURL).mockReturnValue(undefined);
+      vi.mocked(getAssetFoldersByPath).mockReturnValue([]);
+      vi.mocked(getEntriesByAssets)
+        .mockResolvedValueOnce([[entry]])
         .mockResolvedValueOnce([]);
-      vi.mocked(getAssetFoldersByPath).mockReturnValue([mockFolder]);
 
-      const savingEntries = [];
-      const changes = [];
+      const updatingEntryMap = new Map();
 
-      await collectEntryChangesFromAsset({
-        _cmsConfig: {},
-        _globalAssetFolder: { publicPath: '/global' },
-        newPath: 'new-assets/image.jpg',
-        asset: mockAsset,
-        savingEntries,
-        changes,
+      await collectEntryChangesFromAssets({
+        _globalAssetFolder: { publicPath: '/images' },
+        movingAssets: [{ asset: mockAsset, path: 'assets/new/image.jpg' }],
+        updatingEntryMap,
       });
 
-      // Should return early when no updating entries found
-      expect(savingEntries).toHaveLength(0);
-      expect(changes).toHaveLength(0);
+      expect(getEntriesByAssets).toHaveBeenNthCalledWith(1, [{ asset: mockAsset }]);
+      expect(getEntriesByAssets).toHaveBeenLastCalledWith(
+        [{ asset: mockAsset, newURL: '/images/new/image.jpg' }],
+        { entries: [updatingEntryMap.get('entry1')] },
+      );
     });
 
-    it('should collect changes for asset with updating entries', async () => {
+    it('should work out the new URL with the folder the asset is moved to', async () => {
       const { getAssetPublicURL } = await import('$lib/services/assets/info');
-      const { getEntriesByAssetURL } = await import('$lib/services/contents/collection/entries');
+      const { getEntriesByAssets } = await import('$lib/services/assets/references');
+      const entry = { id: 'entry1', locales: {} };
+      const destination = { internalPath: 'static/projects', publicPath: '/projects' };
+
+      vi.mocked(getAssetPublicURL).mockImplementation((asset) =>
+        asset.folder === destination ? '/projects/image.jpg' : '/assets/image.jpg',
+      );
+      vi.mocked(getEntriesByAssets)
+        .mockResolvedValueOnce([[entry]])
+        .mockResolvedValueOnce([]);
+
+      const updatingEntryMap = new Map();
+
+      await collectEntryChangesFromAssets({
+        _globalAssetFolder: {},
+        movingAssets: [
+          { asset: mockAsset, path: 'static/projects/image.jpg', folder: destination },
+        ],
+        updatingEntryMap,
+      });
+
+      expect(getAssetPublicURL).toHaveBeenLastCalledWith(
+        {
+          ...mockAsset,
+          path: 'static/projects/image.jpg',
+          name: 'image.jpg',
+          folder: destination,
+        },
+        { pathOnly: true, allowSpecial: true },
+      );
+      expect(getEntriesByAssets).toHaveBeenLastCalledWith(
+        [{ url: '/assets/image.jpg', newURL: '/projects/image.jpg' }],
+        { entries: [updatingEntryMap.get('entry1')] },
+      );
+    });
+
+    it('should fall back to the asset’s own folder without a global folder', async () => {
+      const { getAssetPublicURL } = await import('$lib/services/assets/info');
+      const { getEntriesByAssets } = await import('$lib/services/assets/references');
       const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
+      const entry = { id: 'entry1', locales: {} };
+      const asset = { ...mockAsset, folder: { internalPath: 'assets', publicPath: '/media' } };
 
-      const mockAsset = {
-        path: 'assets/image.jpg',
-        folder: { internalPath: 'assets' },
-        blobURL: undefined,
-      };
+      vi.mocked(getAssetPublicURL).mockReturnValue(undefined);
+      vi.mocked(getAssetFoldersByPath).mockReturnValue([]);
+      vi.mocked(getEntriesByAssets)
+        .mockResolvedValueOnce([[entry]])
+        .mockResolvedValueOnce([]);
 
-      const mockFolder = {
-        collectionName: 'posts',
-        publicPath: '/images',
-      };
+      const updatingEntryMap = new Map();
 
-      const mockUsedEntry = { id: 'entry1', title: 'Test' };
-
-      const mockUpdatingEntry = {
-        id: 'entry1',
-        title: 'Test Updated',
-        locales: { en: { path: 'content/test.md', content: {} } },
-      };
-
-      // First call returns used entries, second call returns updating entries
-      vi.mocked(getAssetPublicURL).mockReturnValue('https://example.com/assets/image.jpg');
-      vi.mocked(getEntriesByAssetURL)
-        .mockResolvedValueOnce([mockUsedEntry])
-        .mockResolvedValueOnce([mockUpdatingEntry]);
-      vi.mocked(getAssetFoldersByPath).mockReturnValue([mockFolder]);
-
-      const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-      const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
-
-      const { isCollectionIndexFile } =
-        await import('$lib/services/contents/collection/entries/index-file');
-
-      vi.mocked(getAssociatedCollections).mockReturnValue([]);
-      vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
-      vi.mocked(isCollectionIndexFile).mockReturnValue(false);
-
-      const savingEntries = [];
-      const changes = [];
-
-      await collectEntryChangesFromAsset({
-        _globalAssetFolder: { publicPath: '/global' },
-        newPath: 'new-assets/image.jpg',
-        asset: mockAsset,
-        savingEntries,
-        changes,
+      // Without the global `media_folder` option, there is no global folder
+      await collectEntryChangesFromAssets({
+        _globalAssetFolder: undefined,
+        movingAssets: [{ asset, path: 'assets/new/image.jpg' }],
+        updatingEntryMap,
       });
 
-      // Should call getEntriesByAssetURL twice and process updating entries
-      expect(getEntriesByAssetURL).toHaveBeenCalledTimes(2);
-      expect(getAssociatedCollections).toHaveBeenCalledWith(mockUpdatingEntry);
+      expect(getEntriesByAssets).toHaveBeenLastCalledWith(
+        [{ asset, newURL: '/media/new/image.jpg' }],
+        { entries: [updatingEntryMap.get('entry1')] },
+      );
     });
 
-    it('should use blobURL when getAssetPublicURL returns undefined', async () => {
+    it('should rewrite the references in a copy of each entry, falling back to the folder paths', async () => {
       const { getAssetPublicURL } = await import('$lib/services/assets/info');
-      const { getEntriesByAssetURL } = await import('$lib/services/contents/collection/entries');
+      const { getEntriesByAssets } = await import('$lib/services/assets/references');
+      const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
+      const entry = { id: 'entry1', locales: { en: { content: { image: '/images/image.jpg' } } } };
 
-      const mockAsset = {
-        path: 'assets/image.jpg',
-        folder: { internalPath: 'assets' },
-        blobURL: 'blob:http://example.com/12345',
+      // The moved asset has no public path, as in an entry-relative folder
+      vi.mocked(getAssetPublicURL).mockImplementation((_a, options) =>
+        options ? undefined : 'https://example.com/images/image.jpg',
+      );
+      vi.mocked(getEntriesByAssets)
+        .mockResolvedValueOnce([[entry]])
+        .mockResolvedValueOnce([]);
+      // The collection folder’s public path is used over the global folder’s
+      vi.mocked(getAssetFoldersByPath).mockReturnValue([
+        { collectionName: undefined, publicPath: '/global' },
+        { collectionName: 'posts', publicPath: '/images' },
+      ]);
+
+      const updatingEntryMap = new Map();
+
+      await collectEntryChangesFromAssets({
+        _globalAssetFolder: { publicPath: '/global' },
+        movingAssets: [{ asset: mockAsset, path: 'assets/new/image.jpg' }],
+        updatingEntryMap,
+      });
+
+      const copy = updatingEntryMap.get('entry1');
+
+      // A copy, so the original entry is left alone until the change is saved
+      expect(copy).toEqual(entry);
+      expect(copy).not.toBe(entry);
+      expect(getEntriesByAssets).toHaveBeenLastCalledWith(
+        [{ url: 'https://example.com/images/image.jpg', newURL: '/images/new/image.jpg' }],
+        { entries: [copy] },
+      );
+    });
+
+    it('should derive the new URL from the moved asset the way the current URL is derived', async () => {
+      const { getAssetPublicURL } = await import('$lib/services/assets/info');
+      const { getEntriesByAssets } = await import('$lib/services/assets/references');
+      const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
+      const entry = { id: 'entry1', locales: {} };
+
+      // `media_folder: public` with `public_folder: /`
+      const asset = {
+        path: 'public/photo.jpg',
+        name: 'photo.jpg',
+        folder: { internalPath: 'public' },
+      };
+
+      vi.mocked(getAssetPublicURL).mockImplementation(
+        (a, { pathOnly = false } = {}) =>
+          `${pathOnly ? '' : 'https://example.com'}/${a.path.replace('public/', '')}`,
+      );
+      vi.mocked(getEntriesByAssets).mockResolvedValue([[entry]]);
+      vi.mocked(getAssetFoldersByPath).mockReturnValue([]);
+
+      await collectEntryChangesFromAssets({
+        _globalAssetFolder: { internalPath: 'public', publicPath: '/' },
+        movingAssets: [{ asset, path: 'public/2024/new.jpg' }],
+        updatingEntryMap: new Map(),
+      });
+
+      expect(getAssetPublicURL).toHaveBeenLastCalledWith(
+        { ...asset, path: 'public/2024/new.jpg', name: 'new.jpg' },
+        { pathOnly: true, allowSpecial: true },
+      );
+      expect(getEntriesByAssets).toHaveBeenLastCalledWith(
+        [{ url: 'https://example.com/photo.jpg', newURL: '/2024/new.jpg' }],
+        { entries: [expect.objectContaining({ id: 'entry1' })] },
+      );
+    });
+
+    it('should look every asset up at once and copy an entry using several of them once', async () => {
+      const { getAssetPublicURL } = await import('$lib/services/assets/info');
+      const { getEntriesByAssets } = await import('$lib/services/assets/references');
+      const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
+      const entry = { id: 'entry1', locales: {} };
+      const other = { id: 'entry2', locales: {} };
+      const existingCopy = { id: 'entry2', locales: {} };
+      const updatingEntryMap = new Map([['entry2', existingCopy]]);
+      const otherAsset = { ...mockAsset, path: 'assets/other.jpg' };
+
+      vi.mocked(getAssetPublicURL).mockImplementation((a, options) =>
+        options ? undefined : `https://example.com/${a.path}`,
+      );
+
+      const unusedAsset = { ...mockAsset, path: 'assets/unused.jpg' };
+
+      vi.mocked(getEntriesByAssets).mockResolvedValue([[entry], [entry, other], []]);
+      vi.mocked(getAssetFoldersByPath).mockReturnValue([]);
+
+      await collectEntryChangesFromAssets({
+        _globalAssetFolder: { publicPath: '/images' },
+        movingAssets: [
+          { asset: mockAsset, path: 'assets/new/image.jpg' },
+          { asset: otherAsset, path: 'assets/new/other.jpg' },
+          { asset: unusedAsset, path: 'assets/new/unused.jpg' },
+        ],
+        updatingEntryMap,
+      });
+
+      expect(getEntriesByAssets).toHaveBeenCalledTimes(2);
+      expect(getEntriesByAssets).toHaveBeenNthCalledWith(1, [
+        { url: 'https://example.com/assets/image.jpg' },
+        { url: 'https://example.com/assets/other.jpg' },
+        { url: 'https://example.com/assets/unused.jpg' },
+      ]);
+      expect(updatingEntryMap.size).toBe(2);
+      // A copy made earlier is reused
+      expect(updatingEntryMap.get('entry2')).toBe(existingCopy);
+      expect(getEntriesByAssets).toHaveBeenLastCalledWith(
+        [
+          { url: 'https://example.com/assets/image.jpg', newURL: '/images/new/image.jpg' },
+          { url: 'https://example.com/assets/other.jpg', newURL: '/images/new/other.jpg' },
+        ],
+        { entries: [updatingEntryMap.get('entry1'), existingCopy] },
+      );
+    });
+
+    it('should swap the file name in a reference relative to the entry when renaming', async () => {
+      const { getAssetPublicURL } = await import('$lib/services/assets/info');
+      const { getEntriesByAssets } = await import('$lib/services/assets/references');
+      const entry = { id: 'entry1', locales: {} };
+
+      const asset = {
+        path: 'content/posts/hello/my photo.png',
+        name: 'my photo.png',
+        folder: { internalPath: 'content/posts', entryRelative: true },
       };
 
       vi.mocked(getAssetPublicURL).mockReturnValue(undefined);
-      vi.mocked(getEntriesByAssetURL).mockResolvedValue([]);
+      vi.mocked(getEntriesByAssets).mockResolvedValue([[entry]]);
 
-      const savingEntries = [];
-      const changes = [];
-
-      await collectEntryChangesFromAsset({
-        _globalAssetFolder: {},
-        newPath: 'new-assets/image.jpg',
-        asset: mockAsset,
-        savingEntries,
-        changes,
+      await collectEntryChangesFromAssets({
+        _globalAssetFolder: { publicPath: '/images' },
+        movingAssets: [{ asset, path: 'content/posts/hello/new photo.png' }],
+        updatingEntryMap: new Map(),
       });
 
-      // Should use blobURL as fallback
-      expect(getEntriesByAssetURL).toHaveBeenCalledWith('blob:http://example.com/12345');
+      const [[{ newURL }]] = vi.mocked(getEntriesByAssets).mock.lastCall;
+
+      // The rest of the reference is kept as the entry has it, and an encoded name stays encoded
+      expect(newURL('my photo.png')).toBe('new photo.png');
+      expect(newURL('./my photo.png')).toBe('./new photo.png');
+      expect(newURL('images/my%20photo.png')).toBe('images/new%20photo.png');
+      // A reference that doesn’t end with the name is left alone
+      expect(newURL('other.png')).toBeUndefined();
+      expect(newURL('not-my photo.png')).toBeUndefined();
     });
 
-    it('should handle asset folder without internalPath', async () => {
+    it('should swap a file name encoded with the `encode_file_path` option when renaming', async () => {
       const { getAssetPublicURL } = await import('$lib/services/assets/info');
-      const { getEntriesByAssetURL } = await import('$lib/services/contents/collection/entries');
-      const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
+      const { getEntriesByAssets } = await import('$lib/services/assets/references');
+      const entry = { id: 'entry1', locales: {} };
 
-      const mockAsset = {
-        path: 'assets/image.jpg',
-        folder: { internalPath: undefined },
-        blobURL: undefined,
+      const asset = {
+        path: 'content/posts/hello/photo (1).png',
+        name: 'photo (1).png',
+        folder: { internalPath: 'content/posts', entryRelative: true },
       };
 
-      const mockFolder = {
-        collectionName: 'posts',
-        publicPath: '/images',
-      };
+      vi.mocked(getAssetPublicURL).mockReturnValue(undefined);
+      vi.mocked(getEntriesByAssets).mockResolvedValue([[entry]]);
 
-      const mockUsedEntry = { id: 'entry1' };
-
-      const mockUpdatingEntry = {
-        id: 'entry1',
-        locales: { en: { path: 'content/test.md', content: {} } },
-      };
-
-      vi.mocked(getAssetPublicURL).mockReturnValue('https://example.com/assets/image.jpg');
-      vi.mocked(getEntriesByAssetURL)
-        .mockResolvedValueOnce([mockUsedEntry])
-        .mockResolvedValueOnce([mockUpdatingEntry]);
-      vi.mocked(getAssetFoldersByPath).mockReturnValue([mockFolder]);
-
-      const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-      const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
-
-      const { isCollectionIndexFile } =
-        await import('$lib/services/contents/collection/entries/index-file');
-
-      vi.mocked(getAssociatedCollections).mockReturnValue([]);
-      vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
-      vi.mocked(isCollectionIndexFile).mockReturnValue(false);
-
-      const savingEntries = [];
-      const changes = [];
-
-      await collectEntryChangesFromAsset({
-        _globalAssetFolder: { publicPath: '/global' },
-        newPath: 'new-assets/image.jpg',
-        asset: mockAsset,
-        savingEntries,
-        changes,
+      await collectEntryChangesFromAssets({
+        _globalAssetFolder: { publicPath: '/images' },
+        movingAssets: [{ asset, path: 'content/posts/hello/photo (2).png' }],
+        updatingEntryMap: new Map(),
       });
 
-      // When internalPath is undefined (becomes ''), replace('', publicPath) prepends publicPath
-      expect(getEntriesByAssetURL).toHaveBeenLastCalledWith(
-        'https://example.com/assets/image.jpg',
-        expect.objectContaining({
-          newURL: '/imagesnew-assets/image.jpg', // '' is replaced with '/images'
-        }),
+      const [[{ newURL }]] = vi.mocked(getEntriesByAssets).mock.lastCall;
+
+      // `encodeFilePath()` encodes `(` and `)` as well, unlike `encodeURI()`
+      expect(newURL('photo%20%281%29.png')).toBe('photo%20%282%29.png');
+      expect(newURL('./photo%20%281%29.png')).toBe('./photo%20%282%29.png');
+      // A name encoded by hand is still matched
+      expect(newURL('photo%20(1).png')).toBe('photo%20(2).png');
+    });
+
+    it('should keep the form of a reference to an asset renamed in a shared entry-relative folder', async () => {
+      const { getAssetPublicURL } = await import('$lib/services/assets/info');
+      const { getEntriesByAssets } = await import('$lib/services/assets/references');
+      const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
+      /** @type {typeof import('$lib/services/assets/info')} */
+      const actual = await vi.importActual('$lib/services/assets/info');
+      const entry = { id: 'entry1', locales: {} };
+
+      // The real function, which gives an asset directly in a shared entry-relative folder, as with
+      // entries that are files sharing the collection folder, a path relative to the folder
+      vi.mocked(getAssetPublicURL).mockImplementation(actual.getAssetPublicURL);
+      vi.mocked(getEntriesByAssets).mockResolvedValue([[entry]]);
+      cmsConfig.current = { output: { encode_file_path: true } };
+      onTestFinished(() => {
+        cmsConfig.current = undefined;
+      });
+
+      /**
+       * Rename an asset in the given folder and get the function rewriting a reference to it.
+       * @param {object} folder Asset folder.
+       * @param {string} oldName Current file name.
+       * @param {string} newName New file name.
+       * @returns {Promise<(src: string) => string | undefined>} Function.
+       */
+      const rename = async (folder, oldName, newName) => {
+        const dirPath = [folder.internalPath, folder.internalSubPath].filter(Boolean).join('/');
+        const asset = { path: `${dirPath}/${oldName}`, name: oldName, folder };
+
+        vi.mocked(getAssetFoldersByPath).mockReturnValue([folder]);
+
+        await collectEntryChangesFromAssets({
+          _globalAssetFolder: { internalPath: 'static/images', publicPath: '/images' },
+          movingAssets: [{ asset, path: `${dirPath}/${newName}` }],
+          updatingEntryMap: new Map(),
+        });
+
+        return vi.mocked(getEntriesByAssets).mock.lastCall[0][0].newURL;
+      };
+
+      const base = { collectionName: 'blog', entryRelative: true, hasTemplateTags: false };
+
+      // `media_folder: ''` with `public_folder: ./`
+      let newURL = await rename(
+        { ...base, internalPath: 'src/content/blog', internalSubPath: '', publicPath: '.' },
+        'photo.jpg',
+        'photo-new.jpg',
+      );
+
+      expect(newURL('./photo.jpg')).toBe('./photo-new.jpg');
+
+      // `media_folder: images` with `public_folder: ./images`
+      newURL = await rename(
+        {
+          ...base,
+          internalPath: 'src/content/blog',
+          internalSubPath: 'images',
+          publicPath: './images',
+        },
+        'photo.jpg',
+        'photo-new.jpg',
+      );
+
+      expect(newURL('./images/photo.jpg')).toBe('./images/photo-new.jpg');
+
+      // `media_folder: images` with `public_folder: ''`, which stores a bare file name
+      newURL = await rename(
+        { ...base, internalPath: 'src/content/blog', internalSubPath: 'images', publicPath: '' },
+        'x.jpg',
+        'x-new.jpg',
+      );
+
+      expect(newURL('x.jpg')).toBe('x-new.jpg');
+
+      // A name encoded with the `encode_file_path` option stays encoded
+      newURL = await rename(
+        { ...base, internalPath: 'src/content/blog', internalSubPath: 'images', publicPath: '' },
+        'my photo.jpg',
+        'new photo.jpg',
+      );
+
+      expect(newURL('my%20photo.jpg')).toBe('new%20photo.jpg');
+    });
+
+    it('should fall back to the folder paths when an entry-relative asset changes folders', async () => {
+      const { getAssetPublicURL } = await import('$lib/services/assets/info');
+      const { getEntriesByAssets } = await import('$lib/services/assets/references');
+      const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
+      const entry = { id: 'entry1', locales: {} };
+
+      const asset = {
+        path: 'content/posts/hello/photo.png',
+        name: 'photo.png',
+        folder: { internalPath: 'content/posts', entryRelative: true },
+      };
+
+      vi.mocked(getAssetPublicURL).mockReturnValue(undefined);
+      vi.mocked(getEntriesByAssets).mockResolvedValue([[entry]]);
+      vi.mocked(getAssetFoldersByPath).mockReturnValue([]);
+
+      await collectEntryChangesFromAssets({
+        _globalAssetFolder: { publicPath: '/images' },
+        movingAssets: [{ asset, path: 'content/posts/hello/sub/photo.png' }],
+        updatingEntryMap: new Map(),
+      });
+
+      expect(getEntriesByAssets).toHaveBeenLastCalledWith(
+        [{ asset, newURL: '/images/hello/sub/photo.png' }],
+        { entries: [expect.objectContaining({ id: 'entry1' })] },
       );
     });
 
-    it('should use global asset folder publicPath when collection not found', async () => {
+    it('should fall back to the global folder without a public path', async () => {
       const { getAssetPublicURL } = await import('$lib/services/assets/info');
-      const { getEntriesByAssetURL } = await import('$lib/services/contents/collection/entries');
+      const { getEntriesByAssets } = await import('$lib/services/assets/references');
       const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
+      const entry = { id: 'entry1', locales: {} };
 
-      const mockAsset = {
-        path: 'assets/image.jpg',
-        folder: { internalPath: 'assets' },
-        blobURL: undefined,
-      };
-
-      const mockUsedEntry = { id: 'entry1' };
-
-      const mockUpdatingEntry = {
-        id: 'entry1',
-        locales: { en: { path: 'content/test.md', content: {} } },
-      };
-
-      // Return empty array so find returns undefined
-      vi.mocked(getAssetPublicURL).mockReturnValue('https://example.com/assets/image.jpg');
-      vi.mocked(getEntriesByAssetURL)
-        .mockResolvedValueOnce([mockUsedEntry])
-        .mockResolvedValueOnce([mockUpdatingEntry]);
-      vi.mocked(getAssetFoldersByPath).mockReturnValue([]);
-
-      const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-      const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
-
-      const { isCollectionIndexFile } =
-        await import('$lib/services/contents/collection/entries/index-file');
-
-      vi.mocked(getAssociatedCollections).mockReturnValue([]);
-      vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
-      vi.mocked(isCollectionIndexFile).mockReturnValue(false);
-
-      const savingEntries = [];
-      const changes = [];
-      const globalPublicPath = '/media';
-
-      await collectEntryChangesFromAsset({
-        _globalAssetFolder: { publicPath: globalPublicPath },
-        newPath: 'new-assets/image.jpg',
-        asset: mockAsset,
-        savingEntries,
-        changes,
-      });
-
-      // Should use global asset folder publicPath
-      expect(getEntriesByAssetURL).toHaveBeenLastCalledWith(
-        'https://example.com/assets/image.jpg',
-        expect.objectContaining({
-          newURL: expect.stringContaining(globalPublicPath),
-        }),
+      // The moved asset has no public path, as in an entry-relative folder
+      vi.mocked(getAssetPublicURL).mockImplementation((_a, options) =>
+        options ? undefined : 'https://example.com/image.jpg',
       );
-    });
-
-    it('should handle global asset folder with undefined publicPath', async () => {
-      const { getAssetPublicURL } = await import('$lib/services/assets/info');
-      const { getEntriesByAssetURL } = await import('$lib/services/contents/collection/entries');
-      const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
-
-      const mockAsset = {
-        path: 'assets/image.jpg',
-        folder: { internalPath: 'assets' },
-        blobURL: undefined,
-      };
-
-      const mockUsedEntry = { id: 'entry1' };
-
-      const mockUpdatingEntry = {
-        id: 'entry1',
-        locales: { en: { path: 'content/test.md', content: {} } },
-      };
-
-      vi.mocked(getAssetPublicURL).mockReturnValue('https://example.com/assets/image.jpg');
-      vi.mocked(getEntriesByAssetURL)
-        .mockResolvedValueOnce([mockUsedEntry])
-        .mockResolvedValueOnce([mockUpdatingEntry]);
+      vi.mocked(getEntriesByAssets).mockResolvedValue([[entry]]);
       vi.mocked(getAssetFoldersByPath).mockReturnValue([]);
 
-      const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-      const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
-
-      const { isCollectionIndexFile } =
-        await import('$lib/services/contents/collection/entries/index-file');
-
-      vi.mocked(getAssociatedCollections).mockReturnValue([]);
-      vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
-      vi.mocked(isCollectionIndexFile).mockReturnValue(false);
-
-      const savingEntries = [];
-      const changes = [];
-
-      await collectEntryChangesFromAsset({
+      await collectEntryChangesFromAssets({
         _globalAssetFolder: { publicPath: undefined },
-        newPath: 'new-assets/image.jpg',
-        asset: mockAsset,
-        savingEntries,
-        changes,
+        movingAssets: [
+          { asset: { ...mockAsset, folder: { internalPath: undefined } }, path: 'new/image.jpg' },
+        ],
+        updatingEntryMap: new Map(),
       });
 
-      // Should use undefined as publicPath when global has undefined
-      expect(getEntriesByAssetURL).toHaveBeenLastCalledWith(
-        'https://example.com/assets/image.jpg',
-        expect.objectContaining({
-          newURL: expect.any(String),
+      expect(getEntriesByAssets).toHaveBeenLastCalledWith(
+        [{ url: 'https://example.com/image.jpg', newURL: 'new/image.jpg' }],
+        { entries: [expect.objectContaining({ id: 'entry1' })] },
+      );
+    });
+  });
+
+  describe('collectReferenceChanges', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it('rewrites the references, and collects the changes to save the entries with', async () => {
+      const { getEntriesByAssets } = await import('$lib/services/assets/references');
+      const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
+      const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
+      const { createSavingEntryData } = await import('$lib/services/contents/draft/save/changes');
+      const entry = { id: 'evening', locales: { en: { slug: 'evening', content: {} } } };
+      const change = { action: 'update', path: 'content/posts/evening.md', data: '' };
+
+      vi.mocked(getEntriesByAssets).mockResolvedValueOnce([]);
+      vi.mocked(getAssociatedCollections).mockReturnValue([{ name: 'posts', fields: [] }]);
+      vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+      vi.mocked(createSavingEntryData).mockResolvedValue({
+        savingEntry: { id: 'evening' },
+        changes: [change],
+      });
+
+      const getNewURL = vi.fn(() => 'https://cdn.example.com/a.png');
+
+      await expect(
+        collectReferenceChanges({
+          plan: { targets: [{ url: '/a.png' }, { url: '/b.png' }], usedEntries: [[entry], []] },
+          getNewURL,
         }),
+      ).resolves.toEqual({ savingEntries: [{ id: 'evening' }], changes: [change] });
+      // Only the file an entry uses gets a new URL
+      expect(getNewURL).toHaveBeenCalledExactlyOnceWith(0);
+      expect(getEntriesByAssets).toHaveBeenLastCalledWith(
+        [{ url: '/a.png', newURL: 'https://cdn.example.com/a.png' }],
+        { entries: [{ ...entry }] },
       );
     });
 
-    it('should handle when both find() and ?? return globalAssetFolder', async () => {
-      const { getAssetPublicURL } = await import('$lib/services/assets/info');
-      const { getEntriesByAssetURL } = await import('$lib/services/contents/collection/entries');
-      const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
+    it('collects nothing when no entry uses the files', async () => {
+      const { getEntriesByAssets } = await import('$lib/services/assets/references');
 
-      const mockAsset = {
-        path: 'assets/image.jpg',
-        folder: { internalPath: 'assets' },
-        blobURL: undefined,
-      };
-
-      const mockUsedEntry = { id: 'entry1' };
-
-      const mockUpdatingEntry = {
-        id: 'entry1',
-        locales: { en: { path: 'content/test.md', content: {} } },
-      };
-
-      vi.mocked(getAssetPublicURL).mockReturnValue('https://example.com/assets/image.jpg');
-      vi.mocked(getEntriesByAssetURL)
-        .mockResolvedValueOnce([mockUsedEntry])
-        .mockResolvedValueOnce([mockUpdatingEntry]);
-      // Return array with folder that doesn't have collectionName !== undefined property
-      vi.mocked(getAssetFoldersByPath).mockReturnValue([{ publicPath: '/local' }]);
-
-      const { getAssociatedCollections } = await import('$lib/services/contents/entry');
-      const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
-
-      const { isCollectionIndexFile } =
-        await import('$lib/services/contents/collection/entries/index-file');
-
-      vi.mocked(getAssociatedCollections).mockReturnValue([]);
-      vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
-      vi.mocked(isCollectionIndexFile).mockReturnValue(false);
-
-      const savingEntries = [];
-      const changes = [];
-
-      await collectEntryChangesFromAsset({
-        _globalAssetFolder: { publicPath: '/global' },
-        newPath: 'new-assets/image.jpg',
-        asset: mockAsset,
-        savingEntries,
-        changes,
-      });
-
-      // Should use global publicPath when find() doesn't find a folder with collectionName
-      expect(getEntriesByAssetURL).toHaveBeenLastCalledWith(
-        'https://example.com/assets/image.jpg',
-        expect.objectContaining({
-          newURL: expect.stringContaining('/global'),
+      await expect(
+        collectReferenceChanges({
+          plan: { targets: [{ url: '/a.png' }], usedEntries: [[]] },
+          getNewURL: vi.fn(),
         }),
-      );
+      ).resolves.toEqual({ savingEntries: [], changes: [] });
+      expect(getEntriesByAssets).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('saveReferenceChanges', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
     });
 
-    it('should collect changes for multiple updating entries', async () => {
-      const { getAssetPublicURL } = await import('$lib/services/assets/info');
-      const { getEntriesByAssetURL } = await import('$lib/services/contents/collection/entries');
-      const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
-
-      const mockAsset = {
-        path: 'assets/image.jpg',
-        folder: { internalPath: 'assets' },
-        blobURL: undefined,
-      };
-
-      const mockFolder = {
-        collectionName: 'posts',
-        publicPath: '/images',
-      };
-
-      const mockUsedEntry = { id: 'entry1' };
-
-      const mockUpdatingEntry1 = {
-        id: 'entry1',
-        locales: { en: { path: 'content/test1.md', content: {} } },
-      };
-
-      const mockUpdatingEntry2 = {
-        id: 'entry2',
-        locales: { en: { path: 'content/test2.md', content: {} } },
-      };
-
-      vi.mocked(getAssetPublicURL).mockReturnValue('https://example.com/assets/image.jpg');
-      vi.mocked(getEntriesByAssetURL)
-        .mockResolvedValueOnce([mockUsedEntry])
-        .mockResolvedValueOnce([mockUpdatingEntry1, mockUpdatingEntry2]);
-      vi.mocked(getAssetFoldersByPath).mockReturnValue([mockFolder]);
-
-      const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+    it('commits the entries along with the other changes', async () => {
+      const { saveChanges } = await import('$lib/services/backends/save');
+      const { getEntriesByAssets } = await import('$lib/services/assets/references');
+      const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
       const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
+      const { createSavingEntryData } = await import('$lib/services/contents/draft/save/changes');
+      const entry = { id: 'evening', locales: { en: { slug: 'evening', content: {} } } };
+      const entryChange = { action: 'update', path: 'content/posts/evening.md', data: '' };
+      const fileChange = { action: 'delete', path: 'static/a.png' };
+      const savingAsset = { path: 'static/b.png' };
 
-      const { isCollectionIndexFile } =
-        await import('$lib/services/contents/collection/entries/index-file');
-
-      vi.mocked(getAssociatedCollections).mockReturnValue([]);
+      vi.mocked(getEntriesByAssets).mockResolvedValueOnce([]);
+      vi.mocked(getAssociatedCollections).mockReturnValue([{ name: 'posts', fields: [] }]);
       vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
-      vi.mocked(isCollectionIndexFile).mockReturnValue(false);
-
-      const savingEntries = [];
-      const changes = [];
-
-      await collectEntryChangesFromAsset({
-        _globalAssetFolder: { publicPath: '/global' },
-        newPath: 'new-assets/image.jpg',
-        asset: mockAsset,
-        savingEntries,
-        changes,
+      vi.mocked(createSavingEntryData).mockResolvedValue({
+        savingEntry: { id: 'evening' },
+        changes: [entryChange],
       });
 
-      // Should process both updating entries
-      expect(getAssociatedCollections).toHaveBeenCalledTimes(2);
-      expect(getAssociatedCollections).toHaveBeenNthCalledWith(1, mockUpdatingEntry1);
-      expect(getAssociatedCollections).toHaveBeenNthCalledWith(2, mockUpdatingEntry2);
+      await saveReferenceChanges({
+        plan: { targets: [{ url: '/a.png' }], usedEntries: [[entry]] },
+        newURLs: ['https://cdn.example.com/a.png'],
+        changes: [fileChange],
+        savingAssets: [savingAsset],
+        commitType: 'deleteMedia',
+      });
+
+      expect(getEntriesByAssets).toHaveBeenCalledWith(
+        [{ url: '/a.png', newURL: 'https://cdn.example.com/a.png' }],
+        { entries: [{ ...entry }] },
+      );
+      expect(saveChanges).toHaveBeenCalledWith({
+        changes: [fileChange, entryChange],
+        savingEntries: [{ id: 'evening' }],
+        savingAssets: [savingAsset],
+        options: { commitType: 'deleteMedia' },
+      });
+    });
+
+    it('commits nothing when there’s nothing to change', async () => {
+      const { saveChanges } = await import('$lib/services/backends/save');
+
+      await saveReferenceChanges({
+        plan: { targets: [{ url: '/a.png' }], usedEntries: [[]] },
+        newURLs: ['https://cdn.example.com/a.png'],
+        commitType: 'uploadMedia',
+      });
+
+      expect(saveChanges).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('planReferenceRewrite', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it('finds the entries using the files, without searching for no file', async () => {
+      const { getEntriesByAssets } = await import('$lib/services/assets/references');
+      const entry = { id: 'evening', locales: {} };
+
+      vi.mocked(getEntriesByAssets).mockResolvedValueOnce([[entry]]);
+
+      await expect(planReferenceRewrite([{ url: '/a.png' }])).resolves.toEqual({
+        targets: [{ url: '/a.png' }],
+        usedEntries: [[entry]],
+      });
+      await expect(planReferenceRewrite([])).resolves.toEqual({ targets: [], usedEntries: [] });
+      expect(getEntriesByAssets).toHaveBeenCalledOnce();
     });
   });
 
@@ -1012,9 +1142,8 @@ describe('assets/data/move', () => {
     });
 
     it('should update stores after moving assets', async () => {
-      const { focusedAsset, getAssetByInternalPath, overlaidAsset } =
-        await import('$lib/services/assets');
-
+      const { getAssetByInternalPath } = await import('$lib/services/assets');
+      const { focusedAsset, overlaidAsset } = await import('$lib/services/assets/state');
       const { assetUpdatesToast } = await import('$lib/services/assets/data');
       const mockAsset1 = { path: 'old1.jpg' };
       const mockAsset2 = { path: 'old2.jpg' };
@@ -1065,7 +1194,7 @@ describe('assets/data/move', () => {
     });
 
     it('should handle focused asset not in movedAssets', async () => {
-      const { focusedAsset, overlaidAsset } = await import('$lib/services/assets');
+      const { focusedAsset, overlaidAsset } = await import('$lib/services/assets/state');
       const mockAsset = { path: 'different.jpg' };
       const mockMovedAsset = { path: 'moved.jpg' };
       const movedAssets = [{ asset: mockMovedAsset, path: 'new.jpg' }];
@@ -1080,9 +1209,8 @@ describe('assets/data/move', () => {
     });
 
     it('should handle focused asset found in allAssets', async () => {
-      const { focusedAsset, getAssetByInternalPath, overlaidAsset } =
-        await import('$lib/services/assets');
-
+      const { getAssetByInternalPath } = await import('$lib/services/assets');
+      const { focusedAsset, overlaidAsset } = await import('$lib/services/assets/state');
       const mockMovedAsset = { path: 'old.jpg' };
       const mockNewAsset = { path: 'new.jpg' };
       const movedAssets = [{ asset: mockMovedAsset, path: 'new.jpg' }];
@@ -1099,9 +1227,8 @@ describe('assets/data/move', () => {
     });
 
     it('should handle focused asset not found in allAssets', async () => {
-      const { focusedAsset, getAssetByInternalPath, overlaidAsset } =
-        await import('$lib/services/assets');
-
+      const { getAssetByInternalPath } = await import('$lib/services/assets');
+      const { focusedAsset, overlaidAsset } = await import('$lib/services/assets/state');
       const mockMovedAsset = { path: 'old.jpg' };
       const movedAssets = [{ asset: mockMovedAsset, path: 'new.jpg' }];
 
@@ -1116,9 +1243,8 @@ describe('assets/data/move', () => {
     });
 
     it('should handle overlaid asset not found in allAssets', async () => {
-      const { focusedAsset, getAssetByInternalPath, overlaidAsset } =
-        await import('$lib/services/assets');
-
+      const { getAssetByInternalPath } = await import('$lib/services/assets');
+      const { focusedAsset, overlaidAsset } = await import('$lib/services/assets/state');
       const mockMovedAsset = { path: 'old.jpg' };
       const mockFocusedAsset = { path: 'focused.jpg' };
       const movedAssets = [{ asset: mockMovedAsset, path: 'new.jpg' }];
@@ -1134,9 +1260,8 @@ describe('assets/data/move', () => {
     });
 
     it('should handle overlaid asset found in allAssets', async () => {
-      const { focusedAsset, getAssetByInternalPath, overlaidAsset } =
-        await import('$lib/services/assets');
-
+      const { getAssetByInternalPath } = await import('$lib/services/assets');
+      const { focusedAsset, overlaidAsset } = await import('$lib/services/assets/state');
       const mockMovedAsset = { path: 'old.jpg' };
       const mockNewAsset = { path: 'new.jpg' };
       const movedAssets = [{ asset: mockMovedAsset, path: 'new.jpg' }];
@@ -1155,7 +1280,36 @@ describe('assets/data/move', () => {
 
   describe('moveAssets', () => {
     beforeEach(() => {
-      vi.clearAllMocks();
+      // The implementations the tests above gave the mocks must not leak into these
+      vi.resetAllMocks();
+    });
+
+    it('refuses to move a file into or out of a folder the CMS is served from', async () => {
+      const { saveChanges } = await import('$lib/services/backends/save');
+      const asset = /** @type {any} */ ({ path: 'static/images/a.png', sha: 'a' });
+
+      await expect(moveAssets('move', [{ asset, path: 'static/admin/a.png' }])).rejects.toThrow(
+        'Cannot change a file in a folder the CMS is served from',
+      );
+      await expect(
+        moveAssets('rename', [
+          { asset: { ...asset, path: 'static/admin/index.html' }, path: 'static/admin/old.html' },
+        ]),
+      ).rejects.toThrow('Cannot change a file in a folder the CMS is served from');
+      // An empty folder’s placeholder counts too
+      await expect(
+        moveAssets('move', [], {
+          extraChanges: [
+            { action: 'move', path: 'static/admin/.gitkeep', previousPath: 'static/x/.gitkeep' },
+          ],
+        }),
+      ).rejects.toThrow('Cannot change a file in a folder the CMS is served from');
+      await expect(
+        moveAssets('move', [], {
+          extraChanges: [{ action: 'create', path: 'static/cms/.gitkeep' }],
+        }),
+      ).rejects.toThrow('Cannot change a file in a folder the CMS is served from');
+      expect(saveChanges).not.toHaveBeenCalled();
     });
 
     it('should move assets and update entries', async () => {
@@ -1181,6 +1335,119 @@ describe('assets/data/move', () => {
 
       expect(saveChanges).toHaveBeenCalled();
       expect(getAssetBlob).toHaveBeenCalledWith(mockAsset);
+    });
+
+    it('should save a moved asset with the folder it’s moved to', async () => {
+      const { getPathInfo } = await import('@sveltia/utils/file');
+      const { saveChanges } = await import('$lib/services/backends/save');
+      const folder = { internalPath: 'static/projects' };
+      const otherFolder = { internalPath: 'static/uploads' };
+      const file = new File(['content'], 'image.jpg');
+      const asset = { path: 'static/uploads/image.jpg', sha: 'abc', file, folder: otherFolder };
+      const other = { path: 'static/uploads/b.jpg', sha: 'def', file, folder: otherFolder };
+
+      cmsConfig.current = /** @type {any} */ ({});
+      vi.mocked(getPathInfo).mockImplementation((path) => ({ basename: path.split('/').pop() }));
+      vi.mocked(saveChanges).mockResolvedValue({});
+
+      await moveAssets('move', [
+        { asset, path: 'static/projects/image.jpg', folder },
+        // Without a folder, the asset keeps its own
+        { asset: other, path: 'static/uploads/c.jpg' },
+      ]);
+
+      expect(vi.mocked(saveChanges).mock.calls[0][0].savingAssets).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ path: 'static/projects/image.jpg', folder }),
+          expect.objectContaining({ path: 'static/uploads/c.jpg', folder: otherFolder }),
+        ]),
+      );
+    });
+
+    it('should commit the extra changes along, and keep quiet when asked', async () => {
+      const { getPathInfo } = await import('@sveltia/utils/file');
+      const { saveChanges } = await import('$lib/services/backends/save');
+      const { assetUpdatesToast } = await import('$lib/services/assets/data');
+      const mockFile = new File(['content'], 'image.jpg');
+      const mockAsset = { path: 'old/image.jpg', sha: 'abc123', file: mockFile };
+      const extraChange = { action: 'move', path: 'new/.gitkeep', previousPath: 'old/.gitkeep' };
+
+      cmsConfig.current = /** @type {any} */ ({});
+      assetUpdatesToast.current = undefined;
+      vi.mocked(getPathInfo).mockReturnValue({ basename: 'image.jpg' });
+      vi.mocked(saveChanges).mockResolvedValue({});
+
+      await moveAssets('move', [{ asset: mockAsset, path: 'new/image.jpg' }], {
+        extraChanges: [extraChange],
+        notify: false,
+      });
+
+      const { changes } = vi.mocked(saveChanges).mock.calls[0][0];
+
+      expect(changes).toHaveLength(2);
+      expect(changes[1]).toBe(extraChange);
+      expect(assetUpdatesToast.current).toBeUndefined();
+    });
+
+    it('should save an entry using several of the moved assets once', async () => {
+      const { getPathInfo } = await import('@sveltia/utils/file');
+      const { saveChanges } = await import('$lib/services/backends/save');
+      const { getAssetPublicURL } = await import('$lib/services/assets/info');
+      const { getEntriesByAssets } = await import('$lib/services/assets/references');
+      const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
+      const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
+      const { globalAssetFolder } = await import('$lib/services/assets/folders');
+      const entry = { id: 'entry1', locales: {} };
+
+      globalAssetFolder.current = { publicPath: '/images' };
+
+      const assets = [
+        { path: 'old/a.jpg', sha: 'a', file: new File(['a'], 'a.jpg'), folder: {} },
+        { path: 'old/b.jpg', sha: 'b', file: new File(['b'], 'b.jpg'), folder: {} },
+      ];
+
+      cmsConfig.current = /** @type {any} */ ({});
+      vi.mocked(getPathInfo).mockReturnValue({ basename: 'x.jpg' });
+      vi.mocked(saveChanges).mockResolvedValue({});
+      vi.mocked(getAssetPublicURL).mockImplementation((asset) => `/${asset.path}`);
+      vi.mocked(getEntriesByAssets).mockResolvedValue([[entry], [entry]]);
+      vi.mocked(getAssetFoldersByPath).mockReturnValue([]);
+      vi.mocked(getAssociatedCollections).mockReturnValue([]);
+
+      await moveAssets(
+        'move',
+        assets.map((asset) => ({ asset, path: asset.path.replace('old', 'new') })),
+      );
+
+      // Both references are replaced in one copy of the entry, which is then collected once
+      expect(getAssociatedCollections).toHaveBeenCalledOnce();
+      expect(getAssociatedCollections).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'entry1' }),
+      );
+    });
+
+    it('should refuse to move an asset a read-only entry uses', async () => {
+      const { getPathInfo } = await import('@sveltia/utils/file');
+      const { saveChanges } = await import('$lib/services/backends/save');
+      const { getAssetPublicURL } = await import('$lib/services/assets/info');
+      const { getEntriesByAssets } = await import('$lib/services/assets/references');
+      const { isEntryReadonly } = await import('$lib/services/contents/entry/readonly');
+      const { globalAssetFolder } = await import('$lib/services/assets/folders');
+      const entry = { id: 'entry1', locales: {} };
+      const asset = { path: 'old/a.jpg', sha: 'a', file: new File(['a'], 'a.jpg'), folder: {} };
+
+      globalAssetFolder.current = { publicPath: '/images' };
+      cmsConfig.current = /** @type {any} */ ({});
+      vi.mocked(getPathInfo).mockReturnValue({ basename: 'a.jpg' });
+      vi.mocked(getAssetPublicURL).mockImplementation((_asset) => `/${_asset.path}`);
+      vi.mocked(getEntriesByAssets).mockResolvedValue([[entry]]);
+      vi.mocked(isEntryReadonly).mockReturnValueOnce(true);
+
+      await expect(moveAssets('rename', [{ asset, path: 'old/b.jpg' }])).rejects.toThrow(
+        'cannot_move_referenced_asset',
+      );
+      expect(isEntryReadonly).toHaveBeenCalledWith(entry);
+      expect(saveChanges).not.toHaveBeenCalled();
     });
 
     it('should handle asset with existing file', async () => {

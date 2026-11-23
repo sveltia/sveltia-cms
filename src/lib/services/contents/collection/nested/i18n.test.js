@@ -2,17 +2,16 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { isEntryCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import {
-  getFolderName,
   getOwnFolderName,
   hasLocalizedFolders,
   localizeDirPath,
 } from '$lib/services/contents/collection/nested/i18n';
+import { isEntryCollection } from '$lib/services/contents/collection/predicates';
 import { mergeUnpublishedEntries, unpublishedEntries } from '$lib/services/workflow';
 
-vi.mock('$lib/services/contents/collection', () => ({
+vi.mock('$lib/services/contents/collection/predicates', () => ({
   isEntryCollection: vi.fn(),
 }));
 
@@ -44,7 +43,7 @@ const entry = (id, subPaths) => ({
 });
 
 /**
- * Create a nested collection with localized slugs.
+ * Create a collection of nested entries with localized slugs.
  * @param {object} [overrides] Property overrides.
  * @returns {any} Collection.
  */
@@ -58,6 +57,7 @@ const createCollection = (overrides = {}) => ({
   _i18n: {
     defaultLocale: 'en',
     structure: 'multiple_folders',
+    i18nEnabled: true,
     structureMap: {},
   },
   ...overrides,
@@ -81,14 +81,6 @@ beforeEach(() => {
   ]);
 });
 
-describe('getFolderName()', () => {
-  test('returns the last segment', () => {
-    expect(getFolderName('about/team')).toBe('team');
-    expect(getFolderName('about')).toBe('about');
-    expect(getFolderName('')).toBe('');
-  });
-});
-
 describe('getOwnFolderName()', () => {
   test('returns the folder the index file is in', () => {
     expect(getOwnFolderName('about/team/_index')).toBe('team');
@@ -101,7 +93,7 @@ describe('getOwnFolderName()', () => {
 });
 
 describe('hasLocalizedFolders()', () => {
-  test('is true for a nested collection with an index file and localized slugs', () => {
+  test('is true for nested entries with an index file and localized slugs', () => {
     expect(hasLocalizedFolders(createCollection())).toBe(true);
   });
 
@@ -120,7 +112,7 @@ describe('hasLocalizedFolders()', () => {
     expect(
       hasLocalizedFolders(
         createCollection({
-          _i18n: { defaultLocale: 'en', structureMap: { i18nSingleFile: true } },
+          _i18n: { defaultLocale: 'en', i18nEnabled: true, structureMap: { i18nSingleFile: true } },
         }),
       ),
     ).toBe(false);

@@ -67,6 +67,13 @@ describe('GitHub repository service', () => {
 
       expect(result).toBe('https://github.example.com/api/v3');
     });
+
+    test('replaces /api/graphql with /api/v3', () => {
+      const url = 'https://github.example.com/api/graphql';
+      const result = normalizeRestBaseURL(url);
+
+      expect(result).toBe('https://github.example.com/api/v3');
+    });
   });
 
   describe('normalizeGraphQLBaseURL', () => {
@@ -84,11 +91,11 @@ describe('GitHub repository service', () => {
       expect(result).toBe('https://github.example.com/api/graphql');
     });
 
-    test('replaces /api/v3 with /graphql', () => {
+    test('replaces /api/v3 with /api/graphql', () => {
       const url = 'https://github.example.com/api/v3';
       const result = normalizeGraphQLBaseURL(url);
 
-      expect(result).toBe('https://github.example.com/graphql');
+      expect(result).toBe('https://github.example.com/api/graphql');
     });
 
     test('adds /graphql when URL ends with /api', () => {
@@ -119,6 +126,13 @@ describe('GitHub repository service', () => {
       expect(result).toBe('https://github.example.com/api/graphql');
     });
 
+    test('returns URL unchanged when it ends with /graphql without /api', () => {
+      const url = 'https://proxy.example.com/graphql';
+      const result = normalizeGraphQLBaseURL(url);
+
+      expect(result).toBe('https://proxy.example.com/graphql');
+    });
+
     test('handles URL ending with /graphql and trailing slashes', () => {
       const url = 'https://github.example.com/api/graphql/';
       const result = normalizeGraphQLBaseURL(url);
@@ -137,7 +151,7 @@ describe('GitHub repository service', () => {
       const url = 'https://github.example.com/api/v3/';
       const result = normalizeGraphQLBaseURL(url);
 
-      expect(result).toBe('https://github.example.com/graphql');
+      expect(result).toBe('https://github.example.com/api/graphql');
     });
   });
 });

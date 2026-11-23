@@ -1,14 +1,24 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { parseLocation } from '$lib/services/app/navigation';
 import { searchMode, searchTerms } from '$lib/services/search';
 
-import { isSearchRoute } from './navigation';
+import { isSearchResultsPath, isSearchRoute } from './navigation';
 
 describe('isSearchRoute', () => {
   beforeEach(() => {
     // Reset stores to initial state before each test
     searchMode.current = null;
     searchTerms.current = '';
+  });
+
+  it('should read back the terms from the URL the search input has encoded them in', () => {
+    ['.', '..', '%2E', 'a/../b', '50% off?#1'].forEach((terms) => {
+      const { path } = parseLocation(`https://example.com/#/search/${encodeURIComponent(terms)}`);
+
+      expect(isSearchRoute(path)).toBe(true);
+      expect(searchTerms.current).toBe(terms);
+    });
   });
 
   describe('route matching', () => {
@@ -201,5 +211,25 @@ describe('isSearchRoute', () => {
       expect(isSearchRoute('/search/new')).toBe(true);
       expect(isSearchRoute('/contents')).toBe(false);
     });
+  });
+});
+
+describe('isSearchResultsPath', () => {
+  beforeEach(() => {
+    searchMode.current = null;
+    searchTerms.current = '';
+  });
+
+  it('should tell the search results page from other pages', () => {
+    expect(isSearchResultsPath('/search/hello')).toBe(true);
+    expect(isSearchResultsPath('/search')).toBe(false);
+    expect(isSearchResultsPath('/collections/posts')).toBe(false);
+  });
+
+  it('should leave the search state alone', () => {
+    isSearchResultsPath('/search/hello');
+
+    expect(searchTerms.current).toBe('');
+    expect(searchMode.current).toBeNull();
   });
 });

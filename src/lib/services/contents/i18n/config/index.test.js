@@ -7,7 +7,10 @@ import {
   determineInitialLocales,
   determineOmitDefaultLocale,
   determineStructure,
+  getDraftI18nConfig,
   normalizeI18nConfig,
+  usesMultiFileStructure,
+  usesSingleFileStructure,
 } from '.';
 
 /**
@@ -971,6 +974,45 @@ describe('Test normalizeI18nConfig()', () => {
     });
   });
 
+  test('config with the locale placeholder in the collection folder', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        ...cmsConfigBase,
+        i18n: {
+          structure: 'multiple_root_folders',
+          locales: ['en', 'de', 'fr'],
+          omit_default_locale_from_file_path: true,
+        },
+        collections: [collectionWithI18n],
+      },
+    };
+
+    /** @type {Collection} */
+    const collection = { ...collectionWithI18n, folder: 'content/{{locale}}/posts' };
+
+    // The placeholder says where the locale folder goes, so the configured structure is replaced
+    // with `multiple_folders`, and the default locale can be omitted from the file path
+    expect(normalizeI18nConfig(collection)).toEqual({
+      structure: 'multiple_folders',
+      structureMap: {
+        i18nSingleFile: false,
+        i18nSingleFileDefaultRoot: false,
+        i18nMultiFile: false,
+        i18nMultiFolder: true,
+        i18nMultiRootFolder: false,
+      },
+      i18nEnabled: true,
+      allLocales: ['en', 'de', 'fr'],
+      initialLocales: ['en', 'de', 'fr'],
+      defaultLocale: 'en',
+      saveAllLocales: true,
+      canonicalSlug,
+      omitDefaultLocaleFromFilePath: true,
+      omitDefaultLocaleFromPreviewPath: false,
+    });
+  });
+
   test('backward compatibility: both legacy and new option names work together (new option takes precedence)', async () => {
     // @ts-ignore
     (await import('$lib/services/config')).cmsConfig = {
@@ -1080,6 +1122,31 @@ describe('Test normalizeI18nConfig()', () => {
   });
 });
 
+describe('Test getDraftI18nConfig()', () => {
+  const collectionI18n = /** @type {any} */ ({ ...DEFAULT_I18N_CONFIG, i18nEnabled: true });
+  const fileI18n = /** @type {any} */ ({ ...DEFAULT_I18N_CONFIG, defaultLocale: 'ja' });
+
+  test('returns the config of the collection file if any', () => {
+    const draft = /** @type {any} */ ({
+      collection: { _i18n: collectionI18n },
+      collectionFile: { _i18n: fileI18n },
+    });
+
+    expect(getDraftI18nConfig(draft)).toBe(fileI18n);
+  });
+
+  test('returns the config of the collection otherwise', () => {
+    const draft = /** @type {any} */ ({ collection: { _i18n: collectionI18n } });
+
+    expect(getDraftI18nConfig(draft)).toBe(collectionI18n);
+  });
+
+  test('returns the default config without a draft', () => {
+    expect(getDraftI18nConfig(undefined)).toBe(DEFAULT_I18N_CONFIG);
+    expect(getDraftI18nConfig(/** @type {any} */ ({}))).toBe(DEFAULT_I18N_CONFIG);
+  });
+});
+
 describe('Test internal helper functions', () => {
   describe('determineStructure', () => {
     test('should return default structure when no file provided', () => {
@@ -1113,6 +1180,48 @@ describe('Test internal helper functions', () => {
       expect(determineStructure('multiple_folders', file1)).toBe('multiple_files');
       expect(determineStructure('single_file', file2)).toBe('multiple_files');
       expect(determineStructure('multiple_folders_i18n_root', file3)).toBe('multiple_files');
+    });
+
+    test('should return multiple_folders when the folder includes {{locale}}', () => {
+      expect(determineStructure('single_file', undefined, 'content/{{locale}}/posts')).toBe(
+        'multiple_folders',
+      );
+      expect(determineStructure('multiple_files', undefined, '{{locale}}/posts')).toBe(
+        'multiple_folders',
+      );
+      expect(determineStructure('multiple_root_folders', undefined, 'content/{{locale}}')).toBe(
+        'multiple_folders',
+      );
+    });
+
+    test('should return default structure when the folder does not include {{locale}}', () => {
+      expect(determineStructure('multiple_root_folders', undefined, 'content/posts')).toBe(
+        'multiple_root_folders',
+      );
+      expect(determineStructure('single_file', undefined, '')).toBe('single_file');
+    });
+
+    test('should ignore the folder when a file is given', () => {
+      const file = { name: 'home', file: 'data/home.json', fields: [] };
+
+      expect(determineStructure('multiple_folders', file, 'content/{{locale}}/posts')).toBe(
+        'single_file',
+      );
+    });
+
+    test('should return single_file for an entry collection storing all the entries in one file', () => {
+      expect(determineStructure('multiple_folders', undefined, undefined, 'data/a.json')).toBe(
+        'single_file',
+      );
+      expect(determineStructure('multiple_files', undefined, undefined, 'data/a.json')).toBe(
+        'single_file',
+      );
+    });
+
+    test('should preserve single_file_default_root for an entry collection storing all the entries in one file', () => {
+      expect(
+        determineStructure('single_file_default_root', undefined, undefined, 'data/a.json'),
+      ).toBe('single_file_default_root');
     });
   });
 
@@ -1330,6 +1439,18 @@ describe('Test internal helper functions', () => {
       expect(determineOmitDefaultLocale(true, baseStructureMap, file)).toBe(false);
     });
 
+    test.each([
+      'i18n/{{locale}}.yaml',
+      'data/settings_{{locale}}.json',
+      'settings-{{locale}}.json',
+      '{{locale}}.md',
+    ])('should return false for file with {{locale}} that can’t be removed: %s', (path) => {
+      /** @type {CollectionFile} */
+      const file = { name: 'about', file: path, fields: [] };
+
+      expect(determineOmitDefaultLocale(true, baseStructureMap, file)).toBe(false);
+    });
+
     test('should return false for file with {{locale}} at end of path (no separator)', () => {
       /** @type {CollectionFile} */
       const file = { name: 'about', file: 'content/about-{{locale}}', fields: [] };
@@ -1343,6 +1464,29 @@ describe('Test internal helper functions', () => {
       const file = { name: 'about', file: 'content/about.md', fields: [] }; // no {{locale}}
 
       expect(determineOmitDefaultLocale(true, structureMap, file)).toBe(false);
+    });
+  });
+
+  describe('usesSingleFileStructure', () => {
+    test('should detect the single file structures', () => {
+      expect(usesSingleFileStructure(createStructureMap(true, 'single_file'))).toBe(true);
+      expect(usesSingleFileStructure(createStructureMap(true, 'single_file_default_root'))).toBe(
+        true,
+      );
+      expect(usesSingleFileStructure(createStructureMap(true, 'multiple_files'))).toBe(false);
+      expect(usesSingleFileStructure(createStructureMap(false, 'single_file'))).toBe(false);
+      expect(usesSingleFileStructure({})).toBe(false);
+    });
+  });
+
+  describe('usesMultiFileStructure', () => {
+    test('should detect the multiple file structures', () => {
+      expect(usesMultiFileStructure(createStructureMap(true, 'multiple_files'))).toBe(true);
+      expect(usesMultiFileStructure(createStructureMap(true, 'multiple_folders'))).toBe(true);
+      expect(usesMultiFileStructure(createStructureMap(true, 'multiple_root_folders'))).toBe(true);
+      expect(usesMultiFileStructure(createStructureMap(true, 'single_file'))).toBe(false);
+      expect(usesMultiFileStructure(createStructureMap(false, 'multiple_files'))).toBe(false);
+      expect(usesMultiFileStructure({})).toBe(false);
     });
   });
 });

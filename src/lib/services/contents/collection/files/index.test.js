@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { cmsConfig } from '$lib/services/config';
-import { allEntries, allEntryFolders } from '$lib/services/contents';
+import { allEntryFolders, findEntryByPaths } from '$lib/services/contents';
 import { getCollection, getValidCollections } from '$lib/services/contents/collection';
 import {
   getCollectionFile,
@@ -9,8 +9,7 @@ import {
   getCollectionFileIndex,
   getCollectionFileLabel,
   getCollectionFilesByEntry,
-  getValidCollectionFiles,
-  isValidCollectionFile,
+  resolveCollectionAndFile,
 } from '$lib/services/contents/collection/files';
 
 // Mock dependencies
@@ -18,134 +17,16 @@ vi.mock('$lib/services/config', () => ({
   cmsConfig: { current: undefined },
 }));
 vi.mock('$lib/services/contents', () => ({
-  allEntries: { current: undefined },
   allEntryFolders: { current: undefined },
+  findEntryByPaths: vi.fn(),
 }));
 vi.mock('$lib/services/contents/collection', () => ({
   getCollection: vi.fn(),
   getValidCollections: vi.fn(),
 }));
-vi.mock('$lib/services/contents/entry', () => ({
+vi.mock('$lib/services/contents/entry/collections', () => ({
   getAssociatedCollections: vi.fn(),
 }));
-
-describe('isValidCollectionFile()', () => {
-  test('returns true for valid collection file', () => {
-    const validFile = {
-      name: 'test-file',
-      file: 'test.md',
-      fields: [{ name: 'title', widget: 'string' }],
-    };
-
-    expect(isValidCollectionFile(validFile)).toBe(true);
-  });
-
-  test('returns false for divider', () => {
-    const divider = {
-      divider: true,
-    };
-
-    expect(isValidCollectionFile(divider)).toBe(false);
-  });
-
-  test('returns false for file without string file property', () => {
-    const invalidFile = {
-      name: 'test-file',
-      file: 123, // Not a string
-      fields: [{ name: 'title', widget: 'string' }],
-    };
-
-    // Cast to any to test the type validation
-    expect(isValidCollectionFile(/** @type {any} */ (invalidFile))).toBe(false);
-  });
-
-  test('returns false for file without fields array', () => {
-    const invalidFile = {
-      name: 'test-file',
-      file: 'test.md',
-      fields: 'not-an-array',
-    };
-
-    // Cast to any to test the type validation
-    expect(isValidCollectionFile(/** @type {any} */ (invalidFile))).toBe(false);
-  });
-
-  test('returns false for file without fields', () => {
-    const invalidFile = {
-      name: 'test-file',
-      file: 'test.md',
-    };
-
-    // Cast to any to test the type validation
-    expect(isValidCollectionFile(/** @type {any} */ (invalidFile))).toBe(false);
-  });
-});
-
-describe('getValidCollectionFiles()', () => {
-  test('filters out dividers and invalid files', () => {
-    const files = [
-      {
-        name: 'valid-file-1',
-        file: 'test1.md',
-        fields: [{ name: 'title', widget: 'string' }],
-      },
-      {
-        divider: true,
-      },
-      {
-        name: 'valid-file-2',
-        file: 'test2.md',
-        fields: [{ name: 'content', widget: 'markdown' }],
-      },
-      {
-        name: 'invalid-file',
-        file: 123, // Invalid file property
-        fields: [{ name: 'title', widget: 'string' }],
-      },
-    ];
-
-    const validFiles = getValidCollectionFiles(/** @type {any} */ (files));
-
-    expect(validFiles).toHaveLength(2);
-    expect(validFiles[0].name).toBe('valid-file-1');
-    expect(validFiles[1].name).toBe('valid-file-2');
-  });
-
-  test('returns empty array for no valid files', () => {
-    const files = [
-      { divider: true },
-      {
-        name: 'invalid-file',
-        file: 123,
-        fields: 'not-an-array',
-      },
-    ];
-
-    const validFiles = getValidCollectionFiles(/** @type {any} */ (files));
-
-    expect(validFiles).toHaveLength(0);
-  });
-
-  test('returns all files when all are valid', () => {
-    const files = [
-      {
-        name: 'file-1',
-        file: 'test1.md',
-        fields: [{ name: 'title', widget: 'string' }],
-      },
-      {
-        name: 'file-2',
-        file: 'test2.md',
-        fields: [{ name: 'content', widget: 'markdown' }],
-      },
-    ];
-
-    const validFiles = getValidCollectionFiles(files);
-
-    expect(validFiles).toHaveLength(2);
-    expect(validFiles).toEqual(files);
-  });
-});
 
 describe('getCollectionFile()', () => {
   beforeEach(async () => {
@@ -202,6 +83,14 @@ describe('getCollectionFile()', () => {
     expect(getCollection).not.toHaveBeenCalled();
   });
 
+  test('returns undefined for the name of an `Object.prototype` member', () => {
+    const mockCollection = { name: 'test-collection', _type: 'file', _fileMap: {} };
+
+    ['constructor', 'toString', '__proto__'].forEach((name) => {
+      expect(getCollectionFile(/** @type {any} */ (mockCollection), name)).toBeUndefined();
+    });
+  });
+
   test('returns undefined for non-existent collection', () => {
     vi.mocked(getCollection).mockReturnValue(undefined);
 
@@ -236,6 +125,50 @@ describe('getCollectionFile()', () => {
     const result = getCollectionFile('test-collection', 'non-existent-file');
 
     expect(result).toBeUndefined();
+  });
+});
+
+describe('resolveCollectionAndFile()', () => {
+  const collectionFile = { name: 'about', file: 'content/about.md' };
+  const fileCollection = { name: 'pages', _type: 'file', _fileMap: { about: collectionFile } };
+  const entryCollection = { name: 'posts', _type: 'entry', folder: 'content/posts' };
+
+  test('returns the collection alone when no file name is given', () => {
+    vi.mocked(getCollection).mockReturnValue(/** @type {any} */ (entryCollection));
+
+    expect(resolveCollectionAndFile('posts', undefined)).toEqual({
+      collection: entryCollection,
+      collectionFile: undefined,
+    });
+    expect(getCollection).toHaveBeenCalledWith('posts');
+  });
+
+  test('returns the collection and its file when a file name is given', () => {
+    vi.mocked(getCollection).mockReturnValue(/** @type {any} */ (fileCollection));
+
+    expect(resolveCollectionAndFile('pages', 'about')).toEqual({
+      collection: fileCollection,
+      collectionFile,
+    });
+  });
+
+  test('returns undefined for a non-existent collection', () => {
+    vi.mocked(getCollection).mockReturnValue(undefined);
+
+    expect(resolveCollectionAndFile('non-existent', undefined)).toBeUndefined();
+    expect(resolveCollectionAndFile('non-existent', 'about')).toBeUndefined();
+  });
+
+  test('returns undefined for a non-existent file', () => {
+    vi.mocked(getCollection).mockReturnValue(/** @type {any} */ (fileCollection));
+
+    expect(resolveCollectionAndFile('pages', 'contact')).toBeUndefined();
+  });
+
+  test('returns undefined when a file name is given for an entry collection', () => {
+    vi.mocked(getCollection).mockReturnValue(/** @type {any} */ (entryCollection));
+
+    expect(resolveCollectionAndFile('posts', 'about')).toBeUndefined();
   });
 });
 
@@ -359,6 +292,45 @@ describe('getCollectionFilesByEntry()', () => {
     expect(result).toHaveLength(0);
   });
 
+  test('matches a file by any locale’s path of the entry', () => {
+    // Only the French file exists
+    const entry = {
+      slug: 'about',
+      subPath: '',
+      locales: { fr: { path: 'content/about.fr.md', slug: 'about', content: {} } },
+      id: 'about-id',
+    };
+
+    const _i18n = { defaultLocale: 'en', omitDefaultLocaleFromFilePath: false };
+
+    const aboutFile = {
+      name: 'about',
+      file: '/content/about.{{locale}}.md',
+      fields: [],
+      _file: { fullPath: 'content/about.en.md' },
+      _i18n,
+    };
+
+    const contactFile = {
+      name: 'contact',
+      file: 'content/contact.{{locale}}.md',
+      fields: [],
+      _file: { fullPath: 'content/contact.en.md' },
+      _i18n,
+    };
+
+    const collection = {
+      name: 'pages',
+      _type: 'file',
+      _i18n,
+      _fileMap: { about: aboutFile, contact: contactFile },
+    };
+
+    expect(
+      getCollectionFilesByEntry(/** @type {any} */ (collection), /** @type {any} */ (entry)),
+    ).toEqual([aboutFile]);
+  });
+
   test('returns empty array when no files match', () => {
     const entry = {
       slug: 'test-entry',
@@ -426,15 +398,17 @@ describe('getCollectionFileEntry()', () => {
         filePathMap: { en: 'content/test.md' },
       },
     ];
-    allEntries.current = /** @type {any} */ ([mockEntry]);
+    vi.mocked(findEntryByPaths).mockReturnValue(/** @type {any} */ (mockEntry));
 
     const result = getCollectionFileEntry('test-collection', 'test-file');
 
+    // The entry is looked up through the path index
+    expect(findEntryByPaths).toHaveBeenCalledExactlyOnceWith(['content/test.md']);
     expect(result).toBe(mockEntry);
   });
 
   test('returns undefined when no entry matches', () => {
-    // Folder found but allEntries empty
+    // Folder found but no entry has a file at its path
     allEntryFolders.current = [
       {
         collectionName: 'test-collection',
@@ -442,7 +416,7 @@ describe('getCollectionFileEntry()', () => {
         filePathMap: { en: 'content/test.md' },
       },
     ];
-    allEntries.current = [];
+    vi.mocked(findEntryByPaths).mockReturnValue(undefined);
 
     const result = getCollectionFileEntry('test-collection', 'test-file');
 

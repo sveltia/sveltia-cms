@@ -18,24 +18,32 @@ vi.mock('$lib/services/backends/git/gitea/auth', () => ({
 vi.mock('$lib/services/backends/git/gitea/commits', () => ({
   commitChanges: vi.fn(),
   fetchFileCommits: vi.fn(),
+  fetchLastCommit: vi.fn(),
 }));
 
-vi.mock('$lib/services/backends/git/gitea/constants', () => ({
+vi.mock('$lib/services/backends/git/gitea/constants', async (importOriginal) => ({
+  ...(await importOriginal()),
   BACKEND_LABEL: 'Gitea',
-  BACKEND_NAME: 'gitea',
-  DEFAULT_API_ROOT: 'https://gitea.com/api/v1',
-  DEFAULT_AUTH_PATH: 'login/oauth/authorize',
-  DEFAULT_AUTH_ROOT: 'https://gitea.com',
+}));
+
+vi.mock('$lib/services/backends/git/gitea/deployment', () => ({
+  fetchBranchHeadSHA: vi.fn(),
+  fetchDeployments: vi.fn(),
 }));
 
 vi.mock('$lib/services/backends/git/gitea/files', () => ({
   fetchBlob: vi.fn(),
+  fetchDirSHA: vi.fn(),
   fetchFiles: vi.fn(),
 }));
 
 vi.mock('$lib/services/backends/git/gitea/repository', () => ({
   repository: {},
   getBaseURLs: vi.fn(() => ({ treeBaseURL: 'tree-url', blobBaseURL: 'blob-url' })),
+}));
+
+vi.mock('$lib/services/backends/git/gitea/workflow', () => ({
+  default: { fetchPullRequests: vi.fn() },
 }));
 
 vi.mock('$lib/services/backends/git/shared/api', () => ({
@@ -53,8 +61,9 @@ vi.mock('$lib/services/user/prefs.svelte', () => ({
 }));
 
 // Import after mocks
-const { init } = await import('.');
+const { init, forgejo } = await import('.');
 const { getTokenPageURL } = await import('./auth.js');
+const { apiConfig } = await import('$lib/services/backends/git/shared/api');
 
 describe('Gitea Index Service', () => {
   beforeEach(() => {
@@ -116,6 +125,40 @@ describe('Gitea Index Service', () => {
           treeBaseURL: 'tree-url',
           blobBaseURL: 'blob-url',
         }),
+      );
+    });
+
+    test('should ask for the repository and user scopes by default', () => {
+      init();
+
+      expect(apiConfig.authScope).toBe('read:repository,write:repository,read:user');
+    });
+
+    test('should also ask for the issue scope with Editorial Workflow', () => {
+      cmsConfig.current = /** @type {any} */ ({
+        publish_mode: 'editorial_workflow',
+        backend: { name: 'gitea', repo: 'owner/repo-name', branch: 'main' },
+      });
+
+      init();
+
+      expect(apiConfig.authScope).toBe(
+        'read:repository,write:repository,read:issue,write:issue,read:user',
+      );
+    });
+
+    test('should ask for the issue scope when only a collection enables the feature', () => {
+      // A collection can turn Editorial Workflow on by itself, and the labels it writes need the
+      // scope just the same
+      cmsConfig.current = /** @type {any} */ ({
+        backend: { name: 'gitea', repo: 'owner/repo-name', branch: 'main' },
+        collections: [{ name: 'posts', folder: 'posts', publish_mode: 'editorial_workflow' }],
+      });
+
+      init();
+
+      expect(apiConfig.authScope).toBe(
+        'read:repository,write:repository,read:issue,write:issue,read:user',
       );
     });
 
@@ -233,6 +276,49 @@ describe('Gitea Index Service', () => {
       expect(result?.isSelfHosted).toBe(true);
     });
 
+    test('should initialize the Forgejo backend, deriving the auth URL from the API root', () => {
+      cmsConfig.current = /** @type {any} */ ({
+        backend: {
+          name: 'forgejo',
+          repo: 'owner/repo-name',
+          app_id: 'test-client-id',
+          api_root: 'https://codeberg.org/api/v1',
+        },
+      });
+
+      const result = init();
+
+      expect(result).toEqual(
+        expect.objectContaining({
+          service: 'forgejo',
+          label: 'Forgejo',
+          owner: 'owner',
+          repo: 'repo-name',
+          branch: undefined,
+          repoURL: 'https://codeberg.org/owner/repo-name',
+          databaseName: 'forgejo:owner/repo-name',
+          isSelfHosted: true,
+        }),
+      );
+      expect(stripSlashesMock).toHaveBeenCalledWith('https://codeberg.org');
+      expect(apiConfig.clientId).toBe('test-client-id');
+    });
+
+    test('should prefer the configured auth URL with the Forgejo backend', () => {
+      cmsConfig.current = /** @type {any} */ ({
+        backend: {
+          name: 'forgejo',
+          repo: 'owner/repo-name',
+          api_root: 'https://example.com/forgejo/api/v1',
+          base_url: 'https://auth.example.com',
+        },
+      });
+
+      init();
+
+      expect(stripSlashesMock).toHaveBeenCalledWith('https://auth.example.com');
+    });
+
     test('should handle dev mode logging', () => {
       const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 
@@ -267,8 +353,21 @@ describe('Gitea Index Service', () => {
       expect(typeof backend.signIn).toBe('function');
       expect(typeof backend.signOut).toBe('function');
       expect(typeof backend.fetchFiles).toBe('function');
+      expect(typeof backend.fetchLastCommit).toBe('function');
       expect(typeof backend.fetchBlob).toBe('function');
       expect(typeof backend.commitChanges).toBe('function');
+      expect(typeof backend.fetchBranchHeadSHA).toBe('function');
+      expect(typeof backend.fetchDeployments).toBe('function');
+    });
+  });
+
+  describe('forgejo export', () => {
+    test('should export the same service under the Forgejo backend name', async () => {
+      const { default: backend } = await import('.');
+
+      expect(forgejo).toEqual({ ...backend, name: 'forgejo', label: 'Forgejo' });
+      expect(forgejo.init).toBe(init);
+      expect(forgejo.repository).toBe(backend.repository);
     });
   });
 });

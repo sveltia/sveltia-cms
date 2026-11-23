@@ -1,18 +1,27 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { ESCAPED_PLACEHOLDER_REGEX } from '$lib/services/common/template/constants';
+import { getTemplatePattern } from '$lib/services/common/template/utils';
 import {
   createPath,
   createPathRegEx,
-  decodeFilePath,
   encodeFilePath,
-  formatFileName,
-  formatSize,
+  foldFileName,
+  foldPath,
+  getBaseName,
   getBlob,
+  getByteSize,
+  getDirName,
   getGitHash,
   isEquivalentFileExtension,
+  normalizeFolderPath,
+  readBlobAsFile,
+  renameIfNeeded,
+  renameReservedFileName,
   resolvePath,
+  sanitizeFileName,
   sanitizePath,
+  stripLeadingDotSlash,
+  stripPathPrefix,
 } from '$lib/services/utils/file';
 
 // Mock i18n dependencies
@@ -32,169 +41,170 @@ describe('Test encodeFilePath()', () => {
   });
 });
 
-describe('Test decodeFilePath()', () => {
-  test('Decode', () => {
-    expect(decodeFilePath('/public/uploads/French%20Hotdog%281%29.jpg')).toEqual(
-      '/public/uploads/French Hotdog(1).jpg',
-    );
-    expect(decodeFilePath('@assets/images/%E7%A7%81%E3%81%AE%E7%94%BB%E5%83%8F.jpg')).toEqual(
-      '@assets/images/私の画像.jpg',
-    );
+describe('Test sanitizeFileName()', () => {
+  test('should normalize, collapse whitespace and drop unsafe characters', () => {
+    // A decomposed “é” is composed
+    expect(sanitizeFileName('cafe\u0301.jpg')).toEqual('café.jpg');
+    expect(sanitizeFileName('a\u00A0b\t\n  c.jpg')).toEqual('a b c.jpg');
+    expect(sanitizeFileName('a/b\\c:d?.jpg')).toEqual('abcd.jpg');
+  });
+
+  test('should rename a name Windows reserves instead of dropping it', () => {
+    expect(sanitizeFileName('aux.png')).toEqual('aux-1.png');
+    expect(sanitizeFileName('CON')).toEqual('CON-1');
+    expect(sanitizeFileName('nul.tar.gz')).toEqual('nul-1.tar.gz');
+    expect(sanitizeFileName('LPT¹.txt')).toEqual('LPT¹-1.txt');
+    // An unsafe character can be what makes the name reserved
+    expect(sanitizeFileName('aux?.png')).toEqual('aux-1.png');
+    expect(sanitizeFileName('com1 ')).toEqual('com1-1');
+    // The length limit still applies
+    expect(sanitizeFileName(`aux.${'a'.repeat(300)}`)).toEqual(`aux-1.${'a'.repeat(249)}`);
+    // A name with nothing usable is still dropped
+    expect(sanitizeFileName('?:*')).toEqual('');
+    expect(sanitizeFileName('..')).toEqual('');
+    // Names that only start like a reserved one are kept
+    expect(sanitizeFileName('auxiliary.png')).toEqual('auxiliary.png');
+    expect(sanitizeFileName('con-tent')).toEqual('con-tent');
   });
 });
 
-describe('Test formatFileName()', () => {
-  test('Basic sanitization without slugification', () => {
-    // Test basic filename sanitization
-    expect(formatFileName('test.jpg')).toEqual('test.jpg');
-    expect(formatFileName('my file.jpg')).toEqual('my file.jpg');
-
-    // Test removal of dangerous characters
-    expect(formatFileName('file<>:"|?*.txt')).toEqual('file.txt');
-    expect(formatFileName('file/path\\test.jpg')).toEqual('filepathtest.jpg');
-
-    // Test unicode normalization
-    expect(formatFileName('café.jpg')).toEqual('café.jpg');
-    expect(formatFileName('résumé.pdf')).toEqual('résumé.pdf');
-
-    // Test whitespace normalization - all whitespace characters replaced with regular spaces
-    // Consecutive whitespace is collapsed to a single space
-    // U+00A0: non-breaking space
-    expect(formatFileName('my\u00A0file.jpg')).toEqual('my file.jpg');
-    expect(formatFileName('test\u00A0\u00A0multiple.txt')).toEqual('test multiple.txt');
-    // U+202F: narrow no-break space (used by macOS in screenshot timestamps)
-    expect(formatFileName('Screenshot 2025-10-02 at 6.01.11\u202FPM.png')).toEqual(
-      'Screenshot 2025-10-02 at 6.01.11 PM.png',
-    );
-    // Tab character
-    expect(formatFileName('my\tfile.jpg')).toEqual('my file.jpg');
-    // Newline characters (edge case - gets replaced with space)
-    expect(formatFileName('my\nfile.jpg')).toEqual('my file.jpg');
-    expect(formatFileName('my\r\nfile.jpg')).toEqual('my file.jpg');
-    // Multiple consecutive spaces collapsed
-    expect(formatFileName('my   file.jpg')).toEqual('my file.jpg');
-    expect(formatFileName('test\t\t\tfile.txt')).toEqual('test file.txt');
-    expect(formatFileName('mixed\u00A0 \t\u202Fspaces.pdf')).toEqual('mixed spaces.pdf');
+describe('Test renameReservedFileName()', () => {
+  test('should number a name Windows reserves, before the first dot', () => {
+    expect(renameReservedFileName('aux.png')).toEqual('aux-1.png');
+    expect(renameReservedFileName('Prn')).toEqual('Prn-1');
+    expect(renameReservedFileName('com9.tar.gz')).toEqual('com9-1.tar.gz');
   });
 
-  test('Slugification when enabled', () => {
-    const options = { slugificationEnabled: true };
+  test('should leave any other name alone', () => {
+    expect(renameReservedFileName('photo.png')).toEqual('photo.png');
+    expect(renameReservedFileName('console.log')).toEqual('console.log');
+    expect(renameReservedFileName('my-aux.png')).toEqual('my-aux.png');
+  });
+});
 
-    // Test basic slugification
-    expect(formatFileName('My Test File.jpg', options)).toEqual('my-test-file.jpg');
-    expect(formatFileName('Hello World.png', options)).toEqual('hello-world.png');
+describe('Test foldFileName()', () => {
+  test('should fold case and the Unicode normalization form', () => {
+    expect(foldFileName('Photo.JPG')).toEqual('photo.jpg');
+    expect(foldFileName('Cafe\u0301.png')).toEqual('caf\u00e9.png');
+    expect(foldFileName('CAF\u00c9.png')).toEqual(foldFileName('cafe\u0301.png'));
+  });
+});
 
-    // Test special characters are slugified
-    expect(formatFileName('File & Test (1).pdf', options)).toEqual('file-test-1.pdf');
-    expect(formatFileName('café résumé.docx', options)).toEqual('café-résumé.docx');
+describe('Test foldPath()', () => {
+  test('should strip the slashes and fold the path', () => {
+    expect(foldPath('/Static/Cafe\u0301/')).toEqual('static/caf\u00e9');
+    expect(foldPath('static/Admin/config.yml')).toEqual('static/admin/config.yml');
+    expect(foldPath('')).toEqual('');
+  });
+});
 
-    // Test numbers and hyphens are preserved
-    expect(formatFileName('file-123.txt', options)).toEqual('file-123.txt');
-    expect(formatFileName('2023-report.xlsx', options)).toEqual('2023-report.xlsx');
-
-    // Test uppercase extensions are lowercased during slugification
-    expect(formatFileName('Photo.JPG', options)).toEqual('photo.jpg');
-    expect(formatFileName('Video.MOV', options)).toEqual('video.mov');
-    expect(formatFileName('Clip.MP4', options)).toEqual('clip.mp4');
-    expect(formatFileName('Document.PDF', options)).toEqual('document.pdf');
-    expect(formatFileName('My Image.JPEG', options)).toEqual('my-image.jpeg');
-    expect(formatFileName('Mixed Case.Png', options)).toEqual('mixed-case.png');
+describe('Test stripLeadingDotSlash()', () => {
+  test('should remove a leading `./` or a lone `.`', () => {
+    expect(stripLeadingDotSlash('./images')).toEqual('images');
+    expect(stripLeadingDotSlash('./')).toEqual('');
+    expect(stripLeadingDotSlash('.')).toEqual('');
+    // Slashes are kept otherwise
+    expect(stripLeadingDotSlash('./images/')).toEqual('images/');
+    expect(stripLeadingDotSlash('/images')).toEqual('/images');
   });
 
-  test('Handling duplicate names', () => {
-    const existingFiles = ['test.jpg', 'test-1.jpg', 'document.pdf'];
+  test('should leave a parent folder or a dot file alone', () => {
+    expect(stripLeadingDotSlash('../images')).toEqual('../images');
+    expect(stripLeadingDotSlash('.images')).toEqual('.images');
+    expect(stripLeadingDotSlash('..')).toEqual('..');
+    expect(stripLeadingDotSlash('')).toEqual('');
+  });
+});
 
-    // Test avoiding duplicate with existing file
-    expect(formatFileName('test.jpg', { assetNamesInSameFolder: existingFiles })).toEqual(
-      'test-2.jpg',
-    );
+describe('Test normalizeFolderPath()', () => {
+  test('should strip the slashes, then a leading `./`', () => {
+    expect(normalizeFolderPath('')).toEqual('');
+    expect(normalizeFolderPath('/')).toEqual('');
+    expect(normalizeFolderPath('.')).toEqual('');
+    expect(normalizeFolderPath('./')).toEqual('');
+    expect(normalizeFolderPath('./static/images/')).toEqual('static/images');
+    expect(normalizeFolderPath('/static/images')).toEqual('static/images');
+    expect(normalizeFolderPath('../images')).toEqual('../images');
+  });
+});
 
-    // Test no conflict when file doesn’t exist
-    expect(formatFileName('newfile.jpg', { assetNamesInSameFolder: existingFiles })).toEqual(
-      'newfile.jpg',
-    );
+describe('Test renameIfNeeded()', () => {
+  test('uses the folded names given instead of folding the other names', () => {
+    const otherNames = ['Photo.png', 'photo-1.png'];
+    const foldedNames = new Set(otherNames.map((name) => name.toLowerCase()));
 
-    // Test with empty array
-    expect(formatFileName('test.jpg', { assetNamesInSameFolder: [] })).toEqual('test.jpg');
-
-    // Test when only base name exists (no numbered suffix) - should create test-1.jpg
-    expect(formatFileName('test.jpg', { assetNamesInSameFolder: ['test.jpg'] })).toEqual(
-      'test-1.jpg',
+    expect(renameIfNeeded('photo.png', otherNames, { foldedNames })).toEqual('photo-2.png');
+    expect(renameIfNeeded('new.png', otherNames, { foldedNames })).toEqual('new.png');
+    // Only the set tells whether the name is taken
+    expect(renameIfNeeded('photo.png', otherNames, { foldedNames: new Set() })).toEqual(
+      'photo.png',
     );
   });
 
-  test('Combined slugification and duplicate handling', () => {
-    const existingFiles = ['my-file.jpg', 'my-file-1.jpg'];
-
-    const options = {
-      slugificationEnabled: true,
-      assetNamesInSameFolder: existingFiles,
-    };
-
-    // Test slugification with duplicate avoidance
-    expect(formatFileName('My File.jpg', options)).toEqual('my-file-2.jpg');
-    expect(formatFileName('My Different File.jpg', options)).toEqual('my-different-file.jpg');
+  test('should take the highest number already used, whatever order the names come in', () => {
+    expect(renameIfNeeded('photo.png', ['photo-1.png', 'photo.png', 'photo-0.png'])).toEqual(
+      'photo-2.png',
+    );
+    expect(renameIfNeeded('photo.png', ['photo-10.png', 'photo-9.png', 'photo.png'])).toEqual(
+      'photo-11.png',
+    );
+    expect(renameIfNeeded('photo.png', ['photo.png', 'photo-0.png'])).toEqual('photo-1.png');
+    // A slug has no extension
+    expect(renameIfNeeded('my-post', ['my-post-1', 'my-post'])).toEqual('my-post-2');
   });
 
-  test('Files without extensions', () => {
-    // Test files without extensions
-    expect(formatFileName('README')).toEqual('README');
-    expect(formatFileName('LICENSE', { slugificationEnabled: true })).toEqual('license');
-
-    const existingFiles = ['README', 'README-1'];
-
-    expect(formatFileName('README', { assetNamesInSameFolder: existingFiles })).toEqual('README-2');
+  test('should number a name without an extension at the end', () => {
+    expect(
+      renameIfNeeded('release-2.0', ['release-2.0', 'release-2.0-1'], { hasExtension: false }),
+    ).toEqual('release-2.0-2');
+    expect(renameIfNeeded('example.com', ['Example.com'], { hasExtension: false })).toEqual(
+      'example.com-1',
+    );
+    // A file name keeps its extension by default
+    expect(renameIfNeeded('example.com', ['example.com'])).toEqual('example-1.com');
   });
 
-  test('Edge cases and special characters', () => {
-    // Test very long filenames - sanitize truncates to 255 chars and may remove extension
-    const longName = `${'a'.repeat(300)}.txt`;
-    const result = formatFileName(longName);
-
-    expect(result.length).toBeLessThanOrEqual(255); // sanitize truncates to 255 chars
-    expect(result).toBe('a'.repeat(255)); // extension gets truncated off
-
-    // Test empty or null-like inputs
-    expect(formatFileName('')).toEqual('');
-    expect(formatFileName('   ')).toEqual('');
-
-    // Test files that start with dots
-    expect(formatFileName('.gitignore')).toEqual('.gitignore');
-    expect(formatFileName('.hidden-file.txt', { slugificationEnabled: true })).toEqual(
-      '.hidden-file.txt',
-    );
+  test('should keep a name that isn’t taken, even if numbered variants of it are', () => {
+    expect(renameIfNeeded('summer.jpg', ['summer-2023.jpg'])).toEqual('summer.jpg');
+    expect(renameIfNeeded('photo.jpg', ['photo-1.jpg', 'photo-2.jpg'])).toEqual('photo.jpg');
+    expect(renameIfNeeded('my-post', ['my-post-1', 'other'])).toEqual('my-post');
+    // A different extension doesn’t clash
+    expect(renameIfNeeded('photo.jpg', ['photo.png', 'photo-1.png'])).toEqual('photo.jpg');
   });
 
-  test('Unicode and international characters', () => {
-    // Test various unicode characters
-    expect(formatFileName('测试文件.jpg')).toEqual('测试文件.jpg');
-    expect(formatFileName('файл.txt')).toEqual('файл.txt');
-    expect(formatFileName('ファイル.png')).toEqual('ファイル.png');
-
-    // Test unicode with slugification - keeps unicode characters by default
-    const options = { slugificationEnabled: true };
-
-    expect(formatFileName('测试文件.jpg', options)).toEqual('测试文件.jpg');
-    expect(formatFileName('файл тест.txt', options)).toEqual('файл-тест.txt');
+  test('should treat names that only differ in case as taken', () => {
+    // They clash on a case-insensitive file system like macOS’s or Windows’s
+    expect(renameIfNeeded('Photo.jpg', ['photo.jpg'])).toEqual('Photo-1.jpg');
+    expect(renameIfNeeded('photo.jpg', ['PHOTO.JPG', 'Photo-1.jpg'])).toEqual('photo-2.jpg');
   });
 
-  test('Multiple extensions and complex filenames', () => {
-    // Test files with multiple extensions
-    expect(formatFileName('archive.tar.gz')).toEqual('archive.tar.gz');
-    expect(formatFileName('backup.sql.bz2', { slugificationEnabled: true })).toEqual(
-      'backup.sql.bz2',
-    );
+  test('should treat names that only differ in Unicode normalization form as taken', () => {
+    // A name read from a macOS disk is in NFD, while one typed in the browser is in NFC
+    expect(renameIfNeeded('caf\u00e9.jpg', ['cafe\u0301.jpg'])).toEqual('caf\u00e9-1.jpg');
+    expect(renameIfNeeded('cafe\u0301.jpg', ['Caf\u00c9.jpg'])).toEqual('cafe\u0301-1.jpg');
+    // The numbered variants count in either form too
+    expect(
+      renameIfNeeded('caf\u00e9.jpg', ['cafe\u0301.jpg', 'cafe\u0301-1.jpg', 'CAFE\u0301-2.JPG']),
+    ).toEqual('caf\u00e9-3.jpg');
+  });
 
-    // Test very complex filenames - consecutive special chars become multiple hyphens
-    expect(formatFileName('My (Important) File - Copy [2023].pdf')).toEqual(
-      'My (Important) File - Copy [2023].pdf',
+  test('should not be fooled by a dot in the base name', () => {
+    // The base name is everything before the last dot, so these candidates all share the `x.y.z`
+    // prefix. Picking anything but the highest number would hand back a name that is already taken
+    expect(renameIfNeeded('x.y.z.png', ['x.y.z.png', 'x.y.z-1.png', 'x.y.z-0.png'])).toEqual(
+      'x.y.z-2.png',
     );
+    expect(
+      renameIfNeeded('my.photo.jpg', ['my.photo-8.jpg', 'my.photo.jpg', 'my.photo-3.jpg']),
+    ).toEqual('my.photo-9.jpg');
+  });
 
-    const options = { slugificationEnabled: true };
+  test('should leave the given list of other names alone', () => {
+    const otherNames = ['photo-2.png', 'photo.png', 'photo-1.png'];
 
-    expect(formatFileName('My (Important) File - Copy [2023].pdf', options)).toEqual(
-      'my-important-file-copy-2023.pdf',
-    );
+    renameIfNeeded('photo.png', otherNames);
+    // The caller reuses this list for the next file, so its order must survive the call
+    expect(otherNames).toEqual(['photo-2.png', 'photo.png', 'photo-1.png']);
   });
 });
 
@@ -310,6 +320,24 @@ describe('Test getBlob()', () => {
   });
 });
 
+describe('Test getByteSize()', () => {
+  test('Measure a string as UTF-8, like a Blob created from it', () => {
+    ['', 'Hello, World!', 'Café 日本語 🎉', 'Lone \uD800 surrogate'].forEach((content) => {
+      expect(getByteSize(content)).toBe(new Blob([content]).size);
+    });
+
+    expect(getByteSize('Café')).toBe(5);
+  });
+
+  test('Return the size of a Blob or File', () => {
+    const blob = new Blob([new Uint8Array([0x00, 0x01, 0x02])]);
+    const file = new File(['日本語'], 'test.txt', { type: 'text/plain' });
+
+    expect(getByteSize(blob)).toBe(3);
+    expect(getByteSize(file)).toBe(9);
+  });
+});
+
 describe('Test getGitHash()', () => {
   test('Hash string content', async () => {
     // Test with a simple string - Git hash for "hello world\n"
@@ -393,6 +421,41 @@ describe('Test getGitHash()', () => {
     expect(result).toBe('613754cfaf74a7a2d86984231479d5671731f18a');
   });
 
+  test('Read a blob only once, however many times it is hashed', async () => {
+    const file = new File(['hello world\n'], 'test.txt', { type: 'text/plain' });
+    const arrayBuffer = vi.spyOn(file, 'arrayBuffer');
+    // Concurrent callers share the one read, and a later caller gets the cached result
+    const [hash1, hash2] = await Promise.all([getGitHash(file), getGitHash(file)]);
+    const hash3 = await getGitHash(file);
+
+    expect(hash1).toBe('3b18e512dba79e4c8300dd08aeb37f8e728b8dad');
+    expect(hash2).toBe(hash1);
+    expect(hash3).toBe(hash1);
+    expect(arrayBuffer).toHaveBeenCalledOnce();
+  });
+
+  test('Hash each blob object on its own', async () => {
+    const file1 = new File(['hello world\n'], 'test.txt', { type: 'text/plain' });
+    const file2 = new File(['hello world\n'], 'test.txt', { type: 'text/plain' });
+    const arrayBuffer1 = vi.spyOn(file1, 'arrayBuffer');
+    const arrayBuffer2 = vi.spyOn(file2, 'arrayBuffer');
+
+    expect(await getGitHash(file1)).toBe(await getGitHash(file2));
+    expect(arrayBuffer1).toHaveBeenCalledOnce();
+    expect(arrayBuffer2).toHaveBeenCalledOnce();
+  });
+
+  test('Retry a blob that could not be read', async () => {
+    const file = new File(['hello world\n'], 'test.txt', { type: 'text/plain' });
+    const error = new DOMException('The requested file could not be read', 'NotReadableError');
+    const arrayBuffer = vi.spyOn(file, 'arrayBuffer').mockRejectedValueOnce(error);
+
+    await expect(getGitHash(file)).rejects.toBe(error);
+    // The failure is not cached, so the next call reads the file again
+    await expect(getGitHash(file)).resolves.toBe('3b18e512dba79e4c8300dd08aeb37f8e728b8dad');
+    expect(arrayBuffer).toHaveBeenCalledTimes(2);
+  });
+
   test('Hash image File object', async () => {
     // Test with the same image as a File object
     const pngBase64 =
@@ -406,51 +469,6 @@ describe('Test getGitHash()', () => {
     expect(result).toHaveLength(40);
     // Should produce the same hash as the Blob version
     expect(result).toBe('613754cfaf74a7a2d86984231479d5671731f18a');
-  });
-});
-
-describe('Test formatSize()', () => {
-  test('should format file sizes correctly', () => {
-    // The formatSize function returns i18n translated strings, not just numbers
-    // Test bytes
-    expect(formatSize(500)).toBe('file_size_units.b(500)');
-    expect(formatSize(999)).toBe('file_size_units.b(999)');
-
-    // Test kilobytes
-    expect(formatSize(1000)).toBe('file_size_units.kb(1)');
-    expect(formatSize(1500)).toBe('file_size_units.kb(1.5)');
-    expect(formatSize(999999)).toBe('file_size_units.kb(1,000)');
-
-    // Test megabytes
-    expect(formatSize(1000000)).toBe('file_size_units.mb(1)');
-    expect(formatSize(1500000)).toBe('file_size_units.mb(1.5)');
-    expect(formatSize(999999999)).toBe('file_size_units.mb(1,000)');
-
-    // Test gigabytes
-    expect(formatSize(1000000000)).toBe('file_size_units.gb(1)');
-    expect(formatSize(1500000000)).toBe('file_size_units.gb(1.5)');
-    expect(formatSize(999999999999)).toBe('file_size_units.gb(1,000)');
-
-    // Test terabytes
-    expect(formatSize(1000000000000)).toBe('file_size_units.tb(1)');
-    expect(formatSize(1500000000000)).toBe('file_size_units.tb(1.5)');
-  });
-
-  test('should handle edge cases', () => {
-    expect(formatSize(0)).toBe('file_size_units.b(0)');
-    expect(formatSize(1)).toBe('file_size_units.b(1)');
-  });
-
-  test('should reuse the cached Intl.NumberFormat instance for the same locale', () => {
-    // After the tests above, 'en' is already in fileSizeFormatterCache.
-    // Subsequent calls for the same locale must hit the cache, not invoke the constructor.
-    const spy = vi.spyOn(Intl, 'NumberFormat');
-
-    formatSize(1000);
-    formatSize(5000000);
-
-    expect(spy).not.toHaveBeenCalled();
-    spy.mockRestore();
   });
 });
 
@@ -489,11 +507,14 @@ describe('Test resolvePath()', () => {
     expect(resolvePath('//folder/file.txt')).toBe('folder/file.txt'); // Leading empty segments are filtered
   });
 
-  test('should handle dots after all segments are removed', () => {
-    // When .. is encountered but no named segment exists before it (after first segment)
-    // This tests the case where lastIndex === -1 inside the .. handling
-    expect(resolvePath('file.txt/../..')).toBe(''); // .. after removing file.txt finds no segment
-    expect(resolvePath('a/file.txt/../../..')).toBe(''); // Going back 3 times removes all segments
+  test('should keep a `..` that goes up past the named segments', () => {
+    // The path points outside the starting folder, so the excess `..` can’t be dropped
+    expect(resolvePath('file.txt/../..')).toBe('..');
+    expect(resolvePath('a/file.txt/../../..')).toBe('..');
+    expect(resolvePath('a/../../b')).toBe('../b');
+    // A leading `..` isn’t cancelled out by a later one
+    expect(resolvePath('../a/../../b')).toBe('../../b');
+    expect(resolvePath('./a/../../b')).toBe('./../b');
     expect(resolvePath('a/b/file.txt/../..')).toBe('a'); // Going back twice: removes file.txt then b, a remains
     // Case where segment exists after going back
     expect(resolvePath('a/b/c/../../file.txt')).toBe('a/file.txt'); // Go back twice, then file.txt at same level
@@ -589,6 +610,50 @@ describe('Test createPath()', () => {
 
   test('should handle array with only falsy values', () => {
     expect(createPath([null, undefined, ''])).toBe('');
+  });
+});
+
+describe('Test getDirName()', () => {
+  test('should return the directory of a file path', () => {
+    expect(getDirName('static/images/photo.jpg')).toBe('static/images');
+    expect(getDirName('static/photo.jpg')).toBe('static');
+  });
+
+  test('should return an empty string for a file at the root', () => {
+    expect(getDirName('photo.jpg')).toBe('');
+  });
+});
+
+describe('Test getBaseName()', () => {
+  test('should return the last segment of a path', () => {
+    expect(getBaseName('static/images/photo.jpg')).toBe('photo.jpg');
+    expect(getBaseName('https://example.com/a/b_150.jpg')).toBe('b_150.jpg');
+  });
+
+  test('should return the path itself if it has no slash', () => {
+    expect(getBaseName('photo.jpg')).toBe('photo.jpg');
+  });
+
+  test('should return an empty string for a path ending with a slash', () => {
+    expect(getBaseName('static/images/')).toBe('');
+  });
+});
+
+describe('Test stripPathPrefix()', () => {
+  test('removes the directory from a path below it', () => {
+    expect(stripPathPrefix('images/photo.jpg', 'images')).toBe('photo.jpg');
+    expect(stripPathPrefix('images/2024/photo.jpg', 'images')).toBe('2024/photo.jpg');
+  });
+
+  test('leaves a path that is not below the directory as is', () => {
+    expect(stripPathPrefix('images-backup/photo.jpg', 'images')).toBe('images-backup/photo.jpg');
+    expect(stripPathPrefix('images', 'images')).toBe('images');
+    expect(stripPathPrefix('other/photo.jpg', 'images')).toBe('other/photo.jpg');
+  });
+
+  test('leaves the path as is without a directory', () => {
+    expect(stripPathPrefix('/photo.jpg', '')).toBe('/photo.jpg');
+    expect(stripPathPrefix('photo.jpg', undefined)).toBe('photo.jpg');
   });
 });
 
@@ -710,14 +775,9 @@ describe('Test createPathRegEx()', () => {
   });
 
   test('should handle brackets with template tags', () => {
-    const regex = createPathRegEx('app/(pages)/{{slug}}.md', (segment) => {
-      // First escape special regex chars including parentheses
-      let escaped = segment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-      // Then replace escaped template placeholders with wildcard
-      escaped = escaped.replace(ESCAPED_PLACEHOLDER_REGEX, '.+?');
-      return escaped;
-    });
+    const regex = createPathRegEx('app/(pages)/{{slug}}.md', (segment) =>
+      getTemplatePattern(segment, '.+?'),
+    );
 
     expect(regex.test('app/(pages)/my-post.md')).toBe(true);
     expect(regex.test('app/(pages)/another.md')).toBe(true);
@@ -737,5 +797,16 @@ describe('Test createPathRegEx()', () => {
     const result = 'src/assets/images/666-test/photo.jpg'.replace(regex, '/@assets/images/$<slug>');
 
     expect(result).toBe('/@assets/images/666-test/photo.jpg');
+  });
+});
+
+describe('readBlobAsFile()', () => {
+  test('copies the bytes and type of a blob into a named file', async () => {
+    const file = await readBlobAsFile(new Blob(['png'], { type: 'image/png' }), 'a.png');
+
+    expect(file).toBeInstanceOf(File);
+    expect(file.name).toBe('a.png');
+    expect(file.type).toBe('image/png');
+    expect(await file.text()).toBe('png');
   });
 });

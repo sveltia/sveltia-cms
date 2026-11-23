@@ -16,10 +16,10 @@
     getPickedAssetKind,
     resolvePickedResources,
   } from '$lib/services/contents/fields/custom/files';
-  import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
+  import { getAcceptedFileTypes } from '$lib/services/integrations/media-libraries/default';
 
   /**
-   * @import { SelectedResource, TypedFieldKeyPath } from '$lib/types/private';
+   * @import { InternalLocaleCode, SelectedResource, TypedFieldKeyPath } from '$lib/types/private';
    * @import {
    * CustomField,
    * CustomFieldPickFileOptions,
@@ -36,16 +36,17 @@
    * of, if any.
    * @property {boolean} [inEditorComponent] Whether the field is rendered in a rich text editor
    * component.
+   * @property {InternalLocaleCode} [locale] Locale the field is edited in, which an existing asset
+   * in an entry-relative folder is referenced relative to.
    */
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     fieldConfig,
     typedKeyPath,
     componentName = undefined,
     inEditorComponent = false,
-    /* eslint-enable prefer-const */
+    locale = undefined,
   } = $props();
 
   const entryDraft = getEntryDraftContext();
@@ -53,11 +54,8 @@
   let open = $state(false);
   /** @type {CustomFieldPickFileOptions} */
   let options = $state.raw({});
-  let showRejectedFilesAlert = $state(false);
-  /** @type {string[]} */
-  let oversizedFileNames = $state([]);
-  /** @type {string[]} */
-  let invalidFileNames = $state([]);
+  /** @type {RejectedFilesAlertDialog | undefined} */
+  let rejectedFilesAlert = $state();
   /**
    * Settles the promise returned by the pending `pick()` call. `undefined` while nothing is
    * pending. The resolver is dropped as soon as a selection is made, so that the dialog closing
@@ -78,11 +76,18 @@
       : undefined,
   );
   const kind = $derived(getPickedAssetKind(options));
-  // The dialog only falls back to the image types once, so give it the types for every pick
+  // The dialog only falls back to the image types once, so give it the types for every pick. HEIC
+  // photos are accepted only if they’re converted on upload
   const accept = $derived(
-    options.accept ?? (kind === 'image' ? SUPPORTED_IMAGE_TYPES.join(',') : undefined),
+    getAcceptedFileTypes({
+      accept: options.accept,
+      image: kind === 'image',
+      transformations: assetOptions?.libraryConfig.transformations,
+    }),
   );
+  /* v8 ignore start -- only read to report a file exceeding the configured size */
   const maxSize = $derived(assetOptions?.libraryConfig.max_file_size ?? Infinity);
+  /* v8 ignore stop */
   // The dialog only reads the media library options from the field configuration, which a custom
   // field may define the same way as a File/Image field
   const mediaFieldConfig = $derived(/** @type {MediaField} */ (/** @type {any} */ (fieldConfig)));
@@ -115,6 +120,7 @@
    */
   const onSelect = async (resources) => {
     const draft = entryDraft.current;
+    /* v8 ignore start -- the dialog is only shown while a pick is pending and the draft is there */
     const { resolve, reject } = pending ?? {};
     // Read before the await below: another `pick()` call made in the meantime replaces the options
     const { multiple = false } = options;
@@ -131,6 +137,7 @@
 
       return;
     }
+    /* v8 ignore stop */
 
     try {
       const { files, ...rejected } = await resolvePickedResources({
@@ -138,15 +145,13 @@
         fieldConfig,
         typedKeyPath,
         componentName,
+        locale,
         inEditorComponent,
         resources,
+        accept,
       });
 
-      ({ oversizedFileNames, invalidFileNames } = rejected);
-
-      if (oversizedFileNames.length || invalidFileNames.length) {
-        showRejectedFilesAlert = true;
-      }
+      rejectedFilesAlert?.report(rejected);
 
       if (!files.length) {
         resolve(null);
@@ -181,6 +186,7 @@
     multiple={!!options.multiple}
     canEnterURL={options.allowURL ?? true}
     draft={entryDraft.current}
+    {locale}
     fieldConfig={mediaFieldConfig}
     assetLibraryFolderMap={assetOptions.folderMap}
     enabledCloudServiceEntries={assetOptions.cloudServiceEntries}
@@ -191,10 +197,5 @@
 
   <ConflictResolutionDialog />
 
-  <RejectedFilesAlertDialog
-    bind:open={showRejectedFilesAlert}
-    {oversizedFileNames}
-    {invalidFileNames}
-    {maxSize}
-  />
+  <RejectedFilesAlertDialog bind:this={rejectedFilesAlert} {maxSize} {accept} />
 {/if}

@@ -88,6 +88,28 @@ describe('integrations/media-libraries/stock/pixabay', () => {
     });
 
     describe('parseResults', () => {
+      it('should escape the user name and the link in the credit', () => {
+        /** @type {any} */
+        const [result] = parseResults([
+          {
+            id: 1,
+            webformatURL: 'https://example.com/a_640.jpg',
+            previewURL: 'https://example.com/a_150.jpg',
+            largeImageURL: 'https://example.com/a_1280.jpg',
+            imageWidth: 640,
+            imageHeight: 480,
+            pageURL: 'https://pixabay.com/photos/a-1/?a=1&b="2"',
+            tags: 'a',
+            user: 'Smith & <Jones>',
+          },
+        ]);
+
+        expect(result.credit).toBe(
+          '<a href="https://pixabay.com/photos/a-1/?a=1&amp;b=&quot;2&quot;">' +
+            'Photo by Smith &amp; &lt;Jones&gt; on Pixabay</a>',
+        );
+      });
+
       it('should parse API results correctly', () => {
         const mockApiResults = [
           {
@@ -505,7 +527,7 @@ describe('integrations/media-libraries/stock/pixabay', () => {
       const results = await search('test', { apiKey: mockApiKey });
 
       expect(results[0].credit).toBe(
-        '<a href="https://pixabay.com/photos/sunset-mountains-landscape-12345/">Photo by johndoe on Pixabay',
+        '<a href="https://pixabay.com/photos/sunset-mountains-landscape-12345/">Photo by johndoe on Pixabay</a>',
       );
     });
 

@@ -1,6 +1,15 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { isFormatMismatch } from './format';
+import { customFileFormatRegistry } from '$lib/services/api/registries';
+import { addMessage } from '$lib/services/config/parser/utils/validator';
+
+import { checkBodyField, isFormatMismatch } from './format';
+
+/**
+ * @import { ConfigParserCollectors } from '$lib/types/private';
+ */
+
+vi.mock('$lib/services/config/parser/utils/validator', () => ({ addMessage: vi.fn() }));
 
 describe('isFormatMismatch', () => {
   describe('undefined values', () => {
@@ -285,9 +294,14 @@ describe('isFormatMismatch', () => {
       expect(isFormatMismatch('html', 'toml')).toBe(false);
     });
 
-    it('should return true when html extension with yaml-frontmatter', () => {
-      // html doesn't match yaml-frontmatter base type and isn't md/markdown
-      expect(isFormatMismatch('html', 'yaml-frontmatter')).toBe(true);
+    it('should return false when html extension with any front-matter format', () => {
+      // Like Decap CMS, a non-data extension works with every front-matter format
+      expect(isFormatMismatch('html', 'yaml-frontmatter')).toBe(false);
+      expect(isFormatMismatch('html', 'toml-frontmatter')).toBe(false);
+      expect(isFormatMismatch('html', 'json-frontmatter')).toBe(false);
+      expect(isFormatMismatch('html', 'frontmatter')).toBe(false);
+      expect(isFormatMismatch('liquid', 'yaml-frontmatter')).toBe(false);
+      expect(isFormatMismatch('txt', 'frontmatter')).toBe(false);
     });
 
     it('should return true when yml extension with json-frontmatter', () => {
@@ -369,11 +383,6 @@ describe('isFormatMismatch', () => {
       // Astro is treated as a raw file format, not a front-matter-compatible template engine
       expect(isFormatMismatch('astro', 'frontmatter')).toBe(true);
     });
-
-    it('should return true when custom extension with frontmatter', () => {
-      // frontmatter is only valid with markdown extensions and template engines
-      expect(isFormatMismatch('html', 'frontmatter')).toBe(true);
-    });
   });
 
   describe('raw format', () => {
@@ -391,6 +400,24 @@ describe('isFormatMismatch', () => {
 
     it('should return false for raw format with no fields', () => {
       expect(isFormatMismatch('html', 'raw', [])).toBe(false);
+    });
+  });
+
+  describe('custom format', () => {
+    afterEach(() => {
+      customFileFormatRegistry.clear();
+    });
+
+    it('should return false for a custom format with any extension, including `md`', () => {
+      // The example in the documentation
+      customFileFormatRegistry.set('custom-markdown', { extension: 'md' });
+
+      // A Markdown extension only took a front matter format
+      expect(isFormatMismatch('md', 'custom-markdown')).toBe(false);
+      expect(isFormatMismatch('markdown', 'custom-markdown')).toBe(false);
+      expect(isFormatMismatch('json', 'custom-markdown')).toBe(false);
+      // An unregistered format is still checked
+      expect(isFormatMismatch('md', 'other-markdown')).toBe(true);
     });
   });
 
@@ -593,5 +620,96 @@ describe('isFormatMismatch', () => {
     it('should reject astro with toml-frontmatter', () => {
       expect(isFormatMismatch('astro', 'toml-frontmatter')).toBe(true);
     });
+  });
+});
+
+describe('checkBodyField', () => {
+  /** @type {ConfigParserCollectors} */
+  const collectors = {
+    errors: new Set(),
+    warnings: new Set(),
+    mediaFields: new Set(),
+    relationFields: new Set(),
+    formatLocales: new Set(),
+  };
+
+  const context = { collection: /** @type {any} */ ({ name: 'posts' }) };
+
+  /**
+   * Call {@link checkBodyField} and get the message it added, if any.
+   * @param {Record<string, any>} args Arguments other than the context and collectors.
+   * @returns {any} Arguments passed to `addMessage()`, or `undefined`.
+   */
+  const check = (args) => {
+    vi.mocked(addMessage).mockClear();
+    checkBodyField({ ...args, context, collectors });
+
+    return vi.mocked(addMessage).mock.calls[0]?.[0];
+  };
+
+  it('should report a `body` field that doesn’t hold text in a front matter format', () => {
+    ['object', 'list', 'keyvalue', 'boolean', 'number'].forEach((widget) => {
+      expect(check({ fields: [{ name: 'title' }, { name: 'body', widget }] })).toEqual({
+        strKey: 'front_matter_body_field_not_text',
+        values: { name: 'body', widget },
+        context: { ...context, typedKeyPath: 'body' },
+        collectors,
+      });
+    });
+
+    // A Compute field yielding a number
+    expect(
+      check({ fields: [{ name: 'body', widget: 'compute', value: '1', value_type: 'float' }] }),
+    ).toMatchObject({ values: { name: 'body', widget: 'compute' } });
+    // A field holding a list of values
+    expect(
+      check({ fields: [{ name: 'body', widget: 'select', options: ['a'], multiple: true }] }),
+    ).toMatchObject({ values: { name: 'body', widget: 'select' } });
+    // Every front matter format, including one given with a template engine extension
+    expect(
+      check({
+        extension: 'html',
+        format: 'toml-frontmatter',
+        fields: [{ name: 'body', widget: 'list' }],
+      }),
+    ).toBeDefined();
+    // The field named with the `body_field` option
+    expect(
+      check({ bodyField: { key: 'content' }, fields: [{ name: 'content', widget: 'object' }] }),
+    ).toMatchObject({ values: { name: 'content', widget: 'object' } });
+  });
+
+  it('should leave alone a `body` field that holds text or isn’t below the front matter', () => {
+    // Fields holding text
+    ['string', 'text', 'markdown', 'richtext', 'code', 'select', 'hidden', 'my-custom'].forEach(
+      (widget) => {
+        expect(check({ fields: [{ name: 'body', widget }] })).toBeUndefined();
+      },
+    );
+    expect(check({ fields: [{ name: 'body' }] })).toBeUndefined();
+    expect(
+      check({ fields: [{ name: 'body', widget: 'number', value_type: 'int/string' }] }),
+    ).toBeUndefined();
+    expect(check({ fields: [{ name: 'body', widget: 'compute', value: '' }] })).toBeUndefined();
+    expect(
+      check({
+        fields: [{ name: 'body', widget: 'compute', value: '1', value_type: 'int/string' }],
+      }),
+    ).toBeUndefined();
+    // The body is stored in the front matter along with the other fields
+    expect(
+      check({ bodyField: { inline: true }, fields: [{ name: 'body', widget: 'object' }] }),
+    ).toBeUndefined();
+    // Another field is the body
+    expect(
+      check({ bodyField: { key: 'content' }, fields: [{ name: 'body', widget: 'object' }] }),
+    ).toBeUndefined();
+    // Not a front matter format
+    expect(
+      check({ extension: 'yml', fields: [{ name: 'body', widget: 'object' }] }),
+    ).toBeUndefined();
+    expect(check({ format: 'json', fields: [{ name: 'body', widget: 'object' }] })).toBeUndefined();
+    // No fields
+    expect(check({})).toBeUndefined();
   });
 });

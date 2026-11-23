@@ -1,0 +1,77 @@
+import { cmsConfig } from '$lib/services/config';
+
+/**
+ * @import {
+ * FieldLegacyMediaLibrary,
+ * FieldMediaLibraries,
+ * GlobalLegacyMediaLibrary,
+ * MediaField,
+ * MediaLibraries,
+ * } from '$lib/types/public';
+ */
+
+/**
+ * Helper to check `multiple` option in media libraries config.
+ * @param {MediaLibraries | FieldMediaLibraries | undefined} mediaLibraries Media libraries
+ * configuration.
+ * @returns {boolean | undefined} Result of checking if any media library allows multiple files.
+ */
+export const hasMultipleInMediaLibraries = (mediaLibraries) => {
+  if (!mediaLibraries) {
+    return undefined;
+  }
+
+  const libs = Object.values(mediaLibraries);
+
+  // @ts-ignore
+  if (libs.some((lib) => lib.config?.multiple === true)) {
+    return true;
+  }
+
+  // @ts-ignore
+  if (libs.some((lib) => lib.config?.multiple === false)) {
+    return false;
+  }
+
+  return undefined;
+};
+
+/**
+ * Helper to check `multiple` option in media library config.
+ * @param {GlobalLegacyMediaLibrary | FieldLegacyMediaLibrary | undefined} mediaLibrary Media
+ * library configuration.
+ * @returns {boolean | undefined} Result of checking if any media library allows multiple files.
+ */
+export const hasMultipleInMediaLibrary = (mediaLibrary) => {
+  // @ts-ignore Stock Asset library doesn’t have `config` property
+  if (!mediaLibrary?.config) {
+    return undefined;
+  }
+
+  // @ts-ignore Stock Asset library doesn’t have `config` property
+  const { multiple } = mediaLibrary.config;
+
+  if (typeof multiple === 'boolean') {
+    return multiple;
+  }
+
+  return undefined;
+};
+
+/**
+ * Check if the field configuration allows multiple files.
+ * @param {MediaField} fieldConfig Field configuration to check.
+ * @returns {boolean} `true` if the field allows multiple files, `false` otherwise.
+ */
+export const isMultiple = (fieldConfig) => {
+  const _cmsConfig = cmsConfig.current;
+
+  return (
+    fieldConfig.multiple ??
+    hasMultipleInMediaLibraries(fieldConfig.media_libraries) ??
+    hasMultipleInMediaLibrary(fieldConfig.media_library) ??
+    hasMultipleInMediaLibraries(_cmsConfig?.media_libraries) ??
+    hasMultipleInMediaLibrary(_cmsConfig?.media_library) ??
+    false
+  );
+};

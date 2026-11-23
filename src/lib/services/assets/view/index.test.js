@@ -1,5 +1,5 @@
 /* eslint-disable jsdoc/require-jsdoc */
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -10,11 +10,15 @@ import { sortAssets } from '$lib/services/assets/view/sort';
 
 import {
   assetGroups,
+  folderSummary,
   getAdjacentAssets,
   getFolderLabelByCollection,
   listedAssetIndexMap,
   listedAssets,
+  listedSubfolders,
+  selectedFolderAssets,
   showAssetOverlay,
+  showNewSubfolderDialog,
   showUploadAssetsConfirmDialog,
   showUploadAssetsDialog,
 } from '.';
@@ -24,11 +28,16 @@ import {
 const {
   _publishedAssets,
   _selectedAssets,
+  _focusedAsset,
   _uploadingAssets,
   _selectedAssetFolder,
+  _browsedDirPath,
+  _focusedSubfolder,
+  _selectedSubfolderPath,
   _backend,
   _currentView,
   _prefs,
+  _locale,
 } = await vi.hoisted(async () => {
   const { createRawState } = await import('$lib/services/utils/state.svelte');
 
@@ -38,14 +47,23 @@ const {
     /** @type {{ current: any[] }} */
     _selectedAssets: createRawState([]),
     /** @type {{ current: any }} */
+    _focusedAsset: createRawState(undefined),
+    /** @type {{ current: any }} */
     _uploadingAssets: createRawState({ folder: undefined, files: [] }),
     /** @type {{ current: any }} */
     _selectedAssetFolder: createRawState(undefined),
+    /** @type {{ current: any }} */
+    _browsedDirPath: createRawState(undefined),
+    /** @type {{ current: any }} */
+    _focusedSubfolder: createRawState(undefined),
+    _selectedSubfolderPath: createRawState(''),
     /** @type {{ current: any }} */
     _backend: createRawState(null),
     /** @type {{ current: any }} */
     _currentView: createRawState({ type: 'grid', showInfo: true }),
     _prefs: { devModeEnabled: false },
+    /** @type {{ current: string | undefined }} */
+    _locale: { current: 'en' },
   };
 });
 
@@ -60,6 +78,7 @@ vi.mock('@sveltia/i18n', () => ({
 
     return translations[key] || key;
   },
+  locale: _locale,
 }));
 
 vi.mock('$lib/services/contents/collection', () => ({
@@ -72,14 +91,38 @@ vi.mock('$lib/services/contents/collection/files', () => ({
   getCollectionFileLabel: vi.fn(),
 }));
 
-vi.mock('$lib/services/assets', () => ({
+vi.mock('$lib/services/assets/state', () => ({
   publishedAssets: _publishedAssets,
   selectedAssets: _selectedAssets,
+  focusedAsset: _focusedAsset,
   uploadingAssets: _uploadingAssets,
 }));
 
 vi.mock('$lib/services/assets/folders', () => ({
   selectedAssetFolder: _selectedAssetFolder,
+}));
+
+vi.mock('$lib/services/assets/subfolders', () => ({
+  browsedDirPath: _browsedDirPath,
+  focusedSubfolder: _focusedSubfolder,
+  selectedSubfolderPath: _selectedSubfolderPath,
+  getAssetsInDir: (/** @type {{ dirPath: string, assets: any[] }} */ { dirPath, assets }) =>
+    assets.filter(
+      ({ path }) => (path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '') === dirPath,
+    ),
+  getSubfolders: vi.fn((/** @type {{ dirPath: string, assets: any[] }} */ { dirPath, assets }) => {
+    const prefix = dirPath ? `${dirPath}/` : '';
+
+    /** @type {Set<string>} */
+    const names = new Set(
+      assets
+        .map(({ path }) => (path.startsWith(prefix) ? path.slice(prefix.length) : ''))
+        .filter((/** @type {string} */ rest) => rest.includes('/'))
+        .map((/** @type {string} */ rest) => rest.split('/')[0]),
+    );
+
+    return [...names].sort().map((name) => ({ name, path: `${prefix}${name}` }));
+  }),
 }));
 
 vi.mock('$lib/services/assets/view/filter', () => ({
@@ -139,8 +182,12 @@ describe('assets/view/index', () => {
     _prefs.devModeEnabled = false;
     _publishedAssets.current = [];
     _selectedAssets.current = [];
+    _focusedAsset.current = undefined;
     _uploadingAssets.current = { folder: undefined, files: [] };
     _selectedAssetFolder.current = undefined;
+    _browsedDirPath.current = undefined;
+    _focusedSubfolder.current = undefined;
+    _selectedSubfolderPath.current = '';
     currentView.current = { type: 'grid', showInfo: true };
     await wait();
   });
@@ -148,6 +195,12 @@ describe('assets/view/index', () => {
     it('should be defined as reactive state', () => {
       expect(showAssetOverlay).toBeDefined();
       expect('current' in showAssetOverlay).toBe(true);
+    });
+  });
+
+  describe('showNewSubfolderDialog', () => {
+    it('should be hidden by default', () => {
+      expect(showNewSubfolderDialog.current).toBe(false);
     });
   });
 
@@ -416,6 +469,9 @@ describe('assets/view/index', () => {
     });
 
     it('should map each asset path to its position via listedAssetIndexMap', () => {
+      vi.mocked(sortAssets).mockImplementation((assets) => assets);
+      vi.mocked(groupAssets).mockImplementation((assets) => ({ '*': assets }));
+
       const indexMap = listedAssetIndexMap.current;
 
       expect([...indexMap]).toEqual([
@@ -425,12 +481,108 @@ describe('assets/view/index', () => {
       expect(indexMap.get('missing')).toBeUndefined();
     });
 
+    it('should number the assets in the order they are sorted and grouped in', () => {
+      // The rows of every group make up one grid, so the index runs across the groups
+      vi.mocked(sortAssets).mockImplementation((assets) => [...assets].reverse());
+      vi.mocked(groupAssets).mockImplementation((assets) =>
+        Object.fromEntries(assets.map((asset, index) => [`group-${index}`, [asset]])),
+      );
+
+      expect([...listedAssetIndexMap.current]).toEqual([
+        ['blog/photo2.jpg', 0],
+        ['images/photo1.jpg', 1],
+      ]);
+
+      // A filtered-out asset has no row
+      vi.mocked(filterAssets).mockImplementationOnce((assets) => assets.slice(1));
+      _publishedAssets.current = [..._publishedAssets.current];
+
+      expect([...listedAssetIndexMap.current]).toEqual([['images/photo1.jpg', 0]]);
+    });
+
     it('should reset the selected assets when the listed assets change', async () => {
       _selectedAssets.current = [createAsset('images/photo1.jpg', globalFolder)];
       _selectedAssetFolder.current = blogFolder;
       await wait();
 
       expect(_selectedAssets.current).toEqual([]);
+    });
+
+    it('should reset the selected assets when the filter changes', async () => {
+      const selection = [createAsset('images/photo1.jpg', globalFolder)];
+
+      await wait();
+      _selectedAssets.current = selection;
+      // Switching between grid and list doesn’t change the filter, so the selection is kept
+      currentView.current = { type: 'list', showInfo: true };
+      await wait();
+
+      expect(_selectedAssets.current).toEqual(selection);
+
+      currentView.current = {
+        type: 'list',
+        showInfo: true,
+        filter: { field: 'kind', pattern: 'video' },
+      };
+      await wait();
+
+      expect(_selectedAssets.current).toEqual([]);
+    });
+
+    it('should drop the focus from an asset the filter hides', async () => {
+      await wait();
+
+      const [photo1] = _publishedAssets.current;
+
+      _focusedAsset.current = photo1;
+      // A filter the focused asset matches keeps the focus
+      vi.mocked(filterAssets).mockImplementation((assets, filter) =>
+        filter?.pattern
+          ? assets.filter(({ name }) => name.includes(String(filter.pattern)))
+          : assets,
+      );
+      currentView.current = {
+        type: 'grid',
+        showInfo: true,
+        filter: { field: 'name', pattern: '1' },
+      };
+      await wait();
+
+      expect(_focusedAsset.current).toBe(photo1);
+
+      // The focused asset is filtered out, so the toolbar actions must no longer apply to it
+      currentView.current = {
+        type: 'grid',
+        showInfo: true,
+        filter: { field: 'name', pattern: '2' },
+      };
+      await wait();
+
+      expect(_focusedAsset.current).toBeUndefined();
+
+      vi.mocked(filterAssets).mockImplementation((assets) => assets);
+    });
+
+    it('should drop the focus from an asset no longer listed', async () => {
+      _focusedAsset.current = createAsset('images/photo1.jpg', globalFolder);
+      _selectedAssetFolder.current = blogFolder;
+      await wait();
+
+      expect(_focusedAsset.current).toBeUndefined();
+    });
+
+    it('should keep the focus on an asset replaced with an updated copy', async () => {
+      await wait();
+
+      [_focusedAsset.current] = _publishedAssets.current;
+      // An upload replaces the asset objects, e.g. with a new SHA
+      _publishedAssets.current = _publishedAssets.current.map((/** @type {any} */ a) => ({
+        ...a,
+        sha: `${a.sha}-new`,
+      }));
+      await wait();
+
+      expect(_focusedAsset.current?.path).toBe('images/photo1.jpg');
     });
 
     it('should not log the assets to the console when dev mode is disabled', async () => {
@@ -452,6 +604,70 @@ describe('assets/view/index', () => {
 
       expect(consoleSpy).toHaveBeenCalledWith('listedAssets', expect.any(Array));
       consoleSpy.mockRestore();
+    });
+
+    describe('with folder support', () => {
+      beforeEach(() => {
+        _publishedAssets.current = [
+          createAsset('images/photo1.jpg', globalFolder),
+          createAsset('images/2024/photo2.jpg', globalFolder),
+          createAsset('images/2024/summer/photo3.jpg', globalFolder),
+          createAsset('images/2023/photo4.jpg', globalFolder),
+          createAsset('blog/photo5.jpg', blogFolder),
+        ];
+        _selectedAssetFolder.current = globalFolder;
+      });
+
+      it('should list every asset in the folder via selectedFolderAssets', () => {
+        _browsedDirPath.current = 'images/2024';
+
+        expect(selectedFolderAssets.current.map(({ path }) => path)).toEqual([
+          'images/photo1.jpg',
+          'images/2024/photo2.jpg',
+          'images/2024/summer/photo3.jpg',
+          'images/2023/photo4.jpg',
+        ]);
+      });
+
+      it('should list only the assets in the browsed directory', () => {
+        _browsedDirPath.current = 'images';
+        expect(listedAssets.current.map(({ path }) => path)).toEqual(['images/photo1.jpg']);
+
+        _browsedDirPath.current = 'images/2024';
+        expect(listedAssets.current.map(({ path }) => path)).toEqual(['images/2024/photo2.jpg']);
+
+        _browsedDirPath.current = 'images/2024/summer';
+        expect(listedAssets.current.map(({ path }) => path)).toEqual([
+          'images/2024/summer/photo3.jpg',
+        ]);
+      });
+
+      it('should list the subfolders of the browsed directory', () => {
+        _browsedDirPath.current = 'images';
+        expect(listedSubfolders.current).toEqual([
+          { name: '2023', path: 'images/2023' },
+          { name: '2024', path: 'images/2024' },
+        ]);
+
+        _browsedDirPath.current = 'images/2024';
+        expect(listedSubfolders.current).toEqual([{ name: 'summer', path: 'images/2024/summer' }]);
+
+        _browsedDirPath.current = 'images/2023';
+        expect(listedSubfolders.current).toEqual([]);
+      });
+
+      it('should list no subfolder when the folder is not browsed by subfolder', () => {
+        expect(listedSubfolders.current).toEqual([]);
+        expect(listedAssets.current).toHaveLength(4);
+      });
+
+      it('should offset the asset row indexes by the subfolder count', () => {
+        vi.mocked(sortAssets).mockImplementation((assets) => assets);
+        vi.mocked(groupAssets).mockImplementation((assets) => ({ '*': assets }));
+        _browsedDirPath.current = 'images';
+
+        expect([...listedAssetIndexMap.current]).toEqual([['images/photo1.jpg', 2]]);
+      });
     });
   });
 
@@ -480,6 +696,43 @@ describe('assets/view/index', () => {
       expect(groupAssets).toHaveBeenCalledWith([asset], { field: 'kind' });
     });
 
+    it('should only rerun the steps whose view conditions have changed', () => {
+      vi.mocked(sortAssets).mockImplementation((assets) => [...assets]);
+      vi.mocked(filterAssets).mockImplementation((assets) => [...assets]);
+
+      /** @type {any} */
+      const view = {
+        type: 'grid',
+        showInfo: true,
+        sort: { key: 'name', order: 'ascending' },
+        filter: { field: 'kind', pattern: 'image' },
+        group: { field: 'kind' },
+      };
+
+      // Assets of its own, so the groups aren’t equal to what an earlier test left behind
+      _publishedAssets.current = [createAsset('images/photo3.jpg')];
+      currentView.current = view;
+      void assetGroups.current;
+      vi.clearAllMocks();
+
+      // Switching to the list view leaves the conditions as they were, even though the view is a
+      // new object with copies of them
+      currentView.current = { ...structuredClone(view), type: 'list' };
+      void assetGroups.current;
+
+      expect(sortAssets).not.toHaveBeenCalled();
+      expect(filterAssets).not.toHaveBeenCalled();
+      expect(groupAssets).not.toHaveBeenCalled();
+
+      // A new filter doesn’t sort the assets again
+      currentView.current = { ...view, filter: { field: 'kind', pattern: 'video' } };
+      void assetGroups.current;
+
+      expect(sortAssets).not.toHaveBeenCalled();
+      expect(filterAssets).toHaveBeenCalledTimes(1);
+      expect(groupAssets).toHaveBeenCalledTimes(1);
+    });
+
     it('should keep the same groups when the computed groups are equal', () => {
       const groups = assetGroups.current;
 
@@ -499,6 +752,85 @@ describe('assets/view/index', () => {
     });
   });
 
+  describe('folderSummary', () => {
+    const globalFolder = { collectionName: undefined, internalPath: 'images', label: 'Images' };
+
+    beforeEach(() => {
+      _publishedAssets.current = [
+        createAsset('images/photo1.jpg', globalFolder),
+        createAsset('images/2024/photo2.jpg', globalFolder),
+        createAsset('images/2024/summer/photo3.jpg', globalFolder),
+        createAsset('images/2024/summer/photo4.jpg', globalFolder),
+      ];
+    });
+
+    it('should be undefined without a selected folder', () => {
+      expect(folderSummary.current).toBeUndefined();
+    });
+
+    it('should describe the selected folder', () => {
+      _selectedAssetFolder.current = globalFolder;
+      _browsedDirPath.current = 'images';
+
+      expect(folderSummary.current).toEqual({
+        name: 'Images',
+        path: 'images',
+        folderCount: 1,
+        assetCount: 1,
+      });
+    });
+
+    it('should describe the subfolder being browsed', () => {
+      _selectedAssetFolder.current = globalFolder;
+      _selectedSubfolderPath.current = '2024/summer';
+      _browsedDirPath.current = 'images/2024/summer';
+
+      expect(folderSummary.current).toEqual({
+        name: 'summer',
+        path: 'images/2024/summer',
+        folderCount: 0,
+        assetCount: 2,
+      });
+    });
+
+    it('should describe a folder that is not browsed by subfolder', () => {
+      const allAssetsFolder = { collectionName: undefined, internalPath: undefined };
+
+      _selectedAssetFolder.current = allAssetsFolder;
+
+      expect(folderSummary.current).toEqual({
+        name: 'All Assets',
+        path: undefined,
+        folderCount: undefined,
+        assetCount: 4,
+      });
+    });
+
+    it('should wait for the locale to label the folder', () => {
+      _selectedAssetFolder.current = globalFolder;
+      _locale.current = undefined;
+
+      try {
+        expect(folderSummary.current?.name).toBeUndefined();
+      } finally {
+        _locale.current = 'en';
+      }
+    });
+
+    it('should describe the focused subfolder', () => {
+      _selectedAssetFolder.current = globalFolder;
+      _browsedDirPath.current = 'images';
+      _focusedSubfolder.current = { name: '2024', path: 'images/2024' };
+
+      expect(folderSummary.current).toEqual({
+        name: '2024',
+        path: 'images/2024',
+        folderCount: 1,
+        assetCount: 1,
+      });
+    });
+  });
+
   describe('getAdjacentAssets', () => {
     const assets = [
       createAsset('images/a.jpg'),
@@ -506,30 +838,59 @@ describe('assets/view/index', () => {
       createAsset('images/c.jpg'),
     ];
 
+    const groups = { '*': assets };
+    /**
+     * Allow any asset to be previewed.
+     * @returns {boolean} Result.
+     */
+    const canPreview = () => true;
+
     it('should return the neighbours of an asset in the middle', () => {
-      expect(getAdjacentAssets(assets, ({ path }) => path === 'images/b.jpg')).toEqual({
+      expect(getAdjacentAssets(groups, ({ path }) => path === 'images/b.jpg', canPreview)).toEqual({
         previous: assets[0],
         next: assets[2],
       });
     });
 
     it('should omit the previous asset for the first one', () => {
-      expect(getAdjacentAssets(assets, ({ path }) => path === 'images/a.jpg')).toEqual({
+      expect(getAdjacentAssets(groups, ({ path }) => path === 'images/a.jpg', canPreview)).toEqual({
         previous: undefined,
         next: assets[1],
       });
     });
 
     it('should omit the next asset for the last one', () => {
-      expect(getAdjacentAssets(assets, ({ path }) => path === 'images/c.jpg')).toEqual({
+      expect(getAdjacentAssets(groups, ({ path }) => path === 'images/c.jpg', canPreview)).toEqual({
         previous: assets[1],
         next: undefined,
       });
     });
 
     it('should return nothing when the asset is not listed', () => {
-      expect(getAdjacentAssets(assets, ({ path }) => path === 'images/d.jpg')).toEqual({});
-      expect(getAdjacentAssets([], () => true)).toEqual({});
+      expect(getAdjacentAssets(groups, ({ path }) => path === 'images/d.jpg', canPreview)).toEqual(
+        {},
+      );
+      expect(getAdjacentAssets({}, () => true, canPreview)).toEqual({});
+    });
+
+    it('should move across the groups in the order they are listed', () => {
+      expect(
+        getAdjacentAssets(
+          { A: [assets[0]], B: [assets[1], assets[2]] },
+          ({ path }) => path === 'images/a.jpg',
+          canPreview,
+        ),
+      ).toEqual({ previous: undefined, next: assets[1] });
+    });
+
+    it('should skip the assets that can’t be previewed, but not the current one', () => {
+      expect(
+        getAdjacentAssets(
+          groups,
+          ({ path }) => path === 'images/b.jpg',
+          ({ path }) => path === 'images/c.jpg',
+        ),
+      ).toEqual({ previous: undefined, next: assets[2] });
     });
   });
 

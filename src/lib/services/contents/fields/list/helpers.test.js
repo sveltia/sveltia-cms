@@ -1,6 +1,15 @@
 import { beforeAll, describe, expect, test, vi } from 'vitest';
 
-import { formatSummary, getListFieldInfo } from './helpers';
+import {
+  formatSummary,
+  getListFieldInfo,
+  getListItemKey,
+  getPairedListKeyPaths,
+  hasDuplicatedSubField,
+  isPairedList,
+  isSingleItemList,
+  tagListItems,
+} from './helpers';
 
 vi.mock('$lib/services/config');
 
@@ -32,6 +41,7 @@ describe('Test formatSummary() — comprehensive tests', () => {
                     { name: 'date', widget: 'date', picker_utc: true, time_format: false },
                     { name: 'hidden_field', widget: 'hidden' },
                     { name: 'number_value', widget: 'number' },
+                    { name: 'body', widget: 'richtext' },
                   ],
                 },
               ],
@@ -138,6 +148,15 @@ describe('Test formatSummary() — comprehensive tests', () => {
         ).toEqual('1,234');
       });
 
+      test('should strip Markdown syntax and HTML tags from a Rich Text field value', () => {
+        expect(
+          formatSummary({
+            ...baseArgs,
+            valueMap: { 'images.0.body': 'A **rich text** _field_\n\nwith <em>HTML</em>' },
+          }),
+        ).toEqual('A rich text field with HTML');
+      });
+
       test('should reuse cached regex when called twice with the same keyPath and index', () => {
         // Exercises the listSummaryRegexCache hit path added by the perf optimisation.
         const result1 = formatSummary({ ...baseArgs, valueMap: basicValueMap });
@@ -148,6 +167,34 @@ describe('Test formatSummary() — comprehensive tests', () => {
     });
 
     describe('with template', () => {
+      test('should strip Markdown syntax and HTML tags from a Rich Text field value', () => {
+        expect(
+          formatSummary({
+            ...baseArgs,
+            valueMap: { 'images.0.body': '<p>A <strong>rich text</strong> field</p>' },
+            summaryTemplate: '{{fields.body}}',
+          }),
+        ).toEqual('A rich text field');
+
+        expect(
+          formatSummary({
+            ...baseArgs,
+            valueMap: { 'images.0.body': '# A **rich text** field' },
+            summaryTemplate: '{{fields.body | upper}}',
+          }),
+        ).toEqual('A RICH TEXT FIELD');
+      });
+
+      test('should keep Markdown syntax in a non-Rich Text field value', () => {
+        expect(
+          formatSummary({
+            ...baseArgs,
+            valueMap: { 'images.0.alt': '**hello**' },
+            summaryTemplate: '{{fields.alt}}',
+          }),
+        ).toEqual('**hello**');
+      });
+
       test('should use template field values', () => {
         expect(
           formatSummary({
@@ -406,6 +453,11 @@ describe('Test formatSummary() — comprehensive tests', () => {
                   widget: 'list',
                   field: { name: 'tag', widget: 'string' },
                 },
+                {
+                  name: 'notes',
+                  widget: 'list',
+                  field: { name: 'note', widget: 'richtext' },
+                },
               ],
             },
           ],
@@ -446,7 +498,7 @@ describe('Test formatSummary() — comprehensive tests', () => {
             ...baseArgs,
             valueMap: {},
           }),
-        ).toEqual(undefined);
+        ).toEqual('');
       });
 
       test('should handle different data types', () => {
@@ -455,14 +507,24 @@ describe('Test formatSummary() — comprehensive tests', () => {
             ...baseArgs,
             valueMap: { 'images.0': 123 },
           }),
-        ).toEqual(123);
+        ).toEqual('123');
 
         expect(
           formatSummary({
             ...baseArgs,
             valueMap: { 'images.0': true },
           }),
-        ).toEqual(true);
+        ).toEqual('true');
+      });
+
+      test('should strip Markdown syntax and HTML tags from a Rich Text field value', () => {
+        expect(
+          formatSummary({
+            ...baseArgs,
+            keyPath: 'notes',
+            valueMap: { 'notes.0': 'A **rich text** <em>field</em>' },
+          }),
+        ).toEqual('A rich text field');
       });
     });
 
@@ -679,5 +741,177 @@ describe('Test getListFieldInfo()', () => {
       hasVariableTypes: true,
       hasSubFields: true,
     });
+  });
+});
+
+describe('Test hasDuplicatedSubField()', () => {
+  /** @type {any} */
+  const duplicated = { name: 'name', widget: 'string', i18n: 'duplicate' };
+  /** @type {any} */
+  const translatable = { name: 'description', widget: 'text', i18n: true };
+
+  test('should find a duplicated subfield', () => {
+    expect(hasDuplicatedSubField(/** @type {any} */ ({ fields: [translatable, duplicated] }))).toBe(
+      true,
+    );
+    expect(hasDuplicatedSubField(/** @type {any} */ ({ field: duplicated }))).toBe(true);
+    expect(
+      hasDuplicatedSubField(
+        /** @type {any} */ ({ types: [{ name: 'a' }, { name: 'b', fields: [duplicated] }] }),
+      ),
+    ).toBe(true);
+  });
+
+  test('should find a subfield using the `sync` strategy', () => {
+    expect(
+      hasDuplicatedSubField(
+        /** @type {any} */ ({
+          fields: [translatable, { name: 'url', widget: 'string', i18n: 'sync' }],
+        }),
+      ),
+    ).toBe(true);
+  });
+
+  test('should find a subfield using the `duplicate_if_empty` strategy', () => {
+    expect(
+      hasDuplicatedSubField(
+        /** @type {any} */ ({
+          fields: [translatable, { name: 'caption', widget: 'string', i18n: 'duplicate_if_empty' }],
+        }),
+      ),
+    ).toBe(true);
+  });
+
+  test('should ignore the `duplicate_if_empty` option of a subfield not supporting it', () => {
+    // Such a subfield works like a translatable one, so the items aren’t paired
+    expect(
+      hasDuplicatedSubField(
+        /** @type {any} */ ({
+          fields: [
+            translatable,
+            { name: 'draft', widget: 'boolean', i18n: 'duplicate_if_empty' },
+            {
+              name: 'colors',
+              widget: 'select',
+              options: ['red'],
+              multiple: true,
+              i18n: 'duplicate_if_empty',
+            },
+            { name: 'photos', widget: 'image', multiple: true, i18n: 'duplicate_if_empty' },
+          ],
+        }),
+      ),
+    ).toBe(false);
+  });
+
+  test('should find a duplicated subfield nested in another subfield', () => {
+    expect(
+      hasDuplicatedSubField(
+        /** @type {any} */ ({
+          fields: [{ name: 'details', widget: 'object', fields: [duplicated] }],
+        }),
+      ),
+    ).toBe(true);
+  });
+
+  test('should return false without a duplicated subfield', () => {
+    expect(hasDuplicatedSubField(/** @type {any} */ ({ fields: [translatable] }))).toBe(false);
+    expect(hasDuplicatedSubField(/** @type {any} */ ({ field: translatable }))).toBe(false);
+    expect(hasDuplicatedSubField(/** @type {any} */ ({ name: 'tags', widget: 'list' }))).toBe(
+      false,
+    );
+  });
+});
+
+describe('Test isPairedList() and getPairedListKeyPaths()', () => {
+  /** @type {any} */
+  const pairedList = {
+    name: 'residences',
+    widget: 'list',
+    i18n: true,
+    fields: [{ name: 'name', widget: 'string', i18n: 'duplicate' }],
+  };
+
+  test('should only accept a translatable List field with a duplicated subfield', () => {
+    expect(isPairedList(pairedList)).toBe(true);
+    expect(isPairedList({ ...pairedList, i18n: 'duplicate' })).toBe(false);
+    expect(isPairedList({ ...pairedList, fields: [{ name: 'name', widget: 'string' }] })).toBe(
+      false,
+    );
+    expect(isPairedList({ ...pairedList, widget: 'object' })).toBe(false);
+  });
+
+  test('should find the paired List fields, including those in an Object field', () => {
+    /** @type {any[]} */
+    const fields = [
+      { name: 'title', widget: 'string' },
+      pairedList,
+      { name: 'details', widget: 'object', fields: [pairedList] },
+      { name: 'blocks', widget: 'object', types: [{ name: 'a', fields: [pairedList] }] },
+    ];
+
+    expect(getPairedListKeyPaths(fields)).toEqual(['residences', 'details.residences']);
+    expect(getPairedListKeyPaths([pairedList], 'details')).toEqual(['details.residences']);
+  });
+});
+
+describe('Test isSingleItemList()', () => {
+  test('should be true for a list limited to one item holding no more than that', () => {
+    /** @type {any} */
+    const fieldConfig = { name: 'author', widget: 'list', max: 1, fields: [] };
+
+    expect(isSingleItemList({ fieldConfig, itemCount: 0 })).toBe(true);
+    expect(isSingleItemList({ fieldConfig, itemCount: 1 })).toBe(true);
+    // More items than the limit, e.g. from a file edited outside the CMS
+    expect(isSingleItemList({ fieldConfig, itemCount: 2 })).toBe(false);
+    expect(isSingleItemList({ fieldConfig: { ...fieldConfig, max: 2 }, itemCount: 1 })).toBe(false);
+    expect(
+      isSingleItemList({ fieldConfig: { ...fieldConfig, max: undefined }, itemCount: 1 }),
+    ).toBe(false);
+  });
+});
+
+describe('Test getListItemKey()', () => {
+  test('uses the generated ID of an object item', () => {
+    expect(getListItemKey([{ __sc_item_id: 'abc' }], 0)).toBe('abc');
+  });
+
+  test('falls back to the index for an object item without an ID', () => {
+    expect(getListItemKey([{}, { title: 'b' }], 1)).toBe(1);
+  });
+
+  test('uses the index for a primitive or missing item', () => {
+    expect(getListItemKey(['a', 'b'], 1)).toBe(1);
+    expect(getListItemKey([], 2)).toBe(2);
+  });
+});
+
+describe('Test tagListItems()', () => {
+  test('records the original key path of every object item, keeping existing tags', () => {
+    const list = [{ a: 1 }, 'text', { b: 2, __sc_item_original_key_path: 'items.5' }];
+
+    tagListItems(list, 'items');
+
+    expect(list).toEqual([
+      { a: 1, __sc_item_original_key_path: 'items.0' },
+      'text',
+      { b: 2, __sc_item_original_key_path: 'items.5' },
+    ]);
+  });
+
+  test('also assigns IDs when requested, keeping existing ones', () => {
+    /** @type {any[]} */
+    const list = [{ a: 1 }, { b: 2, __sc_item_id: 'existing' }, 3];
+
+    tagListItems(list, 'items', { assignIds: true });
+
+    expect(list[0].__sc_item_id).toMatch(/^[0-9a-f-]{36}$/);
+    expect(list[0].__sc_item_original_key_path).toBe('items.0');
+    expect(list[1]).toEqual({
+      b: 2,
+      __sc_item_id: 'existing',
+      __sc_item_original_key_path: 'items.1',
+    });
+    expect(list[2]).toBe(3);
   });
 });

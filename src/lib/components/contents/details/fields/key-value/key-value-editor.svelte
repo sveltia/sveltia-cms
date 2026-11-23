@@ -1,29 +1,43 @@
 <!--
   @component
   Implement the editor for a KeyValue field compatible with Static CMS.
+
+  Like a simple List field, the editor always offers a row to type into: a field without pairs shows
+  one blank row, which isn’t stored until its key is filled in.
   @see https://staticjscms.netlify.app/docs/widget-keyvalue
   @see https://sveltiacms.app/en/docs/fields/keyvalue
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Button, Icon, TextInput } from '@sveltia/ui';
-  import equal from 'fast-deep-equal';
-  import { getContext } from 'svelte';
+  import { TextInput } from '@sveltia/ui';
+  import { tick } from 'svelte';
+  import { flip } from 'svelte/animate';
 
+  import RemoveButton from '$lib/components/common/remove-button.svelte';
+  import ReorderControls from '$lib/components/common/reorder-controls.svelte';
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
+  import AddItemButton from '$lib/components/contents/details/fields/object/add-item-button.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { forEachTargetLocale } from '$lib/services/contents/draft/update/locale';
-  import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { deferDraftWrite } from '$lib/services/contents/draft/update/deferred';
+  import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { getFieldEditorContext } from '$lib/services/contents/editor/field-context';
   import {
     getPairs,
+    getPairsToSave,
+    haveStoredPairsChanged,
     savePairs,
+    shouldStorePlaceholder,
     validatePairs,
   } from '$lib/services/contents/fields/key-value/helpers';
+  import { getPairsFromContent } from '$lib/services/contents/fields/key-value/pairs';
   import { getDirection } from '$lib/services/contents/i18n';
-  import { watch } from '$lib/services/utils/state.svelte';
+  import { focusAfterRemoval, moveListItem } from '$lib/services/utils/drag-sorting';
+  import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
+  import { createKeyedRows } from '$lib/services/utils/keyed-rows.svelte';
+  import { createStableDerivedState, watch } from '$lib/services/utils/state.svelte';
 
   /**
-   * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
+   * @import { FieldEditorProps } from '$lib/types/private';
    * @import { KeyValueField } from '$lib/types/public';
    */
 
@@ -35,19 +49,10 @@
 
   const entryDraft = getEntryDraftContext();
 
-  /** @type {FieldEditorContext} */
-  const { valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
+  const { valueStoreKey = 'currentValues' } = getFieldEditorContext();
 
   /** @type {FieldEditorProps & Props} */
-  let {
-    /* eslint-disable prefer-const */
-    locale,
-    keyPath,
-    fieldId,
-    fieldConfig,
-    readonly = false,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { locale, keyPath, fieldId, fieldConfig, readonly = false } = $props();
 
   const {
     i18n = false,
@@ -65,125 +70,224 @@
     readonly || (i18n === 'duplicate_keys' && locale !== defaultLocale),
   );
 
-  /** @type {[string, string][]} */
-  let pairs = $state([]);
-  /** @type {number[]} */
-  let pairIds = $state([]);
-  let nextPairId = 0;
+  /**
+   * Key-value pairs shown in the editor, one per row.
+   */
+  const rows = createKeyedRows(/** @type {[string, string][]} */ ([]));
   /** @type {HTMLTableRowElement[]} */
   const rowElements = $state([]);
+  /** @type {HTMLTableSectionElement | undefined} */
+  let tableBody = $state();
   /** @type {boolean[]} */
   let edited = $state([]);
-  /** @type {('empty' | 'duplicate' | undefined)[]} */
-  let validations = $state([]);
+  /**
+   * Validation results of the {@link rows}, one per row.
+   * @type {('empty' | 'duplicate' | undefined)[]}
+   */
+  const validations = $derived(validatePairs({ pairs: rows.values, edited }));
+
+  // Removing the blank row offered for an empty field would just bring it back
+  const isOnlyBlankRow = $derived(
+    rows.values.length === 1 && !rows.values[0][0] && !rows.values[0][1],
+  );
 
   /**
-   * Update the {@link pairs} whenever the current values are changed.
+   * Add a blank row if there are no pairs, so there’s always somewhere to type, unless the keys
+   * can’t be edited, in which case there’s nothing to type into.
+   */
+  const ensureBlankRow = () => {
+    if (!rows.values.length && !keysReadonly) {
+      rows.insert(rows.values.length, ['', '']);
+      edited.push(false);
+    }
+  };
+
+  /**
+   * Update the {@link rows} whenever the current values are changed.
    */
   const updatePairs = () => {
     const draft = entryDraft.current;
 
+    /* v8 ignore next 3 -- the editor is only rendered while the draft is there */
     if (!draft) {
       return;
     }
 
     const updatedPairs = getPairs({ draft, valueStoreKey, keyPath, locale });
-    // A pair whose key is still empty hasn’t been written to the draft — adding one removes the
-    // `null` placeholder from the draft, which is what runs this — so it doesn’t count as a change
-    const savedPairs = pairs.filter(([key]) => key.trim());
+    const valueStore = draft[valueStoreKey][locale];
 
-    if (!equal(savedPairs, updatedPairs)) {
-      pairs = [...updatedPairs];
+    if (haveStoredPairsChanged({ rows: rows.values, storedPairs: updatedPairs })) {
       // Preserve existing IDs for unchanged positions; assign new IDs for new pairs
-      pairIds = updatedPairs.map((_pair, i) => {
-        if (i < pairIds.length) {
-          return pairIds[i];
-        }
-
-        nextPairId += 1;
-
-        return nextPairId - 1;
-      });
+      rows.replace([...updatedPairs], { keepIds: true });
       edited = updatedPairs.map(() => false);
     }
 
-    if (!pairs.length && draft[valueStoreKey][locale][keyPath] !== null) {
-      // Enable validation
-      draft[valueStoreKey][locale][keyPath] = null;
+    ensureBlankRow();
+
+    if (shouldStorePlaceholder({ storedPairs: updatedPairs, storedValue: valueStore[keyPath] })) {
+      const _keyPath = keyPath;
+
+      // Enable validation. This runs from an effect, so the write is deferred
+      deferDraftWrite(() => {
+        valueStore[_keyPath] = null;
+      });
     }
   };
 
   /**
-   * Add an empty pair to the {@link pairs} array.
+   * Add an empty pair to the {@link rows}.
    */
   const addPair = () => {
-    const draft = entryDraft.current;
-
-    if (!draft) {
-      return;
-    }
-
-    forEachTargetLocale({ valueStore: draft[valueStoreKey], locale, i18n }, (content) => {
-      // Remove `null` added for validation
-      delete content[keyPath];
-    });
-
-    pairs.push(['', '']);
-    pairIds.push(nextPairId);
-    nextPairId += 1;
+    rows.insert(rows.values.length, ['', '']);
     edited.push(false);
 
     window.requestAnimationFrame(() => {
       /** @type {HTMLInputElement} */ (
-        rowElements[pairs.length - 1].querySelector('input')
+        rowElements[rows.values.length - 1].querySelector('input')
       ).focus();
     });
   };
 
   /**
-   * Remove a pair from {@link pairs}.
-   * @param {number} index Index in the {@link pairs} array.
+   * Remove a pair from {@link rows}.
+   * @param {number} index Row index.
    */
-  const removePair = (index) => {
-    pairs.splice(index, 1);
-    pairIds.splice(index, 1);
+  const removePair = async (index) => {
+    rows.remove(index);
     edited.splice(index, 1);
+    ensureBlankRow();
+    await tick();
+
+    // The focused Remove button is gone along with the row, so move the focus to the Remove button
+    // of the row now at the same position, or the previous row if the last one was removed. The
+    // blank row left once the last pair is removed can’t be removed, so its key takes the focus
+    // There’s always a row left, as the blank row takes the place of the last pair
+    const { rows: rowList } = /** @type {HTMLTableSectionElement} */ (tableBody);
+
+    focusAfterRemoval({
+      index,
+      /**
+       * Get the Remove button of a row, or the key input if the row can’t be removed.
+       * @param {number} _index Row index.
+       * @returns {HTMLElement | null | undefined} Element.
+       */
+      getTarget: (_index) => {
+        const row = rowList[_index];
+
+        return (
+          row &&
+          /** @type {HTMLElement | null} */ (
+            row.querySelector('td.action button:enabled') ?? row.querySelector('td.key input')
+          )
+        );
+      },
+    });
   };
 
   /**
-   * Update the draft store whenever the {@link pairs} is updated.
+   * Move a pair to another position in {@link rows}. The pairs are saved in the new order.
+   * @param {number} from Source index.
+   * @param {number} to Destination index.
+   */
+  const movePair = (from, to) => {
+    rows.move(from, to);
+    edited = moveListItem(edited, from, to);
+  };
+
+  const sorter = createDragSorter({
+    /**
+     * Get the number of pairs.
+     * @returns {number} Pair count.
+     */
+    getItemCount: () => rows.values.length,
+    /**
+     * Get the table body, whose rows are the pairs.
+     * @returns {HTMLTableSectionElement | undefined} Element.
+     */
+    getListElement: () => tableBody,
+    onMove: movePair,
+    /**
+     * Get the key of a pair, to be attached to its drag.
+     * @param {number} index Row index.
+     * @returns {string} Key.
+     */
+    getItemData: (index) => rows.values[index][0],
+  });
+
+  /**
+   * Update the draft store whenever the {@link rows} is updated.
    */
   const updateStore = () => {
     const draft = entryDraft.current;
 
-    validations = validatePairs({ pairs, edited });
-
-    if (!draft || validations.some(Boolean) || pairs.some(([key]) => !key.trim())) {
+    /* v8 ignore next 3 -- the editor is only rendered while the draft is there */
+    if (!draft) {
       return;
     }
 
-    savePairs({ draft, valueStoreKey, fieldConfig, keyPath, locale, pairs });
+    const pairs = getPairsToSave({
+      rows: rows.values,
+      validations,
+      /**
+       * Get the pairs stored in the draft.
+       * @returns {[string, string][]} Pairs.
+       */
+      getStoredPairs: () => getPairs({ draft, valueStoreKey, keyPath, locale }),
+    });
+
+    if (!pairs) {
+      return;
+    }
+
+    const args = {
+      draft,
+      valueStoreKey,
+      fieldConfig,
+      keyPath,
+      locale,
+      pairs: $state.snapshot(pairs),
+    };
+
+    // This runs from an effect, so the write to the draft is deferred
+    deferDraftWrite(() => {
+      savePairs(args);
+    });
   };
 
+  /**
+   * The pairs stored in the draft and the value at the field’s key path, which is all
+   * {@link updatePairs} reads. It only changes when the field does, rather than whenever anything
+   * else in the entry is changed, e.g. on every keystroke in another field.
+   */
+  const storedField = createStableDerivedState(() => {
+    const valueMap = getFieldValueMapSnapshot(entryDraft.current, locale, keyPath, valueStoreKey);
+
+    // A snapshot isn’t mutated, so its key paths are read from the index kept for it
+    return [getPairsFromContent(valueMap, keyPath, { live: false }), valueMap[keyPath]];
+  });
+
   watch(
-    () => [getValueMapSnapshot(entryDraft.current, locale, valueStoreKey)],
+    () => [storedField.current],
     () => {
       updatePairs();
     },
   );
 
   watch(
-    () => $state.snapshot(pairs),
+    () => $state.snapshot(rows.values),
     () => {
       updateStore();
     },
   );
 </script>
 
-{#if pairs.length}
+{#if rows.values.length}
   <table>
     <thead>
       <tr>
+        {#if !keysReadonly}
+          <th scope="col" class="reorder" aria-label={_('reorder')}></th>
+        {/if}
         <th scope="col" class="key">{keyLabel}</th>
         <th scope="col" class="value">{valueLabel}</th>
         {#if !keysReadonly}
@@ -191,17 +295,34 @@
         {/if}
       </tr>
     </thead>
-    <tbody>
-      {#each pairs as pair, index (pairIds[index])}
-        <tr bind:this={rowElements[index]}>
+    <tbody bind:this={tableBody} {...sorter.listProps}>
+      {#each sorter.displayOrder as index (rows.ids[index])}
+        <tr
+          bind:this={rowElements[index]}
+          class:drag-placeholder={sorter.dragIndex === index}
+          {...sorter.itemProps(index)}
+          animate:flip={{ duration: 200 }}
+        >
+          {#if !keysReadonly}
+            <td class="reorder">
+              <div role="none">
+                <ReorderControls
+                  {index}
+                  itemCount={rows.values.length}
+                  disabled={rows.values.length < 2}
+                  {...sorter.reorderControlProps(index)}
+                />
+              </div>
+            </td>
+          {/if}
           <td class="key">
             <TextInput
               dir="ltr"
               readonly={keysReadonly}
               flex
-              bind:value={pair[0]}
+              bind:value={rows.values[index][0]}
               invalid={!!validations[index]}
-              aria-label={keyLabel}
+              ariaLabel={keyLabel}
               aria-errormessage={validations[index] ? `${fieldId}-kv-error` : undefined}
               oninput={() => {
                 edited[index] = true;
@@ -221,16 +342,19 @@
               dir={getDirection(locale)}
               {readonly}
               flex
-              bind:value={pair[1]}
-              aria-label={valueLabel}
+              bind:value={rows.values[index][1]}
+              ariaLabel={valueLabel}
               onkeydown={(event) => {
-                // Move focus or add a new pair with Enter key
+                // Move focus or add a new pair with Enter key. The next key is skipped when it’s
+                // read-only
                 if (event.key === 'Enter' && !event.isComposing) {
-                  if (index < pairs.length - 1) {
+                  if (index < rows.values.length - 1) {
                     /** @type {HTMLInputElement} */ (
-                      rowElements[index + 1].querySelector('input')
+                      rowElements[index + 1].querySelector(
+                        keysReadonly ? 'td.value input' : 'td.key input',
+                      )
                     ).focus();
-                  } else if (!keysReadonly && pairs.length < max) {
+                  } else if (!keysReadonly && rows.values.length < max) {
                     addPair();
                   }
                 }
@@ -239,19 +363,13 @@
           </td>
           {#if !keysReadonly}
             <td class="action">
-              <Button
+              <RemoveButton
                 variant="ghost"
-                size="small"
-                iconic
-                aria-label={_('remove')}
+                disabled={isOnlyBlankRow}
                 onclick={() => {
                   removePair(index);
                 }}
-              >
-                {#snippet startIcon()}
-                  <Icon name="close" />
-                {/snippet}
-              </Button>
+              />
             </td>
           {/if}
         </tr>
@@ -271,19 +389,37 @@
   </ValidationError>
 {/if}
 
-<div role="none">
-  <Button
-    label={_('add')}
-    variant="tertiary"
-    disabled={keysReadonly || pairs.length >= max}
-    onclick={() => {
-      addPair();
-    }}
-  />
-</div>
+{#if rows.values.length < max}
+  <div role="none" class="toolbar">
+    <AddItemButton
+      disabled={keysReadonly}
+      {fieldConfig}
+      {locale}
+      items={rows.values}
+      addItem={() => {
+        addPair();
+      }}
+    />
+  </div>
+{/if}
 
 <style>
+  .toolbar {
+    display: flex;
+    align-items: center;
+    margin-block-start: 8px;
+
+    &:first-child {
+      margin-block-start: 0;
+    }
+  }
+
   table {
+    /* Space the cells like the items of a List field. The outer spacing is cancelled out by the
+      negative margins, which the stretched width makes up for */
+    margin: -4px;
+    border-collapse: separate;
+    border-spacing: 4px;
     width: -moz-available;
     width: -webkit-fill-available;
     width: stretch;
@@ -310,5 +446,10 @@
   td {
     padding: 0;
     vertical-align: middle;
+
+    &.reorder div {
+      display: flex;
+      align-items: center;
+    }
   }
 </style>

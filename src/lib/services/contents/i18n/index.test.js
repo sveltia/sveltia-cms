@@ -242,6 +242,31 @@ describe('Test getLocalePath()', () => {
     );
   });
 
+  test('omit default locale from collection folder path', () => {
+    const _i18n = {
+      ...DEFAULT_I18N_CONFIG,
+      i18nEnabled: true,
+      allLocales: ['en', 'fr'],
+      defaultLocale: 'en',
+      omitDefaultLocaleFromFilePath: true,
+      omitDefaultLocaleFromPreviewPath: false,
+    };
+
+    // Default locale: omit the {{locale}} folder, wherever it is, without leaving a slash behind
+    expect(getLocalePath({ _i18n, locale: 'en', path: 'content/{{locale}}/posts' })).toBe(
+      'content/posts',
+    );
+    expect(getLocalePath({ _i18n, locale: 'en', path: 'content/{{locale}}' })).toBe('content');
+    expect(getLocalePath({ _i18n, locale: 'en', path: '{{locale}}' })).toBe('');
+
+    // Non-default locales: include the locale folder
+    expect(getLocalePath({ _i18n, locale: 'fr', path: 'content/{{locale}}/posts' })).toBe(
+      'content/fr/posts',
+    );
+    expect(getLocalePath({ _i18n, locale: 'fr', path: 'content/{{locale}}' })).toBe('content/fr');
+    expect(getLocalePath({ _i18n, locale: 'fr', path: '{{locale}}' })).toBe('fr');
+  });
+
   test('omit default locale disabled', () => {
     const _i18n = {
       ...DEFAULT_I18N_CONFIG,
@@ -533,6 +558,12 @@ describe('Test getListFormatter()', () => {
     const formatter2 = getListFormatter('en', { style: 'long', type: 'disjunction' });
 
     expect(formatter1).not.toBe(formatter2);
+  });
+
+  test('should format items that aren’t strings', () => {
+    expect(getListFormatter('en').format(['a', 1, true, null, undefined, 2n])).toBe(
+      'a, 1, true, 2',
+    );
   });
 });
 

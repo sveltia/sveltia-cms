@@ -26,8 +26,18 @@
     }
   };
 
+  /* v8 ignore start -- reloading the page would tear the test down */
+  /**
+   * Reload the page to pick up the new version.
+   */
+  const reload = () => {
+    window.location.reload();
+  };
+  /* v8 ignore stop */
+
   onMount(() => {
-    if (import.meta.env.DEV) {
+    // An npm install is updated with the package manager, not by reloading the page
+    if (import.meta.env.DEV || import.meta.env.NPM_BUILD) {
       return undefined;
     }
 
@@ -48,12 +58,6 @@
 {#if updateAvailable}
   <Infobar --sui-infobar-message-justify-content="center">
     {_('update_available')}
-    <Button
-      variant="link"
-      label={_('update_now')}
-      onclick={() => {
-        window.location.reload();
-      }}
-    />
+    <Button variant="link" label={_('update_now')} onclick={reload} />
   </Infobar>
 {/if}

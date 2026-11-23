@@ -1,8 +1,8 @@
+import { loadAdditions } from '$lib/services/app/additions';
 import local from '$lib/services/backends/fs/local';
 import test from '$lib/services/backends/fs/test';
-import gitea from '$lib/services/backends/git/gitea';
-import github from '$lib/services/backends/git/github';
-import gitlab from '$lib/services/backends/git/gitlab';
+import { gitBackendServices, loadGitBackendService } from '$lib/services/backends/git/services';
+import { cmsConfig } from '$lib/services/config';
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
 
 /**
@@ -11,24 +11,29 @@ import { createDerivedState, createRawState } from '$lib/services/utils/state.sv
  */
 
 /**
- * List of all the supported backend services.
+ * List of the supported backend services that aren’t Git hosting services.
  * @type {Record<string, BackendService>}
- * @see https://decapcms.org/docs/backends-overview/
- * @see https://sveltiacms.app/en/docs/backends
  */
-export const allBackendServices = {
-  github,
-  gitlab,
-  gitea,
+const fileSystemBackendServices = {
   local,
   'test-repo': test,
 };
 
 /**
+ * Get a backend service that has been loaded. A Git backend service kept in a chunk is only there
+ * once it’s been loaded with {@link loadBackendService}.
+ * @param {string} name Backend name.
+ * @returns {BackendService | undefined} Service.
+ * @see https://decapcms.org/docs/backends-overview/
+ * @see https://sveltiacms.app/en/docs/backends
+ */
+const getBackendService = (name) => fileSystemBackendServices[name] ?? gitBackendServices[name];
+
+/**
  * List of backend services that are implemented in Netlify/Decap CMS but are not supported in
  * Sveltia CMS for performance and/or deprecation reasons.
  * @type {Record<string, { label: string, deprecated?: boolean }>}
- * @see https://sveltiacms.app/en/docs/migration/netlify-decap-cms#features-not-to-be-implemented
+ * @see https://sveltiacms.app/en/docs/migration/netlify-decap-cms#compatibility
  */
 export const unsupportedBackends = {
   azure: { label: 'Azure DevOps' },
@@ -42,17 +47,10 @@ export const unsupportedBackends = {
  * requires a Git backend service to be configured.
  * @type {BackendName[]}
  */
-export const validBackendNames = /** @type {BackendName[]} */ (
-  Object.keys(allBackendServices).filter((name) => name !== 'local')
-);
-
-/**
- * List of all the Git backend services.
- * @type {Record<string, BackendService>}
- */
-export const gitBackendServices = Object.fromEntries(
-  Object.entries(allBackendServices).filter(([, service]) => service.isGit),
-);
+export const validBackendNames = /** @type {BackendName[]} */ ([
+  ...Object.keys(gitBackendServices),
+  'test-repo',
+]);
 
 /**
  * Currently selected backend service name. Use {@link selectBackend} to change it, so that the new
@@ -65,16 +63,42 @@ export const backendName = createRawState();
  * Currently selected backend service.
  */
 export const backend = createDerivedState(() =>
-  backendName.current ? allBackendServices[backendName.current] : undefined,
+  backendName.current ? getBackendService(backendName.current) : undefined,
 );
 
 /**
- * Select the backend service with the given name, initializing it if it’s not the current one.
- * @param {string | undefined} name Backend name, or `undefined` to deselect the current backend.
- * @returns {BackendService | undefined} Selected backend service, if any.
+ * Get a backend service, loading it first if it’s kept in a chunk. The local backend wraps the
+ * configured Git backend, so that one is loaded along with it, and so is the `additions` chunk
+ * when the CMS works with Sveltia CMS Additions.
+ * @param {string} name Backend name.
+ * @returns {Promise<BackendService | undefined>} Service, or `undefined` if there’s no backend with
+ * the name.
+ * @throws {Error} If the service can’t be loaded.
  */
-export const selectBackend = (name) => {
-  const service = name ? allBackendServices[name] : undefined;
+export const loadBackendService = async (name) => {
+  // Sveltia CMS Additions takes over the sign-in, so it comes with the backend
+  await loadAdditions();
+
+  if (name === 'local') {
+    const remoteName = cmsConfig.current?.backend.name;
+
+    if (remoteName) {
+      await loadGitBackendService(remoteName);
+    }
+  }
+
+  return fileSystemBackendServices[name] ?? loadGitBackendService(name);
+};
+
+/**
+ * Select the backend service with the given name, loading it if needed and initializing it if it’s
+ * not the current one.
+ * @param {string | undefined} name Backend name, or `undefined` to deselect the current backend.
+ * @returns {Promise<BackendService | undefined>} Selected backend service, if any.
+ * @throws {Error} If the service can’t be loaded.
+ */
+export const selectBackend = async (name) => {
+  const service = name ? await loadBackendService(name) : undefined;
 
   if (service && service !== backend.current) {
     service.init();

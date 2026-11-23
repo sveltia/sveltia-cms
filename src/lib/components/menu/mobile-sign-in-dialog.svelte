@@ -1,30 +1,45 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { Dialog } from '@sveltia/ui';
-  import { toCanvas } from 'qrcode';
 
+  import { loadChunk } from '$lib/services/app/dependencies';
   import { showMobileSignInDialog } from '$lib/services/app/onboarding';
   import { user } from '$lib/services/user/account.svelte';
+  import { encodeMagicLinkData } from '$lib/services/user/magic-link';
   import { prefs } from '$lib/services/user/prefs.svelte';
+  import { watchAsync } from '$lib/services/utils/state.svelte';
 
   /** @type {HTMLCanvasElement | undefined} */
   let canvas = $state();
 
-  $effect(() => {
-    if (canvas && showMobileSignInDialog.current) {
+  // The QR code library is only loaded once the dialog is opened, as few users ever open it
+  watchAsync(
+    () => {
+      if (!canvas || !showMobileSignInDialog.current) {
+        return undefined;
+      }
+
+      const target = canvas;
       const { origin, pathname } = window.location;
       const snapshot = $state.snapshot(prefs);
-      const encodedData = btoa(JSON.stringify({ token: user.account?.token, prefs: snapshot }));
+      const encodedData = encodeMagicLinkData({ token: user.account?.token, prefs: snapshot });
       const url = `${origin}${pathname}#/signin/${encodedData}`;
-
-      toCanvas(canvas, url);
 
       if (prefs.devModeEnabled) {
         // eslint-disable-next-line no-console
         console.info('Mobile sign-in URL:', url);
       }
-    }
-  });
+
+      return loadChunk('qrcode').then(({ toCanvas }) => ({ toCanvas, target, url }));
+    },
+    ({ toCanvas, target, url }) => {
+      toCanvas(target, url);
+    },
+    (error) => {
+      // eslint-disable-next-line no-console
+      console.error(error);
+    },
+  );
 </script>
 
 <Dialog

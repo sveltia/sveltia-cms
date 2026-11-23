@@ -11,6 +11,8 @@
 create: 新規作成
 select: 選択
 select_all: すべて選択
+# Accessible name of the checkbox that selects a single entry or asset in a list
+select_item: '{$name} を選択'
 upload: アップロード
 copy: コピー
 download: ダウンロード
@@ -69,6 +71,10 @@ primary: プライマリー
 secondary: セカンダリー
 collection: コレクション
 folder: フォルダー
+# Label of the subfolder list in the asset picker
+folders: フォルダー
+# Menu in a breadcrumb holding the folders that don’t fit
+more_folders: その他のフォルダー
 
 # ==============================================================================
 # Miscellaneous Labels
@@ -113,6 +119,7 @@ welcome_message: '{$name} へようこそ'
 powered_by: Powered by {$name}
 
 # Shown during initial configuration and data loading
+unsupported_browser_error: お使いのブラウザーはサポートされていません。最新バージョンに更新するか、別のブラウザーを使ってください。
 loading_cms_config: CMS 設定を読み込んでいます…
 loading_site_data: サイトデータを読み込んでいます…
 loading_site_data_error: サイトデータの読み込み中にエラーが発生しました。
@@ -125,6 +132,8 @@ sign_in_with_x: '{$service} にログイン'
 # Access token dialog: alternative authentication method
 sign_in_using_access_token: アクセストークンを使用してログイン
 sign_in_using_access_token_description: 以下にトークンを入力してください。リポジトリコンテンツへの読み取り・書き込みアクセスが必要です。
+# Shown after the description above when Editorial Workflow is enabled, which opens and merges pull requests
+sign_in_using_access_token_workflow_note: 編集ワークフローが有効になっているため、プルリクエストへの読み取り・書き込みアクセスも必要です。
 # Inline link text with embedded HTML anchor tag
 # {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
 sign_in_using_access_token_link: <a>{$service} ユーザー設定ページ</a> でトークンを生成できます。
@@ -143,6 +152,11 @@ work_with_local_repo_description: ダイアログが表示されたら、「{$re
 work_with_local_repo_description_no_repo: ダイアログが表示されたら、Git リポジトリのルートディレクトリを選択してください。
 # Button label for demo/test repository
 work_with_test_repo: テストリポジトリで作業
+# Button label for the test repository when sample content is seeded, e.g. on a demo site
+start_demo: デモを開始
+# Shown below the disabled test repository option in a browser that can’t save files to its
+# storage, e.g. Safari before version 26
+test_repo_unsupported_browser: お使いのブラウザーはテストリポジトリのファイルを保存できません。最新バージョンに更新するか、別のブラウザーを使ってください。
 
 # Authentication errors
 # Error messages shown during sign-in failures
@@ -167,14 +181,28 @@ sign_in_error:
 backend_unsupported_version: '{$name} バックエンドには {$name} {$version} 以降のバージョンが必要です。'
 # {$repo} is the repository identifier, typically in owner/repo format
 repository_no_access: あなたには「{$repo}」リポジトリへのアクセス権がありません。
+# {$repo} is the repository identifier, typically in owner/repo format
+repository_no_write_access: あなたには「{$repo}」リポジトリへの書き込み権限がありません。
 repository_not_found: 「{$repo}」リポジトリは存在しません。
 repository_empty: 「{$repo}」リポジトリにはブランチがありません。
 # {$repo} is the repository identifier, and {$branch} is the configured branch name
 branch_not_found: 「{$repo}」リポジトリに「{$branch}」ブランチは存在しません。
+# {$repo} is the repository identifier, and {$dir} is the configured root directory
+root_dir_not_found: 「{$repo}」リポジトリにルートディレクトリ「{$dir}」は存在しません。
 
 # General errors
 # Fallback error dialog title for unexpected errors
 unexpected_error: 予期せぬエラー
+# Shown in place of the page when an unexpected error stops it from being displayed
+# {$message} is the error message
+page_crashed: 問題が発生したため、このページを表示できません。{$message}
+# Shown in place of a field editor or preview when an unexpected error stops it from being displayed
+# {$message} is the error message
+field_crashed: 問題が発生したため、このフィールドを表示できません。{$message}
+# Button label for displaying a part of the page again after an unexpected error
+try_again: 再試行
+# Button label for reloading the CMS after an unexpected error
+reload_cms: CMS を再読み込み
 
 # Entry file parsing errors
 # Toast notification when entry files fail to parse on initial load
@@ -200,6 +228,328 @@ sign_in: ログイン
 sign_in_with_mobile: モバイルでログイン
 # Instructions shown in the mobile sign-in dialog for passwordless authentication
 sign_in_with_mobile_instruction: 以下の QR コードを携帯電話かタブレットでスキャンすると、パスワードなしでログインできます。ユーザー設定は自動的にコピーされます。
+# Confirmation dialog shown when the CMS is opened with a sign-in link from the mobile sign-in
+# QR code. {$account} is the account name, {$service} is the Git service name, e.g. GitHub
+sign_in_with_link: リンクでログイン
+sign_in_with_link_confirmation: このリンクを使うと {$service} に {$account} としてログインし、リンクを作成したデバイスのユーザー設定がコピーされます。ご自身で作成したリンクの場合のみ続行してください。
+
+# Sign-in with Sveltia CMS Additions, which manages its own user accounts instead of the Git
+# service’s. Don’t localize “Sveltia CMS Additions”
+additions:
+  username: ユーザー名
+  password: パスワード
+  sign_in: ログイン
+  new_password_title: 新しいパスワードを設定
+  new_password_description: 仮のパスワードでログインしました。続行するには新しいパスワードを設定してください。
+  new_password: 新しいパスワード
+  password_too_short: パスワードが短すぎます。12 文字以上にしてください。
+  change_password: パスワードを変更
+  # {$name} is the user’s username, {$role} their role, e.g. Editor
+  signed_in_as_x_with_role: '{$name} としてログイン中 ({$role})'
+  link_github: GitHub アカウントを連携
+  link_github_error: GitHub アカウントを連携できませんでした
+  current_password: 現在のパスワード
+  # {$username} is the username filled in from a magic link emailed to the user
+  filled_from_link: ユーザー名とパスワードがリンクから入力されました。「{$username}」があなたのユーザー名である場合のみログインしてください。
+  change_password_description: このデバイスではサインインしたまま、他のデバイスからはサインアウトされます。
+  password_changed: パスワードを変更しました。
+  # The Account settings panel of a Sveltia CMS Additions user
+  account:
+    profile: プロフィール
+    profile_description: 名前は CMS 上で他のユーザーに表示されるほか (例：エントリーのロックやコメント)、あなたのコミットにも使われます。
+    username_description: ユーザー名は変更できません。
+    email: メールアドレス
+    email_description: あなたのコミットに使われ、GitHub がコミットをあなたのアカウントに関連付けられるようになります。空の場合は代わりのアドレスが使われます。変更できるのは管理者のみです。
+    change_name: 名前を変更
+    name_changed: 名前を変更しました。
+    password: パスワード
+    no_password: このアカウントは GitHub でのみサインインするため、変更するパスワードはありません。管理者がパスワードをリセットすると、パスワードを設定できます。
+  setup:
+    use_admin_secret: 管理用シークレットを使用
+    title: Sveltia CMS Additions のセットアップ
+    secret_description: Sveltia CMS Additions サービスの設定で指定した管理用シークレットを入力してください。セットアップ中はこのタブ内でのみ保持されます。
+    admin_secret: 管理用シークレット
+    continue: 続行
+    back: ログイン画面に戻る
+    admin_title: 管理者アカウント
+    admin_create_description: 最初の管理者アカウントを作成します。このアカウントでログインし、他のユーザーを管理します。
+    admin_reset_description: 管理者アカウントはすでに存在します。ログインできない場合は、ここで管理者のパスワードを再設定するか、別の管理者を作成してください。
+    admin_saved: 管理者アカウントの準備ができました。入力したパスワードでログインしてください。
+    create_admin: 管理者を作成
+    reset_password: 管理者を保存
+    github_title: GitHub
+    # {$repo} is the repository, e.g. octocat/site
+    github_description: このサイト用の GitHub App を作成し、「{$repo}」リポジトリにインストールします。GitHub で確認した後、この画面に戻ります。
+    # {$repo} is the repository, {$app} is the name of the GitHub App
+    github_connected: GitHub App「{$app}」で「{$repo}」リポジトリに接続されています。
+    connect_github: GitHub に接続
+    # {$step} is the number of the current step, {$total} the number of steps
+    step_x_of_y: ステップ {$step}/{$total}
+    admin_exists: 管理者アカウントは作成済みです。
+    reset_admin_password: 管理者のパスワードをリセット
+    setup_complete: セットアップは完了しています。管理者アカウントでログインして、ユーザーや設定を管理してください。管理者シークレットを使えば、いつでもここに戻れます。
+    manage_sites: 他のサイトを管理
+    back_to_setup: 戻る
+    sites_title: 他のサイト
+    sites_description: このサービスでは他のサイトも提供でき、それぞれに独自のユーザー、設定、GitHub App があります。サイトの CMS 設定の “base_url” をその URL に設定してから、そちらで管理者シークレットを使ってセットアップしてください。
+    no_sites: 他のサイトはまだありません。
+    site_id: サイト ID
+    site_id_description: 1〜32 文字の小文字の英字、数字、ハイフン (“acme” など)。サイトの URL に使われ、後から変更できません。
+    site_name_optional: 名前 (任意)
+    add_site: サイトを追加
+    # {$name} is the name of the site
+    site_added: “{$name}” を追加しました。その CMS 設定の “base_url” をこの URL に設定してから、そちらでセットアップウィザードを開いてください。
+    # {$name} is the name of the site
+    copy_site_url: '{$name} の URL をコピー'
+    delete_site: サイトを削除
+    # {$name} is the name of the site
+    delete_site_x: '{$name} を削除'
+    # {$name} is the name of the site, {$id} is its ID
+    delete_site_confirmation: “{$name}” を削除すると、そのユーザー、設定、コメントも削除されます。この操作は元に戻せません。GitHub App は GitHub に残るので、そちらで削除できます。確認のため “{$id}” と入力してください。
+    site_id_to_confirm: 確認用のサイト ID
+    data_key_locked_title: 管理用シークレットが変更されました
+    data_key_locked_description: 管理用シークレットが変更されたため、保存された設定を読み取れません。設定を維持するには以前のシークレットを入力してください。紛失した場合はやり直してください。
+    previous_secret: 以前の管理用シークレット
+    unlock: ロック解除
+    rekey: やり直す
+    rekey_confirmation: やり直すと、GitHub App の認証情報やその他の保存されたシークレットが削除され、全員がログアウトされます。パスワードは保持されます。続行しますか？
+    result:
+      ok: GitHub に接続されました。ログインできます。
+      github_app_not_created: GitHub App が作成されませんでした。管理用シークレットを使用してやり直してください。
+      github_app_not_installed: GitHub App がインストールされませんでした。管理用シークレットを使用してやり直してください。
+      github_wrong_account: GitHub App がリポジトリを所有していないアカウントにインストールされました。リポジトリを所有するアカウントにインストールしてやり直してください。
+      github_repository_not_included: GitHub App がリポジトリへのアクセス権なしでインストールされました。GitHub でリポジトリへのアクセスを許可してやり直してください。
+      unexpected: 予期しないエラーにより GitHub への接続に失敗しました。もう一度お試しください。
+  locks:
+    # {$name} is the name of the person editing the entry, {$time} when they started
+    being_edited: '{$name} が {$time} からこのエントリーを編集しているため、閲覧のみ可能です。'
+    being_edited_by_you: 別のタブでこのエントリーを編集しているため、ここでは閲覧のみ可能です。
+    # {$name} is the name of the person who took over the entry
+    taken_over: '{$name} がこのエントリーの編集を引き継いだため、閲覧のみ可能になりました。'
+    take_over: 編集を引き継ぐ
+    unavailable: エントリーのロックを利用できないため、他の人が同時にこのエントリーを編集している可能性があります。
+    # {$name} is the name of the person editing the entry
+    being_edited_by_x: '{$name} が編集中'
+    # {$names} is a list of the other people who have the entry open in the editor
+    also_open_by_x: '{$names} もこのエントリーを開いています'
+    # {$names} is a list of the people who have the entry open, besides anyone editing it
+    open_by_x: '{$names} が開いています'
+  users:
+    title: ユーザー
+    add_user: ユーザーを追加
+    edit_user: ユーザーを編集
+    add: 追加
+    name: 名前
+    username_description: ユーザー名は追加した後に変更できません。
+    email_optional: メールアドレス (任意)
+    email_description: このユーザーのコミットに使われ、GitHub がコミットをそのアカウントに関連付けられるようになります。空の場合は代わりのアドレスが使われます。
+    role: 役割
+    status: 状態
+    last_sign_in: 最終ログイン
+    sign_in_column: サインイン方法
+    methods:
+      password: パスワード
+      # {$login} is a GitHub username
+      github: GitHub ({$login})
+    actions: 操作
+    you: (自分)
+    never: なし
+    roles:
+      admin: 管理者
+      editor: 編集者
+      viewer: 閲覧者
+    statuses:
+      active: 有効
+      temporary_password: 仮パスワード
+      waiting_for_sign_in: 初回サインイン待ち
+      disabled: 無効
+    # {$name} is the user’s name
+    show_options_for_x: '{$name} のオプションを表示'
+    options: ユーザーのオプション
+    reset_password: パスワードを再設定
+    sign_out_everywhere: すべてのデバイスからログアウト
+    enable: ユーザーを有効にする
+    disable: ユーザーを無効にする
+    delete: ユーザーを削除
+    # {$name} is the user’s name
+    reset_password_confirmation: '{$name} に新しい仮パスワードを発行しますか？すべてのデバイスからログアウトされ、次回のログイン時に新しいパスワードを設定する必要があります。'
+    delete_confirmation: '{$name} を削除しますか？この操作は元に戻せません。'
+    temporary_password: 仮パスワード
+    # {$name} is the user’s name
+    temporary_password_description: このユーザー名と仮パスワードを {$name} に伝えてください。パスワードは再表示されません。ログイン時に自分のパスワードを設定してもらいます。
+    copy_username: ユーザー名をコピー
+    copy_password: パスワードをコピー
+    # {$name} is the user’s name
+    email_credentials: '{$name} にメールで送る'
+    # The emails the admin sends from their own email app, with the sign-in details: `new` to a user
+    # who has just been added, `reset` to one whose password has been reset. Each line is a string of
+    # its own, as line breaks aren’t kept in these files
+    credentials_email:
+      # {$name} is the user’s name
+      greeting: '{$name} さん'
+      # {$url} is a link to the CMS that fills in the username and the temporary password
+      sign_in_link: 'ログイン用リンク: {$url}'
+      # {$username} is the username
+      username: 'ユーザー名: {$username}'
+      # {$password} is the temporary password
+      password: '仮パスワード: {$password}'
+      new:
+        # {$app} is the name of the CMS
+        subject: '{$app} のログイン情報'
+        # {$app} is the name of the CMS
+        message: '{$app} にログインできるようになりました。下のリンクを開くとユーザー名と仮パスワードが入力されるので、ログインして自分のパスワードを設定してください。'
+      reset:
+        # {$app} is the name of the CMS
+        subject: '{$app} のパスワードがリセットされました'
+        # {$app} is the name of the CMS
+        message: '{$app} のパスワードがリセットされ、すべての端末からログアウトしました。下のリンクを開くとユーザー名と仮パスワードが入力されるので、ログインして新しいパスワードを設定してください。'
+    allowed_domains: 許可されたドメイン
+    allowed_domains_description: Sveltia CMS Additions を使用できるサイトのホスト名を 1 行に 1 つずつ指定します。ワイルドカード (*) は任意のサブドメインに一致します (例：*.example.com)。可能な限り正確なホスト名を指定してください。同じ Sveltia CMS Additions インスタンスが他のサイトも提供している場合でも、このリストはこのサイトにのみ適用されます。
+    save_allowed_domains: 許可されたドメインを保存
+    allowed_domains_saved: 許可されたドメインを保存しました。
+    sign_in_tab: サインイン
+    # {$latest} is the newest version of Sveltia CMS Additions, {$current} the one in use
+    update_available: Sveltia CMS Additions {$latest} が利用可能です。現在のバージョンは {$current} です。
+    release_notes: リリースノート
+    github_username_optional: GitHub ユーザー名 (任意)
+    github_username_description: GitHub ユーザー名を入力すると、パスワードの代わりにその GitHub アカウントでサインインします。
+    # {$name} is the user’s name
+    github_required: '{$name} は GitHub でのみサインインできるため、GitHub ユーザー名は削除できません。先にパスワードをリセットして、パスワードでサインインできるようにしてください。'
+    adopt: アカウントを引き取る
+    sign_in:
+      github: GitHub でのサインインを許可
+      github_description: GitHub アカウントでサインインしたユーザーは自分の GitHub トークンを受け取るため、変更は本人の名前でコミットされます。サインアップルールの対象でない限り、事前に管理者が GitHub ユーザー名で追加する必要があります。
+      # Shown when signing in with GitHub is being turned off while {$count} users can only sign in
+      # with it
+      github_only_warning: '{$count} 人のユーザーは GitHub でしかサインインできないため、オフにするとパスワードをリセットするまでサインインできなくなります。'
+      rules: サインアップルール
+      rules_description: アプリがインストールされている GitHub Organization のメンバーは、事前に追加されていなくてもサインインできます。アカウントは選択した役割で作成され、組織を離れると無効になります (引き取った場合を除く)。
+      org: GitHub Organization
+      add_rule: ルールを追加
+      # {$org} is the name of a GitHub organization
+      remove_rule: '{$org} のルールを削除'
+      # For a rule whose organization hasn’t been entered yet
+      remove_empty_rule: ルールを削除
+      save: サインイン設定を保存
+      saved: サインイン設定を保存しました。
+    domains_tab: ドメイン
+    github_tab: GitHub
+    github:
+      app: GitHub アプリ
+      repository: リポジトリ
+      not_installed: 未インストール
+      statuses:
+        ok: アプリは正常に動作しています。
+        not_registered: GitHub アプリがまだ設定されていません。サインインページから管理者シークレットを使ってセットアップウィザードを実行してください。
+        key_missing: 管理者シークレットが置き換えられたため、アプリの秘密鍵が失われました。GitHub のアプリ設定で新しい秘密鍵を生成し、以下からアップロードしてください。
+        key_rejected: アプリの秘密鍵が GitHub に受け付けられません。GitHub で削除された可能性があります。GitHub のアプリ設定で新しい秘密鍵を生成し、以下からアップロードしてください。
+        not_installed: アプリがリポジトリにインストールされていません。GitHub のアプリページから再度インストールするか、セットアップウィザードを実行してください。
+        suspended: アプリのインストールが停止されています。GitHub のインストール設定で再開してください。
+        unreachable: GitHub に接続できませんでした。しばらくしてからもう一度お試しください。
+      check_again: 再確認
+      # {$branch} is the name of the repository’s default branch
+      branch_protected: ルールセットにより「{$branch}」ブランチは強制プッシュと削除から保護されています。
+      branch_bypassed: ルールセットにより「{$branch}」ブランチは保護されていますが、アプリがルールを回避できるため、編集者が強制プッシュや削除を行える状態です。それらのルールセットの回避リストからアプリを外してください。
+      branch_unprotected: 「{$branch}」ブランチを強制プッシュと削除から保護するルールセットがないため、編集者が履歴を書き換えたりブランチを削除したりできる状態です。リポジトリ設定で両方を禁止するルールセットを、回避リストにアプリを含めずに追加してください。
+      repository_rules: リポジトリのルールを開く
+      private_key: 秘密鍵
+      private_key_description: 秘密鍵を置き換えるには、GitHub のアプリ設定で新しい秘密鍵を生成し、ダウンロードされた .pem ファイルをアップロードしてください。その後、古い鍵を GitHub で削除してください。
+      app_settings: アプリ設定を開く
+      upload_private_key: 秘密鍵をアップロード
+      replace_private_key: 秘密鍵を置き換える
+      private_key_summary: サービスはアプリの秘密鍵を使って GitHub のリポジトリにアクセスします。秘密鍵が漏洩したおそれがある場合は置き換えてください。
+      private_key_replaced: 秘密鍵を置き換えました。
+      commit_author: コミットの作成者
+      commit_author_description: CMS で保存した変更の作成者として表示する名前を選択してください。GitHub が署名するのはアプリが作成したコミットだけなので、署名付きコミットを必須とするルールセットがある場合はアプリを選択してください。他のユーザーには 1 時間以内に反映されます。
+      commit_author_user: 変更を行った人
+      commit_author_bot: GitHub アプリ (変更を行った人を共同作成者として記載)
+      commit_author_saved: コミットの作成者を保存しました。
+  # Administration section for the API keys and the deploy hook an admin shares with everyone
+  credentials:
+    title: 認証情報
+    description: ここで入力した API キーとデプロイフックは、サインインするすべての人が使用します。各自が設定で自分のものを入力した場合はそちらが優先されます。CMS にサインインできる人は誰でも内容を読み取れるので、チームで共有して構わないキーだけを入力してください。
+    save: 認証情報を保存
+    saved: 認証情報を保存しました。
+    # {$service} is the service name, e.g. DeepL
+    invalid_key: '{$service} の API キーが正しくないようです。'
+  error:
+    unauthenticated: セッションの有効期限が切れました。もう一度ログインしてください。
+    wrong_admin_secret: 管理用シークレットが正しくありません。
+    admin_secret_missing: Sveltia CMS Additions サービスの設定で管理用シークレットが指定されていません。
+    admin_secret_too_short: Sveltia CMS Additions サービスの設定で指定された管理用シークレットが短すぎます。32 文字以上のランダムな文字列を使用してください。
+    wrong_previous_secret: 以前の管理用シークレットが正しくありません。
+    not_an_admin: このユーザーは管理者ではありません。別のユーザー名を選んでください。
+    invalid_username: ユーザー名は 3〜30 文字の小文字の英字、数字、ピリオド、ハイフン、アンダースコアで指定してください。
+    last_admin: 管理者が少なくとも 1 人必要です。
+    cannot_disable_self: 自分のアカウントは無効にできません。
+    cannot_delete_self: 自分のアカウントは削除できません。
+    username_taken: このユーザー名は他のユーザーが使用しています。
+    email_taken: このメールアドレスは他のユーザーが使用しています。
+    invalid_name: 名前は 1〜100 文字で指定してください。
+    invalid_email: メールアドレスが正しくありません。
+    invalid_domains: 許可されたドメインのいずれかが有効なホスト名ではありません。
+    current_origin_removed: 許可されたドメインには、現在使用しているサイトを含める必要があります。
+    forbidden: この操作は管理者のみ行えます。
+    invalid_credentials: ユーザー名またはパスワードが正しくありません。
+    user_disabled: このアカウントは無効になっています。管理者にお問い合わせください。
+    too_many_attempts: 試行回数が多すぎます。しばらくしてから再度お試しください。
+    wrong_password: 現在のパスワードが正しくありません。
+    same_password: 現在のパスワードとは異なるパスワードを選んでください。
+    invalid_github_login: 有効な GitHub ユーザー名ではありません。
+    github_user_not_found: この名前の GitHub ユーザーは存在しません。
+    github_account_taken: この GitHub アカウントでは別のユーザーがサインインしています。
+    invalid_rules: サインアップルールには GitHub Organization 名が必要です。
+    invalid_rule_role: サインアップルールで付与できるのは編集者または閲覧者の役割のみです。
+    rule_org_not_installed: サインアップルールの Organization に GitHub アプリがインストールされている必要があります。
+    not_invited: このサイトのアカウントがありません。管理者に追加を依頼してください。
+    method_disabled: GitHub でのサインインは無効になっています。
+    access_denied: サインインがキャンセルされました。
+    github_app_not_set_up: Sveltia CMS Additions はまだ GitHub に接続されていません。管理者にセットアップの完了を依頼してください。
+    invalid_tenant_id: サイト ID は 1〜32 文字の小文字の英字、数字、ハイフンで、“default” 以外にしてください。
+    invalid_tenant_name: サイト名は 100 文字以内にしてください。
+    tenant_exists: この ID のサイトはすでに存在します。
+    github_app_missing: GitHub アプリがまだ設定されていません。
+    invalid_private_key: このファイルは有効な秘密鍵ではありません。
+    private_key_mismatch: この秘密鍵は GitHub でアプリ用として受け付けられません。アプリの設定で生成したものか確認してください。
+    github_error: GitHub がエラーを返しました。しばらくしてからもう一度お試しください。
+    data_key_locked: 管理者が管理用シークレットの変更を完了するまで Sveltia CMS Additions は使用できません。
+    not_configured: Sveltia CMS Additions が正しく設定されていません。管理者にお問い合わせください。
+    origin_not_allowed: このサイトは Sveltia CMS Additions の使用を許可されていません。許可されたドメインに追加するよう管理者に依頼してください。
+    not_set_up: Sveltia CMS Additions はまだ GitHub に接続されていません。セットアップを完了するよう管理者に依頼してください。
+    # A user whose password an admin has reset signs in another way, e.g. with GitHub
+    temporary_password: パスワードがリセットされました。ユーザー名と管理者から受け取った一時パスワードでサインインし、新しいパスワードを設定してください。
+    # {$url} is the URL of the service
+    incompatible: このバージョンの Sveltia CMS は {$url} の Sveltia CMS Additions サービスでは動作しません。
+    unreachable: Sveltia CMS Additions に接続できませんでした。しばらくしてから再度お試しください。
+    insecure_connection: Sveltia CMS Additions は HTTPS で提供されている必要があります。CMS 設定の `base_url` を確認してください。
+    unexpected: 予期しないエラーにより Sveltia CMS Additions へのリクエストが失敗しました。しばらくしてから再度お試しください。
+
+  # Conversation panel: comments on the entry, kept by Sveltia CMS Additions
+  conversation:
+    title: 会話
+    refresh: 会話を更新
+    empty: まだコメントはありません。
+    # Button above a long conversation, which is loaded from its latest comments
+    show_older: 以前のコメントを表示
+    # Label of the list of comments
+    timeline: コメント
+    deleted_user: 削除されたユーザー
+    you: あなた
+    edited: 編集済み
+    comment_label: コメント
+    placeholder: コメントを入力 (Markdown)
+    visible_to_cms_users: CMS のユーザーにのみ表示されます
+    send: コメント
+    options: コメントのオプション
+    edit: 編集
+    delete: 削除
+    save: 保存
+    delete_confirmation: このコメントを削除しますか？この操作は元に戻せません。
+    send_failed: コメントを送信できませんでした。
+
+  # Placeholder of an API key or deploy hook field the user has left empty, while an admin of
+  # Sveltia CMS Additions has entered one for everyone
+  provided_by_admin: 管理者が設定済み
 
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
@@ -207,6 +557,15 @@ sign_in_with_mobile_instruction: 以下の QR コードを携帯電話かタブ�
 signed_in_as_x: '{$name} としてログイン中'
 working_with_local_repo: ローカルリポジトリで作業中
 working_with_test_repo: テストリポジトリで作業中
+working_in_demo_mode: デモモード
+
+# Demo welcome dialog: shown once after signing in to a demo site, where the test repository is
+# seeded with sample content and the changes are only stored in the browser
+demo_welcome:
+  title: Sveltia CMS デモへようこそ
+  description: CMS を自由に操作して、サンプルコンテンツを編集してみてください。変更内容はこのブラウザーにのみ保存されます。オンラインで公開されることはなく、他のユーザーに見られることもありません。
+  reset_hint: 元のコンテンツからやり直すには、設定 > データ管理 で「すべてのデータを消去」を選択してください。
+  button_label: はじめる
 
 # Account menu: action items for sign-out and app installation
 sign_out: ログアウト
@@ -222,9 +581,14 @@ install_as_app: アプリとしてインストール
 contents: コンテンツ
 assets: アセット
 editorial_workflow: 編集ワークフロー
+# Name of the Editorial Workflow page when all the content uses Preview Workflow, which has no
+# review stages, so the page only lists the drafts
+drafts: 下書き
 cms_config: CMS 設定
 # Mobile menu page title (shown only on small screens)
 menu: メニュー
+# Mobile menu page section heading listing the custom pages registered by the site
+custom_pages: ページ
 
 # Mobile promo infobar: encouraging users to try the mobile version
 mobile_promo_title: Sveltia CMS がモバイルに対応しました！
@@ -235,10 +599,36 @@ mobile_promo_button: 試してみる
 new_language_available: Sveltia CMS が {$locale} に対応しました！
 change_language: 言語を変更
 
+# Live reload infobar: shown when the CMS runs on a page that a framework’s development server (e.g.
+# Astro) reloads on every file change, instead of a static HTML file
+live_reload_warning: 開発サーバーはファイルが変更されるたびにこのページを再読み込みするため、保存が中断されてファイルが壊れることがあります。代わりに静的な HTML ファイルから CMS を読み込んでください。<a>詳細</a>
+
 # Toast notification shown while the translation for the selected language is being downloaded
 # {$locale} is the localized language name, e.g., “French”
 switching_language: '{$locale} に切り替え中…'
 locale_load_failed: '{$locale} の翻訳を読み込めませんでした。後で再度お試しください。'
+
+# Toast notification shown when changes saved with the local backend couldn’t be committed to Git
+# {$reason} is one of the `local_git_skip_reasons` strings below
+local_git_not_committed: 変更は保存されましたが、Git にはコミットされていません。{$reason} ファイルの保存だけを行うには、設定 > 開発者 で Git コミットをオフにしてください。
+local_git_skip_reasons:
+  unsupported_repository: このリポジトリでは、リンクされたワークツリー、SHA-256 オブジェクト名、reftable 形式、スパースインデックス、feature.manyFiles オプションや git add -N で使われるバージョン 3 または 4 のインデックスなど、CMS が対応していない Git の機能が使われています。
+  missing_identity: リポジトリの Git 設定に名前とメールアドレスが設定されておらず、CMS はグローバル設定を読み込めません。リポジトリ内で git config --local user.name "Your Name" と git config --local user.email "you@example.com" を実行して設定してください。
+  locked: 別の Git プロセスがリポジトリを使用しています。実行中のプロセスがない場合は、.git/index.lock ファイルを削除してください。
+  # The operation in progress, with how to finish or cancel it
+  operation_in_progress:
+    merge: マージが進行中です。git commit で完了するか、git merge --abort で取り消してください。
+    rebase: リベースが進行中です。git rebase --continue で完了するか、git rebase --abort で取り消してください。すでに別の作業に移っている場合は、git rebase --quit でファイルを変更せずに中断できます。
+    cherry_pick: チェリーピックが進行中です。git cherry-pick --continue で完了するか、git cherry-pick --abort で取り消してください。
+    revert: リバートが進行中です。git revert --continue で完了するか、git revert --abort で取り消してください。
+    am: git am によるパッチの適用が進行中です。git am --continue で完了するか、git am --abort で取り消してください。
+    conflict: 一部のファイルにコンフリクトがあります。先に解決して結果をステージしてください。
+  detached_head: ブランチがチェックアウトされていません。
+  staged_changes: コミット対象としてステージされた他の変更があります。先にそれらをコミットするか、ステージを解除してください。
+  # {$path} is the file path
+  lfs: '{$path} は Git LFS で管理されているため、CMS ではコミットできません。'
+  # {$message} is the error message
+  error: 予期しないエラーが発生しました。{$message}
 
 # Site and page navigation
 # Toolbar button aria-label for visiting the live site
@@ -273,6 +663,10 @@ account: アカウント
 live_site: 管理対象サイト
 git_repository: Git リポジトリ
 settings: 設定
+
+# Page for the people who look after the CMS, apart from the personal settings: user management
+# and the CMS configuration
+administration: 管理
 
 # Help menu: button aria-labels and section headings
 show_help_menu: ヘルプメニューを表示
@@ -339,9 +733,9 @@ asset_list: アセットリスト
 # Collection and folder page titles
 # Used as aria-labels on page containers
 # {$collection} is the current collection label
-x_collection: 「{$collection}」コレクション
+x_collection: '{$collection} コレクション'
 # {$folder} is the current asset folder label
-x_asset_folder: 「{$folder}」アセットフォルダー
+x_asset_folder: '{$folder} アセットフォルダー'
 
 # Navigation announcements (ARIA live regions)
 # Announce page changes for screen reader users
@@ -366,6 +760,10 @@ viewing_x_asset_folder: |
 # Cloud storage service view announcement
 # {$service} is the cloud storage service name, e.g. Uploadcare
 viewing_x_external_location: '{$service} 上のアセットを表示しています。'
+# Administration page announcements
+viewing_admin_section_list: 管理ページのセクション一覧を表示しています。
+# {$section} is the section label, e.g. Users
+viewing_x_admin_section: 管理ページの「{$section}」セクションを表示しています。
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
@@ -384,6 +782,7 @@ x_of_x_selected: '{$total} 個のうち {$selected} 個を選択中'
 
 # View switcher: toggle between list and grid views
 switch_view: ビューを切り替え
+table_view: テーブルビュー
 list_view: リストビュー
 grid_view: グリッドビュー
 switch_to_list_view: リストビューに切り替え
@@ -397,6 +796,16 @@ switch_to_grid_view: グリッドビューに切り替え
 # Sort menu: button labels and options
 sort: 表示順
 sorting_options: 表示順オプション
+# Table view column labels for the entry metadata used as `{{…}}` template tags
+table_column_keys:
+  # The folder containing the entry file
+  dirname: フォルダー
+  # The entry file name without the extension
+  filename: ファイル名
+  # The entry file extension
+  extension: 拡張子
+  # The enabled locales of the entry
+  locales: 言語
 # Sort key option labels
 sort_keys:
   # No sorting; entries appear in their natural repository order
@@ -436,6 +845,8 @@ grouping_options: グループ化オプション
 # Asset type filter and group labels
 type: 種類
 all: すべて
+# Group option for the linked files, which can be hosted anywhere: the host name of the file’s URL
+domain: ドメイン
 # Asset type labels
 image: 画像
 video: 動画
@@ -454,6 +865,9 @@ all_assets: すべてのアセット
 global_assets: グローバルアセット
 # Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
 linked_files: リンクされたファイル
+# Badge and message shown on a linked file that couldn’t be loaded, e.g. because it has been deleted
+file_unavailable: 利用不可
+file_unavailable_description: このファイルは読み込めませんでした。移動または削除された可能性があります。
 
 # ==============================================================================
 # Entry and Collection Actions
@@ -475,12 +889,27 @@ creating_entries_disabled_by_quota: このコレクションは最大の {$quota
 creating_entries_nearing_quota: |
   このコレクションは {$quota} エントリーの上限に近づいています。あと {$remaining} 件のエントリーしか作成できません。
 
+# Read-only restrictions set with the `readonly` option: advisory messages
+readonly_cms: CMS は読み取り専用モードです。コンテンツやアセットを閲覧することはできますが、変更することはできません。
+readonly_collection: このコレクションは読み取り専用です。コンテンツを閲覧することはできますが、変更することはできません。
+readonly_entry: このエントリーは読み取り専用です。閲覧することはできますが、変更することはできません。
+readonly_asset_folder: このフォルダーは読み取り専用です。アセットを閲覧することはできますが、変更することはできません。
+readonly_branch: 「{$branch}」ブランチへのプッシュ権限がありません。このコンテンツを閲覧することはできますが、変更することはできません。
+readonly_role: 閲覧のみの権限があります。コンテンツやアセットを閲覧することはできますが、変更することはできません。
+readonly_reference: このエントリーは読み取り専用のため、参照を削除できません。
+# {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
+cannot_rename_referenced_entry: '以下の読み取り専用エントリーが現在の名前で参照しているため、このエントリーの名前を変更できません: {$entries}'
+# {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
+cannot_move_referenced_asset: '以下の読み取り専用エントリーで使用されているため、このアセットを移動または名前変更できません: {$entries}'
+
 # Navigation: back links and list labels
 back_to_collection: コレクションへ戻る
 collection_list: コレクションリスト
 back_to_collection_list: コレクションリストへ戻る
 asset_folder_list: アセットフォルダーリスト
 back_to_asset_folder_list: アセットフォルダーリストへ戻る
+# Back button shown in place of the one above while browsing a subfolder of an asset folder
+back_to_parent_folder: 親フォルダーへ戻る
 
 # ==============================================================================
 # Search
@@ -529,6 +958,53 @@ no_entries_found: エントリーは見つかりませんでした。
 # Upload dialog: title and button label
 upload_assets: 新しいアセットをアップロード
 
+# New Folder button and dialog in the Asset Library
+new_folder: 新しいフォルダー
+new_folder_name: フォルダー名
+new_folder_create: 作成
+# {$folder} is the path of the folder the new one will be created in, starting with a slash
+new_folder_description: 新しいフォルダーは「{$folder}」内に作成されます。
+# Validation errors for the new folder name
+new_folder_error:
+  empty: フォルダー名は空白にはできません。
+  invalid: フォルダー名にスラッシュを含めたり、ドットで始めたりすることはできません。
+  # A name the CMS itself is usually served from, e.g. `admin` or `cms`
+  reserved: この名前のフォルダーは通常 CMS 自体の配置に使われるため、中のファイルは読み取り専用です。
+  duplicate: この名前のフォルダーまたはファイルは既に存在します。
+# Progress and error messages while the folder is being created
+creating_folder: フォルダーを作成中…
+creating_folder_failed: フォルダーを作成できませんでした。
+
+# Menu on a folder in the Asset Library, and the Rename Folder and Delete Folder dialogs
+folder_options: フォルダーオプション
+show_folder_options: フォルダーオプションを表示
+rename_folder: フォルダーの名前を変更
+delete_folder: フォルダーを削除
+# Rename Folder dialog body text
+# {$count} is the number of assets in the folder, which are moved along with it
+enter_new_name_for_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ 新しい名前を以下に入力してください。 }}
+    1   {{ 新しい名前を以下に入力してください。フォルダー内のアセットも一緒に移動され、それを使用しているエントリーも更新されます。 }}
+    *   {{ 新しい名前を以下に入力してください。フォルダー内の {$count} 個のアセットも一緒に移動され、それらを使用しているエントリーも更新されます。 }}
+# Delete Folder confirmation
+# {$name} is the folder name and {$count} is the number of assets in the folder
+confirm_deleting_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ 空の「{$name}」フォルダーを削除してもよろしいですか？ }}
+    1   {{ 「{$name}」フォルダーとその中のアセットを削除してもよろしいですか？ }}
+    *   {{ 「{$name}」フォルダーとその中の {$count} 個のアセットを削除してもよろしいですか？ }}
+# Progress and error messages while the folder is being renamed or deleted
+renaming_folder: フォルダーの名前を変更中…
+renaming_folder_failed: フォルダーの名前を変更できませんでした。
+deleting_folder: フォルダーを削除中…
+deleting_folder_failed: フォルダーを削除できませんでした。
+# Asset Library and asset picker: notice shown when a cloud storage service holds more files than
+# are listed at once
+external_assets_truncated: サービス上のファイルが多すぎるため、一部のファイルは一覧に表示されていません。
+
 # Edit options menu: button and item labels
 edit_options: 編集オプション
 show_edit_options: 編集オプションを表示
@@ -541,6 +1017,44 @@ edit_x: '{$name} を編集'
 
 # Asset text editor: switch for line wrapping
 wrap_long_lines: 長い行を折り返す
+
+# Move assets: dialog for moving assets to another folder in the repository
+move: 移動
+move_asset: アセットを移動
+# Dialog title. {$name} is the asset name when a single asset is moved, and {$count} is the number of
+# assets being moved
+move_assets_title: |
+  .input {$count :integer}
+  .match $count
+    1   {{ {$name} を移動 }}
+    *   {{ {$count} 件のアセットを移動 }}
+# Dialog body text. {$count} is the number of entries that currently use the assets
+select_asset_move_destination: |
+  .input {$count :integer}
+  .match $count
+    0   {{ 移動先のフォルダーを選択してください。 }}
+    *   {{ 移動先のフォルダーを選択してください。アセットを使用している {$count} 件のエントリーも更新されます。 }}
+# Accessible label of the folder tree in the Move dialog
+asset_move_destination: 移動先フォルダー
+# Shown when the assets being moved are all in the selected folder already
+assets_already_in_folder: |
+  .input {$count :integer}
+  .match $count
+    *   {{ アセットは既にこのフォルダーにあります。 }}
+# Shown when files with the same names exist in the selected folder. {$names} is a comma-separated
+# list of file names
+asset_move_conflict: '次のファイルは既にこのフォルダーに存在します: {$names}'
+moving_assets: アセットを移動中…
+moving_assets_failed: アセットを移動できませんでした。
+# Warning shown when files have been moved off a cloud storage service, but the originals couldn’t
+# be deleted from it
+asset_move_cleanup_failed: ファイルは移動されましたが、ストレージサービスから元のファイルを削除できませんでした。
+# Shown when files on a cloud storage service can’t be renamed or moved, because the entries using
+# them can’t be updated, e.g. for an Open Authoring contributor. {$count} is the number of files
+cannot_change_used_external_files: |
+  .input {$count :integer}
+  .match $count
+    *   {{ 使用しているエントリーを更新できないため、ファイルの名前変更や移動はできません。 }}
 
 # Rename asset: dialog and validation
 rename_asset: アセットの名前を変更
@@ -559,6 +1073,15 @@ enter_new_name_for_asset_error:
   empty: ファイル名を空白にすることはできません。
   character: ファイル名に特別な文字を含めることはできません。
   duplicate: このファイル名は他のアセットに使われています。
+  # A name starting with a dot hides the file, which the CMS wouldn’t list any more
+  leading_dot: ファイル名をドットで始めることはできません。
+  # The name of a file next to the asset that isn’t an asset, like an entry file
+  file_duplicate: この名前のファイルは既に存在します。
+  # The name of a folder next to the file
+  folder_duplicate: この名前のフォルダーは既に存在します。
+# Shown while renaming a file whose name will be changed on saving, e.g. by the `slugify_filename`
+# media library option
+file_will_be_saved_as: ファイルは「{$name}」として保存されます。
 # Confirmation dialog shown when the file extension is changed while renaming an asset
 change_file_extension: 拡張子の変更
 # {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
@@ -572,6 +1095,10 @@ file_extension_change_warning: 拡張子が実際のファイル形式と一致�
 replace_asset: アセットを差し替え
 # {$name} is the asset being replaced
 replace_x: '{$name} を差し替え'
+replace_file: ファイルを差し替え
+replace_image: 画像を差し替え
+remove_file: ファイルを削除
+remove_image: 画像を削除
 
 # File selection prompts: drop zones and file pickers
 # Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
@@ -640,6 +1167,29 @@ confirm_deleting_selected_assets: |
     1   {{ 選択されたアセットを削除してもよろしいですか？ }}
     *   {{ 選択された {$count} 個のアセットを削除してもよろしいですか？ }}
 confirm_deleting_all_assets: すべてのアセットを削除してもよろしいですか？
+# Note added to the confirmation when entries use the assets being deleted; the references are
+# removed in the same commit. {$count} is the number of entries using them
+deleting_referenced_assets_note: |
+  .input {$count :integer}
+  .match $count
+    1   {{ エントリーからの参照も削除されます。 }}
+    *   {{ {$count} 個のエントリーからの参照も削除されます。 }}
+# Shown in place of the confirmation when removing the references would leave a field in an entry
+# invalid, e.g. a required Image field with nothing left, so the deletion is refused. The fields are
+# listed below the message, each with the validation error it would have. {$count} is the number of
+# assets being deleted
+cannot_delete_referenced_assets: |
+  .input {$count :integer}
+  .match $count
+    1   {{ このアセットを使用しているエントリーの以下のフィールドがアセットなしでは無効になるため、削除できません。先にそれらのエントリーを更新してください。 }}
+    *   {{ これらのアセットを使用しているエントリーの以下のフィールドがアセットなしでは無効になるため、削除できません。先にそれらのエントリーを更新してください。 }}
+# Error shown in the asset deletion dialog when the entries using the assets couldn’t be looked up,
+# so the deletion can’t go ahead. {$count} is the number of assets being deleted
+checking_asset_references_failed: |
+  .input {$count :integer}
+  .match $count
+    1   {{ このアセットを使用しているエントリーを確認できませんでした。このダイアログを閉じて、もう一度お試しください。 }}
+    *   {{ これらのアセットを使用しているエントリーを確認できませんでした。このダイアログを閉じて、もう一度お試しください。 }}
 
 # Delete entries: dialog titles and confirmation messages
 # {$count} is the number of entries targeted by the action
@@ -666,6 +1216,23 @@ confirm_deleting_selected_entries_with_assets: |
     *   {{ 選択された {$count} 個のエントリーと関連アセットを削除してもよろしいですか？ }}
 confirm_deleting_all_entries: すべてのエントリーを削除してもよろしいですか？
 confirm_deleting_all_entries_with_assets: すべてのエントリーと関連アセットを削除してもよろしいですか？
+# Note added to the confirmation when other entries reference the entries being deleted through
+# Relation fields; the references are removed in the same commit. {$count} is the number of
+# referencing entries
+deleting_referenced_entries_note: |
+  .input {$count :integer}
+  .match $count
+    1   {{ 他のエントリーからの参照も削除されます。 }}
+    *   {{ 他の {$count} 個のエントリーからの参照も削除されます。 }}
+# Shown in place of the confirmation when removing the references would leave a Relation field in
+# another entry invalid, e.g. a required field with nothing selected, so the deletion is refused.
+# The fields are listed below the message, each with the validation error it would have. {$count}
+# is the number of entries being deleted
+cannot_delete_referenced_entries: |
+  .input {$count :integer}
+  .match $count
+    1   {{ 他のエントリーの以下のフィールドがこのエントリーなしでは無効になるため、削除できません。先にそれらのエントリーを更新してください。 }}
+    *   {{ 他のエントリーの以下のフィールドがこれらのエントリーなしでは無効になるため、削除できません。先にそれらのエントリーを更新してください。 }}
 
 # ==============================================================================
 # Entry Reordering
@@ -679,6 +1246,39 @@ cancel_reordering_entries: エントリーの並び替えをキャンセル
 
 # Reorder error message
 saving_reorder_failed: エントリーの並び替えを保存できませんでした。再度お試しください。
+
+# ==============================================================================
+# Bulk Entry Editing
+# ==============================================================================
+# Strings for editing the fields of many entries at once in a table.
+
+# Bulk edit mode: toggle buttons
+bulk_edit_entries: エントリーを一括編集
+save_bulk_edits: 一括編集を保存
+cancel_bulk_edits: 一括編集をキャンセル
+
+# Bulk edit table: column header of the entry titles
+bulk_edit_entry: エントリー
+
+# Bulk edit table: label of the table
+bulk_edit_table: 一括エディター
+
+# Bulk edit table: label of a cell input; {$field} is the field label, {$entry} is the entry title
+bulk_edit_cell: '{$entry} の {$field}'
+
+# Bulk edit status: number of changed fields
+bulk_edit_count: |
+  .input {$count :integer}
+  .match $count
+    0 {{ 変更なし }}
+    * {{ {$count} 件の変更 }}
+
+# Bulk edit error messages
+bulk_edit_invalid: 無効な値があります。強調表示されたフィールドを修正して、もう一度お試しください。
+saving_bulk_edits_failed: 変更を保存できませんでした。もう一度お試しください。
+
+# Bulk edit: confirmation shown when leaving the mode with unsaved changes
+discard_bulk_edits_confirm: エントリーに加えた変更を破棄しますか？
 
 # ==============================================================================
 # File Upload and Processing
@@ -725,6 +1325,20 @@ warning_invalid_files: |
   .match $count
     1   {{ このファイルは破損しているか、内容が拡張子と一致しないため、アップロードできません。HEIC 画像を JPEG として保存するなど、写真を変換せずに拡張子だけを変更した場合によく発生します。ファイルを変換してから再度アップロードしてください。 }}
     *   {{ これらのファイルは破損しているか、内容が拡張子と一致しないため、アップロードできません。HEIC 画像を JPEG として保存するなど、写真を変換せずに拡張子だけを変更した場合によく発生します。ファイルを変換してから再度アップロードしてください。 }}
+# {$count} is the number of files that are not of a type the field accepts, even once transformed
+# {$types} is the list of accepted file types, such as “.pdf or .txt”
+warning_unsupported_files: |
+  .input {$count :integer}
+  .match $count
+    1   {{ このファイルは次の形式のいずれでもないため、アップロードできません: {$types}。 }}
+    *   {{ これらのファイルは次の形式のいずれでもないため、アップロードできません: {$types}。 }}
+# {$count} is the number of files that are not of an image type the field accepts
+# {$types} is the list of accepted image formats, such as “PNG or WebP”
+warning_unsupported_image_files: |
+  .input {$count :integer}
+  .match $count
+    1   {{ このファイルはアップロードできません。受け入れられる画像形式は次のとおりです: {$types}。 }}
+    *   {{ これらのファイルはアップロードできません。受け入れられる画像形式は次のとおりです: {$types}。 }}
 
 # File format validation when replacing an asset
 # Warning section for replacement files that are in a different format
@@ -760,6 +1374,8 @@ uploading_files_failed: アップロードに失敗しました。
 # Errors shown when a file on a cloud storage service could not be deleted or renamed
 deleting_assets_failed: 削除に失敗しました。
 renaming_asset_failed: 名前の変更に失敗しました。
+# Error shown when an edited text file in the Asset Library could not be saved
+saving_asset_failed: 保存に失敗しました。
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
@@ -797,6 +1413,8 @@ entry_validation_errors: |
   .match $count
     1   {{ ひとつのフィールドにエラーがあります。エントリーを保存するには問題を修正してください。 }}
     *   {{ {$count} 個のフィールドにエラーがあります。エントリーを保存するには問題を修正してください。 }}
+# Button on the validation error toast that opens the Validation panel listing the errors
+show_errors: エラーを表示
 
 # ==============================================================================
 # Success Notifications
@@ -873,6 +1491,18 @@ assets_deleted: |
   .match $count
     1   {{ アセットが削除されました。 }}
     *   {{ {$count} 個のアセットが削除されました。 }}
+folder_created: フォルダーが作成されました。
+# Folder info panel in the Asset Library sidebar
+folder_path: フォルダーのパス
+folder_contents: 内容
+# {$count} is the number of subfolders in the folder
+x_folders: |
+  .input {$count :integer}
+  .match $count
+    0   {{ フォルダーなし }}
+    *   {{ {$count} 個のフォルダー }}
+folder_renamed: フォルダーの名前が変更されました。
+folder_deleted: フォルダーが削除されました。
 
 # ==============================================================================
 # Content Editor
@@ -913,6 +1543,9 @@ edit_singleton_announcement: 「{$file}」ファイルを編集しています�
 # Shown when CI skip is enabled/disabled
 save_and_publish: 保存して公開
 save_without_publishing: 公開せずに保存
+# Shown disabled in place of `save_and_publish` while entries created or edited from a Relation
+# field are in a collection whose review can’t be skipped with the `direct_publish` option
+save_and_publish_needs_review: 保存して公開（関連エントリーのレビューが必要）
 
 # Editor options menu
 show_editor_options: エディターオプションを表示
@@ -942,6 +1575,9 @@ swap_panes: ペインを入れ替える
 # {$locale} is the localized language name for the current content pane, e.g., English
 edit_x_locale: '{$locale} コンテンツを編集'
 preview_x_locale: '{$locale} コンテンツをプレビュー'
+# The content of a monolingual entry, which has no locale to name
+edit_content: コンテンツを編集
+preview_content: コンテンツをプレビュー
 
 # Preview iframe labels
 content_preview: コンテンツプレビュー
@@ -950,6 +1586,8 @@ content_preview: コンテンツプレビュー
 # {$locale} is the localized language name for the content options menu, e.g., English
 show_content_options_x_locale: '{$locale} コンテンツのオプションを表示'
 content_options_x_locale: '{$locale} コンテンツのオプション'
+show_content_options: コンテンツのオプションを表示
+content_options: コンテンツのオプション
 
 # Field container labels
 # {$field} is the field’s display label
@@ -988,8 +1626,9 @@ deploy_preview:
   view: プレビューを見る
   # Shown while the site is still being built, with or without a URL to open yet
   building: プレビューをビルド中です。
-  # Shown when the build failed, so no preview is available
-  failed: プレビューをビルドできませんでした。
+  # Shown when the build failed, so no preview is available. The failure may lie in the site’s own
+  # code rather than the entry, so the editor is told not to assume it’s theirs, and who to ask
+  build_failed: プレビューをビルドできませんでした。変更内容が原因とは限りません。問題が解決しない場合は、サイト管理者にお問い合わせください。
   # Shown briefly while the CI/CD provider is being queried
   checking: プレビューを確認中…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
@@ -1020,9 +1659,17 @@ translate_from: 他の言語から翻訳…
 # {$locale} is the localized language name of the source content being translated, e.g., English
 translate_from_x: '{$locale} から翻訳'
 
-# Revert changes
+# Revert changes, restore the default values or clear the fields
 revert_changes: 変更を取り消す
 revert_all_changes: すべての変更を取り消す
+restore_default: デフォルトに戻す
+clear_all: すべてクリア
+confirm_reverting_changes: このエントリーに加えたすべての変更を取り消してもよろしいですか？
+confirm_reverting_changes_x_locale: '{$locale}のコンテンツに加えたすべての変更を取り消してもよろしいですか？'
+confirm_restoring_defaults: このエントリーのすべてのフィールドをデフォルト値に戻してもよろしいですか？変更は失われます。
+confirm_restoring_defaults_x_locale: '{$locale}のコンテンツのすべてのフィールドをデフォルト値に戻してもよろしいですか？変更は失われます。'
+confirm_clearing_fields: このエントリーのすべてのフィールドをクリアしてもよろしいですか？変更は失われます。
+confirm_clearing_fields_x_locale: '{$locale}のコンテンツのすべてのフィールドをクリアしてもよろしいですか？変更は失われます。'
 
 # Slug editing
 edit_slug: スラッグを編集
@@ -1030,8 +1677,10 @@ edit_slug_error:
   empty: スラッグは空白にはできません。
   invalid: スラッグにはスラッシュや空白を含む特殊文字を使用できません。
   duplicate: このスラッグは他のエントリーに使われています。
+# {$slug} is the slug filled from the slug template, which a number is added to when another entry uses it
+slug_numbered: スラッグ「{$slug}」は他のエントリーに使われているため、番号が追加されます。
 
-# Entry path editing in a nested collection
+# Entry path editing for nested entries
 # Heading for the parent folder picker shown when the `meta.path` option is enabled
 entry_parent_folder: 親フォルダー
 new_parent_folder: 新しいフォルダー
@@ -1125,6 +1774,13 @@ validation:
     email: 正しいメールアドレスを入力してください。
     url: 正しい URL を入力してください。
 
+  # Value used for the same field in another entry of the collection
+  value_not_unique: この値は他のエントリーに使われています。
+  # Key of a keyed List field item used for another item of the same list
+  key_not_unique: このキーは他の項目に使われています。
+  # Key of a keyed List field item that is a whole number, which doesn’t keep its order in a map
+  key_numeric: 項目の順序が失われるため、キーを整数のみにすることはできません。
+
   # Custom field validation error
   invalid_value: 無効な値です。
   unexpected_error: 予期せぬエラーが発生しました。
@@ -1146,6 +1802,12 @@ entry_sidebar:
     # Button in the panel header that validates the entry on demand
     validate: 検証
 
+  # Slug panel: shows the entry slug and lets the user edit it
+  slug:
+    title: スラッグ
+    generated_on_save: スラッグはエントリーの保存時にその内容から生成されます。スラッグに含まれる日時は保存時のものになります。
+    unavailable: このエントリーにはスラッグがありません。
+
   # History panel: shows entry commit history
   history:
     title: 履歴
@@ -1157,11 +1819,55 @@ entry_sidebar:
     title: バックリンク
     no_entries: このエントリーを参照しているエントリーはありません。
 
+  # Tab label of a panel with a count, e.g. of comments. {$title} is the panel title
+  title_with_count: '{$title} ({$count})'
+
+# Status shown next to the Save button while an entry with many new files is being saved
+# {$done} and {$total} are the number of files prepared and to prepare, or the number of commits
+# made and the estimated number of commits in all
+save_progress:
+  preparing: 'ファイルを準備中: {$done} / {$total}'
+  committing: 'GitHub に保存中: {$done} / 約 {$total} コミット'
+
 # Entry save error dialog
 saving_entry:
   error:
     title: エラー
     description: エントリーを保存中に問題が発生しました。後で再度お試しください。
+
+# Dialog shown when saving the entry would overwrite a change someone else has made in the
+# repository since the entry was opened in the editor
+save_conflict:
+  title: 他のユーザーがエントリーを変更しました
+  # `{$name}` is the other person’s name, `{$date}` when they made the change
+  modified_by: あなたがこのエントリーを開いた後、{$date} に {$name} がこのエントリーを変更しました。
+  # Shown instead of `modified_by` when the other person isn’t known
+  modified: あなたがこのエントリーを開いた後、リポジトリ上でこのエントリーが変更されました。
+  deleted: あなたがこのエントリーを開いた後、リポジトリからこのエントリーが削除されました。
+  # Follows `modified_by` or `modified`
+  overwrite_warning: 今保存すると、その変更は失われます。
+  # Follows `deleted`
+  recreate_warning: 今保存すると、エントリーが再作成されます。
+  # Follows `modified_by`, `modified` or `deleted` for an entry stored in the same file as the other
+  # entries of the collection, which can’t be saved over the change
+  reload_warning: このエントリーは他のエントリーと同じファイルに保存されているため、変更を上書きして保存することはできません。編集をキャンセルしてから、リストからエントリーを開き直して編集してください。
+  # OK button label
+  save_anyway: このまま保存
+  # Error shown when the repository was updated between the check above and the commit itself
+  branch_moved: 保存中に他のユーザーがリポジトリを更新しました。再度お試しください。
+  # Error shown when saving would change an item in a file storing all the entries of a collection,
+  # which someone else has changed or moved since it was loaded
+  array_item_changed: 同じファイルに保存されているエントリーが他のユーザーによって変更されました。再度お試しください。
+  # {$path} is the file path
+  array_file_invalid: '{$path} ファイルには有効なエントリーのリストが含まれていないため、更新できません。'
+
+# Notice shown in the entry editor when someone else has changed or deleted the entry in the
+# repository while the user has it open. The change itself is described with the `save_conflict`
+# strings above
+remote_change:
+  reload_entry: エントリーを再読み込み
+  # Confirmation shown before reloading when the user has unsaved changes
+  confirm_reloading_entry: エントリーを再読み込みしてもよろしいですか？未保存の変更は失われます。
 
 # ==============================================================================
 # Asset Editor
@@ -1226,21 +1932,63 @@ map_lat_lng: 緯度 {$latitude}、経度 {$longitude} の地図
 remove_this_item: このアイテムを削除
 move_up: 上へ移動
 move_down: 下へ移動
+# Menu of a list item or file with the extra reorder actions, shown in a list of 3 or more items
+reorder_options: 並べ替えオプション
+move_to_top: 先頭へ移動
+move_to_bottom: 末尾へ移動
+# Opens a dialog asking for the position to move a list item to
+move_to: 指定した位置へ移動…
+# Dialog asking for the new position of an item. {$count} is the number of items in the list
+move_to_description: 1 から {$count} までの位置を入力してください。
+move_to_position: 位置
 # aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
 # or moved with the arrow keys while the handle has focus
 reorder_item: アイテムを並び替え
 # aria-label for the text input holding one item of a simple List field, which has no subfield to
 # take a label from
 list_item_value: アイテムの値
+# aria-label for each item of a List field, giving its position in the list
+# {$position} is the 1-based position of the item, {$count} is the number of items
+list_item_position: '{$count} 個中 {$position} 番目のアイテム'
+# Message shown in place of a removed List field item or Object field, next to a Restore button
+# that puts it back
+item_removed: アイテムが削除されました。
 
-# Add item button label
+# Add item button label, also used by the Relation field to create a new entry in the referenced
+# collection, with the collection’s singular label
 # Example: “Add Image”, “Add Author”
 # {$name} is the label of the item type that can be added
 add_x: '{$name} を追加'
 
 # List item context menu
+# aria-label for the button opening the menu, and for the menu itself
+list_item_options: リストアイテムオプション
 add_item_above: 上にアイテムを追加
 add_item_below: 下にアイテムを追加
+paste_item_above: 上にアイテムを貼り付け
+paste_item_below: 下にアイテムを貼り付け
+paste_item_to_replace: 置き換えて貼り付け
+
+# List item clipboard
+# Button in the list toolbar to paste a copied item, from any list in any entry, at the end of the
+# list, or at the start with the `add_to_top` option
+paste_item: アイテムを貼り付け
+list_item_copied: アイテムをコピーしました。
+# ⋮ stands for the icon of the item menu button; keep it, along with the button’s aria-label
+no_list_item_to_paste: 貼り付けるアイテムがありません。先にアイテムの ⋮（リストアイテムオプション）メニューで「コピー」を選択してください。
+list_item_not_compatible: コピーしたアイテムはこのリストに合いません。
+# {$count} is the number of the values left out, as the list doesn’t have the fields
+list_item_pasted_without_values: |
+  .input {$count :integer}
+  .match $count
+    1   {{ アイテムを貼り付けました。このリストで使えない値が 1 個除外されました。 }}
+    *   {{ アイテムを貼り付けました。このリストで使えない値が {$count} 個除外されました。 }}
+# {$count} is the number of the files the pasted item references that couldn’t be found
+list_item_pasted_without_files: |
+  .input {$count :integer}
+  .match $count
+    1   {{ アイテムを貼り付けましたが、使われているファイルが見つかりませんでした。アイテム内のファイルフィールドを確認してください。 }}
+    *   {{ アイテムを貼り付けましたが、使われているファイルが {$count} 個見つかりませんでした。アイテム内のファイルフィールドを確認してください。 }}
 
 # Variable-type list selector
 select_list_type: リストタイプを選択
@@ -1259,12 +2007,45 @@ opacity: 透明度
 # Select field: empty option placeholder
 unselected_option: (なし)
 
+# Relation field: creating or editing a referenced entry without leaving the editor
+relation_field:
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  save_together_hint: 新しい{$name}は、編集中のエントリーと一緒に保存されます。
+  # Error shown when the entry couldn’t be prepared. {$name} is the singular label of the collection
+  add_failed: '{$name} を追加できませんでした。詳細はブラウザーのコンソールを確認してください。'
+  # Title of the dialog to edit an entry selected in the field. {$name} is the singular label of the
+  # referenced collection
+  edit_entry_title: '{$name} を編集'
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  edit_together_hint: '{$name} への変更は、編集中のエントリーと一緒に保存されます。'
+  # Error shown when the changes couldn’t be prepared. {$name} is the singular label of the collection
+  edit_failed: '{$name} への変更を適用できませんでした。詳細はブラウザーのコンソールを確認してください。'
+  # Error shown when the changes would move the entry to another file path, e.g. through a path
+  # template using a field. {$name} is the singular label of the collection
+  move_unsupported: この変更により {$name} が別の場所へ移動してしまいます。移動は {$name} を単独で編集する場合にのみ可能です。
+  # Error shown when saving, if someone else has changed an entry edited from the field since. {$name}
+  # is the summary of that entry
+  edit_conflict: 「{$name}」は、あなたが編集した後に他のユーザーによって変更されました。フィールドからもう一度開いて、最新版に対する変更内容を確認してください。
+  # Error shown when saving, if someone else has deleted an entry edited from the field since.
+  # {$name} is the summary of that entry
+  edit_deleted: 「{$name}」は、あなたが編集した後に他のユーザーによって削除されました。エントリーを保存するには、フィールドから外してください。
+  # Accessible label of the menu listing the selected entries that can be edited
+  select_entry_to_edit: 編集するエントリーを選択
+  # Warning shown in the editor of an entry that has been edited from a Relation field of another
+  # entry, while the changes wait in that entry’s pull request. {$name} is the summary of that
+  # entry
+  edited_with_entry: このエントリーへの変更が「{$name}」と一緒に公開されるのを待っています。ここで保存すると、そのエントリーの公開時に両方の変更が統合されますが、変更が重なっている場合は失敗することがあります。
+  # Warning shown in the dialog when an entry edited from the field has been changed by someone else
+  # since. {$name} is the singular label of the collection
+  changed_since_edit: この {$name} は、あなたが編集した後に他のユーザーによって変更されました。最新版の上にあなたの変更内容が表示されています。更新する前に確認してください。
+
 # Select Assets dialog
 assets_dialog:
   # Dialog titles for different selection modes
   title:
     file: ファイルを選択
     image: 画像を選択
+    folder: フォルダーを選択
 
   # Search input labels
   search_for_file: ファイルを検索
@@ -1272,6 +2053,14 @@ assets_dialog:
 
   # Locations panel aria-label
   locations: 場所
+
+  # Folder selection mode for a File field with the `select_folder` option. {$path} is the public
+  # path of the folder to be selected, and {$count} is the number of folders selected
+  selected_folder: '選択中のフォルダー: {$path}'
+  selected_folders: '{$count} 個のフォルダーを選択中'
+  no_subfolders: このフォルダーにはサブフォルダーがありません。
+  # Shown for a cloud storage service whose `prefix` option depends on fields of the entry
+  prefix_unresolved: このロケーションのファイルを参照またはアップロードするには、関連するフィールドに入力してください。
 
   # Asset folder options
   folder:
@@ -1289,6 +2078,7 @@ assets_dialog:
 
   # Stock photo panels
   available_images: 利用可能な画像
+  available_files: 利用可能なファイル
 
   # URL entry option
   enter_url: URL を入力
@@ -1311,6 +2101,9 @@ assets_dialog:
   photo_credit:
     title: 写真クレジット
     description: '可能であれば以下のクレジットを使ってください:'
+    # {$field} is the label of the Markdown field the credit is added to
+    insert_to_field: '{$field} に挿入'
+    copy_as_markdown: Markdown としてコピー
 
   # Unsaved asset badge
   unsaved: 未保存
@@ -1350,6 +2143,7 @@ editor_components:
   alt: 代替テキスト
   title: タイトル
   link: リンク
+  caption: キャプション
 
 # Key-Value field: column headers and validation
 key_value:
@@ -1398,6 +2192,10 @@ cloud_storage:
       requested: ログイン中…
       error: ユーザー名またはパスワードが間違っています。確認の上、再度お試しください。
 
+  # Shared by the S3-compatible services, unless overridden below
+  s3:
+    auth_key_label: シークレットアクセスキー
+
   # Service-specific configurations
   cloudinary:
     iframe_title: Cloudinary メディアライブラリ
@@ -1410,14 +2208,14 @@ cloud_storage:
   uploadcare:
     auth_key_label: API Secret Key
 
-  aws_s3:
-    auth_key_label: シークレットアクセスキー
+  azure_blob_storage:
+    auth_key_label: SAS トークン
 
-  cloudflare_r2:
-    auth_key_label: シークレットアクセスキー
+  backblaze_b2:
+    auth_key_label: アプリケーションキー
 
-  digitalocean_spaces:
-    auth_key_label: シークレットアクセスキー
+  bunny_storage:
+    auth_key_label: ストレージゾーンパスワード
 
 # ==============================================================================
 # Configuration Validation
@@ -1469,16 +2267,42 @@ config:
     unsupported_backend_suggestion: <a>サポートされているバックエンド</a> のいずれかを使用してください。
     missing_repository: リポジトリが定義されていません。
     invalid_repository: 設定されているリポジトリが正しくありません。この設定は「owner/repo」形式でなければなりません。
+    # Don’t localize `api_root`
+    missing_api_root: '`api_root` オプションが定義されていません。Forgejo バックエンドではこの設定が必須です。'
+    invalid_root_dir: 設定されているルートディレクトリが正しくありません。この設定は「..」を含まない、リポジトリ内のパスでなければなりません。
+    invalid_root_dir_branch: '設定されているルートディレクトリは `editorial_workflow` および `preview` 公開モードのブランチ名に使用できません。パスの各部分は、ドットで始まったり「.lock」で終わったりせず、スペースやコロン、アスタリスクなどの特殊文字を含まないようにしてください。'
+    path_outside_root_dir: パス「{$path}」はルートディレクトリの外を指しています。CMS はルートディレクトリの外のファイルを一覧表示できません。
     oauth_implicit_flow: 設定されている認証方式 (暗黙的フロー) は Sveltia CMS では非対応です。代わりに他の <a>認証方法</a> を使用してください。
     github_pkce_unsupported: GitHub の制約により PKCE 認証はまだサポートされていません。代わりに他の <a>認証方法</a> を使用してください。
+    additions_no_base_url: '`base_url` オプションには Sveltia CMS Additions サービスの URL を指定してください。'
     oauth_no_app_id: ' OAuth アプリケーション ID が定義されていません。'
-    # Don’t localize `open_authoring` and `editorial_workflow`
-    open_authoring_no_workflow: '`open_authoring` オプションには `editorial_workflow` 公開モードが必要です。詳しくは <a>ドキュメント</a> を参照してください。'
+    # Don’t localize `open_authoring`, `editorial_workflow` and `preview`
+    open_authoring_no_workflow: '`open_authoring` オプションには `editorial_workflow` または `preview` 公開モードが必要です。詳しくは <a>ドキュメント</a> を参照してください。'
     # Don’t localize `auth_methods`
     no_auth_methods: '`auth_methods` オプションには少なくとも 1 つの認証方法を含める必要があります。'
+    # Don’t localize `auth_scope`, `repo` and `public_repo`
+    auth_scope_no_repo: '`auth_scope` オプションには `repo` または `public_repo` を含める必要があります。'
     missing_media_folder: メディアフォルダーが定義されていません。
     public_folder_relative_path: 設定されているパブリックフォルダーが正しくありません。この設定は「/」で始まる絶対パスでなければなりません。
     public_folder_absolute_url: パブリックフォルダーオプションの絶対 URL は Sveltia CMS では非対応です。
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    unsupported_folder_template_tag: '`{$option}` オプションに含まれるテンプレートタグ `{$tag}` はここではサポートされていません。使用できるのは `\{\{slug\}\}` や `\{\{year\}\}` などのスラッグのテンプレートタグと、`\{\{dirname\}\}`、`\{\{filename\}\}`、`\{\{extension\}\}`、`\{\{media_folder\}\}`、`\{\{public_folder\}\}` タグのみです。'
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    global_folder_template_tag: '`{$option}` オプションにテンプレートタグ `{$tag}` が含まれています。テンプレートタグは、値を埋めるエントリーがあるコレクション、コレクションファイル、フィールドのオプションでのみ使用できます。'
+    # {$replacement} is the configured replacement string; Don’t localize `sanitize_replacement`
+    invalid_sanitize_replacement: '`sanitize_replacement` オプションに `{$replacement}` が指定されていますが、スラッグに使用できない文字が含まれているため、置換文字として使用できません。'
+    # {$option} is the option name (`site_url` or `display_url`) and {$url} is the configured value
+    invalid_url_option: '`{$option}` オプションに `{$url}` が指定されていますが、`https://` または `http://` で始まる絶対 URL を指定する必要があります。'
+    # Don’t localize `publish_mode`, `stages`, `draft`, `pending_review` and `pending_publish`
+    invalid_publish_mode_stages: '`publish_mode` の `stages` オプションは `draft` で始まり、`draft`、`pending_review`、`pending_publish` の順に、重複なく指定する必要があります。'
+    # Don’t localize `i18n` and `locales`
+    i18n_no_locales: '`i18n.locales` オプションには少なくとも 1 つのロケールを指定する必要があります。'
+    # {$locale} is the locale code from the configuration; Don’t localize `default_locale` and `locales`
+    i18n_invalid_default_locale: '`default_locale` オプションに `{$locale}` が指定されていますが、`locales` に含まれていません。'
+    # {$locale} is the locale code from the configuration; Don’t localize `initial_locales` and `locales`
+    i18n_invalid_initial_locale: '`initial_locales` オプションに `{$locale}` が含まれていますが、`locales` に含まれていません。'
+    # Don’t localize `i18n`
+    i18n_no_collections: '設定のトップレベルで `i18n` オプションが設定されていますが、どのコレクションやシングルトンにも `i18n` オプションがないため、コンテンツを翻訳できません。翻訳するコレクションやシングルトンに `i18n: true` を追加してください。'
     # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
     invalid_transformation_key: '`transformations` オプションにサポートされていない `{$key}` キーが含まれています。`raster_image`、`svg` またはサポートされているラスター画像形式を指定してください。'
     # {$key} is the transformation key; Don’t localize `quality`
@@ -1491,18 +2315,52 @@ config:
     invalid_asset_collection_name: アセットコレクション名 `{$name}` は無効です。特殊文字を含めることはできません。
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: アセットコレクション名は一意でなければなりませんが、`{$name}` が複数回使用されています。
-    # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_no_options: コレクションは `folder`、`files`、`divider` オプションのいずれかを定義する必要があります。
-    # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_multiple_options: コレクションは `folder`、`files`、`divider` オプションを同時に持つことはできません。
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_no_options: コレクションは `folder`、`file`、`files`、`divider` オプションのいずれかを定義する必要があります。
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_multiple_options: コレクションは `folder`、`file`、`files`、`divider` オプションのうち複数を同時に持つことはできません。
     # {$extension} is the file extension and {$format} is the configured content format
     file_format_mismatch: 拡張子 `{$extension}` は `{$format}` 形式と一致しません。
+    # {$name} is the field name from the configuration and {$widget} is its field type
+    front_matter_body_field_not_text: '`{$name}` フィールドはフロントマターの下に本文として保存され、本文はテキストのみを保持でき、`{$widget}` フィールドのように数値、真偽値、リスト、オブジェクトを保持することはできません。テキストを保持するフィールドタイプを使用するか、フィールド名を変更してください。'
+    # {$file} is the file path from the configuration; Don’t localize `file` and `locale`. The curly
+    # brackets are escaped with backslashes for MessageFormat 2
+    invalid_collection_data_file: '`file` オプション `{$file}` は無効です。`\{\{locale\}\}` プレースホルダーを含まない JSON ファイルのパスである必要があります。'
+    # {$prop} is the option name; Don’t localize `file`
+    unsupported_collection_data_file_option: '`file` オプションを持つコレクションでは `{$prop}` オプションはサポートされていません。'
+    # Don’t localize `file`, `publish_mode` and `simple`
+    collection_data_file_workflow: '`file` オプションを持つコレクションでは、オープンオーサリングを含む編集ワークフローおよびプレビューワークフローはサポートされていません。コレクションの `publish_mode` オプションを `simple` に設定してください。'
+    # {$prop} is the option name; Don’t localize `file` and `slug`. The curly brackets are escaped
+    # with backslashes for MessageFormat 2
+    collection_data_file_slug_tag: '`file` オプションを持つコレクションでは、`{$prop}` オプションに `\{\{slug\}\}` タグを含めることはできません。エントリーのスラッグはその位置であり、エントリーの並べ替えや削除で変わるためです。代わりに一意の値を持つフィールドを使用してください。'
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
     invalid_slug_slash: スラッグテンプレート `{$slug}` は無効です。スラッシュを含めることはできません。エントリーをサブフォルダーに整理するには、`slug` の代わりに `path` オプションを使用してください。
+    # {$name} is the field name from the configuration; Don’t localize `identifier_field`
+    invalid_identifier_field: '`identifier_field` オプションで `{$name}` が参照されていますが、そのフィールドはコレクションに定義されていません。'
+    # {$name} is the field name from the configuration; Don’t localize `filter`
+    invalid_filter_field: '`filter` オプションで `{$name}` が参照されていますが、そのフィールドはコレクションに定義されていません。'
+    # Don’t localize `filter`, `value` and `pattern`
+    invalid_filter_no_condition: '`filter` オプションには、エントリーを照合するための `value` または `pattern` オプションが必要です。'
+    # {$option} is an option name such as `slug` or `summary` and {$name} is the field name or template tag from the configuration
+    option_field_not_found: '`{$option}` オプションで `{$name}` が参照されていますが、そのフィールドは定義されていません。'
+    # {$name} is the field name from the configuration and {$widget} is its field type; Don’t localize `thumbnail`
+    thumbnail_field_not_media: '`thumbnail` オプションに `{$name}` が指定されていますが、`{$widget}` フィールドではなく Image または File フィールドでなければなりません。'
+    # Don’t localize `inline` or `multiple`
+    invalid_inline_component_fields: '`inline` モードでは、Boolean、Color、DateTime、Number、Relation、Select、String のいずれか 1 つのフィールドだけを定義する必要があります。Relation と Select フィールドでは `multiple` オプションを有効にできません。'
+    # {$option} is an option name such as `pattern` or `filter` and {$pattern} is the configured pattern
+    invalid_regex: '`{$option}` オプションに無効な正規表現 `{$pattern}` が含まれているため、無視されます。'
     # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
     invalid_reorder_group: '`reorder` オプションで指定された `{$name}` グループは、`view_groups` オプションに定義されていません。'
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit` and `fields`
+    invalid_bulk_edit_field: '`bulk_edit` オプションの `fields` リストで指定された `{$name}` フィールドは、コレクションのトップレベルに定義されていません。'
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit`, `fields` and `multiple`
+    unsupported_bulk_edit_field: '`bulk_edit` オプションの `fields` リストで指定された `{$name}` フィールドは一括編集できません。対応しているのは、読み取り専用でなく、`multiple` オプションが無効で、保存時に自動設定されない Boolean、Color、DateTime、Number、Relation、Select、String フィールドのみです。'
     # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
     invalid_sortable_field: '`sortable_fields` オプションで指定された `{$name}` フィールドは、コレクションに定義されていません。'
+    # Don’t localize `sortable_fields` and `default_sort`
+    multiple_sortable_field_defaults: '`sortable_fields` オプションで `default_sort` オプションを指定できる項目は 1 つだけです。'
+    # {$option} is `table_columns` or `summary_fields`, and {$name} is the field name from the configuration
+    invalid_table_column_field: '`{$option}` オプションで指定された `{$name}` フィールドは、コレクションに定義されていません。'
     # {$name} is the field name from the configuration; Don’t localize `view_groups`
     invalid_view_group_field: '`view_groups` オプションで指定された `{$name}` フィールドは、コレクションに定義されていません。'
     # {$name} is the field name from the configuration; Don’t localize `view_filters`
@@ -1514,9 +2372,15 @@ config:
     duplicate_view_group_name: ビューグループ名は一意である必要がありますが、`{$name}` が複数回使用されています。
     # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
     missing_view_filter_name: ビューフィルター {$count} には `name` オプションを空でない文字列として定義する必要があります。
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `pattern`, `eq` and `gte`
+    invalid_view_filter_no_condition: ビューフィルター {$count} には、エントリーを照合するための `pattern` オプション、または `eq` や `gte` などの比較オプションを定義する必要があります。
     # {$name} is the invalid or duplicate view filter name
     invalid_view_filter_name: ビューフィルター名 `{$name}` は無効です。特殊文字を含めることはできません。
     duplicate_view_filter_name: ビューフィルター名は一意である必要がありますが、`{$name}` が複数回使用されています。
+    # {$name} is the default view group name from the configuration; Don’t localize `default` and `view_groups`
+    invalid_view_group_default: '`view_groups` の `default` オプションに `{$name}` が指定されていますが、その名前のビューグループはありません。'
+    # {$name} is the default view filter name from the configuration; Don’t localize `default` and `view_filters`
+    invalid_view_filter_default: '`view_filters` の `default` オプションに `{$name}` が指定されていますが、その名前のビューフィルターはありません。'
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: コレクション {$count} には `name` オプションを空でない文字列として定義する必要があります。
     # {$name} is the invalid or duplicate collection name
@@ -1531,8 +2395,19 @@ config:
     collection_no_fields: コレクションには少なくとも 1 つのフィールドを定義する必要があります。
     # Don’t localize `fields`
     collection_file_no_fields: コレクションファイルには少なくとも 1 つのフィールドを定義する必要があります。
+    # Don’t localize `i18n`, `locale` and `folder`
+    collection_folder_i18n_required: コレクションには、`folder` パスで `locale` プレースホルダーを使用する場合、`i18n` オプションを定義する必要があります。
+    # {$folder} is the invalid folder path; Don’t localize `locale`, `folder` and the example path. The
+    # curly brackets in the example are escaped with backslashes for MessageFormat 2
+    invalid_collection_folder_locale: '`folder` パス `{$folder}` は無効です。`locale` プレースホルダーは `content/\{\{locale\}\}/posts` のように、フォルダー名全体として一度だけ使用できます。'
     # Don’t localize `i18n`, `locale` and `file`
     collection_file_i18n_required: コレクションファイルには、`file` パスで `locale` プレースホルダーを使用する場合、`i18n` オプションを定義する必要があります。
+    # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
+    collection_i18n_no_fields: 'コレクションに `i18n` オプションがありますが、どのフィールドにも `i18n` オプションがないため、フィールドを翻訳できません。翻訳するフィールドに `i18n: true` または `i18n: duplicate` を追加してください。'
+    # Don’t localize `i18n` and `i18n: true`
+    collection_i18n_no_files: 'コレクションに `i18n` オプションがありますが、どのファイルにも `i18n` オプションがないため、ファイルを翻訳できません。翻訳するファイルに `i18n: true` を追加してください。'
+    # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
+    collection_file_i18n_no_fields: 'コレクションファイルに `i18n` オプションがありますが、どのフィールドにも `i18n` オプションがないため、フィールドを翻訳できません。翻訳するフィールドに `i18n: true` または `i18n: duplicate` を追加してください。'
     # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
     missing_field_name: フィールド {$count} には `name` オプションを空でない文字列として定義する必要があります。
     # {$name} is the invalid or duplicate field name
@@ -1544,6 +2419,8 @@ config:
     invalid_variable_type: 変数タイプ名 `{$name}` は無効です。特殊文字を含めることはできません。
     duplicate_variable_type: 変数タイプ名は一意でなければなりませんが、`{$name}` が複数回使用されています。
     date_field_type: 'Sveltia CMS では非推奨の Date フィールドタイプはサポートされていません。代わりに `type: date` オプション付きの DateTime フィールドタイプを使用してください。'
+    # curly brackets in the placeholder are escaped with backslashes for MessageFormat 2
+    hidden_field_locale_without_i18n: Hidden フィールドの `default` オプションで `\{\{locale\}\}` プレースホルダーが使用されていますが、コレクションで i18n が有効になっていないため、置き換えるロケールがありません。
     # {$timeZone} is the invalid IANA timezone identifier from the configuration
     invalid_timezone: '無効なタイムゾーン: {$timeZone}。有効な IANA タイムゾーン識別子を使用してください。例: `America/New_York` または `Asia/Tokyo`。'
     # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
@@ -1556,12 +2433,85 @@ config:
     invalid_list_variable_type: List フィールドの変数タイプが無効です。`widget` オプションは `{$widget}` に設定されていますが、`object` でなければなりません。
     # Don’t localize `fields`, and `types`
     invalid_object_field: Object フィールドは `fields` と `types` オプションを同時に持つことはできません。
+    # {$min} and {$max} are option names such as `min` and `max` or `minlength` and `maxlength`
+    invalid_range_options: '`{$min}` オプションは `{$max}` オプションより大きくすることはできません。'
+    # {$step} is the configured value; Don’t localize `step`
+    invalid_step: '`step` オプションに `{$step}` が指定されていますが、0 より大きい値、またはステップ操作を無効にする場合は `-1` を指定する必要があります。'
+    # Don’t localize `options`
+    select_field_no_options: Select フィールドの `options` オプションには少なくとも 1 つの項目が必要です。
+    # {$value} is the option value from the configuration; Don’t localize `options`
+    select_field_duplicate_option: Select フィールドの `options` は一意である必要がありますが、`{$value}` が複数回使用されています。
+    # {$value} is the default value from the configuration; Don’t localize `default` and `options`
+    select_field_invalid_default: Select フィールドの `default` オプションに `{$value}` が指定されていますが、`options` に含まれていません。
+    # Don’t localize `fields` and `types`
+    list_field_no_subfields: List フィールドの `fields` または `types` オプションには少なくとも 1 つの項目が必要です。単純な値のリストにする場合は、オプションを省略してください。
+    # Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_object: List フィールドの `default` オプションにオブジェクトが含まれていますが、フィールドに `fields` も `types` もないため、各項目は単純な値でなければなりません。
+    # {$value} is the default item from the configuration; Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_item: List フィールドの `default` オプションに `{$value}` が含まれていますが、フィールドに `fields` または `types` があるため、各項目はオブジェクトでなければなりません。
+    # {$key} is a property name of the default item from the configuration; Don’t localize `default`
+    list_field_invalid_default_key: List フィールドの `default` オプションの項目に `{$key}` プロパティが含まれていますが、その名前のサブフィールドはありません。
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    list_field_default_missing_type: List フィールドの `default` オプションの項目に、`types` のいずれかを識別する `{$typeKey}` プロパティがありません。
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default item; Don’t localize `default` and `types`
+    list_field_invalid_default_type: List フィールドの `default` オプションの項目の `{$typeKey}` プロパティが `{$value}` ですが、`types` に含まれていません。
+    # Don’t localize `map_key_field`, `fields` and `types`
+    list_field_map_key_no_subfields: 各キーはサブフィールドから取得されるため、List フィールドの `map_key_field` オプションには `fields` または `types` オプションが必要です。
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_not_found: List フィールドの `map_key_field` オプションが `{$name}` を参照していますが、その名前のサブフィールドはありません。
+    # {$name} is the subfield name, and {$type} is the variable type name; Don’t localize `map_key_field`
+    list_field_map_key_missing_in_type: List フィールドの `map_key_field` オプションが `{$name}` を参照していますが、`{$type}` タイプにはその名前のサブフィールドがありません。
+    # {$name} is the subfield name, and {$widget} is its field type; Don’t localize `map_key_field`
+    list_field_map_key_invalid_type: List フィールドの `map_key_field` オプションが `{$name}` を参照していますが、`{$widget}` フィールドではなく String、Relation、Select のいずれかのフィールドである必要があります。
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `multiple`
+    list_field_map_key_multiple: List フィールドの `map_key_field` オプションが `{$name}` を参照していますが、各項目には単一のキーが必要なため、そのサブフィールドで複数の値を選択することはできません。`multiple` オプションを削除してください。
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_option_not_string: List フィールドの `map_key_field` オプションが `{$name}` を参照していますが、各キーは文字列として保存されるため、そのサブフィールドの選択肢の値は文字列である必要があります。
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `required`
+    list_field_map_key_not_required: List フィールドの `map_key_field` オプションが `{$name}` を参照していますが、各項目にはキーが必要なため、そのサブフィールドを任意にすることはできません。`required` オプションを削除してください。
+    # {$name} is the subfield name; Don’t localize `map_key_field`, `i18n: false` and `i18n: duplicate`
+    list_field_map_key_not_localized: 'List フィールドの `map_key_field` オプションが `{$name}` を参照していますが、項目にはすべてのロケールでキーが必要なため、そのサブフィールドに `i18n: false` は指定できません。`i18n: duplicate` を使うか、オプションを削除してください。'
+    # Don’t localize `i18n`, `duplicate_if_empty`, `multiple` and `true`
+    duplicate_if_empty_multiple: '`i18n: duplicate_if_empty` オプションは `multiple` オプションを持つフィールドではサポートされていないため、このフィールドは `i18n: true` と同様に動作します。'
+    # Don’t localize `default` and `multiple`
+    invalid_default_multiple: '`multiple` オプションが `true` のため、`default` オプションは配列でなければなりません。'
+    invalid_default_single: '`multiple` オプションが `true` ではないため、`default` オプションは配列ではなく単一の値でなければなりません。'
+    # {$key} is a property name of the default object from the configuration; Don’t localize `default`
+    object_field_invalid_default_key: Object フィールドの `default` オプションに `{$key}` プロパティが含まれていますが、その名前のサブフィールドはありません。
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    object_field_default_missing_type: Object フィールドの `default` オプションに、`types` のいずれかを識別する `{$typeKey}` プロパティがありません。
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default object; Don’t localize `default` and `types`
+    object_field_invalid_default_type: Object フィールドの `default` オプションの `{$typeKey}` プロパティが `{$value}` ですが、`types` に含まれていません。
+    # Don’t localize `default` and `output_code_only`
+    code_field_invalid_default_object: '`output_code_only` オプションが `true` のため、Code フィールドの `default` オプションは文字列でなければなりません。'
+    # {$key} is a property name of the default object, {$code} and {$lang} are the configured property names; Don’t localize `default` and `keys`
+    code_field_invalid_default_key: Code フィールドの `default` オプションに `{$key}` プロパティが含まれていますが、`keys` オプションで許可されているのは `{$code}` と `{$lang}` のみです。
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_invalid_expression: '`value_type` オプションが `{$valueType}` のため、Compute フィールドの `value` オプションは `\{\{fields.price\}\} * \{\{fields.quantity\}\}` のような有効な計算式でなければなりません。'
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_uuid_in_expression: '`value_type` オプションが `{$valueType}` で `value` オプションが計算式として扱われるため、Compute フィールドの `value` オプションでは `\{\{uuid\}\}` などの UUID タグを使用できません。'
+    # {$value} is the default value and {$valueType} is the configured value type; Don’t localize `default` and `value_type`
+    number_field_default_not_integer: Number フィールドの `default` オプションに `{$value}` が指定されていますが、`value_type` オプションが `{$valueType}` のため、整数でなければなりません。
+    number_field_default_not_number: Number フィールドの `default` オプションに `{$value}` が指定されていますが、`value_type` オプションが `{$valueType}` のため、数値でなければなりません。
+    # Don’t localize `fields` and `types`
+    object_field_no_subfields: Object フィールドの `fields` または `types` オプションには少なくとも 1 つの項目が必要です。
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: 参照されている `{$collection}` コレクションは無効であるか定義されていません。
     relation_field_invalid_collection_file: 参照されている `{$file}` ファイルは無効であるか定義されていません。
     # Don’t localize `file`
     relation_field_missing_file_name: ファイルコレクションへの参照には `file` オプションを定義する必要があります。
     relation_field_invalid_value_field: 参照されている値フィールド `{$field}` は無効であるか定義されていません。
+    # {$collection} is the referenced collection name; Don’t localize `file`, `value_field` and `slug`.
+    # The curly brackets are escaped with backslashes for MessageFormat 2
+    relation_field_array_file_slug: '`{$collection}` コレクションへの参照では `\{\{slug\}\}` の値を保存できません。`file` オプションを持つコレクションのエントリーのスラッグはその位置であり、エントリーの並べ替えや削除で変わるためです。代わりに `value_field` オプションに一意の値を持つフィールドを指定してください。'
+    # {$collection} is the referenced collection name; Don’t localize `file`
+    relation_field_array_file_workflow: '`file` オプションを持つコレクションは、編集ワークフローまたはプレビューワークフローを使用する `{$collection}` コレクションへの参照を持つことができません。そのコレクションで名前が変更または削除されたエントリーへの参照を、ファイル内で更新できないためです。'
+    relation_field_invalid_display_field: 参照されている表示フィールド `{$field}` は無効であるか定義されていません。
+    relation_field_invalid_search_field: 参照されている検索フィールド `{$field}` は無効であるか定義されていません。
+    relation_field_invalid_filter_field: 参照されているフィルターフィールド `{$field}` は無効であるか定義されていません。
+    relation_field_invalid_sort_field: 参照されている並べ替えフィールド `{$field}` は無効であるか定義されていません。
+    # Don’t localize `sort_by` and `file`
+    relation_field_sort_by_file_ignored: '`sort_by` オプションはファイルへの参照には適用されません。オプションはリスト項目の順序に従います。このオプションは無視されます。'
     unexpected: 予期せぬ問題
 
     # Schema validation errors, reported when the configuration doesn’t match the published JSON
@@ -1594,20 +2544,56 @@ config:
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: OAuth アプリケーション ID が定義されていません。ユーザーがログインするにはアクセストークンを入力する必要があります。
-    editorial_workflow_unsupported: エディトリアルワークフローは現在 GitHub と GitLab バックエンドでのみサポートされています。
-    open_authoring_unsupported_backend: オープンオーサリングは現在 GitHub バックエンドでのみサポートされています。
+    # Don’t localize `prefix`
+    site_library_prefix_template: メディアライブラリの `prefix` オプションにテンプレートタグが含まれています。トップレベルには値を埋め込むエントリーがないため、テンプレートタグはフィールドレベルでのみサポートされます。
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: '`{$prop}` オプションは Sveltia CMS ではサポートされていません。このオプションは無視されます。'
+    # Don’t localize `stages`, `publish_mode`, `editorial_workflow` and {$type}, which is `preview` or `simple`
+    publish_mode_stages_ignored: '`publish_mode` の `stages` オプションは `editorial_workflow` 公開モードでのみ有効なため、`{$type}` では無視されます。'
+    # Don’t localize `pattern`, `m` and `s`
+    inline_component_multiline_pattern: 'このインラインコンポーネントの `pattern` に `m` または `s` フラグが付いているか改行に一致するようになっていますが、インラインコンポーネントは段落内でのみ照合されます。'
+    # {$name} is a button or component name and {$option} is `buttons` or `editor_components`; Don’t localize them and `multiline: false`
+    single_line_block_item: '`multiline: false` のフィールドにはインラインのコンテンツしか入れられないため、`{$option}` オプションの `{$name}` は無視されます。'
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: '`picker_utc` と新しいタイムゾーンオプション (`input_timezone` または `output_utc`) の両方が設定されています。新しいオプションが優先されます。設定から `picker_utc` を削除することを検討してください。'
+    # Don’t localize `localize_format` and `format`
+    localize_format_without_format: 'フィールドに `format` オプションがなく、値が ISO 8601 形式で保存されるため、`localize_format` オプションは効果がありません。'
+    # {$name} is a template tag like `fields.lines.*.price`; Don’t localize `value`, `*` and `sum()`
+    compute_field_wildcard_without_item: Compute フィールドの `value` オプションで `{$name}` が参照されていますが、このフィールドは `*` が表すリストの項目内にないため、空の値になります。リストのすべての項目を使えるのは `sum()` などの集計関数だけです。
+    # {$name} is a template tag like `fields.lines.*.amount`; Don’t localize `value`
+    compute_field_self_reference: Compute フィールドの `value` オプションで `{$name}` としてフィールド自身が参照されているため、計算のたびに値が変わり、確定しません。
+    # {$name} is a template tag like `fields.total`; Don’t localize `value`
+    compute_field_reference_cycle: Compute フィールドの `value` オプションで参照されている `{$name}` は、直接または他のフィールドを介してこのフィールドを参照し返す Compute フィールドであるため、値が確定しません。
+    # Don’t localize `localize_format`, `true` and `de`
+    localize_format_without_i18n: '`localize_format` オプションが `true` に設定されていますが、コレクションで i18n が有効になっていないため、値は英語で書き込まれます。代わりに `de` のようなロケールコードを指定してください。'
+    # {$locale} is the locale code from the configuration; Don’t localize `localize_format`
+    localize_format_unsupported_locale: '`localize_format` オプションに指定された `{$locale}` はサポートされていないロケールのため、値は英語で書き込まれます。'
     # Don’t localize `preview_path`
     preview_path_no_date_field: '`preview_path` オプションで日時タグが使用されていますが、コレクションに参照可能な DateTime フィールドがないため、プレビューリンクは表示されません。'
     # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
     preview_path_date_field_not_found: '`preview_path_date_field` オプションで `{$name}` という名前のフィールドが指定されていますが、その名前の DateTime フィールドが定義されていないため、プレビューリンクは表示されません。'
     # {$name} is the template tag from the configuration; Don’t localize `preview_path`
     preview_path_field_not_found: '`preview_path` オプションで `{$name}` が参照されていますが、そのフィールドはコレクションに定義されていないため、プレビューリンクは表示されません。'
+    # {$name} is the default identifier field name; Don’t localize `identifier_field` and `slug`
+    missing_identifier_field: コレクションに新しいエントリーの名前となる `{$name}` フィールドがないため、新しいエントリーにはランダムなスラッグが付けられます。`{$name}` フィールドを追加するか、`identifier_field` または `slug` オプションを設定してください。
+    # Don’t localize `slug`, `i18n`, `multiple_files`, `multiple_folders` and `multiple_root_folders`
+    slug_i18n_ineffective: コレクションが各ロケールのファイルを個別に持つ `multiple_files`、`multiple_folders`、`multiple_root_folders` のいずれの i18n 構造も使用していないため、`slug` の `i18n` オプションは効果がありません。
+    # Don’t localize `slug`, `template` and `auto_increment`
+    slug_template_ignored: スラッグは `auto_increment` オプションによって連番になるため、`slug` の `template` オプションは無視されます。
+    # {$file} is the file path; Don’t localize `file`, `locale`, `i18n`, `false`,
+    # `omit_default_locale_from_file_path` and the example paths. The curly brackets in the examples
+    # are escaped with backslashes for MessageFormat 2
+    locale_not_omitted_from_file_path: '`file` パス `{$file}` から `locale` プレースホルダーを取り除けないため、`omit_default_locale_from_file_path` i18n オプションが有効でもデフォルトロケールがパスに残ります。ロケールを省くには、プレースホルダーを `\{\{locale\}\}/about.md` のようにフォルダー名全体として、または `about.\{\{locale\}\}.md` のようにファイル名と拡張子の間に配置してください。ロケールを残す場合は、ファイルの `i18n` オプションでこのオプションを `false` に設定してください。'
+    # Don’t localize `i18n`
+    i18n_not_configured: '`i18n` オプションが有効になっていますが、設定のトップレベルまたはコレクションで i18n が設定されていないため、このオプションは効果がありません。'
+    # Don’t localize `public_folder` and `media_folder`
+    empty_public_folder: '`public_folder` オプションが空の文字列になっているため、エントリーに保存されるアセットパスには代わりに `media_folder` のパスが使用されます。このオプションを削除するか、`/images` のように使用したいパスを設定してください。'
     # {$option} is an option path from the configuration, such as `filter.Regulation`
     schema_unknown_option: '`{$option}` オプションは Sveltia CMS の設定スキーマに定義されていません。このオプションは無視されます。入力ミスや記述ミスがないか確認してください。'
+    # Don’t localize `default_localized`, `default` and `i18n`
+    default_localized_without_i18n: コレクションで i18n が有効になっていないため、`default_localized` オプションは効果がありません。代わりに `default` オプションを使用してください。
+    # {$locale} is a locale code from the configuration; Don’t localize `default_localized`
+    default_localized_unknown_locale: '`default_localized` オプションに `{$locale}` の値がありますが、このロケールはコレクションのロケールに含まれていないため、値は使用されません。'
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: '詳しくは互換性情報をご覧ください: {$link}'
@@ -1640,6 +2626,11 @@ viewing_editorial_workflow: 'エディトリアルワークフローボードを
 # Same as above, for an Open Authoring contributor: their board has no Ready column, because only
 # a maintainer can publish
 viewing_open_authoring_workflow: 'エディトリアルワークフローボードを表示しています。下書き: {$draft} 件。レビュー中: {$review} 件。削除待ち: {$deletion} 件。'
+# Same as above, when the In Review stage is left out with the `stages` publish mode option
+viewing_editorial_workflow_without_review: 'エディトリアルワークフローボードを表示しています。下書き: {$draft} 件。公開可: {$ready} 件。削除待ち: {$deletion} 件。'
+# Same as above, when all the content uses Preview Workflow, which has no review stages, so the
+# page only lists the drafts
+viewing_preview_workflow: '下書きページを表示しています。下書き: {$draft} 件。削除待ち: {$deletion} 件。'
 
 # Workflow status names. `drafts` is the plural form used as a column heading,
 # while `draft` is the singular form used in the editor’s status button.
@@ -1651,6 +2642,10 @@ status:
   # A pending removal, which is a status of its own rather than a stage: it has no review to go
   # through, only the deletion itself to carry out or call off
   pending_deletion: 削除待ち
+  # Merged changes the site hasn’t caught up with yet: it’s being rebuilt and deployed from the
+  # merge, so a published entry isn’t live and a deleted one is still up. Heading of the tray below
+  # the board that lists them until the site has caught up
+  deploying: デプロイ中
 
 workflow:
   # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
@@ -1694,6 +2689,14 @@ workflow:
   status_updated: ステータスを更新しました。
   # Error notification when the status could not be changed
   status_change_failed: ステータスを変更できませんでした。再度お試しください。
+  # Workflow page: toolbar button that reads the pull requests again, to pick up the changes made
+  # by anyone else since the board was loaded, and the toast notifications shown while doing so and
+  # once done
+  refresh: 更新
+  refreshing: 更新しています…
+  refreshed: ボードは最新の状態です。
+  # Error notification when the board could not be refreshed
+  refresh_failed: ボードを更新できませんでした。再度お試しください。
   # Error notification when the status can’t be changed because the entry is incomplete. Required
   # fields can be left empty while the entry is a draft, but not once it moves on from there
   status_change_blocked: エントリーにエラーがあります。ステータスを変更するには問題を修正してください。
@@ -1704,6 +2707,10 @@ workflow:
   # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
   send_for_review: レビューを依頼
   confirm_sending_for_review: 変更を下書きとして保存しました。誰かが確認して公開できるよう、このエントリーのレビューを依頼しますか？
+  # Same as above, when the In Review stage is left out with the `stages` publish mode option, so
+  # the next step is to mark the entry as ready to be published
+  mark_as_ready: 公開可にする
+  confirm_marking_as_ready: 変更を下書きとして保存しました。公開できるよう、このエントリーを公開可にしますか？
   # Editor toolbar: button shown when the entry is ready to be published
   publish_entry: エントリーを公開
   # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
@@ -1732,7 +2739,7 @@ workflow:
       1   {{ そのうち 1 件はまだ公開されていないため、未公開の変更は破棄されます。公開版があればそのまま公開されたままになります。 }}
       *   {{ そのうち {$count} 件はまだ公開されていないため、未公開の変更は破棄されます。公開版があればそのまま公開されたままになります。 }}
   # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
-  confirm_publishing_entry: このエントリーを公開してもよろしいですか？ 変更は即座に反映されます。
+  confirm_publishing_entry_after_build: このエントリーを公開してもよろしいですか？ 変更はサイトの再構築後に反映されます。
   # Workflow page: toast notifications shown while an entry is being published from a card, and
   # once publishing has completed
   publishing_entry: エントリーを公開しています…
@@ -1744,10 +2751,55 @@ workflow:
   entry_deleted: エントリーを削除しました。
   # Error notification when publishing fails
   publishing_entry_failed: エントリーを公開できませんでした。再度お試しください。
+  # Error notification when an entry can’t be published from the CMS, because its request also
+  # changes files that aren’t part of the entry and that the CMS doesn’t show, goes somewhere other
+  # than the site’s branch, or is too large to check. Keep the wording free of Git jargon
+  publish_refused_other_changes: このエントリーには CMS で表示できない他の変更が含まれているため、ここでは公開できません。開発者にレビューを依頼してください。
+  # Error notification when an entry can’t be published because its branch has been committed to
+  # since the entry was opened, so what would be published isn’t what was reviewed
+  publish_refused_entry_changed: エントリーを開いた後に変更が加えられました。ページを再読み込みして最新の内容を確認してから公開してください。
+  review_on_x: '{$service} でレビュー'
+  from_fork: フォークから
+  fork_entry_editable: このエントリーは「{$fork}」から作成された貢献者のプルリクエストに含まれています。変更は貢献者のブランチに保存されます。プルリクエストのレビューとマージは Git サービス上で行ってください。
+  fork_entry_locked: このエントリーは「{$fork}」から作成された貢献者のプルリクエストに含まれています。貢献者がメンテナーによる編集を許可していないため、ここでは閲覧のみ可能です。
+  fork_not_editable: 貢献者がこのプルリクエストのメンテナーによる編集を許可していません。
+  fork_entry_gone: 貢献者のプルリクエストがすでに閉じられているため、変更を保存できません。
+  # Error shown in the save error dialog when an entry can’t be saved for review, because a request
+  # the CMS doesn’t show is already open from the branch the entry would be saved to. `{$number}` is
+  # the request number, e.g. `#12` on GitHub or `!12` on GitLab. Keep the wording free of Git jargon
+  branch_in_use: このエントリーには CMS の外で別のリクエスト ({$number}) が既に作成されています。先に開発者にそのリクエストを閉じてもらってください。
   # Workflow page: empty column message
   no_entries: エントリーはありません。
   # Workflow page: aria-label for a draggable entry card
   drag_entry: ドラッグするとステータスを変更できます
+  # Workflow page: note on a card in the Deploying tray, marking an entry that’s being removed from
+  # the site rather than published to it
+  deploying_deletion: 削除
+  # Workflow page: note on a card listing the new entries that were created from a Relation field
+  # of the entry and are published along with it, e.g. “Also adds Section: Getting Started”
+  companion_entries: '{$entries} も追加されます'
+  # Workflow page: note on a card listing the existing entries that were edited from a Relation
+  # field of the entry and are published along with it, e.g. “Also changes Author: Ada Lovelace”
+  edited_companion_entries: '{$entries} も変更されます'
+  # Workflow page: one of the entries listed by `companion_entries` or `edited_companion_entries`,
+  # named by its collection’s singular label and its title
+  companion_entry: '{$collection}: {$title}'
+
+# Dialog asking the user for a commit message every time changes are saved, when the site is
+# configured to. The message is recorded in the repository’s history along with the changes
+commit_message:
+  # Dialog title
+  title: コミットメッセージ
+  # Description when the user writes the whole message, which the text box is filled in with
+  description_replace: 変更内容を説明してください。このメッセージは変更とともに履歴に記録されます。
+  # Description when the text the user enters is added before or after a message the CMS writes
+  description_addition: 変更とともに履歴に記録されるメッセージに、課題番号などの注記を追加できます。空欄のままでも構いません。
+  # Accessible name of the text box when the user writes the whole message
+  message: コミットメッセージ
+  # Accessible name of the text box when the text is added before or after the message
+  addition: 注記
+  # Preview of the message as it will be recorded. {$message} is the message
+  preview: 'メッセージ: {$message}'
 
 # Open Authoring: a contributor without write access to the configured repository works in a fork
 # of it, and their changes reach the site through a pull request a maintainer merges
@@ -1761,6 +2813,10 @@ open_authoring:
   fork_declined: 変更を提案するには、あなたのアカウントにリポジトリのフォークが必要です。
   # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
   fork_failed: 「{$repo}」リポジトリのフォークをあなたのアカウントに作成できませんでした。
+  # Error shown when the user’s fork doesn’t have the branch the CMS is configured with, so there’s
+  # nothing to start their changes from. {$fork} and {$repo} are repository identifiers in
+  # owner/repo format, {$branch} is the branch name
+  fork_branch_missing: あなたの「{$fork}」フォークに「{$branch}」ブランチがありません。「{$repo}」リポジトリからフォークを更新してから、もう一度サインインしてください。
   # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
   # because the API rate limit is exhausted. {$repo} is the repository identifier
   permission_check_failed: 「{$repo}」リポジトリへのアクセス権を確認できませんでした。しばらくしてから再度お試しください。
@@ -1775,6 +2831,10 @@ open_authoring:
   private_repo_scope_required: ログインにプライベートリポジトリへのアクセスが含まれていないため、「{$repo}」リポジトリを読み取れません。CMS の認証設定を確認するようメンテナーに依頼してください。
   # Error shown when a contributor tries to publish an entry, which only a maintainer can do
   publish_unsupported: このサイトへの変更を公開できるのはメンテナーだけです。代わりにエントリーをレビュー中にしてください。誰かが確認します。
+  # Error shown when a contributor changes the status of an entry whose request a maintainer has
+  # published since the page was loaded, leaving nothing to review. The entry then leaves the
+  # Editorial Workflow board and the editor closes. Keep the wording free of Git jargon
+  entry_already_published: このエントリーはメンテナーによって既に公開されているため、レビューするものはありません。
   # Error shown when a change would go straight to the site instead of being reviewed, which a
   # contributor can’t do. It covers media library uploads and deletions, and entry reordering
   direct_commit_unsupported: この変更は直接行えません。レビューを依頼できるのはエントリーの編集のみです。
@@ -1790,11 +2850,10 @@ open_authoring:
 # Settings page aria-label
 categories: カテゴリ
 
-# Site Configuration Editor
-site_configuration_editor: サイト設定エディター
-
 # Preferences panels
 prefs:
+  account:
+    title: アカウント
   # API key management feedback messages
   changes:
     api_key_saved: API キーが保存されました。
@@ -1844,7 +2903,7 @@ prefs:
         select_service: サービスを選択
       api_keys:
         title: 翻訳サービス API キー
-        description: <a>翻訳サービス</a> の API キーを管理します。
+        description: <a>翻訳サービス</a> の API キーを管理します。汎用 AI サービスの API キーは AI 設定で管理できます。
       # API key input label, e.g., “DeepL Key”
       # {$service} is the translation service name
       field_label: '{$service} キー'
@@ -1878,6 +2937,16 @@ prefs:
       field_label: '{$service} API キー'
       no_services: 利用可能な <a>クラウドストレージサービス</a> はありません。
 
+  # AI panel
+  ai:
+    title: AI
+    api_keys:
+      title: AI サービス API キー
+      description: AI サービスの API キーを管理します。
+    # API key input label, e.g., “OpenAI GPT API Key”
+    # {$service} is the AI service name
+    field_label: '{$service} API キー'
+
   # Accessibility panel
   accessibility:
     title: アクセシビリティ
@@ -1886,30 +2955,9 @@ prefs:
       description: エントリープレビューやユーザーインターフェイスラベル内のリンクに下線を表示します。
       switch_label: 常に下線を付ける
 
-  # Advanced panel
-  advanced:
-    title: 詳細
-    beta:
-      title: ベータ機能
-      description: 不安定あるいは未ローカライズの可能性がある、いくつかのベータ機能を有効化します。
-      switch_label: ベータプログラムに参加する
-    developer_mode:
-      title: 開発者モード
-      description: 詳細なコンソールログやネイティブコンテキストメニューなど、いくつかの開発者向け機能を有効化します。
-      switch_label: 開発者モードを有効にする
-    deploy_hook:
-      title: デプロイフック
-      description: 「変更を公開」を選択して手動でデプロイを実行する際に呼び出すウェブフック URL を入力してください。GitHub Actions を使用する場合は空欄のままで構いません。
-      # Hook URL input
-      url:
-        field_label: フック URL
-        saved: フック URL が保存されました。
-        removed: フック URL が削除されました。
-      # Authorization header input
-      auth:
-        field_label: '認証ヘッダー (例: Bearer <token>) (オプション)'
-        saved: 認証ヘッダーが保存されました。
-        removed: 認証ヘッダーが削除されました。
+  # Data Management panel
+  data:
+    title: データ管理
     clear_data:
       title: データの削除
       # Clear File Cache button
@@ -1922,6 +2970,36 @@ prefs:
         description: キャッシュされたファイル、未保存の下書き、設定など、CMS がこのブラウザーに保存しているすべてのデータを削除します。リポジトリに保存済みのデータは影響を受けません。
         button_label: すべてのデータを消去
         confirmation: キャッシュされたファイルの内容、画像のサムネイル、未保存の下書き、設定、サインイン状態など、このブラウザーに保存されているすべてのデータが削除されます。リポジトリは影響を受けませんが、未保存の変更は失われ、再度サインインする必要があります。完了後、CMS が再読み込みされます。
+
+  # Developer panel
+  developer:
+    title: 開発者
+    developer_mode:
+      title: 開発者モード
+      description: 詳細なコンソールログやネイティブコンテキストメニューなど、いくつかの開発者向け機能を有効化します。
+      switch_label: 開発者モードを有効にする
+    local_git:
+      title: Git コミット
+      description: 変更を保存するたびに、ローカルリポジトリの現在のブランチにコミットします。リモートリポジトリで作業する場合と同じです。コミットは普段お使いの Git ツールで確認してプッシュできます。
+      switch_label: 変更を Git にコミットする
+      checking: リポジトリを確認しています…
+      # {$branch} is the branch name, {$name} and {$email} are the commit author’s name and email address
+      ready: 変更は {$name} ({$email}) として {$branch} ブランチにコミットされます。
+      # {$reason} is one of the `local_git_skip_reasons` strings
+      not_ready: 現在、変更をコミットできません。{$reason}
+    deploy_hook:
+      title: デプロイフック
+      description: 「変更を公開」を選択して手動でデプロイを実行する際に呼び出すウェブフック URL を入力してください。GitHub Actions または GitLab CI/CD を使用する場合は空欄のままで構いません。
+      # Hook URL input
+      url:
+        field_label: フック URL
+        saved: フック URL が保存されました。
+        removed: フック URL が削除されました。
+      # Authorization header input
+      auth:
+        field_label: '認証ヘッダー (例: Bearer <token>) (オプション)'
+        saved: 認証ヘッダーが保存されました。
+        removed: 認証ヘッダーが削除されました。
 
 # ==============================================================================
 # Keyboard Shortcuts
@@ -1946,6 +3024,8 @@ file_type_labels:
   avif: AVIF 画像
   bmp: Bitmap 画像
   gif: GIF 画像
+  heic: HEIC 画像
+  heif: HEIF 画像
   ico: アイコン
   jpeg: JPEG 画像
   jpg: JPEG 画像

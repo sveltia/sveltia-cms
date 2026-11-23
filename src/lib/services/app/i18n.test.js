@@ -1,29 +1,34 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+// Load the module graph, including the locale files globbed in development, while the file is
+// collected, so that it doesn’t count against the first test’s timeout
+import './i18n.js';
+
 // Simplified locale data used by the locale module mocks
-const mockEnData = { hello: 'Hello', world: 'World' };
-const mockJaData = { hello: 'こんにちは', world: '世界' };
+const mockEnData = vi.hoisted(() => ({ hello: 'Hello', world: 'World' }));
+const mockJaData = vi.hoisted(() => ({ hello: 'こんにちは', world: '世界' }));
 // Sveltia UI strings for the default locale, statically imported from the package in production
-const mockDefaultComponentStrings = { button: 'Button (bundled)' };
+const mockDefaultComponentStrings = vi.hoisted(() => ({ button: 'Button (bundled)' }));
 
 /** @type {Record<string, Record<string, string> | undefined>} */
-const mockComponentStrings = {
+const mockComponentStrings = vi.hoisted(() => ({
   'en-CA': { button: 'Button' },
   'en-GB': { button: 'Button (UK)' },
   'en-US': { button: 'Button (US)' },
   ja: { button: 'ボタン' },
-};
+}));
 
 // Mock all dependencies first
-const mockAddMessages = vi.fn();
-const mockInit = vi.fn();
-const mockRegister = vi.fn();
-const mockGetLocaleFromNavigator = vi.fn();
-const mockGetPathInfo = vi.fn();
+const mockAddMessages = vi.hoisted(() => vi.fn());
+const mockInit = vi.hoisted(() => vi.fn());
+const mockRegister = vi.hoisted(() => vi.fn());
+const mockGetLocaleFromNavigator = vi.hoisted(() => vi.fn());
+const mockGetPathInfo = vi.hoisted(() => vi.fn());
 
 vi.mock('$lib/locales/en-CA.yaml', () => ({ default: mockEnData }));
 vi.mock('$lib/locales/en-GB.yaml', () => ({ default: mockEnData }));
 vi.mock('$lib/locales/en-US.yaml', () => ({ default: mockEnData }));
+vi.mock('$lib/locales/en-US.yaml?omit=additions', () => ({ default: mockEnData }));
 vi.mock('$lib/locales/ja.yaml', () => ({ default: mockJaData }));
 
 vi.mock('@sveltia/i18n', () => ({
@@ -44,6 +49,16 @@ vi.mock('$lib/services/app', () => ({
 const mockEffects = vi.hoisted(() => /** @type {(() => void)[]} */ ([]));
 
 vi.mock('$lib/services/utils/state.svelte', () => ({
+  // The value is computed on every read, which a real derived state only does after a change
+  createDerivedState: vi.fn((getter) => ({
+    /**
+     * Get the current value.
+     * @returns {any} Value.
+     */
+    get current() {
+      return getter();
+    },
+  })),
   createRawState: vi.fn((initialValue) => ({ current: initialValue })),
   createRootEffect: vi.fn((fn) => {
     mockEffects.push(fn);
@@ -63,7 +78,7 @@ vi.mock('@sveltia/utils/file', () => ({
   getPathInfo: mockGetPathInfo,
 }));
 
-const mockLocalStorage = { get: vi.fn(), set: vi.fn(), delete: vi.fn() };
+const mockLocalStorage = vi.hoisted(() => ({ get: vi.fn(), set: vi.fn(), delete: vi.fn() }));
 
 vi.mock('@sveltia/utils/storage', () => ({
   LocalStorage: mockLocalStorage,
@@ -71,7 +86,9 @@ vi.mock('@sveltia/utils/storage', () => ({
 
 // Locale matching the browser’s language settings, which lives in the preferences service so that
 // the language preference can be applied there
-const mockNavigatorLocale = { current: /** @type {string | undefined} */ (undefined) };
+const mockNavigatorLocale = vi.hoisted(() => ({
+  current: /** @type {string | undefined} */ (undefined),
+}));
 
 vi.mock('$lib/services/user/prefs.svelte', () => ({
   navigatorLocale: mockNavigatorLocale,
@@ -419,6 +436,50 @@ describe('i18n', () => {
       });
     });
 
+    it('should load the published strings in the npm build without hitting the CDN', async () => {
+      const strings = { hello: 'こんにちは', _sui: { button: 'ボタン' } };
+      const mockFetch = vi.fn();
+
+      vi.stubGlobal('fetch', mockFetch);
+      vi.stubEnv('NPM_BUILD', 'true');
+      // The npm build generates a loader for each locale file published with the package
+      vi.doMock('$lib/services/app/published-locales', () => ({
+        // eslint-disable-next-line jsdoc/require-jsdoc
+        PUBLISHED_LOCALE_LOADERS: { ja: async () => ({ default: strings }) },
+      }));
+      vi.resetModules();
+
+      try {
+        const { initAppLocale } = await import('./i18n.js');
+
+        initAppLocale();
+
+        const [, loader] = /** @type {[string, () => Promise<any>]} */ (
+          mockRegister.mock.calls.find(([locale]) => locale === 'ja')
+        );
+
+        await expect(loader()).resolves.toEqual(strings);
+        expect(mockFetch).not.toHaveBeenCalled();
+        // The strings aren’t copied to the local storage, as the browser caches the chunk
+        expect(mockLocalStorage.get).not.toHaveBeenCalledWith('sveltia-cms.locale');
+        expect(mockLocalStorage.set).not.toHaveBeenCalledWith(
+          'sveltia-cms.locale',
+          expect.anything(),
+        );
+
+        // Nor when the locale is activated again later in the session
+        const { updateLocaleCache } = await import('./i18n.js');
+
+        await updateLocaleCache('ja');
+        expect(mockLocalStorage.set).not.toHaveBeenCalledWith(
+          'sveltia-cms.locale',
+          expect.anything(),
+        );
+      } finally {
+        vi.doUnmock('$lib/services/app/published-locales');
+      }
+    });
+
     it('should use the cached strings without hitting the CDN', async () => {
       const strings = { hello: 'こんにちは', _sui: { button: 'ボタン' } };
       const mockFetch = vi.fn();
@@ -557,6 +618,54 @@ describe('i18n', () => {
       // eslint-disable-next-line jsdoc/require-jsdoc
       resolveFetch({ ok: true, json: () => Promise.resolve({}) });
       await promise;
+
+      expect(appLocaleLoading.current).toBeUndefined();
+    });
+
+    it('should keep the loading state of a locale that started loading later', async () => {
+      /** @type {Record<string, (value: any) => void>} */
+      const resolvers = {};
+
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(
+          (/** @type {string} */ url) =>
+            new Promise((resolve) => {
+              resolvers[url.includes('/ja.') ? 'ja' : 'other'] = resolve;
+            }),
+        ),
+      );
+
+      const { appLocaleLoading, initAppLocale } = await import('./i18n.js');
+
+      initAppLocale();
+
+      const loaders = Object.fromEntries(
+        /** @type {[string, () => Promise<any>][]} */ (mockRegister.mock.calls),
+      );
+
+      const otherLocale = Object.keys(loaders).find((locale) => locale !== 'ja');
+      const jaPromise = loaders.ja();
+
+      await vi.waitFor(() => {
+        expect(appLocaleLoading.current).toBe('ja');
+      });
+
+      const otherPromise = loaders[/** @type {string} */ (otherLocale)]();
+
+      await vi.waitFor(() => {
+        expect(appLocaleLoading.current).toBe(otherLocale);
+      });
+
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      resolvers.ja({ ok: true, json: () => Promise.resolve({}) });
+      await jaPromise;
+
+      expect(appLocaleLoading.current).toBe(otherLocale);
+
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      resolvers.other({ ok: true, json: () => Promise.resolve({}) });
+      await otherPromise;
 
       expect(appLocaleLoading.current).toBeUndefined();
     });
@@ -858,6 +967,20 @@ describe('i18n', () => {
         _version: '1.2.3',
         ...remoteStrings.ja,
       });
+    });
+  });
+
+  describe('appNumberFormatter', () => {
+    it('should format numbers in the application locale', async () => {
+      const { locale } = await import('@sveltia/i18n');
+      const { appNumberFormatter } = await import('./i18n.js');
+
+      expect(appNumberFormatter.current.format(1234.5)).toBe('1,234.5');
+
+      /** @type {any} */ (locale).current = 'de';
+      expect(appNumberFormatter.current.format(1234.5)).toBe('1.234,5');
+
+      /** @type {any} */ (locale).current = 'en';
     });
   });
 });

@@ -5,11 +5,10 @@
   @see https://sveltiacms.app/en/docs/fields/string
 -->
 <script>
-  import { isURL } from '@sveltia/utils/string';
-
   import YouTubeEmbed from '$lib/components/contents/details/fields/string/youtube-embed.svelte';
+  import { getPreviewType } from '$lib/services/contents/fields/string/preview';
   import { getCanonicalLocale, getDirection } from '$lib/services/contents/i18n';
-  import { isYouTubeVideoURL } from '$lib/services/utils/media/video/youtube';
+  import { encodeURLSafely } from '$lib/services/utils/url';
 
   /**
    * @import { FieldPreviewProps } from '$lib/types/private';
@@ -23,37 +22,32 @@
    */
 
   /** @type {FieldPreviewProps & Props} */
-  let {
-    /* eslint-disable prefer-const */
-    locale,
-    fieldConfig,
-    currentValue,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { locale, fieldConfig, currentValue } = $props();
 
-  const { name: fieldName, type = 'text' } = $derived(fieldConfig);
-
-  const SAFE_PROTOCOL_REGEX = /^(?:https|mailto|tel):/;
+  const { name: fieldName } = $derived(fieldConfig);
+  /** The value to be shown. Empty if there is no value or it’s whitespace only. */
+  const value = $derived(
+    typeof currentValue === 'string' && currentValue.trim() ? currentValue : '',
+  );
+  /* v8 ignore start -- only read while there’s a value */
+  const previewType = $derived(value ? getPreviewType({ fieldConfig, value }) : 'text');
+  /* v8 ignore stop */
 </script>
 
-{#if typeof currentValue === 'string' && currentValue.trim()}
+{#if value}
   <p
     lang={getCanonicalLocale(locale)}
     dir={getDirection(locale)}
     class:title={fieldName === 'title'}
   >
-    {#if type === 'url' || isURL(currentValue)}
-      {#if isYouTubeVideoURL(currentValue)}
-        <YouTubeEmbed url={currentValue} />
-      {:else if SAFE_PROTOCOL_REGEX.test(currentValue)}
-        <a href={encodeURI(currentValue)}>{currentValue}</a>
-      {:else}
-        {currentValue}
-      {/if}
-    {:else if type === 'email'}
-      <a href="mailto:{encodeURI(currentValue)}">{currentValue}</a>
+    {#if previewType === 'youtube'}
+      <YouTubeEmbed url={value} />
+    {:else if previewType === 'link'}
+      <a href={encodeURLSafely(value)}>{value}</a>
+    {:else if previewType === 'email'}
+      <a href={encodeURLSafely(`mailto:${value}`)}>{value}</a>
     {:else}
-      {currentValue}
+      {value}
     {/if}
   </p>
 {/if}
@@ -62,12 +56,5 @@
   .title {
     font-size: var(--sui-font-size-xxx-large);
     font-weight: var(--sui-font-weight-bold);
-  }
-
-  /* Remove the padding to make the iframe full-width on small screens */
-  @media (width < 768px) {
-    :global([role='document'] section) > p:has(:global(iframe)) {
-      margin-inline: calc(var(--entry-preview-padding-inline) * -1);
-    }
   }
 </style>

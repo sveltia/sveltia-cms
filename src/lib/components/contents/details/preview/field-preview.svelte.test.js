@@ -1,0 +1,321 @@
+import { describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
+
+import { previews } from '$lib/components/contents/details/fields';
+import { customFieldTypeRegistry } from '$lib/services/api/registries';
+import { highlightEditorField } from '$lib/services/contents/editor/fields';
+import { initTestConfig } from '$lib/test/config';
+import { createMockDraft, renderWithDraft } from '$lib/test/draft';
+
+import FieldPreview from './field-preview.svelte';
+
+/**
+ * @import { Field } from '$lib/types/public';
+ */
+
+vi.mock('$lib/services/contents/editor/fields', async (importOriginal) => ({
+  .../** @type {object} */ (await importOriginal()),
+  highlightEditorField: vi.fn(),
+}));
+
+/**
+ * Render the preview of a field within a draft.
+ * @param {object} args Arguments.
+ * @param {Field} args.fieldConfig Field configuration.
+ * @param {Record<string, any>} [args.values] Flattened values in the current locale.
+ * @param {string} [args.locale] Current locale.
+ * @param {boolean} [args.i18nEnabled] Whether the collection has i18n enabled.
+ * @param {boolean} [args.showLabel] Whether to show the label.
+ * @returns {Promise<HTMLElement>} Container.
+ */
+const renderPreview = async ({
+  fieldConfig,
+  values = {},
+  locale = 'en',
+  i18nEnabled = false,
+  showLabel = undefined,
+}) => {
+  const { container } = await renderWithDraft(FieldPreview, {
+    draft: createMockDraft({
+      fields: [fieldConfig],
+      i18n: { i18nEnabled, defaultLocale: 'en', allLocales: i18nEnabled ? ['en', 'ja'] : ['en'] },
+      values: { en: values, ...(i18nEnabled ? { ja: values } : {}) },
+    }),
+    props: {
+      locale,
+      keyPath: fieldConfig.name,
+      typedKeyPath: fieldConfig.name,
+      fieldConfig,
+      showLabel,
+    },
+  });
+
+  return container;
+};
+
+/**
+ * Component that throws while it’s rendered, standing in for a field editor or preview with a bug.
+ * @throws {TypeError} Always.
+ */
+const BrokenComponent = () => {
+  throw new TypeError('boom');
+};
+
+describe('FieldPreview', () => {
+  test('shows a message in place of a preview that fails, keeping the label', async () => {
+    const { string } = previews;
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    previews.string = /** @type {any} */ (BrokenComponent);
+
+    try {
+      const container = await renderPreview({
+        fieldConfig: { name: 'title', widget: 'string', label: 'Title' },
+        values: { title: 'Hello' },
+      });
+
+      await expect
+        .element(page.getByRole('alert'))
+        .toMatchTextContent(/this field can’t be displayed\. .*boom/);
+      expect(container.querySelector('h4')).toHaveTextContent('Title');
+    } finally {
+      previews.string = string;
+      consoleErrorSpy.mockRestore();
+    }
+  });
+
+  test('renders the preview for the field type under its label', async () => {
+    const container = await renderPreview({
+      fieldConfig: { name: 'title', widget: 'string', label: 'Title' },
+      values: { title: 'Hello' },
+    });
+
+    const section = container.querySelector('section');
+
+    expect(section).toHaveAttribute('data-field-type', 'string');
+    expect(section).toHaveAttribute('data-key-path', 'title');
+    expect(section?.querySelector('h4')).toHaveTextContent('Title');
+    expect(section?.querySelector('p')).toHaveTextContent('Hello');
+  });
+
+  test('makes an image or an embedded video full-width on a small screen', async () => {
+    // The default viewport of the component tests
+    await page.viewport(414, 896);
+
+    const container = await renderPreview({
+      fieldConfig: { name: 'title', widget: 'string' },
+      values: { title: 'Hello' },
+    });
+
+    const section = /** @type {HTMLElement} */ (container.querySelector('section'));
+
+    container.setAttribute('role', 'document');
+    container.style.setProperty('--entry-preview-padding-inline', '16px');
+    section.insertAdjacentHTML('beforeend', '<p id="image"><img alt=""></p>');
+    section.insertAdjacentHTML('beforeend', '<p id="video"><iframe title="Video"></iframe></p>');
+
+    /**
+     * Get the inline margins of an element in the section.
+     * @param {string} selector Selector.
+     * @returns {string[]} Margins.
+     */
+    const getMargins = (selector) => {
+      const style = getComputedStyle(/** @type {Element} */ (section.querySelector(selector)));
+
+      return [style.marginInlineStart, style.marginInlineEnd];
+    };
+
+    expect(getMargins('#image')).toEqual(['-16px', '-16px']);
+    expect(getMargins('#video')).toEqual(['-16px', '-16px']);
+    // A paragraph of text keeps the padding
+    expect(getMargins('p:not([id])')).not.toEqual(['-16px', '-16px']);
+  });
+
+  test('falls back to the field name as the label, or hides it', async () => {
+    expect(
+      (await renderPreview({ fieldConfig: { name: 'title', widget: 'string' } })).querySelector(
+        'h4',
+      ),
+    ).toHaveTextContent('title');
+    expect(
+      (
+        await renderPreview({
+          fieldConfig: { name: 'title', widget: 'string' },
+          showLabel: false,
+        })
+      ).querySelector('h4'),
+    ).toBeNull();
+  });
+
+  test('shows the label in the locale of the pane', async () => {
+    const container = await renderPreview({
+      fieldConfig: {
+        name: 'title',
+        widget: 'string',
+        i18n: true,
+        label: 'Title',
+        label_localized: { ja: 'タイトル' },
+      },
+      values: { title: 'Hello' },
+      locale: 'ja',
+      i18nEnabled: true,
+    });
+
+    expect(container.querySelector('h4')).toHaveTextContent('タイトル');
+  });
+
+  test('passes the items of a multi-value field', async () => {
+    const container = await renderPreview({
+      fieldConfig: { name: 'tags', widget: 'list' },
+      values: { 'tags.0': 'a', 'tags.1': 'b' },
+    });
+
+    expect([...container.querySelectorAll('li')].map((li) => li.textContent)).toEqual(['a', 'b']);
+  });
+
+  test('renders nothing for a hidden field or a field without preview', async () => {
+    expect(
+      (await renderPreview({ fieldConfig: { name: 'secret', widget: 'hidden' } })).children,
+    ).toHaveLength(0);
+    expect(
+      (await renderPreview({ fieldConfig: { name: 'title', widget: 'string', preview: false } }))
+        .children,
+    ).toHaveLength(0);
+  });
+
+  test('renders nothing without a field configuration', async () => {
+    const { container } = await renderWithDraft(FieldPreview, {
+      draft: createMockDraft({
+        fields: [{ name: 'title', widget: 'string' }],
+        values: { en: { title: 'Hello' } },
+      }),
+      props: {
+        locale: 'en',
+        keyPath: 'missing',
+        typedKeyPath: 'missing',
+        fieldConfig: /** @type {any} */ (undefined),
+      },
+    });
+
+    expect(container.querySelector('section')).toBeNull();
+  });
+
+  test('renders a non-translatable field in the default locale only', async () => {
+    /** @type {Field} */
+    const fieldConfig = { name: 'title', widget: 'string', i18n: false };
+
+    expect(
+      (await renderPreview({ fieldConfig, locale: 'en', i18nEnabled: true })).children,
+    ).toHaveLength(1);
+    expect(
+      (await renderPreview({ fieldConfig, locale: 'ja', i18nEnabled: true })).children,
+    ).toHaveLength(0);
+    expect(
+      (
+        await renderPreview({
+          fieldConfig: { ...fieldConfig, i18n: 'duplicate' },
+          locale: 'ja',
+          i18nEnabled: true,
+        })
+      ).children,
+    ).toHaveLength(1);
+  });
+
+  test('renders a subfield duplicated along with its ancestor in another locale', async () => {
+    /** @type {Field} */
+    const venueField = {
+      name: 'venue',
+      widget: 'object',
+      i18n: 'duplicate',
+      fields: [{ name: 'name', widget: 'string', label: 'Name' }],
+    };
+
+    // The ancestors of a subfield are looked up in the configuration
+    await initTestConfig({
+      i18n: { structure: 'multiple_files', locales: ['en', 'ja'], default_locale: 'en' },
+      collections: [
+        {
+          name: 'posts',
+          label: 'Posts',
+          folder: 'content/posts',
+          i18n: true,
+          fields: [venueField],
+        },
+      ],
+    });
+
+    const { container } = await renderWithDraft(FieldPreview, {
+      draft: createMockDraft({
+        fields: [venueField],
+        i18n: { i18nEnabled: true, defaultLocale: 'en', allLocales: ['en', 'ja'] },
+        values: { en: { 'venue.name': 'Hall' }, ja: { 'venue.name': 'Hall' } },
+      }),
+      props: {
+        locale: 'ja',
+        keyPath: 'venue.name',
+        typedKeyPath: 'venue.name',
+        fieldConfig: /** @type {any} */ (venueField).fields[0],
+      },
+    });
+
+    // Like the editor, which shows it read-only, rather than leaving the Object field empty
+    expect(container.children).toHaveLength(1);
+    await expect.element(page.getByText('Hall')).toBeVisible();
+  });
+
+  test('highlights the editor field when activated', async () => {
+    const container = await renderPreview({
+      fieldConfig: { name: 'title', widget: 'string' },
+      values: { title: 'Hello' },
+    });
+
+    const section = page.elementLocator(
+      /** @type {HTMLElement} */ (container.querySelector('section')),
+    );
+
+    await section.click();
+    expect(highlightEditorField).toHaveBeenCalledWith({ locale: 'en', keyPath: 'title' });
+
+    vi.mocked(highlightEditorField).mockClear();
+    /** @type {HTMLElement} */ (container.querySelector('section')).focus();
+    await page
+      .getByRole('group')
+      .element()
+      .dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(highlightEditorField).toHaveBeenCalledOnce();
+
+    // Any other key is left alone
+    await page
+      .getByRole('group')
+      .element()
+      .dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+    expect(highlightEditorField).toHaveBeenCalledOnce();
+  });
+
+  test('renders a custom field type with its own preview', async () => {
+    const preview = vi.fn(({ value }) => `Custom: ${value}`);
+
+    customFieldTypeRegistry.set('rating', /** @type {any} */ ({ preview }));
+
+    try {
+      const container = await renderPreview({
+        fieldConfig: /** @type {any} */ ({ name: 'stars', widget: 'rating' }),
+        values: { stars: 5 },
+      });
+
+      await expect.poll(() => container.textContent?.trim()).toMatch(/^stars\s*Custom: 5$/);
+
+      // A custom field type without a preview shows nothing
+      customFieldTypeRegistry.set('rating', /** @type {any} */ ({}));
+
+      const another = await renderPreview({
+        fieldConfig: /** @type {any} */ ({ name: 'stars', widget: 'rating' }),
+        values: { stars: 5 },
+      });
+
+      await expect.poll(() => another.textContent?.trim()).toBe('stars');
+    } finally {
+      customFieldTypeRegistry.delete('rating');
+    }
+  });
+});

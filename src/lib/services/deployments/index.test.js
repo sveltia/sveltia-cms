@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
   deployments,
@@ -7,6 +7,7 @@ import {
   lastCommitPublishHint,
   productionSHA,
   resetDeployments,
+  setLastCommitPublishHint,
 } from '$lib/services/deployments';
 
 describe('Deployment stores', () => {
@@ -52,6 +53,19 @@ describe('Deployment stores', () => {
       expect(productionSHA.current).toBe('');
       expect(deployPollTimedOut.current).toBe(false);
       expect(lastCommitPublishHint.current).toEqual({ published: true, time: 0 });
+    });
+  });
+
+  describe('setLastCommitPublishHint', () => {
+    test('records the expectation with the current time', () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(1_700_000_000_000);
+
+      setLastCommitPublishHint(false);
+
+      expect(lastCommitPublishHint.current).toEqual({ published: false, time: 1_700_000_000_000 });
+
+      vi.useRealTimers();
     });
   });
 });

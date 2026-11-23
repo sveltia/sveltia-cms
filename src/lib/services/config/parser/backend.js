@@ -1,10 +1,23 @@
 import { _ } from '@sveltia/i18n';
 import { isObject } from '@sveltia/utils/object';
 
-import { gitBackendServices, unsupportedBackends, validBackendNames } from '$lib/services/backends';
+import { COMPATIBILITY_URL } from '$lib/services/api/compatibility';
+import { DOCS_BASE_URL } from '$lib/services/app';
+import { unsupportedBackends, validBackendNames } from '$lib/services/backends';
+import {
+  FORGEJO_BACKEND_NAME,
+  isGiteaBackendName,
+} from '$lib/services/backends/git/gitea/constants';
+import { gitBackendServices } from '$lib/services/backends/git/services';
+import { normalizeRootDir } from '$lib/services/backends/root-dir';
 import { warnDeprecation } from '$lib/services/config/deprecations';
-import { checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
-import { makeLink } from '$lib/services/utils/string';
+import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
+import { isHttpURL, makeLink } from '$lib/services/utils/string';
+import {
+  getPublishMode,
+  isWorkflowConfigured,
+  isWorkflowMode,
+} from '$lib/services/workflow/config';
 
 /**
  * @import { CmsConfig, GitBackend } from '$lib/types/public';
@@ -20,14 +33,36 @@ const UNSUPPORTED_OPTIONS = [
   { type: 'warning', prop: 'use_graphql', strKey: 'unsupported_ignored_option' },
 ];
 
-const UNSUPPORTED_BACKEND_DOC_URL =
-  'https://sveltiacms.app/en/docs/migration/netlify-decap-cms#features-not-to-be-implemented';
+const UNSUPPORTED_BACKEND_SUGGESTION_URL = `${DOCS_BASE_URL}/backends#supported-backends`;
+const AUTH_DOC_URL = `${DOCS_BASE_URL}/backends/BACKEND_NAME#authentication`;
+/**
+ * Backend names whose documentation page has a different slug.
+ * @type {Record<string, string>}
+ */
+const BACKEND_DOC_SLUGS = { gitea: 'gitea-forgejo', forgejo: 'gitea-forgejo' };
+const OPEN_AUTHORING_DOC_URL = `${DOCS_BASE_URL}/workflows/open`;
+/**
+ * Backend options that hold the URL of an API or authentication server and have to be absolute. A
+ * relative or scheme-less URL would either make the backend throw while it’s being set up, leaving
+ * the user unable to sign in without any explanation, or send the requests to the CMS origin.
+ */
+const URL_OPTIONS = ['api_root', 'graphql_api_root', 'base_url'];
+/**
+ * Regular expression matching a path segment Git doesn’t allow in a branch name: one starting with
+ * a dot or ending with `.lock`, or one containing a control character, a space, any of `~^:?*[\`
+ * or `@{`.
+ * @see https://git-scm.com/docs/git-check-ref-format
+ */
+// eslint-disable-next-line no-control-regex
+const INVALID_BRANCH_SEGMENT_REGEX = /^\.|\.lock$|[\x00-\x20\x7f~^:?*[\\]|@\{/;
 
-const UNSUPPORTED_BACKEND_SUGGESTION_URL =
-  'https://sveltiacms.app/en/docs/backends#supported-backends';
-
-const AUTH_DOC_URL = 'https://sveltiacms.app/en/docs/backends/BACKEND_NAME#authentication';
-const OPEN_AUTHORING_DOC_URL = 'https://sveltiacms.app/en/docs/workflows/open';
+/**
+ * Check whether the given directory path can be part of a Git branch name.
+ * @param {string} path Normalized directory path.
+ * @returns {boolean} Result.
+ */
+const isValidBranchPath = (path) =>
+  path.split('/').every((segment) => !INVALID_BRANCH_SEGMENT_REGEX.test(segment));
 
 /**
  * Parse and validate the backend configuration from the site config.
@@ -60,7 +95,7 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
 
     const message = makeLink(
       _(`config.error.unsupported_${type}_backend`, { values: { name: label } }),
-      UNSUPPORTED_BACKEND_DOC_URL,
+      COMPATIBILITY_URL,
     );
 
     const suggestion = makeLink(
@@ -73,6 +108,19 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
     return;
   }
 
+  const { root_dir: rootDir } = backend;
+
+  if (typeof rootDir === 'string') {
+    // The CMS can’t see anything outside the repository, so a root directory that climbs out of it
+    // could only ever lead to a confusing error later
+    if (rootDir.split('/').includes('..')) {
+      errors.add(_('config.error.invalid_root_dir'));
+    } else if (isWorkflowConfigured(cmsConfig) && !isValidBranchPath(normalizeRootDir(rootDir))) {
+      // Editorial Workflow names its branches after the directory, which Git would refuse
+      errors.add(_('config.error.invalid_root_dir_branch'));
+    }
+  }
+
   if (name in gitBackendServices) {
     const {
       repo,
@@ -80,20 +128,30 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
       auth_methods: authMethods,
       // @ts-ignore GitHub/GitLab only
       auth_type: authType,
-      // @ts-ignore GitLab/Gitea only
+      // @ts-ignore GitLab/Gitea/Forgejo only
       app_id: appId,
-      // @ts-ignore GitHub only
       open_authoring: openAuthoring,
       // @ts-ignore GitHub only
       auth_scope: authScope,
+      api_root: apiRoot,
     } = /** @type {GitBackend} */ (backend);
 
     if (Array.isArray(authMethods) && !authMethods.length) {
       errors.add(_('config.error.no_auth_methods'));
     }
 
+    // A list of scopes can add `workflow`, which is no use on its own: without a repository scope
+    // the CMS can’t write to the repository or a fork of it. The schema only checks each scope
+    if (
+      name === 'github' &&
+      Array.isArray(authScope) &&
+      !authScope.some((scope) => scope === 'repo' || scope === 'public_repo')
+    ) {
+      errors.add(_('config.error.auth_scope_no_repo'));
+    }
+
     const allowTokenAuth = !authMethods || authMethods.includes('token');
-    const authDocURL = AUTH_DOC_URL.replace('BACKEND_NAME', name);
+    const authDocURL = AUTH_DOC_URL.replace('BACKEND_NAME', BACKEND_DOC_SLUGS[name] ?? name);
 
     if (repo === undefined) {
       errors.add(_('config.error.missing_repository'));
@@ -101,6 +159,12 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
       // A configured but malformed repository is a separate problem from a missing one, and
       // reporting both for the same option only reads as noise
       errors.add(_('config.error.invalid_repository'));
+    }
+
+    // The Forgejo backend has no default instance: unlike the Gitea backend, which falls back to
+    // Gitea.com, it derives the instance URL from the API root, as Decap CMS does
+    if (name === FORGEJO_BACKEND_NAME && apiRoot === undefined) {
+      errors.add(_('config.error.missing_api_root'));
     }
 
     if (authType === 'implicit') {
@@ -115,22 +179,33 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
       errors.add(_('config.error.oauth_no_app_id'));
     }
 
+    // Sveltia CMS Additions has no default location: each site deploys its own
+    if (
+      name === 'github' &&
+      authType === 'additions' &&
+      // @ts-ignore GitHub only
+      !(typeof backend.base_url === 'string' && URL.canParse(backend.base_url))
+    ) {
+      errors.add(_('config.error.additions_no_base_url'));
+    }
+
     if (openAuthoring) {
       // Open Authoring turns each change into a pull request from the contributor’s fork, so it
-      // only makes sense on top of Editorial Workflow
-      if (cmsConfig.publish_mode !== 'editorial_workflow') {
+      // only makes sense on top of Editorial Workflow or Preview Workflow. The site-level option is
+      // what counts here: a collection can opt out with its own `publish_mode`, but that only
+      // affects maintainers, who write to the configured repository; a contributor’s fork always
+      // goes through pull requests
+      if (!isWorkflowMode(getPublishMode({ cmsConfig }))) {
         errors.add(makeLink(_('config.error.open_authoring_no_workflow'), OPEN_AUTHORING_DOC_URL));
-      }
-
-      if (name !== 'github') {
-        warnings.add(_('config.warning.open_authoring_unsupported_backend'));
       }
 
       // The default scope grants access to every repository the contributor owns, including their
       // private ones. That’s a lot to ask of someone who just wants to fix a typo, and a public
       // repository doesn’t need it. The visibility of the repository isn’t known until someone
-      // signs in, so this can’t be decided automatically
-      if (authScope === undefined) {
+      // signs in, so this can’t be decided automatically. GitLab has no equivalent option: its
+      // single `api` scope covers everything the CMS does. Gitea/Forgejo scopes are already
+      // limited to what the CMS uses
+      if (name === 'github' && authScope === undefined) {
         // Warnings are logged to the console for whoever set the CMS up, so this is plain English
         // with a plain URL rather than a localized string with a link in it
         warnings.add(
@@ -148,13 +223,27 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
     // sign in with a token. If token auth is explicitly disabled as well, we issue an error because
     // there is no working sign-in method available.
     // @see https://github.com/sveltia/sveltia-cms/issues/721
-    if (name === 'gitea' && !appId) {
+    if (isGiteaBackendName(name) && !appId) {
       if (allowTokenAuth) {
         warnings.add(_('config.warning.oauth_no_app_id'));
       } else {
         errors.add(_('config.error.oauth_no_app_id'));
       }
     }
+
+    URL_OPTIONS.forEach((option) => {
+      const url = /** @type {Record<string, any>} */ (backend)[option];
+
+      // A value of another type is reported against the JSON schema
+      if (typeof url === 'string' && !isHttpURL(url)) {
+        addMessage({
+          strKey: 'invalid_url_option',
+          values: { option, url },
+          context: { cmsConfig },
+          collectors,
+        });
+      }
+    });
 
     // @todo Remove the option prior to the 1.0 release.
     if (autoDeploy !== undefined) {

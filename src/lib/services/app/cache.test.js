@@ -8,6 +8,9 @@ import { backend } from '$lib/services/backends';
 
 vi.mock('$lib/services/backends', () => ({
   backend: { current: null },
+}));
+
+vi.mock('$lib/services/backends/git/services', () => ({
   gitBackendServices: { github: {}, gitlab: {}, gitea: {} },
 }));
 
@@ -63,11 +66,43 @@ describe('clearFileCache()', () => {
 
     await clearFileCache();
 
-    expect(IndexedDB).toHaveBeenCalledTimes(2);
+    expect(IndexedDB).toHaveBeenCalledTimes(4);
     expect(IndexedDB).toHaveBeenCalledWith('github:owner/repo', 'file-cache');
+    expect(IndexedDB).toHaveBeenCalledWith('github:owner/repo', 'tree-cache');
     expect(IndexedDB).toHaveBeenCalledWith('github:owner/repo', 'asset-thumbnails');
-    expect(clear).toHaveBeenCalledTimes(2);
+    expect(IndexedDB).toHaveBeenCalledWith('github:owner/repo', 'asset-hashes');
+    expect(clear).toHaveBeenCalledTimes(4);
     expect(removeEntry).not.toHaveBeenCalled();
+  });
+
+  test('clears the stores one after another', async () => {
+    backend.current = { name: 'github', repository: { databaseName: 'github:owner/repo' } };
+
+    /** @type {(() => void)[]} */
+    const resolvers = [];
+
+    clear.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolvers.push(resolve);
+        }),
+    );
+
+    const promise = clearFileCache();
+
+    // Creating a missing store bumps the database version, and two concurrent bumps leave one
+    // connection without its store, so the next store is only opened once the previous is cleared
+    await vi.waitFor(() => expect(IndexedDB).toHaveBeenCalledTimes(1));
+    expect(clear).toHaveBeenCalledTimes(1);
+    resolvers[0]();
+    await vi.waitFor(() => expect(clear).toHaveBeenCalledTimes(2));
+    expect(IndexedDB).toHaveBeenCalledTimes(2);
+    resolvers[1]();
+    await vi.waitFor(() => expect(clear).toHaveBeenCalledTimes(3));
+    resolvers[2]();
+    await vi.waitFor(() => expect(clear).toHaveBeenCalledTimes(4));
+    resolvers[3]();
+    await expect(promise).resolves.toBeUndefined();
   });
 
   test('does nothing when the backend is not initialized', async () => {
@@ -148,12 +183,30 @@ describe('eraseAllData()', () => {
   });
 
   test('works without a database when the backend has none', async () => {
-    backend.current = { name: 'test-repo' };
+    backend.current = { name: 'local', repository: { databaseName: '' } };
 
     await eraseAllData();
 
     expect(deleteDatabase).not.toHaveBeenCalled();
     expect(removeEntry).toHaveBeenCalledWith('sveltia-cms-test', { recursive: true });
+  });
+
+  test('deletes the test backend’s database, which isn’t named after a repository', async () => {
+    backend.current = { name: 'test-repo' };
+    vi.stubGlobal('indexedDB', { deleteDatabase });
+
+    await eraseAllData();
+
+    expect(deleteDatabase).toHaveBeenCalledExactlyOnceWith('test-repo:sveltia-cms-test');
+    expect(removeEntry).toHaveBeenCalledWith('sveltia-cms-test', { recursive: true });
+  });
+
+  test('deletes the test backend’s database left behind', async () => {
+    databases.mockResolvedValue([{ name: 'test-repo:sveltia-cms-test' }, { name: 'test-repo' }]);
+
+    await eraseAllData();
+
+    expect(deleteDatabase).toHaveBeenCalledExactlyOnceWith('test-repo:sveltia-cms-test');
   });
 
   test('falls back to the current database when enumeration is unavailable', async () => {

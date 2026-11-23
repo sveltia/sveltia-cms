@@ -1,16 +1,24 @@
+import equal from 'fast-deep-equal';
+
 import { fillTemplate } from '$lib/services/common/template';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import {
   getEntryDirPath,
-  getNestedConfig,
+  getSharedEntryFileName,
   isDescendantPath,
 } from '$lib/services/contents/collection/nested';
-import { getPreviousSha } from '$lib/services/contents/draft/save/changes';
-import { buildSingleFileContent } from '$lib/services/contents/draft/save/content';
-import { serializeContent } from '$lib/services/contents/draft/save/serialize';
-import { hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
-import { createSyntheticDraft, resolveCacheDB } from '$lib/services/contents/entry/changes';
-import { formatEntryFile } from '$lib/services/contents/file/format';
+import { hasLocalizedSlugs } from '$lib/services/contents/collection/slug';
+import { rewriteEntryAssetReferences } from '$lib/services/contents/draft/save/asset-references';
+import {
+  buildEntryFileChanges,
+  resolveCacheDB,
+} from '$lib/services/contents/draft/save/file-changes';
+import { createSyntheticDraft } from '$lib/services/contents/entry/changes';
+import { mapEntryContent } from '$lib/services/contents/entry/locales';
+import { getEntryLocaleFile } from '$lib/services/contents/entry/paths';
+import { refreshPermalinks } from '$lib/services/contents/entry/permalink';
+import { resolveFileConfig } from '$lib/services/contents/file/config';
+import { getBaseName } from '$lib/services/utils/file';
 
 /**
  * @import { IndexedDB } from '@sveltia/utils/storage';
@@ -20,7 +28,9 @@ import { formatEntryFile } from '$lib/services/contents/file/format';
  * InternalCollection,
  * InternalEntryCollection,
  * InternalLocaleCode,
+ * LocalizedEntry,
  * } from '$lib/types/private';
+ * @import { EntryFilePlan } from '$lib/services/contents/draft/save/file-changes';
  */
 
 /**
@@ -107,7 +117,7 @@ const moveEntry = ({ entry, dirMove, localeDirMoves }) => {
 };
 
 /**
- * Refresh the canonical slug of a moved entry. In a nested collection with localized slugs, the
+ * Refresh the canonical slug of a moved entry. Among nested entries with localized slugs, the
  * localized files are linked by the default locale’s sub path, which has just changed, so each file
  * gets the new one, or the link would go stale and stop matching the entry’s own location.
  * @param {object} args Arguments.
@@ -142,18 +152,11 @@ const updateCanonicalSlug = ({ collection, entry }) => {
           currentSlug: subPath,
         });
 
-  return {
-    ...entry,
-    locales: Object.fromEntries(
-      Object.entries(locales).map(([locale, localizedEntry]) => [
-        locale,
-        localizedEntry.content
-          ? // Copy the content, which is shared with the entry in the store
-            { ...localizedEntry, content: { ...localizedEntry.content, [key]: canonicalSlug } }
-          : localizedEntry,
-      ]),
-    ),
-  };
+  // Copy the content, which is shared with the entry in the store
+  return mapEntryContent(entry, ({ localizedEntry: { content } }) => ({
+    ...content,
+    [key]: canonicalSlug,
+  }));
 };
 
 /**
@@ -164,78 +167,72 @@ const updateCanonicalSlug = ({ collection, entry }) => {
  * @param {Entry} args.movedEntry Same entry with its new paths.
  * @param {any} args.draft Synthetic draft used for serialization.
  * @param {IndexedDB} [args.cacheDB] File cache database, when available.
- * @returns {Promise<FileChange[]>} Move changes, one per file the entry occupies.
+ * @returns {Promise<FileChange[]>} Changes, one per file the entry occupies: a `move` for a file
+ * that goes elsewhere, or an `update` for one that stays put but has its canonical slug refreshed.
+ * @see https://github.com/sveltia/sveltia-cms/issues/984
  */
 const buildMoveChanges = async ({ collection, originalEntry, movedEntry, draft, cacheDB }) => {
-  const {
-    _file,
-    _i18n: {
-      i18nEnabled,
-      allLocales,
-      defaultLocale,
-      structureMap: { i18nSingleFile, i18nSingleFileDefaultRoot } = {},
-    },
-  } = /** @type {InternalEntryCollection} */ (collection);
+  const { defaultLocale } = collection._i18n;
 
-  if (!i18nEnabled || i18nSingleFile || i18nSingleFileDefaultRoot) {
-    const previousPath = originalEntry.locales[defaultLocale].path;
-    const { slug, path } = movedEntry.locales[defaultLocale];
+  return buildEntryFileChanges({
+    draft,
+    config: collection,
+    _file: resolveFileConfig({ collection, isIndexFile: draft.isIndexFile }),
+    entry: movedEntry,
+    cacheDB,
+    /**
+     * Plan the change to a file of the entry.
+     * @param {InternalLocaleCode} [locale] Locale of the file, or `undefined` for the single file.
+     * @returns {EntryFilePlan | undefined} Planned change.
+     */
+    planChange: (locale) => {
+      if (locale === undefined) {
+        // The default locale can be missing from a single-file i18n entry; another locale then
+        // has the same path
+        const { path: previousPath } = /** @type {LocalizedEntry} */ (
+          getEntryLocaleFile(originalEntry, { defaultLocale })
+        );
 
-    const [previousSha, data] = await Promise.all([
-      getPreviousSha({ cacheDB, previousPath }),
-      formatEntryFile({
-        content: buildSingleFileContent({ config: collection, entry: movedEntry, draft }),
-        _file,
-      }),
-    ]);
+        const { slug, path } = /** @type {LocalizedEntry} */ (
+          getEntryLocaleFile(movedEntry, { defaultLocale })
+        );
 
-    return [
-      /** @type {FileChange} */ ({ action: 'move', slug, path, previousPath, previousSha, data }),
-    ];
-  }
+        return { action: 'move', slug, path, previousPath, currentPath: previousPath };
+      }
 
-  const localeChanges = await Promise.all(
-    allLocales.map(async (locale) => {
       const localizedEntry = movedEntry.locales[locale];
 
       if (!localizedEntry?.content) {
         return undefined;
       }
 
-      const previousPath = originalEntry.locales[locale].path;
+      const originalLocalizedEntry = originalEntry.locales[locale];
+      const { path: previousPath } = originalLocalizedEntry;
+      const moved = previousPath !== localizedEntry.path;
 
-      // The file stays where it is when the folder isn’t localized the same way in this locale
-      if (previousPath === localizedEntry.path) {
+      // The file stays where it is when the folder isn’t localized the same way in this locale.
+      // It still has to be rewritten if its canonical slug has been refreshed, though, or it would
+      // no longer link to the files that have moved and the entry would fall apart on reload
+      if (!moved && equal(localizedEntry.content, originalLocalizedEntry.content)) {
         return undefined;
       }
 
-      const [previousSha, data] = await Promise.all([
-        getPreviousSha({ cacheDB, previousPath }),
-        formatEntryFile({
-          content: serializeContent({ draft, locale, valueMap: localizedEntry.content }),
-          _file,
-        }),
-      ]);
-
-      return /** @type {FileChange} */ ({
-        action: 'move',
+      return {
+        action: moved ? 'move' : 'update',
         slug: localizedEntry.slug,
         path: localizedEntry.path,
-        previousPath,
-        previousSha,
-        data,
-      });
-    }),
-  );
-
-  return /** @type {FileChange[]} */ (localeChanges.filter(Boolean));
+        previousPath: moved ? previousPath : undefined,
+        currentPath: previousPath,
+      };
+    },
+  });
 };
 
 /**
- * Build the file changes that move the whole subtree of a nested collection entry along with the
- * entry itself. In the `subfolders` mode, an entry owns the folder it’s stored in, so relocating it
- * with the path editor has to take everything below that folder with it, or the descendants would
- * be orphaned in a folder that no longer has an entry of its own.
+ * Build the file changes that move the whole subtree of a nested entry along with the
+ * entry itself. In the `subfolders` mode, an entry stored as the index file owns the folder it’s
+ * stored in, so relocating it with the path editor has to take everything below that folder with
+ * it, or the descendants would be orphaned in a folder that no longer has an entry of its own.
  * @param {object} args Arguments.
  * @param {InternalCollection} args.collection Collection of the moved entry.
  * @param {Entry} [args.originalEntry] Moved entry as it was before the save. `undefined` for a new
@@ -254,8 +251,12 @@ export const buildNestedMoveChanges = async ({
 }) => {
   /** @type {{ changes: FileChange[], savingEntries: Entry[] }} */
   const noChanges = { changes: [], savingEntries: [] };
+  const indexFileName = getSharedEntryFileName(collection);
 
-  if (!originalEntry || !getNestedConfig(collection)?.subfolders) {
+  // An entry only owns its folder when it’s stored as the index file that names every entry in the
+  // `subfolders` mode. Otherwise it’s a regular file sharing the folder with its siblings and with
+  // whatever is below, none of which moves with it
+  if (!originalEntry || !indexFileName || getBaseName(originalEntry.subPath) !== indexFileName) {
     return noChanges;
   }
 
@@ -295,18 +296,31 @@ export const buildNestedMoveChanges = async ({
     ]),
   );
 
-  const movedEntries = descendants.flatMap((entry) => {
-    const movedEntry = moveEntry({ entry, dirMove, localeDirMoves });
+  const movedEntries = (
+    await Promise.all(
+      descendants.map(async (entry) => {
+        const movedEntry = moveEntry({ entry, dirMove, localeDirMoves });
 
-    return movedEntry
-      ? [
-          {
-            originalEntry: entry,
-            movedEntry: updateCanonicalSlug({ collection, entry: movedEntry }),
-          },
-        ]
-      : [];
-  });
+        return movedEntry
+          ? [
+              {
+                originalEntry: entry,
+                movedEntry: refreshPermalinks({
+                  collection,
+                  // The references to the entry’s own assets by an absolute path filled with its
+                  // slug, e.g. `/blog/{{slug}}/images/photo.jpg`, follow the entry
+                  entry: await rewriteEntryAssetReferences({
+                    collection,
+                    originalEntry: entry,
+                    savingEntry: updateCanonicalSlug({ collection, entry: movedEntry }),
+                  }),
+                }),
+              },
+            ]
+          : [];
+      }),
+    )
+  ).flat();
 
   // Nothing moves when the folder keeps its name in every locale
   if (!movedEntries.length) {

@@ -1,0 +1,143 @@
+import { backend } from '$lib/services/backends';
+import { createBaseCommitMessage } from '$lib/services/backends/git/shared/commits';
+import { toRepoChanges } from '$lib/services/backends/root-dir';
+import { cmsConfig } from '$lib/services/config';
+import { prefs } from '$lib/services/user/prefs.svelte';
+import { createRawState, requestAnswer } from '$lib/services/utils/state.svelte';
+
+/**
+ * @import {
+ * CommitMessagePromptMode,
+ * CommitMessageRequest,
+ * CommitOptions,
+ * FileChange,
+ * } from '$lib/types/private';
+ * @import { GitBackend } from '$lib/types/public';
+ */
+
+/**
+ * Message of the error thrown when the user cancels a commit by dismissing the prompt.
+ */
+const COMMIT_CANCELLED = 'commit_cancelled';
+
+/**
+ * The pending request for a commit message, which the UI turns into a prompt dialog. It’s
+ * `undefined` while no request is outstanding.
+ * @type {{ current: CommitMessageRequest | undefined }}
+ */
+export const commitMessageRequest = createRawState();
+
+/**
+ * Text last entered in the prompt with the `prefix` or `suffix` mode. It’s typically an issue
+ * number that the next few commits share, so the prompt starts with it. Kept for the session only.
+ */
+let lastAddition = '';
+
+/**
+ * Check if the given error has been thrown because the user cancelled a commit.
+ * @param {any} ex Error.
+ * @returns {boolean} Result.
+ */
+export const isCommitCancelled = (ex) => ex?.message === COMMIT_CANCELLED;
+
+/**
+ * Run an action that commits changes, and sort out how it ended. A cancellation at the commit
+ * message prompt isn’t a failure, so it’s not logged. Any other error is logged to the console.
+ * @template T
+ * @param {() => Promise<T>} action Action to run.
+ * @returns {Promise<{ ok: true, cancelled: false, result: T, error: undefined }
+ * | { ok: false, cancelled: boolean, result: undefined, error: any }>} Outcome. `error` is what
+ * the action threw, whether it was a cancellation or a failure.
+ */
+export const runCommit = async (action) => {
+  try {
+    return { ok: true, cancelled: false, result: await action(), error: undefined };
+  } catch (/** @type {any} */ ex) {
+    const cancelled = isCommitCancelled(ex);
+
+    if (!cancelled) {
+      // eslint-disable-next-line no-console
+      console.error(ex);
+    }
+
+    return { ok: false, cancelled, result: undefined, error: ex };
+  }
+};
+
+/**
+ * Get how the user is asked for a commit message. The user is only asked when the changes are
+ * actually committed: by a Git backend, or by the local backend with local Git commits turned on.
+ * @returns {CommitMessagePromptMode | undefined} Mode, or `undefined` if the user isn’t asked.
+ */
+export const getCommitMessagePromptMode = () => {
+  const { current: _cmsConfig } = cmsConfig;
+  const { current: _backend } = backend;
+
+  if (
+    !_cmsConfig ||
+    !_backend ||
+    !(_backend.isGit || (_backend.name === 'local' && prefs.localGitCommits))
+  ) {
+    return undefined;
+  }
+
+  const { prompt_commit_messages: mode } = /** @type {GitBackend} */ (_cmsConfig.backend);
+
+  return mode === true || mode === 'prefix' || mode === 'suffix' ? mode : undefined;
+};
+
+/**
+ * Ask the user for a commit message, and wait for the answer.
+ * @param {object} args Arguments.
+ * @param {CommitMessagePromptMode} args.mode How the text the user enters is used.
+ * @param {string} args.defaultMessage Message made from the template.
+ * @returns {Promise<string | null>} Text entered, or `null` if the user has cancelled.
+ */
+const requestCommitMessage = async ({ mode, defaultMessage }) =>
+  // Saves are made one at a time, so a second request can’t normally be outstanding, but an earlier
+  // one is answered just in case
+  requestAnswer(
+    commitMessageRequest,
+    { mode, defaultMessage, initialValue: mode === true ? defaultMessage : lastAddition },
+    null,
+  );
+
+/**
+ * Ask the user for a commit message if the `prompt_commit_messages` backend option is set, and add
+ * the answer to the commit options. Nothing is asked if the options already have one, e.g. when the
+ * same answer is used for several commits.
+ * @param {FileChange[]} changes Changes to be committed, with paths relative to the root directory.
+ * @param {CommitOptions} options Commit options.
+ * @returns {Promise<CommitOptions>} Commit options, with the user’s message if asked.
+ * @throws {Error} When the user has cancelled the commit. Use {@link isCommitCancelled} to tell it
+ * from a failure.
+ */
+export const promptCommitMessage = async (changes, options) => {
+  const mode = getCommitMessagePromptMode();
+
+  if (!mode || options.userMessage !== undefined) {
+    return options;
+  }
+
+  // The commit message names the paths relative to the repository root
+  const defaultMessage = createBaseCommitMessage(toRepoChanges(changes), options);
+  const message = await requestCommitMessage({ mode, defaultMessage });
+
+  if (message === null) {
+    throw new Error(COMMIT_CANCELLED);
+  }
+
+  let userMessage = message.trim();
+
+  if (mode === true) {
+    // An unchanged message is made from the template again when committing, which can then tell
+    // the files apart more accurately, e.g. when several entries are stored in the same file
+    if (userMessage === defaultMessage) {
+      userMessage = '';
+    }
+  } else {
+    lastAddition = userMessage;
+  }
+
+  return { ...options, userMessage };
+};

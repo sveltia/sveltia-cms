@@ -1,11 +1,12 @@
 import { generateUUID } from '@sveltia/utils/crypto';
-import { stripSlashes } from '@sveltia/utils/string';
 
-import { DATE_TIME_FIELDS } from '$lib/services/common/template/constants';
+import { DATE_TIME_FIELDS, UUID_TYPES } from '$lib/services/common/template/constants';
+import { getFileNameParts } from '$lib/services/common/template/utils';
 import {
   getSharedEntryFileName,
   stripIndexFileName,
 } from '$lib/services/contents/collection/nested';
+import { getEntryDirName } from '$lib/services/contents/entry/paths';
 import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary';
 
 /**
@@ -26,18 +27,8 @@ export const handleDateTimeTag = (tag, dateTimeParts) =>
  * @param {string} tag The template tag.
  * @returns {string | undefined} The UUID value or undefined if not a UUID tag.
  */
-export const handleUuidTag = (tag) => {
-  switch (tag) {
-    case 'uuid':
-      return generateUUID();
-    case 'uuid_short':
-      return generateUUID('short');
-    case 'uuid_shorter':
-      return generateUUID('shorter');
-    default:
-      return undefined;
-  }
-};
+export const handleUuidTag = (tag) =>
+  Object.hasOwn(UUID_TYPES, tag) ? generateUUID(UUID_TYPES[tag].length) : undefined;
 
 /**
  * Handles slug-related template tags.
@@ -60,9 +51,9 @@ export const handleSlugTag = (tag, context) => {
 
   const slug = currentSlug ?? getEntrySummaryFromContent(content, { identifierField });
 
-  // In a nested collection, an entry’s slug is its path within the collection folder, which ends
-  // with the file name shared by every entry, e.g. `guides/intro/_index`. That file name is an
-  // implementation detail of the content folder, not part of the entry’s URL.
+  // In a collection with nested entries, an entry’s slug is its path within the collection folder,
+  // which ends with the file name shared by every entry, e.g. `guides/intro/_index`. That file name
+  // is an implementation detail of the content folder, not part of the entry’s URL.
   // @see https://github.com/decaporg/decap-cms/issues/4963
   if (type === 'preview_path' && collection) {
     // The collection’s own index file stands for the root of the preview path, so nothing is left
@@ -81,35 +72,31 @@ export const handleSlugTag = (tag, context) => {
  * @param {string} tag The template tag.
  * @param {string | undefined} entryFilePath Entry file path.
  * @param {string | undefined} basePath Base path.
+ * @param {string[]} [localeSuffixes] Locale codes that can follow the file name, with the
+ * `multiple_files` i18n structure.
+ * @param {RegExp} [fullPathRegEx] Entry collection’s entry path matcher, which tells the
+ * `{{dirname}}` tag where the locale folder is.
  * @returns {string | undefined} The file path value or undefined if not a file path tag.
  */
-export const handleFilePathTag = (tag, entryFilePath, basePath) => {
+export const handleFilePathTag = (
+  tag,
+  entryFilePath,
+  basePath,
+  localeSuffixes = [],
+  fullPathRegEx = undefined,
+) => {
   if (!entryFilePath) {
     return '';
   }
 
   switch (tag) {
-    case 'dirname': {
-      // The folder is relative to the collection folder, so it must not keep the slash left behind
-      // by the removed base path, or a template like `media/{{dirname}}` would produce `media//sub`
+    case 'dirname':
       // @see https://github.com/decaporg/decap-cms/issues/7752
-      const pathAfterBase = stripSlashes(entryFilePath.replace(basePath ?? '', ''));
-      const lastSlashIndex = pathAfterBase.lastIndexOf('/');
+      return getEntryDirName(entryFilePath, { basePath, fullPathRegEx });
 
-      return lastSlashIndex > 0 ? pathAfterBase.substring(0, lastSlashIndex) : '';
-    }
-
-    case 'filename': {
-      const fileName = /** @type {string} */ (entryFilePath.split('/').pop());
-
-      return fileName.split('.').shift();
-    }
-
-    case 'extension': {
-      const fileName = /** @type {string} */ (entryFilePath.split('/').pop());
-
-      return fileName.split('.').pop();
-    }
+    case 'filename':
+    case 'extension':
+      return getFileNameParts(entryFilePath, localeSuffixes)[tag];
 
     default:
       return undefined;

@@ -43,11 +43,12 @@ describe('integrations/media-libraries/cloud/s3/scaleway-object-storage', () => 
   });
 
   describe('resolveConfig', () => {
-    it('should use path-style region endpoint and derive virtual-hosted public_url', () => {
+    it('should derive the endpoint and public_url, and make objects public', () => {
       expect(scalewayObjectStorageService.resolveConfig(libOptions)).toEqual({
         ...libOptions,
         endpoint: 'https://s3.fr-par.scw.cloud',
         public_url: 'https://my-bucket.s3.fr-par.scw.cloud',
+        acl: 'public-read',
       });
     });
 

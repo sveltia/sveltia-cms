@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -87,6 +87,19 @@ describe('Preview page liveness', () => {
     expect(sendRequest).toHaveBeenCalledTimes(2);
   });
 
+  test('checks a missing page again once its build is reported finished', async () => {
+    vi.mocked(sendRequest).mockResolvedValueOnce(/** @type {any} */ ({ ok: false, status: 404 }));
+    await pingURL(`${origin}/a`);
+
+    vi.mocked(sendRequest).mockResolvedValueOnce(/** @type {any} */ ({ ok: true, status: 200 }));
+    await expect(pingURL(`${origin}/a`, { recheckPending: true })).resolves.toBe('ready');
+    expect(pageLiveness.current[`${origin}/a`]).toBe('ready');
+
+    // A page found live isn’t checked again within the cache window
+    await pingURL(`${origin}/a`, { recheckPending: true });
+    expect(sendRequest).toHaveBeenCalledTimes(2);
+  });
+
   test('leaves the store untouched when the result is unchanged', async () => {
     vi.mocked(sendRequest).mockResolvedValue(/** @type {any} */ ({ ok: true, status: 200 }));
 
@@ -124,6 +137,30 @@ describe('Preview page liveness', () => {
     vi.mocked(sendRequest).mockClear();
     await pingURL(urls[0]);
     expect(sendRequest).toHaveBeenCalledTimes(1);
+  });
+
+  test('keeps a page just checked again when the cap is passed', async () => {
+    vi.mocked(sendRequest).mockResolvedValue(/** @type {any} */ ({ ok: true, status: 200 }));
+    vi.mocked(sendRequest).mockResolvedValueOnce(/** @type {any} */ ({ ok: false, status: 404 }));
+
+    const urls = Array.from({ length: 101 }, (_, index) => `${origin}/posts/${index}`);
+
+    // Fill the cache to the cap, the first page still building
+    // eslint-disable-next-line no-restricted-syntax
+    for (const url of urls.slice(0, 100)) {
+      // eslint-disable-next-line no-await-in-loop
+      await pingURL(url);
+    }
+
+    // Check the first page again, which makes it the most recent one
+    await expect(pingURL(urls[0], { recheckPending: true })).resolves.toBe('ready');
+    await pingURL(urls[100]);
+
+    const remembered = pageLiveness.current;
+
+    // The longest-standing page goes rather than the one just checked
+    expect(remembered[urls[0]]).toBe('ready');
+    expect(remembered[urls[1]]).toBeUndefined();
   });
 
   test('lets expired results go before recently checked ones', async () => {

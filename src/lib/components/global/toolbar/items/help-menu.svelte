@@ -4,6 +4,7 @@
 
   import ReleaseNotesMenuItem from '$lib/components/help/release-notes-menu-item.svelte';
   import ShortcutsMenuItem from '$lib/components/help/shortcuts-menu-item.svelte';
+  import { DOCS_BASE_URL, REPOSITORY_URL } from '$lib/services/app';
   import { prefs } from '$lib/services/user/prefs.svelte';
   import { openNewTab } from '$lib/services/utils/window';
 
@@ -13,11 +14,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    menuButton,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { menuButton } = $props();
 </script>
 
 {#snippet link(/** @type {string} */ labelKey, /** @type {string} */ url)}
@@ -29,22 +26,16 @@
   />
 {/snippet}
 
-<Menu aria-label={_('help')}>
+<Menu ariaLabel={_('help')}>
   <ShortcutsMenuItem {menuButton} />
   {#if prefs.devModeEnabled}
-    {@render link('documentation', 'https://sveltiacms.app/en/docs')}
+    {@render link('documentation', DOCS_BASE_URL)}
     <ReleaseNotesMenuItem />
-    {@render link(
-      'announcements',
-      'https://github.com/sveltia/sveltia-cms/discussions/categories/announcements',
-    )}
+    {@render link('announcements', `${REPOSITORY_URL}/discussions/categories/announcements`)}
     <Divider />
-    {@render link('report_issue', 'https://github.com/sveltia/sveltia-cms/issues')}
-    {@render link(
-      'share_feedback',
-      'https://github.com/sveltia/sveltia-cms/discussions/categories/ideas',
-    )}
-    {@render link('get_help', 'https://github.com/sveltia/sveltia-cms/discussions/categories/q-a')}
+    {@render link('report_issue', `${REPOSITORY_URL}/issues`)}
+    {@render link('share_feedback', `${REPOSITORY_URL}/discussions/categories/ideas`)}
+    {@render link('get_help', `${REPOSITORY_URL}/discussions/categories/q-a`)}
     {@render link('donate', 'https://github.com/sponsors/kyoshino')}
     <Divider />
     {@render link('bluesky', 'https://bsky.app/profile/sveltiacms.app')}

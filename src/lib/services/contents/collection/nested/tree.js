@@ -7,13 +7,15 @@ import {
   getSharedEntryFileName,
 } from '$lib/services/contents/collection/nested';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
+import { getOrCreate } from '$lib/services/utils/cache';
+import { getBaseName } from '$lib/services/utils/file';
 
 /**
  * @import { Entry, InternalCollection, InternalLocaleCode } from '$lib/types/private';
  */
 
 /**
- * A folder within a nested collection, shown as an item in the collection tree.
+ * A folder within a collection with nested entries, shown as an item in the collection tree.
  * @typedef {object} NestedTreeNode
  * @property {string} path Directory path relative to the collection folder, without leading and
  * trailing slashes.
@@ -22,11 +24,11 @@ import { getEntrySummary } from '$lib/services/contents/entry/summary';
  */
 
 /**
- * Get the path of the parent folder.
- * @param {string} path Folder path relative to the collection folder.
- * @returns {string} Parent path, or an empty string if the folder is at the top level.
+ * Count the segments of a path.
+ * @param {string} path Path relative to the collection folder, e.g. `about/team`.
+ * @returns {number} Number of segments, `0` for the collection folder itself.
  */
-const getParentPath = (path) => (path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '');
+const countSegments = (path) => (path ? path.split('/').length : 0);
 
 /**
  * Rate how well an entry represents the folder it’s stored in, so a folder that holds more than one
@@ -83,11 +85,11 @@ const collectFolders = ({ entries, indexFileName, subfolders }) => {
     }
 
     // Register the ancestors, which don’t necessarily hold an entry of their own
-    let ancestorPath = getParentPath(dirPath);
+    let ancestorPath = getEntryDirPath(dirPath);
 
     while (ancestorPath && !folders.has(ancestorPath)) {
       folders.set(ancestorPath, undefined);
-      ancestorPath = getParentPath(ancestorPath);
+      ancestorPath = getEntryDirPath(ancestorPath);
     }
   });
 
@@ -107,7 +109,7 @@ const collectFolders = ({ entries, indexFileName, subfolders }) => {
  * @returns {string} Label.
  */
 const getNodeLabel = ({ collection, path, indexEntry, summaryTemplate, locale }) => {
-  const folderName = path.slice(path.lastIndexOf('/') + 1);
+  const folderName = getBaseName(path);
 
   if (!indexEntry) {
     return folderName;
@@ -123,17 +125,26 @@ const getNodeLabel = ({ collection, path, indexEntry, summaryTemplate, locale })
 };
 
 /**
- * Build a folder tree for a nested collection.
+ * Build a folder tree for a collection with nested entries.
  * @param {object} args Arguments.
  * @param {InternalCollection} args.collection Collection.
  * @param {Entry[]} args.entries Entries in the collection.
  * @param {boolean} args.pruneLeaves Whether to leave out a folder that has no subfolder of its own.
  * @param {string} [args.excludePath] Folder to leave out along with everything below it.
+ * @param {number} [args.maxDepth] Number of path segments a folder can have at most. A deeper one
+ * is left out along with everything below it.
  * @param {InternalLocaleCode} [args.locale] Locale to label the folders in.
  * @returns {NestedTreeNode[]} Top-level folders, sorted by label. An empty array if the collection
- * is not a nested collection or has no folder to show.
+ * has no nested entries or has no folder to show.
  */
-const buildTree = ({ collection, entries, pruneLeaves, excludePath, locale }) => {
+const buildTree = ({
+  collection,
+  entries,
+  pruneLeaves,
+  excludePath,
+  maxDepth = Infinity,
+  locale,
+}) => {
   const config = getNestedConfig(collection);
 
   if (!config) {
@@ -147,9 +158,9 @@ const buildTree = ({ collection, entries, pruneLeaves, excludePath, locale }) =>
   const childPaths = new Map();
 
   [...folders.keys()].forEach((path) => {
-    const parentPath = getParentPath(path);
+    const parentPath = getEntryDirPath(path);
 
-    childPaths.set(parentPath, [...(childPaths.get(parentPath) ?? []), path]);
+    getOrCreate(childPaths, parentPath, () => []).push(path);
   });
 
   /**
@@ -162,7 +173,9 @@ const buildTree = ({ collection, entries, pruneLeaves, excludePath, locale }) =>
       .filter(
         (path) =>
           // A leaf folder in the `subfolders` mode is an entry, not a container
-          (!pruneLeaves || !subfolders || !!childPaths.get(path)?.length) && path !== excludePath,
+          (!pruneLeaves || !subfolders || !!childPaths.get(path)?.length) &&
+          path !== excludePath &&
+          countSegments(path) <= maxDepth,
       )
       .map((path) => ({
         path,
@@ -181,8 +194,9 @@ const buildTree = ({ collection, entries, pruneLeaves, excludePath, locale }) =>
 };
 
 /**
- * Build the folder tree shown below a nested collection in the primary sidebar. Only folders are
- * included; the entries themselves are listed in the main area once a folder is selected.
+ * Build the folder tree shown below a collection with nested entries in the primary sidebar. Only
+ * folders are included; the entries themselves are listed in the main area once a folder is
+ * selected.
  *
  * In the default `subfolders` mode, a folder that has no subfolder of its own is left out, because
  * such a folder is an entry rather than a container: it holds nothing but its own index file, and
@@ -191,27 +205,71 @@ const buildTree = ({ collection, entries, pruneLeaves, excludePath, locale }) =>
  * @param {InternalCollection} args.collection Collection.
  * @param {Entry[]} args.entries Entries in the collection.
  * @returns {NestedTreeNode[]} Top-level folders, sorted by label. An empty array if the collection
- * is not a nested collection or has no subfolder.
+ * has no nested entries or has no subfolder.
  */
 export const getNestedTree = ({ collection, entries }) =>
   buildTree({ collection, entries, pruneLeaves: true });
 
 /**
- * Build the folder tree offered by the entry path editor, which lists every folder an entry can be
- * filed in. Unlike the sidebar tree, a folder that holds nothing but its own entry is included,
- * because an entry can be filed below any other entry.
+ * Get the number of path segments a folder offered by the entry path editor can have at most, so an
+ * entry filed in it stays within the collection’s `nested.depth`. Anything deeper isn’t part of the
+ * collection, so an entry saved there would vanish from the CMS as soon as it’s saved. An entry
+ * takes one segment below its folder as a file, or two in the `subfolders` mode, where it’s a
+ * folder of its own holding an index file. An existing entry takes the pages below it along, so
+ * they need room too.
  * @param {object} args Arguments.
  * @param {InternalCollection} args.collection Collection.
  * @param {Entry[]} args.entries Entries in the collection.
- * @param {string} [args.excludePath] Folder to leave out along with everything below it, so an
- * entry can’t be filed within itself.
+ * @param {string} [args.ownFolderPath] Folder of the entry being moved, in the `subfolders` mode.
+ * @returns {number} Maximum number of segments, `Infinity` if the depth is unlimited.
+ */
+export const getMaxParentFolderDepth = ({ collection, entries, ownFolderPath }) => {
+  const depth = getNestedConfig(collection)?.depth ?? Infinity;
+
+  if (!getSharedEntryFileName(collection)) {
+    return depth - 1;
+  }
+
+  if (!ownFolderPath) {
+    return depth - 2;
+  }
+
+  const baseDepth = countSegments(getEntryDirPath(ownFolderPath));
+
+  const height = Math.max(
+    2,
+    ...entries
+      .filter(({ subPath }) => subPath.startsWith(`${ownFolderPath}/`))
+      .map(({ subPath }) => countSegments(subPath) - baseDepth),
+  );
+
+  return depth - height;
+};
+
+/**
+ * Build the folder tree offered by the entry path editor, which lists every folder an entry can be
+ * filed in. Unlike the sidebar tree, a folder that holds nothing but its own entry is included,
+ * because an entry can be filed below any other entry. A folder too deep for the entry to stay
+ * within the collection’s depth is left out; see {@link getMaxParentFolderDepth}.
+ * @param {object} args Arguments.
+ * @param {InternalCollection} args.collection Collection.
+ * @param {Entry[]} args.entries Entries in the collection.
+ * @param {string} [args.excludePath] Folder of the entry being moved, in the `subfolders` mode.
+ * It’s left out along with everything below it, so an entry can’t be filed within itself.
  * @param {InternalLocaleCode} [args.locale] Locale to label the folders in, which is the locale of
  * the pane showing the tree. A folder is labelled with its entry’s summary, so with localized
  * content each pane names the folders in its own language.
  * @returns {NestedTreeNode[]} Top-level folders, sorted by label.
  */
 export const getParentFolderTree = ({ collection, entries, excludePath, locale }) =>
-  buildTree({ collection, entries, pruneLeaves: false, excludePath, locale });
+  buildTree({
+    collection,
+    entries,
+    pruneLeaves: false,
+    excludePath,
+    maxDepth: getMaxParentFolderDepth({ collection, entries, ownFolderPath: excludePath }),
+    locale,
+  });
 
 /**
  * Add a folder that holds no entry yet to a tree, creating any missing folders above it, so that it
@@ -273,3 +331,62 @@ export const findNestedTreeNode = (nodes, path) =>
       found ?? (node.path === path ? node : findNestedTreeNode(node.children, path)),
     undefined,
   );
+
+/**
+ * Get the name of the folder an entry occupies, which travels with it when the entry is filed
+ * elsewhere with the parent folder picker. Only an entry that’s already saved in a collection where
+ * every entry shares one file name has one: a new entry’s folder is named after its slug at save
+ * time, and in the other modes an entry is a file rather than a folder.
+ * @param {object} args Arguments.
+ * @param {InternalCollection | undefined} args.collection Collection.
+ * @param {string | undefined} args.subPath Entry’s sub path, e.g. `docs/guides/_index`.
+ * @param {boolean} [args.isNew] Whether the entry is new.
+ * @returns {string | undefined} Folder name, e.g. `guides`, or `undefined` if the entry doesn’t
+ * occupy a folder, including the collection’s own index file.
+ */
+export const getMovableFolderName = ({ collection, subPath, isNew = false }) => {
+  if (isNew || !subPath || !collection || !getSharedEntryFileName(collection)) {
+    return undefined;
+  }
+
+  const dirPath = getEntryDirPath(subPath);
+
+  return dirPath ? getBaseName(dirPath) : undefined;
+};
+
+/**
+ * Get the tree the parent folder picker offers: the collection folder, with the folders an entry
+ * can be filed in below it, along with the folders created with the picker that hold no entry yet.
+ * @param {object} args Arguments.
+ * @param {InternalCollection} args.collection Collection.
+ * @param {string} args.label Label of the collection folder.
+ * @param {Entry[]} args.entries Entries in the collection, including the unpublished ones, so a
+ * folder that only exists as a draft can be chosen too.
+ * @param {string[]} args.newFolderPaths Paths of the folders created with the picker.
+ * @param {string} [args.excludePath] Folder of the entry being moved, which is left out.
+ * @param {InternalLocaleCode} [args.locale] Locale to label the folders in.
+ * @returns {NestedTreeNode} Root node, standing for the collection folder.
+ */
+export const getParentFolderPickerTree = ({
+  collection,
+  label,
+  entries,
+  newFolderPaths,
+  excludePath,
+  locale,
+}) => ({
+  path: '',
+  label,
+  children: newFolderPaths.reduce(
+    (nodes, path) => addFolderToTree({ nodes, path }),
+    getParentFolderTree({ collection, entries, excludePath, locale }),
+  ),
+});
+
+/**
+ * Get the names of the folders directly within the given one, which a new folder there can’t take.
+ * @param {NestedTreeNode | undefined} node Folder.
+ * @returns {string[]} Folder names.
+ */
+export const getChildFolderNames = (node) =>
+  (node?.children ?? []).map(({ path }) => getBaseName(path));

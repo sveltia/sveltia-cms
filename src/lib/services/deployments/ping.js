@@ -92,12 +92,17 @@ const request = async (url) => {
  * anyway would cost a round trip and a console error to learn nothing, so it’s skipped. In practice
  * this covers the common setup where the CMS is served from the site it edits.
  * @param {string} url URL to check.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.recheckPending] Whether to check again a page found missing, however
+ * recently. Used once the build is reported finished: a page checked while it was building would
+ * otherwise be reported missing until the cached result expires, with nothing to check it again.
  * @returns {Promise<PageLiveness>} Result.
  */
-export const pingURL = async (url) => {
+export const pingURL = async (url, { recheckPending = false } = {}) => {
   const cached = cache.get(url);
+  const recheck = recheckPending && pageLiveness.current[url] === 'pending';
 
-  if (cached && Date.now() - cached.time < PING_TTL) {
+  if (cached && !recheck && Date.now() - cached.time < PING_TTL) {
     return cached.promise;
   }
 
@@ -113,6 +118,9 @@ export const pingURL = async (url) => {
     ? request(url)
     : Promise.resolve(/** @type {PageLiveness} */ ('unknown'));
 
+  // Delete the entry first, as setting an existing key keeps its place in the insertion order,
+  // which {@link prune} goes by, and the page just checked could otherwise be the first to go
+  cache.delete(url);
   cache.set(url, { time: Date.now(), promise });
   prune();
 

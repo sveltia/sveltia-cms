@@ -13,20 +13,36 @@ vi.mock('$lib/services/contents/i18n', () => ({
   getLocalePath: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/collection', () => ({
+vi.mock('$lib/services/contents/collection/predicates', () => ({
   isEntryCollection: vi.fn(
     (collection) => typeof collection?.folder === 'string' && !Array.isArray(collection?.files),
   ),
+  isArrayFileCollection: vi.fn((collection) => !!collection?._file?.arrayFile),
 }));
 
 vi.mock('$lib/services/contents/collection/entries', () => ({
   getEntriesByCollection: vi.fn(() => []),
 }));
 
+vi.mock('$lib/services/contents/draft/slugs', async (importOriginal) => ({
+  ...(await importOriginal()),
+  getEntryDateTimeParts: vi.fn(() => ({ year: '2020' })),
+}));
+
 vi.mock('$lib/services/workflow', () => ({
   mergeUnpublishedEntries: vi.fn((entries) => entries),
   unpublishedEntries: { current: [] },
 }));
+
+// Import the module once the mocks above are in place. Importing it here rather than in each test
+// keeps the first, slow load of its module graph out of the test timeout
+const {
+  buildCustomEntryPath,
+  buildPathByStructure,
+  createEntryPath,
+  getKeptSubPath,
+  keepsOriginalPath,
+} = await import('./entry-path.js');
 
 describe('contents/draft/save/entry-path', () => {
   let mockFillTemplate;
@@ -50,9 +66,56 @@ describe('contents/draft/save/entry-path', () => {
   });
 
   describe('buildPathByStructure', () => {
-    it('should handle multiple_folders structure with omitLocale=false', async () => {
-      const { buildPathByStructure } = await import('./entry-path.js');
+    it('should fill in the locale placeholder in basePath regardless of the structure', () => {
+      expect(
+        buildPathByStructure({
+          basePath: 'content/{{locale}}/posts',
+          path: '2026/hello/index',
+          extension: 'md',
+          locale: 'fr',
+          omitLocale: false,
+          structure: 'multiple_folders',
+        }),
+      ).toBe('content/fr/posts/2026/hello/index.md');
 
+      expect(
+        buildPathByStructure({
+          basePath: '{{locale}}/posts',
+          path: 'hello',
+          extension: 'md',
+          locale: 'fr',
+          omitLocale: false,
+          structure: 'multiple_root_folders',
+        }),
+      ).toBe('fr/posts/hello.md');
+    });
+
+    it('should leave out the locale placeholder folder with omitLocale=true', () => {
+      expect(
+        buildPathByStructure({
+          basePath: 'content/{{locale}}/posts',
+          path: 'hello',
+          extension: 'md',
+          locale: 'en',
+          omitLocale: true,
+          structure: 'multiple_folders',
+        }),
+      ).toBe('content/posts/hello.md');
+
+      // The leading slash left behind by a bare placeholder is removed by `createEntryPath()`
+      expect(
+        buildPathByStructure({
+          basePath: '{{locale}}',
+          path: 'hello',
+          extension: 'md',
+          locale: 'en',
+          omitLocale: true,
+          structure: 'multiple_folders',
+        }),
+      ).toBe('/hello.md');
+    });
+
+    it('should handle multiple_folders structure with omitLocale=false', async () => {
       const result = buildPathByStructure({
         basePath: 'content',
         path: 'products',
@@ -66,8 +129,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should handle multiple_folders structure with omitLocale=true', async () => {
-      const { buildPathByStructure } = await import('./entry-path.js');
-
       const result = buildPathByStructure({
         basePath: 'content',
         path: 'products',
@@ -81,8 +142,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should handle multiple_folders_i18n_root structure (deprecated) with omitLocale=false', async () => {
-      const { buildPathByStructure } = await import('./entry-path.js');
-
       const result = buildPathByStructure({
         basePath: 'content',
         path: 'settings',
@@ -96,8 +155,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should handle multiple_folders_i18n_root structure (deprecated) with omitLocale=true', async () => {
-      const { buildPathByStructure } = await import('./entry-path.js');
-
       const result = buildPathByStructure({
         basePath: 'content',
         path: 'settings',
@@ -111,8 +168,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should handle multiple_root_folders structure with omitLocale=false', async () => {
-      const { buildPathByStructure } = await import('./entry-path.js');
-
       const result = buildPathByStructure({
         basePath: 'content',
         path: 'settings',
@@ -126,8 +181,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should handle multiple_root_folders structure with omitLocale=true', async () => {
-      const { buildPathByStructure } = await import('./entry-path.js');
-
       const result = buildPathByStructure({
         basePath: 'content',
         path: 'settings',
@@ -141,8 +194,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should handle multiple_files structure with omitLocale=false', async () => {
-      const { buildPathByStructure } = await import('./entry-path.js');
-
       const result = buildPathByStructure({
         basePath: 'posts',
         path: 'hello',
@@ -156,8 +207,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should handle multiple_files structure with omitLocale=true', async () => {
-      const { buildPathByStructure } = await import('./entry-path.js');
-
       const result = buildPathByStructure({
         basePath: 'posts',
         path: 'hello',
@@ -171,8 +220,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should handle default structure (single_file)', async () => {
-      const { buildPathByStructure } = await import('./entry-path.js');
-
       const result = buildPathByStructure({
         basePath: 'content',
         path: 'about',
@@ -186,8 +233,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should handle empty basePath', async () => {
-      const { buildPathByStructure } = await import('./entry-path.js');
-
       const result = buildPathByStructure({
         basePath: '',
         path: 'settings',
@@ -203,8 +248,6 @@ describe('contents/draft/save/entry-path', () => {
 
   describe('createEntryPath', () => {
     it('should create path for file collection', async () => {
-      const { createEntryPath } = await import('./entry-path.js');
-
       const draft = {
         collection: {
           _i18n: {
@@ -238,9 +281,32 @@ describe('contents/draft/save/entry-path', () => {
       expect(result).toBeDefined();
     });
 
-    it('should return existing path when slug matches original entry', async () => {
-      const { createEntryPath } = await import('./entry-path.js');
+    it('should return the file path for a collection storing the entries in one file', () => {
+      const _i18n = {
+        defaultLocale: 'en',
+        structure: 'single_file',
+        omitDefaultLocaleFromFilePath: false,
+        omitDefaultLocaleFromPreviewPath: false,
+      };
 
+      const draft = {
+        collection: {
+          file: 'data/members.json',
+          _file: { arrayFile: true, fullPath: 'data/members.json' },
+          _i18n,
+        },
+        collectionFile: undefined,
+        originalEntry: undefined,
+        currentValues: {},
+        isIndexFile: false,
+      };
+
+      expect(createEntryPath({ draft, locale: 'en', slug: 'jane' })).toBe('data/members.json');
+      expect(createEntryPath({ draft, locale: 'fr', slug: 'jane' })).toBe('data/members.json');
+      expect(mockGetLocalePath).not.toHaveBeenCalled();
+    });
+
+    it('should return existing path when slug matches original entry', async () => {
       const draft = {
         collection: {
           _i18n: {
@@ -266,8 +332,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should create path for single_file structure', async () => {
-      const { createEntryPath } = await import('./entry-path.js');
-
       const draft = {
         collection: {
           _type: 'entry',
@@ -295,8 +359,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should create path for multiple_folders structure', async () => {
-      const { createEntryPath } = await import('./entry-path.js');
-
       const draft = {
         collection: {
           _type: 'entry',
@@ -323,9 +385,73 @@ describe('contents/draft/save/entry-path', () => {
       expect(result).toBe('posts/en/my-post.md');
     });
 
-    it('should create path for multiple_folders_i18n_root structure', async () => {
-      const { createEntryPath } = await import('./entry-path.js');
+    it('should create path with the locale placeholder in the collection folder', async () => {
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _i18n: {
+            defaultLocale: 'en',
+            structure: 'multiple_folders',
+            omitDefaultLocaleFromFilePath: true,
+            omitDefaultLocaleFromPreviewPath: false,
+          },
+          _file: {
+            basePath: 'content/{{locale}}/posts',
+            subPath: '{{slug}}/index',
+            extension: 'md',
+          },
+        },
+        collectionFile: undefined,
+        originalEntry: undefined,
+        currentValues: { en: {}, fr: {} },
+        isIndexFile: false,
+      };
 
+      mockFillTemplate.mockImplementation((template, { currentSlug }) =>
+        template.replace('{{slug}}', currentSlug),
+      );
+
+      expect(createEntryPath({ draft, locale: 'fr', slug: 'my-post' })).toBe(
+        'content/fr/posts/my-post/index.md',
+      );
+      // The default locale is omitted from the path
+      expect(createEntryPath({ draft, locale: 'en', slug: 'my-post' })).toBe(
+        'content/posts/my-post/index.md',
+      );
+    });
+
+    it('should create the index file path with the locale placeholder in the collection folder', async () => {
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _i18n: {
+            defaultLocale: 'en',
+            structure: 'multiple_folders',
+            omitDefaultLocaleFromFilePath: false,
+            omitDefaultLocaleFromPreviewPath: false,
+          },
+          _file: {
+            basePath: 'content/{{locale}}/posts',
+            subPath: '{{year}}/{{slug}}/index',
+            extension: 'md',
+          },
+          index_file: true,
+        },
+        collectionFile: undefined,
+        originalEntry: undefined,
+        currentValues: { en: {}, fr: {} },
+        isIndexFile: true,
+      };
+
+      mockGetIndexFile.mockReturnValue({ name: '_index' });
+
+      // The index file sits right under the locale’s collection folder
+      expect(createEntryPath({ draft, locale: 'fr', slug: '_index' })).toBe(
+        'content/fr/posts/_index.md',
+      );
+    });
+
+    it('should create path for multiple_folders_i18n_root structure', async () => {
       const draft = {
         collection: {
           _type: 'entry',
@@ -353,8 +479,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should create path for multiple_root_folders structure', async () => {
-      const { createEntryPath } = await import('./entry-path.js');
-
       const draft = {
         collection: {
           _type: 'entry',
@@ -382,8 +506,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should create path for multiple_files structure', async () => {
-      const { createEntryPath } = await import('./entry-path.js');
-
       const draft = {
         collection: {
           _type: 'entry',
@@ -411,8 +533,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should omit default locale from filename when configured', async () => {
-      const { createEntryPath } = await import('./entry-path.js');
-
       const draft = {
         collection: {
           _type: 'entry',
@@ -444,8 +564,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should handle entry collections path with subPath', async () => {
-      const { createEntryPath } = await import('./entry-path.js');
-
       mockFillTemplate.mockImplementation((template) => {
         if (template === '{{year}}/{{slug}}') {
           return '2024/my-post';
@@ -483,14 +601,50 @@ describe('contents/draft/save/entry-path', () => {
           collection: draft.collection,
           locale: 'en',
           currentSlug: 'my-post',
+          dateTimeParts: { year: '2020' },
         }),
       );
       expect(result).toBe('posts/2024/my-post.md');
     });
 
-    it('should handle index file', async () => {
-      const { createEntryPath } = await import('./entry-path.js');
+    it('should fill the subPath with the random values shared by every call and locale', async () => {
+      const { getRandomValues } = await import('$lib/services/contents/draft/slugs');
 
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _i18n: {
+            defaultLocale: 'en',
+            structure: 'multiple_files',
+            omitDefaultLocaleFromFilePath: false,
+            omitDefaultLocaleFromPreviewPath: false,
+          },
+          _file: {
+            basePath: 'posts',
+            subPath: '{{uuid_short}}/index',
+            extension: 'md',
+          },
+        },
+        collectionFile: undefined,
+        originalEntry: undefined,
+        currentValues: { en: {}, fr: {} },
+        isIndexFile: false,
+      };
+
+      createEntryPath({ draft, locale: 'en', slug: 'my-post' });
+      createEntryPath({ draft, locale: 'fr', slug: 'my-post' });
+
+      const [[, enOptions], [, frOptions]] = mockFillTemplate.mock.calls;
+
+      // The non-default locale is filled as the default locale, whose values are used, so that the
+      // random values are looked up with the same keys
+      expect(enOptions.locale).toBe('en');
+      expect(frOptions.locale).toBe('en');
+      expect(enOptions.randomValues).toBe(getRandomValues(draft));
+      expect(frOptions.randomValues).toBe(getRandomValues(draft));
+    });
+
+    it('should handle index file', async () => {
       mockGetIndexFile.mockReturnValue({ name: 'index.md' });
 
       const draft = {
@@ -520,9 +674,45 @@ describe('contents/draft/save/entry-path', () => {
       expect(result).toBe('posts/index.md');
     });
 
-    it('should use fallback to single_file structure if unknown', async () => {
-      const { createEntryPath } = await import('./entry-path.js');
+    it('should use the index file’s own extension', async () => {
+      mockGetIndexFile.mockReturnValue({ name: 'posts' });
 
+      const _file = {
+        basePath: 'posts',
+        subPath: '{{slug}}/index',
+        extension: 'md',
+      };
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _i18n: {
+            defaultLocale: 'en',
+            structure: 'single_file',
+            omitDefaultLocaleFromFilePath: false,
+            omitDefaultLocaleFromPreviewPath: false,
+          },
+          _file: { ..._file, indexFile: { ..._file, extension: 'json', format: 'json' } },
+        },
+        collectionFile: undefined,
+        originalEntry: undefined,
+        currentValues: { en: {} },
+        isIndexFile: true,
+      };
+
+      expect(createEntryPath({ draft, locale: 'en', slug: 'posts' })).toBe('posts/posts.json');
+
+      // An entry keeps the collection’s extension
+      mockFillTemplate.mockImplementation((template, { currentSlug }) =>
+        template.replace('{{slug}}', currentSlug),
+      );
+
+      expect(
+        createEntryPath({ draft: { ...draft, isIndexFile: false }, locale: 'en', slug: 'hello' }),
+      ).toBe('posts/hello/index.md');
+    });
+
+    it('should use fallback to single_file structure if unknown', async () => {
       const draft = {
         collection: {
           _type: 'entry',
@@ -550,8 +740,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should strip leading slash when basePath is empty for single_file structure', async () => {
-      const { createEntryPath } = await import('./entry-path.js');
-
       const draft = {
         collection: {
           _type: 'entry',
@@ -579,8 +767,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should strip leading slash when basePath is empty for multiple_folders structure', async () => {
-      const { createEntryPath } = await import('./entry-path.js');
-
       const draft = {
         collection: {
           _type: 'entry',
@@ -608,8 +794,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should strip leading slash when basePath is empty for multiple_files structure', async () => {
-      const { createEntryPath } = await import('./entry-path.js');
-
       const draft = {
         collection: {
           _type: 'entry',
@@ -637,8 +821,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should strip leading slash when basePath is empty for multiple_folders_i18n_root structure', async () => {
-      const { createEntryPath } = await import('./entry-path.js');
-
       const draft = {
         collection: {
           _type: 'entry',
@@ -666,8 +848,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should strip leading slash when basePath is empty for multiple_root_folders structure', async () => {
-      const { createEntryPath } = await import('./entry-path.js');
-
       const draft = {
         collection: {
           _type: 'entry',
@@ -694,13 +874,143 @@ describe('contents/draft/save/entry-path', () => {
       expect(result).toBe('en/my-post.md');
     });
   });
+
+  describe('createEntryPath for a locale enabled later', () => {
+    /**
+     * Create a draft of an existing entry stored with the `{{year}}/{{slug}}` path, whose English
+     * file was saved in 2023, while the template now fills the year with 2026.
+     * @param {object} args Arguments.
+     * @param {string} args.structure I18n structure.
+     * @param {boolean} [args.omitDefaultLocale] Whether to omit the default locale from the path.
+     * @param {string} args.enPath English file path.
+     * @param {RegExp} args.fullPathRegEx Regular expression matching the entry paths.
+     * @returns {any} Entry draft.
+     */
+    const createDraft = ({ structure, omitDefaultLocale = false, enPath, fullPathRegEx }) => ({
+      collection: {
+        _type: 'entry',
+        _i18n: {
+          defaultLocale: 'en',
+          structure,
+          omitDefaultLocaleFromFilePath: omitDefaultLocale,
+          omitDefaultLocaleFromPreviewPath: false,
+        },
+        _file: {
+          basePath: 'content/posts',
+          subPath: '{{year}}/{{slug}}',
+          extension: 'md',
+          fullPathRegEx,
+        },
+      },
+      collectionFile: undefined,
+      originalEntry: {
+        id: 'posts/2023/hello',
+        slug: 'hello',
+        subPath: '2023/hello',
+        locales: { en: { slug: 'hello', path: enPath, content: {} } },
+      },
+      currentValues: { en: {}, fr: {} },
+      isIndexFile: false,
+    });
+
+    beforeEach(() => {
+      mockFillTemplate.mockImplementation((template, { currentSlug }) =>
+        template.replace('{{year}}', '2026').replace('{{slug}}', currentSlug),
+      );
+    });
+
+    it('should put the file alongside the entry’s other files with `multiple_files`', () => {
+      const draft = createDraft({
+        structure: 'multiple_files',
+        enPath: 'content/posts/2023/hello.en.md',
+        fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?\/[^/]+?)\.(?<locale>en|fr)\.md$/,
+      });
+
+      expect(createEntryPath({ draft, locale: 'en', slug: 'hello' })).toBe(
+        'content/posts/2023/hello.en.md',
+      );
+      expect(createEntryPath({ draft, locale: 'fr', slug: 'hello' })).toBe(
+        'content/posts/2023/hello.fr.md',
+      );
+      expect(mockFillTemplate).not.toHaveBeenCalled();
+    });
+
+    it('should put the file alongside the entry’s other files with `multiple_folders`', () => {
+      const draft = createDraft({
+        structure: 'multiple_folders',
+        omitDefaultLocale: true,
+        enPath: 'content/posts/2023/hello.md',
+        fullPathRegEx: /^content\/posts\/(?:(?<locale>fr)\/)?(?<subPath>[^/]+?\/[^/]+?)\.md$/,
+      });
+
+      expect(createEntryPath({ draft, locale: 'fr', slug: 'hello' })).toBe(
+        'content/posts/fr/2023/hello.md',
+      );
+      expect(mockFillTemplate).not.toHaveBeenCalled();
+    });
+
+    it('should fill the template again for every locale of a renamed entry', () => {
+      const draft = createDraft({
+        structure: 'multiple_files',
+        enPath: 'content/posts/2023/hello.en.md',
+        fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?\/[^/]+?)\.(?<locale>en|fr)\.md$/,
+      });
+
+      expect(createEntryPath({ draft, locale: 'en', slug: 'world' })).toBe(
+        'content/posts/2026/world.en.md',
+      );
+      expect(createEntryPath({ draft, locale: 'fr', slug: 'world' })).toBe(
+        'content/posts/2026/world.fr.md',
+      );
+    });
+  });
+
+  describe('getKeptSubPath', () => {
+    const fullPathRegEx = /^posts\/(?<subPath>[^/]+?)\.(?<locale>en|fr)\.md$/;
+
+    it('should return the sub path of the entry’s file with the same slug', () => {
+      const draft = {
+        originalEntry: {
+          locales: {
+            en: { slug: 'hello', path: 'posts/hello.en.md' },
+            de: { slug: 'hallo', path: 'posts/hallo.de.md' },
+          },
+        },
+      };
+
+      expect(getKeptSubPath({ draft, slug: 'hello', fullPathRegEx })).toBe('hello');
+      expect(getKeptSubPath({ draft, slug: 'world', fullPathRegEx })).toBeUndefined();
+    });
+
+    it('should return `undefined` for a new entry', () => {
+      expect(
+        getKeptSubPath({ draft: { originalEntry: undefined }, slug: 'hello', fullPathRegEx }),
+      ).toBeUndefined();
+    });
+
+    it('should skip a file the collection’s entry paths don’t match', () => {
+      const draft = {
+        originalEntry: {
+          locales: {
+            en: { slug: 'hello', path: 'elsewhere/hello.en.md' },
+            fr: { slug: 'hello', path: 'posts/hello.fr.md' },
+          },
+        },
+      };
+
+      expect(getKeptSubPath({ draft, slug: 'hello', fullPathRegEx })).toBe('hello');
+      expect(getKeptSubPath({ draft, slug: 'hello', fullPathRegEx: /^posts\// })).toBeUndefined();
+    });
+  });
+
   describe('buildCustomEntryPath', () => {
     /** Collection whose slugs aren’t localized. */
-    const collection = { _type: 'entry', _i18n: { defaultLocale: 'en', structureMap: {} } };
+    const collection = {
+      _type: 'entry',
+      _i18n: { defaultLocale: 'en', i18nEnabled: true, structureMap: {} },
+    };
 
     it('should use the configured index file name', async () => {
-      const { buildCustomEntryPath } = await import('./entry-path.js');
-
       const result = buildCustomEntryPath({
         draft: { collection, originalEntry: undefined, currentPath: '/docs/guides/' },
         slug: 'my-post',
@@ -712,8 +1022,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should keep the file name of an existing entry', async () => {
-      const { buildCustomEntryPath } = await import('./entry-path.js');
-
       const result = buildCustomEntryPath({
         draft: {
           collection,
@@ -729,8 +1037,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should use the slug for a new entry', async () => {
-      const { buildCustomEntryPath } = await import('./entry-path.js');
-
       const result = buildCustomEntryPath({
         draft: { collection, originalEntry: undefined, currentPath: 'guides' },
         slug: 'my-post',
@@ -742,8 +1048,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should place the entry in the collection folder when the path is empty', async () => {
-      const { buildCustomEntryPath } = await import('./entry-path.js');
-
       const result = buildCustomEntryPath({
         draft: { collection, originalEntry: undefined, currentPath: undefined },
         slug: 'my-post',
@@ -765,10 +1069,11 @@ describe('contents/draft/save/entry-path', () => {
       name: 'pages',
       folder: 'content/pages',
       nested: {},
-      meta: { path: { widget: 'string', index_file: '_index' } },
+      meta: { path: { index_file: '_index' } },
       _i18n: {
         defaultLocale: 'en',
         structure: 'single_file',
+        i18nEnabled: true,
         structureMap: { i18nSingleFile: true },
         omitDefaultLocaleFromFilePath: false,
         omitDefaultLocaleFromPreviewPath: false,
@@ -777,8 +1082,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should give a new entry a folder of its own within the chosen folder', async () => {
-      const { createEntryPath } = await import('./entry-path.js');
-
       const draft = {
         collection: createCollection(),
         collectionFile: undefined,
@@ -796,8 +1099,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should give a new entry a folder of its own at the collection root', async () => {
-      const { createEntryPath } = await import('./entry-path.js');
-
       const draft = {
         collection: createCollection(),
         collectionFile: undefined,
@@ -815,8 +1116,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should keep an existing entry’s folder as the one the editor points at', async () => {
-      const { createEntryPath } = await import('./entry-path.js');
-
       const draft = {
         collection: createCollection(),
         collectionFile: undefined,
@@ -838,7 +1137,6 @@ describe('contents/draft/save/entry-path', () => {
 
     it('should keep each entry’s own file name without the subfolders mode', async () => {
       // @see https://github.com/decaporg/decap-cms/issues/7606
-      const { createEntryPath } = await import('./entry-path.js');
       const collection = createCollection();
 
       collection.nested = { subfolders: false };
@@ -860,7 +1158,6 @@ describe('contents/draft/save/entry-path', () => {
 
     it('should fall back to the collection path template when the folder is blank', async () => {
       // @see https://github.com/decaporg/decap-cms/issues/7094
-      const { createEntryPath } = await import('./entry-path.js');
       const { fillTemplate } = await import('$lib/services/common/template');
 
       vi.mocked(fillTemplate).mockReturnValue('my-post/_index');
@@ -868,7 +1165,7 @@ describe('contents/draft/save/entry-path', () => {
       const collection = createCollection();
 
       // Without a shared file name, a blank folder hands the path back to the collection options
-      collection.meta = { path: { widget: 'string' } };
+      collection.meta = { path: {} };
       collection._file.subPath = '{{slug}}/_index';
 
       const draft = {
@@ -888,10 +1185,9 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should fall back to the slug when the folder is blank and no path is configured', async () => {
-      const { createEntryPath } = await import('./entry-path.js');
       const collection = createCollection();
 
-      collection.meta = { path: { widget: 'string' } };
+      collection.meta = { path: {} };
 
       const draft = {
         collection,
@@ -910,8 +1206,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should move an entry up to the collection folder when the folder is cleared', async () => {
-      const { createEntryPath } = await import('./entry-path.js');
-
       const draft = {
         collection: createCollection(),
         collectionFile: undefined,
@@ -932,8 +1226,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should move an existing entry even though the slug is unchanged', async () => {
-      const { createEntryPath } = await import('./entry-path.js');
-
       const draft = {
         collection: createCollection(),
         collectionFile: undefined,
@@ -960,7 +1252,7 @@ describe('contents/draft/save/entry-path', () => {
       folder: 'content/pages',
       nested: {},
       meta: { path: { index_file: '_index' } },
-      _i18n: { defaultLocale: 'en', structureMap: {} },
+      _i18n: { defaultLocale: 'en', i18nEnabled: true, structureMap: {} },
     };
 
     const originalEntry = {
@@ -969,8 +1261,6 @@ describe('contents/draft/save/entry-path', () => {
     };
 
     it('should be false for a new entry', async () => {
-      const { keepsOriginalPath } = await import('./entry-path.js');
-
       expect(
         keepsOriginalPath({
           draft: { collection, isNew: true, originalEntry: undefined, currentPath: 'docs' },
@@ -981,8 +1271,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should be false when the slug has changed', async () => {
-      const { keepsOriginalPath } = await import('./entry-path.js');
-
       expect(
         keepsOriginalPath({
           draft: { collection, originalEntry, originalPath: 'docs', currentPath: 'docs' },
@@ -993,8 +1281,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should be false when the folder has changed', async () => {
-      const { keepsOriginalPath } = await import('./entry-path.js');
-
       expect(
         keepsOriginalPath({
           draft: { collection, originalEntry, originalPath: 'docs', currentPath: 'guides' },
@@ -1005,8 +1291,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should be true when neither the slug nor the folder has changed', async () => {
-      const { keepsOriginalPath } = await import('./entry-path.js');
-
       expect(
         keepsOriginalPath({
           draft: { collection, originalEntry, originalPath: 'docs', currentPath: '/docs/' },
@@ -1017,8 +1301,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should be false when a folder is chosen where none was recorded', async () => {
-      const { keepsOriginalPath } = await import('./entry-path.js');
-
       expect(
         keepsOriginalPath({
           draft: { collection, originalEntry, originalPath: undefined, currentPath: 'docs' },
@@ -1029,8 +1311,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should be true for an unchanged slug without the path editor', async () => {
-      const { keepsOriginalPath } = await import('./entry-path.js');
-
       expect(
         keepsOriginalPath({
           draft: { collection, originalEntry, originalPath: undefined, currentPath: undefined },
@@ -1045,7 +1325,7 @@ describe('contents/draft/save/entry-path', () => {
     // @see https://github.com/sveltia/sveltia-cms/issues/962
 
     /**
-     * Create a nested collection with localized slugs and the path editor enabled.
+     * Create a collection of nested entries with localized slugs and the path editor enabled.
      * @param {object} [overrides] Property overrides.
      * @returns {any} Collection.
      */
@@ -1059,6 +1339,7 @@ describe('contents/draft/save/entry-path', () => {
       _i18n: {
         defaultLocale: 'en',
         structure: 'multiple_folders',
+        i18nEnabled: true,
         structureMap: {},
         omitDefaultLocaleFromFilePath: false,
         omitDefaultLocaleFromPreviewPath: false,
@@ -1095,8 +1376,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should file a new entry below the localized folder chain', async () => {
-      const { createEntryPath } = await import('./entry-path.js');
-
       const draft = {
         collection: createCollection(),
         isNew: true,
@@ -1115,8 +1394,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should leave an untouched entry where it is in every locale', async () => {
-      const { createEntryPath } = await import('./entry-path.js');
-
       const draft = {
         collection: createCollection(),
         isNew: false,
@@ -1136,8 +1413,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should move an existing entry along with its localized folder', async () => {
-      const { createEntryPath } = await import('./entry-path.js');
-
       const draft = {
         collection: createCollection(),
         isNew: false,
@@ -1157,8 +1432,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should rename the folder in one locale only', async () => {
-      const { createEntryPath } = await import('./entry-path.js');
-
       const draft = {
         collection: createCollection(),
         isNew: false,
@@ -1178,8 +1451,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should name the folder after a bare slug for a locale that has just been enabled', async () => {
-      const { createEntryPath } = await import('./entry-path.js');
-
       const draft = {
         collection: createCollection(),
         isNew: false,
@@ -1196,7 +1467,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should keep the localized file name without the subfolders mode', async () => {
-      const { createEntryPath } = await import('./entry-path.js');
       const collection = createCollection({ nested: { subfolders: false } });
 
       const draft = {
@@ -1218,7 +1488,6 @@ describe('contents/draft/save/entry-path', () => {
     });
 
     it('should use the localized slug for a new locale without the subfolders mode', async () => {
-      const { createEntryPath } = await import('./entry-path.js');
       const collection = createCollection({ nested: { subfolders: false } });
 
       const draft = {

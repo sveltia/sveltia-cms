@@ -1,0 +1,296 @@
+import { describe, expect, test } from 'vitest';
+
+import {
+  hasDefaultSort,
+  isValidArray,
+  parseCustomSortableFields,
+  parseViewOptions,
+} from './options';
+
+describe('Test parseViewOptions()', () => {
+  test('returns empty options for undefined input', () => {
+    expect(parseViewOptions(undefined, 'items')).toEqual({ options: [] });
+  });
+
+  test('returns empty options for null input', () => {
+    expect(parseViewOptions(/** @type {any} */ (null), 'items')).toEqual({ options: [] });
+  });
+
+  test('returns empty options for non-object, non-array input', () => {
+    expect(parseViewOptions(/** @type {any} */ ('invalid'), 'items')).toEqual({ options: [] });
+    expect(parseViewOptions(/** @type {any} */ (42), 'items')).toEqual({ options: [] });
+  });
+
+  test('returns array as options when input is an array', () => {
+    const items = [{ name: 'a', field: 'f', pattern: 'p' }];
+
+    expect(parseViewOptions(items, 'items')).toEqual({ options: items });
+  });
+
+  test('returns empty options for empty array input', () => {
+    expect(parseViewOptions([], 'items')).toEqual({ options: [] });
+  });
+
+  test('extracts options from object using the given optionsKey', () => {
+    const options = [{ name: 'x', field: 'f', pattern: 'p' }];
+
+    expect(parseViewOptions({ items: options }, 'items')).toEqual({
+      options,
+      default: undefined,
+    });
+  });
+
+  test('returns empty options when object is missing the optionsKey', () => {
+    expect(parseViewOptions(/** @type {any} */ ({ default: 'x' }), 'items')).toEqual({
+      options: [],
+    });
+  });
+
+  test('returns empty options when object optionsKey value is not an array', () => {
+    expect(parseViewOptions(/** @type {any} */ ({ items: 'not an array' }), 'items')).toEqual({
+      options: [],
+    });
+  });
+
+  test('returns default condition when default name matches an option', () => {
+    const options = [
+      { name: 'foo', field: 'status', pattern: 'published' },
+      { name: 'bar', field: 'category', pattern: 'tech' },
+    ];
+
+    const result = parseViewOptions({ items: options, default: 'foo' }, 'items');
+
+    expect(result).toEqual({
+      options,
+      default: { field: 'status', pattern: 'published' },
+    });
+  });
+
+  test('returns the comparison options of the default option without its name and label', () => {
+    const options = [
+      { name: 'upcoming', label: 'Upcoming', field: 'date', gte: '{{today}}', in: ['a'] },
+      { name: 'bar', field: 'category', pattern: 'tech' },
+    ];
+
+    const result = parseViewOptions({ items: options, default: 'upcoming' }, 'items');
+
+    expect(result).toEqual({
+      options,
+      default: { field: 'date', gte: '{{today}}', in: ['a'] },
+    });
+  });
+
+  test('returns undefined default when default name does not match any option', () => {
+    const options = [{ name: 'foo', field: 'status', pattern: 'published' }];
+    const result = parseViewOptions({ items: options, default: 'nonexistent' }, 'items');
+
+    expect(result).toEqual({ options, default: undefined });
+  });
+
+  test('returns undefined default when no default name is supplied', () => {
+    const options = [{ name: 'foo', field: 'status', pattern: 'published' }];
+    const result = parseViewOptions({ items: options }, 'items');
+
+    expect(result).toEqual({ options, default: undefined });
+  });
+
+  test('respects the optionsKey parameter — different keys are independent', () => {
+    const options = [{ name: 'a', field: 'f', pattern: 'p' }];
+
+    expect(parseViewOptions({ filters: options }, 'filters')).toEqual({
+      options,
+      default: undefined,
+    });
+    expect(parseViewOptions({ groups: options }, 'groups')).toEqual({
+      options,
+      default: undefined,
+    });
+    // Wrong key → no options
+    expect(parseViewOptions({ filters: options }, 'groups')).toEqual({ options: [] });
+  });
+
+  test('projects only field and pattern into the default condition', () => {
+    const options = [{ name: 'foo', field: 'status', pattern: 'published', label: 'Published' }];
+    const result = parseViewOptions({ items: options, default: 'foo' }, 'items');
+
+    // 'label' and 'name' should not appear in the default condition
+    expect(result.default).toEqual({ field: 'status', pattern: 'published' });
+    expect(result.default).not.toHaveProperty('label');
+    expect(result.default).not.toHaveProperty('name');
+  });
+});
+
+describe('Test isValidArray()', () => {
+  test('returns true for valid array of strings', () => {
+    expect(isValidArray(['title', 'date', 'author'])).toBe(true);
+    expect(isValidArray(['single'])).toBe(true);
+    expect(isValidArray([])).toBe(true);
+  });
+
+  test('returns false for array with non-string elements', () => {
+    expect(isValidArray(['title', 123, 'author'])).toBe(false);
+    expect(isValidArray([123, 456])).toBe(false);
+    expect(isValidArray(['title', null])).toBe(false);
+    expect(isValidArray(['title', undefined])).toBe(false);
+    expect(isValidArray(['title', {}])).toBe(false);
+  });
+
+  test('returns false for non-arrays', () => {
+    expect(isValidArray('not-array')).toBe(false);
+    expect(isValidArray(123)).toBe(false);
+    expect(isValidArray({})).toBe(false);
+    expect(isValidArray(null)).toBe(false);
+    expect(isValidArray(undefined)).toBe(false);
+  });
+});
+
+describe('Test parseCustomSortableFields()', () => {
+  test('parses simple array of strings', () => {
+    const result = parseCustomSortableFields(['title', 'date', 'author']);
+
+    expect(result).toEqual({
+      keys: ['title', 'date', 'author'],
+      defaultKey: undefined,
+      defaultOrder: undefined,
+    });
+  });
+
+  test('parses advanced object with fields array', () => {
+    const config = {
+      fields: ['title', 'date'],
+      default: { field: 'title', direction: /** @type {'descending'} */ ('descending') },
+    };
+
+    const result = parseCustomSortableFields(config);
+
+    expect(result).toEqual({
+      keys: ['title', 'date'],
+      defaultKey: 'title',
+      defaultOrder: 'descending',
+    });
+  });
+
+  test('handles advanced object with invalid fields', () => {
+    const config = /** @type {any} */ ({
+      fields: 'not-array',
+      default: { field: 'title' },
+    });
+
+    const result = parseCustomSortableFields(config);
+
+    expect(result).toEqual({ keys: [] });
+  });
+
+  test('handles descending direction variations', () => {
+    const configs = [
+      {
+        fields: ['title'],
+        default: { field: 'title', direction: /** @type {'descending'} */ ('descending') },
+      },
+      {
+        fields: ['title'],
+        default: { field: 'title', direction: /** @type {'Descending'} */ ('Descending') },
+      },
+    ];
+
+    configs.forEach((config) => {
+      const result = parseCustomSortableFields(config);
+
+      expect(result.defaultOrder).toBe('descending');
+    });
+  });
+
+  test('defaults to ascending for other directions', () => {
+    const configs = [
+      {
+        fields: ['title'],
+        default: { field: 'title', direction: /** @type {'ascending'} */ ('ascending') },
+      },
+      { fields: ['title'], default: { field: 'title', direction: /** @type {any} */ ('invalid') } },
+      { fields: ['title'], default: { field: 'title' } },
+    ];
+
+    configs.forEach((config) => {
+      const result = parseCustomSortableFields(config);
+
+      expect(result.defaultOrder).toBe('ascending');
+    });
+  });
+
+  test('handles invalid input types', () => {
+    expect(parseCustomSortableFields(/** @type {any} */ (null))).toEqual({ keys: [] });
+    expect(parseCustomSortableFields(/** @type {any} */ (undefined))).toEqual({ keys: [] });
+    expect(parseCustomSortableFields(/** @type {any} */ ('string'))).toEqual({ keys: [] });
+    expect(parseCustomSortableFields(/** @type {any} */ (123))).toEqual({ keys: [] });
+  });
+
+  test('parses Decap CMS sortable field objects mixed with field names', () => {
+    expect(
+      parseCustomSortableFields([
+        'title',
+        { field: 'date', label: 'Publish date', default_sort: 'desc' },
+        { field: 'author' },
+        'commit_date',
+      ]),
+    ).toStrictEqual({
+      keys: ['title', 'date', 'author', 'commit_date'],
+      labels: { date: 'Publish date' },
+      defaultKey: 'date',
+      defaultOrder: 'descending',
+    });
+  });
+
+  test('sorts in ascending order by default with `asc` or `true`', () => {
+    expect(parseCustomSortableFields([{ field: 'title', default_sort: 'asc' }])).toStrictEqual({
+      keys: ['title'],
+      defaultKey: 'title',
+      defaultOrder: 'ascending',
+    });
+
+    expect(parseCustomSortableFields([{ field: 'title', default_sort: true }])).toStrictEqual({
+      keys: ['title'],
+      defaultKey: 'title',
+      defaultOrder: 'ascending',
+    });
+  });
+
+  test('ignores `default_sort: false` and uses the first of multiple defaults', () => {
+    expect(
+      parseCustomSortableFields([
+        { field: 'title', default_sort: false },
+        { field: 'date', default_sort: 'asc' },
+        { field: 'author', default_sort: 'desc' },
+      ]),
+    ).toStrictEqual({
+      keys: ['title', 'date', 'author'],
+      defaultKey: 'date',
+      defaultOrder: 'ascending',
+    });
+  });
+
+  test('ignores invalid items and blank labels', () => {
+    expect(
+      parseCustomSortableFields(
+        /** @type {any} */ ([
+          'title',
+          null,
+          123,
+          { label: 'No field' },
+          { field: 'date', label: '  ' },
+          { field: 'author', label: 42 },
+        ]),
+      ),
+    ).toStrictEqual({ keys: ['title', 'date', 'author'] });
+  });
+});
+
+describe('Test hasDefaultSort()', () => {
+  test('detects an item with the `default_sort` option enabled', () => {
+    expect(hasDefaultSort({ field: 'title', default_sort: true })).toBe(true);
+    expect(hasDefaultSort({ field: 'title', default_sort: 'asc' })).toBe(true);
+    expect(hasDefaultSort({ field: 'title', default_sort: 'desc' })).toBe(true);
+    expect(hasDefaultSort({ field: 'title', default_sort: false })).toBe(false);
+    expect(hasDefaultSort({ field: 'title' })).toBe(false);
+    expect(hasDefaultSort('title')).toBe(false);
+  });
+});

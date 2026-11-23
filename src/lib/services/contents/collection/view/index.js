@@ -2,15 +2,18 @@ import equal from 'fast-deep-equal';
 import { untrack } from 'svelte';
 
 import { backend } from '$lib/services/backends';
+import { lockedBranch } from '$lib/services/backends/branch-access';
+import { getConditionKey, getGroupingKey, getViewConditions } from '$lib/services/common/view';
+import { isReadonly } from '$lib/services/config/readonly';
 import { allEntries } from '$lib/services/contents';
 import { selectedCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection, selectedEntries } from '$lib/services/contents/collection/entries';
+import { getBulkEditableFields } from '$lib/services/contents/collection/entries/bulk-edit/config';
+import { countQuotaEntries } from '$lib/services/contents/collection/entries/count';
+import { isManuallyOrdered } from '$lib/services/contents/collection/entries/reorder/config';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
-import {
-  filterNestedEntries,
-  isNestedCollection,
-  nestedFilterPath,
-} from '$lib/services/contents/collection/nested';
+import { filterNestedEntries, nestedFilterPath } from '$lib/services/contents/collection/nested';
+import { usesCurrentTime } from '$lib/services/contents/collection/view/conditions';
 import { filterEntries, parseFilterConfig } from '$lib/services/contents/collection/view/filter';
 import {
   getReorderGroupingConditions,
@@ -21,6 +24,7 @@ import {
   currentView,
   entryListSettings,
   initSettings,
+  viewBeforeReorder,
 } from '$lib/services/contents/collection/view/settings';
 import { sortEntries } from '$lib/services/contents/collection/view/sort';
 import { getSortConfig } from '$lib/services/contents/collection/view/sort-keys';
@@ -29,27 +33,42 @@ import {
   createDerivedState,
   createRawState,
   createRootEffect,
+  createStableDerivedState,
 } from '$lib/services/utils/state.svelte';
 import { swapUnpublishedEntries, unpublishedEntries } from '$lib/services/workflow';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
 /**
- * @import { Entry, EntryListView, InternalEntryCollection } from '$lib/types/private';
+ * @import {
+ * BulkEditErrors,
+ * BulkEdits,
+ * } from '$lib/services/contents/collection/entries/bulk-edit';
+ * @import {
+ * Entry,
+ * EntryListView,
+ * GroupingConditions,
+ * InternalEntryCollection,
+ * } from '$lib/types/private';
  */
 
 /**
  * @typedef {object} CollectionState
  * @property {boolean} isEntryCollection Whether the selected collection is an entry collection.
- * @property {boolean} canCreate Whether new entries can be created in the selected collection.
+ * @property {boolean} readonly Whether the selected collection is read-only, because of its own or
+ * the global `readonly` option. Nothing can be created, deleted or reordered in it then.
+ * @property {boolean} canCreate Whether new entries can be created in the selected collection. It’s
+ * `false` with the `create: false` option, and also with `limit: 0`, which forbids creating entries
+ * the same way rather than being a quota to reach.
  * @property {boolean} canDelete Whether entries can be deleted from the selected collection.
  * @property {boolean} canReorder Whether entries in the selected collection can be reordered.
+ * @property {boolean} canBulkEdit Whether entries in the selected collection can be edited in bulk.
  * @property {number} quota The maximum number of entries allowed in the selected collection.
  * @property {number} remaining The number of additional entries that can be added to the selected
  * collection before reaching the quota.
  * @property {boolean} nearingQuota Whether the number of remaining entries is at or below the
  * warning threshold.
- * @property {boolean} creationDisabled Whether creating new entries is currently disabled, either
- * due to permissions or because the quota has been reached.
+ * @property {boolean} creationDisabled Whether creating new entries is currently disabled, due to
+ * permissions, because the collection is read-only or because the quota has been reached.
  */
 
 /**
@@ -75,11 +94,87 @@ export const reorderedEntries = createRawState([]);
 export const reorderDirty = createRawState(false);
 
 /**
- * View snapshot taken when entering reorder mode, restored on exit so the user’s prior sort/filter/
- * grouping returns once they finish (or cancel) reordering. `undefined` while not in reorder mode.
- * @type {EntryListView | undefined}
+ * Whether the entry collection is in bulk edit mode, which shows the listed entries in a table
+ * where their simple fields can be edited at once. Use {@link setBulkEditMode} to change it, so the
+ * pending edits are reset at the same time.
  */
-let viewBeforeReorder;
+export const bulkEditing = createRawState(false);
+
+/**
+ * Pending edits made in bulk edit mode, keyed by entry ID, then by field name. Only the values that
+ * differ from the stored ones are kept, so the mode has unsaved changes if this isn’t empty.
+ * @type {{ current: BulkEdits }}
+ */
+export const bulkEdits = createRawState({});
+
+/**
+ * Whether the pending edits made in bulk edit mode are being saved. The cells are read-only then,
+ * as the mode is left once the commit is made, which would discard an edit made in the meantime.
+ */
+export const bulkEditSaving = createRawState(false);
+
+/**
+ * Entries shown in bulk edit mode, published by the bulk editor when it’s opened so the toolbar
+ * Save button can read them. The list is a snapshot, so a background refresh doesn’t pull the rows
+ * from under the user.
+ * @type {{ current: Entry[] }}
+ */
+export const bulkEditedEntries = createRawState([]);
+
+/**
+ * Validation messages of the pending edits made in bulk edit mode, keyed by entry ID, then by field
+ * name. Empty until the user tries to save invalid edits; it’s then kept up to date as the edits
+ * change, so a fixed field stops being reported.
+ * @type {{ current: BulkEditErrors }}
+ */
+export const bulkEditErrors = createRawState({});
+
+/**
+ * Check whether the entry collection is in reorder or bulk edit mode, which rewrite the published
+ * entries.
+ * @returns {boolean} Result.
+ */
+const isRewriting = () => reordering.current || bulkEditing.current;
+/**
+ * How often {@link viewTime} is updated while a time-based view filter or group is applied. A
+ * minute keeps the list close to the clock without recomputing it for nothing.
+ */
+const VIEW_TIME_INTERVAL = 60000;
+
+/**
+ * Current date and time that the template tags in the view filters and groups resolve to, such as
+ * `{{today}}` in an “Upcoming events” filter. It’s updated every minute while the current view has
+ * such a condition, so that the list is recomputed as time goes by, e.g. when an event starts or
+ * the day changes, and not only when the view or the entries change. See {@link viewUsesTime}.
+ * @type {{ current: Date }}
+ */
+export const viewTime = createRawState(new Date());
+
+/**
+ * Whether the current view has a filter or group depending on the current time.
+ * @type {{ readonly current: boolean }}
+ */
+export const viewUsesTime = createDerivedState(() => {
+  const { filters = [], group } = currentView.current;
+
+  return filters.some(usesCurrentTime) || usesCurrentTime(group);
+});
+
+/**
+ * Sorting conditions of the current view. This and the other view conditions below are picked out
+ * of {@link currentView} one by one, so replacing the view to switch between list and grid, or to
+ * collapse a group, doesn’t sort, filter and group the entries all over again: each step only
+ * reruns when the conditions it uses have actually changed.
+ */
+const sortConditions = createStableDerivedState(() => currentView.current.sort);
+/**
+ * Filtering conditions of the current view. See {@link sortConditions}.
+ */
+const filterConditions = createStableDerivedState(() => currentView.current.filters);
+/**
+ * Grouping conditions of the current view. See {@link sortConditions}.
+ */
+const groupConditions = createStableDerivedState(() => currentView.current.group);
 
 /**
  * List of the entries shown in the entry list for the selected entry collection. For a nested
@@ -97,7 +192,7 @@ export const listedEntries = createDerivedState(() => {
   }
 
   /**
-   * Limit the entries to the folder currently browsed in a nested collection.
+   * Limit the entries to the folder currently browsed in a collection with nested entries.
    * @param {Entry[]} entries Entries to be filtered.
    * @returns {Entry[]} Filtered entries.
    */
@@ -106,9 +201,9 @@ export const listedEntries = createDerivedState(() => {
 
   const entries = getEntriesByCollection(_collection.name);
 
-  // Don’t swap while reordering, because the reorder UI persists an order field on the published
-  // entries, and the draft version must not leak into that commit
-  if (reordering.current) {
+  // Don’t swap while reordering or bulk editing, because these modes rewrite the published entries,
+  // and the draft version must not leak into that commit
+  if (isRewriting()) {
     return filterNested(entries);
   }
 
@@ -125,17 +220,16 @@ export const listedEntries = createDerivedState(() => {
 });
 
 /**
- * List of unpublished entries for the selected entry collection that have never been published,
- * sorted and filtered with the same view settings as {@link entryGroups}. Unlike an update to an
- * existing entry, which replaces the published version in {@link listedEntries}, these are listed
- * in a separate group above the published entries.
+ * Unpublished entries for the selected entry collection that have never been published, before the
+ * view settings are applied. Unlike an update to an existing entry, which replaces the published
+ * version in {@link listedEntries}, these are listed in a separate group above the published
+ * entries.
  * @type {{ readonly current: Entry[] }}
  */
-export const listedUnpublishedEntries = createDerivedState(() => {
+const newUnpublishedEntries = createDerivedState(() => {
   const { current: _collection } = selectedCollection;
-  const { current: _currentView } = currentView;
 
-  if (_collection?._type !== 'entry' || reordering.current) {
+  if (_collection?._type !== 'entry' || isRewriting()) {
     return [];
   }
 
@@ -143,38 +237,51 @@ export const listedUnpublishedEntries = createDerivedState(() => {
   // rather than by path, which a rename would break
   const swappedIn = new Set(listedEntries.current);
 
-  /** @type {Entry[]} */
-  let entries = filterNestedEntries({
+  return filterNestedEntries({
     collection: _collection,
     entries: unpublishedEntries.current.filter(
       (entry) => entry.workflow.collectionName === _collection.name && !swappedIn.has(entry),
     ),
     dirPath: nestedFilterPath.current,
   });
+});
+
+/**
+ * List of unpublished entries for the selected entry collection that have never been published,
+ * sorted and filtered with the same view settings as {@link entryGroups}. See
+ * {@link newUnpublishedEntries}.
+ * @type {{ readonly current: Entry[] }}
+ */
+export const listedUnpublishedEntries = createDerivedState(() => {
+  let entries = newUnpublishedEntries.current;
 
   if (!entries.length) {
     return [];
   }
 
-  if (_currentView.sort) {
-    entries = sortEntries(entries, _collection, _currentView.sort);
+  const _collection = /** @type {InternalEntryCollection} */ (selectedCollection.current);
+  const { current: sort } = sortConditions;
+  const { current: filters } = filterConditions;
+
+  if (sort) {
+    entries = sortEntries(entries, _collection, sort);
   }
 
-  if (_currentView.filters) {
-    entries = filterEntries(entries, _collection, _currentView.filters);
+  if (filters) {
+    entries = filterEntries(entries, _collection, filters, viewTime.current);
   }
 
   return entries;
 });
 
 /**
- * Map from entry ID to the entry’s index in {@link listedEntries}, used by list rows to resolve
- * their `aria-rowindex` in O(1). Rows are appended by an infinite scroller and never unmounted, so
- * once a large collection has been scrolled through, an `indexOf()` per row would make every
- * subsequent list update O(n²).
+ * Number of entries in the entry list for the selected entry collection, published or not, before
+ * the view filters narrow them down. The list controls depend on this rather than on what’s shown,
+ * so that they stay available, and a filter hiding every entry can be reset.
+ * @type {{ readonly current: number }}
  */
-export const listedEntryIndexMap = createDerivedState(
-  () => new Map(listedEntries.current.map((entry, index) => [entry.id, index])),
+export const listedEntryCount = createDerivedState(
+  () => listedEntries.current.length + newUnpublishedEntries.current.length,
 );
 
 /**
@@ -192,40 +299,47 @@ const QUOTA_WARNING_THRESHOLD = 5;
  */
 export const collectionState = createDerivedState(() => {
   const { current: _selectedCollection } = selectedCollection;
+  const readonly = !!_selectedCollection && isReadonly({ collection: _selectedCollection });
 
   if (_selectedCollection?._type === 'entry') {
-    const canCreate = _selectedCollection.create ?? true;
-    const canDelete = _selectedCollection.delete ?? true;
+    // `limit: 0` means no entries can ever be created, so it’s treated like `create: false`
+    const canCreate = (_selectedCollection.create ?? true) && _selectedCollection.limit !== 0;
+    const canDelete = !readonly && (_selectedCollection.delete ?? true);
     // Reordering writes the new order straight to the configured branch rather than going through
-    // review, so it’s not something an Open Authoring contributor can do
-    const canReorder = !!_selectedCollection.reorder && !openAuthoring.current;
+    // review, even in a collection using Editorial Workflow, so it’s not something an Open
+    // Authoring contributor or a user who can’t push to the branch can do. An entry collection
+    // storing all the entries in one file can always be reordered
+    const canWriteToBranch = !readonly && !openAuthoring.current && !lockedBranch.current;
+    const canReorder = canWriteToBranch && isManuallyOrdered(_selectedCollection);
+    // Bulk editing writes straight to the configured branch as well, for the same reasons
+    const canBulkEdit = canWriteToBranch && !!getBulkEditableFields(_selectedCollection).length;
     const quota = _selectedCollection?.limit ?? Infinity;
-
-    // In a nested collection, `listedEntries` only holds the folder being browsed, while the
-    // quota applies to the whole collection
-    const entryCount = isNestedCollection(_selectedCollection)
-      ? getEntriesByCollection(_selectedCollection.name).length
-      : listedEntries.current.length;
-
+    // The quota applies to the whole collection, including the entries that only exist in a pull
+    // request, so it agrees with the count shown next to the collection in the sidebar
+    const entryCount = countQuotaEntries(_selectedCollection.name);
     const remaining = quota < Infinity ? quota - entryCount : Infinity;
 
     return {
       isEntryCollection: true,
+      readonly,
       canCreate,
       canDelete,
       canReorder,
+      canBulkEdit,
       quota,
       remaining,
       nearingQuota: remaining > 0 && remaining <= QUOTA_WARNING_THRESHOLD,
-      creationDisabled: !canCreate || remaining <= 0,
+      creationDisabled: !canCreate || readonly || remaining <= 0,
     };
   }
 
   return {
     isEntryCollection: false,
+    readonly,
     canCreate: false,
     canDelete: false,
     canReorder: false,
+    canBulkEdit: false,
     quota: Infinity,
     remaining: Infinity,
     nearingQuota: false,
@@ -234,32 +348,84 @@ export const collectionState = createDerivedState(() => {
 });
 
 /**
- * Sorted, filtered and grouped entries for the selected entry collection. `sortEntries()` and
- * `groupEntries()` may return localized labels, and they read the current app locale, so the
- * groups are also recomputed when the locale changes.
+ * {@link listedEntries} sorted with the current view’s conditions. Sorting is the costliest step,
+ * as it reads a value from every entry, so it comes first: changing a filter, or {@link viewTime}
+ * ticking, then only reruns the cheaper steps below. `sortEntries()` reads the current app locale,
+ * so this is also recomputed when the locale changes.
+ * @type {{ readonly current: Entry[] }}
+ */
+const sortedEntries = createDerivedState(() => {
+  const collection = /** @type {InternalEntryCollection} */ (selectedCollection.current);
+  const { current: entries } = listedEntries;
+  const { current: sort } = sortConditions;
+
+  return sort ? sortEntries(entries, collection, sort) : entries;
+});
+
+/**
+ * {@link sortedEntries} filtered with the current view’s conditions.
+ * @type {{ readonly current: Entry[] }}
+ */
+const filteredEntries = createDerivedState(() => {
+  const collection = /** @type {InternalEntryCollection} */ (selectedCollection.current);
+  const { current: entries } = sortedEntries;
+  const { current: filters } = filterConditions;
+
+  return filters ? filterEntries(entries, collection, filters, viewTime.current) : entries;
+});
+
+/**
+ * Sorted, filtered and grouped entries for the selected entry collection. `groupEntries()` may
+ * return localized labels, as it reads the current app locale, so the groups are also recomputed
+ * when the locale changes. They are also recomputed as {@link viewTime} ticks while a time-based
+ * filter or group is applied.
  * @type {{ readonly current: { name: string, entries: Entry[] }[] }}
  */
 export const entryGroups = createDerivedState(() => {
-  const { current: _currentView } = currentView;
   const collection = /** @type {InternalEntryCollection} */ (selectedCollection.current);
-  /** @type {Entry[]} */
-  let entries = [...listedEntries.current];
+  const { current: entries } = listedEntries;
 
-  // Reset the groups if the current collection is empty or a file/singleton collection
+  // Reset the groups if the current collection is empty or a file/singleton collection. This is
+  // checked before the entries are sorted and filtered, so neither is done for nothing
   if (!entries.length || !!getCollectionFilesByEntry(collection, entries[0]).length) {
     return [];
   }
 
-  if (_currentView.sort) {
-    entries = sortEntries(entries, collection, _currentView.sort);
-  }
+  const { current: group } = groupConditions;
 
-  if (_currentView.filters) {
-    entries = filterEntries(entries, collection, _currentView.filters);
-  }
-
-  return groupEntries(entries, collection, _currentView.group);
+  return groupEntries(
+    filteredEntries.current,
+    collection,
+    group,
+    viewTime.current,
+    sortConditions.current,
+  );
 });
+
+/**
+ * Entries the entry list shows, the unpublished ones included, which the selection is limited to.
+ * The entries in a collapsed group count as shown, as Select All selects them too.
+ * @type {{ readonly current: Set<Entry> }}
+ */
+const shownEntries = createDerivedState(
+  () =>
+    new Set([
+      ...listedUnpublishedEntries.current,
+      ...entryGroups.current.flatMap(({ entries }) => entries),
+    ]),
+);
+
+/**
+ * Map from entry ID to the entry’s row index in the list, used by list rows to resolve their
+ * `aria-rowindex` in O(1). The index follows the displayed order of {@link shownEntries}: the
+ * unpublished entries come first, then the entries of every group, sorted and filtered, as the rows
+ * of every group make up one grid. Rows are appended by an infinite scroller and never unmounted,
+ * so once a large collection has been scrolled through, an `indexOf()` per row would make every
+ * subsequent list update O(n²).
+ */
+export const listedEntryIndexMap = createDerivedState(
+  () => new Map([...shownEntries.current].map((entry, index) => [entry.id, index])),
+);
 
 /**
  * Restore the view settings of the given entry collection from {@link entryListSettings}, falling
@@ -270,7 +436,9 @@ export const entryGroups = createDerivedState(() => {
 const restoreView = (collection, _allEntries) => {
   const { view_filters: viewFilters, view_groups: viewGroups } = collection;
   /** @type {EntryListView} */
-  const view = { ...(entryListSettings.current?.[collection.name] ?? { type: 'list' }) };
+  // The view type is only set once the user picks one; until then, the default applies. See
+  // `getEntryViewType()`
+  const view = { ...entryListSettings.current?.[collection.name] };
 
   const { default: defaultSort } = getSortConfig({
     collection,
@@ -278,8 +446,34 @@ const restoreView = (collection, _allEntries) => {
     isCommitDateAvailable: _allEntries.some((entry) => !!entry.commitDate),
   });
 
+  // The commit metadata may arrive after the entries, so a saved sort key depending on it is
+  // validated as if it were there, rather than dropped while it’s on its way
+  const { keys: sortKeys } = getSortConfig({
+    collection,
+    isCommitAuthorAvailable: true,
+    isCommitDateAvailable: true,
+  });
+
   const { default: defaultFilter } = parseFilterConfig(viewFilters);
-  const { default: defaultGroup } = parseGroupConfig(viewGroups);
+  const { options: groupOptions, default: defaultGroup } = parseGroupConfig(viewGroups);
+
+  // Drop a saved sort key or group that has been removed from the configuration since the view was
+  // saved, so the defaults apply instead. A stale group would otherwise stay applied while the menu
+  // no longer offers a way to undo it. Stale filters are ignored by `filterEntries()` instead
+  if (view.sort?.key !== undefined && !sortKeys.includes(view.sort.key)) {
+    delete view.sort;
+  }
+
+  if (
+    view.group &&
+    !groupOptions.some(
+      (option) =>
+        getConditionKey(getViewConditions(option)) ===
+        getConditionKey(/** @type {GroupingConditions} */ (view.group)),
+    )
+  ) {
+    delete view.group;
+  }
 
   if (view.sort === undefined && defaultSort) {
     view.sort = defaultSort;
@@ -311,9 +505,9 @@ export const setReorderMode = (value) => {
     reorderDirty.current = false;
 
     // Restore the snapshot taken when entering reorder mode, if any.
-    if (viewBeforeReorder) {
-      currentView.current = viewBeforeReorder;
-      viewBeforeReorder = undefined;
+    if (viewBeforeReorder.current) {
+      currentView.current = viewBeforeReorder.current.view;
+      viewBeforeReorder.current = undefined;
     }
 
     reordering.current = false;
@@ -335,8 +529,9 @@ export const setReorderMode = (value) => {
   const view = currentView.current;
   const reorderGroup = getReorderGroupingConditions(selectedCollection.current);
 
-  // Snapshot so we can restore on exit.
-  viewBeforeReorder = view;
+  // Snapshot so we can restore on exit. The view settings save it in place of the reorder view, so
+  // the user’s own view is kept even if reordering is never finished
+  viewBeforeReorder.current = { collectionName: selectedCollection.current?.name, view };
 
   /** @type {Partial<EntryListView>} */
   const overrides = {};
@@ -350,7 +545,7 @@ export const setReorderMode = (value) => {
   }
 
   if (reorderGroup) {
-    if (view.group?.field !== reorderGroup.field || view.group?.pattern !== reorderGroup.pattern) {
+    if (getGroupingKey(view.group) !== getGroupingKey(reorderGroup)) {
       overrides.group = reorderGroup;
     }
   } else if (view.group) {
@@ -364,17 +559,54 @@ export const setReorderMode = (value) => {
   reordering.current = true;
 };
 
+/**
+ * Enter or exit bulk edit mode. The pending edits are discarded either way: on entering, so the
+ * mode starts afresh, and on exiting, whether they have been saved or cancelled. Unlike reorder
+ * mode, the view is kept as it is, so the user can pick the entries to edit by filtering the list
+ * first.
+ * @param {boolean} value Whether to enter bulk edit mode.
+ */
+export const setBulkEditMode = (value) => {
+  bulkEdits.current = {};
+  bulkEditErrors.current = {};
+  bulkEditedEntries.current = [];
+  bulkEditing.current = value;
+};
+
 // Restore the view settings when a different entry collection is selected. The entries are also
-// tracked, because the available sort keys depend on them
+// tracked, because the available sort keys depend on them. While the collection is being reordered,
+// the saved view is the one from before reordering, which exiting the mode restores, so a change to
+// the entries, like an asset upload or the commit metadata arriving, mustn’t restore it midway. The
+// snapshot is only there in reorder mode, and switching collections discards it after this runs
 createRootEffect(() => {
   const collection = selectedCollection.current;
   const { current: _allEntries } = allEntries;
 
   if (collection?._type === 'entry') {
     untrack(() => {
-      restoreView(collection, _allEntries);
+      if (viewBeforeReorder.current?.collectionName !== collection.name) {
+        restoreView(collection, _allEntries);
+      }
     });
   }
+});
+
+// Keep the time-based view filters and groups up to date. The time is reset as soon as such a
+// condition is applied, as the last tick may date from long ago
+createRootEffect(() => {
+  if (!viewUsesTime.current) {
+    return undefined;
+  }
+
+  viewTime.current = new Date();
+
+  const timer = setInterval(() => {
+    viewTime.current = new Date();
+  }, VIEW_TIME_INTERVAL);
+
+  return () => {
+    clearInterval(timer);
+  };
 });
 
 createRootEffect(() => {
@@ -385,9 +617,12 @@ createRootEffect(() => {
   }
 });
 
+// Clear the selection when the listed entries or the filters change, so it never includes an entry
+// the current view hides, which a bulk action like Delete would otherwise apply to
 createRootEffect(() => {
   const entries = listedEntries.current;
 
+  void filterConditions.current;
   selectedEntries.current = [];
 
   if (untrack(() => prefs.devModeEnabled)) {
@@ -396,18 +631,40 @@ createRootEffect(() => {
   }
 });
 
+// Drop the entries the view no longer shows from the selection, e.g. an event that a `{{now}}`
+// filter hides as time goes by, which doesn’t change the listed entries or the filters. The shown
+// entries are only computed while something is selected, as nothing else may need them
+createRootEffect(() => {
+  const selected = selectedEntries.current;
+
+  if (!selected.length) {
+    return;
+  }
+
+  const { current: shown } = shownEntries;
+
+  if (selected.some((entry) => !shown.has(entry))) {
+    selectedEntries.current = selected.filter((entry) => shown.has(entry));
+  }
+});
+
 createRootEffect(() => {
   const collection = selectedCollection.current;
 
-  // Reset the reorder state when switching collections, to avoid accidentally reordering entries in
-  // the wrong collection or leaving the UI in a broken state if the new collection doesn’t support
-  // reordering. Discard any view snapshot first so it isn’t restored against the wrong collection,
-  // which would otherwise corrupt the new collection’s persisted view via `entryListSettings`.
+  // Reset the reorder and bulk edit states when switching collections, to avoid accidentally saving
+  // entries in the wrong collection or leaving the UI in a broken state if the new collection
+  // doesn’t support the mode. Discard any view snapshot first so it isn’t restored against the
+  // wrong collection, which would otherwise corrupt the new collection’s persisted view via
+  // `entryListSettings`.
   untrack(() => {
-    viewBeforeReorder = undefined;
+    viewBeforeReorder.current = undefined;
 
     if (reordering.current) {
       setReorderMode(false);
+    }
+
+    if (bulkEditing.current) {
+      setBulkEditMode(false);
     }
   });
 

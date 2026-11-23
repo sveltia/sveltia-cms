@@ -1,14 +1,16 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { getCollection } from '$lib/services/contents/collection';
-import { getCollectionFile } from '$lib/services/contents/collection/files';
 import { buildDraft } from '$lib/services/contents/draft/create';
 import { validateDraft, validateEntry } from '$lib/services/contents/draft/validate';
 import { expandInvalidFields } from '$lib/services/contents/editor/fields';
-import { validateWorkflowEntry } from '$lib/services/workflow/validate';
+import {
+  canMoveToStatus,
+  canPublish,
+  validateWorkflowEntry,
+} from '$lib/services/workflow/validate';
 
 vi.mock('$lib/services/contents/collection');
-vi.mock('$lib/services/contents/collection/files');
 vi.mock('$lib/services/contents/draft/create');
 vi.mock('$lib/services/contents/draft/validate');
 vi.mock('$lib/services/contents/editor/fields');
@@ -49,7 +51,7 @@ describe('workflow/validate', () => {
       vi.mocked(validateEntry).mockReturnValue(true);
 
       expect(validateWorkflowEntry({ entry, draft: openDraft })).toBe(true);
-      expect(validateEntry).toHaveBeenCalledWith({ draft: openDraft });
+      expect(validateEntry).toHaveBeenCalledWith({ draft: openDraft, enforceRequired: true });
       expect(buildDraft).not.toHaveBeenCalled();
       expect(expandInvalidFields).not.toHaveBeenCalled();
     });
@@ -99,14 +101,20 @@ describe('workflow/validate', () => {
       /** @type {any} */
       const collectionFile = { name: 'about', file: 'content/about.md' };
       /** @type {any} */
-      const fileEntry = { ...entry, workflow: { ...entry.workflow, fileName: 'about' } };
+      const fileCollection = { name: 'pages', _type: 'file', _fileMap: { about: collectionFile } };
 
-      vi.mocked(getCollectionFile).mockReturnValue(collectionFile);
+      /** @type {any} */
+      const fileEntry = {
+        ...entry,
+        workflow: { ...entry.workflow, collectionName: 'pages', fileName: 'about' },
+      };
+
+      vi.mocked(getCollection).mockReturnValue(fileCollection);
 
       expect(validateWorkflowEntry({ entry: fileEntry })).toBe(true);
 
       expect(buildDraft).toHaveBeenCalledWith({
-        collection,
+        collection: fileCollection,
         collectionFile,
         originalEntry: fileEntry,
       });
@@ -123,10 +131,48 @@ describe('workflow/validate', () => {
       /** @type {any} */
       const fileEntry = { ...entry, workflow: { ...entry.workflow, fileName: 'about' } };
 
-      vi.mocked(getCollectionFile).mockReturnValue(undefined);
+      vi.mocked(getCollection).mockReturnValue(
+        /** @type {any} */ ({ name: 'pages', _type: 'file', _fileMap: {} }),
+      );
 
       expect(validateWorkflowEntry({ entry: fileEntry })).toBe(true);
       expect(buildDraft).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('canMoveToStatus', () => {
+    test('always lets an entry go back to the drafting stage', () => {
+      vi.mocked(validateDraft).mockReturnValue(/** @type {any} */ ({ valid: false }));
+
+      expect(canMoveToStatus({ entry, status: 'draft' })).toBe(true);
+      expect(validateDraft).not.toHaveBeenCalled();
+    });
+
+    test('checks the entry before it moves towards publication', () => {
+      expect(canMoveToStatus({ entry, status: 'pending_review' })).toBe(true);
+
+      vi.mocked(validateDraft).mockReturnValue(/** @type {any} */ ({ valid: false }));
+
+      expect(canMoveToStatus({ entry, status: 'pending_publish' })).toBe(false);
+    });
+  });
+
+  describe('canPublish', () => {
+    test('checks the entry before it’s published', () => {
+      expect(canPublish({ entry })).toBe(true);
+
+      vi.mocked(validateDraft).mockReturnValue(/** @type {any} */ ({ valid: false }));
+
+      expect(canPublish({ entry })).toBe(false);
+    });
+
+    test('doesn’t check a pending removal, which has no content', () => {
+      vi.mocked(validateDraft).mockReturnValue(/** @type {any} */ ({ valid: false }));
+
+      const removal = { ...entry, workflow: { ...entry.workflow, status: 'pending_deletion' } };
+
+      expect(canPublish({ entry: removal })).toBe(true);
+      expect(validateDraft).not.toHaveBeenCalled();
     });
   });
 });

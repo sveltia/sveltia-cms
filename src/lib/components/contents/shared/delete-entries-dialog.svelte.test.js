@@ -1,0 +1,420 @@
+import { flushSync } from 'svelte';
+import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
+import { render } from 'vitest-browser-svelte';
+
+import { allAssetFolders } from '$lib/services/assets/folders';
+import { backendName } from '$lib/services/backends';
+import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
+import { getCollection, selectedCollection } from '$lib/services/contents/collection';
+import {
+  contentUpdatesToast,
+  UPDATE_TOAST_DEFAULT_STATE,
+} from '$lib/services/contents/collection/data';
+import { deleteEntries } from '$lib/services/contents/collection/data/delete';
+import { selectedEntries } from '$lib/services/contents/collection/entries';
+import { allUnpublishedEntries } from '$lib/services/workflow';
+import { deleteWorkflowEntries, discardWorkflowEntries } from '$lib/services/workflow/save';
+import {
+  createMockAsset,
+  createMockEntry,
+  initTestConfig,
+  setAssets,
+  setEntries,
+} from '$lib/test/config';
+import { getShownToastAlert, waitForToastsToHide } from '$lib/test/toast';
+
+import DeleteEntriesDialog from './delete-entries-dialog.svelte';
+
+vi.mock('$lib/services/contents/collection/data/delete', () => ({
+  updateStores: vi.fn(),
+  deleteEntries: vi.fn(),
+}));
+vi.mock('$lib/services/workflow/save', () => ({
+  upsertUnpublishedEntry: vi.fn(),
+  removeUnpublishedEntry: vi.fn(),
+  saveWorkflowChanges: vi.fn(),
+  updateWorkflowStatus: vi.fn(),
+  publishWorkflowEntry: vi.fn(),
+  discardWorkflowEntry: vi.fn(),
+  deleteWorkflowEntry: vi.fn(),
+  discardWorkflowEntries: vi.fn(),
+  deleteWorkflowEntries: vi.fn(),
+}));
+
+const entries = [
+  createMockEntry({ slug: 'a', content: { _default: { title: 'A' } } }),
+  createMockEntry({ slug: 'b', content: { _default: { title: 'B' } } }),
+  createMockEntry({ slug: 'c', content: { _default: { title: 'C' } } }),
+];
+
+/** @type {any} */
+const postsCollection = {
+  name: 'posts',
+  label: 'Posts',
+  folder: 'content/posts',
+  fields: [
+    { name: 'title', widget: 'string' },
+    { name: 'image', widget: 'image' },
+  ],
+};
+
+describe('DeleteEntriesDialog', () => {
+  beforeAll(async () => {
+    await initTestConfig({ collections: [postsCollection] });
+  });
+
+  beforeEach(() => {
+    backendName.current = undefined;
+    setEntries(entries);
+    allUnpublishedEntries.current = [];
+    selectedCollection.current = getCollection('posts');
+  });
+
+  test('asks for confirmation, then deletes the selected entries', async () => {
+    vi.mocked(deleteEntries).mockResolvedValue(undefined);
+    selectedEntries.current = [entries[0], entries[1]];
+
+    const props = $state({ open: true });
+
+    await render(DeleteEntriesDialog, props);
+
+    const dialog = page.getByRole('alertdialog', { name: 'Delete Entries' });
+
+    await expect
+      .element(dialog)
+      .toHaveTextContent(
+        'Delete Entries Are you sure you want to delete the selected 2 entries? Delete Cancel',
+      );
+    await dialog.getByRole('button', { name: 'Delete' }).click();
+
+    await vi.waitFor(() =>
+      expect(deleteEntries).toHaveBeenCalledWith([entries[0], entries[1]], []),
+    );
+    await expect.poll(() => selectedEntries.current).toEqual([]);
+    expect(props.open).toBe(false);
+  });
+
+  test('words the confirmation for all the entries', async () => {
+    selectedEntries.current = entries;
+
+    await render(DeleteEntriesDialog, { open: true });
+    await expect
+      .element(page.getByRole('alertdialog'))
+      .toHaveTextContent(
+        'Delete Entries Are you sure you want to delete all the entries? Delete Cancel',
+      );
+  });
+
+  test('discards an unpublished entry instead of deleting it', async () => {
+    vi.mocked(discardWorkflowEntries).mockResolvedValue(undefined);
+    contentUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE };
+
+    const draft = createMockEntry({
+      slug: 'd',
+      entry: { workflow: /** @type {any} */ ({ status: 'draft', collectionName: 'posts' }) },
+    });
+
+    // A selected entry must be listed, or it’s dropped from the selection. Listing it clears the
+    // selection, so it’s selected afterwards
+    allUnpublishedEntries.current = [/** @type {any} */ (draft)];
+    flushSync();
+    selectedEntries.current = [draft];
+
+    await render(DeleteEntriesDialog, { open: true });
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
+
+    await vi.waitFor(() => expect(discardWorkflowEntries).toHaveBeenCalledWith([draft]));
+    expect(deleteEntries).not.toHaveBeenCalled();
+    // The draft is gone for good, as nothing was published
+    expect(contentUpdatesToast.current).toEqual(
+      expect.objectContaining({ deleted: true, deletionPending: false, count: 1 }),
+    );
+  });
+
+  test('deletes an entry with pending changes rather than only discarding them', async () => {
+    vi.mocked(deleteWorkflowEntries).mockResolvedValue(undefined);
+    contentUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE };
+
+    // Pending changes to the published entry A, which the list shows in its place
+    const draft = createMockEntry({
+      slug: 'a',
+      content: { _default: { title: 'A (edited)' } },
+      entry: { workflow: /** @type {any} */ ({ status: 'draft', collectionName: 'posts' }) },
+    });
+
+    allUnpublishedEntries.current = [/** @type {any} */ (draft)];
+    flushSync();
+    selectedEntries.current = [draft];
+
+    await render(DeleteEntriesDialog, { open: true });
+
+    const dialog = page.getByRole('alertdialog');
+
+    // It’s not one that hasn’t been published yet
+    await expect
+      .element(dialog)
+      .toHaveTextContent(
+        'Delete Entry Are you sure you want to delete the selected entry? Delete Cancel',
+      );
+    await dialog.getByRole('button', { name: 'Delete' }).click();
+
+    // The removal goes through the entry’s pull request, even without Editorial Workflow enabled
+    // for the collection, as the entry editor does, so the published version doesn’t stay behind
+    await vi.waitFor(() =>
+      expect(deleteWorkflowEntries).toHaveBeenCalledWith([
+        { entry: draft, collection: getCollection('posts'), assets: [] },
+      ]),
+    );
+    expect(discardWorkflowEntries).not.toHaveBeenCalled();
+    expect(deleteEntries).not.toHaveBeenCalled();
+    expect(contentUpdatesToast.current).toEqual(
+      expect.objectContaining({ deleted: true, deletionPending: true, count: 1 }),
+    );
+  });
+
+  test('notes the unpublished entries among the selected ones', async () => {
+    const draft = createMockEntry({
+      slug: 'd',
+      entry: { workflow: /** @type {any} */ ({ status: 'draft', collectionName: 'posts' }) },
+    });
+
+    // A selected entry must be listed, or it’s dropped from the selection. Listing it clears the
+    // selection, so it’s selected afterwards
+    allUnpublishedEntries.current = [/** @type {any} */ (draft)];
+    flushSync();
+    selectedEntries.current = [entries[0], draft];
+
+    await render(DeleteEntriesDialog, { open: true });
+    await expect
+      .element(page.getByRole('alertdialog'))
+      .toMatchTextContent('One of them hasn’t been published yet');
+  });
+
+  test('says what stands in the way of the deletion', async () => {
+    vi.mocked(deleteEntries).mockRejectedValue(
+      createLocalizedError(
+        'Cannot delete a published entry as an Open Authoring contributor',
+        'open_authoring.direct_commit_unsupported',
+      ),
+    );
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    selectedEntries.current = [entries[0]];
+
+    await render(DeleteEntriesDialog, { open: true });
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
+
+    await expect
+      .element(page.getByRole('alert'))
+      .toHaveTextContent(
+        'error Error This change can’t be made directly. Only edits to entries can be suggested for review.',
+      );
+    await waitForToastsToHide();
+  });
+
+  test('reports a failure', async () => {
+    vi.mocked(deleteEntries).mockRejectedValue(new Error('Boom'));
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    selectedEntries.current = [entries[0]];
+
+    await render(DeleteEntriesDialog, { open: true });
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
+
+    await expect
+      .element(page.getByRole('alert'))
+      .toHaveTextContent('error Error Couldn’t delete the entry. Please try again.');
+
+    // The toast goes away on its own
+    await expect
+      .poll(() => document.querySelector('.sui.toast')?.getAttribute('aria-hidden'), {
+        timeout: 7000,
+      })
+      .toBe('true');
+  });
+
+  test('says nothing and keeps the selection when the commit is cancelled', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    vi.mocked(deleteEntries).mockRejectedValue(new Error('commit_cancelled'));
+    selectedEntries.current = [entries[0]];
+
+    await render(DeleteEntriesDialog, { open: true });
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
+
+    await vi.waitFor(() => expect(deleteEntries).toHaveBeenCalledOnce());
+    // Let the rejection settle
+    await new Promise((resolve) => {
+      setTimeout(resolve, 100);
+    });
+    expect(getShownToastAlert('error')).toBeNull();
+    expect(error).not.toHaveBeenCalled();
+    expect(selectedEntries.current).toEqual([entries[0]]);
+  });
+
+  describe('with entry-relative assets', () => {
+    beforeEach(async () => {
+      // The assets are stored alongside the entries
+      await initTestConfig({ collections: [{ ...postsCollection, media_folder: '' }] });
+      setEntries(entries);
+      selectedCollection.current = getCollection('posts');
+    });
+
+    test('words the confirmation for the assets', async () => {
+      const folder = allAssetFolders.current.find(
+        ({ collectionName }) => collectionName === 'posts',
+      );
+
+      const withAssets = [
+        createMockEntry({ slug: 'a', content: { _default: { title: 'A', image: 'a.png' } } }),
+        createMockEntry({ slug: 'b', content: { _default: { title: 'B', image: 'b.png' } } }),
+      ];
+
+      setEntries(withAssets);
+      setAssets([
+        createMockAsset({ name: 'a.png', folderPath: 'content/posts', asset: { folder } }),
+        createMockAsset({ name: 'b.png', folderPath: 'content/posts', asset: { folder } }),
+      ]);
+
+      try {
+        // Let the selection be pruned for the new entry list first
+        flushSync();
+        selectedEntries.current = [withAssets[0]];
+        await render(DeleteEntriesDialog, { open: true });
+        await expect
+          .element(page.getByRole('alertdialog'))
+          .toMatchTextContent('delete the selected entry and associated assets?');
+
+        selectedEntries.current = withAssets;
+        await expect
+          .element(page.getByRole('alertdialog'))
+          .toMatchTextContent('delete all the entries and associated assets?');
+      } finally {
+        setAssets([]);
+      }
+    });
+
+    test('deletes the assets along with the entries', async () => {
+      vi.mocked(deleteEntries).mockResolvedValue(undefined);
+      selectedEntries.current = [entries[0]];
+
+      await render(DeleteEntriesDialog, { open: true });
+      await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
+
+      await vi.waitFor(() => expect(deleteEntries).toHaveBeenCalledWith([entries[0]], []));
+    });
+
+    test('requests the deletion for review with Editorial Workflow', async () => {
+      await initTestConfig({
+        backend: { name: 'github', repo: 'me/site' },
+        publish_mode: 'editorial_workflow',
+        collections: [{ ...postsCollection, media_folder: '' }],
+      });
+      backendName.current = 'github';
+      setEntries(entries);
+      selectedCollection.current = getCollection('posts');
+      vi.mocked(deleteWorkflowEntries).mockResolvedValue(undefined);
+      selectedEntries.current = [entries[0], entries[1]];
+
+      await render(DeleteEntriesDialog, { open: true });
+      await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
+
+      await vi.waitFor(() =>
+        expect(deleteWorkflowEntries).toHaveBeenCalledWith([
+          { entry: entries[0], collection: getCollection('posts'), assets: [] },
+          { entry: entries[1], collection: getCollection('posts'), assets: [] },
+        ]),
+      );
+      expect(deleteEntries).not.toHaveBeenCalled();
+      expect(contentUpdatesToast.current).toEqual(
+        expect.objectContaining({ deleted: true, deletionPending: true, count: 2 }),
+      );
+    });
+  });
+
+  describe('with referencing entries', () => {
+    const tagsCollection = {
+      name: 'tags',
+      label: 'Tags',
+      folder: 'content/tags',
+      fields: [{ name: 'title', widget: 'string' }],
+    };
+
+    const postsWithRelations = {
+      ...postsCollection,
+      fields: [
+        { name: 'title', widget: 'string' },
+        { name: 'category', label: 'Category', widget: 'relation', collection: 'tags' },
+        { name: 'topic', label: 'Topic', widget: 'relation', collection: 'tags', required: false },
+      ],
+    };
+
+    const tags = ['travel', 'food'].map((slug) =>
+      createMockEntry({ slug, folder: 'content/tags', content: { _default: { title: slug } } }),
+    );
+
+    /**
+     * Load the given posts along with the tags, and select the `travel` tag for deletion.
+     * @param {Record<string, any>[]} posts Flattened content of each post.
+     */
+    const selectTravelTag = (posts) => {
+      setEntries([
+        ...tags,
+        ...posts.map((content, index) =>
+          createMockEntry({ slug: `post-${index}`, content: { _default: content } }),
+        ),
+      ]);
+      // Let the selection be pruned for the new entry list first
+      flushSync();
+      selectedEntries.current = [tags[0]];
+    };
+
+    beforeEach(async () => {
+      await initTestConfig({ collections: [tagsCollection, postsWithRelations] });
+      selectedCollection.current = getCollection('tags');
+    });
+
+    test('notes the entries whose references are removed', async () => {
+      vi.mocked(deleteEntries).mockResolvedValue(undefined);
+      selectTravelTag([
+        { title: 'A', category: 'food', topic: 'travel' },
+        { title: 'B', category: 'food', topic: 'travel' },
+        { title: 'C', category: 'food' },
+      ]);
+
+      await render(DeleteEntriesDialog, { open: true });
+
+      const dialog = page.getByRole('alertdialog', { name: 'Delete Entry' });
+
+      await expect
+        .element(dialog)
+        .toHaveTextContent(
+          'Delete Entry Are you sure you want to delete the selected entry? The references to ' +
+            'it in 2 other entries will be removed as well. Delete Cancel',
+        );
+      await dialog.getByRole('button', { name: 'Delete' }).click();
+
+      await vi.waitFor(() => expect(deleteEntries).toHaveBeenCalledWith([tags[0]], []));
+    });
+
+    test('refuses the deletion when a required field would be left empty', async () => {
+      selectTravelTag([
+        { title: 'A', category: 'travel' },
+        { title: 'B', category: 'food', topic: 'travel' },
+      ]);
+
+      await render(DeleteEntriesDialog, { open: true });
+
+      const dialog = page.getByRole('alertdialog', { name: 'Delete Entry' });
+
+      await expect
+        .element(dialog.getByRole('alert'))
+        .toMatchTextContent('This entry can’t be deleted');
+      // There’s nothing to confirm
+      await expect.element(dialog).not.toMatchTextContent('Are you sure');
+      await expect
+        .element(dialog.getByRole('listitem'))
+        .toHaveTextContent('Posts › A Category: This field is required.');
+      await expect.element(dialog.getByRole('button', { name: 'Delete' })).toBeDisabled();
+    });
+  });
+});

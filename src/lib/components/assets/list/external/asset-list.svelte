@@ -1,22 +1,28 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { EmptyState } from '@sveltia/ui';
-  import { sleep } from '@sveltia/utils/misc';
 
   import CloudinaryPanel from '$lib/components/assets/browser/cloudinary-panel.svelte';
   import AssetListContainer from '$lib/components/assets/list/asset-list-container.svelte';
   import AssetListItem from '$lib/components/assets/list/external/asset-list-item.svelte';
+  import SubfolderListItem from '$lib/components/assets/list/external/subfolder-list-item.svelte';
   import UploadAssetsButton from '$lib/components/assets/list/external/upload-assets-button.svelte';
   import CloudServiceAuth from '$lib/components/assets/shared/cloud-service-auth.svelte';
   import ListContainer from '$lib/components/common/list-container.svelte';
   import {
     externalAssets,
     externalAssetsError,
+    focusedExternalAsset,
+    focusedExternalSubfolder,
     hasAuthInfo,
     selectedCloudService,
   } from '$lib/services/assets/external';
   import { uploadingExternalAssets } from '$lib/services/assets/external/data';
-  import { listedExternalAssets } from '$lib/services/assets/external/view';
+  import {
+    externalAssetGroups,
+    listedExternalAssets,
+    listedExternalSubfolders,
+  } from '$lib/services/assets/external/view';
   import { currentView } from '$lib/services/assets/view/settings';
 
   /**
@@ -27,12 +33,7 @@
   const service = $derived(/** @type {MediaLibraryService} */ (selectedCloudService.current));
   const viewType = $derived(currentView.current.type);
   const uploadDisabled = $derived(!service.upload);
-  /** @type {Record<string, ExternalAsset[]>} */
-  const groups = $derived(
-    listedExternalAssets.current.length
-      ? { '*': listedExternalAssets.current }
-      : /** @type {Record<string, ExternalAsset[]>} */ ({}),
-  );
+  const subfolderCount = $derived(listedExternalSubfolders.current.length);
 </script>
 
 {#if service.authType === 'widget'}
@@ -60,19 +61,28 @@
   </ListContainer>
 {:else}
   <AssetListContainer
-    {groups}
+    groups={externalAssetGroups.current}
     itemKey="id"
-    totalCount={listedExternalAssets.current.length}
+    totalCount={subfolderCount + listedExternalAssets.current.length}
+    hasSubfolders={!!subfolderCount}
     {viewType}
     {uploadDisabled}
     onDrop={(files) => {
       uploadingExternalAssets.current = { files };
     }}
+    onBlankClick={() => {
+      // Show the info of the folder being browsed in place of an asset’s or a subfolder’s
+      focusedExternalAsset.current = undefined;
+      focusedExternalSubfolder.current = undefined;
+    }}
   >
-    {#snippet renderItem(/** @type {ExternalAsset} */ asset, /** @type {number} */ index)}
-      {#await sleep() then}
-        <AssetListItem {asset} {index} {viewType} />
-      {/await}
+    {#snippet subfolders()}
+      {#each listedExternalSubfolders.current as subfolder, index (subfolder.path)}
+        <SubfolderListItem {subfolder} rowIndex={index} {viewType} />
+      {/each}
+    {/snippet}
+    {#snippet renderItem(/** @type {ExternalAsset} */ asset)}
+      <AssetListItem {asset} {viewType} />
     {/snippet}
     {#snippet emptyAction()}
       <UploadAssetsButton label={_('upload_assets')} />

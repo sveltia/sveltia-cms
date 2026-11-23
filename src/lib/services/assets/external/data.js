@@ -1,27 +1,52 @@
 import { assetUpdatesToast } from '$lib/services/assets/data';
+import { saveReferenceChanges } from '$lib/services/assets/data/move';
 import {
   externalAssetCounts,
   externalAssets,
   externalAssetsError,
+  externalAssetsTruncated,
+  externalFolders,
   focusedExternalAsset,
+  focusedExternalSubfolder,
   getFetchOptions,
+  mergeUploadedExternalAssets,
+  pruneExternalAssetSelection,
   selectedCloudService,
   selectedExternalAssets,
+  selectedExternalDirPath,
 } from '$lib/services/assets/external';
-import { processFile } from '$lib/services/assets/process';
+import {
+  moveFilesWithReferences,
+  planExternalReferenceRewrite,
+} from '$lib/services/assets/external/move';
+import { getAssetNameContext } from '$lib/services/assets/name';
+import { partitionProcessedFiles, processFile } from '$lib/services/assets/process';
 import { cmsConfig } from '$lib/services/config';
 import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/data';
+import { getSlugs } from '$lib/services/contents/draft/slugs';
+import { normalizeFileNameTemplate } from '$lib/services/integrations/media-libraries/default';
+import { createPath, getDirName } from '$lib/services/utils/file';
 import { createDeepState, createRawState } from '$lib/services/utils/state.svelte';
+import { runWithUndo } from '$lib/services/utils/undo';
 
 /**
- * @import { ExternalAsset, MediaLibraryService } from '$lib/types/private';
- * @import { SharedMediaLibraryOptions } from '$lib/types/public';
+ * @import {
+ * AssetSubfolder,
+ * EntryDraft,
+ * ExternalAsset,
+ * ExternalFolderListing,
+ * MediaLibraryFetchOptions,
+ * MediaLibraryService,
+ * } from '$lib/types/private';
+ * @import { MediaField, SharedMediaLibraryOptions } from '$lib/types/public';
  */
 
 /**
- * State of the toast reporting the progress or failure of an operation on a cloud storage service.
- * Successful operations are reported through {@link assetUpdatesToast}, like repository assets.
- * @type {{ current: { show: boolean, status: 'info' | 'error', message: string } }}
+ * State of the toast reporting the progress or failure of an operation on a cloud storage service,
+ * or a warning about one that has only partly succeeded, like a move that has left the originals
+ * behind. Successful operations are reported through {@link assetUpdatesToast}, like repository
+ * assets.
+ * @type {{ current: { show: boolean, status: 'info' | 'warning' | 'error', message: string } }}
  */
 export const externalAssetsToast = createDeepState({ show: false, status: 'info', message: '' });
 
@@ -35,10 +60,15 @@ export const uploadingExternalAssets = createRawState({ files: [] });
 
 /**
  * Get the options shared by all the media libraries, which include the file size limit and
- * transformations applied before uploading.
+ * transformations applied before uploading. The field-level options, if any, are merged into the
+ * global ones, as with `getMediaLibraryOptions()` in the media library integrations.
+ * @param {MediaField} [fieldConfig] Configuration of the field the files are selected for.
  * @returns {SharedMediaLibraryOptions} Options.
  */
-export const getSharedMediaLibraryOptions = () => cmsConfig.current?.media_libraries?.all ?? {};
+export const getSharedMediaLibraryOptions = (fieldConfig) => ({
+  ...cmsConfig.current?.media_libraries?.all,
+  ...fieldConfig?.media_libraries?.all,
+});
 
 /**
  * Show the toast reporting an error.
@@ -53,10 +83,11 @@ const reportError = (message, ex) => {
 
 /**
  * Show the toast reporting a successful operation.
- * @param {'saved' | 'renamed' | 'deleted'} action Action.
- * @param {number} count Number of assets.
+ * @param {'saved' | 'renamed' | 'deleted' | 'folderCreated' | 'folderRenamed' | 'folderDeleted'}
+ * action Action.
+ * @param {number} [count] Number of assets.
  */
-const reportSuccess = (action, count) => {
+const reportSuccess = (action, count = 1) => {
   externalAssetsToast.current.show = false;
   assetUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE, [action]: true, count };
 };
@@ -76,6 +107,18 @@ const setAssets = (assets) => {
       [service.serviceId]: assets.length,
     };
   }
+};
+
+/**
+ * Drop the given assets from the list, the selection and the focus, once a deletion has removed
+ * them from the service.
+ * @param {ExternalAsset[]} assets Assets that no longer exist.
+ */
+const forgetDeletedAssets = (assets) => {
+  const deletedIds = new Set(assets.map(({ id }) => id));
+
+  setAssets(externalAssets.current?.filter(({ id }) => !deletedIds.has(id)));
+  pruneExternalAssetSelection((id) => !deletedIds.has(id));
 };
 
 /**
@@ -101,17 +144,25 @@ const updateAsset = (oldAsset, newAsset) => {
 };
 
 /**
- * Drop the selected and focused assets that are no longer in the list, e.g. after the list has
- * been reloaded from the service.
+ * Drop the selected and focused assets, and the focused subfolder, that are no longer in the list,
+ * e.g. after the list has been reloaded from the service.
  * @param {ExternalAsset[]} assets Assets in the list.
+ * @param {string[]} [folders] Paths of the empty folders in the list.
  */
-const pruneSelection = (assets) => {
+const pruneSelection = (assets, folders = []) => {
   const ids = new Set(assets.map(({ id }) => id));
 
-  selectedExternalAssets.current = selectedExternalAssets.current.filter(({ id }) => ids.has(id));
+  pruneExternalAssetSelection((id) => ids.has(id));
 
-  if (focusedExternalAsset.current && !ids.has(focusedExternalAsset.current.id)) {
-    focusedExternalAsset.current = undefined;
+  const focusedPath = focusedExternalSubfolder.current?.path;
+
+  // A folder exists as long as a file or a placeholder sits below it
+  if (
+    focusedPath !== undefined &&
+    !assets.some(({ description }) => description.startsWith(`${focusedPath}/`)) &&
+    !folders.some((path) => path === focusedPath || path.startsWith(`${focusedPath}/`))
+  ) {
+    focusedExternalSubfolder.current = undefined;
   }
 };
 
@@ -150,19 +201,32 @@ export const loadExternalAssets = async (service) => {
 
   setAssets(undefined);
   externalAssetsError.current = undefined;
+  externalAssetsTruncated.current = false;
 
   try {
-    const assets = (await service.list?.(getFetchOptions(service))) ?? [];
+    const fetchOptions = getFetchOptions(service);
+
+    // A service with folder support lists its empty folders along with the files
+    const {
+      assets,
+      folders,
+      truncated = false,
+    } = service.browse
+      ? await service.browse(fetchOptions)
+      : { assets: (await service.list?.(fetchOptions)) ?? [], folders: [] };
 
     // Ignore the result if a different service has been selected or a newer load has been started
     // in the meantime
     if (selectedCloudService.current === service && loadId === latestLoadId) {
       setAssets(assets);
-      pruneSelection(assets);
+      externalFolders.current = folders;
+      externalAssetsTruncated.current = truncated;
+      pruneSelection(assets, folders);
     }
   } catch (ex) {
     if (selectedCloudService.current === service && loadId === latestLoadId) {
       setAssets([]);
+      externalFolders.current = [];
       externalAssetsError.current = 'search_fetch_failed';
       pruneSelection([]);
     }
@@ -170,6 +234,41 @@ export const loadExternalAssets = async (service) => {
     // eslint-disable-next-line no-console
     console.error(ex);
   }
+};
+
+/**
+ * Validate and transform files before they are uploaded to a cloud storage service, and sort out
+ * the ones that can’t be uploaded, so the caller can tell the user.
+ * @param {File[]} files Files to be uploaded.
+ * @param {SharedMediaLibraryOptions} options Media library options, which include the file size
+ * limit, the transformations to apply and the template to rename the files with.
+ * @param {object} [extraOptions] Extra options.
+ * @param {boolean} [extraOptions.replacing] Whether the file replaces an existing asset, taking
+ * over its name, so the file isn’t renamed with the template.
+ * @param {EntryDraft | null} [extraOptions.draft] Draft of the entry the files are added to, whose
+ * current values fill the template. Without one, the entry tags get random values.
+ * @returns {Promise<{ validFiles: File[], oversizedFileNames: string[], invalidFileNames: string[]
+ * }>} Files that can be uploaded, and the names of the files that were rejected.
+ */
+export const prepareExternalUploads = async (files, options, { replacing = false, draft } = {}) => {
+  const nameTemplate = replacing ? undefined : normalizeFileNameTemplate(options.filename_template);
+
+  const nameContext =
+    nameTemplate && draft
+      ? getAssetNameContext({ draft, defaultLocaleSlug: getSlugs({ draft }).defaultLocaleSlug })
+      : undefined;
+
+  const processed = await Promise.all(
+    files.map((file) => processFile(file, options, { nameTemplate, nameContext })),
+  );
+
+  const { validFiles, oversizedFiles, invalidFiles } = partitionProcessedFiles(processed);
+
+  return {
+    validFiles,
+    oversizedFileNames: oversizedFiles.map(({ name }) => name),
+    invalidFileNames: invalidFiles.map(({ name }) => name),
+  };
 };
 
 /**
@@ -184,18 +283,12 @@ export const loadExternalAssets = async (service) => {
  */
 export const uploadExternalAssets = async (files, { originalAsset } = {}) => {
   const service = selectedCloudService.current;
-  const sharedOptions = getSharedMediaLibraryOptions();
-  const processed = await Promise.all(files.map((file) => processFile(file, sharedOptions)));
 
-  const validFiles = processed
-    .filter(({ oversized, invalid }) => !oversized && !invalid)
-    .map(({ file }) => file);
-
-  const oversizedFileNames = processed
-    .filter(({ oversized, invalid }) => oversized && !invalid)
-    .map(({ file }) => file.name);
-
-  const invalidFileNames = processed.filter(({ invalid }) => invalid).map(({ file }) => file.name);
+  const { validFiles, oversizedFileNames, invalidFileNames } = await prepareExternalUploads(
+    files,
+    getSharedMediaLibraryOptions(),
+    { replacing: !!originalAsset },
+  );
 
   if (service && validFiles.length) {
     externalAssetsToast.current = {
@@ -205,7 +298,11 @@ export const uploadExternalAssets = async (files, { originalAsset } = {}) => {
     };
 
     try {
-      const fetchOptions = getFetchOptions(service);
+      // A new file goes to the folder being browsed; a replacement keeps the asset’s own path
+      const fetchOptions = {
+        ...getFetchOptions(service),
+        dirPath: selectedExternalDirPath.current,
+      };
 
       if (originalAsset) {
         if (service.replace) {
@@ -217,17 +314,15 @@ export const uploadExternalAssets = async (files, { originalAsset } = {}) => {
         }
       } else if (service.upload) {
         const uploaded = await service.upload(validFiles, fetchOptions);
-        const uploadedIds = new Set(uploaded.map(({ id }) => id));
 
-        // A file uploaded under an existing name overwrites the asset on most services
-        setAssets([
-          ...uploaded,
-          ...(externalAssets.current ?? []).filter(({ id }) => !uploadedIds.has(id)),
-        ]);
+        setAssets(mergeUploadedExternalAssets(uploaded, externalAssets.current ?? []));
         reportSuccess('saved', uploaded.length);
       }
     } catch (ex) {
       reportError('uploading_files_failed', ex);
+      // The files are uploaded one by one, so those uploaded before the failure are on the service
+      // already. Reload the list to show them rather than leave them out until the next reload
+      await loadExternalAssets(service);
     }
   }
 
@@ -257,24 +352,17 @@ export const deleteExternalAssets = async (assets) => {
     return false;
   }
 
-  const deletedIds = new Set(assets.map(({ id }) => id));
-
-  setAssets(externalAssets.current?.filter(({ id }) => !deletedIds.has(id)));
-  selectedExternalAssets.current = selectedExternalAssets.current.filter(
-    ({ id }) => !deletedIds.has(id),
-  );
-
-  if (focusedExternalAsset.current && deletedIds.has(focusedExternalAsset.current.id)) {
-    focusedExternalAsset.current = undefined;
-  }
-
+  forgetDeletedAssets(assets);
   reportSuccess('deleted', assets.length);
 
   return true;
 };
 
 /**
- * Rename the given asset on the selected cloud storage service and update the list.
+ * Rename the given asset on the selected cloud storage service and update the list. The entries
+ * using the asset are pointed at its new URL in one commit; if that fails, the file is renamed back
+ * so they still find it. The rename is refused up front if the entries can’t be updated, as one of
+ * them is read-only or the media library is locked.
  * @param {ExternalAsset} asset Asset to be renamed.
  * @param {string} newName New file name.
  * @returns {Promise<ExternalAsset | undefined>} Renamed asset, or `undefined` if the asset could
@@ -287,8 +375,24 @@ export const renameExternalAsset = async (asset, newName) => {
     return undefined;
   }
 
+  const fetchOptions = getFetchOptions(service);
+
   try {
-    const renamedAsset = await service.rename(asset, newName, getFetchOptions(service));
+    const plan = await planExternalReferenceRewrite([asset]);
+    const { rename } = service;
+
+    const [renamedAsset] = await runWithUndo(
+      [
+        {
+          // eslint-disable-next-line jsdoc/require-jsdoc
+          run: () => rename(asset, newName, fetchOptions),
+          // eslint-disable-next-line jsdoc/require-jsdoc
+          undo: (renamed) => rename(renamed, asset.fileName, fetchOptions),
+        },
+      ],
+      ([renamed]) =>
+        saveReferenceChanges({ plan, newURLs: [renamed.downloadURL], commitType: 'uploadMedia' }),
+    );
 
     updateAsset(asset, renamedAsset);
     reportSuccess('renamed', 1);
@@ -299,4 +403,199 @@ export const renameExternalAsset = async (asset, newName) => {
 
     return undefined;
   }
+};
+
+/**
+ * Get the assets below a folder on the selected cloud storage service, at any depth, which are
+ * what a rename moves along and a deletion removes.
+ * @param {string} dirPath Folder path relative to the configured prefix.
+ * @returns {ExternalAsset[]} Assets.
+ */
+export const getExternalSubfolderAssets = (dirPath) =>
+  (externalAssets.current ?? []).filter(({ description }) => description.startsWith(`${dirPath}/`));
+
+/**
+ * Get a folder on the selected cloud storage service and every folder below it, which are what a
+ * rename rebases and a deletion removes.
+ * @param {string} dirPath Folder path relative to the configured prefix.
+ * @returns {string[]} Folder paths.
+ */
+const getExternalFolderTree = (dirPath) =>
+  externalFolders.current.filter((path) => path === dirPath || path.startsWith(`${dirPath}/`));
+
+/**
+ * Get the assets and the empty folders below a folder on the given cloud storage service, at any
+ * depth, which are what a rename moves along and a deletion removes. They are listed from the
+ * service in full when it can list a folder, as the asset list stops short of the end on a service
+ * holding many files, and a folder operation working off it would leave files behind; otherwise
+ * they are read off the list.
+ * @param {MediaLibraryService} service Service.
+ * @param {string} dirPath Folder path relative to the configured prefix.
+ * @param {MediaLibraryFetchOptions} fetchOptions Fetch options.
+ * @returns {Promise<ExternalFolderListing>} Assets and folder paths, including the folder itself
+ * if it’s kept by a placeholder.
+ */
+const getExternalFolderContents = async (service, dirPath, fetchOptions) =>
+  service.listFolder
+    ? service.listFolder(dirPath, fetchOptions)
+    : { assets: getExternalSubfolderAssets(dirPath), folders: getExternalFolderTree(dirPath) };
+
+/**
+ * Create an empty folder in the folder being browsed on the selected cloud storage service. The
+ * service keeps a placeholder object for it, which is what the folder is listed from.
+ * @param {string} name Folder name.
+ * @returns {Promise<boolean>} Whether the folder has been created.
+ */
+export const createExternalFolder = async (name) => {
+  const service = selectedCloudService.current;
+
+  if (!service?.createFolder) {
+    return false;
+  }
+
+  const dirPath = createPath([selectedExternalDirPath.current, name]);
+
+  try {
+    await service.createFolder(dirPath, getFetchOptions(service));
+  } catch (ex) {
+    reportError('creating_folder_failed', ex);
+
+    return false;
+  }
+
+  externalFolders.current = [...externalFolders.current, dirPath];
+  reportSuccess('folderCreated');
+
+  return true;
+};
+
+/**
+ * Rename a folder on the selected cloud storage service, which moves every asset below it, one by
+ * one, along with the placeholder of any empty folder below it. The entries using the assets are
+ * updated, and the rename is refused up front if they can’t be. The rename is refused if a folder
+ * with the new name already exists, as its files would be overwritten. The list is reloaded from
+ * the service afterwards, whether or not every move went through, so it never shows a file at a
+ * path it no longer has.
+ * @param {AssetSubfolder} subfolder Folder to be renamed.
+ * @param {string} newName New folder name.
+ * @returns {Promise<boolean>} Whether the folder has been renamed.
+ */
+export const renameExternalFolder = async ({ path: dirPath }, newName) => {
+  const service = selectedCloudService.current;
+
+  if (!service?.move || !service.createFolder || !service.deleteFolder) {
+    return false;
+  }
+
+  const newDirPath = createPath([getDirName(dirPath), newName]);
+  /**
+   * Get the path of a file or folder once the folder has been renamed.
+   * @param {string} path Current path.
+   * @returns {string} New path.
+   */
+  const rebase = (path) => `${newDirPath}${path.slice(dirPath.length)}`;
+  const fetchOptions = getFetchOptions(service);
+  // Checked up front, as reloading the list lets go of a focused folder that is no longer there
+  const focused = focusedExternalSubfolder.current?.path === dirPath;
+
+  externalAssetsToast.current = { show: true, status: 'info', message: 'renaming_folder' };
+
+  try {
+    const { assets, folders } = await getExternalFolderContents(service, dirPath, fetchOptions);
+    // The destination is listed in full too, as the list the user picked the name against can be
+    // cut short on a service holding many files, and moving the files onto an existing folder
+    // would overwrite its files with the same names
+    const destination = await getExternalFolderContents(service, newDirPath, fetchOptions);
+
+    if (destination.assets.length || destination.folders.length) {
+      throw new Error(`A folder named “${newName}” already exists in the folder.`);
+    }
+
+    // The entries using the files are pointed at their new URLs once they have moved, or the files
+    // are moved back
+    await moveFilesWithReferences({
+      service,
+      moves: assets.map((asset) => ({ asset, path: rebase(asset.description) })),
+      plan: await planExternalReferenceRewrite(assets),
+    });
+
+    // A placeholder can’t be moved, so a new one is made and the old one removed. The renamed
+    // folder itself gets one only if it had one, i.e. it held no file
+    // eslint-disable-next-line no-restricted-syntax
+    for (const path of folders) {
+      // eslint-disable-next-line no-await-in-loop
+      await service.createFolder(rebase(path), fetchOptions);
+      // eslint-disable-next-line no-await-in-loop
+      await service.deleteFolder(path, fetchOptions);
+    }
+  } catch (ex) {
+    reportError('renaming_folder_failed', ex);
+    await loadExternalAssets(service);
+
+    return false;
+  }
+
+  await loadExternalAssets(service);
+
+  // Keep the Info pane on the folder under its new name
+  if (focused) {
+    focusedExternalSubfolder.current = { name: newName, path: newDirPath };
+  }
+
+  reportSuccess('folderRenamed');
+
+  return true;
+};
+
+/**
+ * Delete a folder on the selected cloud storage service along with every asset below it, and the
+ * placeholder of any empty folder below it, including its own.
+ * @param {AssetSubfolder} subfolder Folder to be deleted.
+ * @returns {Promise<boolean>} Whether the folder has been deleted.
+ */
+export const deleteExternalFolder = async ({ path: dirPath }) => {
+  const service = selectedCloudService.current;
+
+  if (!service?.delete || !service.deleteFolder) {
+    return false;
+  }
+
+  const fetchOptions = getFetchOptions(service);
+  /** @type {ExternalAsset[]} */
+  let assets = [];
+  /** @type {string[]} */
+  let folders = [];
+
+  externalAssetsToast.current = { show: true, status: 'info', message: 'deleting_folder' };
+
+  try {
+    ({ assets, folders } = await getExternalFolderContents(service, dirPath, fetchOptions));
+
+    await service.delete(assets, fetchOptions);
+
+    // eslint-disable-next-line no-restricted-syntax
+    for (const path of folders) {
+      // eslint-disable-next-line no-await-in-loop
+      await service.deleteFolder(path, fetchOptions);
+    }
+  } catch (ex) {
+    reportError('deleting_folder_failed', ex);
+    // Some of the files may have been deleted before the failure, so reload the list rather than
+    // keep showing files that no longer exist
+    await loadExternalAssets(service);
+
+    return false;
+  }
+
+  forgetDeletedAssets(assets);
+  externalFolders.current = externalFolders.current.filter((path) => !folders.includes(path));
+
+  // The Info pane has nothing to describe once the folder is gone
+  if (focusedExternalSubfolder.current?.path === dirPath) {
+    focusedExternalSubfolder.current = undefined;
+  }
+
+  reportSuccess('folderDeleted');
+
+  return true;
 };

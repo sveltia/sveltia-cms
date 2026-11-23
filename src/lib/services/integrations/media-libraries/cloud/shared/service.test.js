@@ -1,0 +1,214 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { cmsConfig } from '$lib/services/config/state';
+
+import { ObjectStorageService } from './service';
+
+/**
+ * @import { ExternalAsset } from '$lib/types/private';
+ * @import { AzureMediaLibrary } from '$lib/types/public';
+ */
+
+vi.mock('$lib/services/config/state', () => ({
+  cmsConfig: { current: undefined },
+}));
+
+describe('integrations/media-libraries/cloud/shared/service', () => {
+  const libOptions = { account_name: 'account', container: 'media' };
+  const fetchOptions = { apiKey: 'secret' };
+  const asset = /** @type {ExternalAsset} */ ({ id: 'photo.jpg' });
+  const file = new File(['content'], 'photo.jpg');
+
+  const operations = {
+    list: vi.fn(async () => []),
+    browse: vi.fn(async () => ({ assets: [], folders: [] })),
+    listFolder: vi.fn(async () => ({ assets: [], folders: [] })),
+    search: vi.fn(async () => []),
+    upload: vi.fn(async () => []),
+    delete: vi.fn(async () => undefined),
+    rename: vi.fn(async () => asset),
+    replace: vi.fn(async () => asset),
+    move: vi.fn(async () => asset),
+    createFolder: vi.fn(async () => undefined),
+    deleteFolder: vi.fn(async () => undefined),
+  };
+
+  const definition = /** @type {const} */ ({
+    serviceId: 'azure_blob_storage',
+    serviceLabel: 'Test Service',
+    serviceURL: 'https://example.com/',
+    developerURL: 'https://example.com/docs',
+    apiKeyURL: 'https://example.com/keys',
+    apiKeyPattern: /^\w+$/,
+  });
+
+  /** @type {ObjectStorageService<AzureMediaLibrary>} */
+  const service = new ObjectStorageService({
+    ...definition,
+    /**
+     * Check if the container is set.
+     * @param {AzureMediaLibrary} config Configuration.
+     * @returns {boolean} Result.
+     */
+    isConfigured: ({ container }) => !!container,
+    /**
+     * Check if the URL points to the configured account.
+     * @param {AzureMediaLibrary} config Configuration.
+     * @param {string} url URL.
+     * @returns {boolean} Result.
+     */
+    isConfigURL: (config, url) => url.startsWith(`https://${config.account_name}/`),
+    operations,
+  });
+
+  beforeEach(() => {
+    cmsConfig.current = /** @type {any} */ ({
+      media_libraries: { azure_blob_storage: libOptions },
+    });
+  });
+
+  it('should expose the service definition and the fixed properties', () => {
+    expect(service).toMatchObject({
+      serviceType: 'cloud_storage',
+      showServiceLink: true,
+      hotlinking: true,
+      authType: 'api_key',
+      ...definition,
+    });
+    expect(service.resolveConfig(libOptions)).toBe(libOptions);
+  });
+
+  it('should use the site-level `label` option as the service label', () => {
+    expect(service.serviceLabel).toBe('Test Service');
+
+    cmsConfig.current = /** @type {any} */ ({
+      media_libraries: { azure_blob_storage: { ...libOptions, label: 'My Storage' } },
+    });
+
+    // Consumers destructure the label from the service object
+    const { serviceLabel } = service;
+
+    expect(serviceLabel).toBe('My Storage');
+  });
+
+  it.each([
+    ['an empty label', { media_libraries: { azure_blob_storage: { label: '' } } }],
+    ['a disabled service', { media_libraries: { azure_blob_storage: false } }],
+    ['an unconfigured service', {}],
+    ['a missing config', undefined],
+  ])('should fall back to the default service label with %s', (_name, config) => {
+    cmsConfig.current = /** @type {any} */ (config);
+
+    expect(service.serviceLabel).toBe('Test Service');
+  });
+
+  it('should get the library options from the site or given config', () => {
+    expect(service.getLibraryOptions()).toBe(libOptions);
+    expect(service.getLibraryOptions(/** @type {any} */ ({}))).toBeUndefined();
+  });
+
+  it('should check whether the service is enabled with the resolved config', () => {
+    const { isEnabled } = service;
+
+    expect(isEnabled()).toBe(true);
+    expect(
+      isEnabled(
+        /** @type {any} */ ({ media_libraries: { azure_blob_storage: { container: '' } } }),
+      ),
+    ).toBe(false);
+
+    cmsConfig.current = /** @type {any} */ ({});
+    expect(isEnabled()).toBe(false);
+  });
+
+  it('should merge the field-level options over the site-level ones', async () => {
+    const { isEnabled, list } = service;
+
+    const fieldConfig = /** @type {any} */ ({
+      widget: 'image',
+      media_libraries: { azure_blob_storage: { container: 'field' } },
+    });
+
+    cmsConfig.current = /** @type {any} */ ({
+      media_libraries: { azure_blob_storage: { account_name: 'account' } },
+    });
+    expect(isEnabled()).toBe(false);
+    expect(isEnabled(fieldConfig)).toBe(true);
+
+    await list({ ...fetchOptions, fieldConfig });
+    expect(operations.list).toHaveBeenCalledWith(
+      { account_name: 'account', container: 'field' },
+      { ...fetchOptions, fieldConfig },
+    );
+  });
+
+  it('should pass the library options through the config resolver', () => {
+    const resolveConfig = vi.fn((options) => ({ ...options, endpoint: 'https://test' }));
+
+    const custom = new ObjectStorageService({
+      ...service,
+      serviceLabel: definition.serviceLabel,
+      resolveConfig,
+    });
+
+    expect(custom.getConfig(fetchOptions)).toEqual({ ...libOptions, endpoint: 'https://test' });
+    expect(resolveConfig).toHaveBeenCalledWith(libOptions);
+  });
+
+  it('should check whether a URL points to a file on the service', () => {
+    const { isAssetURL } = service;
+
+    expect(isAssetURL('https://account/photo.jpg')).toBe(true);
+    expect(isAssetURL('https://example.com/photo.jpg')).toBe(false);
+
+    cmsConfig.current = /** @type {any} */ ({});
+    expect(isAssetURL('https://account/photo.jpg')).toBe(false);
+  });
+
+  it('should call the operations with the resolved config', async () => {
+    const {
+      list,
+      browse,
+      listFolder,
+      search,
+      upload,
+      rename,
+      replace,
+      move,
+      createFolder,
+      deleteFolder,
+    } = service;
+
+    await list(fetchOptions);
+    expect(operations.list).toHaveBeenCalledWith(libOptions, fetchOptions);
+    await browse(fetchOptions);
+    expect(operations.browse).toHaveBeenCalledWith(libOptions, fetchOptions);
+    await listFolder('2024', fetchOptions);
+    expect(operations.listFolder).toHaveBeenCalledWith('2024', libOptions, fetchOptions);
+    await search('photo', fetchOptions);
+    expect(operations.search).toHaveBeenCalledWith('photo', libOptions, fetchOptions);
+    await upload([file], fetchOptions);
+    expect(operations.upload).toHaveBeenCalledWith([file], libOptions, fetchOptions);
+    await service.delete([asset], fetchOptions);
+    expect(operations.delete).toHaveBeenCalledWith([asset], libOptions, fetchOptions);
+    await rename(asset, 'new.jpg', fetchOptions);
+    expect(operations.rename).toHaveBeenCalledWith(asset, 'new.jpg', libOptions, fetchOptions);
+    await replace(asset, file, fetchOptions);
+    expect(operations.replace).toHaveBeenCalledWith(asset, file, libOptions, fetchOptions);
+    await move(asset, '2024/photo.jpg', fetchOptions);
+    expect(operations.move).toHaveBeenCalledWith(asset, '2024/photo.jpg', libOptions, fetchOptions);
+    await createFolder('2024', fetchOptions);
+    expect(operations.createFolder).toHaveBeenCalledWith('2024', libOptions, fetchOptions);
+    await deleteFolder('2024', fetchOptions);
+    expect(operations.deleteFolder).toHaveBeenCalledWith('2024', libOptions, fetchOptions);
+  });
+
+  it('should reject when the service is not configured', async () => {
+    cmsConfig.current = /** @type {any} */ ({});
+
+    await expect(service.list(fetchOptions)).rejects.toThrow(
+      'Test Service configuration is not available',
+    );
+    expect(operations.list).not.toHaveBeenCalled();
+  });
+});

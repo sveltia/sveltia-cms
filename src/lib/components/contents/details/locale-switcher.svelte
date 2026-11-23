@@ -3,9 +3,11 @@
   import { Divider, Icon, Option, Select, SelectButton, SelectButtonGroup } from '@sveltia/ui';
 
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
+  import { hasInvalidFields } from '$lib/services/contents/draft/validate/reveal';
+  import { afterPendingFieldUpdates } from '$lib/services/contents/editor/pending';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
-  import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
+  import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
   import { env } from '$lib/services/user/env.svelte';
   import { createRawState } from '$lib/services/utils/state.svelte';
 
@@ -18,22 +20,22 @@
    * @property {string} id The wrapper element’s `id` attribute.
    * @property {{ current: ?EntryEditorPane }} thisPane This pane’s mode and locale.
    * @property {{ current: ?EntryEditorPane }} [thatPane] Another pane’s mode and locale.
+   * @property {boolean} [previewInThisPane] Whether to offer the preview in this pane, which takes
+   * turns with the editor when there’s no other pane to hold it.
    */
 
   const entryDraft = getEntryDraftContext();
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    id,
-    thisPane,
-    thatPane = createRawState(null),
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { id, thisPane, thatPane = createRawState(null), previewInThisPane = false } = $props();
 
-  const collection = $derived(entryDraft.current?.collection);
-  const collectionFile = $derived(entryDraft.current?.collectionFile);
-  const { allLocales } = $derived((collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG);
+  const { i18nEnabled, allLocales } = $derived(getDraftI18nConfig(entryDraft.current));
+  // With a single locale, the only option is the editor, which takes turns with the preview
+  const hasMultipleLocales = $derived(i18nEnabled && allLocales.length > 1);
+  /* v8 ignore start -- the switcher is only rendered while the draft is there */
+  const validities = $derived(entryDraft.current?.validities ?? {});
+  const canPreview = $derived(entryDraft.current?.canPreview ?? true);
+  /* v8 ignore stop */
   const listedLocales = $derived(
     env.isSmallScreen || env.isMediumScreen
       ? [...allLocales]
@@ -41,14 +43,18 @@
           (locale) => !(thatPane.current?.mode === 'edit' && thatPane.current.locale === locale),
         ),
   );
+  // The preview can take this pane’s place when the other pane edits a locale
+  const previewOffered = $derived(
+    previewInThisPane ||
+      (thatPane.current?.mode === 'edit' &&
+        canPreview &&
+        !!entryEditorSettings.current?.showPreview),
+  );
   const hasAnyError = $derived(
-    Object.entries(entryDraft.current?.validities ?? {}).some(
-      ([locale, validityMap]) =>
-        listedLocales.includes(locale) &&
-        Object.values(validityMap ?? {}).some(({ valid }) => !valid),
+    Object.entries(validities).some(
+      ([locale, validityMap]) => listedLocales.includes(locale) && hasInvalidFields(validityMap),
     ),
   );
-  const canPreview = $derived(entryDraft.current?.canPreview ?? true);
   const useDropDown = $derived(env.isSmallScreen || env.isMediumScreen || allLocales.length >= 5);
   const SelectComponent = $derived(useDropDown ? Select : SelectButtonGroup);
   const OptionComponent = $derived(useDropDown ? Option : SelectButton);
@@ -67,17 +73,16 @@
   <SelectComponent
     value={currentValue}
     class={hasAnyError && useDropDown ? 'error' : undefined}
-    aria-label={_('switch_locale')}
+    ariaLabel={_(hasMultipleLocales ? 'switch_locale' : 'switch_view')}
     aria-controls={id.replace('-header', '-body')}
   >
     <!-- Need an inner to style elements inside the <dialog> -->
     <div role="none" class="inner">
       {#each listedLocales as locale (locale)}
-        {@const label = getLocaleLabel(locale) ?? locale}
+        {@const label = hasMultipleLocales ? (getLocaleLabel(locale) ?? locale) : _('edit')}
         {@const disabled = !entryDraft.current?.currentLocales[locale]}
-        {@const hasError = Object.values(entryDraft.current?.validities[locale] ?? {}).some(
-          ({ valid }) => !valid,
-        )}
+        <!-- A locale without content, e.g. a disabled one, is left out of the validation -->
+        {@const hasError = hasInvalidFields(validities[locale])}
         <OptionComponent
           {variant}
           {size}
@@ -92,11 +97,13 @@
           class={hasError ? 'error' : ''}
           data-mode="edit"
           onSelect={() => {
-            thisPane.current = { mode: 'edit', locale };
+            afterPendingFieldUpdates(() => {
+              thisPane.current = { mode: 'edit', locale };
 
-            if (thatPane.current?.mode === 'preview') {
-              thatPane.current = { mode: 'preview', locale };
-            }
+              if (thatPane.current?.mode === 'preview') {
+                thatPane.current = { mode: 'preview', locale };
+              }
+            });
           }}
         >
           {#snippet startIcon()}
@@ -108,7 +115,7 @@
           {/snippet}
         </OptionComponent>
       {/each}
-      {#if thatPane.current?.mode === 'edit' && canPreview && entryEditorSettings.current?.showPreview}
+      {#if previewOffered}
         {#if useDropDown}
           <Divider />
         {/if}
@@ -120,7 +127,15 @@
           selected={thisPane.current?.mode === 'preview'}
           data-mode="preview"
           onSelect={() => {
-            thisPane.current = { mode: 'preview', locale: thatPane.current?.locale ?? '' };
+            // Read the locale now: the other pane may change while the updates land. Without one,
+            // this pane previews the locale it edits
+            const { locale } = /** @type {EntryEditorPane} */ (
+              thatPane.current ?? thisPane.current
+            );
+
+            afterPendingFieldUpdates(() => {
+              thisPane.current = { mode: 'preview', locale };
+            });
           }}
         />
       {/if}

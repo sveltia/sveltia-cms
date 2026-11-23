@@ -2,15 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { cmsConfig } from '$lib/services/config/state';
 
-import {
-  deleteS3Objects,
-  isS3ObjectUrl,
-  listS3Objects,
-  renameS3Object,
-  replaceS3Object,
-  searchS3Objects,
-  uploadToS3,
-} from './core';
+import { isS3ObjectUrl, s3Operations } from './core';
 import { S3CompatibleService } from './service';
 
 /**
@@ -23,14 +15,33 @@ vi.mock('$lib/services/config/state', () => ({
 }));
 
 vi.mock('./core', () => ({
-  listS3Objects: vi.fn(),
-  searchS3Objects: vi.fn(),
-  uploadToS3: vi.fn(),
-  deleteS3Objects: vi.fn(),
-  renameS3Object: vi.fn(),
-  replaceS3Object: vi.fn(),
+  s3Operations: {
+    list: vi.fn(),
+    browse: vi.fn(),
+    search: vi.fn(),
+    upload: vi.fn(),
+    delete: vi.fn(),
+    rename: vi.fn(),
+    replace: vi.fn(),
+    move: vi.fn(),
+    createFolder: vi.fn(),
+    deleteFolder: vi.fn(),
+  },
   isS3ObjectUrl: vi.fn(() => true),
 }));
+
+const {
+  list: listS3Objects,
+  browse: browseS3Objects,
+  search: searchS3Objects,
+  upload: uploadToS3,
+  delete: deleteS3Objects,
+  rename: renameS3Object,
+  replace: replaceS3Object,
+  move: moveS3Object,
+  createFolder: createS3Folder,
+  deleteFolder: deleteS3Folder,
+} = s3Operations;
 
 describe('integrations/media-libraries/cloud/s3/service', () => {
   const mockAccessKeyId = 'AKIAIOSFODNN7EXAMPLE';
@@ -61,13 +72,14 @@ describe('integrations/media-libraries/cloud/s3/service', () => {
         showServiceLink: true,
         hotlinking: true,
         authType: 'api_key',
+        compatibleAPI: 's3',
         ...definition,
       });
     });
 
     it('should require region by default and use library options as the config', () => {
       expect(service.requiredOption).toBe('region');
-      expect(service.resolveConfig(libOptions)).toBe(libOptions);
+      expect(service.resolveConfig(libOptions)).toEqual(libOptions);
     });
 
     it('should accept a custom required option and config resolver', () => {
@@ -80,7 +92,11 @@ describe('integrations/media-libraries/cloud/s3/service', () => {
       });
 
       expect(custom.requiredOption).toBe('account_id');
-      expect(custom.resolveConfig).toBe(resolveConfig);
+      expect(custom.resolveConfig(libOptions)).toEqual({
+        ...libOptions,
+        endpoint: 'https://s3.test',
+      });
+      expect(resolveConfig).toHaveBeenCalledExactlyOnceWith(libOptions);
     });
   });
 
@@ -163,6 +179,28 @@ describe('integrations/media-libraries/cloud/s3/service', () => {
       expect(custom.isEnabled()).toBe(true);
     });
 
+    it('should check the resolved config, so a resolver can fill in defaults', () => {
+      const custom = new S3CompatibleService({
+        ...definition,
+        /**
+         * Default the access key ID to the bucket name.
+         * @param {S3MediaLibrary} options Library options.
+         * @returns {S3Config} Resolved configuration.
+         */
+        resolveConfig: (options) => ({
+          ...options,
+          access_key_id: options.access_key_id ?? options.bucket,
+        }),
+      });
+
+      cmsConfig.current = /** @type {any} */ ({
+        media_libraries: { aws_s3: { bucket: mockBucket, region: mockRegion } },
+      });
+
+      expect(service.isEnabled()).toBe(false);
+      expect(custom.isEnabled()).toBe(true);
+    });
+
     it('should prefer field-level config over global config', () => {
       cmsConfig.current = /** @type {any} */ ({});
 
@@ -216,18 +254,23 @@ describe('integrations/media-libraries/cloud/s3/service', () => {
       const custom = new S3CompatibleService({
         ...definition,
         /**
-         * Add an endpoint and disable ACLs.
+         * Add an endpoint.
          * @param {S3MediaLibrary} options Library options.
          * @returns {S3Config} Resolved configuration.
          */
-        resolveConfig: (options) => ({ ...options, endpoint: 'https://s3.test', acl: false }),
+        resolveConfig: (options) => ({ ...options, endpoint: 'https://s3.test' }),
       });
 
       expect(custom.getConfig(fetchOptions)).toEqual({
         ...libOptions,
         endpoint: 'https://s3.test',
-        acl: false,
       });
+    });
+
+    it('should add the service’s object ACL to the config', () => {
+      const custom = new S3CompatibleService({ ...definition, objectAcl: 'public-read' });
+
+      expect(custom.getConfig(fetchOptions)).toEqual({ ...libOptions, acl: 'public-read' });
     });
 
     it('should throw with the service label when config is not available', () => {
@@ -283,6 +326,25 @@ describe('integrations/media-libraries/cloud/s3/service', () => {
 
       await expect(service.replace(asset, file, fetchOptions)).resolves.toBe(asset);
       expect(replaceS3Object).toHaveBeenCalledWith(asset, file, libOptions, fetchOptions);
+    });
+
+    it('should call the folder functions with the resolved config', async () => {
+      const listing = { assets: [asset], folders: ['2024'] };
+
+      vi.mocked(browseS3Objects).mockResolvedValue(listing);
+      vi.mocked(moveS3Object).mockResolvedValue(asset);
+
+      await expect(service.browse(fetchOptions)).resolves.toBe(listing);
+      expect(browseS3Objects).toHaveBeenCalledWith(libOptions, fetchOptions);
+
+      await expect(service.move(asset, '2024/photo.jpg', fetchOptions)).resolves.toBe(asset);
+      expect(moveS3Object).toHaveBeenCalledWith(asset, '2024/photo.jpg', libOptions, fetchOptions);
+
+      await service.createFolder('2024', fetchOptions);
+      expect(createS3Folder).toHaveBeenCalledWith('2024', libOptions, fetchOptions);
+
+      await service.deleteFolder('2024', fetchOptions);
+      expect(deleteS3Folder).toHaveBeenCalledWith('2024', libOptions, fetchOptions);
     });
 
     it('should reject when config is not available', async () => {

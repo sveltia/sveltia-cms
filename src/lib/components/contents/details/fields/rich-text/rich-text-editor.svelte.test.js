@@ -1,0 +1,956 @@
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { page, userEvent } from 'vitest/browser';
+
+import { customComponentRegistry } from '$lib/services/api/registries';
+import { globalAssetFolder } from '$lib/services/assets/folders';
+import { cmsConfig } from '$lib/services/config';
+import { trackPendingFieldUpdate } from '$lib/services/contents/editor/pending';
+import { processResource } from '$lib/services/contents/fields/file/process';
+import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
+import { createMockImageFile, initTestConfig } from '$lib/test/config';
+import { createMockDraft } from '$lib/test/draft';
+import { createMockCloudService, createMockExternalAsset } from '$lib/test/factories';
+import { renderFieldEditor } from '$lib/test/field.svelte';
+import { getShownToastText, waitForToastsToHide } from '$lib/test/toast';
+
+import RichTextEditor from './rich-text-editor.svelte';
+
+vi.mock('$lib/services/contents/fields/file/process', { spy: true });
+vi.mock('$lib/services/contents/editor/pending', () => ({
+  trackPendingFieldUpdate: vi.fn(),
+  awaitPendingFieldUpdates: vi.fn(),
+  afterPendingFieldUpdates: vi.fn(async (fn) => fn()),
+}));
+
+/**
+ * @import { RichTextField } from '$lib/types/public';
+ */
+
+/**
+ * Render the editor within a draft.
+ * @param {string} currentValue Markdown.
+ * @param {Partial<RichTextField>} [config] Field options.
+ * @param {object} [options] Options.
+ * @param {string} [options.collectionName] Collection name.
+ * @param {Record<string, any>} [options.context] Field editor context to override.
+ * @param {Record<string, any>} [options.props] Props to override.
+ * @param {Record<string, string>} [options.otherValues] Values in other locales, keyed by locale,
+ * for an entry in multiple locales.
+ * @returns {Promise<{
+ * props: any,
+ * container: HTMLElement,
+ * draft: any,
+ * entryDraft: any,
+ * createDraft: (value: string) => any,
+ * }>} Props, container, draft, the draft state, whose `current` can be replaced to open another
+ * entry, and a function creating another draft for the field.
+ */
+const renderEditor = async (
+  currentValue,
+  config = {},
+  { collectionName = 'posts', context = {}, props: extra = {}, otherValues = {} } = {},
+) => {
+  /** @type {RichTextField} */
+  const fieldConfig = { name: 'body', widget: 'richtext', ...config };
+
+  /**
+   * Create a draft holding the given value in the default locale.
+   * @param {string} value Markdown.
+   * @returns {any} Draft.
+   */
+  const createDraft = (value) =>
+    createMockDraft({
+      collectionName,
+      fields: [fieldConfig],
+      i18n: { defaultLocale: 'en', allLocales: ['en', ...Object.keys(otherValues)] },
+      values: {
+        en: { body: value },
+        ...Object.fromEntries(Object.entries(otherValues).map(([k, v]) => [k, { body: v }])),
+      },
+    });
+
+  const draft = createDraft(currentValue);
+
+  const { props, container, entryDraft } = await renderFieldEditor(RichTextEditor, {
+    fieldConfig,
+    fieldLabel: 'Body',
+    currentValue,
+    props: extra,
+    draft,
+    // The editor is always rendered within a field editor
+    context: {
+      'field-editor': { parentComponentNames: [], valueStoreKey: 'currentValues', ...context },
+    },
+  });
+
+  return { props, container, draft, entryDraft, createDraft };
+};
+
+describe('RichTextEditor', () => {
+  beforeEach(() => {
+    cmsConfig.current = /** @type {any} */ ({});
+  });
+
+  test('shows the Markdown as rich text with the formatting toolbar', async () => {
+    await renderEditor('# Title\n\nSome **bold** text.');
+
+    const editor = page.getByRole('textbox');
+
+    await expect.poll(() => editor.element().querySelector('h1')?.textContent).toBe('Title');
+    expect(editor.element().querySelector('strong')).toHaveTextContent('bold');
+    await expect.element(page.getByRole('button', { name: 'Bold' })).toBeVisible();
+  });
+
+  test('lets each paragraph take the direction of its own text without i18n', async () => {
+    // An Arabic paragraph, “Hello”, followed by an English one
+    const value = 'مرحبا\n\nHello'; // cspell:disable-line
+    const { container } = await renderEditor(value, {}, { props: { locale: '_default' } });
+    const editor = page.getByRole('textbox');
+
+    await expect
+      .poll(() =>
+        [...editor.element().querySelectorAll('p')].map((p) => getComputedStyle(p).direction),
+      )
+      .toEqual(['rtl', 'ltr']);
+
+    const textarea = /** @type {HTMLTextAreaElement} */ (container.querySelector('textarea'));
+
+    // The hidden `<textarea>` gets the value on every change, which `dir="auto"` would make slow
+    expect(textarea.dir).toBe('');
+  });
+
+  test('applies the direction of the locale', async () => {
+    const { container } = await renderEditor('Hello', {}, { props: { locale: 'ar' } });
+    const editor = page.getByRole('textbox');
+
+    await expect.poll(() => editor.element().getAttribute('dir')).toBe('rtl');
+
+    const textarea = /** @type {HTMLTextAreaElement} */ (container.querySelector('textarea'));
+
+    expect(textarea.dir).toBe('rtl');
+  });
+
+  test('stores the edited content as Markdown', async () => {
+    const { props } = await renderEditor('Hello');
+    const editor = page.getByRole('textbox');
+
+    await expect.poll(() => editor.element().textContent).toBe('Hello');
+    await editor.fill('Hello, world!');
+    await expect.poll(() => props.currentValue).toBe('Hello, world!');
+  });
+
+  test('shows an HTML value as rich text, and stores the edited content as HTML', async () => {
+    const { props } = await renderEditor('<h2>Title</h2><p>Some <strong>bold</strong> text.</p>', {
+      format: 'html',
+    });
+
+    const editor = page.getByRole('textbox');
+
+    await expect.poll(() => editor.element().querySelector('h2')?.textContent).toBe('Title');
+    expect(editor.element().querySelector('strong')).toHaveTextContent('bold');
+
+    // Replacing the whole content keeps the block type of the first block
+    await editor.fill('Hello, world!');
+    await expect.poll(() => props.currentValue).toBe('<h2>Hello, world!</h2>');
+  });
+
+  test('offers only the components with HTML syntax in the HTML format', async () => {
+    customComponentRegistry.set('youtube', {
+      id: 'youtube',
+      label: 'YouTube',
+      trigger: 'button',
+      fields: [{ name: 'id', label: 'ID' }],
+      pattern: /^youtube (\S+)$/,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      toBlock: ({ id }) => `youtube ${id}`,
+    });
+
+    try {
+      await renderEditor('<p>Hello</p>', { format: 'html' });
+      await expect.element(page.getByRole('button', { name: /Image/ })).toBeVisible();
+      expect(page.getByRole('button', { name: /YouTube/ }).elements()).toHaveLength(0);
+    } finally {
+      customComponentRegistry.delete('youtube');
+    }
+  });
+
+  test('reads and writes images as HTML in the HTML format', async () => {
+    const { props } = await renderEditor(
+      '<p>Hello <a href="/about"><img src="/a.png" alt="A &amp; B"></a></p>',
+      { format: 'html' },
+    );
+
+    const editor = page.getByRole('textbox');
+
+    // The linked image is shown as a component, not as a link
+    await expect
+      .poll(() => editor.element().querySelector('[data-key-path-prefix]'))
+      .not.toBeNull();
+    expect(editor.element().querySelector('a')).toBeNull();
+
+    // An image from another site is inserted as HTML, keeping the existing one
+    const dataTransfer = new DataTransfer();
+
+    dataTransfer.setData('text/html', '<img src="https://example.com/photo.png" alt="Photo">');
+    editor
+      .element()
+      .dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer }));
+    await expect
+      .poll(() => props.currentValue)
+      .toContain('<img src="https://example.com/photo.png" alt="Photo">');
+    expect(props.currentValue).toContain('<a href="/about"><img src="/a.png" alt="A &amp; B"></a>');
+  });
+
+  test('follows an external change to the value', async () => {
+    const { props } = await renderEditor('Hello');
+
+    props.currentValue = 'Changed';
+
+    await expect.poll(() => page.getByRole('textbox').element().textContent).toBe('Changed');
+  });
+
+  test('limits the toolbar to the configured buttons and modes', async () => {
+    const { container } = await renderEditor('Hi', {
+      buttons: ['bold'],
+      modes: ['raw'],
+      minimal: true,
+    });
+
+    await expect.element(page.getByRole('button', { name: 'Bold' })).toBeVisible();
+    // Sveltia UI makes the editor compact
+    expect(container.querySelector('.sui.text-editor')).toHaveClass('minimal');
+    expect(page.getByRole('button', { name: 'Italic' }).elements()).toHaveLength(0);
+  });
+
+  test('keeps a single-line field on one line, with the inline buttons only', async () => {
+    const { props, container } = await renderEditor('One', {
+      multiline: false,
+      buttons: ['bold', 'heading-one', 'quote'],
+    });
+
+    const editor = page.getByRole('textbox');
+
+    await expect.element(editor).toHaveTextContent('One');
+    expect(container.querySelector('.sui.text-editor')).toHaveClass('single-line');
+    await expect.element(editor).toHaveAttribute('aria-multiline', 'false');
+    await expect.element(page.getByRole('button', { name: 'Bold' })).toBeVisible();
+    expect(page.getByRole('button', { name: 'Show Text Style Options' }).elements()).toHaveLength(
+      0,
+    );
+
+    await userEvent.click(editor);
+    await userEvent.keyboard('{End}{Enter} two');
+    await expect.poll(() => props.currentValue).toBe('One two');
+  });
+
+  test('takes the compact and single-line options from the field defaults', async () => {
+    cmsConfig.current = /** @type {any} */ ({
+      field_defaults: { richtext: { minimal: true, multiline: false } },
+    });
+
+    const { container } = await renderEditor('One');
+
+    await expect.element(page.getByRole('textbox')).toHaveTextContent('One');
+
+    const wrapper = container.querySelector('.sui.text-editor');
+
+    expect(wrapper).toHaveClass('minimal');
+    expect(wrapper).toHaveClass('single-line');
+  });
+
+  test('tracks a pending update while typing', async () => {
+    const { props } = await renderEditor('Hello');
+    const editor = page.getByRole('textbox');
+
+    await expect.poll(() => editor.element().textContent).toBe('Hello');
+    await editor.click();
+    await userEvent.keyboard('{End}!');
+
+    // A save waits for the update, which is settled once the Markdown is written back
+    await vi.waitFor(() => expect(trackPendingFieldUpdate).toHaveBeenCalledOnce());
+    await expect(vi.mocked(trackPendingFieldUpdate).mock.calls[0][0]).resolves.toBeUndefined();
+    expect(props.currentValue).toBe('Hello!');
+  });
+
+  test('tracks a pending update for a change made with the toolbar', async () => {
+    const { props } = await renderEditor('Hello');
+    const editor = page.getByRole('textbox');
+
+    await expect.poll(() => editor.element().textContent).toBe('Hello');
+
+    // An attribute change on the editor’s root element doesn’t change the content
+    props.invalid = true;
+    await expect.poll(() => editor.element().getAttribute('aria-invalid')).toBe('true');
+
+    // Select the text, and let the editor pick up the selection, then make it bold with the toolbar
+    const range = document.createRange();
+
+    range.selectNodeContents(editor.element());
+    window.getSelection()?.removeAllRanges();
+    window.getSelection()?.addRange(range);
+    document.dispatchEvent(new Event('selectionchange'));
+    await new Promise((resolve) => {
+      requestAnimationFrame(resolve);
+    });
+    expect(trackPendingFieldUpdate).not.toHaveBeenCalled();
+    await page.getByRole('button', { name: 'Bold' }).click();
+
+    await vi.waitFor(() => expect(trackPendingFieldUpdate).toHaveBeenCalledOnce());
+    await expect(vi.mocked(trackPendingFieldUpdate).mock.calls[0][0]).resolves.toBeUndefined();
+    expect(props.currentValue).toBe('**Hello**');
+  });
+
+  test('neither tracks an update nor writes back a value in another style when it’s loaded', async () => {
+    const { props } = await renderEditor('Some *italic* text.');
+    const editor = page.getByRole('textbox');
+
+    await expect.poll(() => editor.element().textContent).toBe('Some italic text.');
+    // Give the editor time to convert the content, which it would write as `_italic_`
+    await new Promise((resolve) => {
+      setTimeout(resolve, 300);
+    });
+    expect(trackPendingFieldUpdate).not.toHaveBeenCalled();
+    expect(props.currentValue).toBe('Some *italic* text.');
+
+    // A change made by the user is written, in the editor’s style
+    await editor.click();
+    await userEvent.keyboard('{End}!');
+    await expect.poll(() => props.currentValue).toBe('Some _italic_ text.!');
+  });
+
+  test('writes a change typed in the Markdown mode', async () => {
+    const { props } = await renderEditor('Hello', { modes: ['raw'] });
+    const source = page.getByRole('textbox');
+
+    await expect.element(source).toHaveValue('Hello');
+    await source.click();
+    await userEvent.keyboard('{End}!');
+    await expect.poll(() => props.currentValue).toBe('Hello!');
+  });
+
+  test('inserts a dropped image', async () => {
+    await initTestConfig({
+      collections: [
+        {
+          name: 'posts',
+          label: 'Posts',
+          folder: 'content/posts',
+          fields: [{ name: 'body', widget: 'richtext' }],
+        },
+      ],
+    });
+
+    const { props, draft } = await renderEditor('Hello');
+    const editor = page.getByRole('textbox');
+
+    await expect.poll(() => editor.element().textContent).toBe('Hello');
+
+    const dataTransfer = new DataTransfer();
+
+    dataTransfer.items.add(await createMockImageFile({ name: 'photo.png' }));
+    editor
+      .element()
+      .dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer }));
+
+    // The file is held in the draft under a temporary URL
+    await expect.poll(() => props.currentValue).toMatch(/!\[\]\(blob:[^)]+\)/);
+    expect(Object.values(draft.files)[0]).toEqual(
+      expect.objectContaining({ folder: globalAssetFolder.current }),
+    );
+
+    // A file that isn’t a valid image is skipped
+    const broken = new DataTransfer();
+
+    broken.items.add(new File(['x'], 'broken.png', { type: 'image/png' }));
+    editor
+      .element()
+      .dispatchEvent(
+        new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: broken }),
+      );
+    await new Promise((resolve) => {
+      setTimeout(resolve, 300);
+    });
+    expect(Object.keys(draft.files)).toHaveLength(1);
+  });
+
+  /**
+   * Drop an image onto the editor, holding its processing until the returned function is called.
+   * @returns {Promise<(value: string) => void>} Function finishing the processing with the given
+   * value.
+   */
+  const dropImageHeldInProcessing = async () => {
+    /**
+     * Finish processing the dropped image.
+     * @type {(value: any) => void}
+     */
+    let resolve = () => undefined;
+
+    vi.mocked(processResource).mockImplementationOnce(
+      () =>
+        new Promise((_resolve) => {
+          resolve = _resolve;
+        }),
+    );
+
+    const dataTransfer = new DataTransfer();
+
+    dataTransfer.items.add(await createMockImageFile({ name: 'photo.png' }));
+    page
+      .getByRole('textbox')
+      .element()
+      .dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer }));
+    await vi.waitFor(() => expect(processResource).toHaveBeenCalledOnce());
+
+    return (value) => resolve({ value });
+  };
+
+  test('tracks a pending update while a dropped image is processed', async () => {
+    const { props } = await renderEditor('Hello');
+    const editor = page.getByRole('textbox');
+
+    await expect.poll(() => editor.element().textContent).toBe('Hello');
+
+    const finish = await dropImageHeldInProcessing();
+
+    // A save or a locale switch made while the image is processed waits for it to be inserted
+    await vi.waitFor(() => expect(trackPendingFieldUpdate).toHaveBeenCalledOnce());
+
+    let settled = false;
+
+    vi.mocked(trackPendingFieldUpdate).mock.calls[0][0].then(() => {
+      settled = true;
+    });
+    await new Promise((resolve) => {
+      setTimeout(resolve, 50);
+    });
+    expect(settled).toBe(false);
+    finish('blob:held');
+    await expect.poll(() => props.currentValue).toContain('![](blob:held)');
+    await Promise.all(vi.mocked(trackPendingFieldUpdate).mock.calls.map(([promise]) => promise));
+  });
+
+  test('inserts no image processed after the locale has changed', async () => {
+    const { props } = await renderEditor('Hello', {}, { otherValues: { fr: 'Bonjour' } });
+    const editor = page.getByRole('textbox');
+
+    await expect.poll(() => editor.element().textContent).toBe('Hello');
+
+    const finish = await dropImageHeldInProcessing();
+
+    expect(vi.mocked(processResource).mock.calls[0][0].locale).toBe('en');
+    // The editor is reused for another locale while the image is being processed
+    props.locale = 'fr';
+    props.currentValue = 'Bonjour';
+    await expect.poll(() => editor.element().textContent).toBe('Bonjour');
+    finish('blob:late');
+    await new Promise((resolve) => {
+      setTimeout(resolve, 300);
+    });
+    expect(props.currentValue).toBe('Bonjour');
+    expect(editor.element().querySelector('img')).toBeNull();
+  });
+
+  test('inserts no image processed after another entry has been opened', async () => {
+    const { props, entryDraft, createDraft } = await renderEditor('Hello');
+    const editor = page.getByRole('textbox');
+
+    await expect.poll(() => editor.element().textContent).toBe('Hello');
+
+    const finish = await dropImageHeldInProcessing();
+
+    entryDraft.current = createDraft('Other');
+    props.currentValue = 'Other';
+    await expect.poll(() => editor.element().textContent).toBe('Other');
+    finish('blob:late');
+    await new Promise((resolve) => {
+      setTimeout(resolve, 300);
+    });
+    expect(props.currentValue).toBe('Other');
+    expect(editor.element().querySelector('img')).toBeNull();
+  });
+
+  test('inserts a pasted image, and ignores other content', async () => {
+    const { props } = await renderEditor('Hello');
+    const editor = page.getByRole('textbox');
+
+    await expect.poll(() => editor.element().textContent).toBe('Hello');
+
+    const dataTransfer = new DataTransfer();
+
+    dataTransfer.items.add(await createMockImageFile({ name: 'pasted.png' }));
+    editor.element().dispatchEvent(
+      new ClipboardEvent('paste', {
+        bubbles: true,
+        cancelable: true,
+        clipboardData: dataTransfer,
+      }),
+    );
+
+    await expect.poll(() => props.currentValue).toMatch(/!\[\]\(blob:[^)]+\)/);
+
+    // Plain text is left to the editor
+    const text = new DataTransfer();
+
+    text.setData('text/plain', 'plain');
+    editor
+      .element()
+      .dispatchEvent(
+        new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: text }),
+      );
+    await expect.poll(() => props.currentValue).not.toContain('plain');
+  });
+
+  test('inserts a pasted image within the paragraph of a single-line field', async () => {
+    const { props } = await renderEditor('Hello', { multiline: false });
+    const editor = page.getByRole('textbox');
+
+    await expect.poll(() => editor.element().textContent).toBe('Hello');
+    await userEvent.click(editor);
+    await userEvent.keyboard('{End}');
+
+    const dataTransfer = new DataTransfer();
+
+    dataTransfer.items.add(await createMockImageFile({ name: 'pasted.png' }));
+    editor.element().dispatchEvent(
+      new ClipboardEvent('paste', {
+        bubbles: true,
+        cancelable: true,
+        clipboardData: dataTransfer,
+      }),
+    );
+
+    await expect.poll(() => props.currentValue).toMatch(/^Hello!\[\]\(blob:[^)]+\)$/);
+    expect(editor.element().querySelectorAll('p')).toHaveLength(1);
+  });
+
+  test('inserts no dropped or pasted image into a read-only field', async () => {
+    await initTestConfig({
+      collections: [
+        {
+          name: 'posts',
+          label: 'Posts',
+          folder: 'content/posts',
+          fields: [{ name: 'body', widget: 'richtext' }],
+        },
+      ],
+    });
+
+    const { props, draft } = await renderEditor('Hello', {}, { props: { readonly: true } });
+    const editor = page.getByRole('textbox');
+
+    await expect.poll(() => editor.element().textContent).toBe('Hello');
+
+    const dropped = new DataTransfer();
+
+    dropped.items.add(await createMockImageFile({ name: 'photo.png' }));
+    editor
+      .element()
+      .dispatchEvent(
+        new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dropped }),
+      );
+
+    const pasted = new DataTransfer();
+
+    pasted.items.add(await createMockImageFile({ name: 'pasted.png' }));
+    editor
+      .element()
+      .dispatchEvent(
+        new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: pasted }),
+      );
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, 300);
+    });
+    expect(props.currentValue).toBe('Hello');
+    expect(Object.keys(draft.files)).toHaveLength(0);
+  });
+
+  describe('with a cloud storage service', () => {
+    /** @type {any} */
+    const services = allCloudStorageServices;
+
+    /**
+     * Load the configuration with the given media library options, and drop an image onto the
+     * editor.
+     * @param {Record<string, any>} mediaLibraries Site-level `media_libraries` option.
+     * @returns {Promise<{ props: any, draft: any }>} Editor props and draft.
+     */
+    const dropImage = async (mediaLibraries) => {
+      await initTestConfig({
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'content/posts',
+            fields: [{ name: 'body', widget: 'richtext' }],
+          },
+        ],
+      });
+      // Set after the validation, which only knows the actual services
+      /** @type {any} */ (cmsConfig.current).media_libraries = mediaLibraries;
+
+      const { props, draft } = await renderEditor('Hello');
+      const editor = page.getByRole('textbox');
+
+      await expect.poll(() => editor.element().textContent).toBe('Hello');
+
+      const dataTransfer = new DataTransfer();
+
+      dataTransfer.items.add(await createMockImageFile({ name: 'up.png' }));
+      editor
+        .element()
+        .dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer }));
+
+      return { props, draft };
+    };
+
+    beforeEach(() => {
+      // Register a service that needs no network access
+      services.test_cloud = createMockCloudService({
+        upload: vi.fn(async (/** @type {File[]} */ files) =>
+          files.map(({ name }) => createMockExternalAsset({ fileName: name })),
+        ),
+      });
+    });
+
+    afterEach(() => {
+      delete services.test_cloud;
+    });
+
+    test.each([
+      ['marked as the default', { test_cloud: { default: true } }],
+      ['when the repository is disabled', { default: false }],
+    ])('uploads a dropped image to the service %s', async (_label, mediaLibraries) => {
+      const { props, draft } = await dropImage(mediaLibraries);
+      const dialog = page.getByRole('dialog', { name: 'Select Image' });
+
+      // The dialog opens on the service to upload the file there, and selects the uploaded image
+      await expect.element(dialog).toBeInTheDocument();
+      await vi.waitFor(() =>
+        expect(services.test_cloud.upload).toHaveBeenCalledWith(
+          [expect.objectContaining({ name: 'up.png' })],
+          expect.anything(),
+        ),
+      );
+      await expect.element(dialog.getByRole('button', { name: 'Insert' })).toBeEnabled();
+      await dialog.getByRole('button', { name: 'Insert' }).click();
+
+      // The image is inserted with its URL on the service, and nothing goes to the repository
+      await expect
+        .poll(() => props.currentValue)
+        .toContain('![](https://cdn.example.com/images/up.png)');
+      expect(draft.files).toEqual({});
+    });
+
+    test('rejects a dropped image when no location can take it', async () => {
+      delete services.test_cloud.upload;
+
+      const { props, draft } = await dropImage({ default: false });
+
+      await expect.poll(() => getShownToastText('error')).toBe('error Error Upload failed.');
+      expect(page.getByRole('dialog', { name: 'Select Image' }).query()).toBeNull();
+      expect(props.currentValue).toBe('Hello');
+      expect(draft.files).toEqual({});
+      await waitForToastsToHide();
+    });
+  });
+
+  test('locks the components in a read-only field', async () => {
+    await initTestConfig({
+      collections: [
+        {
+          name: 'posts',
+          label: 'Posts',
+          folder: 'content/posts',
+          fields: [{ name: 'body', widget: 'richtext' }],
+        },
+      ],
+    });
+
+    const { props } = await renderEditor('![Cat](/cat.png)', {}, { props: { readonly: true } });
+    const component = page.getByRole('group', { name: 'Image', exact: true });
+
+    // The component learns that the field is read-only once it’s in place
+    await expect.element(component).toBeVisible();
+    await expect
+      .poll(() => component.getByRole('button', { name: 'Remove' }).elements())
+      .toEqual([]);
+
+    // The component isn’t removed with the Backspace key either
+    component
+      .element()
+      .dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true }));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 300);
+    });
+    expect(props.currentValue).toBe('![Cat](/cat.png)');
+  });
+
+  // A List with a single subfield gives it a context of its own, which mustn’t hide the component
+  test.each([
+    ['rich-text-editor-component', 'nested-off', 'body:c1:content', 'body:c1:content'],
+    ['single-subfield-list-field', 'nested-off-list', 'body:c1:notes.0', 'body:c1:notes.*'],
+  ])(
+    'offers no components when nested ones are disabled by the parent field (%s)',
+    async (fieldContext, collectionName, keyPath, typedKeyPath) => {
+      await initTestConfig({
+        collections: [
+          {
+            name: collectionName,
+            label: 'Posts',
+            folder: 'content/posts',
+            fields: [{ name: 'body', widget: 'richtext', allow_nested_components: false }],
+          },
+        ],
+      });
+
+      await renderEditor(
+        'Hi',
+        {},
+        {
+          // The field config is cached per collection, so each test uses its own one
+          collectionName,
+          context: {
+            fieldContext,
+            parentComponentNames: ['card'],
+            valueStoreKey: 'extraValues',
+          },
+          props: { keyPath, typedKeyPath },
+        },
+      );
+
+      await expect.element(page.getByRole('button', { name: 'Bold' })).toBeVisible();
+      expect(page.getByRole('button', { name: /Insert|Image/ }).elements()).toHaveLength(0);
+    },
+  );
+
+  test('leaves the current component out of the nested ones', async () => {
+    await initTestConfig({
+      collections: [
+        {
+          name: 'nested-self',
+          label: 'Posts',
+          folder: 'content/posts',
+          fields: [{ name: 'body', widget: 'richtext', allow_nested_components: 'exclude_self' }],
+        },
+      ],
+    });
+
+    await renderEditor(
+      'Hi',
+      {},
+      {
+        collectionName: 'nested-self',
+        // The parent component name is the definition ID, which is `linked-image` for an image
+        // while linked images are enabled
+        context: {
+          fieldContext: 'rich-text-editor-component',
+          parentComponentNames: ['linked-image'],
+          valueStoreKey: 'extraValues',
+        },
+        props: { keyPath: 'body:c1:content', typedKeyPath: 'body:c1:content' },
+      },
+    );
+
+    await expect.element(page.getByRole('button', { name: 'Bold' })).toBeVisible();
+    // Other components are still offered; the code block is a text style
+    await page.getByRole('button', { name: 'Show Text Style Options' }).click();
+    await expect.element(page.getByRole('menuitemcheckbox', { name: 'Code Block' })).toBeVisible();
+    await userEvent.keyboard('{Escape}');
+    expect(page.getByRole('button', { name: /Image/ }).elements()).toHaveLength(0);
+
+    // The image component is left out, so a dropped image goes nowhere
+    const dataTransfer = new DataTransfer();
+
+    dataTransfer.items.add(await createMockImageFile({ name: 'photo.png' }));
+
+    const editor = page.getByRole('textbox');
+
+    await expect.poll(() => editor.element().textContent).toBe('Hi');
+    editor
+      .element()
+      .dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer }));
+    await expect.poll(() => editor.element().textContent).toBe('Hi');
+  });
+
+  test('leaves the current custom component out of the nested ones', async () => {
+    customComponentRegistry.set('youtube', {
+      id: 'youtube',
+      label: 'YouTube',
+      // Show a toolbar button instead of an item in the Insert menu
+      trigger: 'button',
+      fields: [{ name: 'id', label: 'ID' }],
+      pattern: /^youtube (\S+)$/,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      toBlock: ({ id }) => `youtube ${id}`,
+    });
+
+    try {
+      await initTestConfig({
+        collections: [
+          {
+            name: 'nested-self-custom',
+            label: 'Posts',
+            folder: 'content/posts',
+            fields: [{ name: 'body', widget: 'richtext', allow_nested_components: 'exclude_self' }],
+          },
+        ],
+      });
+
+      await renderEditor(
+        'Hi',
+        {},
+        {
+          collectionName: 'nested-self-custom',
+          // The parent component name is the prefixed definition ID
+          context: {
+            fieldContext: 'rich-text-editor-component',
+            parentComponentNames: ['x-youtube'],
+            valueStoreKey: 'extraValues',
+          },
+          props: { keyPath: 'body:c1:content', typedKeyPath: 'body:c1:content' },
+        },
+      );
+
+      await expect.element(page.getByRole('button', { name: 'Bold' })).toBeVisible();
+      // The image component is still offered
+      await expect.element(page.getByRole('button', { name: /Image/ })).toBeVisible();
+      expect(page.getByRole('button', { name: /YouTube/ }).elements()).toHaveLength(0);
+    } finally {
+      customComponentRegistry.delete('youtube');
+    }
+  });
+
+  test('cleans up the values of removed components', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+
+    try {
+      const { props, draft } = await renderEditor('Hello');
+
+      draft.extraValues.en['body:c1:title'] = 'gone';
+      // Values of other fields, and those without a component prefix, are left alone
+      draft.extraValues.en['summary:c1:title'] = 'kept';
+      draft.extraValues.en.plain = 'kept';
+      props.currentValue = 'Changed';
+      await vi.advanceTimersByTimeAsync(600);
+      expect(draft.extraValues.en['body:c1:title']).toBeUndefined();
+      expect(draft.extraValues.en['summary:c1:title']).toBe('kept');
+      expect(draft.extraValues.en.plain).toBe('kept');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('shows an empty editor when the value is not a string', async () => {
+    const { props } = await renderEditor(/** @type {any} */ (undefined));
+    const editor = page.getByRole('textbox');
+
+    await expect.element(editor).toBeVisible();
+    expect(editor.element().textContent).toBe('');
+
+    props.currentValue = /** @type {any} */ (42);
+    await expect.poll(() => editor.element().textContent).toBe('');
+  });
+
+  test('offers the code block type only when the component is enabled', async () => {
+    await renderEditor('Hi', { buttons: [], editor_components: ['image'] });
+    await expect.element(page.getByRole('textbox')).toBeVisible();
+    // Only paragraphs are left, so there’s no text style menu
+    expect(page.getByRole('button', { name: 'Show Text Style Options' }).elements()).toHaveLength(
+      0,
+    );
+  });
+
+  test('inserts a dropped external image, and ignores dropped text', async () => {
+    const { props } = await renderEditor('Hello');
+    const editor = page.getByRole('textbox');
+
+    await expect.poll(() => editor.element().textContent).toBe('Hello');
+
+    const text = new DataTransfer();
+
+    text.setData('text/plain', 'plain');
+    editor
+      .element()
+      .dispatchEvent(
+        new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: text }),
+      );
+    await new Promise((resolve) => {
+      setTimeout(resolve, 300);
+    });
+    expect(props.currentValue).toBe('Hello');
+
+    // An image from another site is linked as is
+    const html = new DataTransfer();
+
+    html.setData('text/html', '<img src="https://example.com/photo.png" alt="Photo">');
+    editor
+      .element()
+      .dispatchEvent(
+        new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: html }),
+      );
+    await expect
+      .poll(() => props.currentValue)
+      .toContain('![Photo](https://example.com/photo.png)');
+  });
+
+  test('edits and inserts a pattern-based inline component', async () => {
+    const onEdit = vi.fn(async () => ({ page: 'About' }));
+    const onInsert = vi.fn(async () => ({ page: 'Now' }));
+
+    customComponentRegistry.set('wikilink', {
+      id: 'wikilink',
+      label: 'Wikilink',
+      type: 'inline',
+      pattern: /\[\[(?<page>[^\]]+)\]\]/,
+      trigger: '[[',
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      toInline: ({ page: name = '' }) => `[[${name}]]`,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      toPreview: ({ page: name = '' }) => `<a href="/${name}">${name}</a>`,
+      onEdit,
+      onInsert,
+    });
+
+    try {
+      const { props } = await renderEditor('See [[Home]] now');
+      const editor = page.getByRole('textbox');
+      // The button is named after its preview, which changes, and described with the label
+      const wikilink = editor.getByTitle('Wikilink');
+
+      await expect.element(wikilink).toHaveTextContent('Home');
+
+      // Clicking the component edits its data
+      await wikilink.click();
+      await expect.element(wikilink).toHaveTextContent('About');
+      expect(onEdit).toHaveBeenCalledExactlyOnceWith({ data: { page: 'Home' } });
+      await expect.poll(() => props.currentValue).toBe('See [[About]] now');
+
+      // Select the last word, and let the editor pick up the selection
+      const textNode = /** @type {Text} */ (
+        [...editor.element().querySelectorAll('span[data-lexical-text]')].at(-1)?.firstChild
+      );
+
+      const range = document.createRange();
+
+      range.setStart(textNode, 1);
+      range.setEnd(textNode, 4);
+      window.getSelection()?.removeAllRanges();
+      window.getSelection()?.addRange(range);
+      document.dispatchEvent(new Event('selectionchange'));
+      await new Promise((resolve) => {
+        requestAnimationFrame(resolve);
+      });
+
+      // The component inserted from the toolbar replaces the selected text
+      await page.getByRole('button', { name: 'Insert' }).click();
+      await page.getByRole('menuitem', { name: 'Wikilink' }).click();
+      await vi.waitFor(() =>
+        expect(onInsert).toHaveBeenCalledExactlyOnceWith({ selectedText: 'now' }),
+      );
+      await expect.poll(() => props.currentValue).toBe('See [[About]] [[Now]]');
+    } finally {
+      customComponentRegistry.delete('wikilink');
+    }
+  });
+});

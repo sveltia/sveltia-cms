@@ -1,11 +1,23 @@
 import { isObject } from '@sveltia/utils/object';
 
+import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
+
 /**
  * The default field key used to store an entry’s display order when reordering is enabled and no
  * custom key is configured.
  * @type {string}
  */
-export const DEFAULT_ORDER_FIELD_KEY = 'order';
+const DEFAULT_ORDER_FIELD_KEY = 'order';
+
+/**
+ * Check if the entries of the given collection are kept in a manual order: an entry collection with
+ * the `reorder` option, or one storing all the entries in one file, which keeps them in the order
+ * of the array.
+ * @param {any} collection Collection. Anything other than an entry collection returns `false`.
+ * @returns {boolean} Result.
+ */
+export const isManuallyOrdered = (collection) =>
+  collection?._type === 'entry' && (!!collection.reorder || isArrayFileCollection(collection));
 
 /**
  * Get the field key used to persist an entry’s display order for the given collection.
@@ -16,7 +28,8 @@ export const DEFAULT_ORDER_FIELD_KEY = 'order';
 export const getOrderFieldKey = (collection) => {
   const reorder = collection?.reorder;
 
-  if (!reorder) {
+  // An entry collection storing all the entries in one file keeps them in the order of the array
+  if (!reorder || typeof collection.file === 'string') {
     return undefined;
   }
 
@@ -26,6 +39,16 @@ export const getOrderFieldKey = (collection) => {
 
   return DEFAULT_ORDER_FIELD_KEY;
 };
+
+/**
+ * Check if the given sort key sorts entries by their manual order: the special `_manual` key, or
+ * the collection’s order field itself.
+ * @param {any} collection Collection (typically an entry collection).
+ * @param {string | undefined} key Sort key.
+ * @returns {boolean} Result. `false` for an empty key, even if the collection has no order field.
+ */
+export const isManualOrderKey = (collection, key) =>
+  !!key && (key === '_manual' || key === getOrderFieldKey(collection));
 
 /**
  * Get the name of the view group that entries should be grouped by while the given collection is in

@@ -1,12 +1,16 @@
-import { describe, expect, test } from 'vitest';
+import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 
+import { allEntries, allEntryFolders } from '$lib/services/contents';
 import {
+  getCollectionFileSummary,
   getEntrySummary,
   getEntrySummaryFromContent,
   replace,
   replaceSub,
   sanitizeEntrySummary,
 } from '$lib/services/contents/entry/summary';
+import { getEntryPathRegEx } from '$lib/services/contents/file/config';
+import { expectLinearTime } from '$lib/test/complexity';
 
 /**
  * @import { Entry, InternalCollection, LocalizedEntry } from '$lib/types/private';
@@ -190,6 +194,13 @@ describe('Test getEntrySummary()', () => {
     expect(format("{{draft | ternary('Draft', 'Public')}}")).toEqual('Public');
   });
 
+  test('fields named after `Object.prototype` members', () => {
+    // `Object` was taken for a truthy value, and the source of `Object.prototype.toString` was
+    // shown. A missing field gives nothing, even with a transformation
+    expect(format("{{constructor | ternary('Yes', 'No')}}")).toEqual('');
+    expect(format('{{title}}{{toString}}')).toEqual('.Net');
+  });
+
   test('nested templates in default transformation', () => {
     // Test the issue from GitHub #813: default transformation with nested template
     const entryWithSubtitle = {
@@ -290,6 +301,38 @@ describe('Test getEntrySummary()', () => {
     ).toEqual('Main Title');
   });
 
+  test('several nested templates in a transformation argument', () => {
+    /**
+     * Create an entry with the given German content.
+     * @param {Record<string, any>} content Content.
+     * @returns {any} Entry.
+     */
+    const withValues = (content) => ({
+      ...entry,
+      locales: { de: { ...entry.locales.de, content } },
+    });
+
+    const options = { locale: 'de', useTemplate: true };
+
+    expect(
+      getEntrySummary(
+        { ...collection, summary: "{{fields.subtitle | default('{{title}} ({{author}})')}}" },
+        withValues({ title: 'Main Title', author: 'Jane', subtitle: '' }),
+        options,
+      ),
+    ).toEqual('Main Title (Jane)');
+    expect(
+      getEntrySummary(
+        {
+          ...collection,
+          summary: "{{fields.draft | ternary('Draft: {{title}}', '{{title}} – {{author}}')}}",
+        },
+        withValues({ title: 'Main Title', author: 'Jane', draft: false }),
+        options,
+      ),
+    ).toEqual('Main Title – Jane');
+  });
+
   test('Markdown', () => {
     const markdownStr =
       'This `code` on [GitHub](https://github.com/sveltia/sveltia-cms) _is_ ~~so~~ **good**!';
@@ -356,15 +399,22 @@ describe('Test getEntrySummary()', () => {
     const indexFileCollection = {
       ...collection,
       index_file: {
-        name: 'net',
         label: 'Category Index',
+      },
+      _file: {
+        ...collection._file,
+        fullPathRegEx: /^content\/tags\/(?<subPath>[^/]+?\/index|_index)\.(?<locale>en|de)\.md$/,
       },
     };
 
     // Create entry that would be identified as an index file
     const indexFileEntry = {
       ...entry,
-      slug: 'net',
+      slug: '_index',
+      subPath: '_index',
+      locales: {
+        de: { ...entry.locales.de, path: 'content/tags/_index.de.md' },
+      },
     };
 
     const result = getEntrySummary(indexFileCollection, indexFileEntry, {
@@ -374,6 +424,33 @@ describe('Test getEntrySummary()', () => {
 
     // When entry is an index file, should return the index file's label
     expect(result).toBe('Category Index');
+  });
+
+  test('formats the index file like any other entry with `useIndexFileLabel: false`', () => {
+    const indexFileCollection = {
+      ...collection,
+      index_file: { label: 'Category Index' },
+      _file: {
+        ...collection._file,
+        fullPathRegEx: /^content\/tags\/(?<subPath>[^/]+?\/index|_index)\.(?<locale>en|de)\.md$/,
+      },
+    };
+
+    const indexFileEntry = {
+      ...entry,
+      slug: '_index',
+      subPath: '_index',
+      locales: { de: { ...entry.locales.de, path: 'content/tags/_index.de.md' } },
+    };
+
+    const result = getEntrySummary(indexFileCollection, indexFileEntry, {
+      locale: 'de',
+      useTemplate: true,
+      template: '{{slug}}',
+      useIndexFileLabel: false,
+    });
+
+    expect(result).toBe('_index');
   });
 
   test('handles missing locales fallback (lines 210-211)', () => {
@@ -436,7 +513,7 @@ describe('Test getEntrySummary()', () => {
 
   test('covers locales fallback when requested locale is undefined (line 211)', () => {
     // Create entry where first locale doesn't match requested locale
-    // Force the ternary: locales[undefined ?? defaultLocale] ?? Object.values(locales)[0] ?? {}
+    // Force the ternary: the requested locale, or the first one the entry has
     const entryWithMultipleLocales = {
       ...entry,
       slug: 'test-slug',
@@ -455,7 +532,7 @@ describe('Test getEntrySummary()', () => {
     });
 
     // With defaultLocale='de', tries to find 'de' locale
-    // Doesn't exist, so falls back to Object.values(locales)[0] which is 'fr' locale
+    // Doesn't exist, so falls back to the first locale the entry has, which is 'fr'
     expect(result).toContain('French');
   });
 });
@@ -465,9 +542,10 @@ describe('Test sanitizeEntrySummary()', () => {
     const input = 'This is **bold** and _italic_ and `code` and <script>alert("xss")</script>';
     const result = sanitizeEntrySummary(input, { allowMarkdown: true });
 
-    // Script tags are completely removed for security
+    // A tag other than a formatting one is kept as text, escaped
     expect(result).toBe(
-      'This is <strong>bold</strong> and <em>italic</em> and <code>code</code> and',
+      'This is <strong>bold</strong> and <em>italic</em> and <code>code</code> and ' +
+        '&lt;script&gt;alert("xss")&lt;/script&gt;',
     );
   });
 
@@ -475,8 +553,22 @@ describe('Test sanitizeEntrySummary()', () => {
     const input = 'This is **bold** and _italic_ and `code` and <script>alert("xss")</script>';
     const result = sanitizeEntrySummary(input, { allowMarkdown: false });
 
-    // All HTML tags are stripped including script content
-    expect(result).toBe('This is bold and italic and code and');
+    // The formatting is stripped, while another tag is kept as text
+    expect(result).toBe('This is bold and italic and code and <script>alert("xss")</script>');
+  });
+
+  test('should keep a tag other than a formatting one as text', () => {
+    expect(sanitizeEntrySummary('Vec<T> in Rust')).toBe('Vec<T> in Rust');
+    expect(sanitizeEntrySummary('Using <script> tags **safely**')).toBe(
+      'Using <script> tags safely',
+    );
+    expect(sanitizeEntrySummary('Vec<T> in **Rust**', { allowMarkdown: true })).toBe(
+      'Vec&lt;T&gt; in <strong>Rust</strong>',
+    );
+    // An unclosed tag doesn’t take the rest of the summary with it
+    expect(sanitizeEntrySummary('The <details> element', { allowMarkdown: true })).toBe(
+      'The &lt;details> element',
+    );
   });
 
   test('should parse HTML character entities', () => {
@@ -498,6 +590,16 @@ describe('Test sanitizeEntrySummary()', () => {
     const result = sanitizeEntrySummary(input, { allowMarkdown: true });
 
     expect(result).toBe('<strong>Safe</strong>');
+  });
+
+  test('should strip attributes from allowed Markdown tags', () => {
+    const input =
+      '<strong style="position: fixed; inset: 0" class="x" id="y">A</strong> ' +
+      '&lt;em style=&quot;display: block&quot;&gt;B&lt;/em&gt;';
+
+    const result = sanitizeEntrySummary(input, { allowMarkdown: true });
+
+    expect(result).toBe('<strong>A</strong> <em>B</em>');
   });
 
   test('should trim whitespace', () => {
@@ -639,6 +741,81 @@ describe('Test getEntrySummaryFromContent()', () => {
     expect(result).toBe('Main Header');
   });
 
+  test('should only strip a custom anchor at the end of the header', () => {
+    expect(getEntrySummaryFromContent({ body: '## Header {#a} and {#b}' })).toBe('Header');
+    expect(getEntrySummaryFromContent({ body: '# Header {#a}x' })).toBe('Header {#a}x');
+    expect(getEntrySummaryFromContent({ body: '# Header{#a}' })).toBe('Header{#a}');
+    expect(getEntrySummaryFromContent({ body: '# Header {#}' })).toBe('Header {#}');
+    expect(getEntrySummaryFromContent({ body: '# {#a}' })).toBe('{#a}');
+    expect(getEntrySummaryFromContent({ body: '# {#a} {#b}' })).toBe('{#a}');
+    expect(getEntrySummaryFromContent({ body: '# Header {#a}  \t' })).toBe('Header');
+    expect(getEntrySummaryFromContent({ body: '# Header }' })).toBe('Header }');
+  });
+
+  test('should skip lines that are not headers or have no text', () => {
+    expect(getEntrySummaryFromContent({ body: '#Hashtag\n#\n#   \n\n## Header' })).toBe('Header');
+    expect(getEntrySummaryFromContent({ body: 'Text # Not a header' })).toBe('');
+    // More than six `#` characters, or more than three spaces of indentation, isn’t a header
+    expect(getEntrySummaryFromContent({ body: '####### Not a header\n# Header' })).toBe('Header');
+    expect(getEntrySummaryFromContent({ body: '    # Code\n   # Header' })).toBe('Header');
+    expect(getEntrySummaryFromContent({ body: '#\tHeader' })).toBe('Header');
+  });
+
+  test('should strip the closing sequence of a header', () => {
+    expect(getEntrySummaryFromContent({ body: '## Closing ##' })).toBe('Closing');
+    expect(getEntrySummaryFromContent({ body: '# Closing #########  ' })).toBe('Closing');
+    expect(getEntrySummaryFromContent({ body: '# Closing {#a} #' })).toBe('Closing');
+    // Not preceded by a space, the `#` characters are part of the text
+    expect(getEntrySummaryFromContent({ body: '# C#' })).toBe('C#');
+    expect(getEntrySummaryFromContent({ body: '# Closing ## x' })).toBe('Closing ## x');
+    // A header with a closing sequence only has no text
+    expect(getEntrySummaryFromContent({ body: '### ###\n# Header' })).toBe('Header');
+  });
+
+  test('should skip fenced code blocks', () => {
+    expect(
+      getEntrySummaryFromContent({ body: '```sh\n# install deps\nnpm i\n```\n\n# Real Title' }),
+    ).toBe('Real Title');
+    expect(getEntrySummaryFromContent({ body: '  ~~~\n# Comment\n~~~~  \n# Real Title' })).toBe(
+      'Real Title',
+    );
+    // A closing fence is at least as long as the opening one, uses the same character, and has
+    // nothing but spaces after it
+    expect(
+      getEntrySummaryFromContent({
+        body: '````\n```\n# A\n~~~~\n# B\n```` x\n# C\n`````\n# Real Title',
+      }),
+    ).toBe('Real Title');
+    // An unclosed code block runs to the end
+    expect(getEntrySummaryFromContent({ body: '~~~\n# Comment' })).toBe('');
+    // A backtick fence with a backtick in its info string is inline code
+    expect(getEntrySummaryFromContent({ body: '``` `code` ```\n# Real Title' })).toBe('Real Title');
+    // An indented fence is code, not a fence
+    expect(getEntrySummaryFromContent({ body: '    ```\n# Real Title' })).toBe('Real Title');
+  });
+
+  test.each(
+    /** @type {[string, (n: number) => string][]} */ ([
+      ['spaces in a header', (n) => `# a${' '.repeat(n)}b`],
+      ['spaces before an unclosed anchor', (n) => `# a${' '.repeat(n)}{#b`],
+      ['anchor starts', (n) => `# a${' {#'.repeat(n)}`],
+      ['header markers', (n) => `${'#'.repeat(n)}x`],
+      ['empty headers', (n) => '# \n'.repeat(n)],
+      ['closing sequences', (n) => `# a${' #'.repeat(n)}x`],
+      ['closing sequence markers', (n) => `# a ${'#'.repeat(n)}x`],
+      ['fence markers', (n) => `${'`'.repeat(n)}\n# a`],
+      ['fence lines', (n) => '```\n```x\n'.repeat(n)],
+    ]),
+  )('should find a header in linear time: %s', (_name, build) => {
+    expectLinearTime(build, (body) => getEntrySummaryFromContent({ body }), 2000);
+  });
+
+  test('should find a header with a long run of spaces', () => {
+    expect(getEntrySummaryFromContent({ body: `# a${' '.repeat(100_000)}b` })).toBe(
+      `a${' '.repeat(100_000)}b`,
+    );
+  });
+
   test('should return empty string when nothing found', () => {
     const content = {
       body: 'No headers here, just content',
@@ -734,6 +911,20 @@ describe('Test replaceSub()', () => {
     const result = replaceSub('extension', context);
 
     expect(result).toBe('md');
+  });
+
+  test('should strip only the last extension from the filename tag', () => {
+    const dottedContext = { ...context, entryPath: 'content/posts/2024/my.post.md' };
+
+    expect(replaceSub('filename', dottedContext)).toBe('my.post');
+    expect(replaceSub('extension', dottedContext)).toBe('md');
+  });
+
+  test('should give an empty extension for a file name without a dot', () => {
+    const plainContext = { ...context, entryPath: 'content/posts/2024/README' };
+
+    expect(replaceSub('filename', plainContext)).toBe('README');
+    expect(replaceSub('extension', plainContext)).toBe('');
   });
 
   test('should replace commit_date tag', () => {
@@ -876,6 +1067,79 @@ describe('Test replaceSub()', () => {
     expect(result).toBe('');
   });
 
+  test('should handle dirname with the locale placeholder in basePath', () => {
+    const localeContext = {
+      slug: 'test-entry',
+      entryPath: 'content/fr/posts/blog/article.md',
+      basePath: 'content/{{locale}}/posts',
+      locales: ['en', 'fr'],
+      commitDate: new Date('2024-01-15T10:30:00Z'),
+      commitAuthor: { name: 'John Doe', login: 'john', email: 'john@test.com' },
+    };
+
+    // The locale folder is part of the base path
+    expect(replaceSub('dirname', localeContext)).toBe('blog');
+    // The default locale may be omitted from the path
+    expect(
+      replaceSub('dirname', { ...localeContext, entryPath: 'content/posts/blog/article.md' }),
+    ).toBe('blog');
+    expect(
+      replaceSub('dirname', { ...localeContext, entryPath: 'content/fr/posts/article.md' }),
+    ).toBe('');
+  });
+
+  test('should leave the locale folder out of dirname with a folder per locale', () => {
+    // With the `multiple_folders` and `multiple_root_folders` i18n structures, the locale folder
+    // is added to the entry path but not to the base path, which is the collection’s `folder`
+    // option. The entry path matcher tells where it is, so the summary is the same for every
+    // locale.
+    const basePath = 'content/posts';
+
+    /**
+     * Get the entry path matcher for the given i18n structure.
+     * @param {'i18nMultiFolder' | 'i18nMultiRootFolder'} structure I18n structure flag.
+     * @returns {RegExp} Matcher.
+     */
+    const getRegEx = (structure) =>
+      getEntryPathRegEx({
+        extension: 'md',
+        format: 'frontmatter',
+        basePath,
+        nestedDepth: Infinity,
+        _i18n: /** @type {any} */ ({
+          allLocales: ['en', 'fr'],
+          defaultLocale: 'en',
+          omitDefaultLocaleFromFilePath: false,
+          structureMap: { [structure]: true },
+        }),
+      });
+
+    const localeContext = {
+      slug: 'foo',
+      basePath,
+      locales: ['en', 'fr'],
+      commitDate: undefined,
+      commitAuthor: undefined,
+    };
+
+    // `multiple_folders`
+    expect(
+      replaceSub('dirname', {
+        ...localeContext,
+        entryPath: 'content/posts/en/2024/foo.md',
+        fullPathRegEx: getRegEx('i18nMultiFolder'),
+      }),
+    ).toBe('2024');
+    // `multiple_root_folders`
+    expect(
+      replaceSub('dirname', {
+        ...localeContext,
+        entryPath: 'fr/content/posts/2024/foo.md',
+        fullPathRegEx: getRegEx('i18nMultiRootFolder'),
+      }),
+    ).toBe('2024');
+  });
+
   test('should handle dirname when basePath is undefined (line 105)', () => {
     // Test when basePath is undefined to exercise basePath ?? ''
     const contextWithoutBasePath = {
@@ -895,11 +1159,8 @@ describe('Test replaceSub()', () => {
     expect(result).toBe('content/posts');
   });
 
-  test('should handle dirname when dirPath starts with basePath but not with prefix (line 113 else if branch)', () => {
-    // This specifically tests the else if branch on line 113
-    // We need dirPath that starts with basePath but NOT with prefix (basePath + '/')
-    // Example: basePath='content/posts', dirPath='content/posts-backup/index/'
-    // prefix would be 'content/posts/', but dirPath starts with 'content/posts-'
+  test('should not strip a base path that is only a string prefix of the dirname', () => {
+    // `content/posts-backup` isn’t below `content/posts`, so the base path isn’t removed
     const contextEdgeCase = {
       slug: 'test-entry',
       entryPath: 'content/posts-backup/index/test-entry.md',
@@ -911,13 +1172,7 @@ describe('Test replaceSub()', () => {
 
     const result = replaceSub('dirname', contextEdgeCase);
 
-    // After removing 'test-entry.md', dirPath is 'content/posts-backup/index/'
-    // prefix is 'content/posts/' (basePath + '/')
-    // dirPath doesn't start with prefix 'content/posts/' (next char is -, not /)
-    // dirPath DOES start with basePath 'content/posts'
-    // So else if branch removes 'content/posts' leaving '-backup/index/'
-    // stripSlashes only removes slashes, leaving '-backup/index'
-    expect(result).toBe('-backup/index');
+    expect(result).toBe('content/posts-backup/index');
   });
 
   test('should handle dirname when dirPath does NOT start with basePath (line 113 skip)', () => {
@@ -941,9 +1196,7 @@ describe('Test replaceSub()', () => {
     expect(result).toBe('content/posts/index');
   });
 
-  test('should handle dirname with basePath as substring prefix (line 113 else if)', () => {
-    // Another case for the else if on line 113
-    // basePath='posts', dirPath starts with 'posts' but prefix='posts/' doesn't match
+  test('should not strip a base path that is a substring prefix of the dirname', () => {
     const contextSubstring = {
       slug: 'entry',
       entryPath: 'posts-archive/2024/entry.md',
@@ -955,13 +1208,7 @@ describe('Test replaceSub()', () => {
 
     const result = replaceSub('dirname', contextSubstring);
 
-    // After removing 'entry.md', dirPath is 'posts-archive/2024/'
-    // prefix is 'posts/' (basePath + '/')
-    // dirPath doesn't start with prefix (next is -, not /)
-    // dirPath DOES start with basePath 'posts'
-    // So else if removes 'posts' leaving '-archive/2024/'
-    // stripSlashes removes slashes leaving '-archive/2024'
-    expect(result).toBe('-archive/2024');
+    expect(result).toBe('posts-archive/2024');
   });
 
   test('should handle dirname when basePath ends with slash (line 109 ternary)', () => {
@@ -1006,7 +1253,7 @@ describe('Test replace()', () => {
         email: 'john@example.com',
       },
     },
-    defaultLocale: 'en',
+    locale: 'en',
   };
 
   test('should replace slug placeholder', () => {
@@ -1190,7 +1437,7 @@ describe('Test replace()', () => {
         ...context.replaceSubContext,
         locales: ['en'],
       },
-      defaultLocale: 'en',
+      locale: 'en',
     };
 
     // 'missingField' doesn't exist in replaceSub (returns undefined)
@@ -1363,10 +1610,8 @@ describe('Additional comprehensive tests for edge cases', () => {
     expect(result).toBe('');
   });
 
-  test('replaceSub dirname should handle basePath boundary correctly (branch 114-115)', () => {
-    // Test case where dirPath starts with basePath but not with prefix
-    // This would only happen if there's unusual path construction
-    // For normal usage, the if branch will be taken
+  test('replaceSub dirname should handle basePath boundary correctly', () => {
+    // `content/blogpost` isn’t below `content/blog`, so the base path isn’t removed
     const context = {
       slug: 'entry',
       entryPath: 'content/blogpost/entry.md',
@@ -1378,13 +1623,7 @@ describe('Additional comprehensive tests for edge cases', () => {
 
     const result = replaceSub('dirname', context);
 
-    // After removing filename: 'content/blogpost/'
-    // prefix would be 'content/blog/', but dirPath is 'content/blogpost/'
-    // prefix doesn't match (expects slash after 'blog')
-    // So checks if dirPath.startsWith('content/blog') which is true
-    // Then slices off 'content/blog', leaving 'post/'
-    // stripSlashes gives 'post'
-    expect(result).toBe('post');
+    expect(result).toBe('content/blogpost');
   });
 
   test('replaceSub should handle entryPath with no base path', () => {
@@ -1415,9 +1654,12 @@ describe('Additional comprehensive tests for edge cases', () => {
     const input = 'Text <img src="x" onerror="alert(1)"> <iframe src="evil"></iframe>';
     const result = sanitizeEntrySummary(input, { allowMarkdown: true });
 
-    // Dangerous tags should be removed
-    expect(result).not.toContain('onerror');
-    expect(result).not.toContain('iframe');
+    // Dangerous tags are only shown as text
+    expect(result).not.toContain('<img');
+    expect(result).not.toContain('<iframe');
+    expect(result).toBe(
+      'Text &lt;img src="x" onerror="alert(1)"> &lt;iframe src="evil">&lt;/iframe>',
+    );
   });
 
   test('getEntrySummary should handle collection with no summary template', () => {
@@ -1485,7 +1727,7 @@ describe('Additional comprehensive tests for edge cases', () => {
         commitDate: undefined,
         commitAuthor: { name: '', login: '', email: '' },
       },
-      defaultLocale: 'en',
+      locale: 'en',
     };
 
     const result = replace('commit_author', context);
@@ -1520,7 +1762,7 @@ describe('Additional comprehensive tests for edge cases', () => {
         commitDate: undefined,
         commitAuthor: undefined,
       },
-      defaultLocale: 'en',
+      locale: 'en',
     };
 
     // Note: This depends on how transformations are applied
@@ -1601,7 +1843,7 @@ describe('Additional comprehensive tests for edge cases', () => {
           email: 'john@example.com',
         },
       },
-      defaultLocale: 'en',
+      locale: 'en',
     };
 
     // Regular field with no special transformation, not in replaceSub
@@ -1653,7 +1895,7 @@ describe('Additional comprehensive tests for edge cases', () => {
           email: 'john@example.com',
         },
       },
-      defaultLocale: 'en',
+      locale: 'en',
     };
 
     // With ternary transformation on falsy value, should use valueMap
@@ -1773,5 +2015,244 @@ describe('Test getEntrySummary() caching', () => {
 
     expect(getEntrySummary(collection, entry, { locale: 'en' })).toBe('Hello');
     expect(getEntrySummary(collection, otherEntry, { locale: 'en' })).toBe('World');
+  });
+});
+
+describe('Test getEntrySummary() with a collection file or an index file', () => {
+  const i18n = /** @type {any} */ ({ defaultLocale: '_default', allLocales: ['_default'] });
+  /**
+   * Build a collection file.
+   * @param {Record<string, any>} props Collection file properties.
+   * @returns {any} Collection file.
+   */
+  const createFile = (props) => ({ fields: [], _file: {}, _i18n: i18n, ...props });
+
+  /** @type {InternalCollection} */
+  const fileCollection = /** @type {any} */ ({
+    name: 'settings',
+    _type: 'file',
+    files: [],
+    _fileMap: {
+      general: createFile({
+        name: 'general',
+        label: 'General',
+        file: 'data/general.yml',
+        summary: '{{theme}} — {{filename}}',
+      }),
+      titled: createFile({
+        name: 'titled',
+        label: 'Titled',
+        file: 'data/titled.yml',
+        summary: '**{{title}}**',
+      }),
+      social: createFile({ name: 'social', file: 'data/social.yml' }),
+    },
+    _i18n: i18n,
+    _thumbnailFieldNames: [],
+  });
+
+  /**
+   * Build an entry collection with an index file.
+   * @param {any} indexFile The `index_file` option value.
+   * @returns {InternalCollection} Collection.
+   */
+  const createEntryCollection = (indexFile) =>
+    /** @type {any} */ ({
+      name: 'tags',
+      folder: 'content/tags',
+      fields: [],
+      summary: '{{title}} (tag)',
+      index_file: indexFile,
+      _type: 'entry',
+      _file: { basePath: 'content/tags', fullPathRegEx: /^content\/tags\/(?<subPath>.+)\.md$/ },
+      _i18n: i18n,
+      _thumbnailFieldNames: [],
+    });
+
+  /**
+   * Build an entry.
+   * @param {string} path File path.
+   * @param {Record<string, any>} [content] Content.
+   * @returns {Entry} Entry.
+   */
+  const createEntry = (path, content = {}) => {
+    const slug = /** @type {string} */ (path.split('/').pop()?.split('.')[0]);
+
+    return { id: path, slug, subPath: slug, locales: { _default: { slug, path, content } } };
+  };
+
+  test('formats the file’s own summary template', () => {
+    const entry = createEntry('data/general.yml', { theme: 'dark' });
+
+    expect(getEntrySummary(fileCollection, entry, { fileName: 'general', useTemplate: true })).toBe(
+      'dark — general',
+    );
+  });
+
+  test('returns the file label without `useTemplate` or with a given template', () => {
+    const entry = createEntry('data/general.yml', { theme: 'dark' });
+
+    expect(getEntrySummary(fileCollection, entry, { fileName: 'general' })).toBe('General');
+    expect(
+      getEntrySummary(fileCollection, entry, {
+        fileName: 'general',
+        useTemplate: true,
+        template: '{{filename}}',
+      }),
+    ).toBe('General');
+  });
+
+  test('returns the file label or name without a summary template', () => {
+    const entry = createEntry('data/social.yml');
+
+    expect(getEntrySummary(fileCollection, entry, { fileName: 'social', useTemplate: true })).toBe(
+      'social',
+    );
+  });
+
+  test('falls back to the file label for an empty `{{title}}`', () => {
+    const entry = createEntry('data/titled.yml');
+
+    expect(
+      getEntrySummary(fileCollection, entry, {
+        fileName: 'titled',
+        useTemplate: true,
+        allowMarkdown: true,
+      }),
+    ).toBe('<strong>Titled</strong>');
+  });
+
+  test('reads the file in its own default locale', () => {
+    /** @type {InternalCollection} */
+    const collection = /** @type {any} */ ({
+      ...fileCollection,
+      _fileMap: {
+        about: createFile({
+          name: 'about',
+          file: 'data/about.{{locale}}.yml',
+          summary: '{{headline}}',
+          _i18n: { defaultLocale: 'ja', allLocales: ['en', 'ja'] },
+        }),
+      },
+    });
+
+    /** @type {Entry} */
+    const entry = {
+      id: 'about',
+      slug: 'about',
+      subPath: 'about',
+      locales: {
+        en: { slug: 'about', path: 'data/about.en.yml', content: { headline: 'Hello' } },
+        ja: { slug: 'about', path: 'data/about.ja.yml', content: { headline: 'こんにちは' } },
+      },
+    };
+
+    expect(getEntrySummary(collection, entry, { fileName: 'about', useTemplate: true })).toBe(
+      'こんにちは',
+    );
+  });
+
+  test('keys the cache on the file name', () => {
+    const entry = createEntry('data/general.yml', { theme: 'dark' });
+
+    expect(getEntrySummary(fileCollection, entry, { useTemplate: true })).toBe('general');
+    expect(getEntrySummary(fileCollection, entry, { fileName: 'general', useTemplate: true })).toBe(
+      'dark — general',
+    );
+  });
+
+  test('formats the index file’s own summary template', () => {
+    const collection = createEntryCollection({
+      label: 'Tag Index',
+      summary: '{{theme}}: {{title}}',
+    });
+
+    const entry = createEntry('content/tags/_index.md', { theme: 'dark' });
+
+    expect(getEntrySummary(collection, entry, { useTemplate: true })).toBe('dark: Tag Index');
+    expect(getEntrySummary(collection, entry)).toBe('Tag Index');
+    // A given template, such as `nested.summary`, doesn’t apply to the index file
+    expect(getEntrySummary(collection, entry, { useTemplate: true, template: '{{slug}}' })).toBe(
+      'Tag Index',
+    );
+    // The collection’s template still applies to the other entries
+    expect(
+      getEntrySummary(collection, createEntry('content/tags/net.md', { title: '.Net' }), {
+        useTemplate: true,
+      }),
+    ).toBe('.Net (tag)');
+  });
+
+  test('returns the index file label without a summary template of its own', () => {
+    const collection = createEntryCollection({ label: 'Tag Index' });
+    const entry = createEntry('content/tags/_index.md');
+
+    expect(getEntrySummary(collection, entry, { useTemplate: true })).toBe('Tag Index');
+  });
+});
+
+describe('Test getCollectionFileSummary()', () => {
+  const i18n = /** @type {any} */ ({ defaultLocale: '_default', allLocales: ['_default'] });
+
+  /** @type {InternalCollection} */
+  const collection = /** @type {any} */ ({
+    name: 'settings',
+    _type: 'file',
+    files: [],
+    _fileMap: {
+      general: { name: 'general', file: 'data/general.yml', summary: '**{{theme}}**', _i18n: i18n },
+      social: { name: 'social', label: 'Social', file: 'data/social.yml', _i18n: i18n },
+    },
+    _i18n: i18n,
+    _thumbnailFieldNames: [],
+  });
+
+  /** @type {Entry} */
+  const entry = {
+    id: 'general',
+    slug: 'general',
+    subPath: 'general',
+    locales: {
+      _default: { slug: 'general', path: 'data/general.yml', content: { theme: 'dark' } },
+    },
+  };
+
+  beforeAll(() => {
+    allEntryFolders.current = /** @type {any} */ ([
+      {
+        collectionName: 'settings',
+        fileName: 'general',
+        filePathMap: { _default: 'data/general.yml' },
+      },
+      {
+        collectionName: 'settings',
+        fileName: 'social',
+        filePathMap: { _default: 'data/social.yml' },
+      },
+    ]);
+  });
+
+  afterAll(() => {
+    allEntryFolders.current = [];
+    allEntries.current = [];
+  });
+
+  test('formats the summary of a file with the `summary` option', () => {
+    allEntries.current = [entry];
+
+    expect(getCollectionFileSummary(collection, 'general')).toBe('<strong>dark</strong>');
+  });
+
+  test('returns `undefined` for a file that doesn’t exist yet', () => {
+    allEntries.current = [];
+
+    expect(getCollectionFileSummary(collection, 'general')).toBeUndefined();
+  });
+
+  test('returns `undefined` for a file without the `summary` option or an unknown file', () => {
+    allEntries.current = [entry];
+
+    expect(getCollectionFileSummary(collection, 'social')).toBeUndefined();
+    expect(getCollectionFileSummary(collection, 'unknown')).toBeUndefined();
   });
 });

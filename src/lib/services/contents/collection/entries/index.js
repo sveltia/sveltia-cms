@@ -1,19 +1,15 @@
-/* eslint-disable no-continue */
-/* eslint-disable no-await-in-loop */
-/* eslint-disable no-restricted-syntax */
-
-import { getMediaFieldURL } from '$lib/services/assets/info';
-import { cmsConfig } from '$lib/services/config';
 import { allEntries, allEntryFolders } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import {
   getIndexFile,
+  getIndexFileName,
   isCollectionIndexFile,
 } from '$lib/services/contents/collection/entries/index-file';
-import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
-import { getAssociatedCollections } from '$lib/services/contents/entry';
-import { getField, getPropertyValue } from '$lib/services/contents/entry/fields';
-import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
+import { getListedEntryValue } from '$lib/services/contents/collection/view/values';
+import { getAssociatedCollections } from '$lib/services/contents/entry/collections';
+import { getEntryDisplayLocale } from '$lib/services/contents/entry/paths';
+import { getSlug } from '$lib/services/contents/file/process';
+import { getOrCreate } from '$lib/services/utils/cache';
 import { getRegex } from '$lib/services/utils/regex';
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
 
@@ -21,17 +17,10 @@ import { createDerivedState, createRawState } from '$lib/services/utils/state.sv
  * @import {
  * Entry,
  * EntryFolderInfo,
- * FlattenedEntryContent,
  * InternalCollection,
- * InternalCollectionFile,
  * } from '$lib/types/private';
  * @import { FieldKeyPath } from '$lib/types/public';
  */
-
-/**
- * Regular expression to match `![alt](src "title")`.
- */
-export const MARKDOWN_IMAGE_REGEX = /!\[.*?\]\((.+?)(?:\s+".*?")?\)/g;
 
 /**
  * Currently selected entries.
@@ -68,30 +57,26 @@ const filterConditionCache = new WeakMap();
  * @returns {EntryFilterCondition | undefined} Condition, or `undefined` if the collection is not an
  * entry collection or defines no usable filter.
  */
-const getFilterCondition = (collection) => {
-  if (!filterConditionCache.has(collection)) {
+const getFilterCondition = (collection) =>
+  getOrCreate(filterConditionCache, collection, () => {
     const { filter } = collection._type === 'entry' ? collection : {};
     const field = filter?.field;
 
-    filterConditionCache.set(
-      collection,
-      field === undefined
-        ? undefined
-        : {
-            field,
-            pattern: getRegex(filter?.pattern),
-            values:
-              filter?.value === undefined
-                ? []
-                : Array.isArray(filter.value)
-                  ? filter.value
-                  : [filter.value],
-          },
-    );
-  }
+    if (field === undefined) {
+      return undefined;
+    }
 
-  return filterConditionCache.get(collection);
-};
+    return {
+      field,
+      pattern: getRegex(filter?.pattern),
+      values:
+        filter?.value === undefined
+          ? []
+          : Array.isArray(filter.value)
+            ? filter.value
+            : [filter.value],
+    };
+  });
 
 /**
  * Check if the given entry passes the given collection’s `filter` option. An entry that doesn’t is
@@ -104,7 +89,7 @@ const getFilterCondition = (collection) => {
  * @param {Entry} entry Entry.
  * @returns {boolean} Result.
  * @see https://decapcms.org/docs/collection-folder/#filtered-folder-collections
- * @see https://sveltiacms.app/en/docs/collections/entries#filtering-entries
+ * @see https://sveltiacms.app/en/docs/collections/entries/listings#filtering-entries
  */
 export const matchesCollectionFilter = (collection, entry) => {
   const condition = getFilterCondition(collection);
@@ -118,35 +103,95 @@ export const matchesCollectionFilter = (collection, entry) => {
 
   const { field, pattern, values } = condition;
 
-  const value =
-    getPropertyValue({
-      entry,
-      locale: collection._i18n.defaultLocale,
-      collectionName: collection.name,
-      key: field,
-    }) ?? null;
+  // The filter is matched against the stored value, like Decap CMS does, so a Relation field isn’t
+  // resolved to the label of the referenced entry. Resolving it would also look up the entries of
+  // the referenced collection, which loops forever if that’s this collection. A multi-file i18n
+  // entry can lack its default locale file, in which case it’s listed in another locale, and so the
+  // filter reads the value from that locale
+  const value = getListedEntryValue({
+    entry,
+    locale: collection._i18n.defaultLocale,
+    collectionName: collection.name,
+    key: field,
+    resolveRef: false,
+  });
+
+  // A multi-value field, such as a List field or a Relation field with `multiple: true`, yields an
+  // array of its items, and the entry passes when any of them does. An entry without a value only
+  // passes when `null` is one of the filter values, which is how it’s stored in YAML
+  // @see https://github.com/sveltia/sveltia-cms/issues/997
+  const items = Array.isArray(value) ? value : [value ?? null];
 
   if (pattern) {
-    return pattern.test(value);
+    // A missing value never matches a pattern, like Decap CMS’s view filters do. `RegExp.test()`
+    // would coerce `null` to the string `null`, which `.+` or `^n` would match
+    return items.some((item) => item !== null && item !== undefined && pattern.test(String(item)));
   }
 
-  return values.includes(value);
+  return items.some((item) => values.includes(item));
 };
 
 /**
  * Get a list of collections the given entry is listed in, which are the collections the entry
- * belongs to, minus any whose `filter` option the entry doesn’t pass.
+ * belongs to, minus any whose `filter` option the entry doesn’t pass and any hidden with the `hide`
+ * option. A hidden collection can’t be opened, so its entries mustn’t be linked from anywhere, such
+ * as the search results or the “Used in” section of an asset.
  * @param {Entry} entry Entry.
  * @returns {InternalCollection[]} Collections.
  */
 export const getListedCollections = (entry) =>
-  getAssociatedCollections(entry).filter((collection) =>
-    matchesCollectionFilter(collection, entry),
+  getAssociatedCollections(entry).filter(
+    (collection) => !collection.hide && matchesCollectionFilter(collection, entry),
   );
 
 /**
- * Scan `allEntries` for the entries belonging to the given collection. This is the uncached
- * implementation of {@link getEntriesByCollection}.
+ * Cache for {@link getEntriesByCollection}, keyed by collection name and invalidated whenever
+ * `allEntries` or `allEntryFolders` is replaced.
+ * @type {{
+ * entrySource: Entry[] | undefined,
+ * folderSource: EntryFolderInfo[] | undefined,
+ * buckets: Map<string, Entry[]> | undefined,
+ * map: Map<string, Entry[]>,
+ * folderMap: Map<string, Entry[]>,
+ * }}
+ */
+const entriesByCollectionCache = {
+  entrySource: undefined,
+  folderSource: undefined,
+  buckets: undefined,
+  map: new Map(),
+  folderMap: new Map(),
+};
+
+/**
+ * Sort every entry into the collections it belongs to, in one pass over `allEntries`. The sidebar
+ * asks for the entries of every collection whenever the entry list changes, so looking each one up
+ * with its own scan would cost a pass per collection. The collections of an entry are cached with
+ * the entry object, which survives a save or a refresh unless the entry itself has changed, so this
+ * is mostly lookups.
+ * @returns {Map<string, Entry[]>} Entries by collection name, in the order of `allEntries`.
+ */
+const getCollectionBuckets = () => {
+  if (!entriesByCollectionCache.buckets) {
+    /** @type {Map<string, Entry[]>} */
+    const buckets = new Map();
+
+    allEntries.current.forEach((entry) => {
+      // A collection can match an entry through more than one of its folders
+      new Set(getAssociatedCollections(entry).map(({ name }) => name)).forEach((name) => {
+        getOrCreate(buckets, name, () => []).push(entry);
+      });
+    });
+
+    entriesByCollectionCache.buckets = buckets;
+  }
+
+  return entriesByCollectionCache.buckets;
+};
+
+/**
+ * Get the entries belonging to the given collection. This is the uncached implementation of
+ * {@link getEntriesByCollection}.
  * @param {string} collectionName Collection name.
  * @returns {Entry[]} Entries.
  */
@@ -157,51 +202,9 @@ const queryEntriesByCollection = (collectionName) => {
     return [];
   }
 
-  // Pre-compute membership check to avoid calling getAssociatedCollections() per entry, which
-  // internally does allEntryFolders.current.filter().sort() for each entry.
-  let isMember;
-
-  if (collection._type === 'entry') {
-    const fullPathRegEx = collection._file?.fullPathRegEx;
-
-    isMember = fullPathRegEx
-      ? (/** @type {Entry} */ entry) =>
-          fullPathRegEx.test(Object.values(entry.locales)[0]?.path ?? '')
-      : (/** @type {Entry} */ entry) =>
-          getAssociatedCollections(entry).some(({ name }) => name === collectionName);
-  } else {
-    const validPaths = new Set(
-      allEntryFolders.current
-        .filter(({ collectionName: name }) => name === collectionName)
-        .flatMap(({ filePathMap }) => (filePathMap ? Object.values(filePathMap) : [])),
-    );
-
-    // eslint-disable-next-line jsdoc/require-jsdoc
-    isMember = (/** @type {Entry} */ entry) => {
-      const entryPath = Object.values(entry.locales)[0]?.path;
-
-      return !!entryPath && validPaths.has(entryPath);
-    };
-  }
-
-  return allEntries.current.filter(
-    (entry) => isMember(entry) && matchesCollectionFilter(collection, entry),
+  return (getCollectionBuckets().get(collectionName) ?? []).filter((entry) =>
+    matchesCollectionFilter(collection, entry),
   );
-};
-
-/**
- * Cache for {@link getEntriesByCollection}, keyed by collection name and invalidated whenever
- * `allEntries` or `allEntryFolders` is replaced.
- * @type {{
- * entrySource: Entry[] | undefined,
- * folderSource: EntryFolderInfo[] | undefined,
- * map: Map<string, Entry[]>,
- * }}
- */
-const entriesByCollectionCache = {
-  entrySource: undefined,
-  folderSource: undefined,
-  map: new Map(),
 };
 
 /**
@@ -211,7 +214,29 @@ const entriesByCollectionCache = {
 export const _resetEntriesByCollectionCache = () => {
   entriesByCollectionCache.entrySource = undefined;
   entriesByCollectionCache.folderSource = undefined;
+  entriesByCollectionCache.buckets = undefined;
   entriesByCollectionCache.map = new Map();
+  entriesByCollectionCache.folderMap = new Map();
+};
+
+/**
+ * Drop the cached entries of {@link getEntriesByCollection} and
+ * {@link getEntriesInCollectionFolder} once the entry stores have been replaced.
+ */
+const syncEntriesByCollectionCache = () => {
+  const entrySource = allEntries.current;
+  const folderSource = allEntryFolders.current;
+
+  if (
+    entrySource !== entriesByCollectionCache.entrySource ||
+    folderSource !== entriesByCollectionCache.folderSource
+  ) {
+    entriesByCollectionCache.entrySource = entrySource;
+    entriesByCollectionCache.folderSource = folderSource;
+    entriesByCollectionCache.buckets = undefined;
+    entriesByCollectionCache.map = new Map();
+    entriesByCollectionCache.folderMap = new Map();
+  }
 };
 
 /**
@@ -227,20 +252,10 @@ export const _resetEntriesByCollectionCache = () => {
  * @param {string} collectionName Collection name.
  * @returns {Entry[]} Entries.
  * @see https://decapcms.org/docs/collection-folder/#filtered-folder-collections
- * @see https://sveltiacms.app/en/docs/collections/entries#filtering-entries
+ * @see https://sveltiacms.app/en/docs/collections/entries/listings#filtering-entries
  */
 export const getEntriesByCollection = (collectionName) => {
-  const entrySource = allEntries.current;
-  const folderSource = allEntryFolders.current;
-
-  if (
-    entrySource !== entriesByCollectionCache.entrySource ||
-    folderSource !== entriesByCollectionCache.folderSource
-  ) {
-    entriesByCollectionCache.entrySource = entrySource;
-    entriesByCollectionCache.folderSource = folderSource;
-    entriesByCollectionCache.map = new Map();
-  }
+  syncEntriesByCollectionCache();
 
   const cache = entriesByCollectionCache.map.get(collectionName);
 
@@ -256,168 +271,124 @@ export const getEntriesByCollection = (collectionName) => {
 };
 
 /**
- * Check if the field contains the asset.
- * @param {object} args Arguments.
- * @param {string} args.assetURL Asset’s public or blob URL.
- * @param {string} [args.newURL] New URL to replace the found URL.
- * @param {string} args.collectionName Collection name.
- * @param {Entry} args.entry Entry.
- * @param {FlattenedEntryContent} args.content Value map for the collection. This will be modified
- * if the URL is replaced.
- * @param {FieldKeyPath} args.keyPath Key path of the value in the collection.
- * @param {string} args.value Value of the field.
- * @param {boolean} args.isIndexFile Whether the corresponding entry is the collection’s special
- * index file used specifically in Hugo.
- * @param {InternalCollectionFile} [args.collectionFile] Collection file. File collection only.
- * @returns {Promise<boolean>} Result.
+ * Get the entries another collection claims although their files are stored in the folder of the
+ * given entry collection, e.g. Hugo’s `_index.md` declared as a file collection’s file, as they
+ * would be read in the entry collection: with the slugs and sub paths it would give them.
+ * @param {InternalCollection} collection Entry collection.
+ * @param {Entry[]} ownEntries Entries the collection already has.
+ * @returns {Entry[]} Entries.
  */
-export const hasAsset = async ({
-  assetURL,
-  newURL,
-  collectionName,
-  entry,
-  content,
-  keyPath,
-  value,
-  isIndexFile,
-  collectionFile,
-}) => {
-  const fileName = collectionFile?.name;
-  const field = getField({ collectionName, fileName, valueMap: content, keyPath, isIndexFile });
+const getForeignEntriesInFolder = (collection, ownEntries) => {
+  const { _file: { fullPathRegEx = undefined, subPath: subPathTemplate = undefined } = {} } =
+    collection._type === 'entry' ? collection : {};
 
-  if (!field) {
-    return false;
+  if (!fullPathRegEx) {
+    return [];
   }
 
-  const isBlobURL = assetURL.startsWith('blob:');
-  const getURLArgs = { entry, collectionName, fileName };
-  const { widget: fieldType = 'string' } = field;
+  const { defaultLocale } = collection._i18n;
+  const ownEntrySet = new Set(ownEntries);
 
-  if (MEDIA_FIELD_TYPES.includes(fieldType)) {
-    const match = isBlobURL
-      ? (await getMediaFieldURL({ ...getURLArgs, value })) === assetURL
-      : value === assetURL;
-
-    if (match && newURL) {
-      content[keyPath] = newURL;
+  return allEntries.current.flatMap((entry) => {
+    if (ownEntrySet.has(entry)) {
+      return [];
     }
 
-    return match;
-  }
+    /** @type {Entry['locales']} */
+    const locales = {};
+    /** @type {Record<string, string>} */
+    const subPaths = {};
 
-  // Search images in markdown body
-  if (['richtext', 'markdown'].includes(fieldType)) {
-    const matches = [...value.matchAll(MARKDOWN_IMAGE_REGEX)];
+    Object.values(entry.locales).forEach((localizedEntry) => {
+      const { subPath, locale = defaultLocale } =
+        localizedEntry.path.match(fullPathRegEx)?.groups ?? {};
 
-    if (matches.length) {
-      return (
-        await Promise.all(
-          matches.map(async ([, src]) => {
-            const match =
-              (isBlobURL ? await getMediaFieldURL({ ...getURLArgs, value: src }) : src) ===
-              assetURL;
-
-            if (match && newURL) {
-              content[keyPath] = content[keyPath].replace(src, newURL);
-            }
-
-            return match;
-          }),
-        )
-      ).some(Boolean);
-    }
-  }
-
-  return false;
-};
-
-/**
- * Find entries by an asset URL, and replace the URL if needed.
- * @param {string} url Asset’s public or blob URL.
- * @param {object} [options] Options.
- * @param {Entry[]} [options.entries] Entries to be searched.
- * @param {string} [options.newURL] New URL to replace the found URL.
- * @returns {Promise<Entry[]>} Found (and replaced) entries.
- */
-export const getEntriesByAssetURL = async (
-  url,
-  { entries = allEntries.current, newURL = '' } = {},
-) => {
-  const baseURL = cmsConfig.current?._baseURL;
-  const assetURL = baseURL && !url.startsWith('blob:') ? url.replace(baseURL, '') : url;
-  const isBlobURL = assetURL.startsWith('blob:');
-  const isReplacing = !!newURL;
-
-  const results = await Promise.all(
-    entries.map(async (entry) => {
-      const { locales } = entry;
-      const collections = getAssociatedCollections(entry);
-      let found = false;
-
-      for (const { content } of Object.values(locales)) {
-        for (const [keyPath, value] of Object.entries(content)) {
-          if (typeof value !== 'string' || !value) continue;
-          // Pre-filter: skip values that can’t possibly contain the asset URL, avoiding the
-          // expensive getField() call for the vast majority of fields.
-          if (!isBlobURL && !value.includes(assetURL)) continue;
-
-          for (const collection of collections) {
-            const hasAssetArgs = {
-              assetURL,
-              newURL,
-              collectionName: collection.name,
-              entry,
-              content,
-              keyPath,
-              value,
-              isIndexFile: isCollectionIndexFile(collection, entry),
-            };
-
-            const collectionFiles = getCollectionFilesByEntry(collection, entry);
-            let matched;
-
-            if (collectionFiles.length) {
-              matched = (
-                await Promise.all(
-                  collectionFiles.map((collectionFile) =>
-                    hasAsset({ ...hasAssetArgs, collectionFile }),
-                  ),
-                )
-              ).includes(true);
-            } else {
-              matched = await hasAsset({ ...hasAssetArgs });
-            }
-
-            if (matched) {
-              found = true;
-              if (!isReplacing) break;
-            }
-          }
-
-          if (found && !isReplacing) break;
-        }
-
-        if (found && !isReplacing) break;
+      if (subPath) {
+        locales[locale] = { ...localizedEntry, slug: getSlug({ subPath, subPathTemplate }) };
+        subPaths[locale] = subPath;
       }
+    });
 
-      return found;
-    }),
-  );
+    // The default locale’s file may not be in the folder, e.g. with the `multiple_root_folders`
+    // i18n structure
+    const locale = getEntryDisplayLocale(locales, defaultLocale);
 
-  return entries.filter((_entry, index) => results[index]);
+    if (!locale) {
+      return [];
+    }
+
+    const { slug } = locales[locale];
+    const subPath = subPaths[locale];
+
+    return [{ ...entry, slug, subPath, locales }];
+  });
 };
 
 /**
- * Check if index file creation is allowed in the collection.
+ * Get every entry stored in the folder of the given collection, whether it passes the collection’s
+ * `filter` option or not, and even if another collection claims it. Collections can share a folder
+ * and tell their entries apart with a filter, and a file collection can declare a file in the
+ * folder, such as Hugo’s `_index.md`, so a file name has to be unique among all of these entries,
+ * not only the listed ones: a new entry taking the slug of an entry another collection lists would
+ * overwrite its file. An entry another collection claims comes with the slug and sub path this
+ * collection would give it.
+ *
+ * The returned array is shared between callers, so treat it as read-only.
+ * @param {string} collectionName Collection name.
+ * @returns {Entry[]} Entries.
+ */
+export const getEntriesInCollectionFolder = (collectionName) => {
+  syncEntriesByCollectionCache();
+
+  return getOrCreate(entriesByCollectionCache.folderMap, collectionName, () => {
+    const collection = getCollection(collectionName);
+    const entries = getCollectionBuckets().get(collectionName) ?? [];
+
+    return collection ? [...entries, ...getForeignEntriesInFolder(collection, entries)] : entries;
+  });
+};
+
+/**
+ * Count the entries in the collection, leaving out Hugo’s special index file. The index file stands
+ * for the collection’s own page rather than for one of the entries in it, so it’s not part of the
+ * count shown next to the collection in the sidebar. It’s still listed in the entry list, where it
+ * has an icon and a label of its own that tell it from the entries.
+ *
+ * The entries are passed in rather than looked up, because the caller merges the pending changes
+ * into them, so an entry that only exists in a pull request is counted as well. The collection is
+ * looked up so that the index file can be told by the entry’s path in this collection, as another
+ * collection’s index file can be listed here — see {@link isCollectionIndexFile}.
+ * @param {string} collectionName Collection name.
+ * @param {Entry[]} entries Entries in the collection.
+ * @returns {number} Count.
+ * @see https://github.com/sveltia/sveltia-cms/issues/1005
+ */
+export const countCollectionEntries = (collectionName, entries) => {
+  const collection = getCollection(collectionName);
+
+  // A collection without an index file has nothing to leave out, which is the common case, so skip
+  // the pass over the entries rather than testing each one
+  if (!collection || getIndexFileName(collection) === undefined) {
+    return entries.length;
+  }
+
+  return entries.filter((entry) => !isCollectionIndexFile(collection, entry)).length;
+};
+
+/**
+ * Check if index file creation is allowed in the collection. The listed entries can include another
+ * collection’s index file, when that collection’s folder sits below this one’s, so each entry is
+ * tested by its path rather than by the slug the owning collection computed for it.
  * @param {InternalCollection} collection Collection.
  * @returns {boolean} Result. It returns `false` if the index file already exists.
+ * @see https://github.com/sveltia/sveltia-cms/issues/1005
  */
 export const canCreateIndexFile = (collection) => {
-  const indexFile = getIndexFile(collection);
-
-  if (!indexFile) {
+  if (!getIndexFile(collection)) {
     return false;
   }
 
-  return !getEntriesByCollection(collection.name).some(({ slug }) => slug === indexFile.name);
+  return !getEntriesByCollection(collection.name).some((entry) =>
+    isCollectionIndexFile(collection, entry),
+  );
 };

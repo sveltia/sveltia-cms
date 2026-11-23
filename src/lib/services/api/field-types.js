@@ -8,6 +8,7 @@ import { fieldStateContext } from '$lib/services/api/field-state';
 import { createSvelteProps, updateSvelteProps } from '$lib/services/api/field-types.svelte';
 import { customFieldTypeRegistry } from '$lib/services/api/registries';
 import { BUILTIN_FIELD_TYPES } from '$lib/services/contents/fields';
+import { getFieldLabel } from '$lib/services/contents/i18n/options';
 
 /**
  * @import { ReactElement } from 'react';
@@ -117,15 +118,17 @@ const normalizeFieldConfig = (field) => {
  */
 const buildEditorProps = (props, fieldState) => {
   const { value, field, forID, locale, keyPath, required, readonly, invalid } = props;
-  const { name, label, required: requiredOption } = normalizeFieldConfig(field);
+  const fieldConfig = normalizeFieldConfig(field);
+  const { name, required: requiredOption } = fieldConfig;
+  const _locale = locale ?? fieldState.locale ?? '';
 
   return {
-    locale: locale ?? fieldState.locale ?? '',
+    locale: _locale,
     keyPath: keyPath ?? fieldState.keyPath ?? name ?? '',
     typedKeyPath: '',
     fieldId: forID ?? '',
     // An empty label is as good as none, matching what the field editor renders
-    fieldLabel: label || name || '',
+    fieldLabel: getFieldLabel({ config: fieldConfig, locale: _locale }),
     // Store the field configuration as given, so that a change can be detected. It’s converted
     // when the Svelte component reads the prop.
     fieldConfig: field,
@@ -292,10 +295,10 @@ export const getFieldTypeDefinition = (name, visited = new Set()) => {
     return getBuiltInFieldType(name);
   }
 
-  const { control, preview, schema } = customFieldType;
+  const { control, preview, summary, schema } = customFieldType;
 
   if (typeof control !== 'string') {
-    return { control, preview, schema };
+    return { control, preview, summary, schema };
   }
 
   visited.add(name);
@@ -304,6 +307,7 @@ export const getFieldTypeDefinition = (name, visited = new Set()) => {
     // The control can be the name of another field type, which is resolved recursively
     control: visited.has(control) ? undefined : getFieldTypeDefinition(control, visited)?.control,
     preview,
+    summary,
     schema,
   };
 };

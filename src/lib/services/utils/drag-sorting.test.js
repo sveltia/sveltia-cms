@@ -1,8 +1,12 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import {
+  canMoveToEdge,
+  focusAfterRemoval,
+  focusItemReorderControl,
+  focusReorderControl,
   getAutoScrollSpeed,
   getDropIndex,
   getKeyboardMoveTarget,
@@ -10,6 +14,7 @@ import {
   getMoveTarget,
   getScrollContainer,
   moveListItem,
+  parseMovePosition,
   startAutoScroll,
   stopAutoScroll,
 } from '$lib/services/utils/drag-sorting';
@@ -289,10 +294,8 @@ describe('startAutoScroll', () => {
     container.style.overflowY = 'auto';
     Object.defineProperty(container, 'scrollHeight', { value: 1000, configurable: true });
     Object.defineProperty(container, 'clientHeight', { value: 400, configurable: true });
-    // jsdom doesn’t implement scrolling, so back `scrollTop` with a plain property
-    Object.defineProperty(container, 'scrollTop', { value: 0, writable: true, configurable: true });
     /**
-     * Report a fixed rectangle, since jsdom doesn’t lay anything out.
+     * Report a fixed rectangle, since happy-dom doesn’t lay anything out.
      * @returns {DOMRect} Rectangle.
      */
     container.getBoundingClientRect = () =>
@@ -453,5 +456,190 @@ describe('startAutoScroll', () => {
     createScrollable();
 
     expect(() => stopAutoScroll()).not.toThrow();
+  });
+});
+
+describe('focusReorderControl', () => {
+  /**
+   * Create a list whose items each hold a `reorder` and a `move-up` control.
+   * @returns {HTMLElement} List element, attached to the document so its controls can be focused.
+   */
+  const createList = () => {
+    const list = document.createElement('div');
+
+    list.innerHTML = [0, 1]
+      .map(
+        () =>
+          '<div><button data-action="reorder"></button><button data-action="move-up"></button></div>',
+      )
+      .join('');
+    document.body.append(list);
+
+    return list;
+  };
+
+  test('focuses the control with the given action on the item at the index', () => {
+    const list = createList();
+
+    focusReorderControl({ listElement: list, index: 1, action: 'move-up' });
+    expect(document.activeElement).toBe(list.children[1].querySelector('[data-action="move-up"]'));
+
+    focusReorderControl({ listElement: list, index: 0 });
+    expect(document.activeElement).toBe(list.children[0].querySelector('[data-action="reorder"]'));
+
+    list.remove();
+  });
+
+  test('does nothing without a list or an item at the index', () => {
+    expect(() => focusReorderControl({ listElement: undefined, index: 0 })).not.toThrow();
+
+    const list = createList();
+
+    expect(() => focusReorderControl({ listElement: list, index: 5 })).not.toThrow();
+
+    list.remove();
+  });
+});
+
+describe('focusItemReorderControl', () => {
+  /**
+   * Create a list item holding the given reorder controls.
+   * @param {string} html Inner HTML.
+   * @returns {HTMLElement} Item element, attached to the document so its controls can be focused.
+   */
+  const createItem = (html) => {
+    const item = document.createElement('div');
+
+    item.innerHTML = html;
+    document.body.append(item);
+
+    return item;
+  };
+
+  /**
+   * Get a control on an item.
+   * @param {HTMLElement} item Item element.
+   * @param {string} action `data-action` of the control.
+   * @returns {Element | null} Control.
+   */
+  const getControl = (item, action) => item.querySelector(`[data-action="${action}"]`);
+
+  test('falls back to the Move Down button once Move Up is disabled at the top', () => {
+    const item = createItem(
+      '<button data-action="move-up" disabled></button><button data-action="move-down"></button>',
+    );
+
+    focusItemReorderControl({ item, action: 'move-up' });
+    expect(document.activeElement).toBe(getControl(item, 'move-down'));
+
+    item.remove();
+  });
+
+  test('falls back to the Move Up button once Move Down is disabled at the bottom', () => {
+    const item = createItem(
+      '<button data-action="move-up"></button><button data-action="move-down" disabled></button>',
+    );
+
+    focusItemReorderControl({ item, action: 'move-down' });
+    expect(document.activeElement).toBe(getControl(item, 'move-up'));
+
+    item.remove();
+  });
+
+  test('falls back to the drag handle when both buttons are disabled', () => {
+    const item = createItem(
+      '<button data-action="move-up" disabled></button>' +
+        '<button data-action="move-down" disabled></button>' +
+        '<button data-action="reorder"></button>',
+    );
+
+    focusItemReorderControl({ item, action: 'move-down' });
+    expect(document.activeElement).toBe(getControl(item, 'reorder'));
+
+    item.remove();
+  });
+
+  test('does nothing when no reorder control is enabled', () => {
+    const item = createItem('<button data-action="reorder" disabled></button>');
+
+    focusItemReorderControl({ item });
+    expect(document.activeElement).toBe(document.body);
+    expect(() => focusItemReorderControl({ item: undefined })).not.toThrow();
+
+    item.remove();
+  });
+});
+
+describe('focusAfterRemoval', () => {
+  /**
+   * Create buttons attached to the document so they can be focused.
+   * @param {number} count Number of buttons.
+   * @returns {HTMLButtonElement[]} Buttons.
+   */
+  const createButtons = (count) =>
+    [...Array(count).keys()].map(() => document.body.appendChild(document.createElement('button')));
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  test('focuses the item now at the same position', () => {
+    const buttons = createButtons(2);
+    const fallback = vi.fn();
+
+    focusAfterRemoval({ index: 0, getTarget: vi.fn((index) => buttons[index]), fallback });
+    expect(document.activeElement).toBe(buttons[0]);
+    expect(fallback).not.toHaveBeenCalled();
+  });
+
+  test('focuses the previous item once the last one was removed', () => {
+    const buttons = createButtons(2);
+
+    focusAfterRemoval({ index: 2, getTarget: vi.fn((index) => buttons[index]) });
+    expect(document.activeElement).toBe(buttons[1]);
+  });
+
+  test('falls back without any item left', () => {
+    const fallback = vi.fn();
+
+    focusAfterRemoval({ index: 0, getTarget: vi.fn(() => undefined), fallback });
+    expect(fallback).toHaveBeenCalledOnce();
+
+    // Without a fallback, the focus is left alone
+    expect(() => focusAfterRemoval({ index: 0, getTarget: vi.fn(() => null) })).not.toThrow();
+  });
+});
+
+describe('canMoveToEdge', () => {
+  test('requires at least three items', () => {
+    expect(canMoveToEdge(2)).toBe(false);
+    expect(canMoveToEdge(3)).toBe(true);
+    expect(canMoveToEdge(10)).toBe(true);
+  });
+});
+
+describe('parseMovePosition', () => {
+  test('converts a 1-based position to an index', () => {
+    expect(parseMovePosition({ position: 1, itemCount: 100 })).toBe(0);
+    expect(parseMovePosition({ position: 12, itemCount: 100 })).toBe(11);
+    expect(parseMovePosition({ position: 100, itemCount: 100 })).toBe(99);
+  });
+
+  test('refuses anything but a whole number within range', () => {
+    expect(parseMovePosition({ position: 0, itemCount: 100 })).toBeUndefined();
+    expect(parseMovePosition({ position: 101, itemCount: 100 })).toBeUndefined();
+    expect(parseMovePosition({ position: -3, itemCount: 100 })).toBeUndefined();
+    expect(parseMovePosition({ position: 2.5, itemCount: 100 })).toBeUndefined();
+    expect(parseMovePosition({ position: undefined, itemCount: 100 })).toBeUndefined();
+  });
+
+  test('moves the item to the requested position', () => {
+    const list = Array.from({ length: 100 }, (_, i) => i + 1);
+    const to = /** @type {number} */ (parseMovePosition({ position: 12, itemCount: 100 }));
+    const result = moveListItem(list, 86, to);
+
+    expect(result[11]).toBe(87);
+    expect(result[12]).toBe(12);
+    expect(result).toHaveLength(100);
   });
 });

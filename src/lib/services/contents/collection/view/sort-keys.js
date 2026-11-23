@@ -4,14 +4,24 @@ import { unique } from '@sveltia/utils/array';
 import { allEntries } from '$lib/services/contents';
 import { selectedCollection } from '$lib/services/contents/collection';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
-import { parseCustomSortableFields } from '$lib/services/contents/collection/view/utils';
+import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
+import { parseCustomSortableFields } from '$lib/services/contents/collection/view/options';
+import { SUMMARY_COLUMN_KEY } from '$lib/services/contents/collection/view/table-keys';
 import { getField } from '$lib/services/contents/entry/fields';
+import { storesNumber } from '$lib/services/contents/fields/number/helpers';
+import { getLocalizedOption } from '$lib/services/contents/i18n/options';
 import { isNumeric } from '$lib/services/utils/number';
 import { createDerivedState } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { InternalEntryCollection, SortingConditions, SortOrder } from '$lib/types/private';
- * @import { Field, FieldKeyPath, NumberField } from '$lib/types/public';
+ * @import {
+ * InternalEntryCollection,
+ * ParsedSortableFields,
+ * SortingConditions,
+ * SortKey,
+ * SortOrder,
+ * } from '$lib/types/private';
+ * @import { Field, FieldKeyPath } from '$lib/types/public';
  */
 
 /**
@@ -19,7 +29,7 @@ import { createDerivedState } from '$lib/services/utils/state.svelte';
  * `description` fields supported by Netlify/Decap CMS, it also includes `name` for the entry name
  * field, which is used by Sveltia CMS to infer the entry title.
  * @see https://decapcms.org/docs/configuration-options/#sortable_fields
- * @see https://sveltiacms.app/en/docs/collections/entries#sorting
+ * @see https://sveltiacms.app/en/docs/collections/entries/views#sorting
  */
 export const DEFAULT_SORT_KEYS = ['title', 'name', 'date', 'author', 'description'];
 
@@ -43,7 +53,7 @@ export const SPECIAL_SORT_KEY_TYPES = {
   slug: String,
   commit_author: String,
   commit_date: Date,
-  _summary: String,
+  [SUMMARY_COLUMN_KEY]: String,
   _manual: String,
 };
 
@@ -56,8 +66,7 @@ export const SPECIAL_SORT_KEYS = Object.keys(SPECIAL_SORT_KEY_TYPES);
 /**
  * Get default sort keys for the entry collection.
  * @param {FieldKeyPath | undefined} customIdField Custom ID field key path.
- * @returns {{ keys: string[], defaultKey?: string, defaultOrder?: SortOrder }} Parsed sortable
- * fields configuration.
+ * @returns {ParsedSortableFields} Parsed sortable fields configuration.
  */
 export const getDefaultSortKeys = (customIdField) => {
   if (customIdField) {
@@ -81,8 +90,8 @@ export const getDefaultSortKeys = (customIdField) => {
  * author. Available for some Git-based backends.
  * @param {boolean} args.isCommitDateAvailable Whether the entries in the collection have a commit
  * date. Available for some Git-based backends.
- * @returns {{ keys: string[], default: SortingConditions }} A list of sortable fields and default
- * sort conditions.
+ * @returns {{ keys: string[], labels?: Record<string, string>, default: SortingConditions }} A list
+ * of sortable fields, custom labels given in the configuration, and default sort conditions.
  */
 export const getSortConfig = ({ collection, isCommitAuthorAvailable, isCommitDateAvailable }) => {
   const {
@@ -90,22 +99,42 @@ export const getSortConfig = ({ collection, isCommitAuthorAvailable, isCommitDat
     identifier_field: customIdField,
     sortable_fields: customSortableFields,
     summary: summaryTemplate,
+    _i18n: { i18nEnabled, canonicalSlug },
   } = collection;
 
-  let { keys, defaultKey, defaultOrder } = customSortableFields
+  const parsed = customSortableFields
     ? parseCustomSortableFields(customSortableFields)
     : getDefaultSortKeys(customIdField);
+
+  // Copy the keys, which can be the configured `sortable_fields` array itself, before adding any
+  let keys = [...parsed.keys];
+  let { defaultKey, defaultOrder } = parsed;
+  const { labels } = parsed;
 
   // Special handling for summary field: if the collection has a summary template defined, we add
   // `_summary` as a special sort key, which uses the generated summary value
   if (summaryTemplate) {
-    keys.unshift('_summary');
+    keys.unshift(SUMMARY_COLUMN_KEY);
   }
+
+  // Make sure the keys are valid field keys or special keys. The canonical slug key,
+  // `translationKey` by default, is part of the content of each localized entry without being a
+  // field, so it can be used as a sort key when i18n is enabled. This has to come first: the
+  // default `date` and `author` keys only stand in for the commit date and author when the
+  // collection has such fields
+  const specialKeys = i18nEnabled ? [...SPECIAL_SORT_KEYS, canonicalSlug.key] : SPECIAL_SORT_KEYS;
+
+  keys = unique(keys).filter(
+    (key) => !!key && (specialKeys.includes(key) || !!getField({ collectionName, keyPath: key })),
+  );
 
   const hasCommitAuthorKey = keys.includes('commit_author');
   const hasCommitDateKey = keys.includes('commit_date');
+  // An entry stored in a file with the other entries of the collection carries the file’s last
+  // commit, which is about whichever entry was changed last, so it doesn’t tell the entries apart
+  const isArrayFile = isArrayFileCollection(collection);
 
-  if (isCommitAuthorAvailable) {
+  if (isCommitAuthorAvailable && !isArrayFile) {
     if (!keys.includes('author') && !hasCommitAuthorKey) {
       keys.push('commit_author');
     }
@@ -113,7 +142,7 @@ export const getSortConfig = ({ collection, isCommitAuthorAvailable, isCommitDat
     keys = keys.filter((key) => key !== 'commit_author');
   }
 
-  if (isCommitDateAvailable) {
+  if (isCommitDateAvailable && !isArrayFile) {
     if (!keys.includes('date') && !hasCommitDateKey) {
       keys.push('commit_date');
     }
@@ -121,18 +150,14 @@ export const getSortConfig = ({ collection, isCommitAuthorAvailable, isCommitDat
     keys = keys.filter((key) => key !== 'commit_date');
   }
 
-  // Make sure the keys are valid field keys or special keys
-  keys = unique(keys).filter(
-    (key) =>
-      !!key && (SPECIAL_SORT_KEYS.includes(key) || !!getField({ collectionName, keyPath: key })),
-  );
-
   // If the collection allows reordering, expose a single special `_manual` sort key that maps to
   // the order field. We hide the raw order field key from the dropdown — even if the user listed it
   // in `sortable_fields` — to avoid showing two equivalent options.
   const orderKey = getOrderFieldKey(collection);
 
-  if (orderKey) {
+  // An entry collection storing all the entries in one file keeps them in the order of the array,
+  // so the manual order is always available there
+  if (orderKey || isArrayFileCollection(collection)) {
     keys = keys.filter((key) => key !== orderKey);
 
     if (!keys.includes('_manual')) {
@@ -148,6 +173,7 @@ export const getSortConfig = ({ collection, isCommitAuthorAvailable, isCommitDat
 
   return {
     keys,
+    labels,
     default: {
       key: defaultKey,
       order: defaultOrder,
@@ -164,7 +190,8 @@ export const getSortConfig = ({ collection, isCommitAuthorAvailable, isCommitDat
  * the key.
  */
 export const getSortKeyType = ({ key, fieldConfig }) => {
-  if (key in SPECIAL_SORT_KEY_TYPES) {
+  // A field named after an `Object.prototype` member, e.g. `constructor`, isn’t a special key
+  if (Object.hasOwn(SPECIAL_SORT_KEY_TYPES, key)) {
     return SPECIAL_SORT_KEY_TYPES[key];
   }
 
@@ -172,15 +199,29 @@ export const getSortKeyType = ({ key, fieldConfig }) => {
     return Boolean;
   }
 
-  if (fieldConfig?.widget === 'number') {
-    const { value_type: valueType = 'int' } = /** @type {NumberField} */ (fieldConfig);
-
-    if (valueType === 'int' || valueType === 'float') {
-      return Number;
-    }
+  // A Compute field yielding a number has the same `value_type` option, but defaults to `string`
+  if (fieldConfig && storesNumber(fieldConfig)) {
+    return Number;
   }
 
   return String;
+};
+
+/**
+ * Resolve the given sort key to the key of the field it sorts by. The `_manual` key stands for the
+ * order field when that is a configured field, e.g. a Number field named `weight`, so it’s labelled
+ * and typed like the field.
+ * @param {InternalEntryCollection} collection Collection.
+ * @param {string} key Sort key.
+ * @returns {string} Order field key for `_manual` backed by a configured field, otherwise `key`.
+ * @see https://github.com/sveltia/sveltia-cms/issues/1169
+ */
+export const resolveSortFieldKey = (collection, key) => {
+  const orderKey = key === '_manual' ? getOrderFieldKey(collection) : undefined;
+
+  return orderKey && getField({ collectionName: collection.name, keyPath: orderKey })
+    ? orderKey
+    : key;
 };
 
 /**
@@ -205,39 +246,57 @@ export const getSortKeyLabel = ({ collection, key }) => {
         }
 
         const keyPath = arr.slice(0, index + 1).join('.');
+        const field = getField({ collectionName: collection.name, keyPath });
 
-        // @ts-ignore Hidden field doesn’t have `label` property
-        return getField({ collectionName: collection.name, keyPath })?.label || _key;
+        return getLocalizedOption({ config: field, option: 'label' }) || _key;
       })
       .filter(Boolean)
       .join(' – ');
   }
 
-  // @ts-ignore Hidden field doesn’t have `label` property
-  return collection.fields?.find(({ name }) => name === key)?.label || key;
+  const field = collection.fields?.find(({ name }) => name === key);
+
+  return getLocalizedOption({ config: field, option: 'label' }) || key;
 };
 
 /**
- * List of available sort keys for the selected entry collection. `getSortKeyLabel()` may return a
- * localized label, and it reads the current app locale, so the list is also recomputed when the
- * locale changes.
- * @type {{ readonly current: { key: string, label: string }[] }}
+ * List of available sort keys for the selected entry collection. A key is labelled with the
+ * `label` given in the `sortable_fields` option, if any. `getSortKeyLabel()` may return a localized
+ * label, and it reads the current app locale, so the list is also recomputed when the locale
+ * changes. A key sorted as a number is marked as such, so that the sort menu words its orders for
+ * one, e.g. “small to large”.
+ * @type {{ readonly current: SortKey[] }}
  */
 export const sortKeys = createDerivedState(() => {
   const collection = selectedCollection.current;
 
   // Disable sorting for file/singleton collection
-  if (!collection || !('folder' in collection)) {
+  if (collection?._type !== 'entry') {
     return [];
   }
 
   const { current: _allEntries } = allEntries;
 
-  const { keys } = getSortConfig({
+  const { keys, labels } = getSortConfig({
     collection,
     isCommitAuthorAvailable: _allEntries.some((entry) => !!entry.commitAuthor),
     isCommitDateAvailable: _allEntries.some((entry) => !!entry.commitDate),
   });
 
-  return keys.map((key) => ({ key, label: getSortKeyLabel({ collection, key }) }));
+  return keys.map((key) => {
+    const fieldKey = resolveSortFieldKey(collection, key);
+    const fieldConfig = getField({ collectionName: collection.name, keyPath: fieldKey });
+
+    const label =
+      labels?.[key] ?? labels?.[fieldKey] ?? getSortKeyLabel({ collection, key: fieldKey });
+
+    /** @type {SortKey} */
+    const sortKey = { key, label };
+
+    if (getSortKeyType({ key: fieldKey, fieldConfig }) === Number) {
+      sortKey.type = 'number';
+    }
+
+    return sortKey;
+  });
 });

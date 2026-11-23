@@ -1,12 +1,13 @@
 # Sveltia CMS
 
-Modern, Git-based headless CMS, drop-in replacement for Netlify/Decap CMS. Svelte 5 (runes) with JavaScript, Vite 8, Vitest 5. ~840 source files, 312 test files, 8,500+ tests. Ships as a browser bundle (IIFE + ES module), loaded via CDN or npm.
+Modern, Git-based headless CMS, drop-in replacement for Netlify/Decap CMS. Svelte 5 (runes) with JavaScript, Vite 8, Vitest 5. ~840 source files, 380 test files, 9,300+ tests. Ships as a browser bundle (IIFE + ES module), loaded via CDN or npm.
 
 ## Setup
 
 - **pnpm only** — npm will not work correctly with this project.
 - Node v26 (see `.nvmrc`).
 - Run `pnpm install` first, and again after any `package.json` change.
+- Run `pnpm exec playwright install chromium` once for the component and end-to-end tests, which run in a real browser.
 
 ## Commands
 
@@ -23,11 +24,17 @@ pnpm check:stylelint
 pnpm check:svelte
 pnpm check:oxlint
 pnpm check:cspell
+pnpm check:duplicates # copy-paste detection with jscpd, configured in `.jscpd.json`
+pnpm find:similar     # report functions that look alike, which jscpd misses once they have drifted
 pnpm check:imports    # custom script, more accurate than standard unused-import tools
 pnpm check:audit
 
-pnpm test
-pnpm test:coverage
+pnpm test                      # unit + component tests
+pnpm test:unit                 # Vitest `unit` project: Node (or happy-dom) tests
+pnpm test:unit:coverage        # unit tests with coverage of the `.js` files
+pnpm test:components           # Vitest `browser` project: component tests in headless Chromium
+pnpm test:components:coverage  # component tests with coverage of the `.svelte` files
+pnpm test:e2e                  # Playwright end-to-end tests against the built bundle (`pnpm build` first)
 
 pnpm format           # auto-fix Prettier formatting
 ```
@@ -61,7 +68,36 @@ Build output: `package/dist/sveltia-cms.js` (IIFE), `package/dist/sveltia-cms.mj
 
 ## CI
 
-`.github/workflows/tests.yml` runs on every push: Check, Test (three Vitest shards), Build in parallel, using `.nvmrc` Node version and pnpm. A PR must pass ESLint, Prettier, all tests, Svelte compiler checks, the production build, and the unused-imports check.
+`.github/workflows/tests.yml` runs on every push, using the `.nvmrc` Node version and pnpm: Check, Test (three shards each of the unit and component tests and six of the end-to-end tests, the latter two with Chromium) and Build in parallel, except the end-to-end tests, which wait for Build and run against the bundle it uploads. A PR must pass ESLint, Prettier, all tests, Svelte compiler checks, the production build, and the unused-imports check.
+
+## Workflow
+
+- Fix a bug a test turns up, and cover it with a test that fails without the fix; don’t work around it in the test. When the fix needs a product decision, pin the current behaviour with a “(known issue)” test (see `e2e/README.md`) and raise it instead.
+- Before running tests, review the change with `/code-review --fix` repeatedly until it reports no findings.
+- Also run `/security-review` to check for security issues if the change touches a backend, API client, integration, or any code that handles user input or content.
+- Run the end-to-end tests on a port of your own, e.g. `E2E_PORT=4181 pnpm test:e2e`, when another worktree may be running them: the run fails rather than share a busy port.
+- Do not add a `Co-Authored-By` trailer to commit messages.
+- When an issue ID is given, add `Fix #(ISSUE_ID)` to the commit description.
+
+## Localization PRs
+
+When reviewing or preparing a PR that adds or updates a translation:
+
+- Read `src/lib/locales/README.md` first and check the PR against it: a linked l10n issue the author is assigned to, the title “Add/Update [language] localization”, a Firefox-style language code as the file name (`ko`, not `ko-KR`), every comment of `en-US.yaml` kept untranslated and in order, quotes only where YAML needs them, curly quotes in prose and straight ones in code, and HTML/Markdown formatting, code spans and link targets kept from the English string.
+- Run `pnpm check:l10n` (`scripts/check-locales.js`): it must report no errors for the locale, and a new locale should have no warnings either. It catches MF2 syntax errors, plural variants the language doesn’t have, a count-less `one` variant in languages where `one` also covers 21, 31…, mismatched placeholders, stale keys and missing plural categories. Also run `pnpm check:prettier` on the file.
+- The PR changes only `src/lib/locales/<code>.yaml`. No scripts, `package.json` entries, docs, or other locales: fixes to another language go in that language’s own PR. A new locale needs no registration — `src/lib/services/app/i18n.js` loads every file in the folder.
+- `en-US.yaml` is the source of truth for keys and meaning. A missing key falls back to English, so it isn’t an error, but there should be no keys that `en-US.yaml` lacks.
+- The Sveltia UI strings are translated in a separate PR to `sveltia/sveltia-ui`; a new language needs both.
+- Translation quality can’t be judged here: limit the review to structure, syntax, placeholders, plurals and the rules above, and spot-check plural forms against the [CLDR plural rules](https://www.unicode.org/cldr/charts/48/supplemental/language_plural_rules.html).
+
+## Syncing Locales
+
+When asked to sync the latest English strings to the other locales, translating them:
+
+- Run `pnpm sync:l10n todo --out <temporary folder>`. It finds the last sync by its commit message, “Sync and translate…”, or takes `--since <commit>`, and lists for each locale the keys it lacks and the keys whose English changed since the translation was last touched, even under the same key, as `todo/<locale>.todo.json`. It also writes `BRIEF.md`, the translators’ instructions from `scripts/sync-locales.md`.
+- Translate each locale with an agent of its own, pointed at `BRIEF.md` with its locale code, all in parallel; at most 20 run at once, so start the rest as they finish. A locale with nothing to do needs no agent. `en-CA`, `en-GB` and `en-ZA` only adapt the spelling the file already uses, and `ja` is maintained along with `en-US`.
+- Each agent writes JSON files and runs `pnpm sync:l10n apply <locale> <json…>`, which rebuilds the locale file in the order and under the comments of `en-US.yaml`, keeping the locale’s own header comment, then checks it with `pnpm check:l10n` and Prettier.
+- Finish with `pnpm check:l10n` and `pnpm check:prettier`, pass on the agents’ notes for the native reviewers, and commit as “Sync and translate the latest strings in all locales” so the next sync starts from there. The next sync takes every locale to be up to date as of that commit, so a locale left out of it has to be synced on its own next time, with `--since` set to an earlier commit.
 
 ## Conventions
 
@@ -69,7 +105,9 @@ Build output: `package/dist/sveltia-cms.js` (IIFE), `package/dist/sveltia-cms.mj
 - Types: JSDoc comments (TypeScript-flavoured), centralized in `src/types/*.js`, imported via `@import`.
 - Svelte 5: runes syntax only — no legacy Svelte patterns. Use the Svelte MCP server / `svelte-file-editor` agent for any `.svelte` or `.svelte.js`/`.svelte.ts` work.
 - Prose: Canadian English in Markdown, American English in code/comments. Curly quotes in prose, straight quotes in source, backticks for inline code.
-- Tests: Vitest, co-located `*.test.js` files. Coverage tracked for `src/lib/{components,services}/**/*.js`; keep it at 100%. Use `sed` to spot uncovered lines in coverage reports. `clearMocks` defaults to `true`, so calls a mock records while its module is imported are cleared before the first test runs — capture those arguments in a `vi.hoisted()` variable rather than reading `mock.calls`.
+- Tests: Vitest, co-located `*.test.js` files. Coverage tracked for `src/lib/{components,services}/**/*.js` from the `unit` project; `pnpm test:unit:coverage` enforces 100% on every metric. Use `sed` to spot uncovered lines in coverage reports. `clearMocks` defaults to `true`, so calls a mock records while its module is imported are cleared before the first test runs — capture those arguments in a `vi.hoisted()` variable rather than reading `mock.calls`.
+- Component tests: `src/lib/components/**/*.svelte.test.js`, next to the `.svelte` file, run in headless Chromium (Vitest Browser Mode, `vitest-browser-svelte`). Render with `await render(Component, props)` or `render(Component, { props, context })`; query with `page.getByRole()` and `await expect.element()`, which retry for up to 5 s (`expect.poll.timeout` in `vite.config.js`; don’t pass a shorter one — a Sveltia UI dialog only reports its result once its closing transition has finished, which a loaded CI runner takes a while over); interact with the locators or `userEvent` from `vitest/browser`. A `.svelte.test.js` file can use runes: pass a `$state` props object to test a bindable prop in both directions, and `createRawSnippet()` for a snippet prop. `vitest.browser.setup.js` loads the `en-US` strings, so query by the text a user sees, not by message key. `toHaveTextContent()` matches the whole text of an element; use `toMatchTextContent()` for a substring or a regular expression. `initTestConfig()` clears the collection and field caches, so a test file can load another configuration, but a root effect reacting to a new `selectedCollection.current` runs after the test continues — call `flushSync()` before `setReorderMode()` or anything else the effect would undo. An interpolated value comes wrapped in bidi isolates, which are written as `\u2068…\u2069` escapes in an assertion — never as the literal characters, which GitHub flags as hidden Unicode. Before testing a component, extract the logic in it to a service module where it can be unit-tested; the component test then covers what’s left — markup, ARIA, bindings and events. `pnpm test:components:coverage` measures the `.svelte` files and enforces the thresholds: statements, functions and lines at 100%, branches at 98.4%. Branches can’t reach 100%: Svelte compiles `text {value}` interpolations and `class="x {y}"` to `${y ?? ''}`, whose fallback never runs, and there is no way to annotate markup — every other branch is covered or annotated, so a drop below the threshold is a real gap. For a defensive guard in a `<script>` block that a test can’t reach, use `/* v8 ignore next N -- reason */` — the hint works in `.svelte` files, but only right before a statement, not inside a method chain or a `try` block, and not with a JSDoc block in between: put `/* v8 ignore start */` … `/* v8 ignore stop */` around a documented function or a `$derived()` declaration instead, JSDoc included, or ESLint inserts an empty JSDoc stub. A branch in markup that can’t be reached is moved into a `<script>` helper or `$derived()` where it can be annotated, or simplified away: a fallback for a value the draft always has is a cast, not a `??`. Many `$derived()` fallbacks are unreachable because the value is only read while the component is rendered, e.g. within `{#if entryDraft.current}`; annotate those with the reason. A Sveltia UI `Toast` writes `show` back after a few seconds, so a test that shows one waits for it with `waitForToastsToHide()` from `$lib/test/toast`.
+- End-to-end tests: `e2e/specs/*.e2e.js`, run by Playwright (not Vitest) against the production bundle, or the dev server with `E2E_TARGET=dev`; see `e2e/README.md`. Import `test` and `expect` from `e2e/fixtures/test.js`: each test serves its own config (`test.use({ config })`, `test-repo` backend by default) in a fresh browser context, and the `cms` fixture seeds the repository in OPFS, signs in and reads back what a Save wrote. With `GITHUB_CONFIG`, the `github` fixture mocks the GitHub API over an in-memory repository instead, for commits and remote changes. Cover a flow across modules here, not what a component test can.
 - Target: modern browsers (ES2025).
 
 ```javascript
