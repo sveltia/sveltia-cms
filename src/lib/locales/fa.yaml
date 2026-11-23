@@ -51,7 +51,7 @@ collapse_all: جمع کردن همه
 # Content manipulation: inserting, restoring, and discarding
 insert: درج
 restore: بازیابی
-discard: دور انداختن
+discard: از بین بردن
 
 # ==============================================================================
 # Common UI Elements
@@ -1341,7 +1341,7 @@ bulk_edit_invalid: برخی از مقادیر معتبر نیستند. فیلد�
 saving_bulk_edits_failed: ذخیره تغییرات ناموفق بود. لطفاً دوباره تلاش کنید.
 
 # Bulk edit: confirmation shown when leaving the mode with unsaved changes
-discard_bulk_edits_confirm: آیا تغییرات اعمال‌شده روی ورودی‌ها لغو شوند؟
+discard_bulk_edits_confirm: آیا تغییرات اعمال‌شده روی ورودی‌ها از بین برود؟
 
 # ==============================================================================
 # File Upload and Processing
@@ -2777,8 +2777,8 @@ workflow:
   changes_discarded: |
     .input {$count :integer}
     .match $count
-      one {{ تغییرات دور انداخته شدند. }}
-      *   {{ تغییرات {$count} ورودی دور انداخته شدند. }}
+      one {{ تغییرات از بین رفتند. }}
+      *   {{ تغییرات {$count} ورودی از بین رفتند. }}
   # Toast notifications shown while a deletion is being called off, and once that has completed
   cancelling_deletion: در حال لغو حذف…
   deletion_cancelled: حذف لغو شد.
@@ -2825,7 +2825,7 @@ workflow:
   publish_entry: انتشار ورودی
   # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
   # entry has a published version, because only the pending changes are thrown away
-  discard_changes: دور انداختن تغییرات
+  discard_changes: از بین بردن تغییرات
   # Confirmation message shown before deleting a published entry, replacing the direct
   # `confirm_deleting_this_entry` when Editorial Workflow is enabled: the removal goes through
   # review, so it isn’t immediate. Keep the label name in sync with `pending_deletion` below
@@ -2837,7 +2837,7 @@ workflow:
   confirm_deleting_unpublished_entry: این ورودی هنوز منتشر نشده است، بنابراین حذف آن باعث دور انداختن کامل آن می‌شود.
   # Used when the entry updates one that is already live, which stays untouched. The dialog is
   # titled “Discard Changes”, so the wording is about discarding, not deleting
-  confirm_discarding_entry_changes: این ورودی دارای تغییرات منتشرنشده است. دور انداختن آن‌ها نسخه منتشرشده را بازیابی خواهد کرد. خود ورودی حذف نخواهد شد.
+  confirm_discarding_entry_changes: این ورودی دارای تغییرات منتشرنشده است. از بین بردن آن‌ها نسخه منتشرشده را بازیابی خواهد کرد. خود ورودی حذف نخواهد شد.
   # Extra sentence appended to the entry list’s delete confirmation when every selected entry is
   # unpublished. {$count} is the number of selected entries. Keep the wording free of Git jargon.
   deleting_unpublished_note_all: |
