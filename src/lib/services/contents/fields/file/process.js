@@ -3,7 +3,7 @@ import { sanitize } from 'isomorphic-dompurify';
 
 import { isAssetInFolder } from '$lib/services/assets';
 import { getEntryAssetFolderPath } from '$lib/services/assets/entry-folder';
-import { isSameFileName } from '$lib/services/assets/file-name';
+import { formatFileName, isSameFileName } from '$lib/services/assets/file-name';
 import { createDisplayBlobURL, getAssetPublicURL } from '$lib/services/assets/info';
 import { getAssetKind } from '$lib/services/assets/kinds';
 import { createAssetNameTemplate, getPendingFileName } from '$lib/services/assets/name';
@@ -11,7 +11,7 @@ import { processFile } from '$lib/services/assets/process';
 import { allAssets } from '$lib/services/assets/state';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { isAcceptedFile } from '$lib/services/integrations/media-libraries/default';
-import { createPath, getGitHash } from '$lib/services/utils/file';
+import { createPath, getDirName, getGitHash } from '$lib/services/utils/file';
 import { LINK_SANITIZE_OPTIONS } from '$lib/services/utils/string';
 
 /**
@@ -155,11 +155,42 @@ export const getUnsavedAssets = async ({ draft, targetFolderPath }) => {
 };
 
 /**
+ * Get the folder an entry-relative folder stores the entry’s assets in: the entry’s own folder if
+ * it has one, and otherwise the folder it shares with the rest of the collection, as determined by
+ * {@link getEntryAssetFolderPath}.
+ * @param {EntryDraft} draft Entry draft.
+ * @param {AssetFolderInfo} folder Entry-relative asset folder associated with the field.
+ * @param {InternalLocaleCode} [locale] Locale being edited, whose entry file the assets are stored
+ * beside. Default: the default locale.
+ * @returns {string | undefined} Folder path, or `undefined` for a new entry, which has no folder
+ * yet.
+ */
+const getEntryAssetBasePath = (draft, folder, locale) => {
+  const { originalEntry, defaultLocale, collection } = draft;
+
+  const entryFilePath = (
+    (locale ? originalEntry?.locales[locale] : undefined) ?? originalEntry?.locales[defaultLocale]
+  )?.path;
+
+  if (!entryFilePath) {
+    return undefined;
+  }
+
+  const assetFolderPath = getEntryAssetFolderPath({
+    collection,
+    entryFilePath,
+    // An entry-relative folder is always configured with a path
+    internalPath: /** @type {string} */ (folder.internalPath),
+  });
+
+  return createPath([assetFolderPath, folder.internalSubPath]);
+};
+
+/**
  * Get the saved assets relevant to the current entry draft and folder. For entry-relative folders,
  * the result is filtered to only include assets within the folder the entry’s relative assets are
  * saved to, preventing false duplicate detection across entries that share the same folder config
- * template. That’s the entry’s own folder if it has one, and otherwise the folder it shares with
- * the rest of the collection, as determined by {@link getEntryAssetFolderPath}.
+ * template.
  * @param {EntryDraft} draft Entry draft.
  * @param {AssetFolderInfo | undefined} folder Asset folder associated with the field.
  * @param {InternalLocaleCode} [locale] Locale being edited, whose entry file the assets are stored
@@ -173,27 +204,101 @@ const getSavedAssetsForEntry = (draft, folder, locale) => {
     return savedAssets;
   }
 
-  const { originalEntry, defaultLocale, collection } = draft;
+  const expectedPrefix = getEntryAssetBasePath(draft, folder, locale);
 
-  const entryFilePath = (
-    (locale ? originalEntry?.locales[locale] : undefined) ?? originalEntry?.locales[defaultLocale]
-  )?.path;
-
-  if (!entryFilePath) {
+  if (expectedPrefix === undefined) {
     // New entry — no saved assets exist for this entry yet
     return [];
   }
 
-  const assetFolderPath = getEntryAssetFolderPath({
-    collection,
-    entryFilePath,
-    // An entry-relative folder is always configured with a path
-    internalPath: /** @type {string} */ (folder.internalPath),
-  });
-
-  const expectedPrefix = createPath([assetFolderPath, folder.internalSubPath]);
-
   return savedAssets.filter((a) => a.path.startsWith(`${expectedPrefix}/`));
+};
+
+/**
+ * Get the repository directory a file is uploaded to, if it’s known before the entry is saved.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {AssetFolderInfo} args.folder Asset folder associated with the field.
+ * @param {string} [args.subfolderPath] Subfolder below the folder the file is saved to.
+ * @param {InternalLocaleCode} [args.locale] Locale being edited.
+ * @returns {string | undefined} Directory path, or `undefined` if it depends on the entry, as with
+ * a folder path with template tags or an entry-relative folder of a new entry.
+ */
+const getUploadDirPath = ({ draft, folder, subfolderPath, locale }) => {
+  if (folder.entryRelative) {
+    const basePath = getEntryAssetBasePath(draft, folder, locale);
+
+    return basePath === undefined ? undefined : createPath([basePath, subfolderPath]);
+  }
+
+  // A folder for uploads always has a path, unlike the All Assets folder
+  return folder.hasTemplateTags
+    ? undefined
+    : createPath([/** @type {string} */ (folder.internalPath), subfolderPath]);
+};
+
+/**
+ * Find an existing asset that is the same file as the one being uploaded. Several identical copies
+ * may be stored in the folder, e.g. in different subfolders, so the copy at the path the file would
+ * be saved to is preferred, then one in the same directory, and then one with the same name.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {Asset[]} args.assets Saved and unsaved assets to search.
+ * @param {string} args.sha Git object ID of the uploaded file.
+ * @param {string} args.name Name of the uploaded file.
+ * @param {AssetFolderInfo} args.folder Asset folder associated with the field.
+ * @param {string} [args.subfolderPath] Subfolder below the folder the file is saved to.
+ * @param {boolean} args.replace Whether the file replaces an existing asset with the same name.
+ * @param {InternalLocaleCode} [args.locale] Locale being edited.
+ * @param {boolean} [args.slugificationEnabled] Whether the file names are slugified on upload.
+ * @returns {Asset | undefined} Existing asset.
+ */
+const findSameAsset = ({
+  draft,
+  assets,
+  sha,
+  name,
+  folder,
+  subfolderPath = '',
+  replace,
+  locale,
+  slugificationEnabled = false,
+}) => {
+  // A file replacing an existing one must keep its name, so an identical file under another name
+  // doesn’t count. An asset is assigned to one of the folders sharing its path, e.g. the
+  // `media_folder` of another collection, so any folder with the same path counts as the same one.
+  const matches = assets.filter(
+    (a) =>
+      a.sha === sha &&
+      isAssetInFolder(a, folder) &&
+      (!replace || ((!a.unsaved || a.replace) && isSameFileName(a.name, name))),
+  );
+
+  if (matches.length < 2) {
+    return matches[0];
+  }
+
+  const dirPath = getUploadDirPath({ draft, folder, subfolderPath, locale });
+  // The name the file would be saved under, which may be slugified
+  const savedName = formatFileName(name, { slugificationEnabled });
+
+  /**
+   * Rank an asset by how close it is to where the file would be saved.
+   * @param {Asset} asset Asset.
+   * @returns {number} Rank. The higher, the better.
+   */
+  const rank = (asset) => {
+    // The path of a pending file is only determined when the entry is saved, so its subfolder is
+    // compared instead. `getUnsavedAssets()` lists it with the blob URL it’s stored under
+    const inDir = asset.unsaved
+      ? (draft.files[/** @type {string} */ (asset.blobURL)].subfolderPath ?? '') === subfolderPath
+      : dirPath !== undefined && getDirName(asset.path) === dirPath;
+
+    return Number(inDir) * 2 + Number(isSameFileName(asset.name, savedName));
+  };
+
+  // A tie goes to the earlier asset, and the saved assets are listed before the pending ones
+  return matches.reduce((best, asset) => (rank(asset) > rank(best) ? asset : best));
 };
 
 /**
@@ -296,19 +401,21 @@ export const processResource = async ({ draft, resource, libraryConfig, accept, 
       const { name } = file;
 
       // Check if the selected file has already been uploaded or is pending upload, otherwise
-      // duplicate files lead to an `each_key_duplicate` error in Svelte. A file replacing an
-      // existing one must keep its name, so an identical file under another name doesn’t count.
-      // An asset is assigned to one of the folders sharing its path, e.g. the `media_folder` of
-      // another collection, so any folder with the same path counts as the same folder.
-      const existingAsset = [
-        ...getSavedAssetsForEntry(draft, folder, locale),
-        ...(await getUnsavedAssets({ draft })),
-      ].find(
-        (a) =>
-          a.sha === sha &&
-          isAssetInFolder(a, folder) &&
-          (!replace || ((!a.unsaved || a.replace) && isSameFileName(a.name, name))),
-      );
+      // duplicate files lead to an `each_key_duplicate` error in Svelte
+      const existingAsset = findSameAsset({
+        draft,
+        assets: [
+          ...getSavedAssetsForEntry(draft, folder, locale),
+          ...(await getUnsavedAssets({ draft })),
+        ],
+        sha,
+        name,
+        folder,
+        subfolderPath,
+        replace,
+        locale,
+        slugificationEnabled: libraryConfig?.slugify_filename,
+      });
 
       if (existingAsset) {
         // If the selected file has already been uploaded, use the existing asset instead of
