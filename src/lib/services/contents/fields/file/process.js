@@ -10,7 +10,10 @@ import { createAssetNameTemplate, getPendingFileName } from '$lib/services/asset
 import { processFile } from '$lib/services/assets/process';
 import { allAssets } from '$lib/services/assets/state';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
-import { isAcceptedFile } from '$lib/services/integrations/media-libraries/default';
+import {
+  isAcceptedFile,
+  keepsFileFormat,
+} from '$lib/services/integrations/media-libraries/default';
 import { createPath, getDirName, getGitHash } from '$lib/services/utils/file';
 import { LINK_SANITIZE_OPTIONS } from '$lib/services/utils/string';
 
@@ -371,42 +374,58 @@ export const processResource = async ({ draft, resource, libraryConfig, accept, 
 
       value = existingBlobURL;
     } else {
-      const {
-        file: processedFile,
-        oversized,
-        invalid,
-      } = await processFile(file, libraryConfig ?? {});
-
-      file = processedFile;
-
-      if (invalid) {
-        return getFailedResult({ invalidFileName: file.name });
-      }
-
-      // The original file is named, as the user knows it by that name
-      if (!isAcceptedFile(file, accept)) {
-        return getFailedResult({ mismatchedFileName: /** @type {File} */ (resource.file).name });
-      }
-
-      const sha = await getGitHash(file);
-      const { name } = file;
+      /**
+       * Find a saved or pending asset that is the same file as the given one. The assets are read
+       * on each call, as a file pending for another field may be added while this one is processed.
+       * @param {File} _file File.
+       * @returns {Promise<Asset | undefined>} Asset.
+       */
+      const findExistingAsset = async (_file) =>
+        findSameAsset({
+          draft,
+          assets: [
+            ...getSavedAssetsForEntry(draft, folder, locale),
+            ...(await getUnsavedAssets({ draft })),
+          ],
+          sha: await getGitHash(_file),
+          name: _file.name,
+          folder,
+          subfolderPath,
+          replace,
+          locale,
+          slugificationEnabled: libraryConfig?.slugify_filename,
+        });
 
       // Check if the selected file has already been uploaded or is pending upload, otherwise
-      // duplicate files lead to an `each_key_duplicate` error in Svelte
-      const existingAsset = findSameAsset({
-        draft,
-        assets: [
-          ...getSavedAssetsForEntry(draft, folder, locale),
-          ...(await getUnsavedAssets({ draft })),
-        ],
-        sha,
-        name,
-        folder,
-        subfolderPath,
-        replace,
-        locale,
-        slugificationEnabled: libraryConfig?.slugify_filename,
-      });
+      // duplicate files lead to an `each_key_duplicate` error in Svelte. A file identical to an
+      // existing one, e.g. a copy of an image converted on upload, is taken as is, because a
+      // transformation would encode it again into a file that no longer matches. Not if it would be
+      // converted to another format, as the site wants the new format, e.g. WebP instead of PNG
+      let existingAsset =
+        isAcceptedFile(file, accept) &&
+        (await keepsFileFormat(file, libraryConfig?.transformations))
+          ? await findExistingAsset(file)
+          : undefined;
+
+      let oversized = false;
+
+      if (!existingAsset) {
+        const result = await processFile(file, libraryConfig ?? {});
+
+        ({ file, oversized } = result);
+
+        if (result.invalid) {
+          return getFailedResult({ invalidFileName: file.name });
+        }
+
+        // The original file is named, as the user knows it by that name
+        if (!isAcceptedFile(file, accept)) {
+          return getFailedResult({ mismatchedFileName: /** @type {File} */ (resource.file).name });
+        }
+
+        // The same file may be stored once processed, e.g. the same photo converted to WebP
+        existingAsset = await findExistingAsset(file);
+      }
 
       if (existingAsset) {
         // If the selected file has already been uploaded, use the existing asset instead of

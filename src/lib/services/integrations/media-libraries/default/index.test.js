@@ -6,6 +6,7 @@ import {
   getAcceptedImageTypes,
   getDefaultMediaLibraryOptions,
   isAcceptedFile,
+  keepsFileFormat,
   transformFile,
 } from '.';
 
@@ -472,6 +473,46 @@ describe('integrations/media-libraries/default', () => {
           transformations: undefined,
         },
       });
+    });
+  });
+
+  describe('keepsFileFormat', () => {
+    it('should keep any file without transformations', async () => {
+      expect(
+        await keepsFileFormat(new File(['a'], 'a.png', { type: 'image/png' }), undefined),
+      ).toBe(true);
+    });
+
+    it('should keep a file that is not a raster image', async () => {
+      const svg = new File(['<svg/>'], 'a.svg', { type: 'image/svg+xml' });
+      const pdf = new File(['%PDF'], 'a.pdf', { type: 'application/pdf' });
+      const transformations = { raster_image: { format: /** @type {const} */ ('webp') } };
+
+      expect(await keepsFileFormat(svg, transformations)).toBe(true);
+      expect(await keepsFileFormat(pdf, transformations)).toBe(true);
+    });
+
+    it('should keep a raster image without a transformation for it', async () => {
+      const png = new File(['a'], 'a.png', { type: 'image/png' });
+
+      expect(await keepsFileFormat(png, { svg: { optimize: true } })).toBe(true);
+    });
+
+    it('should keep a WebP image encoded again as WebP', async () => {
+      const webp = new File(['a'], 'a.webp', { type: 'image/webp' });
+
+      // WebP is the default format
+      expect(await keepsFileFormat(webp, { raster_image: { quality: 82 } })).toBe(true);
+      expect(await keepsFileFormat(webp, { webp: { format: 'webp', width: 2400 } })).toBe(true);
+    });
+
+    it('should not keep a raster image converted to another format', async () => {
+      const png = new File(['a'], 'a.png', { type: 'image/png' });
+      // A JPEG image named and typed as WebP is still converted
+      const jpeg = new File([JPEG_HEADER], 'a.webp', { type: 'image/webp' });
+
+      expect(await keepsFileFormat(png, { raster_image: { format: 'webp' } })).toBe(false);
+      expect(await keepsFileFormat(jpeg, { raster_image: { format: 'webp' } })).toBe(false);
     });
   });
 

@@ -28,6 +28,7 @@ vi.mock('$lib/services/integrations/media-libraries/default', async (importOrigi
   canConvertHEIC: vi.fn(() => false),
   transformFile: vi.fn(),
   isAcceptedFile: /** @type {any} */ (await importOriginal()).isAcceptedFile,
+  keepsFileFormat: /** @type {any} */ (await importOriginal()).keepsFileFormat,
 }));
 
 vi.mock('$lib/services/utils/file', () => ({
@@ -601,6 +602,86 @@ describe('Test processResource()', () => {
 
     expect(otherResult.value).toMatch(/^blob:/);
     expect(Object.keys(draft.files)).toHaveLength(1);
+  });
+
+  test('should use an existing asset identical to the file before it is transformed', async () => {
+    // https://github.com/sveltia/sveltia-cms/issues/1182#issuecomment-7103945453 — a copy of a
+    // stored WebP image would be encoded again, and the result would no longer match
+    const storedCopy = new File(['stored'], 'photo_copy.webp', { type: 'image/webp' });
+    const reencoded = new File(['re-encoded'], 'photo_copy.webp', { type: 'image/webp' });
+    // @ts-ignore - Simplified draft for testing
+    const draft = { files: {} };
+
+    const folder = {
+      collectionName: 'posts',
+      internalPath: 'src/assets/uploads',
+      publicPath: '/assets/uploads',
+      entryRelative: false,
+      hasTemplateTags: false,
+    };
+
+    const existingAsset = {
+      sha: 'stored-hash',
+      folder,
+      name: 'photo.webp',
+      path: 'src/assets/uploads/photo.webp',
+    };
+
+    getGitHashMock.mockImplementation(async (/** @type {File} */ f) =>
+      f === storedCopy ? 'stored-hash' : 'other-hash',
+    );
+    transformFileMock.mockResolvedValue(reencoded);
+    allAssets.current = /** @type {any} */ ([existingAsset]);
+    getAssetPublicURLMock.mockReturnValue('/assets/uploads/photo.webp');
+
+    /** @type {import('$lib/types/public').DefaultMediaLibraryConfig} */
+    const libraryConfig = { transformations: { raster_image: { format: 'webp', quality: 82 } } };
+
+    // @ts-ignore - Test with simplified types
+    const result = await processResource({
+      draft: /** @type {any} */ (draft),
+      resource: { file: storedCopy, folder, credit: '' },
+      libraryConfig,
+      accept: 'image/*',
+    });
+
+    expect(result.value).toBe('/assets/uploads/photo.webp');
+    expect(transformFileMock).not.toHaveBeenCalled();
+    expect(Object.keys(draft.files)).toHaveLength(0);
+
+    // A file the field doesn’t take as it is goes through the transformation, which could convert
+    // it to a type the field takes
+    // @ts-ignore - Test with simplified types
+    const otherResult = await processResource({
+      draft: /** @type {any} */ (draft),
+      resource: { file: storedCopy, folder, credit: '' },
+      libraryConfig,
+      accept: 'image/avif',
+    });
+
+    expect(transformFileMock).toHaveBeenCalledOnce();
+    expect(otherResult.mismatchedFileName).toBe('photo_copy.webp');
+
+    // A file converted to another format isn’t matched as it is: the site wants the new format
+    const storedPNG = new File(['stored'], 'logo.png', { type: 'image/png' });
+
+    allAssets.current = /** @type {any} */ ([
+      { ...existingAsset, name: 'logo.png', path: 'src/assets/uploads/logo.png' },
+    ]);
+    getGitHashMock.mockImplementation(async (/** @type {File} */ f) =>
+      f === storedPNG ? 'stored-hash' : 'other-hash',
+    );
+
+    // @ts-ignore - Test with simplified types
+    const pngResult = await processResource({
+      draft: /** @type {any} */ (draft),
+      resource: { file: storedPNG, folder, credit: '' },
+      libraryConfig,
+      accept: 'image/*',
+    });
+
+    expect(transformFileMock).toHaveBeenCalledTimes(2);
+    expect(pngResult.value).toMatch(/^blob:/);
   });
 
   test('should reuse the same file pending upload to another subfolder', async () => {
