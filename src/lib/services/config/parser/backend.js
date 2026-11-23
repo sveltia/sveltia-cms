@@ -34,6 +34,7 @@ const UNSUPPORTED_OPTIONS = [
 ];
 
 const UNSUPPORTED_BACKEND_SUGGESTION_URL = `${DOCS_BASE_URL}/backends#supported-backends`;
+const ADDITIONS_DOC_URL = `${DOCS_BASE_URL}/additions`;
 const AUTH_DOC_URL = `${DOCS_BASE_URL}/backends/BACKEND_NAME#authentication`;
 /**
  * Backend names whose documentation page has a different slug.
@@ -84,7 +85,13 @@ const reportUnsupportedBackend = (name, errors) => {
     UNSUPPORTED_BACKEND_SUGGESTION_URL,
   );
 
-  errors.add(`${message} ${suggestion}`);
+  // Sveltia CMS Additions replaces Git Gateway’s user management on top of the GitHub backend
+  const alternative =
+    name === 'git-gateway'
+      ? ` ${makeLink(_('config.error.git_gateway_alternative'), ADDITIONS_DOC_URL)}`
+      : '';
+
+  errors.add(`${message} ${suggestion}${alternative}`);
 };
 
 /**

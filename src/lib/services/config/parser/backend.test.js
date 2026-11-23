@@ -11,6 +11,7 @@ const mockI18nStrings = {
   'config.error.unsupported_deprecated_backend': 'Deprecated backend: {name}',
   'config.error.unsupported_custom_backend': 'Unsupported backend: {name}',
   'config.error.unsupported_backend_suggestion': 'Please check the supported backends.',
+  'config.error.git_gateway_alternative': 'For user management, use <a>Sveltia CMS Additions</a>.',
   'config.error.missing_repository': 'Missing repository',
   'config.error.invalid_repository': 'Invalid repository format',
   'config.error.missing_api_root': 'Missing API root',
@@ -195,6 +196,10 @@ describe('parseBackendConfig', () => {
       // 'unsupported_deprecated_backend' message key
       expect(error).toContain('Deprecated backend: Git Gateway');
       expect(error).toContain('Please check the supported backends');
+      expect(error).toContain(
+        '<a href="https://sveltiacms.app/en/docs/additions" target="_blank" ' +
+          'rel="noopener noreferrer">Sveltia CMS Additions</a>',
+      );
     });
 
     it('should use "known" message branch for non-deprecated unsupported backend', async () => {
@@ -213,6 +218,7 @@ describe('parseBackendConfig', () => {
       // 'unsupported_known_backend' message key
       expect(error).toContain('Unsupported backend: Azure DevOps');
       expect(error).toContain('Please check the supported backends');
+      expect(error).not.toContain('Sveltia CMS Additions');
     });
   });
 

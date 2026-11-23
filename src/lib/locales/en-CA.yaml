@@ -2375,6 +2375,7 @@ config:
     unsupported_deprecated_backend: The deprecated {$name} backend is <a>not supported</a> in Sveltia CMS.
     unsupported_custom_backend: Custom backends are <a>not supported</a> in Sveltia CMS.
     unsupported_backend_suggestion: Use one of the <a>supported backends</a> instead.
+    git_gateway_alternative: If you need user management, use <a>Sveltia CMS Additions</a> with GitHub.
     missing_repository: The repository is not defined.
     invalid_repository: The configured repository is invalid. It must be in “owner/repo” format.
     # Don’t localize `api_root`

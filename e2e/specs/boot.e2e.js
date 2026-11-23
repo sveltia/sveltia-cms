@@ -76,6 +76,37 @@ test.describe('with an invalid config', () => {
   });
 });
 
+test.describe('with the Git Gateway backend', () => {
+  test.use({ config: { ...BASE_CONFIG, backend: { name: 'git-gateway' } } });
+
+  test('suggests the supported backends and Sveltia CMS Additions', async ({ cms, page }) => {
+    const docs = 'https://sveltiacms.app/en/docs';
+
+    await cms.open();
+
+    const error = page.getByRole('alert').getByRole('listitem').filter({ hasText: 'Git Gateway' });
+
+    await expect(error).toHaveText(
+      'The deprecated \u2068Git Gateway\u2069 backend is not supported in Sveltia CMS. Use one ' +
+        'of the supported backends instead. If you need user management, use Sveltia CMS ' +
+        'Additions with GitHub.',
+    );
+    await expect(error.getByRole('link', { name: 'not supported' })).toHaveAttribute(
+      'href',
+      `${docs}/migration/netlify-decap-cms#compatibility`,
+    );
+    await expect(error.getByRole('link', { name: 'supported backends' })).toHaveAttribute(
+      'href',
+      `${docs}/backends#supported-backends`,
+    );
+    await expect(error.getByRole('link', { name: 'Sveltia CMS Additions' })).toHaveAttribute(
+      'href',
+      `${docs}/additions`,
+    );
+    await expect(page.getByRole('button', { name: /^(Sign In|Work with)/ })).toHaveCount(0);
+  });
+});
+
 test.describe('with the legacy `media_library` option', () => {
   /**
    * Legacy Cloudinary options, as written for Netlify/Decap CMS.

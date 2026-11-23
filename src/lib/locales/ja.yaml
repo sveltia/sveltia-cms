@@ -2265,6 +2265,7 @@ config:
     unsupported_deprecated_backend: 廃止予定の {$name} バックエンドは Sveltia CMS では <a>非対応です</a>。
     unsupported_custom_backend: カスタムバックエンドは Sveltia CMS では <a>非対応です</a>。
     unsupported_backend_suggestion: <a>サポートされているバックエンド</a> のいずれかを使用してください。
+    git_gateway_alternative: ユーザー管理が必要な場合は、GitHub と <a>Sveltia CMS Additions</a> を組み合わせて使用してください。
     missing_repository: リポジトリが定義されていません。
     invalid_repository: 設定されているリポジトリが正しくありません。この設定は「owner/repo」形式でなければなりません。
     # Don’t localize `api_root`
