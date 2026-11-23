@@ -269,8 +269,8 @@ additions:
     no_password: Din konto logger kun ind med GitHub, så den har ingen adgangskode at ændre. En administrator kan give dig en ved at nulstille din adgangskode.
   setup:
     use_admin_secret: Brug administratorhemmelighed
-    title: Konfigurer Sveltia CMS Additions
-    secret_description: Indtast den administratorhemmelighed der er angivet i indstillingerne for din Sveltia CMS Additions-tjeneste. Den gemmes kun i denne fane mens du konfigurerer.
+    title: Sæt Sveltia CMS Additions op
+    secret_description: Indtast den administratorhemmelighed der er angivet i indstillingerne for din Sveltia CMS Additions-tjeneste. Den gemmes kun i denne fane mens du sætter op.
     admin_secret: Administratorhemmelighed
     continue: Fortsæt
     back: Tilbage til login
@@ -290,7 +290,7 @@ additions:
     step_x_of_y: Trin {$step} af {$total}
     admin_exists: Der findes en administratorkonto.
     reset_admin_password: Nulstil administratoradgangskode
-    setup_complete: Konfigurationen er fuldført. Log ind med en administratorkonto for at administrere brugere og indstillinger. Du kan til enhver tid vende tilbage hertil med administratorhemmeligheden.
+    setup_complete: Opsætningen er fuldført. Log ind med en administratorkonto for at administrere brugere og indstillinger. Du kan til enhver tid vende tilbage hertil med administratorhemmeligheden.
     manage_sites: Administrer andre websteder
     back_to_setup: Tilbage
     sites_title: Andre websteder
@@ -301,7 +301,7 @@ additions:
     site_name_optional: Navn (valgfrit)
     add_site: Tilføj websted
     # {$name} is the name of the site
-    site_added: ”{$name}” er tilføjet. Angiv webstedets URL som ”base_url” i dets CMS-konfiguration, og åbn derefter konfigurationsguiden dér.
+    site_added: ”{$name}” er tilføjet. Angiv webstedets URL som ”base_url” i dets CMS-konfiguration, og åbn derefter opsætningsguiden dér.
     # {$name} is the name of the site
     copy_site_url: Kopiér URL’en til {$name}
     delete_site: Slet websted
@@ -315,7 +315,7 @@ additions:
     previous_secret: Tidligere administratorhemmelighed
     unlock: Lås op
     rekey: Start forfra
-    rekey_confirmation: Hvis du starter forfra, slettes GitHub-appens loginoplysninger og de andre gemte hemmeligheder, og alle bliver logget ud. Adgangskoderne bevares. Vil du fortsætte?
+    rekey_confirmation: Hvis du starter forfra, slettes GitHub-appens adgangsoplysninger og de andre gemte hemmeligheder, og alle bliver logget ud. Adgangskoderne bevares. Vil du fortsætte?
     result:
       ok: GitHub er forbundet. Du kan nu logge ind.
       github_app_not_created: GitHub-appen blev ikke oprettet. Brug administratorhemmeligheden for at prøve igen.
@@ -418,7 +418,7 @@ additions:
     github_username_description: Med et GitHub-brugernavn logger brugeren ind med den GitHub-konto i stedet for med en adgangskode.
     # {$name} is the user’s name
     github_required: '{$name} kan kun logge ind med GitHub, så vedkommendes GitHub-brugernavn kan ikke fjernes. Nulstil først adgangskoden for at give vedkommende en adgangskode at logge ind med.'
-    adopt: Overtag konto
+    adopt: Behold konto
     sign_in:
       github: Tillad login med GitHub
       github_description: Brugerne logger ind med deres GitHub-konto og får deres eget GitHub-token, så deres ændringer bliver committet i deres navn. En administrator tilføjer dem først med deres GitHub-brugernavn, medmindre en tilmeldingsregel dækker dem.
@@ -430,7 +430,7 @@ additions:
           one {{ Én bruger kan kun logge ind med GitHub og vil ikke kunne logge ind når det er slået fra, før du nulstiller vedkommendes adgangskode. }}
           *   {{ {$count} brugere kan kun logge ind med GitHub og vil ikke kunne logge ind når det er slået fra, før du nulstiller deres adgangskoder. }}
       rules: Tilmeldingsregler
-      rules_description: Medlemmer af den GitHub-organisation som appen er installeret på, kan logge ind uden først at blive tilføjet. Deres konto får den rolle du vælger, og bliver deaktiveret hvis de forlader organisationen, medmindre du overtager den.
+      rules_description: Medlemmer af den GitHub-organisation som appen er installeret på, kan logge ind uden først at blive tilføjet. Deres konto får den rolle du vælger, og bliver deaktiveret hvis de forlader organisationen, medmindre du beholder den.
       org: GitHub-organisation
       add_rule: Tilføj regel
       # {$org} is the name of a GitHub organization
@@ -447,10 +447,10 @@ additions:
       not_installed: Ikke installeret
       statuses:
         ok: Appen virker.
-        not_registered: Der er endnu ikke konfigureret nogen GitHub App. Kør konfigurationsguiden fra loginsiden med administratorhemmeligheden.
+        not_registered: Der er endnu ikke sat nogen GitHub App op. Kør opsætningsguiden fra loginsiden med administratorhemmeligheden.
         key_missing: Appens private nøgle gik tabt da administratorhemmeligheden blev udskiftet. Generér en ny privat nøgle i appindstillingerne på GitHub, og upload den herunder.
         key_rejected: GitHub accepterer ikke appens private nøgle, fx fordi den er blevet slettet dér. Generér en ny privat nøgle i appindstillingerne på GitHub, og upload den herunder.
-        not_installed: Appen er ikke installeret på repositoriet. Installer den igen fra appens side på GitHub, eller kør konfigurationsguiden.
+        not_installed: Appen er ikke installeret på repositoriet. Installer den igen fra appens side på GitHub, eller kør opsætningsguiden.
         suspended: Appens installation er suspenderet. Ophæv suspenderingen i installationsindstillingerne på GitHub.
         unreachable: Der kunne ikke oprettes forbindelse til GitHub. Prøv igen senere.
       check_again: Kontrollér igen
@@ -473,10 +473,10 @@ additions:
       commit_author_saved: Commit-forfatteren er gemt.
   # Administration section for the API keys and the deploy hook an admin shares with everyone
   credentials:
-    title: Loginoplysninger
+    title: Adgangsoplysninger
     description: API-nøgler og deploy-hooket der indtastes her, bruges af alle der logger ind, medmindre de indtaster deres egne under Indstillinger. Alle der er logget ind i CMS’et, kan læse dem, så indtast kun nøgler du gerne vil dele med dit team.
-    save: Gem loginoplysninger
-    saved: Loginoplysningerne er gemt.
+    save: Gem adgangsoplysninger
+    saved: Adgangsoplysningerne er gemt.
     # {$service} is the service name, e.g. DeepL
     invalid_key: API-nøglen til {$service} ser ikke rigtig ud.
   error:
@@ -511,18 +511,18 @@ additions:
     not_invited: Du har ingen konto her. Bed din administrator om at tilføje dig.
     method_disabled: Login med GitHub er slået fra.
     access_denied: Login blev annulleret.
-    github_app_not_set_up: Sveltia CMS Additions er endnu ikke forbundet til GitHub. Bed din administrator om at fuldføre konfigurationen.
+    github_app_not_set_up: Sveltia CMS Additions er endnu ikke forbundet til GitHub. Bed din administrator om at fuldføre opsætningen.
     invalid_tenant_id: Websteds-id’et skal bestå af 1 til 32 små bogstaver, tal og bindestreger og må ikke være ”default”.
     invalid_tenant_name: Webstedets navn må højst have 100 tegn.
     tenant_exists: Der findes allerede et websted med dette id.
-    github_app_missing: Der er endnu ikke konfigureret nogen GitHub App.
+    github_app_missing: Der er endnu ikke sat nogen GitHub App op.
     invalid_private_key: Filen er ikke en gyldig privat nøgle.
     private_key_mismatch: GitHub accepterer ikke denne private nøgle for appen. Sørg for at du har genereret den i appens indstillinger.
     github_error: GitHub svarede med en fejl. Prøv igen senere.
     data_key_locked: Sveltia CMS Additions kan ikke bruges før en administrator er færdig med at ændre administratorhemmeligheden.
     not_configured: Sveltia CMS Additions er ikke konfigureret korrekt. Bed din administrator om hjælp.
     origin_not_allowed: Dette websted har ikke tilladelse til at bruge Sveltia CMS Additions. Bed din administrator om at tilføje det til de tilladte domæner.
-    not_set_up: Sveltia CMS Additions er endnu ikke forbundet til GitHub. Bed din administrator om at fuldføre konfigurationen.
+    not_set_up: Sveltia CMS Additions er endnu ikke forbundet til GitHub. Bed din administrator om at fuldføre opsætningen.
     # A user whose password an admin has reset signs in another way, e.g. with GitHub
     temporary_password: Din adgangskode er blevet nulstillet. Log ind med dit brugernavn og den midlertidige adgangskode du har fået af din administrator, og vælg derefter en ny.
     # {$url} is the URL of the service
@@ -556,7 +556,7 @@ additions:
 
   # Placeholder of an API key or deploy hook field the user has left empty, while an admin of
   # Sveltia CMS Additions has entered one for everyone
-  provided_by_admin: Leveret af din administrator
+  provided_by_admin: Angivet af din administrator
 
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
@@ -1709,7 +1709,7 @@ deploy_preview:
   # moments
   short:
     building: Bygger…
-    failed: Build mislykkedes
+    failed: Kunne ikke bygges
 
 # Content copying from other locales
 copy_from: Kopiér fra…
@@ -2110,19 +2110,19 @@ unselected_option: (Ingen)
 # Relation field: creating or editing a referenced entry without leaving the editor
 relation_field:
   # Note shown in the dialog. {$name} is the singular label of the referenced collection
-  save_together_hint: Det nye element ({$name}) bliver gemt sammen med det dokument du redigerer.
+  save_together_hint: '{$name} oprettes og gemmes sammen med det dokument du redigerer.'
   # Error shown when the entry couldn’t be prepared. {$name} is the singular label of the collection
-  add_failed: Elementet ({$name}) kunne ikke tilføjes. Se browserkonsollen for detaljer.
+  add_failed: '{$name} kunne ikke tilføjes. Se browserkonsollen for detaljer.'
   # Title of the dialog to edit an entry selected in the field. {$name} is the singular label of the
   # referenced collection
   edit_entry_title: Redigerer {$name}
   # Note shown in the dialog. {$name} is the singular label of the referenced collection
-  edit_together_hint: Dine ændringer i elementet ({$name}) bliver gemt sammen med det dokument du redigerer.
+  edit_together_hint: Dine ændringer i {$name} gemmes sammen med det dokument du redigerer.
   # Error shown when the changes couldn’t be prepared. {$name} is the singular label of the collection
-  edit_failed: Ændringerne i elementet ({$name}) kunne ikke anvendes. Se browserkonsollen for detaljer.
+  edit_failed: Ændringerne i {$name} kunne ikke anvendes. Se browserkonsollen for detaljer.
   # Error shown when the changes would move the entry to another file path, e.g. through a path
   # template using a field. {$name} is the singular label of the collection
-  move_unsupported: Disse ændringer ville flytte elementet ({$name}) til en anden placering, hvilket kun kan gøres ved at redigere det for sig selv.
+  move_unsupported: Disse ændringer ville flytte {$name} til en anden placering, hvilket kun kan gøres ved at redigere dokumentet for sig selv.
   # Error shown when saving, if someone else has changed an entry edited from the field since. {$name}
   # is the summary of that entry
   edit_conflict: ”{$name}” er blevet ændret af en anden siden du redigerede det. Åbn det igen fra feltet for at gennemgå dine ændringer i forhold til den nyeste version.
@@ -2137,7 +2137,7 @@ relation_field:
   edited_with_entry: Ændringer i dette dokument venter på at blive udgivet sammen med ”{$name}”. Hvis du gemmer det nu, bliver de to sæt ændringer kombineret når det dokument udgives, hvilket kan mislykkes hvis de overlapper.
   # Warning shown in the dialog when an entry edited from the field has been changed by someone else
   # since. {$name} is the singular label of the collection
-  changed_since_edit: Dette element ({$name}) er blevet ændret af en anden siden du redigerede det. Dine ændringer vises oven på den nyeste version. Gennemgå dem før du opdaterer.
+  changed_since_edit: '{$name} er blevet ændret af en anden siden du redigerede dokumentet. Dine ændringer vises oven på den nyeste version. Gennemgå dem før du opdaterer.'
 
 # Select Assets dialog
 assets_dialog:
@@ -2439,7 +2439,7 @@ config:
     # {$prop} is the option name; Don’t localize `file`
     unsupported_collection_data_file_option: Indstillingen `{$prop}` understøttes ikke i en samling med indstillingen `file`.
     # Don’t localize `file`, `publish_mode` and `simple`
-    collection_data_file_workflow: Redaktionel arbejdsgang og arbejdsgang med forhåndsvisning, herunder åben redigering, understøttes ikke i en samling med indstillingen `file`. Sæt samlingens indstilling `publish_mode` til `simple`.
+    collection_data_file_workflow: Redaktionel arbejdsgang og forhåndsvisningsarbejdsgang, herunder åben redigering, understøttes ikke i en samling med indstillingen `file`. Sæt samlingens indstilling `publish_mode` til `simple`.
     # {$prop} is the option name; Don’t localize `file` and `slug`. The curly brackets are escaped
     # with backslashes for MessageFormat 2
     collection_data_file_slug_tag: Indstillingen `{$prop}` kan ikke indeholde tagget `\{\{slug\}\}` i en samling med indstillingen `file`, da et dokuments slug er dets position, som ændres når dokumenterne flyttes eller slettes. Brug i stedet et felt med en unik værdi.
@@ -2606,20 +2606,20 @@ config:
     # Don’t localize `fields` and `types`
     object_field_no_subfields: Objektfeltets indstilling `fields` eller `types` skal have mindst ét element.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
-    relation_field_invalid_collection: Den refererede samling `{$collection}` er ugyldig eller ikke defineret.
-    relation_field_invalid_collection_file: Den refererede fil `{$file}` er ugyldig eller ikke defineret.
+    relation_field_invalid_collection: Feltet henviser til en ugyldig eller udefineret samling `{$collection}`.
+    relation_field_invalid_collection_file: Feltet henviser til en ugyldig eller udefineret fil `{$file}`.
     # Don’t localize `file`
     relation_field_missing_file_name: Indstillingen `file` skal være defineret for en relation til en filsamling.
-    relation_field_invalid_value_field: Det refererede værdifelt `{$field}` er ugyldigt eller ikke defineret.
+    relation_field_invalid_value_field: Feltet henviser til et ugyldigt eller udefineret værdifelt `{$field}`.
     # {$collection} is the referenced collection name; Don’t localize `file`, `value_field` and `slug`.
     # The curly brackets are escaped with backslashes for MessageFormat 2
     relation_field_array_file_slug: Relationen til samlingen `{$collection}` kan ikke gemme værdien `\{\{slug\}\}`, da et dokuments slug i en samling med indstillingen `file` er dets position, som ændres når dokumenterne flyttes eller slettes. Sæt i stedet indstillingen `value_field` til et felt med en unik værdi.
     # {$collection} is the referenced collection name; Don’t localize `file`
-    relation_field_array_file_workflow: En samling med indstillingen `file` kan ikke have en relation til samlingen `{$collection}`, som bruger redaktionel arbejdsgang eller arbejdsgang med forhåndsvisning, da henvisningerne til et dokument der omdøbes eller slettes dér, ikke kan opdateres i filen.
-    relation_field_invalid_display_field: Det refererede visningsfelt `{$field}` er ugyldigt eller ikke defineret.
-    relation_field_invalid_search_field: Det refererede søgefelt `{$field}` er ugyldigt eller ikke defineret.
-    relation_field_invalid_filter_field: Det refererede filterfelt `{$field}` er ugyldigt eller ikke defineret.
-    relation_field_invalid_sort_field: Det refererede sorteringsfelt `{$field}` er ugyldigt eller ikke defineret.
+    relation_field_array_file_workflow: En samling med indstillingen `file` kan ikke have en relation til samlingen `{$collection}`, som bruger redaktionel arbejdsgang eller forhåndsvisningsarbejdsgang, da henvisningerne til et dokument der omdøbes eller slettes dér, ikke kan opdateres i filen.
+    relation_field_invalid_display_field: Feltet henviser til et ugyldigt eller udefineret visningsfelt `{$field}`.
+    relation_field_invalid_search_field: Feltet henviser til et ugyldigt eller udefineret søgefelt `{$field}`.
+    relation_field_invalid_filter_field: Feltet henviser til et ugyldigt eller udefineret filterfelt `{$field}`.
+    relation_field_invalid_sort_field: Feltet henviser til et ugyldigt eller udefineret sorteringsfelt `{$field}`.
     # Don’t localize `sort_by` and `file`
     relation_field_sort_by_file_ignored: Indstillingen `sort_by` gælder ikke for en relation til en fil, hvis muligheder følger listeelementernes rækkefølge. Den bliver ignoreret.
     unexpected: Uventet fejl
@@ -2875,8 +2875,8 @@ workflow:
   review_on_x: Gennemse på {$service}
   from_fork: Fra en fork
   fork_entry_editable: Dette dokument kommer fra en bidragyders pull request, der er oprettet fra ”{$fork}”. Dine ændringer gemmes i bidragyderens branch. Gennemse og merge pull requesten på Git-tjenesten.
-  fork_entry_locked: Dette dokument kommer fra en bidragyders pull request, der er oprettet fra ”{$fork}”. Bidragyderen tillader ikke at vedligeholdere redigerer den, så den kan kun ses her.
-  fork_not_editable: Bidragyderen tillader ikke at vedligeholdere redigerer denne pull request.
+  fork_entry_locked: Dette dokument kommer fra en bidragyders pull request, der er oprettet fra ”{$fork}”. Bidragyderen tillader ikke at de ansvarlige redigerer den, så den kan kun ses her.
+  fork_not_editable: Bidragyderen tillader ikke at de ansvarlige redigerer denne pull request.
   fork_entry_gone: Bidragyderens pull request er ikke længere åben, så ændringerne kan ikke gemmes i den.
   # Error shown in the save error dialog when an entry can’t be saved for review, because a request
   # the CMS doesn’t show is already open from the branch the entry would be saved to. `{$number}` is
@@ -2922,7 +2922,7 @@ open_authoring:
   # label on its OK button. {$repo} is the repository identifier in owner/repo format
   fork_repository: Fork repositoriet
   fork: Fork
-  confirm_forking_repository: For at foreslå ændringer til ”{$repo}” skal der oprettes en fork af repositoriet på din konto. Dine ændringer gemmes i den fork, og en vedligeholder gennemser dem før de bliver offentliggjort.
+  confirm_forking_repository: For at foreslå ændringer til ”{$repo}” skal der oprettes en fork af repositoriet på din konto. Dine ændringer gemmes i den fork, og en ansvarlig gennemser dem før de bliver offentliggjort.
   # Error shown when the user declined the dialog above
   fork_declined: Du skal have en fork af repositoriet på din konto for at kunne foreslå ændringer.
   # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
@@ -2936,24 +2936,24 @@ open_authoring:
   permission_check_failed: Din adgang til repositoriet ”{$repo}” kunne ikke kontrolleres. Prøv igen om et øjeblik.
   # Error shown when the repository can’t be forked, which is the default for a private
   # repository. {$repo} is the repository identifier
-  forking_disabled: Repositoriet ”{$repo}” tillader ikke forks. Bed en vedligeholder om at slå forks til for det.
+  forking_disabled: Repositoriet ”{$repo}” tillader ikke forks. Bed en ansvarlig om at slå forks til for det.
   # Error shown when the user was invited to the repository but hasn’t accepted yet, so they still
   # have no access. {$repo} is the repository identifier
   invitation_pending: Du har en ventende invitation til repositoriet ”{$repo}”. Accepter den på GitHub, og log derefter ind igen.
   # Error shown when the repository is private but the sign-in doesn’t cover private repositories.
   # {$repo} is the repository identifier
-  private_repo_scope_required: Dit login giver ikke adgang til private repositorier, så repositoriet ”{$repo}” kan ikke læses. Bed en vedligeholder om at tjekke CMS’ets godkendelsesindstillinger.
+  private_repo_scope_required: Dit login giver ikke adgang til private repositorier, så repositoriet ”{$repo}” kan ikke læses. Bed en ansvarlig om at tjekke CMS’ets godkendelsesindstillinger.
   # Error shown when a contributor tries to publish an entry, which only a maintainer can do
-  publish_unsupported: Kun en vedligeholder kan udgive ændringer på dette websted. Marker i stedet dit dokument som ”Til gennemsyn”, så kigger nogen på det.
+  publish_unsupported: Kun en ansvarlig kan udgive ændringer på dette websted. Marker i stedet dit dokument som ”Til gennemsyn”, så kigger nogen på det.
   # Error shown when a contributor changes the status of an entry whose request a maintainer has
   # published since the page was loaded, leaving nothing to review. The entry then leaves the
   # Editorial Workflow board and the editor closes. Keep the wording free of Git jargon
-  entry_already_published: En vedligeholder har allerede udgivet dette dokument, så der er intet tilbage at gennemse.
+  entry_already_published: En ansvarlig har allerede udgivet dette dokument, så der er intet tilbage at gennemse.
   # Error shown when a change would go straight to the site instead of being reviewed, which a
   # contributor can’t do. It covers media library uploads and deletions, and entry reordering
   direct_commit_unsupported: Denne ændring kan ikke foretages direkte. Kun redigeringer af dokumenter kan foreslås til gennemsyn.
   # Infobar shown while a contributor is signed in. {$repo} is their fork in owner/repo format
-  contributing_via_fork: Dine ændringer gemmes i din fork af dette repositorium på ”{$repo}” og gennemses før de bliver offentliggjort.
+  contributing_via_fork: Dine ændringer gemmes i din fork af dette repository på ”{$repo}” og gennemses før de bliver offentliggjort.
   view_fork: Vis fork
 
 # ==============================================================================
@@ -3081,9 +3081,9 @@ prefs:
         confirmation: Lokalt cachelagret filindhold og miniaturebilleder bliver slettet. Dine ikke-gemte kladder og indstillinger bevares, og slettede data bliver downloadet eller genereret igen efter behov. CMS’et genindlæses når det er færdigt.
       # Erase All Data button
       all_data:
-        description: Slet alt hvad CMS’et gemmer i denne browser, herunder cachelagrede filer, ikke-gemte kladder og indstillinger. Det der allerede er gemt i dit repositorium, bliver ikke påvirket.
+        description: Slet alt hvad CMS’et gemmer i denne browser, herunder cachelagrede filer, ikke-gemte kladder og indstillinger. Det der allerede er gemt i dit repository, bliver ikke påvirket.
         button_label: Slet alle data
-        confirmation: Alle data der er gemt i denne browser, bliver slettet, herunder cachelagret filindhold, miniaturebilleder, ikke-gemte kladder, indstillinger og loginstatus. Dit repositorium bliver ikke påvirket, men alle ændringer du ikke har gemt, går tabt, og du skal logge ind igen. CMS’et genindlæses når det er færdigt.
+        confirmation: Alle data der er gemt i denne browser, bliver slettet, herunder cachelagret filindhold, miniaturebilleder, ikke-gemte kladder, indstillinger og loginstatus. Dit repository bliver ikke påvirket, men alle ændringer du ikke har gemt, går tabt, og du skal logge ind igen. CMS’et genindlæses når det er færdigt.
 
   # Developer panel
   developer:
