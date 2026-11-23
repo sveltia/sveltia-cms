@@ -6,14 +6,14 @@ import {
   UPDATE_TOAST_DEFAULT_STATE,
 } from '$lib/services/contents/collection/data';
 import { deleteOrDiscardEntries } from '$lib/services/workflow/delete';
-import { discardWorkflowEntry } from '$lib/services/workflow/save';
+import { discardWorkflowEntry } from '$lib/services/workflow/removal';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 import { waitForToastsToHide } from '$lib/test/toast';
 
 import EntryRemoval from './entry-removal.svelte';
 
 vi.mock('$lib/services/workflow/delete', () => ({ deleteOrDiscardEntries: vi.fn() }));
-vi.mock('$lib/services/workflow/save', () => ({ discardWorkflowEntry: vi.fn() }));
+vi.mock('$lib/services/workflow/removal', () => ({ discardWorkflowEntry: vi.fn() }));
 
 const entry = /** @type {any} */ ({ id: 'hello', slug: 'hello' });
 const unpublishedEntry = /** @type {any} */ ({ ...entry, workflow: { status: 'draft' } });

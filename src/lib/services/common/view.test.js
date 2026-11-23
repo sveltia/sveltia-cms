@@ -12,6 +12,7 @@ import {
   getConditionKey,
   getGroupingKey,
   getGroupLabel,
+  getRowIndexMap,
   getViewConditions,
   groupItems,
   hasComparison,
@@ -390,6 +391,22 @@ describe('Test sortItemsByKey()', () => {
 
     expect(getKey).toHaveBeenCalledTimes(items.length);
     expect(items.map((i) => i.v)).toEqual(['a', 'b', 'c']);
+  });
+});
+
+describe('Test getRowIndexMap()', () => {
+  test('counts the rows across the groups after the offset', () => {
+    const groups = { a: [{ id: 'x' }, { id: 'y' }], b: [{ id: 'z' }] };
+
+    expect([...getRowIndexMap(groups, 2, ({ id }) => id)]).toEqual([
+      ['x', 2],
+      ['y', 3],
+      ['z', 4],
+    ]);
+  });
+
+  test('returns an empty map for no groups', () => {
+    expect(getRowIndexMap({}, 0, String).size).toBe(0);
   });
 });
 

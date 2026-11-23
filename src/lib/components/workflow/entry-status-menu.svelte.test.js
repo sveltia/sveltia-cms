@@ -22,6 +22,8 @@ vi.mock('$lib/services/workflow/save', () => ({
   saveWorkflowChanges: vi.fn(),
   updateWorkflowStatus: vi.fn(),
   publishWorkflowEntry: vi.fn(),
+}));
+vi.mock('$lib/services/workflow/removal', () => ({
   discardWorkflowEntry: vi.fn(),
   deleteWorkflowEntry: vi.fn(),
   discardWorkflowEntries: vi.fn(),

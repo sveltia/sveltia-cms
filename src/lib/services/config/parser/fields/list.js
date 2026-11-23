@@ -1,10 +1,14 @@
 import { isObject } from '@sveltia/utils/object';
 
-import { parseFieldConfig, parseFields } from '$lib/services/config/parser/fields/registry';
+import {
+  parseFieldConfig,
+  parseFields,
+  parseVariableTypes,
+} from '$lib/services/config/parser/fields/registry';
 import { checkObjectDefault } from '$lib/services/config/parser/utils/defaults';
 import { getSubFields } from '$lib/services/config/parser/utils/fields';
 import { checkThumbnailField } from '$lib/services/config/parser/utils/references';
-import { addMessage, checkName } from '$lib/services/config/parser/utils/validator';
+import { addMessage } from '$lib/services/config/parser/utils/validator';
 import { BUILTIN_FIELD_TYPES } from '$lib/services/contents/fields';
 
 /**
@@ -18,6 +22,7 @@ import { BUILTIN_FIELD_TYPES } from '$lib/services/contents/fields';
  * RelationField,
  * SelectField,
  * StringField,
+ * VariableFieldType,
  * } from '$lib/types/public';
  * @import {
  * ConfigParserCollectors,
@@ -247,7 +252,6 @@ export const parseListFieldConfig = (args) => {
   const { types } = /** @type {ListFieldWithTypes} */ (config);
   const { thumbnail } = /** @type {ComplexListFieldBaseProps} */ (config);
   const { typedKeyPath } = context;
-  const checkNameArgs = { nameCounts: {}, strKeyBase: 'variable_type', collectors };
 
   // Validate mutually exclusive options
   if ((subfield && subfields) || (subfield && types) || (subfields && types)) {
@@ -289,15 +293,18 @@ export const parseListFieldConfig = (args) => {
   }
 
   // Handle variable types
-  types?.forEach(({ name, widget: fieldType = 'object', fields: typedFields }, index) => {
-    const newContext = { ...context, typedKeyPath: `${typedKeyPath}.*<${name}>` };
-
-    if (
-      checkName({ ...checkNameArgs, name, index, context: newContext }) &&
-      checkFieldType(fieldType, newContext, collectors) &&
-      typedFields
-    ) {
-      parseFields(typedFields, newContext, collectors);
-    }
+  parseVariableTypes({
+    types,
+    typeKeyPath: `${typedKeyPath}.*`,
+    context,
+    collectors,
+    /**
+     * Check if the variable type is an Object field, the only type a List field supports.
+     * @param {VariableFieldType} type Variable type.
+     * @param {ConfigParserContext} newContext Context of the type.
+     * @returns {boolean} Whether the type is valid.
+     */
+    checkType: ({ widget: fieldType = 'object' }, newContext) =>
+      checkFieldType(fieldType, newContext, collectors),
   });
 };

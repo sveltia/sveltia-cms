@@ -1,9 +1,11 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 
+import { saveProgress } from '$lib/services/backends/commit-progress';
 import {
   estimateRemainingCommits,
   getPayloadSize,
   isUploadFailure,
+  runSplitCommits,
   sortAdditions,
   takeAdditions,
 } from '$lib/services/backends/git/shared/commit-split';
@@ -116,5 +118,138 @@ describe('isUploadFailure', () => {
     ).toBe(false);
     expect(isUploadFailure(new Error('Failed to fetch'))).toBe(false);
     expect(isUploadFailure(undefined)).toBe(false);
+  });
+});
+
+describe('runSplitCommits', () => {
+  /**
+   * Create a queue of file additions of the given sizes.
+   * @param {number[]} sizes Sizes.
+   * @returns {any[]} Additions.
+   */
+  const createQueue = (sizes) =>
+    sizes.map((size, index) => ({ index, path: `file-${index}`, contents: 'x'.repeat(size) }));
+
+  const uploadFailure = new Error('Failed to send the request');
+
+  test('commits the additions in groups, the last one with the rest', async () => {
+    /** @type {any[]} */
+    const calls = [];
+
+    const result = await runSplitCommits({
+      queue: createQueue([4, 4, 4]),
+      payloadSize: 8,
+      commitGroup: vi.fn(async ({ group, isLast, commitCount }) => {
+        calls.push([group.map((/** @type {any} */ { path }) => path), isLast, commitCount]);
+
+        return `commit-${commitCount}`;
+      }),
+      isBranchUnmoved: vi.fn(),
+    });
+
+    expect(calls).toEqual([
+      [['file-0', 'file-1'], false, 0],
+      [['file-2'], true, 1],
+    ]);
+    expect(result).toBe('commit-1');
+    expect(saveProgress.current).toBeUndefined();
+  });
+
+  test('makes a single commit for no additions', async () => {
+    const commitGroup = vi.fn(async () => 'commit');
+
+    await runSplitCommits({ queue: [], payloadSize: 8, commitGroup, isBranchUnmoved: vi.fn() });
+
+    expect(commitGroup).toHaveBeenCalledExactlyOnceWith({
+      group: [],
+      isLast: true,
+      commitCount: 0,
+    });
+  });
+
+  test('retries a failed upload with half the files while the branch hasn’t moved', async () => {
+    /** @type {string[][]} */
+    const groups = [];
+    const getNextPayloadSize = vi.fn(({ timedOutSize }) => timedOutSize + 100);
+
+    await runSplitCommits({
+      queue: createQueue([4, 4, 4, 4]),
+      payloadSize: 16,
+      commitGroup: vi.fn(async ({ group }) => {
+        groups.push(group.map((/** @type {any} */ { path }) => path));
+
+        if (group.length > 2) {
+          throw uploadFailure;
+        }
+
+        return 'commit';
+      }),
+      isBranchUnmoved: vi.fn(async () => true),
+      getNextPayloadSize,
+    });
+
+    expect(groups).toEqual([
+      ['file-0', 'file-1', 'file-2', 'file-3'],
+      ['file-0', 'file-1'],
+      ['file-2', 'file-3'],
+    ]);
+    // The size that failed is passed on, for the following commits to stay below it
+    expect(getNextPayloadSize).toHaveBeenCalledWith(
+      expect.objectContaining({ groupSize: 8, timedOutSize: 16 }),
+    );
+  });
+
+  test('throws an error it can’t retry, after the failure callback', async () => {
+    const onFailure = vi.fn();
+    const conflict = new Error('Conflict');
+    let count = 0;
+
+    await expect(
+      runSplitCommits({
+        queue: createQueue([4, 4]),
+        payloadSize: 4,
+        commitGroup: vi.fn(async () => {
+          count += 1;
+
+          if (count === 2) {
+            throw conflict;
+          }
+
+          return 'commit';
+        }),
+        isBranchUnmoved: vi.fn(async () => true),
+        onFailure,
+      }),
+    ).rejects.toBe(conflict);
+    expect(onFailure).toHaveBeenCalledExactlyOnceWith(conflict, { commitCount: 1 });
+    expect(saveProgress.current).toBeUndefined();
+  });
+
+  test('doesn’t retry a single file, or once the branch has moved', async () => {
+    const isBranchUnmoved = vi.fn(async () => false);
+
+    await expect(
+      runSplitCommits({
+        queue: createQueue([4]),
+        payloadSize: 8,
+        commitGroup: vi.fn(async () => {
+          throw uploadFailure;
+        }),
+        isBranchUnmoved,
+      }),
+    ).rejects.toBe(uploadFailure);
+    expect(isBranchUnmoved).not.toHaveBeenCalled();
+
+    await expect(
+      runSplitCommits({
+        queue: createQueue([4, 4]),
+        payloadSize: 8,
+        commitGroup: vi.fn(async () => {
+          throw uploadFailure;
+        }),
+        isBranchUnmoved,
+      }),
+    ).rejects.toBe(uploadFailure);
+    expect(isBranchUnmoved).toHaveBeenCalledOnce();
   });
 });

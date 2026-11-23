@@ -37,11 +37,8 @@
   import { deployingEntries } from '$lib/services/workflow/deploy';
   import { getDiscardDialogStrings, getPublishDialogStrings } from '$lib/services/workflow/dialogs';
   import { reloadUnpublishedEntries } from '$lib/services/workflow/load';
-  import {
-    discardWorkflowEntry,
-    publishReviewedEntry,
-    updateWorkflowStatus,
-  } from '$lib/services/workflow/save';
+  import { discardWorkflowEntry } from '$lib/services/workflow/removal';
+  import { publishReviewedEntry, updateWorkflowStatus } from '$lib/services/workflow/save';
   import {
     boardStages,
     getStageOfEntry,

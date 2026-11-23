@@ -15,24 +15,22 @@ vi.mock('@sveltia/i18n', async () =>
 );
 
 const mockParseFields = vi.fn();
+const mockParseVariableTypes = vi.fn();
 
 vi.mock('$lib/services/config/parser/fields/registry', () => ({
   parseFields: mockParseFields,
+  parseVariableTypes: mockParseVariableTypes,
 }));
 
 const mockAddMessage = vi.fn();
-const mockCheckName = vi.fn();
 
 vi.mock('$lib/services/config/parser/utils/validator', () => ({
   addMessage: mockAddMessage,
-  checkName: mockCheckName,
 }));
 
 describe('Object Field Config Parser', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-
-    mockCheckName.mockReturnValue(true);
   });
 
   describe('parseObjectFieldConfig with fields', () => {
@@ -99,116 +97,31 @@ describe('Object Field Config Parser', () => {
   });
 
   describe('parseObjectFieldConfig with types', () => {
-    it('should parse object field with variable types', async () => {
+    it('should parse the variable types under the field’s key path', async () => {
       const { parseObjectFieldConfig } = await import('./object.js');
       const collectors = createCollectors();
 
-      /** @type {any} */
-      const fieldConfig = {
-        name: 'block',
-        widget: 'object',
-        types: [
-          {
-            name: 'text_block',
-            fields: [{ name: 'text', widget: 'text' }],
-          },
-          {
-            name: 'image_block',
-            fields: [{ name: 'image', widget: 'image' }],
-          },
-        ],
-      };
+      const types = [
+        { name: 'text_block', fields: [{ name: 'text', widget: 'text' }] },
+        { name: 'image_block', fields: [{ name: 'image', widget: 'image' }] },
+      ];
 
       /** @type {any} */
-      const context = {
-        cmsConfig: {},
-        collection: { name: 'posts' },
-        typedKeyPath: 'block',
-      };
+      const context = { cmsConfig: {}, collection: { name: 'posts' }, typedKeyPath: 'block' };
 
       parseObjectFieldConfig({
-        config: fieldConfig,
+        config: /** @type {any} */ ({ name: 'block', widget: 'object', types }),
         context,
         collectors,
       });
 
-      // parseFields should be called for each type's fields
-      expect(mockParseFields).toHaveBeenCalledTimes(2);
-    });
-
-    it('should validate type names', async () => {
-      const { parseObjectFieldConfig } = await import('./object.js');
-      const collectors = createCollectors();
-
-      mockCheckName.mockReturnValueOnce(true).mockReturnValueOnce(false);
-
-      /** @type {any} */
-      const fieldConfig = {
-        name: 'block',
-        widget: 'object',
-        types: [
-          {
-            name: 'text',
-            fields: [{ name: 'content', widget: 'text' }],
-          },
-          {
-            name: 'text',
-            fields: [{ name: 'content', widget: 'text' }],
-          },
-        ],
-      };
-
-      /** @type {any} */
-      const context = {
-        cmsConfig: {},
-        collection: { name: 'posts' },
-        typedKeyPath: 'block',
-      };
-
-      parseObjectFieldConfig({
-        config: fieldConfig,
+      expect(mockParseVariableTypes).toHaveBeenCalledExactlyOnceWith({
+        types,
+        typeKeyPath: 'block',
         context,
         collectors,
       });
-
-      expect(mockCheckName).toHaveBeenCalledTimes(2);
-    });
-
-    it('should pass correct context for types including typed key path', async () => {
-      const { parseObjectFieldConfig } = await import('./object.js');
-      const collectors = createCollectors();
-
-      /** @type {any} */
-      const fieldConfig = {
-        name: 'block',
-        widget: 'object',
-        types: [
-          {
-            name: 'text_block',
-            fields: [{ name: 'text', widget: 'text' }],
-          },
-        ],
-      };
-
-      /** @type {any} */
-      const context = {
-        cmsConfig: {},
-        collection: { name: 'posts' },
-        typedKeyPath: 'block',
-      };
-
-      parseObjectFieldConfig({
-        config: fieldConfig,
-        context,
-        collectors,
-      });
-
-      // Check that parseFields was called with modified context
-      expect(mockParseFields).toHaveBeenCalled();
-
-      const passedContext = mockParseFields.mock.calls[0][1];
-
-      expect(passedContext.typedKeyPath).toBe('block<text_block>');
+      expect(mockParseFields).not.toHaveBeenCalled();
     });
   });
 
@@ -301,43 +214,6 @@ describe('Object Field Config Parser', () => {
         collectors,
       });
       expect(mockParseFields).not.toHaveBeenCalled();
-    });
-
-    it('should skip parsing types without fields', async () => {
-      const { parseObjectFieldConfig } = await import('./object.js');
-      const collectors = createCollectors();
-
-      /** @type {any} */
-      const fieldConfig = {
-        name: 'block',
-        widget: 'object',
-        types: [
-          {
-            name: 'text_block',
-            fields: [{ name: 'text', widget: 'text' }],
-          },
-          {
-            name: 'empty_block',
-            // No fields property
-          },
-        ],
-      };
-
-      /** @type {any} */
-      const context = {
-        cmsConfig: {},
-        collection: { name: 'posts' },
-        typedKeyPath: 'block',
-      };
-
-      parseObjectFieldConfig({
-        config: fieldConfig,
-        context,
-        collectors,
-      });
-
-      // Only one call to parseFields (for the first type with fields)
-      expect(mockParseFields).toHaveBeenCalledTimes(1);
     });
   });
 

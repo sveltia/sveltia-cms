@@ -15,7 +15,7 @@ import { LINKED_FILES_SERVICE_ID } from '$lib/services/assets/external/linked';
 import { listSubfolders } from '$lib/services/assets/subfolders';
 import { currentView } from '$lib/services/assets/view/settings';
 import { getNameSortValue } from '$lib/services/assets/view/sort';
-import { groupItems, sortItemsByKey } from '$lib/services/common/view';
+import { getRowIndexMap, groupItems, sortItemsByKey } from '$lib/services/common/view';
 import { getNormalizedValueCache, hasMatch, normalize } from '$lib/services/search/util';
 import { getBaseName, getDirName } from '$lib/services/utils/file';
 import {
@@ -347,20 +347,17 @@ export const externalAssetGroups = createDerivedState(() =>
 
 /**
  * Map from asset ID to the asset’s row index in the list, used by list rows to resolve their
- * `aria-rowindex` in O(1). The index is counted across the groups rather than within each one, as
- * the rows of every group make up one grid. The subfolders come first, so they offset the index.
- * Like `listedAssetIndexMap` for repository assets.
+ * `aria-rowindex`. The subfolders come first, so they offset the index. Like `listedAssetIndexMap`
+ * for repository assets.
  * @type {{ readonly current: Map<string, number> }}
  */
-export const listedExternalAssetIndexMap = createDerivedState(() => {
-  const offset = listedExternalSubfolders.current.length;
-
-  return new Map(
-    Object.values(externalAssetGroups.current)
-      .flat(1)
-      .map(({ id }, index) => [id, index + offset]),
-  );
-});
+export const listedExternalAssetIndexMap = createDerivedState(() =>
+  getRowIndexMap(
+    externalAssetGroups.current,
+    listedExternalSubfolders.current.length,
+    ({ id }) => id,
+  ),
+);
 
 /**
  * Drop the selected and focused assets that are no longer listed, so that the toolbar actions

@@ -380,6 +380,118 @@ export const createUnpublishedEntryProps = ({
 });
 
 /**
+ * Get the entry files the given pull request vacates. Editing the slug renames the entry file, so
+ * the path it came from is kept, for the entry list to still match the draft with its published
+ * counterpart. Both backends report a rename with the old path, and a file the pull request simply
+ * deleted counts too.
+ * @param {WorkflowPullRequest} pullRequest Pull request.
+ * @param {string} collectionName Name of the collection the branch is named after.
+ * @returns {BaseEntryListItem[]} Vacated files of the collection.
+ */
+const getVacatedEntryFiles = (pullRequest, collectionName) => {
+  const vacatedPaths = pullRequest.files.flatMap(({ path, deleted, previousPath }) => {
+    if (previousPath) {
+      return [previousPath];
+    }
+
+    return deleted ? [path] : [];
+  });
+
+  if (!vacatedPaths.length) {
+    return [];
+  }
+
+  return createFileList(vacatedPaths.map((path) => toFileListItem(path)))
+    .entryFiles.map((file) => assignToCollection(file, collectionName))
+    .filter(({ folder }) => folder.collectionName === collectionName);
+};
+
+/**
+ * Get the parsed entries to be handed over to another collection sharing the folder, which the
+ * collection’s filter excludes, so they’re parsed as entries committed along with the entry. The
+ * entry the branch is named after stays, even if an edit took it out of the filter, and so do the
+ * entries if none would be left, so the pull request doesn’t vanish from the board.
+ * @param {object} args Arguments.
+ * @param {Entry[]} args.parsedEntries Entries parsed from the files of the collection.
+ * @param {string} args.slug Slug of the entry the branch is named after.
+ * @param {string} args.collectionName Name of the collection the branch is named after.
+ * @returns {{ entry: Entry, folder: EntryFolderInfo }[]} Entries, with the folder of the
+ * collection each one goes to.
+ */
+const getHandedOverEntries = ({ parsedEntries, slug, collectionName }) => {
+  const candidates = parsedEntries.flatMap((entry) => {
+    const folder = entry.slug !== slug && findOtherCollectionFolder(entry, collectionName);
+
+    return folder ? [{ entry, folder }] : [];
+  });
+
+  return candidates.length < parsedEntries.length ? candidates : [];
+};
+
+/**
+ * Get the entries of a pull request that only removes entry files, which has nothing to parse, so
+ * the published entries it touches are reused. When it deletes all of an entry’s files, it’s an
+ * Unpublish, and the published content is what the list and the editor display while the removal
+ * awaits publication. Otherwise it only deletes the files of locales turned off for the entry: it’s
+ * an edit without those locales. The other files of the collection it may carry are those of the
+ * entries a removal rewrites.
+ * @param {object} args Arguments.
+ * @param {WorkflowPullRequest} args.pullRequest Pull request.
+ * @param {string} args.collectionName Name of the collection the branch is named after.
+ * @param {string} [args.fileName] Collection file name of the vacated files, if any.
+ * @param {string[]} args.previousPaths Paths of the entry files the pull request vacates.
+ * @param {Set<string>} args.deletedPaths Paths of the files the pull request deletes outright.
+ * @returns {UnpublishedEntry[]} Entries.
+ */
+const getRemovedEntries = ({
+  pullRequest,
+  collectionName,
+  fileName,
+  previousPaths,
+  deletedPaths,
+}) => {
+  const removedPaths = new Set(previousPaths);
+
+  const removedEntries = previousPaths.length
+    ? allEntries.current.filter((entry) =>
+        Object.values(entry.locales).some(({ path }) => removedPaths.has(path)),
+      )
+    : [];
+
+  return removedEntries.map((entry) => {
+    const remainingLocales = Object.entries(entry.locales).filter(
+      ([, { path }]) => !deletedPaths.has(path),
+    );
+
+    if (remainingLocales.length) {
+      return {
+        ...entry,
+        locales: Object.fromEntries(remainingLocales),
+        workflow: createUnpublishedEntryProps({
+          pullRequest,
+          collectionName,
+          fileName,
+          previousPaths,
+        }),
+      };
+    }
+
+    return {
+      ...entry,
+      workflow: {
+        pullRequest,
+        // A removal opened before the dedicated status existed carries `pending_publish`, so the
+        // status is taken from the contents rather than the label
+        status: /** @type {WorkflowStatus} */ ('pending_deletion'),
+        collectionName,
+        fileName: undefined,
+        previousPaths,
+      },
+    };
+  });
+};
+
+/**
  * Parse the files in the given pull request. See {@link convertPullRequest}.
  * @param {WorkflowPullRequest} pullRequest Pull request.
  * @returns {Promise<PullRequestContents>} Entries and assets.
@@ -411,24 +523,7 @@ const parsePullRequestContents = async (pullRequest) => {
 
   const { entryFiles: listedEntryFiles, assetFiles } = createFileList(files);
   let entryFiles = listedEntryFiles.map((file) => assignToCollection(file, collectionName));
-
-  // Editing the slug renames the entry file. Keep the path it came from, so the entry list can
-  // still match the draft with its published counterpart. Both backends report a rename with the
-  // old path, and a file the pull request simply deleted counts too.
-  const vacatedPaths = pullRequest.files.flatMap(({ path, deleted, previousPath }) => {
-    if (previousPath) {
-      return [previousPath];
-    }
-
-    return deleted ? [path] : [];
-  });
-
-  const vacatedEntryFiles = vacatedPaths.length
-    ? createFileList(vacatedPaths.map((path) => toFileListItem(path)))
-        .entryFiles.map((file) => assignToCollection(file, collectionName))
-        .filter(({ folder }) => folder.collectionName === collectionName)
-    : [];
-
+  const vacatedEntryFiles = getVacatedEntryFiles(pullRequest, collectionName);
   const previousPaths = vacatedEntryFiles.map(({ path }) => path);
 
   // Files deleted outright, as opposed to renamed. With the multi-file i18n structure, turning off
@@ -454,18 +549,8 @@ const parsePullRequestContents = async (pullRequest) => {
   );
 
   const parsedEntries = targetFiles.length ? (await prepareEntries(targetFiles)).entries : [];
-
-  // An entry of another collection sharing the folder, which the collection’s filter excludes, is
-  // handed over to that collection, so it’s parsed as an entry committed along with the entry. The
-  // entry the branch is named after stays, even if an edit took it out of the filter, and so do the
-  // entries if none would be left, so the pull request doesn’t vanish from the board
-  const handOverCandidates = parsedEntries.flatMap((entry) => {
-    const folder = entry.slug !== parsed.slug && findOtherCollectionFolder(entry, collectionName);
-
-    return folder ? [{ entry, folder }] : [];
-  });
-
-  const handedOver = handOverCandidates.length < parsedEntries.length ? handOverCandidates : [];
+  // An entry another collection sharing the folder takes is parsed as one committed along with it
+  const handedOver = getHandedOverEntries({ parsedEntries, slug: parsed.slug, collectionName });
   const handedOverEntries = new Set(handedOver.map(({ entry }) => entry));
 
   if (handedOver.length) {
@@ -493,51 +578,15 @@ const parsePullRequestContents = async (pullRequest) => {
       })
     : [];
 
-  // A pull request that only removes entry files has nothing to parse, so reuse the published entry
-  // it touches. When it deletes all the entry’s files, it’s an Unpublish, and the published content
-  // is what the list and the editor display while the removal awaits publication. Otherwise it only
-  // deletes the files of locales turned off for the entry: it’s an edit without those locales. The
-  // other files of the collection it may carry are those of the entries a removal rewrites.
+  // A pull request that only removes entry files has nothing to parse
   if (!ownEntries.length) {
-    const removedPaths = new Set(previousPaths);
-
-    const removedEntries = previousPaths.length
-      ? allEntries.current.filter((entry) =>
-          Object.values(entry.locales).some(({ path }) => removedPaths.has(path)),
-        )
-      : [];
-
     return {
-      entries: removedEntries.map((entry) => {
-        const remainingLocales = Object.entries(entry.locales).filter(
-          ([, { path }]) => !deletedPaths.has(path),
-        );
-
-        if (remainingLocales.length) {
-          return {
-            ...entry,
-            locales: Object.fromEntries(remainingLocales),
-            workflow: createUnpublishedEntryProps({
-              pullRequest,
-              collectionName,
-              fileName: vacatedEntryFiles[0].folder.fileName,
-              previousPaths,
-            }),
-          };
-        }
-
-        return {
-          ...entry,
-          workflow: {
-            pullRequest,
-            // A removal opened before the dedicated status existed carries `pending_publish`, so
-            // the status is taken from the contents rather than the label
-            status: /** @type {WorkflowStatus} */ ('pending_deletion'),
-            collectionName,
-            fileName: undefined,
-            previousPaths,
-          },
-        };
+      entries: getRemovedEntries({
+        pullRequest,
+        collectionName,
+        fileName: vacatedEntryFiles[0]?.folder.fileName,
+        previousPaths,
+        deletedPaths,
       }),
       assets,
     };

@@ -1,8 +1,7 @@
-import { isObject } from '@sveltia/utils/object';
-
 import { applyCustomFieldSchemas } from '$lib/services/config/schema/custom-fields';
 import { reportSchemaErrors } from '$lib/services/config/schema/errors';
 import { compileSchema } from '$lib/services/config/schema/validator';
+import { mapValuesDeep } from '$lib/services/utils/object';
 
 /**
  * @import { ConfigParserCollectors, ConfigSchemas } from '$lib/types/private';
@@ -19,23 +18,8 @@ export { getConfigSchemas } from '$lib/services/config/schema/loader';
  * @param {any} value Configuration, or any value within it.
  * @returns {any} Value with every `RegExp` replaced.
  */
-const replaceRegExps = (value) => {
-  if (value instanceof RegExp) {
-    return value.source;
-  }
-
-  if (Array.isArray(value)) {
-    return value.map(replaceRegExps);
-  }
-
-  if (isObject(value)) {
-    return Object.fromEntries(
-      Object.entries(value).map(([key, item]) => [key, replaceRegExps(item)]),
-    );
-  }
-
-  return value;
-};
+const replaceRegExps = (value) =>
+  mapValuesDeep(value, (item) => (item instanceof RegExp ? item.source : undefined));
 
 /**
  * Validate a CMS configuration against the JSON schema and collect any violation as a

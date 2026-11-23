@@ -62,6 +62,7 @@ const {
   resetCopiedListItem,
 } = await import('$lib/services/contents/fields/list/clipboard');
 
+const { conformItemToLocales } = await import('$lib/services/contents/fields/list/clipboard/paste');
 const folder = { internalPath: 'content/pages', publicPath: '', entryRelative: true };
 
 /** @type {ComplexListField} */
@@ -414,6 +415,47 @@ describe('copyListItem() and readListItem()', () => {
     await copyListItem({ draft, ...args });
 
     expect((await readListItem())?.data.values).toEqual({ en: { tag: 'news' } });
+  });
+});
+
+describe('conformItemToLocales()', () => {
+  /**
+   * Conform a copied item to a list of tags.
+   * @param {Record<string, any>} data Data to override.
+   * @returns {ReturnType<typeof conformItemToLocales>} Result.
+   */
+  const conform = (data) =>
+    conformItemToLocales({
+      draft,
+      valueStoreKey: 'currentValues',
+      data: createData(data),
+      fieldConfig: tagsField,
+      fields: [{ name: 'tag', widget: 'string' }],
+      inEditorComponent: false,
+    });
+
+  test('conforms the item in every locale, taking a missing one from the copied locale', () => {
+    expect(
+      conform({ values: { en: { tag: 'a' } }, assets: { en: { 'a.png': 'images/a.png' } } }),
+    ).toEqual({
+      conformed: [
+        { locale: 'en', value: { tag: 'a' }, assetPaths: { 'a.png': 'images/a.png' } },
+        { locale: 'ja', value: { tag: 'a' }, assetPaths: { 'a.png': 'images/a.png' } },
+      ],
+      droppedCount: 0,
+    });
+  });
+
+  test('takes a single value from an item with another subfield name', () => {
+    expect(conform({ values: { en: { label: 'a' } } })?.conformed[0].value).toEqual({ tag: 'a' });
+  });
+
+  test('counts the values left out once, and rejects an item none of whose values fit', () => {
+    expect(
+      conform({ values: { en: { tag: 'a', other: 'b' }, ja: { tag: 'c', other: 'd' } } })
+        ?.droppedCount,
+    ).toBe(1);
+    expect(conform({ values: { en: { tag: { nested: true } } } })).toBeUndefined();
   });
 });
 

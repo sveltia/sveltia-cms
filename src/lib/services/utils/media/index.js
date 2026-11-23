@@ -1,4 +1,5 @@
 import { extractExifData } from '$lib/services/utils/media/image/exif';
+import { waitForMediaLoad } from '$lib/services/utils/media/load';
 
 /**
  * @import { Asset, AssetKind, GeoCoordinates, MediaDimensions } from '$lib/types/private';
@@ -22,14 +23,13 @@ import { extractExifData } from '$lib/services/utils/media/image/exif';
  * @param {() => SourceInfo} args.getInfo Function to collect the info once the event fires.
  * @returns {Promise<SourceInfo>} Dimensions and duration, if available.
  */
-const probeSource = ({ element, eventType, src, getInfo }) =>
-  /** @type {Promise<SourceInfo>} */ (
-    new Promise((resolve) => {
-      element.addEventListener(eventType, () => resolve(getInfo()), { once: true });
-      element.addEventListener('error', () => resolve({}), { once: true });
-      element.src = src;
-    })
-  );
+const probeSource = async ({ element, eventType, src, getInfo }) => {
+  const loaded = waitForMediaLoad(element, eventType);
+
+  element.src = src;
+
+  return (await loaded) ? getInfo() : {};
+};
 
 /**
  * Get the dimensions of an image asset.

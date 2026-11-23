@@ -14,11 +14,8 @@ import {
 import { resetDeployingEntries, trackDeployingEntry } from '$lib/services/workflow/deploy';
 import { reloadUnpublishedEntries } from '$lib/services/workflow/load';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
-import {
-  discardWorkflowEntry,
-  publishReviewedEntry,
-  updateWorkflowStatus,
-} from '$lib/services/workflow/save';
+import { discardWorkflowEntry } from '$lib/services/workflow/removal';
+import { publishReviewedEntry, updateWorkflowStatus } from '$lib/services/workflow/save';
 import { canMoveToStatus, canPublish } from '$lib/services/workflow/validate';
 import {
   createMockEntry,
@@ -44,6 +41,8 @@ vi.mock('$lib/services/workflow/save', () => ({
   saveWorkflowChanges: vi.fn(),
   updateWorkflowStatus: vi.fn(),
   publishReviewedEntry: vi.fn(),
+}));
+vi.mock('$lib/services/workflow/removal', () => ({
   discardWorkflowEntry: vi.fn(),
   deleteWorkflowEntry: vi.fn(),
   discardWorkflowEntries: vi.fn(),

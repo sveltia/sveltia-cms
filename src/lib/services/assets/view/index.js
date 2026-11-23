@@ -22,6 +22,7 @@ import { groupAssets } from '$lib/services/assets/view/group';
 import { assetListSettings, currentView, initSettings } from '$lib/services/assets/view/settings';
 import { sortAssets } from '$lib/services/assets/view/sort';
 import { backend } from '$lib/services/backends';
+import { getRowIndexMap } from '$lib/services/common/view';
 import { getCollection, getCollectionLabel } from '$lib/services/contents/collection';
 import { getCollectionFile, getCollectionFileLabel } from '$lib/services/contents/collection/files';
 import { prefs } from '$lib/services/user/prefs.svelte';
@@ -256,21 +257,14 @@ export const assetGroups = createDerivedState(() => {
 
 /**
  * Map from asset path to the asset’s row index in the list, used by list rows to resolve their
- * `aria-rowindex` in O(1). The index is counted across the groups rather than within each one, as
- * the rows of every group make up one grid, and follows the current sorting and filtering. The
- * subfolders come first, so they offset the index. Rows are appended by an infinite scroller and
- * never unmounted, so once a large folder has been scrolled through, an `indexOf()` per row would
- * make every subsequent list update O(n²).
+ * `aria-rowindex`. The index follows the current sorting and filtering, and the subfolders come
+ * first, so they offset it. Rows are appended by an infinite scroller and never unmounted, so once
+ * a large folder has been scrolled through, an `indexOf()` per row would make every subsequent
+ * list update O(n²).
  */
-export const listedAssetIndexMap = createDerivedState(() => {
-  const offset = listedSubfolders.current.length;
-
-  return new Map(
-    Object.values(assetGroups.current)
-      .flat(1)
-      .map((asset, index) => [asset.path, index + offset]),
-  );
-});
+export const listedAssetIndexMap = createDerivedState(() =>
+  getRowIndexMap(assetGroups.current, listedSubfolders.current.length, ({ path }) => path),
+);
 
 createRootEffect(() => {
   const { current: _backend } = backend;

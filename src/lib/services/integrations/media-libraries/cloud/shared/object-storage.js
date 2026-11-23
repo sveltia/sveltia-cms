@@ -93,6 +93,19 @@ const getCredential = (provider, config, options) => {
 };
 
 /**
+ * Parse a single object the service returned after writing it.
+ * @template T
+ * @template {CloudStorageConfig} C
+ * @param {ObjectStorageProvider<T, C>} provider Service provider.
+ * @param {T} object Object.
+ * @param {C} config Service configuration.
+ * @param {string} credential Credential.
+ * @returns {ExternalAsset} Asset.
+ */
+const parseObject = (provider, object, config, credential) =>
+  provider.parseResults([object], config, credential)[0];
+
+/**
  * Get the key prefix to list a folder with.
  * @param {CloudStorageConfig} config Service configuration.
  * @param {string} [dirPath] Folder path relative to the configured prefix. Default: the configured
@@ -388,7 +401,7 @@ export const replaceObject = async (provider, asset, file, config, options) => {
   const credential = getCredential(provider, config, options);
   const object = await provider.putObject({ key: asset.id, file, config, credential });
 
-  return provider.parseResults([object], config, credential)[0];
+  return parseObject(provider, object, config, credential);
 };
 
 /**
@@ -410,7 +423,7 @@ export const moveObject = async (provider, asset, newPath, config, options) => {
 
   await provider.deleteObject({ key: asset.id, config, credential });
 
-  return provider.parseResults([object], config, credential)[0];
+  return parseObject(provider, object, config, credential);
 };
 
 /**

@@ -25,11 +25,7 @@
   } from '$lib/services/contents/editor/field-context';
   import { trackPendingWhile } from '$lib/services/contents/editor/pending.svelte';
   import { getField } from '$lib/services/contents/entry/fields';
-  import { processResource } from '$lib/services/contents/fields/file/process';
-  import {
-    getMediaFieldAssetOptions,
-    processResources,
-  } from '$lib/services/contents/fields/file/resources';
+  import { getMediaFieldAssetOptions } from '$lib/services/contents/fields/file/resources';
   import {
     DEFAULT_BUTTONS,
     DEFAULT_MODES,
@@ -39,6 +35,8 @@
   import { IMAGE_COMPONENT_IDS } from '$lib/services/contents/fields/rich-text/components/definitions';
   import {
     getImageSrcFieldConfig,
+    insertInlineImages,
+    insertSelectedImages,
     sortDroppedImages,
   } from '$lib/services/contents/fields/rich-text/image-uploads';
   import {
@@ -192,6 +190,22 @@
   );
 
   /**
+   * Run the given image processing task, during which a save waits for the images to be inserted.
+   * @template T
+   * @param {() => Promise<T>} task Task.
+   * @returns {Promise<T>} Result of the task.
+   */
+  const trackImageProcessing = async (task) => {
+    processingImages += 1;
+
+    try {
+      return await task();
+    } finally {
+      processingImages -= 1;
+    }
+  };
+
+  /**
    * Insert images to the editor content.
    * @param {object} args Arguments.
    * @param {EventTarget | null} args.target Event target.
@@ -216,57 +230,37 @@
       assetOptions,
     });
 
-    /**
-     * Whether the editor still shows the content the images were dropped in. The editor is reused
-     * when the pane switches to another locale or another entry is opened, so the image would be
-     * inserted into the content it shows now, with a path resolved for the one it was dropped in.
-     * @returns {boolean} Result.
-     */
-    const isSameContent = () => entryDraft.current === draft && locale === _locale;
+    const insertionArgs = {
+      draft,
+      folder,
+      libraryConfig,
+      locale: _locale,
+      /**
+       * Whether the editor still shows the content the images were dropped in.
+       * @returns {boolean} Result.
+       */
+      isCurrent: () => entryDraft.current === draft && locale === _locale,
+      /**
+       * Insert an image.
+       * @param {string} src Image URL.
+       * @param {string} alt Alternative text.
+       */
+      insertImage: (src, alt) => {
+        editor.update(() => {
+          const node = component.createNode({ src, alt });
 
-    /**
-     * Insert an image.
-     * @param {string} src Image URL.
-     * @param {string} alt Alternative text.
-     */
-    const insertImage = (src, alt) => {
-      editor.update(() => {
-        const node = component.createNode({ src, alt });
-
-        // Start a new paragraph after the image, unless the field holds a single one
-        insertNodes(multiline ? [node, createParagraphNode()] : [node]);
-      });
+          // Start a new paragraph after the image, unless the field holds a single one
+          insertNodes(multiline ? [node, createParagraphNode()] : [node]);
+        });
+      },
     };
 
-    processingImages += 1;
+    const done = await trackImageProcessing(() =>
+      insertInlineImages({ ...insertionArgs, images: inlineImages }),
+    );
 
-    try {
-      // eslint-disable-next-line no-restricted-syntax
-      for (const { file, src: externalSrc, alt = '' } of inlineImages) {
-        let src = externalSrc;
-
-        if (file) {
-          // eslint-disable-next-line no-await-in-loop
-          const { value } = await processResource({
-            draft,
-            resource: { file, folder },
-            libraryConfig,
-            locale: _locale,
-          });
-
-          if (!isSameContent()) {
-            return;
-          }
-
-          src = value;
-        }
-
-        if (src) {
-          insertImage(src, alt);
-        }
-      }
-    } finally {
-      processingImages -= 1;
+    if (!done) {
+      return;
     }
 
     if (rejected) {
@@ -279,33 +273,13 @@
 
     /**
      * Insert the images the user has selected in the Select Assets dialog, which uploads the files
-     * to the cloud storage service, asking for the credentials if needed.
+     * to the cloud storage service, asking for the credentials if needed. A save made right after
+     * the images have been selected waits for them to be inserted.
      * @param {SelectedResource[]} resources Selected resources.
+     * @returns {Promise<void>} Nothing.
      */
-    insertUploadedImages = async (resources) => {
-      // A save made right after the images have been selected waits for them to be inserted
-      processingImages += 1;
-
-      try {
-        const results = await processResources({
-          draft,
-          resources,
-          folder,
-          libraryConfig,
-          locale: _locale,
-        });
-
-        if (isSameContent()) {
-          results.forEach(({ value }) => {
-            if (value) {
-              insertImage(value, '');
-            }
-          });
-        }
-      } finally {
-        processingImages -= 1;
-      }
-    };
+    insertUploadedImages = (resources) =>
+      trackImageProcessing(() => insertSelectedImages({ ...insertionArgs, resources }));
 
     pendingFiles = uploadFiles;
     showSelectAssetsDialog = true;

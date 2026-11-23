@@ -141,6 +141,54 @@ export const fetchOK = async (...args) => {
 };
 
 /**
+ * Get the delay before sending a request again after a transient error that may succeed on retry:
+ * 502 Bad Gateway, which the GitHub GraphQL API is known to occasionally answer with, and, for a
+ * request without side effects only, a rate limit or a self-hosted instance under load.
+ * @param {object} args Arguments.
+ * @param {Response} args.response Response.
+ * @param {RequestInit} args.init Request options.
+ * @param {number} args.retries Number of remaining retries.
+ * @param {boolean} args.retryable Whether the request can be sent again after a transient error.
+ * @returns {number | undefined} Delay in milliseconds, or `undefined` if the request isn’t to be
+ * sent again.
+ * @see https://github.com/sveltia/sveltia-cms/issues/695
+ */
+export const resolveRetryDelay = ({ response: { status, headers }, init, retries, retryable }) =>
+  retries > 0 &&
+  retryable &&
+  (status === 502 || (TRANSIENT_STATUSES.includes(status) && isRetryableRequest(init)))
+    ? getRetryDelay(status, headers)
+    : undefined;
+
+/**
+ * Get the error message from the body of an error response: the `error` string, the `message`
+ * string of a typical REST API, or the `errors` list, either of strings or of GraphQL errors.
+ * @param {Record<string, any>} result Parsed response body.
+ * @returns {string} Message, or an empty string if there is none.
+ */
+export const getErrorMessage = (result) => {
+  const { error, message, errors } = result;
+
+  if (Array.isArray(errors)) {
+    if (typeof errors[0] === 'string') {
+      return errors.join(', ');
+    }
+
+    // Typical GraphQL
+    if (isObject(errors[0]) && typeof errors[0].message === 'string') {
+      return errors.map((e) => e.message).join(', ');
+    }
+  }
+
+  // Typical REST
+  if (typeof message === 'string') {
+    return message;
+  }
+
+  return typeof error === 'string' ? error : '';
+};
+
+/**
  * A `fetch` wrapper to send an HTTP request to an API endpoint, parse the response as JSON or other
  * specified format, and handle errors gracefully.
  * @param {string} url URL.
@@ -214,17 +262,7 @@ export const sendRequest = async (
     return sendRequest(url, init, { responseType, retryable });
   };
 
-  // A transient error that may succeed on retry: 502 Bad Gateway, which the GitHub GraphQL API is
-  // known to occasionally answer with, and, for a request without side effects only, a rate limit
-  // or a self-hosted instance under load
-  // @see https://github.com/sveltia/sveltia-cms/issues/695
-  const retryDelay =
-    retries > 0 &&
-    retryable &&
-    (status === 502 || (TRANSIENT_STATUSES.includes(status) && isRetryableRequest(init)))
-      ? getRetryDelay(status, response.headers)
-      : undefined;
-
+  const retryDelay = resolveRetryDelay({ response, init, retries, retryable });
   const shouldRetry = retryDelay !== undefined;
 
   /**
@@ -297,29 +335,9 @@ export const sendRequest = async (
     throw new Error('Server responded with an error', { cause: { status } });
   }
 
-  let message = '';
-
-  if (typeof result.error === 'string') {
-    message = result.error;
-  }
-
-  // Typical REST
-  if (typeof result.message === 'string') {
-    message = result.message;
-  }
-
-  if (Array.isArray(result.errors)) {
-    if (typeof result.errors[0] === 'string') {
-      message = result.errors.join(', ');
-    }
-
-    // Typical GraphQL
-    if (isObject(result.errors[0]) && typeof result.errors[0].message === 'string') {
-      message = /** @type {any[]} */ (result.errors).map((e) => e.message).join(', ');
-    }
-  }
-
-  throw new Error('Server responded with an error', { cause: { status, message } });
+  throw new Error('Server responded with an error', {
+    cause: { status, message: getErrorMessage(result) },
+  });
 };
 
 /**

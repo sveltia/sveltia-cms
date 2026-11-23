@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { deleteEntries } from '$lib/services/contents/collection/data/delete';
 import { cancelBackup, deleteBackup } from '$lib/services/contents/draft/backup';
 import { deleteOrDiscardEntries } from '$lib/services/workflow/delete';
-import { deleteWorkflowEntries, discardWorkflowEntries } from '$lib/services/workflow/save';
+import { deleteWorkflowEntries, discardWorkflowEntries } from '$lib/services/workflow/removal';
 
 vi.mock('$lib/services/contents/collection/data/delete', () => ({ deleteEntries: vi.fn() }));
 vi.mock('$lib/services/contents/draft/backup', () => ({
@@ -13,7 +13,7 @@ vi.mock('$lib/services/contents/draft/backup', () => ({
   // maintainers’ own pull request
   getBackupSlug: vi.fn(({ fileName, originalEntry }) => fileName ?? originalEntry?.subPath),
 }));
-vi.mock('$lib/services/workflow/save', () => ({
+vi.mock('$lib/services/workflow/removal', () => ({
   deleteWorkflowEntries: vi.fn(),
   discardWorkflowEntries: vi.fn(),
 }));

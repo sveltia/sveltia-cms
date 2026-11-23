@@ -4,7 +4,7 @@ import {
   JSON_INTEGER_REGEX,
   rememberUniqueSource,
 } from '$lib/services/contents/file/value-sources';
-import { isPlainObject } from '$lib/services/utils/object';
+import { isPlainObject, mapValuesDeep } from '$lib/services/utils/object';
 
 /**
  * Source text of the integers read from files that a `number` can’t represent exactly, keyed by the
@@ -133,26 +133,17 @@ export const hasUnsafeIntegerSources = () => unsafeIntegerSources.size > 0;
  * @param {any} value Value to be formatted.
  * @returns {any} Copy of arrays and plain objects; any other value as is.
  */
-export const restoreBigInts = (value) => {
-  const source = getUnsafeIntegerSource(value);
-
-  if (source !== undefined) {
-    return BigInt(source);
-  }
-
-  if (Array.isArray(value)) {
-    return value.map(restoreBigInts);
-  }
-
+export const restoreBigInts = (value) =>
   // Leave class instances, such as a `TomlDate`, as they are
-  if (isPlainObject(value)) {
-    return Object.fromEntries(
-      Object.entries(value).map(([key, val]) => [key, restoreBigInts(val)]),
-    );
-  }
+  mapValuesDeep(
+    value,
+    (item) => {
+      const source = getUnsafeIntegerSource(item);
 
-  return value;
-};
+      return source !== undefined ? BigInt(source) : undefined;
+    },
+    isPlainObject,
+  );
 
 /**
  * Clear the source text of the integers read so far. Used in tests.

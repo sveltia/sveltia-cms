@@ -1,18 +1,11 @@
 import { encodeBase64 } from '@sveltia/utils/file';
 
-import { clearSaveProgress, reportCommits } from '$lib/services/backends/commit-progress';
 import { getBranchRepository } from '$lib/services/backends/git/github/fork';
 import { createGitDataCommit } from '$lib/services/backends/git/github/git-data';
 import { fetchAliasedBatch } from '$lib/services/backends/git/github/graphql';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchGraphQL } from '$lib/services/backends/git/shared/api';
-import {
-  estimateRemainingCommits,
-  getPayloadSize,
-  isUploadFailure,
-  sortAdditions,
-  takeAdditions,
-} from '$lib/services/backends/git/shared/commit-split';
+import { runSplitCommits, sortAdditions } from '$lib/services/backends/git/shared/commit-split';
 import {
   addCommitTrailer,
   assertBranchNotMoved,
@@ -343,84 +336,69 @@ export const commitChanges = async (changes, options) => {
 
   const message = signOffCommitMessage(createCommitMessage(changes, options));
   let expectedHeadOid = await getExpectedHeadOid(options);
-  let payloadSize = author ? Infinity : INITIAL_COMMIT_PAYLOAD_SIZE;
-  // Smallest payload that has timed out, which the following commits stay below, as the speed
-  // measured on a slow or uneven connection can suggest a size that has already failed
-  let timedOutSize = Infinity;
-  let commitCount = 0;
-  /** @type {Record<string, any>} */
-  let commit = {};
   /** @type {Record<string, any>} */
   const fileShas = {};
 
-  // Commit the additions in groups, each on top of the previous one, sized so that each commit
-  // takes a few seconds to upload. The deletions go into the last commit along with the entries,
-  // so a file isn’t removed before the entry stops referring to it. There is always at least one
-  // commit, which can have no additions, so a changeset with only deletions is still committed
-  try {
-    do {
-      // The files still waiting, at the current commit size, make up the commits yet to be made
-      reportCommits(commitCount, commitCount + estimateRemainingCommits(queue, payloadSize));
+  // The additions go in groups sized so that each commit takes a few seconds to upload. The
+  // deletions go into the last commit along with the entries, so a file isn’t removed before the
+  // entry stops referring to it
+  const commit = await runSplitCommits({
+    queue,
+    payloadSize: author ? Infinity : INITIAL_COMMIT_PAYLOAD_SIZE,
+    /**
+     * Make a commit with the given additions.
+     * @param {object} args Arguments.
+     * @param {FileAddition[]} args.group Additions.
+     * @param {boolean} args.isLast Whether it’s the last commit.
+     * @returns {Promise<Record<string, any>>} Commit.
+     */
+    commitGroup: async ({ group, isLast }) => {
+      const result = await createCommit({
+        owner,
+        repo,
+        branch,
+        expectedHeadOid,
+        additions: isLast ? [...group, ...addedAgain] : group,
+        deletions: isLast ? deletions : [],
+        message,
+        onWorkflowBranch: !!options.branch,
+        author,
+        coAuthor: commitAuthor,
+      });
 
-      const group = takeAdditions(queue, payloadSize);
-      const isLast = !queue.length;
-      const groupSize = getPayloadSize(group);
-      const startTime = performance.now();
+      Object.assign(fileShas, result);
+      expectedHeadOid = result.oid;
 
-      try {
-        // eslint-disable-next-line no-await-in-loop
-        commit = await createCommit({
-          owner,
-          repo,
-          branch,
-          expectedHeadOid,
-          additions: isLast ? [...group, ...addedAgain] : group,
-          deletions: isLast ? deletions : [],
-          message,
-          onWorkflowBranch: !!options.branch,
-          author,
-          coAuthor: commitAuthor,
-        });
-      } catch (ex) {
-        // The upload has taken too long on the connection. Put the files back and try again with
-        // half of them, provided the branch is still where it was, so the commit hasn’t landed
-        if (
-          group.length > 1 &&
-          isUploadFailure(ex) &&
-          // eslint-disable-next-line no-await-in-loop
-          (await fetchLastCommit(options.branch).catch(() => undefined))?.hash === expectedHeadOid
-        ) {
-          queue.unshift(...group);
-          timedOutSize = Math.min(timedOutSize, groupSize);
-          payloadSize = Math.floor(groupSize / 2);
-          // eslint-disable-next-line no-continue
-          continue;
-        }
-
-        // Some of the assets have landed on the configured branch, but the entry hasn’t. Take the
-        // last commit made as the known head, so the check before the retry doesn’t load those
-        // assets, which would then be saved again under different names. The retry saves them
-        // under the same paths instead, with the same content, along with the entry. A workflow
-        // branch isn’t tracked this way; it’s reset from scratch when no pull request comes out of
-        // it
-        if (commitCount && !options.branch) {
-          repositoryHead.current = expectedHeadOid;
-        }
-
-        throw ex;
+      return result;
+    },
+    /**
+     * Check whether the branch is still where it was before the failed commit.
+     * @returns {Promise<boolean>} Result.
+     */
+    isBranchUnmoved: async () =>
+      (await fetchLastCommit(options.branch).catch(() => undefined))?.hash === expectedHeadOid,
+    /**
+     * Take the last commit made as the known head when some of the assets have landed on the
+     * configured branch, but the entry hasn’t, so the check before the retry doesn’t load those
+     * assets, which would then be saved again under different names. The retry saves them under
+     * the same paths instead, with the same content, along with the entry. A workflow branch isn’t
+     * tracked this way; it’s reset from scratch when no pull request comes out of it.
+     * @param {any} _ex Error.
+     * @param {{ commitCount: number }} args Number of the commits made.
+     */
+    onFailure: (_ex, { commitCount }) => {
+      if (commitCount && !options.branch) {
+        repositoryHead.current = expectedHeadOid;
       }
-
-      payloadSize = Math.min(
-        getNextPayloadSize(groupSize, performance.now() - startTime),
-        timedOutSize - 1,
-      );
-      commitCount += 1;
-      Object.assign(fileShas, commit);
-      expectedHeadOid = commit.oid;
-    } while (queue.length);
-  } finally {
-    clearSaveProgress();
-  }
+    },
+    /**
+     * Size the next commit to the upload speed measured on the last one.
+     * @param {{ groupSize: number, duration: number, timedOutSize: number }} args Arguments.
+     * @returns {number} Payload size.
+     */
+    getNextPayloadSize: ({ groupSize, duration, timedOutSize }) =>
+      Math.min(getNextPayloadSize(groupSize, duration), timedOutSize - 1),
+  });
 
   return {
     sha: commit.oid,

@@ -4,7 +4,7 @@ import { addMessage, checkName } from '$lib/services/config/parser/utils/validat
 import { BUILTIN_FIELD_TYPES } from '$lib/services/contents/fields';
 
 /**
- * @import { Field } from '$lib/types/public';
+ * @import { Field, VariableFieldType } from '$lib/types/public';
  * @import {
  * ConfigParserCollectors,
  * ConfigParserContext,
@@ -65,6 +65,34 @@ export const parseFields = (fields, context, collectors) => {
 
     if (checkName({ ...checkNameArgs, name, index })) {
       parseFieldConfig({ config, context, collectors });
+    }
+  });
+};
+
+/**
+ * Parse and validate the variable types of a List or Object field, with the subfields of each type.
+ * @param {object} args Arguments.
+ * @param {VariableFieldType[] | undefined} args.types Variable types.
+ * @param {string} args.typeKeyPath Key path of the field’s value that the types apply to, e.g.
+ * `blocks.*` for the items of a List field, to which `<name>` is appended for each type.
+ * @param {ConfigParserContext} args.context Context of the field.
+ * @param {ConfigParserCollectors} args.collectors Collectors.
+ * @param {(type: VariableFieldType, context: ConfigParserContext) => boolean} [args.checkType]
+ * Additional check of each type with a valid name, before its subfields are parsed.
+ */
+export const parseVariableTypes = ({ types, typeKeyPath, context, collectors, checkType }) => {
+  const checkNameArgs = { nameCounts: {}, strKeyBase: 'variable_type', collectors };
+
+  types?.forEach((type, index) => {
+    const { name, fields } = type;
+    const newContext = { ...context, typedKeyPath: `${typeKeyPath}<${name}>` };
+
+    if (
+      checkName({ ...checkNameArgs, name, index, context: newContext }) &&
+      (checkType?.(type, newContext) ?? true) &&
+      fields
+    ) {
+      parseFields(fields, newContext, collectors);
     }
   });
 };

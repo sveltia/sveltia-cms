@@ -20,9 +20,18 @@ import { getTypedKeyPath } from '$lib/services/contents/fields/object/helpers';
  * InternalLocaleCode,
  * TypedFieldKeyPath,
  * } from '$lib/types/private';
- * @import { ComplexListField, ListFieldWithSubField } from '$lib/types/public';
+ * @import { ComplexListField, Field, ListFieldWithSubField } from '$lib/types/public';
  * @import { AssetValueCallback } from '$lib/services/contents/fields/list/clipboard/walk';
  * @import { ListItemClipboardData } from '$lib/services/contents/fields/list/clipboard/data';
+ */
+
+/**
+ * Copied list item conformed to the subfields in a locale of the draft.
+ * @typedef {object} ConformedListItem
+ * @property {InternalLocaleCode} locale Locale of the draft.
+ * @property {Record<string, any>} value Item conformed to the subfields.
+ * @property {Record<string, string>} assetPaths Repository paths of the copied entry-relative
+ * assets, keyed by reference.
  */
 
 /**
@@ -37,55 +46,84 @@ import { getTypedKeyPath } from '$lib/services/contents/fields/object/helpers';
  */
 
 /**
- * Prepare a copied list item to be pasted into a list: conform the item to the subfields, and
- * rewrite the references to the source entry’s assets, so they keep pointing at the same files. An
- * asset that can’t be referenced from the entry, e.g. one stored beside another entry, is copied
- * and cached in the draft as a pending upload, the same as if the user had picked the file for the
- * field, so saving the entry writes the copy alongside it.
+ * Conform a copied list item to the subfields in each locale of the draft. The item’s own values
+ * are pasted in a locale it doesn’t have.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
- * @param {DraftValueStoreKey} [args.valueStoreKey] Key of the values in the draft.
- * @param {{ data: ListItemClipboardData, files: Map<string, File> }} args.copied Copied item.
+ * @param {DraftValueStoreKey} args.valueStoreKey Key of the values in the draft.
+ * @param {ListItemClipboardData} args.data Copied item.
  * @param {ComplexListField} args.fieldConfig List field configuration.
- * @param {TypedFieldKeyPath} args.typedKeyPath Typed key path of the list.
+ * @param {Field[]} args.fields Subfields of the item.
+ * @param {boolean} args.inEditorComponent Whether the list is in a rich text editor component, so
+ * the subfields get their defaults as in the locale they’re edited in.
+ * @returns {{ conformed: ConformedListItem[], droppedCount: number } | undefined} Item in each
+ * locale, with the number of values left out, or `undefined` if nothing in the item fits the list.
+ */
+export const conformItemToLocales = ({
+  draft,
+  valueStoreKey,
+  data,
+  fieldConfig,
+  fields,
+  inEditorComponent,
+}) => {
+  const { hasSingleSubField } = getListFieldInfo(fieldConfig);
+  const { field } = /** @type {ListFieldWithSubField} */ (fieldConfig);
+  const stats = { dropped: 0 };
+  /** @type {ConformedListItem[]} */
+  const conformed = [];
+
+  const fits = Object.keys(draft[valueStoreKey]).every((locale, index) => {
+    const sourceLocale = locale in data.values ? locale : data.locale;
+    /** @type {Record<string, any>} */
+    let obj = structuredClone(data.values[sourceLocale]);
+
+    // The values left out are counted once, as the locales have the same fields
+    const options = {
+      locale,
+      defaultLocale: inEditorComponent ? locale : draft.defaultLocale,
+      stats: index ? { dropped: 0 } : stats,
+    };
+
+    // A single value is taken from an item with another subfield name
+    if (hasSingleSubField && !(field.name in obj) && Object.keys(obj).length === 1) {
+      obj = { [field.name]: Object.values(obj)[0] };
+    }
+
+    const { value, matched } = conformObject(obj, fields, options);
+
+    // Nothing in the item fits the list. An item without values, e.g. of a variable type without
+    // subfields, fits any list having the type
+    if (Object.keys(obj).length && !matched) {
+      return false;
+    }
+
+    conformed.push({ locale, value, assetPaths: data.assets[sourceLocale] ?? {} });
+
+    return true;
+  });
+
+  return fits ? { conformed, droppedCount: stats.dropped } : undefined;
+};
+
+/**
+ * Create a function to rewrite a copied asset reference for the entry being edited, so it keeps
+ * pointing at the same file. An asset that can’t be referenced from the entry, e.g. one stored
+ * beside another entry, is copied and cached in the draft as a pending upload.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {Map<string, File>} args.files Copied pending files, keyed by blob URL.
  * @param {string} [args.componentName] Name of the rich text editor component the list is in, if
  * any, for a field-level asset folder.
- * @param {boolean} [args.inEditorComponent] Whether the list is in a rich text editor component,
- * whose values live in the document of the locale they’re edited in, so the subfields get their
- * defaults as in the default locale, like a new item.
- * @returns {Promise<ListItemPasteResult | undefined>} Result, or `undefined` if the item doesn’t
- * fit the list.
+ * @param {Set<string>} args.missingFiles References that couldn’t be rewritten, as the files can’t
+ * be found or copied. Updated in place.
+ * @returns {(args: { src: string, assetPaths: Record<string, string>, fieldTypedKeyPath:
+ * TypedFieldKeyPath, locale: InternalLocaleCode }) => Promise<string | undefined>} Function
+ * returning the new reference, or `undefined` if the reference doesn’t have to be rewritten or it
+ * couldn’t be.
  */
-export const prepareListItemPaste = async ({
-  draft,
-  valueStoreKey = 'currentValues',
-  copied: { data, files },
-  fieldConfig,
-  typedKeyPath,
-  componentName,
-  inEditorComponent = false,
-}) => {
+const createReferenceRewriter = ({ draft, files, componentName, missingFiles }) => {
   const { originalEntry: entry, collectionName, fileName, isIndexFile } = draft;
-  const { hasSingleSubField, hasVariableTypes } = getListFieldInfo(fieldConfig);
-  const { field } = /** @type {ListFieldWithSubField} */ (fieldConfig);
-  const type = hasVariableTypes ? data.type : undefined;
-  const fields = getItemSubFields(fieldConfig, type);
-
-  if (!fields) {
-    return undefined;
-  }
-
-  const stats = { dropped: 0 };
-  /**
-   * References that couldn’t be rewritten, as the files can’t be found or copied. A file referenced
-   * in every locale is only counted once.
-   * @type {Set<string>}
-   */
-  const missingFiles = new Set();
-  /** @type {Record<InternalLocaleCode, any>} */
-  const items = {};
-  /** @type {Promise<void>[]} */
-  const tasks = [];
 
   // Copies are keyed by asset path or blob URL, so an asset referenced more than once, from another
   // locale or field, is copied once and shares the blob URL. The file may already be pending for
@@ -192,49 +230,73 @@ export const prepareListItemPaste = async ({
     return blobURL;
   };
 
-  /**
-   * The item conformed to the subfields in each locale of the draft. The item’s own values are
-   * pasted in a locale it doesn’t have.
-   * @type {{ locale: InternalLocaleCode, value: Record<string, any>, assetPaths: Record<string,
-   * string> }[]}
-   */
-  const conformed = [];
+  return rewriteReference;
+};
 
-  const fits = Object.keys(draft[valueStoreKey]).every((locale, index) => {
-    const sourceLocale = locale in data.values ? locale : data.locale;
-    /** @type {Record<string, any>} */
-    let obj = structuredClone(data.values[sourceLocale]);
+/**
+ * Prepare a copied list item to be pasted into a list: conform the item to the subfields, and
+ * rewrite the references to the source entry’s assets, so they keep pointing at the same files. An
+ * asset that can’t be referenced from the entry, e.g. one stored beside another entry, is copied
+ * and cached in the draft as a pending upload, the same as if the user had picked the file for the
+ * field, so saving the entry writes the copy alongside it.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {DraftValueStoreKey} [args.valueStoreKey] Key of the values in the draft.
+ * @param {{ data: ListItemClipboardData, files: Map<string, File> }} args.copied Copied item.
+ * @param {ComplexListField} args.fieldConfig List field configuration.
+ * @param {TypedFieldKeyPath} args.typedKeyPath Typed key path of the list.
+ * @param {string} [args.componentName] Name of the rich text editor component the list is in, if
+ * any, for a field-level asset folder.
+ * @param {boolean} [args.inEditorComponent] Whether the list is in a rich text editor component,
+ * whose values live in the document of the locale they’re edited in, so the subfields get their
+ * defaults as in the default locale, like a new item.
+ * @returns {Promise<ListItemPasteResult | undefined>} Result, or `undefined` if the item doesn’t
+ * fit the list.
+ */
+export const prepareListItemPaste = async ({
+  draft,
+  valueStoreKey = 'currentValues',
+  copied: { data, files },
+  fieldConfig,
+  typedKeyPath,
+  componentName,
+  inEditorComponent = false,
+}) => {
+  const { hasSingleSubField, hasVariableTypes } = getListFieldInfo(fieldConfig);
+  const { field } = /** @type {ListFieldWithSubField} */ (fieldConfig);
+  const type = hasVariableTypes ? data.type : undefined;
+  const fields = getItemSubFields(fieldConfig, type);
 
-    // The values left out are counted once, as the locales have the same fields
-    const options = {
-      locale,
-      defaultLocale: inEditorComponent ? locale : draft.defaultLocale,
-      stats: index ? { dropped: 0 } : stats,
-    };
-
-    // A single value is taken from an item with another subfield name
-    if (hasSingleSubField && !(field.name in obj) && Object.keys(obj).length === 1) {
-      obj = { [field.name]: Object.values(obj)[0] };
-    }
-
-    const { value, matched } = conformObject(obj, fields, options);
-
-    // Nothing in the item fits the list. An item without values, e.g. of a variable type without
-    // subfields, fits any list having the type
-    if (Object.keys(obj).length && !matched) {
-      return false;
-    }
-
-    conformed.push({ locale, value, assetPaths: data.assets[sourceLocale] ?? {} });
-
-    return true;
-  });
-
-  if (!fits) {
+  if (!fields) {
     return undefined;
   }
 
-  conformed.forEach(({ locale, value, assetPaths }) => {
+  const conformResult = conformItemToLocales({
+    draft,
+    valueStoreKey,
+    data,
+    fieldConfig,
+    fields,
+    inEditorComponent,
+  });
+
+  if (!conformResult) {
+    return undefined;
+  }
+
+  /**
+   * References that couldn’t be rewritten, as the files can’t be found or copied. A file referenced
+   * in every locale is only counted once.
+   * @type {Set<string>}
+   */
+  const missingFiles = new Set();
+  const rewriteReference = createReferenceRewriter({ draft, files, componentName, missingFiles });
+  /** @type {Record<InternalLocaleCode, any>} */
+  const items = {};
+  /** @type {Promise<void>[]} */
+  const tasks = [];
+
+  conformResult.conformed.forEach(({ locale, value, assetPaths }) => {
     walkObject({
       obj: value,
       fields,
@@ -274,5 +336,10 @@ export const prepareListItemPaste = async ({
 
   await Promise.all(tasks);
 
-  return { type, items, droppedCount: stats.dropped, missingFileCount: missingFiles.size };
+  return {
+    type,
+    items,
+    droppedCount: conformResult.droppedCount,
+    missingFileCount: missingFiles.size,
+  };
 };

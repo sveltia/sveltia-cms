@@ -1,6 +1,5 @@
 import { encodeBase64 } from '@sveltia/utils/file';
 
-import { clearSaveProgress, reportCommits } from '$lib/services/backends/commit-progress';
 import { getBranchRepository, projectIds } from '$lib/services/backends/git/gitlab/fork';
 import {
   fetchProjectBranchHead,
@@ -8,13 +7,7 @@ import {
   repository,
 } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
-import {
-  estimateRemainingCommits,
-  getPayloadSize,
-  isUploadFailure,
-  sortAdditions,
-  takeAdditions,
-} from '$lib/services/backends/git/shared/commit-split';
+import { runSplitCommits, sortAdditions } from '$lib/services/backends/git/shared/commit-split';
 import {
   assertBranchNotMoved,
   createCommitMessage,
@@ -129,50 +122,27 @@ export const _resetLandedPaths = () => {
 const isBinary = (data) => data !== undefined && typeof data !== 'string';
 
 /**
- * Save entries or assets remotely. Note that the `commitCreate` GraphQL mutation is broken and
- * images cannot be uploaded properly, so we use the REST API instead. The changes normally go into
- * a single commit, but a large changeset, typically an entry with many new images, is split into
- * several commits made one after another, with the entry files, moves and deletions in the last
- * one, like the GitHub backend does: a request over the body size limit of the instance fails with
- * 413 Content Too Large, which the browser reports as a network error, as the answer comes without
- * CORS headers. Unlike GitHub, GitLab doesn’t close a request that takes a while to upload, so the
- * commits aren’t sized to the upload speed: each takes up to {@link MAX_COMMIT_PAYLOAD_SIZE}, and a
- * commit that is too large or times out is retried with half of its files, at which size the
- * following commits stay. A changeset of a usual size therefore still makes a single commit.
- * @param {FileChange[]} changes File changes to be saved.
- * @param {CommitOptions} options Commit options.
- * @returns {Promise<CommitResults>} Commit results, including the commit SHA and updated file SHAs.
- * The commit is the last one made when the changes have been split.
- * @see https://docs.gitlab.com/api/commits.html#create-a-commit-with-multiple-files-and-actions
- * @see https://gitlab.com/gitlab-org/gitlab/-/merge_requests/31102
- * @see https://docs.gitlab.com/api/graphql/reference/#mutationcommitcreate
- * @see https://forum.gitlab.com/t/how-to-commit-a-image-via-gitlab-commit-api/26632/4
+ * @typedef {object} CommitActionPlan
+ * @property {FileAddition[]} queue File additions to be committed in order.
+ * @property {FileAddition[]} addedAgain File additions that go into the last commit, after the
+ * deletions and moves that free their paths.
+ * @property {(addition: FileAddition) => Record<string, any>[]} getWriteActions Function to get
+ * the commit actions that write a file.
+ * @property {Record<string, any>[]} lastActions Deletions and moves, which go into the last commit.
  */
-export const commitChanges = async (changes, options) => {
-  checkDirectCommitAllowed(options);
 
-  // A workflow branch lives in the contributor’s fork with Open Authoring, or in the fork of the
-  // contributor whose merge request a maintainer is editing, while the configured branch is only
-  // ever committed to by someone who can write to the configured project
-  const fork = options.branch ? forkedRepository.current : undefined;
-  const target = options.branch ? getBranchRepository(options.branch) : undefined;
-  const branch = /** @type {string} */ (target?.branch ?? repository.branch);
-  // The commit the branch is expected to point at: on the configured branch, the one the loaded
-  // site data reflects, which the caller has just brought up to date; on a workflow branch, the
-  // merge request’s head, which the caller has just compared the branch with. GitLab has no
-  // branch-level guard like GitHub’s `expectedHeadOid`: a `start_sha` is refused on an existing
-  // branch unless `force` is set, which would discard someone else’s push instead. But an action
-  // can take a `last_commit_id`, and GitLab 15.10+ refuses an update, move or deletion when the
-  // file’s last commit on the branch differs from its last commit as of that ID, i.e. when someone
-  // else has changed the file since. So the head goes with every such action, which takes no lookup
-  // per file. A workflow branch is named after the entry, not the editor, so others can push to it
-  // too. The head stays the same for every commit of a split save: taking the previous commit
-  // instead would let through a colleague’s change made before it, which that commit is on top of
-  const expectedHead = (options.branch ? options.headOid : repositoryHead.current) || undefined;
-  const lastCommit = expectedHead ? { last_commit_id: expectedHead } : {};
-  // Files a failed save has left behind, which only the configured branch keeps track of, like the
-  // head. A workflow branch is reset from scratch when no merge request comes out of it
-  const landed = options.branch ? new Set() : landedPaths;
+/**
+ * Plan the commit actions for the given changes. Moves and deletions go into the last commit along
+ * with the entries, so a file isn’t removed before the entry stops referring to it.
+ * @param {object} args Arguments.
+ * @param {FileChange[]} args.changes File changes to be saved.
+ * @param {Set<string>} args.landed Paths of the files a failed save has created already.
+ * @param {{ last_commit_id?: string }} args.lastCommit Commit the branch is expected to point at,
+ * to go with every action that changes an existing file, so GitLab refuses a file someone else has
+ * changed since.
+ * @returns {Promise<CommitActionPlan>} Plan.
+ */
+export const buildCommitActions = async ({ changes, landed, lastCommit }) => {
   /** @type {FileChange[]} */
   const writes = [];
   /** @type {string[]} */
@@ -261,6 +231,61 @@ export const commitChanges = async (changes, options) => {
     })),
   ];
 
+  return { queue, addedAgain, getWriteActions, lastActions };
+};
+
+/**
+ * Save entries or assets remotely. Note that the `commitCreate` GraphQL mutation is broken and
+ * images cannot be uploaded properly, so we use the REST API instead. The changes normally go into
+ * a single commit, but a large changeset, typically an entry with many new images, is split into
+ * several commits made one after another, with the entry files, moves and deletions in the last
+ * one, like the GitHub backend does: a request over the body size limit of the instance fails with
+ * 413 Content Too Large, which the browser reports as a network error, as the answer comes without
+ * CORS headers. Unlike GitHub, GitLab doesn’t close a request that takes a while to upload, so the
+ * commits aren’t sized to the upload speed: each takes up to {@link MAX_COMMIT_PAYLOAD_SIZE}, and a
+ * commit that is too large or times out is retried with half of its files, at which size the
+ * following commits stay. A changeset of a usual size therefore still makes a single commit.
+ * @param {FileChange[]} changes File changes to be saved.
+ * @param {CommitOptions} options Commit options.
+ * @returns {Promise<CommitResults>} Commit results, including the commit SHA and updated file SHAs.
+ * The commit is the last one made when the changes have been split.
+ * @see https://docs.gitlab.com/api/commits.html#create-a-commit-with-multiple-files-and-actions
+ * @see https://gitlab.com/gitlab-org/gitlab/-/merge_requests/31102
+ * @see https://docs.gitlab.com/api/graphql/reference/#mutationcommitcreate
+ * @see https://forum.gitlab.com/t/how-to-commit-a-image-via-gitlab-commit-api/26632/4
+ */
+export const commitChanges = async (changes, options) => {
+  checkDirectCommitAllowed(options);
+
+  // A workflow branch lives in the contributor’s fork with Open Authoring, or in the fork of the
+  // contributor whose merge request a maintainer is editing, while the configured branch is only
+  // ever committed to by someone who can write to the configured project
+  const fork = options.branch ? forkedRepository.current : undefined;
+  const target = options.branch ? getBranchRepository(options.branch) : undefined;
+  const branch = /** @type {string} */ (target?.branch ?? repository.branch);
+  // The commit the branch is expected to point at: on the configured branch, the one the loaded
+  // site data reflects, which the caller has just brought up to date; on a workflow branch, the
+  // merge request’s head, which the caller has just compared the branch with. GitLab has no
+  // branch-level guard like GitHub’s `expectedHeadOid`: a `start_sha` is refused on an existing
+  // branch unless `force` is set, which would discard someone else’s push instead. But an action
+  // can take a `last_commit_id`, and GitLab 15.10+ refuses an update, move or deletion when the
+  // file’s last commit on the branch differs from its last commit as of that ID, i.e. when someone
+  // else has changed the file since. So the head goes with every such action, which takes no lookup
+  // per file. A workflow branch is named after the entry, not the editor, so others can push to it
+  // too. The head stays the same for every commit of a split save: taking the previous commit
+  // instead would let through a colleague’s change made before it, which that commit is on top of
+  const expectedHead = (options.branch ? options.headOid : repositoryHead.current) || undefined;
+  const lastCommit = expectedHead ? { last_commit_id: expectedHead } : {};
+  // Files a failed save has left behind, which only the configured branch keeps track of, like the
+  // head. A workflow branch is reset from scratch when no merge request comes out of it
+  const landed = options.branch ? new Set() : landedPaths;
+
+  const { queue, addedAgain, getWriteActions, lastActions } = await buildCommitActions({
+    changes,
+    landed,
+    lastCommit,
+  });
+
   const endpoint = `/projects/${getProjectId(target)}/repository/commits`;
   const commitMessage = signOffCommitMessage(createCommitMessage(changes, options));
   const { startBranch } = options;
@@ -273,24 +298,21 @@ export const commitChanges = async (changes, options) => {
   const startProject = fork ? { start_project: projectIds.base } : {};
   // The commit the branch points at before each commit is made, as far as this save knows
   let previousHead = expectedHead;
-  let payloadSize = MAX_COMMIT_PAYLOAD_SIZE;
-  let commitCount = 0;
   /** @type {string | undefined} */
   let parentSha;
-  /** @type {CommitResponse} */
-  let response = /** @type {any} */ (undefined);
 
-  // Commit the files in groups, each on top of the previous one. There is always at least one
-  // commit, which can have no files to write, so a changeset with only deletions is still committed
-  try {
-    do {
-      // The files still waiting, at the current commit size, make up the commits yet to be made
-      reportCommits(commitCount, commitCount + estimateRemainingCommits(queue, payloadSize));
-
-      const group = takeAdditions(queue, payloadSize);
-      const isLast = !queue.length;
-      const groupSize = getPayloadSize(group);
-
+  const response = await runSplitCommits({
+    queue,
+    payloadSize: MAX_COMMIT_PAYLOAD_SIZE,
+    /**
+     * Make a commit with the given additions.
+     * @param {object} args Arguments.
+     * @param {FileAddition[]} args.group Additions.
+     * @param {boolean} args.isLast Whether it’s the last commit.
+     * @param {number} args.commitCount Number of the commits made so far.
+     * @returns {Promise<CommitResponse>} Commit.
+     */
+    commitGroup: async ({ group, isLast, commitCount }) => {
       const actions = [
         ...group.flatMap(getWriteActions),
         ...(isLast ? [...lastActions, ...addedAgain.flatMap(getWriteActions)] : []),
@@ -298,86 +320,76 @@ export const commitChanges = async (changes, options) => {
 
       const body = { branch, commit_message: commitMessage, actions };
 
-      try {
-        // GitLab rejects `start_branch` outright once the branch exists. That’s left to the caller
-        // to sort out, because only the Editorial Workflow service can tell whether the branch is a
-        // leftover to start over from or someone’s work in progress to commit onto. Only the first
-        // commit of a split save creates the branch
-        response = /** @type {CommitResponse} */ (
-          // eslint-disable-next-line no-await-in-loop
-          await fetchAPI(endpoint, {
-            method: 'POST',
-            body:
-              startBranch && !commitCount
-                ? { ...body, start_branch: startBranch, ...startProject }
-                : body,
-            // The commit can be sent again after a transient error: one that has already landed
-            // is refused, as a created file then exists and a changed file has a newer last commit
-            retryable: true,
-          })
-        );
-      } catch (/** @type {any} */ ex) {
-        // The request was too large for the instance or has taken too long. Put the files back and
-        // try again with half of them, provided the branch is still where it was, so the commit
-        // hasn’t landed. A branch the first commit was to create is still missing then
-        if (
-          group.length > 1 &&
-          isUploadFailure(ex) &&
-          // eslint-disable-next-line no-await-in-loop
-          (await fetchProjectBranchHead(branch, target).catch(() => null)) === previousHead
-        ) {
-          queue.unshift(...group);
-          payloadSize = Math.floor(groupSize / 2);
-          // eslint-disable-next-line no-continue
-          continue;
-        }
+      // GitLab rejects `start_branch` outright once the branch exists. That’s left to the caller to
+      // sort out, because only the Editorial Workflow service can tell whether the branch is a
+      // leftover to start over from or someone’s work in progress to commit onto. Only the first
+      // commit of a split save creates the branch
+      const result = /** @type {CommitResponse} */ (
+        await fetchAPI(endpoint, {
+          method: 'POST',
+          body:
+            startBranch && !commitCount
+              ? { ...body, start_branch: startBranch, ...startProject }
+              : body,
+          // The commit can be sent again after a transient error: one that has already landed is
+          // refused, as a created file then exists and a changed file has a newer last commit
+          retryable: true,
+        })
+      );
 
-        // The commit the loaded site data, along with the commits this save has made, reflects:
-        // the last of them, unless one has landed on top of someone else’s commit, which the site
-        // data doesn’t reflect yet. The head is then the one the save started from
-        const knownHead = parentSha === expectedHead ? previousHead : expectedHead;
-
-        // GitLab refuses a changed file with a 400 Bad Request, like any other invalid request. A
-        // workflow branch’s head is looked up by the Editorial Workflow service, which knows the
-        // branch
-        if (knownHead && !options.branch && ex.cause?.status === 400) {
-          // eslint-disable-next-line no-await-in-loop
-          await assertBranchNotMoved(knownHead, fetchLastCommit);
-        }
-
-        // Some of the assets have landed on the configured branch, but the entry hasn’t. Take the
-        // last commit made as the known head, so the check before the retry doesn’t load those
-        // assets, which would then be saved again under different names. The retry saves them
-        // under the same paths instead, with the same content, along with the entry. A commit on
-        // top of someone else’s is not taken, though: their commit would never be fetched, and the
-        // retry, checking the files against a head that includes their change, would overwrite it
-        if (commitCount && !options.branch) {
-          repositoryHead.current = /** @type {string} */ (knownHead);
-        }
-
-        throw ex;
-      }
-
-      commitCount += 1;
-
-      const parentId = response.parent_ids?.[0];
+      const parentId = result.parent_ids?.[0];
 
       // GitLab only checks the files being changed, so a commit can land on top of someone else’s
       // commit to another file; the caller tells that from the parent. Only the first commit is
       // expected to have one this save doesn’t know about
-      if (commitCount === 1 || parentId !== previousHead) {
+      if (!commitCount || parentId !== previousHead) {
         parentSha = parentId;
       }
 
-      previousHead = response.id;
+      previousHead = result.id;
 
       if (!isLast) {
         group.forEach(({ path }) => landed.add(path));
       }
-    } while (queue.length);
-  } finally {
-    clearSaveProgress();
-  }
+
+      return result;
+    },
+    /**
+     * Check whether the branch is still where it was before the failed commit, so the commit
+     * hasn’t landed. A branch the first commit was to create is still missing then.
+     * @returns {Promise<boolean>} Result.
+     */
+    isBranchUnmoved: async () =>
+      (await fetchProjectBranchHead(branch, target).catch(() => null)) === previousHead,
+    /**
+     * Check the branch, and keep track of the commits made, when a commit has failed.
+     * @param {any} ex Error.
+     * @param {{ commitCount: number }} args Number of the commits made.
+     */
+    onFailure: async (ex, { commitCount }) => {
+      // The commit the loaded site data, along with the commits this save has made, reflects: the
+      // last of them, unless one has landed on top of someone else’s commit, which the site data
+      // doesn’t reflect yet. The head is then the one the save started from
+      const knownHead = parentSha === expectedHead ? previousHead : expectedHead;
+
+      // GitLab refuses a changed file with a 400 Bad Request, like any other invalid request. A
+      // workflow branch’s head is looked up by the Editorial Workflow service, which knows the
+      // branch
+      if (knownHead && !options.branch && ex.cause?.status === 400) {
+        await assertBranchNotMoved(knownHead, fetchLastCommit);
+      }
+
+      // Some of the assets have landed on the configured branch, but the entry hasn’t. Take the
+      // last commit made as the known head, so the check before the retry doesn’t load those
+      // assets, which would then be saved again under different names. The retry saves them under
+      // the same paths instead, with the same content, along with the entry. A commit on top of
+      // someone else’s is not taken, though: their commit would never be fetched, and the retry,
+      // checking the files against a head that includes their change, would overwrite it
+      if (commitCount && !options.branch) {
+        repositoryHead.current = /** @type {string} */ (knownHead);
+      }
+    },
+  });
 
   landed.clear();
 

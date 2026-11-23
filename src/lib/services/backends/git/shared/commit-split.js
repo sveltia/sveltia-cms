@@ -1,3 +1,5 @@
+import { clearSaveProgress, reportCommits } from '$lib/services/backends/commit-progress';
+
 /**
  * @import { FileChange } from '$lib/types/private';
  */
@@ -88,3 +90,88 @@ export const estimateRemainingCommits = (queue, payloadSize) =>
 export const isUploadFailure = (ex) =>
   ex?.message === 'Failed to send the request' ||
   UPLOAD_FAILURE_STATUSES.includes(ex?.cause?.status);
+
+/**
+ * Commit the given file additions in groups, each on top of the previous one, reporting the
+ * progress as the commits are made. There is always at least one commit, which can have no
+ * additions, so a changeset with only deletions is still committed. A group that fails to upload
+ * as it’s too large or takes too long is put back and retried with half of its files, provided the
+ * branch is still where it was, so the commit hasn’t landed; the following commits stay below the
+ * size that failed.
+ * @template R
+ * @param {object} args Arguments.
+ * @param {FileAddition[]} args.queue Additions to be committed in order. Modified in place.
+ * @param {number} args.payloadSize Payload size of the first commit.
+ * @param {(args: { group: FileAddition[], isLast: boolean, commitCount: number }) => Promise<R>}
+ * args.commitGroup Function to make a commit with the given additions, and the deletions and the
+ * remaining files on the last one. Called with the number of the commits made so far.
+ * @param {() => Promise<boolean>} args.isBranchUnmoved Function to check whether the branch still
+ * points at the commit it did before the failed request.
+ * @param {(ex: any, args: { commitCount: number }) => Promise<void> | void} [args.onFailure]
+ * Function called with the error of a commit that can’t be retried, before it’s thrown.
+ * @param {(args: { groupSize: number, duration: number, timedOutSize: number }) => number}
+ * [args.getNextPayloadSize] Function to size the next commit from the last one, which took the
+ * given time in milliseconds. By default, the size stays the same.
+ * @returns {Promise<R>} Result of the last commit.
+ * @throws {Error} When a commit fails.
+ */
+export const runSplitCommits = async ({
+  queue,
+  payloadSize: initialPayloadSize,
+  commitGroup,
+  isBranchUnmoved,
+  onFailure,
+  getNextPayloadSize,
+}) => {
+  let payloadSize = initialPayloadSize;
+  // Smallest payload that has failed, which the following commits stay below
+  let timedOutSize = Infinity;
+  let commitCount = 0;
+  /** @type {R} */
+  let result = /** @type {any} */ (undefined);
+
+  try {
+    do {
+      // The files still waiting, at the current commit size, make up the commits yet to be made
+      reportCommits(commitCount, commitCount + estimateRemainingCommits(queue, payloadSize));
+
+      const group = takeAdditions(queue, payloadSize);
+      const isLast = !queue.length;
+      const groupSize = getPayloadSize(group);
+      const startTime = performance.now();
+
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        result = await commitGroup({ group, isLast, commitCount });
+      } catch (ex) {
+        // eslint-disable-next-line no-await-in-loop
+        if (group.length > 1 && isUploadFailure(ex) && (await isBranchUnmoved())) {
+          queue.unshift(...group);
+          timedOutSize = Math.min(timedOutSize, groupSize);
+          payloadSize = Math.floor(groupSize / 2);
+          // eslint-disable-next-line no-continue
+          continue;
+        }
+
+        // eslint-disable-next-line no-await-in-loop
+        await onFailure?.(ex, { commitCount });
+
+        throw ex;
+      }
+
+      commitCount += 1;
+
+      if (getNextPayloadSize) {
+        payloadSize = getNextPayloadSize({
+          groupSize,
+          duration: performance.now() - startTime,
+          timedOutSize,
+        });
+      }
+    } while (queue.length);
+  } finally {
+    clearSaveProgress();
+  }
+
+  return result;
+};

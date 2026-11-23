@@ -3,6 +3,7 @@
   import { Alert, Button, Icon, Toast } from '@sveltia/ui';
   import { matchesShortcuts } from '@sveltia/utils/events';
 
+  import { readClipboardImage } from '$lib/services/contents/fields/file/clipboard';
   import { env } from '$lib/services/user/env.svelte';
 
   /**
@@ -57,27 +58,9 @@
     }
 
     try {
-      const clipboardItems = await navigator.clipboard.read();
-      /** @type {string | undefined} */
-      let imageType;
+      const file = await readClipboardImage();
 
-      const imageItem = clipboardItems.find((item) =>
-        item.types.some((type) => {
-          const isImage = type.startsWith('image/');
-
-          if (isImage) {
-            imageType = type;
-          }
-
-          return isImage;
-        }),
-      );
-
-      if (imageItem && imageType) {
-        const blob = await imageItem.getType(imageType);
-        const ext = imageType.split('/')[1].replace('+xml', '');
-        const file = new File([blob], `pasted-image-${Date.now()}.${ext}`, { type: imageType });
-
+      if (file) {
         onFilePaste(file);
 
         return;

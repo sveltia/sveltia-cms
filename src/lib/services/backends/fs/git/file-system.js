@@ -217,6 +217,23 @@ export const createGitFileSystem = (rootDirHandle, { Buffer }) => {
   const stat = (path) =>
     run(path, async (segments) => getStats(await getEntry(rootDirHandle, segments)));
 
+  /**
+   * Remove a file or an empty directory, making sure it’s of the given kind first, as
+   * `removeEntry()` would remove either just as well.
+   * @param {string} path Path.
+   * @param {FileSystemHandleKind} kind Kind of the entry to remove.
+   * @returns {Promise<void>} Nothing.
+   */
+  const removeEntry = (path, kind) =>
+    run(path, async (segments) => {
+      const { parentHandle, name } = await getParent(segments);
+
+      await (kind === 'file'
+        ? parentHandle.getFileHandle(name)
+        : parentHandle.getDirectoryHandle(name));
+      await parentHandle.removeEntry(name);
+    });
+
   return {
     /**
      * Read a file.
@@ -286,27 +303,13 @@ export const createGitFileSystem = (rootDirHandle, { Buffer }) => {
      * @param {string} path Path.
      * @returns {Promise<void>} Nothing.
      */
-    rmdir: (path) =>
-      run(path, async (segments) => {
-        const { parentHandle, name } = await getParent(segments);
-
-        // Make sure it’s a directory, as `removeEntry()` would remove a file just as well
-        await parentHandle.getDirectoryHandle(name);
-        await parentHandle.removeEntry(name);
-      }),
+    rmdir: (path) => removeEntry(path, 'directory'),
     /**
      * Remove a file.
      * @param {string} path Path.
      * @returns {Promise<void>} Nothing.
      */
-    unlink: (path) =>
-      run(path, async (segments) => {
-        const { parentHandle, name } = await getParent(segments);
-
-        // Make sure it’s a file, as `removeEntry()` would remove an empty directory just as well
-        await parentHandle.getFileHandle(name);
-        await parentHandle.removeEntry(name);
-      }),
+    unlink: (path) => removeEntry(path, 'file'),
     /**
      * List the names in a directory.
      * @param {string} path Path.

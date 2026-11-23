@@ -3,10 +3,12 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import {
   assertResponseOK,
   fetchOK,
+  getErrorMessage,
   getRetryDelay,
   isLocalHostname,
   isSecureURL,
   MAX_RETRY_DELAY,
+  resolveRetryDelay,
   sendRequest,
 } from './networking';
 
@@ -847,6 +849,78 @@ describe('getRetryDelay', () => {
     // A rate limit without a delay typically lasts until the limit resets, a minute or more later
     expect(getRetryDelay(429, new Headers())).toBeUndefined();
     expect(getRetryDelay(429, new Headers({ 'Retry-After': 'soon' }))).toBeUndefined();
+  });
+});
+
+describe('resolveRetryDelay', () => {
+  /**
+   * Create a response with the given status.
+   * @param {number} status Status.
+   * @param {Record<string, string>} [headers] Headers.
+   * @returns {Response} Response.
+   */
+  const respond = (status, headers = {}) => new Response(null, { status, headers });
+
+  test('retries a 502 response of any request', () => {
+    const init = { method: 'POST', body: '{}' };
+
+    expect(resolveRetryDelay({ response: respond(502), init, retries: 1, retryable: true })).toBe(
+      getRetryDelay(502, new Headers()),
+    );
+  });
+
+  test.each([
+    [429, { 'Retry-After': '2' }],
+    [503, {}],
+    [504, {}],
+  ])('retries a %i response only for a request without side effects', (status, headers) => {
+    expect(
+      resolveRetryDelay({
+        response: respond(status, headers),
+        init: {},
+        retries: 1,
+        retryable: true,
+      }),
+    ).toBeTypeOf('number');
+    expect(
+      resolveRetryDelay({
+        response: respond(status, headers),
+        init: { method: 'POST', body: '{}' },
+        retries: 1,
+        retryable: true,
+      }),
+    ).toBeUndefined();
+  });
+
+  test('doesn’t retry without retries left, a request that opted out, or another status', () => {
+    expect(
+      resolveRetryDelay({ response: respond(502), init: {}, retries: 0, retryable: true }),
+    ).toBeUndefined();
+    expect(
+      resolveRetryDelay({ response: respond(502), init: {}, retries: 1, retryable: false }),
+    ).toBeUndefined();
+    expect(
+      resolveRetryDelay({ response: respond(500), init: {}, retries: 1, retryable: true }),
+    ).toBeUndefined();
+  });
+});
+
+describe('getErrorMessage', () => {
+  test('reads the message of each kind of error body', () => {
+    expect(getErrorMessage({ error: 'bad_token' })).toBe('bad_token');
+    expect(getErrorMessage({ error: 'bad_token', message: 'Bad token' })).toBe('Bad token');
+    expect(getErrorMessage({ message: 'Bad', errors: ['One', 'Two'] })).toBe('One, Two');
+    expect(getErrorMessage({ errors: [{ message: 'One' }, { message: 'Two' }] })).toBe('One, Two');
+  });
+
+  test('falls back to the other properties for an unknown error list', () => {
+    expect(getErrorMessage({ message: 'Bad', errors: [{ code: 1 }] })).toBe('Bad');
+    expect(getErrorMessage({ error: 'bad', errors: [] })).toBe('bad');
+  });
+
+  test('returns an empty string if there is no message', () => {
+    expect(getErrorMessage({})).toBe('');
+    expect(getErrorMessage({ error: 1, message: null })).toBe('');
   });
 });
 

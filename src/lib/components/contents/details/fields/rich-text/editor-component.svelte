@@ -19,6 +19,7 @@
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { setFieldEditorContext } from '$lib/services/contents/editor/field-context';
   import { awaitPendingFieldUpdates } from '$lib/services/contents/editor/pending';
+  import { handleComponentBlockKeyDown } from '$lib/services/contents/fields/rich-text/components/keyboard';
   import {
     getComponentDisplayText,
     getComponentDisplayValues,
@@ -219,28 +220,15 @@
    * @param {KeyboardEvent} event `keydown` event.
    */
   const handleBlockKeyDown = (event) => {
-    const { target } = /** @type {KeyboardEvent & { target: HTMLElement }} */ (event);
-
-    // A nested rich text editor handles its own keys, so leave the event alone when it comes from
-    // one: cancelling it would block typing there. The outer editor ignores the event once it
-    // bubbles up, as Lexical marks it as handled by the nested one
-    if (target.closest('[contenteditable]') !== wrapper) {
-      return;
-    }
-
-    // Keep the outer editor from acting on the key, e.g. selecting all of its content with Ctrl+A
-    // pressed in a `TextInput` within the block
-    event.stopPropagation();
-
-    // Keep the browser from editing the outer editor’s content, except in a text field or button,
-    // and let Tab move the focus
-    if (!target.matches('button, input, textarea') && event.key !== 'Tab') {
-      event.preventDefault();
-    }
-
-    if (target === wrapper && event.key === 'Backspace' && !readonly) {
-      onChange(new CustomEvent('remove'));
-    }
+    handleComponentBlockKeyDown(event, {
+      wrapper,
+      readonly,
+      /**
+       * Remove the block.
+       * @returns {void}
+       */
+      onRemove: () => onChange(new CustomEvent('remove')),
+    });
   };
 
   /**

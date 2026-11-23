@@ -18,7 +18,7 @@
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { deleteOrDiscardEntries } from '$lib/services/workflow/delete';
   import { getDiscardDialogStrings } from '$lib/services/workflow/dialogs';
-  import { discardWorkflowEntry } from '$lib/services/workflow/save';
+  import { discardWorkflowEntry } from '$lib/services/workflow/removal';
 
   /**
    * @import {

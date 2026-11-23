@@ -8,6 +8,7 @@ import {
   hasIndexLikeChildKey,
   isPlainObject,
   isValueEmpty,
+  mapValuesDeep,
   unescapeKeySegment,
   unflattenKeys,
   unflattenMap,
@@ -449,5 +450,39 @@ describe('Test isValueEmpty()', () => {
     // And confirming that false and 0 are NOT empty (as mentioned in the comment)
     expect(isValueEmpty(false)).toBe(false);
     expect(isValueEmpty(0)).toBe(false);
+  });
+});
+
+describe('mapValuesDeep()', () => {
+  /**
+   * Replace every number with its double.
+   * @param {any} value Value.
+   * @returns {any} Replacement, if any.
+   */
+  const double = (value) => (typeof value === 'number' ? value * 2 : undefined);
+
+  test('replaces values in nested arrays and objects without changing the input', () => {
+    const value = { a: 1, b: [2, { c: 3 }], d: 'x', e: null };
+    const result = mapValuesDeep(value, double);
+
+    expect(result).toEqual({ a: 2, b: [4, { c: 6 }], d: 'x', e: null });
+    expect(value).toEqual({ a: 1, b: [2, { c: 3 }], d: 'x', e: null });
+    expect(result.b).not.toBe(value.b);
+  });
+
+  test('replaces the value itself, without looking inside it', () => {
+    expect(mapValuesDeep(5, double)).toBe(10);
+    expect(mapValuesDeep([1], (value) => (Array.isArray(value) ? 'array' : undefined))).toBe(
+      'array',
+    );
+  });
+
+  test('keeps an object the container check rejects as is', () => {
+    const date = new TomlDate('2025-01-01');
+    const value = { date, nested: { n: 1 } };
+    const result = mapValuesDeep(value, double, isPlainObject);
+
+    expect(result.date).toBe(date);
+    expect(result.nested).toEqual({ n: 2 });
   });
 });

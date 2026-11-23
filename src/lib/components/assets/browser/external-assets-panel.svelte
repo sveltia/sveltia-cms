@@ -28,6 +28,7 @@
     getSharedMediaLibraryOptions,
     prepareExternalUploads,
   } from '$lib/services/assets/external/data';
+  import { fetchExternalAssetListing } from '$lib/services/assets/external/listing';
   import {
     getExternalAssetsInDir,
     getExternalFolderLabel,
@@ -183,34 +184,21 @@
     truncated = false;
 
     try {
-      /** @type {ExternalAsset[]} */
-      let assets;
-      /** @type {string[] | undefined} */
-      let emptyFolders;
-      let incomplete = false;
-
-      if (query) {
-        assets = await /** @type {NonNullable<typeof search>} */ (search)(query, listFetchOptions);
-      } else if (browse) {
-        // A service with folder support lists its empty folders along with the files
-        ({
-          assets,
-          folders: emptyFolders,
-          truncated: incomplete = false,
-        } = await browse(listFetchOptions));
-      } else {
-        assets = (await list?.(listFetchOptions)) ?? [];
-      }
+      const listing = await fetchExternalAssetListing({
+        service: { search, browse, list },
+        query,
+        options: listFetchOptions,
+      });
 
       if (!isLatest()) {
         return;
       }
 
-      listedAssets = assets;
-      truncated = incomplete;
+      listedAssets = listing.assets;
+      truncated = listing.truncated;
 
-      if (emptyFolders) {
-        folders = emptyFolders;
+      if (listing.folders) {
+        folders = listing.folders;
       }
     } catch (ex) {
       if (!isLatest()) {

@@ -1,6 +1,7 @@
 import { createLazyModule } from '$lib/services/api/lazy-module';
 import { loadChunk } from '$lib/services/app/dependencies';
 import { cmsConfig } from '$lib/services/config';
+import { trimTrailingSlashes } from '$lib/services/utils/url';
 
 /**
  * @import { InternalCmsConfig } from '$lib/types/private';
@@ -31,10 +32,12 @@ export const isAdditionsEnabled = (config = cmsConfig.current) => {
  * @returns {string} URL without a trailing slash.
  */
 export const getAdditionsURL = () =>
-  /** @type {string} */ (
-    /** @type {GitHubBackend} */ (/** @type {InternalCmsConfig} */ (cmsConfig.current).backend)
-      .base_url
-  ).replace(/\/+$/, '');
+  trimTrailingSlashes(
+    /** @type {string} */ (
+      /** @type {GitHubBackend} */ (/** @type {InternalCmsConfig} */ (cmsConfig.current).backend)
+        .base_url
+    ),
+  );
 
 /**
  * Loader of the `additions` chunk, which holds everything Sveltia CMS Additions needs, so a site

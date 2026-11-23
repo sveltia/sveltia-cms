@@ -11,6 +11,7 @@
   } from '$lib/services/assets/info';
   import { isPDF, THUMBNAIL_KINDS } from '$lib/services/assets/kinds';
   import { createPreviewLifecycle } from '$lib/services/assets/preview-lifecycle';
+  import { waitForMediaLoad } from '$lib/services/utils/media/load';
   import { requestFlushSync } from '$lib/services/utils/render';
   import { createLatestGuard } from '$lib/services/utils/scheduling';
   import { watchAsync } from '$lib/services/utils/state.svelte';
@@ -219,19 +220,14 @@
 
     if (!isReady) {
       // Not loaded yet; wait until it’s ready
-      const failed = await new Promise((resolve) => {
-        mediaElement?.addEventListener(isImage ? 'load' : 'loadedmetadata', () => resolve(false), {
-          once: true,
-        });
-        mediaElement?.addEventListener('error', () => resolve(true), { once: true });
-      });
+      const isLoaded = await waitForMediaLoad(mediaElement, isImage ? 'load' : 'loadedmetadata');
 
       // Another source has come while the media was loading
       if (mediaSrc !== currentSrc) {
         return;
       }
 
-      if (failed) {
+      if (!isLoaded) {
         // Show the fallback icon rather than an empty tile that never finishes its transition
         failedSource = currentSource;
 

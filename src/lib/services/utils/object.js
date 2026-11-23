@@ -60,6 +60,40 @@ export const isPlainObject = (value) =>
   isObject(value) && [Object.prototype, null].includes(Object.getPrototypeOf(value));
 
 /**
+ * Copy the given value, replacing every value within it that the given function returns a
+ * replacement for. Arrays, and the objects the given check accepts, are copied with their items
+ * replaced in turn; any other value is kept as is.
+ * @param {any} value Value.
+ * @param {(value: any) => any} getReplacement Function returning the replacement for a value, or
+ * `undefined` to keep it, or look inside it if it’s an array or an accepted object.
+ * @param {(value: any) => boolean} [isContainer] Function to check whether an object is to be
+ * copied with its properties replaced. Default: any object, including a class instance.
+ * @returns {any} Copy of arrays and accepted objects; any other value as is, or replaced.
+ */
+export const mapValuesDeep = (value, getReplacement, isContainer = isObject) => {
+  const replacement = getReplacement(value);
+
+  if (replacement !== undefined) {
+    return replacement;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => mapValuesDeep(item, getReplacement, isContainer));
+  }
+
+  if (isContainer(value)) {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [
+        key,
+        mapValuesDeep(item, getReplacement, isContainer),
+      ]),
+    );
+  }
+
+  return value;
+};
+
+/**
  * Remove {@link STRING_KEY_PREFIX} from the object keys in the given value, recursively.
  * @param {any} value Value unflattened with prefixed key segments.
  * @returns {any} Value with the original keys. Arrays are updated in place, while plain objects are

@@ -1,10 +1,10 @@
 import { isObject } from '@sveltia/utils/object';
 
-import { parseFields } from '$lib/services/config/parser/fields/registry';
+import { parseFields, parseVariableTypes } from '$lib/services/config/parser/fields/registry';
 import { checkObjectDefault } from '$lib/services/config/parser/utils/defaults';
 import { getSubFields } from '$lib/services/config/parser/utils/fields';
 import { checkThumbnailField } from '$lib/services/config/parser/utils/references';
-import { addMessage, checkName } from '$lib/services/config/parser/utils/validator';
+import { addMessage } from '$lib/services/config/parser/utils/validator';
 
 /**
  * @import { ObjectField, ObjectFieldWithSubFields, ObjectFieldWithTypes } from '$lib/types/public';
@@ -21,7 +21,6 @@ export const parseObjectFieldConfig = (args) => {
   const { types, typeKey } = /** @type {ObjectFieldWithTypes} */ (config);
   const { default: defaultValue, thumbnail } = /** @type {ObjectField} */ (config);
   const { typedKeyPath } = context;
-  const checkNameArgs = { nameCounts: {}, strKeyBase: 'variable_type', collectors };
 
   // Validate mutually exclusive options
   if (subfields && types) {
@@ -65,11 +64,11 @@ export const parseObjectFieldConfig = (args) => {
   }
 
   // Handle variable types
-  types?.forEach(({ name, fields: typedFields }, index) => {
-    const newContext = { ...context, typedKeyPath: `${typedKeyPath}<${name}>` };
-
-    if (checkName({ ...checkNameArgs, name, index, context: newContext }) && typedFields) {
-      parseFields(typedFields, newContext, collectors);
-    }
+  // `parseFieldConfig()` always sets the key path of the field being parsed
+  parseVariableTypes({
+    types,
+    typeKeyPath: /** @type {string} */ (typedKeyPath),
+    context,
+    collectors,
   });
 };

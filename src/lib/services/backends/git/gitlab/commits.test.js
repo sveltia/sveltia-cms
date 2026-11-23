@@ -5,6 +5,7 @@ import { saveProgress } from '$lib/services/backends/commit-progress';
 import {
   _resetAvatarURLCache,
   _resetLandedPaths,
+  buildCommitActions,
   commitChanges,
   fetchFileCommits,
   fetchLastCommit,
@@ -1047,6 +1048,79 @@ describe('GitLab commits service', () => {
       mockCommits();
       await commitChanges(/** @type {any} */ ([changes[0]]), /** @type {any} */ ({}));
       expect(getActions()).toEqual([[['create', 'a.jpg']]]);
+    });
+  });
+
+  describe('buildCommitActions', () => {
+    const image = new File(['x'], 'a.jpg', { type: 'image/jpeg' });
+    const lastCommit = { last_commit_id: 'head' };
+
+    beforeEach(() => {
+      vi.mocked(encodeBase64).mockResolvedValue('base64encodedcontent==');
+    });
+
+    test('plans the writes in order, with moves and deletions for the last commit', async () => {
+      const { queue, addedAgain, getWriteActions, lastActions } = await buildCommitActions({
+        changes: /** @type {any[]} */ ([
+          { action: 'create', path: 'content/post.md', data: 'text' },
+          { action: 'update', path: 'static/a.jpg', data: image },
+          { action: 'delete', path: 'static/old.jpg' },
+          { action: 'move', path: 'static/new.jpg', previousPath: 'static/moved.jpg' },
+          { action: 'move', path: 'content/b.md', previousPath: 'content/c.md', data: 'b' },
+          { action: 'create', path: 'static/old.jpg', data: image },
+        ]),
+        landed: new Set(),
+        lastCommit,
+      });
+
+      // Binary files come first, and a file created at a freed path goes last
+      expect(queue.map(({ path }) => path)).toEqual(['static/a.jpg', 'content/post.md']);
+      expect(addedAgain.map(({ path }) => path)).toEqual(['static/old.jpg']);
+      expect(queue.flatMap(getWriteActions)).toEqual([
+        // A replaced binary file is deleted and created again, for Git LFS to handle it
+        { action: 'delete', file_path: 'static/a.jpg', ...lastCommit },
+        {
+          action: 'create',
+          content: 'base64encodedcontent==',
+          encoding: 'base64',
+          file_path: 'static/a.jpg',
+        },
+        { action: 'create', content: 'text', encoding: 'text', file_path: 'content/post.md' },
+      ]);
+      expect(lastActions).toEqual([
+        { action: 'delete', file_path: 'static/old.jpg', ...lastCommit },
+        {
+          action: 'move',
+          file_path: 'static/new.jpg',
+          previous_path: 'static/moved.jpg',
+          ...lastCommit,
+        },
+        {
+          action: 'move',
+          content: 'b',
+          encoding: 'text',
+          file_path: 'content/b.md',
+          previous_path: 'content/c.md',
+          ...lastCommit,
+        },
+      ]);
+    });
+
+    test('updates a text file, and re-creates a file a failed save has left behind', async () => {
+      const { queue, getWriteActions } = await buildCommitActions({
+        changes: /** @type {any[]} */ ([
+          { action: 'update', path: 'content/a.md', data: 'a' },
+          { action: 'create', path: 'content/b.md', data: 'b' },
+        ]),
+        landed: new Set(['content/b.md']),
+        lastCommit: {},
+      });
+
+      expect(queue.flatMap(getWriteActions)).toEqual([
+        { action: 'update', content: 'a', encoding: 'text', file_path: 'content/a.md' },
+        { action: 'delete', file_path: 'content/b.md' },
+        { action: 'create', content: 'b', encoding: 'text', file_path: 'content/b.md' },
+      ]);
     });
   });
 

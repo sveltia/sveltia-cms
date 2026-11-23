@@ -239,6 +239,23 @@ export const sortItemsByKey = (items, getKey, isStringType, order) => {
 };
 
 /**
+ * Map the key of each item in the given groups to the item’s row index in a list, for rows to
+ * resolve their `aria-rowindex` in O(1). The index is counted across the groups rather than within
+ * each one, as the rows of every group make up one grid.
+ * @template T
+ * @param {Record<string, T[]>} groups Items grouped as the list shows them.
+ * @param {number} offset Number of rows shown before the items, e.g. subfolders.
+ * @param {(item: T) => string} getKey Function to get the key of an item.
+ * @returns {Map<string, number>} Map of item keys to row indices.
+ */
+export const getRowIndexMap = (groups, offset, getKey) =>
+  new Map(
+    Object.values(groups)
+      .flat(1)
+      .map((item, index) => [getKey(item), index + offset]),
+  );
+
+/**
  * Get the names of the groups that can be collapsed. The `*` group, which holds every item when
  * the list isn’t grouped, has no caption and so no expander.
  * @param {string[]} names Names of all the groups in the list.

@@ -1,6 +1,6 @@
 import { deleteEntries } from '$lib/services/contents/collection/data/delete';
 import { cancelBackup, deleteBackup, getBackupSlug } from '$lib/services/contents/draft/backup';
-import { deleteWorkflowEntries, discardWorkflowEntries } from '$lib/services/workflow/save';
+import { deleteWorkflowEntries, discardWorkflowEntries } from '$lib/services/workflow/removal';
 
 /**
  * @import {

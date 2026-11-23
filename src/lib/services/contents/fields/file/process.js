@@ -324,6 +324,140 @@ const getFailedResult = ({ oversizedFileName, invalidFileName, mismatchedFileNam
 });
 
 /**
+ * Resolve a file selected for a field: take a pending or saved file that is the same, or process
+ * the file and cache it in the draft as a pending upload.
+ * @param {object} args Arguments. See {@link processResource}.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {SelectedResource & { file: File }} args.resource Resource with a file.
+ * @param {DefaultMediaLibraryConfig} args.libraryConfig Configuration for the media library.
+ * @param {string} [args.accept] File types the field accepts.
+ * @param {InternalLocaleCode} [args.locale] Locale the resource is selected for.
+ * @returns {Promise<{ failed?: ProcessResourceResult, asset?: Asset, value?: string }>} Result
+ * that leaves nothing to add to the field, an existing asset that is the same file, or the blob URL
+ * of the pending file.
+ */
+const resolveFileResource = async ({ draft, resource, libraryConfig, accept, locale }) => {
+  const { subfolderPath, replace = false } = resource;
+  let { file } = resource;
+  const { folder } = resource;
+
+  // A file is uploaded to a repository folder, which there isn’t when only a cloud media library
+  // is configured and neither the field nor the collection has its own `media_folder`
+  if (!folder) {
+    return { failed: getFailedResult() };
+  }
+
+  /** @type {string | undefined} */
+  let existingBlobURL;
+
+  try {
+    existingBlobURL = await getExistingBlobURL({ draft, file, folder, subfolderPath, replace });
+  } catch {
+    // The file can’t be read any more, e.g. it was moved or deleted after being picked. It can’t
+    // be uploaded either way, so it’s reported along with the corrupt files rather than failing
+    // the whole batch and leaving the field stuck in the processing state.
+    return { failed: getFailedResult({ invalidFileName: file.name }) };
+  }
+
+  if (existingBlobURL) {
+    // The file is already pending, as processed for another field maybe, which can accept other
+    // file types
+    if (!isAcceptedFile(file, accept)) {
+      return { failed: getFailedResult({ mismatchedFileName: file.name }) };
+    }
+
+    return { value: existingBlobURL };
+  }
+
+  /**
+   * Find a saved or pending asset that is the same file as the given one. The assets are read
+   * on each call, as a file pending for another field may be added while this one is processed.
+   * @param {File} _file File.
+   * @returns {Promise<Asset | undefined>} Asset.
+   */
+  const findExistingAsset = async (_file) =>
+    findSameAsset({
+      draft,
+      assets: [
+        ...getSavedAssetsForEntry(draft, folder, locale),
+        ...(await getUnsavedAssets({ draft })),
+      ],
+      sha: await getGitHash(_file),
+      name: _file.name,
+      folder,
+      subfolderPath,
+      replace,
+      locale,
+      slugificationEnabled: libraryConfig?.slugify_filename,
+    });
+
+  // Check if the selected file has already been uploaded or is pending upload, otherwise
+  // duplicate files lead to an `each_key_duplicate` error in Svelte. A file identical to an
+  // existing one, e.g. a copy of an image converted on upload, is taken as is, because a
+  // transformation would encode it again into a file that no longer matches. Not if it would be
+  // converted to another format, as the site wants the new format, e.g. WebP instead of PNG
+  let existingAsset =
+    isAcceptedFile(file, accept) && (await keepsFileFormat(file, libraryConfig?.transformations))
+      ? await findExistingAsset(file)
+      : undefined;
+
+  let oversized = false;
+
+  if (!existingAsset) {
+    const result = await processFile(file, libraryConfig ?? {});
+
+    ({ file, oversized } = result);
+
+    if (result.invalid) {
+      return { failed: getFailedResult({ invalidFileName: file.name }) };
+    }
+
+    // The original file is named, as the user knows it by that name
+    if (!isAcceptedFile(file, accept)) {
+      return {
+        failed: getFailedResult({ mismatchedFileName: /** @type {File} */ (resource.file).name }),
+      };
+    }
+
+    // The same file may be stored once processed, e.g. the same photo converted to WebP
+    existingAsset = await findExistingAsset(file);
+  }
+
+  if (existingAsset) {
+    // If the selected file has already been uploaded, use the existing asset instead of
+    // uploading the same file twice
+    return { asset: existingAsset };
+  }
+
+  if (oversized) {
+    // Like a corrupt file, an oversized file leaves nothing to add to the field
+    return { failed: getFailedResult({ oversizedFileName: file.name }) };
+  }
+
+  // Set a temporary blob URL, which will be later replaced with the actual file path. The URL
+  // is made for display, e.g. an SVG image can’t run script, while the file itself is cached
+  const value = await createDisplayBlobURL(file);
+  // Cache the file itself for later upload. A file replacing an existing one keeps its name
+  const template = replace ? undefined : libraryConfig?.filename_template;
+
+  draft.files[value] = {
+    file,
+    folder,
+    replace,
+    subfolderPath,
+    ...(template
+      ? {
+          nameTemplate: createAssetNameTemplate(template, {
+            slugificationEnabled: libraryConfig.slugify_filename,
+          }),
+        }
+      : {}),
+  };
+
+  return { value };
+};
+
+/**
  * Process a selected resource.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft containing the resource.
@@ -339,124 +473,28 @@ const getFailedResult = ({ oversizedFileName, invalidFileName, mismatchedFileNam
  * @returns {Promise<ProcessResourceResult>} Result of processing the resource.
  */
 export const processResource = async ({ draft, resource, libraryConfig, accept, locale }) => {
-  const { url, folderPath, credit, replace = false, subfolderPath } = resource;
-  let { asset, file } = resource;
+  const { url, folderPath, credit, file } = resource;
+  let { asset } = resource;
   /** @type {string | undefined} */
   let value = '';
 
   if (file) {
-    const { folder } = resource;
+    const result = await resolveFileResource({
+      draft,
+      resource: /** @type {SelectedResource & { file: File }} */ (resource),
+      libraryConfig,
+      accept,
+      locale,
+    });
 
-    // A file is uploaded to a repository folder, which there isn’t when only a cloud media library
-    // is configured and neither the field nor the collection has its own `media_folder`
-    if (!folder) {
-      return getFailedResult();
+    if (result.failed) {
+      return result.failed;
     }
 
-    /** @type {string | undefined} */
-    let existingBlobURL;
-
-    try {
-      existingBlobURL = await getExistingBlobURL({ draft, file, folder, subfolderPath, replace });
-    } catch {
-      // The file can’t be read any more, e.g. it was moved or deleted after being picked. It can’t
-      // be uploaded either way, so it’s reported along with the corrupt files rather than failing
-      // the whole batch and leaving the field stuck in the processing state.
-      return getFailedResult({ invalidFileName: file.name });
-    }
-
-    if (existingBlobURL) {
-      // The file is already pending, as processed for another field maybe, which can accept other
-      // file types
-      if (!isAcceptedFile(file, accept)) {
-        return getFailedResult({ mismatchedFileName: file.name });
-      }
-
-      value = existingBlobURL;
+    if (result.asset) {
+      asset = result.asset;
     } else {
-      /**
-       * Find a saved or pending asset that is the same file as the given one. The assets are read
-       * on each call, as a file pending for another field may be added while this one is processed.
-       * @param {File} _file File.
-       * @returns {Promise<Asset | undefined>} Asset.
-       */
-      const findExistingAsset = async (_file) =>
-        findSameAsset({
-          draft,
-          assets: [
-            ...getSavedAssetsForEntry(draft, folder, locale),
-            ...(await getUnsavedAssets({ draft })),
-          ],
-          sha: await getGitHash(_file),
-          name: _file.name,
-          folder,
-          subfolderPath,
-          replace,
-          locale,
-          slugificationEnabled: libraryConfig?.slugify_filename,
-        });
-
-      // Check if the selected file has already been uploaded or is pending upload, otherwise
-      // duplicate files lead to an `each_key_duplicate` error in Svelte. A file identical to an
-      // existing one, e.g. a copy of an image converted on upload, is taken as is, because a
-      // transformation would encode it again into a file that no longer matches. Not if it would be
-      // converted to another format, as the site wants the new format, e.g. WebP instead of PNG
-      let existingAsset =
-        isAcceptedFile(file, accept) &&
-        (await keepsFileFormat(file, libraryConfig?.transformations))
-          ? await findExistingAsset(file)
-          : undefined;
-
-      let oversized = false;
-
-      if (!existingAsset) {
-        const result = await processFile(file, libraryConfig ?? {});
-
-        ({ file, oversized } = result);
-
-        if (result.invalid) {
-          return getFailedResult({ invalidFileName: file.name });
-        }
-
-        // The original file is named, as the user knows it by that name
-        if (!isAcceptedFile(file, accept)) {
-          return getFailedResult({ mismatchedFileName: /** @type {File} */ (resource.file).name });
-        }
-
-        // The same file may be stored once processed, e.g. the same photo converted to WebP
-        existingAsset = await findExistingAsset(file);
-      }
-
-      if (existingAsset) {
-        // If the selected file has already been uploaded, use the existing asset instead of
-        // uploading the same file twice
-        asset = existingAsset;
-        file = undefined;
-      } else if (oversized) {
-        // Like a corrupt file, an oversized file leaves nothing to add to the field
-        return getFailedResult({ oversizedFileName: file.name });
-      } else {
-        // Set a temporary blob URL, which will be later replaced with the actual file path. The URL
-        // is made for display, e.g. an SVG image can’t run script, while the file itself is cached
-        value = await createDisplayBlobURL(file);
-
-        // Cache the file itself for later upload. A file replacing an existing one keeps its name
-        const template = replace ? undefined : libraryConfig?.filename_template;
-
-        draft.files[value] = {
-          file,
-          folder,
-          replace,
-          subfolderPath,
-          ...(template
-            ? {
-                nameTemplate: createAssetNameTemplate(template, {
-                  slugificationEnabled: libraryConfig.slugify_filename,
-                }),
-              }
-            : {}),
-        };
-      }
+      value = result.value;
     }
   }
 

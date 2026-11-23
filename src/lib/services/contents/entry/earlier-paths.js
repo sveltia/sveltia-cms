@@ -1,3 +1,5 @@
+import { stripSlashes } from '@sveltia/utils/string';
+
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getAliasesKey, getAliasKeyPaths } from '$lib/services/contents/entry/aliases';
 import { isNonEmptyString } from '$lib/services/utils/string';
@@ -20,7 +22,7 @@ import { isNonEmptyString } from '$lib/services/utils/string';
  * @param {string} path Path.
  * @returns {string} Normalized path.
  */
-const normalizeSitePath = (path) => `/${path.replace(/^\/+|\/+$/g, '')}`;
+const normalizeSitePath = (path) => `/${stripSlashes(path)}`;
 
 /**
  * Create a regular expression that reads the slug from an entry’s URL, from the `preview_path`

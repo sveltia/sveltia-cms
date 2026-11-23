@@ -20,15 +20,16 @@ const mockAddMessage = vi.fn();
 
 vi.mock('$lib/services/config/parser/utils/validator', () => ({
   addMessage: mockAddMessage,
-  checkName: vi.fn(() => true),
 }));
 
 const mockParseFieldConfig = vi.fn();
 const mockParseFields = vi.fn();
+const mockParseVariableTypes = vi.fn();
 
 vi.mock('$lib/services/config/parser/fields/registry', () => ({
   parseFieldConfig: mockParseFieldConfig,
   parseFields: mockParseFields,
+  parseVariableTypes: mockParseVariableTypes,
 }));
 
 /**
@@ -120,30 +121,26 @@ describe('List Field Parser', () => {
       expect(mockParseFieldConfig).toHaveBeenCalled();
     });
 
-    it('should parse list field with types', async () => {
+    it('should parse the variable types under the item key path', async () => {
       const { parseListFieldConfig } = await import('./list.js');
       const context = createContext();
       const collectors = createCollectors();
+      const types = [{ name: 'type1', widget: 'object', fields: [{ name: 'f1' }] }];
 
-      const args = {
-        config: {
-          name: 'items',
-          widget: 'list',
-          types: [
-            {
-              name: 'type1',
-              widget: 'object',
-              fields: [{ name: 'f1', widget: 'string' }],
-            },
-          ],
-        },
+      parseListFieldConfig({
+        config: /** @type {any} */ ({ name: 'items', widget: 'list', types }),
         context,
         collectors,
-      };
+      });
 
-      parseListFieldConfig(args);
-
-      expect(mockParseFields).toHaveBeenCalled();
+      expect(mockParseVariableTypes).toHaveBeenCalledExactlyOnceWith({
+        types,
+        typeKeyPath: 'config.collections.0.fields.0.*',
+        context,
+        collectors,
+        checkType: expect.any(Function),
+      });
+      expect(mockParseFields).not.toHaveBeenCalled();
     });
 
     it('should error when field and subfields are both present', async () => {
@@ -221,58 +218,31 @@ describe('List Field Parser', () => {
       );
     });
 
-    it('should handle types with invalid field type', async () => {
+    it('should only accept the Object field type for a variable type', async () => {
       const { parseListFieldConfig } = await import('./list.js');
       const context = createContext();
       const collectors = createCollectors();
 
-      const args = {
-        config: {
-          name: 'items',
-          widget: 'list',
-          types: [
-            {
-              name: 'type1',
-              widget: 'string', // Invalid: not object
-              fields: [{ name: 'f1', widget: 'string' }],
-            },
-          ],
-        },
+      parseListFieldConfig({
+        config: /** @type {any} */ ({ name: 'items', widget: 'list', types: [{ name: 'type1' }] }),
         context,
         collectors,
-      };
+      });
 
-      parseListFieldConfig(args);
+      const [[{ checkType }]] = mockParseVariableTypes.mock.calls;
+      /** @type {any} */
+      const typeContext = { ...context, typedKeyPath: 'items.*<type1>' };
 
-      // Should not parse fields when type is invalid
-      expect(mockParseFields).not.toHaveBeenCalled();
-    });
-
-    it('should handle types without fields', async () => {
-      const { parseListFieldConfig } = await import('./list.js');
-      const context = createContext();
-      const collectors = createCollectors();
-
-      const args = {
-        config: {
-          name: 'items',
-          widget: 'list',
-          types: [
-            {
-              name: 'type1',
-              widget: 'object',
-              // no fields
-            },
-          ],
-        },
-        context,
+      expect(checkType({ name: 'type1' }, typeContext)).toBe(true);
+      expect(checkType({ name: 'type1', widget: 'object' }, typeContext)).toBe(true);
+      expect(mockAddMessage).not.toHaveBeenCalled();
+      expect(checkType({ name: 'type1', widget: 'string' }, typeContext)).toBe(false);
+      expect(mockAddMessage).toHaveBeenCalledExactlyOnceWith({
+        strKey: 'invalid_list_variable_type',
+        context: typeContext,
+        values: { widget: 'string' },
         collectors,
-      };
-
-      parseListFieldConfig(args);
-
-      // Should not parse fields when none exist
-      expect(mockParseFields).not.toHaveBeenCalled();
+      });
     });
 
     it('should error on an empty subfield or type list', async () => {

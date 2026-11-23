@@ -14,7 +14,7 @@ import {
 import { deleteEntries } from '$lib/services/contents/collection/data/delete';
 import { selectedEntries } from '$lib/services/contents/collection/entries';
 import { allUnpublishedEntries } from '$lib/services/workflow';
-import { deleteWorkflowEntries, discardWorkflowEntries } from '$lib/services/workflow/save';
+import { deleteWorkflowEntries, discardWorkflowEntries } from '$lib/services/workflow/removal';
 import {
   createMockAsset,
   createMockEntry,
@@ -36,6 +36,8 @@ vi.mock('$lib/services/workflow/save', () => ({
   saveWorkflowChanges: vi.fn(),
   updateWorkflowStatus: vi.fn(),
   publishWorkflowEntry: vi.fn(),
+}));
+vi.mock('$lib/services/workflow/removal', () => ({
   discardWorkflowEntry: vi.fn(),
   deleteWorkflowEntry: vi.fn(),
   discardWorkflowEntries: vi.fn(),
