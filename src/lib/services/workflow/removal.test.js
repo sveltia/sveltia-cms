@@ -1052,6 +1052,17 @@ describe('workflow/removal', () => {
       expect(additions.deleteEntryComments).toHaveBeenCalledWith('posts/hello');
     });
 
+    test('deletes the comments of a collection file by its name', async () => {
+      const entry = /** @type {any} */ (createEntry('cms/pages/about'));
+
+      Object.assign(entry, { subPath: 'content/pages/about' });
+      Object.assign(entry.workflow, { collectionName: 'pages', fileName: 'about' });
+      upsertUnpublishedEntry(entry);
+      await discardWorkflowEntry(entry);
+
+      expect(additions.deleteEntryComments).toHaveBeenCalledWith('pages/about');
+    });
+
     test('keeps the comments of a published entry', async () => {
       const entry = createEntry('cms/posts/hello');
 

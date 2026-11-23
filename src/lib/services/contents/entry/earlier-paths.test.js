@@ -113,6 +113,22 @@ describe('getEarlierEntryPaths', () => {
     ).toEqual([{ subPath: 'hello', paths: ['content/news/hello.md'] }]);
   });
 
+  test('changes the file name rather than a locale or an extension of the same name', () => {
+    [
+      ['en', 'content/posts/en.en.md', 'content/posts/hello.en.md'],
+      ['md', 'content/posts/md.md', 'content/posts/hello.md'],
+    ].forEach(([slug, path, earlierPath]) => {
+      expect(
+        getEarlierEntryPaths(
+          createArgs({
+            subPath: slug,
+            locales: { en: { slug, path, content: { 'aliases.0': '/posts/hello' } } },
+          }),
+        ),
+      ).toEqual([{ subPath: 'hello', paths: [earlierPath] }]);
+    });
+  });
+
   test('keeps the folder of a slug made of the last segment of the path', () => {
     expect(
       getEarlierEntryPaths(

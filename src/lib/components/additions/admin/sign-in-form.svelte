@@ -39,6 +39,8 @@
       ? additionsUsers.users.filter((target) => !target.disabled && isGitHubOnly(target)).length
       : 0,
   );
+  // A rule needs an organization, or the service refuses the rules
+  const hasEmptyRule = $derived(rules.some(({ org }) => !org.trim()));
 </script>
 
 <div role="none" class="sign-in">
@@ -109,7 +111,7 @@
   <Button
     variant="secondary"
     label={_('additions.users.sign_in.save')}
-    disabled={runner.busy}
+    disabled={runner.busy || hasEmptyRule}
     onclick={() =>
       runner.run(
         async () => {

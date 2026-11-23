@@ -120,10 +120,9 @@
       await saveAdmin({ username: trimmedUsername, password });
       adminSaved = true;
       password = '';
-
-      if (view === 'admin') {
-        await showView('steps');
-      }
+      // Back to the steps after resetting a password; the form creating the first admin makes way
+      // for the next step, so the focus moves either way, rather than being lost with the button
+      await showView('steps');
     });
   };
 

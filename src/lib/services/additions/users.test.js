@@ -9,6 +9,7 @@ import {
   loadUsers,
   resetPassword,
   signOutUser,
+  startUsers,
   updateUser,
 } from '$lib/services/additions/users.svelte';
 import { user } from '$lib/services/user/account.svelte';
@@ -269,5 +270,71 @@ describe('GitHub users and sign-in settings', () => {
       body: { username: 'mona', name: 'Mona', email: null, role: 'editor', github: 'octocat' },
       token: 'session',
     });
+  });
+});
+
+describe('startUsers', () => {
+  test('forgets the users and settings once the admin signs out', async () => {
+    const stop = startUsers();
+
+    await loadUsers();
+    expect(additionsUsers.loaded).toBe(true);
+    stop();
+    expect(additionsUsers).toMatchObject({
+      users: [],
+      allowedDomains: [],
+      commitAuthor: 'user',
+      loaded: false,
+    });
+  });
+
+  test('doesn’t bring them back with a request still in flight', async () => {
+    const stop = startUsers();
+    /**
+     * Resolve the pending request for the users.
+     * @type {(value: any) => void}
+     */
+    let resolveUsers = () => {};
+
+    vi.mocked(fetchAdditions).mockImplementation((path) =>
+      path === '/v1/users'
+        ? new Promise((resolve) => {
+            resolveUsers = resolve;
+          })
+        : Promise.resolve({ allowed_domains: ['cms.example'] }),
+    );
+
+    const loading = loadUsers();
+
+    stop();
+    resolveUsers({ users: USERS });
+    await loading;
+    expect(additionsUsers.users).toEqual([]);
+    expect(additionsUsers.loaded).toBe(false);
+  });
+
+  test('doesn’t bring the users back with a list still loading after a change', async () => {
+    const stop = startUsers();
+    /**
+     * Resolve the pending request for the users.
+     * @type {(value: any) => void}
+     */
+    let resolveUsers = () => {};
+
+    vi.mocked(fetchAdditions).mockImplementation((path, { method } = {}) =>
+      path === '/v1/users' && !method
+        ? new Promise((resolve) => {
+            resolveUsers = resolve;
+          })
+        : Promise.resolve({}),
+    );
+
+    const deleting = deleteUser('u2');
+
+    await vi.waitFor(() => expect(fetchAdditions).toHaveBeenCalledTimes(2));
+    stop();
+    resolveUsers({ users: USERS });
+    await deleting;
+    expect(additionsUsers.users).toEqual([]);
   });
 });

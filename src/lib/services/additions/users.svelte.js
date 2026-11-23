@@ -3,6 +3,7 @@ import { derivePrehash } from '$lib/services/additions/kdf';
 import { fetchWithSession } from '$lib/services/additions/session-api';
 import { generatePassword } from '$lib/services/additions/user-form';
 import { user } from '$lib/services/user/account.svelte';
+import { createGeneration } from '$lib/services/utils/generation';
 
 /**
  * @import { UserChanges } from '$lib/services/additions/user-form';
@@ -52,31 +53,45 @@ import { user } from '$lib/services/user/account.svelte';
 
 /**
  * State of the Users page.
+ * @typedef {object} AdditionsUsersState
+ * @property {AdditionsUser[]} users Users.
+ * @property {string[]} allowedDomains Allowed domains.
+ * @property {'user' | 'bot'} commitAuthor Who appears as the author of the commits: the person, or
+ * the app with the person as co-author.
+ * @property {{ github: boolean }} signInMethods Sign-in methods besides the password.
+ * @property {SignUpRule[]} signUpRules Sign-up rules.
+ * @property {{ current: string, latest: string } | undefined} update Newer release of the service,
+ * if there is one.
+ * @property {boolean} loaded Whether the settings have been loaded, which are edited from a copy of
+ * them.
+ * @property {AdditionsGitHubStatus | undefined} github GitHub settings and their state.
  */
-export const additionsUsers = $state({
-  /** @type {AdditionsUser[]} */
+
+/**
+ * Get the state of the Users page before anything is loaded.
+ * @returns {AdditionsUsersState} State.
+ */
+const getInitialState = () => ({
   users: [],
-  /** @type {string[]} */
   allowedDomains: [],
-  /**
-   * Who appears as the author of the commits: the person, or the app with the person as co-author.
-   * @type {'user' | 'bot'}
-   */
   commitAuthor: 'user',
-  /** Sign-in methods besides the password. */
   signInMethods: { github: false },
-  /** @type {SignUpRule[]} */
   signUpRules: [],
-  /**
-   * Newer release of the service, if there is one.
-   * @type {{ current: string, latest: string } | undefined}
-   */
   update: undefined,
-  /** Whether the settings have been loaded, which are edited from a copy of them. */
   loaded: false,
-  /** @type {AdditionsGitHubStatus | undefined} */
   github: undefined,
 });
+
+/**
+ * State of the Users page.
+ */
+export const additionsUsers = $state(getInitialState());
+
+/**
+ * Generation of the users and settings, which is bumped once they’ve been forgotten, so a request
+ * still in flight when the admin signs out doesn’t bring them back.
+ */
+const generation = createGeneration();
 
 /**
  * Derive the prehash of a password for a user, which is all the service ever sees of it.
@@ -94,7 +109,12 @@ const getPrehash = async (username, password) =>
  * @throws {Error} When the service refuses the request, e.g. because the user isn’t an admin.
  */
 export const loadSiteSettings = async () => {
+  const isCurrent = generation.capture();
   const settings = await fetchWithSession('/v1/settings');
+
+  if (!isCurrent()) {
+    return;
+  }
 
   // An older release of the service lacks the newer settings; the CMS is updated on its own, and
   // may run ahead of it
@@ -113,9 +133,12 @@ export const loadSiteSettings = async () => {
  * @throws {Error} When the service refuses the request, e.g. because the user isn’t an admin.
  */
 export const loadUsers = async () => {
+  const isCurrent = generation.capture();
   const [{ users }] = await Promise.all([fetchWithSession('/v1/users'), loadSiteSettings()]);
 
-  additionsUsers.users = users;
+  if (isCurrent()) {
+    additionsUsers.users = users;
+  }
 };
 
 /**
@@ -124,7 +147,12 @@ export const loadUsers = async () => {
  * @returns {Promise<void>}
  */
 const refreshUsers = async () => {
-  additionsUsers.users = (await fetchWithSession('/v1/users')).users;
+  const isCurrent = generation.capture();
+  const { users } = await fetchWithSession('/v1/users');
+
+  if (isCurrent()) {
+    additionsUsers.users = users;
+  }
 };
 
 /**
@@ -256,4 +284,15 @@ export const deleteUser = async (id) => {
   await changeUsers(async () => {
     await fetchWithSession(`/v1/users/${encodeURIComponent(id)}`, { method: 'DELETE' });
   });
+};
+
+/**
+ * Keep the users and site settings an admin has loaded for as long as they’re signed in. Whoever
+ * signs in next, maybe on the same tab, doesn’t see them, nor a form enabled as if they were
+ * loaded.
+ * @returns {() => void} Function that forgets them.
+ */
+export const startUsers = () => () => {
+  generation.bump();
+  Object.assign(additionsUsers, getInitialState());
 };

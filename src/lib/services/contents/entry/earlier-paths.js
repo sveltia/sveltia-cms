@@ -51,6 +51,19 @@ const getSlugRegex = (template) => {
 };
 
 /**
+ * Find where the sub path is in an entry’s file path. It ends the path but for the locale suffix
+ * and the extension, while a folder, a locale or the extension may share its name, e.g. `en` in
+ * `content/posts/en.en.md`, so it’s the last occurrence that starts a segment and ends one or the
+ * file name.
+ * @param {string} path File path.
+ * @param {string} subPath Sub path.
+ * @returns {number} Index, or `-1` if the path doesn’t have it.
+ */
+const getSubPathIndex = (path, subPath) =>
+  [...path.matchAll(new RegExp(`(?<=^|/)${RegExp.escape(subPath)}(?=[./]|$)`, 'g'))].at(-1)
+    ?.index ?? -1;
+
+/**
  * Get the locations an entry had before it was renamed outside the CMS, e.g. with `git mv`, which
  * the Git host doesn’t carry its history or comments over from. The URL aliases (redirects) the
  * entry keeps, e.g. Hugo’s `aliases`, which the CMS adds when it renames an entry, tell its earlier
@@ -95,8 +108,9 @@ export const getEarlierEntryPaths = ({ collection, fields, entry }) => {
     // The slug is the path without an extension, or its last segment, e.g. with folders. A slug
     // made up otherwise, e.g. translated, doesn’t tell an earlier path
     const slugIsPath = slug === subPath;
+    const index = getSubPathIndex(path, subPath);
 
-    if ((!slugIsPath && `${folder}${slug}` !== subPath) || !path.includes(subPath)) {
+    if ((!slugIsPath && `${folder}${slug}` !== subPath) || index === -1) {
       return;
     }
 
@@ -123,8 +137,6 @@ export const getEarlierEntryPaths = ({ collection, fields, entry }) => {
         }
 
         const paths = earlier.get(earlierSubPath) ?? new Set();
-        // The sub path ends the file path, but for the extension, while a folder may share its name
-        const index = path.lastIndexOf(subPath);
 
         paths.add(`${path.slice(0, index)}${earlierSubPath}${path.slice(index + subPath.length)}`);
         earlier.set(earlierSubPath, paths);

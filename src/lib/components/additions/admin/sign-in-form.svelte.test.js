@@ -64,7 +64,10 @@ describe('SignInForm', () => {
     await page.getByRole('button', { name: 'Add Rule' }).click();
 
     const newRule = page.getByRole('group', { name: 'GitHub organization' });
+    const save = page.getByRole('button', { name: 'Save Sign-In Settings' });
 
+    // Not until the new rule has an organization
+    await expect.element(save).toHaveAttribute('aria-disabled', 'true');
     // Named for its organization once it has one
     await expect
       .element(newRule.getByRole('button', { name: 'Remove Rule', exact: true }))
@@ -76,7 +79,7 @@ describe('SignInForm', () => {
     await page.getByRole('button', { name: 'Remove Rule for \u2068acme\u2069' }).click();
     await page.getByRole('combobox', { name: 'Role' }).click();
     await page.getByRole('option', { name: 'Editor' }).click();
-    await page.getByRole('button', { name: 'Save Sign-In Settings' }).click();
+    await save.click();
 
     await vi.waitFor(() =>
       expect(saveSignInSettings).toHaveBeenCalledWith({

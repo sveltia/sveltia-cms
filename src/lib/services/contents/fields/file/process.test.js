@@ -1060,6 +1060,61 @@ describe('Test processResource()', () => {
     expect(Object.keys(draft.files)).toHaveLength(0);
   });
 
+  test('should deduplicate a file saved beside the entry but filed under another collection', async () => {
+    const mockFile = new File(['content'], 'photo.jpg', { type: 'image/jpeg' });
+
+    Object.defineProperty(mockFile, 'size', { value: 50000 });
+
+    const folder = {
+      entryRelative: true,
+      internalPath: 'src/content/posts',
+      internalSubPath: '',
+      publicPath: '',
+      hasTemplateTags: false,
+      collectionName: 'news',
+    };
+
+    // @ts-ignore - Simplified draft for testing
+    const draft = {
+      files: {},
+      defaultLocale: '_default',
+      originalEntry: {
+        locales: {
+          _default: { path: 'src/content/posts/hello/index.md' },
+        },
+      },
+      collection: {
+        _type: 'entry',
+        _file: { subPath: '{{slug}}/index' },
+      },
+    };
+
+    // @ts-ignore - Simplified resource for testing
+    const resource = { file: mockFile, folder, credit: '' };
+    // @ts-ignore - Simplified config for testing
+    const libraryConfig = { max_file_size: 1000000 };
+
+    // Another collection shares the folder, and the asset is filed under its media folder, while
+    // the field lists it, being stored beside the entry, so the duplicate check doesn’t ask
+    const savedAsset = {
+      sha: 'git-hash',
+      folder: { ...folder, collectionName: 'posts' },
+      path: 'src/content/posts/hello/photo.jpg',
+      unsaved: false,
+    };
+
+    getGitHashMock.mockResolvedValue('git-hash');
+    allAssets.current = /** @type {any} */ ([savedAsset]);
+    getAssetPublicURLMock.mockReturnValue('photo.jpg');
+
+    // @ts-ignore - Test with simplified types
+    const result = await processResource({ draft, resource, libraryConfig });
+
+    // Not uploaded again under another name
+    expect(result.value).toBe('photo.jpg');
+    expect(Object.keys(draft.files)).toHaveLength(0);
+  });
+
   test('should only deduplicate a file saved beside the given locale’s entry file', async () => {
     const mockFile = new File(['content'], 'photo.jpg', { type: 'image/jpeg' });
 

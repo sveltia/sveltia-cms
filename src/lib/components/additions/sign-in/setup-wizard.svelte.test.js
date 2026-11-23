@@ -136,6 +136,8 @@ describe('SetupWizard', () => {
     await expect.element(page.getByText('Step 2 of 2')).toBeVisible();
     await expect.element(page.getByRole('status')).toMatchTextContent(/The admin account is ready/);
     expect(page.getByLabelText('New password', { exact: true }).elements()).toHaveLength(0);
+    // The focus isn’t lost with the button that was clicked
+    await expect.element(page.getByRole('heading', { name: 'Admin Account' })).toHaveFocus();
 
     await page.getByRole('button', { name: 'Connect to GitHub' }).click();
     await vi.waitFor(() =>

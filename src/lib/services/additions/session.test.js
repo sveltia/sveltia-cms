@@ -8,6 +8,7 @@ import { startLocks } from '$lib/services/additions/locks.svelte';
 import { prepareSignIn, startSession } from '$lib/services/additions/session';
 import { readSetupResult } from '$lib/services/additions/setup.svelte';
 import { startSocket } from '$lib/services/additions/socket.svelte';
+import { startUsers } from '$lib/services/additions/users.svelte';
 
 const { stops } = vi.hoisted(() => ({
   stops: {
@@ -17,6 +18,7 @@ const { stops } = vi.hoisted(() => ({
     locks: vi.fn(),
     socket: vi.fn(),
     tokenRefresh: vi.fn(),
+    users: vi.fn(),
   },
 }));
 
@@ -38,6 +40,7 @@ vi.mock('$lib/services/additions/setup.svelte', () => ({ readSetupResult: vi.fn(
 vi.mock('$lib/services/additions/socket.svelte', () => ({
   startSocket: vi.fn(() => stops.socket),
 }));
+vi.mock('$lib/services/additions/users.svelte', () => ({ startUsers: vi.fn(() => stops.users) }));
 
 describe('prepareSignIn()', () => {
   test('reads the setup result and the sign-in methods', () => {
@@ -59,6 +62,7 @@ describe('startSession()', () => {
       startLocks,
       startSocket,
       startTokenRefresh,
+      startUsers,
     ].forEach((start) => {
       expect(start).toHaveBeenCalledOnce();
     });

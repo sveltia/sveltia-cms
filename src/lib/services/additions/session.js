@@ -5,6 +5,7 @@ import { startCredentials } from '$lib/services/additions/credentials.svelte';
 import { startLocks } from '$lib/services/additions/locks.svelte';
 import { readSetupResult } from '$lib/services/additions/setup.svelte';
 import { startSocket } from '$lib/services/additions/socket.svelte';
+import { startUsers } from '$lib/services/additions/users.svelte';
 
 /**
  * Get the sign-in page ready: read the outcome of connecting the service to GitHub, if the user is
@@ -16,8 +17,8 @@ export const prepareSignIn = () => {
 };
 
 /**
- * Share the entry locks, comment counts and credentials, and keep the GitHub token fresh, while the
- * user is signed in.
+ * Share the entry locks, comment counts and credentials, keep the GitHub token fresh, and keep what
+ * an admin has loaded on the Administration page, while the user is signed in.
  * @returns {() => void} Function to stop all of them, once the user signs out.
  */
 export const startSession = () => {
@@ -29,6 +30,7 @@ export const startSession = () => {
     startLocks(),
     startSocket(),
     startTokenRefresh(),
+    startUsers(),
   ];
 
   return () => {

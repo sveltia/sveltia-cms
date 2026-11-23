@@ -270,10 +270,13 @@ const findSameAsset = ({
   // A file replacing an existing one must keep its name, so an identical file under another name
   // doesn’t count. An asset is assigned to one of the folders sharing its path, e.g. the
   // `media_folder` of another collection, so any folder with the same path counts as the same one.
+  // The saved assets of an entry-relative folder are those stored beside the entry, whatever folder
+  // they’re filed under, e.g. that of another collection sharing the entry folder, as the field
+  // lists them; see `getSavedAssetsForEntry()`
   const matches = assets.filter(
     (a) =>
       a.sha === sha &&
-      isAssetInFolder(a, folder) &&
+      ((folder.entryRelative && !a.unsaved) || isAssetInFolder(a, folder)) &&
       (!replace || ((!a.unsaved || a.replace) && isSameFileName(a.name, name))),
   );
 

@@ -7,7 +7,7 @@
   import { _, locale as appLocale } from '@sveltia/i18n';
   import { Button, Infobar } from '@sveltia/ui';
 
-  import { getLockNotice, takeOverLock } from '$lib/services/additions/locks.svelte';
+  import { entryLocks, getLockNotice, takeOverLock } from '$lib/services/additions/locks.svelte';
   import { isViewer } from '$lib/services/config/readonly';
   import { formatRecentDateTime } from '$lib/services/utils/date';
 
@@ -26,7 +26,8 @@
   const notice = $derived(getLockNotice(lockKey));
 
   /**
-   * The lock asked to be taken over, so the button doesn’t ask again until the service replaces it.
+   * The lock asked to be taken over, so the button doesn’t ask again until the service replaces it,
+   * or refuses without saying who holds it, e.g. as the user holds too many locks.
    * @type {EntryLock | undefined}
    */
   let requested = $state();
@@ -68,7 +69,7 @@
       <Button
         variant="link"
         label={_('additions.locks.take_over')}
-        disabled={requested === notice.lock}
+        disabled={requested === notice.lock && !entryLocks.refused[/** @type {string} */ (lockKey)]}
         onclick={() => {
           requested = notice.lock;
           takeOverLock(/** @type {string} */ (lockKey));

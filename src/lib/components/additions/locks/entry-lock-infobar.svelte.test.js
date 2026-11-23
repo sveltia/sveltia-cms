@@ -38,7 +38,7 @@ describe('EntryLockInfobar', () => {
 
   afterEach(() => {
     socketState.status = 'disconnected';
-    Object.assign(entryLocks, { connection: '', locks: {}, takenOver: {} });
+    Object.assign(entryLocks, { connection: '', locks: {}, takenOver: {}, refused: {} });
   });
 
   test('says nothing while nobody else is editing the entry', async () => {
@@ -64,6 +64,20 @@ describe('EntryLockInfobar', () => {
     // Asked once, until the lock changes
     await expect.element(takeOver).toHaveAttribute('aria-disabled', 'true');
     entryLocks.locks[KEY] = { ...BOB_LOCK, name: 'Carol', user_id: 'u3' };
+    await expect.element(takeOver).not.toHaveAttribute('aria-disabled', 'true');
+  });
+
+  test('offers to take over again once the service refuses without a lock', async () => {
+    entryLocks.locks[KEY] = BOB_LOCK;
+
+    await render(EntryLockInfobar, { lockKey: KEY });
+
+    const takeOver = page.getByRole('button', { name: 'Take Over' });
+
+    await takeOver.click();
+    await expect.element(takeOver).toHaveAttribute('aria-disabled', 'true');
+    // Refused, e.g. as the user holds too many locks, which leaves Bob’s lock as it was
+    entryLocks.refused[KEY] = true;
     await expect.element(takeOver).not.toHaveAttribute('aria-disabled', 'true');
   });
 

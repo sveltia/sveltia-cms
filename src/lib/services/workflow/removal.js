@@ -57,8 +57,9 @@ export const discardWorkflowEntry = async (entry) => {
   await workflow.discard(pullRequest);
   clearUnpublishedEntry(pullRequest, removeWorkflowAssets);
 
-  const { collectionName } = entry.workflow;
-  const key = getEntryKey(collectionName, entry.subPath);
+  const { collectionName, fileName } = entry.workflow;
+  // A collection file is keyed by its name, as in the editor, while its `subPath` is the file path
+  const key = getEntryKey(collectionName, fileName ?? entry.subPath);
   // Paths of the files the pull request renamed, if it renames a published entry
   const previousPaths = new Set(pullRequest.files.map(({ previousPath }) => previousPath));
 
