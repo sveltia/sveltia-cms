@@ -6,7 +6,7 @@ import {
   allStockAssetProviders,
   getStockAssetMediaLibraryOptions,
 } from '$lib/services/integrations/media-libraries/stock';
-import { getDirName } from '$lib/services/utils/file';
+import { getDirName, getGitHash } from '$lib/services/utils/file';
 
 /**
  * @import {
@@ -204,6 +204,29 @@ export const getPickedFolderPublicPaths = ({
  */
 export const getUnsavedAssetSubfolderPath = ({ path }, targetFolderPath) =>
   targetFolderPath !== undefined ? getDirName(getRelativePath(path, targetFolderPath)) : '';
+
+/**
+ * Run a task for each of the given files, once per content. The task for a file checks whether the
+ * same file is already pending, which a file with the same content in the same batch can’t be
+ * until its own task is done, so such a file shares the result of the first one instead.
+ * @template T
+ * @param {File[]} files Files.
+ * @param {(file: File) => Promise<T>} task Task.
+ * @returns {Promise<T[]>} Results, in the order of the files.
+ */
+export const processUniqueFiles = async (files, task) => {
+  const hashes = await Promise.all(files.map((file) => getGitHash(file)));
+  /** @type {Promise<T>[]} */
+  const results = [];
+
+  hashes.forEach((hash, index) => {
+    const firstIndex = hashes.indexOf(hash);
+
+    results.push(firstIndex === index ? task(files[index]) : results[firstIndex]);
+  });
+
+  return Promise.all(results);
+};
 
 /**
  * Get the resources to select once files are dropped. A file dropped more than once, or one already

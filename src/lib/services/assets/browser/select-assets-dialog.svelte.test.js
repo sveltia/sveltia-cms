@@ -15,6 +15,7 @@ import {
   getStockAssetProviderEntries,
   getUnsavedAssetSubfolderPath,
   isFolderOffered,
+  processUniqueFiles,
   sortServicesByName,
   trackInsertedExternalAssets,
 } from './select-assets-dialog.svelte';
@@ -317,6 +318,22 @@ describe('getUnsavedAssetSubfolderPath()', () => {
 
   test('returns an empty string without a target folder', () => {
     expect(getUnsavedAssetSubfolderPath(asset, undefined)).toBe('');
+  });
+});
+
+describe('processUniqueFiles()', () => {
+  test('should run the task once per content', async () => {
+    const files = [
+      new File(['a'], 'a.png'),
+      new File(['b'], 'b.png'),
+      new File(['a'], 'a-copy.png'),
+    ];
+
+    const task = vi.fn(async (/** @type {File} */ file) => file.name);
+
+    // The copy shares the result of the first file with the same content
+    expect(await processUniqueFiles(files, task)).toEqual(['a.png', 'b.png', 'a.png']);
+    expect(task.mock.calls).toEqual([[files[0]], [files[1]]]);
   });
 });
 

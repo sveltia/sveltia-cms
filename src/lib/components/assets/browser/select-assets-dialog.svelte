@@ -29,6 +29,7 @@
     getPickedFolderPublicPaths,
     getStockAssetProviderEntries,
     isFolderOffered,
+    processUniqueFiles,
     sortServicesByName,
   } from '$lib/services/assets/browser/select-assets-dialog.svelte';
   import { fillLibraryPrefix } from '$lib/services/assets/external/prefix';
@@ -394,7 +395,7 @@
     }
 
     selectedResources = getDroppedResources(
-      await Promise.all(files.map((file) => processFile(file, replace))),
+      await processUniqueFiles(files, (file) => processFile(file, replace)),
     );
   };
 
