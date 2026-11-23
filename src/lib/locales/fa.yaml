@@ -51,7 +51,7 @@ collapse_all: جمع کردن همه
 # Content manipulation: inserting, restoring, and discarding
 insert: درج
 restore: بازیابی
-discard: دور انداختن
+discard: از بین بردن
 
 # ==============================================================================
 # Common UI Elements
@@ -254,7 +254,7 @@ additions:
   current_password: رمز عبور فعلی
   # {$username} is the username filled in from a magic link emailed to the user
   filled_from_link: نام کاربری و رمز عبور از یک لینک پر شده‌اند. فقط در صورتی وارد شوید که «{$username}» نام کاربری شما باشد.
-  change_password_description: شما در اینجا وارد باقی می‌مانید و از دستگاه‌های دیگر خود خارج خواهید شد.
+  change_password_description: در این دستگاه متصل می‌مانید و از دستگاه‌های دیگر خارج خواهید شد.
   password_changed: رمز عبور شما تغییر کرد.
   # The Account settings panel of a Sveltia CMS Additions user
   account:
@@ -334,9 +334,9 @@ additions:
     # {$name} is the name of the person editing the entry
     being_edited_by_x: در حال ویرایش توسط {$name}
     # {$names} is a list of the other people who have the entry open in the editor
-    also_open_by_x: همچنین باز توسط {$names}
+    also_open_by_x: همچنین باز شده توسط {$names}
     # {$names} is a list of the people who have the entry open, besides anyone editing it
-    open_by_x: باز توسط {$names}
+    open_by_x: باز شده توسط {$names}
   users:
     title: کاربران
     add_user: افزودن کاربر
@@ -455,9 +455,9 @@ additions:
         unreachable: دسترسی به GitHub امکان‌پذیر نبود. لطفاً بعداً دوباره تلاش کنید.
       check_again: بررسی مجدد
       # {$branch} is the name of the repository’s default branch
-      branch_protected: مجموعه‌قوانین (Ruleset) از شاخه «{$branch}» در برابر force push و حذف محافظت می‌کنند.
-      branch_bypassed: مجموعه‌قوانین از شاخه «{$branch}» محافظت می‌کنند، اما برنامه می‌تواند آن‌ها را دور بزند، بنابراین ویرایشگران همچنان می‌توانند روی آن force push کنند یا آن را حذف کنند. برنامه را از فهرست‌های استثنای آن مجموعه‌قوانین حذف کنید.
-      branch_unprotected: هیچ مجموعه‌قوانینی از شاخه «{$branch}» در برابر force push و حذف محافظت نمی‌کند، بنابراین ویرایشگران می‌توانند تاریخچه آن را بازنویسی یا آن را حذف کنند. در تنظیمات مخزن یک مجموعه‌قوانین اضافه کنید که هر دو را مسدود کند، بدون اینکه برنامه در فهرست استثنای آن باشد.
+      branch_protected: مجموعه قوانین (Ruleset) از شاخه «{$branch}» در برابر force push و حذف محافظت می‌کنند.
+      branch_bypassed: مجموعه قوانین از شاخه «{$branch}» محافظت می‌کنند، اما برنامه می‌تواند آن‌ها را دور بزند، بنابراین ویرایشگران همچنان می‌توانند روی آن force push کنند یا آن را حذف کنند. برنامه را از فهرست‌های استثنای آن مجموعه قوانین حذف کنید.
+      branch_unprotected: هیچ مجموعه قوانینی از شاخه «{$branch}» در برابر force push و حذف محافظت نمی‌کند، بنابراین ویرایشگران می‌توانند تاریخچه آن را بازنویسی یا آن را حذف کنند. در تنظیمات مخزن یک مجموعه قوانین اضافه کنید که هر دو را مسدود کند، بدون اینکه برنامه در فهرست استثنای آن باشد.
       repository_rules: باز کردن قوانین مخزن
       private_key: کلید خصوصی
       private_key_description: برای جایگزینی کلید خصوصی، یک کلید جدید در تنظیمات برنامه در GitHub بسازید، سپس فایل .pem دانلودشده را بارگذاری کنید. پس از آن، کلید قدیمی را در آنجا حذف کنید.
@@ -467,7 +467,7 @@ additions:
       private_key_summary: سرویس از کلید خصوصی برنامه برای دسترسی به مخزن در GitHub استفاده می‌کند. اگر ممکن است فاش شده باشد، آن را جایگزین کنید.
       private_key_replaced: کلید خصوصی جایگزین شد.
       commit_author: نویسنده کامیت
-      commit_author_description: انتخاب کنید چه کسی به عنوان نویسنده تغییرات ذخیره‌شده در CMS نمایش داده شود. GitHub فقط کامیت‌هایی را امضا می‌کند که نویسنده‌شان برنامه است، بنابراین اگر یک مجموعه‌قوانین کامیت‌های امضاشده را الزامی می‌کند، برنامه را انتخاب کنید. سایر کاربران ظرف یک ساعت این تغییر را دریافت می‌کنند.
+      commit_author_description: انتخاب کنید چه کسی به عنوان نویسنده تغییرات ذخیره‌شده در CMS نمایش داده شود. GitHub فقط کامیت‌هایی را امضا می‌کند که نویسنده‌شان برنامه است، بنابراین اگر یک مجموعه قوانین کامیت‌های امضاشده را الزامی می‌کند، برنامه را انتخاب کنید. سایر کاربران ظرف یک ساعت این تغییر را دریافت می‌کنند.
       commit_author_user: فردی که تغییر را ایجاد کرده است
       commit_author_bot: GitHub App، با آن فرد به عنوان هم‌نویسنده
       commit_author_saved: نویسنده کامیت ذخیره شد.
@@ -625,7 +625,7 @@ local_git_skip_reasons:
   # The operation in progress, with how to finish or cancel it
   operation_in_progress:
     merge: یک ادغام (merge) در حال انجام است. آن را با git commit کامل کنید یا با git merge --abort لغو کنید.
-    rebase: یک rebase در حال انجام است. آن را با git rebase --continue کامل کنید یا با git rebase --abort لغو کنید. اگر از آن گذشته‌اید، git rebase --quit آن را بدون تغییر فایل‌های شما کنار می‌گذارد.
+    rebase: یک rebase در حال انجام است. آن را با git rebase --continue کامل کنید یا با git rebase --abort لغو کنید. اگر دیگر قصد ادامه آن را ندارید، git rebase --quit آن را بدون تغییر فایل‌های شما کنار می‌گذارد.
     cherry_pick: یک cherry-pick در حال انجام است. آن را با git cherry-pick --continue کامل کنید یا با git cherry-pick --abort لغو کنید.
     revert: یک revert در حال انجام است. آن را با git revert --continue کامل کنید یا با git revert --abort لغو کنید.
     am: اعمال وصله‌ها با git am در حال انجام است. آن را با git am --continue کامل کنید یا با git am --abort لغو کنید.
@@ -1341,7 +1341,7 @@ bulk_edit_invalid: برخی از مقادیر معتبر نیستند. فیلد�
 saving_bulk_edits_failed: ذخیره تغییرات ناموفق بود. لطفاً دوباره تلاش کنید.
 
 # Bulk edit: confirmation shown when leaving the mode with unsaved changes
-discard_bulk_edits_confirm: تغییرات اعمال‌شده روی ورودی‌ها دور انداخته شوند؟
+discard_bulk_edits_confirm: آیا تغییرات اعمال‌شده روی ورودی‌ها از بین برود؟
 
 # ==============================================================================
 # File Upload and Processing
@@ -2777,8 +2777,8 @@ workflow:
   changes_discarded: |
     .input {$count :integer}
     .match $count
-      one {{ تغییرات دور انداخته شدند. }}
-      *   {{ تغییرات {$count} ورودی دور انداخته شدند. }}
+      one {{ تغییرات از بین رفتند. }}
+      *   {{ تغییرات {$count} ورودی از بین رفتند. }}
   # Toast notifications shown while a deletion is being called off, and once that has completed
   cancelling_deletion: در حال لغو حذف…
   deletion_cancelled: حذف لغو شد.
@@ -2825,7 +2825,7 @@ workflow:
   publish_entry: انتشار ورودی
   # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
   # entry has a published version, because only the pending changes are thrown away
-  discard_changes: دور انداختن تغییرات
+  discard_changes: از بین بردن تغییرات
   # Confirmation message shown before deleting a published entry, replacing the direct
   # `confirm_deleting_this_entry` when Editorial Workflow is enabled: the removal goes through
   # review, so it isn’t immediate. Keep the label name in sync with `pending_deletion` below
@@ -2834,24 +2834,24 @@ workflow:
   # request instead of committing a deletion to the configured branch. Keep the wording free of
   # Git jargon, as editors are often non-technical.
   # Used when the entry has never been published, so nothing of it is left afterwards
-  confirm_deleting_unpublished_entry: این ورودی هنوز منتشر نشده است، بنابراین حذف آن باعث دور انداختن کامل آن می‌شود.
+  confirm_deleting_unpublished_entry: این ورودی هنوز منتشر نشده است، بنابراین حذف آن باعث از بین رفتن کامل آن می‌شود.
   # Used when the entry updates one that is already live, which stays untouched. The dialog is
   # titled “Discard Changes”, so the wording is about discarding, not deleting
-  confirm_discarding_entry_changes: این ورودی دارای تغییرات منتشرنشده است. دور انداختن آن‌ها نسخه منتشرشده را بازیابی خواهد کرد. خود ورودی حذف نخواهد شد.
+  confirm_discarding_entry_changes: این ورودی دارای تغییرات منتشرنشده است. از بین بردن آن‌ها نسخه منتشرشده را بازیابی خواهد کرد. خود ورودی حذف نخواهد شد.
   # Extra sentence appended to the entry list’s delete confirmation when every selected entry is
   # unpublished. {$count} is the number of selected entries. Keep the wording free of Git jargon.
   deleting_unpublished_note_all: |
     .input {$count :integer}
     .match $count
-      one {{ هنوز منتشر نشده است، بنابراین تغییرات منتشرنشده شما دور انداخته خواهند شد. هر نسخه منتشرشده‌ای منتشرشده باقی خواهد ماند. }}
-      *   {{ هنوز منتشر نشده‌اند، بنابراین تغییرات منتشرنشده شما دور انداخته خواهند شد. هر نسخه منتشرشده‌ای منتشرشده باقی خواهد ماند. }}
+      one {{ هنوز منتشر نشده است، بنابراین تغییرات منتشرنشده شما از بین خواهند رفت. هر نسخه منتشرشده‌ای منتشرشده باقی خواهد ماند. }}
+      *   {{ هنوز منتشر نشده‌اند، بنابراین تغییرات منتشرنشده شما از بین خواهند رفت. هر نسخه منتشرشده‌ای منتشرشده باقی خواهد ماند. }}
   # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
   # the number of selected entries that are unpublished.
   deleting_unpublished_note_some: |
     .input {$count :integer}
     .match $count
-      one {{ یکی از آن‌ها هنوز منتشر نشده است، بنابراین تغییرات منتشرنشده شما دور انداخته خواهند شد. هر نسخه منتشرشده‌ای منتشرشده باقی خواهد ماند. }}
-      *   {{ {$count} مورد از آن‌ها هنوز منتشر نشده‌اند، بنابراین تغییرات منتشرنشده شما دور انداخته خواهند شد. هر نسخه منتشرشده‌ای منتشرشده باقی خواهند ماند. }}
+      one {{ یکی از آن‌ها هنوز منتشر نشده است، بنابراین تغییرات منتشرنشده شما از بین خواهند رفت. هر نسخه منتشرشده‌ای منتشرشده باقی خواهد ماند. }}
+      *   {{ {$count} مورد از آن‌ها هنوز منتشر نشده‌اند، بنابراین تغییرات منتشرنشده شما از بین خواهند رفت. هر نسخه منتشرشده‌ای منتشرشده باقی خواهند ماند. }}
   # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
   confirm_publishing_entry_after_build: آیا مطمئن هستید که می‌خواهید این ورودی را منتشر کنید؟ تغییرات شما پس از بازسازی سایت آنلاین خواهند شد.
   # Workflow page: toast notifications shown while an entry is being published from a card, and
@@ -2861,7 +2861,7 @@ workflow:
   # Workflow page: toast notifications shown while an entry is being deleted from a card, and once
   # the deletion has completed
   deleting_entry: در حال حذف ورودی…
-  discarding_changes: در حال دور انداختن تغییرات…
+  discarding_changes: در حال از بین بردن تغییرات…
   entry_deleted: ورودی حذف شد.
   # Error notification when publishing fails
   publishing_entry_failed: انتشار ورودی امکان‌پذیر نبود. لطفاً دوباره تلاش کنید.
