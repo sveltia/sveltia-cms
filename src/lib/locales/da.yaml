@@ -294,7 +294,7 @@ additions:
     manage_sites: Administrer andre websteder
     back_to_setup: Tilbage
     sites_title: Andre websteder
-    sites_description: Denne tjeneste kan også betjene andre websteder, hver med sine egne brugere, indstillinger og GitHub App. Angiv webstedets URL som ”base_url” i dets CMS-konfiguration, og konfigurer derefter webstedet dér med administratorhemmeligheden.
+    sites_description: Denne tjeneste kan også betjene andre websteder, hver med sine egne brugere, indstillinger og GitHub App. Angiv webstedets URL som ”base_url” i dets CMS-konfiguration, og sæt derefter webstedet op dér med administratorhemmeligheden.
     no_sites: Der er endnu ingen andre websteder.
     site_id: Websteds-id
     site_id_description: 1 til 32 små bogstaver, tal og bindestreger, fx ”acme”. Det indgår i webstedets URL og kan ikke ændres.
