@@ -14,7 +14,7 @@ Explore the largest [showcase](https://sveltiacms.app/en/showcase) of any Git-ba
 
 [![Sveltia CMS vs. Decap CMS](https://sveltiacms.app/images/highlights/sveltia-vs-decap.webp?20261112)](https://sveltiacms.app/en/compare/decap-cms)
 
-[![880 Netlify/Decap CMS issues solved in Sveltia CMS (including duplicates)](https://sveltiacms.app/images/highlights/decap-issues.webp?20261121)](https://sveltiacms.app/en/docs/successor-to-netlify-cms)
+[![880 Netlify/Decap CMS issues solved in Sveltia CMS (including duplicates)](https://sveltiacms.app/images/highlights/decap-issues.webp?20261122)](https://sveltiacms.app/en/docs/successor-to-netlify-cms)
 
 [![See it in action. Visit Sveltia CMS Showcase](https://sveltiacms.app/images/highlights/showcase.webp)](https://sveltiacms.app/en/showcase)
 
