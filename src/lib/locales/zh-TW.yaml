@@ -131,7 +131,7 @@ sign_in_with_x: 使用 {$service} 登入
 
 # Access token dialog: alternative authentication method
 sign_in_using_access_token: 使用存取權杖登入
-sign_in_using_access_token_description: 在下方輸入權杖，需要有倉庫內容的讀寫權限。
+sign_in_using_access_token_description: 在下方輸入權杖，需要有儲存庫內容的讀寫權限。
 # Shown after the description above when Editorial Workflow is enabled, which opens and merges pull requests
 sign_in_using_access_token_workflow_note: 由於已啟用編輯工作流程，權杖也必須具備提取要求的讀寫權限。
 # Inline link text with embedded HTML anchor tag
@@ -146,23 +146,23 @@ signing_in: 登入中……
 
 # Local and test repository options
 # Button label and description for working with a local Git repository
-work_with_local_repo: 使用本機倉庫
+work_with_local_repo: 使用本機儲存庫
 # {$repo} is the configured repository name shown when it is available
-work_with_local_repo_description: 在彈出的對話框中，選擇「{$repo}」倉庫的根目錄。
-work_with_local_repo_description_no_repo: 在彈出的對話框中，選擇您的 Git 倉庫的根目錄。
+work_with_local_repo_description: 在彈出的對話框中，選擇「{$repo}」儲存庫的根目錄。
+work_with_local_repo_description_no_repo: 在彈出的對話框中，選擇您的 Git 儲存庫的根目錄。
 # Button label for demo/test repository
-work_with_test_repo: 使用測試倉庫
+work_with_test_repo: 使用測試儲存庫
 # Button label for the test repository when sample content is seeded, e.g. on a demo site
 start_demo: 開始示範
 # Shown below the disabled test repository option in a browser that can’t save files to its
 # storage, e.g. Safari before version 26
-test_repo_unsupported_browser: 您的瀏覽器無法儲存測試倉庫的檔案。請更新至最新版本或改用其他瀏覽器。
+test_repo_unsupported_browser: 您的瀏覽器無法儲存測試儲存庫的檔案。請更新至最新版本或改用其他瀏覽器。
 
 # Authentication errors
 # Error messages shown during sign-in failures
 sign_in_error:
-  not_project_root: 所選資料夾不是倉庫根目錄。請再試一次。
-  picker_dismissed: 無法選擇倉庫根目錄。請再試一次。
+  not_project_root: 所選資料夾不是儲存庫根目錄。請再試一次。
+  picker_dismissed: 無法選擇儲存庫根目錄。請再試一次。
   authentication_aborted: 認證已中止。請再試一次。
   invalid_token: 提供的權杖無效。請檢查後再試一次。
   # OAuth and authenticator errors (shown with error codes) — keys are defined in the Sveltia CMS Authenticator library
@@ -180,15 +180,15 @@ sign_in_error:
 # {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
 backend_unsupported_version: '{$name} 後端需要 {$name} {$version} 或更高版本。'
 # {$repo} is the repository identifier, typically in owner/repo format
-repository_no_access: 您沒有存取「{$repo}」倉庫的權限。
+repository_no_access: 您沒有存取「{$repo}」儲存庫的權限。
 # {$repo} is the repository identifier, typically in owner/repo format
-repository_no_write_access: 您沒有「{$repo}」倉庫的寫入權限。
-repository_not_found: 「{$repo}」倉庫不存在。
-repository_empty: 「{$repo}」倉庫沒有分支。
+repository_no_write_access: 您沒有「{$repo}」儲存庫的寫入權限。
+repository_not_found: 「{$repo}」儲存庫不存在。
+repository_empty: 「{$repo}」儲存庫沒有分支。
 # {$repo} is the repository identifier, and {$branch} is the configured branch name
-branch_not_found: 「{$repo}」倉庫沒有「{$branch}」分支。
+branch_not_found: 「{$repo}」儲存庫沒有「{$branch}」分支。
 # {$repo} is the repository identifier, and {$dir} is the configured root directory
-root_dir_not_found: 「{$repo}」倉庫中不存在根目錄「{$dir}」。
+root_dir_not_found: 「{$repo}」儲存庫中不存在根目錄「{$dir}」。
 
 # General errors
 # Fallback error dialog title for unexpected errors
@@ -267,10 +267,10 @@ additions:
     password: 密碼
     no_password: 您的帳號僅使用 GitHub 登入，因此沒有可變更的密碼。管理員可以透過重設密碼為您設定一組密碼。
   setup:
-    use_admin_secret: 使用管理員密鑰
+    use_admin_secret: 使用管理員金鑰
     title: 設定 Sveltia CMS Additions
-    secret_description: 請輸入在 Sveltia CMS Additions 服務設定中設定的管理員密鑰。它只會在設定期間保留在此分頁中。
-    admin_secret: 管理員密鑰
+    secret_description: 請輸入在 Sveltia CMS Additions 服務設定中設定的管理員金鑰。它只會在設定期間保留在此分頁中。
+    admin_secret: 管理員金鑰
     continue: 繼續
     back: 返回登入
     admin_title: 管理員帳號
@@ -281,19 +281,19 @@ additions:
     reset_password: 儲存管理員
     github_title: GitHub
     # {$repo} is the repository, e.g. octocat/site
-    github_description: 為此網站建立 GitHub App，並將其安裝到「{$repo}」倉庫。GitHub 會要求您確認，然後將您帶回此處。
+    github_description: 為此網站建立 GitHub App，並將其安裝到「{$repo}」儲存庫。GitHub 會要求您確認，然後將您帶回此處。
     # {$repo} is the repository, {$app} is the name of the GitHub App
-    github_connected: 已透過「{$app}」GitHub App 連線到「{$repo}」倉庫。
+    github_connected: 已透過「{$app}」GitHub App 連線到「{$repo}」儲存庫。
     connect_github: 連線到 GitHub
     # {$step} is the number of the current step, {$total} the number of steps
     step_x_of_y: 第 {$step} 步，共 {$total} 步
     admin_exists: 管理員帳號已存在。
     reset_admin_password: 重設管理員密碼
-    setup_complete: 設定已完成。請使用管理員帳號登入以管理使用者和設定。您隨時可以使用管理員密鑰回到此處。
+    setup_complete: 設定已完成。請使用管理員帳號登入以管理使用者和設定。您隨時可以使用管理員金鑰回到此處。
     manage_sites: 管理其他網站
     back_to_setup: 返回
     sites_title: 其他網站
-    sites_description: 此服務也可以為其他網站提供服務，每個網站都有各自的使用者、設定和 GitHub App。請在網站的 CMS 設定中將「base_url」設為此服務的 URL，然後在該網站上使用管理員密鑰進行設定。
+    sites_description: 此服務也可以為其他網站提供服務，每個網站都有各自的使用者、設定和 GitHub App。請在網站的 CMS 設定中將「base_url」設為此服務的 URL，然後在該網站上使用管理員金鑰進行設定。
     no_sites: 目前還沒有其他網站。
     site_id: 網站 ID
     site_id_description: 1 到 32 個小寫字母、數字和連字號，例如「acme」。它會出現在網站的 URL 中，且無法變更。
@@ -309,18 +309,18 @@ additions:
     # {$name} is the name of the site, {$id} is its ID
     delete_site_confirmation: 刪除「{$name}」也會刪除它的使用者、設定和留言，且無法復原。GitHub App 會保留在 GitHub 上，您可以在那裡刪除它。請輸入「{$id}」以確認。
     site_id_to_confirm: 輸入網站 ID 以確認
-    data_key_locked_title: 管理員密鑰已變更
-    data_key_locked_description: 管理員密鑰已變更，因此無法讀取已儲存的設定。請輸入先前的密鑰以保留設定，若已遺失則重新開始。
-    previous_secret: 先前的管理員密鑰
+    data_key_locked_title: 管理員金鑰已變更
+    data_key_locked_description: 管理員金鑰已變更，因此無法讀取已儲存的設定。請輸入先前的金鑰以保留設定，若已遺失則重新開始。
+    previous_secret: 先前的管理員金鑰
     unlock: 解鎖
     rekey: 重新開始
-    rekey_confirmation: 重新開始會刪除 GitHub App 憑證和其他已儲存的密鑰，並登出所有人。密碼會保留。要繼續嗎？
+    rekey_confirmation: 重新開始會刪除 GitHub App 憑證和其他已儲存的金鑰，並登出所有人。密碼會保留。要繼續嗎？
     result:
       ok: 已連線到 GitHub。您現在可以登入了。
-      github_app_not_created: 未建立 GitHub App。請使用管理員密鑰再試一次。
-      github_app_not_installed: 未安裝 GitHub App。請使用管理員密鑰再試一次。
-      github_wrong_account: GitHub App 安裝到了不擁有此倉庫的帳號。請將其安裝到擁有此倉庫的帳號後再試一次。
-      github_repository_not_included: GitHub App 安裝時未取得該倉庫的存取權。請在 GitHub 上授予它倉庫存取權後再試一次。
+      github_app_not_created: 未建立 GitHub App。請使用管理員金鑰再試一次。
+      github_app_not_installed: 未安裝 GitHub App。請使用管理員金鑰再試一次。
+      github_wrong_account: GitHub App 安裝到了不擁有此儲存庫的帳號。請將其安裝到擁有此儲存庫的帳號後再試一次。
+      github_repository_not_included: GitHub App 安裝時未取得該儲存庫的存取權。請在 GitHub 上授予它儲存庫存取權後再試一次。
       unexpected: 因發生意外錯誤，無法連線到 GitHub。請再試一次。
   locks:
     # {$name} is the name of the person editing the entry, {$time} when they started
@@ -441,28 +441,28 @@ additions:
     github_tab: GitHub
     github:
       app: GitHub App
-      repository: 倉庫
+      repository: 儲存庫
       not_installed: 未安裝
       statuses:
         ok: 應用程式運作正常。
-        not_registered: 尚未設定 GitHub App。請在登入頁面使用管理員密鑰執行設定精靈。
-        key_missing: 更換管理員密鑰時，應用程式的私密金鑰已遺失。請在 GitHub 上的應用程式設定中產生新的私密金鑰，並在下方上傳。
+        not_registered: 尚未設定 GitHub App。請在登入頁面使用管理員金鑰執行設定精靈。
+        key_missing: 更換管理員金鑰時，應用程式的私密金鑰已遺失。請在 GitHub 上的應用程式設定中產生新的私密金鑰，並在下方上傳。
         key_rejected: GitHub 不接受此應用程式的私密金鑰，例如因為它已在 GitHub 上被刪除。請在 GitHub 上的應用程式設定中產生新的私密金鑰，並在下方上傳。
-        not_installed: 此應用程式未安裝在倉庫上。請從 GitHub 上的應用程式頁面重新安裝，或執行設定精靈。
+        not_installed: 此應用程式未安裝在儲存庫上。請從 GitHub 上的應用程式頁面重新安裝，或執行設定精靈。
         suspended: 此應用程式的安裝已被暫停。請在 GitHub 上的安裝設定中取消暫停。
         unreachable: 無法連線到 GitHub。請稍後再試。
       check_again: 再次檢查
       # {$branch} is the name of the repository’s default branch
       branch_protected: 規則集已保護「{$branch}」分支，防止強制推送和刪除。
       branch_bypassed: 規則集保護了「{$branch}」分支，但此應用程式可以略過這些規則，因此編輯者仍可能對其強制推送或刪除它。請將此應用程式從這些規則集的略過清單中移除。
-      branch_unprotected: 沒有任何規則集保護「{$branch}」分支免於強制推送和刪除，因此編輯者可能改寫其歷史記錄或刪除它。請在倉庫設定中新增一個同時阻擋這兩項操作的規則集，且不要將此應用程式加入其略過清單。
-      repository_rules: 開啟倉庫規則
+      branch_unprotected: 沒有任何規則集保護「{$branch}」分支免於強制推送和刪除，因此編輯者可能改寫其歷史記錄或刪除它。請在儲存庫設定中新增一個同時阻擋這兩項操作的規則集，且不要將此應用程式加入其略過清單。
+      repository_rules: 開啟儲存庫規則
       private_key: 私密金鑰
       private_key_description: 若要更換私密金鑰，請在 GitHub 上的應用程式設定中產生新的金鑰，然後上傳下載的 .pem 檔案。之後再到該處刪除舊金鑰。
       app_settings: 開啟應用程式設定
       upload_private_key: 上傳私密金鑰
       replace_private_key: 更換私密金鑰
-      private_key_summary: 此服務使用應用程式的私密金鑰來存取 GitHub 上的倉庫。若金鑰可能已外洩，請更換。
+      private_key_summary: 此服務使用應用程式的私密金鑰來存取 GitHub 上的儲存庫。若金鑰可能已外洩，請更換。
       private_key_replaced: 私密金鑰已更換。
       commit_author: 提交作者
       commit_author_description: 選擇在 CMS 中儲存的變更要顯示誰為作者。GitHub 只會為應用程式所撰寫的提交簽署，因此若規則集要求簽署提交，請選擇應用程式。其他使用者會在一小時內套用此變更。
@@ -479,10 +479,10 @@ additions:
     invalid_key: '{$service} 的 API 金鑰看起來不正確。'
   error:
     unauthenticated: 您的工作階段已過期。請重新登入。
-    wrong_admin_secret: 管理員密鑰不正確。
-    admin_secret_missing: Sveltia CMS Additions 服務的設定中未設定管理員密鑰。
-    admin_secret_too_short: Sveltia CMS Additions 服務設定中的管理員密鑰太短。請至少使用 32 個隨機字元。
-    wrong_previous_secret: 先前的管理員密鑰不正確。
+    wrong_admin_secret: 管理員金鑰不正確。
+    admin_secret_missing: Sveltia CMS Additions 服務的設定中未設定管理員金鑰。
+    admin_secret_too_short: Sveltia CMS Additions 服務設定中的管理員金鑰太短。請至少使用 32 個隨機字元。
+    wrong_previous_secret: 先前的管理員金鑰不正確。
     not_an_admin: 此使用者不是管理員。請選擇其他使用者名稱。
     invalid_username: 使用者名稱須為 3 到 30 個小寫字母、數字、點、連字號或底線。
     last_admin: 至少必須有一位管理員。
@@ -517,7 +517,7 @@ additions:
     invalid_private_key: 此檔案不是有效的私密金鑰。
     private_key_mismatch: GitHub 不接受此應用程式使用這個私密金鑰。請確認金鑰是在應用程式的設定中產生的。
     github_error: GitHub 回應了錯誤。請稍後再試。
-    data_key_locked: 在管理員完成變更管理員密鑰之前，無法使用 Sveltia CMS Additions。
+    data_key_locked: 在管理員完成變更管理員金鑰之前，無法使用 Sveltia CMS Additions。
     not_configured: Sveltia CMS Additions 設定不正確。請向管理員尋求協助。
     origin_not_allowed: 此網站不允許使用 Sveltia CMS Additions。請聯絡管理員將其加入允許的網域。
     not_set_up: Sveltia CMS Additions 尚未連線到 GitHub。請聯絡管理員完成設定。
@@ -560,8 +560,8 @@ additions:
 # Shown at the top of the account dropdown menu
 # {$name} is the signed-in user’s login name
 signed_in_as_x: 目前以 {$name} 身分登入
-working_with_local_repo: 正在使用本機倉庫
-working_with_test_repo: 正在使用測試倉庫
+working_with_local_repo: 正在使用本機儲存庫
+working_with_test_repo: 正在使用測試儲存庫
 working_in_demo_mode: 示範模式
 
 # Demo welcome dialog: shown once after signing in to a demo site, where the test repository is
@@ -617,9 +617,9 @@ locale_load_failed: 無法載入 {$locale} 翻譯。請稍後再試。
 # {$reason} is one of the `local_git_skip_reasons` strings below
 local_git_not_committed: 您的變更已儲存，但尚未提交到 Git。{$reason}若只想儲存檔案，請在「設定」>「開發者」中關閉 Git 提交。
 local_git_skip_reasons:
-  unsupported_repository: 您的倉庫使用了 CMS 不支援的 Git 功能，例如連結的工作樹、SHA-256 物件名稱、reftable 格式、稀疏索引，或第 3 版或第 4 版的索引（feature.manyFiles 選項和 git add -N 會使用這些版本）。
-  missing_identity: 倉庫的 Git 設定中未設定您的名稱和電子郵件地址，且 CMS 無法讀取您的全域設定。請在倉庫中使用 git config --local user.name "Your Name" 和 git config --local user.email "you@example.com" 進行設定。
-  locked: 另一個 Git 程序正在使用此倉庫。若沒有程序在執行，請刪除 .git/index.lock 檔案。
+  unsupported_repository: 您的儲存庫使用了 CMS 不支援的 Git 功能，例如連結的工作樹、SHA-256 物件名稱、reftable 格式、稀疏索引，或第 3 版或第 4 版的索引（feature.manyFiles 選項和 git add -N 會使用這些版本）。
+  missing_identity: 儲存庫的 Git 設定中未設定您的名稱和電子郵件地址，且 CMS 無法讀取您的全域設定。請在儲存庫中使用 git config --local user.name "Your Name" 和 git config --local user.email "you@example.com" 進行設定。
+  locked: 另一個 Git 程序正在使用此儲存庫。若沒有程序在執行，請刪除 .git/index.lock 檔案。
   # The operation in progress, with how to finish or cancel it
   operation_in_progress:
     merge: 合併正在進行中。請使用 git commit 完成，或使用 git merge --abort 取消。
@@ -666,7 +666,7 @@ account: 帳號
 
 # Account menu items: links to external resources
 live_site: 線上網站
-git_repository: Git 倉庫
+git_repository: Git 儲存庫
 settings: 設定
 
 # Page for the people who look after the CMS, apart from the personal settings: user management
@@ -1620,7 +1620,7 @@ locale_x_has_been_disabled: 已停用 {$locale} 內容。
 locale_x_now_disabled: '{$locale} 內容已關閉，儲存項目時會被刪除。'
 
 # Repository and site links
-view_in_repository: 在倉庫中檢視
+view_in_repository: 在儲存庫中檢視
 # {$service} is the external service label, such as GitHub or GitLab
 view_on_x: 在 {$service} 上檢視
 view_on_live_site: 在線上網站檢視
@@ -1864,8 +1864,8 @@ save_conflict:
   # `{$name}` is the other person’s name, `{$date}` when they made the change
   modified_by: '{$name} 在您開啟此項目後，於 {$date} 變更了它。'
   # Shown instead of `modified_by` when the other person isn’t known
-  modified: 在您開啟此項目後，它已在倉庫中被變更。
-  deleted: 在您開啟此項目後，它已從倉庫中被刪除。
+  modified: 在您開啟此項目後，它已在儲存庫中被變更。
+  deleted: 在您開啟此項目後，它已從儲存庫中被刪除。
   # Follows `modified_by` or `modified`
   overwrite_warning: 如果現在儲存，對方的變更將會遺失。
   # Follows `deleted`
@@ -1876,7 +1876,7 @@ save_conflict:
   # OK button label
   save_anyway: 仍要儲存
   # Error shown when the repository was updated between the check above and the commit itself
-  branch_moved: 儲存期間倉庫已被他人更新。請再試一次。
+  branch_moved: 儲存期間儲存庫已被他人更新。請再試一次。
   # Error shown when saving would change an item in a file storing all the entries of a collection,
   # which someone else has changed or moved since it was loaded
   array_item_changed: 儲存在同一個檔案中的某個項目已被他人變更。請再試一次。
@@ -2295,11 +2295,11 @@ config:
     unsupported_deprecated_backend: Sveltia CMS <a>不支援</a>已棄用的 {$name} 後端。
     unsupported_custom_backend: Sveltia CMS <a>不支援</a>自訂後端。
     unsupported_backend_suggestion: 請改用<a>支援的後端</a>。
-    missing_repository: 未定義倉庫。
-    invalid_repository: 設定的倉庫無效。格式必須為「owner/repo」。
+    missing_repository: 未定義儲存庫。
+    invalid_repository: 設定的儲存庫無效。格式必須為「owner/repo」。
     # Don’t localize `api_root`
     missing_api_root: 未定義 `api_root` 選項。Forgejo 後端需要此選項。
-    invalid_root_dir: 根目錄無效。它必須是倉庫內的路徑，且不能包含「..」。
+    invalid_root_dir: 根目錄無效。它必須是儲存庫內的路徑，且不能包含「..」。
     invalid_root_dir_branch: 根目錄無法用於 `editorial_workflow` 和 `preview` 發布模式的分支名稱。其路徑的任何部分都不能以點開頭、以「.lock」結尾，或包含空格或特殊字元（例如冒號或星號）。
     path_outside_root_dir: 路徑「{$path}」指向根目錄之外，CMS 無法在該處列出檔案。
     oauth_implicit_flow: Sveltia CMS 不支援設定的認證方法（隱式授權）。請改用其他<a>認證方法</a>。
@@ -2836,29 +2836,29 @@ commit_message:
 open_authoring:
   # Confirmation dialog shown when the CMS needs to create a fork for the contributor, and the
   # label on its OK button. {$repo} is the repository identifier in owner/repo format
-  fork_repository: Fork 倉庫
+  fork_repository: Fork 儲存庫
   fork: Fork
-  confirm_forking_repository: 要對「{$repo}」提出變更建議，必須在您的帳號下建立該倉庫的 fork。您的變更會儲存到那個 fork，並由維護者審核之後才會上線。
+  confirm_forking_repository: 要對「{$repo}」提出變更建議，必須在您的帳號下建立該儲存庫的 fork。您的變更會儲存到那個 fork，並由維護者審核之後才會上線。
   # Error shown when the user declined the dialog above
-  fork_declined: 您的帳號下必須有該倉庫的 fork，才能提出變更建議。
+  fork_declined: 您的帳號下必須有該儲存庫的 fork，才能提出變更建議。
   # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
-  fork_failed: 無法在您的帳號下建立「{$repo}」倉庫的 fork。
+  fork_failed: 無法在您的帳號下建立「{$repo}」儲存庫的 fork。
   # Error shown when the user’s fork doesn’t have the branch the CMS is configured with, so there’s
   # nothing to start their changes from. {$fork} and {$repo} are repository identifiers in
   # owner/repo format, {$branch} is the branch name
-  fork_branch_missing: 您的「{$fork}」fork 中沒有「{$branch}」分支。請從「{$repo}」倉庫更新該 fork，然後重新登入。
+  fork_branch_missing: 您的「{$fork}」fork 中沒有「{$branch}」分支。請從「{$repo}」儲存庫更新該 fork，然後重新登入。
   # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
   # because the API rate limit is exhausted. {$repo} is the repository identifier
-  permission_check_failed: 無法確認您對「{$repo}」倉庫的存取權限。請稍後再試。
+  permission_check_failed: 無法確認您對「{$repo}」儲存庫的存取權限。請稍後再試。
   # Error shown when the repository can’t be forked, which is the default for a private
   # repository. {$repo} is the repository identifier
-  forking_disabled: 「{$repo}」倉庫不允許 fork。請聯絡維護者為它啟用 fork。
+  forking_disabled: 「{$repo}」儲存庫不允許 fork。請聯絡維護者為它啟用 fork。
   # Error shown when the user was invited to the repository but hasn’t accepted yet, so they still
   # have no access. {$repo} is the repository identifier
-  invitation_pending: 您有一封「{$repo}」倉庫的邀請尚未接受。請先在 GitHub 上接受邀請，再重新登入。
+  invitation_pending: 您有一封「{$repo}」儲存庫的邀請尚未接受。請先在 GitHub 上接受邀請，再重新登入。
   # Error shown when the repository is private but the sign-in doesn’t cover private repositories.
   # {$repo} is the repository identifier
-  private_repo_scope_required: 您的登入權限不包含私有倉庫，因此無法讀取「{$repo}」倉庫。請聯絡維護者檢查 CMS 的認證設定。
+  private_repo_scope_required: 您的登入權限不包含私有儲存庫，因此無法讀取「{$repo}」儲存庫。請聯絡維護者檢查 CMS 的認證設定。
   # Error shown when a contributor tries to publish an entry, which only a maintainer can do
   publish_unsupported: 只有維護者才能發布這個網站的變更。請改將您的項目標示為審核中，會有人來檢視。
   # Error shown when a contributor changes the status of an entry whose request a maintainer has
@@ -2869,7 +2869,7 @@ open_authoring:
   # contributor can’t do. It covers media library uploads and deletions, and entry reordering
   direct_commit_unsupported: 這項變更無法直接套用。只有對項目的編輯可以提出審核建議。
   # Infobar shown while a contributor is signed in. {$repo} is their fork in owner/repo format
-  contributing_via_fork: 您的變更會儲存到您在「{$repo}」的倉庫 fork，並經過審核之後才會上線。
+  contributing_via_fork: 您的變更會儲存到您在「{$repo}」的儲存庫 fork，並經過審核之後才會上線。
   view_fork: 檢視 Fork
 
 # ==============================================================================
@@ -2997,9 +2997,9 @@ prefs:
         confirmation: 本機快取的檔案內容和圖片縮圖將被刪除。您未儲存的草稿和設定會保留，刪除的資料會在需要時重新下載或產生。完成後 CMS 將重新載入。
       # Erase All Data button
       all_data:
-        description: 刪除 CMS 在此瀏覽器中儲存的所有內容，包括快取檔案、未儲存的草稿和設定。已儲存到倉庫的內容不受影響。
+        description: 刪除 CMS 在此瀏覽器中儲存的所有內容，包括快取檔案、未儲存的草稿和設定。已儲存到儲存庫的內容不受影響。
         button_label: 清除所有資料
-        confirmation: 此瀏覽器中儲存的所有資料將被刪除，包括快取的檔案內容、圖片縮圖、未儲存的草稿、設定和登入狀態。您的倉庫不受影響，但任何未儲存的變更都將遺失，並且您需要重新登入。完成後 CMS 將重新載入。
+        confirmation: 此瀏覽器中儲存的所有資料將被刪除，包括快取的檔案內容、圖片縮圖、未儲存的草稿、設定和登入狀態。您的儲存庫不受影響，但任何未儲存的變更都將遺失，並且您需要重新登入。完成後 CMS 將重新載入。
 
   # Developer panel
   developer:
@@ -3010,9 +3010,9 @@ prefs:
       switch_label: 啟用開發者模式
     local_git:
       title: Git 提交
-      description: 每次儲存變更時，將其提交到本機倉庫的目前分支，就像使用遠端倉庫時 CMS 所做的一樣。之後您可以使用慣用的 Git 工具檢查並推送這些提交。
+      description: 每次儲存變更時，將其提交到本機儲存庫的目前分支，就像使用遠端儲存庫時 CMS 所做的一樣。之後您可以使用慣用的 Git 工具檢查並推送這些提交。
       switch_label: 將變更提交到 Git
-      checking: 正在檢查倉庫……
+      checking: 正在檢查儲存庫……
       # {$branch} is the branch name, {$name} and {$email} are the commit author’s name and email address
       ready: 變更將以 {$name}（{$email}）的身分提交到 {$branch} 分支。
       # {$reason} is one of the `local_git_skip_reasons` strings
