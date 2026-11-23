@@ -301,7 +301,7 @@ additions:
     site_name_optional: Nom (opcional)
     add_site: Afegeix un lloc
     # {$name} is the name of the site
-    site_added: S’ha afegit «{$name}». Definiu «base_url» a la seva configuració del CMS amb el seu URL i després obriu-hi l’assistent de configuració.
+    site_added: S’ha afegit «{$name}». Definiu «base_url» a la seva configuració del CMS amb la seva URL i després obriu-hi l’assistent de configuració.
     # {$name} is the name of the site
     copy_site_url: Copia l’URL de {$name}
     delete_site: Suprimeix el lloc
@@ -486,7 +486,7 @@ additions:
     admin_secret_too_short: El secret d’administrador definit a la configuració del servei de Sveltia CMS Additions és massa curt. Useu almenys 32 caràcters aleatoris.
     wrong_previous_secret: El secret d’administrador anterior no és correcte.
     not_an_admin: Aquest usuari no és administrador. Trieu un altre nom d’usuari.
-    invalid_username: Un nom d’usuari té de 3 a 30 lletres minúscules, xifres, punts, guionets o guions baixos.
+    invalid_username: Un nom d’usuari ha de tenir de 3 a 30 lletres minúscules, xifres, punts, guionets o guions baixos.
     last_admin: Hi ha d’haver almenys un administrador.
     cannot_disable_self: No podeu desactivar el vostre propi compte.
     cannot_delete_self: No podeu suprimir el vostre propi compte.
@@ -1863,7 +1863,7 @@ validation:
   type_mismatch:
     number: Introduïu un número.
     email: Introduïu un correu electrònic vàlid.
-    url: Introduïu un URL vàlid.
+    url: Introduïu una URL vàlida.
 
   # Value used for the same field in another entry of the collection
   value_not_unique: Aquest valor ja s’usa per a una altra entrada.
@@ -2185,7 +2185,7 @@ assets_dialog:
   available_files: Fitxers disponibles
 
   # URL entry option
-  enter_url: Introduïu un URL
+  enter_url: Introduïu una URL
   enter_file_url: 'Introduïu l’URL del fitxer:'
   enter_image_url: 'Introduïu l’URL de la imatge:'
 
@@ -2355,7 +2355,7 @@ config:
       .input {$count :integer}
       .match $count
         one {{ L’URL del fitxer de configuració ha d’usar el protocol HTTPS o una adreça localhost. }}
-        *   {{ Els URLs del fitxer de configuració han d’usar el protocol HTTPS o adreces localhost. }}
+        *   {{ Les URL del fitxer de configuració han d’usar el protocol HTTPS o adreces localhost. }}
     fetch_failed: No s’ha pogut recuperar el fitxer de configuració.
     # {$status} is the HTTP status code returned while fetching the config file
     fetch_failed_not_ok: La resposta HTTP ha retornat amb l’estat {$status}.
@@ -2375,6 +2375,7 @@ config:
     unsupported_deprecated_backend: El rerefons obsolet {$name} no està <a>suportat</a> a Sveltia CMS.
     unsupported_custom_backend: Els rerefons personalitzats no estan <a>suportats</a> a Sveltia CMS.
     unsupported_backend_suggestion: Useu un dels <a>rerefons suportats</a> en el seu lloc.
+    git_gateway_alternative: Si necessiteu gestionar usuaris, feu servir <a>Sveltia CMS Additions</a> amb GitHub.
     missing_repository: No s’ha definit el repositori.
     invalid_repository: El repositori configurat no és vàlid. Ha de tenir el format «owner/repo».
     # Don’t localize `api_root`
@@ -2394,7 +2395,7 @@ config:
     auth_scope_no_repo: L’opció `auth_scope` ha d’incloure `repo` o `public_repo`.
     missing_media_folder: No s’ha definit la carpeta multimèdia.
     public_folder_relative_path: La carpeta pública configurada no és vàlida. Ha de ser un camí absolut que comenci per «/».
-    public_folder_absolute_url: No s’admet un URL absolut per a l’opció de carpeta pública a Sveltia CMS.
+    public_folder_absolute_url: No s’admet una URL absoluta per a l’opció de carpeta pública a Sveltia CMS.
     # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
     unsupported_folder_template_tag: L’opció `{$option}` conté l’etiqueta de plantilla `{$tag}`, que no s’admet en aquest lloc. Només es poden usar les etiquetes de plantilla del slug, com ara `\{\{slug\}\}` i `\{\{year\}\}`, i les etiquetes `\{\{dirname\}\}`, `\{\{filename\}\}`, `\{\{extension\}\}`, `\{\{media_folder\}\}` i `\{\{public_folder\}\}`.
     # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
@@ -2402,7 +2403,7 @@ config:
     # {$replacement} is the configured replacement string; Don’t localize `sanitize_replacement`
     invalid_sanitize_replacement: L’opció `sanitize_replacement` està definida com a `{$replacement}`, però conté un caràcter que no es pot usar en un slug, de manera que no pot substituir-ne cap.
     # {$option} is the option name (`site_url` or `display_url`) and {$url} is the configured value
-    invalid_url_option: L’opció `{$option}` està definida com a `{$url}`, però ha de ser un URL absolut que comenci per `https://` o `http://`.
+    invalid_url_option: L’opció `{$option}` està definida com a `{$url}`, però ha de ser una URL absoluta que comenci per `https://` o `http://`.
     # Don’t localize `publish_mode`, `stages`, `draft`, `pending_review` and `pending_publish`
     invalid_publish_mode_stages: L’opció `stages` de `publish_mode` ha de començar amb `draft` i llistar les etapes en l’ordre `draft`, `pending_review`, `pending_publish`, sense repetir-ne cap.
     # Don’t localize `i18n` and `locales`
@@ -3103,12 +3104,12 @@ prefs:
       not_ready: Ara mateix no es poden confirmar els canvis. {$reason}
     deploy_hook:
       title: Ganxo de desplegament
-      description: Introduïu un URL de webhook que es cridarà quan activeu manualment un desplegament seleccionant Publica els canvis. Es pot deixar en blanc si useu GitHub Actions o GitLab CI/CD.
+      description: Introduïu una URL de webhook que es cridarà quan activeu manualment un desplegament seleccionant Publica els canvis. Es pot deixar en blanc si useu GitHub Actions o GitLab CI/CD.
       # Hook URL input
       url:
         field_label: URL del ganxo
-        saved: URL del ganxo desat.
-        removed: URL del ganxo suprimit.
+        saved: URL del ganxo desada.
+        removed: URL del ganxo suprimida.
       # Authorization header input
       auth:
         field_label: Capçalera d’autorització (p. ex., Bearer <testimoni>) (opcional)
