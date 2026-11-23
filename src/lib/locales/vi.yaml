@@ -266,11 +266,11 @@ additions:
     change_name: Đổi tên
     name_changed: Tên của bạn đã được thay đổi.
     password: Mật khẩu
-    no_password: Tài khoản của bạn chỉ đăng nhập bằng GitHub nên không có mật khẩu để thay đổi. Quản trị viên có thể cấp mật khẩu cho bạn bằng cách đặt lại mật khẩu.
+    no_password: Tài khoản của bạn chỉ dùng GitHub để đăng nhập nên không có mật khẩu để thay đổi. Quản trị viên có thể cấp mật khẩu cho bạn bằng cách đặt lại mật khẩu.
   setup:
     use_admin_secret: Dùng mã bí mật quản trị
     title: Thiết lập Sveltia CMS Additions
-    secret_description: Nhập mã bí mật quản trị đã đặt trong phần cài đặt của dịch vụ Sveltia CMS Additions. Mã này chỉ được giữ trong tab này trong khi bạn thiết lập.
+    secret_description: Nhập mã bí mật quản trị đã đặt trong phần cài đặt của dịch vụ Sveltia CMS Additions. Mã này chỉ được lưu tạm trong tab này khi bạn thiết lập.
     admin_secret: Mã bí mật quản trị
     continue: Tiếp tục
     back: Quay lại đăng nhập
@@ -325,7 +325,7 @@ additions:
       unexpected: Kết nối với GitHub không thành công do lỗi không mong muốn. Vui lòng thử lại.
   locks:
     # {$name} is the name of the person editing the entry, {$time} when they started
-    being_edited: '{$name} đã chỉnh sửa bài viết này từ {$time} nên bạn chỉ có thể xem.'
+    being_edited: '{$name} đang chỉnh sửa bài viết này từ {$time} nên bạn chỉ có thể xem.'
     being_edited_by_you: Bạn đang chỉnh sửa bài viết này trong một tab khác nên tại đây bạn chỉ có thể xem.
     # {$name} is the name of the person who took over the entry
     taken_over: '{$name} đã tiếp quản bài viết này nên giờ bạn chỉ có thể xem.'
@@ -418,7 +418,7 @@ additions:
     github_username_description: Khi có tên người dùng GitHub, người dùng sẽ đăng nhập bằng tài khoản GitHub đó thay vì mật khẩu.
     # {$name} is the user’s name
     github_required: '{$name} chỉ có thể đăng nhập bằng GitHub nên không thể xóa tên người dùng GitHub của họ. Hãy đặt lại mật khẩu của họ trước để cấp cho họ mật khẩu đăng nhập.'
-    adopt: Tiếp nhận tài khoản
+    adopt: Quản lý thủ công
     sign_in:
       github: Cho phép đăng nhập bằng GitHub
       github_description: Người dùng đăng nhập bằng tài khoản GitHub của họ và nhận mã GitHub riêng, nhờ đó các thay đổi được commit dưới tên của chính họ. Quản trị viên cần thêm họ trước bằng tên người dùng GitHub, trừ khi họ thuộc phạm vi của một quy tắc đăng ký.
@@ -429,7 +429,7 @@ additions:
         .match $count
           *   {{ {$count} người dùng chỉ có thể đăng nhập bằng GitHub và sẽ không thể đăng nhập khi tùy chọn này bị tắt, cho đến khi bạn đặt lại mật khẩu của họ. }}
       rules: Quy tắc đăng ký
-      rules_description: Thành viên của tổ chức GitHub nơi ứng dụng được cài đặt có thể đăng nhập mà không cần được thêm trước. Tài khoản của họ sẽ nhận vai trò bạn chọn và bị tắt nếu họ rời khỏi tổ chức, trừ khi bạn tiếp nhận tài khoản đó.
+      rules_description: Thành viên của tổ chức GitHub đã cài ứng dụng có thể tự đăng nhập mà không cần quản trị viên thêm trước. Tài khoản của họ sẽ được cấp vai trò bạn chọn. Nếu họ rời khỏi tổ chức, tài khoản sẽ tự động bị tắt, trừ khi bạn đã chuyển tài khoản sang quản lý thủ công.
       org: Tổ chức GitHub
       add_rule: Thêm quy tắc
       # {$org} is the name of a GitHub organization
@@ -450,25 +450,25 @@ additions:
         key_missing: Khóa riêng tư của ứng dụng đã bị mất khi mã bí mật quản trị được thay thế. Hãy tạo khóa riêng tư mới trong phần cài đặt ứng dụng trên GitHub và tải lên bên dưới.
         key_rejected: GitHub không chấp nhận khóa riêng tư của ứng dụng, chẳng hạn vì khóa đã bị xóa trên đó. Hãy tạo khóa riêng tư mới trong phần cài đặt ứng dụng trên GitHub và tải lên bên dưới.
         not_installed: Ứng dụng chưa được cài đặt trên kho mã nguồn. Hãy cài đặt lại từ trang của ứng dụng trên GitHub hoặc chạy trình hướng dẫn thiết lập.
-        suspended: Bản cài đặt của ứng dụng đang bị tạm ngưng. Hãy bỏ tạm ngưng trong phần cài đặt bản cài đặt trên GitHub.
+        suspended: Ứng dụng đã bị tạm ngừng trên GitHub nên không thể truy cập kho mã nguồn. Hãy kích hoạt lại trong trang cấu hình của ứng dụng đã cài trên GitHub.
         unreachable: Không thể kết nối với GitHub. Vui lòng thử lại sau.
       check_again: Kiểm tra lại
       # {$branch} is the name of the repository’s default branch
-      branch_protected: Các bộ quy tắc đang bảo vệ nhánh “{$branch}” khỏi force push và bị xóa.
-      branch_bypassed: Các bộ quy tắc đang bảo vệ nhánh “{$branch}”, nhưng ứng dụng có thể bỏ qua chúng, vì vậy biên tập viên vẫn có thể force push lên nhánh hoặc xóa nhánh. Hãy gỡ ứng dụng khỏi danh sách bỏ qua của các bộ quy tắc đó.
-      branch_unprotected: Không có bộ quy tắc nào bảo vệ nhánh “{$branch}” khỏi force push và bị xóa, vì vậy biên tập viên có thể viết lại lịch sử hoặc xóa nhánh. Hãy thêm một bộ quy tắc trong cài đặt kho mã nguồn để chặn cả hai, và không đưa ứng dụng vào danh sách bỏ qua của nó.
-      repository_rules: Mở quy tắc kho mã nguồn
+      branch_protected: Nhánh “{$branch}” đang được bảo vệ, không thể bị force push hay xóa.
+      branch_bypassed: Nhánh “{$branch}” đang được bảo vệ, nhưng ứng dụng được phép bỏ qua chế độ bảo vệ này, nên biên tập viên vẫn có thể force push hoặc xóa nhánh. Hãy gỡ ứng dụng khỏi danh sách được bỏ qua trong cài đặt bảo vệ nhánh.
+      branch_unprotected: Nhánh “{$branch}” chưa được bảo vệ khỏi force push và xóa nhánh, nên biên tập viên có thể viết lại lịch sử hoặc xóa nhánh. Hãy bật bảo vệ nhánh trong cài đặt kho mã nguồn để chặn cả hai, và đừng đưa ứng dụng vào danh sách được bỏ qua.
+      repository_rules: Mở cài đặt bảo vệ nhánh
       private_key: Khóa riêng tư
-      private_key_description: Để thay thế khóa riêng tư, hãy tạo khóa mới trong phần cài đặt ứng dụng trên GitHub, sau đó tải lên tệp .pem được tải xuống. Sau đó hãy xóa khóa cũ trên GitHub.
+      private_key_description: Để thay thế khóa riêng tư, hãy tạo khóa mới trong phần cài đặt ứng dụng trên GitHub, rồi tải lên tệp .pem vừa tải về. Sau đó, hãy xóa khóa cũ trên GitHub.
       app_settings: Mở cài đặt ứng dụng
       upload_private_key: Tải lên khóa riêng tư
       replace_private_key: Thay thế khóa riêng tư
       private_key_summary: Dịch vụ dùng khóa riêng tư của ứng dụng để truy cập kho mã nguồn trên GitHub. Hãy thay thế khóa nếu có khả năng nó đã bị lộ.
       private_key_replaced: Đã thay thế khóa riêng tư.
       commit_author: Tác giả commit
-      commit_author_description: Chọn người xuất hiện là tác giả của các thay đổi được lưu trong CMS. GitHub chỉ ký các commit do ứng dụng tạo, vì vậy hãy chọn ứng dụng nếu một bộ quy tắc yêu cầu commit có chữ ký. Những người dùng khác sẽ nhận được thay đổi này trong vòng một giờ.
+      commit_author_description: Chọn ai sẽ được ghi là tác giả của các thay đổi được lưu trong CMS. GitHub chỉ ký các commit do ứng dụng tạo, vì vậy hãy chọn ứng dụng nếu nhánh được bảo vệ yêu cầu commit có chữ ký. Thiết lập này sẽ áp dụng cho những người dùng khác trong vòng một giờ.
       commit_author_user: Người thực hiện thay đổi
-      commit_author_bot: GitHub App, với người thực hiện là đồng tác giả
+      commit_author_bot: GitHub App, ghi người thực hiện thay đổi là đồng tác giả
       commit_author_saved: Đã lưu tác giả commit.
   # Administration section for the API keys and the deploy hook an admin shares with everyone
   credentials:
@@ -632,7 +632,7 @@ local_git_skip_reasons:
   detached_head: Chưa checkout nhánh nào.
   staged_changes: Bạn có các thay đổi khác đã được stage để commit. Hãy commit hoặc bỏ stage chúng trước.
   # {$path} is the file path
-  lfs: '{$path} được theo dõi bằng Git LFS, CMS không thể commit vào đó.'
+  lfs: '{$path} được theo dõi bằng Git LFS nên CMS không thể commit tệp này.'
   # {$message} is the error message
   error: Đã xảy ra lỗi không mong muốn. {$message}
 
@@ -1025,7 +1025,7 @@ deleting_folder: Đang xóa thư mục…
 deleting_folder_failed: Không thể xóa thư mục.
 # Asset Library and asset picker: notice shown when a cloud storage service holds more files than
 # are listed at once
-external_assets_truncated: Dịch vụ có quá nhiều tệp nên không thể liệt kê tất cả, một số tệp đã bị bỏ qua.
+external_assets_truncated: Dịch vụ có quá nhiều tệp nên không thể liệt kê hết. Một số tệp đã bị bỏ qua.
 
 # Edit options menu: button and item labels
 edit_options: Chỉnh sửa tùy chọn
@@ -1583,11 +1583,11 @@ create_entry_title: Tạo {$name}
 create_entry_announcement: Bạn hiện đang tạo một bài viết mới trong chuyên mục “{$collection}”.
 # Editing an existing entry
 # {$entry} is the current entry label and {$collection} is the collection label
-edit_entry_announcement: Hiện bạn đang chỉnh sửa bài viết “{$entry}” trong chuyên mục “{$collection}”.
+edit_entry_announcement: Bạn hiện đang chỉnh sửa bài viết “{$entry}” trong chuyên mục “{$collection}”.
 # {$file} is the file name and {$collection} is the collection label
-edit_file_announcement: Hiện bạn đang chỉnh sửa tệp “{$file}” trong chuyên mục “{$collection}”.
+edit_file_announcement: Bạn hiện đang chỉnh sửa tệp “{$file}” trong chuyên mục “{$collection}”.
 # {$file} is the singleton file name
-edit_singleton_announcement: Bây giờ bạn đang chỉnh sửa trang đơn “{$file}”.
+edit_singleton_announcement: Bạn hiện đang chỉnh sửa trang đơn “{$file}”.
 
 # Save button variants
 # Shown when CI skip is enabled/disabled
@@ -1892,7 +1892,7 @@ entry_sidebar:
 # made and the estimated number of commits in all
 save_progress:
   preparing: 'Đang chuẩn bị tệp: {$done}/{$total}'
-  committing: 'Đang lưu lên GitHub: {$done}/khoảng {$total} commit'
+  committing: 'Đang lưu lên GitHub: {$done} trong số khoảng {$total} commit'
 
 # Entry save error dialog
 saving_entry:
@@ -2093,7 +2093,7 @@ relation_field:
   edit_failed: Không thể áp dụng các thay đổi đối với {$name}. Kiểm tra bảng điều khiển của trình duyệt để biết chi tiết.
   # Error shown when the changes would move the entry to another file path, e.g. through a path
   # template using a field. {$name} is the singular label of the collection
-  move_unsupported: Các thay đổi này sẽ di chuyển {$name} sang vị trí khác, điều chỉ có thể thực hiện bằng cách chỉnh sửa riêng mục đó.
+  move_unsupported: Các thay đổi này sẽ chuyển {$name} sang vị trí khác. Việc này chỉ thực hiện được khi bạn chỉnh sửa riêng {$name} đó.
   # Error shown when saving, if someone else has changed an entry edited from the field since. {$name}
   # is the summary of that entry
   edit_conflict: “{$name}” đã bị người khác thay đổi kể từ khi bạn chỉnh sửa. Hãy mở lại từ trường để xem xét các thay đổi của bạn so với phiên bản mới nhất.
@@ -2105,10 +2105,10 @@ relation_field:
   # Warning shown in the editor of an entry that has been edited from a Relation field of another
   # entry, while the changes wait in that entry’s pull request. {$name} is the summary of that
   # entry
-  edited_with_entry: Các thay đổi đối với bài viết này đang chờ được xuất bản cùng với “{$name}”. Nếu bạn lưu bây giờ, hai nhóm thay đổi sẽ được kết hợp khi bài viết đó được xuất bản, điều này có thể thất bại nếu chúng chồng chéo nhau.
+  edited_with_entry: Các thay đổi đối với bài viết này đang chờ được xuất bản cùng với “{$name}”. Nếu bạn lưu bây giờ, hai nhóm thay đổi sẽ được gộp lại khi bài viết đó được xuất bản, và việc gộp có thể thất bại nếu chúng xung đột với nhau.
   # Warning shown in the dialog when an entry edited from the field has been changed by someone else
   # since. {$name} is the singular label of the collection
-  changed_since_edit: '{$name} này đã bị người khác thay đổi kể từ khi bạn chỉnh sửa. Các thay đổi của bạn được hiển thị trên phiên bản mới nhất. Hãy xem xét chúng trước khi cập nhật.'
+  changed_since_edit: Người khác đã thay đổi {$name} này sau khi bạn chỉnh sửa. Các thay đổi của bạn đang được áp lên phiên bản mới nhất. Hãy kiểm tra lại trước khi cập nhật.
 
 # Select Assets dialog
 assets_dialog:
@@ -2701,7 +2701,7 @@ local_workflow:
 viewing_editorial_workflow: 'Bạn hiện đang xem bảng Quy trình biên tập. Bản nháp: {$draft}. Đang duyệt: {$review}. Sẵn sàng: {$ready}. Đang chờ xóa: {$deletion}.'
 # Same as above, for an Open Authoring contributor: their board has no Ready column, because only
 # a maintainer can publish
-viewing_open_authoring_workflow: 'Bạn hiện đang xem bảng quy trình biên tập. Bản nháp: {$draft}. Đang duyệt: {$review}. Chờ xóa: {$deletion}.'
+viewing_open_authoring_workflow: 'Bạn hiện đang xem bảng Quy trình biên tập. Bản nháp: {$draft}. Đang duyệt: {$review}. Đang chờ xóa: {$deletion}.'
 # Same as above, when the In Review stage is left out with the `stages` publish mode option
 viewing_editorial_workflow_without_review: 'Bạn hiện đang xem bảng Quy trình biên tập. Bản nháp: {$draft}. Sẵn sàng: {$ready}. Đang chờ xóa: {$deletion}.'
 # Same as above, when all the content uses Preview Workflow, which has no review stages, so the
@@ -2770,7 +2770,7 @@ workflow:
   # once done
   refresh: Làm mới
   refreshing: Đang làm mới…
-  refreshed: Bảng đã được cập nhật mới nhất.
+  refreshed: Bảng đã được cập nhật.
   # Error notification when the board could not be refreshed
   refresh_failed: Không thể làm mới bảng. Vui lòng thử lại.
   # Error notification when the status can’t be changed because the entry is incomplete. Required
@@ -2854,7 +2854,7 @@ workflow:
   drag_entry: Kéo để thay đổi trạng thái
   # Workflow page: note on a card in the Deploying tray, marking an entry that’s being removed from
   # the site rather than published to it
-  deploying_deletion: Xóa
+  deploying_deletion: Đang xóa
   # Workflow page: note on a card listing the new entries that were created from a Relation field
   # of the entry and are published along with it, e.g. “Also adds Section: Getting Started”
   companion_entries: Thêm cả {$entries}
@@ -3049,7 +3049,7 @@ prefs:
       all_data:
         description: Xóa mọi thứ mà CMS lưu trong trình duyệt này, bao gồm các tệp trong bộ nhớ đệm, bản nháp chưa lưu và cài đặt. Những gì đã lưu vào kho mã nguồn của bạn sẽ không bị ảnh hưởng.
         button_label: Xóa toàn bộ dữ liệu
-        confirmation: Thao tác này sẽ xóa bộ nhớ đệm, bản nháp chưa lưu, cài đặt và trạng thái đăng nhập trong trình duyệt. Dữ liệu trong kho mã nguồn vẫn được giữ nguyên. CMS sẽ tải lại và bạn cần đăng nhập lại.
+        confirmation: Toàn bộ dữ liệu lưu trong trình duyệt này sẽ bị xóa, gồm nội dung tệp trong bộ nhớ đệm, hình thu nhỏ, bản nháp chưa lưu, cài đặt và trạng thái đăng nhập. Kho mã nguồn của bạn không bị ảnh hưởng, nhưng mọi thay đổi chưa lưu sẽ bị mất và bạn sẽ phải đăng nhập lại. CMS sẽ được tải lại sau khi hoàn tất.
 
   # Developer panel
   developer:
