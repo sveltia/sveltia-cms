@@ -16,7 +16,7 @@ import {
  */
 
 // The source text of the TOML values that the parsed content holds in another type is remembered
-// in `valueSources`, like that of the values in a JSON or YAML file. A native date or time, e.g.
+// in the file state, like that of the values in a JSON or YAML file. A native date or time, e.g.
 // `2024-01-01T10:00:00Z`, `1979-05-27` or `12:30:00`, is held as a string, e.g.
 // `2024-01-01T10:00:00.000Z`, like a date in a JSON or YAML file, as the entry draft, its backup
 // and the fields handle strings. Writing it back as it was read means saving an entry neither turns

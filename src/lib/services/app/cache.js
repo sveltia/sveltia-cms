@@ -10,12 +10,12 @@ import { gitBackendServices } from '$lib/services/backends/git/services';
 import { LEGACY_USER_STORAGE_KEYS } from '$lib/services/user/constants';
 
 /**
- * Names of the IndexedDB object stores holding cached file contents, generated asset thumbnails and
- * the asset hashes computed by the local backend. The data in these stores can always be re-fetched
- * or regenerated, so it’s safe to delete.
+ * Names of the IndexedDB object stores holding cached file contents and directory listings,
+ * generated asset thumbnails and the asset hashes computed by the local backend. The data in these
+ * stores can always be re-fetched or regenerated, so it’s safe to delete.
  * @type {string[]}
  */
-const CACHE_STORE_NAMES = ['file-cache', 'asset-thumbnails', 'asset-hashes'];
+const CACHE_STORE_NAMES = ['file-cache', 'tree-cache', 'asset-thumbnails', 'asset-hashes'];
 
 /**
  * Prefix shared by all the local storage keys written by the CMS, such as `sveltia-cms.prefs`.

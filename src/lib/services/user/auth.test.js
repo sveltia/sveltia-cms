@@ -55,7 +55,7 @@ vi.mock('$lib/services/app/navigation', () => ({
 vi.mock('$lib/services/backends', () => ({
   backend: mockBackendStore,
   backendName: mockBackendName,
-  selectBackend: vi.fn((name) => {
+  selectBackend: vi.fn(async (name) => {
     mockBackendName.current = name;
 
     return name ? mockBackendStore.current : undefined;
@@ -70,6 +70,14 @@ vi.mock('$lib/services/contents', () => ({
   dataLoaded: mockDataLoaded,
 }));
 
+const mockChangeTemporaryPassword = vi.hoisted(() => vi.fn());
+
+vi.mock('$lib/services/app/additions', () => ({
+  isAdditionsEnabled: vi.fn(() => false),
+  loadAdditions: vi.fn(async () => undefined),
+  requireAdditions: vi.fn(() => ({ changeTemporaryPassword: mockChangeTemporaryPassword })),
+}));
+
 vi.mock('$lib/services/user/account.svelte', () => ({
   user: mockUser,
 }));
@@ -79,7 +87,7 @@ vi.mock('$lib/services/user/prefs.svelte', () => ({
 }));
 
 vi.mock('$lib/services/workflow', () => ({
-  unpublishedEntries: mockUnpublishedEntries,
+  allUnpublishedEntries: mockUnpublishedEntries,
   unpublishedEntriesLoaded: mockUnpublishedEntriesLoaded,
   publishingBranches: mockPublishingBranches,
 }));
@@ -176,10 +184,10 @@ describe('auth service', () => {
    */
   const answerMagicLinkPrompt = async (confirmed) => {
     await vi.waitFor(() => {
-      expect(auth.magicLinkConfirmation).toBeDefined();
+      expect(authModule.magicLinkConfirmation.current).toBeDefined();
     });
 
-    auth.magicLinkConfirmation.resolve(confirmed);
+    authModule.magicLinkConfirmation.current.respond(confirmed);
   };
 
   describe('initial state', () => {
@@ -229,6 +237,50 @@ describe('auth service', () => {
 
       expect(result._user).toEqual({ token: 'magic-token' });
       expect(result.copiedPrefs).toEqual(prefs);
+    });
+
+    it('should keep the username and password of an emailed magic link to fill in the form', () => {
+      const encodedData = encodeMagicLinkData({ username: 'viewer', password: 'kq7m-x2pd' });
+
+      mockParseLocation.mockReturnValue({
+        path: {
+          /**
+           * Mock match function.
+           * @returns {object} Match result with groups.
+           */
+          match: () => ({ groups: { encodedData } }),
+        },
+      });
+
+      const result = authModule.parseMagicLink();
+
+      // Nothing to sign in with automatically
+      expect(result._user).toBeUndefined();
+      expect(result.copiedPrefs).toBeUndefined();
+      expect(authModule.auth.emailedSignIn).toEqual({
+        username: 'viewer',
+        password: 'kq7m-x2pd',
+      });
+      // Taken out of the URL, like a token
+      expect(mockGoto).toHaveBeenCalledWith('', { replaceState: true });
+      authModule.auth.emailedSignIn = undefined;
+    });
+
+    it('should ignore a magic link with a username but no password', () => {
+      const encodedData = encodeMagicLinkData({ username: 'viewer' });
+
+      mockParseLocation.mockReturnValue({
+        path: {
+          /**
+           * Mock match function.
+           * @returns {object} Match result with groups.
+           */
+          match: () => ({ groups: { encodedData } }),
+        },
+      });
+
+      authModule.parseMagicLink();
+      expect(authModule.auth.emailedSignIn).toBeUndefined();
     });
 
     it('should parse magic link with token but no prefs', () => {
@@ -449,77 +501,92 @@ describe('auth service', () => {
   });
 
   describe('getBackend', () => {
-    it('should return backend and set local backendName when user has local backendName', () => {
+    it('should return backend and set local backendName when user has local backendName', async () => {
       const _user = { token: 'test-token', backendName: 'local' };
 
       mockBackendStore.current = mockBackend;
       mockCmsConfigStore.current = mockCmsConfig;
 
-      const result = authModule.getBackend(_user);
+      const result = await authModule.getBackend(_user);
 
       expect(mockBackendName.current).toEqual('local');
       expect(result).toBe(mockBackend);
     });
 
-    it('should return backend and set local backendName when user has proxy backendName', () => {
+    it('should return backend and set local backendName when user has proxy backendName', async () => {
       const _user = { token: 'test-token', backendName: 'proxy' };
 
       mockBackendStore.current = mockBackend;
       mockCmsConfigStore.current = mockCmsConfig;
 
-      const result = authModule.getBackend(_user);
+      const result = await authModule.getBackend(_user);
 
       // Should convert proxy to local
       expect(mockBackendName.current).toEqual('local');
       expect(result).toBe(mockBackend);
     });
 
-    it('should use backend name from cmsConfig when user has different backendName', () => {
+    it('should use backend name from cmsConfig when user has different backendName', async () => {
       const _user = { token: 'test-token', backendName: 'gitlab' };
 
       mockBackendStore.current = mockBackend;
       mockCmsConfigStore.current = mockCmsConfig;
 
-      const result = authModule.getBackend(_user);
+      const result = await authModule.getBackend(_user);
 
       // Should use the name from cmsConfig (github in this case)
       expect(mockBackendName.current).toEqual('github');
       expect(result).toBe(mockBackend);
     });
 
-    it('should use backend name from cmsConfig when user is undefined', () => {
+    it('should use backend name from cmsConfig when user is undefined', async () => {
       mockBackendStore.current = mockBackend;
       mockCmsConfigStore.current = mockCmsConfig;
 
-      const result = authModule.getBackend(undefined);
+      const result = await authModule.getBackend(undefined);
 
       expect(mockBackendName.current).toEqual('github');
       expect(result).toBe(mockBackend);
     });
 
-    it('should return undefined when backend store returns undefined', () => {
+    it('should return undefined when backend store returns undefined', async () => {
       const _user = { token: 'test-token', backendName: 'github' };
 
       mockBackendStore.current = undefined;
       mockCmsConfigStore.current = mockCmsConfig;
 
-      const result = authModule.getBackend(_user);
+      const result = await authModule.getBackend(_user);
 
       expect(mockBackendName.current).toEqual('github');
       expect(result).toBeUndefined();
     });
 
-    it('should handle user with custom backend name not in local/proxy list', () => {
+    it('should handle user with custom backend name not in local/proxy list', async () => {
       const _user = { token: 'test-token', backendName: 'gitea' };
 
       mockBackendStore.current = mockBackend;
       mockCmsConfigStore.current = mockCmsConfig;
 
-      const result = authModule.getBackend(_user);
+      const result = await authModule.getBackend(_user);
 
       // Should use cmsConfig backend name, not the user's gitea
       expect(mockBackendName.current).toEqual('github');
       expect(result).toBe(mockBackend);
+    });
+
+    it('reports a backend that fails to load as a sign-in error', async () => {
+      const { selectBackend } = await import('$lib/services/backends');
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      mockCmsConfigStore.current = mockCmsConfig;
+      vi.mocked(selectBackend).mockRejectedValueOnce(
+        new Error('Failed to load the gitlab chunk.', { cause: { message: 'Offline' } }),
+      );
+
+      await expect(authModule.getBackend(undefined)).resolves.toBeUndefined();
+      expect(auth.signInError).toEqual({ message: 'Offline', context: 'authentication' });
+
+      consoleSpy.mockRestore();
     });
   });
 
@@ -683,18 +750,18 @@ describe('auth service', () => {
       const signingIn = authModule.signInAutomatically();
 
       await vi.waitFor(() => {
-        expect(auth.magicLinkConfirmation).toBeDefined();
+        expect(authModule.magicLinkConfirmation.current).toBeDefined();
       });
 
       // The account is verified with the token alone, and shown to the user before anything else
-      expect(auth.magicLinkConfirmation.account).toEqual(magicUser);
+      expect(authModule.magicLinkConfirmation.current.account).toEqual(magicUser);
       expect(mockUser.account).toBeUndefined();
       expect(mockBackend.fetchFiles).not.toHaveBeenCalled();
 
-      auth.magicLinkConfirmation.resolve(true);
+      authModule.magicLinkConfirmation.current.respond(true);
       await signingIn;
 
-      expect(auth.magicLinkConfirmation).toBeUndefined();
+      expect(authModule.magicLinkConfirmation.current).toBeUndefined();
       expect(mockUser.account).toEqual(magicUser);
       expect(mockBackend.fetchFiles).toHaveBeenCalled();
     });
@@ -729,7 +796,7 @@ describe('auth service', () => {
         auto: true,
       });
       expect(mockUser.account).toEqual(cachedUser);
-      expect(auth.magicLinkConfirmation).toBeUndefined();
+      expect(authModule.magicLinkConfirmation.current).toBeUndefined();
       // The settings in the link are discarded along with it
       expect(mockPrefs.deployHookURL).toBeUndefined();
     });
@@ -774,7 +841,7 @@ describe('auth service', () => {
 
       await authModule.signInAutomatically();
 
-      expect(auth.magicLinkConfirmation).toBeUndefined();
+      expect(authModule.magicLinkConfirmation.current).toBeUndefined();
       expect(auth.signingIn).toBe(false);
       expect(auth.unauthenticated).toBe(true);
     });
@@ -812,6 +879,34 @@ describe('auth service', () => {
       expect(mockGoto).not.toHaveBeenCalled();
     });
 
+    it('should forget the details of an emailed magic link once a cached user signs in', async () => {
+      const cachedUser = { token: 'cached-token', backendName: 'github' };
+      const encodedData = encodeMagicLinkData({ username: 'editor', password: 'kq7m-x2pd' });
+
+      mockParseLocation.mockReturnValue({
+        path: {
+          /**
+           * Mock match function.
+           * @returns {object} Match result with groups.
+           */
+          match: () => ({ groups: { encodedData } }),
+        },
+      });
+      mockLocalStorage.get.mockResolvedValue(cachedUser);
+      mockBackendStore.current = mockBackend;
+      mockCmsConfigStore.current = mockCmsConfig;
+      mockBackend.signIn.mockResolvedValue(cachedUser);
+      mockBackend.fetchFiles.mockResolvedValue(undefined);
+
+      await authModule.signInAutomatically();
+
+      // Signed in from the cache, so the sign-in form won’t be filled in after signing out
+      expect(mockBackend.signIn).toHaveBeenCalledWith(
+        expect.objectContaining({ token: 'cached-token' }),
+      );
+      expect(authModule.auth.emailedSignIn).toBeUndefined();
+    });
+
     it('should return early if user cache is empty object', async () => {
       mockParseLocation.mockReturnValue({
         path: {
@@ -847,6 +942,83 @@ describe('auth service', () => {
       expect(mockLocalStorage.get).toHaveBeenCalledWith('decap-cms-user');
       expect(mockLocalStorage.get).toHaveBeenCalledWith('netlify-cms-user');
       expect(auth.signingIn).toBe(false);
+    });
+
+    it('should not send a token cached for another backend to the configured one', async () => {
+      // Left by a session from when the site used GitLab, before it moved to GitHub
+      mockLocalStorage.get.mockImplementation(async (key) =>
+        key === 'sveltia-cms.user'
+          ? { backendName: 'gitlab', token: 'gitlab-token', refreshToken: 'gitlab-refresh' }
+          : null,
+      );
+      mockBackendStore.current = mockBackend;
+      mockCmsConfigStore.current = mockCmsConfig;
+      mockUser.account = undefined;
+
+      await authModule.signInAutomatically();
+
+      expect(mockBackendName.current).toBe('github');
+      expect(mockBackend.signIn).not.toHaveBeenCalled();
+      expect(mockBackend.fetchFiles).not.toHaveBeenCalled();
+      // The cache is cleared, so the sign-in page is shown
+      expect(mockLocalStorage.set).toHaveBeenCalledWith('sveltia-cms.user', {});
+      expect(mockLocalStorage.delete).toHaveBeenCalledWith('decap-cms-user');
+      expect(mockLocalStorage.delete).toHaveBeenCalledWith('netlify-cms-user');
+      expect(mockUser.account).toBeUndefined();
+      expect(auth.signingIn).toBe(false);
+      expect(auth.unauthenticated).toBe(true);
+    });
+
+    it('should not send a token cached for or without Sveltia CMS Additions to the other', async () => {
+      const { isAdditionsEnabled } = await import('$lib/services/app/additions');
+
+      mockBackendStore.current = mockBackend;
+      mockCmsConfigStore.current = mockCmsConfig;
+
+      // A session token from when the site used Sveltia CMS Additions, which only gives a role
+      mockLocalStorage.get.mockImplementation(async (key) =>
+        key === 'sveltia-cms.user'
+          ? { backendName: 'github', token: 'ghs_x', refreshToken: 'session', role: 'editor' }
+          : null,
+      );
+      mockUser.account = undefined;
+      await authModule.signInAutomatically();
+      expect(mockBackend.signIn).not.toHaveBeenCalled();
+      expect(mockLocalStorage.set).toHaveBeenCalledWith('sveltia-cms.user', {});
+
+      // A GitHub refresh token from before the site started using it
+      vi.mocked(isAdditionsEnabled).mockReturnValue(true);
+      mockLocalStorage.get.mockImplementation(async (key) =>
+        key === 'sveltia-cms.user'
+          ? { backendName: 'github', token: 'gho_x', refreshToken: 'ghr_x' }
+          : null,
+      );
+      mockUser.account = undefined;
+      await authModule.signInAutomatically();
+      expect(mockBackend.signIn).not.toHaveBeenCalled();
+
+      // The stub cached while a sign-in popup is open, which has no token yet, goes on
+      mockLocalStorage.get.mockImplementation(async (key) =>
+        key === 'sveltia-cms.user' ? { backendName: 'github' } : null,
+      );
+      mockUser.account = undefined;
+      await authModule.signInAutomatically();
+      expect(mockBackend.signIn).toHaveBeenCalledWith({ auto: true });
+      vi.mocked(isAdditionsEnabled).mockReturnValue(false);
+    });
+
+    it('should not send a token Decap CMS cached for another backend to the configured one', async () => {
+      mockLocalStorage.get.mockImplementation(async (key) =>
+        key === 'decap-cms-user' ? { backendName: 'git-gateway', token: 'gateway-token' } : null,
+      );
+      mockBackendStore.current = mockBackend;
+      mockCmsConfigStore.current = mockCmsConfig;
+
+      await authModule.signInAutomatically();
+
+      expect(mockBackend.signIn).not.toHaveBeenCalled();
+      expect(mockLocalStorage.delete).toHaveBeenCalledWith('decap-cms-user');
+      expect(auth.unauthenticated).toBe(true);
     });
 
     it('should sign in with cached user data and set signingIn state', async () => {
@@ -1292,14 +1464,14 @@ describe('auth service', () => {
       mockBackendStore.current = undefined;
 
       expect(await authModule.confirmMagicLink('magic-token')).toBeUndefined();
-      expect(auth.magicLinkConfirmation).toBeUndefined();
+      expect(authModule.magicLinkConfirmation.current).toBeUndefined();
     });
 
     it('should return undefined when the token does not resolve to an account', async () => {
       mockBackend.signIn.mockResolvedValue(undefined);
 
       expect(await authModule.confirmMagicLink('magic-token')).toBeUndefined();
-      expect(auth.magicLinkConfirmation).toBeUndefined();
+      expect(authModule.magicLinkConfirmation.current).toBeUndefined();
     });
 
     it('should return the account once the user has confirmed it', async () => {
@@ -1314,6 +1486,35 @@ describe('auth service', () => {
 
       expect(result).toEqual(account);
       expect(mockBackend.signIn).toHaveBeenCalledWith({ token: 'magic-token', auto: true });
+    });
+
+    it('should decline a pending prompt once another link asks about its account', async () => {
+      const first = { backendName: 'github', token: 'first-token', login: 'first' };
+      const second = { backendName: 'github', token: 'second-token', login: 'second' };
+
+      mockBackend.signIn.mockImplementation(async ({ token }) =>
+        token === 'first-token' ? first : second,
+      );
+
+      const firstConfirmed = authModule.confirmMagicLink('first-token');
+
+      await vi.waitFor(() => {
+        expect(authModule.magicLinkConfirmation.current?.account).toEqual(first);
+      });
+
+      const secondConfirmed = authModule.confirmMagicLink('second-token');
+
+      await vi.waitFor(() => {
+        expect(authModule.magicLinkConfirmation.current?.account).toEqual(second);
+      });
+
+      // The stale prompt is declined rather than left hanging, and the new one stays up
+      await expect(firstConfirmed).resolves.toBeUndefined();
+      expect(authModule.magicLinkConfirmation.current?.account).toEqual(second);
+
+      await Promise.all([secondConfirmed, answerMagicLinkPrompt(true)]);
+      await expect(secondConfirmed).resolves.toEqual(second);
+      expect(authModule.magicLinkConfirmation.current).toBeUndefined();
     });
   });
 
@@ -1423,6 +1624,16 @@ describe('auth service', () => {
       expect(mockUser.account).toEqual({ login: 'bob', token: 'token-b' });
     });
 
+    it('should forget the details of an emailed magic link once signed in', async () => {
+      authModule.auth.emailedSignIn = { username: 'editor', password: 'kq7m-x2pd' };
+      mockBackend.signIn.mockResolvedValue({ login: 'bob', token: 'token-b' });
+      mockBackend.fetchFiles.mockResolvedValue(undefined);
+
+      await authModule.signInManually('github', 'token-b');
+
+      expect(authModule.auth.emailedSignIn).toBeUndefined();
+    });
+
     it('should sign in with provided credentials and set signingIn state', async () => {
       const user = { token: 'manual-token' };
 
@@ -1440,6 +1651,50 @@ describe('auth service', () => {
       expect(auth.unauthenticated).toBe(false);
       expect(mockUser.account).toEqual(user);
       expect(mockBackend.fetchFiles).toHaveBeenCalled();
+    });
+
+    it('should change a temporary password, then sign in with the new session', async () => {
+      mockChangeTemporaryPassword.mockResolvedValue('new-session');
+      mockBackend.signIn.mockResolvedValue(undefined);
+
+      await expect(authModule.signInWithNewPassword('github', 'new password')).resolves.toBe(true);
+
+      expect(mockChangeTemporaryPassword).toHaveBeenCalledWith('new password');
+      expect(mockBackend.signIn).toHaveBeenCalledWith({
+        token: undefined,
+        auto: false,
+        refreshToken: 'new-session',
+      });
+    });
+
+    it('should report a failed password change without signing in', async () => {
+      const error = new Error('Refused', { cause: { message: 'Refused by the service' } });
+
+      mockChangeTemporaryPassword.mockRejectedValue(error);
+
+      await expect(authModule.signInWithNewPassword('github', 'new password')).resolves.toBe(false);
+
+      expect(auth.signInError.message).toBe('Refused by the service');
+      expect(mockBackend.signIn).not.toHaveBeenCalled();
+    });
+
+    it('should pass Sveltia CMS Additions credentials on to the backend', async () => {
+      mockBackend.signIn.mockResolvedValue(undefined);
+
+      await authModule.signInManually('github', undefined, {
+        username: 'editor',
+        password: 'secret',
+      });
+
+      expect(mockBackend.signIn).toHaveBeenCalledWith({
+        token: undefined,
+        auto: false,
+        username: 'editor',
+        password: 'secret',
+      });
+      // A user who must change a temporary password isn’t signed in yet
+      expect(auth.unauthenticated).toBe(true);
+      expect(mockBackend.fetchFiles).not.toHaveBeenCalled();
     });
 
     it('should handle sign in failure and set signingIn state', async () => {
@@ -1660,6 +1915,24 @@ describe('auth service', () => {
       expect(openAuthoringModule.forkPermissionRequest.current).toBeUndefined();
       await expect(forkPermissionGranted).resolves.toBe(false);
       expect(mockResetDeployingEntries).toHaveBeenCalled();
+    });
+
+    it('should decline a pending magic link prompt', async () => {
+      const account = { backendName: 'github', token: 'magic-token', login: 'me' };
+
+      mockBackend.signIn.mockResolvedValue(account);
+      mockBackend.signOut.mockResolvedValue(undefined);
+
+      const confirmed = authModule.confirmMagicLink('magic-token');
+
+      await vi.waitFor(() => {
+        expect(authModule.magicLinkConfirmation.current).toBeDefined();
+      });
+
+      await authModule.signOut();
+
+      expect(authModule.magicLinkConfirmation.current).toBeUndefined();
+      await expect(confirmed).resolves.toBeUndefined();
     });
 
     it('should sign out even if the backend fails to', async () => {

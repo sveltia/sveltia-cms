@@ -5,6 +5,7 @@ import { isObject } from '@sveltia/utils/object';
 import { isURL } from '@sveltia/utils/string';
 
 import { allAssetFolders } from '$lib/services/assets/folders';
+import { loadTransliterator } from '$lib/services/common/slug/transliterate';
 import {
   cmsConfig,
   cmsConfigErrors,
@@ -23,6 +24,7 @@ import { normalizeConfigTemplates } from '$lib/services/config/templates';
 import { allEntryFolders } from '$lib/services/contents';
 import { loadDayjsLocales } from '$lib/services/contents/fields/date-time/locales';
 import { prefs } from '$lib/services/user/prefs.svelte';
+import { stripLeadingDotSlash } from '$lib/services/utils/file';
 
 /**
  * @import { InternalCmsConfig } from '$lib/types/private';
@@ -59,7 +61,6 @@ const updateFolders = (config) => {
  * Initialize the CMS configuration state by loading the YAML file and optionally merge the object
  * with one specified with `CMS.init()`.
  * @param {CmsConfig} [manualConfig] Raw configuration specified with manual initialization.
- * @todo Normalize configuration object.
  */
 export const initCmsConfig = async (manualConfig) => {
   cmsConfig.current = undefined;
@@ -136,15 +137,19 @@ export const initCmsConfig = async (manualConfig) => {
     config.collections?.forEach((collection) => {
       // The JSON schema has checked that `folder` is a string
       if ('folder' in collection) {
-        collection.folder = /** @type {string} */ (collection.folder)
-          .replace(/^\.(?:\/|$)/, '')
-          .replace(/^\/$/, '');
+        const folder = stripLeadingDotSlash(/** @type {string} */ (collection.folder));
+
+        collection.folder = folder === '/' ? '' : folder;
       }
     });
 
     // DateTime field values are parsed and formatted synchronously, so the locales they’re written
-    // in have to be ready before the content is loaded
-    await loadDayjsLocales(collectors.formatLocales);
+    // in have to be ready before the content is loaded. So does the library cleaning the accents of
+    // slugs, which are made synchronously as well
+    await Promise.all([
+      loadDayjsLocales(collectors.formatLocales),
+      config.slug?.clean_accents ? loadTransliterator() : undefined,
+    ]);
 
     cmsConfig.current = config;
     updateFolders(config);

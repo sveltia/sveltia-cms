@@ -819,6 +819,8 @@ test.describe('as a contributor', () => {
             // A contributor can’t label a pull request on the repository
             labels: [],
             author: github.user,
+            // The maintainers can edit the entry while reviewing it
+            maintainerCanModify: true,
           },
         ]);
 

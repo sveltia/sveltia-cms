@@ -1,25 +1,29 @@
 import {
   fetchDefaultBranchName,
-  isRateLimited,
+  fetchRepositoryAccess,
   repository,
 } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
-import { fetchAPIOrUndefined } from '$lib/services/backends/git/shared/api-optional';
 import {
   createLocalizedError,
   NOT_COLLABORATOR_ERROR_MESSAGE,
 } from '$lib/services/backends/git/shared/errors';
 import {
   createForkError,
+  fetchForkByNameFor,
   isOpenAuthoringConfiguredFor,
   pollForFork,
+  resolveBranchRepository,
   resolveWorkflowRepository,
   runOpenAuthoringSetUp,
   setUpForkFor,
-  warnForkNotFastForwarded,
-  warnForkSyncError,
+  syncForkWith,
 } from '$lib/services/backends/git/shared/fork';
-import { getRepositoryPath, isSameRepository } from '$lib/services/backends/git/shared/repository';
+import {
+  getRepositoryPath,
+  isSameRepository,
+  toRepositoryPath,
+} from '$lib/services/backends/git/shared/repository';
 import { user } from '$lib/services/user/account.svelte';
 
 /**
@@ -42,11 +46,24 @@ export const isOpenAuthoringConfigured = () => isOpenAuthoringConfiguredFor('git
 export const getWorkflowRepository = () => resolveWorkflowRepository(repository);
 
 /**
- * HTTP statuses that mean the signed-in user can’t see the repository at all. A private repository
- * answers a request from someone without access with a 404 rather than a 403, so its existence
- * isn’t leaked.
+ * Get the repository a workflow branch lives in, and its name there: see
+ * {@link resolveBranchRepository}.
+ * @param {string} branch Branch name as the CMS knows it.
+ * @returns {RepositoryPath & { branch: string }} Repository owner and name, and the branch name.
  */
-const NO_ACCESS_STATUSES = [403, 404];
+export const getBranchRepository = (branch) => resolveBranchRepository(repository, branch);
+
+/**
+ * Get the repository to read the files of the workflow branches from, by commit or blob ID.
+ * That’s the repository given by {@link getWorkflowRepository}: the contributor’s fork with Open
+ * Authoring, and the configured repository otherwise. The configured repository also serves the
+ * commits of the pull requests contributors have opened from their forks, as GitHub keeps them
+ * there under `refs/pull/{number}/head`, so a maintainer reads those from it too, rather than from
+ * a fork they may not be able to see, e.g. a private one, or one deleted since. Writes and branch
+ * lookups go to the fork itself: see {@link getBranchRepository}.
+ * @returns {RepositoryPath} Repository owner and name.
+ */
+export const getContentRepository = () => getWorkflowRepository();
 
 /**
  * Check whether the signed-in user has an invitation to the configured repository that they haven’t
@@ -110,111 +127,53 @@ const getNoAccessError = async (response) => {
 
 /**
  * Fetch what the sign-in needs to know about the configured repository: whether the signed-in user
- * can commit to it, and whether it can be forked at all. Both come from the repository itself,
- * which reports the authenticated user’s own permissions. Asking the collaborator endpoint instead
- * would need administrator access to answer, so a maintainer who merely has write access would be
- * turned away as though they had none.
- * @returns {Promise<{ canWrite: boolean, allowForking: boolean }>} Repository access.
+ * can commit to it, and whether it can be forked at all. See {@link fetchRepositoryAccess}. Open
+ * Authoring still needs the contributor to be able to read the repository, so being unable to see
+ * it is a dead end rather than a reason to fall back to a fork. A refusal is worth a hint.
+ * @returns {Promise<{ canRead: boolean, canWrite: boolean, allowForking: boolean,
+ * isPersonalPrivate: boolean }>} Repository access.
  * @throws {Error} When the user has no access to the repository, or the answer couldn’t be
  * determined — which is not the same thing.
- * @see https://docs.github.com/en/rest/repos/repos#get-a-repository
  */
-export const fetchRepositoryAccess = async () => {
-  const { owner, repo } = repository;
-  const repoPath = `${owner}/${repo}`;
+export const fetchOpenAuthoringAccess = async () => {
+  const access = await fetchRepositoryAccess(getNoAccessError);
 
-  const response = /** @type {Response} */ (
-    await fetchAPI(getRepositoryPath(repository), {
-      headers: { Accept: 'application/json' },
-      responseType: 'raw',
-    })
-  );
-
-  if (response.ok) {
-    const {
-      permissions,
-      private: isPrivate,
-      owner: repoOwner,
-      allow_forking: allowForking,
-    } = await response.json();
-
-    // GitHub doesn’t offer read-only collaborators on a repository owned by a personal account, so
-    // a private one has nobody for Open Authoring to serve: everyone invited can write to it and
-    // keeps working on it directly, and everyone else can’t read it at all. The feature then sits
-    // there doing nothing, with nothing on screen to say why, so point it out to whoever set it up
-    if (isPrivate && repoOwner?.type === 'User') {
-      // eslint-disable-next-line no-console
-      console.warn(
-        `Open Authoring is enabled, but the ${repoPath} repository is private and owned by a ` +
-          'personal account. GitHub does not allow read-only collaborators there, so everyone ' +
-          'who can sign in can also write to the repository and no one is treated as a ' +
-          'contributor. Transfer the repository to an organization to use Open Authoring with it.',
-      );
-    }
-
-    // `push` covers the write, maintain and admin roles
-    return { canWrite: !!permissions?.push, allowForking: allowForking !== false };
+  // GitHub doesn’t offer read-only collaborators on a repository owned by a personal account, so
+  // a private one has nobody for Open Authoring to serve: everyone invited can write to it and
+  // keeps working on it directly, and everyone else can’t read it at all. The feature then sits
+  // there doing nothing, with nothing on screen to say why, so point it out to whoever set it up
+  if (access.isPersonalPrivate) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      `Open Authoring is enabled, but the ${repository.owner}/${repository.repo} repository is ` +
+        'private and owned by a personal account. GitHub does not allow read-only collaborators ' +
+        'there, so everyone who can sign in can also write to the repository and no one is ' +
+        'treated as a contributor. Transfer the repository to an organization to use Open ' +
+        'Authoring with it.',
+    );
   }
 
-  // Open Authoring still needs the contributor to be able to read the repository, so being unable
-  // to see it is a dead end rather than a reason to fall back to a fork
-  if (NO_ACCESS_STATUSES.includes(response.status) && !isRateLimited(response)) {
-    throw await getNoAccessError(response);
-  }
-
-  // A rate limit or an outage leaves the question unanswered. Reading that as “no write access”
-  // would send a maintainer down the fork path over something passing, and offer to create a copy
-  // of a repository they can already write to, so make the failure visible instead
-  throw createLocalizedError(
-    'Failed to check the repository permission.',
-    'open_authoring.permission_check_failed',
-    { repo: repoPath },
-  );
+  return access;
 };
 
 /**
- * Look for the fork at the name GitHub gives it by default, which is the parent’s. This is where it
- * is unless the contributor renamed it, or already had a repository of that name when the fork was
- * made, in which case GitHub added a suffix. A repository that happens to share the name but isn’t
- * a fork of the configured one is ignored.
+ * Look for the fork at the name GitHub gives it by default: see {@link fetchForkByNameFor}.
  * @returns {Promise<RepositoryPath | undefined>} The fork, or `undefined` if it isn’t there.
- * @see https://docs.github.com/en/rest/repos/repos#get-a-repository
  */
-export const fetchForkByName = async () => {
-  const { repo } = repository;
-  const userName = /** @type {string} */ (user.account?.login);
+export const fetchForkByName = () =>
+  fetchForkByNameFor(repository, { headers: { Accept: 'application/json' } });
 
-  // Only a missing repository means there’s no fork at the name. Reading a rate limit or an outage
-  // the same way would have the contributor asked to create another one, so that is passed on
-  const result = /** @type {Record<string, any> | undefined} */ (
-    await fetchAPIOrUndefined(getRepositoryPath({ owner: userName, repo }), {
-      headers: { Accept: 'application/json' },
-    })
-  );
-
-  if (!result) {
-    return undefined;
-  }
-
-  // GitHub redirects a repository that has been transferred, so check that the fork found is still
-  // the user’s own, the way {@link fetchForkFromNetwork} does
-  if (
-    !result.fork ||
-    !isSameRepository(result.parent?.full_name, repository) ||
-    result.owner?.login?.toLowerCase() !== userName.toLowerCase()
-  ) {
-    return undefined;
-  }
-
-  const [forkOwner, forkRepo] = result.full_name.split('/');
-
-  return { owner: forkOwner, repo: forkRepo };
-};
-
+// `affiliations` is the one that filters by the viewer, so `OWNER` keeps the forks the signed-in
+// user owns. `ownerAffiliations` is about the owner being viewed instead, and its default of
+// `[OWNER, COLLABORATOR]` is widened to every value, so it can’t leave the fork out
 const FETCH_USER_FORK_QUERY = `
   query($owner: String!, $repo: String!) {
     repository(owner: $owner, name: $repo) {
-      forks(ownerAffiliations: [OWNER], first: 1) {
+      forks(
+        affiliations: [OWNER]
+        ownerAffiliations: [OWNER, COLLABORATOR, ORGANIZATION_MEMBER]
+        first: 1
+      ) {
         nodes {
           nameWithOwner
           owner {
@@ -248,9 +207,7 @@ export const fetchForkFromNetwork = async () => {
     return undefined;
   }
 
-  const [forkOwner, forkRepo] = node.nameWithOwner.split('/');
-
-  return { owner: forkOwner, repo: forkRepo };
+  return toRepositoryPath(node.nameWithOwner);
 };
 
 /**
@@ -308,9 +265,7 @@ export const createFork = async () => {
     throw createForkError(`${owner}/${repo}`, ex);
   }
 
-  const [forkOwner, forkRepo] = result.full_name.split('/');
-  /** @type {RepositoryPath} */
-  const fork = { owner: forkOwner, repo: forkRepo };
+  const fork = toRepositoryPath(result.full_name);
 
   await waitForFork(fork);
 
@@ -318,38 +273,11 @@ export const createFork = async () => {
 };
 
 /**
- * Bring the fork’s copy of the configured branch up to date with the configured repository, so a
- * new workflow branch starts from what’s currently on the site and the resulting pull request only
- * contains the entry being edited. A failure is logged rather than raised: a fork that has drifted
- * still works, it just makes for a noisier pull request.
+ * Bring the fork’s copy of the configured branch up to date: see {@link syncForkWith}.
  * @param {RepositoryPath} fork Fork to update.
- * @see https://docs.github.com/en/rest/branches/branches#sync-a-fork-branch-with-the-upstream-repository
+ * @returns {Promise<void>} Nothing.
  */
-export const syncFork = async (fork) => {
-  /** @type {Response | undefined} */
-  let response;
-
-  try {
-    response = /** @type {Response} */ (
-      await fetchAPI(`${getRepositoryPath(fork)}/merge-upstream`, {
-        method: 'POST',
-        body: { branch: repository.branch },
-        responseType: 'raw',
-      })
-    );
-  } catch (/** @type {any} */ ex) {
-    warnForkSyncError(fork, ex);
-
-    return;
-  }
-
-  // The request answers with a conflict when the fork has commits of its own on the branch, which
-  // is a state the CMS can’t resolve on the contributor’s behalf. It’s also refused when the update
-  // would change GitHub Actions workflow files and the OAuth token lacks the `workflow` scope
-  if (!response.ok) {
-    warnForkNotFastForwarded(fork);
-  }
-};
+export const syncFork = (fork) => syncForkWith(fork, repository.branch);
 
 /**
  * Work out how the signed-in user is going to write to the repository, and set up a fork for them
@@ -360,20 +288,11 @@ export const syncFork = async (fork) => {
  * @see https://sveltiacms.app/en/docs/workflows/open
  */
 const setUpOpenAuthoring = async () => {
-  const { owner, repo } = repository;
-
   await setUpForkFor({
-    repoPath: `${owner}/${repo}`,
-    fetchAccess: fetchRepositoryAccess,
-    /**
-     * Resolve the branch name, which syncing the fork needs. It’s otherwise resolved later in the
-     * data load.
-     */
-    prepare: async () => {
-      if (!repository.branch) {
-        await fetchDefaultBranchName();
-      }
-    },
+    repository,
+    fetchAccess: fetchOpenAuthoringAccess,
+    // Syncing the fork needs the branch name
+    fetchDefaultBranchName,
     fetchFork,
     prepareFork: syncFork,
     /**

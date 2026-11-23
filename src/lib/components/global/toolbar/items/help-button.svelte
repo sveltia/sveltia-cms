@@ -13,6 +13,7 @@
     variant="ghost"
     iconic
     popupPosition="bottom-right"
+    tooltip={_('help')}
     aria-label={_('show_help_menu')}
     bind:this={menuButton}
   >

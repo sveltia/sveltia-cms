@@ -1,10 +1,14 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
+import { getConversationCount } from '$lib/services/additions/conversation.svelte';
+import { entryLocks, getLockKey } from '$lib/services/additions/locks.svelte';
+import { loadAdditions } from '$lib/services/app/additions';
 import { allAssetFolders } from '$lib/services/assets/folders';
 import { backendName } from '$lib/services/backends';
 import { reportCommits } from '$lib/services/backends/commit-progress';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
+import { cmsConfig } from '$lib/services/config';
 import { getCollection } from '$lib/services/contents/collection';
 import {
   contentUpdatesToast,
@@ -23,7 +27,7 @@ import { recheckDeployments } from '$lib/services/deployments/poll';
 import { env } from '$lib/services/user/env.svelte';
 import { prefs } from '$lib/services/user/prefs.svelte';
 import { formatDate } from '$lib/services/utils/date';
-import { unpublishedEntries } from '$lib/services/workflow';
+import { allUnpublishedEntries } from '$lib/services/workflow';
 import {
   deleteWorkflowEntries,
   discardWorkflowEntries,
@@ -34,16 +38,22 @@ import {
 import {
   createMockAsset,
   createMockEntry,
+  createMockForkPullRequest,
   initTestConfig,
   setAssets,
   setEntries,
 } from '$lib/test/config';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
-import { waitForToastsToHide } from '$lib/test/toast';
+import { getShownToastText, waitForToastsToHide } from '$lib/test/toast';
 
 import Toolbar from './toolbar.svelte';
 
 vi.mock('$lib/services/contents/draft/save', () => ({ saveEntry: vi.fn() }));
+// Comments are kept by Sveltia CMS Additions, which only one test turns on
+vi.mock('$lib/services/additions/conversation.svelte', async (importOriginal) => ({
+  ...(await importOriginal()),
+  getConversationCount: vi.fn(() => 0),
+}));
 vi.mock('$lib/services/contents/collection/data/delete', () => ({
   updateStores: vi.fn(),
   deleteEntries: vi.fn(),
@@ -117,16 +127,6 @@ const renderExisting = (draftProps = {}) =>
   renderToolbar({ isNew: false, originalEntry: helloEntry, ...draftProps });
 
 /**
- * Get the text of the toast being shown, if any.
- * @returns {string | undefined} Text.
- */
-const getShownToastText = () =>
-  document
-    .querySelector('.sui.toast:not([aria-hidden="true"])')
-    ?.textContent?.replace(/\s+/g, ' ')
-    .trim();
-
-/**
  * Open the editor options menu.
  * @returns {Promise<import('vitest/browser').Locator>} Menu.
  */
@@ -149,7 +149,7 @@ describe('Toolbar', () => {
     prefs.closeOnSave = true;
     entryEditorSettings.current = { showPreview: true, showSecondPane: true, syncScrolling: true };
     sidebarSheetPanel.current = null;
-    unpublishedEntries.current = [];
+    allUnpublishedEntries.current = [];
     deployPollTimedOut.current = false;
     contentUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE };
     copyFromLocaleToast.current = { ...copyFromLocaleToast.current, show: false };
@@ -287,7 +287,7 @@ describe('Toolbar', () => {
     await page.getByRole('button', { name: 'Show Errors' }).click();
     expect(entryEditorSettings.current?.sidebarPanel).toBe('validation');
     expect(sidebarSheetPanel.current).toBeNull();
-    await expect.poll(getShownToastText).toBeUndefined();
+    await expect.poll(() => getShownToastText()).toBeUndefined();
   });
 
   test('puts the validation error toast away by itself', async () => {
@@ -335,6 +335,61 @@ describe('Toolbar', () => {
     await page.getByRole('button', { name: 'Save' }).click();
     await page.getByRole('button', { name: 'Show Errors' }).click();
     expect(sidebarSheetPanel.current).toBe('validation');
+  });
+
+  test('shows the comment count on the Conversation item on a small screen', async () => {
+    env.isSmallScreen = true;
+    env.isLargeScreen = false;
+    cmsConfig.current = /** @type {any} */ ({
+      ...cmsConfig.current,
+      backend: { name: 'github', repo: 'me/site', auth_type: 'additions' },
+    });
+    vi.mocked(getConversationCount).mockReturnValue(3);
+
+    try {
+      await loadAdditions();
+      await renderToolbar();
+
+      const menu = await openMenu();
+
+      await expect
+        .element(menu.getByRole('menuitem', { name: /^.Conversation. \(3\)$/ }))
+        .toBeVisible();
+    } finally {
+      vi.mocked(getConversationCount).mockReturnValue(0);
+    }
+  });
+
+  test('shows who else has the entry open, with Sveltia CMS Additions only', async () => {
+    const key = getLockKey('posts', helloEntry.subPath);
+
+    Object.assign(entryLocks, {
+      userId: 'u1',
+      presence: { [key]: [{ connection: 'theirs', user_id: 'u2', name: 'Ada Lovelace' }] },
+    });
+
+    const label = 'Also open by \u2068Ada Lovelace\u2069';
+
+    try {
+      await renderExisting();
+      await expect.element(page.getByRole('button', { name: 'Save' })).toBeVisible();
+      expect(page.getByRole('img', { name: label }).elements()).toHaveLength(0);
+
+      cmsConfig.current = /** @type {any} */ ({
+        ...cmsConfig.current,
+        backend: { name: 'github', repo: 'me/site', auth_type: 'additions' },
+      });
+      await loadAdditions();
+
+      const avatars = page
+        .getByRole('toolbar', { name: 'Primary' })
+        .getByRole('img', { name: label });
+
+      await expect.element(avatars).toBeVisible();
+      await expect.element(avatars).toHaveTextContent('AL');
+    } finally {
+      Object.assign(entryLocks, { userId: '', presence: {} });
+    }
   });
 
   test('reports a failure to save', async () => {
@@ -1074,7 +1129,7 @@ describe('Toolbar', () => {
           name: 'nested',
           folder: 'content/nested',
           nested: { depth: 3 },
-          meta: { path: { widget: 'string' } },
+          meta: { path: {} },
         },
       ],
     });
@@ -1150,7 +1205,7 @@ describe('Toolbar', () => {
     await renderExisting();
 
     listItemClipboardToast.current = { id: 1, show: true, status: 'success', message: 'Copied.' };
-    await expect.poll(getShownToastText).toBe('check_circle Success Copied.');
+    await expect.poll(() => getShownToastText()).toBe('check_circle Success Copied.');
     await waitForToastsToHide();
     expect(listItemClipboardToast.current.show).toBe(false);
   });
@@ -1166,7 +1221,7 @@ describe('Toolbar', () => {
       count: 1,
       sourceLanguage: undefined,
     };
-    await expect.poll(getShownToastText).toBe('error Error Nothing to copy.');
+    await expect.poll(() => getShownToastText()).toBe('error Error Nothing to copy.');
 
     // An unknown language is named by its code
     copyFromLocaleToast.current = {
@@ -1178,7 +1233,7 @@ describe('Toolbar', () => {
       sourceLanguage: 'xx',
     };
     await expect
-      .poll(getShownToastText)
+      .poll(() => getShownToastText())
       .toBe('check_circle Success Field copied from \u2068xx\u2069.');
     await waitForToastsToHide();
     expect(copyFromLocaleToast.current.show).toBe(false);
@@ -1309,7 +1364,7 @@ describe('Toolbar', () => {
         collections: [{ ...postsCollection, preview_path: 'posts/{{slug}}' }],
       });
       backendName.current = 'github';
-      unpublishedEntries.current = [unpublishedEntry];
+      allUnpublishedEntries.current = [unpublishedEntry];
       vi.mocked(saveEntry).mockResolvedValue(unpublishedEntry);
       vi.mocked(updateWorkflowStatus).mockResolvedValue(unpublishedEntry);
     });
@@ -1373,6 +1428,31 @@ describe('Toolbar', () => {
       // Nothing is left to hand over for review
       expect(page.getByRole('alertdialog').elements()).toHaveLength(0);
       await expect.poll(() => window.location.hash).toBe('#/collections/posts');
+    });
+
+    test('doesn’t offer to publish an entry whose contributor’s pull request has gone', async () => {
+      await initTestConfig({
+        backend: { name: 'github', repo: 'me/site' },
+        publish_mode: { type: 'editorial_workflow', direct_publish: true },
+        collections: [postsCollection],
+      });
+
+      // The pull request was merged or closed since the editor was opened, so it’s off the store
+      allUnpublishedEntries.current = [];
+      await renderExisting({
+        originalEntry: {
+          ...helloEntry,
+          workflow: { ...unpublishedEntry.workflow, pullRequest: createMockForkPullRequest() },
+        },
+      });
+
+      await expect
+        .element(
+          page.getByRole('toolbar', { name: 'Primary' }).getByRole('button', { name: 'Save' }),
+        )
+        .toBeInTheDocument();
+      // The Save button comes without the popup that offers Save and Publish
+      expect(page.getByRole('button', { name: 'More Options' }).elements()).toHaveLength(0);
     });
 
     test('refuses to save and publish along with an entry that has to be reviewed', async () => {
@@ -1496,8 +1576,29 @@ describe('Toolbar', () => {
       ]);
     });
 
+    test('links a contributor’s locked pull request to the Git service, with nothing to save', async () => {
+      /** @type {any} */
+      const forkEntry = {
+        ...unpublishedEntry,
+        workflow: {
+          ...unpublishedEntry.workflow,
+          status: 'pending_publish',
+          pullRequest: createMockForkPullRequest({ editable: false }),
+        },
+      };
+
+      allUnpublishedEntries.current = [forkEntry];
+      await renderExisting({ originalEntry: forkEntry });
+
+      const toolbar = page.getByRole('toolbar', { name: 'Primary' });
+
+      await expect.element(toolbar.getByRole('button', { name: /^Review on/ })).toBeInTheDocument();
+      expect(toolbar.getByRole('button', { name: 'Save' }).elements()).toHaveLength(0);
+      expect(toolbar.getByRole('button', { name: 'Publish Entry' }).elements()).toHaveLength(0);
+    });
+
     test('offers to publish an entry that is ready', async () => {
-      unpublishedEntries.current = [
+      allUnpublishedEntries.current = [
         {
           ...unpublishedEntry,
           workflow: { ...unpublishedEntry.workflow, status: 'pending_publish' },
@@ -1522,7 +1623,7 @@ describe('Toolbar', () => {
         workflow: { ...unpublishedEntry.workflow, status: 'pending_publish' },
       };
 
-      unpublishedEntries.current = [renamedEntry];
+      allUnpublishedEntries.current = [renamedEntry];
 
       await renderExisting({ originalEntry: renamedEntry });
 
@@ -1673,7 +1774,7 @@ describe('Toolbar', () => {
         travelTag,
         createMockEntry({ slug: 'a', content: { _default: { title: 'A', tag: 'travel' } } }),
       ]);
-      unpublishedEntries.current = [renamedTag];
+      allUnpublishedEntries.current = [renamedTag];
       vi.mocked(deleteWorkflowEntries).mockResolvedValue(undefined);
       window.location.hash = '#/collections/tags/entries/trips';
 
@@ -1712,7 +1813,7 @@ describe('Toolbar', () => {
 
     test('offers to cancel a pending deletion, and nothing else', async () => {
       setEntries([helloEntry]);
-      unpublishedEntries.current = [
+      allUnpublishedEntries.current = [
         {
           ...unpublishedEntry,
           workflow: { ...unpublishedEntry.workflow, status: 'pending_deletion' },
@@ -1743,7 +1844,7 @@ describe('Toolbar', () => {
 
     test('offers no workflow action for a read-only entry', async () => {
       setEntries([helloEntry]);
-      unpublishedEntries.current = [
+      allUnpublishedEntries.current = [
         {
           ...unpublishedEntry,
           workflow: { ...unpublishedEntry.workflow, status: 'pending_publish' },

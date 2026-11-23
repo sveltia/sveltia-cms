@@ -68,6 +68,7 @@ export const replaceTemplateTag = (tag, context) => {
   const {
     type,
     collection,
+    collectionFile,
     content,
     entryFilePath,
     locale,
@@ -112,13 +113,14 @@ export const replaceTemplateTag = (tag, context) => {
     return locale;
   }
 
-  // Handle file path related tags
+  // Handle file path related tags. A collection file can be localized differently from its
+  // collection, e.g. as multiple files, so its own i18n configuration decides the locale suffix
   if (type === 'preview_path' || type === 'media_folder') {
     const filePathValue = handleFilePathTag(
       tag,
       entryFilePath,
       basePath,
-      getFileNameLocaleSuffixes(collection),
+      getFileNameLocaleSuffixes(collectionFile ?? collection),
       fullPathRegEx,
     );
 
@@ -157,17 +159,19 @@ export const replaceTemplatePlaceholder = (placeholder, context) => {
     String(replaceTemplateTag(innerTag, replaceSubContext) ?? ''),
   );
 
-  // Fall back with a random ID unless the `default` transformation or a custom one is defined,
-  // which may give a value for a missing one
-  const hasDefaultTransformation = parsedTransformations.some(
-    (tf) => tf.args.defaultValue !== undefined,
+  // Fall back with a random ID unless the `default` or `ternary` transformation, or a custom one,
+  // is defined, which may give a value for a missing one. `ternary` always gives one of its values,
+  // so a missing value, e.g. of a Boolean field added after the entry was saved, gets the falsy one
+  const hasValueTransformation = parsedTransformations.some(
+    (tf) => tf.args.defaultValue !== undefined || tf.method === 'ternary',
   );
 
   const hasCustomTransformation = parsedTransformations.some((tf) =>
     customStringTransformationRegistry.has(tf.method),
   );
 
-  const isMissingValue = value === undefined;
+  // An empty number field holds `null`, which mustn’t become the word `null`
+  const isMissingValue = value === undefined || value === null;
   const { type, locale } = replaceSubContext;
 
   // A random fallback keeps generated slugs and paths unique, but a `preview_path` is recomputed on
@@ -200,7 +204,7 @@ export const replaceTemplatePlaceholder = (placeholder, context) => {
     );
   };
 
-  if (isMissingValue && !hasDefaultTransformation && !hasCustomTransformation) {
+  if (isMissingValue && !hasValueTransformation && !hasCustomTransformation) {
     return getFallbackValue();
   }
 
@@ -214,15 +218,15 @@ export const replaceTemplatePlaceholder = (placeholder, context) => {
   }
 
   // A custom transformation may give nothing for a missing value after all. The result of `default`
-  // is kept as is, even if its nested template resolves to nothing
-  if (isMissingValue && !hasDefaultTransformation && value === '') {
+  // or `ternary` is kept as is, even if its nested template resolves to nothing
+  if (isMissingValue && !hasValueTransformation && value === '') {
     return getFallbackValue();
   }
 
   // A value stands for a single folder of a media library prefix, so it can’t add path segments.
   // Unlike a slug, an empty value doesn’t get a random ID
   if (type === 'library_prefix') {
-    const slug = slugify(sanitizePath(String(value ?? '')), {
+    const slug = slugify(sanitizePath(String(value)), {
       locale,
       maxLength: Infinity,
       fallback: false,

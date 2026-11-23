@@ -18,13 +18,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    label,
-    showLabel = true,
-    children,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { label, showLabel = true, children } = $props();
 
   const id = $props.id();
   const labelId = `${id}-label`;

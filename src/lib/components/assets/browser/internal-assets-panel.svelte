@@ -48,7 +48,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     multiple = false,
     kind = undefined,
     selectFolder = false,
@@ -66,7 +65,6 @@
     onOpenSubfolder = undefined,
     selectedSubfolderPaths = [],
     onSelectSubfolder = undefined,
-    /* eslint-enable prefer-const */
   } = $props();
 
   /** @type {DropZone | undefined} */

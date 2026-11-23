@@ -12,19 +12,14 @@
   import { onDestroy, tick, untrack } from 'svelte';
 
   import LeafletMap from '$lib/components/common/leaflet-map.svelte';
-  import { createMapDrawController } from '$lib/services/contents/fields/map/draw';
-  import { searchLocations } from '$lib/services/contents/fields/map/geocoding';
-  import {
-    GeolocationUnsupportedError,
-    getCurrentPosition,
-  } from '$lib/services/contents/fields/map/geolocation';
-  import { isValidGeoJSON, parseGeoJSON } from '$lib/services/contents/fields/map/helpers';
+  import { mapServices } from '$lib/services/contents/fields/map/services';
   import { watch, watchAsync } from '$lib/services/utils/state.svelte';
 
   /**
    * @import Leaflet from 'leaflet';
    * @import { MapDrawController } from '$lib/services/contents/fields/map/draw';
    * @import { LocationSearchResult } from '$lib/services/contents/fields/map/geocoding';
+   * @import { MapServices } from '$lib/services/contents/fields/map/services';
    * @import { FieldEditorProps, GeoCoordinates } from '$lib/types/private';
    * @import { MapField } from '$lib/types/public';
    */
@@ -37,13 +32,11 @@
 
   /** @type {FieldEditorProps & Props} */
   let {
-    /* eslint-disable prefer-const */
     fieldConfig,
     currentValue = $bindable(),
     // required = true,
     readonly = false,
     invalid = false,
-    /* eslint-enable prefer-const */
   } = $props();
 
   const { decimals = 7, type: geometryType = 'Point', center, zoom } = $derived(fieldConfig);
@@ -70,6 +63,9 @@
   /** Whether the component has been destroyed, possibly before the drawing tools are loaded. */
   let destroyed = false;
 
+  // Fetch the services while Leaflet is loading, rather than once the map is ready
+  mapServices.preload();
+
   /**
    * Start the drawing tools once the Leaflet map is ready.
    * @param {object} args Arguments.
@@ -77,6 +73,8 @@
    * @param {Leaflet.Map} args.map Leaflet map instance.
    */
   const onReady = async ({ leaflet, map }) => {
+    const { createMapDrawController, isValidGeoJSON } = await mapServices.load();
+
     const controller = await createMapDrawController({
       leaflet,
       map,
@@ -118,8 +116,8 @@
       return;
     }
 
-    // Validate the value
-    const geometry = parseGeoJSON(currentValue ?? '', geometryType);
+    // Validate the value. The services are loaded before the drawing tools
+    const geometry = mapServices.get().parseGeoJSON(currentValue ?? '', geometryType);
     const newValue = geometry ? /** @type {string} */ (currentValue) : '';
 
     if (inputValue === newValue) {
@@ -180,15 +178,19 @@
    * @see https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API
    */
   const useCurrentLocation = async () => {
+    /** @type {MapServices | undefined} */
+    let services;
     /** @type {GeoCoordinates} */
     let coordinates;
 
     try {
-      coordinates = await getCurrentPosition();
+      services = await mapServices.load();
+      coordinates = await services.getCurrentPosition();
     } catch (error) {
       showAlertDialog = true;
 
-      if (error instanceof GeolocationUnsupportedError) {
+      // A failure to load the services is reported as any other error
+      if (services && error instanceof services.GeolocationUnsupportedError) {
         errorMessage = _('geolocation_unsupported');
       } else {
         errorMessage = _('geolocation_error_body');
@@ -248,10 +250,15 @@
 
       searching = true;
 
-      return untrack(() => searchLocations(query));
+      return untrack(async () => (await mapServices.load()).searchLocations(query));
     },
     (results) => {
       searchResults = results;
+      searching = false;
+    },
+    () => {
+      // The services failed to load: show no results, as `searchLocations()` does on an error
+      searchResults = [];
       searching = false;
     },
   );
@@ -267,11 +274,10 @@
     placeholder={_('find_place')}
     aria-label={_('find_place')}
   />
-  <!-- @todo Replace `title` with a native tooltip -->
   <Button
     variant="tertiary"
     iconic
-    title={_('use_your_location')}
+    tooltip={_('use_your_location')}
     aria-label={_('use_your_location')}
     disabled={readonly}
     onclick={() => {

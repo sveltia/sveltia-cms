@@ -8,9 +8,10 @@ import { restoreBackup } from '$lib/services/contents/draft/backup';
 import { buildDraft } from '$lib/services/contents/draft/create';
 import { getReferencedPendingEntrySet } from '$lib/services/contents/draft/pending-entries';
 import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
-import { compareWithStore } from '$lib/services/contents/draft/save/conflict';
+import { compareEntries } from '$lib/services/contents/draft/save/conflict';
 import { assignManualSortOrder } from '$lib/services/contents/draft/save/sort-order';
 import { getCanonicalSlug, getFillSlugOptions, getSlugs } from '$lib/services/contents/draft/slugs';
+import { updateComputedValues } from '$lib/services/contents/draft/update/compute';
 import { getField } from '$lib/services/contents/entry/fields';
 import { isEntryReadonly } from '$lib/services/contents/entry/readonly';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
@@ -84,7 +85,7 @@ vi.mock('$lib/services/contents/entry/fields', async (importOriginal) => ({
 }));
 
 vi.mock('$lib/services/contents/draft/save/conflict', () => ({
-  compareWithStore: vi.fn(),
+  compareEntries: vi.fn(),
 }));
 
 vi.mock('$lib/services/contents/fields/date-time/auto-now', () => ({
@@ -128,6 +129,10 @@ vi.mock('$lib/services/contents/fields/number/auto-increment', () => ({
   assignAutoIncrementValues: vi.fn(),
 }));
 
+vi.mock('$lib/services/contents/draft/update/compute', () => ({
+  updateComputedValues: vi.fn(),
+}));
+
 vi.mock('$lib/services/contents/draft/slugs', () => ({
   getCanonicalSlug: vi.fn(),
   getFillSlugOptions: vi.fn(() => ({ content: {} })),
@@ -168,7 +173,7 @@ beforeEach(() => {
   vi.mocked(getUnpublishedEntry).mockReturnValue(undefined);
   vi.mocked(getUnpublishedEntryByBranch).mockReturnValue(undefined);
   vi.mocked(getUnpublishedEntryByDraft).mockReturnValue(undefined);
-  unpublishedEntries.current = [];
+  /** @type {{ current: any[] }} */ (unpublishedEntries).current = [];
 });
 
 /** @type {RelationField} */
@@ -348,6 +353,11 @@ describe('getCreatableCollection', () => {
     vi.mocked(getCollection).mockReturnValue({ ...tagCollection, readonly: true });
     expect(getCreatableCollection({ fieldConfig, draft })).toBeUndefined();
   });
+
+  it('returns nothing when the collection is hidden', () => {
+    vi.mocked(getCollection).mockReturnValue({ ...tagCollection, hide: true });
+    expect(getCreatableCollection({ fieldConfig, draft })).toBeUndefined();
+  });
 });
 
 describe('getQuickAddHost', () => {
@@ -420,7 +430,7 @@ describe('getNestedQuickAddHost', () => {
 describe('hasCreationRoom', () => {
   beforeEach(() => {
     vi.mocked(getEntriesByCollection).mockReturnValue([]);
-    unpublishedEntries.current = [];
+    /** @type {{ current: any[] }} */ (unpublishedEntries).current = [];
   });
 
   it('does not count the existing entries edited from the draft', () => {
@@ -478,7 +488,7 @@ describe('hasCreationRoom', () => {
     });
 
     vi.mocked(getEntriesByCollection).mockReturnValue([entry('a')]);
-    unpublishedEntries.current = [
+    /** @type {{ current: any[] }} */ (unpublishedEntries).current = [
       entry('b', { collectionName: 'tags' }),
       entry('c', { collectionName: 'posts' }),
     ];
@@ -488,7 +498,7 @@ describe('hasCreationRoom', () => {
 
   it('counts a new entry riding along in another entry’s pull request against the limit', () => {
     vi.mocked(getEntriesByCollection).mockReturnValue(/** @type {any} */ ([{}]));
-    unpublishedEntries.current = [createHostEntry('svelte')];
+    /** @type {{ current: any[] }} */ (unpublishedEntries).current = [createHostEntry('svelte')];
 
     expect(
       hasCreationRoom({ collection: { ...tagCollection, limit: 2 }, draft: createParentDraft() }),
@@ -501,7 +511,7 @@ describe('hasCreationRoom', () => {
   it('counts a pending entry once after it has been saved to the pull request', () => {
     // The editor may stay open on the draft after the save, which still holds the entry
     vi.mocked(getEntriesByCollection).mockReturnValue(/** @type {any} */ ([{}]));
-    unpublishedEntries.current = [createHostEntry('svelte')];
+    /** @type {{ current: any[] }} */ (unpublishedEntries).current = [createHostEntry('svelte')];
 
     expect(
       hasCreationRoom({
@@ -751,7 +761,7 @@ describe('getPendingEntrySlugs', () => {
       canonicalSlug: undefined,
     });
     vi.mocked(getCanonicalSlug).mockReturnValue(undefined);
-    unpublishedEntries.current = [createHostEntry('svelte')];
+    /** @type {{ current: any[] }} */ (unpublishedEntries).current = [createHostEntry('svelte')];
 
     expect(getPendingEntrySlugs({ draft, pendingEntries: [] }).defaultLocaleSlug).toBe('svelte-1');
   });
@@ -856,6 +866,14 @@ describe('createPendingEntry', () => {
     expect(assignManualSortOrder).toHaveBeenCalledWith(draft, 1);
     expect(assignAutoIncrementValues).toHaveBeenCalledWith(draft, 1);
     expect(assignAutoNowValues).toHaveBeenCalledWith(draft);
+    // A Compute field referring to a value assigned above is resolved before the entry is saved
+    expect(updateComputedValues).toHaveBeenCalledWith(draft);
+    expect(vi.mocked(updateComputedValues).mock.invocationCallOrder[0]).toBeGreaterThan(
+      vi.mocked(assignAutoNowValues).mock.invocationCallOrder[0],
+    );
+    expect(vi.mocked(updateComputedValues).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(createSavingEntryData).mock.invocationCallOrder[0],
+    );
     // The `preSave` event hooks are held back until the entry is committed with the parent
     expect(createSavingEntryData).toHaveBeenCalledWith({ draft, slugs, runPreSave: false });
     expect(getEntryOptions).toHaveBeenCalledWith({
@@ -1478,6 +1496,10 @@ describe('canEditEntry', () => {
     expect(canEditEntry({ fieldConfig, draft, entry })).toBe(true);
     expect(canEditEntry({ fieldConfig, draft, entry: { ...entry, slug: '_index' } })).toBe(false);
 
+    // A hidden collection isn’t meant to be edited
+    vi.mocked(getCollection).mockReturnValue(/** @type {any} */ ({ ...collection, hide: true }));
+    expect(canEditEntry({ fieldConfig, draft, entry })).toBe(false);
+
     vi.mocked(getCollection).mockReturnValue(collection);
     vi.mocked(isEntryReadonly).mockReturnValue(true);
     expect(canEditEntry({ fieldConfig, draft, entry })).toBe(false);
@@ -1683,7 +1705,7 @@ describe('getEditableEntries', () => {
 describe('getEditTarget', () => {
   beforeEach(() => {
     allEntries.current = [];
-    vi.mocked(compareWithStore).mockReturnValue(undefined);
+    vi.mocked(compareEntries).mockReturnValue(undefined);
   });
 
   it('creates a new entry without an entry to edit', () => {
@@ -1720,9 +1742,9 @@ describe('getEditTarget', () => {
 
     allEntries.current = [latest];
     expect(getEditTarget(args)).toEqual({ pendingEntry, baseEntry: latest, changedSince: false });
-    expect(compareWithStore).toHaveBeenCalledWith(pendingEntry.baseEntry, { entries: [latest] });
+    expect(compareEntries).toHaveBeenCalledWith(pendingEntry.baseEntry, latest);
 
-    vi.mocked(compareWithStore).mockReturnValue({ type: 'modified', canOverwrite: true });
+    vi.mocked(compareEntries).mockReturnValue({ type: 'modified', canOverwrite: true });
     expect(getEditTarget(args).changedSince).toBe(true);
 
     // Deleted since, so it’s edited from the version it was edited from
@@ -1740,7 +1762,7 @@ describe('buildQuickAddDraft', () => {
 
   beforeEach(() => {
     allEntries.current = [];
-    vi.mocked(compareWithStore).mockReturnValue(undefined);
+    vi.mocked(compareEntries).mockReturnValue(undefined);
   });
 
   it('builds a new entry at the root of the collection folder', async () => {
@@ -1818,13 +1840,13 @@ describe('getLatestEntry', () => {
   });
 
   it('compares a version with the latest one', () => {
-    vi.mocked(compareWithStore).mockReturnValue(undefined);
+    vi.mocked(compareEntries).mockReturnValue(undefined);
     expect(compareWithLatest(createParentDraft(), published)).toBeUndefined();
-    expect(compareWithStore).toHaveBeenCalledWith(published, { entries: [published] });
+    expect(compareEntries).toHaveBeenCalledWith(published, published);
 
     allEntries.current = [];
     compareWithLatest(createParentDraft(), published);
-    expect(compareWithStore).toHaveBeenLastCalledWith(published, { entries: [] });
+    expect(compareEntries).toHaveBeenLastCalledWith(published, undefined);
   });
 });
 

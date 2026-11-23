@@ -22,12 +22,10 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     files = $bindable([]),
     transformedFileMap = undefined,
     removable = true,
     showThumbnail = true,
-    /* eslint-enable prefer-const */
   } = $props();
 
   /**

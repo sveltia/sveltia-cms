@@ -23,6 +23,7 @@
   import { initAppInstallDetection } from '$lib/services/app/install';
   import {
     announcedPageStatus,
+    hasOverlay,
     mainAreaTitle,
     overlayTitle,
     startViewTransition,
@@ -44,11 +45,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    config,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { config } = $props();
 
   // The strings for the default locale are always bundled with the app, so the UI can be rendered
   // right away, even while the strings for another locale are being fetched from the CDN
@@ -159,15 +156,19 @@
     around it working; this one catches a failure in those -->
     <ErrorBoundary scope="page">
       <LocaleLoadErrorToast />
-      <UpdateNotification />
       <ForkPermissionDialog />
       <CommitMessageDialog />
-      {#if backend.current}
-        <BackendStatusIndicator />
-      {/if}
-      {#if user.account && dataLoaded.current}
-        <OpenAuthoringIndicator />
-      {/if}
+      <!-- The infobars are covered by the content and asset overlays, so they mustn’t take the
+      focus then. The dialogs stay outside: the commit message one is opened from the editor -->
+      <div role="none" class="infobars" inert={hasOverlay.current}>
+        <UpdateNotification />
+        {#if backend.current}
+          <BackendStatusIndicator />
+        {/if}
+        {#if user.account && dataLoaded.current}
+          <OpenAuthoringIndicator />
+        {/if}
+      </div>
       <div role="none" class="main">
         <ErrorBoundary scope="page">
           {#if user.account && dataLoaded.current && transitioned}
@@ -305,6 +306,14 @@
   }
 
   :global {
+    /* The dragged item of a sortable list is left as a faint placeholder marking the gap it would
+      drop into. The pointer already carries the browser’s own drag image of it, so showing it
+      twice at full strength would just be confusing. */
+
+    .drag-placeholder {
+      opacity: 0.25;
+    }
+
     html:active-view-transition-type(forwards) {
       @media (width < 768px) {
         &::view-transition-old(page-root) {
@@ -433,6 +442,10 @@
     position: absolute;
     inset: 0;
     overflow: hidden;
+  }
+
+  .infobars {
+    display: contents;
   }
 
   .main {

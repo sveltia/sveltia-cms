@@ -3,7 +3,7 @@
   import { SecretInput } from '@sveltia/ui';
   import { onMount } from 'svelte';
 
-  import { setApiKey } from '$lib/services/user/api-keys';
+  import { isInvalidApiKey, isSharedApiKey, setApiKey } from '$lib/services/user/api-keys';
   import { prefs } from '$lib/services/user/prefs.svelte';
 
   /**
@@ -25,14 +25,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    serviceId,
-    service,
-    ariaLabel,
-    onChange = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { serviceId, service, ariaLabel, onChange = undefined } = $props();
 
   const { apiKeyPattern } = $derived(service);
 
@@ -43,7 +36,7 @@
    */
   const onchange = () => {
     const apiKey = value.trim();
-    const invalid = !!apiKey && !!apiKeyPattern && !apiKeyPattern.test(apiKey);
+    const invalid = isInvalidApiKey(apiKey, apiKeyPattern);
 
     setApiKey(serviceId, invalid ? '' : apiKey);
 
@@ -62,4 +55,13 @@
   });
 </script>
 
-<SecretInput bind:value flex autocomplete="off" spellcheck="false" {ariaLabel} {onchange} />
+<!-- An admin’s key is used until the user enters their own, so say so rather than show it -->
+<SecretInput
+  bind:value
+  flex
+  autocomplete="off"
+  spellcheck="false"
+  placeholder={isSharedApiKey(serviceId) ? _('additions.provided_by_admin') : undefined}
+  {ariaLabel}
+  {onchange}
+/>

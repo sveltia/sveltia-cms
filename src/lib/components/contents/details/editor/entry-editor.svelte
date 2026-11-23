@@ -17,11 +17,7 @@
   const entryDraft = getEntryDraftContext();
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    locale,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { locale } = $props();
 
   const fields = $derived(entryDraft.current?.fields ?? []);
   const showPathEditor = $derived(

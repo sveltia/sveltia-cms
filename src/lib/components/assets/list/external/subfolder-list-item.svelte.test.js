@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import { ASSET_DRAG_TYPE } from '$lib/services/assets/drag';
 import {
   deletingExternalSubfolder,
   focusedExternalAsset,
@@ -11,12 +12,31 @@ import {
   selectedExternalAssets,
   selectedExternalDirPath,
 } from '$lib/services/assets/external';
+import { assetMoveRequest, draggedFiles } from '$lib/services/assets/state';
 import { env } from '$lib/services/user/env.svelte';
 import { createMockCloudService, createMockExternalAsset } from '$lib/test/config';
 
 import SubfolderListItem from './subfolder-list-item.svelte';
 
 const subfolder = { name: '2024', path: 'images/2024' };
+
+/**
+ * Fire a drag event carrying files dragged from the list on the given element. The data transfer
+ * is a stand-in, as Chrome ignores a drop effect set on a real one outside a real drag.
+ * @param {Element} element Element.
+ * @param {string} type Event type.
+ * @returns {{ event: Event, dataTransfer: { types: string[], dropEffect: string } }} Event and
+ * its data transfer, holding the resulting drop effect.
+ */
+const dragFiles = (element, type) => {
+  const dataTransfer = { types: [ASSET_DRAG_TYPE], dropEffect: '' };
+  const event = new Event(type, { bubbles: true, cancelable: true });
+
+  Object.defineProperty(event, 'dataTransfer', { value: dataTransfer });
+  element.dispatchEvent(event);
+
+  return { event, dataTransfer };
+};
 
 const folderService = {
   browse: vi.fn(),
@@ -38,6 +58,8 @@ describe('SubfolderListItem', () => {
     deletingExternalSubfolder.current = undefined;
     focusedExternalSubfolder.current = undefined;
     focusedExternalAsset.current = undefined;
+    assetMoveRequest.current = undefined;
+    draggedFiles.current = undefined;
   });
 
   test('shows the folder as a row aligned with the asset rows in the list view', async () => {
@@ -120,5 +142,47 @@ describe('SubfolderListItem', () => {
 
     await page.getByRole('row', { name: '2024' }).click();
     expect(selectedExternalDirPath.current).toBe('images/2024');
+  });
+
+  test('takes the files on the service dropped on it, to be moved there', async () => {
+    const service = createMockCloudService({
+      ...folderService,
+      upload: vi.fn(),
+      listFolder: vi.fn(),
+    });
+
+    const asset = createMockExternalAsset({ fileName: 'a.png' });
+
+    selectedCloudService.current = service;
+    draggedFiles.current = { externalAssets: [asset], service };
+
+    await render(SubfolderListItem, { subfolder, rowIndex: 0, viewType: 'list' });
+
+    const row = page.getByRole('row', { name: '2024' });
+
+    expect(dragFiles(row.element(), 'dragover').dataTransfer.dropEffect).toBe('move');
+    await expect.element(row).toHaveClass('dragover');
+
+    dragFiles(row.element(), 'drop');
+    await expect.element(row).not.toHaveClass('dragover');
+    expect(assetMoveRequest.current).toEqual({
+      externalAssets: [asset],
+      service,
+      dirPath: 'images/2024',
+      serviceId: 'test_cloud',
+    });
+    expect(draggedFiles.current).toBeUndefined();
+
+    // A file already in the folder stays where it is, so there’s nothing to move
+    assetMoveRequest.current = undefined;
+    draggedFiles.current = {
+      externalAssets: [createMockExternalAsset({ fileName: 'b.png', folder: 'images/2024' })],
+      service,
+    };
+
+    expect(dragFiles(row.element(), 'dragover').dataTransfer.dropEffect).toBe('none');
+    await expect.element(row).not.toHaveClass('dragover');
+    dragFiles(row.element(), 'drop');
+    expect(assetMoveRequest.current).toBeUndefined();
   });
 });

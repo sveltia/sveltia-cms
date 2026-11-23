@@ -755,6 +755,43 @@ describe('Test getEntrySummaryFromContent()', () => {
   test('should skip lines that are not headers or have no text', () => {
     expect(getEntrySummaryFromContent({ body: '#Hashtag\n#\n#   \n\n## Header' })).toBe('Header');
     expect(getEntrySummaryFromContent({ body: 'Text # Not a header' })).toBe('');
+    // More than six `#` characters, or more than three spaces of indentation, isn’t a header
+    expect(getEntrySummaryFromContent({ body: '####### Not a header\n# Header' })).toBe('Header');
+    expect(getEntrySummaryFromContent({ body: '    # Code\n   # Header' })).toBe('Header');
+    expect(getEntrySummaryFromContent({ body: '#\tHeader' })).toBe('Header');
+  });
+
+  test('should strip the closing sequence of a header', () => {
+    expect(getEntrySummaryFromContent({ body: '## Closing ##' })).toBe('Closing');
+    expect(getEntrySummaryFromContent({ body: '# Closing #########  ' })).toBe('Closing');
+    expect(getEntrySummaryFromContent({ body: '# Closing {#a} #' })).toBe('Closing');
+    // Not preceded by a space, the `#` characters are part of the text
+    expect(getEntrySummaryFromContent({ body: '# C#' })).toBe('C#');
+    expect(getEntrySummaryFromContent({ body: '# Closing ## x' })).toBe('Closing ## x');
+    // A header with a closing sequence only has no text
+    expect(getEntrySummaryFromContent({ body: '### ###\n# Header' })).toBe('Header');
+  });
+
+  test('should skip fenced code blocks', () => {
+    expect(
+      getEntrySummaryFromContent({ body: '```sh\n# install deps\nnpm i\n```\n\n# Real Title' }),
+    ).toBe('Real Title');
+    expect(getEntrySummaryFromContent({ body: '  ~~~\n# Comment\n~~~~  \n# Real Title' })).toBe(
+      'Real Title',
+    );
+    // A closing fence is at least as long as the opening one, uses the same character, and has
+    // nothing but spaces after it
+    expect(
+      getEntrySummaryFromContent({
+        body: '````\n```\n# A\n~~~~\n# B\n```` x\n# C\n`````\n# Real Title',
+      }),
+    ).toBe('Real Title');
+    // An unclosed code block runs to the end
+    expect(getEntrySummaryFromContent({ body: '~~~\n# Comment' })).toBe('');
+    // A backtick fence with a backtick in its info string is inline code
+    expect(getEntrySummaryFromContent({ body: '``` `code` ```\n# Real Title' })).toBe('Real Title');
+    // An indented fence is code, not a fence
+    expect(getEntrySummaryFromContent({ body: '    ```\n# Real Title' })).toBe('Real Title');
   });
 
   test.each(
@@ -764,6 +801,10 @@ describe('Test getEntrySummaryFromContent()', () => {
       ['anchor starts', (n) => `# a${' {#'.repeat(n)}`],
       ['header markers', (n) => `${'#'.repeat(n)}x`],
       ['empty headers', (n) => '# \n'.repeat(n)],
+      ['closing sequences', (n) => `# a${' #'.repeat(n)}x`],
+      ['closing sequence markers', (n) => `# a ${'#'.repeat(n)}x`],
+      ['fence markers', (n) => `${'`'.repeat(n)}\n# a`],
+      ['fence lines', (n) => '```\n```x\n'.repeat(n)],
     ]),
   )('should find a header in linear time: %s', (_name, build) => {
     expectLinearTime(build, (body) => getEntrySummaryFromContent({ body }), 2000);

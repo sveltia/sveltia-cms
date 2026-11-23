@@ -1,11 +1,11 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Divider, Menu, MenuButton, MenuItem, MenuItemRadio } from '@sveltia/ui';
+  import { Divider, Menu, MenuButton, MenuItem } from '@sveltia/ui';
 
+  import ConditionRadioItems from '$lib/components/common/page-toolbar/condition-radio-items.svelte';
   import {
     getCollapsibleGroupNames,
-    getConditionKey,
-    getViewConditions,
+    isCollapsedByDefault,
     isGroupCollapsed,
     setAllGroupsCollapsed,
   } from '$lib/services/common/view';
@@ -29,7 +29,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     currentView,
     'aria-controls': ariaControls,
     label = '',
@@ -37,47 +36,32 @@
     noneLabel = '',
     groups = [],
     groupNames = [],
-    /* eslint-enable prefer-const */
   } = $props();
 
   const collapsibleGroupNames = $derived(getCollapsibleGroupNames(groupNames));
+  const collapsedByDefault = $derived(isCollapsedByDefault(groups, currentView.current.group));
   const canExpandAll = $derived(
-    collapsibleGroupNames.some((name) => isGroupCollapsed(currentView.current, name)),
+    collapsibleGroupNames.some((name) =>
+      isGroupCollapsed(currentView.current, name, collapsedByDefault),
+    ),
   );
   const canCollapseAll = $derived(
-    collapsibleGroupNames.some((name) => !isGroupCollapsed(currentView.current, name)),
+    collapsibleGroupNames.some(
+      (name) => !isGroupCollapsed(currentView.current, name, collapsedByDefault),
+    ),
   );
 </script>
 
 <MenuButton variant="ghost" label={label || _('group')} {disabled} popupPosition="bottom-right">
   {#snippet popup()}
     <Menu ariaLabel={_('grouping_options')} aria-controls={ariaControls}>
-      <MenuItemRadio
-        label={noneLabel || _('sort_keys.none')}
-        checked={!currentView.current.group}
-        onSelect={() => {
-          currentView.current = {
-            ...currentView.current,
-            group: null,
-          };
-        }}
+      <ConditionRadioItems
+        {currentView}
+        viewKey="group"
+        noneValue={null}
+        {noneLabel}
+        options={groups}
       />
-      {#each groups as group (getConditionKey(getViewConditions(group)))}
-        {@const { label: _label } = group}
-        {@const conditions = getViewConditions(group)}
-        {@const key = getConditionKey(conditions)}
-        <MenuItemRadio
-          label={_label}
-          checked={!!currentView.current.group &&
-            getConditionKey(currentView.current.group) === key}
-          onSelect={() => {
-            currentView.current = {
-              ...currentView.current,
-              group: conditions,
-            };
-          }}
-        />
-      {/each}
       <Divider />
       <MenuItem
         label={_('expand_all')}
@@ -87,6 +71,7 @@
             currentView.current,
             collapsibleGroupNames,
             false,
+            collapsedByDefault,
           );
         }}
       />
@@ -98,6 +83,7 @@
             currentView.current,
             collapsibleGroupNames,
             true,
+            collapsedByDefault,
           );
         }}
       />

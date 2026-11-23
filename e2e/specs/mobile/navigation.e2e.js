@@ -119,6 +119,32 @@ test('opens the settings from the menu, and goes back', async ({ page }) => {
   await expect(page.getByRole('menu', { name: 'Account' })).toBeVisible();
 });
 
+test('opens an Administration section from the menu, and goes back to it', async ({ page }) => {
+  const navigation = getBottomNavigation(page);
+
+  // Developer Mode adds the CMS Configuration section
+  await navigation.getByRole('radio', { name: 'Menu' }).click();
+  await page.getByRole('menuitem', { name: 'Settings' }).click();
+  await page.getByRole('menuitem', { name: 'Developer' }).click();
+  await page.getByRole('switch', { name: 'Enable Developer Mode' }).click();
+  await navigation.getByRole('radio', { name: 'Menu' }).click();
+
+  await page
+    .getByRole('menu', { name: 'Administration' })
+    .getByRole('menuitem', { name: 'CMS Configuration' })
+    .click();
+  await expect(page).toHaveURL(/#\/admin\/config$/);
+
+  const main = page.getByRole('main', { name: 'CMS Configuration' });
+
+  await expect(main.getByRole('blockquote', { name: 'CMS Configuration' })).toBeVisible();
+
+  // Back to the menu the section was opened from, not to a list of the sections
+  await main.getByRole('button', { name: 'Back' }).click();
+  await expect(page).toHaveURL(/#\/menu$/);
+  await expect(page.getByRole('menu', { name: 'Administration' })).toBeVisible();
+});
+
 test('signs out from the menu', async ({ page }) => {
   await getBottomNavigation(page).getByRole('radio', { name: 'Menu' }).click();
   await page.getByRole('menuitem', { name: 'Sign Out' }).click();

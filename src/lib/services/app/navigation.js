@@ -4,6 +4,7 @@ import { flushSync } from 'svelte';
 import { showAssetOverlay } from '$lib/services/assets/view';
 import { cmsConfig } from '$lib/services/config';
 import { showContentOverlay } from '$lib/services/contents/editor';
+import { getEntryEditorPath } from '$lib/services/contents/editor/route';
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
 import { decodeURIComponentSafely, encodePathSegments } from '$lib/services/utils/url';
 import { openNewTab } from '$lib/services/utils/window';
@@ -346,9 +347,10 @@ export const goto = async (
     return;
   }
 
-  const { origin, pathname, hash } = window.location;
-  const oldURL = `${origin}${pathname}${hash}`;
-  const newURL = `${origin}${pathname}#${path}`;
+  // Keep the query string, which the page may have been opened with, as a hash change would
+  const { origin, pathname, search, hash } = window.location;
+  const oldURL = `${origin}${pathname}${search}${hash}`;
+  const newURL = `${origin}${pathname}${search}#${path}`;
   // `from` is the URL of the previous history entry, which {@link goBack} relies on. Replacing the
   // current entry doesn’t change what the previous entry is, so carry the value over; the entry
   // being replaced is gone and must not become `from`, or a direct link followed by an in-place
@@ -397,12 +399,9 @@ export const redirectLegacyEntryLink = () => {
   // Carry any query string over, so the editor locale and dynamic default values survive
   const query = new URLSearchParams(params).toString();
 
-  goto(
-    `${encodePathSegments(`/collections/${collectionName}/entries/${subPath}`)}${query ? `?${query}` : ''}`,
-    {
-      replaceState: true,
-    },
-  );
+  goto(`${getEntryEditorPath(collectionName, subPath)}${query ? `?${query}` : ''}`, {
+    replaceState: true,
+  });
 
   return true;
 };
@@ -411,7 +410,7 @@ export const redirectLegacyEntryLink = () => {
  * Page names that make up the whole route. Unlike the content library and the other pages that
  * take a path of their own, anything following these in the URL is a dead link.
  */
-const STANDALONE_PAGE_NAMES = ['workflow', 'config', 'menu'];
+const STANDALONE_PAGE_NAMES = ['workflow', 'menu'];
 /**
  * Search modes set by the pages that search their own items.
  * @type {Record<string, 'contents' | 'assets'>}
@@ -435,6 +434,11 @@ export const resolveRoute = (path, pageNames) => {
   // The page name has to fill the whole first path segment, so `/collections-foo` doesn’t pass for
   // the content library and land on a page that can’t make sense of the rest of the path
   const { pageName } = path.match(`^\\/(?<pageName>${pageNames.join('|')})(?=\\/|$)`)?.groups ?? {};
+
+  // The CMS configuration has moved to the Administration page
+  if (path === '/config') {
+    return { redirect: '#/admin/config' };
+  }
 
   if (!pageName) {
     // The bare `#/` path is where the app starts, so open the content library. Any other unknown

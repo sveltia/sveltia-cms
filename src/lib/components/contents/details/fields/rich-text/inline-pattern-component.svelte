@@ -28,7 +28,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     componentName,
     label,
     toPreview,
@@ -36,7 +35,6 @@
     onEdit,
     values,
     onChange = () => undefined,
-    /* eslint-enable prefer-const */
   } = $props();
 
   /** @type {HTMLElement | undefined} */

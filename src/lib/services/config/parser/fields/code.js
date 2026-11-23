@@ -1,6 +1,7 @@
 import { isObject } from '@sveltia/utils/object';
 
 import { addMessage } from '$lib/services/config/parser/utils/validator';
+import { getCodeKeys } from '$lib/services/contents/fields/code/helpers';
 
 /**
  * @import { FieldParserArgs } from '$lib/types/private';
@@ -14,11 +15,7 @@ import { addMessage } from '$lib/services/config/parser/utils/validator';
  * @param {FieldParserArgs} args Arguments.
  */
 export const parseCodeFieldConfig = ({ config, context, collectors }) => {
-  const {
-    default: defaultValue,
-    output_code_only: outputCodeOnly = false,
-    keys = { code: 'code', lang: 'lang' },
-  } = /** @type {CodeField} */ (config);
+  const { default: defaultValue } = /** @type {CodeField} */ (config);
 
   // A string default is the code in either mode; a value of another type is reported against the
   // JSON schema
@@ -26,7 +23,9 @@ export const parseCodeFieldConfig = ({ config, context, collectors }) => {
     return;
   }
 
-  if (outputCodeOnly) {
+  const keys = getCodeKeys(/** @type {CodeField} */ (config));
+
+  if (!keys) {
     addMessage({ strKey: 'code_field_invalid_default_object', context, collectors });
 
     return;

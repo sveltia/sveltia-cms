@@ -11,11 +11,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    menuButton,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { menuButton } = $props();
 
   let showDialog = $state(false);
 </script>

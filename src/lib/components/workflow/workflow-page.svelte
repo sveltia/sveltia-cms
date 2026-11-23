@@ -18,11 +18,11 @@
   import { announcedPageStatus } from '$lib/services/app/navigation';
   import { retainDeployPolling } from '$lib/services/deployments/poll';
   import {
+    allUnpublishedEntries,
     checkPublishedVersion,
     getUnpublishedEntryById,
     isPendingDeletion,
     publishingBranches,
-    unpublishedEntries,
     workflowDataReady,
   } from '$lib/services/workflow';
   import {
@@ -110,7 +110,7 @@
   // A pending deletion has a status of its own, so it never lands in a stage column. It’s listed
   // below the board instead, and its cards don’t drag: there are no stages to move it through
   const { columns, pendingDeletions } = $derived(
-    groupEntriesByStatus(boardStages.current, unpublishedEntries.current, getStageOfEntry),
+    groupEntriesByStatus(boardStages.current, allUnpublishedEntries.current, getStageOfEntry),
   );
   const deploying = $derived(deployingEntries.current);
 

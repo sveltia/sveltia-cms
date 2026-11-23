@@ -4,6 +4,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  escapeAlt,
   escapeTitle,
   followReadonly,
   getParentComponentNames,
@@ -231,6 +232,27 @@ describe('utils', () => {
     it('should be the counterpart of unescapeTitle', () => {
       ['T "q"', 'a\\"b', 'end\\', 'C:\\Users', '\\\\"', '"""'].forEach((title) => {
         expect(unescapeTitle(escapeTitle(title))).toBe(title);
+      });
+    });
+  });
+
+  describe('escapeAlt', () => {
+    it('should escape brackets', () => {
+      expect(escapeAlt('smile :] [1')).toBe('smile :\\] \\[1');
+    });
+
+    it('should escape a backslash before a punctuation character or at the end', () => {
+      expect(escapeAlt('a\\] b\\* c\\')).toBe('a\\\\\\] b\\\\* c\\\\');
+    });
+
+    it('should keep other characters as is', () => {
+      expect(escapeAlt('')).toBe('');
+      expect(escapeAlt('C:\\Users "it\'s"')).toBe('C:\\Users "it\'s"');
+    });
+
+    it('should be the counterpart of unescapeTitle', () => {
+      ['a]', '[b', 'end\\', 'C:\\Users', '\\]', '\\\\[', '![x](y)'].forEach((alt) => {
+        expect(unescapeTitle(escapeAlt(alt))).toBe(alt);
       });
     });
   });

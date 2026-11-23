@@ -20,6 +20,8 @@ import {
   discardAssetsNavigation,
   getAssetFolderHistoryState,
   getSelectedAssetFolderLabel,
+  leaveMovedAsset,
+  replaceShownAssetPath,
   resolveAssetsRoute,
   showAssetDetails,
 } from '$lib/services/assets/navigation';
@@ -183,6 +185,55 @@ describe('getSelectedAssetFolderLabel()', () => {
 
     expect(getSelectedAssetFolderLabel()).toBe('');
     expect(getFolderLabelByCollection).not.toHaveBeenCalled();
+  });
+});
+
+describe('replaceShownAssetPath()', () => {
+  test('updates the URL of the asset shown in the details view, keeping the folder', async () => {
+    selectedAssetFolder.current = allFolder;
+    vi.mocked(parseLocation).mockReturnValue(
+      /** @type {any} */ ({ path: '/assets/static/uploads/a b.png' }),
+    );
+
+    await replaceShownAssetPath('static/uploads/a b.png', 'static/projects/a b.png');
+
+    expect(goto).toHaveBeenCalledExactlyOnceWith('encoded:/assets/static/projects/a b.png', {
+      replaceState: true,
+      notifyChange: false,
+      state: { folder: allFolder },
+    });
+    selectedAssetFolder.current = undefined;
+  });
+
+  test('leaves the URL alone for another asset', async () => {
+    vi.mocked(parseLocation).mockReturnValue(/** @type {any} */ ({ path: '/assets/static/x.png' }));
+
+    await replaceShownAssetPath('static/uploads/a.png', 'static/projects/a.png');
+
+    expect(goto).not.toHaveBeenCalled();
+  });
+});
+
+describe('leaveMovedAsset()', () => {
+  test('shows the list the asset shown in the details view has been moved out of', async () => {
+    vi.mocked(parseLocation).mockReturnValue(
+      /** @type {any} */ ({ path: '/assets/static/uploads/a.png' }),
+    );
+
+    await leaveMovedAsset('/assets/static/uploads/a.png', '/assets/static/uploads');
+
+    expect(goto).toHaveBeenCalledExactlyOnceWith('encoded:/assets/static/uploads', {
+      replaceState: true,
+      transitionType: 'backwards',
+    });
+  });
+
+  test('stays on another page', async () => {
+    vi.mocked(parseLocation).mockReturnValue(/** @type {any} */ ({ path: '/assets/static' }));
+
+    await leaveMovedAsset('/assets/static/uploads/a.png', '/assets/static/uploads');
+
+    expect(goto).not.toHaveBeenCalled();
   });
 });
 
@@ -535,6 +586,25 @@ describe('resolveAssetsRoute()', () => {
 
       expect(resolveAssetsRoute()).toEqual({ ...initial, notFound: true });
       expect(resolveAssetFolderPath).toHaveBeenCalledWith('LICENSE', undefined);
+    });
+
+    test('shows the details of an asset in a root media folder', () => {
+      // `showAssetDetails()` navigates to `/assets/photo.jpg` for `photo.jpg` with
+      // `media_folder: /`
+      const rootFolder = /** @type {any} */ ({ internalPath: '' });
+      const photo = /** @type {any} */ ({ name: 'photo.jpg', path: 'photo.jpg' });
+
+      visit('/assets/photo.jpg');
+      allAssetFolders.current = [rootFolder];
+      allAssets.current = [photo];
+      vi.mocked(resolveAssetFolderPath).mockReturnValue({ folder: rootFolder, subfolderPath: '' });
+
+      expect(resolveAssetsRoute()).toEqual(initial);
+      expect(resolveAssetFolderPath).toHaveBeenCalledWith('', undefined);
+      expect(selectedAssetFolder.current).toBe(rootFolder);
+      expect(selectedSubfolderPath.current).toBe('');
+      expect(overlaidAsset.current).toBe(photo);
+      expect(showAssetOverlay.current).toBe(true);
     });
 
     test('reports a missing file', () => {

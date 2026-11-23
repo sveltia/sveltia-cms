@@ -1,9 +1,18 @@
 import { isObject } from '@sveltia/utils/object';
 
+import { DATE_TIME_FIELDS, UUID_TYPES } from '$lib/services/common/template/constants';
+import { getTemplateTags } from '$lib/services/common/template/tags';
+import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
+import { parseTransformations } from '$lib/services/common/transformations';
 import { getIdentifierFieldName } from '$lib/services/contents/collection/identifier';
+import { usesSingleFileStructure } from '$lib/services/contents/i18n/config';
 
 /**
- * @import { InternalCollection, InternalSlugOptions } from '$lib/types/private';
+ * @import {
+ * InternalCollection,
+ * InternalEntryCollection,
+ * InternalSlugOptions,
+ * } from '$lib/types/private';
  * @import {
  * Collection,
  * CollectionSlugOptions,
@@ -137,4 +146,62 @@ export const getSlugOptions = (collection) => {
     hint: options.hint,
     pattern: options.pattern,
   };
+};
+
+/**
+ * Template tags a slug template can use that don’t refer to a field, and therefore can’t be
+ * localized.
+ * @type {string[]}
+ */
+const NON_FIELD_TAGS = [...DATE_TIME_FIELDS, ...Object.keys(UUID_TYPES), 'slug'];
+
+/**
+ * Get the key paths of the fields whose values are localized in the slug, which are the tags in the
+ * slug template carrying the `localize` flag, e.g. `{{title | localize}}`. With the slug’s `i18n`
+ * option enabled, every field tag in the template is localized.
+ * @param {InternalEntryCollection} collection Collection.
+ * @returns {string[]} Key paths. An empty array if the slug isn’t localized.
+ */
+export const getLocalizingKeyPaths = (collection) => {
+  const { template, localized } = getSlugOptions(collection);
+  /** @type {Set<string>} */
+  const keyPaths = new Set();
+
+  getTemplateTags(template).forEach(({ content: placeholder }) => {
+    // Leave out the transformations, e.g. `upper` in `{{title | upper | localize}}`. The `localize`
+    // flag can come anywhere among them; it’s a no-op when the template is filled
+    const { value, transformations } = parseTransformations(placeholder);
+    const keyPath = stripFieldTagPrefix(value);
+
+    if (transformations.some(({ method }) => method === 'localize')) {
+      keyPaths.add(keyPath);
+    } else if (localized && !NON_FIELD_TAGS.includes(keyPath)) {
+      keyPaths.add(keyPath);
+    }
+  });
+
+  return [...keyPaths];
+};
+
+/**
+ * Check whether the entries in the given collection get a slug of their own for each locale, which
+ * is the case when i18n is enabled with the multiple files or folders structure, and either the
+ * slug’s `i18n` option is enabled or the slug template contains the `localize` flag, e.g.
+ * `{{title | localize}}`.
+ * @param {InternalCollection} collection Collection.
+ * @returns {boolean} Result.
+ * @see https://sveltiacms.app/en/docs/i18n/slugs#localizing-entry-slugs
+ */
+export const hasLocalizedSlugs = (collection) => {
+  const {
+    _i18n: { i18nEnabled, structureMap },
+  } = collection;
+
+  return (
+    // A monolingual collection has only one locale, so there’s nothing to localize
+    i18nEnabled &&
+    !usesSingleFileStructure(structureMap) &&
+    collection._type === 'entry' &&
+    (getSlugOptions(collection).localized || !!getLocalizingKeyPaths(collection).length)
+  );
 };

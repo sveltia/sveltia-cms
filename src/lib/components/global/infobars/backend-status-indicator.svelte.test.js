@@ -2,16 +2,22 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
-import { allBackendServices, backendName } from '$lib/services/backends';
+import { backendName } from '$lib/services/backends';
+import { gitBackendServices } from '$lib/services/backends/git/services';
 import { cmsConfig } from '$lib/services/config';
 
 import BackendStatusIndicator from './backend-status-indicator.svelte';
 
-const { checkStatus } = allBackendServices.github;
+/**
+ * @import { BackendService } from '$lib/types/private';
+ */
+
+const { github } = /** @type {Record<string, BackendService>} */ (gitBackendServices);
+const { checkStatus } = github;
 
 describe('BackendStatusIndicator', () => {
   afterEach(() => {
-    allBackendServices.github.checkStatus = checkStatus;
+    github.checkStatus = checkStatus;
   });
 
   test('shows nothing while the service is fine, or without a backend', async () => {
@@ -19,12 +25,12 @@ describe('BackendStatusIndicator', () => {
     expect((await render(BackendStatusIndicator, {})).container.children).toHaveLength(0);
 
     backendName.current = 'github';
-    allBackendServices.github.checkStatus = vi.fn().mockResolvedValue('none');
+    github.checkStatus = vi.fn().mockResolvedValue('none');
     cmsConfig.current = /** @type {any} */ ({ backend: { name: 'github' } });
 
     const { container } = await render(BackendStatusIndicator, {});
 
-    await vi.waitFor(() => expect(allBackendServices.github.checkStatus).toHaveBeenCalled());
+    await vi.waitFor(() => expect(github.checkStatus).toHaveBeenCalled());
     expect(container.children).toHaveLength(0);
   });
 
@@ -32,7 +38,7 @@ describe('BackendStatusIndicator', () => {
     const open = vi.spyOn(window, 'open').mockImplementation(() => null);
 
     backendName.current = 'github';
-    allBackendServices.github.checkStatus = vi.fn().mockResolvedValue('major');
+    github.checkStatus = vi.fn().mockResolvedValue('major');
     cmsConfig.current = /** @type {any} */ ({ backend: { name: 'github' } });
 
     try {
@@ -44,11 +50,7 @@ describe('BackendStatusIndicator', () => {
           'error Error \u2068GitHub\u2069 is experiencing a major incident. You may want to wait until the situation has improved. Details',
         );
       await page.getByRole('button', { name: 'Details' }).click();
-      expect(open).toHaveBeenCalledWith(
-        allBackendServices.github.statusDashboardURL,
-        '_blank',
-        'noopener,noreferrer',
-      );
+      expect(open).toHaveBeenCalledWith(github.statusDashboardURL, '_blank', 'noopener,noreferrer');
     } finally {
       open.mockRestore();
     }
@@ -56,7 +58,7 @@ describe('BackendStatusIndicator', () => {
 
   test('warns about a minor incident', async () => {
     backendName.current = 'github';
-    allBackendServices.github.checkStatus = vi.fn().mockResolvedValue('minor');
+    github.checkStatus = vi.fn().mockResolvedValue('minor');
     cmsConfig.current = /** @type {any} */ ({ backend: { name: 'github' } });
 
     await render(BackendStatusIndicator, {});
@@ -71,14 +73,14 @@ describe('BackendStatusIndicator', () => {
   test('keeps checking periodically', async () => {
     vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
     backendName.current = 'github';
-    allBackendServices.github.checkStatus = vi.fn().mockResolvedValue('none');
+    github.checkStatus = vi.fn().mockResolvedValue('none');
     cmsConfig.current = /** @type {any} */ ({ backend: { name: 'github' } });
 
     try {
       await render(BackendStatusIndicator, {});
-      await vi.waitFor(() => expect(allBackendServices.github.checkStatus).toHaveBeenCalledOnce());
+      await vi.waitFor(() => expect(github.checkStatus).toHaveBeenCalledOnce());
       await vi.advanceTimersByTimeAsync(5 * 60 * 1000);
-      expect(allBackendServices.github.checkStatus).toHaveBeenCalledTimes(2);
+      expect(github.checkStatus).toHaveBeenCalledTimes(2);
     } finally {
       vi.useRealTimers();
     }

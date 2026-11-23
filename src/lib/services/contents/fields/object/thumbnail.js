@@ -83,7 +83,13 @@ export const getObjectThumbnail = ({
 
   const fieldNames = hasSingleSubField ? nestedFieldNames : [subFieldName, ...nestedFieldNames];
   const fieldKeyPath = [keyPath, ...fieldNames].filter(Boolean).join('.');
-  const fieldTypedKeyPath = [typedKeyPath, ...fieldNames].filter(Boolean).join('.');
+
+  // The typed key path names the single subfield all the same, like `gallery.*.photo`, which the
+  // config parser registers a field-level media folder under
+  const fieldTypedKeyPath = [typedKeyPath, subFieldName, ...nestedFieldNames]
+    .filter(Boolean)
+    .join('.');
+
   const fieldConfig = getField({ ...getFieldArgs, keyPath: fieldKeyPath });
   const { widget: fieldType = 'string' } = fieldConfig ?? {};
 

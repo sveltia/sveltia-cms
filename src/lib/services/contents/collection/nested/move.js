@@ -7,15 +7,18 @@ import {
   getSharedEntryFileName,
   isDescendantPath,
 } from '$lib/services/contents/collection/nested';
+import { hasLocalizedSlugs } from '$lib/services/contents/collection/slug';
+import { rewriteEntryAssetReferences } from '$lib/services/contents/draft/save/asset-references';
 import {
   buildEntryFileChanges,
   resolveCacheDB,
 } from '$lib/services/contents/draft/save/file-changes';
-import { hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
 import { createSyntheticDraft } from '$lib/services/contents/entry/changes';
 import { mapEntryContent } from '$lib/services/contents/entry/locales';
+import { getEntryLocaleFile } from '$lib/services/contents/entry/paths';
 import { refreshPermalinks } from '$lib/services/contents/entry/permalink';
 import { resolveFileConfig } from '$lib/services/contents/file/config';
+import { getBaseName } from '$lib/services/utils/file';
 
 /**
  * @import { IndexedDB } from '@sveltia/utils/storage';
@@ -25,6 +28,7 @@ import { resolveFileConfig } from '$lib/services/contents/file/config';
  * InternalCollection,
  * InternalEntryCollection,
  * InternalLocaleCode,
+ * LocalizedEntry,
  * } from '$lib/types/private';
  * @import { EntryFilePlan } from '$lib/services/contents/draft/save/file-changes';
  */
@@ -183,8 +187,15 @@ const buildMoveChanges = async ({ collection, originalEntry, movedEntry, draft, 
      */
     planChange: (locale) => {
       if (locale === undefined) {
-        const previousPath = originalEntry.locales[defaultLocale].path;
-        const { slug, path } = movedEntry.locales[defaultLocale];
+        // The default locale can be missing from a single-file i18n entry; another locale then
+        // has the same path
+        const { path: previousPath } = /** @type {LocalizedEntry} */ (
+          getEntryLocaleFile(originalEntry, { defaultLocale })
+        );
+
+        const { slug, path } = /** @type {LocalizedEntry} */ (
+          getEntryLocaleFile(movedEntry, { defaultLocale })
+        );
 
         return { action: 'move', slug, path, previousPath, currentPath: previousPath };
       }
@@ -245,11 +256,7 @@ export const buildNestedMoveChanges = async ({
   // An entry only owns its folder when it’s stored as the index file that names every entry in the
   // `subfolders` mode. Otherwise it’s a regular file sharing the folder with its siblings and with
   // whatever is below, none of which moves with it
-  if (
-    !originalEntry ||
-    !indexFileName ||
-    originalEntry.subPath.slice(originalEntry.subPath.lastIndexOf('/') + 1) !== indexFileName
-  ) {
+  if (!originalEntry || !indexFileName || getBaseName(originalEntry.subPath) !== indexFileName) {
     return noChanges;
   }
 
@@ -289,21 +296,31 @@ export const buildNestedMoveChanges = async ({
     ]),
   );
 
-  const movedEntries = descendants.flatMap((entry) => {
-    const movedEntry = moveEntry({ entry, dirMove, localeDirMoves });
+  const movedEntries = (
+    await Promise.all(
+      descendants.map(async (entry) => {
+        const movedEntry = moveEntry({ entry, dirMove, localeDirMoves });
 
-    return movedEntry
-      ? [
-          {
-            originalEntry: entry,
-            movedEntry: refreshPermalinks({
-              collection,
-              entry: updateCanonicalSlug({ collection, entry: movedEntry }),
-            }),
-          },
-        ]
-      : [];
-  });
+        return movedEntry
+          ? [
+              {
+                originalEntry: entry,
+                movedEntry: refreshPermalinks({
+                  collection,
+                  // The references to the entry’s own assets by an absolute path filled with its
+                  // slug, e.g. `/blog/{{slug}}/images/photo.jpg`, follow the entry
+                  entry: await rewriteEntryAssetReferences({
+                    collection,
+                    originalEntry: entry,
+                    savingEntry: updateCanonicalSlug({ collection, entry: movedEntry }),
+                  }),
+                }),
+              },
+            ]
+          : [];
+      }),
+    )
+  ).flat();
 
   // Nothing moves when the folder keeps its name in every locale
   if (!movedEntries.length) {

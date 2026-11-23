@@ -3,7 +3,6 @@ import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 
 import { customFileFormatRegistry } from '$lib/services/api/registries';
 import { getTemplatePattern } from '$lib/services/common/template/utils';
-import { warnDeprecation } from '$lib/services/config/deprecations';
 import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getNestedConfig } from '$lib/services/contents/collection/nested';
 import { isEntryCollection } from '$lib/services/contents/collection/predicates';
@@ -385,11 +384,6 @@ export const getFileConfig = ({ rawCollection, file, _i18n }) => {
     extension: _extension,
     format: _format,
   });
-
-  // @todo Remove the option prior to the 1.0 release.
-  if (yamlQuote !== undefined) {
-    warnDeprecation('yaml_quote');
-  }
 
   /** @type {FileConfig} */
   const config = {

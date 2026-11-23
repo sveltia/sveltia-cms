@@ -234,10 +234,7 @@ test.describe('Amazon S3', () => {
       await expect(page.getByRole('row', { name: 'dusk.png' })).toBeVisible();
     });
 
-    test('warns that renaming a file breaks the links of the entries using it', async ({
-      cms,
-      page,
-    }) => {
+    test('renames a file and updates the entry using it', async ({ cms, page }) => {
       await page.getByRole('row', { name: 'trips' }).dblclick();
       await page.getByRole('row', { name: 'map.png' }).click();
       await page.getByRole('button', { name: 'Show Edit Options' }).click();
@@ -245,21 +242,17 @@ test.describe('Amazon S3', () => {
 
       const dialog = page.getByRole('dialog', { name: /Rename/ });
 
-      await expect(dialog.getByRole('alert')).toHaveText(
-        'An entry links to this file. The entry won’t be updated, so the link will break once ' +
-          'the file is renamed.',
-      );
-
-      // The file can still be renamed, leaving the entry as is
+      await expect(dialog).toContainText('An entry using the asset will also be updated.');
       await dialog.getByRole('textbox').fill('route.png');
       await dialog.getByRole('button', { name: 'Rename' }).click();
       await expect.poll(() => s3.objects.has('uploads/trips/route.png')).toBe(true);
-      expect((await cms.readRepo())['content/posts/hike.md']).toContain('trips/map.png');
+      expect(s3.objects.has('uploads/trips/map.png')).toBe(false);
+      await expect
+        .poll(async () => (await cms.readRepo())['content/posts/hike.md'])
+        .toBe(`---\ntitle: Hike\ncover: ${S3_URL}/uploads/trips/route.png\n---\n`);
     });
 
-    test('warns that renaming a folder breaks the links of the entries using its files', async ({
-      page,
-    }) => {
+    test('renames a folder and updates the entry using a file in it', async ({ cms, page }) => {
       await page
         .getByRole('row', { name: 'trips' })
         .getByRole('button', { name: 'Show Folder Options' })
@@ -268,13 +261,16 @@ test.describe('Amazon S3', () => {
 
       const dialog = page.getByRole('dialog', { name: /Rename/ });
 
-      await expect(dialog.getByRole('alert')).toHaveText(
-        'An entry links to a file in this folder. The entry won’t be updated, so the link will ' +
-          'break once the folder is renamed.',
+      await expect(dialog).toContainText(
+        'The asset in the folder will be moved along, and any entry using it will be updated.',
       );
-      await dialog.getByRole('button', { name: 'Cancel' }).click();
-      await expect(dialog).toHaveCount(0);
-      expect(s3.objects.has('uploads/trips/map.png')).toBe(true);
+      await dialog.getByRole('textbox').fill('travel');
+      await dialog.getByRole('button', { name: 'Rename' }).click();
+      await expect.poll(() => s3.objects.has('uploads/travel/map.png')).toBe(true);
+      expect(s3.objects.has('uploads/trips/map.png')).toBe(false);
+      await expect
+        .poll(async () => (await cms.readRepo())['content/posts/hike.md'])
+        .toBe(`---\ntitle: Hike\ncover: ${S3_URL}/uploads/travel/map.png\n---\n`);
     });
 
     test('creates a folder', async ({ page }) => {
@@ -477,6 +473,58 @@ test.describe('Amazon S3 with a prefix made of an entry field', () => {
     await dialog.getByRole('button', { name: 'Insert' }).click();
     await expect(cover.getByRole('textbox', { name: 'Cover' })).toHaveText(
       `${S3_URL}/12/balloon.png`,
+    );
+    expect(s3.refused).toEqual([]);
+  });
+});
+
+test.describe('Amazon S3 with a file name made of an entry field', () => {
+  const config = createConfig(
+    {
+      aws_s3: {
+        access_key_id: 'AKIAE2ETESTKEY000000',
+        bucket: 'e2e-bucket',
+        region: 'eu-west-3',
+      },
+    },
+    [{ name: 'release', label: 'Release', widget: 'number', value_type: 'int', required: false }],
+  );
+
+  config.collections[0].fields[1].media_libraries = {
+    all: { filename_template: 'guestpic{{release}}' },
+  };
+  test.use({ config });
+
+  test('names an uploaded file after the field, as filled in at the time', async ({
+    cms,
+    page,
+  }) => {
+    const s3 = new MockS3({ bucket: 'e2e-bucket', region: 'eu-west-3', baseURL: S3_URL });
+    const balloon = createPNG({ color: [0, 128, 255] });
+
+    await s3.install(page);
+    await cms.open();
+    await cms.signIn();
+
+    const { editor, cover, dialog } = await openSelectImageDialog(page, 'Amazon S3');
+
+    await dialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(dialog).toBeHidden();
+    await editor.getByRole('spinbutton', { name: 'Release' }).fill('521');
+    await cover.getByRole('button', { name: 'Browse' }).click();
+    await dialog.getByRole('option', { name: 'Amazon S3' }).click();
+    await enterCredential(dialog, 'Amazon S3', s3.secretAccessKey);
+
+    const [chooser] = await Promise.all([
+      page.waitForEvent('filechooser'),
+      dialog.getByRole('button', { name: 'Upload' }).click(),
+    ]);
+
+    await chooser.setFiles({ name: 'balloon.png', mimeType: 'image/png', buffer: balloon });
+    await expect.poll(() => s3.objects.get('guestpic521.png')?.body).toEqual(balloon);
+    await dialog.getByRole('button', { name: 'Insert' }).click();
+    await expect(cover.getByRole('textbox', { name: 'Cover' })).toHaveText(
+      `${S3_URL}/guestpic521.png`,
     );
     expect(s3.refused).toEqual([]);
   });

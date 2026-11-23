@@ -18,7 +18,8 @@ import { getCustomPagePath } from '$lib/services/app/custom-pages';
 
 /**
  * Get the pages to switch between with the page switcher: Contents, followed by Assets if there is
- * anything to show, the Editorial Workflow, the custom pages and, on a small screen, Menu.
+ * anything to show, the Editorial Workflow, Administration, the custom pages and, on a small
+ * screen, Menu, which lists the Administration sections instead.
  * @param {object} args Arguments.
  * @param {string} args.selectedPageName Name of the current page.
  * @param {'contents' | 'assets' | null} args.searchMode Search mode, which makes the page
@@ -28,6 +29,8 @@ import { getCustomPagePath } from '$lib/services/app/custom-pages';
  * @param {string} args.assetsLink Path of the Assets page.
  * @param {boolean} args.workflowEnabled Whether the Editorial Workflow is enabled.
  * @param {string} args.workflowLabelKey Message key of the Editorial Workflow page label.
+ * @param {string | undefined} args.adminLink Path of the Administration page, if the user can see
+ * any of it.
  * @param {CustomPage[]} args.customPages Custom pages to switch to, which don’t open in a new tab.
  * @param {string} args.selectedCustomPageId ID of the current custom page, if any.
  * @param {boolean} args.isSmallScreen Whether the screen is small.
@@ -40,6 +43,7 @@ export const getToolbarPages = ({
   assetsLink,
   workflowEnabled,
   workflowLabelKey,
+  adminLink,
   customPages,
   selectedCustomPageId,
   isSmallScreen,
@@ -72,6 +76,16 @@ export const getToolbarPages = ({
       icon: 'rebase_edit',
       link: '/workflow',
       selected: selectedPageName === 'workflow',
+    });
+  }
+
+  if (adminLink && !isSmallScreen) {
+    pages.push({
+      key: 'admin',
+      label: _('administration'),
+      icon: 'settings_applications',
+      link: adminLink,
+      selected: selectedPageName === 'admin',
     });
   }
 

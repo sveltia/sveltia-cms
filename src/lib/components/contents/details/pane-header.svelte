@@ -2,6 +2,7 @@
   import { _ } from '@sveltia/i18n';
   import { Divider, Menu, MenuButton, MenuItem, Spacer, Toolbar } from '@sveltia/ui';
 
+  import ViewInRepositoryItem from '$lib/components/common/view-in-repository-item.svelte';
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
   import ResetDialog from '$lib/components/contents/details/editor/reset-dialog.svelte';
   import ResetMenuItems from '$lib/components/contents/details/editor/reset-menu-items.svelte';
@@ -49,13 +50,7 @@
   const entryDraft = getEntryDraftContext();
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    id,
-    thisPane,
-    thatPane = createRawState(null),
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { id, thisPane, thatPane = createRawState(null) } = $props();
 
   const collection = $derived(entryDraft.current?.collection);
   const collectionFile = $derived(entryDraft.current?.collectionFile);
@@ -238,20 +233,15 @@
                     }}
                   />
                 {/if}
-                {#if prefs.devModeEnabled}
-                  <MenuItem
-                    disabled={!backend.current?.repository?.blobBaseURL}
-                    label={backend.current?.repository?.label
-                      ? _('view_on_x', { values: { service: backend.current.repository.label } })
-                      : _('view_in_repository')}
-                    onclick={() => {
-                      /* v8 ignore next 3 -- the item is only offered for an existing entry */
-                      if (originalEntry && thisPane.current) {
-                        openNewTab(getEntryRepoBlobURL(originalEntry, thisPane.current.locale));
-                      }
-                    }}
-                  />
-                {/if}
+                <ViewInRepositoryItem
+                  disabled={!backend.current?.repository?.blobBaseURL}
+                  onclick={() => {
+                    /* v8 ignore next 3 -- the item is only offered for an existing entry */
+                    if (originalEntry && thisPane.current) {
+                      openNewTab(getEntryRepoBlobURL(originalEntry, thisPane.current.locale));
+                    }
+                  }}
+                />
               {/if}
             </Menu>
           {/snippet}

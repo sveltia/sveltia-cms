@@ -605,7 +605,7 @@ describe('ObjectEditor', () => {
         .toHaveTextContent(
           'warning Warning This item can’t be displayed due to an unknown type. Check the browser console for details.',
         );
-      expect(container.querySelector('.wrapper')).toHaveClass('unknown-type');
+      expect(container.querySelector('.wrapper')).toHaveClass('object-unknown-type');
       expect(warn).toHaveBeenCalledWith(expect.stringContaining('“video” type is not defined'));
 
       // There are no subfields to collapse, so the header has no expander

@@ -2,13 +2,14 @@ import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import AssetUpdatesToast from '$lib/components/assets/shared/asset-updates-toast.svelte';
 import { saveAssets } from '$lib/services/assets/data/create';
 import { globalAssetFolder } from '$lib/services/assets/folders';
 import { processedAssets } from '$lib/services/assets/process';
 import { uploadingAssets } from '$lib/services/assets/state';
 import { showAssetOverlay } from '$lib/services/assets/view';
 import { createMockAsset, initTestConfig, setAssets } from '$lib/test/config';
-import { waitForToastsToHide } from '$lib/test/toast';
+import { getShownToastAlert, waitForToastsToHide } from '$lib/test/toast';
 
 import UploadAssetsConfirmDialog from './upload-assets-confirm-dialog.svelte';
 
@@ -282,6 +283,9 @@ describe('UploadAssetsConfirmDialog', () => {
   });
 
   test('reports a failure to upload', async () => {
+    // The toasts reporting the commit are rendered by the shared component
+    await render(AssetUpdatesToast, {});
+
     vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(saveAssets).mockRejectedValue(new Error('Boom'));
 
@@ -312,12 +316,8 @@ describe('UploadAssetsConfirmDialog', () => {
     await page.getByRole('alertdialog').getByRole('button', { name: 'Upload' }).click();
 
     await vi.waitFor(() => expect(saveAssets).toHaveBeenCalled());
-    await expect
-      .poll(() => document.querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert'))
-      .toBeNull();
-    expect(
-      document.querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error'),
-    ).toBeNull();
+    await expect.poll(() => getShownToastAlert()).toBeNull();
+    expect(getShownToastAlert('error')).toBeNull();
     expect(error).not.toHaveBeenCalled();
   });
 

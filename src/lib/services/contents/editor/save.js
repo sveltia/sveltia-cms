@@ -5,8 +5,8 @@ import { saveEntry } from '$lib/services/contents/draft/save';
 import { validateDraft } from '$lib/services/contents/draft/validate';
 import { countInvalidFields } from '$lib/services/contents/draft/validate/reveal';
 import { awaitPendingFieldUpdates } from '$lib/services/contents/editor/pending';
+import { getEntryEditorPath } from '$lib/services/contents/editor/route';
 import { getSaveFailure } from '$lib/services/contents/editor/toolbar';
-import { encodePathSegments } from '$lib/services/utils/url';
 import { publishWorkflowEntry, updateWorkflowStatus } from '$lib/services/workflow/save';
 import { getEntryStage, getNextStage } from '$lib/services/workflow/stages';
 import { getWorkflowErrorMessage } from '$lib/services/workflow/verify';
@@ -151,9 +151,7 @@ export const saveEntryDraftFlow = async ({
     // the `new` route doesn’t stay in the session history: moving forward from the entry list then
     // reopens the entry that was just created instead of a blank editor
     const path = isNew
-      ? encodePathSegments(
-          `/collections/${collection.name}/entries/${collectionFile?.name ?? savedEntry.subPath}`,
-        )
+      ? getEntryEditorPath(collection.name, collectionFile?.name ?? savedEntry.subPath)
       : undefined;
 
     // The entry itself is saved, so a failed status change leaves the editor open rather than

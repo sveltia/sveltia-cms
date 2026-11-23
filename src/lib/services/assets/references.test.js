@@ -8,9 +8,12 @@ import {
   getComparableAssetURL,
   getEntriesByAssets,
   getEntriesByAssetURL,
+  getEntriesUsingTargets,
+  matchAssetURL,
 } from '$lib/services/assets/references';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
+import { parseMediaSource } from '$lib/services/contents/fields/rich-text/previews/media-sources';
 
 // Mock dependencies
 vi.mock('$lib/services/assets/media-field', () => {
@@ -707,6 +710,57 @@ describe('getComparableAssetURL()', () => {
   });
 });
 
+describe('matchAssetURL()', () => {
+  /**
+   * Check whether a URL is one of the given ones.
+   * @param {string[]} urls URLs.
+   * @returns {(url: string) => boolean} Function.
+   */
+  const isAnyOf = (urls) => (url) => urls.includes(url);
+
+  test('matches a value as is, decoded, and without its fragment', () => {
+    expect(matchAssetURL('/a b.jpg', isAnyOf(['/a b.jpg']))).toEqual({
+      url: '/a b.jpg',
+      fragment: '',
+      decoded: false,
+    });
+    expect(matchAssetURL('/a%20b.jpg', isAnyOf(['/a b.jpg']))).toEqual({
+      url: '/a b.jpg',
+      fragment: '',
+      decoded: true,
+    });
+    expect(matchAssetURL('/caf%C3%A9.jpg', isAnyOf(['/café.jpg']))?.url).toBe('/café.jpg');
+    expect(matchAssetURL('/a.jpg#x', isAnyOf(['/a.jpg']))).toEqual({
+      url: '/a.jpg',
+      fragment: '#x',
+      decoded: false,
+    });
+    expect(matchAssetURL('/a%20b.jpg#x', isAnyOf(['/a b.jpg']))).toEqual({
+      url: '/a b.jpg',
+      fragment: '#x',
+      decoded: true,
+    });
+    // The whole value comes first, as a file name can contain `#`
+    expect(matchAssetURL('/a#1.jpg', isAnyOf(['/a', '/a#1.jpg']))?.url).toBe('/a#1.jpg');
+    // A `%` that isn’t an escape sequence is left as is
+    expect(matchAssetURL('/50%.jpg', isAnyOf(['/50%.jpg']))?.url).toBe('/50%.jpg');
+  });
+
+  test('accepts a parsed media URL', () => {
+    expect(
+      matchAssetURL(parseMediaSource('<a b.jpg#x>', 'markdown'), isAnyOf(['a b.jpg'])),
+    ).toEqual({ url: 'a b.jpg', fragment: '#x', decoded: false });
+  });
+
+  test('returns nothing for a value that matches no URL', () => {
+    expect(matchAssetURL('/b.jpg', isAnyOf(['/a.jpg']))).toBeUndefined();
+    expect(matchAssetURL('/50%.jpg', isAnyOf(['/a.jpg']))).toBeUndefined();
+    expect(matchAssetURL('/b.jpg#x', isAnyOf(['/a.jpg']))).toBeUndefined();
+    // A fragment alone points at no file
+    expect(matchAssetURL('#x', isAnyOf(['']))).toBeUndefined();
+  });
+});
+
 describe('getEntriesByAssets()', () => {
   /**
    * Set the mocks up for a `posts` entry collection whose fields are Image fields, except `body`,
@@ -771,6 +825,21 @@ describe('getEntriesByAssets()', () => {
     expect(results).toEqual([[a, c], [a, b], []]);
     // Each value that can refer to a target is looked at once, however many targets there are
     expect(getField).toHaveBeenCalledTimes(4);
+  });
+
+  test('lists each entry using any of the targets once', async () => {
+    await setup();
+
+    const a = createEntry('a', { cover: '/uploads/1.jpg', thumb: '/uploads/2.jpg' });
+    const b = createEntry('b', { cover: '/uploads/2.jpg' });
+
+    allEntries.current = [a, b];
+
+    expect(
+      await getEntriesUsingTargets([{ url: '/uploads/1.jpg' }, { url: '/uploads/2.jpg' }]),
+    ).toEqual([a, b]);
+    expect(await getEntriesUsingTargets([])).toEqual([]);
+    allEntries.current = [];
   });
 
   test('stops searching an entry once every target has been found in it', async () => {
@@ -969,6 +1038,158 @@ describe('getEntriesByAssets()', () => {
     expect(content).toEqual({
       cover: '/uploads/New Photo.jpg',
       body: '![a](/uploads/New%20Photo.jpg) ![b](/uploads/Other.jpg)',
+    });
+  });
+
+  test('finds and replaces a reference with a fragment, keeping the fragment', async () => {
+    const { getMediaFieldSource } = await setup();
+    const asset = { path: 'posts/a/photo.jpg', name: 'photo.jpg' };
+
+    const content = {
+      cover: '/uploads/a.jpg#hero',
+      thumb: '/uploads/My%20Photo.jpg#x',
+      body: [
+        '![a](/uploads/a.jpg#center) ![b](/uploads/My%20Photo.jpg#y) ![c](photo.jpg#z)',
+        '<img src="/uploads/a.jpg#w">',
+      ].join('\n\n'),
+      // A fragment alone points at no file
+      anchor: '#top',
+      html: '<p><img src="/uploads/My%20Photo.jpg#v"></p>',
+    };
+
+    const a = createEntry('a', content);
+
+    vi.mocked(getMediaFieldSource).mockImplementation(({ value }) =>
+      value.startsWith('photo.jpg') ? { asset } : undefined,
+    );
+
+    const references = await getAssetReferences([{ url: '/uploads/a.jpg' }], { entries: [a] });
+
+    expect(references.map(({ keyPath }) => keyPath)).toEqual(['cover', 'body']);
+
+    /**
+     * Rename the photo, as `getRenamedReference()` does, which only knows the file name, so the
+     * reference is passed without its fragment.
+     * @param {string} src Reference.
+     * @returns {string | undefined} New reference.
+     */
+    const newURL = (src) => (src === 'photo.jpg' ? 'image.jpg' : undefined);
+
+    await getEntriesByAssets(
+      [
+        { url: '/uploads/a.jpg', newURL: '/uploads/b.jpg' },
+        { url: '/uploads/My Photo.jpg', newURL: '/uploads/New Photo.jpg' },
+        { asset, newURL },
+      ],
+      { entries: [a] },
+    );
+
+    expect(content).toEqual({
+      cover: '/uploads/b.jpg#hero',
+      thumb: '/uploads/New%20Photo.jpg#x',
+      body: [
+        '![a](/uploads/b.jpg#center) ![b](/uploads/New%20Photo.jpg#y) ![c](image.jpg#z)',
+        '<img src="/uploads/b.jpg#w">',
+      ].join('\n\n'),
+      anchor: '#top',
+      html: '<p><img src="/uploads/New%20Photo.jpg#v"></p>',
+    });
+  });
+
+  test('matches a file name with `#` as a whole before trying without a fragment', async () => {
+    await setup();
+
+    const content = { cover: '/uploads/photo #1.jpg', body: '![a](/uploads/photo%20%231.jpg)' };
+    const a = createEntry('a', content);
+
+    await getEntriesByAssets(
+      [
+        { url: '/uploads/photo #1.jpg', newURL: '/uploads/photo 2.jpg' },
+        { url: '/uploads/photo ', newURL: '/uploads/wrong.jpg' },
+      ],
+      { entries: [a] },
+    );
+
+    expect(content).toEqual({
+      cover: '/uploads/photo 2.jpg',
+      body: '![a](/uploads/photo%202.jpg)',
+    });
+  });
+
+  test('encodes a space in a new URL written in a body, as the CMS does on insert', async () => {
+    const { getMediaFieldSource } = await setup();
+    const asset = { path: 'posts/a/photo.jpg', name: 'photo.jpg' };
+
+    const content = {
+      cover: '/uploads/a.jpg',
+      body: [
+        '![a](/uploads/a.jpg) ![b](</uploads/old name.jpg>) ![c](photo.jpg)',
+        '<img src="/uploads/a.jpg">',
+      ].join('\n\n'),
+      html: '<p><img src="/uploads/a.jpg"></p>',
+    };
+
+    const a = createEntry('a', content);
+
+    vi.mocked(getMediaFieldSource).mockImplementation(({ value }) =>
+      value === 'photo.jpg' ? { asset } : undefined,
+    );
+
+    /**
+     * Get the new reference to the photo, holding a space.
+     * @returns {string} New reference.
+     */
+    const getNewImageURL = () => 'my image.jpg';
+
+    await getEntriesByAssets(
+      [
+        { url: '/uploads/a.jpg', newURL: '/uploads/my photo.jpg' },
+        { url: '/uploads/old name.jpg', newURL: '/uploads/new name.jpg' },
+        { asset, newURL: getNewImageURL },
+      ],
+      { entries: [a] },
+    );
+
+    expect(content).toEqual({
+      // A media field holds the path as is, unless it was encoded
+      cover: '/uploads/my photo.jpg',
+      body: [
+        // A source wrapped in angle brackets, which holds a space as is, keeps its form
+        '![a](/uploads/my%20photo.jpg) ![b](</uploads/new name.jpg>) ![c](my%20image.jpg)',
+        '<img src="/uploads/my%20photo.jpg">',
+      ].join('\n\n'),
+      html: '<p><img src="/uploads/my%20photo.jpg"></p>',
+    });
+  });
+
+  test('encodes a new URL by where the reference is written, not by what it holds', async () => {
+    await setup();
+
+    const content = {
+      body: [
+        // A source wrapped in angle brackets is kept unencoded, even if it held no space, while
+        // one that isn’t is encoded, even if it held a space
+        '![a](</uploads/a.jpg>) ![b](/uploads/old name.jpg) ![c](</uploads/a.jpg#x>)',
+        // An HTML attribute holding a space keeps holding it as is
+        '<img src="/uploads/old name.jpg#y">',
+      ].join('\n\n'),
+    };
+
+    const a = createEntry('a', content);
+
+    await getEntriesByAssets(
+      [
+        { url: '/uploads/a.jpg', newURL: '/uploads/my photo.jpg' },
+        { url: '/uploads/old name.jpg', newURL: '/uploads/new name.jpg' },
+      ],
+      { entries: [a] },
+    );
+
+    expect(content).toEqual({
+      body: [
+        '![a](</uploads/my photo.jpg>) ![b](/uploads/new%20name.jpg) ![c](</uploads/my photo.jpg#x>)',
+        '<img src="/uploads/new name.jpg#y">',
+      ].join('\n\n'),
     });
   });
 

@@ -1,24 +1,19 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Alert, ConfirmationDialog, Radio, RadioGroup, Toast } from '@sveltia/ui';
+  import { Alert, ConfirmationDialog, Radio, RadioGroup } from '@sveltia/ui';
   import { getPathInfo } from '@sveltia/utils/file';
 
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
   import { getAssetsByDirName, getDuplicateFiles } from '$lib/services/assets';
+  import { runAssetCommit } from '$lib/services/assets/data/commit';
   import { saveAssets } from '$lib/services/assets/data/create';
   import { formatSize } from '$lib/services/assets/file-size';
   import { processedAssets } from '$lib/services/assets/process';
   import { uploadingAssets } from '$lib/services/assets/state';
   import { getUploadDirPath } from '$lib/services/assets/subfolders';
   import { showAssetOverlay, showUploadAssetsConfirmDialog } from '$lib/services/assets/view';
-  import { runCommit } from '$lib/services/backends/commit-prompt';
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
   import { isEquivalentFileExtension } from '$lib/services/utils/file';
-
-  // Committing to a remote repository takes a few seconds, and the confirmation dialog is gone by
-  // then, so the upload would otherwise happen with nothing on screen to say it’s under way
-  let uploading = $state(false);
-  let uploadFailed = $state(false);
 
   const {
     files: originalFiles,
@@ -80,7 +75,7 @@
   title={_(originalAsset ? 'replace_asset' : 'upload_assets')}
   okLabel={_(originalAsset ? 'replace' : 'upload')}
   okDisabled={!files.length}
-  onOk={async () => {
+  onOk={() => {
     const request = originalAsset
       ? { files, folder, originalAssets }
       : { files, folder, subfolderPath, replaceDuplicates: replaceFiles };
@@ -89,18 +84,11 @@
     // meanwhile then open the dialog again rather than being swallowed by this upload, and a failed
     // upload doesn’t leave the store holding files that no dialog is showing any more
     uploadingAssets.current = { folder: undefined, files: [] };
-    uploading = true;
 
-    const { ok, cancelled } = await runCommit(() =>
-      saveAssets(request, { commitType: 'uploadMedia' }),
-    );
-
-    uploading = false;
-
-    // A cancellation at the commit message prompt isn’t a failure
-    if (!ok && !cancelled) {
-      uploadFailed = true;
-    }
+    runAssetCommit(() => saveAssets(request, { commitType: 'uploadMedia' }), {
+      progress: 'uploading_files_progress',
+      failure: 'uploading_files_failed',
+    });
   }}
   onCancel={() => {
     uploadingAssets.current = { folder: undefined, files: [] };
@@ -174,15 +162,6 @@
     </div>
   {/if}
 </ConfirmationDialog>
-
-<!-- `duration={0}` keeps this up until the upload settles, however long the commit takes -->
-<Toast show={uploading} duration={0}>
-  <Alert status="info">{_('uploading_files_progress')}</Alert>
-</Toast>
-
-<Toast bind:show={uploadFailed}>
-  <Alert status="error">{_('uploading_files_failed')}</Alert>
-</Toast>
 
 <style>
   .section {

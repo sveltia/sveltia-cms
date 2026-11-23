@@ -8,6 +8,7 @@ import {
   applyDateTransformation,
   applyDefaultTransformation,
   applyLowerCaseTransformation,
+  applyPlainifyTransformation,
   applyTransformation,
   applyTransformations,
   applyTruncateTransformation,
@@ -81,6 +82,22 @@ describe('Test parseTransformations()', () => {
         { method: 'upper', args: {} },
       ],
     });
+  });
+
+  test('parses an empty `default` value and `truncate` ellipsis', () => {
+    expect(parseTransformations("title | default('') | truncate(5, '')")).toEqual({
+      value: 'title',
+      transformations: [
+        { method: 'default', args: { defaultValue: '' } },
+        { method: 'truncate', args: { max: '5', ellipsis: '' } },
+      ],
+    });
+  });
+
+  test('leaves a `date` transformation with an empty format unparsed', () => {
+    expect(parseTransformations("date | date('')").transformations).toEqual([
+      { method: "date('')", args: {} },
+    ]);
   });
 
   test('parses a long run of quoted arguments in linear time', () => {
@@ -534,6 +551,35 @@ describe('Test custom transformations', () => {
 });
 
 describe('Test applyTransformations()', () => {
+  test('applies an empty `default` value and `truncate` ellipsis', () => {
+    /**
+     * Apply the transformations in a placeholder to a value.
+     * @param {string} value Value.
+     * @param {string} placeholder Placeholder like `title | upper`.
+     * @returns {string} Result.
+     */
+    const apply = (value, placeholder) =>
+      applyTransformations({
+        value,
+        transformations: parseTransformations(placeholder).transformations,
+      });
+
+    expect(apply('Hello world', "x | truncate(5, '')")).toBe('Hello');
+    expect(apply('', "x | default('')")).toBe('');
+    expect(apply('', "x | default('') | upper")).toBe('');
+  });
+
+  test('applies plainify before truncate, so the limit counts the visible text', () => {
+    const { transformations } = parseTransformations("body | plainify | truncate(10, '...')");
+
+    expect(
+      applyTransformations({
+        value: '**Welcome** [our guest](https://example.com/a/long/path)',
+        transformations: [...transformations],
+      }),
+    ).toBe('Welcome ou...');
+  });
+
   test('applies multiple transformations in sequence', () => {
     expect(
       applyTransformations({
@@ -835,6 +881,39 @@ describe('Test individual transformation functions', () => {
     test('should handle empty strings as values', () => {
       expect(ternaryTransformation(true, { truthyValue: '', falsyValue: 'No' })).toBe('');
       expect(ternaryTransformation(false, { truthyValue: 'Yes', falsyValue: '' })).toBe('');
+    });
+  });
+
+  describe('applyPlainifyTransformation()', () => {
+    test('should remove inline Markdown syntax', () => {
+      expect(
+        applyPlainifyTransformation(
+          "Hi let's **welcome** this morning [guest](https://example.com/?a=1&b=2)",
+        ),
+      ).toBe("Hi let's welcome this morning guest");
+    });
+
+    test('should remove block Markdown syntax and collapse line breaks', () => {
+      expect(applyPlainifyTransformation('# Episode 1\n\nThe *intro*.\n\n- One\n- Two')).toBe(
+        'Episode 1 The intro. One Two',
+      );
+    });
+
+    test('should remove HTML tags', () => {
+      expect(applyPlainifyTransformation('<p>Hello <b>world</b></p><p>Again</p>')).toBe(
+        'Hello world Again',
+      );
+    });
+
+    test('should handle non-string values', () => {
+      expect(applyPlainifyTransformation(123)).toBe('123');
+      expect(applyPlainifyTransformation(true)).toBe('true');
+    });
+
+    test('should return an empty string for an empty value', () => {
+      expect(applyPlainifyTransformation('')).toBe('');
+      expect(applyPlainifyTransformation(null)).toBe('');
+      expect(applyPlainifyTransformation(undefined)).toBe('');
     });
   });
 

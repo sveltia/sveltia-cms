@@ -11,6 +11,9 @@ import { createMapDrawController, fitMapToGeometry, getDrawnValue } from './draw
 vi.mock('$lib/services/app/dependencies', () => ({
   loadModule: vi.fn(),
 }));
+vi.mock('$lib/services/contents/fields/map/leaflet-adapter', () => ({
+  createLeafletAdapter: vi.fn((args) => ({ adapterArgs: args })),
+}));
 
 /**
  * Create a feature on the map.
@@ -27,6 +30,10 @@ const feature = (id, coordinates, type = 'Point') =>
     properties: {},
   });
 
+/**
+ * Fake `TerraDrawExtend` namespace of Terra Draw, passed to the Leaflet adapter.
+ */
+const TerraDrawExtend = {};
 /**
  * Create a fake Leaflet map.
  * @returns {any} Map.
@@ -162,26 +169,18 @@ describe('createMapDrawController()', () => {
         mode = name;
       };
 
-    vi.mocked(loadModule).mockImplementation(async (name) =>
-      name === 'terra-draw'
-        ? {
-            // eslint-disable-next-line jsdoc/require-jsdoc
-            TerraDraw: function TerraDraw(/** @type {any} */ args) {
-              modeArgs = args;
+    vi.mocked(loadModule).mockResolvedValue({
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      TerraDraw: function TerraDraw(/** @type {any} */ args) {
+        modeArgs = args;
 
-              return draw;
-            },
-            TerraDrawPointMode: mode('point'),
-            TerraDrawLineStringMode: mode('linestring'),
-            TerraDrawPolygonMode: mode('polygon'),
-          }
-        : {
-            // eslint-disable-next-line jsdoc/require-jsdoc
-            TerraDrawLeafletAdapter: function TerraDrawLeafletAdapter(/** @type {any} */ args) {
-              return { adapterArgs: args };
-            },
-          },
-    );
+        return draw;
+      },
+      TerraDrawExtend,
+      TerraDrawPointMode: mode('point'),
+      TerraDrawLineStringMode: mode('linestring'),
+      TerraDrawPolygonMode: mode('polygon'),
+    });
   });
 
   test('gives up when cancelled while loading', async () => {
@@ -211,7 +210,7 @@ describe('createMapDrawController()', () => {
     });
 
     expect(controller).toBeDefined();
-    expect(modeArgs.adapter.adapterArgs).toEqual({ lib: leaflet, map });
+    expect(modeArgs.adapter.adapterArgs).toEqual({ TerraDrawExtend, leaflet, map });
     expect(modeArgs.modes[0].mode).toBe('point');
     expect(draw.start).toHaveBeenCalled();
     expect(draw.setMode).toHaveBeenCalledWith('point');

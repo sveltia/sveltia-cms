@@ -844,6 +844,40 @@ describe('Test getEntryPreviewURL()', () => {
     expect(result).toBe('https://preview.example.com/');
   });
 
+  test('fills the preview_path of a collection file with the file’s own configuration', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = { current: { show_preview_links: true } };
+
+    const { isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
+    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+
+    const { fillTemplate } = await import('$lib/services/common/template');
+
+    vi.mocked(fillTemplate).mockReturnValue('about');
+
+    const collectionFile = /** @type {InternalCollectionFile} */ ({
+      name: 'about',
+      file: 'content/about.md',
+      preview_path: '{{filename}}',
+      fields: [],
+      _file: { extension: 'md', format: 'yaml-frontmatter' },
+      _i18n: mockCollection._i18n,
+    });
+
+    const result = getEntryPreviewURL(mockEntry, 'en', mockCollection, collectionFile, {
+      baseURL: 'https://example.com',
+    });
+
+    expect(result).toBe('https://example.com/about');
+    // The file is passed on, so its fields and i18n configuration are used to fill the template
+    expect(fillTemplate).toHaveBeenCalledWith(
+      '{{filename}}',
+      expect.objectContaining({ collection: mockCollection, collectionFile }),
+    );
+  });
+
   test('uses preview_path rather than the root when both are possible', async () => {
     // @ts-ignore
     (await import('$lib/services/config')).cmsConfig = { current: { show_preview_links: true } };

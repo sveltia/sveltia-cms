@@ -3,11 +3,16 @@ import { page } from 'vitest/browser';
 
 import { mergeLockedBranch } from '$lib/services/backends/branch-access';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
+import { openNewTab } from '$lib/services/utils/window';
 import { publishingBranches } from '$lib/services/workflow';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import { publishReviewedEntry } from '$lib/services/workflow/save';
 import { canPublish } from '$lib/services/workflow/validate';
-import { createMockWorkflowEntry, initTestConfig } from '$lib/test/config';
+import {
+  createMockForkPullRequest,
+  createMockWorkflowEntry,
+  initTestConfig,
+} from '$lib/test/config';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 import { waitForToastsToHide } from '$lib/test/toast';
 
@@ -25,6 +30,7 @@ vi.mock('$lib/services/workflow/save', () => ({
   deleteWorkflowEntries: vi.fn(),
 }));
 vi.mock('$lib/services/workflow/validate', () => ({ canPublish: vi.fn(() => true) }));
+vi.mock('$lib/services/utils/window', () => ({ openNewTab: vi.fn() }));
 
 /**
  * Build an unpublished entry.
@@ -64,6 +70,21 @@ describe('PublishEntryButton', () => {
     });
 
     expect(container.querySelector('button')).toBeNull();
+  });
+
+  test('links to a contributor’s pull request on the Git service instead', async () => {
+    const entry = createEntry('pending_publish', 'hello', createMockForkPullRequest());
+
+    await renderWithDraft(PublishEntryButton, {
+      draft: createEntryDraft(entry),
+      props: { entry },
+    });
+
+    await expect
+      .element(page.getByRole('button', { name: 'Publish Entry' }))
+      .not.toBeInTheDocument();
+    await page.getByRole('button', { name: /^Review on/ }).click();
+    expect(openNewTab).toHaveBeenCalledWith('https://github.com/owner/repo/pull/7');
   });
 
   test('publishes the entry after confirmation, then leaves the editor', async () => {

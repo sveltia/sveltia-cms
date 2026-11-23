@@ -3,7 +3,7 @@ import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
-import { getAssetDetails } from '$lib/services/assets/details';
+import { getAssetDetails, getAssetUsedEntries } from '$lib/services/assets/details';
 import { backendName } from '$lib/services/backends';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { createMockAsset, createMockImageFile, initTestConfig, setEntries } from '$lib/test/config';
@@ -13,7 +13,11 @@ import InfoPanel from './info-panel.svelte';
 vi.mock('$lib/services/assets/details', async (importOriginal) => {
   const actual = /** @type {any} */ (await importOriginal());
 
-  return { ...actual, getAssetDetails: vi.fn(actual.getAssetDetails) };
+  return {
+    ...actual,
+    getAssetDetails: vi.fn(actual.getAssetDetails),
+    getAssetUsedEntries: vi.fn(actual.getAssetUsedEntries),
+  };
 });
 
 /**
@@ -142,11 +146,29 @@ describe('InfoPanel', () => {
 
     await expect.poll(() => getSections(container)['Used in']).toBe('None');
     expect(getSections(container)).toEqual(
-      expect.objectContaining({ Duration: '–', Dimensions: '–', 'Updated by': 'melvin' }),
+      expect.objectContaining({
+        Duration: '–',
+        Dimensions: '–',
+        // The URL doesn’t need the file
+        'Public URL': 'https://example.com/uploads/song.mp3',
+        'Updated by': 'melvin',
+      }),
     );
     expect(error).toHaveBeenCalledWith(
       expect.objectContaining({ message: 'Failed to retrieve blob' }),
     );
+  });
+
+  test('keeps the details when the used entries can’t be looked up', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    vi.mocked(getAssetUsedEntries).mockRejectedValueOnce(new Error('Failed'));
+
+    const { container } = await render(InfoPanel, { asset: createMockAsset({ name: 'a.txt' }) });
+
+    await expect.poll(() => getSections(container)['Used in']).toBe('None');
+    expect(getSections(container)['Public URL']).toBe('https://example.com/uploads/a.txt');
+    expect(error).toHaveBeenCalledWith(expect.objectContaining({ message: 'Failed' }));
   });
 
   test('ignores the details of an asset focused earlier that arrive late', async () => {

@@ -1,7 +1,8 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Menu, MenuButton, MenuItemCheckbox, MenuItemRadio } from '@sveltia/ui';
+  import { Menu, MenuButton, MenuItemCheckbox } from '@sveltia/ui';
 
+  import ConditionRadioItems from '$lib/components/common/page-toolbar/condition-radio-items.svelte';
   import { getConditionKey, getViewConditions } from '$lib/services/common/view';
 
   /**
@@ -22,7 +23,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     currentView,
     'aria-controls': ariaControls,
     label = '',
@@ -30,7 +30,6 @@
     multiple = false,
     noneLabel = '',
     filters = [],
-    /* eslint-enable prefer-const */
   } = $props();
 </script>
 
@@ -63,32 +62,13 @@
           />
         {/each}
       {:else}
-        <MenuItemRadio
-          label={noneLabel || _('sort_keys.none')}
-          checked={!currentView.current.filter}
-          onSelect={() => {
-            currentView.current = {
-              ...currentView.current,
-              filter: undefined,
-            };
-          }}
+        <ConditionRadioItems
+          {currentView}
+          viewKey="filter"
+          noneValue={undefined}
+          {noneLabel}
+          options={filters}
         />
-        {#each filters as filter (getConditionKey(getViewConditions(filter)))}
-          {@const { label: _label } = filter}
-          {@const conditions = getViewConditions(filter)}
-          {@const key = getConditionKey(conditions)}
-          <MenuItemRadio
-            label={_label}
-            checked={!!currentView.current.filter &&
-              getConditionKey(currentView.current.filter) === key}
-            onSelect={() => {
-              currentView.current = {
-                ...currentView.current,
-                filter: conditions,
-              };
-            }}
-          />
-        {/each}
       {/if}
     </Menu>
   {/snippet}

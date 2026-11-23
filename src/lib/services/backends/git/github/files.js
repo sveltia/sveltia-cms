@@ -1,6 +1,7 @@
+import { isAdditionsEnabled } from '$lib/services/app/additions';
 import { fetchLastCommit } from '$lib/services/backends/git/github/commits';
 import {
-  getWorkflowRepository,
+  getContentRepository,
   initOpenAuthoring,
   isOpenAuthoringConfigured,
 } from '$lib/services/backends/git/github/fork';
@@ -19,6 +20,7 @@ import { startSimulatedProgress } from '$lib/services/backends/git/shared/progre
 import { getRepositoryPath } from '$lib/services/backends/git/shared/repository';
 import { toFileListItems } from '$lib/services/backends/git/shared/tree';
 import { getRootDir } from '$lib/services/backends/root-dir';
+import { getBotCoAuthor } from '$lib/services/utils/commit-author';
 import { encodePathSegments } from '$lib/services/utils/url';
 
 /**
@@ -189,6 +191,7 @@ export const getFileMetadataFragment = ({ path }) => `
               }
             }
             committedDate
+            messageBody
           }
         }
       }
@@ -281,17 +284,21 @@ export const parseFileMetadata = (fetchingFiles, results) =>
         return [];
       }
 
-      const { author, committedDate } = commit;
+      const { author, committedDate, messageBody } = commit;
       const user = author?.user;
+      // A commit made by an app for someone, e.g. with Sveltia CMS Additions, is theirs
+      const coAuthor = getBotCoAuthor(author, messageBody);
 
       return [
         [
           path,
           {
             // The author can be `null` when the commit has no valid author info
-            commitAuthor: author
-              ? { name: author.name, email: author.email, id: user?.id, login: user?.login }
-              : undefined,
+            commitAuthor:
+              coAuthor ||
+              (author
+                ? { name: author.name, email: author.email, id: user?.id, login: user?.login }
+                : undefined),
             commitDate: new Date(committedDate),
           },
         ],
@@ -360,7 +367,9 @@ export const fetchFiles = async ({ lastCommit } = {}) => {
     isOpenAuthoringConfigured,
     initOpenAuthoring,
     repository,
-    checkAccess: checkRepositoryAccess,
+    // With Sveltia CMS Additions, the GitHub token is limited to the repository and the user’s
+    // role, and an installation token has no repository permissions to check
+    checkAccess: isAdditionsEnabled() ? undefined : checkRepositoryAccess,
     checkBranchAccess,
     fetchDefaultBranchName,
     fetchLastCommit,
@@ -377,9 +386,9 @@ export const fetchFiles = async ({ lastCommit } = {}) => {
  * @returns {Promise<Blob>} Blob data.
  */
 export const fetchBlob = async (asset) => {
-  // An asset attached to an unpublished entry is committed to a workflow branch, which lives in the
-  // contributor’s fork with Open Authoring, so the blob has to be read from there
-  const { owner, repo } = asset.workflow ? getWorkflowRepository() : repository;
+  // An asset attached to an unpublished entry is committed to a workflow branch, whose blobs are
+  // read from the repository that serves the workflow branches’ files
+  const { owner, repo } = asset.workflow ? getContentRepository() : repository;
   const { sha } = asset;
 
   const response = /** @type {Response} */ (

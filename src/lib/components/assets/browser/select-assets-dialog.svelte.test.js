@@ -6,7 +6,7 @@ import { render } from 'vitest-browser-svelte';
 import { createSubfolder } from '$lib/services/assets/data/subfolder';
 import { globalAssetFolder } from '$lib/services/assets/folders';
 import { selectAssetsView, showContentOverlay } from '$lib/services/contents/editor';
-import { duplicates } from '$lib/services/contents/fields/file/duplicates.svelte';
+import { duplicatesRequest } from '$lib/services/contents/fields/file/duplicates.svelte';
 import { listAssets } from '$lib/services/contents/fields/file/helpers';
 import { getUnsavedAssets } from '$lib/services/contents/fields/file/process';
 import {
@@ -26,6 +26,8 @@ import {
   serveMediaFolderAtSiteRoot,
   setAssets,
 } from '$lib/test/config';
+import { createFileDropEvent } from '$lib/test/drop';
+import { getShownToastText, waitForToastsToHide } from '$lib/test/toast';
 
 import SelectAssetsDialog from './select-assets-dialog.svelte';
 
@@ -83,36 +85,13 @@ const renderDialog = async (props = {}, service = {}) => {
 };
 
 /**
- * Drop the given files onto the dialog, the way a browser does when files are dropped from the
- * desktop: each item resolves to a file system entry.
+ * Drop the given files onto the drop target.
  * @param {File[]} files Files.
  */
 const dropFiles = (files) => {
-  const event = new Event('drop', { bubbles: true, cancelable: true });
-
-  Object.defineProperty(event, 'dataTransfer', {
-    value: {
-      dropEffect: '',
-      items: files.map((file) => ({
-        /**
-         * Get the entry.
-         * @returns {any} File entry.
-         */
-        webkitGetAsEntry: () => ({
-          name: file.name,
-          isFile: true,
-          /**
-           * Read the file.
-           * @param {(file: File) => void} callback Callback.
-           * @returns {void} Nothing.
-           */
-          file: (callback) => callback(file),
-        }),
-      })),
-    },
-  });
-
-  /** @type {HTMLElement} */ (document.querySelector('.drop-target')).dispatchEvent(event);
+  /** @type {HTMLElement} */ (document.querySelector('.drop-target')).dispatchEvent(
+    createFileDropEvent(files),
+  );
 };
 
 /**
@@ -450,7 +429,7 @@ describe('SelectAssetsDialog', () => {
 
       dropFiles([file]);
       await waitForGrid(3);
-      expect(duplicates.showDialog).toBe(false);
+      expect(duplicatesRequest.current).toBeUndefined();
       await dialog.getByRole('button', { name: 'Insert' }).click();
 
       await vi.waitFor(() =>
@@ -704,7 +683,10 @@ describe('SelectAssetsDialog', () => {
     await dialog.getByRole('option', { name: 'Enter URL' }).click();
     await expect.element(dialog.getByText('Enter URL of the file:')).toBeInTheDocument();
 
-    await dialog.getByRole('textbox').fill(' https://example.com/x.pdf ');
+    // The prompt names the input
+    await dialog
+      .getByRole('textbox', { name: 'Enter URL of the file:' })
+      .fill(' https://example.com/x.pdf ');
     await dialog.getByRole('button', { name: 'Insert' }).click();
 
     await vi.waitFor(() =>
@@ -725,7 +707,9 @@ describe('SelectAssetsDialog', () => {
 
     const insert = dialog.getByRole('button', { name: 'Insert' });
 
-    await dialog.getByRole('textbox').fill('https://example.com/x.png');
+    await dialog
+      .getByRole('textbox', { name: 'Enter URL of the image:' })
+      .fill('https://example.com/x.png');
     await expect.element(insert).toBeEnabled();
     await dialog.getByRole('textbox').fill(' ');
     await expect.element(insert).toBeDisabled();
@@ -737,7 +721,9 @@ describe('SelectAssetsDialog', () => {
     const insert = dialog.getByRole('button', { name: 'Insert' });
 
     await dialog.getByRole('option', { name: 'Enter URL' }).click();
-    await dialog.getByRole('textbox').fill('https://example.com/x.png');
+    await dialog
+      .getByRole('textbox', { name: 'Enter URL of the image:' })
+      .fill('https://example.com/x.png');
     await expect.element(insert).toBeEnabled();
 
     // Nothing is selected in the repository folder
@@ -1158,15 +1144,15 @@ describe('SelectAssetsDialog', () => {
     const duplicate = await createMockImageFile({ name: 'a.png', width: 5 });
 
     dropFiles([duplicate]);
-    await expect.poll(() => duplicates.showDialog).toBe(true);
-    duplicates.resolve?.(undefined);
-    await expect.poll(() => duplicates.showDialog).toBe(false);
+    await expect.poll(() => !!duplicatesRequest.current).toBe(true);
+    duplicatesRequest.current?.respond(undefined);
+    await expect.poll(() => !!duplicatesRequest.current).toBe(false);
     await sleep(100);
     expect(document.querySelectorAll('#select-assets-grid [role="option"]')).toHaveLength(3);
 
     dropFiles([duplicate]);
-    await expect.poll(() => duplicates.showDialog).toBe(true);
-    duplicates.resolve?.(true);
+    await expect.poll(() => !!duplicatesRequest.current).toBe(true);
+    duplicatesRequest.current?.respond(true);
     // The new file takes the place of the existing asset in the list
     await expect.poll(() => document.querySelectorAll('.unsaved').length).toBe(1);
     await waitForGrid(3);
@@ -1225,6 +1211,29 @@ describe('SelectAssetsDialog', () => {
     }
   });
 
+  test('opens on the cloud storage service marked as the default', async () => {
+    const list = vi.fn().mockResolvedValue([createMockExternalAsset({ fileName: 'cloud.png' })]);
+
+    await renderDialog(
+      {
+        fieldConfig: {
+          name: 'image',
+          widget: 'image',
+          media_libraries: { test_cloud: { default: true } },
+        },
+      },
+      { list },
+    );
+
+    const dialog = page.getByRole('dialog');
+
+    await expect
+      .element(dialog.getByRole('option', { name: 'Test Cloud' }))
+      .toHaveAttribute('aria-selected', 'true');
+    await waitForGrid(1);
+    expect(list).toHaveBeenCalled();
+  });
+
   test('selects the first external service when no folder is available', async () => {
     await renderDialog({
       assetLibraryFolderMap: { global: { folder: globalAssetFolder.current, enabled: false } },
@@ -1235,8 +1244,8 @@ describe('SelectAssetsDialog', () => {
       .toHaveAttribute('aria-selected', 'true');
   });
 
-  test('falls back to a stock photo service for pending files without a cloud service', async () => {
-    await renderDialog({
+  test('reports pending files that no location can take, falling back to a stock photo service', async () => {
+    const { props } = await renderDialog({
       assetLibraryFolderMap: { global: { folder: globalAssetFolder.current, enabled: false } },
       enabledCloudServiceEntries: [],
       pendingFiles: [await createMockImageFile({ name: 'pending.png' })],
@@ -1245,6 +1254,76 @@ describe('SelectAssetsDialog', () => {
     await expect
       .element(page.getByRole('dialog').getByRole('option', { name: 'Lorem Picsum' }))
       .toHaveAttribute('aria-selected', 'true');
+    await expect.poll(() => getShownToastText('error')).toBe('error Error Upload failed.');
+    expect(props.pendingFiles).toEqual([]);
+    await waitForToastsToHide();
+  });
+
+  test('takes the files dropped on the field to the cloud service once signed in', async () => {
+    const upload = vi.fn(async (/** @type {File[]} */ files) =>
+      files.map((file) => createMockExternalAsset({ fileName: file.name })),
+    );
+
+    // The field renders the dialog closed, and opens it once files are dropped on the field, so
+    // the location offered first, Lorem Picsum, was picked before there were files to upload
+    const { props } = await renderDialog(
+      {
+        open: false,
+        pendingFiles: [],
+        assetLibraryFolderMap: { global: { folder: globalAssetFolder.current, enabled: false } },
+        draft: { originalEntry: undefined, files: {} },
+      },
+      { authType: 'api_key', apiKeyPattern: /^[a-z]+$/, upload },
+    );
+
+    const pending = await createMockImageFile({ name: 'pending.png' });
+
+    props.pendingFiles = [pending];
+    props.open = true;
+
+    const dialog = page.getByRole('dialog');
+
+    await expect
+      .element(dialog.getByRole('option', { name: 'Test Cloud' }))
+      .toHaveAttribute('aria-selected', 'true');
+
+    // Nothing is uploaded without the credentials, which the service asks for first
+    const input = dialog.getByRole('textbox', { name: /Test Cloud/ });
+
+    await expect.element(input).toBeInTheDocument();
+    await expect.element(dialog.getByRole('button', { name: 'Upload' })).toBeDisabled();
+    await sleep(100);
+    expect(upload).not.toHaveBeenCalled();
+    expect(props.pendingFiles).toEqual([pending]);
+
+    await input.fill('secret');
+    await vi.waitFor(() =>
+      expect(upload).toHaveBeenCalledWith([pending], expect.objectContaining({ apiKey: 'secret' })),
+    );
+    expect(props.pendingFiles).toEqual([]);
+    await expect.element(dialog.getByRole('button', { name: 'Upload' })).toBeEnabled();
+  });
+
+  test('leaves the pending files out once another location is picked', async () => {
+    const pending = await createMockImageFile({ name: 'pending.png' });
+
+    const { props } = await renderDialog(
+      {
+        pendingFiles: [pending],
+        assetLibraryFolderMap: { global: { folder: globalAssetFolder.current, enabled: false } },
+      },
+      { authType: 'api_key', apiKeyPattern: /^[a-z]+$/, upload: vi.fn() },
+    );
+
+    const dialog = page.getByRole('dialog');
+
+    await expect.element(dialog.getByRole('textbox', { name: /Test Cloud/ })).toBeInTheDocument();
+    expect(props.pendingFiles).toEqual([pending]);
+
+    await dialog.getByRole('option', { name: 'Lorem Picsum' }).click();
+    expect(props.pendingFiles).toEqual([]);
+    // They were meant for the cloud service, so no failure is reported
+    expect(getShownToastText('error')).toBeUndefined();
   });
 
   test('opens the Cloudinary library, and closes once assets are picked', async () => {

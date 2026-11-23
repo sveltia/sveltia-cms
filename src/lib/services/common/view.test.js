@@ -16,6 +16,7 @@ import {
   groupItems,
   hasComparison,
   initViewSettingsStorage,
+  isCollapsedByDefault,
   isGroupCollapsed,
   matchesFilter,
   OTHER_GROUP_NAME,
@@ -632,6 +633,86 @@ describe('Test setAllGroupsCollapsed()', () => {
     const view = { type: 'list' };
 
     expect(setAllGroupsCollapsed(view, ['blog'], true)).toBe(view);
+  });
+});
+
+describe('Test isCollapsedByDefault()', () => {
+  test('checks the `collapsed` option of the view group the conditions came from', () => {
+    const options = [
+      { name: 'category', label: 'Category', field: 'category', collapsed: true },
+      { name: 'year', label: 'Year', field: 'date', pattern: '\\d{4}' },
+      { name: 'upcoming', label: 'Upcoming', field: 'date', gte: '{{today}}', collapsed: true },
+    ];
+
+    expect(isCollapsedByDefault(options, { field: 'category' })).toBe(true);
+    expect(isCollapsedByDefault(options, { field: 'date', pattern: '\\d{4}' })).toBe(false);
+    expect(isCollapsedByDefault(options, { field: 'date', gte: '{{today}}' })).toBe(true);
+    // A group that has been removed from the configuration
+    expect(isCollapsedByDefault(options, { field: 'author' })).toBe(false);
+    // Ungrouped, or no options
+    expect(isCollapsedByDefault(options, null)).toBe(false);
+    expect(isCollapsedByDefault(options, undefined)).toBe(false);
+    expect(isCollapsedByDefault(undefined, { field: 'category' })).toBe(false);
+    expect(isCollapsedByDefault([], { field: 'category' })).toBe(false);
+  });
+
+  test('only takes `true` as enabling the option', () => {
+    const options = [
+      { label: 'Category', field: 'category', collapsed: /** @type {any} */ ('yes') },
+    ];
+
+    expect(isCollapsedByDefault(options, { field: 'category' })).toBe(false);
+  });
+});
+
+describe('Group collapsing with groups collapsed by default', () => {
+  const group = { field: 'category' };
+
+  test('isGroupCollapsed() treats every group as collapsed unless expanded', () => {
+    const expandedGroups = { '["category"]': ['news'] };
+
+    expect(isGroupCollapsed({ group }, 'news', true)).toBe(true);
+    expect(isGroupCollapsed({ group, expandedGroups }, 'news', true)).toBe(false);
+    expect(isGroupCollapsed({ group, expandedGroups }, 'blog', true)).toBe(true);
+    // The collapsed groups saved for the default state don’t apply
+    expect(isGroupCollapsed({ group, collapsedGroups: expandedGroups }, 'news', true)).toBe(true);
+    // Nothing is collapsed without grouping
+    expect(isGroupCollapsed({ group: null, expandedGroups }, 'blog', true)).toBe(false);
+    // The `*` group, which has no expander, is never collapsed
+    expect(isGroupCollapsed({ group: { field: '' } }, '*', true)).toBe(false);
+  });
+
+  test('setGroupCollapsed() saves the expanded groups instead', () => {
+    const view = { type: 'list', group, collapsedGroups: { '["year"]': ['2010'] } };
+    const expanded = setGroupCollapsed(view, 'news', false, true);
+
+    expect(expanded).toEqual({
+      type: 'list',
+      group,
+      collapsedGroups: { '["year"]': ['2010'] },
+      expandedGroups: { '["category"]': ['news'] },
+    });
+    expect(setGroupCollapsed(expanded, 'news', false, true)).toEqual(expanded);
+    expect(setGroupCollapsed(expanded, 'news', true, true)).toEqual(view);
+    expect(setGroupCollapsed(view, 'news', true, true)).toEqual(view);
+  });
+
+  test('setAllGroupsCollapsed() saves the expanded groups instead', () => {
+    const view = { type: 'list', group, expandedGroups: { '["category"]': ['old'] } };
+    const expanded = setAllGroupsCollapsed(view, ['blog', 'news'], false, true);
+
+    expect(expanded).toEqual({
+      type: 'list',
+      group,
+      expandedGroups: { '["category"]': ['blog', 'news'] },
+    });
+    expect(isGroupCollapsed(expanded, 'blog', true)).toBe(false);
+    // A group that appears later starts collapsed
+    expect(isGroupCollapsed(expanded, 'misc', true)).toBe(true);
+    expect(setAllGroupsCollapsed(expanded, ['blog', 'news'], true, true)).toEqual({
+      type: 'list',
+      group,
+    });
   });
 });
 

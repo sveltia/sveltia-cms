@@ -80,6 +80,17 @@ describe('assignManualSortOrder', () => {
     expect(draft.currentValues.en.order).toBe(1);
   });
 
+  it('starts from 1 when the highest order is zero or below', () => {
+    vi.mocked(getEntriesByCollection).mockReturnValue(
+      /** @type {any} */ ([{ locales: { en: { content: { order: -2 } } } }]),
+    );
+
+    const draft = createDraft({ en: {} });
+
+    assignManualSortOrder(draft);
+    expect(draft.currentValues.en.order).toBe(1);
+  });
+
   it('skips the orders already taken by the given number of entries', () => {
     vi.mocked(getEntriesByCollection).mockReturnValue(
       /** @type {any} */ ([{ locales: { en: { content: { order: 5 } } } }]),
@@ -114,9 +125,36 @@ describe('getMaxEntryNumber', () => {
     vi.mocked(getUnpublishedEntriesByCollection).mockReturnValue([]);
   });
 
-  it('returns 0 when no entry has a positive number', () => {
+  it('returns `undefined` when no entry has a number', () => {
     vi.mocked(getEntriesByCollection).mockReturnValue(
-      /** @type {any} */ ([{ locales: { en: { content: { id: -3 } } } }]),
+      /** @type {any} */ ([
+        { locales: { en: { content: { id: null } } } },
+        { locales: { en: { content: { id: '' } } } },
+        { locales: { en: { content: {} } } },
+        { locales: { fr: { content: { id: 1 } } } },
+      ]),
+    );
+
+    expect(getMaxEntryNumber({ collectionName: 'tags', keyPath: 'id', locale: 'en' })).toBe(
+      undefined,
+    );
+  });
+
+  it('returns a highest number of zero or below', () => {
+    vi.mocked(getEntriesByCollection).mockReturnValue(
+      /** @type {any} */ ([
+        { locales: { en: { content: { id: -3 } } } },
+        { locales: { en: { content: { id: '-7' } } } },
+      ]),
+    );
+
+    expect(getMaxEntryNumber({ collectionName: 'tags', keyPath: 'id', locale: 'en' })).toBe(-3);
+
+    vi.mocked(getEntriesByCollection).mockReturnValue(
+      /** @type {any} */ ([
+        { locales: { en: { content: { id: -3 } } } },
+        { locales: { en: { content: { id: 0 } } } },
+      ]),
     );
 
     expect(getMaxEntryNumber({ collectionName: 'tags', keyPath: 'id', locale: 'en' })).toBe(0);

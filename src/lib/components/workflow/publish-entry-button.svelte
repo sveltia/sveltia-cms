@@ -6,14 +6,14 @@
   import { _ } from '@sveltia/i18n';
   import { Alert, Button, ConfirmationDialog, Toast } from '@sveltia/ui';
 
+  import ExternalReviewButton from '$lib/components/workflow/external-review-button.svelte';
   import { getCollection } from '$lib/services/contents/collection';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { isPublishAllowed, publishingBranches } from '$lib/services/workflow';
+  import { getPublishAction, publishingBranches } from '$lib/services/workflow';
   import { getPublishDialogStrings } from '$lib/services/workflow/dialogs';
-  import { closeWorkflowEntryEditor } from '$lib/services/workflow/editor';
+  import { runWorkflowEditorAction } from '$lib/services/workflow/editor';
   import { publishReviewedEntry } from '$lib/services/workflow/save';
   import { canPublish } from '$lib/services/workflow/validate';
-  import { getWorkflowErrorMessage } from '$lib/services/workflow/verify';
 
   /**
    * @import { UnpublishedEntry } from '$lib/types/private';
@@ -31,13 +31,7 @@
   const entryDraft = getEntryDraftContext();
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    entry,
-    disabled = false,
-    modified = false,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { entry, disabled = false, modified = false } = $props();
 
   let showPublishDialog = $state(false);
   let showErrorToast = $state(false);
@@ -53,38 +47,39 @@
   const publishing = $derived(
     publishingBranches.current.includes(entry.workflow.pullRequest.branch),
   );
-  // Only a user who can merge the pull request gets the control, once the entry is ready
-  const visible = $derived(isPublishAllowed(entry, getCollection(entry.workflow.collectionName)));
+  // Only a user who can merge the pull request gets the control, once the entry is ready. A pull
+  // request a contributor has opened from their fork is merged on the Git service instead
+  const publishAction = $derived(
+    getPublishAction(entry, getCollection(entry.workflow.collectionName)),
+  );
 
   /**
    * Publish the entry by merging the pull request, then go back to the entry list.
    */
   const publish = async () => {
-    // An entry can be saved as a draft with its required fields left empty, so it’s checked first
-    if (!canPublish({ entry, draft: entryDraft.current })) {
+    const { blocked, errorMessage: message } = await runWorkflowEditorAction({
+      entry,
+      entryDraft,
+      valid: canPublish({ entry, draft: entryDraft.current }),
+      /**
+       * Merge the pull request, pinned to the version the editor shows.
+       * @returns {Promise<void>} Result.
+       */
+      action: () => publishReviewedEntry(entry, entryDraft.current?.originalEntry),
+      failure: 'workflow.publishing_entry_failed',
+      closeOnSuccess: true,
+    });
+
+    if (blocked) {
       showValidationToast = true;
-
-      return;
-    }
-
-    // Read these up front: publishing takes the entry out of `unpublishedEntries`, and the `entry`
-    // prop is derived from that store, so it’s `undefined` once the merge resolves
-    const { collectionName, pullRequest } = entry.workflow;
-
-    try {
-      // Pinned to the version the editor shows
-      await publishReviewedEntry(entry, entryDraft.current?.originalEntry);
-      closeWorkflowEntryEditor({ entryDraft, branch: pullRequest.branch, collectionName });
-    } catch (/** @type {any} */ ex) {
-      errorMessage = getWorkflowErrorMessage(ex, 'workflow.publishing_entry_failed');
+    } else if (message) {
+      errorMessage = message;
       showErrorToast = true;
-      // eslint-disable-next-line no-console
-      console.error(ex);
     }
   };
 </script>
 
-{#if visible}
+{#if publishAction === 'publish'}
   <Button
     variant="primary"
     label={publishing && !deletion ? _('publishing') : dialogStrings.label}
@@ -94,6 +89,8 @@
       showPublishDialog = true;
     }}
   />
+{:else if publishAction === 'review'}
+  <ExternalReviewButton {entry} {disabled} />
 {/if}
 
 <ConfirmationDialog

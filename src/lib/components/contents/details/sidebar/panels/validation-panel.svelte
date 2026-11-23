@@ -25,11 +25,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    onSelectField = highlightEditorField,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { onSelectField = highlightEditorField } = $props();
 
   const entryDraft = getEntryDraftContext();
 

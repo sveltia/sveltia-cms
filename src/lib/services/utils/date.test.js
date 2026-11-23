@@ -1,10 +1,11 @@
-import { describe, expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
 import {
   DATE_FORMAT_OPTIONS,
   DATE_REGEX,
   DATE_TIME_FORMAT_OPTIONS,
   formatDate,
+  formatRecentDateTime,
   TIME_FORMAT_OPTIONS,
   TIME_SUFFIX_REGEX,
 } from './date';
@@ -148,5 +149,93 @@ describe('formatDate', () => {
 
     expect(typeof formatDate(date, null)).toBe('string');
     expect(formatDate(date, null).length).toBeGreaterThan(0);
+  });
+});
+
+describe('formatRecentDateTime()', () => {
+  const { TZ } = process.env;
+
+  afterEach(() => {
+    process.env.TZ = TZ;
+  });
+
+  describe('in UTC', () => {
+    test('shows the time alone for today', () => {
+      expect(
+        formatRecentDateTime({
+          timestamp: new Date('2026-11-07T10:30:00Z'),
+          locale: 'en-US',
+          now: new Date('2026-11-07T18:00:00Z'),
+        }),
+      ).toBe('10:30 AM');
+    });
+
+    test('adds the month and day for another day this year', () => {
+      expect(
+        formatRecentDateTime({
+          timestamp: new Date('2026-01-15T10:30:00Z'),
+          locale: 'en-US',
+          now: new Date('2026-11-07T18:00:00Z'),
+        }),
+      ).toBe('Jan 15, 10:30 AM');
+      // The same day of another month
+      expect(
+        formatRecentDateTime({
+          timestamp: new Date('2026-10-07T10:30:00Z'),
+          locale: 'en-US',
+          now: new Date('2026-11-07T18:00:00Z'),
+        }),
+      ).toBe('Oct 7, 10:30 AM');
+    });
+
+    test('adds the year for another year', () => {
+      expect(
+        formatRecentDateTime({
+          timestamp: new Date('2025-11-07T10:30:00Z'),
+          locale: 'en-US',
+          now: new Date('2026-11-07T18:00:00Z'),
+        }),
+      ).toBe('Nov 7, 2025, 10:30 AM');
+    });
+
+    test('compares with the current time by default', () => {
+      const timestamp = new Date();
+
+      timestamp.setHours(10, 30, 0, 0);
+      expect(formatRecentDateTime({ timestamp, locale: 'en-US' })).toBe('10:30 AM');
+    });
+  });
+
+  describe('in another time zone', () => {
+    beforeEach(() => {
+      process.env.TZ = 'Asia/Tokyo';
+    });
+
+    test('compares the dates in the user’s time zone, which the time is shown in', () => {
+      // 23:30 the previous evening in Tokyo, while it’s the same day in UTC
+      expect(
+        formatRecentDateTime({
+          timestamp: new Date('2026-11-06T14:30:00Z'),
+          locale: 'en-US',
+          now: new Date('2026-11-06T23:00:00Z'),
+        }),
+      ).toBe('Nov 6, 11:30 PM');
+      // 08:30 the same morning in Tokyo, while it was the previous day in UTC
+      expect(
+        formatRecentDateTime({
+          timestamp: new Date('2026-11-06T23:30:00Z'),
+          locale: 'en-US',
+          now: new Date('2026-11-07T01:00:00Z'),
+        }),
+      ).toBe('8:30 AM');
+      // New Year’s Eve in Tokyo, while it’s already New Year’s Day in UTC
+      expect(
+        formatRecentDateTime({
+          timestamp: new Date('2025-12-31T14:30:00Z'),
+          locale: 'en-US',
+          now: new Date('2026-01-01T03:00:00Z'),
+        }),
+      ).toBe('Dec 31, 2025, 11:30 PM');
+    });
   });
 });

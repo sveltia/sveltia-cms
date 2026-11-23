@@ -5,6 +5,7 @@ import { decodeBase64, getPathInfo } from '@sveltia/utils/file';
 import { getApiSettings } from '$lib/services/backends/git/gitea/api';
 import { fetchLastCommit } from '$lib/services/backends/git/gitea/commits';
 import {
+  getBranchRepository,
   getWorkflowRepository,
   initOpenAuthoring,
   isOpenAuthoringConfigured,
@@ -19,12 +20,13 @@ import {
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { fetchAPIOrUndefined } from '$lib/services/backends/git/shared/api-optional';
 import { mapConcurrently, runConcurrently } from '$lib/services/backends/git/shared/concurrency';
+import { createCachedDirSHALookup } from '$lib/services/backends/git/shared/dir-sha';
 import { fetchRepositoryFiles } from '$lib/services/backends/git/shared/files';
 import { getRepositoryPath } from '$lib/services/backends/git/shared/repository';
 import { toFileListItems } from '$lib/services/backends/git/shared/tree';
 import { getRootDir } from '$lib/services/backends/root-dir';
 import { dataLoadedProgress } from '$lib/services/contents';
-import { createLRUMap } from '$lib/services/utils/cache';
+import { splitIntoSizedChunks } from '$lib/services/utils/array';
 import { encodePathSegments } from '$lib/services/utils/url';
 
 /**
@@ -32,9 +34,9 @@ import { encodePathSegments } from '$lib/services/utils/url';
  * Asset,
  * BaseFileListItem,
  * BaseFileListItemProps,
+ * RepositoryPath,
  * RepositoryContentsMap,
  * } from '$lib/types/private';
- * @import { LRUMap } from '$lib/services/utils/cache';
  */
 
 /**
@@ -66,29 +68,16 @@ import { encodePathSegments } from '$lib/services/utils/url';
  * @see https://docs.gitea.com/administration/config-cheat-sheet
  */
 const DEFAULT_MAX_BLOB_SIZE = 10485760;
-/**
- * Maximum number of entries in {@link dirLookups}.
- */
-const MAX_DIR_LOOKUPS = 4;
-/**
- * Directories recently looked up at a commit, with their tree SHAs. The check for remote changes
- * looks up the old and new heads at the same time, so more than one is kept.
- * @type {LRUMap<string, string | undefined>}
- */
-const dirLookups = createLRUMap(MAX_DIR_LOOKUPS);
 
 /**
- * Forget the directory lookups. Used in tests.
- */
-export const _resetDirLookup = () => {
-  dirLookups.clear();
-};
-
-/**
- * Look the tree SHA of a directory up, without the cache of {@link fetchDirSHA}.
+ * Look the tree SHA of a directory up, by listing the directory that holds it.
+ * Gitea/Forgejo also resolve a `ref:path` expression in place of a tree SHA, but only with the
+ * slashes in the path encoded as `%2F`, which a reverse proxy in front of a self-hosted instance
+ * may decode, so the documented contents endpoint is used instead.
  * @param {string} ref Commit SHA or branch name.
  * @param {string} dirPath Directory path relative to the repository root.
  * @returns {Promise<string | undefined>} Tree SHA, or `undefined` if the directory doesn’t exist.
+ * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetContentsList
  */
 const lookUpDirSHA = async (ref, dirPath) => {
   const { dirname, basename } = getPathInfo(dirPath);
@@ -107,33 +96,12 @@ const lookUpDirSHA = async (ref, dirPath) => {
     : undefined;
 };
 
-/**
- * Find the tree SHA of a directory at the given commit, by listing the directory that holds it.
- * Gitea/Forgejo also resolve a `ref:path` expression in place of a tree SHA, but only with the
- * slashes in the path encoded as `%2F`, which a reverse proxy in front of a self-hosted instance
- * may decode, so the documented contents endpoint is used instead.
- * @param {string} ref Commit SHA or branch name.
- * @param {string} dirPath Directory path relative to the repository root.
- * @returns {Promise<string | undefined>} Tree SHA, or `undefined` if the directory doesn’t exist.
- * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetContentsList
- */
-export const fetchDirSHA = async (ref, dirPath) => {
-  const key = `${repository.owner}/${repository.repo}:${ref}:${dirPath}`;
-
-  // The tree of a directory at a commit never changes, so the lookup the check for remote changes
-  // has just made is reused by the file list. A branch name moves, so it’s always looked up
-  if (dirLookups.has(key)) {
-    return dirLookups.get(key);
-  }
-
-  const sha = await lookUpDirSHA(ref, dirPath);
-
-  if (/^[\da-f]{40,64}$/.test(ref)) {
-    dirLookups.set(key, sha);
-  }
-
-  return sha;
-};
+// The check for remote changes and the file list look the root directory up at the same commit,
+// so the lookup is made once; `_resetDirLookup` forgets the lookups in tests
+export const { fetchDirSHA, resetDirLookups: _resetDirLookup } = createCachedDirSHALookup(
+  repository,
+  lookUpDirSHA,
+);
 
 /**
  * Fetch the repository’s complete file list, and return it in the canonical format. With the
@@ -272,14 +240,17 @@ const requestRawFile = async ({ owner, repo, path, ref }) =>
  * @param {string} [ref] Workflow branch to read the file from. Default: the branch configured in
  * the site configuration. A workflow branch lives in the contributor’s fork with Open Authoring,
  * so that’s where a file on one is read from.
+ * @param {RepositoryPath} [repoPath] Repository to read a file on a workflow branch from, if it
+ * isn’t the one the workflow branches live in, such as the fork of a contributor whose pull request
+ * a maintainer reviews.
  * @returns {Promise<string>} File content.
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetRawFile
  * @see https://github.com/go-gitea/gitea/issues/14432
  */
-export const fetchRawFile = async (path, ref) => {
+export const fetchRawFile = async (path, ref, repoPath = getWorkflowRepository()) => {
   // A workflow branch lives in the contributor’s fork with Open Authoring, so that’s where a file
   // on one is read from
-  const { owner, repo } = ref ? getWorkflowRepository() : repository;
+  const { owner, repo } = ref ? repoPath : repository;
   const { branch = '' } = repository;
 
   return requestRawFile({ owner, repo, path, ref: ref ?? branch });
@@ -295,37 +266,19 @@ export const fetchRawFile = async (path, ref) => {
  * @param {number} limits.maxResponseSize Maximum combined size of the encoded contents per batch.
  * @returns {BaseFileListItem[][]} Batches.
  */
-export const createBatches = (files, { maxItems, maxResponseSize }) => {
-  /** @type {BaseFileListItem[][]} */
-  const batches = [];
-  /** @type {BaseFileListItem[]} */
-  let batch = [];
-  let batchSize = 0;
-
-  files.forEach((file) => {
-    // An instance measures a response by the size of the Base64-encoded contents it returns, and
-    // the encoding inflates a file by four bytes for every three
-    const encodedSize = ((file.size ?? 0) * 4) / 3;
-
-    // Close the current batch before the file that would push it over either limit. A batch is
-    // never left empty, so a file that exceeds a limit on its own still gets a request of its own
-    // instead of looping forever
-    if (batch.length && (batch.length === maxItems || batchSize + encodedSize > maxResponseSize)) {
-      batches.push(batch);
-      batch = [];
-      batchSize = 0;
-    }
-
-    batch.push(file);
-    batchSize += encodedSize;
+export const createBatches = (files, { maxItems, maxResponseSize }) =>
+  splitIntoSizedChunks(files, {
+    maxItems,
+    maxSize: maxResponseSize,
+    /**
+     * Get the size of a file’s contents once encoded. An instance measures a response by the size
+     * of the Base64-encoded contents it returns, and the encoding inflates a file by four bytes for
+     * every three.
+     * @param {BaseFileListItem} file File.
+     * @returns {number} Encoded size.
+     */
+    getSize: (file) => ((file.size ?? 0) * 4) / 3,
   });
-
-  if (batch.length) {
-    batches.push(batch);
-  }
-
-  return batches;
-};
 
 /**
  * Fetch the metadata of entry/asset files as well as text file contents. Gitea and Forgejo have
@@ -494,9 +447,11 @@ export const fetchFiles = async ({ lastCommit } = {}) => {
 export const fetchBlob = async (asset) => {
   const { path } = asset;
   // An asset attached to an unpublished entry only exists on the workflow branch, so that’s where
-  // it has to be read from — in the contributor’s fork with Open Authoring
-  const repoPath = getRepositoryPath(asset.workflow ? getWorkflowRepository() : repository);
-  const ref = asset.workflow?.branch ?? repository.branch;
+  // it has to be read from — in the contributor’s fork with Open Authoring, or when a maintainer
+  // reviews a contributor’s pull request
+  const target = asset.workflow ? getBranchRepository(asset.workflow.branch) : undefined;
+  const repoPath = getRepositoryPath(target ?? repository);
+  const ref = target?.branch ?? repository.branch;
   const refAndPath = `${encodePathSegments(String(ref))}/${encodePathSegments(path)}`;
 
   return /** @type {Promise<Blob>} */ (

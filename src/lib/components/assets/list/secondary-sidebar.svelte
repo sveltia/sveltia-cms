@@ -25,13 +25,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    asset,
-    children,
-    fallback = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { asset, children, fallback = undefined } = $props();
 </script>
 
 {#if env.isLargeScreen && currentView.current.showInfo}

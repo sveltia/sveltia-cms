@@ -5,6 +5,7 @@
 -->
 <script>
   import SubfolderListItem from '$lib/components/assets/list/subfolder-list-item.svelte';
+  import { createAssetDropTarget } from '$lib/services/assets/drag';
   import {
     browseExternalFolder,
     deletingExternalSubfolder,
@@ -27,13 +28,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    subfolder,
-    rowIndex,
-    viewType,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { subfolder, rowIndex, viewType } = $props();
 
   /** The component is only rendered while a service is selected. */
   const service = $derived(/** @type {MediaLibraryService} */ (selectedCloudService.current));
@@ -60,6 +55,7 @@
         renamingExternalSubfolder.current = subfolder;
       }
     : undefined}
+  dropTarget={createAssetDropTarget({ service, dirPath: subfolder.path })}
   onDelete={canDelete
     ? () => {
         deletingExternalSubfolder.current = subfolder;

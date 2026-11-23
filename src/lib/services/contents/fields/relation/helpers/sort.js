@@ -1,7 +1,7 @@
 import { compare } from '@sveltia/utils/string';
 
 import { compareSortKeys } from '$lib/services/common/view';
-import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
+import { isManualOrderKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { getOrderValueGetter } from '$lib/services/contents/collection/entries/reorder/sort';
 import { getEntrySortKeyGetter } from '$lib/services/contents/collection/view/sort';
 import { SPECIAL_SORT_KEYS } from '$lib/services/contents/collection/view/sort-keys';
@@ -32,7 +32,7 @@ import { isFieldInLocale } from '$lib/services/contents/i18n/shared-values';
  * Sort key getter, and whether the keys are compared as strings.
  */
 const getRelationSortKeyGetter = ({ collection, key, locale }) => {
-  if (key === '_manual' || key === getOrderFieldKey(collection)) {
+  if (isManualOrderKey(collection, key)) {
     return { getSortKey: getOrderValueGetter(collection), isStringType: false };
   }
 

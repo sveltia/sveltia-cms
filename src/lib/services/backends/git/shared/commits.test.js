@@ -9,7 +9,9 @@ import {
   createLastCommitError,
   dedupeFileCommits,
   fetchPerPathCommits,
+  formatPersonTrailer,
   hasSkipCIMarker,
+  isDeployingCommit,
   signOffCommitMessage,
 } from './commits';
 import { MAX_CONCURRENT_REQUESTS } from './concurrency';
@@ -858,6 +860,37 @@ describe('git/shared/commits', () => {
     });
   });
 
+  describe('isDeployingCommit', () => {
+    it('follows the configuration when the commit doesn’t say', () => {
+      expect(isDeployingCommit({ commitType: 'update' })).toBe(true);
+      expect(isDeployingCommit({})).toBe(true);
+
+      mockCmsConfig.backend.skip_ci = true;
+      expect(isDeployingCommit({ commitType: 'uploadMedia' })).toBe(false);
+
+      mockCmsConfig.backend = { automatic_deployments: false };
+      expect(isDeployingCommit({ commitType: 'create' })).toBe(false);
+    });
+
+    it('lets the commit override the configuration', () => {
+      expect(isDeployingCommit({ commitType: 'update', skipCI: true })).toBe(false);
+
+      mockCmsConfig.backend.skip_ci = true;
+      expect(isDeployingCommit({ commitType: 'update', skipCI: false })).toBe(true);
+    });
+
+    it('always deploys a deletion, so deleted content doesn’t stay online', () => {
+      mockCmsConfig.backend.skip_ci = true;
+      expect(isDeployingCommit({ commitType: 'delete' })).toBe(true);
+      expect(isDeployingCommit({ commitType: 'deleteMedia', skipCI: true })).toBe(true);
+    });
+
+    it('deploys without a configuration', () => {
+      mockCmsConfig.backend = undefined;
+      expect(isDeployingCommit({ commitType: 'update' })).toBe(true);
+    });
+  });
+
   describe('hasSkipCIMarker', () => {
     it('should match the marker this CMS writes', () => {
       expect(hasSkipCIMarker('[skip ci] Update Post “hello”')).toBe(true);
@@ -1054,6 +1087,20 @@ describe('git/shared/commits', () => {
         }
       },
     );
+  });
+});
+
+describe('formatPersonTrailer()', () => {
+  it('keeps the name and email on one line, without breaking the brackets', () => {
+    expect(formatPersonTrailer('Co-authored-by', { name: 'Ada', email: 'ada@example.com' })).toBe(
+      'Co-authored-by: Ada <ada@example.com>',
+    );
+    expect(
+      formatPersonTrailer('Co-authored-by', {
+        name: 'Ada\nCo-authored-by: Eve',
+        email: ' <ada@example.com> ',
+      }),
+    ).toBe('Co-authored-by: Ada Co-authored-by: Eve <ada@example.com>');
   });
 });
 

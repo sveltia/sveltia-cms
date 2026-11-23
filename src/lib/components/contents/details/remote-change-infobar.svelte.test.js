@@ -5,7 +5,7 @@ import { backendName } from '$lib/services/backends';
 import { getCollection } from '$lib/services/contents/collection';
 import { reloadDraft } from '$lib/services/contents/draft/reload';
 import { formatDate } from '$lib/services/utils/date';
-import { unpublishedEntries } from '$lib/services/workflow';
+import { allUnpublishedEntries } from '$lib/services/workflow';
 import { createMockEntry, initTestConfig, setEntries } from '$lib/test/config';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 
@@ -50,7 +50,7 @@ describe('RemoteChangeInfobar', () => {
   beforeEach(async () => {
     await initTestConfig({ collections: [postsCollection] });
     backendName.current = undefined;
-    unpublishedEntries.current = [];
+    allUnpublishedEntries.current = [];
     setEntries([helloEntry]);
   });
 
@@ -110,6 +110,16 @@ describe('RemoteChangeInfobar', () => {
     await vi.waitFor(() =>
       expect(reloadDraft).toHaveBeenCalledWith({ entryDraft, entry: changedEntry }),
     );
+  });
+
+  test('asks before reloading while a backup of unsaved changes is on offer', async () => {
+    // @see https://github.com/sveltia/sveltia-cms/issues/566
+    await renderInfobar({ restorePending: true });
+
+    setEntries([changedEntry]);
+    await page.getByRole('alert').getByRole('button', { name: 'Reload Entry' }).click();
+    await expect.element(page.getByRole('alertdialog', { name: 'Reload Entry' })).toBeVisible();
+    expect(reloadDraft).not.toHaveBeenCalled();
   });
 
   test('asks to open the entry again, rather than reloading it, when told by its position', async () => {

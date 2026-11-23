@@ -5,7 +5,7 @@
   import SidebarPanel from '$lib/components/contents/details/sidebar/sidebar-panel.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
-  import { getSidebarPanels } from '$lib/services/contents/editor/sidebar';
+  import { getSidebarPanelLabel, getSidebarPanels } from '$lib/services/contents/editor/sidebar';
   import { needsSlugInput } from '$lib/services/contents/editor/slug';
   import { watch } from '$lib/services/utils/state.svelte';
 
@@ -24,10 +24,15 @@
   /** @type {string | undefined} */
   let lastDraftId;
 
-  /** The displayed panel, falling back to Validation if the saved panel is unknown. */
+  /**
+   * The displayed panel, falling back to Validation if the saved panel is unknown, or doesn’t apply
+   * to the draft, e.g. History or Conversation for a new entry.
+   */
   const activeKey = $derived(
     draftPanelKey ??
-      (savedKey ? (panels.find((p) => p.key === savedKey)?.key ?? 'validation') : null),
+      (savedKey
+        ? (panels.find((p) => p.key === savedKey && !p.disabled)?.key ?? 'validation')
+        : null),
   );
 
   watch(
@@ -52,10 +57,14 @@
     ariaLabel={_('entry_sidebar.sidebar_panels')}
     aria-controls={activeKey ? 'entry-sidebar-content' : undefined}
   >
-    {#each panels as { key, icon, disabled } (key)}
+    {#each panels as panel (panel.key)}
+      {@const { key, icon, disabled, badge } = panel}
+      {@const label = getSidebarPanelLabel(panel)}
       <SelectButton
         iconic
-        aria-label={_(`entry_sidebar.${key}.title`)}
+        tooltip={label}
+        tooltipPosition="left"
+        aria-label={label}
         selected={activeKey === key}
         {disabled}
         onclick={() => {
@@ -67,7 +76,12 @@
           entryEditorSettings.current = { ...entryEditorSettings.current, sidebarPanel };
         }}
       >
-        <Icon name={icon} />
+        <span role="none" class="icon">
+          <Icon name={icon} />
+          {#if badge}
+            <span class="badge" aria-hidden="true">{badge > 99 ? '99+' : badge}</span>
+          {/if}
+        </span>
       </SelectButton>
     {/each}
   </SelectButtonGroup>
@@ -79,6 +93,27 @@
 </div>
 
 <style>
+  .icon {
+    position: relative;
+    display: inline-flex;
+  }
+
+  .badge {
+    position: absolute;
+    inset-block-start: -6px;
+    inset-inline-end: -8px;
+    border-radius: 8px;
+    padding: 0 4px;
+    min-width: 16px;
+    height: 16px;
+    background-color: var(--sui-primary-accent-color);
+    color: var(--sui-primary-accent-color-inverted, #fff);
+    font-size: 10px;
+    line-height: 16px;
+    text-align: center;
+    pointer-events: none;
+  }
+
   .sidebar {
     flex: none;
     display: flex;

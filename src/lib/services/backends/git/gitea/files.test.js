@@ -51,11 +51,20 @@ vi.mock('$lib/services/backends/git/gitea/commits', () => ({
   fetchLastCommit: vi.fn(),
 }));
 
-vi.mock('$lib/services/backends/git/gitea/fork', () => ({
-  getWorkflowRepository: vi.fn(() => ({ owner: 'test-owner', repo: 'test-repo' })),
-  initOpenAuthoring: vi.fn(),
-  isOpenAuthoringConfigured: vi.fn(() => false),
-}));
+vi.mock('$lib/services/backends/git/gitea/fork', async () => {
+  const { parseForkBranchName } = await import('$lib/services/workflow/forks');
+  const getRepository = vi.fn(() => ({ owner: 'test-owner', repo: 'test-repo' }));
+
+  return {
+    getWorkflowRepository: getRepository,
+    // Resolve the repository a workflow branch lives in, as the real module does
+    getBranchRepository: vi.fn(
+      (branch) => parseForkBranchName(branch) ?? { ...getRepository(), branch },
+    ),
+    initOpenAuthoring: vi.fn(),
+    isOpenAuthoringConfigured: vi.fn(() => false),
+  };
+});
 
 vi.mock('$lib/services/backends/git/gitea/instance', () => ({
   checkInstanceVersion: vi.fn(),
@@ -218,44 +227,6 @@ describe('Gitea Files Service', () => {
         expect(fetchAPI).toHaveBeenLastCalledWith(
           '/repos/test-owner/test-repo/git/trees/tree-sha?recursive=1&page=1',
         );
-      });
-
-      test('should keep the lookups of both heads a check makes at once', async () => {
-        const [from, to] = ['a'.repeat(40), 'b'.repeat(40)];
-
-        vi.mocked(fetchAPI).mockResolvedValue([{ type: 'dir', name: 'site', sha: 'tree-sha' }]);
-
-        await Promise.all([fetchDirSHA(from, 'apps/site'), fetchDirSHA(to, 'apps/site')]);
-        await fetchDirSHA(from, 'apps/site');
-        await fetchDirSHA(to, 'apps/site');
-
-        expect(fetchAPI).toHaveBeenCalledTimes(2);
-      });
-
-      test('should forget the oldest lookup', async () => {
-        vi.mocked(fetchAPI).mockResolvedValue([{ type: 'dir', name: 'site', sha: 'tree-sha' }]);
-
-        // One more commit than are kept, one at a time
-        // eslint-disable-next-line no-restricted-syntax
-        for (const char of ['a', 'b', 'c', 'd', 'e']) {
-          // eslint-disable-next-line no-await-in-loop
-          await fetchDirSHA(char.repeat(40), 'apps/site');
-        }
-
-        await fetchDirSHA('e'.repeat(40), 'apps/site');
-        expect(fetchAPI).toHaveBeenCalledTimes(5);
-
-        await fetchDirSHA('a'.repeat(40), 'apps/site');
-        expect(fetchAPI).toHaveBeenCalledTimes(6);
-      });
-
-      test('should look a branch up every time, as it moves', async () => {
-        vi.mocked(fetchAPI).mockResolvedValue([{ type: 'dir', name: 'site', sha: 'tree-sha' }]);
-
-        await fetchDirSHA('main', 'apps/site');
-        await fetchDirSHA('main', 'apps/site');
-
-        expect(fetchAPI).toHaveBeenCalledTimes(2);
       });
 
       test('should return an empty list when the root directory doesn’t exist', async () => {
@@ -1313,6 +1284,23 @@ describe('Gitea Files Service', () => {
 
       expect(fetchAPI).toHaveBeenCalledWith(
         '/repos/me/fork/media/cms/me/fork/posts/hello/images/photo.jpg',
+        { responseType: 'blob' },
+      );
+    });
+
+    test('should read the asset of a contributor’s pull request from their fork', async () => {
+      vi.mocked(fetchAPI).mockResolvedValue(new Blob(['binary data']));
+
+      await fetchBlob(
+        /** @type {any} */ ({
+          path: 'images/photo.jpg',
+          workflow: { branch: 'alice/website:cms/alice/website/posts/hello' },
+        }),
+      );
+
+      // The branch goes by its own name in the fork
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/repos/alice/website/media/cms/alice/website/posts/hello/images/photo.jpg',
         { responseType: 'blob' },
       );
     });

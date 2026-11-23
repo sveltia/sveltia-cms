@@ -25,7 +25,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     label = '',
     position = undefined,
     controlId,
@@ -34,7 +33,6 @@
     toggleExpanded,
     centerContent = undefined,
     endContent = undefined,
-    /* eslint-enable prefer-const */
   } = $props();
 </script>
 

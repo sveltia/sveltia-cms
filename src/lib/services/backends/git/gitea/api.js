@@ -1,5 +1,6 @@
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { getOrCreateAsync } from '$lib/services/utils/cache';
+import { readNumberedPages } from '$lib/services/utils/paging';
 
 /**
  * The limits an instance applies to an API response, which it enforces by silently returning less
@@ -72,23 +73,16 @@ const getPageSize = async () =>
 export const fetchPages = async (path) => {
   const limit = await getPageSize();
   const separator = path.includes('?') ? '&' : '?';
-  /** @type {Record<string, any>[]} */
-  const items = [];
 
-  for (let page = 1; page <= MAX_PAGES; page += 1) {
-    const result = /** @type {Record<string, any>[]} */ (
-      // eslint-disable-next-line no-await-in-loop
-      await fetchAPI(`${path}${separator}page=${page}&limit=${limit}`)
-    );
+  const { results, complete } = await readNumberedPages(
+    async (page) =>
+      /** @type {Record<string, any>[]} */ (
+        await fetchAPI(`${path}${separator}page=${page}&limit=${limit}`)
+      ),
+    { pageSize: limit, maxPages: MAX_PAGES, delay: 0 },
+  );
 
-    items.push(...result);
-
-    if (result.length < limit) {
-      return { items, complete: true };
-    }
-  }
-
-  return { items, complete: false };
+  return { items: results, complete };
 };
 
 /**

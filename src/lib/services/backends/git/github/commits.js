@@ -1,24 +1,38 @@
 import { encodeBase64 } from '@sveltia/utils/file';
 
 import { clearSaveProgress, reportCommits } from '$lib/services/backends/commit-progress';
-import { getWorkflowRepository } from '$lib/services/backends/git/github/fork';
+import { getBranchRepository } from '$lib/services/backends/git/github/fork';
+import { createGitDataCommit } from '$lib/services/backends/git/github/git-data';
 import { fetchAliasedBatch } from '$lib/services/backends/git/github/graphql';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import {
+  estimateRemainingCommits,
+  getPayloadSize,
+  isUploadFailure,
+  sortAdditions,
+  takeAdditions,
+} from '$lib/services/backends/git/shared/commit-split';
+import {
+  addCommitTrailer,
   assertBranchNotMoved,
   createCommitMessage,
   createLastCommitError,
   dedupeFileCommits,
+  formatPersonTrailer,
   MAX_FILE_COMMITS,
   signOffCommitMessage,
 } from '$lib/services/backends/git/shared/commits';
 import { checkDirectCommitAllowed } from '$lib/services/backends/git/shared/fork';
 import { repositoryHead } from '$lib/services/backends/git/shared/head';
+import { user } from '$lib/services/user/account.svelte';
+import { getBotCoAuthor } from '$lib/services/utils/commit-author';
 import { getByteSize } from '$lib/services/utils/file';
 
 /**
- * @import { CommitOptions, CommitResults, FileChange, FileCommit } from '$lib/types/private';
+ * @import { AdditionsCommitAuthor, CommitOptions, CommitResults } from '$lib/types/private';
+ * @import { FileChange, FileCommit } from '$lib/types/private';
+ * @import { FileAddition } from '$lib/services/backends/git/shared/commit-split';
  */
 
 /**
@@ -54,14 +68,14 @@ const FETCH_LAST_COMMIT_QUERY = `
  * Fetch the last commit on the repository.
  * @param {string} [branchName] Branch to look at. Default: the branch configured in the site
  * configuration. An Editorial Workflow branch can be passed here, in which case the commit is
- * looked up in the repository that holds the workflow branches — the contributor’s fork with Open
- * Authoring, and the configured repository otherwise.
+ * looked up in the repository that holds the branch: see {@link getBranchRepository}.
  * @returns {Promise<{ hash: string, message: string }>} Commit’s SHA-1 hash and message.
  * @throws {Error} When the branch could not be found.
  */
 export const fetchLastCommit = async (branchName) => {
-  const { owner, repo } = branchName ? getWorkflowRepository() : repository;
-  const branch = branchName ?? repository.branch;
+  const { owner, repo, branch } = branchName
+    ? getBranchRepository(branchName)
+    : { ...repository, branch: repository.branch };
 
   const result = /** @type {LastCommitResponse} */ (
     await fetchGraphQL(FETCH_LAST_COMMIT_QUERY, { owner, repo, ...(branchName ? { branch } : {}) })
@@ -136,81 +150,6 @@ export const MIN_COMMIT_PAYLOAD_SIZE = 256 * 1024;
  * request body.
  */
 const TARGET_COMMIT_DURATION = 5000;
-/**
- * HTTP statuses GitHub, or a proxy in front of it, answers a request with when it has taken too
- * long or is too large: 408 Request Timeout, 413 Content Too Large, 499 Client Closed Request, 502
- * Bad Gateway and 504 Gateway Timeout.
- */
-const UPLOAD_FAILURE_STATUSES = [408, 413, 499, 502, 504];
-
-/**
- * A file addition in a commit mutation, along with the change it comes from.
- * @typedef {object} FileAddition
- * @property {number} index Index of the addition in the changeset, which is used to alias the file
- * in the query for its new SHA.
- * @property {string} path File path.
- * @property {string} contents Base64-encoded file contents.
- * @property {FileChange['data']} data Original file data.
- */
-
-/**
- * Sort file additions in the order they are committed. Assets come first and text files like
- * entries last, so an entry never lands in the repository before the files it refers to. A file
- * that is deleted and added again at the same path, which GitHub resolves within a single commit,
- * is set aside, as it has to go into the last commit along with the deletions, however large it is;
- * otherwise the deletion would remove it again.
- * @param {FileAddition[]} additions File additions.
- * @param {Set<string>} [deletedPaths] Paths of the files to be deleted.
- * @returns {{ queue: FileAddition[], addedAgain: FileAddition[] }} Additions to be
- * committed in order, and those that go into the last commit.
- */
-export const sortAdditions = (additions, deletedPaths = new Set()) => ({
-  queue: additions
-    .filter(({ path }) => !deletedPaths.has(path))
-    .toSorted((a, b) => Number(typeof a.data === 'string') - Number(typeof b.data === 'string')),
-  addedAgain: additions.filter(({ path }) => deletedPaths.has(path)),
-});
-
-/**
- * Take the file additions for the next commit from the start of the queue, as many as fit in the
- * given payload size. A single file over the size is taken on its own.
- * @param {FileAddition[]} queue Additions yet to be committed. Modified in place.
- * @param {number} maxSize Maximum size of the Base64-encoded file contents.
- * @returns {FileAddition[]} Additions taken.
- */
-export const takeAdditions = (queue, maxSize) => {
-  /** @type {FileAddition[]} */
-  const group = [];
-  let size = 0;
-
-  while (queue.length && (!group.length || size + queue[0].contents.length <= maxSize)) {
-    const addition = /** @type {FileAddition} */ (queue.shift());
-
-    group.push(addition);
-    size += addition.contents.length;
-  }
-
-  return group;
-};
-
-/**
- * Get the payload size of the given additions.
- * @param {FileAddition[]} additions File additions.
- * @returns {number} Total size of their Base64-encoded contents.
- */
-export const getPayloadSize = (additions) =>
-  additions.reduce((total, { contents }) => total + contents.length, 0);
-
-/**
- * Estimate how many commits are left to make for the given additions at the given commit size. The
- * last commit is always made, even when it only has the entry files or deletions, so there is at
- * least one.
- * @param {FileAddition[]} queue Additions yet to be committed.
- * @param {number} payloadSize Payload size of each commit.
- * @returns {number} Number of commits.
- */
-export const estimateRemainingCommits = (queue, payloadSize) =>
-  Math.max(1, Math.ceil(getPayloadSize(queue) / payloadSize));
 
 /**
  * Work out the payload size of the next commit from how long the previous one took, so a commit
@@ -228,16 +167,6 @@ export const getNextPayloadSize = (size, duration) =>
       Math.floor((size / Math.max(duration, 1)) * TARGET_COMMIT_DURATION),
     ),
   );
-
-/**
- * Check if a commit mutation has failed because its request took too long or was too large, which
- * the browser typically reports as a network error, as GitHub’s answer comes without CORS headers.
- * @param {any} ex Error thrown.
- * @returns {boolean} Result.
- */
-export const isUploadFailure = (ex) =>
-  ex?.message === 'Failed to send the request' ||
-  UPLOAD_FAILURE_STATUSES.includes(ex?.cause?.status);
 
 /**
  * Split a commit message into the headline and the body, as the GraphQL API takes them separately
@@ -262,11 +191,12 @@ const splitCommitMessage = (message) => {
  * @param {FileAddition[]} args.additions File additions.
  * @param {{ path: string }[]} args.deletions File deletions.
  * @param {string} args.message Commit message.
- * @param {boolean} args.onWorkflowBranch Whether the commit goes to an Editorial Workflow branch.
+ * @param {AdditionsCommitAuthor} [args.coAuthor] Person to credit in a `Co-authored-by` trailer,
+ * since the author is the app whose token makes the commit.
  * @returns {Promise<Record<string, any>>} Commit, including the new file SHAs aliased as
  * `file_{index}`.
  */
-const createCommit = async ({
+const createGraphQLCommit = async ({
   owner,
   repo,
   branch,
@@ -274,7 +204,7 @@ const createCommit = async ({
   additions,
   deletions,
   message,
-  onWorkflowBranch,
+  coAuthor,
 }) => {
   // Part of the query to fetch new file SHAs; skip files over 10 MB to avoid a GitHub GraphQL
   // limitation where large blob OIDs cannot be resolved
@@ -310,24 +240,53 @@ const createCommit = async ({
       additions: additions.map(({ path, contents }) => ({ path, contents })),
       deletions,
     },
-    message: splitCommitMessage(message),
+    message: splitCommitMessage(
+      coAuthor
+        ? addCommitTrailer(message, formatPersonTrailer('Co-authored-by', coAuthor))
+        : message,
+    ),
   };
 
-  try {
-    const {
-      createCommitOnBranch: { commit },
-    } = /** @type {{ createCommitOnBranch: { commit: Record<string, any> }}} */ (
-      // The commit can be sent again after a transient error: one that has already landed is
-      // refused, as the branch no longer points at `expectedHeadOid`
-      await fetchGraphQL(query, { input }, { retryable: true })
-    );
+  const {
+    createCommitOnBranch: { commit },
+  } = /** @type {{ createCommitOnBranch: { commit: Record<string, any> }}} */ (
+    // The commit can be sent again after a transient error: one that has already landed is
+    // refused, as the branch no longer points at `expectedHeadOid`
+    await fetchGraphQL(query, { input }, { retryable: true })
+  );
 
-    return commit;
+  return commit;
+};
+
+/**
+ * Create a commit, with the Git Data API when it has to be authored by the given person, or with
+ * GraphQL otherwise.
+ * @param {object} args Arguments.
+ * @param {string} args.owner Repository owner.
+ * @param {string} args.repo Repository name.
+ * @param {string} args.branch Branch name.
+ * @param {string} args.expectedHeadOid Expected head commit SHA.
+ * @param {FileAddition[]} args.additions File additions.
+ * @param {{ path: string }[]} args.deletions File deletions.
+ * @param {string} args.message Commit message.
+ * @param {boolean} args.onWorkflowBranch Whether the commit goes to an Editorial Workflow branch.
+ * @param {AdditionsCommitAuthor} [args.author] Person to author the commit, with Sveltia CMS
+ * Additions.
+ * @param {AdditionsCommitAuthor} [args.coAuthor] Person to credit in a `Co-authored-by` trailer,
+ * since the author is the app whose token makes the commit.
+ * @returns {Promise<Record<string, any>>} Commit, including the new file SHAs aliased as
+ * `file_{index}`.
+ */
+const createCommit = async ({ onWorkflowBranch, author, coAuthor, ...args }) => {
+  try {
+    return author
+      ? await createGitDataCommit({ ...args, author })
+      : await createGraphQLCommit({ ...args, coAuthor });
   } catch (ex) {
     // GitHub says so in the error message, but the head is looked up rather than the wording
     // relied upon
     if (!onWorkflowBranch) {
-      await assertBranchNotMoved(expectedHeadOid, fetchLastCommit);
+      await assertBranchNotMoved(args.expectedHeadOid, fetchLastCommit);
     }
 
     throw ex;
@@ -349,10 +308,12 @@ const createCommit = async ({
 export const commitChanges = async (changes, options) => {
   checkDirectCommitAllowed(options);
 
-  // A workflow branch lives in the contributor’s fork with Open Authoring, while the configured
-  // branch is only ever committed to by someone who can write to the configured repository
-  const { owner, repo } = options.branch ? getWorkflowRepository() : repository;
-  const branch = /** @type {string} */ (options.branch ?? repository.branch);
+  // A workflow branch lives in the contributor’s fork with Open Authoring, or in the fork of the
+  // contributor whose pull request a maintainer is editing, while the configured branch is only
+  // ever committed to by someone who can write to the configured repository
+  const { owner, repo, branch } = options.branch
+    ? getBranchRepository(options.branch)
+    : { ...repository, branch: /** @type {string} */ (repository.branch) };
 
   /** @type {FileAddition[]} */
   const additions = await Promise.all(
@@ -370,6 +331,11 @@ export const commitChanges = async (changes, options) => {
     .filter(({ action }) => ['move', 'delete'].includes(action))
     .map(({ previousPath, path }) => ({ path: previousPath ?? path }));
 
+  // With Sveltia CMS Additions, the token belongs to an app, which GraphQL makes the author. The
+  // Git Data API takes an author, and has no size limit on a commit, which goes in one piece
+  const { commitAuthor } = user.account ?? {};
+  const author = commitAuthor?.mode === 'user' ? commitAuthor : undefined;
+
   const { queue, addedAgain } = sortAdditions(
     additions,
     new Set(deletions.map(({ path }) => path)),
@@ -377,7 +343,7 @@ export const commitChanges = async (changes, options) => {
 
   const message = signOffCommitMessage(createCommitMessage(changes, options));
   let expectedHeadOid = await getExpectedHeadOid(options);
-  let payloadSize = INITIAL_COMMIT_PAYLOAD_SIZE;
+  let payloadSize = author ? Infinity : INITIAL_COMMIT_PAYLOAD_SIZE;
   // Smallest payload that has timed out, which the following commits stay below, as the speed
   // measured on a slow or uneven connection can suggest a size that has already failed
   let timedOutSize = Infinity;
@@ -412,6 +378,8 @@ export const commitChanges = async (changes, options) => {
           deletions: isLast ? deletions : [],
           message,
           onWorkflowBranch: !!options.branch,
+          author,
+          coAuthor: commitAuthor,
         });
       } catch (ex) {
         // The upload has taken too long on the connection. Put the files back and try again with
@@ -475,6 +443,11 @@ export const commitChanges = async (changes, options) => {
  * commits, so a long list is split to keep a query within the API’s cost limits.
  */
 const FILE_COMMITS_CHUNK_SIZE = 50;
+/**
+ * Number of a commit’s authors requested, for the co-author of a commit an app made for someone:
+ * the app, the person, and anyone else credited.
+ */
+const MAX_COMMIT_AUTHORS = 3;
 
 /**
  * Fetch commit history for the given file paths.
@@ -500,11 +473,19 @@ export const fetchFileCommits = async (paths) => {
               nodes {
                 oid
                 messageHeadline
+                messageBody
                 author {
                   name
                   email
                   avatarUrl
                   user { login }
+                }
+                authors(first: ${MAX_COMMIT_AUTHORS}) {
+                  nodes {
+                    email
+                    avatarUrl
+                    user { login }
+                  }
                 }
                 committedDate
               }
@@ -518,16 +499,34 @@ export const fetchFileCommits = async (paths) => {
 
   return dedupeFileCommits(
     results.flatMap((result) =>
-      (result?.target?.history?.nodes ?? []).map((/** @type {any} */ node) => ({
-        sha: node.oid,
-        message: node.messageHeadline ?? '',
-        // The author can be `null` when the commit has no valid author info
-        authorName: node.author?.name ?? '',
-        authorEmail: node.author?.email,
-        authorAvatarURL: node.author?.avatarUrl,
-        authorLogin: node.author?.user?.login,
-        date: new Date(node.committedDate),
-      })),
+      (result?.target?.history?.nodes ?? []).map((/** @type {any} */ node) => {
+        // A commit made by an app for someone, e.g. with Sveltia CMS Additions, is theirs. GitHub
+        // lists the co-authors along with the author, with the avatar it shows for each. Only a
+        // GitHub user’s avatar is taken: anyone else gets GitHub’s default one, which tells nothing
+        // about them, so their initials are shown instead
+        const coAuthor = getBotCoAuthor(node.author, node.messageBody);
+
+        const author = coAuthor
+          ? {
+              ...coAuthor,
+              ...node.authors?.nodes?.find(
+                (/** @type {any} */ actor) =>
+                  actor?.email?.toLowerCase() === coAuthor.email.toLowerCase(),
+              ),
+            }
+          : node.author;
+
+        return {
+          sha: node.oid,
+          message: node.messageHeadline ?? '',
+          // The author can be `null` when the commit has no valid author info
+          authorName: coAuthor?.name ?? node.author?.name ?? '',
+          authorEmail: coAuthor ? coAuthor.email : node.author?.email,
+          authorAvatarURL: author?.user ? author.avatarUrl : undefined,
+          authorLogin: author?.user?.login,
+          date: new Date(node.committedDate),
+        };
+      }),
     ),
   );
 };

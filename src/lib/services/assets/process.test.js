@@ -226,6 +226,20 @@ describe('assets/process', () => {
       expect(result.file).toBe(file);
     });
 
+    it('should fill the name template with the given entry values', async () => {
+      const { fillAssetNameTemplate } = await import('$lib/services/assets/name');
+      const file = new File(['content'], 'IMG 1.jpg', { type: 'image/jpeg' });
+      const nameContext = { content: { release: 521 }, slug: 'hello' };
+
+      await processFile(file, {}, { nameTemplate: 'guestpic{{release}}', nameContext });
+
+      expect(vi.mocked(fillAssetNameTemplate)).toHaveBeenCalledWith({
+        nameTemplate: { template: 'guestpic{{release}}' },
+        originalName: 'IMG 1.jpg',
+        ...nameContext,
+      });
+    });
+
     it('should rename the file with the given name template', async () => {
       const { formatFileName } = await import('$lib/services/assets/file-name');
       const { fillAssetNameTemplate } = await import('$lib/services/assets/name');

@@ -1,9 +1,10 @@
-import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, onTestFinished, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
 import { allEntries } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import { restoreBackup } from '$lib/services/contents/draft/backup';
+import { trackPendingFieldUpdate } from '$lib/services/contents/editor/pending';
 import { entryEditorSettings } from '$lib/services/contents/editor/settings';
 import { createPendingEntry } from '$lib/services/contents/fields/relation/quick-add';
 import { initTestConfig } from '$lib/test/config';
@@ -79,6 +80,8 @@ const createSource = (values) => ({
  * @param {QuickAddHost} [options.quickAddHost] Host entry of the parent draft, when that’s the
  * draft of another quick-add dialog.
  * @param {Entry} [options.entry] Entry to edit.
+ * @param {Record<string, any>} [options.context] Additional component context, e.g. that of a rich
+ * text editor component the Relation field is in.
  * @returns {Promise<{ draft: any, props: any, onAdd: any }>} Parent draft, props and the `onAdd`
  * callback.
  */
@@ -87,6 +90,7 @@ const renderDialog = async ({
   pendingEntries = [],
   quickAddHost = undefined,
   entry = undefined,
+  context = {},
 } = {}) => {
   const draft = createMockDraft({
     fields: [fieldConfig],
@@ -105,7 +109,7 @@ const renderDialog = async ({
 
   // Wait for the dialog of the previous test to be gone, so the locators don’t pick it up
   await expect.poll(() => document.querySelector('[role="dialog"]')).toBeNull();
-  await renderWithDraft(QuickAddDialog, { draft, props });
+  await renderWithDraft(QuickAddDialog, { draft, props, context });
   // The dialog moves the focus to its first input shortly after opening
   await expect.element(page.getByRole('dialog').getByRole('textbox').first()).toHaveFocus();
 
@@ -142,6 +146,15 @@ describe('QuickAddDialog', () => {
           label_singular: 'Category',
           folder: 'content/categories',
           i18n: true,
+          fields: [{ name: 'title', label: 'Title', widget: 'string', i18n: true }],
+        },
+        {
+          name: 'topics',
+          label: 'Topics',
+          label_singular: 'Topic',
+          folder: 'content/topics',
+          // A new entry only has the default locale enabled
+          i18n: { initial_locales: 'default' },
           fields: [{ name: 'title', label: 'Title', widget: 'string', i18n: true }],
         },
       ],
@@ -221,6 +234,95 @@ describe('QuickAddDialog', () => {
     expect(restoreBackup).not.toHaveBeenCalled();
     expect(draft.pendingEntries).toEqual([pendingEntry]);
     expect(onAdd).toHaveBeenCalledWith(pendingEntry, entry);
+  });
+
+  test('edits an existing entry from a Relation field in a rich text editor component', async () => {
+    const entry = createTag('react', 'React');
+
+    // The component stores the values of its fields in `extraValues`, which the dialog’s fields
+    // must not follow, as they edit the entry itself
+    const context = {
+      'field-editor': { valueStoreKey: 'extraValues', parentComponentNames: ['booking'] },
+    };
+
+    const { props } = await renderDialog({ entry, context });
+    const dialog = page.getByRole('dialog', { name: /Editing.*Tag/ });
+
+    vi.mocked(createPendingEntry).mockResolvedValue({
+      ...createPending('tags', 'react'),
+      baseEntry: entry,
+    });
+
+    await expect.element(dialog.getByRole('textbox', { name: 'Title' })).toHaveValue('React');
+    await dialog.getByRole('textbox', { name: 'Title' }).fill('React 19');
+    await dialog.getByRole('button', { name: 'Update' }).click();
+
+    await expect.poll(() => props.open).toBe(false);
+    expect(createPendingEntry).toHaveBeenCalledWith(
+      expect.objectContaining({
+        draft: expect.objectContaining({
+          currentValues: { _default: { title: 'React 19', description: '' } },
+        }),
+      }),
+    );
+  });
+
+  test('waits for a field update in flight before telling whether the entry has changed', async () => {
+    const entry = createTag('react', 'React');
+    const { props, onAdd } = await renderDialog({ entry });
+    const dialog = page.getByRole('dialog', { name: /Editing.*Tag/ });
+    const pendingEntry = { ...createPending('tags', 'react'), baseEntry: entry };
+    /** @type {PromiseWithResolvers<void>} */
+    const { promise, resolve } = Promise.withResolvers();
+
+    // Settle the update even if the test fails, so it doesn’t hold up the tests that follow
+    onTestFinished(() => resolve());
+
+    vi.mocked(createPendingEntry).mockResolvedValue(pendingEntry);
+
+    // A change still on its way to the draft, e.g. text typed in a rich text editor, which converts
+    // its content with a short delay
+    trackPendingFieldUpdate(promise);
+    await dialog.getByRole('button', { name: 'Update' }).click();
+    await dialog.getByRole('textbox', { name: 'Title' }).fill('React 19');
+    expect(props.open).toBe(true);
+    resolve();
+
+    await expect.poll(() => props.open).toBe(false);
+    expect(createPendingEntry).toHaveBeenCalledWith(
+      expect.objectContaining({
+        draft: expect.objectContaining({
+          currentValues: { _default: { title: 'React 19', description: '' } },
+        }),
+      }),
+    );
+    expect(onAdd).toHaveBeenCalledWith(pendingEntry, entry);
+  });
+
+  test('adds nothing once closed while waiting for a field update in flight', async () => {
+    const { draft, props, onAdd } = await renderDialog({ entry: createTag('react', 'React') });
+    const dialog = page.getByRole('dialog', { name: /Editing.*Tag/ });
+    /** @type {PromiseWithResolvers<void>} */
+    const { promise, resolve } = Promise.withResolvers();
+
+    // Settle the update even if the test fails, so it doesn’t hold up the tests that follow
+    onTestFinished(() => resolve());
+
+    // The button stays in the closed dialog, and is enabled again once the entry is dealt with
+    const updateButton = dialog.getByRole('button', { name: 'Update' }).element();
+
+    trackPendingFieldUpdate(promise);
+    await dialog.getByRole('textbox', { name: 'Title' }).fill('React 19');
+    await dialog.getByRole('button', { name: 'Update' }).click();
+    expect(updateButton.getAttribute('aria-disabled')).toBe('true');
+    await userEvent.keyboard('{Escape}');
+    await expect.poll(() => props.open).toBe(false);
+    resolve();
+    await expect.poll(() => updateButton.getAttribute('aria-disabled')).toBe('false');
+
+    expect(createPendingEntry).not.toHaveBeenCalled();
+    expect(draft.pendingEntries).toEqual([]);
+    expect(onAdd).not.toHaveBeenCalled();
   });
 
   test('closes without adding an existing entry left as it was', async () => {
@@ -655,11 +757,21 @@ describe('QuickAddDialog', () => {
     const dialog = page.getByRole('dialog', { name: /Creating.*Category/ });
     const title = dialog.getByRole('textbox', { name: 'Title' });
 
+    /**
+     * Get the locale the fields are marked with, which a rich text editor component, mounted
+     * outside the component tree, reads through the DOM.
+     * @returns {string | undefined} Locale.
+     */
+    const getFieldsLocale = () =>
+      /** @type {HTMLElement | null} */ (title.element().closest('[data-locale]'))?.dataset.locale;
+
     await title.fill('Travel');
+    expect(getFieldsLocale()).toBe('en');
     // The dialog has nowhere to show a preview
     expect(dialog.getByRole('radio', { name: 'Preview' }).elements()).toHaveLength(0);
     await dialog.getByRole('radio', { name: 'French' }).click();
     await expect.element(title).toHaveValue('');
+    expect(getFieldsLocale()).toBe('fr');
     await title.fill('Voyage');
 
     vi.mocked(createPendingEntry).mockResolvedValue(createPending('categories', 'travel'));
@@ -670,6 +782,44 @@ describe('QuickAddDialog', () => {
     expect(createPendingEntry).toHaveBeenCalledWith(
       expect.objectContaining({
         draft: expect.objectContaining({
+          currentValues: { en: { title: 'Travel' }, fr: { title: 'Voyage' } },
+        }),
+      }),
+    );
+  });
+
+  test('offers to enable a disabled locale instead of showing its fields', async () => {
+    await renderDialog({ collectionName: 'topics' });
+
+    const dialog = page.getByRole('dialog', { name: /Creating.*Topic/ });
+    const title = dialog.getByRole('textbox', { name: 'Title' });
+
+    await title.fill('Travel');
+    // The locale is marked as disabled in the switcher
+    await dialog.getByRole('radio', { name: /^French \S/ }).click();
+    // Values typed in a disabled locale couldn’t be stored, so its fields aren’t offered
+    await expect
+      .element(dialog.getByRole('alert'))
+      .toHaveTextContent('The \u2068French\u2069 content has been disabled.');
+    expect(title.elements()).toHaveLength(0);
+
+    await dialog.getByRole('button', { name: 'Enable \u2068French\u2069' }).click();
+    await expect.element(title).toHaveValue('');
+    await title.fill('Voyage');
+    // The locale is no longer marked as disabled in the switcher
+    await expect.element(dialog.getByRole('radio', { name: 'French', exact: true })).toBeVisible();
+    await dialog.getByRole('radio', { name: 'English' }).click();
+    await expect.element(title).toHaveValue('Travel');
+
+    vi.mocked(createPendingEntry).mockResolvedValue(createPending('topics', 'travel'));
+
+    await dialog.getByRole('button', { name: 'Add' }).click();
+
+    await expect.poll(() => vi.mocked(createPendingEntry).mock.calls.length).toBe(1);
+    expect(createPendingEntry).toHaveBeenCalledWith(
+      expect.objectContaining({
+        draft: expect.objectContaining({
+          currentLocales: { en: true, fr: true },
           currentValues: { en: { title: 'Travel' }, fr: { title: 'Voyage' } },
         }),
       }),

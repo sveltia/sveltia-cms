@@ -26,15 +26,7 @@
   const entryDraft = getEntryDraftContext();
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    locale,
-    keyPath,
-    typedKeyPath,
-    fieldConfig,
-    showLabel = true,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { locale, keyPath, typedKeyPath, fieldConfig, showLabel = true } = $props();
 
   const { widget: fieldType = 'string' } = $derived(fieldConfig);
   const { preview = true } = $derived(/** @type {VisibleField} */ (fieldConfig));
@@ -130,6 +122,11 @@
   }
 
   @media (width < 768px) {
+    /* Remove the padding to make an image or an embedded video full-width */
+    :global([role='document']) section > :global(p:has(img, iframe)) {
+      margin-inline: calc(var(--entry-preview-padding-inline) * -1);
+    }
+
     /* A top-level field, which is wrapped for the Edit Pane to find it before it’s rendered */
     :global([role='document'] > [data-lazy-key-path]) {
       & > section:is([data-field-type='file'], [data-field-type='image']):has(:global(img)),

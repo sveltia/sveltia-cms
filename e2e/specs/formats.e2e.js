@@ -220,6 +220,33 @@ test.describe('output options', () => {
   });
 });
 
+test.describe('YAML block_quote output option', () => {
+  test.use({
+    config: {
+      backend: { name: 'test-repo' },
+      media_folder: 'static/images',
+      output: { yaml: { block_quote: 'folded' } },
+      collections: [collection('pages', { extension: 'yml' })],
+    },
+  });
+
+  test.beforeEach(async ({ cms }) => {
+    await cms.open();
+    await cms.signIn();
+  });
+
+  test('writes multi-line strings as folded block scalars', async ({ cms, page }) => {
+    const editor = await createEntry(page, 'pages');
+
+    await editor.getByRole('textbox', { name: 'Body' }).fill('First.\n\nSecond.');
+    await editor.getByRole('button', { name: 'Save' }).click();
+
+    await expect
+      .poll(async () => (await cms.readRepo())['content/pages/night-sky.yml'])
+      .toBe('title: Night Sky\ntags:\n  - stars\nbody: >-\n  First.\n\n\n  Second.\n');
+  });
+});
+
 test.describe('more output options', () => {
   test.use({
     config: {

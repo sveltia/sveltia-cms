@@ -1,6 +1,6 @@
-import mime from 'mime';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import mime from '$lib/services/utils/mime';
 import { createMockAssetFolder } from '$lib/test/factories';
 
 import {
@@ -20,7 +20,7 @@ import {
 } from './kinds';
 
 // Mock dependencies
-vi.mock('mime', () => ({
+vi.mock('$lib/services/utils/mime', () => ({
   default: {
     getType: vi.fn().mockReturnValue(null),
   },

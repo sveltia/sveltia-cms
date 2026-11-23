@@ -1,12 +1,17 @@
 import { fetchBlobText } from '$lib/services/backends/git/github/files';
-import { getWorkflowRepository } from '$lib/services/backends/git/github/fork';
+import {
+  getBranchRepository,
+  getContentRepository,
+  getWorkflowRepository,
+} from '$lib/services/backends/git/github/fork';
 import { fetchAliasedBatch } from '$lib/services/backends/git/github/graphql';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import {
   parseRestFiles,
-  PULL_REQUEST_DESCRIPTION,
+  parseRestPullRequest,
+  toCommitAuthor,
 } from '$lib/services/backends/git/shared/pull-requests';
 import {
   getPullRequestPath,
@@ -18,7 +23,12 @@ import { getStatusLabel, replaceStatusLabel } from '$lib/services/workflow/label
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 /**
- * @import { WorkflowFile, WorkflowPullRequest, WorkflowStatus } from '$lib/types/private';
+ * @import {
+ * CommitAuthor,
+ * WorkflowFile,
+ * WorkflowPullRequest,
+ * WorkflowStatus,
+ * } from '$lib/types/private';
  */
 
 /**
@@ -103,9 +113,7 @@ export const fetchPullRequestFiles = async (pullRequests) => {
     return;
   }
 
-  // A workflow branch lives in the contributor’s fork with Open Authoring, so that’s where the
-  // blobs have to be read from
-  const workflowRepository = getWorkflowRepository();
+  const workflowRepository = getContentRepository();
 
   const blobs = await fetchAliasedBatch({
     items: targets,
@@ -175,17 +183,17 @@ const FETCH_BRANCH_HEAD_QUERY = `
  * Fetch the commit the given workflow branch points at. Two editors working on the same entry
  * share its branch, so this is how a save finds out that someone else has committed to it since
  * the draft was opened. The branch is looked up in the repository it lives in, which is the
- * contributor’s fork with Open Authoring.
+ * contributor’s fork with Open Authoring, or when a maintainer edits a contributor’s pull request.
  * @param {string} branch Branch name.
  * @returns {Promise<string | undefined>} Git object ID, or `undefined` if the branch is gone,
  * which is what a merged or closed pull request leaves behind.
  * @see https://docs.github.com/en/graphql/reference/objects#ref
  */
 export const fetchBranchHead = async (branch) => {
-  const { owner, repo } = getWorkflowRepository();
+  const { owner, repo, branch: name } = getBranchRepository(branch);
 
   const { repository: result } = /** @type {{ repository: Record<string, any> }} */ (
-    await fetchGraphQL(FETCH_BRANCH_HEAD_QUERY, { owner, repo, branch: `refs/heads/${branch}` })
+    await fetchGraphQL(FETCH_BRANCH_HEAD_QUERY, { owner, repo, branch: `refs/heads/${name}` })
   );
 
   return result?.branchHead?.target?.oid;
@@ -235,6 +243,19 @@ export const updateLabels = async (pullRequest, status) => {
 };
 
 /**
+ * Parse the user who opened a pull request, as the REST or GraphQL API returns it. The REST API
+ * gives the ID as `id` and leaves out the name and email address, while the GraphQL API gives the
+ * ID as `databaseId` and, unless the user keeps them private, the name and email address.
+ * @param {Record<string, any> | undefined} user User object.
+ * @returns {CommitAuthor | undefined} Author, or `undefined` if the user is unknown.
+ */
+export const parseAuthor = (user) => {
+  const { id = user?.databaseId } = user ?? {};
+
+  return toCommitAuthor({ ...user, id });
+};
+
+/**
  * Convert a pull request to a draft, or mark it ready for review. The REST API cannot toggle the
  * draft state, so the GraphQL API is used here.
  * @param {WorkflowPullRequest} pullRequest Pull request.
@@ -266,49 +287,74 @@ export const updateDraftState = async (pullRequest, isDraft) => {
  * @param {string} args.branch Workflow branch name.
  * @param {string} args.title Pull request title.
  * @param {WorkflowStatus} args.status Status to open the pull request with.
+ * @param {string} args.description Pull request description.
  * @returns {Promise<WorkflowPullRequest>} Created pull request.
  * @see https://docs.github.com/en/rest/pulls/pulls#create-a-pull-request
  * @see https://docs.github.com/en/rest/issues/labels#add-labels-to-an-issue
  */
-export const createPullRequest = async ({ branch, title, status }) => {
+export const createPullRequest = async ({ branch, title, status, description }) => {
   const { branch: baseBranch } = repository;
+  const repoPath = getRepositoryPath(repository);
   const fork = forkedRepository.current;
-  const isDraft = status === 'draft';
 
-  const result = /** @type {Record<string, any>} */ (
-    await fetchAPI(`${getRepositoryPath(repository)}/pulls`, {
-      method: 'POST',
-      body: {
-        title,
-        // A cross-repository pull request identifies its head branch by the fork’s owner
-        head: fork ? `${fork.owner}:${branch}` : branch,
-        base: baseBranch,
-        draft: isDraft,
-        body: PULL_REQUEST_DESCRIPTION,
-      },
-    })
-  );
+  /**
+   * Open the pull request.
+   * @param {boolean} [maintainerCanModify] Whether to let the maintainers push to its branch.
+   * @returns {Promise<Record<string, any>>} Pull request.
+   */
+  const open = async (maintainerCanModify) =>
+    /** @type {Record<string, any>} */ (
+      await fetchAPI(`${repoPath}/pulls`, {
+        method: 'POST',
+        body: {
+          title,
+          // A cross-repository pull request identifies its head branch by the fork’s owner
+          head: fork ? `${fork.owner}:${branch}` : branch,
+          base: baseBranch,
+          draft: status === 'draft',
+          body: description,
+          ...(maintainerCanModify ? { maintainer_can_modify: true } : {}),
+        },
+      })
+    );
 
-  /** @type {WorkflowPullRequest} */
-  const pullRequest = {
-    number: result.number,
+  /**
+   * Open a contributor’s pull request, letting the maintainers push to its branch, as GitHub’s own
+   * form does by default, so they can edit the entry in the CMS while reviewing it rather than only
+   * view it. GitHub refuses that for a fork owned by an organization, which gets the pull request
+   * without it instead.
+   * @returns {Promise<Record<string, any>>} Pull request.
+   */
+  const openFromFork = async () => {
+    try {
+      return await open(true);
+    } catch (/** @type {any} */ ex) {
+      if (ex.cause?.status !== 422) {
+        throw ex;
+      }
+
+      return open();
+    }
+  };
+
+  const result = await (fork ? openFromFork() : open());
+
+  const pullRequest = parseRestPullRequest(result, {
     nodeId: result.node_id,
     title: result.title,
-    url: result.html_url,
     branch,
-    headSHA: result.head?.sha,
     status,
-    createdDate: new Date(result.created_at),
-    updatedDate: new Date(result.updated_at),
-    files: [],
-  };
+    // The signed-in user, which is how a later save recognizes the pull request as their own
+    author: parseAuthor(result.user),
+    description,
+  });
 
   // Labelling an issue requires write access to the repository, which an Open Authoring contributor
   // doesn’t have. Their status is read from the pull request itself instead
   if (!fork) {
     // A brand-new pull request has no label to preserve, so add the status label outright rather
     // than reading the current list first like {@link updateLabels} has to
-    await fetchAPI(`${getRepositoryPath(repository)}/issues/${result.number}/labels`, {
+    await fetchAPI(`${repoPath}/issues/${result.number}/labels`, {
       method: 'POST',
       body: { labels: [getStatusLabel(status)] },
     });

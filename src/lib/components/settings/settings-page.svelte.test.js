@@ -63,6 +63,15 @@ describe('SettingsPage', () => {
     await expect.poll(() => window.location.hash).toBe('#/settings');
   });
 
+  test('reports a disabled panel as unknown', async () => {
+    // Internationalization is only offered for a multilingual site
+    window.location.hash = '#/settings/i18n';
+
+    await render(SettingsPage, {});
+
+    await expect.element(page.getByRole('toolbar')).toHaveTextContent('arrow_back Page not found.');
+  });
+
   test('goes back to the menu from the index, and ignores other pages', async () => {
     window.location.hash = '#/settings';
 

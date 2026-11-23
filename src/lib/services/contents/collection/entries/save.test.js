@@ -1,8 +1,13 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { isPublishingCommit } from '$lib/services/backends/git/shared/integration';
 import { saveChanges } from '$lib/services/backends/save';
 import { contentUpdatesToast } from '$lib/services/contents/collection/data';
 import { saveEntryUpdates } from '$lib/services/contents/collection/entries/save';
+
+vi.mock('$lib/services/backends/git/shared/integration', () => ({
+  isPublishingCommit: vi.fn(() => false),
+}));
 
 vi.mock('$lib/services/backends/save', () => ({
   saveChanges: vi.fn().mockResolvedValue({}),
@@ -30,7 +35,23 @@ describe('saveEntryUpdates()', () => {
       savingEntries,
       options: { commitType: 'update', collection },
     });
-    expect(contentUpdatesToast.current).toEqual({ count: 2, saved: true, deleted: false });
+    expect(contentUpdatesToast.current).toEqual({
+      count: 2,
+      saved: true,
+      deleted: false,
+      published: false,
+    });
+  });
+
+  test('reports the entries as published when the commit is', async () => {
+    vi.mocked(isPublishingCommit).mockReturnValueOnce(true);
+
+    const changes = /** @type {any[]} */ ([{ action: 'update', path: 'a.md' }]);
+
+    await saveEntryUpdates({ collection, changes, savingEntries: /** @type {any[]} */ ([{}]) });
+
+    expect(isPublishingCommit).toHaveBeenCalledWith({ commitType: 'update', collection });
+    expect(contentUpdatesToast.current).toMatchObject({ saved: true, published: true });
   });
 
   test('does nothing without changes', async () => {

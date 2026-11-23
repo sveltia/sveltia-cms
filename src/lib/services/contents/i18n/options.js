@@ -2,7 +2,7 @@ import { locale as appLocale } from '@sveltia/i18n';
 import { isObject } from '@sveltia/utils/object';
 
 import { isFieldMirrored } from '$lib/services/contents/i18n/fields';
-import { getOrCreate } from '$lib/services/utils/cache';
+import { getLanguageScript } from '$lib/services/utils/locale';
 
 /**
  * @import { InternalLocaleCode } from '$lib/types/private';
@@ -21,29 +21,12 @@ import { getOrCreate } from '$lib/services/utils/cache';
  */
 
 /**
- * Cache of {@link getLanguageScript} results, keyed by locale code. The codes come from the
- * configuration and the UI locale, so there are only a few of them, while a label is looked up on
- * every render, e.g. in each cell of the bulk edit table.
- * @type {Map<string, string>}
- */
-const languageScriptCache = new Map();
-
-/**
  * Get the language and script of the given locale code, e.g. `zh-Hant` for `zh-TW`, so locales
  * written in different scripts don’t match.
  * @param {string} locale Locale code.
  * @returns {string} Language and script, or the code in lowercase if it’s not a valid locale.
  */
-const getLanguageScript = (locale) =>
-  getOrCreate(languageScriptCache, locale, () => {
-    try {
-      const { language, script } = new Intl.Locale(locale).maximize();
-
-      return `${language}-${script}`;
-    } catch {
-      return locale.toLowerCase();
-    }
-  });
+const getLanguageScriptOrCode = (locale) => getLanguageScript(locale) ?? locale.toLowerCase();
 
 /**
  * Find the key of a localized value map that matches the given application UI locale. The UI locale
@@ -59,8 +42,8 @@ const findUiLocaleKey = (map, uiLocale) => {
     return uiLocale;
   }
 
-  const languageScript = getLanguageScript(uiLocale);
-  const keys = Object.keys(map).filter((key) => getLanguageScript(key) === languageScript);
+  const languageScript = getLanguageScriptOrCode(uiLocale);
+  const keys = Object.keys(map).filter((key) => getLanguageScriptOrCode(key) === languageScript);
 
   return keys.find((key) => !key.includes('-')) ?? keys[0];
 };

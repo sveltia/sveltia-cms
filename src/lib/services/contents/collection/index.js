@@ -13,6 +13,7 @@ import {
 import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getFileConfig } from '$lib/services/contents/file/config';
 import { normalizeI18nConfig } from '$lib/services/contents/i18n/config';
+import { isMultiple } from '$lib/services/integrations/media-libraries/multiple';
 import { createRawState } from '$lib/services/utils/state.svelte';
 
 /**
@@ -104,9 +105,10 @@ export const getThumbnailFieldNames = (rawCollection) => {
   if (fields?.length) {
     return /** @type {MediaField[]} */ (
       fields.filter(({ widget: fieldType = 'string' }) => MEDIA_FIELD_TYPES.includes(fieldType))
-    ).map(({ multiple, name }) =>
-      // If `multiple` is true, append `.*` to the name to indicate that it’s an array
-      multiple ? `${name}.*` : name,
+    ).map((field) =>
+      // If the field takes multiple files, append `.*` to the name to indicate that it’s an array.
+      // The option can also come from the media library configuration
+      isMultiple(field) ? `${field.name}.*` : field.name,
     );
   }
 

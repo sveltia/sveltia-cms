@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { isAdditionsEnabled } from '$lib/services/app/additions';
 import { fetchLastCommit } from '$lib/services/backends/git/github/commits';
 import {
   fetchBlob,
@@ -15,7 +16,7 @@ import {
   parseFileMetadata,
 } from '$lib/services/backends/git/github/files';
 import {
-  getWorkflowRepository,
+  getContentRepository,
   initOpenAuthoring,
   isOpenAuthoringConfigured,
 } from '$lib/services/backends/git/github/fork';
@@ -32,6 +33,7 @@ import { startSimulatedProgress } from '$lib/services/backends/git/shared/progre
 import { forkedRepository, openAuthoringInitialized } from '$lib/services/workflow/open-authoring';
 
 // Mock dependencies
+vi.mock('$lib/services/app/additions', () => ({ isAdditionsEnabled: vi.fn(() => false) }));
 vi.mock('$lib/services/backends/git/github/commits');
 vi.mock('$lib/services/backends/git/github/fork');
 vi.mock('$lib/services/backends/git/github/repository');
@@ -65,7 +67,7 @@ describe('GitHub files service', () => {
       branch: 'main',
     });
     vi.mocked(isOpenAuthoringConfigured).mockReturnValue(false);
-    vi.mocked(getWorkflowRepository).mockReturnValue({ owner: 'test-owner', repo: 'test-repo' });
+    vi.mocked(getContentRepository).mockReturnValue({ owner: 'test-owner', repo: 'test-repo' });
   });
 
   describe('fetchFileList', () => {
@@ -450,6 +452,33 @@ describe('GitHub files service', () => {
       });
     });
 
+    test('credits the person an app committed for, rather than the app', () => {
+      const fetchingFiles = /** @type {any[]} */ ([{ path: 'post.md', sha: 'sha1', size: 100 }]);
+
+      const results = [
+        {
+          target: {
+            history: {
+              nodes: [
+                {
+                  author: { name: 'my-app[bot]', email: 'bot@example.com', user: null },
+                  committedDate: '2023-01-01T00:00:00Z',
+                  messageBody: 'Co-authored-by: Ada Lovelace <ada@example.com>',
+                },
+              ],
+            },
+          },
+        },
+      ];
+
+      expect(parseFileMetadata(fetchingFiles, results)).toEqual({
+        'post.md': {
+          commitAuthor: { name: 'Ada Lovelace', email: 'ada@example.com' },
+          commitDate: new Date('2023-01-01T00:00:00Z'),
+        },
+      });
+    });
+
     test('skips a file without a commit and tolerates a missing author', () => {
       const fetchingFiles = /** @type {any[]} */ ([
         { path: 'deleted.md', sha: 'sha1', size: 100 },
@@ -701,6 +730,19 @@ describe('GitHub files service', () => {
       });
     });
 
+    test('skips the repository access check with Sveltia CMS Additions', async () => {
+      vi.mocked(isAdditionsEnabled).mockReturnValueOnce(true);
+      vi.mocked(fetchAndParseFiles).mockResolvedValue();
+
+      await fetchFiles();
+
+      // The token is already limited to the repository and the role, and an installation token
+      // has no repository permissions to check. The branch is still checked
+      expect(fetchAndParseFiles).toHaveBeenCalledWith(
+        expect.objectContaining({ checkAccess: undefined, checkBranchAccess }),
+      );
+    });
+
     test('sets up the contributor’s fork when Open Authoring is configured', async () => {
       vi.mocked(isOpenAuthoringConfigured).mockReturnValue(true);
       vi.mocked(initOpenAuthoring).mockResolvedValue();
@@ -774,7 +816,7 @@ describe('GitHub files service', () => {
     });
 
     test('reads an unpublished asset from the workflow repository', async () => {
-      vi.mocked(getWorkflowRepository).mockReturnValue({ owner: 'contributor', repo: 'test-repo' });
+      vi.mocked(getContentRepository).mockReturnValue({ owner: 'contributor', repo: 'test-repo' });
 
       const asset = /** @type {any} */ ({
         sha: 'test-sha',

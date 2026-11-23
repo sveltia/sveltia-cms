@@ -19,6 +19,7 @@ const mockI18nStrings = {
   'config.error.oauth_implicit_flow': 'OAuth implicit flow is not supported',
   'config.error.github_pkce_unsupported': 'GitHub does not support PKCE authentication',
   'config.error.oauth_no_app_id': 'OAuth app ID is required',
+  'config.error.additions_no_base_url': 'Sveltia CMS Additions needs `base_url`',
   'config.warning.oauth_no_app_id':
     'OAuth application ID is not defined. Users are required to provide an access token to sign in.',
   'config.error.open_authoring_no_workflow':
@@ -929,6 +930,37 @@ describe('parseBackendConfig', () => {
       const [error] = [...collectors.errors];
 
       expect(error).toBe('GitHub does not support PKCE authentication');
+    });
+
+    it('should require the URL of Sveltia CMS Additions', async () => {
+      const { parseBackendConfig } = await import('./backend.js');
+
+      /**
+       * Parse a configuration with the given `base_url`, and return the errors.
+       * @param {any} baseURL Value of `base_url`, or `undefined` to leave it out.
+       * @returns {string[]} Errors.
+       */
+      const errorsFor = (baseURL) => {
+        const collectors = createCollectors();
+
+        parseBackendConfig(
+          /** @type {any} */ ({
+            backend: {
+              name: 'github',
+              repo: 'owner/repo',
+              auth_type: 'additions',
+              ...(baseURL === undefined ? {} : { base_url: baseURL }),
+            },
+          }),
+          collectors,
+        );
+
+        return [...collectors.errors];
+      };
+
+      expect(errorsFor(undefined)).toEqual(['Sveltia CMS Additions needs `base_url`']);
+      expect(errorsFor('not a URL')).toEqual(['Sveltia CMS Additions needs `base_url`']);
+      expect(errorsFor('https://additions.example.com')).toEqual([]);
     });
   });
 

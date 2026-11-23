@@ -11,6 +11,8 @@
 create: Novo
 select: Odaberi
 select_all: Odaberi sve
+# Accessible name of the checkbox that selects a single entry or asset in a list
+select_item: Odaberi {$name}
 upload: Prenesi
 copy: Kopiraj
 download: Preuzmi
@@ -69,6 +71,10 @@ primary: Primarno
 secondary: Sekundarno
 collection: Zbirka
 folder: Mapa
+# Label of the subfolder list in the asset picker
+folders: Mape
+# Menu in a breadcrumb holding the folders that don’t fit
+more_folders: Više mapa
 
 # ==============================================================================
 # Miscellaneous Labels
@@ -113,6 +119,7 @@ welcome_message: Dobrodošli u {$name}
 powered_by: Pokreće {$name}
 
 # Shown during initial configuration and data loading
+unsupported_browser_error: Vaš preglednik nije podržan. Ažurirajte ga na najnoviju verziju ili upotrijebite drugi preglednik.
 loading_cms_config: Učitavanje konfiguracije CMS-a…
 loading_site_data: Učitavanje podataka web-mjesta…
 loading_site_data_error: Došlo je do pogreške pri učitavanju podataka web-mjesta.
@@ -125,6 +132,8 @@ sign_in_with_x: Prijava putem usluge {$service}
 # Access token dialog: alternative authentication method
 sign_in_using_access_token: Prijava pomoću pristupnog tokena
 sign_in_using_access_token_description: Unesite svoj token u nastavku. Mora imati pravo čitanja i pisanja sadržaja repozitorija.
+# Shown after the description above when Editorial Workflow is enabled, which opens and merges pull requests
+sign_in_using_access_token_workflow_note: Budući da je omogućeno uredničko radno okruženje, token mora imati i pravo čitanja i pisanja zahtjeva za povlačenje.
 # Inline link text with embedded HTML anchor tag
 # {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
 sign_in_using_access_token_link: Token možete generirati na <a>stranici korisničkih postavki usluge {$service}</a>.
@@ -143,6 +152,11 @@ work_with_local_repo_description: Kada se to od vas zatraži, odaberite korijens
 work_with_local_repo_description_no_repo: Kada se to od vas zatraži, odaberite korijenski direktorij svojeg Git repozitorija.
 # Button label for demo/test repository
 work_with_test_repo: Rad s testnim repozitorijem
+# Button label for the test repository when sample content is seeded, e.g. on a demo site
+start_demo: Pokreni demo
+# Shown below the disabled test repository option in a browser that can’t save files to its
+# storage, e.g. Safari before version 26
+test_repo_unsupported_browser: Vaš preglednik ne može spremati datoteke testnog repozitorija. Ažurirajte ga na najnoviju verziju ili upotrijebite drugi preglednik.
 
 # Authentication errors
 # Error messages shown during sign-in failures
@@ -167,14 +181,28 @@ sign_in_error:
 backend_unsupported_version: Backend {$name} zahtijeva {$name} {$version} ili noviji.
 # {$repo} is the repository identifier, typically in owner/repo format
 repository_no_access: Nemate pristup repozitoriju „{$repo}”.
+# {$repo} is the repository identifier, typically in owner/repo format
+repository_no_write_access: Nemate pravo pisanja u repozitorij „{$repo}”.
 repository_not_found: Repozitorij „{$repo}” ne postoji.
 repository_empty: Repozitorij „{$repo}” nema nijednu granu.
 # {$repo} is the repository identifier, and {$branch} is the configured branch name
 branch_not_found: Repozitorij „{$repo}” nema granu „{$branch}”.
+# {$repo} is the repository identifier, and {$dir} is the configured root directory
+root_dir_not_found: Korijenski direktorij „{$dir}” ne postoji u repozitoriju „{$repo}”.
 
 # General errors
 # Fallback error dialog title for unexpected errors
 unexpected_error: Neočekivana pogreška
+# Shown in place of the page when an unexpected error stops it from being displayed
+# {$message} is the error message
+page_crashed: Nešto je pošlo po zlu i ovu stranicu nije moguće prikazati. {$message}
+# Shown in place of a field editor or preview when an unexpected error stops it from being displayed
+# {$message} is the error message
+field_crashed: Nešto je pošlo po zlu i ovo polje nije moguće prikazati. {$message}
+# Button label for displaying a part of the page again after an unexpected error
+try_again: Pokušaj ponovno
+# Button label for reloading the CMS after an unexpected error
+reload_cms: Ponovno učitaj CMS
 
 # Entry file parsing errors
 # Toast notification when entry files fail to parse on initial load
@@ -203,6 +231,334 @@ sign_in: Prijava
 sign_in_with_mobile: Prijava mobilnim uređajem
 # Instructions shown in the mobile sign-in dialog for passwordless authentication
 sign_in_with_mobile_instruction: Skenirajte QR kôd u nastavku mobitelom ili tabletom za prijavu bez lozinke. Vaše postavke bit će automatski kopirane.
+# Confirmation dialog shown when the CMS is opened with a sign-in link from the mobile sign-in
+# QR code. {$account} is the account name, {$service} is the Git service name, e.g. GitHub
+sign_in_with_link: Prijava putem poveznice
+sign_in_with_link_confirmation: Ova vas poveznica prijavljuje kao {$account} na usluzi {$service} i kopira postavke s uređaja na kojem je stvorena. Nastavite samo ako ste poveznicu sami stvorili.
+
+# Sign-in with Sveltia CMS Additions, which manages its own user accounts instead of the Git
+# service’s. Don’t localize “Sveltia CMS Additions”
+additions:
+  username: Korisničko ime
+  password: Lozinka
+  sign_in: Prijava
+  new_password_title: Odaberite novu lozinku
+  new_password_description: Prijavili ste se privremenom lozinkom. Za nastavak odaberite novu.
+  new_password: Nova lozinka
+  password_too_short: Lozinka je prekratka. Upotrijebite najmanje 12 znakova.
+  change_password: Promijeni lozinku
+  # {$name} is the user’s username, {$role} their role, e.g. Editor
+  signed_in_as_x_with_role: Prijavljeni ste kao {$name} ({$role})
+  link_github: Poveži GitHub račun
+  link_github_error: Povezivanje GitHub računa nije uspjelo
+  current_password: Trenutačna lozinka
+  # {$username} is the username filled in from a magic link emailed to the user
+  filled_from_link: Korisničko ime i lozinka ispunjeni su iz poveznice. Prijavite se samo ako je „{$username}” vaše korisničko ime.
+  change_password_description: Ovdje ćete ostati prijavljeni, a na ostalim uređajima bit ćete odjavljeni.
+  password_changed: Vaša je lozinka promijenjena.
+  # The Account settings panel of a Sveltia CMS Additions user
+  account:
+    profile: Profil
+    profile_description: Vaše ime vide drugi korisnici u CMS-u, npr. na zaključavanjima unosa i komentarima, te u vašim commitovima.
+    username_description: Vaše korisničko ime nije moguće promijeniti.
+    email: E-pošta
+    email_description: Koristi se u commitovima koje napravite kako bi ih GitHub mogao povezati s vašim računom. Ako je nemate, koristi se zamjenska adresa. Može je promijeniti samo administrator.
+    change_name: Promijeni ime
+    name_changed: Vaše je ime promijenjeno.
+    password: Lozinka
+    no_password: Vaš se račun prijavljuje samo putem GitHuba, pa nema lozinku koju biste mogli promijeniti. Administrator vam je može dodijeliti poništavanjem vaše lozinke.
+  setup:
+    use_admin_secret: Upotrijebi administratorsku tajnu
+    title: Postavljanje Sveltia CMS Additions
+    secret_description: Unesite administratorsku tajnu postavljenu u postavkama vaše usluge Sveltia CMS Additions. Čuva se samo u ovoj kartici dok traje postavljanje.
+    admin_secret: Administratorska tajna
+    continue: Nastavi
+    back: Natrag na prijavu
+    admin_title: Administratorski račun
+    admin_create_description: Stvorite prvi administratorski račun. Njime ćete se prijavljivati i upravljati ostalim korisnicima.
+    admin_reset_description: Administratorski račun već postoji. Da biste ponovno dobili pristup, ovdje poništite lozinku nekog administratora ili stvorite novog.
+    admin_saved: Administratorski račun je spreman. Prijavite se lozinkom koju ste upravo unijeli.
+    create_admin: Stvori administratora
+    reset_password: Spremi administratora
+    github_title: GitHub
+    # {$repo} is the repository, e.g. octocat/site
+    github_description: Stvorite GitHub aplikaciju za ovo web-mjesto i instalirajte je na repozitorij „{$repo}”. GitHub će zatražiti potvrdu, a zatim vas vratiti ovamo.
+    # {$repo} is the repository, {$app} is the name of the GitHub App
+    github_connected: Povezano s repozitorijem „{$repo}” putem GitHub aplikacije „{$app}”.
+    connect_github: Poveži se s GitHubom
+    # {$step} is the number of the current step, {$total} the number of steps
+    step_x_of_y: Korak {$step} od {$total}
+    admin_exists: Administratorski račun postoji.
+    reset_admin_password: Poništi administratorsku lozinku
+    setup_complete: Postavljanje je dovršeno. Prijavite se administratorskim računom za upravljanje korisnicima i postavkama. Ovamo se možete vratiti s administratorskom tajnom u bilo kojem trenutku.
+    manage_sites: Upravljaj ostalim web-mjestima
+    back_to_setup: Natrag
+    sites_title: Ostala web-mjesta
+    sites_description: Ova usluga može posluživati i druga web-mjesta, svako s vlastitim korisnicima, postavkama i GitHub aplikacijom. U konfiguraciji CMS-a web-mjesta postavite „base_url” na njegov URL, a zatim ondje postavite web-mjesto s administratorskom tajnom.
+    no_sites: Još nema drugih web-mjesta.
+    site_id: ID web-mjesta
+    site_id_description: Od 1 do 32 mala slova, brojke i crtice, npr. „acme”. Prikazuje se u URL-u web-mjesta i nije ga moguće promijeniti.
+    site_name_optional: Naziv (neobavezno)
+    add_site: Dodaj web-mjesto
+    # {$name} is the name of the site
+    site_added: Web-mjesto „{$name}” je dodano. U njegovoj konfiguraciji CMS-a postavite „base_url” na njegov URL, a zatim ondje otvorite čarobnjak za postavljanje.
+    # {$name} is the name of the site
+    copy_site_url: Kopiraj URL web-mjesta {$name}
+    delete_site: Izbriši web-mjesto
+    # {$name} is the name of the site
+    delete_site_x: Izbriši {$name}
+    # {$name} is the name of the site, {$id} is its ID
+    delete_site_confirmation: Brisanjem web-mjesta „{$name}” brišu se i njegovi korisnici, postavke i komentari. To se ne može poništiti. GitHub aplikacija ostaje na GitHubu, gdje je možete izbrisati. Za potvrdu upišite „{$id}”.
+    site_id_to_confirm: ID web-mjesta za potvrdu
+    data_key_locked_title: Administratorska tajna je promijenjena
+    data_key_locked_description: Administratorska tajna je promijenjena, pa spremljene postavke nije moguće pročitati. Unesite prethodnu tajnu da biste ih zadržali ili počnite ispočetka ako je izgubljena.
+    previous_secret: Prethodna administratorska tajna
+    unlock: Otključaj
+    rekey: Počni ispočetka
+    rekey_confirmation: Počinjanjem ispočetka brišu se vjerodajnice GitHub aplikacije i ostale spremljene tajne, a svi korisnici bit će odjavljeni. Lozinke se zadržavaju. Želite li nastaviti?
+    result:
+      ok: GitHub je povezan. Sada se možete prijaviti.
+      github_app_not_created: GitHub aplikacija nije stvorena. Upotrijebite administratorsku tajnu i pokušajte ponovno.
+      github_app_not_installed: GitHub aplikacija nije instalirana. Upotrijebite administratorsku tajnu i pokušajte ponovno.
+      github_wrong_account: GitHub aplikacija instalirana je na račun koji nije vlasnik repozitorija. Instalirajte je na račun koji je vlasnik repozitorija i pokušajte ponovno.
+      github_repository_not_included: GitHub aplikacija instalirana je bez pristupa repozitoriju. Dodijelite joj pristup repozitoriju na GitHubu i pokušajte ponovno.
+      unexpected: Povezivanje s GitHubom nije uspjelo zbog neočekivane pogreške. Pokušajte ponovno.
+  locks:
+    # {$name} is the name of the person editing the entry, {$time} when they started
+    being_edited: '{$name} uređuje ovaj unos od {$time}, pa ga možete samo pregledavati.'
+    being_edited_by_you: Ovaj unos uređujete u drugoj kartici, pa ga ovdje možete samo pregledavati.
+    # {$name} is the name of the person who took over the entry
+    taken_over: '{$name} je preuzeo/preuzela ovaj unos, pa ga sada možete samo pregledavati.'
+    take_over: Preuzmi
+    unavailable: Zaključavanje unosa nije dostupno, pa netko drugi možda istodobno uređuje ovaj unos.
+    # {$name} is the name of the person editing the entry
+    being_edited_by_x: 'Uređuje: {$name}'
+    # {$names} is a list of the other people who have the entry open in the editor
+    also_open_by_x: 'Otvoreno i kod: {$names}'
+    # {$names} is a list of the people who have the entry open, besides anyone editing it
+    open_by_x: 'Otvoreno kod: {$names}'
+  users:
+    title: Korisnici
+    add_user: Dodaj korisnika
+    edit_user: Uredi korisnika
+    add: Dodaj
+    name: Ime
+    username_description: Korisničko ime nije moguće promijeniti nakon dodavanja korisnika.
+    email_optional: E-pošta (neobavezno)
+    email_description: Koristi se u commitovima koje ta osoba napravi kako bi ih GitHub mogao povezati s njezinim računom. Ako je nema, koristi se zamjenska adresa.
+    role: Uloga
+    status: Status
+    last_sign_in: Posljednja prijava
+    sign_in_column: Prijava
+    methods:
+      password: Lozinka
+      # {$login} is a GitHub username
+      github: GitHub ({$login})
+    actions: Radnje
+    you: (vi)
+    never: Nikad
+    roles:
+      admin: Administrator
+      editor: Urednik
+      viewer: Promatrač
+    statuses:
+      active: Aktivan
+      temporary_password: Privremena lozinka
+      waiting_for_sign_in: Čeka prvu prijavu
+      disabled: Onemogućen
+    # {$name} is the user’s name
+    show_options_for_x: Prikaži opcije za korisnika {$name}
+    options: Opcije korisnika
+    reset_password: Poništi lozinku
+    sign_out_everywhere: Odjavi posvuda
+    enable: Omogući korisnika
+    disable: Onemogući korisnika
+    delete: Izbriši korisnika
+    # {$name} is the user’s name
+    reset_password_confirmation: Želite li korisniku {$name} dodijeliti novu privremenu lozinku? Bit će odjavljen posvuda i morat će odabrati novu lozinku pri sljedećoj prijavi.
+    delete_confirmation: Želite li izbrisati korisnika {$name}? To se ne može poništiti.
+    temporary_password: Privremena lozinka
+    # {$name} is the user’s name
+    temporary_password_description: Proslijedite ovo korisničko ime i privremenu lozinku korisniku {$name}. Lozinka se više neće prikazati, a korisnik će pri prijavi odabrati vlastitu lozinku.
+    copy_username: Kopiraj korisničko ime
+    copy_password: Kopiraj lozinku
+    # {$name} is the user’s name
+    email_credentials: Pošalji e-poštom korisniku {$name}
+    # The emails the admin sends from their own email app, with the sign-in details: `new` to a user
+    # who has just been added, `reset` to one whose password has been reset. Each line is a string of
+    # its own, as line breaks aren’t kept in these files
+    credentials_email:
+      # {$name} is the user’s name
+      greeting: Pozdrav, {$name},
+      # {$url} is a link to the CMS that fills in the username and the temporary password
+      sign_in_link: 'Poveznica za prijavu: {$url}'
+      # {$username} is the username
+      username: 'Korisničko ime: {$username}'
+      # {$password} is the temporary password
+      password: 'Privremena lozinka: {$password}'
+      new:
+        # {$app} is the name of the CMS
+        subject: Vaši podaci za prijavu u {$app}
+        # {$app} is the name of the CMS
+        message: Sada se možete prijaviti u {$app}. Otvorite poveznicu u nastavku, koja ispunjava vaše korisničko ime i privremenu lozinku, a pri prijavi odaberite vlastitu lozinku.
+      reset:
+        # {$app} is the name of the CMS
+        subject: Vaša lozinka za {$app} je poništena
+        # {$app} is the name of the CMS
+        message: Vaša lozinka za {$app} je poništena i odjavljeni ste posvuda. Otvorite poveznicu u nastavku, koja ispunjava vaše korisničko ime i privremenu lozinku, a pri prijavi odaberite novu lozinku.
+    allowed_domains: Dopuštene domene
+    allowed_domains_description: Web-mjesta koja mogu koristiti Sveltia CMS Additions, jedan naziv hosta po retku. Zamjenski znak (*) odgovara bilo kojoj poddomeni, npr. *.example.com. Gdje god možete, navedite točne nazive hostova. Popis vrijedi samo za ovo web-mjesto, čak i ako ista instanca Sveltia CMS Additions poslužuje i druga web-mjesta.
+    save_allowed_domains: Spremi dopuštene domene
+    allowed_domains_saved: Dopuštene domene su spremljene.
+    sign_in_tab: Prijava
+    # {$latest} is the newest version of Sveltia CMS Additions, {$current} the one in use
+    update_available: Dostupan je Sveltia CMS Additions {$latest}. Koristite verziju {$current}.
+    release_notes: Bilješke o izdanju
+    github_username_optional: GitHub korisničko ime (neobavezno)
+    github_username_description: Ako je navedeno GitHub korisničko ime, korisnik se prijavljuje tim GitHub računom umjesto lozinkom.
+    # {$name} is the user’s name
+    github_required: '{$name} se može prijaviti samo putem GitHuba, pa GitHub korisničko ime tog korisnika nije moguće ukloniti. Najprije poništite lozinku kako biste korisniku dodijelili lozinku za prijavu.'
+    adopt: Preuzmi račun
+    sign_in:
+      github: Dopusti prijavu putem GitHuba
+      github_description: Korisnici se prijavljuju svojim GitHub računom i dobivaju vlastiti GitHub token, pa se njihove promjene commitaju pod njihovim imenom. Administrator ih najprije dodaje s njihovim GitHub korisničkim imenom, osim ako na njih ne vrijedi neko pravilo registracije.
+      # Shown when signing in with GitHub is being turned off while {$count} users can only sign in
+      # with it
+      github_only_warning: |
+        .input {$count :integer}
+        .match $count
+          1   {{ Jedan se korisnik može prijaviti samo putem GitHuba i neće se moći prijaviti nakon što se to isključi, dok mu ne poništite lozinku. }}
+          one {{ {$count} korisnik može se prijaviti samo putem GitHuba i neće se moći prijaviti nakon što se to isključi, dok mu ne poništite lozinku. }}
+          few {{ {$count} korisnika mogu se prijaviti samo putem GitHuba i neće se moći prijaviti nakon što se to isključi, dok im ne poništite lozinke. }}
+          *   {{ {$count} korisnika može se prijaviti samo putem GitHuba i neće se moći prijaviti nakon što se to isključi, dok im ne poništite lozinke. }}
+      rules: Pravila registracije
+      rules_description: Članovi GitHub organizacije na kojoj je aplikacija instalirana mogu se prijaviti bez prethodnog dodavanja. Njihov račun dobiva ulogu koju odaberete i onemogućuje se ako napuste organizaciju, osim ako ga preuzmete.
+      org: GitHub organizacija
+      add_rule: Dodaj pravilo
+      # {$org} is the name of a GitHub organization
+      remove_rule: Ukloni pravilo za {$org}
+      # For a rule whose organization hasn’t been entered yet
+      remove_empty_rule: Ukloni pravilo
+      save: Spremi postavke prijave
+      saved: Postavke prijave su spremljene.
+    domains_tab: Domene
+    github_tab: GitHub
+    github:
+      app: GitHub aplikacija
+      repository: Repozitorij
+      not_installed: Nije instalirana
+      statuses:
+        ok: Aplikacija radi.
+        not_registered: GitHub aplikacija još nije postavljena. Pokrenite čarobnjak za postavljanje sa stranice za prijavu pomoću administratorske tajne.
+        key_missing: Privatni ključ aplikacije izgubljen je pri zamjeni administratorske tajne. Generirajte novi privatni ključ u postavkama aplikacije na GitHubu i prenesite ga u nastavku.
+        key_rejected: GitHub ne prihvaća privatni ključ aplikacije, primjerice zato što je ondje izbrisan. Generirajte novi privatni ključ u postavkama aplikacije na GitHubu i prenesite ga u nastavku.
+        not_installed: Aplikacija nije instalirana na repozitoriju. Ponovno je instalirajte sa stranice aplikacije na GitHubu ili pokrenite čarobnjak za postavljanje.
+        suspended: Instalacija aplikacije je obustavljena. Ponovno je aktivirajte u postavkama instalacije na GitHubu.
+        unreachable: Nije moguće pristupiti GitHubu. Pokušajte ponovno kasnije.
+      check_again: Provjeri ponovno
+      # {$branch} is the name of the repository’s default branch
+      branch_protected: Skupovi pravila štite granu „{$branch}” od prisilnog slanja (force push) i brisanja.
+      branch_bypassed: Skupovi pravila štite granu „{$branch}”, ali ih aplikacija može zaobići, pa bi urednici i dalje mogli prisilno slati promjene u nju ili je izbrisati. Uklonite aplikaciju s popisa za zaobilaženje tih skupova pravila.
+      branch_unprotected: Nijedan skup pravila ne štiti granu „{$branch}” od prisilnog slanja (force push) i brisanja, pa bi urednici mogli prepisati njezinu povijest ili je izbrisati. U postavkama repozitorija dodajte skup pravila koji blokira oboje, a da aplikacija nije na njegovu popisu za zaobilaženje.
+      repository_rules: Otvori pravila repozitorija
+      private_key: Privatni ključ
+      private_key_description: Da biste zamijenili privatni ključ, generirajte novi u postavkama aplikacije na GitHubu, a zatim prenesite preuzetu .pem datoteku. Nakon toga ondje izbrišite stari ključ.
+      app_settings: Otvori postavke aplikacije
+      upload_private_key: Prenesi privatni ključ
+      replace_private_key: Zamijeni privatni ključ
+      private_key_summary: Usluga koristi privatni ključ aplikacije za pristup repozitoriju na GitHubu. Zamijenite ga ako je možda otkriven.
+      private_key_replaced: Privatni ključ je zamijenjen.
+      commit_author: Autor commita
+      commit_author_description: Odaberite tko se prikazuje kao autor promjena spremljenih u CMS-u. GitHub potpisuje samo commitove čiji je autor aplikacija, pa odaberite aplikaciju ako skup pravila zahtijeva potpisane commitove. Ostali korisnici dobit će promjenu u roku od sat vremena.
+      commit_author_user: Osoba koja je napravila promjenu
+      commit_author_bot: GitHub aplikacija, s osobom kao suautorom
+      commit_author_saved: Autor commita je spremljen.
+  # Administration section for the API keys and the deploy hook an admin shares with everyone
+  credentials:
+    title: Vjerodajnice
+    description: API ključeve i deploy hook unesene ovdje koriste svi koji se prijave, osim ako u Postavkama unesu vlastite. Može ih pročitati svatko tko je prijavljen u CMS, pa unesite samo ključeve koje ste spremni podijeliti sa svojim timom.
+    save: Spremi vjerodajnice
+    saved: Vjerodajnice su spremljene.
+    # {$service} is the service name, e.g. DeepL
+    invalid_key: API ključ za {$service} ne izgleda ispravno.
+  error:
+    unauthenticated: Vaša je sesija istekla. Ponovno se prijavite.
+    wrong_admin_secret: Administratorska tajna nije točna.
+    admin_secret_missing: Administratorska tajna nije postavljena u postavkama usluge Sveltia CMS Additions.
+    admin_secret_too_short: Administratorska tajna postavljena u postavkama usluge Sveltia CMS Additions prekratka je. Upotrijebite najmanje 32 nasumična znaka.
+    wrong_previous_secret: Prethodna administratorska tajna nije točna.
+    not_an_admin: Ovaj korisnik nije administrator. Odaberite drugo korisničko ime.
+    invalid_username: Korisničko ime sadrži od 3 do 30 malih slova, brojki, točaka, crtica ili podvlaka.
+    last_admin: Mora postojati barem jedan administrator.
+    cannot_disable_self: Ne možete onemogućiti vlastiti račun.
+    cannot_delete_self: Ne možete izbrisati vlastiti račun.
+    username_taken: Drugi korisnik već ima to korisničko ime.
+    email_taken: Drugi korisnik već ima tu adresu e-pošte.
+    invalid_name: Ime mora imati od 1 do 100 znakova.
+    invalid_email: Adresa e-pošte nije valjana.
+    invalid_domains: Jedna od dopuštenih domena nije valjan naziv hosta.
+    current_origin_removed: Dopuštene domene moraju uključivati web-mjesto koje trenutačno koristite.
+    forbidden: To mogu učiniti samo administratori.
+    invalid_credentials: Korisničko ime ili lozinka nisu točni.
+    user_disabled: Ovaj je račun onemogućen. Zatražite pomoć od administratora.
+    too_many_attempts: Previše pokušaja. Pokušajte ponovno kasnije.
+    wrong_password: Trenutačna lozinka nije točna.
+    same_password: Odaberite novu lozinku koja se razlikuje od trenutačne.
+    invalid_github_login: Ovo nije valjano GitHub korisničko ime.
+    github_user_not_found: Ne postoji GitHub korisnik s tim imenom.
+    github_account_taken: Drugi se korisnik prijavljuje ovim GitHub računom.
+    invalid_rules: Pravilo registracije zahtijeva naziv GitHub organizacije.
+    invalid_rule_role: Pravilo registracije može dodijeliti samo ulogu urednika ili promatrača.
+    rule_org_not_installed: GitHub aplikacija mora biti instalirana na organizaciji iz pravila registracije.
+    not_invited: Ovdje nemate račun. Zamolite administratora da vas doda.
+    method_disabled: Prijava putem GitHuba je isključena.
+    access_denied: Prijava je otkazana.
+    github_app_not_set_up: Sveltia CMS Additions još nije povezan s GitHubom. Zamolite administratora da dovrši postavljanje.
+    invalid_tenant_id: ID web-mjesta mora sadržavati od 1 do 32 mala slova, brojke i crtice i ne smije biti „default”.
+    invalid_tenant_name: Naziv web-mjesta smije imati najviše 100 znakova.
+    tenant_exists: Web-mjesto s tim ID-om već postoji.
+    github_app_missing: GitHub aplikacija još nije postavljena.
+    invalid_private_key: Datoteka nije valjani privatni ključ.
+    private_key_mismatch: GitHub ne prihvaća ovaj privatni ključ za aplikaciju. Provjerite jeste li ga generirali u postavkama aplikacije.
+    github_error: GitHub je vratio pogrešku. Pokušajte ponovno kasnije.
+    data_key_locked: Sveltia CMS Additions ne može se koristiti dok administrator ne dovrši promjenu administratorske tajne.
+    not_configured: Sveltia CMS Additions nije ispravno konfiguriran. Zatražite pomoć od administratora.
+    origin_not_allowed: Ovo web-mjesto ne smije koristiti Sveltia CMS Additions. Zamolite administratora da ga doda među dopuštene domene.
+    not_set_up: Sveltia CMS Additions još nije povezan s GitHubom. Zamolite administratora da dovrši postavljanje.
+    # A user whose password an admin has reset signs in another way, e.g. with GitHub
+    temporary_password: Vaša je lozinka poništena. Prijavite se svojim korisničkim imenom i privremenom lozinkom koju vam je dao administrator, a zatim odaberite novu.
+    # {$url} is the URL of the service
+    incompatible: Ova verzija Sveltia CMS-a ne radi s uslugom Sveltia CMS Additions na adresi {$url}.
+    unreachable: Nije moguće pristupiti usluzi Sveltia CMS Additions. Pokušajte ponovno kasnije.
+    insecure_connection: Sveltia CMS Additions mora se posluživati putem HTTPS-a. Provjerite `base_url` u konfiguraciji CMS-a.
+    unexpected: Zahtjev prema usluzi Sveltia CMS Additions nije uspio zbog neočekivane pogreške. Pokušajte ponovno kasnije.
+
+  # Conversation panel: comments on the entry, kept by Sveltia CMS Additions
+  conversation:
+    title: Razgovor
+    refresh: Osvježi razgovor
+    empty: Još nema komentara.
+    # Button above a long conversation, which is loaded from its latest comments
+    show_older: Prikaži starije komentare
+    # Label of the list of comments
+    timeline: Komentari
+    deleted_user: Izbrisani korisnik
+    you: Vi
+    edited: uređeno
+    comment_label: Komentar
+    placeholder: Ostavite komentar (Markdown)
+    visible_to_cms_users: Vidljivo samo korisnicima CMS-a
+    send: Komentiraj
+    options: Opcije komentara
+    edit: Uredi
+    delete: Izbriši
+    save: Spremi
+    delete_confirmation: Želite li izbrisati ovaj komentar? To se ne može poništiti.
+    send_failed: Komentar nije moguće poslati.
+
+  # Placeholder of an API key or deploy hook field the user has left empty, while an admin of
+  # Sveltia CMS Additions has entered one for everyone
+  provided_by_admin: Osigurao vaš administrator
 
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
@@ -210,6 +566,15 @@ sign_in_with_mobile_instruction: Skenirajte QR kôd u nastavku mobitelom ili tab
 signed_in_as_x: Prijavljeni ste kao {$name}
 working_with_local_repo: Rad s lokalnim repozitorijem
 working_with_test_repo: Rad s testnim repozitorijem
+working_in_demo_mode: Demo način rada
+
+# Demo welcome dialog: shown once after signing in to a demo site, where the test repository is
+# seeded with sample content and the changes are only stored in the browser
+demo_welcome:
+  title: Dobrodošli u demo Sveltia CMS-a
+  description: Slobodno istražite CMS i uređujte ogledni sadržaj. Vaše se promjene spremaju samo u ovom pregledniku. Ništa se ne objavljuje na internetu i nitko drugi ih ne može vidjeti.
+  reset_hint: Da biste počeli ispočetka s izvornim sadržajem, odaberite Izbriši sve podatke u odjeljku Postavke > Upravljanje podacima.
+  button_label: Započni
 
 # Account menu: action items for sign-out and app installation
 sign_out: Odjava
@@ -225,9 +590,14 @@ install_as_app: Instaliraj kao aplikaciju
 contents: Sadržaj
 assets: Resursi
 editorial_workflow: Uredničko radno okruženje
+# Name of the Editorial Workflow page when all the content uses Preview Workflow, which has no
+# review stages, so the page only lists the drafts
+drafts: Skice
 cms_config: Konfiguracija CMS-a
 # Mobile menu page title (shown only on small screens)
 menu: Izbornik
+# Mobile menu page section heading listing the custom pages registered by the site
+custom_pages: Stranice
 
 # Mobile promo infobar: encouraging users to try the mobile version
 mobile_promo_title: Sveltia CMS sada je dostupan i na mobilnim uređajima!
@@ -238,10 +608,36 @@ mobile_promo_button: Isprobajte
 new_language_available: Sveltia CMS sada je dostupan na jeziku {$locale}!
 change_language: Promijeni jezik
 
+# Live reload infobar: shown when the CMS runs on a page that a framework’s development server (e.g.
+# Astro) reloads on every file change, instead of a static HTML file
+live_reload_warning: Vaš razvojni poslužitelj ponovno učitava ovu stranicu pri svakoj promjeni datoteke, što može prekinuti spremanje i oštetiti vaše datoteke. Umjesto toga poslužujte CMS iz statične HTML datoteke. <a>Saznajte više</a>
+
 # Toast notification shown while the translation for the selected language is being downloaded
 # {$locale} is the localized language name, e.g., “French”
 switching_language: Prebacivanje na {$locale}…
 locale_load_failed: Prijevod za {$locale} nije moguće učitati. Pokušajte ponovno kasnije.
+
+# Toast notification shown when changes saved with the local backend couldn’t be committed to Git
+# {$reason} is one of the `local_git_skip_reasons` strings below
+local_git_not_committed: Vaše su promjene spremljene, ali nisu commitane u Git. {$reason} Da biste samo spremali datoteke, isključite Git commitove u odjeljku Postavke > Razvoj.
+local_git_skip_reasons:
+  unsupported_repository: Vaš repozitorij koristi značajku Gita koju CMS ne podržava, primjerice povezano radno stablo (linked worktree), SHA-256 nazive objekata, format reftable, sparse indeks ili indeks u verziji 3 ili 4, koji koriste opcija feature.manyFiles i git add -N.
+  missing_identity: Vaše ime i adresa e-pošte nisu postavljeni u Git konfiguraciji repozitorija, a CMS ne može pročitati vašu globalnu konfiguraciju. Postavite ih u repozitoriju naredbama git config --local user.name "Vaše Ime" i git config --local user.email "vi@example.com".
+  locked: Repozitorij koristi drugi Git proces. Ako nijedan nije pokrenut, izbrišite datoteku .git/index.lock.
+  # The operation in progress, with how to finish or cancel it
+  operation_in_progress:
+    merge: U tijeku je spajanje (merge). Dovršite ga naredbom git commit ili ga otkažite naredbom git merge --abort.
+    rebase: U tijeku je rebase. Dovršite ga naredbom git rebase --continue ili ga otkažite naredbom git rebase --abort. Ako ste već nastavili dalje, git rebase --quit odbacuje ga bez promjene vaših datoteka.
+    cherry_pick: U tijeku je cherry-pick. Dovršite ga naredbom git cherry-pick --continue ili ga otkažite naredbom git cherry-pick --abort.
+    revert: U tijeku je revert. Dovršite ga naredbom git revert --continue ili ga otkažite naredbom git revert --abort.
+    am: U tijeku je primjena zakrpa naredbom git am. Dovršite je naredbom git am --continue ili je otkažite naredbom git am --abort.
+    conflict: Neke datoteke imaju sukobe. Najprije ih riješite i pripremite rezultate (stage).
+  detached_head: Nijedna grana nije aktivna (checkout).
+  staged_changes: Imate drugih promjena pripremljenih za commit. Najprije ih commitajte ili uklonite iz pripreme.
+  # {$path} is the file path
+  lfs: '{$path} prati se pomoću Git LFS-a, u koji CMS ne može commitati.'
+  # {$message} is the error message
+  error: Došlo je do neočekivane pogreške. {$message}
 
 # Site and page navigation
 # Toolbar button aria-label for visiting the live site
@@ -276,6 +672,10 @@ account: Račun
 live_site: Objavljeno web-mjesto
 git_repository: Git repozitorij
 settings: Postavke
+
+# Page for the people who look after the CMS, apart from the personal settings: user management
+# and the CMS configuration
+administration: Administracija
 
 # Help menu: button aria-labels and section headings
 show_help_menu: Prikaži izbornik pomoći
@@ -371,6 +771,10 @@ viewing_x_asset_folder: |
 # Cloud storage service view announcement
 # {$service} is the cloud storage service name, e.g. Uploadcare
 viewing_x_external_location: Sada pregledavate resurse na usluzi {$service}.
+# Administration page announcements
+viewing_admin_section_list: Sada pregledavate popis odjeljaka administracije.
+# {$section} is the section label, e.g. Users
+viewing_x_admin_section: Sada pregledavate odjeljak „{$section}” stranice Administracija.
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
@@ -389,6 +793,7 @@ x_of_x_selected: Odabrano {$selected} od {$total}
 
 # View switcher: toggle between list and grid views
 switch_view: Promijeni prikaz
+table_view: Prikaz tablice
 list_view: Prikaz popisa
 grid_view: Prikaz mreže
 switch_to_list_view: Prijeđi na prikaz popisa
@@ -402,6 +807,16 @@ switch_to_grid_view: Prijeđi na prikaz mreže
 # Sort menu: button labels and options
 sort: Sortiraj
 sorting_options: Opcije sortiranja
+# Table view column labels for the entry metadata used as `{{…}}` template tags
+table_column_keys:
+  # The folder containing the entry file
+  dirname: Mapa
+  # The entry file name without the extension
+  filename: Naziv datoteke
+  # The entry file extension
+  extension: Nastavak
+  # The enabled locales of the entry
+  locales: Jezici
 # Sort key option labels
 sort_keys:
   # No sorting; entries appear in their natural repository order
@@ -441,6 +856,8 @@ grouping_options: Opcije grupiranja
 # Asset type filter and group labels
 type: Vrsta
 all: Sve
+# Group option for the linked files, which can be hosted anywhere: the host name of the file’s URL
+domain: Domena
 # Asset type labels
 image: Slika
 video: Videozapis
@@ -459,6 +876,9 @@ all_assets: Svi resursi
 global_assets: Globalni resursi
 # Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
 linked_files: Povezane datoteke
+# Badge and message shown on a linked file that couldn’t be loaded, e.g. because it has been deleted
+file_unavailable: Nedostupno
+file_unavailable_description: Ovu datoteku nije moguće učitati. Možda je premještena ili izbrisana.
 
 # ==============================================================================
 # Entry and Collection Actions
@@ -488,12 +908,27 @@ creating_entries_nearing_quota: |
     few {{ Ova se zbirka približava ograničenju od {$quota} unosa. Možete stvoriti još samo {$remaining} unosa. }}
     *   {{ Ova se zbirka približava ograničenju od {$quota} unosa. Možete stvoriti još samo {$remaining} unosa. }}
 
+# Read-only restrictions set with the `readonly` option: advisory messages
+readonly_cms: CMS je u načinu samo za čitanje. Možete pregledavati sadržaj i resurse, ali ne možete unositi promjene.
+readonly_collection: Ova je zbirka samo za čitanje. Možete pregledavati njezin sadržaj, ali ne možete unositi promjene.
+readonly_entry: Ovaj je unos samo za čitanje. Možete ga pregledavati, ali ne možete unositi promjene.
+readonly_asset_folder: Ova je mapa samo za čitanje. Možete pregledavati njezine resurse, ali ne možete unositi promjene.
+readonly_branch: Nemate dopuštenje za slanje promjena u granu „{$branch}”. Možete pregledavati ovaj sadržaj, ali ne možete unositi promjene.
+readonly_role: Imate pristup samo za pregledavanje. Možete pregledavati sadržaj i resurse, ali ne možete unositi promjene.
+readonly_reference: Unos je samo za čitanje, pa referencu nije moguće ukloniti.
+# {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
+cannot_rename_referenced_entry: 'Ovaj unos nije moguće preimenovati jer na njega po trenutačnom nazivu upućuju sljedeći unosi samo za čitanje: {$entries}.'
+# {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
+cannot_move_referenced_asset: 'Ovaj resurs nije moguće premjestiti ni preimenovati jer ga koriste sljedeći unosi samo za čitanje: {$entries}.'
+
 # Navigation: back links and list labels
 back_to_collection: Natrag na zbirku
 collection_list: Popis zbirki
 back_to_collection_list: Natrag na popis zbirki
 asset_folder_list: Popis mapa s resursima
 back_to_asset_folder_list: Natrag na popis mapa s resursima
+# Back button shown in place of the one above while browsing a subfolder of an asset folder
+back_to_parent_folder: Natrag na nadređenu mapu
 
 # ==============================================================================
 # Search
@@ -556,6 +991,57 @@ no_entries_found: Nema pronađenih unosa.
 # Upload dialog: title and button label
 upload_assets: Prijenos novih resursa
 
+# New Folder button and dialog in the Asset Library
+new_folder: Nova mapa
+new_folder_name: Naziv mape
+new_folder_create: Stvori
+# {$folder} is the path of the folder the new one will be created in, starting with a slash
+new_folder_description: Nova mapa bit će stvorena u mapi „{$folder}”.
+# Validation errors for the new folder name
+new_folder_error:
+  empty: Naziv mape ne može biti prazan.
+  invalid: Naziv mape ne smije sadržavati kose crte ni počinjati točkom.
+  # A name the CMS itself is usually served from, e.g. `admin` or `cms`
+  reserved: Datoteke u mapi s tim nazivom samo su za čitanje jer se iz nje obično poslužuje sam CMS.
+  duplicate: Mapa ili datoteka s tim nazivom ovdje već postoji.
+# Progress and error messages while the folder is being created
+creating_folder: Stvaranje mape…
+creating_folder_failed: Stvaranje mape nije uspjelo.
+
+# Menu on a folder in the Asset Library, and the Rename Folder and Delete Folder dialogs
+folder_options: Opcije mape
+show_folder_options: Prikaži opcije mape
+rename_folder: Preimenuj mapu
+delete_folder: Izbriši mapu
+# Rename Folder dialog body text
+# {$count} is the number of assets in the folder, which are moved along with it
+enter_new_name_for_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Unesite novi naziv u nastavku. }}
+    1   {{ Unesite novi naziv u nastavku. Resurs u mapi bit će premješten zajedno s njom, a svaki unos koji ga koristi bit će ažuriran. }}
+    one {{ Unesite novi naziv u nastavku. {$count} resurs u mapi bit će premješten zajedno s njom, a svi unosi koji ga koriste bit će ažurirani. }}
+    few {{ Unesite novi naziv u nastavku. {$count} resursa u mapi bit će premještena zajedno s njom, a svi unosi koji ih koriste bit će ažurirani. }}
+    *   {{ Unesite novi naziv u nastavku. {$count} resursa u mapi bit će premješteno zajedno s njom, a svi unosi koji ih koriste bit će ažurirani. }}
+# Delete Folder confirmation
+# {$name} is the folder name and {$count} is the number of assets in the folder
+confirm_deleting_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Jeste li sigurni da želite izbrisati praznu mapu „{$name}”? }}
+    1   {{ Jeste li sigurni da želite izbrisati mapu „{$name}” i resurs u njoj? }}
+    one {{ Jeste li sigurni da želite izbrisati mapu „{$name}” i {$count} resurs u njoj? }}
+    few {{ Jeste li sigurni da želite izbrisati mapu „{$name}” i {$count} resursa u njoj? }}
+    *   {{ Jeste li sigurni da želite izbrisati mapu „{$name}” i {$count} resursa u njoj? }}
+# Progress and error messages while the folder is being renamed or deleted
+renaming_folder: Preimenovanje mape…
+renaming_folder_failed: Preimenovanje mape nije uspjelo.
+deleting_folder: Brisanje mape…
+deleting_folder_failed: Brisanje mape nije uspjelo.
+# Asset Library and asset picker: notice shown when a cloud storage service holds more files than
+# are listed at once
+external_assets_truncated: Na usluzi ima previše datoteka da bi se sve prikazale, pa su neke izostavljene.
+
 # Edit options menu: button and item labels
 edit_options: Opcije uređivanja
 show_edit_options: Prikaži opcije uređivanja
@@ -568,6 +1054,51 @@ edit_x: Uredi {$name}
 
 # Asset text editor: switch for line wrapping
 wrap_long_lines: Prelomi duge retke
+
+# Move assets: dialog for moving assets to another folder in the repository
+move: Premjesti
+move_asset: Premjesti resurs
+# Dialog title. {$name} is the asset name when a single asset is moved, and {$count} is the number of
+# assets being moved
+move_assets_title: |
+  .input {$count :integer}
+  .match $count
+    1   {{ Premjesti {$name} }}
+    one {{ Premjesti {$count} resurs }}
+    few {{ Premjesti {$count} resursa }}
+    *   {{ Premjesti {$count} resursa }}
+# Dialog body text. {$count} is the number of entries that currently use the assets
+select_asset_move_destination: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Odaberite mapu u koju želite premjestiti. }}
+    1   {{ Odaberite mapu u koju želite premjestiti. Ažurirat će se i unos koji koristi resurse. }}
+    one {{ Odaberite mapu u koju želite premjestiti. Ažurirat će se i {$count} unos koji koristi resurse. }}
+    few {{ Odaberite mapu u koju želite premjestiti. Ažurirat će se i {$count} unosa koji koriste resurse. }}
+    *   {{ Odaberite mapu u koju želite premjestiti. Ažurirat će se i {$count} unosa koji koriste resurse. }}
+# Accessible label of the folder tree in the Move dialog
+asset_move_destination: Odredišna mapa
+# Shown when the assets being moved are all in the selected folder already
+assets_already_in_folder: |
+  .input {$count :integer}
+  .match $count
+    1   {{ Resurs je već u ovoj mapi. }}
+    *   {{ Resursi su već u ovoj mapi. }}
+# Shown when files with the same names exist in the selected folder. {$names} is a comma-separated
+# list of file names
+asset_move_conflict: 'Sljedeće datoteke već postoje u ovoj mapi: {$names}.'
+moving_assets: Premještanje resursa…
+moving_assets_failed: Premještanje resursa nije uspjelo.
+# Warning shown when files have been moved off a cloud storage service, but the originals couldn’t
+# be deleted from it
+asset_move_cleanup_failed: Datoteke su premještene, ali izvornike nije bilo moguće izbrisati s usluge pohrane.
+# Shown when files on a cloud storage service can’t be renamed or moved, because the entries using
+# them can’t be updated, e.g. for an Open Authoring contributor. {$count} is the number of files
+cannot_change_used_external_files: |
+  .input {$count :integer}
+  .match $count
+    1   {{ Ovu datoteku nije moguće preimenovati ni premjestiti jer unose koji je koriste nije moguće ažurirati. }}
+    *   {{ Ove datoteke nije moguće preimenovati ni premjestiti jer unose koji ih koriste nije moguće ažurirati. }}
 
 # Rename asset: dialog and validation
 rename_asset: Preimenuj resurs
@@ -587,6 +1118,15 @@ enter_new_name_for_asset_error:
   empty: Naziv datoteke ne može biti prazan.
   character: Naziv datoteke ne smije sadržavati posebne znakove.
   duplicate: Taj se naziv datoteke već koristi za drugi resurs.
+  # A name starting with a dot hides the file, which the CMS wouldn’t list any more
+  leading_dot: Naziv datoteke ne smije počinjati točkom.
+  # The name of a file next to the asset that isn’t an asset, like an entry file
+  file_duplicate: Ovdje već postoji druga datoteka s tim nazivom.
+  # The name of a folder next to the file
+  folder_duplicate: Ovdje već postoji mapa s tim nazivom.
+# Shown while renaming a file whose name will be changed on saving, e.g. by the `slugify_filename`
+# media library option
+file_will_be_saved_as: Datoteka će biti spremljena kao „{$name}”.
 # Confirmation dialog shown when the file extension is changed while renaming an asset
 change_file_extension: Promijeni nastavak datoteke
 # {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
@@ -600,6 +1140,11 @@ file_extension_change_warning: Datoteka se možda neće ispravno prikazati ili o
 replace_asset: Zamijeni resurs
 # {$name} is the asset being replaced
 replace_x: Zamijeni {$name}
+# File/Image field: labels of the Replace and Remove buttons
+replace_file: Zamijeni datoteku
+replace_image: Zamijeni sliku
+remove_file: Ukloni datoteku
+remove_image: Ukloni sliku
 
 # File selection prompts: drop zones and file pickers
 # Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
@@ -691,6 +1236,31 @@ confirm_deleting_selected_assets: |
     few {{ Jeste li sigurni da želite izbrisati odabrana {$count} resursa? }}
     *   {{ Jeste li sigurni da želite izbrisati odabranih {$count} resursa? }}
 confirm_deleting_all_assets: Jeste li sigurni da želite izbrisati sve resurse?
+# Note added to the confirmation when entries use the assets being deleted; the references are
+# removed in the same commit. {$count} is the number of entries using them
+deleting_referenced_assets_note: |
+  .input {$count :integer}
+  .match $count
+    1   {{ Uklonit će se i referenca u unosu koji ga koristi. }}
+    one {{ Uklonit će se i reference u {$count} unosu koji ga koristi. }}
+    few {{ Uklonit će se i reference u {$count} unosa koji ga koriste. }}
+    *   {{ Uklonit će se i reference u {$count} unosa koji ga koriste. }}
+# Shown in place of the confirmation when removing the references would leave a field in an entry
+# invalid, e.g. a required Image field with nothing left, so the deletion is refused. The fields are
+# listed below the message, each with the validation error it would have. {$count} is the number of
+# assets being deleted
+cannot_delete_referenced_assets: |
+  .input {$count :integer}
+  .match $count
+    1   {{ Ovaj resurs nije moguće izbrisati jer sljedeća polja u unosima koji ga koriste bez njega više ne bi bila valjana. Najprije ažurirajte te unose. }}
+    *   {{ Ove resurse nije moguće izbrisati jer sljedeća polja u unosima koji ih koriste bez njih više ne bi bila valjana. Najprije ažurirajte te unose. }}
+# Error shown in the asset deletion dialog when the entries using the assets couldn’t be looked up,
+# so the deletion can’t go ahead. {$count} is the number of assets being deleted
+checking_asset_references_failed: |
+  .input {$count :integer}
+  .match $count
+    1   {{ Nije moguće provjeriti koji unosi koriste ovaj resurs. Zatvorite ovaj dijalog i pokušajte ponovno. }}
+    *   {{ Nije moguće provjeriti koji unosi koriste ove resurse. Zatvorite ovaj dijalog i pokušajte ponovno. }}
 
 # Delete entries: dialog titles and confirmation messages
 # {$count} is the number of entries targeted by the action
@@ -727,6 +1297,25 @@ confirm_deleting_selected_entries_with_assets: |
     *   {{ Jeste li sigurni da želite izbrisati odabranih {$count} unosa i pripadajuće resurse? }}
 confirm_deleting_all_entries: Jeste li sigurni da želite izbrisati sve unose?
 confirm_deleting_all_entries_with_assets: Jeste li sigurni da želite izbrisati sve unose i pripadajuće resurse?
+# Note added to the confirmation when other entries reference the entries being deleted through
+# Relation fields; the references are removed in the same commit. {$count} is the number of
+# referencing entries
+deleting_referenced_entries_note: |
+  .input {$count :integer}
+  .match $count
+    1   {{ Uklonit će se i referenca na njega u jednom drugom unosu. }}
+    one {{ Uklonit će se i reference na njega u {$count} drugom unosu. }}
+    few {{ Uklonit će se i reference na njega u {$count} druga unosa. }}
+    *   {{ Uklonit će se i reference na njega u {$count} drugih unosa. }}
+# Shown in place of the confirmation when removing the references would leave a Relation field in
+# another entry invalid, e.g. a required field with nothing selected, so the deletion is refused.
+# The fields are listed below the message, each with the validation error it would have. {$count}
+# is the number of entries being deleted
+cannot_delete_referenced_entries: |
+  .input {$count :integer}
+  .match $count
+    1   {{ Ovaj unos nije moguće izbrisati jer sljedeća polja u drugim unosima bez njega više ne bi bila valjana. Najprije ažurirajte te unose. }}
+    *   {{ Ove unose nije moguće izbrisati jer sljedeća polja u drugim unosima bez njih više ne bi bila valjana. Najprije ažurirajte te unose. }}
 
 # ==============================================================================
 # Entry Reordering
@@ -740,6 +1329,41 @@ cancel_reordering_entries: Odustani od promjene redoslijeda unosa
 
 # Reorder error message
 saving_reorder_failed: Spremanje novog redoslijeda unosa nije uspjelo. Pokušajte ponovno.
+
+# ==============================================================================
+# Bulk Entry Editing
+# ==============================================================================
+# Strings for editing the fields of many entries at once in a table.
+
+# Bulk edit mode: toggle buttons
+bulk_edit_entries: Skupno uredi unose
+save_bulk_edits: Spremi skupne izmjene
+cancel_bulk_edits: Odustani od skupnih izmjena
+
+# Bulk edit table: column header of the entry titles
+bulk_edit_entry: Unos
+
+# Bulk edit table: label of the table
+bulk_edit_table: Skupni uređivač
+
+# Bulk edit table: label of a cell input; {$field} is the field label, {$entry} is the entry title
+bulk_edit_cell: '{$field} – {$entry}'
+
+# Bulk edit status: number of changed fields
+bulk_edit_count: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Nema promjena }}
+    one {{ {$count} promjena }}
+    few {{ {$count} promjene }}
+    *   {{ {$count} promjena }}
+
+# Bulk edit error messages
+bulk_edit_invalid: Neke vrijednosti nisu valjane. Ispravite označena polja i pokušajte ponovno.
+saving_bulk_edits_failed: Spremanje promjena nije uspjelo. Pokušajte ponovno.
+
+# Bulk edit: confirmation shown when leaving the mode with unsaved changes
+discard_bulk_edits_confirm: Želite li odbaciti promjene napravljene u unosima?
 
 # ==============================================================================
 # File Upload and Processing
@@ -791,6 +1415,20 @@ warning_invalid_files: |
   .match $count
     1   {{ Ova datoteka ne može se prenijeti jer je oštećena ili njezin sadržaj ne odgovara nastavku datoteke. To se često događa kada se fotografija preimenuje umjesto da se pretvori, primjerice HEIC slika spremljena kao JPEG datoteka. Pretvorite datoteku i pokušajte ponovno. }}
     *   {{ Ove datoteke ne mogu se prenijeti jer su oštećene ili njihov sadržaj ne odgovara nastavcima datoteka. To se često događa kada se fotografije preimenuju umjesto da se pretvore, primjerice HEIC slike spremljene kao JPEG datoteke. Pretvorite datoteke i pokušajte ponovno. }}
+# {$count} is the number of files that are not of a type the field accepts, even once transformed
+# {$types} is the list of accepted file types, such as “.pdf or .txt”
+warning_unsupported_files: |
+  .input {$count :integer}
+  .match $count
+    1   {{ Ova datoteka ne može se prenijeti jer nije nijedna od sljedećih vrsta: {$types}. }}
+    *   {{ Ove datoteke ne mogu se prenijeti jer nisu nijedna od sljedećih vrsta: {$types}. }}
+# {$count} is the number of files that are not of an image type the field accepts
+# {$types} is the list of accepted image formats, such as “PNG or WebP”
+warning_unsupported_image_files: |
+  .input {$count :integer}
+  .match $count
+    1   {{ Ova datoteka ne može se prenijeti jer se prihvaća samo slika sljedećih vrsta: {$types}. }}
+    *   {{ Ove datoteke ne mogu se prenijeti jer se prihvaćaju samo slike sljedećih vrsta: {$types}. }}
 
 # File format validation when replacing an asset
 # Warning section for replacement files that are in a different format
@@ -830,6 +1468,8 @@ uploading_files_failed: Prijenos nije uspio.
 # Errors shown when a file on a cloud storage service could not be deleted or renamed
 deleting_assets_failed: Brisanje nije uspjelo.
 renaming_asset_failed: Preimenovanje nije uspjelo.
+# Error shown when an edited text file in the Asset Library could not be saved
+saving_asset_failed: Spremanje nije uspjelo.
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
@@ -869,6 +1509,8 @@ entry_validation_errors: |
     one {{ {$count} polje sadrži pogrešku. Ispravite je da biste spremili unos. }}
     few {{ {$count} polja sadrže pogreške. Ispravite ih da biste spremili unos. }}
     *   {{ {$count} polja sadrži pogreške. Ispravite ih da biste spremili unos. }}
+# Button on the validation error toast that opens the Validation panel listing the errors
+show_errors: Prikaži pogreške
 
 # ==============================================================================
 # Success Notifications
@@ -971,6 +1613,20 @@ assets_deleted: |
     one {{ Izbrisan je {$count} resurs. }}
     few {{ Izbrisana su {$count} resursa. }}
     *   {{ Izbrisano je {$count} resursa. }}
+folder_created: Mapa je stvorena.
+# Folder info panel in the Asset Library sidebar
+folder_path: Putanja mape
+folder_contents: Sadržaj
+# {$count} is the number of subfolders in the folder
+x_folders: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Nema mapa }}
+    one {{ {$count} mapa }}
+    few {{ {$count} mape }}
+    *   {{ {$count} mapa }}
+folder_renamed: Mapa je preimenovana.
+folder_deleted: Mapa je izbrisana.
 
 # ==============================================================================
 # Content Editor
@@ -1011,6 +1667,9 @@ edit_singleton_announcement: Sada uređujete datoteku „{$file}”.
 # Shown when CI skip is enabled/disabled
 save_and_publish: Spremi i objavi
 save_without_publishing: Spremi bez objave
+# Shown disabled in place of `save_and_publish` while entries created or edited from a Relation
+# field are in a collection whose review can’t be skipped with the `direct_publish` option
+save_and_publish_needs_review: Spremi i objavi (povezani unosi zahtijevaju pregled)
 
 # Editor options menu
 show_editor_options: Prikaži opcije uređivača
@@ -1040,6 +1699,9 @@ swap_panes: Zamijeni okna
 # {$locale} is the localized language name for the current content pane, e.g., English
 edit_x_locale: Uredi sadržaj na jeziku {$locale}
 preview_x_locale: Pretpregledaj sadržaj na jeziku {$locale}
+# The content of a monolingual entry, which has no locale to name
+edit_content: Uredi sadržaj
+preview_content: Pretpregledaj sadržaj
 
 # Preview iframe labels
 content_preview: Pretpregled sadržaja
@@ -1048,6 +1710,8 @@ content_preview: Pretpregled sadržaja
 # {$locale} is the localized language name for the content options menu, e.g., English
 show_content_options_x_locale: Prikaži opcije sadržaja na jeziku {$locale}
 content_options_x_locale: Opcije sadržaja na jeziku {$locale}
+show_content_options: Prikaži opcije sadržaja
+content_options: Opcije sadržaja
 
 # Field container labels
 # {$field} is the field’s display label
@@ -1086,8 +1750,9 @@ deploy_preview:
   view: Prikaži pretpregled
   # Shown while the site is still being built, with or without a URL to open yet
   building: Pretpregled se još izgrađuje.
-  # Shown when the build failed, so no preview is available
-  failed: Pretpregled nije moguće izgraditi.
+  # Shown when the build failed, so no preview is available. The failure may lie in the site’s own
+  # code rather than the entry, so the editor is told not to assume it’s theirs, and who to ask
+  build_failed: Pretpregled nije bilo moguće izgraditi. Uzrok nisu nužno vaše promjene. Ako se problem nastavi, obratite se administratoru web-mjesta.
   # Shown briefly while the CI/CD provider is being queried
   checking: Provjera pretpregleda…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
@@ -1121,9 +1786,20 @@ translate_from: Prevedi s jezika…
 # {$locale} is the localized language name of the source content being translated, e.g., English
 translate_from_x: Prevedi s jezika {$locale}
 
-# Revert changes
+# Revert changes, restore the default values or clear the fields. The field options menu offers
+# them for a field, the content options menu of an editor pane for the locale it shows, and the
+# editor options menu for the whole entry, the latter two asking for confirmation first
 revert_changes: Poništi promjene
 revert_all_changes: Poništi sve promjene
+restore_default: Vrati zadano
+clear_all: Očisti sve
+confirm_reverting_changes: Jeste li sigurni da želite poništiti sve promjene napravljene u ovom unosu?
+# {$locale} is a locale name, e.g. French
+confirm_reverting_changes_x_locale: Jeste li sigurni da želite poništiti sve promjene napravljene u sadržaju na jeziku {$locale}?
+confirm_restoring_defaults: Jeste li sigurni da želite vratiti zadane vrijednosti svih polja u ovom unosu? Vaše promjene bit će izgubljene.
+confirm_restoring_defaults_x_locale: Jeste li sigurni da želite vratiti zadane vrijednosti svih polja u sadržaju na jeziku {$locale}? Vaše promjene bit će izgubljene.
+confirm_clearing_fields: Jeste li sigurni da želite očistiti sva polja u ovom unosu? Vaše promjene bit će izgubljene.
+confirm_clearing_fields_x_locale: Jeste li sigurni da želite očistiti sva polja u sadržaju na jeziku {$locale}? Vaše promjene bit će izgubljene.
 
 # Slug editing
 edit_slug: Uredi slug
@@ -1131,6 +1807,8 @@ edit_slug_error:
   empty: Slug ne može biti prazan.
   invalid: Slug ne smije sadržavati posebne znakove, uključujući kose crte i razmake.
   duplicate: Taj se slug već koristi za drugi unos.
+# {$slug} is the slug filled from the slug template, which a number is added to when another entry uses it
+slug_numbered: Slug „{$slug}” već se koristi za drugi unos, pa će mu se dodati broj.
 
 # Entry path editing for nested entries
 # Heading for the parent folder picker shown when the `meta.path` option is enabled
@@ -1254,6 +1932,13 @@ validation:
     email: Unesite valjanu e-mail adresu.
     url: Unesite valjani URL.
 
+  # Value used for the same field in another entry of the collection
+  value_not_unique: Ta se vrijednost već koristi za drugi unos.
+  # Key of a keyed List field item used for another item of the same list
+  key_not_unique: Taj se ključ već koristi za drugu stavku.
+  # Key of a keyed List field item that is a whole number, which doesn’t keep its order in a map
+  key_numeric: Ključ ne može biti cijeli broj jer bi stavke izgubile svoj redoslijed.
+
   # Custom field validation error
   invalid_value: Nevaljana vrijednost.
   unexpected_error: Došlo je do neočekivane pogreške.
@@ -1275,6 +1960,12 @@ entry_sidebar:
     # Button in the panel header that validates the entry on demand
     validate: Provjeri
 
+  # Slug panel: shows the entry slug and lets the user edit it
+  slug:
+    title: Slug
+    generated_on_save: Slug se generira iz sadržaja unosa pri spremanju. Datum i vrijeme u njemu bit će oni u trenutku spremanja.
+    unavailable: Ovaj unos nema slug.
+
   # History panel: shows entry commit history
   history:
     title: Povijest
@@ -1286,11 +1977,55 @@ entry_sidebar:
     title: Povratne poveznice
     no_entries: Nijedan unos ne upućuje na ovaj unos.
 
+  # Tab label of a panel with a count, e.g. of comments. {$title} is the panel title
+  title_with_count: '{$title} ({$count})'
+
+# Status shown next to the Save button while an entry with many new files is being saved
+# {$done} and {$total} are the number of files prepared and to prepare, or the number of commits
+# made and the estimated number of commits in all
+save_progress:
+  preparing: 'Priprema datoteka: {$done} od {$total}'
+  committing: 'Spremanje na GitHub: {$done} od približno {$total} commitova'
+
 # Entry save error dialog
 saving_entry:
   error:
     title: Pogreška
     description: Došlo je do pogreške pri spremanju unosa. Pokušajte ponovno kasnije.
+
+# Dialog shown when saving the entry would overwrite a change someone else has made in the
+# repository since the entry was opened in the editor
+save_conflict:
+  title: Unos je promijenio netko drugi
+  # `{$name}` is the other person’s name, `{$date}` when they made the change
+  modified_by: '{$name} promijenio/promijenila je ovaj unos {$date}, nakon što ste ga otvorili.'
+  # Shown instead of `modified_by` when the other person isn’t known
+  modified: Ovaj je unos promijenjen u repozitoriju nakon što ste ga otvorili.
+  deleted: Ovaj je unos izbrisan iz repozitorija nakon što ste ga otvorili.
+  # Follows `modified_by` or `modified`
+  overwrite_warning: Ako sada spremite, njihove promjene bit će izgubljene.
+  # Follows `deleted`
+  recreate_warning: Ako sada spremite, unos će biti ponovno stvoren.
+  # Follows `modified_by`, `modified` or `deleted` for an entry stored in the same file as the other
+  # entries of the collection, which can’t be saved over the change
+  reload_warning: Budući da je unos pohranjen u istoj datoteci kao i drugi unosi, ne može se spremiti preko te promjene. Odustanite od uređivanja, ponovno otvorite unos s popisa i unesite svoje izmjene.
+  # OK button label
+  save_anyway: Ipak spremi
+  # Error shown when the repository was updated between the check above and the commit itself
+  branch_moved: Netko drugi ažurirao je repozitorij tijekom spremanja. Pokušajte ponovno.
+  # Error shown when saving would change an item in a file storing all the entries of a collection,
+  # which someone else has changed or moved since it was loaded
+  array_item_changed: Netko drugi promijenio je unos pohranjen u istoj datoteci. Pokušajte ponovno.
+  # {$path} is the file path
+  array_file_invalid: Datoteku {$path} nije moguće ažurirati jer ne sadrži valjani popis unosa.
+
+# Notice shown in the entry editor when someone else has changed or deleted the entry in the
+# repository while the user has it open. The change itself is described with the `save_conflict`
+# strings above
+remote_change:
+  reload_entry: Ponovno učitaj unos
+  # Confirmation shown before reloading when the user has unsaved changes
+  confirm_reloading_entry: Jeste li sigurni da želite ponovno učitati unos? Vaše nespremljene promjene bit će izgubljene.
 
 # ==============================================================================
 # Asset Editor
@@ -1364,21 +2099,67 @@ map_lat_lng: Karta prikazuje zemljopisnu širinu {$latitude}, zemljopisnu dužin
 remove_this_item: Ukloni ovu stavku
 move_up: Pomakni gore
 move_down: Pomakni dolje
+# Menu of a list item or file with the extra reorder actions, shown in a list of 3 or more items
+reorder_options: Opcije redoslijeda
+move_to_top: Pomakni na vrh
+move_to_bottom: Pomakni na dno
+# Opens a dialog asking for the position to move a list item to
+move_to: Pomakni na…
+# Dialog asking for the new position of an item. {$count} is the number of items in the list
+move_to_description: Unesite položaj od 1 do {$count}.
+move_to_position: Položaj
 # aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
 # or moved with the arrow keys while the handle has focus
 reorder_item: Promijeni redoslijed stavke
 # aria-label for the text input holding one item of a simple List field, which has no subfield to
 # take a label from
 list_item_value: Vrijednost stavke
+# aria-label for each item of a List field, giving its position in the list
+# {$position} is the 1-based position of the item, {$count} is the number of items
+list_item_position: Stavka {$position} od {$count}
+# Message shown in place of a removed List field item or Object field, next to a Restore button
+# that puts it back
+item_removed: Stavka je uklonjena.
 
-# Add item button label
+# Add item button label, also used by the Relation field to create a new entry in the referenced
+# collection, with the collection’s singular label
 # Example: “Add Image”, “Add Author”
 # {$name} is the label of the item type that can be added
 add_x: Dodaj – {$name}
 
 # List item context menu
+# aria-label for the button opening the menu, and for the menu itself
+list_item_options: Opcije stavke popisa
 add_item_above: Dodaj stavku iznad
 add_item_below: Dodaj stavku ispod
+paste_item_above: Zalijepi stavku iznad
+paste_item_below: Zalijepi stavku ispod
+paste_item_to_replace: Zalijepi kao zamjenu
+
+# List item clipboard
+# Button in the list toolbar to paste a copied item, from any list in any entry, at the end of the
+# list, or at the start with the `add_to_top` option
+paste_item: Zalijepi stavku
+list_item_copied: Stavka je kopirana.
+# ⋮ stands for the icon of the item menu button; keep it, along with the button’s aria-label
+no_list_item_to_paste: Nema kopirane stavke za lijepljenje. Da biste je kopirali, otvorite izbornik ⋮ (Opcije stavke popisa) neke stavke i odaberite Kopiraj.
+list_item_not_compatible: Kopirana stavka ne odgovara ovom popisu.
+# {$count} is the number of the values left out, as the list doesn’t have the fields
+list_item_pasted_without_values: |
+  .input {$count :integer}
+  .match $count
+    1   {{ Stavka je zalijepljena. Izostavljena je vrijednost koju ovaj popis ne prihvaća. }}
+    one {{ Stavka je zalijepljena. Izostavljena je {$count} vrijednost koju ovaj popis ne prihvaća. }}
+    few {{ Stavka je zalijepljena. Izostavljene su {$count} vrijednosti koje ovaj popis ne prihvaća. }}
+    *   {{ Stavka je zalijepljena. Izostavljeno je {$count} vrijednosti koje ovaj popis ne prihvaća. }}
+# {$count} is the number of the files the pasted item references that couldn’t be found
+list_item_pasted_without_files: |
+  .input {$count :integer}
+  .match $count
+    1   {{ Stavka je zalijepljena, ali datoteka koju koristi nije pronađena. Provjerite polja datoteka u stavci. }}
+    one {{ Stavka je zalijepljena, ali {$count} datoteka koju koristi nije pronađena. Provjerite polja datoteka u stavci. }}
+    few {{ Stavka je zalijepljena, ali {$count} datoteke koje koristi nisu pronađene. Provjerite polja datoteka u stavci. }}
+    *   {{ Stavka je zalijepljena, ali {$count} datoteka koje koristi nije pronađeno. Provjerite polja datoteka u stavci. }}
 
 # Variable-type list selector
 select_list_type: Odaberite vrstu popisa
@@ -1397,12 +2178,45 @@ opacity: Neprozirnost
 # Select field: empty option placeholder
 unselected_option: (Ništa)
 
+# Relation field: creating or editing a referenced entry without leaving the editor
+relation_field:
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  save_together_hint: Novi unos ({$name}) bit će spremljen zajedno s unosom koji uređujete.
+  # Error shown when the entry couldn’t be prepared. {$name} is the singular label of the collection
+  add_failed: Unos ({$name}) nije moguće dodati. Pojedinosti potražite u konzoli preglednika.
+  # Title of the dialog to edit an entry selected in the field. {$name} is the singular label of the
+  # referenced collection
+  edit_entry_title: Uređivanje – {$name}
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  edit_together_hint: Vaše promjene unosa ({$name}) bit će spremljene zajedno s unosom koji uređujete.
+  # Error shown when the changes couldn’t be prepared. {$name} is the singular label of the collection
+  edit_failed: Promjene unosa ({$name}) nije moguće primijeniti. Pojedinosti potražite u konzoli preglednika.
+  # Error shown when the changes would move the entry to another file path, e.g. through a path
+  # template using a field. {$name} is the singular label of the collection
+  move_unsupported: Ove bi promjene premjestile unos ({$name}) na drugu lokaciju, što je moguće samo ako ga uređujete zasebno.
+  # Error shown when saving, if someone else has changed an entry edited from the field since. {$name}
+  # is the summary of that entry
+  edit_conflict: Netko drugi promijenio je „{$name}” nakon što ste ga uredili. Ponovno ga otvorite iz polja kako biste usporedili svoje promjene s najnovijom verzijom.
+  # Error shown when saving, if someone else has deleted an entry edited from the field since.
+  # {$name} is the summary of that entry
+  edit_deleted: Netko drugi izbrisao je „{$name}” nakon što ste ga uredili. Uklonite ga iz polja da biste spremili unos.
+  # Accessible label of the menu listing the selected entries that can be edited
+  select_entry_to_edit: Odaberite unos za uređivanje
+  # Warning shown in the editor of an entry that has been edited from a Relation field of another
+  # entry, while the changes wait in that entry’s pull request. {$name} is the summary of that
+  # entry
+  edited_with_entry: Promjene ovog unosa čekaju objavu zajedno s unosom „{$name}”. Ako ga sada spremite, dva skupa promjena bit će spojena pri objavi tog unosa, što možda neće uspjeti ako se preklapaju.
+  # Warning shown in the dialog when an entry edited from the field has been changed by someone else
+  # since. {$name} is the singular label of the collection
+  changed_since_edit: Netko drugi promijenio je ovaj unos ({$name}) nakon što ste ga uredili. Vaše su promjene prikazane povrh najnovije verzije. Pregledajte ih prije ažuriranja.
+
 # Select Assets dialog
 assets_dialog:
   # Dialog titles for different selection modes
   title:
     file: Odaberite datoteku
     image: Odaberite sliku
+    folder: Odaberite mapu
 
   # Search input labels
   search_for_file: Pretraži datoteke
@@ -1410,6 +2224,19 @@ assets_dialog:
 
   # Locations panel aria-label
   locations: Lokacije
+
+  # Folder selection mode for a File field with the `select_folder` option. {$path} is the public
+  # path of the folder to be selected, and {$count} is the number of folders selected
+  selected_folder: 'Odabrana mapa: {$path}'
+  selected_folders: |
+    .input {$count :integer}
+    .match $count
+      one {{ Odabrana je {$count} mapa }}
+      few {{ Odabrane su {$count} mape }}
+      *   {{ Odabrano je {$count} mapa }}
+  no_subfolders: Ova mapa nema podmapa.
+  # Shown for a cloud storage service whose `prefix` option depends on fields of the entry
+  prefix_unresolved: Ispunite polja o kojima ova lokacija ovisi kako biste mogli pregledavati i prenositi njezine datoteke.
 
   # Asset folder options
   folder:
@@ -1427,6 +2254,7 @@ assets_dialog:
 
   # Stock photo panels
   available_images: Dostupne slike
+  available_files: Dostupne datoteke
 
   # URL entry option
   enter_url: Unesite URL
@@ -1449,6 +2277,9 @@ assets_dialog:
   photo_credit:
     title: Zasluge za fotografiju
     description: 'Ako je moguće, navedite sljedeće zasluge:'
+    # {$field} is the label of the Markdown field the credit is added to
+    insert_to_field: Umetni u polje „{$field}”
+    copy_as_markdown: Kopiraj kao Markdown
 
   # Unsaved asset badge
   unsaved: Nespremljeno
@@ -1494,6 +2325,7 @@ editor_components:
   alt: Alternativni tekst
   title: Naslov
   link: Poveznica
+  caption: Opis slike
 
 # Key-Value field: column headers and validation
 key_value:
@@ -1558,6 +2390,15 @@ cloud_storage:
   uploadcare:
     auth_key_label: Tajni API ključ
 
+  azure_blob_storage:
+    auth_key_label: SAS token
+
+  backblaze_b2:
+    auth_key_label: Ključ aplikacije
+
+  bunny_storage:
+    auth_key_label: Lozinka zone pohrane
+
 # ==============================================================================
 # Configuration Validation
 # ==============================================================================
@@ -1611,16 +2452,42 @@ config:
     unsupported_backend_suggestion: Umjesto toga upotrijebite jedan od <a>podržanih backenda</a>.
     missing_repository: Repozitorij nije definiran.
     invalid_repository: Konfigurirani repozitorij nije valjan. Mora biti u formatu „vlasnik/repozitorij”.
+    # Don’t localize `api_root`
+    missing_api_root: Opcija `api_root` nije definirana. Obavezna je za backend Forgejo.
+    invalid_root_dir: Korijenski direktorij nije valjan. Mora biti putanja unutar repozitorija, bez „..”.
+    invalid_root_dir_branch: Korijenski direktorij nije moguće koristiti u nazivima grana načina objave `editorial_workflow` i `preview`. Nijedan dio njegove putanje ne smije počinjati točkom, završavati s „.lock” ni sadržavati razmak ili poseban znak poput dvotočke ili zvjezdice.
+    path_outside_root_dir: Putanja „{$path}” vodi izvan korijenskog direktorija, gdje CMS ne može prikazati datoteke.
     oauth_implicit_flow: Konfigurirana metoda autentifikacije (implicit flow) nije podržana u Sveltia CMS-u. Umjesto nje upotrijebite drugu <a>metodu autentifikacije</a>.
     github_pkce_unsupported: PKCE autorizacija još nije podržana zbog ograničenja GitHuba. Umjesto nje upotrijebite drugu <a>metodu autentifikacije</a>.
+    additions_no_base_url: Opcija `base_url` mora biti URL vaše usluge Sveltia CMS Additions.
     oauth_no_app_id: ID OAuth aplikacije nije definiran.
     # Don’t localize `open_authoring`, `editorial_workflow` and `preview`
-    open_authoring_no_workflow: Opcija `open_authoring` zahtijeva način objave `editorial_workflow`. Pojedinosti potražite u <a>dokumentaciji</a>.
+    open_authoring_no_workflow: Opcija `open_authoring` zahtijeva način objave `editorial_workflow` ili `preview`. Pojedinosti potražite u <a>dokumentaciji</a>.
     # Don’t localize `auth_methods`
     no_auth_methods: Opcija `auth_methods` mora sadržavati barem jednu metodu.
+    # Don’t localize `auth_scope`, `repo` and `public_repo`
+    auth_scope_no_repo: Opcija `auth_scope` mora uključivati `repo` ili `public_repo`.
     missing_media_folder: Medijska mapa nije definirana.
     public_folder_relative_path: Konfigurirana javna mapa nije valjana. Mora biti apsolutna putanja koja počinje znakom „/”.
     public_folder_absolute_url: Apsolutni URL za opciju javne mape nije podržan u Sveltia CMS-u.
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    unsupported_folder_template_tag: Opcija `{$option}` sadrži oznaku predloška `{$tag}`, koja ondje nije podržana. Mogu se koristiti samo oznake predloška sluga, poput `\{\{slug\}\}` i `\{\{year\}\}`, te oznake `\{\{dirname\}\}`, `\{\{filename\}\}`, `\{\{extension\}\}`, `\{\{media_folder\}\}` i `\{\{public_folder\}\}`.
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    global_folder_template_tag: Opcija `{$option}` sadrži oznaku predloška `{$tag}`, koja se može koristiti samo u opciji zbirke, datoteke zbirke ili polja, gdje postoji unos kojim se može ispuniti.
+    # {$replacement} is the configured replacement string; Don’t localize `sanitize_replacement`
+    invalid_sanitize_replacement: Opcija `sanitize_replacement` postavljena je na `{$replacement}`, ali sadrži znak koji se ne smije koristiti u slugu, pa ga ne može zamijeniti.
+    # {$option} is the option name (`site_url` or `display_url`) and {$url} is the configured value
+    invalid_url_option: Opcija `{$option}` postavljena je na `{$url}`, ali mora biti apsolutni URL koji počinje s `https://` ili `http://`.
+    # Don’t localize `publish_mode`, `stages`, `draft`, `pending_review` and `pending_publish`
+    invalid_publish_mode_stages: Opcija `stages` opcije `publish_mode` mora počinjati s `draft` i navoditi faze redoslijedom `draft`, `pending_review`, `pending_publish`, bez ponavljanja.
+    # Don’t localize `i18n` and `locales`
+    i18n_no_locales: Opcija `i18n.locales` mora navoditi barem jedan jezik.
+    # {$locale} is the locale code from the configuration; Don’t localize `default_locale` and `locales`
+    i18n_invalid_default_locale: Opcija `default_locale` postavljena je na `{$locale}`, ali on nije među jezicima u opciji `locales`.
+    # {$locale} is the locale code from the configuration; Don’t localize `initial_locales` and `locales`
+    i18n_invalid_initial_locale: Opcija `initial_locales` sadrži `{$locale}`, ali on nije među jezicima u opciji `locales`.
+    # Don’t localize `i18n`
+    i18n_no_collections: 'Opcija `i18n` konfigurirana je na najvišoj razini, ali nijedna zbirka ni samostalna datoteka nema opciju `i18n`, pa se nijedan sadržaj ne može prevesti. Dodajte `i18n: true` zbirkama i samostalnim datotekama koje želite prevoditi.'
     # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
     invalid_transformation_key: Opcija `transformations` sadrži nepodržani ključ `{$key}`. Mora biti `raster_image`, `svg` ili podržani format rasterske slike.
     # {$key} is the transformation key; Don’t localize `quality`
@@ -1633,18 +2500,52 @@ config:
     invalid_asset_collection_name: Naziv zbirke resursa `{$name}` nije valjan. Ne smije sadržavati posebne znakove.
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: Nazivi zbirki resursa moraju biti jedinstveni, ali `{$name}` se koristi više puta.
-    # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_no_options: Zbirka mora imati definiranu opciju `folder`, `files` ili `divider`.
-    # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_multiple_options: Zbirka ne može imati opcije `folder`, `files` i `divider` istodobno.
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_no_options: Zbirka mora imati definiranu opciju `folder`, `file`, `files` ili `divider`.
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_multiple_options: Zbirka ne može imati više od jedne od opcija `folder`, `file`, `files` i `divider`.
     # {$extension} is the file extension and {$format} is the configured content format
     file_format_mismatch: Nastavak `{$extension}` ne odgovara formatu `{$format}`.
+    # {$name} is the field name from the configuration and {$widget} is its field type
+    front_matter_body_field_not_text: Polje `{$name}` sprema se kao tijelo ispod front mattera, koje može sadržavati samo tekst, a ne broj, logičku vrijednost, popis ili objekt kao polje `{$widget}`. Upotrijebite vrstu polja koja sadrži tekst ili preimenujte polje.
+    # {$file} is the file path from the configuration; Don’t localize `file` and `locale`. The curly
+    # brackets are escaped with backslashes for MessageFormat 2
+    invalid_collection_data_file: Opcija `file` `{$file}` nije valjana. Mora biti putanja do JSON datoteke, bez rezerviranog mjesta `\{\{locale\}\}`.
+    # {$prop} is the option name; Don’t localize `file`
+    unsupported_collection_data_file_option: Opcija `{$prop}` nije podržana u zbirci s opcijom `file`.
+    # Don’t localize `file`, `publish_mode` and `simple`
+    collection_data_file_workflow: Uredničko radno okruženje i radno okruženje pretpregleda, uključujući otvoreno autorstvo, nisu podržani u zbirci s opcijom `file`. Postavite opciju `publish_mode` zbirke na `simple`.
+    # {$prop} is the option name; Don’t localize `file` and `slug`. The curly brackets are escaped
+    # with backslashes for MessageFormat 2
+    collection_data_file_slug_tag: Opcija `{$prop}` ne smije sadržavati oznaku `\{\{slug\}\}` u zbirci s opcijom `file` jer je slug unosa njegov položaj, koji se mijenja pri promjeni redoslijeda ili brisanju unosa. Umjesto toga upotrijebite polje s jedinstvenom vrijednošću.
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
     invalid_slug_slash: Predložak sluga `{$slug}` nije valjan jer ne smije sadržavati kose crte. Za organiziranje unosa u podmape upotrijebite opciju `path` umjesto `slug`.
+    # {$name} is the field name from the configuration; Don’t localize `identifier_field`
+    invalid_identifier_field: Opcija `identifier_field` upućuje na `{$name}`, ali takvo polje nije definirano u zbirci.
+    # {$name} is the field name from the configuration; Don’t localize `filter`
+    invalid_filter_field: Opcija `filter` upućuje na `{$name}`, ali takvo polje nije definirano u zbirci.
+    # Don’t localize `filter`, `value` and `pattern`
+    invalid_filter_no_condition: Opcija `filter` mora imati opciju `value` ili `pattern` prema kojoj se uspoređuju unosi.
+    # {$option} is an option name such as `slug` or `summary` and {$name} is the field name or template tag from the configuration
+    option_field_not_found: Opcija `{$option}` upućuje na `{$name}`, ali takvo polje nije definirano.
+    # {$name} is the field name from the configuration and {$widget} is its field type; Don’t localize `thumbnail`
+    thumbnail_field_not_media: Opcija `thumbnail` upućuje na `{$name}`, ali to mora biti polje vrste Image ili File, a ne polje `{$widget}`.
+    # Don’t localize `inline` or `multiple`
+    invalid_inline_component_fields: Način `inline` zahtijeva jedno polje vrste Boolean, Color, DateTime, Number, Relation, Select ili String. Polje Relation ili Select ne smije imati omogućenu opciju `multiple`.
+    # {$option} is an option name such as `pattern` or `filter` and {$pattern} is the configured pattern
+    invalid_regex: Opcija `{$option}` sadrži nevaljani regularni izraz `{$pattern}`, koji se zanemaruje.
     # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
     invalid_reorder_group: Opcija `reorder` upućuje na grupu prikaza naziva `{$name}`, ali takva grupa nije definirana u opciji `view_groups`.
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit` and `fields`
+    invalid_bulk_edit_field: Popis `fields` opcije `bulk_edit` upućuje na polje naziva `{$name}`, ali takvo polje najviše razine nije definirano u zbirci.
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit`, `fields` and `multiple`
+    unsupported_bulk_edit_field: Polje `{$name}` na popisu `fields` opcije `bulk_edit` nije moguće skupno uređivati. Podržano je samo polje vrste Boolean, Color, DateTime, Number, Relation, Select ili String koje nije samo za čitanje, nema omogućenu opciju `multiple` i ne postavlja se automatski pri spremanju.
     # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
     invalid_sortable_field: Opcija `sortable_fields` upućuje na polje naziva `{$name}`, ali takvo polje nije definirano u zbirci.
+    # Don’t localize `sortable_fields` and `default_sort`
+    multiple_sortable_field_defaults: Samo jedna stavka u opciji `sortable_fields` smije imati opciju `default_sort`.
+    # {$option} is `table_columns` or `summary_fields`, and {$name} is the field name from the configuration
+    invalid_table_column_field: Opcija `{$option}` upućuje na polje naziva `{$name}`, ali takvo polje nije definirano u zbirci.
     # {$name} is the field name from the configuration; Don’t localize `view_groups`
     invalid_view_group_field: Opcija `view_groups` upućuje na polje naziva `{$name}`, ali takvo polje nije definirano u zbirci.
     # {$name} is the field name from the configuration; Don’t localize `view_filters`
@@ -1656,9 +2557,15 @@ config:
     duplicate_view_group_name: Nazivi grupa prikaza moraju biti jedinstveni, ali `{$name}` se koristi više puta.
     # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
     missing_view_filter_name: Filtar prikaza {$count} mora imati opciju `name` definiranu kao neprazan niz znakova.
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `pattern`, `eq` and `gte`
+    invalid_view_filter_no_condition: Filtar prikaza {$count} mora imati opciju `pattern` ili opciju usporedbe poput `eq` ili `gte` prema kojoj se uspoređuju unosi.
     # {$name} is the invalid or duplicate view filter name
     invalid_view_filter_name: Naziv filtra prikaza `{$name}` nije valjan. Ne smije sadržavati posebne znakove.
     duplicate_view_filter_name: Nazivi filtara prikaza moraju biti jedinstveni, ali `{$name}` se koristi više puta.
+    # {$name} is the default view group name from the configuration; Don’t localize `default` and `view_groups`
+    invalid_view_group_default: Opcija `default` opcije `view_groups` postavljena je na `{$name}`, ali nijedna grupa prikaza nema taj naziv.
+    # {$name} is the default view filter name from the configuration; Don’t localize `default` and `view_filters`
+    invalid_view_filter_default: Opcija `default` opcije `view_filters` postavljena je na `{$name}`, ali nijedan filtar prikaza nema taj naziv.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: Zbirka {$count} mora imati opciju `name` definiranu kao neprazan niz znakova.
     # {$name} is the invalid or duplicate collection name
@@ -1673,8 +2580,19 @@ config:
     collection_no_fields: Zbirka mora imati opciju `fields` definiranu s barem jednim poljem.
     # Don’t localize `fields`
     collection_file_no_fields: Datoteka zbirke mora imati opciju `fields` definiranu s barem jednim poljem.
+    # Don’t localize `i18n`, `locale` and `folder`
+    collection_folder_i18n_required: Zbirka mora imati definiranu opciju `i18n` ako se u putanji `folder` koristi rezervirano mjesto `locale`.
+    # {$folder} is the invalid folder path; Don’t localize `locale`, `folder` and the example path. The
+    # curly brackets in the example are escaped with backslashes for MessageFormat 2
+    invalid_collection_folder_locale: Putanja `folder` `{$folder}` nije valjana. Rezervirano mjesto `locale` smije se koristiti samo jednom i kao cijeli naziv mape, primjerice `content/\{\{locale\}\}/posts`.
     # Don’t localize `i18n`, `locale` and `file`
     collection_file_i18n_required: Datoteka zbirke mora imati definiranu opciju `i18n` ako se u putanji `file` koristi rezervirano mjesto `locale`.
+    # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
+    collection_i18n_no_fields: 'Zbirka ima opciju `i18n`, ali nijedno njezino polje nema opciju `i18n`, pa se nijedno polje ne može prevesti. Dodajte `i18n: true` ili `i18n: duplicate` poljima koja želite prevoditi.'
+    # Don’t localize `i18n` and `i18n: true`
+    collection_i18n_no_files: 'Zbirka ima opciju `i18n`, ali nijedna njezina datoteka nema opciju `i18n`, pa se nijedna datoteka ne može prevesti. Dodajte `i18n: true` datotekama koje želite prevoditi.'
+    # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
+    collection_file_i18n_no_fields: 'Datoteka zbirke ima opciju `i18n`, ali nijedno njezino polje nema opciju `i18n`, pa se nijedno polje ne može prevesti. Dodajte `i18n: true` ili `i18n: duplicate` poljima koja želite prevoditi.'
     # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
     missing_field_name: Polje {$count} mora imati opciju `name` definiranu kao neprazan niz znakova.
     # {$name} is the invalid or duplicate field name
@@ -1686,6 +2604,8 @@ config:
     invalid_variable_type: Naziv varijabilne vrste `{$name}` nije valjan. Ne smije sadržavati posebne znakove.
     duplicate_variable_type: Nazivi varijabilnih vrsta moraju biti jedinstveni, ali `{$name}` se koristi više puta.
     date_field_type: 'Zastarjela vrsta polja Date nije podržana u Sveltia CMS-u. Umjesto nje upotrijebite vrstu polja DateTime s opcijom `type: date`.'
+    # curly brackets in the placeholder are escaped with backslashes for MessageFormat 2
+    hidden_field_locale_without_i18n: Opcija `default` polja vrste Hidden koristi rezervirano mjesto `\{\{locale\}\}`, ali i18n nije omogućen za zbirku, pa sadržaj nema jezik kojim bi ga se ispunilo.
     # {$timeZone} is the invalid IANA timezone identifier from the configuration
     invalid_timezone: 'Nevaljana vremenska zona: {$timeZone}. Mora biti valjani IANA identifikator vremenske zone poput `America/New_York` ili `Asia/Tokyo`.'
     # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
@@ -1698,12 +2618,85 @@ config:
     invalid_list_variable_type: Varijabilna vrsta polja List nije valjana. Opcija `widget` postavljena je na `{$widget}`, ali mora biti `object`.
     # Don’t localize `fields`, and `types`
     invalid_object_field: Polje vrste Object ne može imati opcije `fields` i `types` istodobno.
+    # {$min} and {$max} are option names such as `min` and `max` or `minlength` and `maxlength`
+    invalid_range_options: Opcija `{$min}` ne smije biti veća od opcije `{$max}`.
+    # {$step} is the configured value; Don’t localize `step`
+    invalid_step: Opcija `step` postavljena je na `{$step}`, ali mora biti veća od nule ili `-1` za isključivanje koraka.
+    # Don’t localize `options`
+    select_field_no_options: Polje vrste Select mora imati barem jednu stavku u opciji `options`.
+    # {$value} is the option value from the configuration; Don’t localize `options`
+    select_field_duplicate_option: Vrijednosti u opciji `options` polja Select moraju biti jedinstvene, ali `{$value}` se koristi više puta.
+    # {$value} is the default value from the configuration; Don’t localize `default` and `options`
+    select_field_invalid_default: Opcija `default` polja Select postavljena je na `{$value}`, ali ta vrijednost nije među opcijama `options`.
+    # Don’t localize `fields` and `types`
+    list_field_no_subfields: Opcija `fields` ili `types` polja List mora imati barem jednu stavku. Za popis običnih vrijednosti izostavite tu opciju.
+    # Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_object: Opcija `default` polja List sadrži objekt, ali svaka stavka mora biti obična vrijednost jer polje nema opciju `fields` ni `types`.
+    # {$value} is the default item from the configuration; Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_item: Opcija `default` polja List sadrži `{$value}`, ali svaka stavka mora biti objekt jer polje ima opciju `fields` ili `types`.
+    # {$key} is a property name of the default item from the configuration; Don’t localize `default`
+    list_field_invalid_default_key: Opcija `default` polja List sadrži stavku sa svojstvom `{$key}`, ali nijedno podpolje nema taj naziv.
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    list_field_default_missing_type: Opcija `default` polja List sadrži stavku bez svojstva `{$typeKey}`, koje označava jednu od vrsta u opciji `types`.
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default item; Don’t localize `default` and `types`
+    list_field_invalid_default_type: Opcija `default` polja List sadrži stavku čije svojstvo `{$typeKey}` ima vrijednost `{$value}`, ali ona nije među vrstama u opciji `types`.
+    # Don’t localize `map_key_field`, `fields` and `types`
+    list_field_map_key_no_subfields: Opcija `map_key_field` polja List zahtijeva opciju `fields` ili `types` jer se svaki ključ uzima iz podpolja.
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_not_found: Opcija `map_key_field` polja List upućuje na `{$name}`, ali nijedno podpolje nema taj naziv.
+    # {$name} is the subfield name, and {$type} is the variable type name; Don’t localize `map_key_field`
+    list_field_map_key_missing_in_type: Opcija `map_key_field` polja List upućuje na `{$name}`, ali vrsta `{$type}` nema podpolje s tim nazivom.
+    # {$name} is the subfield name, and {$widget} is its field type; Don’t localize `map_key_field`
+    list_field_map_key_invalid_type: Opcija `map_key_field` polja List upućuje na `{$name}`, ali to mora biti polje vrste String, Relation ili Select, a ne polje `{$widget}`.
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `multiple`
+    list_field_map_key_multiple: Opcija `map_key_field` polja List upućuje na `{$name}`, ali to podpolje ne smije primati više vrijednosti jer svaka stavka treba jedan ključ. Uklonite njegovu opciju `multiple`.
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_option_not_string: Opcija `map_key_field` polja List upućuje na `{$name}`, ali opcije tog podpolja moraju imati vrijednosti u obliku niza znakova jer se svaki ključ sprema kao niz znakova.
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `required`
+    list_field_map_key_not_required: Opcija `map_key_field` polja List upućuje na `{$name}`, ali to podpolje ne smije biti neobavezno jer svaka stavka treba ključ. Uklonite njegovu opciju `required`.
+    # {$name} is the subfield name; Don’t localize `map_key_field`, `i18n: false` and `i18n: duplicate`
+    list_field_map_key_not_localized: 'Opcija `map_key_field` polja List upućuje na `{$name}`, ali to podpolje ne smije imati `i18n: false` jer stavke trebaju ključ na svakom jeziku. Upotrijebite `i18n: duplicate` ili uklonite opciju.'
+    # Don’t localize `i18n`, `duplicate_if_empty`, `multiple` and `true`
+    duplicate_if_empty_multiple: 'Opcija `i18n: duplicate_if_empty` nije podržana za polje s opcijom `multiple`, pa se polje ponaša kao da ima `i18n: true`.'
+    # Don’t localize `default` and `multiple`
+    invalid_default_multiple: Opcija `default` mora biti polje (array) jer je opcija `multiple` postavljena na `true`.
+    invalid_default_single: Opcija `default` mora biti jedna vrijednost, a ne polje (array), jer opcija `multiple` nije postavljena na `true`.
+    # {$key} is a property name of the default object from the configuration; Don’t localize `default`
+    object_field_invalid_default_key: Opcija `default` polja Object ima svojstvo `{$key}`, ali nijedno podpolje nema taj naziv.
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    object_field_default_missing_type: Opcija `default` polja Object nema svojstvo `{$typeKey}`, koje označava jednu od vrsta u opciji `types`.
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default object; Don’t localize `default` and `types`
+    object_field_invalid_default_type: Svojstvo `{$typeKey}` opcije `default` polja Object ima vrijednost `{$value}`, ali ona nije među vrstama u opciji `types`.
+    # Don’t localize `default` and `output_code_only`
+    code_field_invalid_default_object: Opcija `default` polja Code mora biti niz znakova jer je opcija `output_code_only` postavljena na `true`.
+    # {$key} is a property name of the default object, {$code} and {$lang} are the configured property names; Don’t localize `default` and `keys`
+    code_field_invalid_default_key: Opcija `default` polja Code ima svojstvo `{$key}`, ali opcija `keys` dopušta samo `{$code}` i `{$lang}`.
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_invalid_expression: Opcija `value` polja Compute mora biti valjani aritmetički izraz, poput `\{\{fields.price\}\} * \{\{fields.quantity\}\}`, jer je opcija `value_type` postavljena na `{$valueType}`.
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_uuid_in_expression: Opcija `value` polja Compute ne smije koristiti UUID oznaku poput `\{\{uuid\}\}` jer je opcija `value_type` postavljena na `{$valueType}`, zbog čega je vrijednost aritmetički izraz.
+    # {$value} is the default value and {$valueType} is the configured value type; Don’t localize `default` and `value_type`
+    number_field_default_not_integer: Opcija `default` polja Number postavljena je na `{$value}`, ali mora biti cijeli broj jer je opcija `value_type` postavljena na `{$valueType}`.
+    number_field_default_not_number: Opcija `default` polja Number postavljena je na `{$value}`, ali mora biti broj jer je opcija `value_type` postavljena na `{$valueType}`.
+    # Don’t localize `fields` and `types`
+    object_field_no_subfields: Opcija `fields` ili `types` polja Object mora imati barem jednu stavku.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: Referencirana zbirka `{$collection}` nije valjana ili nije definirana.
     relation_field_invalid_collection_file: Referencirana datoteka `{$file}` nije valjana ili nije definirana.
     # Don’t localize `file`
     relation_field_missing_file_name: Opcija `file` mora biti definirana za relaciju prema zbirci datoteka.
     relation_field_invalid_value_field: Referencirano polje vrijednosti `{$field}` nije valjano ili nije definirano.
+    # {$collection} is the referenced collection name; Don’t localize `file`, `value_field` and `slug`.
+    # The curly brackets are escaped with backslashes for MessageFormat 2
+    relation_field_array_file_slug: Relacija prema zbirci `{$collection}` ne može spremati vrijednost `\{\{slug\}\}` jer je slug unosa u zbirci s opcijom `file` njegov položaj, koji se mijenja pri promjeni redoslijeda ili brisanju unosa. Umjesto toga postavite opciju `value_field` na polje s jedinstvenom vrijednošću.
+    # {$collection} is the referenced collection name; Don’t localize `file`
+    relation_field_array_file_workflow: Zbirka s opcijom `file` ne može imati relaciju prema zbirci `{$collection}`, koja koristi uredničko radno okruženje ili radno okruženje pretpregleda, jer se reference na unos koji je ondje preimenovan ili izbrisan ne mogu ažurirati u datoteci.
+    relation_field_invalid_display_field: Referencirano polje za prikaz `{$field}` nije valjano ili nije definirano.
+    relation_field_invalid_search_field: Referencirano polje za pretraživanje `{$field}` nije valjano ili nije definirano.
+    relation_field_invalid_filter_field: Referencirano polje za filtriranje `{$field}` nije valjano ili nije definirano.
+    relation_field_invalid_sort_field: Referencirano polje za sortiranje `{$field}` nije valjano ili nije definirano.
+    # Don’t localize `sort_by` and `file`
+    relation_field_sort_by_file_ignored: Opcija `sort_by` ne primjenjuje se na relaciju prema datoteci, čije opcije prate redoslijed stavki popisa. Bit će zanemarena.
     unexpected: Neočekivana pogreška
 
     # Schema validation errors, reported when the configuration doesn’t match the published JSON
@@ -1736,18 +2729,56 @@ config:
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: ID OAuth aplikacije nije definiran. Korisnici se moraju prijaviti pomoću pristupnog tokena.
+    # Don’t localize `prefix`
+    site_library_prefix_template: Opcija `prefix` medijske biblioteke sadrži oznake predloška, koje su podržane samo na razini polja jer na najvišoj razini ne postoji unos kojim bi se ispunile.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: Opcija `{$prop}` nije podržana u Sveltia CMS-u. Bit će zanemarena.
+    # Don’t localize `stages`, `publish_mode`, `editorial_workflow` and {$type}, which is `preview` or `simple`
+    publish_mode_stages_ignored: Opcija `stages` opcije `publish_mode` primjenjuje se samo na način objave `editorial_workflow`, pa se uz `{$type}` zanemaruje.
+    # Don’t localize `pattern`, `m` and `s`
+    inline_component_multiline_pattern: Opcija `pattern` ove ugrađene komponente ima zastavicu `m` ili `s` ili odgovara prijelomima redaka, ali ugrađena komponenta prepoznaje se samo unutar odlomka.
+    # {$name} is a button or component name and {$option} is `buttons` or `editor_components`; Don’t localize them and `multiline: false`
+    single_line_block_item: 'Stavka `{$name}` opcije `{$option}` zanemaruje se jer polje s `multiline: false` može sadržavati samo sadržaj unutar retka.'
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: Postavljeni su i `picker_utc` i novije opcije vremenske zone (`input_timezone` ili `output_utc`). Nove opcije imaju prednost. Razmislite o uklanjanju opcije `picker_utc` iz konfiguracije.
+    # Don’t localize `localize_format` and `format`
+    localize_format_without_format: Opcija `localize_format` nema učinka jer polje nema opciju `format`, a njegova se vrijednost sprema u formatu ISO 8601.
+    # {$name} is a template tag like `fields.lines.*.price`; Don’t localize `value`, `*` and `sum()`
+    compute_field_wildcard_without_item: Opcija `value` polja Compute upućuje na `{$name}`, ali polje nije u stavci popisa koji `*` predstavlja, pa se razrješava u ništa. Samo agregatna funkcija poput `sum()` može koristiti sve stavke popisa.
+    # {$name} is a template tag like `fields.lines.*.amount`; Don’t localize `value`
+    compute_field_self_reference: Opcija `value` polja Compute upućuje na samo polje kao `{$name}`, pa se njegova vrijednost mijenja pri svakom izračunu i nikada se ne ustali.
+    # {$name} is a template tag like `fields.total`; Don’t localize `value`
+    compute_field_reference_cycle: Opcija `value` polja Compute upućuje na `{$name}`, drugo polje Compute koje upućuje natrag na ovo polje, izravno ili preko drugih polja, pa se njihove vrijednosti nikada ne ustale.
+    # Don’t localize `localize_format`, `true` and `de`
+    localize_format_without_i18n: Opcija `localize_format` postavljena je na `true`, ali i18n nije omogućen za zbirku, pa se vrijednost zapisuje na engleskom. Umjesto toga postavite opciju na kôd jezika poput `de`.
+    # {$locale} is the locale code from the configuration; Don’t localize `localize_format`
+    localize_format_unsupported_locale: Opcija `localize_format` postavljena je na `{$locale}`, što nije podržani jezik, pa se vrijednost zapisuje na engleskom.
     # Don’t localize `preview_path`
     preview_path_no_date_field: Opcija `preview_path` koristi oznake datuma i vremena, ali zbirka nema polje DateTime iz kojeg bi ih čitala, pa se poveznica na pretpregled neće prikazati.
     # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
     preview_path_date_field_not_found: Opcija `preview_path_date_field` upućuje na polje naziva `{$name}`, ali polje DateTime s tim nazivom nije definirano, pa se poveznica na pretpregled neće prikazati.
     # {$name} is the template tag from the configuration; Don’t localize `preview_path`
     preview_path_field_not_found: Opcija `preview_path` upućuje na `{$name}`, ali takvo polje nije definirano u zbirci, pa se poveznica na pretpregled neće prikazati.
+    # {$name} is the default identifier field name; Don’t localize `identifier_field` and `slug`
+    missing_identifier_field: Zbirka nema polje `{$name}` kojim bi se imenovali novi unosi, pa svaki novi unos dobiva nasumični slug. Dodajte polje `{$name}` ili postavite opciju `identifier_field` ili `slug`.
+    # Don’t localize `slug`, `i18n`, `multiple_files`, `multiple_folders` and `multiple_root_folders`
+    slug_i18n_ineffective: Opcija `i18n` opcije `slug` nema učinka jer zbirka ne koristi i18n strukturu `multiple_files`, `multiple_folders` ili `multiple_root_folders`, u kojoj svaki jezik ima vlastitu datoteku.
+    # Don’t localize `slug`, `template` and `auto_increment`
+    slug_template_ignored: Opcija `template` opcije `slug` zanemaruje se jer opcija `auto_increment` umjesto toga numerira slugove.
+    # {$file} is the file path; Don’t localize `file`, `locale`, `i18n`, `false`,
+    # `omit_default_locale_from_file_path` and the example paths. The curly brackets in the examples
+    # are escaped with backslashes for MessageFormat 2
+    locale_not_omitted_from_file_path: Rezervirano mjesto `locale` nije moguće ukloniti iz putanje `file` `{$file}`, pa zadani jezik u njoj ostaje unatoč i18n opciji `omit_default_locale_from_file_path`. Da biste izostavili jezik, upotrijebite rezervirano mjesto kao cijeli naziv mape, primjerice `\{\{locale\}\}/about.md`, ili između naziva datoteke i nastavka, primjerice `about.\{\{locale\}\}.md`. Da biste ga zadržali, postavite opciju na `false` u opciji `i18n` datoteke.
+    # Don’t localize `i18n`
+    i18n_not_configured: Opcija `i18n` je omogućena, ali i18n nije konfiguriran na najvišoj razini konfiguracije ni u zbirci, pa opcija nema učinka.
+    # Don’t localize `public_folder` and `media_folder`
+    empty_public_folder: Opcija `public_folder` prazan je niz znakova, pa se za putanje resursa spremljene u unosima umjesto nje koristi putanja `media_folder`. Uklonite opciju ili je postavite na putanju koju želite koristiti, primjerice `/images`.
     # {$option} is an option path from the configuration, such as `filter.Regulation`
     schema_unknown_option: Opcija `{$option}` nije definirana u shemi konfiguracije Sveltia CMS-a. Bit će zanemarena. Provjerite postoji li pogreška u pisanju ili sintaksi.
+    # Don’t localize `default_localized`, `default` and `i18n`
+    default_localized_without_i18n: Opcija `default_localized` nema učinka jer i18n nije omogućen za zbirku. Umjesto nje upotrijebite opciju `default`.
+    # {$locale} is a locale code from the configuration; Don’t localize `default_localized`
+    default_localized_unknown_locale: Opcija `default_localized` ima vrijednost za `{$locale}`, koji nije među jezicima zbirke, pa se ta vrijednost nikada ne koristi.
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'Pojedinosti potražite u napomenama o kompatibilnosti: {$link}'
@@ -1780,6 +2811,11 @@ viewing_editorial_workflow: 'Sada pregledavate ploču uredničkog radnog okruže
 # Same as above, for an Open Authoring contributor: their board has no Ready column, because only
 # a maintainer can publish
 viewing_open_authoring_workflow: 'Sada pregledavate ploču uredničkog radnog okruženja. Skice: {$draft}. Na pregledu: {$review}. Čeka brisanje: {$deletion}.'
+# Same as above, when the In Review stage is left out with the `stages` publish mode option
+viewing_editorial_workflow_without_review: 'Sada pregledavate ploču uredničkog radnog okruženja. Skice: {$draft}. Spremno: {$ready}. Čeka brisanje: {$deletion}.'
+# Same as above, when all the content uses Preview Workflow, which has no review stages, so the
+# page only lists the drafts
+viewing_preview_workflow: 'Sada pregledavate stranicu Skice. Skice: {$draft}. Čeka brisanje: {$deletion}.'
 
 # Workflow status names. `drafts` is the plural form used as a column heading,
 # while `draft` is the singular form used in the editor’s status button.
@@ -1791,6 +2827,10 @@ status:
   # A pending removal, which is a status of its own rather than a stage: it has no review to go
   # through, only the deletion itself to carry out or call off
   pending_deletion: Čeka brisanje
+  # Merged changes the site hasn’t caught up with yet: it’s being rebuilt and deployed from the
+  # merge, so a published entry isn’t live and a deleted one is still up. Heading of the tray below
+  # the board that lists them until the site has caught up
+  deploying: Uvođenje
 
 workflow:
   # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
@@ -1838,6 +2878,14 @@ workflow:
   status_updated: Status je ažuriran.
   # Error notification when the status could not be changed
   status_change_failed: Promjena statusa nije uspjela. Pokušajte ponovno.
+  # Workflow page: toolbar button that reads the pull requests again, to pick up the changes made
+  # by anyone else since the board was loaded, and the toast notifications shown while doing so and
+  # once done
+  refresh: Osvježi
+  refreshing: Osvježavanje…
+  refreshed: Ploča je ažurna.
+  # Error notification when the board could not be refreshed
+  refresh_failed: Osvježavanje ploče nije uspjelo. Pokušajte ponovno.
   # Error notification when the status can’t be changed because the entry is incomplete. Required
   # fields can be left empty while the entry is a draft, but not once it moves on from there
   status_change_blocked: Unos sadrži pogreške. Ispravite ih prije promjene statusa.
@@ -1848,6 +2896,10 @@ workflow:
   # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
   send_for_review: Pošalji na pregled
   confirm_sending_for_review: Vaše su promjene spremljene kao skica. Želite li poslati unos na pregled kako bi ga netko mogao pregledati i objaviti?
+  # Same as above, when the In Review stage is left out with the `stages` publish mode option, so
+  # the next step is to mark the entry as ready to be published
+  mark_as_ready: Označi kao spremno
+  confirm_marking_as_ready: Vaše su promjene spremljene kao skica. Želite li označiti unos kao spreman kako bi se mogao objaviti?
   # Editor toolbar: button shown when the entry is ready to be published
   publish_entry: Objavi unos
   # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
@@ -1881,6 +2933,8 @@ workflow:
       one {{ {$count} njih još nije objavljen, pa će vaše neobjavljene promjene biti odbačene. Objavljena verzija, ako postoji, ostat će objavljena. }}
       few {{ {$count} njih još nisu objavljena, pa će vaše neobjavljene promjene biti odbačene. Objavljene verzije, ako postoje, ostat će objavljene. }}
       *   {{ {$count} njih još nije objavljeno, pa će vaše neobjavljene promjene biti odbačene. Objavljene verzije, ako postoje, ostat će objavljene. }}
+  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
+  confirm_publishing_entry_after_build: Jeste li sigurni da želite objaviti ovaj unos? Vaše promjene bit će objavljene nakon ponovne izgradnje web-mjesta.
   # Workflow page: toast notifications shown while an entry is being published from a card, and
   # once publishing has completed
   publishing_entry: Objavljivanje unosa…
@@ -1892,10 +2946,55 @@ workflow:
   entry_deleted: Unos je izbrisan.
   # Error notification when publishing fails
   publishing_entry_failed: Objava unosa nije uspjela. Pokušajte ponovno.
+  # Error notification when an entry can’t be published from the CMS, because its request also
+  # changes files that aren’t part of the entry and that the CMS doesn’t show, goes somewhere other
+  # than the site’s branch, or is too large to check. Keep the wording free of Git jargon
+  publish_refused_other_changes: Ovaj unos nije moguće objaviti ovdje jer uključuje druge promjene koje vam CMS ne može prikazati. Zamolite razvojnog programera da ga pregleda.
+  # Error notification when an entry can’t be published because its branch has been committed to
+  # since the entry was opened, so what would be published isn’t what was reviewed
+  publish_refused_entry_changed: Unos je promijenjen nakon što ste ga otvorili. Ponovno učitajte stranicu kako biste pregledali najnoviju verziju prije objave.
+  review_on_x: Pregledaj na usluzi {$service}
+  from_fork: Iz forka
+  fork_entry_editable: Ovaj unos potječe iz zahtjeva za povlačenje suradnika otvorenog iz „{$fork}”. Vaše se promjene spremaju u njegovu granu. Pregledajte i spojite zahtjev za povlačenje na Git usluzi.
+  fork_entry_locked: Ovaj unos potječe iz zahtjeva za povlačenje suradnika otvorenog iz „{$fork}”. Suradnik ne dopušta održavateljima da ga uređuju, pa ga ovdje možete samo pregledavati.
+  fork_not_editable: Suradnik ne dopušta održavateljima da uređuju ovaj zahtjev za povlačenje.
+  fork_entry_gone: Zahtjev za povlačenje suradnika više nije otvoren, pa se promjene u njega ne mogu spremiti.
+  # Error shown in the save error dialog when an entry can’t be saved for review, because a request
+  # the CMS doesn’t show is already open from the branch the entry would be saved to. `{$number}` is
+  # the request number, e.g. `#12` on GitHub or `!12` on GitLab. Keep the wording free of Git jargon
+  branch_in_use: Za ovaj je unos izvan CMS-a već otvoren drugi zahtjev ({$number}). Zamolite razvojnog programera da ga najprije zatvori.
   # Workflow page: empty column message
   no_entries: Nema unosa.
   # Workflow page: aria-label for a draggable entry card
   drag_entry: Povucite za promjenu statusa
+  # Workflow page: note on a card in the Deploying tray, marking an entry that’s being removed from
+  # the site rather than published to it
+  deploying_deletion: Brisanje
+  # Workflow page: note on a card listing the new entries that were created from a Relation field
+  # of the entry and are published along with it, e.g. “Also adds Section: Getting Started”
+  companion_entries: Dodaje i {$entries}
+  # Workflow page: note on a card listing the existing entries that were edited from a Relation
+  # field of the entry and are published along with it, e.g. “Also changes Author: Ada Lovelace”
+  edited_companion_entries: Mijenja i {$entries}
+  # Workflow page: one of the entries listed by `companion_entries` or `edited_companion_entries`,
+  # named by its collection’s singular label and its title
+  companion_entry: '{$collection}: {$title}'
+
+# Dialog asking the user for a commit message every time changes are saved, when the site is
+# configured to. The message is recorded in the repository’s history along with the changes
+commit_message:
+  # Dialog title
+  title: Poruka commita
+  # Description when the user writes the whole message, which the text box is filled in with
+  description_replace: Opišite svoje promjene. Poruka se bilježi u povijesti zajedno s njima.
+  # Description when the text the user enters is added before or after a message the CMS writes
+  description_addition: Dodajte napomenu poruci koja se bilježi u povijesti zajedno s vašim promjenama, primjerice broj problema. Može ostati prazna.
+  # Accessible name of the text box when the user writes the whole message
+  message: Poruka commita
+  # Accessible name of the text box when the text is added before or after the message
+  addition: Napomena
+  # Preview of the message as it will be recorded. {$message} is the message
+  preview: 'Poruka: {$message}'
 
 # Open Authoring: a contributor without write access to the configured repository works in a fork
 # of it, and their changes reach the site through a pull request a maintainer merges
@@ -1909,6 +3008,10 @@ open_authoring:
   fork_declined: Za predlaganje promjena trebate fork repozitorija na svojem računu.
   # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
   fork_failed: Nije moguće stvoriti fork repozitorija „{$repo}” na vašem računu.
+  # Error shown when the user’s fork doesn’t have the branch the CMS is configured with, so there’s
+  # nothing to start their changes from. {$fork} and {$repo} are repository identifiers in
+  # owner/repo format, {$branch} is the branch name
+  fork_branch_missing: Vaš fork „{$fork}” nema granu „{$branch}”. Ažurirajte fork iz repozitorija „{$repo}”, a zatim se ponovno prijavite.
   # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
   # because the API rate limit is exhausted. {$repo} is the repository identifier
   permission_check_failed: Nije moguće provjeriti vaš pristup repozitoriju „{$repo}”. Pokušajte ponovno za trenutak.
@@ -1923,6 +3026,10 @@ open_authoring:
   private_repo_scope_required: Vaša prijava ne uključuje pristup privatnim repozitorijima, pa repozitorij „{$repo}” nije moguće čitati. Zamolite održavatelja da provjeri postavke provjere autentičnosti CMS-a.
   # Error shown when a contributor tries to publish an entry, which only a maintainer can do
   publish_unsupported: Samo održavatelj može objaviti promjene na ovom web-mjestu. Umjesto toga označite svoj unos kao „Na pregledu” i netko će ga pogledati.
+  # Error shown when a contributor changes the status of an entry whose request a maintainer has
+  # published since the page was loaded, leaving nothing to review. The entry then leaves the
+  # Editorial Workflow board and the editor closes. Keep the wording free of Git jargon
+  entry_already_published: Održavatelj je već objavio ovaj unos, pa nema više ničega za pregledati.
   # Error shown when a change would go straight to the site instead of being reviewed, which a
   # contributor can’t do. It covers media library uploads and deletions, and entry reordering
   direct_commit_unsupported: Ovu promjenu nije moguće izravno napraviti. Na pregled se mogu predložiti samo uređivanja unosa.
@@ -1938,11 +3045,10 @@ open_authoring:
 # Settings page aria-label
 categories: Kategorije
 
-# Site Configuration Editor
-site_configuration_editor: Uređivač konfiguracije web-mjesta
-
 # Preferences panels
 prefs:
+  account:
+    title: Račun
   # API key management feedback messages
   changes:
     api_key_saved: API ključ je spremljen.
@@ -1992,7 +3098,7 @@ prefs:
         select_service: Odaberite uslugu
       api_keys:
         title: API ključevi usluga prevođenja
-        description: Upravljajte API ključevima za <a>usluge prevođenja</a>.
+        description: Upravljajte API ključevima za <a>usluge prevođenja</a>. API ključevima za opće usluge umjetne inteligencije možete upravljati u postavkama umjetne inteligencije.
       # API key input label, e.g., “DeepL Key”
       # {$service} is the translation service name
       field_label: Ključ za {$service}
@@ -2026,6 +3132,16 @@ prefs:
       field_label: API ključ za {$service}
       no_services: Nije konfigurirana nijedna <a>usluga pohrane u oblaku</a>.
 
+  # AI panel
+  ai:
+    title: Umjetna inteligencija
+    api_keys:
+      title: API ključevi usluga umjetne inteligencije
+      description: Upravljajte API ključevima za usluge umjetne inteligencije.
+    # API key input label, e.g., “OpenAI GPT API Key”
+    # {$service} is the AI service name
+    field_label: API ključ za {$service}
+
   # Accessibility panel
   accessibility:
     title: Pristupačnost
@@ -2036,6 +3152,7 @@ prefs:
 
   # Data Management panel
   data:
+    title: Upravljanje podacima
     clear_data:
       title: Očisti podatke
       # Clear File Cache button
@@ -2051,13 +3168,23 @@ prefs:
 
   # Developer panel
   developer:
+    title: Razvoj
     developer_mode:
       title: Razvojni način rada
       description: Omogućite neke značajke namijenjene razvojnim programerima, uključujući detaljne zapise u konzoli i izvorne kontekstne izbornike.
       switch_label: Omogući razvojni način rada
+    local_git:
+      title: Git commitovi
+      description: Commitajte svoje promjene u trenutačnu granu lokalnog repozitorija pri svakom spremanju, kao što CMS radi kada radite s udaljenim repozitorijem. Commitove zatim možete pregledati i poslati uobičajenim Git alatima.
+      switch_label: Commitaj promjene u Git
+      checking: Provjera repozitorija…
+      # {$branch} is the branch name, {$name} and {$email} are the commit author’s name and email address
+      ready: Promjene će biti commitane u granu {$branch} kao {$name} ({$email}).
+      # {$reason} is one of the `local_git_skip_reasons` strings
+      not_ready: Promjene trenutačno nije moguće commitati. {$reason}
     deploy_hook:
       title: Deploy Hook
-      description: Unesite URL webhooka koji će se pozvati kada ručno pokrenete objavu odabirom stavke Objavi promjene. Možete ga ostaviti praznim ako koristite GitHub Actions.
+      description: Unesite URL webhooka koji će se pozvati kada ručno pokrenete objavu odabirom stavke Objavi promjene. Možete ga ostaviti praznim ako koristite GitHub Actions ili GitLab CI/CD.
       # Hook URL input
       url:
         field_label: URL hooka

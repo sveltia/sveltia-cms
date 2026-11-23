@@ -12,7 +12,7 @@ import { getEntryRelativeAssets } from '$lib/services/contents/entry/assets';
 import { buildTargetChanges } from '$lib/services/contents/entry/cascade';
 import { planCascadeDelete } from '$lib/services/contents/entry/relations/cascade/delete';
 import { collectRenameTargets } from '$lib/services/contents/entry/relations/cascade/update';
-import { unpublishedEntries } from '$lib/services/workflow';
+import { allUnpublishedEntries } from '$lib/services/workflow';
 import {
   checkReviewedHead,
   findUnexpectedChanges,
@@ -521,6 +521,7 @@ describe('workflow/verify', () => {
       });
 
       // Another entry of the collection deleted in the same selection, and one of another
+      // collection deleted in a selection of its own
       const sibling = {
         ...createEntry({ status: 'pending_deletion', paths: ['content/posts/b.md'] }),
         id: 'sibling',
@@ -529,7 +530,17 @@ describe('workflow/verify', () => {
       const other = createEntry({ status: 'pending_deletion', collectionName: 'authors' });
       const pending = createEntry({ paths: ['content/posts/c.md'] });
 
-      unpublishedEntries.current = [entry, sibling, other, pending];
+      // An entry of the collection deleted on its own, whose references aren’t rewritten here
+      const lone = {
+        ...createEntry({ status: 'pending_deletion', paths: ['content/posts/d.md'] }),
+        id: 'lone',
+      };
+
+      [entry, sibling].forEach((e) => {
+        e.workflow.pullRequest.description = '<!-- sveltia-cms:deletion-group=group-1 -->';
+      });
+      other.workflow.pullRequest.description = '<!-- sveltia-cms:deletion-group=group-2 -->';
+      allUnpublishedEntries.current = [entry, sibling, other, pending, lone];
       vi.mocked(planCascadeDelete).mockReturnValueOnce(
         /** @type {any} */ ({ targets: [{ entry: home }, { entry: team }], blockers: [] }),
       );
@@ -554,7 +565,7 @@ describe('workflow/verify', () => {
         targets: [{ entry: home }, { entry: team }],
       });
       expect(collectRenameTargets).not.toHaveBeenCalled();
-      unpublishedEntries.current = [];
+      allUnpublishedEntries.current = [];
     });
 
     test('allows the rewrite of the entries referencing a renamed entry, as written', async () => {

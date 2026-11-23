@@ -448,6 +448,8 @@ test.describe('as a contributor', () => {
             // A contributor can’t label a pull request on the repository
             labels: [],
             author: gitea.user,
+            // The maintainers can edit the entry while reviewing it
+            allowMaintainerEdit: true,
           },
         ]);
 

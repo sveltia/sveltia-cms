@@ -23,7 +23,12 @@ import { isS3ObjectUrl, s3Operations } from './core';
  * @property {(libOptions: S3MediaLibrary) => S3Config} [resolveConfig] Function to derive the S3
  * configuration from the library options, typically to add the service’s fixed API endpoint and
  * default public URL, or to fill in a default `access_key_id`. The result is also used to decide
- * whether the service is enabled. Default: the library options are used as is.
+ * whether the service is enabled. Default: the library options are used as is, unless
+ * `regionalHost` is given.
+ * @property {(region: string | undefined) => string} [regionalHost] Function to get the host name
+ * of the service’s API endpoint in the given region, for a service that takes path-style API calls
+ * at the region endpoint and serves the public files virtual-hosted-style from a subdomain of it
+ * named after the bucket, unless a custom CDN `public_url` is configured.
  * @property {string} [objectAcl] Canned ACL sent in the `x-amz-acl` header when creating an object,
  * for a service where objects are private by default, even in a public bucket, such as DigitalOcean
  * Spaces and Scaleway. It can’t be set in the library options. Default: none, as Amazon S3 rejects
@@ -48,7 +53,18 @@ export class S3CompatibleService extends ObjectStorageService {
   constructor({
     requiredOption = 'region',
     objectAcl,
-    resolveConfig = (libOptions) => libOptions,
+    regionalHost,
+    resolveConfig = regionalHost
+      ? (libOptions) => {
+          const host = regionalHost(libOptions.region);
+
+          return {
+            ...libOptions,
+            endpoint: `https://${host}`,
+            public_url: libOptions.public_url ?? `https://${libOptions.bucket}.${host}`,
+          };
+        }
+      : (libOptions) => libOptions,
     ...definition
   }) {
     super({

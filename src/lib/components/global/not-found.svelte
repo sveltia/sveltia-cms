@@ -12,12 +12,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    message,
-    backPath = '/collections',
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { message, backPath = '/collections' } = $props();
 
   /**
    * Accept any previous page to go back to, as a dead link can be followed from anywhere.

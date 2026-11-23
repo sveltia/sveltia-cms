@@ -76,6 +76,26 @@
  * @property {string} [avatarURL] Avatar URL.
  * @property {string} [profileURL] Profile URL.
  * @property {boolean} [bot] Whether the user is a service account.
+ * @property {'admin' | 'editor' | 'viewer'} [role] Role given by Sveltia CMS Additions. A viewer
+ * can’t make changes.
+ * @property {AdditionsCommitAuthor} [commitAuthor] How Sveltia CMS Additions asks the user’s
+ * commits to be authored, since its GitHub token belongs to an app, not the user.
+ * @property {boolean} [hasPassword] Whether the Sveltia CMS Additions user has a password, which
+ * someone who only signs in with GitHub doesn’t, so they have none to change.
+ * @property {boolean} [ownGitHubToken] Whether the GitHub token Sveltia CMS Additions gave is the
+ * user’s own, as they signed in with GitHub or linked their GitHub account, rather than the app’s.
+ * @property {string} [tokenExpiresAt] When the GitHub token Sveltia CMS Additions gave expires, as
+ * ISO 8601, so it can be refreshed in time.
+ */
+
+/**
+ * Authorship of the commits made with a Sveltia CMS Additions token.
+ * @typedef {object} AdditionsCommitAuthor
+ * @property {'user' | 'bot'} mode `user` to make the user the author, through the Git Data API, or
+ * `bot` to leave the app as the author, through GraphQL, which GitHub signs, with the user in a
+ * `Co-authored-by` trailer.
+ * @property {string} name User’s name.
+ * @property {string} email User’s email.
  */
 
 /**
@@ -150,6 +170,24 @@
  * @typedef {object} RepositoryPath
  * @property {string} owner Owner name, which could be either an organization or individual user.
  * @property {string} repo Repository name.
+ */
+
+/**
+ * An outstanding request asking the user what to do with uploaded files whose names are already
+ * taken, which the UI turns into a conflict resolution dialog.
+ * @typedef {object} DuplicatesRequest
+ * @property {number} count Number of duplicate files.
+ * @property {string} name Name of the first duplicate file.
+ * @property {(replace: boolean | undefined) => void} respond Function to answer the request: `true`
+ * to replace the existing files, `false` to keep both, or `undefined` to cancel.
+ */
+
+/**
+ * An outstanding request asking the user whether to sign in to the account a magic link belongs
+ * to, which the UI turns into a confirmation dialog.
+ * @typedef {object} MagicLinkConfirmationRequest
+ * @property {User} account Account the link signs in to.
+ * @property {(confirmed: boolean) => void} respond Function to answer the request.
  */
 
 /**
@@ -344,6 +382,11 @@
  * @property {boolean} auto Whether the sign-in process is automatic.
  * @property {string} [token] User’s locally-cached OAuth access token. Git backends only.
  * @property {string} [refreshToken] User’s locally-cached OAuth refresh token. Git backends only.
+ * With Sveltia CMS Additions, it’s the session token.
+ * @property {string} [username] Username to sign in to Sveltia CMS Additions with.
+ * @property {string} [password] Password to sign in to Sveltia CMS Additions with.
+ * @property {string} [provider] Provider to sign in to Sveltia CMS Additions through, e.g.
+ * `github`.
  */
 
 /**
@@ -459,6 +502,23 @@
  * @property {boolean} [canMerge] Whether the signed-in user can merge the pull request, which
  * decides whether the entry can be published. `undefined` when the backend doesn’t tell, in which
  * case the merge is offered and left to the backend to allow or refuse.
+ * @property {string} [description] Pull request description, an empty string if it has none. It
+ * carries the record of the deletion group the pull request belongs to, if any: see
+ * `getDeletionGroup` in `$lib/services/backends/git/shared/pull-requests`. `undefined` for an Open
+ * Authoring draft, which has no pull request yet. Always empty for a pull request from a fork,
+ * whose description is the contributor’s and can’t be trusted to say which entries it deletes.
+ * @property {ForkHead} [fork] Fork the pull request comes from, when a contributor opened it with
+ * Open Authoring and the signed-in user is a maintainer reviewing it. Its `branch` is then
+ * qualified with the fork: see `getForkBranchName` in `$lib/services/workflow/forks`.
+ */
+
+/**
+ * Fork a pull request reviewed by a maintainer comes from.
+ * @typedef {object} ForkHead
+ * @property {string} owner Owner of the fork.
+ * @property {string} repo Name of the fork.
+ * @property {boolean} editable Whether the contributor lets maintainers push to the pull request’s
+ * branch. Without that, the entry can only be viewed in the CMS.
  */
 
 /**
@@ -546,6 +606,9 @@
  * relabelled a moment later.
  * @property {WorkflowPullRequest} [pullRequest] Existing pull request, if the entry has already
  * been saved once.
+ * @property {string} [deletionGroup] ID of the selection of entries deleted together the pull
+ * request belongs to, to be recorded in its description. See `getDeletionGroup` in
+ * `$lib/services/backends/git/shared/pull-requests`.
  */
 
 /**
@@ -584,6 +647,26 @@
  * published.
  * @property {(pullRequest: WorkflowPullRequest) => Promise<void>} discard Function to close the
  * pull request and delete the workflow branch.
+ */
+
+/**
+ * Someone who wrote a comment.
+ * @typedef {object} ConversationAuthor
+ * @property {string} name Display name.
+ * @property {string} login Username on Sveltia CMS Additions.
+ * @property {boolean} isSelf Whether it’s the signed-in user.
+ */
+
+/**
+ * A comment in an entry’s conversation, kept by Sveltia CMS Additions.
+ * @typedef {object} ConversationItem
+ * @property {string} id ID.
+ * @property {string} body Markdown.
+ * @property {ConversationAuthor | null} author Author, or `null` once deleted.
+ * @property {Date} createdDate When it was written.
+ * @property {Date} updatedDate When it was last edited.
+ * @property {boolean} canEdit Whether the signed-in user can edit it.
+ * @property {boolean} canDelete Whether the signed-in user can delete it.
  */
 
 /**
@@ -808,15 +891,28 @@
  */
 
 /**
- * Content parsed from the text of an entry file, along with what it was parsed for.
- * @typedef {object} ParsedFileContent
+ * What is remembered about a file when it’s read, so it’s saved back the way it was written.
+ * @typedef {object} FileState
+ * @property {FrontMatterFormat} [format] Front matter format detected in the text, for a file whose
+ * format is `frontmatter`. Such a collection reads YAML, TOML and JSON front matter alike, and an
+ * existing file is saved back in the format it was read in.
+ * @property {ValueSourceMap} [valueSources] Source text of the values that the parsed content
+ * can’t tell apart from others, e.g. a float that is a whole number.
+ * @property {string} [leadingComment] Comments at the top of a YAML or TOML file, or of its front
+ * matter, which are kept on a save.
+ */
+
+/**
+ * Content parsed from the text of an entry file, along with what it was parsed for and what is
+ * remembered about the file.
+ * @typedef {object} ParsedFileContentProps
  * @property {string} key What the content was parsed for: the CMS version and the CMS configuration
  * hash, either of which can change how a file is parsed.
  * @property {RawEntryContent} content Parsed content.
- * @property {FrontMatterFormat} [format] Front matter format detected in the text, for a file whose
- * format is `frontmatter`.
- * @property {ValueSourceMap} [valueSources] Source text of the values that the parsed content
- * can’t tell apart from others, e.g. a float that is a whole number.
+ */
+
+/**
+ * @typedef {ParsedFileContentProps & FileState} ParsedFileContent
  */
 
 /**
@@ -921,8 +1017,9 @@
  * the entry folder. It will be set when `entryRelative` is `true`.
  * @property {string | undefined} publicPath Absolute folder path that will appear in the public
  * URL, starting with `/`. It can be empty if the collection’s `public_folder` property is a
- * relative path, because the complete path cannot be easily determined. It will be `undefined` for
- * the All Assets folder.
+ * relative path, because the complete path cannot be easily determined. For an entry-relative
+ * folder, it can also be relative to the entry, like `images` or `./images`, which a field value is
+ * then built from as it is. It will be `undefined` for the All Assets folder.
  * @property {boolean} entryRelative Whether the `internalPath` is a relative path from the asset’s
  * associated entry.
  * @property {boolean} hasTemplateTags Whether the `internalPath` contains template tags like
@@ -1328,6 +1425,10 @@
  * @property {boolean} interacted Whether the user has manually interacted with the entry editor.
  * This prevents auto-backup from triggering when only programmatic changes (e.g. Lexical markdown
  * reformatting) have occurred.
+ * @property {boolean} [restorePending] Whether the user is being asked whether to restore a backup
+ * of the draft. The draft is read-only until the user has answered, so the edits made in the
+ * meantime can’t be lost to the restore, or replace the backup on offer. The editor can still be
+ * scrolled, so the user can look through the entry before deciding.
  * @property {PendingEntry[]} pendingEntries Entries created from a Relation field while editing
  * this entry, to be saved along with it.
  * @property {QuickAddHost} [quickAddHost] Entry the pending entries go along with, when this is
@@ -1697,6 +1798,8 @@
  * @typedef {object} MovingAsset
  * @property {Asset} asset Asset.
  * @property {string} path New file path.
+ * @property {AssetFolderInfo} [folder] Asset folder the file is moved to, when it’s another one
+ * than the asset’s own. Default: the asset’s folder.
  */
 
 /**
@@ -1764,6 +1867,35 @@
  * @typedef {object} AssetSubfolder
  * @property {string} name Folder name.
  * @property {string} path Folder path, relative to the project root directory.
+ */
+
+/**
+ * Properties shared by every directory an asset can be moved to.
+ * @typedef {object} AssetMoveDestinationBase
+ * @property {string} dirPath Directory path: relative to the project root directory in the
+ * repository, or to the configured prefix on a service, where an empty string is the root.
+ * @property {string} label Folder or service label for the root, or the subfolder name.
+ * @property {AssetMoveDestination[]} children Subfolders of the directory.
+ */
+
+/**
+ * Directory an asset can be moved to: the root of a repository asset folder or a subfolder below
+ * it, which has the `folder`, or the root of a cloud storage service or a folder on it, which has
+ * the `service`.
+ * @typedef {AssetMoveDestinationBase & (
+ * { folder: AssetFolderInfo, service?: undefined } |
+ * { service: MediaLibraryService, folder?: undefined }
+ * )} AssetMoveDestination
+ */
+
+/**
+ * Assets to be moved with the Move dialog: repository assets, or files on a cloud storage service.
+ * @typedef {object} AssetMoveRequest
+ * @property {Asset[]} [assets] Repository assets.
+ * @property {ExternalAsset[]} [externalAssets] Files on a cloud storage service.
+ * @property {MediaLibraryService} [service] Service the `externalAssets` are on.
+ * @property {string} [dirPath] Directory picked up front, by dropping the assets on a folder.
+ * @property {string} [serviceId] ID of the service the directory picked up front is on, if any.
  */
 
 /**
@@ -1932,7 +2064,11 @@
  * @property {FilteringConditions[]} [filters] One or more filtering conditions.
  * @property {GroupingConditions | null} [group] Grouping conditions.
  * @property {Record<string, string[]>} [collapsedGroups] Names of the groups whose entries are
- * hidden, under each grouping condition’s key. See `getGroupingKey()`.
+ * hidden, under each grouping condition’s key. See `getGroupingKey()`. Used when the groups start
+ * expanded.
+ * @property {Record<string, string[]>} [expandedGroups] Names of the groups whose entries are
+ * shown, under each grouping condition’s key. Used instead of `collapsedGroups` when the view group
+ * has the `collapsed` option enabled, so the groups start collapsed.
  * @property {boolean} [showMedia] Whether to show the Media pane.
  */
 
@@ -2163,6 +2299,9 @@
  * @typedef {object} FillTemplateOptions
  * @property {'preview_path' | 'media_folder' | 'library_prefix'} [type] Slug type.
  * @property {InternalCollection} collection Entry collection.
+ * @property {InternalCollectionFile} [collectionFile] Collection file being filled. File/singleton
+ * collection only. Its fields are used to look up a field’s options for transformations, and its
+ * i18n configuration decides whether `{{filename}}` drops a locale suffix.
  * @property {FlattenedEntryContent} content Entry content for the default locale.
  * @property {string} [currentSlug] Entry slug already created for the path.
  * @property {string} [entryFilePath] File path of the entry. Required if the `type` is
@@ -2181,6 +2320,17 @@
  * @property {string} [dirPath] Folder within the collection folder a new entry goes to, as chosen
  * with the path editor of a collection with nested entries. A filled slug then only has to be
  * unique among the entries in that folder.
+ * @property {Map<InternalLocaleCode, string>} [numberedSlugs] Map to record a filled slug in, under
+ * the `locale`, when another entry uses it and a number is added to make it unique. It lets the
+ * user know why the slug ends with a number.
+ */
+
+/**
+ * Slug a new entry would be saved with if it was saved now, as shown while it’s being edited.
+ * @typedef {object} SlugPreview
+ * @property {string} slug Slug.
+ * @property {string} [takenSlug] Slug the template fills, when another entry uses it, so the slug
+ * has a number added to make it unique.
  */
 
 /**

@@ -365,12 +365,13 @@ export const createAuthSecrets = async () => {
  * @param {object} args Arguments.
  * @param {string} args.backendName Backend name, e.g. `gitlab`.
  * @param {string} args.clientId OAuth application ID.
- * @param {string} args.authURL Authorization site URL.
+ * @param {string | (() => Promise<string>)} args.authURL Authorization site URL, or a function
+ * that gets it, e.g. with a request, once the popup has opened: the popup has to open first.
  * @param {string} args.scope Authorization scope.
  * @returns {Promise<AuthTokens>} Auth access token and refresh token.
  * @see https://docs.gitlab.com/ee/api/oauth2.html#authorization-code-with-proof-key-for-code-exchange-pkce
  */
-export const initClientSideAuth = async ({ backendName, clientId, authURL, scope }) => {
+export const initClientSideAuth = async ({ backendName, clientId, authURL: _authURL, scope }) => {
   const { origin, pathname } = window.location;
   const redirectURL = `${origin}${pathname}`;
   // Open the popup immediately to prevent Safari from blocking it. Safari blocks popups that aren’t
@@ -382,6 +383,17 @@ export const initClientSideAuth = async ({ backendName, clientId, authURL, scope
   }
 
   // Perform async operations after opening the popup
+  /** @type {string} */
+  let authURL;
+
+  try {
+    authURL = typeof _authURL === 'function' ? await _authURL() : _authURL;
+  } catch (ex) {
+    popup.close();
+
+    throw ex;
+  }
+
   const { csrfToken, codeVerifier, codeChallenge } = await createAuthSecrets();
 
   const params = new URLSearchParams({
@@ -398,7 +410,8 @@ export const initClientSideAuth = async ({ backendName, clientId, authURL, scope
   await LocalStorage.set(AUTH_SECRETS_STORAGE_KEY, {
     csrfToken,
     codeVerifier,
-    realAuthURL: `${authURL}?${params}`,
+    // The URL may have a query already, e.g. the reference to a Sveltia CMS Additions user
+    realAuthURL: `${authURL}${authURL.includes('?') ? '&' : '?'}${params}`,
   });
 
   // Store the user info only with the backend name, so the automatic sign-in flow that triggers
@@ -607,7 +620,7 @@ export const handleClientSideAuthPopup = async ({ backendName, apiConfig }) => {
  * so another tab, even one opened with the callback URL, can’t be mistaken for the popup.
  * @returns {boolean} Result.
  */
-const isAuthPopup = () => {
+export const isAuthPopup = () => {
   try {
     if (window.opener) {
       return window.opener.origin === window.location.origin && window.name === 'auth';

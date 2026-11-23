@@ -12,6 +12,7 @@
 
   /**
    * @import { Snippet } from 'svelte';
+   * @import { Attachment } from 'svelte/attachments';
    * @import { Asset, AssetKind, ViewType } from '$lib/types/private';
    */
 
@@ -34,11 +35,12 @@
    * the end of a row, e.g. a badge. The cell is left out when not given, so that the rows of a
    * list without statuses keep their layout, and wherever the title is left out, as the cell is
    * laid out relative to the title.
+   * @property {Attachment<HTMLElement>} [dragSource] Attachment that lets the row be dragged to a
+   * folder, given when the asset can be moved.
    */
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     name,
     kind,
     asset = undefined,
@@ -51,7 +53,7 @@
     onFocus,
     onPreview,
     status = undefined,
-    /* eslint-enable prefer-const */
+    dragSource = undefined,
   } = $props();
 
   /**
@@ -64,9 +66,8 @@
   };
 </script>
 
-<!-- @todo Add support for drag to move. -->
-
 <GridRow
+  {@attach dragSource}
   aria-rowindex={rowIndex >= 0 ? rowIndex + 1 : undefined}
   aria-label={name}
   onChange={(event) => {

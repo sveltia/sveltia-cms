@@ -19,6 +19,16 @@ import { getIdentifierFieldName } from '$lib/services/contents/collection/identi
  */
 
 /**
+ * Entry values a `filename_template` is filled with.
+ * @typedef {object} AssetNameContext
+ * @property {InternalCollection} [collection] Collection of the entry the file is added to.
+ * @property {string} [collectionFileName] Collection file name. File/singleton collection only.
+ * @property {FlattenedEntryContent} [content] Content of the entry in the default locale.
+ * @property {string} [slug] Slug of the entry in the default locale.
+ * @property {boolean} [isIndexFile] Whether the entry is the collection’s special index file.
+ */
+
+/**
  * Create a template to name an uploaded file with, capturing the current date and time so the name
  * doesn’t change between the one shown while editing and the one saved.
  * @param {string} template The `filename_template` media library option.
@@ -35,17 +45,31 @@ export const createAssetNameTemplate = (template, { slugificationEnabled = false
 });
 
 /**
+ * Get the entry values a `filename_template` is filled with. They come from the default locale, so
+ * a file used in several locales gets one name.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {string} args.defaultLocaleSlug Default locale’s entry slug.
+ * @returns {AssetNameContext} Context.
+ */
+export const getAssetNameContext = ({ draft, defaultLocaleSlug }) => {
+  const { collection, fileName, defaultLocale, currentValues, isIndexFile } = draft;
+
+  return {
+    collection,
+    collectionFileName: fileName,
+    content: currentValues[defaultLocale],
+    slug: defaultLocaleSlug,
+    isIndexFile,
+  };
+};
+
+/**
  * Fill the `filename_template` media library option to get the name of an uploaded file. The tag
  * values are slugified like in an entry slug template, and the original extension is appended.
- * @param {object} args Arguments.
- * @param {AssetNameTemplate} args.nameTemplate Template.
- * @param {string} args.originalName Original file name, which `{{filename}}` and `{{extension}}`
- * stand for.
- * @param {InternalCollection} [args.collection] Collection of the entry the file is added to.
- * @param {string} [args.collectionFileName] Collection file name. File/singleton collection only.
- * @param {FlattenedEntryContent} [args.content] Content of the entry in the default locale.
- * @param {string} [args.slug] Slug of the entry in the default locale.
- * @param {boolean} [args.isIndexFile] Whether the entry is the collection’s special index file.
+ * @param {AssetNameContext & { nameTemplate: AssetNameTemplate, originalName: string }} args
+ * Arguments: the template, the original file name, which `{{filename}}` and `{{extension}}` stand
+ * for, and the entry values.
  * @returns {string} File name.
  */
 export const fillAssetNameTemplate = ({
@@ -94,9 +118,8 @@ export const fillAssetNameTemplate = ({
 /**
  * Get the name a file pending upload in an entry draft is saved with, before it’s made unique in
  * the target folder. It’s the file’s own name unless the `filename_template` media library option
- * applies to the file. The template is filled with the default locale’s slug and content, so a file
- * used in several locales gets one name, which is then sanitized, and slugified if the
- * `slugify_filename` option is enabled, like an upload in the asset library.
+ * applies to the file. The filled name is then sanitized, and slugified if the `slugify_filename`
+ * option is enabled, like an upload in the asset library.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {EntryFileItem} args.item File pending upload.
@@ -108,16 +131,10 @@ export const getPendingFileName = ({ draft, item: { file, nameTemplate }, defaul
     return file.name;
   }
 
-  const { collection, fileName, defaultLocale, currentValues, isIndexFile } = draft;
-
   const name = fillAssetNameTemplate({
     nameTemplate,
     originalName: file.name,
-    collection,
-    collectionFileName: fileName,
-    content: currentValues[defaultLocale],
-    slug: defaultLocaleSlug,
-    isIndexFile,
+    ...getAssetNameContext({ draft, defaultLocaleSlug }),
   });
 
   return formatFileName(name, { slugificationEnabled: nameTemplate.slugificationEnabled });

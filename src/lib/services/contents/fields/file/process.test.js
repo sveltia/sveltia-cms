@@ -44,6 +44,12 @@ vi.mock('$lib/services/utils/file', () => ({
    * @returns {string} Path.
    */
   sanitizePath: (path) => path,
+  /**
+   * Get the last segment of a path, as the real function does.
+   * @param {string} path Path.
+   * @returns {string} Last segment.
+   */
+  getBaseName: (path) => path.slice(path.lastIndexOf('/') + 1),
 }));
 
 vi.mock('$lib/services/assets/file-name', () => ({
@@ -1183,7 +1189,7 @@ describe('Test processResource()', () => {
         _type: 'entry',
         folder: 'content/pages',
         nested: { depth: 10 },
-        meta: { path: { widget: 'string', index_file: '_index' } },
+        meta: { path: { index_file: '_index' } },
         _file: { subPath: undefined },
       },
     };

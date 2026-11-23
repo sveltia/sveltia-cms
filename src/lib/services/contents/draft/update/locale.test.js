@@ -20,6 +20,10 @@ vi.mock('$lib/services/contents/i18n/shared-values', async (importOriginal) => (
   isDuplicatedField: vi.fn(),
 }));
 vi.mock('$lib/services/contents/draft/defaults');
+// A Hidden field’s default can take the signed-in user’s details
+vi.mock('$lib/services/user/account.svelte', () => ({
+  user: { account: { email: 'jane@example.com', login: 'jane', name: 'Jane' } },
+}));
 vi.mock('$lib/services/contents/entry/fields');
 vi.mock('$lib/services/contents/fields/date-time/value', async (importOriginal) => ({
   .../** @type {object} */ (await importOriginal()),
@@ -625,6 +629,38 @@ describe('draft/update/locale', () => {
       expect(result.locale_code).toBe('fr');
     });
 
+    it('should fill in a templated Hidden default again but copy a static one', () => {
+      /** @type {Record<string, any>} */
+      const hiddenFields = {
+        ref: { name: 'ref', widget: 'hidden', i18n: true, default: '{{uuid}}' },
+        created_by: {
+          name: 'created_by',
+          widget: 'hidden',
+          i18n: true,
+          default: '{{author-login}}',
+        },
+        // A template tag escaped with a backslash isn’t one
+        literal: { name: 'literal', widget: 'hidden', i18n: true, default: '\\{{uuid}}' },
+        kind: { name: 'kind', widget: 'hidden', i18n: true, default: 'post' },
+      };
+
+      vi.mocked(getField).mockImplementation(({ keyPath }) => hiddenFields[keyPath]);
+      mockEntryDraft.currentValues.en = {
+        ref: 'old-uuid',
+        created_by: 'someone',
+        literal: '{{uuid}}',
+        kind: 'page',
+      };
+
+      const result = copyDefaultLocaleValues({}, 'fr');
+
+      expect(result.ref).toMatch(/^[\da-f]{8}-[\da-f]{4}-/);
+      expect(result.created_by).toBe('jane');
+      expect(result.literal).toBe('{{uuid}}');
+      // An entry keeps a value saved with an older configuration
+      expect(result.kind).toBe('page');
+    });
+
     it('should replace {{locale}} placeholder for hidden field with i18n: "translate" (lines 53-63)', () => {
       vi.mocked(getField).mockImplementation(({ keyPath }) => {
         if (keyPath === 'lang') {
@@ -860,9 +896,66 @@ describe('draft/update/locale', () => {
       vi.mocked(isDuplicatedField).mockReset();
     });
 
+    it('should not copy the default locale’s URL aliases', () => {
+      mockEntryDraft.collection._type = 'entry';
+      mockEntryDraft.currentValues.en = {
+        title: 'English Title',
+        'aliases.0': '/en/posts/old-hello/',
+        'aliases.1': '/en/posts/older-hello/',
+      };
+
+      expect(copyDefaultLocaleValues({ title: '' }, 'fr')).toEqual({ title: '' });
+      // The default locale keeps its own
+      expect(mockEntryDraft.currentValues.en['aliases.0']).toBe('/en/posts/old-hello/');
+      expect(mockEntryDraft.currentValues.en['aliases.1']).toBe('/en/posts/older-hello/');
+
+      // The property name can be customized
+      mockEntryDraft.collection.aliases_field = 'redirects';
+      mockEntryDraft.currentValues.en = { title: 'English Title', 'redirects.0': '/en/old/' };
+
+      expect(copyDefaultLocaleValues({ title: '' }, 'fr')).toEqual({ title: '' });
+    });
+
+    it('should copy an aliases property not managed by the CMS', () => {
+      mockEntryDraft.collection._type = 'entry';
+      mockEntryDraft.collection.aliases_field = false;
+      mockEntryDraft.currentValues.en = { title: 'English Title', 'aliases.0': '/old-hello/' };
+
+      expect(copyDefaultLocaleValues({ title: '' }, 'fr')).toEqual({
+        title: '',
+        'aliases.0': '/old-hello/',
+      });
+    });
+
     describe('keyPathPrefix option', () => {
+      // The same configuration objects are returned for every lookup, like the real `getField()`
+      // does, so an object can be told apart from another one in the default locale
+      const imageField = { name: 'image', widget: 'object', i18n: true };
+      const galleryImageField = { name: 'image', widget: 'object', i18n: true };
+      const altField = { name: 'alt', widget: 'string', i18n: true };
+
+      const srcField = {
+        name: 'src',
+        widget: 'string',
+        i18n: /** @type {const} */ ('duplicate'),
+      };
+
+      const alphaField = { name: 'alpha', widget: 'string', i18n: true };
+      const numField = { name: 'num', widget: 'number', i18n: true };
+      const betaField = { name: 'beta', widget: 'string', i18n: true };
+
+      const blockField = {
+        name: 'block',
+        widget: 'object',
+        i18n: true,
+        types: [
+          { name: 'a', fields: [alphaField, numField] },
+          { name: 'b', fields: [betaField] },
+        ],
+      };
+
       beforeEach(() => {
-        vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        vi.mocked(getField).mockImplementation(({ keyPath, valueMap = {} }) => {
           if (keyPath === 'title') {
             return { name: 'title', widget: 'string', i18n: true };
           }
@@ -871,16 +964,31 @@ describe('draft/update/locale', () => {
             return { name: 'markdown', widget: 'richtext', i18n: true };
           }
 
-          if (/^blocks\.\d+\.image$/.test(keyPath)) {
-            return { name: 'image', widget: 'object', i18n: true };
-          }
+          // A list item of the `gallery` type has an `image` field of its own
+          const [, index, subKeyPath] = keyPath.match(/^blocks\.(\d+)\.(image(?:\..+)?)$/) ?? [];
 
-          if (/^blocks\.\d+\.image\.alt$/.test(keyPath)) {
-            return { name: 'alt', widget: 'string', i18n: true };
+          if (subKeyPath) {
+            const gallery = valueMap[`blocks.${index}.type`] === 'gallery';
+
+            return {
+              image: gallery ? galleryImageField : imageField,
+              'image.alt': altField,
+              'image.src': srcField,
+            }[subKeyPath];
           }
 
           if (/^blocks\.\d+\.limit$/.test(keyPath)) {
             return { name: 'limit', widget: 'number', i18n: true };
+          }
+
+          if (keyPath === 'block') {
+            return blockField;
+          }
+
+          if (keyPath.startsWith('block.')) {
+            return blockField.types
+              .find(({ name }) => name === valueMap['block.type'])
+              ?.fields.find(({ name }) => name === keyPath.slice(6));
           }
 
           return undefined;
@@ -916,6 +1024,57 @@ describe('draft/update/locale', () => {
           'blocks.0.image.alt': '',
           'blocks.0.image.src': '/media/image.png',
         });
+      });
+
+      it('should copy the values of an object of the same type', () => {
+        mockEntryDraft.currentValues.en = {
+          'block.type': 'a',
+          'block.alpha': 'Hello',
+          'block.num': 5,
+        };
+        mockEntryDraft.currentValues.fr = { 'block.type': 'a' };
+
+        const content = { 'block.alpha': '', 'block.num': 0 };
+        const result = copyDefaultLocaleValues(content, 'fr', { keyPathPrefix: 'block' });
+
+        expect(result).toEqual({ 'block.type': 'a', 'block.alpha': '', 'block.num': 5 });
+      });
+
+      it('should not copy the values of an object of another type', () => {
+        mockEntryDraft.currentValues.en = {
+          'block.type': 'a',
+          'block.alpha': 'Hello',
+          'block.num': 5,
+        };
+        mockEntryDraft.currentValues.fr = { 'block.type': 'b' };
+
+        const content = { 'block.beta': '' };
+        const result = copyDefaultLocaleValues(content, 'fr', { keyPathPrefix: 'block' });
+
+        // Neither the other type’s subfields nor the type itself are copied over
+        expect(result).toEqual({ 'block.beta': '' });
+      });
+
+      it('should not copy the values of another field in a list item of another type', () => {
+        mockEntryDraft.currentValues.en['blocks.0.type'] = 'gallery';
+        mockEntryDraft.currentValues.en['blocks.0.image'] = {};
+        mockEntryDraft.currentValues.en['blocks.0.image.src'] = '/media/gallery.png';
+        mockEntryDraft.currentValues.fr = { 'blocks.0.type': 'richtext' };
+
+        const content = { 'blocks.0.image.alt': '' };
+        const result = copyDefaultLocaleValues(content, 'fr', { keyPathPrefix: 'blocks.0.image' });
+
+        expect(result).toEqual({ 'blocks.0.image.alt': '' });
+      });
+
+      it('should not copy any value for an unknown field', () => {
+        mockEntryDraft.currentValues.en['unknown.src'] = '/media/image.png';
+        mockEntryDraft.currentValues.fr = {};
+
+        const content = { 'unknown.alt': '', title: '' };
+        const result = copyDefaultLocaleValues(content, 'fr', { keyPathPrefix: 'unknown' });
+
+        expect(result).toEqual({ 'unknown.alt': '' });
       });
 
       it('should return the whole content when the option is omitted', () => {
@@ -1016,6 +1175,16 @@ describe('draft/update/locale', () => {
         target: expect.any(Object),
       });
       expect(mockEntryDraft.originalValues.ja).toEqual({ title: '', body: '', date: '' });
+    });
+
+    it('should not copy the default locale’s URL aliases to a new locale', () => {
+      mockEntryDraft.collection._type = 'entry';
+      mockEntryDraft.currentValues.en['aliases.0'] = '/en/posts/old-hello/';
+
+      toggleLocale({ draft: mockEntryDraft, locale: 'fr' });
+
+      expect(mockEntryDraft.currentValues.fr).toEqual({ title: '', body: '' });
+      expect(mockEntryDraft.currentValues.en['aliases.0']).toBe('/en/posts/old-hello/');
     });
 
     it('should not reinitialize locale values when already exists', () => {

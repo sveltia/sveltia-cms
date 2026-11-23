@@ -11,6 +11,8 @@
 create: جدید
 select: انتخاب
 select_all: انتخاب همه
+# Accessible name of the checkbox that selects a single entry or asset in a list
+select_item: انتخاب {$name}
 upload: بارگذاری
 copy: کپی
 download: دانلود
@@ -69,6 +71,10 @@ primary: اصلی
 secondary: ثانویه
 collection: مجموعه
 folder: پوشه
+# Label of the subfolder list in the asset picker
+folders: پوشه‌ها
+# Menu in a breadcrumb holding the folders that don’t fit
+more_folders: پوشه‌های بیشتر
 
 # ==============================================================================
 # Miscellaneous Labels
@@ -113,6 +119,7 @@ welcome_message: به {$name} خوش آمدید
 powered_by: قدرت‌گرفته از {$name}
 
 # Shown during initial configuration and data loading
+unsupported_browser_error: مرورگر شما پشتیبانی نمی‌شود. لطفاً آن را به آخرین نسخه به‌روزرسانی کنید یا از مرورگر دیگری استفاده کنید.
 loading_cms_config: در حال بارگذاری پیکربندی CMS…
 loading_site_data: در حال بارگذاری داده‌های سایت…
 loading_site_data_error: خطایی هنگام بارگذاری داده‌های سایت رخ داد.
@@ -125,6 +132,8 @@ sign_in_with_x: ورود با {$service}
 # Access token dialog: alternative authentication method
 sign_in_using_access_token: ورود با استفاده از توکن دسترسی
 sign_in_using_access_token_description: توکن خود را در زیر وارد کنید. این توکن باید دسترسی خواندن/نوشتن به محتوای مخزن داشته باشد.
+# Shown after the description above when Editorial Workflow is enabled, which opens and merges pull requests
+sign_in_using_access_token_workflow_note: از آنجا که گردش کار تحریریه فعال است، توکن باید به درخواست‌های ادغام (Pull Request) نیز دسترسی خواندن/نوشتن داشته باشد.
 # Inline link text with embedded HTML anchor tag
 # {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
 sign_in_using_access_token_link: می‌توانید یک توکن در <a>صفحه تنظیمات کاربری {$service}</a> ایجاد کنید.
@@ -143,6 +152,11 @@ work_with_local_repo_description: پس از نمایش اعلان، پوشه ر�
 work_with_local_repo_description_no_repo: پس از نمایش اعلان، پوشه ریشه مخزن Git خود را انتخاب کنید.
 # Button label for demo/test repository
 work_with_test_repo: کار با مخزن آزمایشی
+# Button label for the test repository when sample content is seeded, e.g. on a demo site
+start_demo: شروع نسخه نمایشی
+# Shown below the disabled test repository option in a browser that can’t save files to its
+# storage, e.g. Safari before version 26
+test_repo_unsupported_browser: مرورگر شما نمی‌تواند فایل‌های مخزن آزمایشی را ذخیره کند. لطفاً آن را به آخرین نسخه به‌روزرسانی کنید یا از مرورگر دیگری استفاده کنید.
 
 # Authentication errors
 # Error messages shown during sign-in failures
@@ -167,14 +181,28 @@ sign_in_error:
 backend_unsupported_version: بک‌اند {$name} نیازمند {$name} نسخه {$version} یا بالاتر است.
 # {$repo} is the repository identifier, typically in owner/repo format
 repository_no_access: شما به مخزن «{$repo}» دسترسی ندارید.
+# {$repo} is the repository identifier, typically in owner/repo format
+repository_no_write_access: شما دسترسی نوشتن به مخزن «{$repo}» را ندارید.
 repository_not_found: مخزن «{$repo}» وجود ندارد.
 repository_empty: مخزن «{$repo}» هیچ شاخه‌ای ندارد.
 # {$repo} is the repository identifier, and {$branch} is the configured branch name
 branch_not_found: مخزن «{$repo}» شاخه «{$branch}» را ندارد.
+# {$repo} is the repository identifier, and {$dir} is the configured root directory
+root_dir_not_found: پوشه ریشه «{$dir}» در مخزن «{$repo}» وجود ندارد.
 
 # General errors
 # Fallback error dialog title for unexpected errors
 unexpected_error: خطای غیرمنتظره
+# Shown in place of the page when an unexpected error stops it from being displayed
+# {$message} is the error message
+page_crashed: مشکلی پیش آمد و این صفحه قابل نمایش نیست. {$message}
+# Shown in place of a field editor or preview when an unexpected error stops it from being displayed
+# {$message} is the error message
+field_crashed: مشکلی پیش آمد و این فیلد قابل نمایش نیست. {$message}
+# Button label for displaying a part of the page again after an unexpected error
+try_again: تلاش مجدد
+# Button label for reloading the CMS after an unexpected error
+reload_cms: بارگذاری مجدد CMS
 
 # Entry file parsing errors
 # Toast notification when entry files fail to parse on initial load
@@ -203,6 +231,332 @@ sign_in: ورود
 sign_in_with_mobile: ورود با موبایل
 # Instructions shown in the mobile sign-in dialog for passwordless authentication
 sign_in_with_mobile_instruction: کد QR زیر را با گوشی یا تبلت خود اسکن کنید تا بدون رمز عبور وارد شوید. تنظیمات شما به طور خودکار کپی خواهد شد.
+# Confirmation dialog shown when the CMS is opened with a sign-in link from the mobile sign-in
+# QR code. {$account} is the account name, {$service} is the Git service name, e.g. GitHub
+sign_in_with_link: ورود با لینک
+sign_in_with_link_confirmation: این لینک شما را به عنوان {$account} در {$service} وارد می‌کند و تنظیمات را از دستگاهی که لینک روی آن ایجاد شده است کپی می‌کند. فقط در صورتی ادامه دهید که خودتان این لینک را ایجاد کرده‌اید.
+
+# Sign-in with Sveltia CMS Additions, which manages its own user accounts instead of the Git
+# service’s. Don’t localize “Sveltia CMS Additions”
+additions:
+  username: نام کاربری
+  password: رمز عبور
+  sign_in: ورود
+  new_password_title: انتخاب رمز عبور جدید
+  new_password_description: شما با یک رمز عبور موقت وارد شده‌اید. برای ادامه، یک رمز عبور جدید انتخاب کنید.
+  new_password: رمز عبور جدید
+  password_too_short: رمز عبور خیلی کوتاه است. حداقل از ۱۲ کاراکتر استفاده کنید.
+  change_password: تغییر رمز عبور
+  # {$name} is the user’s username, {$role} their role, e.g. Editor
+  signed_in_as_x_with_role: واردشده به عنوان {$name} ({$role})
+  link_github: پیوند حساب GitHub
+  link_github_error: پیوند حساب GitHub امکان‌پذیر نبود
+  current_password: رمز عبور فعلی
+  # {$username} is the username filled in from a magic link emailed to the user
+  filled_from_link: نام کاربری و رمز عبور از یک لینک پر شده‌اند. فقط در صورتی وارد شوید که «{$username}» نام کاربری شما باشد.
+  change_password_description: شما در اینجا وارد باقی می‌مانید و از دستگاه‌های دیگر خود خارج خواهید شد.
+  password_changed: رمز عبور شما تغییر کرد.
+  # The Account settings panel of a Sveltia CMS Additions user
+  account:
+    profile: نمایه
+    profile_description: نام شما در CMS برای کاربران دیگر نمایش داده می‌شود، مثلاً روی قفل‌های ورودی و نظرات، و همچنین در کامیت‌های شما.
+    username_description: نام کاربری شما قابل تغییر نیست.
+    email: ایمیل
+    email_description: از آن در کامیت‌هایی که انجام می‌دهید استفاده می‌شود تا GitHub بتواند آن‌ها را به حساب شما پیوند دهد. در صورت نبود ایمیل، از یک آدرس جایگزین استفاده می‌شود. فقط مدیر می‌تواند آن را تغییر دهد.
+    change_name: تغییر نام
+    name_changed: نام شما تغییر کرد.
+    password: رمز عبور
+    no_password: حساب شما فقط با GitHub وارد می‌شود، بنابراین رمز عبوری برای تغییر ندارد. مدیر می‌تواند با بازنشانی رمز عبورتان، یک رمز عبور به شما بدهد.
+  setup:
+    use_admin_secret: استفاده از رمز مدیر
+    title: راه‌اندازی Sveltia CMS Additions
+    secret_description: رمز مدیری را که در تنظیمات سرویس Sveltia CMS Additions خود تعیین کرده‌اید وارد کنید. این رمز فقط در طول راه‌اندازی در همین زبانه نگه داشته می‌شود.
+    admin_secret: رمز مدیر
+    continue: ادامه
+    back: بازگشت به صفحه ورود
+    admin_title: حساب مدیر
+    admin_create_description: نخستین حساب مدیر را ایجاد کنید. با آن وارد می‌شوید و کاربران دیگر را مدیریت می‌کنید.
+    admin_reset_description: یک حساب مدیر از قبل وجود دارد. برای دسترسی دوباره، رمز عبور یکی از مدیران را در اینجا بازنشانی کنید یا یک حساب مدیر دیگر ایجاد کنید.
+    admin_saved: حساب مدیر آماده است. با رمز عبوری که همین حالا وارد کردید وارد شوید.
+    create_admin: ایجاد مدیر
+    reset_password: ذخیره مدیر
+    github_title: GitHub
+    # {$repo} is the repository, e.g. octocat/site
+    github_description: یک GitHub App برای این سایت ایجاد کرده و آن را روی مخزن «{$repo}» نصب کنید. GitHub از شما تأیید می‌خواهد و سپس شما را به اینجا بازمی‌گرداند.
+    # {$repo} is the repository, {$app} is the name of the GitHub App
+    github_connected: با GitHub App «{$app}» به مخزن «{$repo}» متصل شد.
+    connect_github: اتصال به GitHub
+    # {$step} is the number of the current step, {$total} the number of steps
+    step_x_of_y: مرحله {$step} از {$total}
+    admin_exists: یک حساب مدیر وجود دارد.
+    reset_admin_password: بازنشانی رمز عبور مدیر
+    setup_complete: راه‌اندازی کامل شد. برای مدیریت کاربران و تنظیمات با یک حساب مدیر وارد شوید. هر زمان بخواهید می‌توانید با رمز مدیر به اینجا بازگردید.
+    manage_sites: مدیریت سایت‌های دیگر
+    back_to_setup: بازگشت
+    sites_title: سایت‌های دیگر
+    sites_description: این سرویس می‌تواند به سایت‌های دیگر نیز خدمات دهد که هر کدام کاربران، تنظیمات و GitHub App خود را دارند. «base_url» را در پیکربندی CMS هر سایت روی آدرس URL آن تنظیم کنید، سپس سایت را در همان‌جا با رمز مدیر راه‌اندازی کنید.
+    no_sites: هنوز هیچ سایت دیگری وجود ندارد.
+    site_id: شناسه سایت
+    site_id_description: ۱ تا ۳۲ حرف کوچک لاتین، رقم و خط تیره، مثلاً «acme». این شناسه در آدرس URL سایت نمایش داده می‌شود و قابل تغییر نیست.
+    site_name_optional: نام (اختیاری)
+    add_site: افزودن سایت
+    # {$name} is the name of the site
+    site_added: «{$name}» اضافه شد. «base_url» را در پیکربندی CMS آن روی آدرس URL آن تنظیم کنید، سپس جادوگر راه‌اندازی را در همان‌جا باز کنید.
+    # {$name} is the name of the site
+    copy_site_url: کپی آدرس URL {$name}
+    delete_site: حذف سایت
+    # {$name} is the name of the site
+    delete_site_x: حذف {$name}
+    # {$name} is the name of the site, {$id} is its ID
+    delete_site_confirmation: حذف «{$name}» کاربران، تنظیمات و نظرات آن را نیز حذف می‌کند. این کار قابل بازگشت نیست. GitHub App در GitHub باقی می‌ماند و می‌توانید آن را در آنجا حذف کنید. برای تأیید، «{$id}» را تایپ کنید.
+    site_id_to_confirm: شناسه سایت برای تأیید
+    data_key_locked_title: رمز مدیر تغییر کرده است
+    data_key_locked_description: رمز مدیر تغییر کرده است، بنابراین تنظیمات ذخیره‌شده قابل خواندن نیستند. برای حفظ آن‌ها رمز قبلی را وارد کنید، یا اگر آن را گم کرده‌اید از نو شروع کنید.
+    previous_secret: رمز قبلی مدیر
+    unlock: باز کردن قفل
+    rekey: شروع از نو
+    rekey_confirmation: شروع از نو، اعتبارنامه‌های GitHub App و سایر رمزهای ذخیره‌شده را حذف می‌کند و همه را از حساب خارج می‌کند. رمزهای عبور حفظ می‌شوند. ادامه می‌دهید؟
+    result:
+      ok: GitHub متصل شد. اکنون می‌توانید وارد شوید.
+      github_app_not_created: GitHub App ایجاد نشد. برای تلاش مجدد از رمز مدیر استفاده کنید.
+      github_app_not_installed: GitHub App نصب نشد. برای تلاش مجدد از رمز مدیر استفاده کنید.
+      github_wrong_account: GitHub App روی حسابی نصب شده است که مالک مخزن نیست. آن را روی حسابی که مالک مخزن است نصب کرده و دوباره تلاش کنید.
+      github_repository_not_included: GitHub App بدون دسترسی به مخزن نصب شده است. در GitHub به آن دسترسی به مخزن بدهید و دوباره تلاش کنید.
+      unexpected: اتصال به GitHub به دلیل یک خطای غیرمنتظره ناموفق بود. لطفاً دوباره تلاش کنید.
+  locks:
+    # {$name} is the name of the person editing the entry, {$time} when they started
+    being_edited: '{$name} از {$time} در حال ویرایش این ورودی است، بنابراین فقط می‌توانید آن را مشاهده کنید.'
+    being_edited_by_you: شما در حال ویرایش این ورودی در زبانه دیگری هستید، بنابراین در اینجا فقط می‌توانید آن را مشاهده کنید.
+    # {$name} is the name of the person who took over the entry
+    taken_over: '{$name} ویرایش این ورودی را در دست گرفت، بنابراین اکنون فقط می‌توانید آن را مشاهده کنید.'
+    take_over: در دست گرفتن
+    unavailable: قفل‌های ورودی در دسترس نیستند، بنابراین ممکن است فرد دیگری هم‌زمان در حال ویرایش این ورودی باشد.
+    # {$name} is the name of the person editing the entry
+    being_edited_by_x: در حال ویرایش توسط {$name}
+    # {$names} is a list of the other people who have the entry open in the editor
+    also_open_by_x: همچنین باز توسط {$names}
+    # {$names} is a list of the people who have the entry open, besides anyone editing it
+    open_by_x: باز توسط {$names}
+  users:
+    title: کاربران
+    add_user: افزودن کاربر
+    edit_user: ویرایش کاربر
+    add: افزودن
+    name: نام
+    username_description: پس از افزودن کاربر، نام کاربری قابل تغییر نیست.
+    email_optional: ایمیل (اختیاری)
+    email_description: از آن در کامیت‌هایی که این فرد انجام می‌دهد استفاده می‌شود تا GitHub بتواند آن‌ها را به حساب او پیوند دهد. در صورت نبود ایمیل، از یک آدرس جایگزین استفاده می‌شود.
+    role: نقش
+    status: وضعیت
+    last_sign_in: آخرین ورود
+    sign_in_column: ورود
+    methods:
+      password: رمز عبور
+      # {$login} is a GitHub username
+      github: GitHub ({$login})
+    actions: عملیات
+    you: (شما)
+    never: هرگز
+    roles:
+      admin: مدیر
+      editor: ویرایشگر
+      viewer: بیننده
+    statuses:
+      active: فعال
+      temporary_password: رمز عبور موقت
+      waiting_for_sign_in: در انتظار نخستین ورود
+      disabled: غیرفعال
+    # {$name} is the user’s name
+    show_options_for_x: نمایش گزینه‌های {$name}
+    options: گزینه‌های کاربر
+    reset_password: بازنشانی رمز عبور
+    sign_out_everywhere: خروج از همه دستگاه‌ها
+    enable: فعال‌سازی کاربر
+    disable: غیرفعال‌سازی کاربر
+    delete: حذف کاربر
+    # {$name} is the user’s name
+    reset_password_confirmation: یک رمز عبور موقت جدید به {$name} داده شود؟ او از همه دستگاه‌ها خارج می‌شود و باید در ورود بعدی یک رمز عبور جدید انتخاب کند.
+    delete_confirmation: '{$name} حذف شود؟ این کار قابل بازگشت نیست.'
+    temporary_password: رمز عبور موقت
+    # {$name} is the user’s name
+    temporary_password_description: این نام کاربری و رمز عبور موقت را به {$name} بدهید. این رمز دوباره نمایش داده نمی‌شود و او هنگام ورود، رمز عبور خود را انتخاب خواهد کرد.
+    copy_username: کپی نام کاربری
+    copy_password: کپی رمز عبور
+    # {$name} is the user’s name
+    email_credentials: ارسال ایمیل به {$name}
+    # The emails the admin sends from their own email app, with the sign-in details: `new` to a user
+    # who has just been added, `reset` to one whose password has been reset. Each line is a string of
+    # its own, as line breaks aren’t kept in these files
+    credentials_email:
+      # {$name} is the user’s name
+      greeting: سلام {$name}،
+      # {$url} is a link to the CMS that fills in the username and the temporary password
+      sign_in_link: 'لینک ورود: {$url}'
+      # {$username} is the username
+      username: 'نام کاربری: {$username}'
+      # {$password} is the temporary password
+      password: 'رمز عبور موقت: {$password}'
+      new:
+        # {$app} is the name of the CMS
+        subject: اطلاعات ورود شما به {$app}
+        # {$app} is the name of the CMS
+        message: اکنون می‌توانید به {$app} وارد شوید. لینک زیر را باز کنید که نام کاربری و رمز عبور موقت شما را پر می‌کند، و هنگام ورود رمز عبور خود را انتخاب کنید.
+      reset:
+        # {$app} is the name of the CMS
+        subject: رمز عبور شما برای {$app} بازنشانی شد
+        # {$app} is the name of the CMS
+        message: رمز عبور شما برای {$app} بازنشانی شد و از همه دستگاه‌ها خارج شده‌اید. لینک زیر را باز کنید که نام کاربری و رمز عبور موقت شما را پر می‌کند، و هنگام ورود یک رمز عبور جدید انتخاب کنید.
+    allowed_domains: دامنه‌های مجاز
+    allowed_domains_description: سایت‌هایی که می‌توانند از Sveltia CMS Additions استفاده کنند، در هر خط یک نام میزبان. نویسه عام (*) با هر زیردامنه‌ای مطابقت دارد، مثلاً *.example.com. تا جای ممکن نام‌های میزبان دقیق را فهرست کنید. این فهرست فقط برای همین سایت اعمال می‌شود، حتی اگر همین نمونه Sveltia CMS Additions به سایت‌های دیگر نیز خدمات دهد.
+    save_allowed_domains: ذخیره دامنه‌های مجاز
+    allowed_domains_saved: دامنه‌های مجاز ذخیره شدند.
+    sign_in_tab: ورود
+    # {$latest} is the newest version of Sveltia CMS Additions, {$current} the one in use
+    update_available: Sveltia CMS Additions نسخه {$latest} در دسترس است. شما از نسخه {$current} استفاده می‌کنید.
+    release_notes: یادداشت‌های انتشار
+    github_username_optional: نام کاربری GitHub (اختیاری)
+    github_username_description: با داشتن نام کاربری GitHub، کاربر به جای رمز عبور با همان حساب GitHub وارد می‌شود.
+    # {$name} is the user’s name
+    github_required: '{$name} فقط می‌تواند با GitHub وارد شود، بنابراین نام کاربری GitHub او قابل حذف نیست. ابتدا رمز عبور او را بازنشانی کنید تا رمز عبوری برای ورود داشته باشد.'
+    adopt: پذیرش حساب
+    sign_in:
+      github: اجازه ورود با GitHub
+      github_description: کاربران با حساب GitHub خود وارد می‌شوند و توکن GitHub مخصوص خود را دریافت می‌کنند، بنابراین تغییراتشان به نام خودشان کامیت می‌شود. مدیر ابتدا آن‌ها را با نام کاربری GitHub‌شان اضافه می‌کند، مگر اینکه یک قانون ثبت‌نام شامل آن‌ها شود.
+      # Shown when signing in with GitHub is being turned off while {$count} users can only sign in
+      # with it
+      github_only_warning: |
+        .input {$count :integer}
+        .match $count
+          one {{ یک کاربر فقط می‌تواند با GitHub وارد شود و پس از خاموش شدن آن، تا زمانی که رمز عبورش را بازنشانی نکنید، نمی‌تواند وارد شود. }}
+          *   {{ {$count} کاربر فقط می‌توانند با GitHub وارد شوند و پس از خاموش شدن آن، تا زمانی که رمز عبورشان را بازنشانی نکنید، نمی‌توانند وارد شوند. }}
+      rules: قوانین ثبت‌نام
+      rules_description: اعضای سازمان GitHub که برنامه روی آن نصب شده است، می‌توانند بدون افزوده شدن از قبل وارد شوند. حساب آن‌ها نقشی را که انتخاب می‌کنید دریافت می‌کند و در صورت ترک سازمان غیرفعال می‌شود، مگر اینکه آن را بپذیرید.
+      org: سازمان GitHub
+      add_rule: افزودن قانون
+      # {$org} is the name of a GitHub organization
+      remove_rule: حذف قانون {$org}
+      # For a rule whose organization hasn’t been entered yet
+      remove_empty_rule: حذف قانون
+      save: ذخیره تنظیمات ورود
+      saved: تنظیمات ورود ذخیره شدند.
+    domains_tab: دامنه‌ها
+    github_tab: GitHub
+    github:
+      app: GitHub App
+      repository: مخزن
+      not_installed: نصب نشده
+      statuses:
+        ok: برنامه کار می‌کند.
+        not_registered: هنوز هیچ GitHub App راه‌اندازی نشده است. جادوگر راه‌اندازی را از صفحه ورود با رمز مدیر اجرا کنید.
+        key_missing: کلید خصوصی برنامه هنگام جایگزینی رمز مدیر از دست رفت. یک کلید خصوصی جدید در تنظیمات برنامه در GitHub بسازید و آن را در زیر بارگذاری کنید.
+        key_rejected: GitHub کلید خصوصی برنامه را نمی‌پذیرد، مثلاً به این دلیل که در آنجا حذف شده است. یک کلید خصوصی جدید در تنظیمات برنامه در GitHub بسازید و آن را در زیر بارگذاری کنید.
+        not_installed: برنامه روی مخزن نصب نیست. آن را دوباره از صفحه برنامه در GitHub نصب کنید یا جادوگر راه‌اندازی را اجرا کنید.
+        suspended: نصب برنامه معلق شده است. در تنظیمات نصب در GitHub تعلیق آن را لغو کنید.
+        unreachable: دسترسی به GitHub امکان‌پذیر نبود. لطفاً بعداً دوباره تلاش کنید.
+      check_again: بررسی مجدد
+      # {$branch} is the name of the repository’s default branch
+      branch_protected: مجموعه‌قوانین (Ruleset) از شاخه «{$branch}» در برابر force push و حذف محافظت می‌کنند.
+      branch_bypassed: مجموعه‌قوانین از شاخه «{$branch}» محافظت می‌کنند، اما برنامه می‌تواند آن‌ها را دور بزند، بنابراین ویرایشگران همچنان می‌توانند روی آن force push کنند یا آن را حذف کنند. برنامه را از فهرست‌های استثنای آن مجموعه‌قوانین حذف کنید.
+      branch_unprotected: هیچ مجموعه‌قوانینی از شاخه «{$branch}» در برابر force push و حذف محافظت نمی‌کند، بنابراین ویرایشگران می‌توانند تاریخچه آن را بازنویسی یا آن را حذف کنند. در تنظیمات مخزن یک مجموعه‌قوانین اضافه کنید که هر دو را مسدود کند، بدون اینکه برنامه در فهرست استثنای آن باشد.
+      repository_rules: باز کردن قوانین مخزن
+      private_key: کلید خصوصی
+      private_key_description: برای جایگزینی کلید خصوصی، یک کلید جدید در تنظیمات برنامه در GitHub بسازید، سپس فایل .pem دانلودشده را بارگذاری کنید. پس از آن، کلید قدیمی را در آنجا حذف کنید.
+      app_settings: باز کردن تنظیمات برنامه
+      upload_private_key: بارگذاری کلید خصوصی
+      replace_private_key: جایگزینی کلید خصوصی
+      private_key_summary: سرویس از کلید خصوصی برنامه برای دسترسی به مخزن در GitHub استفاده می‌کند. اگر ممکن است فاش شده باشد، آن را جایگزین کنید.
+      private_key_replaced: کلید خصوصی جایگزین شد.
+      commit_author: نویسنده کامیت
+      commit_author_description: انتخاب کنید چه کسی به عنوان نویسنده تغییرات ذخیره‌شده در CMS نمایش داده شود. GitHub فقط کامیت‌هایی را امضا می‌کند که نویسنده‌شان برنامه است، بنابراین اگر یک مجموعه‌قوانین کامیت‌های امضاشده را الزامی می‌کند، برنامه را انتخاب کنید. سایر کاربران ظرف یک ساعت این تغییر را دریافت می‌کنند.
+      commit_author_user: فردی که تغییر را ایجاد کرده است
+      commit_author_bot: GitHub App، با آن فرد به عنوان هم‌نویسنده
+      commit_author_saved: نویسنده کامیت ذخیره شد.
+  # Administration section for the API keys and the deploy hook an admin shares with everyone
+  credentials:
+    title: اعتبارنامه‌ها
+    description: کلیدهای API و هوک انتشاری که در اینجا وارد می‌شوند، برای همه کسانی که وارد می‌شوند استفاده می‌شوند، مگر اینکه خودشان کلید خود را در تنظیمات وارد کنند. هر کسی که به CMS وارد شده باشد می‌تواند آن‌ها را بخواند، بنابراین فقط کلیدهایی را وارد کنید که مایل به اشتراک‌گذاری آن‌ها با تیم خود هستید.
+    save: ذخیره اعتبارنامه‌ها
+    saved: اعتبارنامه‌ها ذخیره شدند.
+    # {$service} is the service name, e.g. DeepL
+    invalid_key: کلید API برای {$service} درست به نظر نمی‌رسد.
+  error:
+    unauthenticated: نشست شما منقضی شده است. لطفاً دوباره وارد شوید.
+    wrong_admin_secret: رمز مدیر اشتباه است.
+    admin_secret_missing: رمز مدیر در تنظیمات سرویس Sveltia CMS Additions تعیین نشده است.
+    admin_secret_too_short: رمز مدیر تعیین‌شده در تنظیمات سرویس Sveltia CMS Additions خیلی کوتاه است. حداقل از ۳۲ کاراکتر تصادفی استفاده کنید.
+    wrong_previous_secret: رمز قبلی مدیر اشتباه است.
+    not_an_admin: این کاربر مدیر نیست. نام کاربری دیگری انتخاب کنید.
+    invalid_username: نام کاربری از ۳ تا ۳۰ حرف کوچک لاتین، رقم، نقطه، خط تیره یا زیرخط تشکیل می‌شود.
+    last_admin: باید حداقل یک مدیر وجود داشته باشد.
+    cannot_disable_self: شما نمی‌توانید حساب خودتان را غیرفعال کنید.
+    cannot_delete_self: شما نمی‌توانید حساب خودتان را حذف کنید.
+    username_taken: کاربر دیگری این نام کاربری را دارد.
+    email_taken: کاربر دیگری این آدرس ایمیل را دارد.
+    invalid_name: نام باید ۱ تا ۱۰۰ کاراکتر داشته باشد.
+    invalid_email: آدرس ایمیل معتبر نیست.
+    invalid_domains: یکی از دامنه‌های مجاز نام میزبان معتبری نیست.
+    current_origin_removed: دامنه‌های مجاز باید شامل سایتی باشند که اکنون از آن استفاده می‌کنید.
+    forbidden: فقط مدیران می‌توانند این کار را انجام دهند.
+    invalid_credentials: نام کاربری یا رمز عبور اشتباه است.
+    user_disabled: این حساب غیرفعال است. از مدیر خود کمک بخواهید.
+    too_many_attempts: تعداد تلاش‌ها بیش از حد مجاز است. لطفاً بعداً دوباره تلاش کنید.
+    wrong_password: رمز عبور فعلی اشتباه است.
+    same_password: رمز عبور جدیدی انتخاب کنید که با رمز عبور فعلی متفاوت باشد.
+    invalid_github_login: این یک نام کاربری معتبر GitHub نیست.
+    github_user_not_found: هیچ کاربر GitHub با این نام وجود ندارد.
+    github_account_taken: کاربر دیگری با این حساب GitHub وارد می‌شود.
+    invalid_rules: قانون ثبت‌نام به نام یک سازمان GitHub نیاز دارد.
+    invalid_rule_role: قانون ثبت‌نام فقط می‌تواند نقش ویرایشگر یا بیننده را بدهد.
+    rule_org_not_installed: GitHub App باید روی سازمانِ قانون ثبت‌نام نصب شده باشد.
+    not_invited: شما در اینجا حسابی ندارید. از مدیر خود بخواهید شما را اضافه کند.
+    method_disabled: ورود با GitHub خاموش است.
+    access_denied: ورود لغو شد.
+    github_app_not_set_up: Sveltia CMS Additions هنوز به GitHub متصل نشده است. از مدیر خود بخواهید راه‌اندازی را کامل کند.
+    invalid_tenant_id: شناسه سایت باید ۱ تا ۳۲ حرف کوچک لاتین، رقم و خط تیره باشد و نمی‌تواند «default» باشد.
+    invalid_tenant_name: نام سایت باید حداکثر ۱۰۰ کاراکتر باشد.
+    tenant_exists: سایتی با این شناسه از قبل وجود دارد.
+    github_app_missing: هنوز هیچ GitHub App راه‌اندازی نشده است.
+    invalid_private_key: این فایل یک کلید خصوصی معتبر نیست.
+    private_key_mismatch: GitHub این کلید خصوصی را برای برنامه نمی‌پذیرد. مطمئن شوید که آن را در تنظیمات همین برنامه ساخته‌اید.
+    github_error: GitHub با خطا پاسخ داد. لطفاً بعداً دوباره تلاش کنید.
+    data_key_locked: تا زمانی که یک مدیر تغییر رمز مدیر را کامل نکند، نمی‌توان از Sveltia CMS Additions استفاده کرد.
+    not_configured: Sveltia CMS Additions به درستی پیکربندی نشده است. از مدیر خود کمک بخواهید.
+    origin_not_allowed: این سایت مجاز به استفاده از Sveltia CMS Additions نیست. از مدیر خود بخواهید آن را به دامنه‌های مجاز اضافه کند.
+    not_set_up: Sveltia CMS Additions هنوز به GitHub متصل نشده است. از مدیر خود بخواهید راه‌اندازی را کامل کند.
+    # A user whose password an admin has reset signs in another way, e.g. with GitHub
+    temporary_password: رمز عبور شما بازنشانی شده است. با نام کاربری خود و رمز عبور موقتی که مدیرتان به شما داده است وارد شوید، سپس یک رمز عبور جدید انتخاب کنید.
+    # {$url} is the URL of the service
+    incompatible: این نسخه از Sveltia CMS با سرویس Sveltia CMS Additions در {$url} کار نمی‌کند.
+    unreachable: دسترسی به Sveltia CMS Additions امکان‌پذیر نبود. لطفاً بعداً دوباره تلاش کنید.
+    insecure_connection: Sveltia CMS Additions باید از طریق HTTPS ارائه شود. گزینه `base_url` را در پیکربندی CMS بررسی کنید.
+    unexpected: درخواست به Sveltia CMS Additions به دلیل یک خطای غیرمنتظره ناموفق بود. لطفاً بعداً دوباره تلاش کنید.
+
+  # Conversation panel: comments on the entry, kept by Sveltia CMS Additions
+  conversation:
+    title: گفتگو
+    refresh: تازه‌سازی گفتگو
+    empty: هنوز نظری ثبت نشده است.
+    # Button above a long conversation, which is loaded from its latest comments
+    show_older: نمایش نظرات قدیمی‌تر
+    # Label of the list of comments
+    timeline: نظرات
+    deleted_user: کاربر حذف‌شده
+    you: شما
+    edited: ویرایش‌شده
+    comment_label: نظر
+    placeholder: نظری بنویسید (Markdown)
+    visible_to_cms_users: فقط برای کاربران CMS قابل مشاهده است
+    send: ارسال نظر
+    options: گزینه‌های نظر
+    edit: ویرایش
+    delete: حذف
+    save: ذخیره
+    delete_confirmation: این نظر حذف شود؟ این کار قابل بازگشت نیست.
+    send_failed: ارسال نظر امکان‌پذیر نبود.
+
+  # Placeholder of an API key or deploy hook field the user has left empty, while an admin of
+  # Sveltia CMS Additions has entered one for everyone
+  provided_by_admin: ارائه‌شده توسط مدیر شما
 
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
@@ -210,6 +564,15 @@ sign_in_with_mobile_instruction: کد QR زیر را با گوشی یا تبلت
 signed_in_as_x: واردشده به عنوان {$name}
 working_with_local_repo: در حال کار با مخزن محلی
 working_with_test_repo: در حال کار با مخزن آزمایشی
+working_in_demo_mode: حالت نمایشی
+
+# Demo welcome dialog: shown once after signing in to a demo site, where the test repository is
+# seeded with sample content and the changes are only stored in the browser
+demo_welcome:
+  title: به نسخه نمایشی Sveltia CMS خوش آمدید
+  description: با خیال راحت CMS را بررسی کنید و محتوای نمونه را ویرایش کنید. تغییرات شما فقط در همین مرورگر ذخیره می‌شوند. هیچ چیزی به صورت آنلاین منتشر نمی‌شود و هیچ‌کس دیگری نمی‌تواند آن‌ها را ببیند.
+  reset_hint: برای شروع دوباره با محتوای اصلی، گزینه «پاک کردن همه داده‌ها» را در تنظیمات > مدیریت داده‌ها انتخاب کنید.
+  button_label: شروع کنید
 
 # Account menu: action items for sign-out and app installation
 sign_out: خروج
@@ -225,9 +588,14 @@ install_as_app: نصب به عنوان برنامه
 contents: محتواها
 assets: دارایی‌ها
 editorial_workflow: گردش کار تحریریه
+# Name of the Editorial Workflow page when all the content uses Preview Workflow, which has no
+# review stages, so the page only lists the drafts
+drafts: پیش‌نویس‌ها
 cms_config: پیکربندی CMS
 # Mobile menu page title (shown only on small screens)
 menu: منو
+# Mobile menu page section heading listing the custom pages registered by the site
+custom_pages: صفحات
 
 # Mobile promo infobar: encouraging users to try the mobile version
 mobile_promo_title: Sveltia CMS اکنون روی موبایل در دسترس است!
@@ -238,10 +606,36 @@ mobile_promo_button: آن را امتحان کنید
 new_language_available: Sveltia CMS اکنون به زبان {$locale} در دسترس است!
 change_language: تغییر زبان
 
+# Live reload infobar: shown when the CMS runs on a page that a framework’s development server (e.g.
+# Astro) reloads on every file change, instead of a static HTML file
+live_reload_warning: سرور توسعه شما با هر تغییر فایل این صفحه را دوباره بارگذاری می‌کند، که می‌تواند ذخیره‌سازی را قطع کرده و فایل‌های شما را خراب کند. به جای آن، CMS را از یک فایل HTML ایستا ارائه دهید. <a>بیشتر بدانید</a>
+
 # Toast notification shown while the translation for the selected language is being downloaded
 # {$locale} is the localized language name, e.g., “French”
 switching_language: در حال تغییر زبان به {$locale}…
 locale_load_failed: بارگذاری ترجمه {$locale} امکان‌پذیر نبود. لطفاً بعداً دوباره تلاش کنید.
+
+# Toast notification shown when changes saved with the local backend couldn’t be committed to Git
+# {$reason} is one of the `local_git_skip_reasons` strings below
+local_git_not_committed: تغییرات شما ذخیره شد اما در Git کامیت نشد. {$reason} برای اینکه فقط فایل‌ها ذخیره شوند، کامیت‌های Git را در تنظیمات > توسعه‌دهنده خاموش کنید.
+local_git_skip_reasons:
+  unsupported_repository: مخزن شما از قابلیتی از Git استفاده می‌کند که CMS از آن پشتیبانی نمی‌کند، مانند worktree پیوندی، نام‌های شیء SHA-256، فرمت reftable، ایندکس پراکنده (sparse index)، یا ایندکس نسخه ۳ یا ۴ که گزینه feature.manyFiles و دستور git add -N از آن استفاده می‌کنند.
+  missing_identity: نام و آدرس ایمیل شما در پیکربندی Git مخزن تنظیم نشده است و CMS نمی‌تواند پیکربندی سراسری شما را بخواند. آن‌ها را در مخزن با git config --local user.name "Your Name" و git config --local user.email "you@example.com" تنظیم کنید.
+  locked: فرایند Git دیگری در حال استفاده از مخزن است. اگر هیچ فرایندی در حال اجرا نیست، فایل .git/index.lock را حذف کنید.
+  # The operation in progress, with how to finish or cancel it
+  operation_in_progress:
+    merge: یک ادغام (merge) در حال انجام است. آن را با git commit کامل کنید یا با git merge --abort لغو کنید.
+    rebase: یک rebase در حال انجام است. آن را با git rebase --continue کامل کنید یا با git rebase --abort لغو کنید. اگر از آن گذشته‌اید، git rebase --quit آن را بدون تغییر فایل‌های شما کنار می‌گذارد.
+    cherry_pick: یک cherry-pick در حال انجام است. آن را با git cherry-pick --continue کامل کنید یا با git cherry-pick --abort لغو کنید.
+    revert: یک revert در حال انجام است. آن را با git revert --continue کامل کنید یا با git revert --abort لغو کنید.
+    am: اعمال وصله‌ها با git am در حال انجام است. آن را با git am --continue کامل کنید یا با git am --abort لغو کنید.
+    conflict: برخی فایل‌ها دارای تداخل هستند. ابتدا آن‌ها را حل کرده و نتایج را stage کنید.
+  detached_head: هیچ شاخه‌ای checkout نشده است.
+  staged_changes: شما تغییرات دیگری دارید که برای کامیت stage شده‌اند. ابتدا آن‌ها را کامیت یا unstage کنید.
+  # {$path} is the file path
+  lfs: '{$path} با Git LFS ردیابی می‌شود که CMS نمی‌تواند در آن کامیت کند.'
+  # {$message} is the error message
+  error: یک خطای غیرمنتظره رخ داد. {$message}
 
 # Site and page navigation
 # Toolbar button aria-label for visiting the live site
@@ -276,6 +670,10 @@ account: حساب کاربری
 live_site: سایت آنلاین
 git_repository: مخزن Git
 settings: تنظیمات
+
+# Page for the people who look after the CMS, apart from the personal settings: user management
+# and the CMS configuration
+administration: مدیریت
 
 # Help menu: button aria-labels and section headings
 show_help_menu: نمایش منوی راهنما
@@ -369,6 +767,10 @@ viewing_x_asset_folder: |
 # Cloud storage service view announcement
 # {$service} is the cloud storage service name, e.g. Uploadcare
 viewing_x_external_location: شما اکنون در حال مشاهده دارایی‌های موجود در {$service} هستید.
+# Administration page announcements
+viewing_admin_section_list: شما اکنون در حال مشاهده فهرست بخش‌های مدیریت هستید.
+# {$section} is the section label, e.g. Users
+viewing_x_admin_section: شما اکنون در حال مشاهده بخش «{$section}» از صفحه مدیریت هستید.
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
@@ -387,6 +789,7 @@ x_of_x_selected: '{$selected} از {$total} انتخاب شده'
 
 # View switcher: toggle between list and grid views
 switch_view: تعویض نما
+table_view: نمای جدولی
 list_view: نمای فهرستی
 grid_view: نمای شبکه‌ای
 switch_to_list_view: تغییر به نمای فهرستی
@@ -400,6 +803,16 @@ switch_to_grid_view: تغییر به نمای شبکه‌ای
 # Sort menu: button labels and options
 sort: مرتب‌سازی
 sorting_options: گزینه‌های مرتب‌سازی
+# Table view column labels for the entry metadata used as `{{…}}` template tags
+table_column_keys:
+  # The folder containing the entry file
+  dirname: پوشه
+  # The entry file name without the extension
+  filename: نام فایل
+  # The entry file extension
+  extension: پسوند
+  # The enabled locales of the entry
+  locales: زبان‌ها
 # Sort key option labels
 sort_keys:
   # No sorting; entries appear in their natural repository order
@@ -439,6 +852,8 @@ grouping_options: گزینه‌های گروه‌بندی
 # Asset type filter and group labels
 type: نوع
 all: همه
+# Group option for the linked files, which can be hosted anywhere: the host name of the file’s URL
+domain: دامنه
 # Asset type labels
 image: تصویر
 video: ویدیو
@@ -457,6 +872,9 @@ all_assets: همه دارایی‌ها
 global_assets: دارایی‌های عمومی
 # Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
 linked_files: فایل‌های پیوندشده
+# Badge and message shown on a linked file that couldn’t be loaded, e.g. because it has been deleted
+file_unavailable: در دسترس نیست
+file_unavailable_description: این فایل بارگذاری نشد. ممکن است منتقل یا حذف شده باشد.
 
 # ==============================================================================
 # Entry and Collection Actions
@@ -477,13 +895,33 @@ entry_not_found: ورودی یافت نشد.
 # Entry creation restrictions: tooltip and advisory messages
 creating_entries_disabled_by_admin: ایجاد ورودی‌های جدید در این مجموعه توسط مدیر غیرفعال شده است.
 # {$quota} is the collection’s maximum entry count
-creating_entries_disabled_by_quota: شما نمی‌توانید ورودی‌های جدیدی به این مجموعه اضافه کنید زیرا به حد مجاز {$quota} ورودی رسیده است.
+creating_entries_disabled_by_quota: |
+  .input {$quota :integer}
+  .match $quota
+    one {{ شما نمی‌توانید ورودی‌های جدیدی به این مجموعه اضافه کنید زیرا به حد مجاز {$quota} ورودی رسیده است. }}
+    *   {{ شما نمی‌توانید ورودی‌های جدیدی به این مجموعه اضافه کنید زیرا به حد مجاز {$quota} ورودی رسیده است. }}
 # {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
 creating_entries_nearing_quota: |
+  .input {$quota :integer}
   .input {$remaining :integer}
-  .match $remaining
-    one {{ این مجموعه به حد مجاز {$quota} ورودی نزدیک می‌شود. شما فقط می‌توانید {$remaining} ورودی دیگر ایجاد کنید. }}
-    *   {{ این مجموعه به حد مجاز {$quota} ورودی نزدیک می‌شود. شما فقط می‌توانید {$remaining} ورودی دیگر ایجاد کنید. }}
+  .match $quota $remaining
+    one one {{ این مجموعه به حد مجاز {$quota} ورودی نزدیک می‌شود. شما فقط می‌توانید {$remaining} ورودی دیگر ایجاد کنید. }}
+    one *   {{ این مجموعه به حد مجاز {$quota} ورودی نزدیک می‌شود. شما فقط می‌توانید {$remaining} ورودی دیگر ایجاد کنید. }}
+    *   one {{ این مجموعه به حد مجاز {$quota} ورودی نزدیک می‌شود. شما فقط می‌توانید {$remaining} ورودی دیگر ایجاد کنید. }}
+    *   *   {{ این مجموعه به حد مجاز {$quota} ورودی نزدیک می‌شود. شما فقط می‌توانید {$remaining} ورودی دیگر ایجاد کنید. }}
+
+# Read-only restrictions set with the `readonly` option: advisory messages
+readonly_cms: CMS در حالت فقط‌خواندنی است. می‌توانید محتوا و دارایی‌ها را مشاهده کنید اما نمی‌توانید هیچ تغییری ایجاد کنید.
+readonly_collection: این مجموعه فقط‌خواندنی است. می‌توانید محتوای آن را مشاهده کنید اما نمی‌توانید هیچ تغییری ایجاد کنید.
+readonly_entry: این ورودی فقط‌خواندنی است. می‌توانید آن را مشاهده کنید اما نمی‌توانید هیچ تغییری ایجاد کنید.
+readonly_asset_folder: این پوشه فقط‌خواندنی است. می‌توانید دارایی‌های آن را مشاهده کنید اما نمی‌توانید هیچ تغییری ایجاد کنید.
+readonly_branch: شما اجازه push به شاخه «{$branch}» را ندارید. می‌توانید این محتوا را مشاهده کنید اما نمی‌توانید هیچ تغییری ایجاد کنید.
+readonly_role: شما فقط دسترسی مشاهده دارید. می‌توانید محتوا و دارایی‌ها را مشاهده کنید اما نمی‌توانید هیچ تغییری ایجاد کنید.
+readonly_reference: ورودی فقط‌خواندنی است، بنابراین ارجاع قابل حذف نیست.
+# {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
+cannot_rename_referenced_entry: 'نام این ورودی قابل تغییر نیست، زیرا ورودی‌های فقط‌خواندنی زیر با نام فعلی به آن ارجاع می‌دهند: {$entries}.'
+# {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
+cannot_move_referenced_asset: 'این دارایی قابل انتقال یا تغییر نام نیست، زیرا ورودی‌های فقط‌خواندنی زیر از آن استفاده می‌کنند: {$entries}.'
 
 # Navigation: back links and list labels
 back_to_collection: بازگشت به مجموعه
@@ -491,6 +929,8 @@ collection_list: فهرست مجموعه‌ها
 back_to_collection_list: بازگشت به فهرست مجموعه‌ها
 asset_folder_list: فهرست پوشه‌های دارایی
 back_to_asset_folder_list: بازگشت به فهرست پوشه‌های دارایی
+# Back button shown in place of the one above while browsing a subfolder of an asset folder
+back_to_parent_folder: بازگشت به پوشه والد
 
 # ==============================================================================
 # Search
@@ -549,6 +989,53 @@ no_entries_found: هیچ ورودی یافت نشد.
 # Upload dialog: title and button label
 upload_assets: بارگذاری دارایی‌های جدید
 
+# New Folder button and dialog in the Asset Library
+new_folder: پوشه جدید
+new_folder_name: نام پوشه
+new_folder_create: ایجاد
+# {$folder} is the path of the folder the new one will be created in, starting with a slash
+new_folder_description: پوشه جدید در «{$folder}» ایجاد خواهد شد.
+# Validation errors for the new folder name
+new_folder_error:
+  empty: نام پوشه نمی‌تواند خالی باشد.
+  invalid: نام پوشه نمی‌تواند شامل اسلش باشد یا با نقطه شروع شود.
+  # A name the CMS itself is usually served from, e.g. `admin` or `cms`
+  reserved: فایل‌های پوشه‌ای با این نام فقط‌خواندنی هستند، زیرا خود CMS معمولاً از آن ارائه می‌شود.
+  duplicate: پوشه یا فایلی با این نام از قبل در اینجا وجود دارد.
+# Progress and error messages while the folder is being created
+creating_folder: در حال ایجاد پوشه…
+creating_folder_failed: ایجاد پوشه امکان‌پذیر نبود.
+
+# Menu on a folder in the Asset Library, and the Rename Folder and Delete Folder dialogs
+folder_options: گزینه‌های پوشه
+show_folder_options: نمایش گزینه‌های پوشه
+rename_folder: تغییر نام پوشه
+delete_folder: حذف پوشه
+# Rename Folder dialog body text
+# {$count} is the number of assets in the folder, which are moved along with it
+enter_new_name_for_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ نام جدیدی را در زیر وارد کنید. }}
+    one {{ نام جدیدی را در زیر وارد کنید. دارایی موجود در پوشه نیز همراه آن منتقل می‌شود و هر ورودی که از آن استفاده می‌کند به‌روزرسانی خواهد شد. }}
+    *   {{ نام جدیدی را در زیر وارد کنید. {$count} دارایی موجود در پوشه نیز همراه آن منتقل می‌شوند و هر ورودی که از آن‌ها استفاده می‌کند به‌روزرسانی خواهد شد. }}
+# Delete Folder confirmation
+# {$name} is the folder name and {$count} is the number of assets in the folder
+confirm_deleting_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ آیا مطمئن هستید که می‌خواهید پوشه خالی «{$name}» را حذف کنید؟ }}
+    one {{ آیا مطمئن هستید که می‌خواهید پوشه «{$name}» و دارایی داخل آن را حذف کنید؟ }}
+    *   {{ آیا مطمئن هستید که می‌خواهید پوشه «{$name}» و {$count} دارایی داخل آن را حذف کنید؟ }}
+# Progress and error messages while the folder is being renamed or deleted
+renaming_folder: در حال تغییر نام پوشه…
+renaming_folder_failed: تغییر نام پوشه امکان‌پذیر نبود.
+deleting_folder: در حال حذف پوشه…
+deleting_folder_failed: حذف پوشه امکان‌پذیر نبود.
+# Asset Library and asset picker: notice shown when a cloud storage service holds more files than
+# are listed at once
+external_assets_truncated: تعداد فایل‌های موجود در سرویس برای فهرست کردن همه آن‌ها بیش از حد زیاد است، بنابراین برخی از آن‌ها نمایش داده نمی‌شوند.
+
 # Edit options menu: button and item labels
 edit_options: گزینه‌های ویرایش
 show_edit_options: نمایش گزینه‌های ویرایش
@@ -561,6 +1048,47 @@ edit_x: ویرایش {$name}
 
 # Asset text editor: switch for line wrapping
 wrap_long_lines: شکستن خطوط طولانی
+
+# Move assets: dialog for moving assets to another folder in the repository
+move: انتقال
+move_asset: انتقال دارایی
+# Dialog title. {$name} is the asset name when a single asset is moved, and {$count} is the number of
+# assets being moved
+move_assets_title: |
+  .input {$count :integer}
+  .match $count
+    one {{ انتقال {$name} }}
+    *   {{ انتقال {$count} دارایی }}
+# Dialog body text. {$count} is the number of entries that currently use the assets
+select_asset_move_destination: |
+  .input {$count :integer}
+  .match $count
+    0   {{ پوشه مقصد را انتخاب کنید. }}
+    one {{ پوشه مقصد را انتخاب کنید. ورودی‌ای که از این دارایی‌ها استفاده می‌کند نیز به‌روزرسانی خواهد شد. }}
+    *   {{ پوشه مقصد را انتخاب کنید. {$count} ورودی که از این دارایی‌ها استفاده می‌کنند نیز به‌روزرسانی خواهند شد. }}
+# Accessible label of the folder tree in the Move dialog
+asset_move_destination: پوشه مقصد
+# Shown when the assets being moved are all in the selected folder already
+assets_already_in_folder: |
+  .input {$count :integer}
+  .match $count
+    one {{ این دارایی از قبل در این پوشه است. }}
+    *   {{ این دارایی‌ها از قبل در این پوشه هستند. }}
+# Shown when files with the same names exist in the selected folder. {$names} is a comma-separated
+# list of file names
+asset_move_conflict: 'فایل‌های زیر از قبل در این پوشه وجود دارند: {$names}.'
+moving_assets: در حال انتقال دارایی‌ها…
+moving_assets_failed: انتقال دارایی‌ها امکان‌پذیر نبود.
+# Warning shown when files have been moved off a cloud storage service, but the originals couldn’t
+# be deleted from it
+asset_move_cleanup_failed: فایل‌ها منتقل شدند، اما فایل‌های اصلی از سرویس ذخیره‌سازی حذف نشدند.
+# Shown when files on a cloud storage service can’t be renamed or moved, because the entries using
+# them can’t be updated, e.g. for an Open Authoring contributor. {$count} is the number of files
+cannot_change_used_external_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ این فایل قابل تغییر نام یا انتقال نیست، زیرا ورودی‌هایی که از آن استفاده می‌کنند قابل به‌روزرسانی نیستند. }}
+    *   {{ این فایل‌ها قابل تغییر نام یا انتقال نیستند، زیرا ورودی‌هایی که از آن‌ها استفاده می‌کنند قابل به‌روزرسانی نیستند. }}
 
 # Rename asset: dialog and validation
 rename_asset: تغییر نام دارایی
@@ -579,6 +1107,15 @@ enter_new_name_for_asset_error:
   empty: نام فایل نمی‌تواند خالی باشد.
   character: نام فایل نمی‌تواند شامل کاراکترهای خاص باشد.
   duplicate: این نام فایل برای دارایی دیگری استفاده شده است.
+  # A name starting with a dot hides the file, which the CMS wouldn’t list any more
+  leading_dot: نام فایل نمی‌تواند با نقطه شروع شود.
+  # The name of a file next to the asset that isn’t an asset, like an entry file
+  file_duplicate: فایل دیگری با این نام از قبل در اینجا وجود دارد.
+  # The name of a folder next to the file
+  folder_duplicate: پوشه‌ای با این نام از قبل در اینجا وجود دارد.
+# Shown while renaming a file whose name will be changed on saving, e.g. by the `slugify_filename`
+# media library option
+file_will_be_saved_as: فایل با نام «{$name}» ذخیره خواهد شد.
 # Confirmation dialog shown when the file extension is changed while renaming an asset
 change_file_extension: تغییر پسوند فایل
 # {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
@@ -592,6 +1129,11 @@ file_extension_change_warning: اگر پسوند فایل با فرمت واقع
 replace_asset: جایگزینی دارایی
 # {$name} is the asset being replaced
 replace_x: جایگزینی {$name}
+# File/Image field: labels of the Replace and Remove buttons
+replace_file: جایگزینی فایل
+replace_image: جایگزینی تصویر
+remove_file: حذف فایل
+remove_image: حذف تصویر
 
 # File selection prompts: drop zones and file pickers
 # Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
@@ -681,6 +1223,29 @@ confirm_deleting_selected_assets: |
     one {{ آیا مطمئن هستید که می‌خواهید دارایی انتخاب‌شده را حذف کنید؟ }}
     *   {{ آیا مطمئن هستید که می‌خواهید {$count} دارایی انتخاب‌شده را حذف کنید؟ }}
 confirm_deleting_all_assets: آیا مطمئن هستید که می‌خواهید همه دارایی‌ها را حذف کنید؟
+# Note added to the confirmation when entries use the assets being deleted; the references are
+# removed in the same commit. {$count} is the number of entries using them
+deleting_referenced_assets_note: |
+  .input {$count :integer}
+  .match $count
+    one {{ ارجاع به آن در یک ورودی نیز حذف خواهد شد. }}
+    *   {{ ارجاع‌ها به آن در {$count} ورودی نیز حذف خواهند شد. }}
+# Shown in place of the confirmation when removing the references would leave a field in an entry
+# invalid, e.g. a required Image field with nothing left, so the deletion is refused. The fields are
+# listed below the message, each with the validation error it would have. {$count} is the number of
+# assets being deleted
+cannot_delete_referenced_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ این دارایی قابل حذف نیست، زیرا فیلدهای زیر در ورودی‌هایی که از آن استفاده می‌کنند بدون آن دیگر معتبر نخواهند بود. ابتدا آن ورودی‌ها را به‌روزرسانی کنید. }}
+    *   {{ این دارایی‌ها قابل حذف نیستند، زیرا فیلدهای زیر در ورودی‌هایی که از آن‌ها استفاده می‌کنند بدون آن‌ها دیگر معتبر نخواهند بود. ابتدا آن ورودی‌ها را به‌روزرسانی کنید. }}
+# Error shown in the asset deletion dialog when the entries using the assets couldn’t be looked up,
+# so the deletion can’t go ahead. {$count} is the number of assets being deleted
+checking_asset_references_failed: |
+  .input {$count :integer}
+  .match $count
+    one {{ بررسی اینکه کدام ورودی‌ها از این دارایی استفاده می‌کنند امکان‌پذیر نبود. این پنجره را ببندید و دوباره تلاش کنید. }}
+    *   {{ بررسی اینکه کدام ورودی‌ها از این دارایی‌ها استفاده می‌کنند امکان‌پذیر نبود. این پنجره را ببندید و دوباره تلاش کنید. }}
 
 # Delete entries: dialog titles and confirmation messages
 # {$count} is the number of entries targeted by the action
@@ -713,6 +1278,23 @@ confirm_deleting_selected_entries_with_assets: |
     *   {{ آیا مطمئن هستید که می‌خواهید {$count} ورودی انتخاب‌شده و دارایی‌های مرتبط را حذف کنید؟ }}
 confirm_deleting_all_entries: آیا مطمئن هستید که می‌خواهید همه ورودی‌ها را حذف کنید؟
 confirm_deleting_all_entries_with_assets: آیا مطمئن هستید که می‌خواهید همه ورودی‌ها و دارایی‌های مرتبط را حذف کنید؟
+# Note added to the confirmation when other entries reference the entries being deleted through
+# Relation fields; the references are removed in the same commit. {$count} is the number of
+# referencing entries
+deleting_referenced_entries_note: |
+  .input {$count :integer}
+  .match $count
+    one {{ ارجاع به آن در یک ورودی دیگر نیز حذف خواهد شد. }}
+    *   {{ ارجاع‌ها به آن در {$count} ورودی دیگر نیز حذف خواهند شد. }}
+# Shown in place of the confirmation when removing the references would leave a Relation field in
+# another entry invalid, e.g. a required field with nothing selected, so the deletion is refused.
+# The fields are listed below the message, each with the validation error it would have. {$count}
+# is the number of entries being deleted
+cannot_delete_referenced_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ این ورودی قابل حذف نیست، زیرا فیلدهای زیر در ورودی‌های دیگر بدون آن دیگر معتبر نخواهند بود. ابتدا آن ورودی‌ها را به‌روزرسانی کنید. }}
+    *   {{ این ورودی‌ها قابل حذف نیستند، زیرا فیلدهای زیر در ورودی‌های دیگر بدون آن‌ها دیگر معتبر نخواهند بود. ابتدا آن ورودی‌ها را به‌روزرسانی کنید. }}
 
 # ==============================================================================
 # Entry Reordering
@@ -726,6 +1308,40 @@ cancel_reordering_entries: لغو تغییر ترتیب ورودی‌ها
 
 # Reorder error message
 saving_reorder_failed: ذخیره ترتیب جدید ورودی‌ها ناموفق بود. لطفاً دوباره تلاش کنید.
+
+# ==============================================================================
+# Bulk Entry Editing
+# ==============================================================================
+# Strings for editing the fields of many entries at once in a table.
+
+# Bulk edit mode: toggle buttons
+bulk_edit_entries: ویرایش گروهی ورودی‌ها
+save_bulk_edits: ذخیره ویرایش‌های گروهی
+cancel_bulk_edits: لغو ویرایش‌های گروهی
+
+# Bulk edit table: column header of the entry titles
+bulk_edit_entry: ورودی
+
+# Bulk edit table: label of the table
+bulk_edit_table: ویرایشگر گروهی
+
+# Bulk edit table: label of a cell input; {$field} is the field label, {$entry} is the entry title
+bulk_edit_cell: '{$field} در {$entry}'
+
+# Bulk edit status: number of changed fields
+bulk_edit_count: |
+  .input {$count :integer}
+  .match $count
+    0   {{ بدون تغییر }}
+    one {{ ۱ تغییر }}
+    *   {{ {$count} تغییر }}
+
+# Bulk edit error messages
+bulk_edit_invalid: برخی از مقادیر معتبر نیستند. فیلدهای مشخص‌شده را اصلاح کرده و دوباره تلاش کنید.
+saving_bulk_edits_failed: ذخیره تغییرات ناموفق بود. لطفاً دوباره تلاش کنید.
+
+# Bulk edit: confirmation shown when leaving the mode with unsaved changes
+discard_bulk_edits_confirm: تغییرات اعمال‌شده روی ورودی‌ها دور انداخته شوند؟
 
 # ==============================================================================
 # File Upload and Processing
@@ -775,6 +1391,20 @@ warning_invalid_files: |
   .match $count
     one {{ این فایل قابل بارگذاری نیست زیرا آسیب دیده است یا محتوای آن با پسوند فایل مطابقت ندارد. این اتفاق معمولاً زمانی رخ می‌دهد که یک عکس به جای تبدیل، تغییر نام داده شده باشد (مانند تصویر HEIC که به عنوان فایل JPEG ذخیره شده باشد). لطفاً فایل را تبدیل کرده و دوباره تلاش کنید. }}
     *   {{ این فایل‌ها قابل بارگذاری نیستند زیرا آسیب دیده‌اند یا محتوای آن‌ها با پسوند فایل مطابقت ندارد. این اتفاق معمولاً زمانی رخ می‌دهد که عکس‌ها به جای تبدیل، تغییر نام داده شده باشند (مانند تصاویر HEIC که به عنوان فایل JPEG ذخیره شده باشند). لطفاً فایل‌ها را تبدیل کرده و دوباره تلاش کنید. }}
+# {$count} is the number of files that are not of a type the field accepts, even once transformed
+# {$types} is the list of accepted file types, such as “.pdf or .txt”
+warning_unsupported_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ این فایل قابل بارگذاری نیست زیرا از انواع زیر نیست: {$types}. }}
+    *   {{ این فایل‌ها قابل بارگذاری نیستند زیرا از انواع زیر نیستند: {$types}. }}
+# {$count} is the number of files that are not of an image type the field accepts
+# {$types} is the list of accepted image formats, such as “PNG or WebP”
+warning_unsupported_image_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ این فایل قابل بارگذاری نیست زیرا فقط تصویری از انواع زیر پذیرفته می‌شود: {$types}. }}
+    *   {{ این فایل‌ها قابل بارگذاری نیستند زیرا فقط تصاویری از انواع زیر پذیرفته می‌شوند: {$types}. }}
 
 # File format validation when replacing an asset
 # Warning section for replacement files that are in a different format
@@ -810,6 +1440,8 @@ uploading_files_failed: بارگذاری ناموفق بود.
 # Errors shown when a file on a cloud storage service could not be deleted or renamed
 deleting_assets_failed: حذف انجام نشد.
 renaming_asset_failed: تغییر نام انجام نشد.
+# Error shown when an edited text file in the Asset Library could not be saved
+saving_asset_failed: ذخیره ناموفق بود.
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
@@ -847,6 +1479,8 @@ entry_validation_errors: |
   .match $count
     one {{ یک فیلد دارای خطا است. لطفاً جهت ذخیره ورودی آن را اصلاح کنید. }}
     *   {{ {$count} فیلد دارای خطا هستند. لطفاً جهت ذخیره ورودی آن‌ها را اصلاح کنید. }}
+# Button on the validation error toast that opens the Validation panel listing the errors
+show_errors: نمایش خطاها
 
 # ==============================================================================
 # Success Notifications
@@ -923,6 +1557,19 @@ assets_deleted: |
   .match $count
     one {{ دارایی حذف شد. }}
     *   {{ {$count} دارایی حذف شدند. }}
+folder_created: پوشه ایجاد شد.
+# Folder info panel in the Asset Library sidebar
+folder_path: مسیر پوشه
+folder_contents: محتویات
+# {$count} is the number of subfolders in the folder
+x_folders: |
+  .input {$count :integer}
+  .match $count
+    0   {{ بدون پوشه }}
+    one {{ {$count} پوشه }}
+    *   {{ {$count} پوشه }}
+folder_renamed: نام پوشه تغییر کرد.
+folder_deleted: پوشه حذف شد.
 
 # ==============================================================================
 # Content Editor
@@ -963,6 +1610,9 @@ edit_singleton_announcement: شما اکنون در حال ویرایش فایل
 # Shown when CI skip is enabled/disabled
 save_and_publish: ذخیره و انتشار
 save_without_publishing: ذخیره بدون انتشار
+# Shown disabled in place of `save_and_publish` while entries created or edited from a Relation
+# field are in a collection whose review can’t be skipped with the `direct_publish` option
+save_and_publish_needs_review: ذخیره و انتشار (ورودی‌های مرتبط نیاز به بررسی دارند)
 
 # Editor options menu
 show_editor_options: نمایش گزینه‌های ویرایشگر
@@ -992,6 +1642,9 @@ swap_panes: جابه‌جایی قاب‌ها
 # {$locale} is the localized language name for the current content pane, e.g., English
 edit_x_locale: ویرایش محتوای {$locale}
 preview_x_locale: پیش‌نمایش محتوای {$locale}
+# The content of a monolingual entry, which has no locale to name
+edit_content: ویرایش محتوا
+preview_content: پیش‌نمایش محتوا
 
 # Preview iframe labels
 content_preview: پیش‌نمایش محتوا
@@ -1000,6 +1653,8 @@ content_preview: پیش‌نمایش محتوا
 # {$locale} is the localized language name for the content options menu, e.g., English
 show_content_options_x_locale: نمایش گزینه‌های محتوای {$locale}
 content_options_x_locale: گزینه‌های محتوای {$locale}
+show_content_options: نمایش گزینه‌های محتوا
+content_options: گزینه‌های محتوا
 
 # Field container labels
 # {$field} is the field’s display label
@@ -1038,8 +1693,9 @@ deploy_preview:
   view: مشاهده پیش‌نمایش
   # Shown while the site is still being built, with or without a URL to open yet
   building: پیش‌نمایش هنوز در حال ساخت است.
-  # Shown when the build failed, so no preview is available
-  failed: ساخت پیش‌نمایش امکان‌پذیر نبود.
+  # Shown when the build failed, so no preview is available. The failure may lie in the site’s own
+  # code rather than the entry, so the editor is told not to assume it’s theirs, and who to ask
+  build_failed: پیش‌نمایش ساخته نشد. این لزوماً به دلیل تغییرات شما نیست. اگر مشکل ادامه داشت، با مدیر سایت خود تماس بگیرید.
   # Shown briefly while the CI/CD provider is being queried
   checking: در حال بررسی پیش‌نمایش…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
@@ -1073,9 +1729,20 @@ translate_from: ترجمه از…
 # {$locale} is the localized language name of the source content being translated, e.g., English
 translate_from_x: ترجمه از {$locale}
 
-# Revert changes
+# Revert changes, restore the default values or clear the fields. The field options menu offers
+# them for a field, the content options menu of an editor pane for the locale it shows, and the
+# editor options menu for the whole entry, the latter two asking for confirmation first
 revert_changes: بازگردانی تغییرات
 revert_all_changes: بازگردانی همه تغییرات
+restore_default: بازگردانی پیش‌فرض
+clear_all: پاک‌سازی همه
+confirm_reverting_changes: آیا مطمئن هستید که می‌خواهید همه تغییرات این ورودی را بازگردانی کنید؟
+# {$locale} is a locale name, e.g. French
+confirm_reverting_changes_x_locale: آیا مطمئن هستید که می‌خواهید همه تغییرات محتوای {$locale} را بازگردانی کنید؟
+confirm_restoring_defaults: آیا مطمئن هستید که می‌خواهید مقادیر پیش‌فرض همه فیلدهای این ورودی را بازگردانی کنید؟ تغییرات شما از بین خواهند رفت.
+confirm_restoring_defaults_x_locale: آیا مطمئن هستید که می‌خواهید مقادیر پیش‌فرض همه فیلدهای محتوای {$locale} را بازگردانی کنید؟ تغییرات شما از بین خواهند رفت.
+confirm_clearing_fields: آیا مطمئن هستید که می‌خواهید همه فیلدهای این ورودی را پاک کنید؟ تغییرات شما از بین خواهند رفت.
+confirm_clearing_fields_x_locale: آیا مطمئن هستید که می‌خواهید همه فیلدهای محتوای {$locale} را پاک کنید؟ تغییرات شما از بین خواهند رفت.
 
 # Slug editing
 edit_slug: ویرایش اسلاگ
@@ -1083,6 +1750,8 @@ edit_slug_error:
   empty: اسلاگ نمی‌تواند خالی باشد.
   invalid: اسلاگ نمی‌تواند شامل کاراکترهای خاص، از جمله اسلش و فاصله باشد.
   duplicate: این اسلاگ برای ورودی دیگری استفاده شده است.
+# {$slug} is the slug filled from the slug template, which a number is added to when another entry uses it
+slug_numbered: اسلاگ «{$slug}» برای ورودی دیگری استفاده شده است، بنابراین یک عدد به آن اضافه خواهد شد.
 
 # Entry path editing for nested entries
 # Heading for the parent folder picker shown when the `meta.path` option is enabled
@@ -1196,6 +1865,13 @@ validation:
     email: لطفاً یک ایمیل معتبر وارد کنید.
     url: لطفاً یک URL معتبر وارد کنید.
 
+  # Value used for the same field in another entry of the collection
+  value_not_unique: این مقدار برای ورودی دیگری استفاده شده است.
+  # Key of a keyed List field item used for another item of the same list
+  key_not_unique: این کلید برای آیتم دیگری استفاده شده است.
+  # Key of a keyed List field item that is a whole number, which doesn’t keep its order in a map
+  key_numeric: کلید نمی‌تواند یک عدد صحیح باشد، زیرا آیتم‌ها ترتیب خود را از دست می‌دهند.
+
   # Custom field validation error
   invalid_value: مقدار نامعتبر است.
   unexpected_error: خطای غیرمنتظره‌ای رخ داد.
@@ -1217,6 +1893,12 @@ entry_sidebar:
     # Button in the panel header that validates the entry on demand
     validate: اعتبارسنجی
 
+  # Slug panel: shows the entry slug and lets the user edit it
+  slug:
+    title: اسلاگ
+    generated_on_save: اسلاگ هنگام ذخیره از محتوای ورودی ساخته می‌شود. هر تاریخ و زمانی در آن، تاریخ و زمان ذخیره خواهد بود.
+    unavailable: این ورودی اسلاگ ندارد.
+
   # History panel: shows entry commit history
   history:
     title: تاریخچه
@@ -1228,11 +1910,55 @@ entry_sidebar:
     title: بک‌لینک‌ها
     no_entries: هیچ ورودی‌ای به این ورودی ارجاع نمی‌دهد.
 
+  # Tab label of a panel with a count, e.g. of comments. {$title} is the panel title
+  title_with_count: '{$title} ({$count})'
+
+# Status shown next to the Save button while an entry with many new files is being saved
+# {$done} and {$total} are the number of files prepared and to prepare, or the number of commits
+# made and the estimated number of commits in all
+save_progress:
+  preparing: 'آماده‌سازی فایل‌ها: {$done} از {$total}'
+  committing: 'ذخیره در GitHub: {$done} از حدود {$total} کامیت'
+
 # Entry save error dialog
 saving_entry:
   error:
     title: خطا
     description: خطایی هنگام ذخیره ورودی رخ داد. لطفاً بعداً دوباره تلاش کنید.
+
+# Dialog shown when saving the entry would overwrite a change someone else has made in the
+# repository since the entry was opened in the editor
+save_conflict:
+  title: ورودی توسط شخص دیگری تغییر کرده است
+  # `{$name}` is the other person’s name, `{$date}` when they made the change
+  modified_by: '{$name} این ورودی را در {$date}، پس از باز کردن آن توسط شما، تغییر داد.'
+  # Shown instead of `modified_by` when the other person isn’t known
+  modified: این ورودی پس از باز کردن آن توسط شما، در مخزن تغییر کرده است.
+  deleted: این ورودی پس از باز کردن آن توسط شما، از مخزن حذف شده است.
+  # Follows `modified_by` or `modified`
+  overwrite_warning: اگر اکنون ذخیره کنید، تغییرات آن‌ها از بین خواهد رفت.
+  # Follows `deleted`
+  recreate_warning: اگر اکنون ذخیره کنید، ورودی دوباره ایجاد خواهد شد.
+  # Follows `modified_by`, `modified` or `deleted` for an entry stored in the same file as the other
+  # entries of the collection, which can’t be saved over the change
+  reload_warning: از آنجا که این ورودی در همان فایلی ذخیره می‌شود که ورودی‌های دیگر در آن هستند، نمی‌توان آن را روی این تغییر ذخیره کرد. ویرایش را لغو کنید، سپس ورودی را دوباره از فهرست باز کرده و ویرایش‌های خود را انجام دهید.
+  # OK button label
+  save_anyway: ذخیره در هر صورت
+  # Error shown when the repository was updated between the check above and the commit itself
+  branch_moved: مخزن هنگام ذخیره توسط شخص دیگری به‌روزرسانی شد. لطفاً دوباره تلاش کنید.
+  # Error shown when saving would change an item in a file storing all the entries of a collection,
+  # which someone else has changed or moved since it was loaded
+  array_item_changed: ورودی دیگری که در همان فایل ذخیره شده است توسط شخص دیگری تغییر کرده است. لطفاً دوباره تلاش کنید.
+  # {$path} is the file path
+  array_file_invalid: فایل {$path} قابل به‌روزرسانی نیست، زیرا شامل فهرست معتبری از ورودی‌ها نیست.
+
+# Notice shown in the entry editor when someone else has changed or deleted the entry in the
+# repository while the user has it open. The change itself is described with the `save_conflict`
+# strings above
+remote_change:
+  reload_entry: بارگذاری مجدد ورودی
+  # Confirmation shown before reloading when the user has unsaved changes
+  confirm_reloading_entry: آیا مطمئن هستید که می‌خواهید ورودی را دوباره بارگذاری کنید؟ تغییرات ذخیره‌نشده شما از بین خواهند رفت.
 
 # ==============================================================================
 # Asset Editor
@@ -1306,21 +2032,63 @@ map_lat_lng: نقشه نشان‌دهنده عرض جغرافیایی {$latitude
 remove_this_item: حذف این آیتم
 move_up: انتقال به بالا
 move_down: انتقال به پایین
+# Menu of a list item or file with the extra reorder actions, shown in a list of 3 or more items
+reorder_options: گزینه‌های تغییر ترتیب
+move_to_top: انتقال به ابتدا
+move_to_bottom: انتقال به انتها
+# Opens a dialog asking for the position to move a list item to
+move_to: انتقال به…
+# Dialog asking for the new position of an item. {$count} is the number of items in the list
+move_to_description: موقعیتی از ۱ تا {$count} وارد کنید.
+move_to_position: موقعیت
 # aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
 # or moved with the arrow keys while the handle has focus
 reorder_item: تغییر ترتیب آیتم
 # aria-label for the text input holding one item of a simple List field, which has no subfield to
 # take a label from
 list_item_value: مقدار آیتم
+# aria-label for each item of a List field, giving its position in the list
+# {$position} is the 1-based position of the item, {$count} is the number of items
+list_item_position: آیتم {$position} از {$count}
+# Message shown in place of a removed List field item or Object field, next to a Restore button
+# that puts it back
+item_removed: آیتم حذف شد.
 
-# Add item button label
+# Add item button label, also used by the Relation field to create a new entry in the referenced
+# collection, with the collection’s singular label
 # Example: “Add Image”, “Add Author”
 # {$name} is the label of the item type that can be added
 add_x: افزودن {$name}
 
 # List item context menu
+# aria-label for the button opening the menu, and for the menu itself
+list_item_options: گزینه‌های آیتم لیست
 add_item_above: افزودن آیتم در بالا
 add_item_below: افزودن آیتم در پایین
+paste_item_above: جای‌گذاری آیتم در بالا
+paste_item_below: جای‌گذاری آیتم در پایین
+paste_item_to_replace: جای‌گذاری برای جایگزینی
+
+# List item clipboard
+# Button in the list toolbar to paste a copied item, from any list in any entry, at the end of the
+# list, or at the start with the `add_to_top` option
+paste_item: جای‌گذاری آیتم
+list_item_copied: آیتم کپی شد.
+# ⋮ stands for the icon of the item menu button; keep it, along with the button’s aria-label
+no_list_item_to_paste: هیچ آیتم کپی‌شده‌ای برای جای‌گذاری وجود ندارد. برای کپی یک آیتم، منوی ⋮ (گزینه‌های آیتم لیست) آن را باز کرده و «کپی» را انتخاب کنید.
+list_item_not_compatible: آیتم کپی‌شده با این لیست سازگار نیست.
+# {$count} is the number of the values left out, as the list doesn’t have the fields
+list_item_pasted_without_values: |
+  .input {$count :integer}
+  .match $count
+    one {{ آیتم جای‌گذاری شد. مقداری که این لیست نمی‌پذیرد کنار گذاشته شد. }}
+    *   {{ آیتم جای‌گذاری شد. {$count} مقدار که این لیست نمی‌پذیرد کنار گذاشته شدند. }}
+# {$count} is the number of the files the pasted item references that couldn’t be found
+list_item_pasted_without_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ آیتم جای‌گذاری شد، اما فایلی که از آن استفاده می‌کند یافت نشد. فیلدهای فایل را در آیتم بررسی کنید. }}
+    *   {{ آیتم جای‌گذاری شد، اما {$count} فایلی که از آن‌ها استفاده می‌کند یافت نشدند. فیلدهای فایل را در آیتم بررسی کنید. }}
 
 # Variable-type list selector
 select_list_type: انتخاب نوع لیست
@@ -1339,12 +2107,45 @@ opacity: شفافیت
 # Select field: empty option placeholder
 unselected_option: (هیچ‌کدام)
 
+# Relation field: creating or editing a referenced entry without leaving the editor
+relation_field:
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  save_together_hint: '{$name} جدید همراه با ورودی‌ای که در حال ویرایش آن هستید ذخیره خواهد شد.'
+  # Error shown when the entry couldn’t be prepared. {$name} is the singular label of the collection
+  add_failed: افزودن {$name} امکان‌پذیر نبود. برای جزئیات، کنسول مرورگر را بررسی کنید.
+  # Title of the dialog to edit an entry selected in the field. {$name} is the singular label of the
+  # referenced collection
+  edit_entry_title: ویرایش {$name}
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  edit_together_hint: تغییرات شما در {$name} همراه با ورودی‌ای که در حال ویرایش آن هستید ذخیره خواهد شد.
+  # Error shown when the changes couldn’t be prepared. {$name} is the singular label of the collection
+  edit_failed: اعمال تغییرات در {$name} امکان‌پذیر نبود. برای جزئیات، کنسول مرورگر را بررسی کنید.
+  # Error shown when the changes would move the entry to another file path, e.g. through a path
+  # template using a field. {$name} is the singular label of the collection
+  move_unsupported: این تغییرات {$name} را به مکان دیگری منتقل می‌کنند، که فقط با ویرایش جداگانه آن امکان‌پذیر است.
+  # Error shown when saving, if someone else has changed an entry edited from the field since. {$name}
+  # is the summary of that entry
+  edit_conflict: «{$name}» پس از ویرایش شما توسط شخص دیگری تغییر کرده است. آن را دوباره از فیلد باز کنید تا تغییرات خود را با آخرین نسخه مقایسه کنید.
+  # Error shown when saving, if someone else has deleted an entry edited from the field since.
+  # {$name} is the summary of that entry
+  edit_deleted: «{$name}» پس از ویرایش شما توسط شخص دیگری حذف شده است. برای ذخیره ورودی، آن را از فیلد حذف کنید.
+  # Accessible label of the menu listing the selected entries that can be edited
+  select_entry_to_edit: انتخاب ورودی برای ویرایش
+  # Warning shown in the editor of an entry that has been edited from a Relation field of another
+  # entry, while the changes wait in that entry’s pull request. {$name} is the summary of that
+  # entry
+  edited_with_entry: تغییرات این ورودی در انتظار انتشار همراه با «{$name}» هستند. اگر اکنون آن را ذخیره کنید، دو مجموعه تغییرات هنگام انتشار آن ورودی با هم ترکیب می‌شوند، که در صورت هم‌پوشانی ممکن است ناموفق باشد.
+  # Warning shown in the dialog when an entry edited from the field has been changed by someone else
+  # since. {$name} is the singular label of the collection
+  changed_since_edit: این {$name} پس از ویرایش شما توسط شخص دیگری تغییر کرده است. تغییرات شما روی آخرین نسخه نمایش داده شده‌اند. پیش از به‌روزرسانی آن‌ها را بررسی کنید.
+
 # Select Assets dialog
 assets_dialog:
   # Dialog titles for different selection modes
   title:
     file: انتخاب فایل
     image: انتخاب تصویر
+    folder: انتخاب پوشه
 
   # Search input labels
   search_for_file: جستجوی فایل‌ها
@@ -1352,6 +2153,18 @@ assets_dialog:
 
   # Locations panel aria-label
   locations: مکان‌ها
+
+  # Folder selection mode for a File field with the `select_folder` option. {$path} is the public
+  # path of the folder to be selected, and {$count} is the number of folders selected
+  selected_folder: 'پوشه انتخاب‌شده: {$path}'
+  selected_folders: |
+    .input {$count :integer}
+    .match $count
+      one {{ {$count} پوشه انتخاب شده }}
+      *   {{ {$count} پوشه انتخاب شده }}
+  no_subfolders: این پوشه هیچ زیرپوشه‌ای ندارد.
+  # Shown for a cloud storage service whose `prefix` option depends on fields of the entry
+  prefix_unresolved: برای مرور و بارگذاری فایل‌های این مکان، فیلدهایی را که این مکان به آن‌ها وابسته است پر کنید.
 
   # Asset folder options
   folder:
@@ -1369,6 +2182,7 @@ assets_dialog:
 
   # Stock photo panels
   available_images: تصاویر موجود
+  available_files: فایل‌های موجود
 
   # URL entry option
   enter_url: ورود آدرس URL
@@ -1391,6 +2205,9 @@ assets_dialog:
   photo_credit:
     title: اعتبار تصویر
     description: 'در صورت امکان از اعتبار زیر استفاده کنید:'
+    # {$field} is the label of the Markdown field the credit is added to
+    insert_to_field: درج در {$field}
+    copy_as_markdown: کپی به صورت Markdown
 
   # Unsaved asset badge
   unsaved: ذخیره‌نشده
@@ -1433,6 +2250,7 @@ editor_components:
   alt: متن جایگزین
   title: عنوان
   link: لینک
+  caption: زیرنویس
 
 # Key-Value field: column headers and validation
 key_value:
@@ -1497,6 +2315,15 @@ cloud_storage:
   uploadcare:
     auth_key_label: کلید سرّی API
 
+  azure_blob_storage:
+    auth_key_label: توکن SAS
+
+  backblaze_b2:
+    auth_key_label: کلید برنامه
+
+  bunny_storage:
+    auth_key_label: رمز عبور Storage Zone
+
 # ==============================================================================
 # Configuration Validation
 # ==============================================================================
@@ -1550,16 +2377,42 @@ config:
     unsupported_backend_suggestion: از یکی از <a>بک‌اندهای پشتیبانی‌شده</a> استفاده کنید.
     missing_repository: مخزن تعریف نشده است.
     invalid_repository: مخزن پیکربندی‌شده نامعتبر است. باید به فرمت «owner/repo» باشد.
+    # Don’t localize `api_root`
+    missing_api_root: گزینه `api_root` تعریف نشده است. این گزینه برای بک‌اند Forgejo الزامی است.
+    invalid_root_dir: پوشه ریشه نامعتبر است. باید مسیری درون مخزن و بدون «..» باشد.
+    invalid_root_dir_branch: پوشه ریشه را نمی‌توان در نام شاخه‌های حالت‌های انتشار `editorial_workflow` و `preview` استفاده کرد. هیچ بخشی از مسیر آن نمی‌تواند با نقطه شروع شود، به «.lock» ختم شود یا شامل فاصله یا کاراکتر خاصی مانند دونقطه یا ستاره باشد.
+    path_outside_root_dir: مسیر «{$path}» به خارج از پوشه ریشه می‌رود، جایی که CMS نمی‌تواند فایل‌ها را فهرست کند.
     oauth_implicit_flow: روش احراز هویت پیکربندی‌شده (implicit flow) در Sveltia CMS پشتیبانی نمی‌شود. از یک <a>روش احراز هویت</a> دیگر استفاده کنید.
     github_pkce_unsupported: احراز هویت PKCE به دلیل محدودیت‌های GitHub هنوز پشتیبانی نمی‌شود. از یک <a>روش احراز هویت</a> دیگر استفاده کنید.
+    additions_no_base_url: گزینه `base_url` باید آدرس URL سرویس Sveltia CMS Additions شما باشد.
     oauth_no_app_id: شناسه برنامه OAuth تعریف نشده است.
     # Don’t localize `open_authoring`, `editorial_workflow` and `preview`
-    open_authoring_no_workflow: گزینه `open_authoring` نیازمند حالت انتشار `editorial_workflow` است. برای جزئیات <a>مستندات</a> را ببینید.
+    open_authoring_no_workflow: گزینه `open_authoring` نیازمند حالت انتشار `editorial_workflow` یا `preview` است. برای جزئیات <a>مستندات</a> را ببینید.
     # Don’t localize `auth_methods`
     no_auth_methods: گزینه `auth_methods` باید حداقل شامل یک روش باشد.
+    # Don’t localize `auth_scope`, `repo` and `public_repo`
+    auth_scope_no_repo: گزینه `auth_scope` باید شامل `repo` یا `public_repo` باشد.
     missing_media_folder: پوشه رسانه تعریف نشده است.
     public_folder_relative_path: پوشه عمومی پیکربندی‌شده نامعتبر است. باید یک مسیر مطلق با شروع از «/» باشد.
     public_folder_absolute_url: آدرس مطلق URL برای گزینه پوشه عمومی در Sveltia CMS پشتیبانی نمی‌شود.
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    unsupported_folder_template_tag: گزینه `{$option}` شامل برچسب قالب `{$tag}` است که در آنجا پشتیبانی نمی‌شود. فقط برچسب‌های قالب اسلاگ، مانند `\{\{slug\}\}` و `\{\{year\}\}`، و برچسب‌های `\{\{dirname\}\}`، `\{\{filename\}\}`، `\{\{extension\}\}`، `\{\{media_folder\}\}` و `\{\{public_folder\}\}` قابل استفاده هستند.
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    global_folder_template_tag: گزینه `{$option}` شامل برچسب قالب `{$tag}` است که فقط در گزینه یک مجموعه، یک فایل مجموعه یا یک فیلد قابل استفاده است، جایی که ورودی‌ای برای پر کردن آن وجود دارد.
+    # {$replacement} is the configured replacement string; Don’t localize `sanitize_replacement`
+    invalid_sanitize_replacement: گزینه `sanitize_replacement` روی `{$replacement}` تنظیم شده است، اما شامل کاراکتری است که در اسلاگ قابل استفاده نیست، بنابراین نمی‌تواند جایگزین آن شود.
+    # {$option} is the option name (`site_url` or `display_url`) and {$url} is the configured value
+    invalid_url_option: گزینه `{$option}` روی `{$url}` تنظیم شده است، اما باید یک آدرس URL مطلق باشد که با `https://` یا `http://` شروع شود.
+    # Don’t localize `publish_mode`, `stages`, `draft`, `pending_review` and `pending_publish`
+    invalid_publish_mode_stages: گزینه `stages` در `publish_mode` باید با `draft` شروع شود و مراحل را به ترتیب `draft`، `pending_review`، `pending_publish` و بدون تکرار فهرست کند.
+    # Don’t localize `i18n` and `locales`
+    i18n_no_locales: گزینه `i18n.locales` باید حداقل یک زبان را فهرست کند.
+    # {$locale} is the locale code from the configuration; Don’t localize `default_locale` and `locales`
+    i18n_invalid_default_locale: گزینه `default_locale` روی `{$locale}` تنظیم شده است، اما جزو `locales` نیست.
+    # {$locale} is the locale code from the configuration; Don’t localize `initial_locales` and `locales`
+    i18n_invalid_initial_locale: گزینه `initial_locales` شامل `{$locale}` است، اما جزو `locales` نیست.
+    # Don’t localize `i18n`
+    i18n_no_collections: 'گزینه `i18n` در سطح بالا پیکربندی شده است، اما هیچ‌یک از مجموعه‌ها یا تک نسخه‌ها گزینه `i18n` را ندارند، بنابراین هیچ محتوایی قابل ترجمه نیست. `i18n: true` را به مجموعه‌ها و تک نسخه‌هایی که باید ترجمه شوند اضافه کنید.'
     # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
     invalid_transformation_key: گزینه `transformations` شامل کلید پشتیبانی‌نشده `{$key}` است. باید `raster_image`، `svg` یا یک فرمت تصویر رستری پشتیبانی‌شده باشد.
     # {$key} is the transformation key; Don’t localize `quality`
@@ -1572,18 +2425,52 @@ config:
     invalid_asset_collection_name: نام مجموعه دارایی `{$name}` نامعتبر است. نباید شامل کاراکترهای خاص باشد.
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: نام‌های مجموعه دارایی باید یکتا باشند، اما `{$name}` بیش از یک‌بار استفاده شده است.
-    # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_no_options: مجموعه باید حداقل یکی از گزینه‌های `folder`، `files` یا `divider` را تعریف کرده باشد.
-    # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_multiple_options: مجموعه نمی‌تواند گزینه‌های `folder`، `files` و `divider` را هم‌زمان داشته باشد.
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_no_options: مجموعه باید یکی از گزینه‌های `folder`، `file`، `files` یا `divider` را تعریف کرده باشد.
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_multiple_options: مجموعه نمی‌تواند بیش از یکی از گزینه‌های `folder`، `file`، `files` و `divider` را داشته باشد.
     # {$extension} is the file extension and {$format} is the configured content format
     file_format_mismatch: پسوند `{$extension}` با فرمت `{$format}` مطابقت ندارد.
+    # {$name} is the field name from the configuration and {$widget} is its field type
+    front_matter_body_field_not_text: فیلد `{$name}` به عنوان بدنه زیر front matter ذخیره می‌شود که فقط می‌تواند متن نگه دارد، نه عدد، مقدار بولین، لیست یا شیء، آن‌طور که فیلد `{$widget}` نگه می‌دارد. از نوع فیلدی استفاده کنید که متن نگه می‌دارد، یا نام فیلد را تغییر دهید.
+    # {$file} is the file path from the configuration; Don’t localize `file` and `locale`. The curly
+    # brackets are escaped with backslashes for MessageFormat 2
+    invalid_collection_data_file: گزینه `file` با مقدار `{$file}` نامعتبر است. باید مسیر یک فایل JSON و بدون جانگهدار `\{\{locale\}\}` باشد.
+    # {$prop} is the option name; Don’t localize `file`
+    unsupported_collection_data_file_option: گزینه `{$prop}` در مجموعه‌ای با گزینه `file` پشتیبانی نمی‌شود.
+    # Don’t localize `file`, `publish_mode` and `simple`
+    collection_data_file_workflow: گردش کار تحریریه و گردش کار پیش‌نمایش، از جمله نویسندگی باز، در مجموعه‌ای با گزینه `file` پشتیبانی نمی‌شوند. گزینه `publish_mode` مجموعه را روی `simple` تنظیم کنید.
+    # {$prop} is the option name; Don’t localize `file` and `slug`. The curly brackets are escaped
+    # with backslashes for MessageFormat 2
+    collection_data_file_slug_tag: گزینه `{$prop}` در مجموعه‌ای با گزینه `file` نمی‌تواند شامل برچسب `\{\{slug\}\}` باشد، زیرا اسلاگ هر ورودی موقعیت آن است که با تغییر ترتیب یا حذف ورودی‌ها تغییر می‌کند. به جای آن از فیلدی با مقدار یکتا استفاده کنید.
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
     invalid_slug_slash: قالب اسلاگ `{$slug}` نامعتبر است زیرا نمی‌تواند شامل اسلش باشد. برای سازماندهی ورودی‌ها در زیرپوشه‌ها، به جای `slug` از گزینه `path` استفاده کنید.
+    # {$name} is the field name from the configuration; Don’t localize `identifier_field`
+    invalid_identifier_field: گزینه `identifier_field` به `{$name}` ارجاع می‌دهد، اما چنین فیلدی در مجموعه تعریف نشده است.
+    # {$name} is the field name from the configuration; Don’t localize `filter`
+    invalid_filter_field: گزینه `filter` به `{$name}` ارجاع می‌دهد، اما چنین فیلدی در مجموعه تعریف نشده است.
+    # Don’t localize `filter`, `value` and `pattern`
+    invalid_filter_no_condition: گزینه `filter` باید یکی از گزینه‌های `value` یا `pattern` را برای تطبیق ورودی‌ها داشته باشد.
+    # {$option} is an option name such as `slug` or `summary` and {$name} is the field name or template tag from the configuration
+    option_field_not_found: گزینه `{$option}` به `{$name}` ارجاع می‌دهد، اما چنین فیلدی تعریف نشده است.
+    # {$name} is the field name from the configuration and {$widget} is its field type; Don’t localize `thumbnail`
+    thumbnail_field_not_media: گزینه `thumbnail` به `{$name}` ارجاع می‌دهد، اما این فیلد باید از نوع Image یا File باشد، نه فیلد `{$widget}`.
+    # Don’t localize `inline` or `multiple`
+    invalid_inline_component_fields: حالت `inline` به یک فیلد واحد از نوع Boolean، Color، DateTime، Number، Relation، Select یا String نیاز دارد. فیلد Relation یا Select نمی‌تواند گزینه `multiple` را فعال داشته باشد.
+    # {$option} is an option name such as `pattern` or `filter` and {$pattern} is the configured pattern
+    invalid_regex: گزینه `{$option}` شامل عبارت باقاعده نامعتبر `{$pattern}` است که نادیده گرفته می‌شود.
     # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
     invalid_reorder_group: گزینه `reorder` به گروه نمایی به نام `{$name}` ارجاع می‌دهد، اما چنین گروهی در گزینه `view_groups` تعریف نشده است.
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit` and `fields`
+    invalid_bulk_edit_field: فهرست `fields` در گزینه `bulk_edit` به فیلدی به نام `{$name}` ارجاع می‌دهد، اما چنین فیلد سطح بالایی در مجموعه تعریف نشده است.
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit`, `fields` and `multiple`
+    unsupported_bulk_edit_field: فیلد `{$name}` در فهرست `fields` گزینه `bulk_edit` قابل ویرایش گروهی نیست. فقط فیلدهای Boolean، Color، DateTime، Number، Relation، Select یا String پشتیبانی می‌شوند که فقط‌خواندنی نباشند، گزینه `multiple` در آن‌ها فعال نباشد و هنگام ذخیره به طور خودکار تنظیم نشوند.
     # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
     invalid_sortable_field: گزینه `sortable_fields` به فیلدی به نام `{$name}` ارجاع می‌دهد، اما چنین فیلدی در مجموعه تعریف نشده است.
+    # Don’t localize `sortable_fields` and `default_sort`
+    multiple_sortable_field_defaults: فقط یک آیتم در گزینه `sortable_fields` می‌تواند گزینه `default_sort` را داشته باشد.
+    # {$option} is `table_columns` or `summary_fields`, and {$name} is the field name from the configuration
+    invalid_table_column_field: گزینه `{$option}` به فیلدی به نام `{$name}` ارجاع می‌دهد، اما چنین فیلدی در مجموعه تعریف نشده است.
     # {$name} is the field name from the configuration; Don’t localize `view_groups`
     invalid_view_group_field: گزینه `view_groups` به فیلدی به نام `{$name}` ارجاع می‌دهد، اما چنین فیلدی در مجموعه تعریف نشده است.
     # {$name} is the field name from the configuration; Don’t localize `view_filters`
@@ -1595,9 +2482,15 @@ config:
     duplicate_view_group_name: نام‌های گروه نمایی باید یکتا باشند، اما `{$name}` بیش از یک‌بار استفاده شده است.
     # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
     missing_view_filter_name: فیلتر نمایی {$count} باید دارای گزینه `name` تعریف‌شده به عنوان رشته غیرخالی باشد.
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `pattern`, `eq` and `gte`
+    invalid_view_filter_no_condition: فیلتر نمایی {$count} باید گزینه `pattern` یا یک گزینه مقایسه مانند `eq` یا `gte` را برای تطبیق ورودی‌ها داشته باشد.
     # {$name} is the invalid or duplicate view filter name
     invalid_view_filter_name: نام فیلتر نمایی `{$name}` نامعتبر است. نباید شامل کاراکترهای خاص باشد.
     duplicate_view_filter_name: نام‌های فیلتر نمایی باید یکتا باشند، اما `{$name}` بیش از یک‌بار استفاده شده است.
+    # {$name} is the default view group name from the configuration; Don’t localize `default` and `view_groups`
+    invalid_view_group_default: گزینه `default` در `view_groups` روی `{$name}` تنظیم شده است، اما هیچ گروه نمایی با این نام وجود ندارد.
+    # {$name} is the default view filter name from the configuration; Don’t localize `default` and `view_filters`
+    invalid_view_filter_default: گزینه `default` در `view_filters` روی `{$name}` تنظیم شده است، اما هیچ فیلتر نمایی با این نام وجود ندارد.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: مجموعه {$count} باید دارای گزینه `name` تعریف‌شده به عنوان رشته غیرخالی باشد.
     # {$name} is the invalid or duplicate collection name
@@ -1612,8 +2505,19 @@ config:
     collection_no_fields: مجموعه باید گزینه `fields` را با حداقل یک فیلد تعریف کرده باشد.
     # Don’t localize `fields`
     collection_file_no_fields: فایل مجموعه باید گزینه `fields` را با حداقل یک فیلد تعریف کرده باشد.
+    # Don’t localize `i18n`, `locale` and `folder`
+    collection_folder_i18n_required: در صورت استفاده از جانگهدار `locale` در مسیر `folder`، مجموعه باید دارای گزینه `i18n` تعریف‌شده باشد.
+    # {$folder} is the invalid folder path; Don’t localize `locale`, `folder` and the example path. The
+    # curly brackets in the example are escaped with backslashes for MessageFormat 2
+    invalid_collection_folder_locale: مسیر `folder` با مقدار `{$folder}` نامعتبر است. جانگهدار `locale` باید فقط یک بار و به عنوان نام کامل یک پوشه استفاده شود، مانند `content/\{\{locale\}\}/posts`.
     # Don’t localize `i18n`, `locale` and `file`
     collection_file_i18n_required: در صورت استفاده از جانگهدار `locale` در مسیر `file`، فایل مجموعه باید دارای گزینه `i18n` تعریف‌شده باشد.
+    # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
+    collection_i18n_no_fields: 'مجموعه گزینه `i18n` را دارد، اما هیچ‌یک از فیلدهای آن گزینه `i18n` را ندارند، بنابراین هیچ فیلدی قابل ترجمه نیست. `i18n: true` یا `i18n: duplicate` را به فیلدهایی که باید ترجمه شوند اضافه کنید.'
+    # Don’t localize `i18n` and `i18n: true`
+    collection_i18n_no_files: 'مجموعه گزینه `i18n` را دارد، اما هیچ‌یک از فایل‌های آن گزینه `i18n` را ندارند، بنابراین هیچ فایلی قابل ترجمه نیست. `i18n: true` را به فایل‌هایی که باید ترجمه شوند اضافه کنید.'
+    # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
+    collection_file_i18n_no_fields: 'فایل مجموعه گزینه `i18n` را دارد، اما هیچ‌یک از فیلدهای آن گزینه `i18n` را ندارند، بنابراین هیچ فیلدی قابل ترجمه نیست. `i18n: true` یا `i18n: duplicate` را به فیلدهایی که باید ترجمه شوند اضافه کنید.'
     # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
     missing_field_name: فیلد {$count} باید دارای گزینه `name` تعریف‌شده به عنوان رشته غیرخالی باشد.
     # {$name} is the invalid or duplicate field name
@@ -1625,6 +2529,8 @@ config:
     invalid_variable_type: نام نوع متغیر `{$name}` نامعتبر است. نباید شامل کاراکترهای خاص باشد.
     duplicate_variable_type: نام‌های نوع متغیر باید یکتا باشند، اما `{$name}` بیش از یک‌بار استفاده شده است.
     date_field_type: 'نوع فیلد منسوخ‌شده Date در Sveltia CMS پشتیبانی نمی‌شود. از نوع فیلد DateTime با گزینه `type: date` استفاده کنید.'
+    # curly brackets in the placeholder are escaped with backslashes for MessageFormat 2
+    hidden_field_locale_without_i18n: گزینه `default` یک فیلد Hidden از جانگهدار `\{\{locale\}\}` استفاده می‌کند، اما i18n برای مجموعه فعال نیست، بنابراین محتوا زبانی برای پر کردن آن ندارد.
     # {$timeZone} is the invalid IANA timezone identifier from the configuration
     invalid_timezone: 'منطقه زمانی نامعتبر: {$timeZone}. باید یک شناسه منطقه زمانی معتبر IANA مانند `America/New_York` یا `Asia/Tokyo` باشد.'
     # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
@@ -1637,12 +2543,85 @@ config:
     invalid_list_variable_type: نوع متغیر فیلد List نامعتبر است. گزینه `widget` روی `{$widget}` تنظیم شده است اما باید `object` باشد.
     # Don’t localize `fields`, and `types`
     invalid_object_field: فیلد Object نمی‌تواند گزینه‌های `fields` و `types` را هم‌زمان داشته باشد.
+    # {$min} and {$max} are option names such as `min` and `max` or `minlength` and `maxlength`
+    invalid_range_options: گزینه `{$min}` نباید بزرگ‌تر از گزینه `{$max}` باشد.
+    # {$step} is the configured value; Don’t localize `step`
+    invalid_step: گزینه `step` روی `{$step}` تنظیم شده است، اما باید بزرگ‌تر از صفر باشد، یا `-1` برای خاموش کردن گام‌بندی.
+    # Don’t localize `options`
+    select_field_no_options: فیلد Select باید حداقل یک آیتم در گزینه `options` داشته باشد.
+    # {$value} is the option value from the configuration; Don’t localize `options`
+    select_field_duplicate_option: مقادیر `options` فیلد Select باید یکتا باشند، اما `{$value}` بیش از یک‌بار استفاده شده است.
+    # {$value} is the default value from the configuration; Don’t localize `default` and `options`
+    select_field_invalid_default: گزینه `default` فیلد Select روی `{$value}` تنظیم شده است، اما جزو `options` نیست.
+    # Don’t localize `fields` and `types`
+    list_field_no_subfields: گزینه `fields` یا `types` فیلد List باید حداقل یک آیتم داشته باشد. برای لیستی از مقادیر ساده، این گزینه را حذف کنید.
+    # Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_object: گزینه `default` فیلد List شامل یک شیء است، اما هر آیتم باید یک مقدار ساده باشد زیرا فیلد هیچ `fields` یا `types` ندارد.
+    # {$value} is the default item from the configuration; Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_item: گزینه `default` فیلد List شامل `{$value}` است، اما هر آیتم باید یک شیء باشد زیرا فیلد دارای `fields` یا `types` است.
+    # {$key} is a property name of the default item from the configuration; Don’t localize `default`
+    list_field_invalid_default_key: گزینه `default` فیلد List شامل آیتمی با ویژگی `{$key}` است، اما هیچ زیرفیلدی این نام را ندارد.
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    list_field_default_missing_type: گزینه `default` فیلد List شامل آیتمی بدون ویژگی `{$typeKey}` است که یکی از `types` را مشخص می‌کند.
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default item; Don’t localize `default` and `types`
+    list_field_invalid_default_type: گزینه `default` فیلد List شامل آیتمی است که ویژگی `{$typeKey}` آن `{$value}` است، اما جزو `types` نیست.
+    # Don’t localize `map_key_field`, `fields` and `types`
+    list_field_map_key_no_subfields: گزینه `map_key_field` فیلد List نیازمند گزینه `fields` یا `types` است، زیرا هر کلید از یک زیرفیلد گرفته می‌شود.
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_not_found: گزینه `map_key_field` فیلد List به `{$name}` ارجاع می‌دهد، اما هیچ زیرفیلدی این نام را ندارد.
+    # {$name} is the subfield name, and {$type} is the variable type name; Don’t localize `map_key_field`
+    list_field_map_key_missing_in_type: گزینه `map_key_field` فیلد List به `{$name}` ارجاع می‌دهد، اما نوع `{$type}` هیچ زیرفیلدی با این نام ندارد.
+    # {$name} is the subfield name, and {$widget} is its field type; Don’t localize `map_key_field`
+    list_field_map_key_invalid_type: گزینه `map_key_field` فیلد List به `{$name}` ارجاع می‌دهد، اما این زیرفیلد باید از نوع String، Relation یا Select باشد، نه فیلد `{$widget}`.
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `multiple`
+    list_field_map_key_multiple: گزینه `map_key_field` فیلد List به `{$name}` ارجاع می‌دهد، اما این زیرفیلد نمی‌تواند چند مقدار بپذیرد، زیرا هر آیتم به یک کلید واحد نیاز دارد. گزینه `multiple` آن را حذف کنید.
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_option_not_string: گزینه `map_key_field` فیلد List به `{$name}` ارجاع می‌دهد، اما گزینه‌های این زیرفیلد باید مقادیر رشته‌ای داشته باشند، زیرا هر کلید به صورت رشته ذخیره می‌شود.
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `required`
+    list_field_map_key_not_required: گزینه `map_key_field` فیلد List به `{$name}` ارجاع می‌دهد، اما این زیرفیلد نمی‌تواند اختیاری باشد، زیرا هر آیتم به یک کلید نیاز دارد. گزینه `required` آن را حذف کنید.
+    # {$name} is the subfield name; Don’t localize `map_key_field`, `i18n: false` and `i18n: duplicate`
+    list_field_map_key_not_localized: 'گزینه `map_key_field` فیلد List به `{$name}` ارجاع می‌دهد، اما این زیرفیلد نمی‌تواند `i18n: false` داشته باشد، زیرا آیتم‌ها در هر زبان به یک کلید نیاز دارند. از `i18n: duplicate` استفاده کنید یا این گزینه را حذف کنید.'
+    # Don’t localize `i18n`, `duplicate_if_empty`, `multiple` and `true`
+    duplicate_if_empty_multiple: 'گزینه `i18n: duplicate_if_empty` برای فیلدی با گزینه `multiple` پشتیبانی نمی‌شود، بنابراین فیلد مانند فیلدی با `i18n: true` عمل می‌کند.'
+    # Don’t localize `default` and `multiple`
+    invalid_default_multiple: گزینه `default` باید یک آرایه باشد زیرا گزینه `multiple` برابر `true` است.
+    invalid_default_single: گزینه `default` باید یک مقدار واحد باشد، نه آرایه، زیرا گزینه `multiple` برابر `true` نیست.
+    # {$key} is a property name of the default object from the configuration; Don’t localize `default`
+    object_field_invalid_default_key: گزینه `default` فیلد Object دارای ویژگی `{$key}` است، اما هیچ زیرفیلدی این نام را ندارد.
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    object_field_default_missing_type: گزینه `default` فیلد Object ویژگی `{$typeKey}` را ندارد که یکی از `types` را مشخص می‌کند.
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default object; Don’t localize `default` and `types`
+    object_field_invalid_default_type: ویژگی `{$typeKey}` در گزینه `default` فیلد Object برابر `{$value}` است، اما جزو `types` نیست.
+    # Don’t localize `default` and `output_code_only`
+    code_field_invalid_default_object: گزینه `default` فیلد Code باید یک رشته باشد زیرا گزینه `output_code_only` برابر `true` است.
+    # {$key} is a property name of the default object, {$code} and {$lang} are the configured property names; Don’t localize `default` and `keys`
+    code_field_invalid_default_key: گزینه `default` فیلد Code دارای ویژگی `{$key}` است، اما گزینه `keys` فقط `{$code}` و `{$lang}` را مجاز می‌داند.
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_invalid_expression: گزینه `value` فیلد Compute باید یک عبارت حسابی معتبر باشد، مانند `\{\{fields.price\}\} * \{\{fields.quantity\}\}`، زیرا گزینه `value_type` برابر `{$valueType}` است.
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_uuid_in_expression: گزینه `value` فیلد Compute نمی‌تواند از برچسب UUID مانند `\{\{uuid\}\}` استفاده کند، زیرا گزینه `value_type` برابر `{$valueType}` است که آن را به یک عبارت حسابی تبدیل می‌کند.
+    # {$value} is the default value and {$valueType} is the configured value type; Don’t localize `default` and `value_type`
+    number_field_default_not_integer: گزینه `default` فیلد Number روی `{$value}` تنظیم شده است، اما باید یک عدد صحیح باشد زیرا گزینه `value_type` برابر `{$valueType}` است.
+    number_field_default_not_number: گزینه `default` فیلد Number روی `{$value}` تنظیم شده است، اما باید یک عدد باشد زیرا گزینه `value_type` برابر `{$valueType}` است.
+    # Don’t localize `fields` and `types`
+    object_field_no_subfields: گزینه `fields` یا `types` فیلد Object باید حداقل یک آیتم داشته باشد.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: مجموعه ارجاع‌شده `{$collection}` نامعتبر است یا تعریف نشده است.
     relation_field_invalid_collection_file: فایل ارجاع‌شده `{$file}` نامعتبر است یا تعریف نشده است.
     # Don’t localize `file`
     relation_field_missing_file_name: گزینه `file` باید برای ارتباط با یک مجموعه فایل تعریف شود.
     relation_field_invalid_value_field: فیلد مقدار ارجاع‌شده `{$field}` نامعتبر است یا تعریف نشده است.
+    # {$collection} is the referenced collection name; Don’t localize `file`, `value_field` and `slug`.
+    # The curly brackets are escaped with backslashes for MessageFormat 2
+    relation_field_array_file_slug: ارتباط با مجموعه `{$collection}` نمی‌تواند مقدار `\{\{slug\}\}` را ذخیره کند، زیرا اسلاگ هر ورودی در مجموعه‌ای با گزینه `file` موقعیت آن است که با تغییر ترتیب یا حذف ورودی‌ها تغییر می‌کند. به جای آن گزینه `value_field` را روی فیلدی با مقدار یکتا تنظیم کنید.
+    # {$collection} is the referenced collection name; Don’t localize `file`
+    relation_field_array_file_workflow: مجموعه‌ای با گزینه `file` نمی‌تواند با مجموعه `{$collection}` ارتباط داشته باشد که از گردش کار تحریریه یا گردش کار پیش‌نمایش استفاده می‌کند، زیرا ارجاع‌ها به ورودی‌ای که در آنجا تغییر نام داده یا حذف شود، در فایل قابل به‌روزرسانی نیستند.
+    relation_field_invalid_display_field: فیلد نمایش ارجاع‌شده `{$field}` نامعتبر است یا تعریف نشده است.
+    relation_field_invalid_search_field: فیلد جستجوی ارجاع‌شده `{$field}` نامعتبر است یا تعریف نشده است.
+    relation_field_invalid_filter_field: فیلد فیلتر ارجاع‌شده `{$field}` نامعتبر است یا تعریف نشده است.
+    relation_field_invalid_sort_field: فیلد مرتب‌سازی ارجاع‌شده `{$field}` نامعتبر است یا تعریف نشده است.
+    # Don’t localize `sort_by` and `file`
+    relation_field_sort_by_file_ignored: گزینه `sort_by` برای ارتباط با یک فایل اعمال نمی‌شود، زیرا گزینه‌های آن از ترتیب آیتم‌های لیست پیروی می‌کنند. این گزینه نادیده گرفته خواهد شد.
     unexpected: خطای غیرمنتظره
 
     # Schema validation errors, reported when the configuration doesn’t match the published JSON
@@ -1675,18 +2654,56 @@ config:
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: شناسه برنامه OAuth تعریف نشده است. کاربران برای ورود باید یک توکن دسترسی ارائه دهند.
+    # Don’t localize `prefix`
+    site_library_prefix_template: گزینه `prefix` یک کتابخانه رسانه شامل برچسب‌های قالب است که فقط در سطح فیلد پشتیبانی می‌شوند، زیرا در سطح بالا ورودی‌ای برای پر کردن آن‌ها وجود ندارد.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: گزینه `{$prop}` در Sveltia CMS پشتیبانی نمی‌شود. این گزینه نادیده گرفته خواهد شد.
+    # Don’t localize `stages`, `publish_mode`, `editorial_workflow` and {$type}, which is `preview` or `simple`
+    publish_mode_stages_ignored: گزینه `stages` در `publish_mode` فقط برای حالت انتشار `editorial_workflow` اعمال می‌شود، بنابراین با `{$type}` نادیده گرفته می‌شود.
+    # Don’t localize `pattern`, `m` and `s`
+    inline_component_multiline_pattern: '`pattern` این کامپوننت درون‌خطی دارای پرچم `m` یا `s` است یا با شکستگی خط مطابقت دارد، اما کامپوننت درون‌خطی فقط درون یک پاراگراف تطبیق داده می‌شود.'
+    # {$name} is a button or component name and {$option} is `buttons` or `editor_components`; Don’t localize them and `multiline: false`
+    single_line_block_item: 'آیتم `{$name}` از گزینه `{$option}` نادیده گرفته می‌شود، زیرا فیلدی با `multiline: false` فقط می‌تواند محتوای درون‌خطی نگه دارد.'
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: هر دو گزینه `picker_utc` و گزینه‌های جدیدتر منطقه زمانی (`input_timezone` یا `output_utc`) تنظیم شده‌اند. گزینه‌های جدید اولویت دارند. حذف `picker_utc` را از پیکربندی خود مد نظر قرار دهید.
+    # Don’t localize `localize_format` and `format`
+    localize_format_without_format: گزینه `localize_format` هیچ تأثیری ندارد، زیرا فیلد گزینه `format` ندارد و مقدار آن در فرمت ISO 8601 ذخیره می‌شود.
+    # {$name} is a template tag like `fields.lines.*.price`; Don’t localize `value`, `*` and `sum()`
+    compute_field_wildcard_without_item: گزینه `value` فیلد Compute به `{$name}` ارجاع می‌دهد، اما فیلد درون آیتمی از لیستی که `*` نماینده آن است قرار ندارد، بنابراین به هیچ مقداری تبدیل نمی‌شود. فقط یک تابع تجمیعی مانند `sum()` می‌تواند از همه آیتم‌های یک لیست استفاده کند.
+    # {$name} is a template tag like `fields.lines.*.amount`; Don’t localize `value`
+    compute_field_self_reference: گزینه `value` فیلد Compute با `{$name}` به خود فیلد ارجاع می‌دهد، بنابراین مقدار آن با هر بار محاسبه تغییر می‌کند و هرگز ثابت نمی‌شود.
+    # {$name} is a template tag like `fields.total`; Don’t localize `value`
+    compute_field_reference_cycle: گزینه `value` فیلد Compute به `{$name}` ارجاع می‌دهد، که فیلد Compute دیگری است که به طور مستقیم یا از طریق فیلدهای دیگر به این فیلد ارجاع می‌دهد، بنابراین مقادیر آن‌ها هرگز ثابت نمی‌شوند.
+    # Don’t localize `localize_format`, `true` and `de`
+    localize_format_without_i18n: گزینه `localize_format` برابر `true` است، اما i18n برای مجموعه فعال نیست، بنابراین مقدار به انگلیسی نوشته می‌شود. به جای آن، گزینه را روی یک کد زبان مانند `de` تنظیم کنید.
+    # {$locale} is the locale code from the configuration; Don’t localize `localize_format`
+    localize_format_unsupported_locale: گزینه `localize_format` روی `{$locale}` تنظیم شده است که زبان پشتیبانی‌شده‌ای نیست، بنابراین مقدار به انگلیسی نوشته می‌شود.
     # Don’t localize `preview_path`
     preview_path_no_date_field: گزینه `preview_path` از برچسب‌های تاریخ و زمان استفاده می‌کند، اما مجموعه هیچ فیلد DateTime برای خواندن آن‌ها ندارد، بنابراین لینک پیش‌نمایش نمایش داده نخواهد شد.
     # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
     preview_path_date_field_not_found: گزینه `preview_path_date_field` به فیلدی به نام `{$name}` ارجاع می‌دهد، اما هیچ فیلد DateTime با این نام تعریف نشده است، بنابراین لینک پیش‌نمایش نمایش داده نخواهد شد.
     # {$name} is the template tag from the configuration; Don’t localize `preview_path`
     preview_path_field_not_found: گزینه `preview_path` به `{$name}` ارجاع می‌دهد، اما چنین فیلدی در مجموعه تعریف نشده است، بنابراین لینک پیش‌نمایش نمایش داده نخواهد شد.
+    # {$name} is the default identifier field name; Don’t localize `identifier_field` and `slug`
+    missing_identifier_field: مجموعه هیچ فیلد `{$name}` برای نام‌گذاری ورودی‌های جدید ندارد، بنابراین هر ورودی جدید یک اسلاگ تصادفی می‌گیرد. یک فیلد `{$name}` اضافه کنید، یا گزینه `identifier_field` یا `slug` را تنظیم کنید.
+    # Don’t localize `slug`, `i18n`, `multiple_files`, `multiple_folders` and `multiple_root_folders`
+    slug_i18n_ineffective: گزینه `i18n` در `slug` هیچ تأثیری ندارد، زیرا مجموعه از ساختار i18n از نوع `multiple_files`، `multiple_folders` یا `multiple_root_folders` استفاده نمی‌کند که در آن هر زبان فایل خود را دارد.
+    # Don’t localize `slug`, `template` and `auto_increment`
+    slug_template_ignored: گزینه `template` در `slug` نادیده گرفته می‌شود، زیرا گزینه `auto_increment` به جای آن اسلاگ‌ها را شماره‌گذاری می‌کند.
+    # {$file} is the file path; Don’t localize `file`, `locale`, `i18n`, `false`,
+    # `omit_default_locale_from_file_path` and the example paths. The curly brackets in the examples
+    # are escaped with backslashes for MessageFormat 2
+    locale_not_omitted_from_file_path: جانگهدار `locale` را نمی‌توان از مسیر `file` با مقدار `{$file}` حذف کرد، بنابراین با وجود گزینه i18n با نام `omit_default_locale_from_file_path`، زبان پیش‌فرض در آن باقی می‌ماند. برای حذف زبان، از جانگهدار به عنوان نام کامل یک پوشه استفاده کنید، مانند `\{\{locale\}\}/about.md`، یا آن را بین نام فایل و پسوند قرار دهید، مانند `about.\{\{locale\}\}.md`. برای حفظ آن، گزینه را در گزینه `i18n` فایل روی `false` تنظیم کنید.
+    # Don’t localize `i18n`
+    i18n_not_configured: گزینه `i18n` فعال است، اما i18n در سطح بالای پیکربندی یا در مجموعه پیکربندی نشده است، بنابراین این گزینه هیچ تأثیری ندارد.
+    # Don’t localize `public_folder` and `media_folder`
+    empty_public_folder: گزینه `public_folder` یک رشته خالی است، بنابراین به جای آن از مسیر `media_folder` برای مسیرهای دارایی ذخیره‌شده در ورودی‌ها استفاده می‌شود. این گزینه را حذف کنید، یا آن را روی مسیری که می‌خواهید استفاده کنید، مانند `/images`، تنظیم کنید.
     # {$option} is an option path from the configuration, such as `filter.Regulation`
     schema_unknown_option: گزینه `{$option}` در طرحواره پیکربندی Sveltia CMS تعریف نشده است. این گزینه نادیده گرفته خواهد شد. وجود اشتباه تایپی یا خطای نحوی را بررسی کنید.
+    # Don’t localize `default_localized`, `default` and `i18n`
+    default_localized_without_i18n: گزینه `default_localized` هیچ تأثیری ندارد، زیرا i18n برای مجموعه فعال نیست. به جای آن از گزینه `default` استفاده کنید.
+    # {$locale} is a locale code from the configuration; Don’t localize `default_localized`
+    default_localized_unknown_locale: گزینه `default_localized` مقداری برای `{$locale}` دارد که جزو زبان‌های مجموعه نیست، بنابراین این مقدار هرگز استفاده نمی‌شود.
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'برای جزئیات یادداشت‌های سازگاری را ببینید: {$link}'
@@ -1719,6 +2736,11 @@ viewing_editorial_workflow: 'شما اکنون در حال مشاهده تابل
 # Same as above, for an Open Authoring contributor: their board has no Ready column, because only
 # a maintainer can publish
 viewing_open_authoring_workflow: 'شما اکنون در حال مشاهده تابلوی گردش کار تحریریه هستید. پیش‌نویس‌ها: {$draft}. در حال بررسی: {$review}. در انتظار حذف: {$deletion}.'
+# Same as above, when the In Review stage is left out with the `stages` publish mode option
+viewing_editorial_workflow_without_review: 'شما اکنون در حال مشاهده تابلوی گردش کار تحریریه هستید. پیش‌نویس‌ها: {$draft}. آماده: {$ready}. در انتظار حذف: {$deletion}.'
+# Same as above, when all the content uses Preview Workflow, which has no review stages, so the
+# page only lists the drafts
+viewing_preview_workflow: 'شما اکنون در حال مشاهده صفحه پیش‌نویس‌ها هستید. پیش‌نویس‌ها: {$draft}. در انتظار حذف: {$deletion}.'
 
 # Workflow status names. `drafts` is the plural form used as a column heading,
 # while `draft` is the singular form used in the editor’s status button.
@@ -1730,6 +2752,10 @@ status:
   # A pending removal, which is a status of its own rather than a stage: it has no review to go
   # through, only the deletion itself to carry out or call off
   pending_deletion: در انتظار حذف
+  # Merged changes the site hasn’t caught up with yet: it’s being rebuilt and deployed from the
+  # merge, so a published entry isn’t live and a deleted one is still up. Heading of the tray below
+  # the board that lists them until the site has caught up
+  deploying: در حال استقرار
 
 workflow:
   # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
@@ -1773,6 +2799,14 @@ workflow:
   status_updated: وضعیت به‌روزرسانی شد.
   # Error notification when the status could not be changed
   status_change_failed: تغییر وضعیت امکان‌پذیر نبود. لطفاً دوباره تلاش کنید.
+  # Workflow page: toolbar button that reads the pull requests again, to pick up the changes made
+  # by anyone else since the board was loaded, and the toast notifications shown while doing so and
+  # once done
+  refresh: تازه‌سازی
+  refreshing: در حال تازه‌سازی…
+  refreshed: تابلو به‌روز است.
+  # Error notification when the board could not be refreshed
+  refresh_failed: تازه‌سازی تابلو امکان‌پذیر نبود. لطفاً دوباره تلاش کنید.
   # Error notification when the status can’t be changed because the entry is incomplete. Required
   # fields can be left empty while the entry is a draft, but not once it moves on from there
   status_change_blocked: ورودی دارای خطا است. لطفاً پیش از تغییر وضعیت، آن‌ها را اصلاح کنید.
@@ -1783,6 +2817,10 @@ workflow:
   # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
   send_for_review: ارسال برای بررسی
   confirm_sending_for_review: تغییرات شما به عنوان پیش‌نویس ذخیره شده است. ورودی را برای بررسی ارسال می‌کنید تا فردی آن را بررسی و منتشر کند؟
+  # Same as above, when the In Review stage is left out with the `stages` publish mode option, so
+  # the next step is to mark the entry as ready to be published
+  mark_as_ready: علامت‌گذاری به عنوان آماده
+  confirm_marking_as_ready: تغییرات شما به عنوان پیش‌نویس ذخیره شد. ورودی را به عنوان آماده علامت‌گذاری می‌کنید تا قابل انتشار باشد؟
   # Editor toolbar: button shown when the entry is ready to be published
   publish_entry: انتشار ورودی
   # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
@@ -1814,6 +2852,8 @@ workflow:
     .match $count
       one {{ یکی از آن‌ها هنوز منتشر نشده است، بنابراین تغییرات منتشرنشده شما دور انداخته خواهند شد. هر نسخه منتشرشده‌ای منتشرشده باقی خواهد ماند. }}
       *   {{ {$count} مورد از آن‌ها هنوز منتشر نشده‌اند، بنابراین تغییرات منتشرنشده شما دور انداخته خواهند شد. هر نسخه منتشرشده‌ای منتشرشده باقی خواهند ماند. }}
+  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
+  confirm_publishing_entry_after_build: آیا مطمئن هستید که می‌خواهید این ورودی را منتشر کنید؟ تغییرات شما پس از بازسازی سایت آنلاین خواهند شد.
   # Workflow page: toast notifications shown while an entry is being published from a card, and
   # once publishing has completed
   publishing_entry: در حال انتشار ورودی…
@@ -1825,10 +2865,55 @@ workflow:
   entry_deleted: ورودی حذف شد.
   # Error notification when publishing fails
   publishing_entry_failed: انتشار ورودی امکان‌پذیر نبود. لطفاً دوباره تلاش کنید.
+  # Error notification when an entry can’t be published from the CMS, because its request also
+  # changes files that aren’t part of the entry and that the CMS doesn’t show, goes somewhere other
+  # than the site’s branch, or is too large to check. Keep the wording free of Git jargon
+  publish_refused_other_changes: این ورودی را نمی‌توان در اینجا منتشر کرد، زیرا همراه با تغییرات دیگری است که CMS نمی‌تواند به شما نشان دهد. از یک توسعه‌دهنده بخواهید آن را بررسی کند.
+  # Error notification when an entry can’t be published because its branch has been committed to
+  # since the entry was opened, so what would be published isn’t what was reviewed
+  publish_refused_entry_changed: ورودی پس از باز کردن آن توسط شما تغییر کرده است. صفحه را دوباره بارگذاری کنید تا پیش از انتشار، آخرین نسخه را بررسی کنید.
+  review_on_x: بررسی در {$service}
+  from_fork: از یک فورک
+  fork_entry_editable: این ورودی از درخواست ادغام یک مشارکت‌کننده می‌آید که از «{$fork}» باز شده است. تغییرات شما در شاخه او ذخیره می‌شوند. درخواست ادغام را در سرویس Git بررسی و ادغام کنید.
+  fork_entry_locked: این ورودی از درخواست ادغام یک مشارکت‌کننده می‌آید که از «{$fork}» باز شده است. مشارکت‌کننده اجازه ویرایش آن را به نگه‌دارندگان نمی‌دهد، بنابراین در اینجا فقط قابل مشاهده است.
+  fork_not_editable: مشارکت‌کننده اجازه ویرایش این درخواست ادغام را به نگه‌دارندگان نمی‌دهد.
+  fork_entry_gone: درخواست ادغام مشارکت‌کننده دیگر باز نیست، بنابراین تغییرات را نمی‌توان در آن ذخیره کرد.
+  # Error shown in the save error dialog when an entry can’t be saved for review, because a request
+  # the CMS doesn’t show is already open from the branch the entry would be saved to. `{$number}` is
+  # the request number, e.g. `#12` on GitHub or `!12` on GitLab. Keep the wording free of Git jargon
+  branch_in_use: درخواست دیگری ({$number}) از قبل برای این ورودی خارج از CMS باز است. از یک توسعه‌دهنده بخواهید ابتدا آن را ببندد.
   # Workflow page: empty column message
   no_entries: بدون ورودی.
   # Workflow page: aria-label for a draggable entry card
   drag_entry: کشیدن برای تغییر وضعیت
+  # Workflow page: note on a card in the Deploying tray, marking an entry that’s being removed from
+  # the site rather than published to it
+  deploying_deletion: حذف
+  # Workflow page: note on a card listing the new entries that were created from a Relation field
+  # of the entry and are published along with it, e.g. “Also adds Section: Getting Started”
+  companion_entries: همچنین افزودن {$entries}
+  # Workflow page: note on a card listing the existing entries that were edited from a Relation
+  # field of the entry and are published along with it, e.g. “Also changes Author: Ada Lovelace”
+  edited_companion_entries: همچنین تغییر {$entries}
+  # Workflow page: one of the entries listed by `companion_entries` or `edited_companion_entries`,
+  # named by its collection’s singular label and its title
+  companion_entry: '{$collection}: {$title}'
+
+# Dialog asking the user for a commit message every time changes are saved, when the site is
+# configured to. The message is recorded in the repository’s history along with the changes
+commit_message:
+  # Dialog title
+  title: پیام کامیت
+  # Description when the user writes the whole message, which the text box is filled in with
+  description_replace: تغییرات خود را شرح دهید. این پیام همراه با آن‌ها در تاریخچه ثبت می‌شود.
+  # Description when the text the user enters is added before or after a message the CMS writes
+  description_addition: یادداشتی به پیامی که همراه با تغییرات شما در تاریخچه ثبت می‌شود اضافه کنید، مانند شماره یک مسئله (issue). می‌توانید آن را خالی بگذارید.
+  # Accessible name of the text box when the user writes the whole message
+  message: پیام کامیت
+  # Accessible name of the text box when the text is added before or after the message
+  addition: یادداشت
+  # Preview of the message as it will be recorded. {$message} is the message
+  preview: 'پیام: {$message}'
 
 # Open Authoring: a contributor without write access to the configured repository works in a fork
 # of it, and their changes reach the site through a pull request a maintainer merges
@@ -1842,6 +2927,10 @@ open_authoring:
   fork_declined: برای پیشنهاد تغییرات به یک فورک از مخزن روی حساب کاربری خود نیاز دارید.
   # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
   fork_failed: ایجاد فورک از مخزن «{$repo}» روی حساب کاربری شما امکان‌پذیر نبود.
+  # Error shown when the user’s fork doesn’t have the branch the CMS is configured with, so there’s
+  # nothing to start their changes from. {$fork} and {$repo} are repository identifiers in
+  # owner/repo format, {$branch} is the branch name
+  fork_branch_missing: فورک «{$fork}» شما شاخه «{$branch}» را ندارد. فورک را از مخزن «{$repo}» به‌روزرسانی کنید، سپس دوباره وارد شوید.
   # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
   # because the API rate limit is exhausted. {$repo} is the repository identifier
   permission_check_failed: بررسی دسترسی شما به مخزن «{$repo}» امکان‌پذیر نبود. لطفاً لحظاتی دیگر دوباره تلاش کنید.
@@ -1856,6 +2945,10 @@ open_authoring:
   private_repo_scope_required: ورود شما شامل دسترسی به مخازن خصوصی نیست، بنابراین مخزن «{$repo}» قابل خواندن نیست. از یک مدیر بخواهید تنظیمات احراز هویت CMS را بررسی کند.
   # Error shown when a contributor tries to publish an entry, which only a maintainer can do
   publish_unsupported: فقط یک مدیر می‌تواند تغییرات این سایت را منتشر کند. ورودی خود را به عنوان «در حال بررسی» علامت‌گذاری کنید تا شخص دیگری آن را بررسی کند.
+  # Error shown when a contributor changes the status of an entry whose request a maintainer has
+  # published since the page was loaded, leaving nothing to review. The entry then leaves the
+  # Editorial Workflow board and the editor closes. Keep the wording free of Git jargon
+  entry_already_published: یکی از نگه‌دارندگان این ورودی را قبلاً منتشر کرده است، بنابراین چیزی برای بررسی باقی نمانده است.
   # Error shown when a change would go straight to the site instead of being reviewed, which a
   # contributor can’t do. It covers media library uploads and deletions, and entry reordering
   direct_commit_unsupported: این تغییر نمی‌تواند به طور مستقیم انجام شود. فقط ویرایش‌های ورودی‌ها را می‌توان برای بررسی پیشنهاد داد.
@@ -1871,11 +2964,10 @@ open_authoring:
 # Settings page aria-label
 categories: دسته‌بندی‌ها
 
-# Site Configuration Editor
-site_configuration_editor: ویرایشگر پیکربندی سایت
-
 # Preferences panels
 prefs:
+  account:
+    title: حساب کاربری
   # API key management feedback messages
   changes:
     api_key_saved: کلید API ذخیره شد.
@@ -1925,7 +3017,7 @@ prefs:
         select_service: انتخاب سرویس
       api_keys:
         title: کلیدهای API سرویس ترجمه
-        description: مدیریت کلیدهای API برای <a>سرویس‌های ترجمه</a>.
+        description: مدیریت کلیدهای API برای <a>سرویس‌های ترجمه</a>. کلیدهای API سرویس‌های عمومی هوش مصنوعی را می‌توان در تنظیمات هوش مصنوعی مدیریت کرد.
       # API key input label, e.g., “DeepL Key”
       # {$service} is the translation service name
       field_label: کلید {$service}
@@ -1959,6 +3051,16 @@ prefs:
       field_label: کلید API سرویس {$service}
       no_services: هیچ <a>سرویس ذخیره‌سازی ابری</a> پیکربندی نشده است.
 
+  # AI panel
+  ai:
+    title: هوش مصنوعی
+    api_keys:
+      title: کلیدهای API سرویس هوش مصنوعی
+      description: مدیریت کلیدهای API برای سرویس‌های هوش مصنوعی.
+    # API key input label, e.g., “OpenAI GPT API Key”
+    # {$service} is the AI service name
+    field_label: کلید API سرویس {$service}
+
   # Accessibility panel
   accessibility:
     title: دسترسی‌پذیری
@@ -1969,6 +3071,7 @@ prefs:
 
   # Data Management panel
   data:
+    title: مدیریت داده‌ها
     clear_data:
       title: پاک‌سازی داده‌ها
       # Clear File Cache button
@@ -1984,13 +3087,23 @@ prefs:
 
   # Developer panel
   developer:
+    title: توسعه‌دهنده
     developer_mode:
       title: حالت توسعه‌دهنده
       description: فعال‌سازی برخی ویژگی‌های مخصوص توسعه‌دهندگان، از جمله لوگ‌های تفصیلی کنسول و منوهای زمینه بومی.
       switch_label: فعال‌سازی حالت توسعه‌دهنده
+    local_git:
+      title: کامیت‌های Git
+      description: هر بار که تغییرات خود را ذخیره می‌کنید، آن‌ها را در شاخه فعلی مخزن محلی خود کامیت کنید، همان‌طور که CMS هنگام کار با مخزن راه دور انجام می‌دهد. سپس می‌توانید کامیت‌ها را با ابزارهای معمول Git خود بررسی و push کنید.
+      switch_label: کامیت تغییرات در Git
+      checking: در حال بررسی مخزن…
+      # {$branch} is the branch name, {$name} and {$email} are the commit author’s name and email address
+      ready: تغییرات در شاخه {$branch} به نام {$name} ({$email}) کامیت خواهند شد.
+      # {$reason} is one of the `local_git_skip_reasons` strings
+      not_ready: در حال حاضر نمی‌توان تغییرات را کامیت کرد. {$reason}
     deploy_hook:
       title: هوک انتشار (Deploy Hook)
-      description: آدرس وب‌هوک را وارد کنید تا هنگام فراخوانی دستی انتشار با انتخاب «انتشار تغییرات»، فراخوانی شود. اگر از GitHub Actions استفاده می‌کنید می‌توانید این را خالی بگذارید.
+      description: آدرس وب‌هوک را وارد کنید تا هنگام فراخوانی دستی انتشار با انتخاب «انتشار تغییرات»، فراخوانی شود. اگر از GitHub Actions یا GitLab CI/CD استفاده می‌کنید می‌توانید این را خالی بگذارید.
       # Hook URL input
       url:
         field_label: آدرس URL هوک

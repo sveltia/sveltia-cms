@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { cmsConfig } from '$lib/services/config/state';
 
@@ -349,6 +349,24 @@ describe('integrations/media-libraries/cloud/azure-blob-storage', () => {
 
       expect(fetch).toHaveBeenCalledWith(
         `${containerURL}?restype=container&comp=list&maxresults=1000&${token}`,
+      );
+    });
+
+    it('should refuse to send the token to a custom endpoint over plain HTTP', async () => {
+      await expect(
+        listBlobs({ ...config, endpoint: 'http://cdn.example.com' }, { apiKey: token }),
+      ).rejects.toThrow('Refusing to send credentials over an insecure connection');
+      expect(fetch).not.toHaveBeenCalled();
+    });
+
+    it('should allow a local emulator endpoint over plain HTTP', async () => {
+      vi.mocked(fetch).mockResolvedValue(new Response(buildListXml([sampleBlob]), { status: 200 }));
+
+      const endpoint = 'http://127.0.0.1:10000/devstoreaccount1';
+
+      expect(await listBlobs({ ...config, endpoint }, { apiKey: token })).toHaveLength(1);
+      expect(fetch).toHaveBeenCalledWith(
+        `${endpoint}/${container}?restype=container&comp=list&maxresults=1000&${token}`,
       );
     });
 
@@ -744,6 +762,10 @@ describe('integrations/media-libraries/cloud/azure-blob-storage', () => {
   });
 
   describe('renameBlob', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
     /** @type {any} */
     const asset = {
       id: 'images/my photo.jpg',
@@ -763,6 +785,7 @@ describe('integrations/media-libraries/cloud/azure-blob-storage', () => {
       );
 
     it('should copy the blob to the new name and delete the original', async () => {
+      vi.useFakeTimers({ now: new Date('2025-06-01T12:00:00Z'), toFake: ['Date'] });
       vi.mocked(fetch)
         .mockResolvedValueOnce(createEmptyListing())
         .mockResolvedValue(new Response(null, { status: 201 }));
@@ -785,7 +808,8 @@ describe('integrations/media-libraries/cloud/azure-blob-storage', () => {
           id: 'images/renamed.jpg',
           fileName: 'renamed.jpg',
           size: 1234,
-          lastModified: asset.lastModified,
+          // The copy is a new blob, so it’s been modified just now, not when the source was
+          lastModified: new Date('2025-06-01T12:00:00Z'),
           kind: 'image',
         }),
       );
@@ -810,7 +834,7 @@ describe('integrations/media-libraries/cloud/azure-blob-storage', () => {
       );
       expect(result.id).toBe('renamed.jpg');
       expect(result.size).toBeUndefined();
-      expect(result.lastModified).toBeUndefined();
+      expect(result.lastModified).toBeInstanceOf(Date);
     });
 
     it('should reject when the token is missing', async () => {

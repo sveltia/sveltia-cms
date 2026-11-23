@@ -17,7 +17,7 @@
     EMPTY_CASCADE_DELETE_PLAN,
     planCascadeDelete,
   } from '$lib/services/contents/entry/relations/cascade/delete';
-  import { isWorkflowEnabled } from '$lib/services/workflow';
+  import { isDiscardableDraft, isWorkflowEnabled } from '$lib/services/workflow';
   import { deleteOrDiscardEntries } from '$lib/services/workflow/delete';
 
   /**
@@ -35,16 +35,27 @@
   let showErrorToast = $state(false);
   let errorMessage = $state('');
 
-  // Deleting an unpublished entry discards the draft instead of committing a deletion, so the two
-  // kinds of entries have to be handled separately
-  const draftEntries = $derived(
-    /** @type {UnpublishedEntry[]} */ (
-      selectedEntries.current.filter((entry) => 'workflow' in entry)
-    ),
-  );
-  const publishedEntries = $derived(
-    /** @type {Entry[]} */ (selectedEntries.current.filter((entry) => !('workflow' in entry))),
-  );
+  // Deleting an unpublished entry that has never been published discards the draft instead of
+  // committing a deletion, so the two kinds of entries have to be handled separately. An entry with
+  // pending changes to a published version, which the list shows in place of that version, is
+  // deleted like a published one, as the entry editor does: discarding its pull request would leave
+  // the published version on the site
+  const { draftEntries, publishedEntries } = $derived.by(() => {
+    /** @type {UnpublishedEntry[]} */
+    const drafts = [];
+    /** @type {Entry[]} */
+    const published = [];
+
+    selectedEntries.current.forEach((entry) => {
+      if (isDiscardableDraft(entry)) {
+        drafts.push(/** @type {UnpublishedEntry} */ (entry));
+      } else {
+        published.push(entry);
+      }
+    });
+
+    return { draftEntries: drafts, publishedEntries: published };
+  });
 
   // What the deletion means for the entries referencing the published ones through Relation fields.
   // Only worked out while the dialog is open: it scans every entry that could hold a reference,
@@ -84,7 +95,10 @@
         drafts: draftEntries,
         items: publishedEntryAssets,
         collection,
-        useWorkflow: isWorkflowEnabled(collection),
+        // An entry with a pull request stays in it until it’s published or discarded, even if the
+        // collection has opted out of Editorial Workflow since, as in the entry editor
+        useWorkflow:
+          isWorkflowEnabled(collection) || publishedEntries.some((entry) => 'workflow' in entry),
       }),
     );
 

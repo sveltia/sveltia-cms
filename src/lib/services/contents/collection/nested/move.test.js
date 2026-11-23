@@ -6,6 +6,7 @@ import { fillTemplate } from '$lib/services/common/template';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { buildNestedMoveChanges } from '$lib/services/contents/collection/nested/move';
 import { isEntryCollection } from '$lib/services/contents/collection/predicates';
+import { rewriteEntryAssetReferences } from '$lib/services/contents/draft/save/asset-references';
 import {
   buildSingleFileContent,
   getFieldComments,
@@ -27,6 +28,10 @@ vi.mock('$lib/services/contents/collection/predicates', () => ({
 
 vi.mock('$lib/services/contents/collection/entries', () => ({
   getEntriesByCollection: vi.fn(() => []),
+}));
+
+vi.mock('$lib/services/contents/draft/save/asset-references', () => ({
+  rewriteEntryAssetReferences: vi.fn(async ({ savingEntry }) => savingEntry),
 }));
 
 vi.mock('$lib/services/contents/draft/save/content', () => ({
@@ -79,7 +84,7 @@ const collection = {
   name: 'pages',
   folder: 'content/pages',
   nested: {},
-  meta: { path: { widget: 'string', label: 'Path', index_file: '_index' } },
+  meta: { path: { index_file: '_index' } },
   _file: { extension: 'md' },
   _i18n: {
     i18nEnabled: false,
@@ -143,7 +148,7 @@ describe('buildNestedMoveChanges()', () => {
 
     expect(
       await buildNestedMoveChanges({
-        collection: { ...collection, meta: { path: { widget: 'string', label: 'Path' } } },
+        collection: { ...collection, meta: { path: {} } },
         originalEntry: entry('1', 'docs/intro'),
         savingEntry: entry('1', 'guides/intro'),
       }),
@@ -276,6 +281,29 @@ describe('buildNestedMoveChanges()', () => {
     expect(savingEntries[0].refreshed).toBe(true);
   });
 
+  test('rewrites the references to the assets of every moved entry', async () => {
+    const intro = entry('2', 'docs/intro/_index');
+
+    vi.mocked(getEntriesByCollection).mockReturnValue([entry('1', 'docs/_index'), intro]);
+    vi.mocked(rewriteEntryAssetReferences).mockImplementationOnce(async ({ savingEntry }) => ({
+      ...savingEntry,
+      rewritten: true,
+    }));
+
+    const { savingEntries } = await buildNestedMoveChanges({
+      collection,
+      originalEntry: entry('1', 'docs/_index'),
+      savingEntry: entry('1', 'guides/_index'),
+    });
+
+    expect(rewriteEntryAssetReferences).toHaveBeenCalledExactlyOnceWith({
+      collection,
+      originalEntry: intro,
+      savingEntry: expect.objectContaining({ subPath: 'guides/intro/_index' }),
+    });
+    expect(savingEntries[0].rewritten).toBe(true);
+  });
+
   test('moves the entries up to the collection folder', async () => {
     vi.mocked(getEntriesByCollection).mockReturnValue([
       entry('1', 'docs/_index'),
@@ -289,6 +317,54 @@ describe('buildNestedMoveChanges()', () => {
     });
 
     expect(changes[0].path).toBe('content/pages/intro/_index.md');
+  });
+
+  test('moves a single-file i18n entry missing the default locale', async () => {
+    /** @type {any} */
+    const i18nCollection = {
+      ...collection,
+      _i18n: {
+        i18nEnabled: true,
+        allLocales: ['en', 'fr'],
+        defaultLocale: 'en',
+        structureMap: { i18nSingleFile: true },
+      },
+    };
+
+    /**
+     * Create an entry with the French content only.
+     * @param {string} id Entry ID.
+     * @param {string} subPath Entry’s sub path.
+     * @returns {any} Entry.
+     */
+    const frEntry = (id, subPath) => ({
+      id,
+      slug: subPath,
+      subPath,
+      locales: {
+        fr: { slug: subPath, path: `content/pages/${subPath}.md`, content: { title: 'FR' } },
+      },
+    });
+
+    vi.mocked(getEntriesByCollection).mockReturnValue([
+      frEntry('1', 'docs/_index'),
+      frEntry('2', 'docs/intro/_index'),
+    ]);
+
+    const { changes } = await buildNestedMoveChanges({
+      collection: i18nCollection,
+      originalEntry: frEntry('1', 'docs/_index'),
+      savingEntry: frEntry('1', 'guides/_index'),
+    });
+
+    expect(changes).toEqual([
+      expect.objectContaining({
+        action: 'move',
+        slug: 'guides/intro/_index',
+        path: 'content/pages/guides/intro/_index.md',
+        previousPath: 'content/pages/docs/intro/_index.md',
+      }),
+    ]);
   });
 
   test('moves one file per locale with a file-per-locale i18n structure', async () => {

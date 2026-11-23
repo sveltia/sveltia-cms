@@ -1,6 +1,6 @@
 import { createHash } from 'crypto';
 
-import { MockGitRepository } from './git.js';
+import { getBlobSHA, MockGitRepository } from './git.js';
 
 /**
  * @import { Page, Route } from '@playwright/test';
@@ -19,6 +19,8 @@ import { MockGitRepository } from './git.js';
  * @property {boolean} draft Whether the pull request is a draft.
  * @property {string[]} labels Label names.
  * @property {MockUser} author Author.
+ * @property {boolean} maintainerCanModify Whether the author of a pull request from a fork lets
+ * the repository’s maintainers push to its branch.
  * @property {Date} createdAt Creation date.
  * @property {Date} updatedAt Last update date.
  * @property {string} [mergeCommit] SHA of the commit that merged the pull request.
@@ -143,6 +145,13 @@ export class MockGitHub extends MockGitRepository {
    * @type {Map<string, { tree: Map<string, string>, prefix: string }>}
    */
   subtrees = new Map();
+
+  /**
+   * File trees created with the Git Data API, or handed out as a commit’s tree for one to be based
+   * on, keyed by their made-up SHA.
+   * @type {Map<string, Map<string, string>>}
+   */
+  gitDataTrees = new Map();
 
   /**
    * The OAuth scopes of the sign-in, as GitHub reports them in the `X-OAuth-Scopes` header, e.g.
@@ -288,6 +297,31 @@ export class MockGitHub extends MockGitRepository {
   }
 
   /**
+   * Open a pull request for a post from the colleague’s fork, the way the CMS does for an Open
+   * Authoring contributor who sends their entry for review: without a label, which the contributor
+   * can’t add. The fork becomes the colleague’s rather than the signed-in user’s. See
+   * {@link commitContributorPost}.
+   * @param {object} args Arguments.
+   * @param {string} args.slug Entry slug.
+   * @param {Record<string, string | null>} args.files Files to commit to the branch.
+   * @param {boolean} [args.editable] Whether the contributor lets maintainers push to the branch.
+   * @returns {MockPullRequest} Pull request, whose `head` is the branch key, e.g.
+   * `alex:cms/alex/e2e-site/posts/{slug}`.
+   */
+  openContributorRequest({ slug, files, editable = true }) {
+    this.fork = { owner: this.colleague.login, repo: this.repo };
+
+    const { branchKey, title } = this.commitContributorPost({ slug, files });
+
+    return this.openPullRequest({
+      title,
+      head: branchKey,
+      author: this.colleague,
+      maintainerCanModify: editable,
+    });
+  }
+
+  /**
    * Open a pull request.
    * @param {object} args Arguments.
    * @param {string} args.title Title.
@@ -297,6 +331,8 @@ export class MockGitHub extends MockGitRepository {
    * @param {string} [args.body] Description.
    * @param {string[]} [args.labels] Labels.
    * @param {MockUser} [args.author] Author, the colleague by default.
+   * @param {boolean} [args.maintainerCanModify] Whether the author of a pull request from a fork
+   * lets the repository’s maintainers push to its branch.
    * @returns {MockPullRequest} Pull request.
    */
   openPullRequest({
@@ -307,6 +343,7 @@ export class MockGitHub extends MockGitRepository {
     body = '',
     labels = [],
     author = this.colleague,
+    maintainerCanModify = true,
   }) {
     const now = new Date();
 
@@ -322,6 +359,7 @@ export class MockGitHub extends MockGitRepository {
       draft,
       labels,
       author,
+      maintainerCanModify,
       createdAt: now,
       updatedAt: now,
     };
@@ -735,6 +773,10 @@ export class MockGitHub extends MockGitRepository {
       );
     }
 
+    if (path.startsWith('git/') && !path.startsWith('git/trees/')) {
+      return this.handleGitDataRequest(method, path.slice('git/'.length), body);
+    }
+
     if (method === 'POST' && path === 'pulls') {
       return this.handleCreatePullRequest(/** @type {Record<string, any>} */ (body));
     }
@@ -987,13 +1029,120 @@ export class MockGitHub extends MockGitRepository {
   }
 
   /**
+   * Answer a request to the Git Data API, which the CMS writes a commit with when it has to set the
+   * author: a blob for each binary file, a tree based on the head’s, then a commit. The branch is
+   * then moved with {@link handleRefRequest}. The commit requests go to {@link received}.
+   * @param {string} method HTTP method.
+   * @param {string} path Path after `git/`, e.g. `blobs` or `commits/{sha}`.
+   * @param {Record<string, any> | null} body Request body.
+   * @returns {MockResponse | undefined} Response.
+   * @see https://docs.github.com/en/rest/git
+   */
+  handleGitDataRequest(method, path, body) {
+    /**
+     * Store file content as a blob.
+     * @param {Buffer} buffer Content.
+     * @returns {string} Blob SHA.
+     */
+    const storeBlob = (buffer) => {
+      const sha = getBlobSHA(buffer);
+
+      this.blobs.set(sha, buffer);
+
+      return sha;
+    };
+
+    if (method === 'POST' && path === 'blobs') {
+      return {
+        status: 201,
+        json: { sha: storeBlob(Buffer.from(body?.content, body?.encoding)) },
+      };
+    }
+
+    if (method === 'GET' && path.startsWith('commits/')) {
+      const commit = this.getCommit(path.slice('commits/'.length));
+
+      if (!commit) {
+        return { status: 404, json: { message: 'Not Found' } };
+      }
+
+      const treeSHA = `tree-${commit.oid}`;
+
+      this.gitDataTrees.set(treeSHA, commit.tree);
+
+      return { json: { sha: commit.oid, tree: { sha: treeSHA } } };
+    }
+
+    if (method === 'POST' && path === 'trees') {
+      const baseTree = this.gitDataTrees.get(body?.base_tree);
+
+      if (!baseTree) {
+        return { status: 422, json: { message: 'Invalid tree info' } };
+      }
+
+      const tree = new Map(baseTree);
+
+      /** @type {{ path: string, sha?: string | null, content?: string }[]} */ (
+        body?.tree ?? []
+      ).forEach(({ path: filePath, sha, content }) => {
+        if (content !== undefined) {
+          tree.set(filePath, storeBlob(Buffer.from(content)));
+        } else if (sha === null) {
+          tree.delete(filePath);
+        } else {
+          tree.set(filePath, /** @type {string} */ (sha));
+        }
+      });
+
+      const treeSHA = `tree-${this.gitDataTrees.size}`;
+
+      this.gitDataTrees.set(treeSHA, tree);
+
+      return { status: 201, json: { sha: treeSHA } };
+    }
+
+    if (method === 'POST' && path === 'commits') {
+      this.received.push(/** @type {Record<string, any>} */ (body));
+
+      const tree = /** @type {Map<string, string>} */ (this.gitDataTrees.get(body?.tree));
+      const parent = this.getCommit(body?.parents[0]);
+
+      const paths = [...new Set([...tree.keys(), ...(parent?.tree.keys() ?? [])])].filter(
+        (filePath) => tree.get(filePath) !== parent?.tree.get(filePath),
+      );
+
+      const commit = this.addCommit({
+        tree,
+        paths,
+        message: body?.message,
+        author: body?.author,
+        parents: body?.parents,
+      });
+
+      return {
+        status: 201,
+        json: { sha: commit.oid, committer: { date: commit.date.toISOString() } },
+      };
+    }
+
+    return undefined;
+  }
+
+  /**
    * Answer a request to open a pull request. Like GitHub, refuse one from a branch that doesn’t
    * exist, has nothing to merge, or already has an open pull request.
    * @param {Record<string, any>} body Request body.
    * @returns {MockResponse} Response.
    * @see https://docs.github.com/en/rest/pulls/pulls#create-a-pull-request
    */
-  handleCreatePullRequest({ title, head, base, draft = false, body = '' }) {
+  handleCreatePullRequest({
+    title,
+    head,
+    base,
+    draft = false,
+    body = '',
+    maintainer_can_modify: maintainerCanModify = false,
+  }) {
     /**
      * Create a validation error response.
      * @param {string} message Error message.
@@ -1025,6 +1174,7 @@ export class MockGitHub extends MockGitRepository {
       draft,
       body,
       author: this.user,
+      maintainerCanModify,
     });
 
     return { status: 201, json: this.toRestPullRequest(pullRequest) };
@@ -1060,6 +1210,7 @@ export class MockGitHub extends MockGitRepository {
 
       Object.assign(pullRequest, {
         ...(body.title !== undefined ? { title: body.title } : {}),
+        ...(body.body !== undefined ? { body: body.body } : {}),
         ...(body.state !== undefined && pullRequest.state !== 'merged'
           ? { state: body.state }
           : {}),
@@ -1215,7 +1366,7 @@ export class MockGitHub extends MockGitRepository {
    * @returns {Record<string, any>} Node.
    */
   toPullRequestNode(pullRequest) {
-    const { number, nodeId, title, state, draft, labels, createdAt, updatedAt, author } =
+    const { number, nodeId, title, body, state, draft, labels, createdAt, updatedAt, author } =
       pullRequest;
 
     const { owner: headOwner, name: headRefName } = splitBranchKey(pullRequest.head);
@@ -1224,6 +1375,7 @@ export class MockGitHub extends MockGitRepository {
       id: nodeId,
       number,
       title,
+      body,
       url: `https://github.com/${this.owner}/${this.repo}/pull/${number}`,
       state: state.toUpperCase(),
       isDraft: draft,
@@ -1233,6 +1385,12 @@ export class MockGitHub extends MockGitRepository {
       headRefName,
       baseRefName: pullRequest.base,
       headRepositoryOwner: { login: headOwner ?? this.owner },
+      // The signed-in user’s fork can have a name of its own; anyone else’s keeps the repository’s
+      headRepository: {
+        name: headOwner && headOwner === this.fork?.owner ? this.fork.repo : this.repo,
+        owner: { login: headOwner ?? this.owner },
+      },
+      maintainerCanModify: pullRequest.maintainerCanModify,
       headRefOid: this.getPullRequestHead(pullRequest).oid,
       author: {
         login: author.login,
@@ -1435,8 +1593,18 @@ export class MockGitHub extends MockGitRepository {
     }
 
     if (query.includes('pullRequests(')) {
+      // The board asks for the pull requests from forks under an alias of their own
+      const forkArgs = query.match(/forkPullRequests:\s*pullRequests\(([^)]*)\)/)?.[1];
+
       return {
-        data: { repository: { pullRequests: { nodes: this.findPullRequests(query, variables) } } },
+        data: {
+          repository: {
+            pullRequests: { nodes: this.findPullRequests(query, variables) },
+            ...(forkArgs
+              ? { forkPullRequests: { nodes: this.filterPullRequests(forkArgs, variables) } }
+              : {}),
+          },
+        },
       };
     }
 
@@ -1575,9 +1743,22 @@ export class MockGitHub extends MockGitRepository {
    */
   findPullRequests(query, variables) {
     const [, args] = /** @type {RegExpMatchArray} */ (query.match(/pullRequests\(([^)]*)\)/));
+
+    return this.filterPullRequests(args, variables);
+  }
+
+  /**
+   * Filter the pull requests by the arguments of a `pullRequests` connection: their state, status
+   * labels, head branch or base branch.
+   * @param {string} args Arguments of the connection.
+   * @param {Record<string, any>} variables Variables.
+   * @returns {Record<string, any>[]} Pull request nodes, the most recently updated first.
+   */
+  filterPullRequests(args, variables) {
     const states = args.match(/states:\s*(\w+)/)?.[1];
     const labels = args.match(/labels:\s*(\[[^\]]*\])/)?.[1];
     const headRefName = /headRefName:\s*\$branch/.test(args) ? variables.branch : undefined;
+    const baseRefName = args.match(new RegExp(`baseRefName:\\s*${STRING}`))?.[1];
 
     return this.pullRequests
       .filter(
@@ -1587,7 +1768,8 @@ export class MockGitHub extends MockGitRepository {
             JSON.parse(labels).some((/** @type {string} */ label) =>
               pullRequest.labels.includes(label),
             )) &&
-          (!headRefName || splitBranchKey(pullRequest.head).name === headRefName),
+          (!headRefName || splitBranchKey(pullRequest.head).name === headRefName) &&
+          (!baseRefName || pullRequest.base === JSON.parse(baseRefName)),
       )
       .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
       .map((pullRequest) => this.toPullRequestNode(pullRequest));

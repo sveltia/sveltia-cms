@@ -1,5 +1,4 @@
 import dayjs from 'dayjs';
-import dayjsLocales from 'dayjs/locale.json';
 
 import { getOrCreate } from '$lib/services/utils/cache';
 
@@ -11,10 +10,10 @@ import { loadLocaleData } from './locale-loader.js';
  */
 
 /**
- * Keys of the locales Day.js provides, e.g. `de` or `pt-br`.
+ * Keys of the locales Day.js provides, e.g. `de` or `pt-br`, listed at build time.
  * @type {Set<string>}
  */
-const DAYJS_LOCALE_KEYS = new Set(dayjsLocales.map(({ key }) => key));
+const DAYJS_LOCALE_KEYS = new Set(import.meta.env.VITE_DAYJS_LOCALES.split(','));
 /**
  * Keys of the locales registered with Day.js. English is built in.
  * @type {Set<string>}

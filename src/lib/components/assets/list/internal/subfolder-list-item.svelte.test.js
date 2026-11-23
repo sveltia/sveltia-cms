@@ -2,8 +2,9 @@ import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import { ASSET_DRAG_TYPE } from '$lib/services/assets/drag';
 import { globalAssetFolder, selectedAssetFolder } from '$lib/services/assets/folders';
-import { focusedAsset } from '$lib/services/assets/state';
+import { assetMoveRequest, draggedFiles, focusedAsset } from '$lib/services/assets/state';
 import {
   deletingSubfolder,
   focusedSubfolder,
@@ -11,11 +12,29 @@ import {
 } from '$lib/services/assets/subfolders';
 import { env } from '$lib/services/user/env.svelte';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
-import { initTestConfig, serveMediaFolderAtSiteRoot } from '$lib/test/config';
+import { createMockAsset, initTestConfig, serveMediaFolderAtSiteRoot } from '$lib/test/config';
 
 import SubfolderListItem from './subfolder-list-item.svelte';
 
 const subfolder = { name: '2024', path: 'static/uploads/2024' };
+
+/**
+ * Fire a drag event carrying assets dragged from the list on the given element. The data transfer
+ * is a stand-in, as Chrome ignores a drop effect set on a real one outside a real drag.
+ * @param {Element} element Element.
+ * @param {string} type Event type.
+ * @returns {{ event: Event, dataTransfer: { types: string[], dropEffect: string } }} Event and
+ * its data transfer, holding the resulting drop effect.
+ */
+const dragAssets = (element, type) => {
+  const dataTransfer = { types: [ASSET_DRAG_TYPE], dropEffect: '' };
+  const event = new Event(type, { bubbles: true, cancelable: true });
+
+  Object.defineProperty(event, 'dataTransfer', { value: dataTransfer });
+  element.dispatchEvent(event);
+
+  return { event, dataTransfer };
+};
 
 describe('SubfolderListItem', () => {
   beforeAll(async () => {
@@ -32,6 +51,8 @@ describe('SubfolderListItem', () => {
     focusedSubfolder.current = undefined;
     focusedAsset.current = undefined;
     forkedRepository.current = undefined;
+    assetMoveRequest.current = undefined;
+    draggedFiles.current = undefined;
     window.location.hash = '#/assets/static/uploads';
   });
 
@@ -173,5 +194,37 @@ describe('SubfolderListItem', () => {
     await page.getByRole('button', { name: 'Show Folder Options' }).click();
     await expect.element(page.getByRole('menuitem', { name: 'Rename Folder' })).toBeDisabled();
     await expect.element(page.getByRole('menuitem', { name: 'Delete Folder' })).toBeDisabled();
+  });
+
+  test('takes the assets dropped on it, to be moved there', async () => {
+    const asset = createMockAsset({ name: 'a.png' });
+
+    draggedFiles.current = { assets: [asset] };
+
+    await render(SubfolderListItem, { subfolder, rowIndex: 0, viewType: 'list' });
+
+    const row = page.getByRole('row', { name: '2024' });
+
+    expect(dragAssets(row.element(), 'dragover').dataTransfer.dropEffect).toBe('move');
+    await expect.element(row).toHaveClass('dragover');
+
+    dragAssets(row.element(), 'drop');
+    await expect.element(row).not.toHaveClass('dragover');
+    expect(assetMoveRequest.current).toEqual({ assets: [asset], dirPath: 'static/uploads/2024' });
+    expect(draggedFiles.current).toBeUndefined();
+  });
+
+  test('takes no assets without a selected asset folder', async () => {
+    selectedAssetFolder.current = undefined;
+    draggedFiles.current = { assets: [createMockAsset({ name: 'a.png' })] };
+
+    await render(SubfolderListItem, { subfolder, rowIndex: 0, viewType: 'list' });
+
+    const row = page.getByRole('row', { name: '2024' });
+
+    expect(dragAssets(row.element(), 'dragover').event.defaultPrevented).toBe(false);
+    dragAssets(row.element(), 'drop');
+    expect(row.element()).not.toHaveClass('dragover');
+    expect(assetMoveRequest.current).toBeUndefined();
   });
 });

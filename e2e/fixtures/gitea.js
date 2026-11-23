@@ -11,10 +11,13 @@ import { getBlobSHA, MockGitRepository } from './git.js';
  * @property {number} number Pull request index, which the API paths use.
  * @property {number} id Internal ID, unique across the instance.
  * @property {string} title Title. A work in progress carries a `WIP: ` prefix.
+ * @property {string} [body] Description.
  * @property {string} headBranch Head branch name.
  * @property {number} headRepoId ID of the repository the head branch is in: the repository’s own,
  * or the fork’s for a pull request from a fork.
  * @property {string} baseBranch Base branch name.
+ * @property {boolean} allowMaintainerEdit Whether the author of a pull request from a fork lets
+ * the repository’s maintainers push to its branch.
  * @property {string[]} labels Label names.
  * @property {'open' | 'closed'} state State.
  * @property {boolean} merged Whether the pull request has been merged.
@@ -139,20 +142,51 @@ export class MockGitea extends MockGitRepository {
   builds = new Map();
 
   /**
+   * Open a pull request for a post from the colleague’s fork, the way the CMS does for an Open
+   * Authoring contributor who sends their entry for review: without a label, which the contributor
+   * can’t add. The fork becomes the colleague’s rather than the signed-in user’s. See
+   * {@link commitContributorPost}.
+   * @param {object} args Arguments.
+   * @param {string} args.slug Entry slug.
+   * @param {Record<string, string | null>} args.files Files to commit to the branch.
+   * @param {boolean} [args.editable] Whether the contributor lets maintainers push to the branch.
+   * @returns {MockPullRequest} Pull request.
+   */
+  openContributorRequest({ slug, files, editable = true }) {
+    this.fork = { owner: this.colleague.login, repo: this.repo };
+
+    const { headBranch, title } = this.commitContributorPost({ slug, files });
+
+    return this.openPullRequest(
+      { title, headBranch },
+      { headRepoId: FORK_REPO_ID, author: this.colleague, allowMaintainerEdit: editable },
+    );
+  }
+
+  /**
    * Open a pull request the way the instance does.
    * @param {object} args Arguments.
    * @param {string} args.title Title.
    * @param {string} args.headBranch Head branch name.
+   * @param {string} [args.body] Description.
    * @param {object} [options] Options.
    * @param {number} [options.headRepoId] ID of the repository holding the head branch.
    * @param {string} [options.baseBranch] Base branch name, the configured one by default.
    * @param {string[]} [options.labels] Label names.
    * @param {MockUser} [options.author] Author.
+   * @param {boolean} [options.allowMaintainerEdit] Whether the author of a pull request from a
+   * fork lets the repository’s maintainers push to its branch.
    * @returns {MockPullRequest} Pull request.
    */
   openPullRequest(
-    { title, headBranch },
-    { headRepoId = REPO_ID, baseBranch = this.branch, labels = [], author } = {},
+    { title, headBranch, body = '' },
+    {
+      headRepoId = REPO_ID,
+      baseBranch = this.branch,
+      labels = [],
+      author,
+      allowMaintainerEdit = false,
+    } = {},
   ) {
     labels.forEach((name) => this.createLabel(name));
 
@@ -161,9 +195,11 @@ export class MockGitea extends MockGitRepository {
       number: this.pullRequests.length + 1,
       id: 900 + this.pullRequests.length + 1,
       title,
+      body,
       headBranch,
       headRepoId,
       baseBranch,
+      allowMaintainerEdit,
       labels: [...labels],
       state: 'open',
       merged: false,
@@ -630,7 +666,7 @@ export class MockGitea extends MockGitRepository {
 
     if (resource === 'branches') {
       if (method === 'GET' && !name) {
-        const prefix = `${this.user.login}:`;
+        const prefix = `${this.forkOwner}:`;
 
         const branches = [...this.refs.keys()]
           .filter((key) => key.startsWith(prefix))
@@ -741,9 +777,10 @@ export class MockGitea extends MockGitRepository {
    * @returns {Record<string, any>} Item.
    */
   toPullRequestItem(pullRequest, { list = false } = {}) {
-    const { number, id, title, headBranch, headRepoId, baseBranch, labels, state, merged, author } =
+    const { number, id, title, body, headBranch, headRepoId, baseBranch, labels, state } =
       pullRequest;
 
+    const { merged, author } = pullRequest;
     const fromFork = headRepoId !== REPO_ID;
     const branchKey = fromFork ? this.forkBranch(headBranch) : headBranch;
     const liveHeadSHA = this.refs.has(branchKey) ? this.getHead(branchKey).oid : '';
@@ -753,6 +790,7 @@ export class MockGitea extends MockGitRepository {
       number,
       id,
       title,
+      body,
       html_url: `https://gitea.com/${this.owner}/${this.repo}/pulls/${number}`,
       state,
       merged,
@@ -768,12 +806,19 @@ export class MockGitea extends MockGitRepository {
         // current head instead for as long as the branch exists, whatever the state
         sha: (list && !this.isForgejo) || !liveHeadSHA ? refHeadSHA : liveHeadSHA,
         repo_id: headRepoId,
-        repo: {
-          full_name: fromFork
-            ? `${this.user.login}/${this.fork?.repo ?? this.repo}`
-            : `${this.owner}/${this.repo}`,
-        },
+        repo: fromFork
+          ? {
+              full_name: `${this.forkOwner}/${this.fork?.repo ?? this.repo}`,
+              name: this.fork?.repo ?? this.repo,
+              owner: { login: this.forkOwner },
+            }
+          : {
+              full_name: `${this.owner}/${this.repo}`,
+              name: this.repo,
+              owner: { login: this.owner },
+            },
       },
+      allow_maintainer_edit: pullRequest.allowMaintainerEdit,
       base: {
         ref: baseBranch,
         repo_id: REPO_ID,
@@ -850,12 +895,15 @@ export class MockGitea extends MockGitRepository {
       if (method === 'GET') {
         const state = searchParams.get('state') ?? 'open';
         const poster = searchParams.get('poster');
+        const baseBranch = searchParams.get('base_branch');
         const labelIds = searchParams.getAll('labels').map(Number);
 
         const items = this.pullRequests
           .filter(
             (pr) =>
-              (state === 'all' || pr.state === state) && (!poster || pr.author.login === poster),
+              (state === 'all' || pr.state === state) &&
+              (!poster || pr.author.login === poster) &&
+              (!baseBranch || pr.baseBranch === baseBranch),
           )
           // The label IDs are matched with a join, so an item carrying any of them is listed, once
           // for each of them it carries
@@ -878,7 +926,14 @@ export class MockGitea extends MockGitRepository {
       }
 
       if (method === 'POST') {
-        const { title, head, base } = /** @type {Record<string, string>} */ (body);
+        const {
+          title,
+          head,
+          base,
+          body: description,
+          allow_maintainer_edit: allowMaintainerEdit,
+        } = /** @type {Record<string, any>} */ (body);
+
         // A cross-repository head is named `owner:branch`
         const [owner, forkRef] = head.includes(':') ? head.split(':') : [undefined, undefined];
 
@@ -886,11 +941,12 @@ export class MockGitea extends MockGitRepository {
           status: 201,
           json: this.toPullRequestItem(
             this.openPullRequest(
-              { title, headBranch: forkRef ?? head },
+              { title, headBranch: forkRef ?? head, body: description },
               {
                 headRepoId: owner ? FORK_REPO_ID : REPO_ID,
                 author: this.user,
                 baseBranch: base,
+                allowMaintainerEdit: !!allowMaintainerEdit,
               },
             ),
           ),
@@ -918,6 +974,10 @@ export class MockGitea extends MockGitRepository {
 
       if (typeof body?.title === 'string') {
         pullRequest.title = body.title;
+      }
+
+      if (typeof body?.body === 'string') {
+        pullRequest.body = body.body;
       }
 
       if (body?.state === 'closed' || body?.state === 'open') {

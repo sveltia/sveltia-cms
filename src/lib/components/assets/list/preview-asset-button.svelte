@@ -17,13 +17,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    path = undefined,
-    disabled = false,
-    state = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { path = undefined, disabled = false, state = undefined } = $props();
 </script>
 
 <Button

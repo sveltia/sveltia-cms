@@ -67,6 +67,18 @@ export const getRepositoryPath = ({ owner, repo }) =>
   `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
 
 /**
+ * Parse a full repository name returned by GitHub or Gitea/Forgejo, like `full_name` or
+ * `nameWithOwner`, into the owner and name pair the CMS works with.
+ * @param {string} fullName Full name, e.g. `owner/repo`.
+ * @returns {RepositoryPath} Repository owner and name.
+ */
+export const toRepositoryPath = (fullName) => {
+  const [owner, repo] = fullName.split('/');
+
+  return { owner, repo };
+};
+
+/**
  * Check whether a full repository name returned by a Git service, like `full_name` on GitHub and
  * Gitea/Forgejo or `path_with_namespace` on GitLab, names the given repository. The services treat
  * owner and repository names as case-insensitive, so they’re compared that way.
@@ -85,6 +97,15 @@ export const isSameRepository = (fullName, { owner, repo }) =>
  */
 export const getPullRequestPath = (repository, number) =>
   `${getRepositoryPath(repository)}/pulls/${number}`;
+
+/**
+ * Get the REST API path of the given branch on GitHub or Gitea/Forgejo.
+ * @param {RepositoryPath} repository Repository holding the branch.
+ * @param {string} branch Branch name.
+ * @returns {string} Path, e.g. `/repos/owner/repo/branches/main`.
+ */
+export const getRestBranchPath = (repository, branch) =>
+  `${getRepositoryPath(repository)}/branches/${encodePathSegments(branch)}`;
 
 /**
  * Create a function to generate base URLs for accessing the repository’s resources on a service’s

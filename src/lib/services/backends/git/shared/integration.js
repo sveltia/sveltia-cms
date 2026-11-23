@@ -1,8 +1,10 @@
 import { backend } from '$lib/services/backends';
+import { isDeployingCommit } from '$lib/services/backends/git/shared/commits';
 import { cmsConfig } from '$lib/services/config';
 import { createDerivedState } from '$lib/services/utils/state.svelte';
 
 /**
+ * @import { CommitOptions } from '$lib/types/private';
  * @import { GitBackend } from '$lib/types/public';
  */
 
@@ -45,3 +47,13 @@ export const skipCIEnabled = createDerivedState(() => {
 
   return skipCI === true || autoDeploy === false;
 });
+
+/**
+ * Check whether a commit is to be reported as publishing its changes, in a toast after saving. That
+ * only applies when the skip CI option is configured; without it, every commit is published, and
+ * saying so each time would be noise. See {@link isDeployingCommit}.
+ * @param {Partial<CommitOptions>} options Commit options.
+ * @returns {boolean} Result.
+ */
+export const isPublishingCommit = (options) =>
+  skipCIConfigured.current && isDeployingCommit(options);

@@ -208,6 +208,23 @@ export const getSortKeyType = ({ key, fieldConfig }) => {
 };
 
 /**
+ * Resolve the given sort key to the key of the field it sorts by. The `_manual` key stands for the
+ * order field when that is a configured field, e.g. a Number field named `weight`, so it’s labelled
+ * and typed like the field.
+ * @param {InternalEntryCollection} collection Collection.
+ * @param {string} key Sort key.
+ * @returns {string} Order field key for `_manual` backed by a configured field, otherwise `key`.
+ * @see https://github.com/sveltia/sveltia-cms/issues/1169
+ */
+export const resolveSortFieldKey = (collection, key) => {
+  const orderKey = key === '_manual' ? getOrderFieldKey(collection) : undefined;
+
+  return orderKey && getField({ collectionName: collection.name, keyPath: orderKey })
+    ? orderKey
+    : key;
+};
+
+/**
  * Get a field’s label by key.
  * @param {object} args Arguments.
  * @param {InternalEntryCollection} args.collection Collection.
@@ -267,11 +284,16 @@ export const sortKeys = createDerivedState(() => {
   });
 
   return keys.map((key) => {
-    const fieldConfig = getField({ collectionName: collection.name, keyPath: key });
-    /** @type {SortKey} */
-    const sortKey = { key, label: labels?.[key] ?? getSortKeyLabel({ collection, key }) };
+    const fieldKey = resolveSortFieldKey(collection, key);
+    const fieldConfig = getField({ collectionName: collection.name, keyPath: fieldKey });
 
-    if (getSortKeyType({ key, fieldConfig }) === Number) {
+    const label =
+      labels?.[key] ?? labels?.[fieldKey] ?? getSortKeyLabel({ collection, key: fieldKey });
+
+    /** @type {SortKey} */
+    const sortKey = { key, label };
+
+    if (getSortKeyType({ key: fieldKey, fieldConfig }) === Number) {
       sortKey.type = 'number';
     }
 

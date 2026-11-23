@@ -7,8 +7,6 @@
   @see https://sveltiacms.app/en/docs/fields/image
 -->
 <script>
-  import { _ } from '@sveltia/i18n';
-  import { ConfirmationDialog, TextArea } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { flushSync, tick } from 'svelte';
   import { flip } from 'svelte/animate';
@@ -18,6 +16,7 @@
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import RejectedFilesAlertDialog from '$lib/components/assets/shared/rejected-files-alert-dialog.svelte';
   import FileEditorItem from '$lib/components/contents/details/fields/file/file-editor-item.svelte';
+  import PhotoCreditDialog from '$lib/components/contents/details/fields/file/photo-credit-dialog.svelte';
   import UploadButton from '$lib/components/contents/details/fields/file/upload-button.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import {
@@ -29,28 +28,25 @@
     getFieldEditorContext,
     isInEditorComponent,
   } from '$lib/services/contents/editor/field-context';
+  import { trackPendingWhile } from '$lib/services/contents/editor/pending.svelte';
   import { checkDuplicates } from '$lib/services/contents/fields/file/duplicates.svelte';
   import { createFolderAssetListing } from '$lib/services/contents/fields/file/listing.svelte';
   import {
+    getDroppedFileDestination,
     getMediaFieldAssetOptions,
     processResources,
     resolveSelectionResult,
   } from '$lib/services/contents/fields/file/resources';
   import { getAcceptedFileTypes } from '$lib/services/integrations/media-libraries/default';
   import { isMultiple } from '$lib/services/integrations/media-libraries/multiple';
+  import { getPreferredLibraryNames } from '$lib/services/integrations/media-libraries/options';
   import { focusAfterRemoval } from '$lib/services/utils/drag-sorting';
   import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
 
   /**
-   * @import {
-   * AssetFolderInfo,
-   * EntryDraft,
-   * FieldEditorProps,
-   * InternalLocaleCode,
-   * MediaLibraryAssetKind,
-   * SelectedResource,
-   * } from '$lib/types/private';
+   * @import { FieldEditorProps, SelectedResource } from '$lib/types/private';
    * @import { FileField, MediaField } from '$lib/types/public';
+   * @import { FolderAssetListingOptions } from '$lib/services/contents/fields/file/listing.svelte';
    */
 
   /**
@@ -71,7 +67,6 @@
 
   /** @type {FieldEditorProps & Props} */
   let {
-    /* eslint-disable prefer-const */
     locale,
     keyPath,
     typedKeyPath,
@@ -81,7 +76,6 @@
     required = true,
     readonly = false,
     invalid = false,
-    /* eslint-enable prefer-const */
   } = $props();
 
   let showSelectAssetsDialog = $state(false);
@@ -143,38 +137,20 @@
   const targetFolder = $derived(assetOptions.folder);
   // The existing files a dropped one could replace. One of another type isn’t listed: a dropped
   // file of that type is refused, unless a transformation gives it another name
-  const assetListing = createFolderAssetListing({
+  const assetListing = createFolderAssetListing(
     /**
-     * Get the entry draft.
-     * @returns {EntryDraft | null | undefined} Draft.
+     * Get the listing options.
+     * @returns {FolderAssetListingOptions} Options.
      */
-    getDraft: () => entryDraft.current,
-    /**
-     * Get the target folder.
-     * @returns {AssetFolderInfo | undefined} Folder.
-     */
-    getFolder: () => targetFolder,
-    /**
-     * Get the locale being edited.
-     * @returns {InternalLocaleCode} Locale.
-     */
-    getLocale: () => locale,
-    /**
-     * Get the asset kind.
-     * @returns {MediaLibraryAssetKind | undefined} Kind.
-     */
-    getKind: () => kind,
-    /**
-     * Get the accepted file types.
-     * @returns {string | undefined} Types.
-     */
-    getAccept: () => acceptedTypes,
-    /**
-     * Get whether file names are slugified.
-     * @returns {boolean | undefined} Whether to slugify.
-     */
-    getSlugificationEnabled: () => libraryConfig.slugify_filename,
-  });
+    () => ({
+      draft: entryDraft.current,
+      folder: targetFolder,
+      locale,
+      kind,
+      accept: acceptedTypes,
+      slugificationEnabled: libraryConfig.slugify_filename,
+    }),
+  );
   const multiple = $derived(isMultiple(fieldConfig));
   const itemCount = $derived(Array.isArray(currentValue) ? currentValue.length : 0);
   /** Whether a multiple-file field has as many files as it takes, so no more can be dropped. */
@@ -204,20 +180,21 @@
   });
   const enabledCloudServiceEntries = $derived(assetOptions.cloudServiceEntries);
   /**
-   * Whether the default (internal) media library is available as a storage provider.
+   * Where dropped files go: the repository or a cloud storage service that can upload them.
    */
-  const isDefaultLibraryAvailable = $derived(assetOptions.enabled && !!targetFolder);
-  /**
-   * The total number of available media storage providers (default and/or cloud).
-   */
-  const totalProviders = $derived(
-    (isDefaultLibraryAvailable ? 1 : 0) + enabledCloudServiceEntries.length,
+  const dropTarget = $derived(
+    getDroppedFileDestination({
+      repositoryAvailable: assetOptions.enabled && !!targetFolder,
+      cloudServiceEntries: enabledCloudServiceEntries,
+      preferredLibraryNames: getPreferredLibraryNames(fieldConfig),
+    }),
   );
   /**
-   * Disable the drop zone if there are no providers or multiple providers are available, to avoid
-   * confusion about where dropped files will be stored. A folder can’t be dropped at all.
+   * Disable the drop zone if no location can take the files, or if several can and none is marked
+   * with the `default` option, to avoid confusion about where dropped files will be stored. A
+   * folder can’t be dropped at all.
    */
-  const allowDrop = $derived(totalProviders === 1 && !selectFolder);
+  const allowDrop = $derived(!!dropTarget.destination && !dropTarget.ambiguous && !selectFolder);
 
   /**
    * Reset the current selection.
@@ -254,6 +231,10 @@
       return;
     }
 
+    // The editor is reused when the pane switches to another locale, so the value has to be written
+    // to the locale the files were picked in, not the one shown once they have been processed
+    const _locale = locale;
+    const _keyPath = keyPath;
     // Save the current value so it can be restored if all resources fail validation
     const previousValue = multiple ? undefined : currentValue;
 
@@ -268,7 +249,7 @@
         folder: targetFolder,
         libraryConfig,
         accept: acceptedTypes,
-        locale,
+        locale: _locale,
       });
 
       // Another entry may have been opened while the files were being processed, e.g. a large
@@ -288,15 +269,19 @@
       if (multiple) {
         addMultiValueItems({
           draft,
-          locale,
+          locale: _locale,
           valueStoreKey,
-          keyPath,
+          keyPath: _keyPath,
           newValues: values,
           replaceIndex: replaceMode ? replaceIndex : undefined,
           max,
         });
-      } else {
+      } else if (locale === _locale) {
         currentValue = value;
+      } else {
+        // `<FieldEditor>` would write the bound value to the locale now shown, so write it to the
+        // draft directly
+        draft[valueStoreKey][_locale][_keyPath] = value;
       }
 
       photoCredit = credit;
@@ -324,7 +309,7 @@
     // Dropped files are added, not taken as a replacement for the file last replaced
     replaceMode = false;
 
-    if (isDefaultLibraryAvailable) {
+    if (dropTarget.destination === 'repository') {
       const replace = await checkDuplicates({ files, listedAssets: assetListing.listedAssets });
 
       if (replace === undefined) {
@@ -404,6 +389,13 @@
 
     moveMultiValueItem({ draft, locale, valueStoreKey, keyPath, from, to });
   };
+
+  // Register the processing of the selected files as a pending update: the previous value has been
+  // cleared, and processing, e.g. converting a large HEIC photo, can take a while, so a save or a
+  // locale switch has to wait for the new value to land rather than take the field as empty or
+  // write the value to another locale. The photo credit dialog that may follow isn’t covered, as
+  // the value has landed by then
+  trackPendingWhile(() => processing);
 
   const sorter = createDragSorter({
     /**
@@ -543,28 +535,14 @@
 
 <RejectedFilesAlertDialog bind:this={rejectedFilesAlert} {maxSize} accept={acceptedTypes} />
 
-<ConfirmationDialog
+<PhotoCreditDialog
   bind:open={showPhotoCreditDialog}
-  title={_('assets_dialog.photo_credit.title')}
-  okLabel={_('copy')}
-  onOk={() => {
-    navigator.clipboard.writeText(photoCredit);
-  }}
->
-  <div role="none">{_('assets_dialog.photo_credit.description')}</div>
-  <div role="none">
-    <TextArea
-      dir="auto"
-      flex
-      readonly
-      value={photoCredit}
-      onclick={(event) => {
-        /** @type {HTMLTextAreaElement} */ (event.target).focus();
-        /** @type {HTMLTextAreaElement} */ (event.target).select();
-      }}
-    />
-  </div>
-</ConfirmationDialog>
+  credit={photoCredit}
+  {locale}
+  {keyPath}
+  {valueStoreKey}
+  {componentName}
+/>
 
 <style>
   .item-list {

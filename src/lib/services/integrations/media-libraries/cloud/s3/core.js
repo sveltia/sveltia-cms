@@ -4,6 +4,7 @@ import { getAssetKind } from '$lib/services/assets/kinds';
 import { getRelativeKey } from '$lib/services/integrations/media-libraries/cloud/shared/keys';
 import { createObjectStorageOperations } from '$lib/services/integrations/media-libraries/cloud/shared/object-storage';
 import { hmacSha256, toHex } from '$lib/services/utils/crypto';
+import { getBaseName } from '$lib/services/utils/file';
 import { assertResponseOK } from '$lib/services/utils/networking';
 import { encodePathSegments, encodeRFC3986, trimTrailingSlashes } from '$lib/services/utils/url';
 import { parseXml, toArray } from '$lib/services/utils/xml';
@@ -282,7 +283,7 @@ export const parseS3Results = (objects, config) => {
 
   return objects.map((obj) => {
     const key = obj.Key;
-    const fileName = key.split('/').pop() || key;
+    const fileName = getBaseName(key) || key;
     const displayKey = getRelativeKey(config, key);
 
     const baseUrl = buildObjectUrl({

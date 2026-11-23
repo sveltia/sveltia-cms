@@ -1,4 +1,4 @@
-import { sendRequest } from '$lib/services/utils/networking';
+import { createStatusChecker } from '$lib/services/backends/git/shared/status';
 
 /**
  * @import { BackendServiceStatus } from '$lib/types/private';
@@ -10,35 +10,21 @@ import { sendRequest } from '$lib/services/utils/networking';
 export const STATUS_DASHBOARD_URL = 'https://www.githubstatus.com/';
 
 /**
- * The URL to check the GitHub service status.
- */
-const STATUS_CHECK_URL = 'https://www.githubstatus.com/api/v2/status.json';
-
-/**
  * Check the GitHub service status.
  * @returns {Promise<BackendServiceStatus>} Current status.
  * @see https://www.githubstatus.com/api
  */
-export const checkStatus = async () => {
-  try {
-    const {
-      status: { indicator },
-    } = /** @type {{ status: { indicator: string }}} */ (await sendRequest(STATUS_CHECK_URL));
-
-    if (indicator === 'none') {
-      return 'none';
-    }
-
-    if (indicator === 'minor') {
-      return 'minor';
-    }
-
-    if (indicator === 'major' || indicator === 'critical') {
-      return 'major';
-    }
-  } catch {
-    //
-  }
-
-  return 'unknown';
-};
+export const checkStatus = createStatusChecker(
+  'https://www.githubstatus.com/api/v2/status.json',
+  /**
+   * Map the status API response to a level.
+   * @param {{ status: { indicator: string } }} response Response.
+   * @returns {BackendServiceStatus | undefined} Level.
+   */
+  ({ status: { indicator } }) =>
+    indicator === 'critical'
+      ? 'major'
+      : ['none', 'minor', 'major'].includes(indicator)
+        ? /** @type {BackendServiceStatus} */ (indicator)
+        : undefined,
+);

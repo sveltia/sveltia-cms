@@ -6,6 +6,11 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 vi.mock('$lib/services/backends', () => ({
   backend: { current: undefined },
 }));
+vi.mock('$lib/services/contents/entry/earlier-paths', () => ({
+  getEarlierEntryPaths: vi.fn(() => [
+    { subPath: 'hi', paths: ['content/posts/hi.md', 'content/posts/hi.fr.md'] },
+  ]),
+}));
 
 describe('history', () => {
   beforeEach(async () => {
@@ -96,6 +101,27 @@ describe('history', () => {
       await fetchEntryHistory(entry);
 
       expect(fetchFileCommits).toHaveBeenCalledWith(['content/posts/hello.md']);
+    });
+
+    test('includes the files the entry had before it was renamed outside the CMS', async () => {
+      const fetchFileCommits = vi.fn().mockResolvedValue([]);
+      const collection = { name: 'posts' };
+      const fields = [];
+      const entry = { id: 'entry-4', locales: { en: { path: 'content/posts/hello.md' } } };
+
+      (await import('$lib/services/backends')).backend.current = { fetchFileCommits };
+
+      const { fetchEntryHistory } = await importModule();
+      const { getEarlierEntryPaths } = await import('$lib/services/contents/entry/earlier-paths');
+
+      await fetchEntryHistory(entry, { collection, fields });
+
+      expect(getEarlierEntryPaths).toHaveBeenCalledWith({ collection, fields, entry });
+      expect(fetchFileCommits).toHaveBeenCalledWith([
+        'content/posts/hello.md',
+        'content/posts/hi.md',
+        'content/posts/hi.fr.md',
+      ]);
     });
 
     test('returns error result when fetchFileCommits throws', async () => {

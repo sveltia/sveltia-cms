@@ -31,17 +31,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    kind,
-    name,
-    type,
-    asset = undefined,
-    src,
-    pending = false,
-    getText,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { kind, name, type, asset = undefined, src, pending = false, getText } = $props();
 
   /** A media file is previewed from the asset if there is one, as the URL may not be ready yet. */
   const mediaSrc = $derived(asset ? undefined : src);

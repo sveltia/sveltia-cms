@@ -16,6 +16,7 @@
   <Button
     variant="ghost"
     iconic
+    tooltip={_('visit_live_site')}
     aria-label={_('visit_live_site')}
     onclick={() => {
       openProductionSite();

@@ -1,7 +1,8 @@
 <!--
   @component
   Edit options menu button, shared by repository assets and assets on external locations. The
-  caller provides the handlers for the built-in Edit, Rename and Replace items, and any extra items.
+  caller provides the handlers for the built-in Edit, Rename, Move and Replace items, and any extra
+  items.
 -->
 <script>
   import { _ } from '@sveltia/i18n';
@@ -18,27 +19,29 @@
    * @property {boolean} [canEdit] Whether the asset can be edited.
    * @property {boolean} [canRename] Whether the asset can be renamed.
    * @property {boolean} [canReplace] Whether the asset can be replaced.
+   * @property {boolean} [canMove] Whether the asset can be moved to another folder.
    * @property {() => void} [onEdit] Called when the Edit item is selected. The item is omitted
    * when this is not given, which means the location doesn’t support the operation at all.
    * @property {() => void} [onRename] Called when the Rename item is selected. Same as above.
    * @property {() => void} [onReplace] Called when the Replace item is selected. Same as above.
+   * @property {() => void} [onMove] Called when the Move item is selected. Same as above.
    * @property {Snippet} [extraItems] Items placed at the top of the menu.
    * @property {Snippet} [moreItems] Items placed at the bottom of the menu, after a divider.
    */
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     readOnly = false,
     canEdit = false,
     canRename = false,
     canReplace = false,
+    canMove = false,
     onEdit = undefined,
     onRename = undefined,
     onReplace = undefined,
+    onMove = undefined,
     extraItems = undefined,
     moreItems = undefined,
-    /* eslint-enable prefer-const */
   } = $props();
 </script>
 
@@ -62,6 +65,15 @@
           aria-label={_('rename_asset')}
           disabled={readOnly || !canRename}
           onclick={onRename}
+        />
+      {/if}
+      {#if onMove}
+        <MenuItem
+          variant="ghost"
+          label={_('move')}
+          aria-label={_('move_asset')}
+          disabled={readOnly || !canMove}
+          onclick={onMove}
         />
       {/if}
       {#if onReplace}

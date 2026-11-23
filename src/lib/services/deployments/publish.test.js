@@ -13,6 +13,7 @@ import {
   isLastCommitPublished,
   triggerDeployment,
 } from '$lib/services/deployments/publish';
+import { user } from '$lib/services/user/account.svelte';
 import { prefs } from '$lib/services/user/prefs.svelte';
 
 vi.mock('$lib/services/backends', async () => {
@@ -150,6 +151,13 @@ describe('Publish state', () => {
     test('is true with a backend that can trigger a deployment', () => {
       /** @type {any} */ (backend).current = /** @type {any} */ ({ triggerDeployment: vi.fn() });
       expect(canTriggerDeployment.current).toBe(true);
+    });
+
+    test('is false for a Sveltia CMS Additions viewer', () => {
+      setPrefs({ deployHookURL: 'https://example.com/hook' });
+      user.account = { backendName: 'github', role: 'viewer' };
+      expect(canTriggerDeployment.current).toBe(false);
+      user.account = undefined;
     });
 
     test('is false once the last commit has been deployed', () => {

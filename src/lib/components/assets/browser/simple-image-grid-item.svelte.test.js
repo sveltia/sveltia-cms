@@ -1,10 +1,10 @@
+import { Listbox } from '@sveltia/ui';
 import { createRawSnippet } from 'svelte';
 import { describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
 import SimpleImageGridItem from './simple-image-grid-item.svelte';
-import SimpleImageGrid from './simple-image-grid.svelte';
 
 const children = createRawSnippet(() => ({
   /**
@@ -28,7 +28,7 @@ describe('SimpleImageGridItem', () => {
         children,
         onChange,
       },
-      { wrapper: SimpleImageGrid },
+      { wrapper: Listbox },
     );
 
     const option = page.getByRole('option', { name: 'photo.png' });
@@ -56,7 +56,7 @@ describe('SimpleImageGridItem', () => {
         children,
         onChange: vi.fn(),
       },
-      { wrapper: SimpleImageGrid },
+      { wrapper: Listbox },
     );
 
     await expect.element(page.getByRole('option')).toHaveAttribute('aria-selected', 'true');

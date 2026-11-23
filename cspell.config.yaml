@@ -35,6 +35,7 @@ words:
   - astrolicious
   - astros
   - Backblaze
+  - backblazeb
   - backlink
   - backlinks
   - basehead
@@ -51,6 +52,7 @@ words:
   - cmaps
   - Codeberg
   - cooldown
+  - crswap
   - CVEs
   - danurbanowicz
   - Decap
@@ -58,8 +60,11 @@ words:
   - deepmerge
   - DeepSeek
   - dialogs
+  - digitaloceanspaces
   - DIRC
+  - discardable
   - dompurify
+  - Draggability
   - embeddable
   - esbuild
   - esrap
@@ -92,11 +97,12 @@ words:
   - husenunicorn
   - iarna
   - iccs
-  - IIFE
   - iids
+  - IIFE
   - indexeddb
   - infobar
   - infobars
+  - Jaccard
   - jbig
   - jfif
   - jsdoc
@@ -105,6 +111,7 @@ words:
   - keyvalue
   - Kohei
   - kyoshino
+  - latlng
   - libheif
   - llms
   - longtask
@@ -114,6 +121,7 @@ words:
   - mdwn
   - messageformat
   - mkdn
+  - mstrl
   - Mtei
   - Mullvad
   - notranslate
@@ -136,11 +144,13 @@ words:
   - pingable
   - Pixabay
   - PKCE
+  - plainify
   - plusplus
   - pnpm
   - popups
   - postcss
   - prefs
+  - prehash
   - previewable
   - privatemaker
   - programmatically
@@ -179,6 +189,7 @@ words:
   - stylelint
   - subfolders
   - subschema
+  - subtags
   - Supabase
   - sveltejs
   - Sveltia
@@ -187,6 +198,7 @@ words:
   - ucarecd
   - unadded
   - unapprove
+  - uncaptioned
   - unflatten
   - unflattened
   - unflattening
@@ -194,6 +206,7 @@ words:
   - unlocalised
   - unlocalized
   - unpatched
+  - unproject
   - unproxify
   - unreviewed
   - unrs

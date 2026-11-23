@@ -13,7 +13,10 @@ import {
 } from '$lib/services/contents/fields/rich-text/options';
 
 vi.mock('$lib/services/config', () => ({ cmsConfig: { current: undefined } }));
-vi.mock('$lib/services/contents/fields/rich-text/components/definitions', () => ({
+vi.mock('$lib/services/contents/fields/rich-text/components/definitions', async () => ({
+  getImageComponentId: (
+    await vi.importActual('$lib/services/contents/fields/rich-text/components/definitions')
+  ).getImageComponentId,
   getComponentDef: vi.fn((name) =>
     name === 'unknown' ? undefined : { id: name === 'youtube' ? 'x-youtube' : name, name },
   ),
@@ -66,6 +69,34 @@ describe('getEditorComponentNames()', () => {
       }),
     ).toEqual(['image']);
   });
+
+  test('uses the `captioned_images` option', () => {
+    const imageConfig = { ...fieldConfig, editor_components: ['image', 'code-block'] };
+
+    expect(getEditorComponentNames({ ...imageConfig, captioned_images: true })).toEqual([
+      'linked-image',
+      'code-block',
+    ]);
+    expect(getEditorComponentNames({ ...imageConfig, captioned_images: false })).toEqual([
+      'uncaptioned-linked-image',
+      'code-block',
+    ]);
+    expect(
+      getEditorComponentNames({ ...imageConfig, captioned_images: false, linked_images: false }),
+    ).toEqual(['uncaptioned-image', 'code-block']);
+    // The field defaults apply unless the field overrides them
+    cmsConfig.current = /** @type {any} */ ({
+      field_defaults: { richtext: { captioned_images: false } },
+    });
+    expect(getEditorComponentNames(imageConfig)).toEqual([
+      'uncaptioned-linked-image',
+      'code-block',
+    ]);
+    expect(getEditorComponentNames({ ...imageConfig, captioned_images: true })).toEqual([
+      'linked-image',
+      'code-block',
+    ]);
+  });
 });
 
 describe('getEditorComponentDefs()', () => {
@@ -86,8 +117,13 @@ describe('getToolbarButtons()', () => {
     expect(getToolbarButtons(['heading-one'], ['linked-image'])).toEqual(['heading-1']);
   });
 
-  test('maps the `align` button', () => {
-    expect(getToolbarButtons(['bold', 'align'], [])).toEqual(['bold', 'align']);
+  test('maps the `underline`, `align` and `task-list` buttons', () => {
+    expect(getToolbarButtons(['bold', 'underline', 'align', 'task-list'], [])).toEqual([
+      'bold',
+      'underline',
+      'align',
+      'task-list',
+    ]);
   });
 
   test('adds `horizontal-rule` when the `hr` component is enabled', () => {

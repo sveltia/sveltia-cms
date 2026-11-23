@@ -98,6 +98,39 @@ describe('FieldPreview', () => {
     expect(section?.querySelector('p')).toHaveTextContent('Hello');
   });
 
+  test('makes an image or an embedded video full-width on a small screen', async () => {
+    // The default viewport of the component tests
+    await page.viewport(414, 896);
+
+    const container = await renderPreview({
+      fieldConfig: { name: 'title', widget: 'string' },
+      values: { title: 'Hello' },
+    });
+
+    const section = /** @type {HTMLElement} */ (container.querySelector('section'));
+
+    container.setAttribute('role', 'document');
+    container.style.setProperty('--entry-preview-padding-inline', '16px');
+    section.insertAdjacentHTML('beforeend', '<p id="image"><img alt=""></p>');
+    section.insertAdjacentHTML('beforeend', '<p id="video"><iframe title="Video"></iframe></p>');
+
+    /**
+     * Get the inline margins of an element in the section.
+     * @param {string} selector Selector.
+     * @returns {string[]} Margins.
+     */
+    const getMargins = (selector) => {
+      const style = getComputedStyle(/** @type {Element} */ (section.querySelector(selector)));
+
+      return [style.marginInlineStart, style.marginInlineEnd];
+    };
+
+    expect(getMargins('#image')).toEqual(['-16px', '-16px']);
+    expect(getMargins('#video')).toEqual(['-16px', '-16px']);
+    // A paragraph of text keeps the padding
+    expect(getMargins('p:not([id])')).not.toEqual(['-16px', '-16px']);
+  });
+
   test('falls back to the field name as the label, or hides it', async () => {
     expect(
       (await renderPreview({ fieldConfig: { name: 'title', widget: 'string' } })).querySelector(

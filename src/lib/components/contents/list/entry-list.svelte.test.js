@@ -8,7 +8,7 @@ import { getCollection, selectedCollection } from '$lib/services/contents/collec
 import { setBulkEditMode, setReorderMode } from '$lib/services/contents/collection/view';
 import { currentView, entryListSettings } from '$lib/services/contents/collection/view/settings';
 import { env } from '$lib/services/user/env.svelte';
-import { unpublishedEntries } from '$lib/services/workflow';
+import { allUnpublishedEntries } from '$lib/services/workflow';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import { createMockEntry, initTestConfig, setEntries, TEST_IMAGE_URL } from '$lib/test/config';
 
@@ -44,10 +44,31 @@ const NOTES = {
   fields: [{ name: 'title', label: 'Title', widget: 'string' }],
 };
 
-describe('EntryList', () => {
-  beforeAll(async () => {
-    await initTestConfig({ collections: [structuredClone(POSTS), structuredClone(NOTES)] });
+/**
+ * Configuration of a collection whose groups start collapsed.
+ */
+const PHOTOS = {
+  name: 'photos',
+  label: 'Photos',
+  folder: 'content/photos',
+  fields: [
+    { name: 'title', label: 'Title', widget: 'string' },
+    { name: 'case', label: 'Case', widget: 'string' },
+  ],
+  view_groups: { groups: [{ name: 'case', label: 'Case', field: 'case', collapsed: true }] },
+};
+
+/**
+ * Load the configuration of all the collections the tests list the entries of.
+ */
+const initConfig = async () => {
+  await initTestConfig({
+    collections: [structuredClone(POSTS), structuredClone(NOTES), structuredClone(PHOTOS)],
   });
+};
+
+describe('EntryList', () => {
+  beforeAll(initConfig);
 
   /**
    * Select the collection, with the given saved view. The view is restored from the settings when
@@ -65,7 +86,7 @@ describe('EntryList', () => {
     env.isLargeScreen = true;
     forkedRepository.current = undefined;
     selectedCollection.current = undefined;
-    unpublishedEntries.current = [];
+    allUnpublishedEntries.current = [];
     setReorderMode(false);
     setBulkEditMode(false);
     window.location.hash = '#/collections/posts';
@@ -89,13 +110,14 @@ describe('EntryList', () => {
 
     await expect.element(grid).toHaveAttribute('aria-rowcount', '3');
     await expect.poll(() => grid.getByRole('row').elements().length).toBe(3);
-    // The French entry has no title in the default locale to sort by, so it comes last
+    // The French entry has no title in the default locale, so it’s sorted by the title it’s listed
+    // with, like it’s filtered and grouped
     expect(
       grid
         .getByRole('row')
         .elements()
         .map((el) => el.textContent?.trim()),
-    ).toEqual(['Hello', 'World', 'Bonjour']);
+    ).toEqual(['Bonjour', 'Hello', 'World']);
 
     // The thumbnail is shown in the view’s size
     await expect
@@ -346,7 +368,7 @@ describe('EntryList', () => {
 
   test('lists the unpublished entries ahead of the published ones', async () => {
     setEntries([createMockEntry({ slug: 'hello', content: { _default: { title: 'Hello' } } })]);
-    unpublishedEntries.current = [
+    allUnpublishedEntries.current = [
       /** @type {any} */ ({
         ...createMockEntry({
           slug: 'draft',
@@ -435,7 +457,7 @@ describe('EntryList', () => {
         .toBe(TEST_IMAGE_URL);
     } finally {
       setReorderMode(false);
-      await initTestConfig({ collections: [structuredClone(POSTS)] });
+      await initConfig();
     }
   });
 
@@ -534,6 +556,48 @@ describe('EntryList', () => {
     expect(currentView.current.collapsedGroups).toEqual({
       '["category"]': ['blog', OTHER_GROUP_NAME],
     });
+  });
+
+  test('starts the groups collapsed with the `collapsed` option, remembering expanded ones', async () => {
+    setEntries([
+      createMockEntry({
+        folder: 'content/photos',
+        slug: 'a',
+        content: { _default: { title: 'A', case: 'one' } },
+      }),
+      createMockEntry({
+        folder: 'content/photos',
+        slug: 'b',
+        content: { _default: { title: 'B', case: 'two' } },
+      }),
+    ]);
+    window.location.hash = '#/collections/photos';
+    entryListSettings.current = {
+      photos: { type: 'list', group: { field: 'case' }, expandedGroups: { '["case"]': ['two'] } },
+    };
+    selectedCollection.current = getCollection('photos');
+
+    await render(EntryList, {});
+
+    const grid = page.getByRole('grid', { name: 'Entries' });
+    const one = grid.getByRole('button', { name: 'one' });
+    const two = grid.getByRole('button', { name: 'two' });
+
+    // A group is collapsed unless the user has expanded it
+    await expect.element(one).toHaveAttribute('aria-expanded', 'false');
+    await expect.element(two).toHaveAttribute('aria-expanded', 'true');
+    await expect.element(grid.getByRole('row', { name: 'B' })).toBeInTheDocument();
+    expect(grid.getByRole('row', { name: 'A' }).elements()).toHaveLength(0);
+
+    await one.click();
+    await expect.element(one).toHaveAttribute('aria-expanded', 'true');
+    await expect.element(grid.getByRole('row', { name: 'A' })).toBeInTheDocument();
+    expect(currentView.current.expandedGroups).toEqual({ '["case"]': ['two', 'one'] });
+    expect(currentView.current.collapsedGroups).toBeUndefined();
+
+    await two.click();
+    await expect.element(two).toHaveAttribute('aria-expanded', 'false');
+    expect(currentView.current.expandedGroups).toEqual({ '["case"]': ['one'] });
   });
 
   test('offers to create an entry when there is none', async () => {

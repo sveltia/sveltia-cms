@@ -1,4 +1,5 @@
 import { isFieldMultiple } from '$lib/services/contents/entry/fields';
+import { getCodeKeys } from '$lib/services/contents/fields/code/helpers';
 import { getLocalizedFieldValue } from '$lib/services/contents/fields/locale';
 import { isValueEmpty } from '$lib/services/utils/object';
 
@@ -53,10 +54,9 @@ export const getMainValueKeyPath = (fieldConfig, keyPath) => {
     return keyPath;
   }
 
-  const { output_code_only: outputCodeOnly = false, keys: outputKeys = { code: 'code' } } =
-    /** @type {CodeField} */ (fieldConfig);
+  const keys = getCodeKeys(/** @type {CodeField} */ (fieldConfig));
 
-  return outputCodeOnly ? keyPath : `${keyPath}.${outputKeys.code}`;
+  return keys ? `${keyPath}.${keys.code}` : keyPath;
 };
 
 /**

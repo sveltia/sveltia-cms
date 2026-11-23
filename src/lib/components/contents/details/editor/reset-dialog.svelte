@@ -31,14 +31,7 @@
   const entryDraft = getEntryDraftContext();
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    open = $bindable(false),
-    action,
-    locale = undefined,
-    onClose = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { open = $bindable(false), action, locale = undefined, onClose = undefined } = $props();
 
   const label = $derived(getResetLabel(action, locale ? 'locale' : 'entry'));
 </script>

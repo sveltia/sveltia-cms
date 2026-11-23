@@ -15,6 +15,7 @@ import {
   hasUnsafeIntegerSources,
   restoreBigInts,
 } from '$lib/services/contents/file/integers';
+import { prependLeadingComment } from '$lib/services/contents/file/leading-comments';
 import { restoreTomlValueSources } from '$lib/services/contents/file/toml-sources';
 import {
   getJSONSourceText,
@@ -26,7 +27,7 @@ import {
 /**
  * @import { Scalar, ToStringOptions } from 'yaml';
  * @import { FormatSyntax } from '$lib/services/contents/file/constants';
- * @import { FileConfig, InternalLocaleCode, ValueSourceMap } from '$lib/types/private';
+ * @import { FileConfig, FileState, InternalLocaleCode } from '$lib/types/private';
  * @import {
  * FieldKeyPath,
  * FileFormatterContext,
@@ -195,13 +196,20 @@ export const formatYAML = (
   legacyOptions = {},
   comments = {},
 ) => {
-  const { indent_size: indent = 2, indent_sequences: indentSeq = true, quote = 'none' } = options;
+  const {
+    indent_size: indent = 2,
+    indent_sequences: indentSeq = true,
+    quote = 'none',
+    block_quote: blockQuote = true,
+  } = options;
+
   const { quote: legacyQuote = false } = legacyOptions;
 
   /** @type {ToStringOptions} */
   const toStringOptions = {
     indent,
     indentSeq,
+    blockQuote,
     lineWidth: 0,
     defaultKeyType: 'PLAIN',
     defaultStringType:
@@ -275,6 +283,25 @@ const FORMATTERS = {
 };
 
 /**
+ * Format the given content in the given syntax, with the comments. The comments at the top of the
+ * file being overwritten are kept in YAML and TOML; JSON has no comments.
+ * @param {object} args Arguments.
+ * @param {FormatSyntax} args.syntax Syntax.
+ * @param {RawEntryContent} args.content Content.
+ * @param {FileConfig} args._file File configuration.
+ * @param {Record<FieldKeyPath, string>} [args.comments] Comments to add before the keys, keyed by
+ * field key path. YAML only.
+ * @param {string} [args.leadingComment] Comments at the top of the file being overwritten, or of
+ * its front matter.
+ * @returns {string} Formatted document.
+ */
+const formatSyntax = ({ syntax, content, _file, comments, leadingComment }) => {
+  const str = FORMATTERS[syntax](content, _file, comments);
+
+  return syntax === 'json' ? str : prependLeadingComment(str, leadingComment);
+};
+
+/**
  * Check whether the given format is written as front matter followed by a body, including the
  * `frontmatter` format, in which a new file gets YAML front matter.
  * @param {string} format File format.
@@ -290,11 +317,13 @@ const isFrontMatterFormat = (format) =>
  * @param {FileConfig} args._file File configuration.
  * @param {Record<FieldKeyPath, string>} [args.comments] Comments to add before the keys, keyed by
  * field key path. YAML only.
+ * @param {string} [args.leadingComment] Comments at the top of the front matter being overwritten.
+ * YAML and TOML only.
  * @returns {string} Formatted front matter.
  * @throws {Error} When the format is not a front matter format, or the content could not be
  * formatted.
  */
-export const formatFrontMatter = ({ content, _file, comments }) => {
+export const formatFrontMatter = ({ content, _file, comments, leadingComment }) => {
   const {
     format,
     fmDelimiters,
@@ -319,9 +348,16 @@ export const formatFrontMatter = ({ content, _file, comments }) => {
   // Support Markdown without a front matter block, particularly for VitePress. A body starting with
   // a delimiter line would be read back as front matter, though, so it gets an empty block above
   // it. Any default delimiter counts, as the `frontmatter` format is detected from the first line.
-  // The blank line inside the block keeps the parser from taking the body’s delimiter as the end
+  // The parser skips any whitespace before the block, so the first line is the first one after
+  // that, e.g. a thematic break below a blank line, but the body is written as is. The blank line
+  // inside the block keeps the parser from taking the body’s delimiter as the end
   if (!Object.keys(content).length) {
-    const firstLine = body.split('\n', 1)[0].trimEnd();
+    // A block holding nothing but comments is kept as is
+    if (leadingComment) {
+      return `${sd}\n${leadingComment}\n${ed}\n${body ? `\n${body}\n` : ''}`;
+    }
+
+    const firstLine = body.trimStart().split('\n', 1)[0].trimEnd();
     const delimiters = [sd, ...Object.values(FRONTMATTER_DELIMITER_MAP).map(([d]) => d)];
 
     return delimiters.includes(firstLine) ? `${sd}\n\n${ed}\n\n${body}\n` : `${body}\n`;
@@ -333,7 +369,7 @@ export const formatFrontMatter = ({ content, _file, comments }) => {
     throw new Error(`Unsupported front matter format: ${format}`);
   }
 
-  let head = FORMATTERS[syntax](content, _file, comments);
+  let head = formatSyntax({ syntax, content, _file, comments, leadingComment });
 
   // Like Netlify/Decap CMS, strip the outer braces of the object when they double as the
   // delimiters, so the front matter block is the object itself rather than one wrapped in another
@@ -354,12 +390,14 @@ export const formatFrontMatter = ({ content, _file, comments }) => {
  * @param {FileConfig} entry._file Entry file configuration.
  * @param {Record<FieldKeyPath, string>} [entry.comments] Comments to add before the keys, keyed by
  * field key path, from the `comment` field option. YAML only, like Netlify/Decap CMS.
- * @param {ValueSourceMap} [entry.valueSources] Source text of the values read from the file being
- * overwritten, to write the ones that haven’t changed as they were.
+ * @param {FileState} [entry.state] What is remembered about the file being overwritten: the source
+ * text of the values, to write the ones that haven’t changed as they were, and the comments at the
+ * top, to keep in YAML and TOML.
  * @returns {string} Formatted string.
  * @throws {Error} When the content could not be formatted.
  */
-const formatWithBuiltInFormatter = ({ content, _file, comments, valueSources }) => {
+const formatWithBuiltInFormatter = ({ content, _file, comments, state = {} }) => {
+  const { valueSources, leadingComment } = state;
   const { format } = _file;
 
   if (format === 'raw') {
@@ -376,13 +414,13 @@ const formatWithBuiltInFormatter = ({ content, _file, comments, valueSources }) 
 
   try {
     if (isFrontMatterFormat(format)) {
-      return formatFrontMatter({ content, _file, comments });
+      return formatFrontMatter({ content, _file, comments, leadingComment });
     }
 
     // A built-in format other than `raw` has a syntax
     const syntax = /** @type {FormatSyntax} */ (getFormatSyntax(format));
 
-    return `${FORMATTERS[syntax](content, _file, comments)}\n`;
+    return `${formatSyntax({ syntax, content, _file, comments, leadingComment })}\n`;
   } catch (/** @type {any} */ ex) {
     throw new Error(`The entry could not be formatted due to ${ex.name}: ${ex.message}`, {
       cause: ex,
@@ -401,13 +439,14 @@ const formatWithBuiltInFormatter = ({ content, _file, comments, valueSources }) 
  * @param {FileConfig} entry._file Entry file configuration.
  * @param {Record<FieldKeyPath, string>} [entry.comments] Comments to add before the keys, keyed by
  * field key path, from the `comment` field option. YAML only, like Netlify/Decap CMS.
- * @param {ValueSourceMap} [entry.valueSources] Source text of the values read from the file being
- * overwritten, to write the ones that haven’t changed as they were.
+ * @param {FileState} [entry.state] What is remembered about the file being overwritten: the source
+ * text of the values, to write the ones that haven’t changed as they were, and the comments at the
+ * top, to keep in YAML and TOML.
  * @returns {Promise<string>} Formatted string.
  * @throws {Error} When the format has no formatter, neither a custom one nor a built-in one, or the
  * content could not be formatted. Writing an empty file instead would wipe the entry’s content.
  */
-export const formatEntryFile = async ({ content, _file, comments, valueSources }) => {
+export const formatEntryFile = async ({ content, _file, comments, state }) => {
   // An existing file of a collection in the `frontmatter` format is saved in the front matter
   // format it was read in, but the custom formatter is registered under the configured format. Fall
   // back to one registered for the detected format, which is what was used before
@@ -430,7 +469,7 @@ export const formatEntryFile = async ({ content, _file, comments, valueSources }
       );
     }
 
-    return formatWithBuiltInFormatter({ content, _file, comments, valueSources });
+    return formatWithBuiltInFormatter({ content, _file, comments, state });
   }
 
   /** @type {FileFormatterContext} */
@@ -460,7 +499,7 @@ export const formatEntryFile = async ({ content, _file, comments, valueSources }
         content: Array.isArray(data) ? [...data] : { ...data },
         _file,
         comments,
-        valueSources,
+        state,
       });
     },
   };

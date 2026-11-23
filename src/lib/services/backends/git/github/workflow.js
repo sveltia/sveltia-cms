@@ -1,6 +1,10 @@
 import { mergeRefusedPullRequest } from '$lib/services/backends/git/github/auto-merge';
 import { commitChanges } from '$lib/services/backends/git/github/commits';
-import { getWorkflowRepository } from '$lib/services/backends/git/github/fork';
+import {
+  getBranchRepository,
+  getWorkflowRepository,
+  isOpenAuthoringConfigured,
+} from '$lib/services/backends/git/github/fork';
 import { fetchAliasedBatch } from '$lib/services/backends/git/github/graphql';
 import {
   createPullRequest,
@@ -9,6 +13,7 @@ import {
   fetchPullRequestFileList,
   fetchPullRequestFiles,
   MAX_ITEMS,
+  parseAuthor,
   parseFileNodes,
   updateDraftState,
   updateLabels,
@@ -21,7 +26,7 @@ import {
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
-import { checkPublishAllowed } from '$lib/services/backends/git/shared/fork';
+import { checkPublishAllowed, toForkPullRequest } from '$lib/services/backends/git/shared/fork';
 import {
   getPullRequestPath,
   getRepositoryPath,
@@ -38,7 +43,9 @@ import {
   saveWorkflowBranch,
   toChangedFilesWithModes,
   updateLabelledStatus,
+  updatePullRequestDescription,
 } from '$lib/services/backends/git/shared/workflow';
+import { readNumberedPages } from '$lib/services/utils/paging';
 import { encodePathSegments } from '$lib/services/utils/url';
 import { getAllStatusLabels, getStatusFromLabels } from '$lib/services/workflow/labels';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
@@ -65,6 +72,7 @@ const getPullRequestFields = () => `
   number
   title
   url
+  body
   isDraft
   isCrossRepository
   baseRefName
@@ -95,15 +103,46 @@ const getPullRequestFields = () => `
 `;
 
 /**
+ * Build the selection to fetch the open pull requests to the configured branch that may come from
+ * Open Authoring contributors. A contributor can’t label a pull request on the configured
+ * repository, so these are matched by base branch rather than by label, and the ones from forks
+ * picked out by {@link parseForkPullRequest}. The repository’s own pull requests share the item
+ * cap, so a busy repository can crowd the oldest contributions out.
+ * @returns {string} Field selection on the `Repository` type.
+ */
+const getForkPullRequestsSelection = () => `
+  forkPullRequests: pullRequests(
+    states: OPEN
+    baseRefName: ${JSON.stringify(repository.branch)}
+    first: ${MAX_ITEMS.pullRequests}
+    orderBy: { field: UPDATED_AT, direction: DESC }
+  ) {
+    nodes {
+      ${getPullRequestFields()}
+      maintainerCanModify
+      headRepository {
+        name
+        owner {
+          login
+        }
+      }
+    }
+  }
+`;
+
+/**
  * Build the query to fetch the open pull requests along with their labels and changed file paths.
  * The status labels are matched by the API rather than by {@link parsePullRequest}, so the item cap
  * applies to the CMS’s own pull requests instead of the repository’s most recently updated ones,
  * which could otherwise push the unpublished entries out of the result. The filter matches a pull
  * request carrying any of the labels, not all of them.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.withForks] Whether to also fetch the pull requests to the configured
+ * branch that may come from Open Authoring contributors.
  * @returns {string} GraphQL query.
  * @see https://docs.github.com/en/graphql/reference/objects#pullrequest
  */
-const getFetchPullRequestsQuery = () => `
+const getFetchPullRequestsQuery = ({ withForks = false } = {}) => `
   query($owner: String!, $repo: String!) {
     repository(owner: $owner, name: $repo) {
       pullRequests(
@@ -116,6 +155,7 @@ const getFetchPullRequestsQuery = () => `
           ${getPullRequestFields()}
         }
       }
+      ${withForks ? getForkPullRequestsSelection() : ''}
     }
   }
 `;
@@ -126,23 +166,27 @@ const getFetchPullRequestsQuery = () => `
  * @param {WorkflowStatus} status Status of the pull request.
  * @returns {WorkflowPullRequest} Pull request.
  */
-const toPullRequest = (node, status) => {
-  const { login, name, email, databaseId } = node.author ?? {};
+const toPullRequest = (node, status) => ({
+  number: node.number,
+  nodeId: node.id,
+  title: node.title,
+  url: node.url,
+  branch: node.headRefName,
+  headSHA: node.headRefOid,
+  status,
+  createdDate: new Date(node.createdAt),
+  updatedDate: new Date(node.updatedAt),
+  author: parseAuthor(node.author),
+  files: parseFileNodes(node.files?.nodes ?? []),
+  description: node.body ?? '',
+});
 
-  return {
-    number: node.number,
-    nodeId: node.id,
-    title: node.title,
-    url: node.url,
-    branch: node.headRefName,
-    headSHA: node.headRefOid,
-    status,
-    createdDate: new Date(node.createdAt),
-    updatedDate: new Date(node.updatedAt),
-    author: login ? { name: name ?? login, email: email ?? '', id: databaseId, login } : undefined,
-    files: parseFileNodes(node.files?.nodes ?? []),
-  };
-};
+/**
+ * Get the names of the labels on a pull request node returned by the GraphQL API.
+ * @param {Record<string, any>} node Pull request node.
+ * @returns {string[]} Label names.
+ */
+const getLabelNames = (node) => node.labels.nodes.map((/** @type {any} */ l) => l.name);
 
 /**
  * Parse a pull request node returned by the GraphQL API.
@@ -151,9 +195,10 @@ const toPullRequest = (node, status) => {
  * request is not managed by the CMS.
  */
 export const parsePullRequest = (node) => {
-  // A pull request from a fork belongs to an Open Authoring contributor, whose branch lives in a
-  // repository this flow can’t read. Labelling one by hand would otherwise put a card on the board
-  // with every file reported as deleted, because the branch isn’t on the configured repository
+  // A pull request from a fork belongs to an Open Authoring contributor. It’s left to
+  // {@link parseForkPullRequest}, which treats it as untrusted: taken here because a maintainer
+  // labelled it, it would pass for one of the CMS’s own, with a branch name that could be mistaken
+  // for one in the configured repository, and could be published from the CMS
   if (node.isCrossRepository) {
     return undefined;
   }
@@ -166,7 +211,7 @@ export const parsePullRequest = (node) => {
     return undefined;
   }
 
-  const status = getStatusFromLabels(node.labels.nodes.map((/** @type {any} */ l) => l.name));
+  const status = getStatusFromLabels(getLabelNames(node));
 
   if (!status) {
     return undefined;
@@ -176,18 +221,51 @@ export const parsePullRequest = (node) => {
 };
 
 /**
+ * Parse a pull request node returned by {@link getForkPullRequestsSelection}, for a maintainer to
+ * review. See {@link toForkPullRequest}.
+ * @param {Record<string, any>} node Pull request node.
+ * @returns {WorkflowPullRequest | undefined} Parsed pull request, or `undefined` if it isn’t one a
+ * contributor opened from their fork for an entry.
+ */
+export const parseForkPullRequest = (node) => {
+  const { owner, name: repo } = node.headRepository ?? {};
+
+  // A pull request whose fork has been deleted has no branch left to read or push to
+  if (!node.isCrossRepository || node.baseRefName !== repository.branch || !owner?.login || !repo) {
+    return undefined;
+  }
+
+  return toForkPullRequest(
+    {
+      owner: owner.login,
+      repo,
+      headBranch: node.headRefName,
+      editable: !!node.maintainerCanModify,
+      draft: !!node.isDraft,
+      labels: getLabelNames(node),
+    },
+    ({ status }) => toPullRequest(node, status),
+  );
+};
+
+/**
  * Fetch all the open pull requests on the configured repository that carry a CMS status label,
  * along with the changed files. This is the regular flow, used by anyone who can write to the
- * repository; see {@link fetchForkPullRequests} for the Open Authoring one.
+ * repository; see {@link fetchForkPullRequests} for the Open Authoring one. With Open Authoring
+ * turned on, the pull requests contributors have opened from their forks are listed as well, for
+ * the maintainers to review.
  * @returns {Promise<WorkflowPullRequest[]>} Pull requests.
  */
 const fetchLabelledPullRequests = async () => {
   const { repository: result } = /** @type {{ repository: Record<string, any> }} */ (
-    await fetchGraphQL(getFetchPullRequestsQuery())
+    await fetchGraphQL(getFetchPullRequestsQuery({ withForks: isOpenAuthoringConfigured() }))
   );
 
   const pullRequests = /** @type {WorkflowPullRequest[]} */ (
-    (result?.pullRequests?.nodes ?? []).map(parsePullRequest).filter(Boolean)
+    [
+      ...(result?.pullRequests?.nodes ?? []).map(parsePullRequest),
+      ...(result?.forkPullRequests?.nodes ?? []).map(parseForkPullRequest),
+    ].filter(Boolean)
   );
 
   // Only a pull request with a renamed file needs the heavier REST request, which is the sole
@@ -485,17 +563,43 @@ export const approve = (pullRequest) => approvePullRequest(repository, pullReque
  * Message a review is dismissed with when the entry is moved back from the ready stage.
  */
 const WITHDRAWAL_MESSAGE = 'The entry is no longer ready to publish.';
+/**
+ * Number of reviews to fetch per page, the most the REST API allows.
+ */
+const REVIEWS_PER_PAGE = 100;
+/**
+ * Most pages of reviews to fetch, as a guard against a server that ignores the `page` parameter.
+ */
+const MAX_REVIEW_PAGES = 10;
+
+/**
+ * Fetch the reviews of a pull request, up to {@link MAX_REVIEW_PAGES} pages. They’re listed oldest
+ * first, so the signed-in user’s latest approval is on the last page of a pull request with many
+ * reviews.
+ * @param {string} path Path of the pull request’s reviews.
+ * @returns {Promise<Record<string, any>[]>} Reviews.
+ * @see https://docs.github.com/en/rest/pulls/reviews#list-reviews-for-a-pull-request
+ */
+const fetchReviews = async (path) =>
+  (
+    await readNumberedPages(
+      async (page) =>
+        /** @type {Record<string, any>[]} */ (
+          await fetchAPI(`${path}?per_page=${REVIEWS_PER_PAGE}&page=${page}`)
+        ),
+      { pageSize: REVIEWS_PER_PAGE, maxPages: MAX_REVIEW_PAGES, delay: 0 },
+    )
+  ).results;
 
 /**
  * Withdraw the signed-in user’s approval of the pull request. A submitted review can’t be deleted
  * on GitHub, so it’s dismissed instead, which a branch protection rule may restrict to some users.
  * @param {WorkflowPullRequest} pullRequest Pull request.
- * @see https://docs.github.com/en/rest/pulls/reviews#list-reviews-for-a-pull-request
  * @see https://docs.github.com/en/rest/pulls/reviews#dismiss-a-review-for-a-pull-request
  */
 export const withdrawApproval = async (pullRequest) => {
   const path = `${getPullRequestPath(repository, pullRequest.number)}/reviews`;
-  const reviews = /** @type {Record<string, any>[]} */ (await fetchAPI(`${path}?per_page=100`));
+  const reviews = await fetchReviews(path);
 
   await Promise.all(
     findOwnApprovals(reviews).map(({ id }) =>
@@ -531,6 +635,8 @@ const commitToNewBranch = async (changes, options) => {
  * @param {CommitOptions} options Commit options, with the workflow branch.
  * @param {WorkflowPullRequest} pullRequest Pull request.
  * @returns {Promise<CommitResults>} Commit results.
+ * @throws {Error} When the pull request comes from a fork whose contributor doesn’t let maintainers
+ * push to it, or the commit fails.
  */
 const commitToExistingBranch = async (changes, options, pullRequest) => {
   const { branch = '' } = options;
@@ -546,12 +652,24 @@ const commitToExistingBranch = async (changes, options, pullRequest) => {
     );
 
     if (branchGone) {
-      throw createBranchGoneError(branch, getWorkflowRepository());
+      const { branch: name, ...headRepository } = getBranchRepository(branch);
+
+      throw createBranchGoneError(name, headRepository);
     }
 
     throw ex;
   }
 };
+
+/**
+ * Update the description of the given pull request with the given function.
+ * @param {WorkflowPullRequest} pullRequest Pull request.
+ * @param {(description: string) => string} transform Function to get the new description from the
+ * current one.
+ * @returns {Promise<string>} New description.
+ */
+const updateDescription = (pullRequest, transform) =>
+  updatePullRequestDescription(repository, pullRequest, transform);
 
 /**
  * Commit the given changes on the workflow branch, creating the branch and the pull request if they
@@ -561,7 +679,12 @@ const commitToExistingBranch = async (changes, options, pullRequest) => {
  * and the new or updated pull request.
  */
 export const savePullRequest = async (args) =>
-  saveWorkflowBranch(args, { commitToNewBranch, commitToExistingBranch, createPullRequest });
+  saveWorkflowBranch(args, {
+    commitToNewBranch,
+    commitToExistingBranch,
+    createPullRequest,
+    updateDescription,
+  });
 
 /**
  * Maximum number of files the comparison API lists. A comparison that reaches it may have left
@@ -759,7 +882,9 @@ export const publish = async (pullRequest) => {
 };
 
 /**
- * Close the pull request without merging it, and delete the workflow branch.
+ * Close the pull request without merging it, and delete the workflow branch. A contributor’s
+ * branch is left in their fork, where they can still use it, as the maintainer can only close the
+ * pull request from it.
  * @param {WorkflowPullRequest} pullRequest Pull request.
  * @returns {Promise<void>}
  */

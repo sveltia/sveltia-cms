@@ -30,16 +30,7 @@
   const entryDraft = getEntryDraftContext();
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    open = $bindable(false),
-    discardsDraft,
-    useWorkflow,
-    withAssets,
-    onOk,
-    onClose,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { open = $bindable(false), discardsDraft, useWorkflow, withAssets, onOk, onClose } = $props();
 
   const collection = $derived(entryDraft.current?.collection);
   const collectionFile = $derived(entryDraft.current?.collectionFile);

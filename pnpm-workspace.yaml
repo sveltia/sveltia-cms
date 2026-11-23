@@ -1,19 +1,7 @@
-# cSpell:ignore gcqx minimatch
-
 allowBuilds:
   unrs-resolver: false
 
 engineStrict: true
-
-auditConfig:
-  ignoreGhsas:
-    # deepmerge: low severity, unpatched. Only used at build time by `@sveltejs/vite-plugin-svelte`;
-    # the CMS itself uses `@fastify/deepmerge` instead
-    # https://github.com/advisories/GHSA-gcqx-w48m-w2h4
-    - GHSA-gcqx-w48m-w2h4
-    # minimatch: Only used by some dev dependencies; no patch available for older versions
-    # https://github.com/advisories/GHSA-g3hv-75wg-m249
-    - GHSA-g3hv-75wg-m249
 
 minimumReleaseAge: 1440
 

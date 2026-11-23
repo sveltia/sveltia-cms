@@ -14,6 +14,7 @@ export const warnedOnceMap = {
   multiple_folders_i18n_root: false,
   omit_default_locale_from_filename: false,
   logo_url: false,
+  flat_metadata_keys: false,
 };
 
 /**
@@ -23,7 +24,8 @@ export const warnedOnceMap = {
 export const warningMessages = {
   slug_length:
     'The `slug_length` collection option is deprecated and will be removed in Sveltia CMS 1.0. ' +
-    'Use the global `slug.maxlength` option instead. ',
+    'Use the global `slug.maxlength` option instead. ' +
+    `${DOCS_BASE_URL}/collections/entries/slugs#global-slug-options`,
   slug_editor_tag:
     'The `{{fields._slug}}` and `{{fields._slug | localize}}` slug template tags are deprecated ' +
     'and will be removed in Sveltia CMS 1.0. Use the `slug` collection option’s object form ' +
@@ -52,11 +54,18 @@ export const warningMessages = {
   omit_default_locale_from_filename:
     'The `omit_default_locale_from_filename` i18n option is deprecated and will be removed in ' +
     'Sveltia CMS 1.0. Use the `omit_default_locale_from_file_path` option instead. ' +
-    `${DOCS_BASE_URL}/i18n/structures`,
+    `${DOCS_BASE_URL}/i18n/options`,
   logo_url:
     'The `logo_url` option is deprecated and will be removed in a future version of Sveltia CMS. ' +
     'Use the `logo.src` option instead. ' +
     `${DOCS_BASE_URL}/customization#custom-logo`,
+  flat_metadata_keys:
+    'Reading the `fieldsMetaData` of a nested field with its flat key path, like `details.author` ' +
+    'or `books.0.author`, or the metadata of a List field’s single `field` under the List field’s ' +
+    'name is deprecated and will be removed in a future version of Sveltia CMS. Use the nested ' +
+    "path instead, like `fieldsMetaData.getIn(['books', 'author'])` or " +
+    "`fieldsMetaData.getIn(['tags', 'tag'])`. " +
+    `${DOCS_BASE_URL}/api/preview-templates`,
 };
 
 /**

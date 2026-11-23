@@ -8,7 +8,7 @@ import {
   fetchForkByName,
   fetchForkBySearch,
   fetchForkingAllowed,
-  fetchRepositoryAccess,
+  getBranchRepository,
   getWorkflowRepository,
   initOpenAuthoring,
   isOpenAuthoringConfigured,
@@ -17,7 +17,7 @@ import {
 import { instance } from '$lib/services/backends/git/gitea/instance';
 import {
   fetchDefaultBranchName,
-  getRepositoryInfo,
+  fetchRepositoryAccess,
   repository,
 } from '$lib/services/backends/git/gitea/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
@@ -34,7 +34,7 @@ vi.mock('$lib/services/backends/git/gitea/instance', () => ({ instance: { isForg
 vi.mock('$lib/services/backends/git/gitea/repository', () => ({
   repository: { owner: 'owner', repo: 'repo', branch: 'main' },
   fetchDefaultBranchName: vi.fn(),
-  getRepositoryInfo: vi.fn(),
+  fetchRepositoryAccess: vi.fn(),
 }));
 vi.mock('$lib/services/backends/git/shared/api');
 vi.mock('$lib/services/config', () => ({ cmsConfig: { current: undefined } }));
@@ -118,37 +118,18 @@ describe('Gitea fork service', () => {
     });
   });
 
-  describe('fetchRepositoryAccess', () => {
-    test('reports write access from the repository’s own permissions', async () => {
-      vi.mocked(getRepositoryInfo).mockResolvedValue({ permissions: { push: true } });
-      await expect(fetchRepositoryAccess()).resolves.toEqual({ canWrite: true });
-
-      vi.mocked(getRepositoryInfo).mockResolvedValue({ permissions: { pull: true } });
-      await expect(fetchRepositoryAccess()).resolves.toEqual({ canWrite: false });
-
-      vi.mocked(getRepositoryInfo).mockResolvedValue({});
-      await expect(fetchRepositoryAccess()).resolves.toEqual({ canWrite: false });
-    });
-
-    test.each([403, 404])('reports no access on a %s', async (status) => {
-      vi.mocked(getRepositoryInfo).mockRejectedValue(apiError(status));
-
-      // The shared message is what makes the sign-in flow drop the cached credentials
-      await expect(fetchRepositoryAccess()).rejects.toThrow('Not a collaborator of the repository');
-    });
-
-    test('reports an unanswered question rather than assuming no write access', async () => {
-      vi.mocked(getRepositoryInfo).mockRejectedValue(apiError(500));
-
-      await expect(fetchRepositoryAccess()).rejects.toThrow(
-        'Failed to check the repository permission.',
-      );
-
-      vi.mocked(getRepositoryInfo).mockRejectedValue(new Error('Network'));
-
-      await expect(fetchRepositoryAccess()).rejects.toThrow(
-        'Failed to check the repository permission.',
-      );
+  describe('getBranchRepository', () => {
+    test('returns the repository a branch lives in', () => {
+      expect(getBranchRepository('cms/posts/hello')).toEqual({
+        owner: 'owner',
+        repo: 'repo',
+        branch: 'cms/posts/hello',
+      });
+      expect(getBranchRepository('alice/website:cms/alice/website/posts/hello')).toEqual({
+        owner: 'alice',
+        repo: 'website',
+        branch: 'cms/alice/website/posts/hello',
+      });
     });
   });
 
@@ -162,7 +143,7 @@ describe('Gitea fork service', () => {
       });
 
       await expect(fetchForkByName()).resolves.toEqual({ owner: 'me', repo: 'repo' });
-      expect(fetchAPI).toHaveBeenCalledWith('/repos/me/repo');
+      expect(fetchAPI).toHaveBeenCalledWith('/repos/me/repo', undefined);
     });
 
     test('ignores a repository of the same name that isn’t a fork of the configured one', async () => {
@@ -506,7 +487,7 @@ describe('Gitea fork service', () => {
 
   describe('initOpenAuthoring', () => {
     test('leaves a maintainer on the configured repository', async () => {
-      vi.mocked(getRepositoryInfo).mockResolvedValue({ permissions: { push: true } });
+      vi.mocked(fetchRepositoryAccess).mockResolvedValue({ canRead: true, canWrite: true });
 
       await initOpenAuthoring();
 
@@ -516,7 +497,7 @@ describe('Gitea fork service', () => {
     });
 
     test('reuses and syncs an existing fork, once it has the branch', async () => {
-      vi.mocked(getRepositoryInfo).mockResolvedValue({ permissions: { pull: true } });
+      vi.mocked(fetchRepositoryAccess).mockResolvedValue({ canRead: true, canWrite: false });
       vi.mocked(fetchAPI)
         .mockResolvedValueOnce({
           full_name: 'me/repo',
@@ -542,7 +523,7 @@ describe('Gitea fork service', () => {
     });
 
     test('stops when the fork doesn’t have the configured branch', async () => {
-      vi.mocked(getRepositoryInfo).mockResolvedValue({ permissions: { pull: true } });
+      vi.mocked(fetchRepositoryAccess).mockResolvedValue({ canRead: true, canWrite: false });
       vi.mocked(fetchAPI)
         .mockResolvedValueOnce({
           full_name: 'me/repo',
@@ -562,7 +543,7 @@ describe('Gitea fork service', () => {
 
     test('resolves the branch name first when it isn’t configured', async () => {
       repository.branch = undefined;
-      vi.mocked(getRepositoryInfo).mockResolvedValue({ permissions: { pull: true } });
+      vi.mocked(fetchRepositoryAccess).mockResolvedValue({ canRead: true, canWrite: false });
       vi.mocked(fetchDefaultBranchName).mockImplementation(async () => {
         repository.branch = 'develop';
 
@@ -589,7 +570,7 @@ describe('Gitea fork service', () => {
     });
 
     test('asks before creating a fork, and creates it when allowed', async () => {
-      vi.mocked(getRepositoryInfo).mockResolvedValue({ permissions: { pull: true } });
+      vi.mocked(fetchRepositoryAccess).mockResolvedValue({ canRead: true, canWrite: false });
       vi.mocked(fetchAPI)
         .mockRejectedValueOnce(apiError(404))
         .mockResolvedValueOnce({ data: [] })
@@ -610,7 +591,7 @@ describe('Gitea fork service', () => {
 
     test('says so when Forgejo has forking turned off, without asking', async () => {
       instance.isForgejo = true;
-      vi.mocked(getRepositoryInfo).mockResolvedValue({ permissions: { pull: true } });
+      vi.mocked(fetchRepositoryAccess).mockResolvedValue({ canRead: true, canWrite: false });
       vi.mocked(fetchAPI)
         .mockRejectedValueOnce(apiError(404))
         .mockResolvedValueOnce({ data: [] })
@@ -622,7 +603,7 @@ describe('Gitea fork service', () => {
     });
 
     test('stops when the user declines to fork', async () => {
-      vi.mocked(getRepositoryInfo).mockResolvedValue({ permissions: { pull: true } });
+      vi.mocked(fetchRepositoryAccess).mockResolvedValue({ canRead: true, canWrite: false });
       vi.mocked(fetchAPI).mockRejectedValueOnce(apiError(404)).mockResolvedValueOnce({});
 
       const promise = initOpenAuthoring();

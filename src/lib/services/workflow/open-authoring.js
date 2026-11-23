@@ -1,4 +1,8 @@
-import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
+import {
+  createDerivedState,
+  createRawState,
+  requestAnswer,
+} from '$lib/services/utils/state.svelte';
 
 /**
  * @import {
@@ -90,30 +94,7 @@ export const forkPermissionRequest = createRawState();
  * @param {string} repo Repository path to be forked, e.g. `owner/repo`.
  * @returns {Promise<boolean>} `true` if the user granted permission.
  */
-export const requestForkPermission = async (repo) => {
-  // A second request can’t be outstanding, because the sign-in flow awaits the first one, but be
-  // defensive: leaving an earlier request unresolved would hang that flow forever
-  forkPermissionRequest.current?.respond(false);
-
-  return new Promise((resolve) => {
-    /** @type {ForkPermissionRequest} */
-    const request = {
-      repo,
-      /**
-       * Answer the request.
-       * @param {boolean} granted Whether the user granted permission.
-       */
-      respond: (granted) => {
-        // Only take down the dialog that belongs to this request, so answering a stale one can’t
-        // dismiss a newer one. Resolving an already settled promise does nothing
-        if (forkPermissionRequest.current === request) {
-          forkPermissionRequest.current = undefined;
-        }
-
-        resolve(granted);
-      },
-    };
-
-    forkPermissionRequest.current = request;
-  });
-};
+export const requestForkPermission = async (repo) =>
+  // A second request can’t be outstanding, because the sign-in flow awaits the first one, but an
+  // earlier one is answered just in case
+  requestAnswer(forkPermissionRequest, { repo }, false);

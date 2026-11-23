@@ -200,6 +200,46 @@ describe('prefs service', () => {
     expect(mockAppLocale.current).toBe('ja');
   });
 
+  it('should revert to the automatic preference when a switch from it fails', async () => {
+    mockLocalStorage.get.mockResolvedValue({ locale: 'auto' });
+
+    const { prefs, navigatorLocale } = await import('./prefs.svelte.js');
+
+    navigatorLocale.current = 'ja';
+
+    await wait();
+
+    expect(mockAppLocale.current).toEqual('ja');
+
+    delete mockDictionary.fr;
+    prefs.locale = 'fr';
+
+    await wait();
+
+    // Reverting to the locale it resolved to would stop following the browser for good
+    expect(prefs.locale).toBe('auto');
+    expect(mockAppLocale.current).toBe('ja');
+  });
+
+  it('should revert to the active locale when no preference has been applied yet', async () => {
+    // The stored preference failed to load on startup, so the locale set by `initAppLocale()` is
+    // the one in use
+    mockAppLocale.current = 'en-US';
+    delete mockDictionary.fr;
+    delete mockDictionary['en-GB'];
+    mockLocalStorage.get.mockResolvedValue({ locale: 'fr' });
+
+    const { prefs } = await import('./prefs.svelte.js');
+
+    await wait();
+
+    prefs.locale = 'en-GB';
+
+    await wait();
+
+    expect(prefs.locale).toBe('en-US');
+  });
+
   it('should not let a slow locale load override a locale picked later', async () => {
     mockLocalStorage.get.mockResolvedValue({ locale: 'ja' });
 

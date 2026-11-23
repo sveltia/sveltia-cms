@@ -3,9 +3,15 @@ import { sleep } from '@sveltia/utils/misc';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { createDraftPullRequest } from '$lib/services/backends/git/shared/fork';
+import {
+  getDeletionGroup,
+  getPullRequestDescription,
+  setDeletionGroup,
+} from '$lib/services/backends/git/shared/pull-requests';
 import { getPullRequestPath } from '$lib/services/backends/git/shared/repository';
 import { cmsConfig } from '$lib/services/config';
 import { user } from '$lib/services/user/account.svelte';
+import { parseForkBranchName } from '$lib/services/workflow/forks';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
 /**
@@ -23,9 +29,17 @@ import { openAuthoring } from '$lib/services/workflow/open-authoring';
  */
 
 /**
- * Function to open a pull request on the service.
- * @typedef {(args: { branch: string, title: string, status: WorkflowStatus }) =>
- * Promise<WorkflowPullRequest>} CreatePullRequest
+ * Function to open a pull request with the given description on the service.
+ * @typedef {(args: { branch: string, title: string, status: WorkflowStatus, description: string })
+ * => Promise<WorkflowPullRequest>} CreatePullRequest
+ */
+
+/**
+ * Function to update the description of an existing pull request on the service. The current
+ * description is read first and passed to `transform`, which returns the new one, so the rest of a
+ * description a maintainer may have edited is kept as it is.
+ * @typedef {(pullRequest: WorkflowPullRequest, transform: (description: string) => string) =>
+ * Promise<string>} UpdateDescription
  */
 
 /**
@@ -46,8 +60,14 @@ export const isSquashMergeEnabled = () => {
  * @param {string} args.branch Branch name.
  * @param {string} args.path REST API path to send the `DELETE` request to.
  * @param {number[]} args.goneStatuses HTTP status codes meaning the branch is already gone.
+ * @throws {Error} When the branch is in a contributor’s fork, which is theirs to delete: a
+ * maintainer only closes the pull request from it.
  */
 export const deleteRemoteBranch = async ({ branch, path, goneStatuses }) => {
+  if (parseForkBranchName(branch)) {
+    throw new Error('A branch in a contributor’s fork cannot be deleted.');
+  }
+
   try {
     await fetchAPI(path, { method: 'DELETE', responseType: 'text' });
   } catch (/** @type {any} */ ex) {
@@ -73,6 +93,8 @@ export const deleteRemoteBranch = async ({ branch, path, goneStatuses }) => {
  * @param {string} args.branch Workflow branch name.
  * @param {string} args.title Pull request title.
  * @param {WorkflowStatus} args.status Status to open the pull request with.
+ * @param {string} [args.deletionGroup] Deletion group to record in the pull request description.
+ * See {@link getDeletionGroup}.
  * @param {CreatePullRequest} args.createPullRequest Function to open a pull request on the service.
  * @returns {Promise<WorkflowPullRequest>} New pull request.
  */
@@ -81,13 +103,19 @@ export const openWorkflowPullRequest = async ({
   branch,
   title,
   status,
+  deletionGroup,
   createPullRequest,
 }) => {
   if (openAuthoring.current && status === 'draft') {
     return createDraftPullRequest({ commit, branch, title });
   }
 
-  return createPullRequest({ branch, title, status });
+  return createPullRequest({
+    branch,
+    title,
+    status,
+    description: getPullRequestDescription(deletionGroup),
+  });
 };
 
 /**
@@ -103,17 +131,40 @@ export const openWorkflowPullRequest = async ({
  * existing pull request.
  * @param {CreatePullRequest} service.createPullRequest Function to open a pull request on the
  * service.
+ * @param {UpdateDescription} service.updateDescription Function to update the description of an
+ * existing pull request, which records the deletion group.
  * @returns {Promise<{ commit: CommitResults, pullRequest: WorkflowPullRequest }>} Commit results
  * and the new or updated pull request.
+ * @throws {Error} When the pull request comes from a fork whose contributor doesn’t let maintainers
+ * push to it.
  */
 export const saveWorkflowBranch = async (
-  { changes, options, branch, title, status, pullRequest },
-  { commitToNewBranch, commitToExistingBranch, createPullRequest },
+  { changes, options, branch, title, status, pullRequest, deletionGroup },
+  { commitToNewBranch, commitToExistingBranch, createPullRequest, updateDescription },
 ) => {
+  // The Git service would refuse the commit anyway, but with a message about permissions that says
+  // nothing of the contributor’s choice behind it
+  if (pullRequest?.fork && !pullRequest.fork.editable) {
+    throw createLocalizedError('Failed to save the changes.', 'workflow.fork_not_editable');
+  }
+
   if (pullRequest) {
+    // A reused pull request may be deleted along with other entries, or carry the record of an
+    // earlier deletion it no longer belongs to. The record is brought in line before the commit, so
+    // a failure leaves the pull request as it was rather than committed with a wrong record
+    const recorded =
+      getDeletionGroup(pullRequest) === deletionGroup
+        ? pullRequest
+        : {
+            ...pullRequest,
+            description: await updateDescription(pullRequest, (description) =>
+              setDeletionGroup(description, deletionGroup),
+            ),
+          };
+
     return {
       commit: await commitToExistingBranch(changes, { ...options, branch }, pullRequest),
-      pullRequest,
+      pullRequest: recorded,
     };
   }
 
@@ -126,6 +177,7 @@ export const saveWorkflowBranch = async (
       branch,
       title,
       status,
+      deletionGroup,
       createPullRequest,
     }),
   };
@@ -218,8 +270,9 @@ export const createBranchGoneError = (branch, repository) =>
  * @param {string | undefined} args.headSHA Head commit on record.
  * @param {(branch: string) => Promise<string | undefined>} args.fetchBranchHead Function to fetch
  * the commit the branch points at, or `undefined` if the branch is gone.
- * @param {() => RepositoryPath} args.getWorkflowRepository Function to get the repository the
- * branch lives in.
+ * @param {(branch: string) => RepositoryPath & { branch: string }} args.getBranchRepository
+ * Function to get the repository the branch lives in, and its name there, which for a contributor’s
+ * branch is the fork and not the name the CMS knows it by.
  * @returns {Promise<string>} Head commit on record.
  * @throws {Error} When the branch is gone, or points at another commit than the one on record.
  */
@@ -227,12 +280,14 @@ export const assertBranchAtHead = async ({
   branch,
   headSHA,
   fetchBranchHead,
-  getWorkflowRepository,
+  getBranchRepository,
 }) => {
   const head = await fetchBranchHead(branch);
 
   if (head === undefined) {
-    throw createBranchGoneError(branch, getWorkflowRepository());
+    const { branch: name, ...repository } = getBranchRepository(branch);
+
+    throw createBranchGoneError(name, repository);
   }
 
   // Trying again reloads the entry first, which takes the other commit into account
@@ -408,6 +463,29 @@ export const reopenPullRequest = async (repository, number) => {
 };
 
 /**
+ * Update the description of a pull request on GitHub or Gitea/Forgejo, whose REST APIs share the
+ * endpoints. The current description is read first and passed to `transform`, so the rest of it is
+ * kept as it is.
+ * @param {RepositoryPath} repository Repository holding the pull request.
+ * @param {WorkflowPullRequest} pullRequest Pull request.
+ * @param {(description: string) => string} transform Function to get the new description from the
+ * current one, which is an empty string if the pull request has none.
+ * @returns {Promise<string>} New description.
+ * @see https://docs.github.com/en/rest/pulls/pulls#get-a-pull-request
+ * @see https://docs.github.com/en/rest/pulls/pulls#update-a-pull-request
+ * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoEditPullRequest
+ */
+export const updatePullRequestDescription = async (repository, pullRequest, transform) => {
+  const path = getPullRequestPath(repository, pullRequest.number);
+  const { body } = /** @type {Record<string, any>} */ (await fetchAPI(path));
+  const description = transform(body ?? '');
+
+  await fetchAPI(path, { method: 'PATCH', body: { body: description } });
+
+  return description;
+};
+
+/**
  * Approve a pull request on behalf of the signed-in user, on GitHub or Gitea/Forgejo, whose REST
  * APIs share the endpoint, pinned to the head commit the entry was reviewed at.
  * @param {RepositoryPath} repository Repository holding the pull request.
@@ -438,29 +516,34 @@ export const findOwnApprovals = (reviews) =>
   );
 
 /**
- * Close a pull request without merging it, on GitHub or Gitea/Forgejo, whose REST APIs share the
- * endpoint, and delete its branch. An Open Authoring draft has no pull request yet, so deleting the
- * branch is all there is to do for it.
+ * Close a pull request without merging it, and delete its branch. An Open Authoring draft has no
+ * pull request yet, so deleting the branch is all there is to do for it.
  * @param {RepositoryPath} repository Repository holding the pull request.
  * @param {WorkflowPullRequest} pullRequest Pull request.
  * @param {object} service Service-specific values.
- * @param {(branch: string) => Promise<void>} service.deleteBranch Function to delete the branch.
+ * @param {(branch: string) => Promise<void>} service.deleteBranch Function to delete the branch. A
+ * contributor’s branch is left in their fork, where they can still use it, as the maintainer can
+ * only close the pull request from it.
  * @param {number[]} [service.closedStatuses] HTTP status codes a refusal to close the pull request
  * comes with when there’s nothing left to close, in which case the branch is still deleted.
+ * @param {(number: number) => Promise<unknown>} [service.closeRequest] Function to close the pull
+ * request. Default: the request GitHub and Gitea/Forgejo take, whose REST APIs share the endpoint.
  * @see https://docs.github.com/en/rest/pulls/pulls#update-a-pull-request
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoEditPullRequest
  */
 export const discardPullRequest = async (
   repository,
   pullRequest,
-  { deleteBranch, closedStatuses = [] },
+  { deleteBranch, closedStatuses = [], closeRequest },
 ) => {
   if (pullRequest.number !== undefined) {
     try {
-      await fetchAPI(getPullRequestPath(repository, pullRequest.number), {
-        method: 'PATCH',
-        body: { state: 'closed' },
-      });
+      await (closeRequest
+        ? closeRequest(pullRequest.number)
+        : fetchAPI(getPullRequestPath(repository, pullRequest.number), {
+            method: 'PATCH',
+            body: { state: 'closed' },
+          }));
     } catch (/** @type {any} */ ex) {
       if (!closedStatuses.includes(ex.cause?.status)) {
         throw ex;
@@ -468,7 +551,9 @@ export const discardPullRequest = async (
     }
   }
 
-  await deleteBranch(pullRequest.branch);
+  if (!pullRequest.fork) {
+    await deleteBranch(pullRequest.branch);
+  }
 };
 
 /**
@@ -532,32 +617,44 @@ export const isPermanentClientError = (ex) => {
 
 /**
  * Wait for the service to merge a pull request that has been set to auto-merge. The pull request is
- * read every so often and handed to `evaluate`, until that reports it merged, in which case this
- * resolves, or throws because the merge won’t happen on its own, or until the wait has run out, in
- * which case the auto-merge is cancelled and an error is thrown. A failed read says nothing about
- * the merge, which the service carries out on its own, so it’s only logged and the wait goes on,
- * unless it’s a client error that asking again won’t fix: see {@link isPermanentClientError}.
+ * read every so often and handed to `check`, until it’s merged, in which case this resolves, or
+ * until it’s clear that the merge won’t happen on its own, or the wait has run out, in which case
+ * an error is thrown. The service keeps the auto-merge armed after a failed check, in case it’s
+ * re-run by hand, but a merge made that way would happen behind the CMS’s back once it has reported
+ * a failure, so the auto-merge is cancelled along with the report: publishing again is what merges
+ * the entry from then on. A failed read says nothing about the merge, which the service carries out
+ * on its own, so it’s only logged and the wait goes on, unless it’s a client error that asking
+ * again won’t fix: see {@link isPermanentClientError}.
  * @template T
  * @param {object} args Arguments.
  * @param {() => Promise<T>} args.read Function to read the pull request.
- * @param {(item: T) => Promise<boolean>} args.evaluate Function to check the pull request read,
- * which resolves to `true` if it has been merged, or `false` to keep waiting, and throws if it
- * won’t be merged.
- * @param {() => Promise<void>} args.cancel Function to cancel the auto-merge, which doesn’t throw.
+ * @param {(item: T) => { merged?: boolean, failure?: string, armed?: boolean }} args.check
+ * Function to check the pull request read: whether it has been merged, if not, a summary of why it
+ * won’t be merged on its own, `undefined` to keep waiting, and whether its auto-merge is still on.
+ * @param {() => Promise<any>} args.cancel Function to cancel the auto-merge. A failure is ignored,
+ * as a pull request that has just been merged or closed has no auto-merge left to cancel.
  * @param {string} args.label Name of the pull request for the messages, e.g. `pull request #1`.
  * @param {number} [args.deadline] Time to give up at, as a Unix timestamp in milliseconds.
  * @returns {Promise<void>}
  * @throws {Error} When the pull request won’t be merged, or wasn’t within the time allowed.
  */
-export const waitForMerge = async ({
-  read,
-  evaluate,
-  cancel,
-  label,
-  deadline = Date.now() + AUTO_MERGE_POLL.maxDuration,
-}) => {
+export const waitForMerge = async (args) => {
+  const { read, check, cancel, label, deadline = Date.now() + AUTO_MERGE_POLL.maxDuration } = args;
+
+  /**
+   * Cancel the auto-merge, reporting a failure rather than throwing it.
+   */
+  const cancelSafely = async () => {
+    try {
+      await cancel();
+    } catch (/** @type {any} */ ex) {
+      // eslint-disable-next-line no-console
+      console.warn(`Failed to cancel the auto-merge on ${label}.`, ex);
+    }
+  };
+
   if (Date.now() >= deadline) {
-    await cancel();
+    await cancelSafely();
 
     throw new Error(`Timed out waiting for ${label} to be merged`);
   }
@@ -578,9 +675,21 @@ export const waitForMerge = async ({
     console.warn(`Failed to read ${label}, still waiting.`, ex);
   }
 
-  if (result && (await evaluate(result.item))) {
-    return;
+  if (result) {
+    const { merged, failure, armed } = check(result.item);
+
+    if (merged) {
+      return;
+    }
+
+    if (failure) {
+      if (armed) {
+        await cancelSafely();
+      }
+
+      throw new Error(`${label[0].toUpperCase()}${label.slice(1)} was not merged: ${failure}`);
+    }
   }
 
-  await waitForMerge({ read, evaluate, cancel, label, deadline });
+  await waitForMerge({ ...args, deadline });
 };

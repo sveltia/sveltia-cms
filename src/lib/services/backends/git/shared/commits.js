@@ -150,21 +150,36 @@ const applyUserMessage = (message, userMessage, mode) => {
 };
 
 /**
+ * Check whether a commit is expected to start a deployment, which is when its message goes without
+ * the skip-CI marker added by {@link createCommitMessage}. The commit’s own `skipCI` option takes
+ * precedence over the `skip_ci` and `automatic_deployments` backend options. To avoid unexpected
+ * data retention, deletions are always deployed.
+ * @param {Partial<CommitOptions>} options Commit options.
+ * @returns {boolean} Result.
+ */
+export const isDeployingCommit = ({ commitType, skipCI }) => {
+  // Read the options rather than `skipCIEnabled`, whose module imports the backends using this one
+  const { skip_ci: skipCIEnabled, automatic_deployments: autoDeploy } = getBackendOptions();
+
+  return (
+    commitType === 'delete' ||
+    commitType === 'deleteMedia' ||
+    !(skipCI ?? (skipCIEnabled === true || autoDeploy === false))
+  );
+};
+
+/**
  * Create a Git commit message.
  * @param {FileChange[]} changes File changes to be saved.
  * @param {CommitOptions} options Commit options.
  * @returns {string} Formatted message.
  */
 export const createCommitMessage = (changes, options) => {
-  const { commitType = 'update', skipCI = undefined, userMessage } = options;
+  const { userMessage } = options;
   const backendOptions = getBackendOptions();
 
-  const {
-    commit_messages: customCommitMessages = {},
-    skip_ci: skipCIEnabled,
-    automatic_deployments: autoDeploy,
-    prompt_commit_messages: promptMode,
-  } = backendOptions;
+  const { commit_messages: customCommitMessages = {}, prompt_commit_messages: promptMode } =
+    backendOptions;
 
   let message = applyUserMessage(
     createBaseCommitMessage(changes, options, backendOptions),
@@ -182,16 +197,11 @@ export const createCommitMessage = (changes, options) => {
   }
 
   // If requested, disable automatic deployments by using the standard `[skip ci]` prefix supported
-  // by major CI/CD providers, including GitHub Actions and Cloudflare Pages. To avoid unexpected
-  // data retention, deployments for deletion commits are not skipped.
+  // by major CI/CD providers, including GitHub Actions and Cloudflare Pages
   // https://docs.github.com/en/actions/managing-workflow-runs/skipping-workflow-runs
   // https://docs.gitlab.com/ee/ci/pipelines/#skip-a-pipeline
   // https://developers.cloudflare.com/pages/platform/branch-build-controls/#skip-builds
-  if (
-    !['delete', 'deleteMedia'].includes(commitType) &&
-    // Cannot use the `skipCIEnabled` store here because it leads to an uninitialized store error
-    (skipCI ?? (skipCIEnabled === true || autoDeploy === false))
-  ) {
+  if (!isDeployingCommit(options)) {
     message = `[skip ci] ${message}`;
   }
 
@@ -210,6 +220,36 @@ const TRAILER_LINE_REGEX = /^[A-Za-z0-9-]+:\s*\S/;
  * @returns {string} Cleaned value.
  */
 const cleanTrailerValue = (value) => (value ?? '').replace(/[\s<>]+/g, ' ').trim();
+
+/**
+ * Format a trailer that credits a person, e.g. `Co-authored-by: Name <email>`. Their name and email
+ * are kept on the line, whatever they hold.
+ * @param {string} token Trailer token, e.g. `Co-authored-by`.
+ * @param {{ name: string, email: string }} person Person.
+ * @returns {string} Trailer line.
+ */
+export const formatPersonTrailer = (token, { name, email }) =>
+  `${token}: ${cleanTrailerValue(name)} <${cleanTrailerValue(email)}>`;
+
+/**
+ * Add a trailer line to a commit message. It joins the trailer block the message already ends with,
+ * if any, and otherwise follows a blank line.
+ * @param {string} message Commit message.
+ * @param {string} trailer Trailer line, e.g. `Co-authored-by: Name <email>`.
+ * @returns {string} Message with the trailer.
+ */
+export const addCommitTrailer = (message, trailer) => {
+  const text = message.trimEnd();
+  const paragraphs = text.split(/\r?\n\s*\r?\n/);
+  const lastParagraph = /** @type {string} */ (paragraphs.at(-1));
+
+  const endsWithTrailers =
+    paragraphs.length > 1 &&
+    lastParagraph.split(/\r?\n/).every((line) => TRAILER_LINE_REGEX.test(line));
+
+  return `${text}${endsWithTrailers ? '\n' : '\n\n'}${trailer}`;
+};
+
 /**
  * Signed-in user accounts that have been warned about their missing email, so the warning is only
  * shown once per sign-in rather than for every commit.
@@ -265,14 +305,10 @@ export const signOffCommitMessage = (message) => {
     return message;
   }
 
-  const paragraphs = text.split(/\r?\n\s*\r?\n/);
-  const lastParagraph = /** @type {string} */ (paragraphs.at(-1));
-
-  const endsWithTrailers =
-    paragraphs.length > 1 &&
-    lastParagraph.split(/\r?\n/).every((line) => TRAILER_LINE_REGEX.test(line));
-
-  return `${text}${endsWithTrailers ? '\n' : '\n\n'}Signed-off-by: ${author} <${cleanEmail}>`;
+  return addCommitTrailer(
+    message,
+    formatPersonTrailer('Signed-off-by', { name: author, email: cleanEmail }),
+  );
 };
 
 /**

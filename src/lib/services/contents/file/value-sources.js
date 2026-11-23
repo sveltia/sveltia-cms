@@ -1,26 +1,13 @@
 import { isObject } from '@sveltia/utils/object';
 import { isMap, isScalar, isSeq } from 'yaml';
 
+import { updateFileState } from '$lib/services/contents/file/state';
 import { isPlainObject } from '$lib/services/utils/object';
 
 /**
  * @import { Document, ScalarTag } from 'yaml';
  * @import { ValueSource, ValueSourceMap } from '$lib/types/private';
  */
-
-/**
- * Source text of the values in a file that the parsed content holds in another type or can’t tell
- * apart from others, keyed by the path of the file they’re read from. A float that is a whole
- * number, e.g. `10.0`, `-3.0` or `1e3`, is read as the same `number` as an integer, e.g. `10`,
- * which a formatter would write. Hugo, written in Go, and other typed consumers then read an
- * integer instead of a float, so e.g. `eq .Params.price 10.0` turns false. A TOML native date or
- * time is held as a string, see `toml-sources.js`.
- *
- * The formatter writes such a value back as it was read, as long as it hasn’t been edited, so
- * saving an entry doesn’t change the type of a value. An edited value is saved like any other.
- * @type {Map<string, ValueSourceMap>}
- */
-export const valueSources = new Map();
 
 /**
  * Regular expression testing whether a document may hold a float that is a whole number: a number
@@ -236,48 +223,22 @@ export const collectJSONFloatSources = (parsed) => {
 };
 
 /**
- * Remember the given source map of a file, if it’s not empty.
+ * Remember the given source map of a file, if it’s not empty. A float that is a whole number, e.g.
+ * `10.0`, `-3.0` or `1e3`, is read as the same `number` as an integer, e.g. `10`, which a formatter
+ * would write. Hugo, written in Go, and other typed consumers then read an integer instead of a
+ * float, so e.g. `eq .Params.price 10.0` turns false. A TOML native date or time is held as a
+ * string, see `toml-sources.js`.
+ *
+ * The formatter writes such a value back as it was read, as long as it hasn’t been edited, so
+ * saving an entry doesn’t change the type of a value. An edited value is saved like any other.
  * @param {string} path File path.
  * @param {ValueSourceMap} sourceMap Source map.
  */
 export const rememberValueSources = (path, sourceMap) => {
   if (Object.keys(sourceMap).length) {
-    valueSources.set(path, sourceMap);
+    updateFileState(path, { valueSources: sourceMap });
   }
 };
-
-/**
- * Get what is remembered for a file before a save from the given map, and let the file after the
- * save, which may have been renamed, take it over, so it’s saved the same way next time as well. A
- * new file doesn’t take over what was remembered for a file deleted from the same path.
- * @template T
- * @param {Map<string, T>} map What is remembered for each file, keyed by file path.
- * @param {string | undefined} previousPath Path of the file before the save, if it exists.
- * @param {string} path Path of the file after the save.
- * @returns {T | undefined} What is remembered, or `undefined` if nothing is.
- */
-export const takeOverFileState = (map, previousPath, path) => {
-  const state = previousPath ? map.get(previousPath) : undefined;
-
-  if (state) {
-    map.set(path, state);
-  } else {
-    map.delete(path);
-  }
-
-  return state;
-};
-
-/**
- * Get the source map to save a file with, from the file before the save. The file after the save,
- * which may have been renamed, takes it over, so it’s saved the same way next time as well.
- * @param {object} args Arguments.
- * @param {string} [args.previousPath] Path of the file before the save, if it exists.
- * @param {string} args.path Path of the file after the save.
- * @returns {ValueSourceMap | undefined} Source map, or `undefined` if the file has none.
- */
-export const getSavedValueSources = ({ previousPath, path }) =>
-  takeOverFileState(valueSources, previousPath, path);
 
 /**
  * Move the source map of a file storing all the entries of an entry collection along with its

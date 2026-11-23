@@ -130,6 +130,10 @@ describe('assets/external/view', () => {
       expect(getSortValue(hero2, 'name')).toBe('hero-2');
     });
 
+    it('should only remove the extension, keeping the other dots in the name', () => {
+      expect(getSortValue(/** @type {any} */ ({ fileName: 'v1.10.png' }), 'name')).toBe('v1.10');
+    });
+
     it('should return the timestamp, or 0 when unknown', () => {
       expect(getSortValue(hero2, 'last_modified')).toBe(new Date('2024-03-01').getTime());
       expect(getSortValue(hero, 'last_modified')).toBe(0);

@@ -64,6 +64,25 @@ import {
  */
 
 /**
+ * Create a `MediaLibraryService` member that calls the given operation of an object storage
+ * service with the resolved configuration, inserted before the fetch options, which come last.
+ * @param {ObjectStorageService<any>} service Service.
+ * @param {keyof ObjectStorageOperations<any>} name Operation name.
+ * @returns {(...args: any[]) => Promise<any>} Member function.
+ */
+const withConfig =
+  (service, name) =>
+  async (...args) => {
+    const options = args.pop();
+
+    return /** @type {(...args: any[]) => Promise<any>} */ (service.operations[name])(
+      ...args,
+      service.getConfig(options),
+      options,
+    );
+  };
+
+/**
  * Media library service for an object storage service, such as Azure Blob Storage or an
  * S3-compatible service. It resolves the service’s configuration from the CMS or field
  * configuration and delegates the operations to the given functions.
@@ -145,8 +164,9 @@ export class ObjectStorageService {
     return this.resolveConfig(libOptions);
   }
 
-  // The `MediaLibraryService` members below are arrow functions rather than prototype methods,
-  // because consumers destructure them from the service object, which would lose `this` otherwise.
+  // The `MediaLibraryService` members below are functions bound to the instance rather than
+  // prototype methods, because consumers destructure them from the service object, which would
+  // lose `this` otherwise.
 
   /**
    * Check if the service is enabled.
@@ -175,99 +195,67 @@ export class ObjectStorageService {
 
   /**
    * List files on the service.
-   * @param {MediaLibraryFetchOptions} options Options containing the configuration.
-   * @returns {Promise<ExternalAsset[]>} Assets.
+   * @type {NonNullable<MediaLibraryService['list']>}
    */
-  list = async (options) => this.operations.list(this.getConfig(options), options);
+  list = withConfig(this, 'list');
 
   /**
    * List the files and the empty folders on the service.
-   * @param {MediaLibraryFetchOptions} options Options containing the configuration.
-   * @returns {Promise<ExternalFolderListing>} Files and folders.
+   * @type {NonNullable<MediaLibraryService['browse']>}
    */
-  browse = async (options) => this.operations.browse(this.getConfig(options), options);
+  browse = withConfig(this, 'browse');
 
   /**
    * List every file and empty folder below a folder on the service, at any depth.
-   * @param {string} dirPath Folder path relative to the configured prefix.
-   * @param {MediaLibraryFetchOptions} options Options containing the configuration.
-   * @returns {Promise<ExternalFolderListing>} Files and folders.
+   * @type {NonNullable<MediaLibraryService['listFolder']>}
    */
-  listFolder = async (dirPath, options) =>
-    this.operations.listFolder(dirPath, this.getConfig(options), options);
+  listFolder = withConfig(this, 'listFolder');
 
   /**
    * Search files on the service.
-   * @param {string} query Search query.
-   * @param {MediaLibraryFetchOptions} options Options containing the configuration.
-   * @returns {Promise<ExternalAsset[]>} Assets.
+   * @type {NonNullable<MediaLibraryService['search']>}
    */
-  search = async (query, options) =>
-    this.operations.search(query, this.getConfig(options), options);
+  search = withConfig(this, 'search');
 
   /**
    * Upload files to the service.
-   * @param {File[]} files Files to upload.
-   * @param {MediaLibraryFetchOptions} options Options containing the configuration.
-   * @returns {Promise<ExternalAsset[]>} Uploaded assets.
+   * @type {NonNullable<MediaLibraryService['upload']>}
    */
-  upload = async (files, options) =>
-    this.operations.upload(files, this.getConfig(options), options);
+  upload = withConfig(this, 'upload');
 
   /**
    * Delete files from the service.
-   * @param {ExternalAsset[]} assets Assets to delete.
-   * @param {MediaLibraryFetchOptions} options Options containing the configuration.
-   * @returns {Promise<void>}
+   * @type {NonNullable<MediaLibraryService['delete']>}
    */
-  delete = async (assets, options) =>
-    this.operations.delete(assets, this.getConfig(options), options);
+  delete = withConfig(this, 'delete');
 
   /**
    * Rename a file on the service.
-   * @param {ExternalAsset} asset Asset to rename.
-   * @param {string} newName New file name.
-   * @param {MediaLibraryFetchOptions} options Options containing the configuration.
-   * @returns {Promise<ExternalAsset>} Renamed asset.
+   * @type {NonNullable<MediaLibraryService['rename']>}
    */
-  rename = async (asset, newName, options) =>
-    this.operations.rename(asset, newName, this.getConfig(options), options);
+  rename = withConfig(this, 'rename');
 
   /**
    * Replace a file on the service with a new file.
-   * @param {ExternalAsset} asset Asset to replace.
-   * @param {File} file New file.
-   * @param {MediaLibraryFetchOptions} options Options containing the configuration.
-   * @returns {Promise<ExternalAsset>} Replaced asset.
+   * @type {NonNullable<MediaLibraryService['replace']>}
    */
-  replace = async (asset, file, options) =>
-    this.operations.replace(asset, file, this.getConfig(options), options);
+  replace = withConfig(this, 'replace');
 
   /**
    * Move a file on the service to another path.
-   * @param {ExternalAsset} asset Asset to move.
-   * @param {string} newPath New path relative to the configured prefix.
-   * @param {MediaLibraryFetchOptions} options Options containing the configuration.
-   * @returns {Promise<ExternalAsset>} Moved asset.
+   * @type {NonNullable<MediaLibraryService['move']>}
    */
-  move = async (asset, newPath, options) =>
-    this.operations.move(asset, newPath, this.getConfig(options), options);
+  move = withConfig(this, 'move');
 
   /**
    * Create an empty folder on the service.
-   * @param {string} dirPath Folder path relative to the configured prefix.
-   * @param {MediaLibraryFetchOptions} options Options containing the configuration.
-   * @returns {Promise<void>}
+   * @type {NonNullable<MediaLibraryService['createFolder']>}
    */
-  createFolder = async (dirPath, options) =>
-    this.operations.createFolder(dirPath, this.getConfig(options), options);
+  createFolder = withConfig(this, 'createFolder');
 
   /**
    * Remove the placeholder of a folder on the service.
-   * @param {string} dirPath Folder path relative to the configured prefix.
-   * @param {MediaLibraryFetchOptions} options Options containing the configuration.
-   * @returns {Promise<void>}
+   * @type {NonNullable<MediaLibraryService['deleteFolder']>}
    */
-  deleteFolder = async (dirPath, options) =>
-    this.operations.deleteFolder(dirPath, this.getConfig(options), options);
+  deleteFolder = withConfig(this, 'deleteFolder');
 }

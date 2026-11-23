@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import { sharedCredentials } from '$lib/services/additions/credentials.svelte';
+import { loadAdditions } from '$lib/services/app/additions';
 import { backendName } from '$lib/services/backends';
 import { checkLocalGitStatus } from '$lib/services/backends/fs/local';
 import { cmsConfig } from '$lib/services/config';
@@ -162,5 +164,49 @@ describe('DeveloperPanel', () => {
     await expect
       .element(page.getByRole('textbox', { name: /^Authorization header/ }))
       .toHaveValue('Bearer abc');
+  });
+
+  test('says the header comes from the admin too, if their hook has one', async () => {
+    cmsConfig.current = /** @type {any} */ ({
+      backend: { name: 'github', repo: 'me/site', auth_type: 'additions', skip_ci: true },
+    });
+    sharedCredentials.deployHook = { url: 'https://example.com/shared', authHeader: 'Bearer x' };
+
+    try {
+      await loadAdditions();
+      await render(DeveloperPanel, {});
+
+      await expect
+        .element(page.getByRole('textbox', { name: /^Authorization header/ }))
+        .toHaveAttribute('placeholder', 'Provided by your administrator');
+    } finally {
+      sharedCredentials.deployHook = null;
+    }
+  });
+
+  test('says when an admin’s deploy hook is used, until the user enters their own', async () => {
+    // Credentials are only shared with Sveltia CMS Additions
+    cmsConfig.current = /** @type {any} */ ({
+      backend: { name: 'github', repo: 'me/site', auth_type: 'additions', skip_ci: true },
+    });
+    sharedCredentials.deployHook = { url: 'https://example.com/shared', authHeader: '' };
+
+    try {
+      await loadAdditions();
+      await render(DeveloperPanel, {});
+
+      const url = page.getByRole('textbox', { name: 'Hook URL' });
+
+      await expect.element(url).toHaveAttribute('placeholder', 'Provided by your administrator');
+      // The admin’s hook has no header
+      await expect
+        .element(page.getByRole('textbox', { name: /^Authorization header/ }))
+        .not.toHaveAttribute('placeholder');
+      await url.fill('https://example.com/mine');
+      await url.element().blur();
+      await expect.element(url).not.toHaveAttribute('placeholder');
+    } finally {
+      sharedCredentials.deployHook = null;
+    }
   });
 });

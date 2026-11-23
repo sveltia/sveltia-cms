@@ -4,8 +4,8 @@ import {
   getAssetFile,
   rewriteAssetReferences,
 } from '$lib/services/assets/copy';
+import { getOwnedEntryFolderPath } from '$lib/services/assets/entry-folder';
 import { getAssetFoldersByPath } from '$lib/services/assets/folders';
-import { getOwnedEntryFolderPath } from '$lib/services/contents/draft/save/assets';
 import { getDraftFieldArgs, getField, getTypedKeyPath } from '$lib/services/contents/entry/fields';
 import { getEntryLocaleFile } from '$lib/services/contents/entry/paths';
 import { MEDIA_FIELD_TYPES, RICH_TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
@@ -136,8 +136,9 @@ export const copyEntryRelativeAssets = async ({ draft, currentValues }) => {
 
     // The asset location is the entry’s own only if the entry has a folder of its own, or the
     // folder is named after the entry with a template tag like `{{slug}}`. Otherwise the folder is
-    // shared with the rest of the collection, and the duplicate can keep referencing the asset
-    if (!folder.entryRelative || !(ownsFolder || folder.hasTemplateTags)) {
+    // shared with the rest of the collection, and the duplicate can keep referencing the asset.
+    // There’s no folder at all if only an external media library is configured
+    if (!folder?.entryRelative || !(ownsFolder || folder.hasTemplateTags)) {
       return;
     }
 

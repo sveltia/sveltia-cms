@@ -1,18 +1,25 @@
 import { unique } from '@sveltia/utils/array';
+import { generateUUID } from '@sveltia/utils/crypto';
 
 import { callEventHooks } from '$lib/services/api/events';
+import { getAdditions } from '$lib/services/app/additions';
+import { getAssetBlob } from '$lib/services/assets/info';
 import { allAssets } from '$lib/services/assets/state';
 import { backend } from '$lib/services/backends';
 import { promptCommitMessage } from '$lib/services/backends/commit-prompt';
 import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
+import { toFileListItem } from '$lib/services/backends/git/shared/tree';
+import { createFileList } from '$lib/services/backends/process';
 import { toRepoChanges } from '$lib/services/backends/root-dir';
 import { getCommitAuthor } from '$lib/services/backends/save';
-import { allEntries } from '$lib/services/contents';
+import { allEntries, findEntryByPaths } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
+import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
 import { resolveCacheDB } from '$lib/services/contents/draft/save/file-changes';
+import { getEntryKey } from '$lib/services/contents/entry/entry-key';
 import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import {
   buildCascadeDeleteChanges,
@@ -24,20 +31,24 @@ import { refreshProductionSHA } from '$lib/services/deployments/resolve';
 import { user } from '$lib/services/user/account.svelte';
 import { shareInFlight } from '$lib/services/utils/cache';
 import {
+  allUnpublishedEntries,
   getDeletionSelection,
   getEditedCompanionPaths,
   getUnpublishedEntryByBranch,
   getUnpublishedEntryBySlug,
   publishingBranches,
-  unpublishedEntries,
 } from '$lib/services/workflow';
 import {
+  getUsedAssetPaths,
   mergeWorkflowAssets,
   publishWorkflowAssets,
   removeWorkflowAssets,
+  removeWorkflowAssetsAt,
 } from '$lib/services/workflow/assets';
 import { getBranchName } from '$lib/services/workflow/branch';
 import { trackDeployingEntry } from '$lib/services/workflow/deploy';
+import { createUnpublishedEntryProps } from '$lib/services/workflow/entries';
+import { isForkEntry, parseForkBranchName } from '$lib/services/workflow/forks';
 import { isEntryAlreadyPublished, openAuthoring } from '$lib/services/workflow/open-authoring';
 import { checkReviewedHead, verifyMergeState } from '$lib/services/workflow/verify';
 
@@ -125,14 +136,22 @@ const getCompanionHookArgs = (entry) =>
  * @param {Entry} [args.entry] Entry being saved or deleted, as it stands before the changes.
  * @returns {{ existingEntry: UnpublishedEntry | undefined, branch: string }} Unpublished entry the
  * changes belong to, if the entry is already under review, and the branch to commit them to.
+ * @throws {Error} When the entry comes from a contributor’s pull request that is no longer open.
  */
 const resolveWorkflowBranch = ({ collectionName, slug, entry }) => {
   const currentBranch = /** @type {UnpublishedEntry | undefined} */ (entry)?.workflow?.pullRequest
     .branch;
 
-  const existingEntry =
-    (currentBranch ? getUnpublishedEntryByBranch(currentBranch) : undefined) ??
-    getUnpublishedEntryBySlug({ collectionName, slug, entry });
+  const currentEntry = currentBranch ? getUnpublishedEntryByBranch(currentBranch) : undefined;
+
+  // A contributor’s pull request that has been merged or closed since the editor was opened leaves
+  // nothing to save to. Their changes must not go into a pull request of the maintainers’ own, nor
+  // straight to the configured branch, without anyone meaning to put them there
+  if (currentBranch && !currentEntry && parseForkBranchName(currentBranch)) {
+    throw createLocalizedError('The pull request is no longer open.', 'workflow.fork_entry_gone');
+  }
+
+  const existingEntry = currentEntry ?? getUnpublishedEntryBySlug({ collectionName, slug, entry });
 
   const branch =
     existingEntry?.workflow.pullRequest.branch ?? getBranchName({ collectionName, slug });
@@ -199,17 +218,17 @@ const applyCommitToFiles = (files, changes, commit) => {
 };
 
 /**
- * Replace or append the given unpublished entry in the {@link unpublishedEntries} store, keyed by
- * the workflow branch name. An existing entry is replaced in place, so a status change doesn’t make
- * the entry jump to the end of the list on the Editorial Workflow page.
+ * Replace or append the given unpublished entry in the {@link allUnpublishedEntries} store, keyed
+ * by the workflow branch name. An existing entry is replaced in place, so a status change doesn’t
+ * make the entry jump to the end of the list on the Editorial Workflow page.
  * @param {UnpublishedEntry} entry Unpublished entry.
  */
 export const upsertUnpublishedEntry = (entry) => {
   const { branch } = entry.workflow.pullRequest;
-  const entries = unpublishedEntries.current;
+  const entries = allUnpublishedEntries.current;
   const index = entries.findIndex((e) => e.workflow.pullRequest.branch === branch);
 
-  unpublishedEntries.current = index === -1 ? [...entries, entry] : entries.with(index, entry);
+  allUnpublishedEntries.current = index === -1 ? [...entries, entry] : entries.with(index, entry);
 };
 
 /**
@@ -217,14 +236,14 @@ export const upsertUnpublishedEntry = (entry) => {
  * @param {string} branch Branch name.
  */
 export const removeUnpublishedEntry = (branch) => {
-  unpublishedEntries.current = unpublishedEntries.current.filter(
+  allUnpublishedEntries.current = allUnpublishedEntries.current.filter(
     (e) => e.workflow.pullRequest.branch !== branch,
   );
 };
 
 /**
  * Attach the given pull request to the entry, and add the resulting unpublished entry to the
- * {@link unpublishedEntries} store or replace the one already there.
+ * {@link allUnpublishedEntries} store or replace the one already there.
  * @param {Entry} entry Entry the pull request holds.
  * @param {object} args Arguments.
  * @param {WorkflowPullRequest} args.pullRequest Pull request.
@@ -241,14 +260,13 @@ const storeUnpublishedEntry = (
   /** @type {UnpublishedEntry} */
   const unpublishedEntry = {
     ...entry,
-    workflow: {
+    workflow: createUnpublishedEntryProps({
       pullRequest,
-      status: pullRequest.status,
       collectionName,
       fileName,
       previousPaths,
-      ...(companions.length ? { companions } : {}),
-    },
+      companions,
+    }),
   };
 
   upsertUnpublishedEntry(unpublishedEntry);
@@ -257,8 +275,9 @@ const storeUnpublishedEntry = (
 };
 
 /**
- * Remove the entry of the given merged or closed pull request from the {@link unpublishedEntries}
- * store, settle the assets committed to its branch, and forget the deployments of its head commit.
+ * Remove the entry of the given merged or closed pull request from the
+ * {@link allUnpublishedEntries} store, settle the assets committed to its branch, and forget the
+ * deployments of its head commit.
  * @param {WorkflowPullRequest} pullRequest Pull request.
  * @param {(branch: string) => void} settleAssets Function to publish or remove the assets committed
  * to the branch: {@link publishWorkflowAssets} or {@link removeWorkflowAssets}.
@@ -350,6 +369,119 @@ const mergeCompanions = (existing, added) => {
 };
 
 /**
+ * Get the published version of the asset at the given path: the asset itself, or the one an asset
+ * committed to a workflow branch shadows.
+ * @param {string} path Asset path.
+ * @returns {Asset | undefined} Asset, or `undefined` if the configured branch has none there.
+ */
+const getPublishedAsset = (path) => {
+  const asset = allAssets.current.find((a) => a.path === path);
+
+  return asset?.workflow ? asset.workflow.replacedAsset : asset;
+};
+
+/**
+ * Get the change that puts the given file of a pull request back the way it is on the configured
+ * branch: a file it has added is removed, one it has changed or removed gets the content the
+ * configured branch has.
+ * @param {WorkflowFile} file File to put back.
+ * @param {string} slug Slug of the entry, for the commit message.
+ * @param {ReturnType<typeof resolveCacheDB>} cacheDB File cache database.
+ * @returns {Promise<FileChange>} Change.
+ * @throws {Error} When the content of the file on the configured branch isn’t known.
+ */
+const getFileRevertChange = async ({ path, deleted }, slug, cacheDB) => {
+  const cache = /** @type {RepositoryFileInfo | undefined} */ (await cacheDB?.get(path));
+  const publishedAsset = getPublishedAsset(path);
+
+  // A file removed by the pull request is on the configured branch, by definition
+  if (!deleted && !cache && !publishedAsset && !findEntryByPaths([path])) {
+    return { action: 'delete', slug, path };
+  }
+
+  const action = deleted ? 'create' : 'update';
+
+  if (cache?.text !== undefined) {
+    return { action, slug, path, data: cache.text };
+  }
+
+  if (publishedAsset) {
+    return /** @type {FileChange} */ ({
+      action,
+      slug,
+      path,
+      data: await getAssetBlob(publishedAsset),
+    });
+  }
+
+  throw new Error(`The published version of ${path} could not be found.`);
+};
+
+/**
+ * Get the changes that take off the workflow branch the assets an earlier save committed for the
+ * given entry that it no longer uses, e.g. an image replaced with another upload while the entry
+ * is still a draft. Nothing references them anymore, so they would be published for nothing, and
+ * the publish check would refuse the pull request because of them. A file the pull request has
+ * added is removed, and one it has changed gets the content the configured branch has. Only the
+ * assets the entry or its companions used before the save are touched: a file committed to the
+ * branch outside the CMS is left for the publish check to refuse.
+ * @param {object} args Arguments.
+ * @param {UnpublishedEntry} args.existingEntry Unpublished entry as it stood before the save.
+ * @param {Entry} args.savingEntry Entry being saved.
+ * @param {CompanionEntry[]} args.companions Entries of other collections in the pull request
+ * after the save.
+ * @param {FileChange[]} args.changes Changes being committed.
+ * @param {string} args.slug Slug of the entry, for the commit message.
+ * @returns {Promise<FileChange[]>} Changes to commit for the assets taken off the branch.
+ * @see https://github.com/sveltia/sveltia-cms/issues/1162
+ */
+const getReplacedAssetChanges = async ({
+  existingEntry,
+  savingEntry,
+  companions,
+  changes,
+  slug,
+}) => {
+  const changedPaths = new Set(
+    changes.flatMap(({ path, previousPath }) => (previousPath ? [path, previousPath] : [path])),
+  );
+
+  const files = existingEntry.workflow.pullRequest.files.filter(
+    ({ path, deleted }) => !deleted && !changedPaths.has(path),
+  );
+
+  const { assetFiles } = createFileList(files.map(({ path }) => toFileListItem(path)));
+
+  const usedPaths = getUsedAssetPaths(
+    existingEntry,
+    existingEntry.workflow.companions ?? [],
+    assetFiles.map(({ path }) => path),
+  );
+
+  const stillUsedPaths = getUsedAssetPaths(savingEntry, companions, [...usedPaths]);
+  const cacheDB = resolveCacheDB();
+
+  // Putting a file back is a bonus on top of the save, so one whose published version can’t be
+  // read is left on the branch for the publish check to report, rather than failing the save
+  const results = await Promise.all(
+    files
+      .filter(({ path }) => usedPaths.has(path) && !stillUsedPaths.has(path))
+      .map(async (file) => {
+        try {
+          return await getFileRevertChange(file, slug, cacheDB);
+        } catch (ex) {
+          // eslint-disable-next-line no-console
+          console.error(ex);
+
+          return undefined;
+        }
+      }),
+  );
+
+  return /** @type {FileChange[]} */ (results.filter(Boolean));
+};
+
+/**
  * Save the given entry changes as a pull request instead of committing them directly to the
  * configured branch. The pull request and the workflow branch are created on the first save, and
  * updated on subsequent saves.
@@ -387,8 +519,24 @@ export const saveWorkflowChanges = async ({
     entry: originalEntry,
   });
 
+  const allCompanions = mergeCompanions(existingEntry?.workflow.companions ?? [], companions);
+
+  // The assets the draft no longer uses go along with the changes, but not into the commit message
+  // or the title, which describe what the user has done
+  const replacedAssetChanges = existingEntry
+    ? await getReplacedAssetChanges({
+        existingEntry,
+        savingEntry,
+        companions: allCompanions,
+        changes,
+        slug,
+      })
+    : [];
+
+  const allChanges = [...changes, ...replacedAssetChanges];
+
   const { commit, pullRequest } = await workflow.savePullRequest({
-    changes,
+    changes: allChanges,
     options: commitOptions,
     branch,
     // The commit message the backend writes names the paths relative to the repository root, so
@@ -436,15 +584,16 @@ export const saveWorkflowChanges = async ({
       pullRequest: {
         ...pullRequest,
         headSHA: commit.sha,
-        files: applyCommitToFiles(pullRequest.files, changes, commit),
+        files: applyCommitToFiles(pullRequest.files, allChanges, commit),
       },
       collectionName,
       fileName,
       previousPaths,
-      companions: mergeCompanions(existingEntry?.workflow.companions ?? [], companions),
+      companions: allCompanions,
     },
   );
 
+  removeWorkflowAssetsAt(branch, new Set(replacedAssetChanges.map(({ path }) => path)));
   mergeWorkflowAssets(savedAssets);
 
   return {
@@ -460,9 +609,11 @@ export const saveWorkflowChanges = async ({
  * on the Git service too, where a branch protection rule may require one before the pull request
  * can be merged; moving it back withdraws the approval, so it can’t be merged there on the strength
  * of it. The Git services don’t let anyone approve their own pull request, and an Open Authoring
- * contributor’s approval doesn’t count, so neither is attempted. The review is a bonus on top of
- * the status change, which has already been made, so a failure is only logged: the user may not be
- * allowed to review, or to dismiss a review on GitHub.
+ * contributor’s approval doesn’t count, so neither is attempted. Nor is a pull request a
+ * contributor opened from their fork approved: the CMS has only shown the entry, not whatever else
+ * their branch holds, so the approval is left to the review on the Git service. The review is a
+ * bonus on top of the status change, which has already been made, so a failure is only logged: the
+ * user may not be allowed to review, or to dismiss a review on GitHub.
  * @param {WorkflowPullRequest} pullRequest Pull request.
  * @param {boolean} approved Whether to approve the pull request rather than withdraw the approval.
  */
@@ -471,6 +622,7 @@ const reviewPullRequest = async (pullRequest, approved) => {
 
   if (
     openAuthoring.current ||
+    pullRequest.fork ||
     number === undefined ||
     (!!author?.login && author.login === user.account?.login)
   ) {
@@ -559,6 +711,7 @@ const pendingPublishes = new Map();
  * entry list to the regular entry list once it has.
  * @param {UnpublishedEntry} entry Unpublished entry.
  * @returns {Promise<void>}
+ * @throws {Error} When the pull request comes from a contributor’s fork.
  */
 const mergeWorkflowEntry = async (entry) => {
   const workflow = getWorkflowService();
@@ -574,6 +727,12 @@ const mergeWorkflowEntry = async (entry) => {
   const [preType, postType] = deletion
     ? /** @type {const} */ (['preUnpublish', 'postUnpublish'])
     : /** @type {const} */ (['prePublish', 'postPublish']);
+
+  // A contributor’s pull request is merged on the Git service, where the maintainer can review the
+  // whole of it, including any changes the CMS doesn’t show; see `getPublishAction()`
+  if (pullRequest.fork) {
+    throw new Error('A pull request from a fork cannot be published from the CMS.');
+  }
 
   // The board shows the entry, but the merge takes the whole pull request as its branch stands. So
   // the pull request is read afresh and checked against what has been shown before anything else
@@ -695,6 +854,25 @@ export const discardWorkflowEntry = async (entry) => {
 
   await workflow.discard(pullRequest);
   clearUnpublishedEntry(pullRequest, removeWorkflowAssets);
+
+  const { collectionName } = entry.workflow;
+  const key = getEntryKey(collectionName, entry.subPath);
+  // Paths of the files the pull request renamed, if it renames a published entry
+  const previousPaths = new Set(pullRequest.files.map(({ previousPath }) => previousPath));
+
+  const publishedEntry = getEntriesByCollection(collectionName).find(
+    ({ subPath, locales }) =>
+      subPath === entry.subPath ||
+      Object.values(locales).some(({ path }) => previousPaths.has(path)),
+  );
+
+  if (!publishedEntry) {
+    // A draft that was never published takes its comments along
+    getAdditions()?.deleteEntryComments(key);
+  } else if (publishedEntry.subPath !== entry.subPath) {
+    // The comments moved with the rename when the draft was saved; give them back
+    getAdditions()?.moveEntryConversation(key, getEntryKey(collectionName, publishedEntry.subPath));
+  }
 };
 
 /**
@@ -749,6 +927,40 @@ const getEditedCompanionRevertChanges = async (unpublishedEntry, slug) => {
 };
 
 /**
+ * Get the changes that put back the rest of the files a reused pull request changes, other than
+ * those the deletion of its entry handles itself, so publishing the removal leaves them as they are
+ * on the configured branch: an asset uploaded for the entry, or the entries a rename rewrote or
+ * moved along with it. See {@link getFileRevertChange}. Only the entry and asset files the CMS
+ * commits are touched: a change made outside the CMS is left for the publish check to refuse, as
+ * nothing tells whether the file is new or what it held.
+ * @param {object} args Arguments.
+ * @param {UnpublishedEntry} args.unpublishedEntry Unpublished entry whose pull request is reused.
+ * @param {string} args.slug Slug of the entry, for the commit message.
+ * @param {Set<string>} args.handledPaths Paths the deletion takes care of otherwise.
+ * @returns {Promise<FileChange[]>} Changes.
+ * @throws {Error} When the content of a file on the configured branch isn’t known.
+ */
+const getOtherFileRevertChanges = async ({ unpublishedEntry, slug, handledPaths }) => {
+  const files = unpublishedEntry.workflow.pullRequest.files.filter(
+    ({ path }) => !handledPaths.has(path),
+  );
+
+  if (!files.length) {
+    return [];
+  }
+
+  const { entryFiles, assetFiles } = createFileList(files.map(({ path }) => toFileListItem(path)));
+  const knownPaths = new Set([...entryFiles, ...assetFiles].map(({ path }) => path));
+  const cacheDB = resolveCacheDB();
+
+  return Promise.all(
+    files
+      .filter(({ path }) => knownPaths.has(path))
+      .map((file) => getFileRevertChange(file, slug, cacheDB)),
+  );
+};
+
+/**
  * Delete the given published entry through Editorial Workflow: instead of committing the removal
  * straight to the configured branch, open a pull request that removes it, so taking an entry off
  * the site is reviewed and released like any other change. The entry stays on the site until that
@@ -765,10 +977,14 @@ const getEditedCompanionRevertChanges = async (unpublishedEntry, slug) => {
  * omitted.
  * @param {string} [options.userMessage] Commit message the user has entered, already asked for by
  * {@link deleteWorkflowEntries} for a whole selection. Asked for if omitted and configured.
+ * @param {string} [options.deletionGroup] ID of the selection the entry is deleted with, recorded
+ * in the pull request so publishing can tell which references it removes. Omitted for an entry
+ * deleted on its own.
  * @returns {Promise<UnpublishedEntry>} Entry with the pull request attached.
  * @throws {Error} When the user has cancelled the commit when asked for a commit message.
  * @throws {Error} When removing the references would leave another entry invalid. The dialogs
  * report this before the deletion is confirmed, so this is only a safeguard.
+ * @throws {Error} When the entry comes from a contributor’s pull request.
  * @see https://github.com/sveltia/sveltia-cms/issues/770
  */
 export const deleteWorkflowEntry = async (
@@ -776,7 +992,7 @@ export const deleteWorkflowEntry = async (
   collection,
   collectionFile,
   assets = [],
-  { targets = undefined, userMessage = undefined } = {},
+  { targets = undefined, userMessage = undefined, deletionGroup = undefined } = {},
 ) => {
   // Taking a published entry off the site is a maintainer’s call. A contributor can discard their
   // own draft, which leaves the published version alone, but not propose a removal
@@ -796,6 +1012,13 @@ export const deleteWorkflowEntry = async (
   const collectionName = collection.name;
   const { slug } = entry;
   const { existingEntry, branch } = resolveWorkflowBranch({ collectionName, slug, entry });
+
+  // A contributor’s pull request is theirs: a maintainer can close it, but not turn it into the
+  // removal of the published entry. The editor doesn’t offer it, so this is only a safeguard
+  if (isForkEntry(existingEntry)) {
+    throw new Error('Cannot delete an entry through a pull request from a fork');
+  }
+
   // Remove the files as they stand on the branch. A pull request that renamed the entry has already
   // staged the deletion of the old paths there, so removing the new ones leaves nothing behind once
   // the merge lands
@@ -826,6 +1049,24 @@ export const deleteWorkflowEntry = async (
   // The references are removed from the published entries as they stand on the configured branch,
   // which is where the pull request will land
   const { changes: cascadeChanges } = await buildCascadeDeleteChanges({ targets });
+  const previousPaths = getPreviousPaths(existingEntry, paths);
+
+  // Anything else the reused pull request holds would be published along with the removal, which
+  // the publish check refuses, so it’s put back as well. The paths the entry has on the configured
+  // branch, which a rename has already removed, stay removed
+  const otherRevertChanges = existingEntry
+    ? await getOtherFileRevertChanges({
+        unpublishedEntry: existingEntry,
+        slug,
+        handledPaths: new Set([
+          ...paths,
+          ...previousPaths,
+          ...assetPaths,
+          ...companionPaths,
+          ...[...companionRevertChanges, ...cascadeChanges].map(({ path }) => path),
+        ]),
+      })
+    : [];
 
   // Reuse any open pull request rather than discarding it first: closing it up front would throw
   // the pending changes away with no way back if opening the replacement then failed
@@ -836,6 +1077,7 @@ export const deleteWorkflowEntry = async (
     ),
     // A file the references are removed from is written from the configured branch anyway
     ...companionRevertChanges.filter(({ path }) => !cascadeChanges.some((c) => c.path === path)),
+    ...otherRevertChanges,
     ...cascadeChanges,
   ];
 
@@ -848,11 +1090,17 @@ export const deleteWorkflowEntry = async (
     // this status avoids the churn of creating a draft and relabelling it a moment later
     status: 'pending_deletion',
     pullRequest: existingEntry?.workflow.pullRequest,
+    deletionGroup,
   });
 
   // A reused pull request carries the files and the head commit from before this one, which
   // publishing compares with the branch
   const files = applyCommitToFiles(pullRequest.files, changes, commit);
+
+  // Every asset the reused pull request committed is now off its branch, or back as published
+  if (existingEntry) {
+    removeWorkflowAssets(branch);
+  }
 
   /**
    * Store the entry with the given pull request, pointed at the new commit.
@@ -865,7 +1113,7 @@ export const deleteWorkflowEntry = async (
       collectionName,
       fileName: collectionFile?.name,
       // Where the entry lives on the configured branch, which a rename has already moved away from
-      previousPaths: getPreviousPaths(existingEntry, paths),
+      previousPaths,
       companions: [],
     });
 
@@ -905,7 +1153,9 @@ export const discardWorkflowEntries = async (entries) => {
  * selection are worked out once, and every pull request carries the same rewrite; identical changes
  * merge cleanly whichever is published first. The trade-off is that the selection is taken as a
  * whole: if one of the pull requests is then cancelled, the others still remove the references to
- * that entry when they’re published.
+ * that entry when they’re published. Each pull request records the selection it belongs to, so
+ * publishing it works out the same rewrite, rather than taking in the entries of the collection
+ * deleted one at a time, whose pull requests rewrite only the references to their own entry.
  * @param {{ entry: Entry, collection: InternalCollection,
  * collectionFile?: InternalCollectionFile, assets?: Asset[] }[]} items Entries to be deleted, with
  * the context each one needs.
@@ -923,19 +1173,20 @@ export const deleteWorkflowEntries = async (items) => {
 
   // A selection comes from one entry list, so it’s normally a single group
   const groups = Map.groupBy(items, getKey);
-  /** @type {Map<string, CascadeTarget[]>} */
-  const targetMap = new Map();
+  /** @type {Map<string, { targets: CascadeTarget[], deletionGroup?: string }>} */
+  const planMap = new Map();
 
   groups.forEach((group, key) => {
     const [{ collection, collectionFile }] = group;
 
-    targetMap.set(
-      key,
-      planCascadeDeleteOrThrow(
+    planMap.set(key, {
+      targets: planCascadeDeleteOrThrow(
         { collection, collectionFile, entries: group.map(({ entry }) => entry) },
         'Cannot delete entries that other entries require',
       ),
-    );
+      // An entry deleted alone in its group is planned on its own, which needs no record
+      deletionGroup: group.length > 1 ? generateUUID() : undefined,
+    });
   });
 
   // Ask for a commit message once for the whole selection rather than for each pull request. Each
@@ -951,7 +1202,7 @@ export const deleteWorkflowEntries = async (items) => {
     const { entry, collection, collectionFile, assets } = item;
 
     await deleteWorkflowEntry(entry, collection, collectionFile, assets, {
-      targets: targetMap.get(getKey(item)),
+      ...planMap.get(getKey(item)),
       // A string, even an empty one, tells the user has been asked already
       userMessage,
     });

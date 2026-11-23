@@ -8,13 +8,13 @@ describe('bundled modules in the npm build', () => {
   it.each([
     ['@discourse/heic', 'decode'],
     ['@jsquash/webp', 'default'],
+    ['@sindresorhus/transliterate', 'default'],
     ['exifr', 'parse'],
     ['immutable', 'Map'],
     ['leaflet', 'map'],
     ['pdfjs-dist', 'getDocument'],
     ['svgo', 'optimize'],
     ['terra-draw', 'TerraDraw'],
-    ['terra-draw-leaflet-adapter', 'TerraDrawLeafletAdapter'],
     ['turndown', 'default'],
   ])('loads %s', async (library, exportName) => {
     await expect(BUNDLED_MODULE_LOADERS[library]()).resolves.toHaveProperty(exportName);

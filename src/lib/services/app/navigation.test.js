@@ -141,6 +141,7 @@ describe('navigation', () => {
         href: 'https://example.com/#/collections',
         origin: 'https://example.com',
         pathname: '/',
+        search: '',
         hash: '#/collections',
       },
       writable: true,
@@ -652,6 +653,26 @@ describe('navigation', () => {
       expect(document.startViewTransition).toHaveBeenCalled();
     });
 
+    it('should keep the query string the page was opened with', async () => {
+      window.location.href = 'https://example.com/admin/?site=a#/collections';
+      window.location.pathname = '/admin/';
+      window.location.search = '?site=a';
+
+      await goto('/collections/posts');
+
+      expect(window.history.pushState).toHaveBeenCalledWith(
+        { from: 'https://example.com/admin/?site=a#/collections' },
+        '',
+        'https://example.com/admin/?site=a#/collections/posts',
+      );
+      expect(window.dispatchEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          oldURL: 'https://example.com/admin/?site=a#/collections',
+          newURL: 'https://example.com/admin/?site=a#/collections/posts',
+        }),
+      );
+    });
+
     it('should replace state when replaceState is true, keeping the previous entry’s URL', async () => {
       /** @type {any} */ (window.history).state = { from: 'https://example.com/#/' };
 
@@ -863,7 +884,7 @@ describe('navigation', () => {
   });
 
   describe('resolveRoute', () => {
-    const pageNames = ['collections', 'assets', 'search', 'workflow', 'config', 'menu', 'settings'];
+    const pageNames = ['collections', 'assets', 'search', 'workflow', 'admin', 'menu', 'settings'];
 
     it('should redirect the root path to the content library', () => {
       expect(resolveRoute('/', pageNames)).toEqual({ redirect: '#/collections' });
@@ -879,8 +900,19 @@ describe('navigation', () => {
 
     it('should report a standalone page followed by a sub path as not found', () => {
       expect(resolveRoute('/workflow/foo', pageNames)).toEqual({ notFound: true });
-      expect(resolveRoute('/config/foo', pageNames)).toEqual({ notFound: true });
       expect(resolveRoute('/menu/foo', pageNames)).toEqual({ notFound: true });
+    });
+
+    it('should send the former CMS configuration page to the Administration page', () => {
+      expect(resolveRoute('/config', pageNames)).toEqual({ redirect: '#/admin/config' });
+      expect(resolveRoute('/config/foo', pageNames)).toEqual({ notFound: true });
+    });
+
+    it('should let the Administration page take a section', () => {
+      expect(resolveRoute('/admin/users', pageNames)).toEqual({
+        pageName: 'admin',
+        searchMode: null,
+      });
     });
 
     it('should set the search mode for the content and asset libraries', () => {

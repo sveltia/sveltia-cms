@@ -1,0 +1,139 @@
+import { getField } from '$lib/services/contents/entry/fields';
+import { hasUuidTag } from '$lib/services/contents/fields/compute/helpers';
+import { getDefaultValueMap as getHiddenFieldDefaultValueMap } from '$lib/services/contents/fields/hidden/defaults';
+import { getInitialValue } from '$lib/services/contents/fields/uuid/helpers';
+import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
+import { isDuplicatedField } from '$lib/services/contents/i18n/shared-values';
+
+/**
+ * @import {
+ * FlattenedEntryContent,
+ * GetFieldArgs,
+ * InternalLocaleCode,
+ * LocaleContentMap,
+ * } from '$lib/types/private';
+ * @import { ComputeField, Field, FieldKeyPath, UuidField } from '$lib/types/public';
+ */
+
+/**
+ * Types of the fields whose values are unique to an entry or list item, and renewed when it’s
+ * duplicated. See {@link getRenewedUniqueValue}.
+ * @type {string[]}
+ */
+export const UNIQUE_VALUE_FIELD_TYPES = ['uuid', 'compute', 'hidden'];
+
+/**
+ * Get a new value for the given field of a duplicated entry or list item, so the duplicate doesn’t
+ * share the values unique to its source: a UUID field gets a new UUID, unless it’s empty, which is
+ * filled in later as with a new entry or item; a Compute field with a UUID tag is cleared, as it
+ * keeps the UUIDs found in its current value when it’s resolved again; and a Hidden field gets its
+ * default value again, which can hold a UUID tag as well. Any other field keeps its value.
+ * @param {object} args Arguments.
+ * @param {Field} args.fieldConfig Field configuration.
+ * @param {FieldKeyPath} args.keyPath Field key path.
+ * @param {any} [args.value] Current value.
+ * @param {InternalLocaleCode} args.locale Locale of the value.
+ * @param {InternalLocaleCode} args.defaultLocale Default locale.
+ * @returns {any} New value.
+ */
+export const getRenewedUniqueValue = ({ fieldConfig, keyPath, value, locale, defaultLocale }) => {
+  const { widget: fieldType } = fieldConfig;
+
+  if (fieldType === 'uuid') {
+    return value ? getInitialValue(/** @type {UuidField} */ (fieldConfig)) : value;
+  }
+
+  if (fieldType === 'compute') {
+    return hasUuidTag(/** @type {ComputeField} */ (fieldConfig).value) ? '' : value;
+  }
+
+  if (fieldType === 'hidden') {
+    return getHiddenFieldDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale })[keyPath];
+  }
+
+  return value;
+};
+
+/**
+ * Regular expression to match the key path of the innermost list item a field belongs to, e.g.
+ * `blocks.0` for `blocks.0.meta.id`.
+ */
+const LIST_ITEM_KEY_PATH_REGEX = /^.*\.\d+(?=\.)/;
+
+/**
+ * Fill in the empty UUID fields of a new entry draft, so that every UUID is in place as soon as the
+ * draft is created, whether or not the field is ever rendered in the editor. The default locale and
+ * any locale where the field is translatable get a UUID of their own, while a duplicated field,
+ * including one nested in a List or Object field with the `duplicate` i18n strategy, takes the
+ * default locale’s value, as the default values of each locale are created separately. A value
+ * that is already there, e.g. a dynamic default value, is kept.
+ * @param {object} args Arguments.
+ * @param {LocaleContentMap} args.contentMap Flattened content of each locale, modified in place.
+ * @param {InternalLocaleCode} args.defaultLocale Default locale.
+ * @param {Omit<GetFieldArgs, 'keyPath' | 'valueMap'>} args.getFieldArgs Arguments for
+ * {@link getField}, except the key path and value map.
+ */
+export const fillUuidValues = ({ contentMap, defaultLocale, getFieldArgs }) => {
+  const defaultContent = contentMap[defaultLocale];
+
+  /**
+   * Get the configuration of the UUID field at the given key path.
+   * @param {FlattenedEntryContent} content Content the key path belongs to.
+   * @param {string} keyPath Key path.
+   * @returns {UuidField | undefined} Field configuration, or `undefined` if it’s not a UUID field.
+   */
+  const getUuidField = (content, keyPath) => {
+    const fieldConfig = getField({ ...getFieldArgs, keyPath, valueMap: content });
+
+    return fieldConfig?.widget === 'uuid' ? /** @type {UuidField} */ (fieldConfig) : undefined;
+  };
+
+  if (defaultContent) {
+    Object.keys(defaultContent).forEach((keyPath) => {
+      const fieldConfig = getUuidField(defaultContent, keyPath);
+
+      if (fieldConfig && !defaultContent[keyPath]) {
+        defaultContent[keyPath] = getInitialValue(fieldConfig);
+      }
+    });
+  }
+
+  Object.entries(contentMap).forEach(([locale, content]) => {
+    if (locale === defaultLocale) {
+      return;
+    }
+
+    Object.keys(content).forEach((keyPath) => {
+      const fieldConfig = getUuidField(content, keyPath);
+
+      if (fieldConfig && !content[keyPath] && isFieldTranslatable(fieldConfig.i18n)) {
+        content[keyPath] = getInitialValue(fieldConfig);
+      }
+    });
+
+    if (!defaultContent) {
+      return;
+    }
+
+    // A duplicated field takes the default locale’s value. A field nested in a duplicated List or
+    // Object field isn’t among the locale’s default values unless it has an `i18n` option of its
+    // own, so copy it as long as the list item it belongs to, if any, is there as well
+    Object.entries(defaultContent).forEach(([keyPath, value]) => {
+      const fieldConfig = getUuidField(defaultContent, keyPath);
+      const listItemKeyPath = keyPath.match(LIST_ITEM_KEY_PATH_REGEX)?.[0];
+
+      if (
+        fieldConfig &&
+        !content[keyPath] &&
+        isDuplicatedField({
+          fieldConfig,
+          getFieldArgs: { ...getFieldArgs, keyPath, valueMap: defaultContent },
+        }) &&
+        (!listItemKeyPath ||
+          Object.keys(content).some((key) => key.startsWith(`${listItemKeyPath}.`)))
+      ) {
+        content[keyPath] = value;
+      }
+    });
+  });
+};

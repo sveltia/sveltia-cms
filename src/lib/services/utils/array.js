@@ -34,3 +34,43 @@ export const splitIntoChunks = (items, size) =>
   Array.from({ length: Math.ceil(items.length / size) }, (_, i) =>
     items.slice(i * size, (i + 1) * size),
   );
+
+/**
+ * Split the given list into chunks that each stay within the given number of items and the given
+ * total size, keeping the original order. A chunk is closed before the item that would push it over
+ * either limit, but never left empty, so an item that exceeds the size limit on its own gets a
+ * chunk of its own.
+ * @template T
+ * @param {T[]} items Items to split.
+ * @param {object} limits Limits.
+ * @param {number} limits.maxItems Maximum number of items per chunk.
+ * @param {number} limits.maxSize Maximum total size of the items per chunk.
+ * @param {(item: T) => number} limits.getSize Function to get the size of an item.
+ * @returns {T[][]} Chunks, in the original order.
+ */
+export const splitIntoSizedChunks = (items, { maxItems, maxSize, getSize }) => {
+  /** @type {T[][]} */
+  const chunks = [];
+  /** @type {T[]} */
+  let chunk = [];
+  let chunkSize = 0;
+
+  items.forEach((item) => {
+    const size = getSize(item);
+
+    if (chunk.length && (chunk.length === maxItems || chunkSize + size > maxSize)) {
+      chunks.push(chunk);
+      chunk = [];
+      chunkSize = 0;
+    }
+
+    chunk.push(item);
+    chunkSize += size;
+  });
+
+  if (chunk.length) {
+    chunks.push(chunk);
+  }
+
+  return chunks;
+};

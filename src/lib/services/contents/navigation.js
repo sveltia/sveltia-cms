@@ -27,6 +27,7 @@ import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { isSearchRoute } from '$lib/services/search/navigation';
 import { env } from '$lib/services/user/env.svelte';
 import {
+  getForkUnpublishedEntry,
   getUnpublishedEntriesByCollection,
   getUnpublishedEntry,
   mergeUnpublishedEntries,
@@ -35,7 +36,11 @@ import {
 
 /**
  * @import { EntryDraftState } from '$lib/services/contents/draft/state.svelte';
- * @import { InternalCollection, InternalCollectionFile } from '$lib/types/private';
+ * @import {
+ * InternalCollection,
+ * InternalCollectionFile,
+ * UnpublishedEntry,
+ * } from '$lib/types/private';
  */
 
 /**
@@ -63,6 +68,8 @@ import {
  * @property {string} collectionLabel Label of the selected collection.
  * @property {string | undefined} routeType Route type: `new`, `entries` or `filter`.
  * @property {string | undefined} subPath Path following the collection name or route type.
+ * @property {number} [pullRequestNumber] Number of the pull request from a contributor’s fork the
+ * entry is to be opened from, given in the URL params, e.g. `?_pr=12`.
  */
 
 /**
@@ -96,6 +103,34 @@ const clearEditor = (state, entryDraft, messageKey) => {
   announcedPageStatus.current = _(messageKey);
 
   return state;
+};
+
+/**
+ * Find the unpublished entry an editor route addresses, which the editor opens in place of the
+ * published version. A route naming a pull request is for an entry a contributor has opened from
+ * their fork, which is only reached from the Editorial Workflow board. Nothing stands in for that
+ * entry when it can’t be found, e.g. once the pull request has been closed: the published
+ * version, or the maintainers’ own pull request, isn’t what the link was for, and editing it by
+ * mistake could mix the two up.
+ * @param {object} args Arguments.
+ * @param {string} args.collectionName Collection name.
+ * @param {string} args.subPath Entry sub path, or collection file name.
+ * @param {number} [args.pullRequestNumber] Pull request number given in the route.
+ * @returns {{ unpublishedEntry: UnpublishedEntry | undefined, missing: boolean }} Unpublished
+ * entry, if any, and whether the entry the route names is missing.
+ */
+const findRouteUnpublishedEntry = ({ collectionName, subPath, pullRequestNumber }) => {
+  if (pullRequestNumber === undefined) {
+    return { unpublishedEntry: getUnpublishedEntry({ collectionName, subPath }), missing: false };
+  }
+
+  const unpublishedEntry = getForkUnpublishedEntry({
+    collectionName,
+    subPath,
+    number: pullRequestNumber,
+  });
+
+  return { unpublishedEntry, missing: !unpublishedEntry };
 };
 
 /**
@@ -206,6 +241,7 @@ const resolveFileRoute = ({
   collectionLabel,
   routeType,
   subPath,
+  pullRequestNumber,
   fileMap,
 }) => {
   if (routeType !== 'entries' || !subPath) {
@@ -221,9 +257,19 @@ const resolveFileRoute = ({
     return clearEditor(state, entryDraft, 'file_not_found');
   }
 
+  const { unpublishedEntry, missing } = findRouteUnpublishedEntry({
+    collectionName,
+    subPath,
+    pullRequestNumber,
+  });
+
+  if (missing) {
+    return clearEditor(state, entryDraft, 'file_not_found');
+  }
+
   // An unpublished entry takes precedence over the published version, so the user can keep
   // editing the draft stored in the pull request
-  const originalEntry = getUnpublishedEntry({ collectionName, subPath }) ??
+  const originalEntry = unpublishedEntry ??
     getCollectionFileEntry(collectionName, subPath) ??
       // File is not yet created
       {
@@ -259,6 +305,7 @@ const resolveEntryRoute = ({
   collectionLabel,
   routeType,
   subPath,
+  pullRequestNumber,
   params,
 }) => {
   if (routeType === 'new' && !subPath) {
@@ -293,11 +340,18 @@ const resolveEntryRoute = ({
   }
 
   if (routeType === 'entries' && subPath) {
-    const originalEntry =
-      getUnpublishedEntry({ collectionName, subPath }) ??
-      // Not `listedEntries`, which a collection with nested entries limits to the folder being
-      // browsed, while an entry can also be opened with a deep link
-      getEntriesByCollection(collectionName).find((entry) => entry.subPath === subPath);
+    const { unpublishedEntry, missing } = findRouteUnpublishedEntry({
+      collectionName,
+      subPath,
+      pullRequestNumber,
+    });
+
+    const originalEntry = missing
+      ? undefined
+      : (unpublishedEntry ??
+        // Not `listedEntries`, which a collection with nested entries limits to the folder being
+        // browsed, while an entry can also be opened with a deep link
+        getEntriesByCollection(collectionName).find((entry) => entry.subPath === subPath));
 
     if (!originalEntry) {
       return clearEditor(state, entryDraft, 'entry_not_found');
@@ -348,6 +402,10 @@ export const resolveContentsRoute = ({ entryDraft }) => {
 
   delete params._locale;
 
+  const pullRequestNumber = params._pr === undefined ? undefined : Number(params._pr);
+
+  delete params._pr;
+
   // `/collections/_singletons` should not be used unless there is only the singleton collection
   if (selectedCollection.current?.name === '_singletons' && getValidCollections().length) {
     selectedCollection.current = undefined;
@@ -396,6 +454,7 @@ export const resolveContentsRoute = ({ entryDraft }) => {
     collectionLabel,
     routeType,
     subPath,
+    pullRequestNumber,
   };
 
   if (!routeType || routeType === 'filter') {

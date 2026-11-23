@@ -1,5 +1,5 @@
 import { deleteEntries } from '$lib/services/contents/collection/data/delete';
-import { cancelBackup, deleteBackup } from '$lib/services/contents/draft/backup';
+import { cancelBackup, deleteBackup, getBackupSlug } from '$lib/services/contents/draft/backup';
 import { deleteWorkflowEntries, discardWorkflowEntries } from '$lib/services/workflow/save';
 
 /**
@@ -32,11 +32,12 @@ const deleteBackups = async ({ entries, collection, collectionFile }) => {
   }
 
   await Promise.all(
-    entries.map(async ({ subPath }) => {
+    entries.map(async (entry) => {
       try {
-        // Same as `getBackupSlug()`: a collection file’s backup is stored under the file name, and
-        // an entry’s under its `subPath`, which, unlike the slug, is unique in the collection
-        await deleteBackup(collection.name, collectionFile?.name ?? subPath);
+        await deleteBackup(
+          collection.name,
+          getBackupSlug({ collection, fileName: collectionFile?.name, originalEntry: entry }),
+        );
       } catch (ex) {
         // eslint-disable-next-line no-console
         console.error(ex);

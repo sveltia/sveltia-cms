@@ -215,8 +215,8 @@ test('shows the developer tools once Developer Mode is on', async ({ cms, page }
   await expect(helpButton).toBeHidden();
   await accountButton.click();
   await expect(page.getByRole('menuitem', { name: 'Keyboard Shortcuts' })).toBeVisible();
-  await expect(page.getByRole('menuitem', { name: 'CMS Configuration' })).toBeHidden();
   await page.keyboard.press('Escape');
+  await expect(page.getByRole('radio', { name: 'Administration' })).toHaveCount(0);
 
   const dialog = await openSettings(cms, page, 'Developer');
   const devMode = dialog.getByRole('switch', { name: 'Enable Developer Mode' });
@@ -234,14 +234,10 @@ test('shows the developer tools once Developer Mode is on', async ({ cms, page }
   await expect(page.getByRole('menuitem', { name: 'Documentation' })).toBeVisible();
   await page.keyboard.press('Escape');
 
-  // The account menu leads to the CMS configuration
-  await cms.chooseMenuItem(
-    accountButton,
-    page.getByRole('menuitem', { name: 'CMS Configuration' }),
-  );
-  await expect(page).toHaveURL(/#\/config$/);
+  // The Administration page shows the CMS configuration, as YAML
+  await page.getByRole('radio', { name: 'Administration' }).click();
+  await expect(page).toHaveURL(/#\/admin\/config$/);
 
-  // The page shows the configuration as YAML
   const config = page.getByRole('blockquote', { name: 'CMS Configuration' });
 
   await expect(config).toContainText('name: test-repo');

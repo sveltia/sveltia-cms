@@ -431,15 +431,52 @@ describe('contents/draft/create/normalize', () => {
         expect(normalize(fields, { a: 'true', b: 'False' })).toEqual({ a: true, b: false });
       });
 
+      it('should coerce a YAML 1.1 boolean or a number in a Boolean field', () => {
+        const names = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k'];
+        const fields = names.map((name) => ({ name, widget: 'boolean', default: true }));
+
+        // A Jekyll site may have `featured: yes`, which the YAML 1.2 parser reads as a string. The
+        // value is kept rather than replaced with the default, so it doesn’t flip on save
+        expect(
+          normalize(fields, {
+            a: 'yes',
+            b: 'On',
+            c: 'Y',
+            d: 1,
+            e: '1',
+            f: 'no',
+            g: 'OFF',
+            h: 'n',
+            i: 0,
+            j: ' 0 ',
+            k: 'False',
+          }),
+        ).toEqual({
+          a: true,
+          b: true,
+          c: true,
+          d: true,
+          e: true,
+          f: false,
+          g: false,
+          h: false,
+          i: false,
+          j: false,
+          k: false,
+        });
+      });
+
       it('should fall back to the default value for an unusable Boolean value', () => {
         const fields = [
           { name: 'draft', widget: 'boolean', default: true },
           { name: 'featured', widget: 'boolean' },
+          { name: 'pinned', widget: 'boolean', default: true },
         ];
 
-        expect(normalize(fields, { draft: 'yes', featured: 1 })).toEqual({
+        expect(normalize(fields, { draft: 'maybe', featured: 2, pinned: null })).toEqual({
           draft: true,
           featured: false,
+          pinned: true,
         });
       });
 

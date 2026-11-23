@@ -6,8 +6,8 @@
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Dialog, TextInput } from '@sveltia/ui';
 
+  import NameInputDialog from '$lib/components/assets/list/name-input-dialog.svelte';
   import { formatSubfolderName, validateSubfolderName } from '$lib/services/assets/subfolders';
 
   /**
@@ -16,8 +16,8 @@
    * @property {string} title Dialog title.
    * @property {string} okLabel Label of the OK button.
    * @property {string} description Text shown above the input field.
-   * @property {string} [warning] Warning shown below the description, e.g. that entries linking to
-   * the files in the folder will break once it’s renamed. The name can still be submitted.
+   * @property {string} [blockedMessage] Why the folder can’t be renamed, e.g. because a read-only
+   * entry uses a file in it, shown in place of the description; the name can’t be submitted then.
    * @property {string} [name] Current folder name, shown in the input field when renaming. Empty
    * for a new folder.
    * @property {string[]} takenNames Names of the files and folders already in the parent folder,
@@ -29,20 +29,16 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     open = $bindable(false),
     title,
     okLabel,
     description,
-    warning = undefined,
+    blockedMessage = undefined,
     name = '',
     takenNames,
     onSubmit,
     onClose = undefined,
-    /* eslint-enable prefer-const */
   } = $props();
-
-  const componentId = $props.id();
 
   let newName = $state('');
   /**
@@ -65,58 +61,21 @@
   });
 </script>
 
-<Dialog
+<NameInputDialog
   {title}
   bind:open
   {okLabel}
-  okDisabled={!!error || unchanged}
+  okDisabled={!!blockedMessage || !!error || unchanged}
   onOk={() => {
     onSubmit(formatSubfolderName(newName));
   }}
   {onClose}
->
-  <p>{description}</p>
-  {#if warning}
-    <p role="alert" class="warning">{warning}</p>
-  {/if}
-  <div role="none">
-    <TextInput
-      dir="auto"
-      flex
-      bind:value={newName}
-      ariaLabel={_('new_folder_name')}
-      {invalid}
-      aria-errormessage="{componentId}-error"
-      oninput={() => {
-        nameEdited = true;
-      }}
-    />
-  </div>
-  <div role="none" class="error" id="{componentId}-error">
-    {#if invalid}
-      {_(`new_folder_error.${error}`)}
-    {/if}
-  </div>
-</Dialog>
-
-<style>
-  p {
-    margin: 0 0 8px;
-  }
-
-  .warning {
-    color: var(--sui-warning-foreground-color);
-  }
-
-  div {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .error {
-    margin: 0;
-    color: var(--sui-error-foreground-color);
-    font-size: var(--sui-font-size-small);
-  }
-</style>
+  {description}
+  {blockedMessage}
+  bind:value={newName}
+  ariaLabel={_('new_folder_name')}
+  oninput={() => {
+    nameEdited = true;
+  }}
+  error={invalid ? _(`new_folder_error.${error}`) : undefined}
+/>

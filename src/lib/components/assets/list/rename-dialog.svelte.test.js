@@ -46,7 +46,8 @@ describe('RenameDialog', () => {
     await expect.element(dialog.getByRole('button', { name: 'Rename' })).toBeDisabled();
     await expectFileNameSelected(dialog.getByRole('textbox'), 'photo.png');
 
-    await dialog.getByRole('textbox').fill('picture.png');
+    // The input is named after the dialog
+    await dialog.getByRole('textbox', { name: 'Rename \u2068photo.png\u2069' }).fill('picture.png');
     await dialog.getByRole('button', { name: 'Rename' }).click();
 
     // The handler runs once the dialog is closed
@@ -102,17 +103,6 @@ describe('RenameDialog', () => {
     await expect.element(dialog.getByRole('alert')).toHaveTextContent('A read-only entry uses it.');
     await expect.element(dialog.getByRole('textbox')).toBeDisabled();
     await expect.element(dialog.getByRole('button', { name: 'Rename' })).toBeDisabled();
-  });
-
-  test('shows a warning without keeping the asset from being renamed', async () => {
-    const { onRename } = await renderDialog({ warning: 'Links will break.' });
-    const dialog = page.getByRole('dialog');
-
-    await expect.element(dialog.getByRole('alert')).toHaveTextContent('Links will break.');
-    await expectFileNameSelected(dialog.getByRole('textbox'), 'photo.png');
-    await dialog.getByRole('textbox').fill('picture.png');
-    await dialog.getByRole('button', { name: 'Rename' }).click();
-    await vi.waitFor(() => expect(onRename).toHaveBeenCalledWith('picture.png'));
   });
 
   test('validates the new name', async () => {
@@ -222,6 +212,33 @@ describe('RenameDialog', () => {
     await page.getByRole('alertdialog').getByRole('button', { name: 'Rename' }).click();
 
     await vi.waitFor(() => expect(onRename).toHaveBeenCalledWith('photo.webp'));
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  test('renames the asset or asks for confirmation with the Enter key, as the button does', async () => {
+    const { onRename, onClose } = await renderDialog();
+    const dialog = page.getByRole('dialog', { name: 'Rename \u2068photo.png\u2069' });
+    const textbox = dialog.getByRole('textbox');
+
+    await expectFileNameSelected(textbox, 'photo.png');
+    await textbox.fill('photo.webp');
+    await userEvent.keyboard('{Enter}');
+
+    // The extension change is confirmed first
+    const confirmation = page.getByRole('alertdialog');
+
+    await expect.element(confirmation).toBeInTheDocument();
+    expect(onRename).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+
+    // Going back keeps the entered name, which can then be changed and submitted again
+    await confirmation.getByRole('button', { name: 'Cancel' }).click();
+    await expectFileNameSelected(textbox, 'photo.webp');
+    await textbox.fill('picture.png');
+    await userEvent.keyboard('{Enter}');
+
+    await vi.waitFor(() => expect(onRename).toHaveBeenCalledWith('picture.png'));
+    expect(onRename).toHaveBeenCalledOnce();
     expect(onClose).toHaveBeenCalledOnce();
   });
 

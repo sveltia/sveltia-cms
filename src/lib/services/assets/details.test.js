@@ -169,10 +169,18 @@ describe('assets/details', () => {
       expect(getMediaMetadata).toHaveBeenCalledTimes(2);
     });
 
-    it('should not remember a failed attempt', async () => {
+    it('should not remember a failed attempt, and still resolve the URLs', async () => {
+      const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
       vi.mocked(getAssetBlobURL).mockRejectedValueOnce(new Error('Network error'));
 
-      await expect(getAssetDetails(createAsset())).rejects.toThrow('Network error');
+      // The URLs don’t depend on the file’s content
+      await expect(getAssetDetails(createAsset())).resolves.toEqual({
+        publicURL: '/images/photo.jpg',
+        repoBlobURL: 'https://github.com/a/b/blob/main/static/images/photo.jpg',
+      });
+      expect(error).toHaveBeenCalledWith(expect.objectContaining({ message: 'Network error' }));
+      error.mockRestore();
       await expect(getAssetDetails(createAsset())).resolves.toMatchObject({
         dimensions: { width: 800, height: 600 },
       });

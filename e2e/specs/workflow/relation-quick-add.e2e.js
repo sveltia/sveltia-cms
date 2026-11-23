@@ -1,10 +1,6 @@
 import { openEntryPullRequest, WORKFLOW_CONFIG } from '../../fixtures/configs/workflow.js';
 import { expect, test } from '../../fixtures/test.js';
-import { getEditor, openEntry } from '../../fixtures/ui.js';
-
-/**
- * @import { Locator, Page } from '@playwright/test';
- */
+import { getCard, getEditor, openBoard, openEntry } from '../../fixtures/ui.js';
 
 /**
  * Help centre on Editorial Workflow, whose articles belong to a section, which can be added on the
@@ -59,26 +55,6 @@ const post = (title, section) => `---\ntitle: ${title}\nsection: ${section}\n---
  * @returns {string} File content.
  */
 const section = (title) => `---\ntitle: ${title}\n---\n`;
-
-/**
- * Open the Editorial Workflow page.
- * @param {Page} page Page.
- * @returns {Promise<Locator>} Board.
- */
-const openBoard = async (page) => {
-  await page.getByRole('radio', { name: 'Editorial Workflow' }).click();
-
-  return page.getByRole('group', { name: 'Editorial Workflow' });
-};
-
-/**
- * Get the card of an entry on the board.
- * @param {Locator} board Board.
- * @param {string} title Entry title.
- * @returns {Locator} Card.
- */
-const getCard = (board, title) =>
-  board.getByRole('listitem').filter({ has: board.page().getByRole('button', { name: title }) });
 
 test('adds a section from a post to the post’s pull request', async ({ cms, github, page }) => {
   const { oid: mainBefore } = github.head;

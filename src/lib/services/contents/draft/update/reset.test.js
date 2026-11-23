@@ -24,6 +24,12 @@ vi.mock('$lib/services/contents/collection', () => ({
           { name: 'rooms', widget: 'list' },
         ],
       },
+      {
+        name: 'place',
+        widget: 'object',
+        i18n: 'sync',
+        fields: [{ name: 'name', widget: 'string' }],
+      },
     ],
   })),
 }));
@@ -328,7 +334,8 @@ describe('Test resetField()', () => {
 
 describe('Test canResetField()', () => {
   test('should tell whether the field holds anything to clear', () => {
-    const args = { fieldConfig: authorField, keyPath: 'author', locale: 'en', defaultLocale: 'en' };
+    const draft = createDraft({});
+    const args = { draft, fieldConfig: authorField, keyPath: 'author', locale: 'en' };
 
     expect(canResetField({ ...args, valueMap: { title: 'Hello', ...authorValues } })).toBe(true);
     // Only the values the user doesn’t enter, which are kept
@@ -355,7 +362,7 @@ describe('Test canResetField()', () => {
   test('should tell whether a List or KeyValue field holds items or pairs', () => {
     const list = { fieldConfig: { name: 'tags', widget: 'list' }, keyPath: 'tags' };
     const meta = { fieldConfig: { name: 'meta', widget: 'keyvalue' }, keyPath: 'meta' };
-    const locales = { locale: 'en', defaultLocale: 'en' };
+    const locales = { draft: createDraft({}), locale: 'en' };
 
     expect(canResetField({ ...list, ...locales, valueMap: { 'tags.0': '' } })).toBe(true);
     expect(canResetField({ ...list, ...locales, valueMap: { tags: [] } })).toBe(false);
@@ -377,9 +384,9 @@ describe('Test canResetField()', () => {
         fields: [{ name: 'url', widget: 'string' }],
         ...options,
       },
+      draft: createDraft({}),
       keyPath: 'links',
       locale: 'en',
-      defaultLocale: 'en',
       valueMap: { links: [], 'links.0.url': '/docs', 'links.1.url': '/blog' },
     });
 
@@ -398,6 +405,22 @@ describe('Test canResetField()', () => {
         valueMap: { links: [], 'links.0': 'a' },
       }),
     ).toBe(true);
+  });
+
+  test('should tell whether a subfield synced along with its parent can be reset in another locale', () => {
+    const args = {
+      draft: createDraft({}),
+      fieldConfig: { name: 'name', widget: 'string' },
+      keyPath: 'place.name',
+      locale: 'fr',
+    };
+
+    expect(canResetField({ ...args, valueMap: { 'place.name': 'Salle' } })).toBe(true);
+    expect(canResetField({ ...args, valueMap: { 'place.name': '' } })).toBe(false);
+    // A subfield duplicated along with its parent can’t be edited in another locale
+    expect(
+      canResetField({ ...args, keyPath: 'venue.name', valueMap: { 'venue.name': 'Salle' } }),
+    ).toBe(false);
   });
 
   test('should keep a List field that doesn’t allow removing items within an Object field', () => {
@@ -553,7 +576,8 @@ describe('Test resetField() for restoring', () => {
   test('should tell whether the field holds anything but the default values', () => {
     /** @type {Field} */
     const fieldConfig = { name: 'tags', widget: 'list', default: ['a'] };
-    const args = { fieldConfig, keyPath: 'tags', locale: 'en', defaultLocale: 'en', restore: true };
+    const draft = createDraft({});
+    const args = { draft, fieldConfig, keyPath: 'tags', locale: 'en', restore: true };
 
     expect(canResetField({ ...args, valueMap: { tags: [], 'tags.0': 'b' } })).toBe(true);
     expect(canResetField({ ...args, valueMap: { tags: [], 'tags.0': 'a' } })).toBe(false);

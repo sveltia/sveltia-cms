@@ -19,12 +19,7 @@
    */
 
   /** @type {FieldPreviewProps & Props} */
-  let {
-    /* eslint-disable prefer-const */
-    fieldConfig,
-    currentValue,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { fieldConfig, currentValue } = $props();
 
   const { enableAlpha = false } = $derived(fieldConfig);
   const rgb = $derived(formatHexAsRGB(currentValue, { enableAlpha }));

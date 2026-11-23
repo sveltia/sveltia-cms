@@ -8,8 +8,6 @@ import {
   DEFAULT_API_ROOT,
   DEFAULT_AUTH_PATH,
   DEFAULT_AUTH_ROOT,
-  DEFAULT_PKCE_AUTH_PATH,
-  DEFAULT_PKCE_AUTH_ROOT,
 } from '$lib/services/backends/git/github/constants';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { apiConfig, graphqlVars } from '$lib/services/backends/git/shared/api';
@@ -252,33 +250,27 @@ describe('GitHub backend service', () => {
       expect(result).toBe(repository);
     });
 
-    test('initializes with PKCE authentication type', () => {
-      const mockCmsConfig = {
+    test('exchanges the session token at the Sveltia CMS Additions token endpoint', () => {
+      cmsConfig.current = /** @type {any} */ ({
         backend: {
           name: BACKEND_NAME,
           repo: 'owner/repo',
           branch: 'main',
-          auth_type: 'pkce',
+          auth_type: 'additions',
+          base_url: 'https://additions.example.com',
         },
-      };
+      });
 
-      cmsConfig.current = /** @type {any} */ (mockCmsConfig);
-
-      const result = init();
-      const expectedAuthURL = `${DEFAULT_PKCE_AUTH_ROOT}/${DEFAULT_PKCE_AUTH_PATH}`;
+      init();
 
       expect(Object.assign).toHaveBeenCalledWith(
         apiConfig,
         expect.objectContaining({
-          clientId: '',
-          authURL: expectedAuthURL,
-          tokenURL: expectedAuthURL.replace('/authorize', '/access_token'),
+          authURL: 'https://additions.example.com/v1/auth/authorize',
+          tokenURL: 'https://additions.example.com/v1/auth/token',
           restBaseURL: DEFAULT_API_ROOT,
-          graphqlBaseURL: `${DEFAULT_API_ROOT}/graphql`,
         }),
       );
-
-      expect(result).toBe(repository);
     });
 
     test('initializes with default auth type when not specified', () => {

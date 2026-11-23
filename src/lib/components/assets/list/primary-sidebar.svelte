@@ -8,6 +8,7 @@
   import { appNumberFormatter } from '$lib/services/app/i18n';
   import { goto } from '$lib/services/app/navigation';
   import { countAssetsInFolder } from '$lib/services/assets';
+  import { createAssetDropTarget } from '$lib/services/assets/drag';
   import {
     enabledCloudServices,
     externalAssetCounts,
@@ -15,20 +16,11 @@
     selectedCloudService,
   } from '$lib/services/assets/external';
   import { linkedAssets, linkedFilesService } from '$lib/services/assets/external/linked';
-  import {
-    allAssetFolders,
-    canCreateAsset,
-    getAssetFolderKey,
-    selectedAssetFolder,
-  } from '$lib/services/assets/folders';
+  import { getAssetFolderKey, selectedAssetFolder } from '$lib/services/assets/folders';
   import { allAssets } from '$lib/services/assets/state';
   import { selectedSubfolderPath } from '$lib/services/assets/subfolders';
   import { getFolderLabelByCollection } from '$lib/services/assets/view';
-  import { getCollection, getCollectionIndex } from '$lib/services/contents/collection';
-  import {
-    getCollectionFile,
-    getCollectionFileIndex,
-  } from '$lib/services/contents/collection/files';
+  import { getAssetFolderIcon, getListedAssetFolders } from '$lib/services/assets/view/folder-list';
   import { env } from '$lib/services/user/env.svelte';
   import { encodePathSegments } from '$lib/services/utils/url';
 
@@ -42,11 +34,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    isSearchPage = false,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { isSearchPage = false } = $props();
 
   /* v8 ignore start -- the app locale is loaded before the sidebar is rendered */
   /**
@@ -57,25 +45,9 @@
   const getFolderLabel = (folder) => (appLocale.current ? getFolderLabelByCollection(folder) : '');
   /* v8 ignore stop */
 
-  const folders = $derived([
-    // All Assets, Global Assets, then collection-level, file-level folders, sorted by appearance
-    // order in the config
-    ...allAssetFolders.current
-      .filter(
-        ({ typedKeyPath, isAssetCollection }) =>
-          !isAssetCollection &&
-          // Exclude field-level folders
-          typedKeyPath === undefined,
-      )
-      .sort(
-        (a, b) =>
-          getCollectionFileIndex(a.collectionName, a.fileName) -
-          getCollectionFileIndex(b.collectionName, b.fileName),
-      )
-      .sort((a, b) => getCollectionIndex(a.collectionName) - getCollectionIndex(b.collectionName)),
-    // All asset collection folders, sorted by appearance order in the config
-    ...allAssetFolders.current.filter(({ isAssetCollection }) => isAssetCollection),
-  ]);
+  // All Assets, Global Assets, then collection-level, file-level folders and asset collections,
+  // sorted by appearance order in the config
+  const folders = $derived(getListedAssetFolders());
 
   /**
    * Whether to show a divider after the folder at the given index.
@@ -108,13 +80,7 @@
       <OptionGroup label={_('asset_location.repository')}>
         {#each folders as folder, index (getAssetFolderKey(folder))}
           {#await sleep() then}
-            {@const { collectionName, fileName, internalPath } = folder}
-            {@const collection = collectionName ? getCollection(collectionName) : undefined}
-            {@const collectionFile =
-              collection && fileName ? getCollectionFile(collection, fileName) : undefined}
-            <!-- Can’t upload assets if collection assets are saved at entry-relative paths, or the
-            folder is read-only -->
-            {@const uploadDisabled = !canCreateAsset(folder)}
+            {@const { internalPath } = folder}
             {@const selected = equal(selectedAssetFolder.current, folder)}
             <Option
               selected={env.isSmallScreen || isSearchPage ? false : selected}
@@ -138,52 +104,11 @@
                   });
                 }
               }}
-              ondragover={(event) => {
-                event.preventDefault();
-
-                if (uploadDisabled) {
-                  return;
-                }
-
-                if (internalPath === undefined || selected) {
-                  /** @type {DataTransfer} */ (event.dataTransfer).dropEffect = 'none';
-                } else {
-                  /** @type {DataTransfer} */ (event.dataTransfer).dropEffect = 'move';
-                  /** @type {HTMLElement} */ (event.target).classList.add('dragover');
-                }
-              }}
-              ondragleave={(event) => {
-                event.preventDefault();
-
-                if (uploadDisabled) {
-                  return;
-                }
-
-                /** @type {HTMLElement} */ (event.target).classList.remove('dragover');
-              }}
-              ondragend={(event) => {
-                event.preventDefault();
-
-                if (uploadDisabled) {
-                  return;
-                }
-
-                /** @type {HTMLElement} */ (event.target).classList.remove('dragover');
-              }}
-              ondrop={(event) => {
-                event.preventDefault();
-
-                if (uploadDisabled) {
-                  return;
-                }
-
-                /** @type {HTMLElement} */ (event.target).classList.remove('dragover');
-                // @todo Move the assets while updating entries using the files, after showing a
-                // confirmation dialog.
-              }}
+              {@attach internalPath !== undefined &&
+                createAssetDropTarget({ folder, dirPath: internalPath })}
             >
               {#snippet startIcon()}
-                <Icon name={folder.icon || collectionFile?.icon || collection?.icon || 'folder'} />
+                <Icon name={getAssetFolderIcon(folder)} />
               {/snippet}
               {#snippet endIcon()}
                 {#key allAssets.current}
@@ -221,6 +146,7 @@
             onSelect={() => {
               goto(getCloudServicePath(service), { transitionType: 'forwards' });
             }}
+            {@attach createAssetDropTarget({ service, dirPath: '' })}
           >
             {#snippet startIcon()}
               <Icon name="cloud" />

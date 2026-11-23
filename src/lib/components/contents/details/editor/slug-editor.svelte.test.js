@@ -1,9 +1,12 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
+import { getSlugPreviewDetails } from '$lib/services/contents/editor/slug';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 
 import SlugEditor from './slug-editor.svelte';
+
+vi.mock('$lib/services/contents/editor/slug', { spy: true });
 
 const i18n = {
   i18nEnabled: true,
@@ -127,6 +130,42 @@ describe('SlugEditor', () => {
       await expect.element(value).toHaveTextContent('hello-again');
       // The slug the template fills isn’t written to the draft, so it’s filled again when saved
       expect(draft.currentSlugs).toEqual({});
+    });
+
+    test('tells why a number is added to a slug another entry uses', async () => {
+      const draft = createTemplateDraft();
+
+      vi.mocked(getSlugPreviewDetails).mockReturnValue({
+        _: { slug: 'hello-world-1', takenSlug: 'hello-world' },
+      });
+
+      try {
+        await renderWithDraft(SlugEditor, { draft, props: { locale: '_default' } });
+
+        const note = page.getByRole('status');
+
+        await expect
+          .element(page.getByRole('textbox', { name: 'Slug' }))
+          .toHaveTextContent('hello-world-1');
+        await expect
+          .element(note)
+          .toHaveTextContent(
+            'The slug “\u2068hello-world\u2069” is used for another entry, so a number will be added to it.',
+          );
+
+        // The note goes away while the slug is edited, and once another slug is given
+        await page.getByRole('button', { name: 'Edit Slug' }).click();
+        await expect.element(note).toHaveTextContent('');
+        await page.getByRole('textbox', { name: 'Slug' }).fill('my-slug');
+        await userEvent.keyboard('{Enter}');
+        await expect.poll(() => draft.currentSlugs).toEqual({ _default: 'my-slug' });
+        await expect
+          .element(page.getByRole('textbox', { name: 'Slug' }))
+          .toHaveTextContent('my-slug');
+        await expect.element(note).toHaveTextContent('');
+      } finally {
+        vi.mocked(getSlugPreviewDetails).mockRestore();
+      }
     });
 
     test('edits the slug with the pencil button', async () => {

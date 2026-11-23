@@ -18,13 +18,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    rootLabel,
-    path,
-    onNavigate = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { rootLabel, path, onNavigate = undefined } = $props();
 
   const items = $derived(
     getFolderBreadcrumbItems({

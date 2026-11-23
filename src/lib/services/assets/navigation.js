@@ -24,6 +24,7 @@ import {
 import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { isSearchRoute } from '$lib/services/search/navigation';
 import { env } from '$lib/services/user/env.svelte';
+import { createPath, getBaseName } from '$lib/services/utils/file';
 import { encodePathSegments } from '$lib/services/utils/url';
 
 /**
@@ -86,6 +87,36 @@ export const getSelectedAssetFolderLabel = () =>
 export const getAssetFolderHistoryState = () => ({ folder: selectedAssetFolder.current });
 
 /**
+ * Update the URL silently once an asset has been renamed or moved, if it’s the asset shown in the
+ * details view, so a reload or a copied link finds it at its new path. The folder the asset was
+ * opened from, e.g. All Assets, is kept.
+ * @param {string} oldPath Asset’s previous path.
+ * @param {string} newPath Asset’s new path.
+ */
+export const replaceShownAssetPath = async (oldPath, newPath) => {
+  if (parseLocation().path === `/assets/${oldPath}`) {
+    await goto(encodePathSegments(`/assets/${newPath}`), {
+      replaceState: true,
+      notifyChange: false,
+      state: getAssetFolderHistoryState(),
+    });
+  }
+};
+
+/**
+ * Leave the details view of an asset that has been moved to another storage location, e.g. from
+ * the repository to a cloud storage service, where it has no details view at the same place. The
+ * list it’s been moved out of is shown instead.
+ * @param {string} shownPath Path of the asset’s details view, e.g. `/assets/static/uploads/a.png`.
+ * @param {string} listPath Path of the list to show, e.g. `/assets/static/uploads`.
+ */
+export const leaveMovedAsset = async (shownPath, listPath) => {
+  if (parseLocation().path === shownPath) {
+    await goto(encodePathSegments(listPath), { replaceState: true, transitionType: 'backwards' });
+  }
+};
+
+/**
  * Show the details of a repository asset in the overlay, within the selected asset folder.
  * @param {Asset} asset Asset.
  * @param {object} [options] Options.
@@ -141,7 +172,7 @@ const selectCloudService = (state, serviceId, assetId) => {
     overlaidExternalAssetId.current = assetId;
     showAssetOverlay.current = true;
     announcedPageStatus.current = _('viewing_x_asset_details', {
-      values: { name: assetId.split('/').pop() },
+      values: { name: getBaseName(assetId) },
     });
   } else {
     overlaidExternalAssetId.current = undefined;
@@ -265,22 +296,22 @@ export const resolveAssetsRoute = () => {
   }
 
   // The regex takes a last path segment with a dot for a file name, but a file doesn’t have to have
-  // an extension, e.g. `LICENSE`. Show the asset if there is one at the path
-  if (
-    !fileName &&
-    folderPath.includes('/') &&
-    allAssets.current.some((asset) => asset.path === folderPath)
-  ) {
+  // an extension, e.g. `LICENSE`. Show the asset if there is one at the path. A path without a
+  // parent folder is taken whole as a folder path, e.g. `photo.jpg`, so it also points at an asset
+  // in a root media folder, if one is configured
+  if (!fileName && allAssets.current.some((asset) => asset.path === folderPath)) {
     const index = folderPath.lastIndexOf('/');
 
-    fileName = folderPath.slice(index + 1);
-    folderPath = folderPath.slice(0, index);
+    if (index > -1 || allAssetFolders.current.some(({ internalPath }) => internalPath === '')) {
+      fileName = folderPath.slice(index + 1);
+      folderPath = folderPath.slice(0, Math.max(index, 0));
+    }
   }
 
   // Conversely, a folder can have a dot in its name too, e.g. `v1.2`. Browse the folder if there is
   // no asset at the path
   if (fileName) {
-    const fullPath = `${folderPath}/${fileName}`;
+    const fullPath = createPath([folderPath, fileName]);
 
     if (
       !allAssets.current.some((asset) => asset.path === fullPath) &&
@@ -327,9 +358,9 @@ export const resolveAssetsRoute = () => {
     return state;
   }
 
-  overlaidAsset.current = allAssets.current.find(
-    (asset) => asset.path === `${folderPath}/${fileName}`,
-  );
+  const assetPath = createPath([folderPath, fileName]);
+
+  overlaidAsset.current = allAssets.current.find((asset) => asset.path === assetPath);
   announcedPageStatus.current = overlaidAsset.current
     ? _('viewing_x_asset_details', { values: { name: overlaidAsset.current.name } })
     : _('file_not_found');

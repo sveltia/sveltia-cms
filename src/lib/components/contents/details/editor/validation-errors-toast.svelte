@@ -16,13 +16,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    show = $bindable(false),
-    count,
-    onShowErrors = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { show = $bindable(false), count, onShowErrors = undefined } = $props();
 </script>
 
 <Toast bind:show>

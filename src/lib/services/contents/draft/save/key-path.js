@@ -1,14 +1,9 @@
 import { isFieldMultiple } from '$lib/services/contents/entry/fields';
 import { MULTI_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
+import { forEachSubFieldConfig } from '$lib/services/contents/fields/list/subfields';
 
 /**
- * @import {
- * Field,
- * FieldKeyPath,
- * FieldWithSubFields,
- * FieldWithTypes,
- * ListFieldWithSubField,
- * } from '$lib/types/public';
+ * @import { Field, FieldKeyPath } from '$lib/types/public';
  */
 
 /**
@@ -20,47 +15,22 @@ import { MULTI_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
  */
 const parseField = ({ field, keyPath, keyPathList }) => {
   const { widget: fieldType } = field;
-  const isList = fieldType === 'list';
 
   keyPathList.push(keyPath);
 
-  if (isList || fieldType === 'object') {
-    const { fields: subFields } = /** @type {FieldWithSubFields} */ (field);
-    const { types, typeKey = 'type' } = /** @type {FieldWithTypes} */ (field);
+  if (fieldType === 'list' || fieldType === 'object') {
+    const { field: subField, fields, types, typeKey = 'type' } = /** @type {any} */ (field);
+    const prefix = fieldType === 'list' ? `${keyPath}.*` : keyPath;
 
-    if (subFields) {
-      subFields.forEach((subField) => {
-        parseField({
-          field: subField,
-          keyPath: isList ? `${keyPath}.*.${subField.name}` : `${keyPath}.${subField.name}`,
-          keyPathList,
-        });
-      });
-    } else if (types) {
-      keyPathList.push(isList ? `${keyPath}.*.${typeKey}` : `${keyPath}.${typeKey}`);
-
-      types.forEach((type) => {
-        type.fields?.forEach((subField) => {
-          parseField({
-            field: subField,
-            keyPath: isList ? `${keyPath}.*.${subField.name}` : `${keyPath}.${subField.name}`,
-            keyPathList,
-          });
-        });
-      });
-    } else if (isList) {
-      const { field: subField } = /** @type {ListFieldWithSubField} */ (field);
-
-      if (subField) {
-        parseField({
-          field: subField,
-          keyPath: `${keyPath}.*`,
-          keyPathList,
-        });
-      } else {
-        keyPathList.push(`${keyPath}.*`);
-      }
+    if (types && !fields) {
+      keyPathList.push(`${prefix}.${typeKey}`);
+    } else if (fieldType === 'list' && !fields && !subField) {
+      keyPathList.push(prefix);
     }
+
+    forEachSubFieldConfig(field, keyPath, (_field, _keyPath) => {
+      parseField({ field: _field, keyPath: _keyPath, keyPathList });
+    });
   } else if (fieldType && MULTI_VALUE_FIELD_TYPES.includes(fieldType) && isFieldMultiple(field)) {
     // Only add wildcard path for multi-value field types that aren’t list/object
     keyPathList.push(`${keyPath}.*`);

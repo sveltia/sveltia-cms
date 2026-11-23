@@ -43,7 +43,7 @@ const createEntry = (subPath, collectionName) => ({
 
 describe('countQuotaEntries()', () => {
   beforeEach(() => {
-    unpublishedEntries.current = [];
+    /** @type {{ current: any[] }} */ (unpublishedEntries).current = [];
   });
 
   test('counts the published entries', () => {
@@ -55,7 +55,7 @@ describe('countQuotaEntries()', () => {
 
   test('counts a never-published draft, but an updated entry only once', () => {
     vi.mocked(getEntriesByCollection).mockReturnValue([createEntry('a'), createEntry('b')]);
-    unpublishedEntries.current = /** @type {any[]} */ ([
+    /** @type {{ current: any[] }} */ (unpublishedEntries).current = /** @type {any[]} */ ([
       createEntry('a', 'posts'),
       createEntry('new', 'posts'),
       createEntry('other', 'pages'),
@@ -66,7 +66,7 @@ describe('countQuotaEntries()', () => {
 
   test('counts a new entry riding along in the pull request of another collection’s entry', () => {
     vi.mocked(getEntriesByCollection).mockReturnValue([createEntry('a')]);
-    unpublishedEntries.current = /** @type {any[]} */ ([
+    /** @type {{ current: any[] }} */ (unpublishedEntries).current = /** @type {any[]} */ ([
       {
         ...createEntry('hello', 'pages'),
         workflow: {

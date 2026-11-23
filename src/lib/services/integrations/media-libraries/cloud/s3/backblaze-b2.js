@@ -1,11 +1,6 @@
 import { S3CompatibleService } from './service';
 
 /**
- * @import { S3Config } from '$lib/types/private';
- * @import { S3MediaLibrary } from '$lib/types/public';
- */
-
-/**
  * Backblaze B2 media library service integration. B2 uses the region endpoint for API calls
  * (path-style) and virtual-hosted-style for public asset URLs, unless the user has configured a
  * custom CDN `public_url`.
@@ -18,15 +13,9 @@ export default new S3CompatibleService({
   apiKeyURL: 'https://secure.backblaze.com/app_keys.htm',
   apiKeyPattern: /^[A-Za-z0-9/+=]{30,}$/,
   /**
-   * Add the B2 region endpoint and public URL to the library options.
-   * @param {S3MediaLibrary} libOptions Library options.
-   * @returns {S3Config} Resolved configuration.
+   * Get the host name of the B2 API endpoint in the given region.
+   * @param {string | undefined} region Region.
+   * @returns {string} Host name.
    */
-  resolveConfig: (libOptions) => ({
-    ...libOptions,
-    endpoint: `https://s3.${libOptions.region}.backblazeb2.com`,
-    public_url:
-      libOptions.public_url ??
-      `https://${libOptions.bucket}.s3.${libOptions.region}.backblazeb2.com`,
-  }),
+  regionalHost: (region) => `s3.${region}.backblazeb2.com`,
 });

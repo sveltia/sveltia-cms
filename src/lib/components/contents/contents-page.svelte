@@ -16,7 +16,7 @@
   import SearchMainArea from '$lib/components/search/search-main-area.svelte';
   import { updateContentFromHashChange } from '$lib/services/app/navigation';
   import { getCollectionLabel, selectedCollection } from '$lib/services/contents/collection';
-  import { listedEntries, listedUnpublishedEntries } from '$lib/services/contents/collection/view';
+  import { listedEntryCount } from '$lib/services/contents/collection/view';
   import { showBackupToastIfNeeded } from '$lib/services/contents/draft/backup';
   import { EntryDraftState } from '$lib/services/contents/draft/state.svelte';
   import { showContentOverlay } from '$lib/services/contents/editor';
@@ -41,11 +41,6 @@
   let awaitingDrafts = $state(false);
   /** @type {string | undefined} */
   let editorLocale = $state();
-
-  // The unpublished entries are listed too, and can be the only ones in the collection
-  const hasListedEntries = $derived(
-    !!(listedEntries.current.length || listedUnpublishedEntries.current.length),
-  );
 
   const MainContent = $derived(
     'files' in (selectedCollection.current ?? {}) ? FileList : EntryList,
@@ -126,7 +121,8 @@
           <PrimaryToolbar />
         {/snippet}
         {#snippet secondaryToolbar()}
-          {#if selectedCollection.current?._type === 'entry' && hasListedEntries}
+          <!-- The count includes the entries hidden by a filter, so the filter can be reset -->
+          {#if selectedCollection.current?._type === 'entry' && listedEntryCount.current}
             <SecondaryToolbar />
           {/if}
         {/snippet}

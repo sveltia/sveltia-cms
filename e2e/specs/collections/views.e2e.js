@@ -98,6 +98,16 @@ const CONFIG = {
       },
       fields: FIELDS,
     },
+    {
+      name: 'calendar',
+      label: 'Calendar',
+      label_singular: 'Event',
+      folder: 'content/events',
+      create: true,
+      // The Decap CMS form, marking the default on one of the fields
+      sortable_fields: ['title', { field: 'starts', label: 'Start Time', default_sort: 'desc' }],
+      fields: FIELDS,
+    },
   ],
 };
 
@@ -332,6 +342,40 @@ test.describe('with the object forms of the view options', () => {
     // The other collection on the same folder keeps its own defaults
     await openCollection(page, 'Events');
     await expect(grid.getByRole('rowgroup', { name: 'published' })).toHaveCount(0);
+    await expect(getRows(page)).toHaveText([
+      /Evening Talk/,
+      /Garden Tour/,
+      /Spring Gala/,
+      /Summer Fair/,
+    ]);
+  });
+});
+
+test.describe('with `default_sort` on a sortable field', () => {
+  // Remembering the user’s choice across a reload needs a Git backend, which
+  // `monolingual/entry-list-actions.e2e.js` covers
+  test('sorts by that field until the user picks another order', async ({ cms, page }) => {
+    await openCollection(page, 'Calendar');
+
+    // The latest start first
+    await expect(getRows(page)).toHaveText([
+      /Summer Fair/,
+      /Evening Talk/,
+      /Garden Tour/,
+      /Spring Gala/,
+    ]);
+    // The menu shows the default as chosen, under the field’s own label
+    await cms.openPopup(
+      page.getByRole('button', { name: 'Sort', exact: true }),
+      page.getByRole('menuitemradio', { name: /Start Time.*new to old/ }),
+    );
+    await expect(page.getByRole('menuitemradio', { name: /Start Time.*new to old/ })).toBeChecked();
+    await page.keyboard.press('Escape');
+
+    await cms.chooseMenuItem(
+      page.getByRole('button', { name: 'Sort', exact: true }),
+      page.getByRole('menuitemradio', { name: /Title.*A to Z/ }),
+    );
     await expect(getRows(page)).toHaveText([
       /Evening Talk/,
       /Garden Tour/,

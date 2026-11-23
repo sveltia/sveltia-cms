@@ -9,7 +9,8 @@ import { resolveCacheDB } from '$lib/services/contents/draft/save/file-changes';
 import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary';
 import { formatEntryFile } from '$lib/services/contents/file/format';
 import { arrayFileItems, createArrayItemEntry } from '$lib/services/contents/file/process';
-import { moveArrayItemSources, valueSources } from '$lib/services/contents/file/value-sources';
+import { fileStates, updateFileState } from '$lib/services/contents/file/state';
+import { moveArrayItemSources } from '$lib/services/contents/file/value-sources';
 import { getEntryFoldersByPath } from '$lib/services/contents/folders';
 
 /**
@@ -104,6 +105,9 @@ const groupArrayFileChanges = (changes) => {
 export const applyArrayFileChanges = ({ collection, path, items, changes }) => {
   /** @type {ArrayFileSlot[]} */
   const slots = items.map((item, index) => ({ item, from: index }));
+  // A reorder moves the slots around, but each keeps the position it came from, so an item can be
+  // found by that position without going through the slots for each change
+  const slotsByOrigin = new Map(slots.map((slot) => [slot.from, slot]));
   /** @type {Set<number>} */
   const removed = new Set();
 
@@ -161,9 +165,7 @@ export const applyArrayFileChanges = ({ collection, path, items, changes }) => {
     if (arrayItem) {
       // The position can have changed with a reorder made in the same commit. A removed item is
       // only left out at the end, so the item is always found
-      const slot = /** @type {ArrayFileSlot} */ (
-        slots.find(({ from }) => from === arrayItem.index)
-      );
+      const slot = /** @type {ArrayFileSlot} */ (slotsByOrigin.get(arrayItem.index));
 
       slot.item = item;
     } else {
@@ -242,12 +244,12 @@ export const combineArrayFileChanges = async (changes) => {
       });
 
       const cache = /** @type {RepositoryFileInfo | undefined} */ (await cacheDB?.get(path));
-      const previousSourceMap = valueSources.get(path);
+      const state = fileStates.get(path) ?? {};
 
       // The source text of the values read from the file moves along with the items
-      const sourceMap = previousSourceMap
+      const sourceMap = state.valueSources
         ? moveArrayItemSources(
-            previousSourceMap,
+            state.valueSources,
             slots.map(({ from }) => from),
           )
         : undefined;
@@ -263,7 +265,8 @@ export const combineArrayFileChanges = async (changes) => {
         data: await formatEntryFile({
           content: /** @type {any} */ (slots.map(({ item }) => item)),
           _file: collection._file,
-          valueSources: sourceMap,
+          // The comments at the top of the file are kept as well
+          state: { ...state, valueSources: sourceMap },
         }),
       };
 
@@ -320,7 +323,7 @@ export const createArrayFileEntries = ({ arrayFileUpdates, savingEntries, meta }
     );
 
     if (sourceMap) {
-      valueSources.set(path, sourceMap);
+      updateFileState(path, { valueSources: sourceMap });
     }
 
     const fileSavingEntries = new Map(

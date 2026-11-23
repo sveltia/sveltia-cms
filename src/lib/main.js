@@ -4,6 +4,7 @@ import createClass from 'create-react-class';
 import DOMPurify from 'isomorphic-dompurify';
 import { marked } from 'marked';
 import React, { createElement, Fragment } from 'react';
+import sharedModules, { sharedModulesKey } from 'virtual:shared-modules';
 
 import { SHARED_REACT_KEY } from './chunks/constants';
 import CMS, { init } from './services/api';
@@ -33,6 +34,14 @@ window.html = html;
 // the elements created with the React above rather than bring a copy of its own
 // @ts-ignore
 globalThis[SHARED_REACT_KEY] = React;
+
+// Share the modules the backend chunks import with them, as they’re built separately and would
+// otherwise bring copies of their own, which wouldn’t share the state of the app’s modules. Only
+// the CDN builds have such chunks
+if (sharedModulesKey) {
+  // @ts-ignore
+  globalThis[sharedModulesKey] = sharedModules;
+}
 
 // Expose the Markdown parser and HTML sanitizer used by the CMS, so custom editor component
 // previews can render the value of a nested RichText or Markdown field, which is passed as is.

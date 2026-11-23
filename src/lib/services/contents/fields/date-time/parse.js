@@ -55,12 +55,13 @@ const FORMAT_TIME_TOKEN_REGEX = /[AaHhkmSsXx]|LT|LLL|lll/;
  * @returns {string} Tokens.
  */
 const getFormatTokens = (format) => format.replaceAll(/\[.*?]/g, '');
+
 /**
  * Check if the given Day.js format has a UTC offset token.
  * @param {string} format Format string.
  * @returns {boolean} Result.
  */
-const hasOffsetToken = (format) => FORMAT_OFFSET_TOKEN_REGEX.test(getFormatTokens(format));
+export const hasOffsetToken = (format) => FORMAT_OFFSET_TOKEN_REGEX.test(getFormatTokens(format));
 
 /**
  * Check if a value has a UTC offset that the given Day.js format, which has a time, can’t hold,

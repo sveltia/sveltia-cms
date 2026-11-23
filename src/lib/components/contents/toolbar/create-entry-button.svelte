@@ -19,13 +19,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    collectionName,
-    label = undefined,
-    keyShortcuts = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { collectionName, label = undefined, keyShortcuts = undefined } = $props();
 
   /* v8 ignore start -- only rendered while a collection is selected, once the locale is loaded */
   const hasOptions = $derived(

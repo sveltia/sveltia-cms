@@ -14,6 +14,7 @@ import {
   isOpenAuthoringConfiguredFor,
   pollForFork,
   requestForkWithFallbackName,
+  resolveBranchRepository,
   resolveWorkflowRepository,
   runOpenAuthoringSetUp,
   setUpForkFor,
@@ -59,6 +60,14 @@ export const isOpenAuthoringConfigured = () => isOpenAuthoringConfiguredFor('git
 export const getWorkflowRepository = () => resolveWorkflowRepository(repository);
 
 /**
+ * Get the project a workflow branch lives in, and its name there: see
+ * {@link resolveBranchRepository}.
+ * @param {string} branch Branch name as the CMS knows it.
+ * @returns {RepositoryPath & { branch: string }} Project owner and name, and the branch name.
+ */
+export const getBranchRepository = (branch) => resolveBranchRepository(repository, branch);
+
+/**
  * Fetch whether the signed-in user can commit to the configured project. The permission query
  * answers both of the questions the sign-in has: a project it can’t see at all is a dead end, while
  * one the user can read but not push to is what Open Authoring is for.
@@ -68,32 +77,17 @@ export const getWorkflowRepository = () => resolveWorkflowRepository(repository)
  */
 export const fetchRepositoryAccess = async () => {
   const { owner, repo } = repository;
-  const repoPath = `${owner}/${repo}`;
-  /** @type {{ found: boolean, canPush: boolean }} */
-  let permissions;
-
-  try {
-    permissions = await fetchProjectPermissions();
-  } catch {
-    // A spent rate limit or an outage leaves the question unanswered. Reading that as “no write
-    // access” would send a maintainer down the fork path over something passing, and offer to make
-    // a copy of a project they can already write to, so make the failure visible instead
-    throw createLocalizedError(
-      'Failed to check the repository permission.',
-      'open_authoring.permission_check_failed',
-      { repo: repoPath },
-    );
-  }
+  const { found, canPush } = await fetchProjectPermissions();
 
   // Open Authoring still needs the contributor to be able to read the project, so being unable to
   // see it is a dead end rather than a reason to fall back to a fork. The shared message is what
   // the sign-in flow looks for to drop the cached credentials, the same as the regular access check
   // does, so the user gets the sign-in form rather than the same error on every reload
-  if (!permissions.found) {
-    throw createNoAccessError(repoPath);
+  if (!found) {
+    throw createNoAccessError(`${owner}/${repo}`);
   }
 
-  return { canWrite: permissions.canPush };
+  return { canWrite: canPush };
 };
 
 /**
@@ -324,11 +318,10 @@ export const createFork = async () => {
  * @see https://sveltiacms.app/en/docs/workflows/open
  */
 const setUpOpenAuthoring = async () => {
-  const { owner, repo } = repository;
   let allowForking = false;
 
   await setUpForkFor({
-    repoPath: `${owner}/${repo}`,
+    repository,
     fetchAccess: fetchRepositoryAccess,
     /**
      * Look up the fork, along with the project details, which are needed whether or not there’s a

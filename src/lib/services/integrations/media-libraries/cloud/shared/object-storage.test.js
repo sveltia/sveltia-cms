@@ -138,6 +138,28 @@ describe('integrations/media-libraries/cloud/shared/object-storage', () => {
       );
       expect(provider.listPage).not.toHaveBeenCalled();
     });
+
+    it('should refuse to send the credential to a custom endpoint over plain HTTP', async () => {
+      const insecureConfig = /** @type {any} */ ({ ...config, endpoint: 'http://example.com' });
+
+      await expect(fetchListing(provider, insecureConfig, options)).rejects.toThrow(
+        'Refusing to send credentials over an insecure connection',
+      );
+      expect(provider.listPage).not.toHaveBeenCalled();
+    });
+
+    it('should allow a custom endpoint over HTTPS or on the local computer', async () => {
+      await Promise.all(
+        ['https://example.com', 'http://localhost:10000', 'http://127.0.0.1:9000'].map(
+          async (endpoint) => {
+            const endpointConfig = /** @type {any} */ ({ ...config, endpoint });
+            const result = await fetchListing(provider, endpointConfig, options);
+
+            expect(result.files).toHaveLength(3);
+          },
+        ),
+      );
+    });
   });
 
   describe('listObjects', () => {
@@ -375,6 +397,16 @@ describe('integrations/media-libraries/cloud/shared/object-storage', () => {
       await expect(deleteObjects(provider, [], config, { apiKey: '' })).rejects.toThrow(
         'Credential is required',
       );
+    });
+
+    it('should refuse to send the credential to a custom endpoint over plain HTTP', async () => {
+      const insecureConfig = /** @type {any} */ ({ ...config, endpoint: 'http://example.com' });
+      const assets = [/** @type {ExternalAsset} */ ({ id: 'uploads/a.jpg' })];
+
+      await expect(deleteObjects(provider, assets, insecureConfig, options)).rejects.toThrow(
+        'Refusing to send credentials over an insecure connection',
+      );
+      expect(provider.deleteObject).not.toHaveBeenCalled();
     });
   });
 

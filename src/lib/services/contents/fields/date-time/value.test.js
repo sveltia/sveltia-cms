@@ -1,7 +1,9 @@
+import dayjs from 'dayjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { getDate } from '$lib/services/contents/fields/date-time/parse';
 import {
+  formatInFieldTimeZone,
   getCurrentDateTime,
   getCurrentStorableValue,
   getCurrentValue,
@@ -1356,5 +1358,29 @@ describe('Test getCurrentValue() in a field time zone with a browser time zone D
         }),
       ).toBe('2026-03-08T03:30:00-04:00');
     });
+  });
+});
+
+describe('formatInFieldTimeZone()', () => {
+  const instant = dayjs('2026-01-15T01:30:00Z');
+
+  test('formats an instant with the wall time and offset of the field’s time zone', () => {
+    expect(
+      formatInFieldTimeZone(
+        instant,
+        'YYYY-MM-DD HH:mm Z',
+        /** @type {DateTimeField} */ ({ ...baseFieldConfig, input_timezone: 'Asia/Tokyo' }),
+      ),
+    ).toBe('2026-01-15 10:30 +09:00');
+  });
+
+  test('formats an instant in the browser’s time zone without a field time zone', () => {
+    expect(
+      formatInFieldTimeZone(
+        instant,
+        'YYYY-MM-DD HH:mm',
+        /** @type {DateTimeField} */ ({ ...baseFieldConfig }),
+      ),
+    ).toBe('2026-01-15 01:30');
   });
 });

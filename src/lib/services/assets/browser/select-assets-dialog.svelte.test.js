@@ -164,6 +164,50 @@ describe('getInitialLibraryName()', () => {
     expect(getInitialLibraryName({ ...args, isDefaultLibraryEnabled: false })).toBe('pexels');
   });
 
+  test('selects the first location marked as the default that’s offered', () => {
+    expect(getInitialLibraryName({ ...args, preferredLibraryNames: ['cloudinary'] })).toBe(
+      'cloudinary',
+    );
+    // The default library stands for the first repository folder
+    expect(
+      getInitialLibraryName({ ...args, preferredLibraryNames: ['default', 'cloudinary'] }),
+    ).toBe('default-global');
+    // A location that isn’t offered, e.g. when a folder is to be selected, is skipped
+    expect(
+      getInitialLibraryName({ ...args, preferredLibraryNames: ['aws_s3', 'cloudinary'] }),
+    ).toBe('cloudinary');
+    expect(
+      getInitialLibraryName({
+        ...args,
+        isDefaultLibraryEnabled: false,
+        preferredLibraryNames: ['default', 'cloudinary'],
+      }),
+    ).toBe('cloudinary');
+    expect(
+      getInitialLibraryName({
+        ...args,
+        cloudServiceEntries: [],
+        preferredLibraryNames: ['cloudinary'],
+      }),
+    ).toBe('default-global');
+  });
+
+  test('skips a marked service that can’t take the pending files', () => {
+    const uploader = /** @type {[string, MediaLibraryService]} */ (
+      /** @type {unknown} */ (['aws_s3', { upload: vi.fn() }])
+    );
+
+    expect(
+      getInitialLibraryName({
+        ...args,
+        isDefaultLibraryEnabled: false,
+        hasPendingFiles: true,
+        cloudServiceEntries: [uploader, cloud],
+        preferredLibraryNames: ['cloudinary', 'aws_s3'],
+      }),
+    ).toBe('aws_s3');
+  });
+
   test('selects nothing without any location', () => {
     expect(
       getInitialLibraryName({

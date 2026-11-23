@@ -19,12 +19,7 @@
    */
 
   /** @type {FieldPreviewProps & Props} */
-  let {
-    /* eslint-disable prefer-const */
-    locale,
-    currentValue,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { locale, currentValue } = $props();
 </script>
 
 {#if typeof currentValue === 'string' && currentValue.trim()}

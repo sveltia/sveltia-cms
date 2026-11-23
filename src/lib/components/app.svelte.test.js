@@ -9,6 +9,7 @@ import { announcedPageStatus, mainAreaTitle, overlayTitle } from '$lib/services/
 import { backendName } from '$lib/services/backends';
 import { cmsConfig, cmsConfigLoaded } from '$lib/services/config';
 import { dataLoaded } from '$lib/services/contents';
+import { showContentOverlay } from '$lib/services/contents/editor';
 import { user } from '$lib/services/user/account.svelte';
 import { auth } from '$lib/services/user/auth.svelte';
 import { env } from '$lib/services/user/env.svelte';
@@ -68,6 +69,14 @@ describe('App', () => {
       announcedPageStatus.current,
     );
 
+    // The dragged item of a sortable list is left faint
+    const dragged = document.createElement('div');
+
+    dragged.className = 'drag-placeholder';
+    container.append(dragged);
+    expect(getComputedStyle(dragged).opacity).toBe('0.25');
+    dragged.remove();
+
     // Neither is there until the logo has been processed
     appIconURLs.current = undefined;
     await expect.poll(() => document.querySelector('link[rel="apple-touch-icon"]')).toBeNull();
@@ -123,6 +132,22 @@ describe('App', () => {
     dataLoaded.current = false;
     await expect.element(page.getByRole('heading', { name: 'Acme CMS' })).toBeVisible();
     await expect.poll(() => document.title).toBe('Acme CMS');
+  });
+
+  test('keeps the infobars out of the focus order while an overlay covers them', async () => {
+    const { container } = await render(App, { config });
+    const infobars = /** @type {HTMLElement} */ (container.querySelector('.infobars'));
+
+    expect(infobars).not.toHaveAttribute('inert');
+
+    try {
+      showContentOverlay.current = true;
+      await expect.poll(() => infobars.inert).toBe(true);
+    } finally {
+      showContentOverlay.current = false;
+    }
+
+    await expect.poll(() => infobars.inert).toBe(false);
   });
 
   test('opens external links in a new tab', async () => {

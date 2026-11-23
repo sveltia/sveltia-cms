@@ -13,6 +13,28 @@ import { watchAsync } from '$lib/services/utils/state.svelte';
  */
 
 /**
+ * What a {@link FolderAssetListing} is made from.
+ * @typedef {object} FolderAssetListingOptions
+ * @property {EntryDraft | null | undefined} draft Entry draft.
+ * @property {AssetFolderInfo | undefined} folder Folder.
+ * @property {InternalLocaleCode | undefined} locale Locale being edited, which an entry-relative
+ * folder depends on.
+ * @property {MediaLibraryAssetKind | undefined} kind Asset kind.
+ * @property {string | undefined} accept Accepted file types.
+ * @property {boolean | undefined} slugificationEnabled Whether file names are slugified, which the
+ * provisional names of unsaved files depend on.
+ * @property {Asset[]} [droppedAssets] Assets created from files dropped in a dialog. They are
+ * listed whatever their type, because a transformation may still change it, and only checked once
+ * inserted.
+ */
+
+/**
+ * Stands in for the dropped assets of a listing without any, so that it stays the same value.
+ * @type {Asset[]}
+ */
+const NO_ASSETS = [];
+
+/**
  * Reactive listing of the assets in a folder a File/Image field stores its files in, created with
  * {@link createFolderAssetListing}.
  * @typedef {object} FolderAssetListing
@@ -30,62 +52,49 @@ import { watchAsync } from '$lib/services/utils/state.svelte';
  * checked against it for a duplicate name. The draft’s files are read asynchronously whenever the
  * draft or the folder changes, and a read started for an earlier state is never taken over a later
  * one. Call it during component initialization, as it sets up an effect.
- * @param {object} args Arguments. Each one is a function, so the listing follows its changes.
- * @param {() => EntryDraft | null | undefined} args.getDraft Function returning the entry draft.
- * @param {() => AssetFolderInfo | undefined} args.getFolder Function returning the folder.
- * @param {() => InternalLocaleCode | undefined} args.getLocale Function returning the locale being
- * edited, which an entry-relative folder depends on.
- * @param {() => MediaLibraryAssetKind | undefined} args.getKind Function returning the asset kind.
- * @param {() => string | undefined} args.getAccept Function returning the accepted file types.
- * @param {() => boolean | undefined} args.getSlugificationEnabled Function returning whether file
- * names are slugified, which the provisional names of unsaved files depend on.
- * @param {() => Asset[]} [args.getDroppedAssets] Function returning the assets created from files
- * dropped in a dialog. They are listed whatever their type, because a transformation may still
- * change it, and only checked once inserted.
+ * @param {() => FolderAssetListingOptions} getOptions Function returning the options, so the
+ * listing follows their changes. A change of the accepted types, say, doesn’t read the draft’s
+ * files again.
  * @returns {FolderAssetListing} Listing.
  */
-export const createFolderAssetListing = ({
-  getDraft,
-  getFolder,
-  getLocale,
-  getKind,
-  getAccept,
-  getSlugificationEnabled,
-  getDroppedAssets = () => [],
-}) => {
+export const createFolderAssetListing = (getOptions) => {
+  const options = $derived(getOptions());
+  // Kept apart as the effect below reads them. The other options only feed derived values, so a
+  // change of one stops there unless it moves the folder path
+  const draft = $derived(options.draft);
+  const droppedAssets = $derived(options.droppedAssets ?? NO_ASSETS);
   /** @type {Asset[]} */
   let unsavedAssets = $state([]);
 
   const targetFolderPath = $derived(
     getTargetFolderPath({
-      entry: getDraft()?.originalEntry,
-      folder: getFolder(),
-      locale: getLocale(),
+      entry: draft?.originalEntry,
+      folder: options.folder,
+      locale: options.locale,
     }),
   );
 
   const listedAssets = $derived(
     listAssets({
-      kind: getKind(),
-      accept: getAccept(),
-      folder: getFolder(),
+      kind: options.kind,
+      accept: options.accept,
+      folder: options.folder,
       folderPath: targetFolderPath,
       unsavedAssets,
-      uncheckedFiles: getDroppedAssets().map(({ file }) => /** @type {File} */ (file)),
-      slugificationEnabled: getSlugificationEnabled(),
+      uncheckedFiles: droppedAssets.map(({ file }) => /** @type {File} */ (file)),
+      slugificationEnabled: options.slugificationEnabled,
     }),
   );
 
   watchAsync(
     async () => {
-      const draft = getDraft();
       // Copied before the first `await`, so that a dropped asset added later is tracked
-      const droppedAssets = [...getDroppedAssets()];
+      const dropped = [...droppedAssets];
 
       return [
         // The draft’s files are read synchronously, so their changes are tracked as well
         ...(draft ? await getUnsavedAssets({ draft, targetFolderPath }) : []),
-        ...droppedAssets,
+        ...dropped,
       ];
     },
     (assets) => {

@@ -8,8 +8,15 @@
  * externally, covering all the CMS configuration options and JavaScript method arguments available
  * on the `CMS` object. This file is automatically converted into a TypeScript type declaration file
  * (`public.d.ts`) and JSON schema (`sveltia-cms.json`) during the build process (see
- * `vite.config.js`), which are then distributed via npm. The outdated Netlify/Decap CMS equivalents
- * can be found below.
+ * `scripts/vite/schema.js`), which are then distributed via npm. The outdated Netlify/Decap CMS
+ * equivalents can be found below.
+ *
+ * Don’t use the `Omit`, `Pick` or `Exclude` utility types here: the JSON schema generator doesn’t
+ * support them properly (see vega/ts-json-schema-generator#993). To leave out some properties of a
+ * type, move the shared properties to a type of their own and intersect it with the rest instead.
+ * `Exclude<string, …>` doesn’t narrow the type in TypeScript anyway; add such a constraint to the
+ * schema in `scripts/vite/schema.js`.
+ * @see https://github.com/vega/ts-json-schema-generator/issues/993
  * @see https://github.com/decaporg/decap-cms/blob/main/packages/decap-cms-core/index.d.ts
  * @see https://www.schemastore.org/netlify.json
  */
@@ -131,8 +138,9 @@
  * `{{filename}}` and `{{extension}}` for the original file name and extension. The extension is
  * always appended, so the template shouldn’t include it. The values of the tags are slugified, and
  * the entry tags are filled with the default locale’s content when the entry is saved. A file
- * uploaded in the asset library or to a cloud storage service is named right away, without an
- * entry, so only the other tags make sense there; Cloudinary keeps the name as the original file
+ * uploaded to a cloud storage service from an entry is named right away with the content at that
+ * time, and a tag with no value yet gets a random one. A file uploaded in the asset library has no
+ * entry, so only the other tags make sense there. Cloudinary keeps the name as the original file
  * name of an asset whose public ID is generated. A file renamed by hand before saving keeps that
  * name, and a file replacing an existing asset takes over its name. Default: `undefined`, meaning
  * that the original file name is kept, or slugified if the `slugify_filename` option is enabled.
@@ -354,49 +362,98 @@
  */
 
 /**
- * Unified media storage option that supports multiple storage providers. See the
- * [documentation](https://sveltiacms.app/en/docs/media#configuration) for details.
- * @typedef {object} MediaLibraries
+ * Options of a storage in the `media_libraries` option, on top of the storage’s own options. The
+ * legacy `media_library` option configures a single storage, so they’re not available there.
+ * @typedef {object} MediaLibrarySelectionOptions
+ * @property {boolean} [default] Whether the Select Assets dialog opens on the storage instead of
+ * the first repository folder, so files aren’t uploaded to the repository by mistake. Set it on one
+ * storage only; if more are marked, the first one offered wins. A storage marked at the field level
+ * takes precedence over one marked at the site level, and `false` clears the mark of a storage
+ * marked at the site level. Set it on the default storage in a field to open the repository folder
+ * again. Default: `false`.
+ */
+
+/**
+ * Options of the media storages in the `media_libraries` option that are the same at the global and
+ * field levels.
+ * @typedef {object} CommonMediaLibraries
  * @property {SharedMediaLibraryOptions} [all] Default options that apply to the default media
  * storage and to files uploaded to the cloud storage services, except for Cloudinary, which uses
  * its own widget. For the default media storage, these options can be overridden by the options in
  * `default.config` at the same level. Field-level `all` options take precedence over global
  * `default.config` options.
- * @property {DefaultMediaLibrary | false} [default] Options for the default media storage. Set to
- * `false` to explicitly disable the default (internal) storage.
- * @property {CloudinaryMediaLibrary | false} [cloudinary] Options for the Cloudinary media storage.
- * Set to `false` to explicitly disable.
- * @property {UploadcareMediaLibrary | false} [uploadcare] Options for the Uploadcare media storage.
- * Set to `false` to explicitly disable.
- * @property {S3MediaLibrary | false} [aws_s3] Options for the Amazon S3 media storage. Set to
- * `false` to explicitly disable.
- * @property {AzureMediaLibrary | false} [azure_blob_storage] Options for the Azure Blob Storage
- * media storage. Set to `false` to explicitly disable.
- * @property {S3MediaLibrary | false} [cloudflare_r2] Options for the Cloudflare R2 media storage.
- * Set to `false` to explicitly disable.
- * @property {S3MediaLibrary | false} [digitalocean_spaces] Options for the DigitalOcean Spaces
- * media storage. Set to `false` to explicitly disable.
- * @property {S3MediaLibrary | false} [backblaze_b2] Options for the Backblaze B2 media storage. Set
- * to `false` to explicitly disable.
- * @property {S3MediaLibrary | false} [bunny_storage] Options for the Bunny Storage media storage.
- * Set to `false` to explicitly disable.
- * @property {S3MediaLibrary | false} [neon_object_storage] Options for the Neon Object Storage
- * media storage. Set to `false` to explicitly disable.
- * @property {S3MediaLibrary | false} [scaleway_object_storage] Options for the Scaleway Object
- * Storage media storage. Set to `false` to explicitly disable.
- * @property {S3MediaLibrary | false} [supabase_storage] Options for the Supabase Storage media
- * storage. Set to `false` to explicitly disable.
+ * @property {(DefaultMediaLibrary & MediaLibrarySelectionOptions) | false} [default] Options for
+ * the default media storage. Set to `false` to explicitly disable the default (internal) storage.
+ * @property {(CloudinaryMediaLibrary & MediaLibrarySelectionOptions) | false} [cloudinary]
+ * Options for the Cloudinary media storage. Set to `false` to explicitly disable.
+ * @property {(UploadcareMediaLibrary & MediaLibrarySelectionOptions) | false} [uploadcare]
+ * Options for the Uploadcare media storage. Set to `false` to explicitly disable.
  * @property {StockMediaLibrary | false} [stock_assets] Options for the unified stock photo/video
  * media library. Set to `false` to explicitly disable.
+ */
+
+/**
+ * Options of the cloud storages in the global `media_libraries` option.
+ * @typedef {object} GlobalCloudMediaLibraries
+ * @property {(S3MediaLibrary & MediaLibrarySelectionOptions) | false} [aws_s3] Options for the
+ * Amazon S3 media storage. Set to `false` to explicitly disable.
+ * @property {(AzureMediaLibrary & MediaLibrarySelectionOptions) | false} [azure_blob_storage]
+ * Options for the Azure Blob Storage media storage. Set to `false` to explicitly disable.
+ * @property {(S3MediaLibrary & MediaLibrarySelectionOptions) | false} [cloudflare_r2] Options for
+ * the Cloudflare R2 media storage. Set to `false` to explicitly disable.
+ * @property {(S3MediaLibrary & MediaLibrarySelectionOptions) | false} [digitalocean_spaces]
+ * Options for the DigitalOcean Spaces media storage. Set to `false` to explicitly disable.
+ * @property {(S3MediaLibrary & MediaLibrarySelectionOptions) | false} [backblaze_b2] Options for
+ * the Backblaze B2 media storage. Set to `false` to explicitly disable.
+ * @property {(S3MediaLibrary & MediaLibrarySelectionOptions) | false} [bunny_storage] Options for
+ * the Bunny Storage media storage. Set to `false` to explicitly disable.
+ * @property {(S3MediaLibrary & MediaLibrarySelectionOptions) | false} [neon_object_storage]
+ * Options for the Neon Object Storage media storage. Set to `false` to explicitly disable.
+ * @property {(S3MediaLibrary & MediaLibrarySelectionOptions) | false} [scaleway_object_storage]
+ * Options for the Scaleway Object Storage media storage. Set to `false` to explicitly disable.
+ * @property {(S3MediaLibrary & MediaLibrarySelectionOptions) | false} [supabase_storage] Options
+ * for the Supabase Storage media storage. Set to `false` to explicitly disable.
+ */
+
+/**
+ * Options of the cloud storages in the field-level `media_libraries` option. Unlike the global
+ * ones, they’re all optional.
+ * @typedef {object} FieldCloudMediaLibraries
+ * @property {(Partial<S3MediaLibrary> & MediaLibrarySelectionOptions) | false} [aws_s3] Options
+ * for the Amazon S3 media storage. Set to `false` to explicitly disable.
+ * @property {(Partial<AzureMediaLibrary> & MediaLibrarySelectionOptions) | false}
+ * [azure_blob_storage] Options for the Azure Blob Storage media storage. Set to `false` to
+ * explicitly disable.
+ * @property {(Partial<S3MediaLibrary> & MediaLibrarySelectionOptions) | false} [cloudflare_r2]
+ * Options for the Cloudflare R2 media storage. Set to `false` to explicitly disable.
+ * @property {(Partial<S3MediaLibrary> & MediaLibrarySelectionOptions) | false}
+ * [digitalocean_spaces] Options for the DigitalOcean Spaces media storage. Set to `false` to
+ * explicitly disable.
+ * @property {(Partial<S3MediaLibrary> & MediaLibrarySelectionOptions) | false} [backblaze_b2]
+ * Options for the Backblaze B2 media storage. Set to `false` to explicitly disable.
+ * @property {(Partial<S3MediaLibrary> & MediaLibrarySelectionOptions) | false} [bunny_storage]
+ * Options for the Bunny Storage media storage. Set to `false` to explicitly disable.
+ * @property {(Partial<S3MediaLibrary> & MediaLibrarySelectionOptions) | false}
+ * [neon_object_storage] Options for the Neon Object Storage media storage. Set to `false` to
+ * explicitly disable.
+ * @property {(Partial<S3MediaLibrary> & MediaLibrarySelectionOptions) | false}
+ * [scaleway_object_storage] Options for the Scaleway Object Storage media storage. Set to `false`
+ * to explicitly disable.
+ * @property {(Partial<S3MediaLibrary> & MediaLibrarySelectionOptions) | false} [supabase_storage]
+ * Options for the Supabase Storage media storage. Set to `false` to explicitly disable.
+ */
+
+/**
+ * Unified media storage option that supports multiple storage providers. See the
+ * [documentation](https://sveltiacms.app/en/docs/media#configuration) for details.
+ * @typedef {CommonMediaLibraries & GlobalCloudMediaLibraries} MediaLibraries
  */
 
 /**
  * Field-level `media_libraries` option. The options of a storage are merged over the global options
  * of the same storage, so the options the storage requires, such as an S3 `bucket`, can be left to
  * the global ones.
- * @typedef {Omit<MediaLibraries, S3MediaLibraryName | 'azure_blob_storage'> &
- * { [K in S3MediaLibraryName]?: Partial<S3MediaLibrary> | false } &
- * { azure_blob_storage?: Partial<AzureMediaLibrary> | false }} FieldMediaLibraries
+ * @typedef {CommonMediaLibraries & FieldCloudMediaLibraries} FieldMediaLibraries
  */
 
 /**
@@ -1118,12 +1175,14 @@
  */
 
 /**
- * Supported button name for the rich text editor. `align` shows the text alignment menu, which is
- * only available with the `html` format, as Markdown has no syntax for alignment. It’s not enabled
- * by default; add it to the `buttons` option to enable it.
- * @typedef {'bold' | 'italic' | 'strikethrough' | 'code' | 'link' | 'heading-one' | 'heading-two' |
- * 'heading-three' | 'heading-four' | 'heading-five' | 'heading-six' | 'quote' | 'bulleted-list' |
- * 'numbered-list' | 'align'} RichTextEditorButtonName
+ * Supported button name for the rich text editor. `underline` underlines text with the `<u>`
+ * element, and `align` shows the text alignment menu. Both are only available with the `html`
+ * format, as Markdown has no syntax for them. `task-list` creates a GitHub Flavored Markdown task
+ * list, written as `- [ ] item` and `- [x] item` in Markdown. None of them are enabled by default;
+ * add them to the `buttons` option to enable them.
+ * @typedef {'bold' | 'italic' | 'underline' | 'strikethrough' | 'code' | 'link' | 'heading-one' |
+ * 'heading-two' | 'heading-three' | 'heading-four' | 'heading-five' | 'heading-six' | 'quote' |
+ * 'bulleted-list' | 'numbered-list' | 'task-list' | 'align'} RichTextEditorButtonName
  * @see https://decapcms.org/docs/widgets/#Markdown
  * @see https://sveltiacms.app/en/docs/fields/richtext
  */
@@ -1163,11 +1222,12 @@
  * Default: `true`. With `false`, the editor keeps the content in a single paragraph, which suits a
  * title or caption with inline formatting: the Enter key doesn’t start a new line, and the
  * paragraphs and lines of pasted text are joined with spaces. Only the inline formatting buttons
- * (`bold`, `italic`, `strikethrough`, `code` and `link`) and inline editor components, like
- * `image`, can be used then, and the HTML output format has no raw mode. A stored value with
+ * (`bold`, `italic`, `underline`, `strikethrough`, `code` and `link`) and inline editor components,
+ * like `image`, can be used then, and the HTML output format has no raw mode. A stored value with
  * several paragraphs is kept as is until the content is edited.
  * @property {RichTextEditorButtonName[]} [buttons] Names of formatting buttons and menu items to be
- * enabled in the editor UI. Default: all the supported button names except `align`.
+ * enabled in the editor UI. Default: all the supported button names except `underline`, `align`
+ * and `task-list`.
  * @property {(RichTextEditorComponentName | string)[]} [editor_components] Names of components to
  * be enabled in the editor UI. This may include custom component names. Default: all the built-in
  * and registered custom component names, except `table` and `hr`, which have to be listed to
@@ -1188,6 +1248,13 @@
  * field for specifying a URL to wrap the image as a link. The resulting Markdown output will be in
  * the format `[![alt](src)](link)`, where clicking the image navigates to the provided link. This
  * feature can be disabled if it causes conflicts with certain frameworks.
+ * @property {boolean} [captioned_images] Whether to enable the image caption feature for the
+ * built-in `image` component. Default: `true`. When enabled, the image component provides an
+ * additional Caption field. Markdown has no syntax for a caption, so an image with a caption is
+ * written as an HTML `<figure>` element with a `<figcaption>`, which can contain links and text
+ * formatting. This feature can be disabled if your framework or theme doesn’t support such HTML,
+ * or you don’t want editors to write it. A `<figure>` element is then left as raw HTML in
+ * Markdown, and can only be edited in the raw mode with the `html` format.
  * @property {boolean} [use_emoji_autocomplete] Whether to enable emoji autocomplete in the rich
  * text editor. Default: `true`. When enabled, typing `:` followed by a few letters will show a list
  * of matching emojis that can be selected to insert into the text.
@@ -1220,10 +1287,14 @@
  */
 
 /**
- * RichText field definition.
+ * RichText field options other than the field type.
  * @typedef {SimpleCommonFieldProps & VisibleFieldProps & FieldValidationProps &
- * RichTextFieldBaseProps & RichTextFieldFormatProps & RichTextFieldProps & UniqueValueProps}
- * RichTextField
+ * RichTextFieldBaseProps & RichTextFieldFormatProps & UniqueValueProps} RichTextFieldOptions
+ */
+
+/**
+ * RichText field definition.
+ * @typedef {RichTextFieldOptions & RichTextFieldProps} RichTextField
  */
 
 /**
@@ -1554,7 +1625,7 @@
 /**
  * Custom field properties.
  * @typedef {object} CustomFieldProps
- * @property {Exclude<string, BuiltInFieldType | ''>} widget Field type.
+ * @property {string} widget Field type. It can’t be empty or the name of a built-in field type.
  * @see https://decapcms.org/docs/custom-widgets/
  * @see https://sveltiacms.app/en/docs/api/field-types
  */
@@ -1652,8 +1723,8 @@
  * @property {string} name Unique identifier for the file.
  * @property {string} [label] Label to be displayed in the editor UI. Default: `name` option value.
  * @property {string} [icon] Name of a [Material Symbols
- * icon](https://fonts.google.com/icons?icon.set=Material+Symbols) to be displayed in the collection
- * file list and other places. See the
+ * icon](https://fontsource.org/fonts/material-symbols-outlined/glyphs) to be displayed in the
+ * collection file list and other places. See the
  * [documentation](https://sveltiacms.app/en/docs/collections#icons) for details.
  * @property {string} [summary] Summary template displayed in the file list of a file collection in
  * place of the label, e.g. `Home Page ({{locales}})`. It can use the file’s fields and the same
@@ -1834,6 +1905,9 @@
  * @property {string | RegExp | boolean} [pattern] Regular expression matching pattern or exact
  * value. Entries are grouped by the matched part of the field value. Without a `pattern` or a
  * comparison option, entries are grouped by the field value itself.
+ * @property {boolean} [collapsed] Whether to collapse the groups by default. Default: `false`. If
+ * set to `true`, every group, including one that appears later, starts collapsed unless the user
+ * has expanded it. The user’s own choice to expand or collapse a group is remembered.
  * @see https://decapcms.org/docs/configuration-options/#view_groups
  * @see https://sveltiacms.app/en/docs/collections/entries/views#grouping
  */
@@ -1914,10 +1988,6 @@
 /**
  * Collection meta data’s path options.
  * @typedef {object} CollectionMetaDataPath
- * @property {string} [widget] Field type for editing the path name. Accepted for compatibility with
- * Netlify/Decap CMS but ignored: the editor is always a folder picker.
- * @property {string} [label] Label for the path editor. Accepted for compatibility with
- * Netlify/Decap CMS but ignored: the picker has a built-in, localized label.
  * @property {string} [index_file] File name, without an extension, shared by every entry in the
  * collection, e.g. `_index`. If omitted, each entry keeps its own file name.
  * @see https://decapcms.org/docs/collection-nested/
@@ -1948,8 +2018,8 @@
  * @property {string} [label] Label to be displayed in the editor UI. Default: Index File or its
  * localized version.
  * @property {string} [icon] Name of a [Material Symbols
- * icon](https://fonts.google.com/icons?icon.set=Material+Symbols) to be displayed in the editor UI.
- * Default: `home`.
+ * icon](https://fontsource.org/fonts/material-symbols-outlined/glyphs) to be displayed in the
+ * editor UI. Default: `home`.
  * @property {string} [summary] Summary template displayed in place of the label in the entry list,
  * search results and other places where the collection’s `summary` option applies to the entries,
  * e.g. `{{title}} ({{locales}})`. It can use the index file’s fields and the same special tags and
@@ -1979,8 +2049,8 @@
  * @property {string} [label] Label of the collection to be displayed in the editor UI. Default:
  * `name` option value.
  * @property {string} [icon] Name of a [Material Symbols
- * icon](https://fonts.google.com/icons?icon.set=Material+Symbols) to be displayed in the collection
- * list.
+ * icon](https://fontsource.org/fonts/material-symbols-outlined/glyphs) to be displayed in the
+ * collection list.
  * @property {boolean} [readonly] Whether to make the collection read-only. Default: `false`. Its
  * entries or files can be viewed but not created, edited, duplicated, reordered, deleted or moved
  * through the Editorial Workflow stages, and assets can’t be uploaded to, changed or deleted from
@@ -2335,9 +2405,13 @@
  * `https://HOSTNAME/api/graphql` for GitHub Enterprise Server.
  * @property {string} [base_url] OAuth base URL origin. Required when using an OAuth client other
  * than Netlify, including [Sveltia CMS Authenticator](https://github.com/sveltia/sveltia-cms-auth).
- * Default: `https://api.netlify.com`.
- * @property {''} [auth_type] OAuth grant type. The default is an empty string, which is
- * authorization code grant. `pkce` is not yet supported due to GitHub’s limitations.
+ * With `auth_type: additions`, it’s the URL of the Sveltia CMS Additions service. Default:
+ * `https://api.netlify.com`.
+ * @property {'' | 'additions'} [auth_type] OAuth grant type. The default is an empty string, which
+ * is authorization code grant. `pkce` is not yet supported due to GitHub’s limitations.
+ * `additions` signs users in with [Sveltia CMS
+ * Additions](https://github.com/sveltia/sveltia-cms-additions) instead of GitHub: it manages the
+ * accounts and roles, and hands out GitHub tokens, so users don’t need a GitHub account.
  * @property {string} [auth_endpoint] OAuth base URL path. Default: `auth`.
  * @property {string} [app_id] OAuth application ID. Not used at this time; reserved for PKCE
  * authorization, which is not yet supported with GitHub.
@@ -2426,11 +2500,9 @@
  */
 
 /**
- * Gitea/Forgejo backend properties.
+ * Gitea/Forgejo backend properties that differ from those of the Forgejo backend.
  * @typedef {object} GiteaBackendProps
  * @property {'gitea'} name Backend name.
- * @property {string} repo Repository identifier: organization/user name and repository name joined
- * by a slash, e.g. `owner/repo`.
  * @property {string} [api_root] REST API endpoint for the backend. Required when using a
  * self-hosted Gitea/Forgejo instance. Default: `https://gitea.com/api/v1`.
  * @property {string} [base_url] OAuth base URL, which is the URL of the Gitea/Forgejo instance,
@@ -2438,6 +2510,15 @@
  * without an OAuth client. It’s not inferred from `api_root`, so it’s required when using a
  * self-hosted instance or Codeberg.
  * Default: `https://gitea.com`.
+ * @see https://decapcms.org/docs/gitea-backend/
+ * @see https://sveltiacms.app/en/docs/backends/gitea-forgejo
+ */
+
+/**
+ * Properties shared by the Gitea/Forgejo and Forgejo backends.
+ * @typedef {object} GiteaForgejoBackendProps
+ * @property {string} repo Repository identifier: organization/user name and repository name joined
+ * by a slash, e.g. `owner/repo`.
  * @property {string} [auth_endpoint] OAuth base URL path. Default: `login/oauth/authorize`.
  * @property {string} [app_id] OAuth application ID. Required for OAuth sign-in; without one, users
  * can still sign in with a personal access token.
@@ -2463,7 +2544,7 @@
 
 /**
  * Gitea/Forgejo backend.
- * @typedef {GitBackendProps & GiteaBackendProps} GiteaBackend
+ * @typedef {GitBackendProps & GiteaBackendProps & GiteaForgejoBackendProps} GiteaBackend
  */
 
 /**
@@ -2482,8 +2563,7 @@
 /**
  * Forgejo backend, as named in Decap CMS. It’s the same as the Gitea/Forgejo backend, except that
  * the `api_root` option is required and the OAuth base URL is derived from it.
- * @typedef {GitBackendProps & Omit<GiteaBackendProps, 'name' | 'api_root' | 'base_url'> &
- * ForgejoBackendProps} ForgejoBackend
+ * @typedef {GitBackendProps & ForgejoBackendProps & GiteaForgejoBackendProps} ForgejoBackend
  */
 
 /**
@@ -2524,6 +2604,12 @@
  * @typedef {object} SlugOptions
  * @property {'unicode' | 'ascii'} [encoding] Encoding option. Default: `unicode`.
  * @property {boolean} [clean_accents] Whether to remove accents. Default: `false`.
+ * @property {string} [transliterate_locale] Locale whose transliteration rules are used with
+ * `clean_accents` where a slug has no locale of its own: on a site or in a collection without i18n
+ * support, for a slug shared by every locale, and for an uploaded file name slugified with
+ * `slugify_filename`. A locale code like `sv` or `de-AT`. An entry locale takes precedence.
+ * Default: none, which applies the library’s default rules. See
+ * https://github.com/sindresorhus/transliterate#supported-locales for supported locales.
  * @property {string} [sanitize_replacement] String to replace sanitized characters. Default: `-`.
  * @property {number} [maxlength] The maximum number of characters allowed for an entry slug.
  * Default: `Infinity`.
@@ -2554,6 +2640,11 @@
  * @property {boolean} [indent_sequences] Whether to indent block sequences. Default: `true`.
  * @property {'none' | 'single' | 'double'} [quote] Default quote type for string values. `none`
  * leaves strings unquoted unless quotes are required. Default: `none`.
+ * @property {boolean | 'literal' | 'folded'} [block_quote] How to write multi-line strings when
+ * `quote` is `none`. `true` or `literal` uses a literal block scalar (`|`), `folded` uses a folded
+ * block scalar (`>`), and `false` uses a quoted string instead of a block scalar. The block
+ * chomping indicator (`-` or `+`) depends on the trailing line breaks of the value. Default:
+ * `true`.
  * @see https://sveltiacms.app/en/docs/data-output#controlling-data-output
  * @see https://eemeli.org/yaml/#tostring-options
  */
@@ -2572,14 +2663,6 @@
  * @property {JsonFormatOptions} [json] JSON format options.
  * @property {YamlFormatOptions} [yaml] YAML format options.
  * @see https://sveltiacms.app/en/docs/data-output#controlling-data-output
- */
-
-/**
- * Issue reporting options. Accepted for compatibility with Decap CMS but ignored: the Report Issue
- * link in the Help menu always points to the Sveltia CMS issue tracker.
- * @typedef {object} IssueReports
- * @property {string} [url] URL of the issue reporting endpoint.
- * @see https://github.com/decaporg/decap-cms/pull/7734
  */
 
 /**
@@ -2663,8 +2746,6 @@
  * @property {LogoOptions} [logo] Site logo options.
  * @property {string} [logout_redirect_url] URL to redirect users to after logging out. Default:
  * none, so users stay on the CMS sign-in page.
- * @property {IssueReports} [issue_reports] Issue reporting options. Accepted for compatibility with
- * Decap CMS but ignored.
  * @property {boolean} [show_preview_links] Whether to show links to entries on the live site and
  * on deploy previews. Default: `true`.
  * @property {SlugOptions} [slug] Slug options, which apply to entry slugs and to the names of entry
@@ -2753,7 +2834,8 @@
  * @property {string} [label] Label of the component to be displayed in the editor UI. Default: the
  * `id` value.
  * @property {string} [icon] Name of a [Material Symbols
- * icon](https://fonts.google.com/icons?icon.set=Material+Symbols) to be displayed in the editor UI.
+ * icon](https://fontsource.org/fonts/material-symbols-outlined/glyphs) to be displayed in the
+ * editor UI.
  * @property {'menuitem' | 'button'} [trigger] Trigger UI of the component. Default: `menuitem`. A
  * menu item is placed under the Insert menu, while a button is placed directly on the toolbar.
  * @property {boolean} [collapsed] Whether to collapse the object by default (`block` mode only).
@@ -2858,7 +2940,8 @@
  * @property {string} [label] Label of the component to be displayed in the editor UI. Default: the
  * `id` value.
  * @property {string} [icon] Name of a [Material Symbols
- * icon](https://fonts.google.com/icons?icon.set=Material+Symbols) to be displayed in the editor UI.
+ * icon](https://fontsource.org/fonts/material-symbols-outlined/glyphs) to be displayed in the
+ * editor UI.
  * @property {'inline'} type Component type, which must be `inline`.
  * @property {RegExp} pattern Regular expression to find the component within a paragraph, e.g.
  * `/\[\[(?<page>[^\]]+)\]\]/` for a wikilink. A leading `^` is ignored, and so are the `g` and
@@ -2908,10 +2991,10 @@
 /**
  * Options for the `CMS.renderRichText()` API.
  * @typedef {object} RenderRichTextOptions
- * @property {Partial<Omit<RichTextField, 'widget'>>} [fieldConfig] RichText field options to be
- * applied to the preview, such as `editor_components` and `sanitize_preview`. Options not given
- * here fall back to the `field_defaults.richtext` option, except for `sanitize_preview`: the output
- * is sanitized unless it’s explicitly set to `false` here.
+ * @property {Partial<RichTextFieldOptions>} [fieldConfig] RichText field options other than
+ * `widget` to be applied to the preview, such as `editor_components` and `sanitize_preview`.
+ * Options not given here fall back to the `field_defaults.richtext` option, except for
+ * `sanitize_preview`: the output is sanitized unless it’s explicitly set to `false` here.
  * @see https://sveltiacms.app/en/docs/api/editor-components
  */
 
@@ -3305,8 +3388,8 @@
  * @property {string} label Label of the page, displayed as the page title and the tooltip of the
  * page’s button.
  * @property {string} [icon] Name of a [Material Symbols
- * icon](https://fonts.google.com/icons?icon.set=Material+Symbols) to be displayed on the page’s
- * button. Default: `extension`.
+ * icon](https://fontsource.org/fonts/material-symbols-outlined/glyphs) to be displayed on the
+ * page’s button. Default: `extension`.
  * @see https://sveltiacms.app/en/docs/api/custom-pages
  */
 

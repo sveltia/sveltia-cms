@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from 'vitest';
+import { beforeAll, describe, expect, test, vi } from 'vitest';
 
 import {
   getNewFolderName,
@@ -7,7 +7,16 @@ import {
   trimSlugEnd,
   validateNewFolderName,
 } from '$lib/services/common/slug';
+import { loadTransliterator } from '$lib/services/common/slug/transliterate';
 import { emulateTurkishLowerCase } from '$lib/test/locale';
+
+// The `clean_accents` option transliterates with the library the CMS loads from the CDN, so the
+// installed copy is loaded instead
+vi.mock('$lib/services/app/dependencies', () => ({
+  loadModule: vi.fn(() => import('@sindresorhus/transliterate')),
+}));
+
+beforeAll(loadTransliterator);
 
 vi.mock('$lib/services/config', () => ({
   cmsConfig: { current: undefined },
@@ -21,7 +30,9 @@ vi.mock('$lib/services/contents/entry/fields', () => ({
 vi.mock('$lib/services/contents/entry/summary', () => ({
   getEntrySummaryFromContent: vi.fn(() => 'summary'),
 }));
-vi.mock('$lib/services/utils/file', () => ({
+vi.mock('$lib/services/utils/file', async (importOriginal) => ({
+  foldFileName: /** @type {typeof import('$lib/services/utils/file')} */ (await importOriginal())
+    .foldFileName,
   renameIfNeeded: vi.fn((slug) => slug),
 }));
 
@@ -257,6 +268,37 @@ describe('Test slugify()', () => {
     };
 
     expect(slugify('Björk', { locale: 'sv' })).toBe('björk'); // No transliteration applied
+  });
+
+  test('transliterate_locale option', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig.current = {
+      slug: {
+        encoding: 'ascii',
+        clean_accents: true,
+        transliterate_locale: 'sv',
+      },
+    };
+
+    // Used where there is no entry locale
+    expect(slugify('tärkeille')).toBe('tarkeille');
+    expect(slugify('tärkeille', { locale: undefined })).toBe('tarkeille');
+    expect(slugify('tärkeille', { locale: '' })).toBe('tarkeille');
+    expect(slugify('tärkeille', { locale: '_default' })).toBe('tarkeille');
+    expect(slugify('tärkeille', { locale: '_' })).toBe('tarkeille');
+
+    // An entry locale takes precedence, even one the library has no rules for
+    expect(slugify('Ærø', { locale: 'da' })).toBe('aeroe');
+    expect(slugify('tärkeille', { locale: 'de' })).toBe('taerkeille');
+    expect(slugify('tärkeille', { locale: 'en' })).toBe('taerkeille');
+
+    // No effect when clean_accents is false
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig.current = {
+      slug: { clean_accents: false, transliterate_locale: 'sv' },
+    };
+
+    expect(slugify('tärkeille')).toBe('tärkeille');
   });
 
   test('custom sanitize replacement', async () => {
@@ -1399,5 +1441,41 @@ describe('Test validateNewFolderName()', () => {
   test('rejects a name that’s taken once it’s slugified', async () => {
     await setUpConfig();
     expect(validateNewFolderName({ takenNames, name: 'Hardware' })).toBe('duplicate');
+  });
+
+  /**
+   * Keep a name as typed, unlike the default formatter, which lowercases it.
+   * @param {string} name Name.
+   * @returns {string} Name.
+   */
+  const keepName = (name) => name;
+  /**
+   * Remove a leading colon, like a sanitizer would, which can leave a leading dot behind.
+   * @param {string} name Name.
+   * @returns {string} Name.
+   */
+  const stripColon = (name) => name.replace(/^:/, '');
+
+  test('rejects a name taken in another case, as a file system may ignore it', async () => {
+    await setUpConfig();
+    expect(
+      validateNewFolderName({ takenNames: ['Hardware'], name: 'hardware', format: keepName }),
+    ).toBe('duplicate');
+  });
+
+  test('rejects a leading dot left by the formatter, and a reserved name', () => {
+    expect(validateNewFolderName({ takenNames, name: '.cache', format: keepName })).toBe('invalid');
+    // A dot that only shows up once the name is formatted, e.g. `:.cache` sanitized to `.cache`
+    expect(validateNewFolderName({ takenNames, name: ':.cache', format: stripColon })).toBe(
+      'invalid',
+    );
+    expect(
+      validateNewFolderName({
+        takenNames,
+        name: 'admin',
+        format: keepName,
+        isReserved: RegExp.prototype.test.bind(/^admin$/),
+      }),
+    ).toBe('reserved');
   });
 });

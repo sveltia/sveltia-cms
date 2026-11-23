@@ -1,25 +1,29 @@
 import { unique } from '@sveltia/utils/array';
 import { isTextFileType } from '@sveltia/utils/file';
-import mime from 'mime';
 
 import { fetchAllPages, fetchPages } from '$lib/services/backends/git/gitea/api';
 import { fetchRawFile } from '$lib/services/backends/git/gitea/files';
-import { getWorkflowRepository } from '$lib/services/backends/git/gitea/fork';
+import { getBranchRepository, getWorkflowRepository } from '$lib/services/backends/git/gitea/fork';
 import { repository } from '$lib/services/backends/git/gitea/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { fetchAPIOrUndefined } from '$lib/services/backends/git/shared/api-optional';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
+import { toForkPullRequest } from '$lib/services/backends/git/shared/fork';
 import { pollUntil, SETTLE_POLL } from '$lib/services/backends/git/shared/poll';
 import {
   createDraftTitleCodec,
   parseRestFiles,
-  PULL_REQUEST_DESCRIPTION,
+  parseRestPullRequest,
+  toCommitAuthor,
 } from '$lib/services/backends/git/shared/pull-requests';
 import {
   getPullRequestPath,
   getRepositoryPath,
+  getRestBranchPath,
 } from '$lib/services/backends/git/shared/repository';
 import { deleteRemoteBranch } from '$lib/services/backends/git/shared/workflow';
+import { getEntryFoldersByPath } from '$lib/services/contents/folders';
+import mime from '$lib/services/utils/mime';
 import { encodePathSegments } from '$lib/services/utils/url';
 import {
   getStatusFromLabels,
@@ -30,6 +34,7 @@ import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 /**
  * @import {
+ * CommitAuthor,
  * FileChange,
  * RepositoryPath,
  * WorkflowFile,
@@ -83,6 +88,13 @@ export const isSameRepositoryPullRequest = ({ head, base }) =>
   typeof head?.repo_id === 'number' && head.repo_id !== -1 && head.repo_id === base?.repo_id;
 
 /**
+ * Parse the user who opened a pull request, as the REST API returns it.
+ * @param {Record<string, any> | undefined} user User object.
+ * @returns {CommitAuthor | undefined} Author, or `undefined` if the user is unknown.
+ */
+const parseAuthor = (user) => toCommitAuthor({ ...user, name: user?.full_name });
+
+/**
  * Parse a pull request returned by the REST API.
  * @param {Record<string, any>} item Pull request.
  * @returns {WorkflowPullRequest | undefined} Parsed pull request, or `undefined` if the pull
@@ -98,7 +110,7 @@ export const parsePullRequest = (item) => {
     return undefined;
   }
 
-  const { ref: branch, sha: headSHA } = item.head ?? {};
+  const { ref: branch } = item.head ?? {};
 
   // A pull request from a fork has its branch in a repository this flow can’t read. Labelling one
   // by hand would otherwise put a card on the board showing the configured repository’s branch of
@@ -116,21 +128,55 @@ export const parsePullRequest = (item) => {
     return undefined;
   }
 
-  const { full_name: fullName, login, email, id } = item.user ?? {};
-
-  return {
-    number: item.number,
-    nodeId: String(item.id),
+  return parseRestPullRequest(item, {
     title: wipTitle.strip(item.title),
-    url: item.html_url,
     branch,
-    headSHA,
     status,
-    createdDate: new Date(item.created_at),
-    updatedDate: new Date(item.updated_at),
-    author: login ? { name: fullName || login, email: email ?? '', id, login } : undefined,
-    files: [],
-  };
+    author: parseAuthor(item.user),
+    description: item.body ?? '',
+  });
+};
+
+/**
+ * Parse a pull request a contributor opened from their fork, for a maintainer to review. See
+ * `toForkPullRequest` in `$lib/services/backends/git/shared/fork`.
+ * @param {Record<string, any>} item Pull request returned by the REST API.
+ * @returns {WorkflowPullRequest | undefined} Parsed pull request, or `undefined` if it isn’t one a
+ * contributor opened from their fork for an entry.
+ */
+export const parseForkPullRequest = (item) => {
+  const { ref, repo: headRepo } = item.head ?? {};
+  const owner = headRepo?.owner?.login;
+  const repo = headRepo?.name;
+
+  // The instance leaves the head repository out once the fork has been deleted, which leaves no
+  // branch to read or push to
+  if (
+    !ref ||
+    !owner ||
+    !repo ||
+    isSameRepositoryPullRequest(item) ||
+    item.base?.ref !== repository.branch
+  ) {
+    return undefined;
+  }
+
+  return toForkPullRequest(
+    {
+      owner,
+      repo,
+      headBranch: ref,
+      editable: !!item.allow_maintainer_edit,
+      draft: !!item.draft,
+      labels: (item.labels ?? []).map((/** @type {any} */ { name }) => name),
+    },
+    (fields) =>
+      parseRestPullRequest(item, {
+        ...fields,
+        title: wipTitle.strip(item.title),
+        author: parseAuthor(item.user),
+      }),
+  );
 };
 
 /**
@@ -270,6 +316,21 @@ export const decodeFileText = (content) => {
 };
 
 /**
+ * Check whether the given file holds text, which is worth reading again when an instance omits its
+ * content. An entry file always does, whatever its extension: a custom one like `njk` or `svx` has
+ * no MIME type, and TOML’s `application/toml` isn’t counted as text by `isTextFileType()`.
+ * @param {string} path File path.
+ * @returns {boolean} Result.
+ */
+const isTextFile = (path) => {
+  const type = mime.getType(path) ?? '';
+
+  return (
+    isTextFileType(type) || type === 'application/toml' || !!getEntryFoldersByPath(path).length
+  );
+};
+
+/**
  * Fetch the content of a single file changed in the given pull request, and populate the
  * {@link WorkflowFile} object in place.
  * @param {WorkflowPullRequest} pullRequest Pull request the file belongs to.
@@ -282,10 +343,14 @@ export const fetchPullRequestFileContent = async (pullRequest, file) => {
   // is that of the commit a publish is pinned to, even if the branch moves on while the board loads
   const { path } = file;
   const ref = pullRequest.headSHA ?? pullRequest.branch;
+  // A contributor’s pull request reports the head of their branch, which the configured repository
+  // only has once the instance has caught its `refs/pull/{number}/head` reference up with a push,
+  // so the file is read in the fork the branch lives in
+  const repoPath = pullRequest.fork ?? getWorkflowRepository();
 
   const result = /** @type {Record<string, any> | undefined} */ (
     await fetchAPIOrUndefined(
-      `${getRepositoryPath(getWorkflowRepository())}/contents/${encodePathSegments(path)}` +
+      `${getRepositoryPath(repoPath)}/contents/${encodePathSegments(path)}` +
         `?ref=${encodeURIComponent(ref)}`,
     )
   );
@@ -308,8 +373,8 @@ export const fetchPullRequestFileContent = async (pullRequest, file) => {
   // An instance omits the content of an oversized blob, and keeping that empty would wipe the file
   // the next time the entry is saved. Only a text file is worth reading again; the media that make
   // up most of the oversized blobs have no text to store anyway
-  if (!content && file.size && isTextFileType(mime.getType(path) ?? '')) {
-    file.text = await fetchRawFile(path, ref);
+  if (!content && file.size && isTextFile(path)) {
+    file.text = await fetchRawFile(path, ref, repoPath);
   }
 };
 
@@ -329,17 +394,17 @@ export const fetchPullRequestFileContents = async (pullRequest) => {
  * Fetch the commit the given workflow branch points at. Two editors working on the same entry
  * share its branch, so this is how a save finds out that someone else has committed to it since
  * the draft was opened. The branch is looked up in the repository it lives in, which is the
- * contributor’s fork with Open Authoring.
+ * contributor’s fork with Open Authoring, or when a maintainer edits a contributor’s pull request.
  * @param {string} branch Branch name.
  * @returns {Promise<string | undefined>} Git object ID, or `undefined` if the branch is gone,
  * which is what a merged or closed pull request leaves behind.
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetBranch
  */
 export const fetchBranchHead = async (branch) => {
+  const { branch: name, ...repoPath } = getBranchRepository(branch);
+
   const result = /** @type {{ commit?: { id?: string } } | undefined} */ (
-    await fetchAPIOrUndefined(
-      `${getRepositoryPath(getWorkflowRepository())}/branches/${encodePathSegments(branch)}`,
-    )
+    await fetchAPIOrUndefined(getRestBranchPath(repoPath, name))
   );
 
   return result?.commit?.id;
@@ -354,7 +419,7 @@ export const fetchBranchHead = async (branch) => {
 export const deleteBranch = async (branch) => {
   await deleteRemoteBranch({
     branch,
-    path: `${getRepositoryPath(getWorkflowRepository())}/branches/${encodePathSegments(branch)}`,
+    path: getRestBranchPath(getWorkflowRepository(), branch),
     goneStatuses: [404],
   });
 };
@@ -452,10 +517,11 @@ export const updateDraftState = async (pullRequest, isDraft) => {
  * @param {string} args.branch Workflow branch name.
  * @param {string} args.title Pull request title.
  * @param {WorkflowStatus} args.status Status to open the pull request with.
+ * @param {string} args.description Pull request description.
  * @returns {Promise<WorkflowPullRequest>} Created pull request.
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoCreatePullRequest
  */
-export const createPullRequest = async ({ branch, title, status }) => {
+export const createPullRequest = async ({ branch, title, status, description }) => {
   const { branch: baseBranch } = repository;
   const fork = forkedRepository.current;
   const isDraft = status === 'draft';
@@ -468,7 +534,11 @@ export const createPullRequest = async ({ branch, title, status }) => {
         // A cross-repository pull request identifies its head branch by the fork’s owner
         head: fork ? `${fork.owner}:${branch}` : branch,
         base: baseBranch,
-        body: PULL_REQUEST_DESCRIPTION,
+        body: description,
+        // A contributor’s pull request lets the maintainers push to its branch, so they can edit
+        // the entry in the CMS while reviewing it rather than only view it. The instance otherwise
+        // goes by the fork’s own default, which is often off
+        ...(fork ? { allow_maintainer_edit: true } : {}),
       },
     })
   );
@@ -482,18 +552,14 @@ export const createPullRequest = async ({ branch, title, status }) => {
     await applyLabels(result.number, [getStatusLabel(status)], status, 'POST');
   }
 
-  return {
-    number: result.number,
-    nodeId: String(result.id),
+  return parseRestPullRequest(result, {
     title,
-    url: result.html_url,
     branch,
-    headSHA: result.head?.sha,
     status,
-    createdDate: new Date(result.created_at),
-    updatedDate: new Date(result.updated_at),
-    files: [],
-  };
+    // The signed-in user, which is how a later save recognizes the pull request as their own
+    author: parseAuthor(result.user),
+    description,
+  });
 };
 
 /**
@@ -540,9 +606,11 @@ export const fetchFileSHA = async (path, ref, { owner, repo } = getWorkflowRepos
  * @param {FileChange[]} changes Changes to be committed.
  * @param {string} ref Branch the changes land on, or the commit the branch is expected to point
  * at.
+ * @param {RepositoryPath} [repoPath] Repository to read the files from. Defaults to the one the
+ * workflow branches live in, which is the contributor’s fork with Open Authoring.
  * @returns {Promise<FileChange[]>} Changes, with the SHA of each existing file filled in.
  */
-export const resolveChangeSHAs = async (changes, ref) => {
+export const resolveChangeSHAs = async (changes, ref, repoPath = getWorkflowRepository()) => {
   const paths = unique(
     changes.filter(({ action }) => action !== 'create').map((change) => getSourcePath(change)),
   );
@@ -555,7 +623,7 @@ export const resolveChangeSHAs = async (changes, ref) => {
   const shaMap = new Map();
 
   await runConcurrently(paths, async (path) => {
-    const sha = await fetchFileSHA(path, ref);
+    const sha = await fetchFileSHA(path, ref, repoPath);
 
     if (sha) {
       shaMap.set(path, sha);

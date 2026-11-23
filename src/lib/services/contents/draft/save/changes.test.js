@@ -32,6 +32,9 @@ vi.mock('$lib/services/config', () => ({
 vi.mock('$lib/services/contents/collection', () => ({
   getCollection: vi.fn(),
 }));
+vi.mock('$lib/services/contents/draft/save/asset-references', () => ({
+  rewriteEntryAssetReferences: vi.fn(async ({ savingEntry }) => savingEntry),
+}));
 vi.mock('$lib/services/contents/draft/save/assets');
 vi.mock('$lib/services/contents/draft/save/entry-path');
 vi.mock('$lib/services/contents/draft/save/serialize');
@@ -146,6 +149,91 @@ describe('draft/save/changes', () => {
       expect(result.savingEntry.slug).toBe('test-post');
       expect(result.changes).toHaveLength(1);
       expect(result.changes[0].action).toBe('create');
+    });
+
+    it('should save the entry with the references to its own assets rewritten', async () => {
+      const { createEntryPath } = await import('./entry-path');
+      const { serializeContent } = await import('./serialize');
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+      const { callEventHooks } = await import('$lib/services/api/events');
+      const { rewriteEntryAssetReferences } = await import('./asset-references');
+
+      vi.mocked(createEntryPath).mockReturnValue('posts/bye/index.md');
+      vi.mocked(serializeContent).mockImplementation((args) => args.valueMap);
+      vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
+
+      const originalEntry = {
+        id: 'test-uuid',
+        slug: 'hello',
+        locales: {
+          en: {
+            slug: 'hello',
+            path: 'posts/hello/index.md',
+            content: { cover: '/blog/hello/a.png' },
+          },
+        },
+      };
+
+      const draft = {
+        id: 'test-uuid',
+        isNew: false,
+        originalEntry,
+        collection: {
+          _type: 'entry',
+          _file: { fullPathRegEx: null },
+          _i18n: {
+            i18nEnabled: false,
+            allLocales: ['en'],
+            defaultLocale: 'en',
+            structureMap: { i18nSingleFile: false },
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
+        collectionName: 'posts',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        originalLocales: { en: true },
+        currentLocales: { en: true },
+        currentValues: { en: { cover: '/blog/hello/a.png' } },
+        files: {},
+      };
+
+      const slugs = {
+        defaultLocaleSlug: 'bye',
+        canonicalSlug: undefined,
+        localizedSlugs: undefined,
+      };
+
+      vi.mocked(rewriteEntryAssetReferences).mockImplementationOnce(async ({ savingEntry }) => ({
+        ...savingEntry,
+        locales: {
+          en: { ...savingEntry.locales.en, content: { cover: '/blog/bye/a.png' } },
+        },
+      }));
+
+      const result = await createSavingEntryData({ draft, slugs });
+
+      expect(rewriteEntryAssetReferences).toHaveBeenCalledWith({
+        collection: draft.collection,
+        collectionFile: undefined,
+        isIndexFile: false,
+        originalEntry,
+        savingEntry: expect.objectContaining({ slug: 'bye' }),
+      });
+      expect(result.savingEntry.locales.en.content).toEqual({ cover: '/blog/bye/a.png' });
+      // The hooks and the file see the rewritten references
+      expect(vi.mocked(callEventHooks).mock.calls[0][0].entry).toBe(result.savingEntry);
+      expect(vi.mocked(serializeContent).mock.calls.at(-1)[0].valueMap).toEqual({
+        cover: '/blog/bye/a.png',
+      });
+
+      // An entry written anew has no references to follow
+      await createSavingEntryData({ draft, slugs, recreate: true });
+
+      expect(vi.mocked(rewriteEntryAssetReferences).mock.calls.at(-1)[0].originalEntry).toBe(
+        undefined,
+      );
     });
 
     it('should leave the internal list item properties out of the saving entry', async () => {
@@ -1701,6 +1789,80 @@ describe('draft/save/changes', () => {
       expect(result.localizedEntryMap.en).toBeDefined();
       expect(result.localizedEntryMap.en.slug).toBe('test-post');
       expect(vi.mocked(replaceBlobURL)).toHaveBeenCalled();
+    });
+
+    it('should store a file in a mirrored field once, in the default locale’s folder', async () => {
+      const { createEntryPath } = await import('./entry-path');
+      const { replaceBlobURL } = await import('$lib/services/contents/draft/save/assets');
+      const { getField } = await import('$lib/services/contents/entry/fields');
+      const { getBlobRegex } = await import('@sveltia/utils/file');
+
+      /** @type {Record<string, any>} */
+      const fields = {
+        cover: { name: 'cover', widget: 'image', i18n: 'duplicate' },
+        photo: { name: 'photo', widget: 'image', i18n: 'sync' },
+        body: { name: 'body', widget: 'markdown', i18n: true },
+      };
+
+      vi.mocked(createEntryPath).mockImplementation(({ locale }) => `posts/${locale}/hello.md`);
+      vi.mocked(getField).mockImplementation(({ keyPath }) => fields[keyPath]);
+      vi.mocked(getBlobRegex).mockReturnValue(/blob:http[^\s]*/g);
+      vi.mocked(replaceBlobURL).mockResolvedValue(undefined);
+
+      const cover = 'blob:http://localhost:5000/cover';
+      const photo = 'blob:http://localhost:5000/photo';
+      const inline = 'blob:http://localhost:5000/inline';
+      const file = { file: { name: 'image.jpg', size: 1024 }, folder: { entryRelative: true } };
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _i18n: {
+            defaultLocale: 'en',
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
+        collectionName: 'posts',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        currentLocales: { en: true, de: true },
+        currentValues: {
+          en: { cover, photo, body: 'Hello' },
+          de: { cover, photo, body: inline },
+        },
+        files: { [cover]: file, [photo]: file, [inline]: file },
+      };
+
+      const slugs = {
+        defaultLocaleSlug: 'hello',
+        canonicalSlug: undefined,
+        localizedSlugs: { en: 'hello', de: 'hallo' },
+      };
+
+      await createBaseSavingEntryData({ draft, slugs });
+
+      /**
+       * Get the locales and slugs a field value in the given locale is resolved against.
+       * @param {string} locale Locale of the content.
+       * @param {string} keyPath Field key path.
+       * @returns {any[]} Locale and slug of each call.
+       */
+      const getTargets = (locale, keyPath) =>
+        vi
+          .mocked(replaceBlobURL)
+          .mock.calls.map(([args]) => args)
+          .filter((args) => args.keyPath === keyPath)
+          // The German content is told apart by its body, a copy being normalized
+          .filter((args) => (args.content.body === inline) === (locale === 'de'))
+          .map((args) => [args.locale, args.slug]);
+
+      // A `duplicate` or `sync` field’s file goes to the default locale’s folder from every locale
+      expect(getTargets('en', 'cover')).toEqual([['en', 'hello']]);
+      expect(getTargets('de', 'cover')).toEqual([['en', undefined]]);
+      expect(getTargets('de', 'photo')).toEqual([['en', undefined]]);
+      // A file in a translatable field goes to the folder of its own locale
+      expect(getTargets('de', 'body')).toEqual([['de', 'hallo']]);
     });
 
     it('should fail with a clear error when a file has no folder to be saved to', async () => {

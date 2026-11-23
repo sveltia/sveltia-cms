@@ -10,6 +10,7 @@ import {
   buildEntryUpdateChanges,
   createSyntheticDraft,
 } from '$lib/services/contents/entry/changes';
+import { getEntryLocaleFile } from '$lib/services/contents/entry/paths';
 
 /**
  * @import { IndexedDB } from '@sveltia/utils/storage';
@@ -69,8 +70,11 @@ const buildReorderChanges = async (collection, orderedEntries, { cacheDB } = {})
   // eslint-disable-next-line no-restricted-syntax
   for (const [index, entry] of orderedEntries.entries()) {
     const newOrder = index + 1;
+    // The value is read like the entries are sorted, from another locale if the default one is
+    // missing
+    const currentOrder = getEntryLocaleFile(entry, { defaultLocale })?.content?.[orderKey];
 
-    if (Number(entry.locales[defaultLocale]?.content?.[orderKey]) !== newOrder) {
+    if (Number(currentOrder) !== newOrder) {
       savingEntries.push(withUpdatedOrder(entry, orderKey, newOrder));
     }
   }

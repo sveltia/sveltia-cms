@@ -11,7 +11,7 @@ import { env } from '$lib/services/user/env.svelte';
 import { prefs } from '$lib/services/user/prefs.svelte';
 import { createRawState } from '$lib/services/utils/state.svelte';
 import { openNewTab } from '$lib/services/utils/window';
-import { unpublishedEntries } from '$lib/services/workflow';
+import { allUnpublishedEntries } from '$lib/services/workflow';
 import { createMockEntry, initTestConfig } from '$lib/test/config';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 
@@ -107,7 +107,7 @@ describe('PaneHeader', () => {
     env.isMediumScreen = false;
     prefs.devModeEnabled = false;
     backendName.current = undefined;
-    unpublishedEntries.current = [];
+    allUnpublishedEntries.current = [];
     deployPollTimedOut.current = false;
     entryEditorSettings.current = undefined;
   });
@@ -287,7 +287,7 @@ describe('PaneHeader', () => {
 
     const entry = createMockEntry({ slug: 'hello' });
 
-    unpublishedEntries.current = [
+    allUnpublishedEntries.current = [
       /** @type {any} */ ({
         ...entry,
         workflow: {
@@ -336,7 +336,7 @@ describe('PaneHeader', () => {
       },
     });
 
-    unpublishedEntries.current = [entry];
+    allUnpublishedEntries.current = [entry];
 
     await renderHeader({
       i18nConfig: { i18nEnabled: false, allLocales: ['_default'], defaultLocale: '_default' },

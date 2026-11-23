@@ -11,6 +11,8 @@
 create: Nowy
 select: Wybierz
 select_all: Zaznacz wszystko
+# Accessible name of the checkbox that selects a single entry or asset in a list
+select_item: Zaznacz {$name}
 upload: Prześlij
 copy: Kopiuj
 download: Pobierz
@@ -69,6 +71,10 @@ primary: Główny
 secondary: Dodatkowy
 collection: Kolekcja
 folder: Folder
+# Label of the subfolder list in the asset picker
+folders: Foldery
+# Menu in a breadcrumb holding the folders that don’t fit
+more_folders: Więcej folderów
 
 # ==============================================================================
 # Miscellaneous Labels
@@ -113,6 +119,7 @@ welcome_message: Witamy w {$name}
 powered_by: Obsługiwane przez {$name}
 
 # Shown during initial configuration and data loading
+unsupported_browser_error: Twoja przeglądarka nie jest obsługiwana. Zaktualizuj ją do najnowszej wersji lub użyj innej przeglądarki.
 loading_cms_config: Ładowanie konfiguracji CMS…
 loading_site_data: Ładowanie danych witryny…
 loading_site_data_error: Wystąpił błąd podczas ładowania danych witryny.
@@ -125,6 +132,8 @@ sign_in_with_x: Zaloguj się przez {$service}
 # Access token dialog: alternative authentication method
 sign_in_using_access_token: Zaloguj się za pomocą tokenu dostępu
 sign_in_using_access_token_description: Wprowadź swój token poniżej. Musi on mieć uprawnienia do odczytu/zapisu zawartości repozytorium.
+# Shown after the description above when Editorial Workflow is enabled, which opens and merges pull requests
+sign_in_using_access_token_workflow_note: Ponieważ obieg redakcyjny jest włączony, token musi mieć również uprawnienia do odczytu/zapisu pull requestów.
 # Inline link text with embedded HTML anchor tag
 # {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
 sign_in_using_access_token_link: Token możesz wygenerować na <a>stronie ustawień użytkownika {$service}</a>.
@@ -143,6 +152,11 @@ work_with_local_repo_description: Po wyświetleniu monitu wybierz katalog głów
 work_with_local_repo_description_no_repo: Po wyświetleniu monitu wybierz katalog główny swojego repozytorium Git.
 # Button label for demo/test repository
 work_with_test_repo: Pracuj z repozytorium testowym
+# Button label for the test repository when sample content is seeded, e.g. on a demo site
+start_demo: Uruchom demo
+# Shown below the disabled test repository option in a browser that can’t save files to its
+# storage, e.g. Safari before version 26
+test_repo_unsupported_browser: Twoja przeglądarka nie może zapisywać plików repozytorium testowego. Zaktualizuj ją do najnowszej wersji lub użyj innej przeglądarki.
 
 # Authentication errors
 # Error messages shown during sign-in failures
@@ -167,14 +181,28 @@ sign_in_error:
 backend_unsupported_version: Backend {$name} wymaga wersji {$name} {$version} lub nowszej.
 # {$repo} is the repository identifier, typically in owner/repo format
 repository_no_access: Nie masz dostępu do repozytorium “{$repo}”.
+# {$repo} is the repository identifier, typically in owner/repo format
+repository_no_write_access: Nie masz uprawnień do zapisu w repozytorium “{$repo}”.
 repository_not_found: Repozytorium “{$repo}” nie istnieje.
 repository_empty: Repozytorium “{$repo}” nie ma żadnych gałęzi.
 # {$repo} is the repository identifier, and {$branch} is the configured branch name
 branch_not_found: Repozytorium “{$repo}” nie ma gałęzi “{$branch}”.
+# {$repo} is the repository identifier, and {$dir} is the configured root directory
+root_dir_not_found: Katalog główny “{$dir}” nie istnieje w repozytorium “{$repo}”.
 
 # General errors
 # Fallback error dialog title for unexpected errors
 unexpected_error: Nieoczekiwany błąd
+# Shown in place of the page when an unexpected error stops it from being displayed
+# {$message} is the error message
+page_crashed: Coś poszło nie tak i nie można wyświetlić tej strony. {$message}
+# Shown in place of a field editor or preview when an unexpected error stops it from being displayed
+# {$message} is the error message
+field_crashed: Coś poszło nie tak i nie można wyświetlić tego pola. {$message}
+# Button label for displaying a part of the page again after an unexpected error
+try_again: Spróbuj ponownie
+# Button label for reloading the CMS after an unexpected error
+reload_cms: Załaduj CMS ponownie
 
 # Entry file parsing errors
 # Toast notification when entry files fail to parse on initial load
@@ -203,6 +231,334 @@ sign_in: Zaloguj się
 sign_in_with_mobile: Zaloguj się z urządzenia mobilnego
 # Instructions shown in the mobile sign-in dialog for passwordless authentication
 sign_in_with_mobile_instruction: Zeskanuj poniższy kod QR telefonem lub tabletem, aby zalogować się bez hasła. Twoje ustawienia zostaną automatycznie skopiowane.
+# Confirmation dialog shown when the CMS is opened with a sign-in link from the mobile sign-in
+# QR code. {$account} is the account name, {$service} is the Git service name, e.g. GitHub
+sign_in_with_link: Logowanie za pomocą linku
+sign_in_with_link_confirmation: Ten link zaloguje Cię jako {$account} w {$service} i skopiuje ustawienia z urządzenia, na którym został utworzony. Kontynuuj tylko wtedy, gdy link został utworzony przez Ciebie.
+
+# Sign-in with Sveltia CMS Additions, which manages its own user accounts instead of the Git
+# service’s. Don’t localize “Sveltia CMS Additions”
+additions:
+  username: Nazwa użytkownika
+  password: Hasło
+  sign_in: Zaloguj się
+  new_password_title: Wybierz nowe hasło
+  new_password_description: Zalogowano Cię przy użyciu hasła tymczasowego. Wybierz nowe hasło, aby kontynuować.
+  new_password: Nowe hasło
+  password_too_short: Hasło jest za krótkie. Użyj co najmniej 12 znaków.
+  change_password: Zmień hasło
+  # {$name} is the user’s username, {$role} their role, e.g. Editor
+  signed_in_as_x_with_role: Zalogowano jako {$name} ({$role})
+  link_github: Połącz konto GitHub
+  link_github_error: Nie udało się połączyć konta GitHub
+  current_password: Bieżące hasło
+  # {$username} is the username filled in from a magic link emailed to the user
+  filled_from_link: Nazwa użytkownika i hasło zostały wypełnione na podstawie linku. Zaloguj się tylko wtedy, gdy “{$username}” to Twoja nazwa użytkownika.
+  change_password_description: Pozostaniesz zalogowany(-a) tutaj, a na pozostałych urządzeniach nastąpi wylogowanie.
+  password_changed: Twoje hasło zostało zmienione.
+  # The Account settings panel of a Sveltia CMS Additions user
+  account:
+    profile: Profil
+    profile_description: Twoje imię i nazwisko jest widoczne dla innych użytkowników w CMS, np. przy blokadach wpisów i komentarzach, a także w Twoich commitach.
+    username_description: Nazwy użytkownika nie można zmienić.
+    email: E-mail
+    email_description: Jest używany w Twoich commitach, aby GitHub mógł powiązać je z Twoim kontem. Jeśli go nie podasz, zostanie użyty adres zastępczy. Tylko administrator może go zmienić.
+    change_name: Zmień imię i nazwisko
+    name_changed: Twoje imię i nazwisko zostało zmienione.
+    password: Hasło
+    no_password: Twoje konto loguje się wyłącznie przez GitHub, więc nie ma hasła do zmiany. Administrator może nadać Ci hasło, resetując je.
+  setup:
+    use_admin_secret: Użyj sekretu administratora
+    title: Konfiguracja Sveltia CMS Additions
+    secret_description: Wprowadź sekret administratora ustawiony w ustawieniach usługi Sveltia CMS Additions. Jest przechowywany tylko w tej karcie na czas konfiguracji.
+    admin_secret: Sekret administratora
+    continue: Kontynuuj
+    back: Powrót do logowania
+    admin_title: Konto administratora
+    admin_create_description: Utwórz pierwsze konto administratora. Będziesz się nim logować i zarządzać pozostałymi użytkownikami.
+    admin_reset_description: Konto administratora już istnieje. Aby odzyskać dostęp, zresetuj tutaj hasło administratora lub utwórz kolejne konto.
+    admin_saved: Konto administratora jest gotowe. Zaloguj się hasłem, które właśnie wprowadzono.
+    create_admin: Utwórz administratora
+    reset_password: Zapisz administratora
+    github_title: GitHub
+    # {$repo} is the repository, e.g. octocat/site
+    github_description: Utwórz aplikację GitHub App dla tej witryny i zainstaluj ją w repozytorium “{$repo}”. GitHub poprosi o potwierdzenie, a następnie przekieruje Cię z powrotem tutaj.
+    # {$repo} is the repository, {$app} is the name of the GitHub App
+    github_connected: Połączono z repozytorium “{$repo}” za pomocą aplikacji GitHub App “{$app}”.
+    connect_github: Połącz z GitHub
+    # {$step} is the number of the current step, {$total} the number of steps
+    step_x_of_y: Krok {$step} z {$total}
+    admin_exists: Konto administratora istnieje.
+    reset_admin_password: Zresetuj hasło administratora
+    setup_complete: Konfiguracja została zakończona. Zaloguj się na konto administratora, aby zarządzać użytkownikami i ustawieniami. W każdej chwili możesz tu wrócić, używając sekretu administratora.
+    manage_sites: Zarządzaj innymi witrynami
+    back_to_setup: Wstecz
+    sites_title: Inne witryny
+    sites_description: Ta usługa może obsługiwać również inne witryny, każdą z własnymi użytkownikami, ustawieniami i aplikacją GitHub App. Ustaw “base_url” w konfiguracji CMS danej witryny na jej adres URL, a następnie skonfiguruj tam witrynę za pomocą sekretu administratora.
+    no_sites: Nie ma jeszcze innych witryn.
+    site_id: Identyfikator witryny
+    site_id_description: Od 1 do 32 małych liter, cyfr i łączników, np. “acme”. Pojawia się w adresie URL witryny i nie można go zmienić.
+    site_name_optional: Nazwa (opcjonalnie)
+    add_site: Dodaj witrynę
+    # {$name} is the name of the site
+    site_added: Dodano “{$name}”. Ustaw “base_url” w konfiguracji CMS tej witryny na jej adres URL, a następnie otwórz tam kreator konfiguracji.
+    # {$name} is the name of the site
+    copy_site_url: Kopiuj adres URL witryny {$name}
+    delete_site: Usuń witrynę
+    # {$name} is the name of the site
+    delete_site_x: Usuń {$name}
+    # {$name} is the name of the site, {$id} is its ID
+    delete_site_confirmation: Usunięcie “{$name}” spowoduje również usunięcie jej użytkowników, ustawień i komentarzy. Tej operacji nie można cofnąć. Aplikacja GitHub App pozostanie w GitHub, gdzie możesz ją usunąć. Wpisz “{$id}”, aby potwierdzić.
+    site_id_to_confirm: Identyfikator witryny do potwierdzenia
+    data_key_locked_title: Sekret administratora został zmieniony
+    data_key_locked_description: Sekret administratora został zmieniony, więc nie można odczytać zapisanych ustawień. Wprowadź poprzedni sekret, aby je zachować, lub zacznij od nowa, jeśli go nie pamiętasz.
+    previous_secret: Poprzedni sekret administratora
+    unlock: Odblokuj
+    rekey: Zacznij od nowa
+    rekey_confirmation: Rozpoczęcie od nowa usunie dane uwierzytelniające aplikacji GitHub App i pozostałe zapisane sekrety oraz wyloguje wszystkich. Hasła zostaną zachowane. Czy kontynuować?
+    result:
+      ok: GitHub jest połączony. Możesz się teraz zalogować.
+      github_app_not_created: Aplikacja GitHub App nie została utworzona. Użyj sekretu administratora, aby spróbować ponownie.
+      github_app_not_installed: Aplikacja GitHub App nie została zainstalowana. Użyj sekretu administratora, aby spróbować ponownie.
+      github_wrong_account: Aplikacja GitHub App została zainstalowana na koncie, które nie jest właścicielem repozytorium. Zainstaluj ją na koncie, które jest właścicielem repozytorium, i spróbuj ponownie.
+      github_repository_not_included: Aplikacja GitHub App została zainstalowana bez dostępu do repozytorium. Przyznaj jej dostęp do repozytorium w GitHub i spróbuj ponownie.
+      unexpected: Nie udało się połączyć z GitHub z powodu nieoczekiwanego błędu. Spróbuj ponownie.
+  locks:
+    # {$name} is the name of the person editing the entry, {$time} when they started
+    being_edited: '{$name} edytuje ten wpis od {$time}, więc możesz go tylko wyświetlić.'
+    being_edited_by_you: Edytujesz ten wpis w innej karcie, więc tutaj możesz go tylko wyświetlić.
+    # {$name} is the name of the person who took over the entry
+    taken_over: '{$name} przejmuje edycję tego wpisu, więc możesz go teraz tylko wyświetlić.'
+    take_over: Przejmij
+    unavailable: Blokady wpisów są niedostępne, więc ktoś inny może edytować ten wpis w tym samym czasie.
+    # {$name} is the name of the person editing the entry
+    being_edited_by_x: 'Edytowany przez: {$name}'
+    # {$names} is a list of the other people who have the entry open in the editor
+    also_open_by_x: 'Otwarty również przez: {$names}'
+    # {$names} is a list of the people who have the entry open, besides anyone editing it
+    open_by_x: 'Otwarty przez: {$names}'
+  users:
+    title: Użytkownicy
+    add_user: Dodaj użytkownika
+    edit_user: Edytuj użytkownika
+    add: Dodaj
+    name: Imię i nazwisko
+    username_description: Nazwy użytkownika nie można zmienić po dodaniu użytkownika.
+    email_optional: E-mail (opcjonalnie)
+    email_description: Jest używany w commitach tej osoby, aby GitHub mógł powiązać je z jej kontem. Jeśli go nie podasz, zostanie użyty adres zastępczy.
+    role: Rola
+    status: Status
+    last_sign_in: Ostatnie logowanie
+    sign_in_column: Logowanie
+    methods:
+      password: Hasło
+      # {$login} is a GitHub username
+      github: GitHub ({$login})
+    actions: Akcje
+    you: (Ty)
+    never: Nigdy
+    roles:
+      admin: Administrator
+      editor: Redaktor
+      viewer: Obserwator
+    statuses:
+      active: Aktywny
+      temporary_password: Hasło tymczasowe
+      waiting_for_sign_in: Oczekuje na pierwsze logowanie
+      disabled: Wyłączony
+    # {$name} is the user’s name
+    show_options_for_x: Pokaż opcje dla {$name}
+    options: Opcje użytkownika
+    reset_password: Zresetuj hasło
+    sign_out_everywhere: Wyloguj ze wszystkich urządzeń
+    enable: Włącz użytkownika
+    disable: Wyłącz użytkownika
+    delete: Usuń użytkownika
+    # {$name} is the user’s name
+    reset_password_confirmation: Czy nadać użytkownikowi {$name} nowe hasło tymczasowe? Zostanie wylogowany(-a) ze wszystkich urządzeń i przy następnym logowaniu będzie musiał(-a) wybrać nowe hasło.
+    delete_confirmation: Czy usunąć użytkownika {$name}? Tej operacji nie można cofnąć.
+    temporary_password: Hasło tymczasowe
+    # {$name} is the user’s name
+    temporary_password_description: Przekaż tę nazwę użytkownika i hasło tymczasowe użytkownikowi {$name}. Hasło nie zostanie ponownie wyświetlone, a przy logowaniu użytkownik wybierze własne hasło.
+    copy_username: Kopiuj nazwę użytkownika
+    copy_password: Kopiuj hasło
+    # {$name} is the user’s name
+    email_credentials: Wyślij e-mail do {$name}
+    # The emails the admin sends from their own email app, with the sign-in details: `new` to a user
+    # who has just been added, `reset` to one whose password has been reset. Each line is a string of
+    # its own, as line breaks aren’t kept in these files
+    credentials_email:
+      # {$name} is the user’s name
+      greeting: Dzień dobry {$name},
+      # {$url} is a link to the CMS that fills in the username and the temporary password
+      sign_in_link: 'Link do logowania: {$url}'
+      # {$username} is the username
+      username: 'Nazwa użytkownika: {$username}'
+      # {$password} is the temporary password
+      password: 'Hasło tymczasowe: {$password}'
+      new:
+        # {$app} is the name of the CMS
+        subject: Twoje dane logowania do {$app}
+        # {$app} is the name of the CMS
+        message: Możesz teraz zalogować się do {$app}. Otwórz poniższy link, który wypełni Twoją nazwę użytkownika i hasło tymczasowe, a podczas logowania wybierz własne hasło.
+      reset:
+        # {$app} is the name of the CMS
+        subject: Twoje hasło do {$app} zostało zresetowane
+        # {$app} is the name of the CMS
+        message: Twoje hasło do {$app} zostało zresetowane i nastąpiło wylogowanie ze wszystkich urządzeń. Otwórz poniższy link, który wypełni Twoją nazwę użytkownika i hasło tymczasowe, a podczas logowania wybierz nowe hasło.
+    allowed_domains: Dozwolone domeny
+    allowed_domains_description: Witryny, które mogą korzystać z Sveltia CMS Additions, po jednej nazwie hosta w wierszu. Symbol wieloznaczny (*) pasuje do dowolnej subdomeny, np. *.example.com. W miarę możliwości podawaj dokładne nazwy hostów. Lista dotyczy tylko tej witryny, nawet jeśli ta sama instancja Sveltia CMS Additions obsługuje również inne witryny.
+    save_allowed_domains: Zapisz dozwolone domeny
+    allowed_domains_saved: Dozwolone domeny zostały zapisane.
+    sign_in_tab: Logowanie
+    # {$latest} is the newest version of Sveltia CMS Additions, {$current} the one in use
+    update_available: Dostępna jest wersja Sveltia CMS Additions {$latest}. Używasz wersji {$current}.
+    release_notes: Informacje o wydaniu
+    github_username_optional: Nazwa użytkownika GitHub (opcjonalnie)
+    github_username_description: Jeśli podasz nazwę użytkownika GitHub, użytkownik będzie logować się tym kontem GitHub zamiast hasłem.
+    # {$name} is the user’s name
+    github_required: '{$name} może logować się tylko przez GitHub, więc nie można usunąć nazwy użytkownika GitHub. Najpierw zresetuj hasło, aby użytkownik mógł logować się hasłem.'
+    adopt: Przejmij konto
+    sign_in:
+      github: Zezwalaj na logowanie przez GitHub
+      github_description: Użytkownicy logują się kontem GitHub i otrzymują własny token GitHub, więc ich zmiany są commitowane w ich imieniu. Administrator musi ich najpierw dodać, podając nazwę użytkownika GitHub, chyba że obejmuje ich reguła rejestracji.
+      # Shown when signing in with GitHub is being turned off while {$count} users can only sign in
+      # with it
+      github_only_warning: |
+        .input {$count :integer}
+        .match $count
+          one  {{ Jeden użytkownik może logować się tylko przez GitHub i po wyłączeniu tej opcji nie będzie mógł się zalogować, dopóki nie zresetujesz jego hasła. }}
+          few  {{ Liczba użytkowników, którzy mogą logować się tylko przez GitHub: {$count}. Po wyłączeniu tej opcji nie będą mogli się zalogować, dopóki nie zresetujesz ich haseł. }}
+          many {{ Liczba użytkowników, którzy mogą logować się tylko przez GitHub: {$count}. Po wyłączeniu tej opcji nie będą mogli się zalogować, dopóki nie zresetujesz ich haseł. }}
+          *    {{ Liczba użytkowników, którzy mogą logować się tylko przez GitHub: {$count}. Po wyłączeniu tej opcji nie będą mogli się zalogować, dopóki nie zresetujesz ich haseł. }}
+      rules: Reguły rejestracji
+      rules_description: Członkowie organizacji GitHub, w której zainstalowano aplikację, mogą się logować bez wcześniejszego dodania. Ich konto otrzymuje wybraną przez Ciebie rolę i zostaje wyłączone, jeśli opuszczą organizację, chyba że je przejmiesz.
+      org: Organizacja GitHub
+      add_rule: Dodaj regułę
+      # {$org} is the name of a GitHub organization
+      remove_rule: Usuń regułę dla {$org}
+      # For a rule whose organization hasn’t been entered yet
+      remove_empty_rule: Usuń regułę
+      save: Zapisz ustawienia logowania
+      saved: Ustawienia logowania zostały zapisane.
+    domains_tab: Domeny
+    github_tab: GitHub
+    github:
+      app: GitHub App
+      repository: Repozytorium
+      not_installed: Niezainstalowana
+      statuses:
+        ok: Aplikacja działa.
+        not_registered: Nie skonfigurowano jeszcze aplikacji GitHub App. Uruchom kreator konfiguracji ze strony logowania, używając sekretu administratora.
+        key_missing: Klucz prywatny aplikacji został utracony podczas zmiany sekretu administratora. Wygeneruj nowy klucz prywatny w ustawieniach aplikacji w GitHub i prześlij go poniżej.
+        key_rejected: GitHub nie akceptuje klucza prywatnego aplikacji, na przykład dlatego, że został tam usunięty. Wygeneruj nowy klucz prywatny w ustawieniach aplikacji w GitHub i prześlij go poniżej.
+        not_installed: Aplikacja nie jest zainstalowana w repozytorium. Zainstaluj ją ponownie ze strony aplikacji w GitHub lub uruchom kreator konfiguracji.
+        suspended: Instalacja aplikacji jest zawieszona. Wznów ją w ustawieniach instalacji w GitHub.
+        unreachable: Nie udało się połączyć z GitHub. Spróbuj ponownie później.
+      check_again: Sprawdź ponownie
+      # {$branch} is the name of the repository’s default branch
+      branch_protected: Zestawy reguł chronią gałąź “{$branch}” przed wymuszonym wypchnięciem (force push) i usunięciem.
+      branch_bypassed: Zestawy reguł chronią gałąź “{$branch}”, ale aplikacja może je omijać, więc redaktorzy nadal mogliby wykonać na niej force push lub ją usunąć. Usuń aplikację z list wyjątków tych zestawów reguł.
+      branch_unprotected: Żaden zestaw reguł nie chroni gałęzi “{$branch}” przed wymuszonym wypchnięciem (force push) i usunięciem, więc redaktorzy mogliby przepisać jej historię lub ją usunąć. Dodaj w ustawieniach repozytorium zestaw reguł, który blokuje obie operacje, bez aplikacji na liście wyjątków.
+      repository_rules: Otwórz reguły repozytorium
+      private_key: Klucz prywatny
+      private_key_description: Aby zastąpić klucz prywatny, wygeneruj nowy w ustawieniach aplikacji w GitHub, a następnie prześlij pobrany plik .pem. Potem usuń tam stary klucz.
+      app_settings: Otwórz ustawienia aplikacji
+      upload_private_key: Prześlij klucz prywatny
+      replace_private_key: Zastąp klucz prywatny
+      private_key_summary: Usługa używa klucza prywatnego aplikacji, aby uzyskać dostęp do repozytorium w GitHub. Zastąp go, jeśli mógł zostać ujawniony.
+      private_key_replaced: Klucz prywatny został zastąpiony.
+      commit_author: Autor commitów
+      commit_author_description: Wybierz, kto ma być widoczny jako autor zmian zapisanych w CMS. GitHub podpisuje tylko commity, których autorem jest aplikacja, więc wybierz aplikację, jeśli zestaw reguł wymaga podpisanych commitów. Pozostali użytkownicy otrzymają tę zmianę w ciągu godziny.
+      commit_author_user: Osoba, która wprowadziła zmianę
+      commit_author_bot: Aplikacja GitHub App, z tą osobą jako współautorem
+      commit_author_saved: Autor commitów został zapisany.
+  # Administration section for the API keys and the deploy hook an admin shares with everyone
+  credentials:
+    title: Dane uwierzytelniające
+    description: Klucze API i webhook wdrożeniowy wprowadzone tutaj są używane przez wszystkich zalogowanych użytkowników, chyba że wprowadzą własne w Ustawieniach. Każdy zalogowany do CMS może je odczytać, więc wprowadzaj tylko klucze, które możesz udostępnić swojemu zespołowi.
+    save: Zapisz dane uwierzytelniające
+    saved: Dane uwierzytelniające zostały zapisane.
+    # {$service} is the service name, e.g. DeepL
+    invalid_key: Klucz API dla {$service} wygląda na nieprawidłowy.
+  error:
+    unauthenticated: Twoja sesja wygasła. Zaloguj się ponownie.
+    wrong_admin_secret: Sekret administratora jest nieprawidłowy.
+    admin_secret_missing: Sekret administratora nie jest ustawiony w ustawieniach usługi Sveltia CMS Additions.
+    admin_secret_too_short: Sekret administratora ustawiony w ustawieniach usługi Sveltia CMS Additions jest za krótki. Użyj co najmniej 32 losowych znaków.
+    wrong_previous_secret: Poprzedni sekret administratora jest nieprawidłowy.
+    not_an_admin: Ten użytkownik nie jest administratorem. Wybierz inną nazwę użytkownika.
+    invalid_username: 'Nazwa użytkownika musi mieć od 3 do 30 znaków: małych liter, cyfr, kropek, łączników lub podkreśleń.'
+    last_admin: Musi istnieć co najmniej jeden administrator.
+    cannot_disable_self: Nie możesz wyłączyć własnego konta.
+    cannot_delete_self: Nie możesz usunąć własnego konta.
+    username_taken: Inny użytkownik ma już tę nazwę użytkownika.
+    email_taken: Inny użytkownik ma już ten adres e-mail.
+    invalid_name: Imię i nazwisko musi mieć od 1 do 100 znaków.
+    invalid_email: Adres e-mail jest nieprawidłowy.
+    invalid_domains: Jedna z dozwolonych domen nie jest prawidłową nazwą hosta.
+    current_origin_removed: Dozwolone domeny muszą obejmować witrynę, której teraz używasz.
+    forbidden: Tylko administratorzy mogą to zrobić.
+    invalid_credentials: Nazwa użytkownika lub hasło są nieprawidłowe.
+    user_disabled: To konto jest wyłączone. Poproś administratora o pomoc.
+    too_many_attempts: Zbyt wiele prób. Spróbuj ponownie później.
+    wrong_password: Bieżące hasło jest nieprawidłowe.
+    same_password: Wybierz nowe hasło, które różni się od bieżącego.
+    invalid_github_login: To nie jest prawidłowa nazwa użytkownika GitHub.
+    github_user_not_found: Nie ma użytkownika GitHub o tej nazwie.
+    github_account_taken: Inny użytkownik loguje się tym kontem GitHub.
+    invalid_rules: Reguła rejestracji wymaga nazwy organizacji GitHub.
+    invalid_rule_role: Reguła rejestracji może nadawać tylko rolę redaktora lub obserwatora.
+    rule_org_not_installed: Aplikacja GitHub App musi być zainstalowana w organizacji określonej w regule rejestracji.
+    not_invited: Nie masz tutaj konta. Poproś administratora o dodanie Cię.
+    method_disabled: Logowanie przez GitHub jest wyłączone.
+    access_denied: Logowanie zostało anulowane.
+    github_app_not_set_up: Sveltia CMS Additions nie jest jeszcze połączone z GitHub. Poproś administratora o dokończenie konfiguracji.
+    invalid_tenant_id: Identyfikator witryny musi składać się z od 1 do 32 małych liter, cyfr i łączników i nie może brzmieć “default”.
+    invalid_tenant_name: Nazwa witryny może mieć maksymalnie 100 znaków.
+    tenant_exists: Witryna o tym identyfikatorze już istnieje.
+    github_app_missing: Nie skonfigurowano jeszcze aplikacji GitHub App.
+    invalid_private_key: Plik nie jest prawidłowym kluczem prywatnym.
+    private_key_mismatch: GitHub nie akceptuje tego klucza prywatnego dla aplikacji. Upewnij się, że został wygenerowany w ustawieniach aplikacji.
+    github_error: GitHub zwrócił błąd. Spróbuj ponownie później.
+    data_key_locked: Z Sveltia CMS Additions nie można korzystać, dopóki administrator nie dokończy zmiany sekretu administratora.
+    not_configured: Sveltia CMS Additions nie jest prawidłowo skonfigurowane. Poproś administratora o pomoc.
+    origin_not_allowed: Ta witryna nie może korzystać z Sveltia CMS Additions. Poproś administratora o dodanie jej do dozwolonych domen.
+    not_set_up: Sveltia CMS Additions nie jest jeszcze połączone z GitHub. Poproś administratora o dokończenie konfiguracji.
+    # A user whose password an admin has reset signs in another way, e.g. with GitHub
+    temporary_password: Twoje hasło zostało zresetowane. Zaloguj się, używając nazwy użytkownika i hasła tymczasowego otrzymanego od administratora, a następnie wybierz nowe hasło.
+    # {$url} is the URL of the service
+    incompatible: Ta wersja Sveltia CMS nie współpracuje z usługą Sveltia CMS Additions pod adresem {$url}.
+    unreachable: Nie udało się połączyć z Sveltia CMS Additions. Spróbuj ponownie później.
+    insecure_connection: Sveltia CMS Additions musi być udostępniane przez HTTPS. Sprawdź opcję `base_url` w konfiguracji CMS.
+    unexpected: Żądanie do Sveltia CMS Additions nie powiodło się z powodu nieoczekiwanego błędu. Spróbuj ponownie później.
+
+  # Conversation panel: comments on the entry, kept by Sveltia CMS Additions
+  conversation:
+    title: Rozmowa
+    refresh: Odśwież rozmowę
+    empty: Brak komentarzy.
+    # Button above a long conversation, which is loaded from its latest comments
+    show_older: Pokaż starsze komentarze
+    # Label of the list of comments
+    timeline: Komentarze
+    deleted_user: Usunięty użytkownik
+    you: Ty
+    edited: edytowano
+    comment_label: Komentarz
+    placeholder: Dodaj komentarz (Markdown)
+    visible_to_cms_users: Widoczny tylko dla użytkowników CMS
+    send: Skomentuj
+    options: Opcje komentarza
+    edit: Edytuj
+    delete: Usuń
+    save: Zapisz
+    delete_confirmation: Czy usunąć ten komentarz? Tej operacji nie można cofnąć.
+    send_failed: Nie udało się wysłać komentarza.
+
+  # Placeholder of an API key or deploy hook field the user has left empty, while an admin of
+  # Sveltia CMS Additions has entered one for everyone
+  provided_by_admin: Dostarczony przez administratora
 
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
@@ -210,6 +566,15 @@ sign_in_with_mobile_instruction: Zeskanuj poniższy kod QR telefonem lub tablete
 signed_in_as_x: Zalogowano jako {$name}
 working_with_local_repo: Praca z lokalnym repozytorium
 working_with_test_repo: Praca z repozytorium testowym
+working_in_demo_mode: Tryb demo
+
+# Demo welcome dialog: shown once after signing in to a demo site, where the test repository is
+# seeded with sample content and the changes are only stored in the browser
+demo_welcome:
+  title: Witamy w wersji demonstracyjnej Sveltia CMS
+  description: Śmiało poznawaj CMS i edytuj przykładowe treści. Twoje zmiany są zapisywane tylko w tej przeglądarce. Nic nie jest publikowane w internecie i nikt inny ich nie widzi.
+  reset_hint: Aby zacząć od nowa z oryginalną treścią, wybierz Wymaż wszystkie dane w Ustawienia > Zarządzanie danymi.
+  button_label: Zaczynamy
 
 # Account menu: action items for sign-out and app installation
 sign_out: Wyloguj się
@@ -225,23 +590,54 @@ install_as_app: Zainstaluj jako aplikację
 contents: Treści
 assets: Zasoby
 editorial_workflow: Obieg redakcyjny
+# Name of the Editorial Workflow page when all the content uses Preview Workflow, which has no
+# review stages, so the page only lists the drafts
+drafts: Szkice
 cms_config: Konfiguracja CMS
 # Mobile menu page title (shown only on small screens)
 menu: Menu
+# Mobile menu page section heading listing the custom pages registered by the site
+custom_pages: Strony
 
 # Mobile promo infobar: encouraging users to try the mobile version
 mobile_promo_title: Sveltia CMS jest teraz dostępny na urządzeniach mobilnych!
 mobile_promo_button: Wypróbuj
 
 # New language infobar: encouraging users to switch to a newly available language
-# {$locale} is the localized language name, e.g., ”French”
+# {$locale} is the localized language name, e.g., “French”
 new_language_available: Sveltia CMS jest teraz dostępny w języku {$locale}!
 change_language: Zmień język
+
+# Live reload infobar: shown when the CMS runs on a page that a framework’s development server (e.g.
+# Astro) reloads on every file change, instead of a static HTML file
+live_reload_warning: Twój serwer deweloperski przeładowuje tę stronę przy każdej zmianie pliku, co może przerwać zapisywanie i uszkodzić Twoje pliki. Zamiast tego udostępniaj CMS ze statycznego pliku HTML. <a>Dowiedz się więcej</a>
 
 # Toast notification shown while the translation for the selected language is being downloaded
 # {$locale} is the localized language name, e.g., “French”
 switching_language: Przełączanie na {$locale}…
 locale_load_failed: Nie udało się wczytać tłumaczenia na {$locale}. Spróbuj ponownie później.
+
+# Toast notification shown when changes saved with the local backend couldn’t be committed to Git
+# {$reason} is one of the `local_git_skip_reasons` strings below
+local_git_not_committed: Twoje zmiany zostały zapisane, ale nie zostały zatwierdzone w Git. {$reason} Aby tylko zapisywać pliki, wyłącz commity Git w Ustawienia > Programista.
+local_git_skip_reasons:
+  unsupported_repository: Twoje repozytorium używa funkcji Git, której CMS nie obsługuje, takiej jak powiązane drzewo robocze (linked worktree), nazwy obiektów SHA-256, format reftable, rzadki indeks (sparse index) lub indeks w wersji 3 albo 4, używany przez opcję feature.manyFiles i polecenie git add -N.
+  missing_identity: Twoje imię i nazwisko oraz adres e-mail nie są ustawione w konfiguracji Git repozytorium, a CMS nie może odczytać Twojej konfiguracji globalnej. Ustaw je w repozytorium poleceniami git config --local user.name "Your Name" i git config --local user.email "you@example.com".
+  locked: Inny proces Git używa repozytorium. Jeśli żaden nie jest uruchomiony, usuń plik .git/index.lock.
+  # The operation in progress, with how to finish or cancel it
+  operation_in_progress:
+    merge: Trwa scalanie (merge). Dokończ je poleceniem git commit lub anuluj poleceniem git merge --abort.
+    rebase: Trwa rebase. Dokończ go poleceniem git rebase --continue lub anuluj poleceniem git rebase --abort. Jeśli zajmujesz się już czymś innym, polecenie git rebase --quit porzuci go bez zmieniania Twoich plików.
+    cherry_pick: Trwa cherry-pick. Dokończ go poleceniem git cherry-pick --continue lub anuluj poleceniem git cherry-pick --abort.
+    revert: Trwa wycofywanie (revert). Dokończ je poleceniem git revert --continue lub anuluj poleceniem git revert --abort.
+    am: Trwa nakładanie poprawek poleceniem git am. Dokończ je poleceniem git am --continue lub anuluj poleceniem git am --abort.
+    conflict: Niektóre pliki mają konflikty. Najpierw je rozwiąż i dodaj wyniki do poczekalni (stage).
+  detached_head: Nie jest wybrana żadna gałąź (checkout).
+  staged_changes: Masz inne zmiany przygotowane do zatwierdzenia (staged). Najpierw je zatwierdź lub usuń z poczekalni.
+  # {$path} is the file path
+  lfs: '{$path} jest śledzony przez Git LFS, do którego CMS nie może zatwierdzać zmian.'
+  # {$message} is the error message
+  error: Wystąpił nieoczekiwany błąd. {$message}
 
 # Site and page navigation
 # Toolbar button aria-label for visiting the live site
@@ -276,6 +672,10 @@ account: Konto
 live_site: Witryna
 git_repository: Repozytorium Git
 settings: Ustawienia
+
+# Page for the people who look after the CMS, apart from the personal settings: user management
+# and the CMS configuration
+administration: Administracja
 
 # Help menu: button aria-labels and section headings
 show_help_menu: Pokaż menu pomocy
@@ -373,6 +773,10 @@ viewing_x_asset_folder: |
 # Cloud storage service view announcement
 # {$service} is the cloud storage service name, e.g. Uploadcare
 viewing_x_external_location: Przeglądasz teraz zasoby w usłudze {$service}.
+# Administration page announcements
+viewing_admin_section_list: Przeglądasz teraz listę sekcji Administracji.
+# {$section} is the section label, e.g. Users
+viewing_x_admin_section: Przeglądasz teraz sekcję “{$section}” strony Administracja.
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
@@ -385,12 +789,13 @@ asset_folder_not_found: Nie znaleziono folderu zasobów.
 file_not_found: Nie znaleziono pliku.
 
 # Selection count indicator
-# Shown in the toolbar when items are selected (e.g., ”2 of 10 selected”)
+# Shown in the toolbar when items are selected (e.g., “2 of 10 selected”)
 # {$selected} is the selected item count and {$total} is the total item count
 x_of_x_selected: Zaznaczono {$selected} z {$total}
 
 # View switcher: toggle between list and grid views
 switch_view: Przełącz widok
+table_view: Widok tabeli
 list_view: Widok listy
 grid_view: Widok siatki
 switch_to_list_view: Przełącz na widok listy
@@ -404,6 +809,16 @@ switch_to_grid_view: Przełącz na widok siatki
 # Sort menu: button labels and options
 sort: Sortuj
 sorting_options: Opcje sortowania
+# Table view column labels for the entry metadata used as `{{…}}` template tags
+table_column_keys:
+  # The folder containing the entry file
+  dirname: Folder
+  # The entry file name without the extension
+  filename: Nazwa pliku
+  # The entry file extension
+  extension: Rozszerzenie
+  # The enabled locales of the entry
+  locales: Języki
 # Sort key option labels
 sort_keys:
   # No sorting; entries appear in their natural repository order
@@ -423,7 +838,7 @@ sort_keys:
   # Manual order defined by the user via drag-and-drop
   _manual: Ręcznie
 # Sort order labels used with field names
-# Example: ”Name, A to Z” or ”Updated on, new to old”
+# Example: “Name, A to Z” or “Updated on, new to old”
 # {$label} is the localized sort field label
 ascending: '{$label}, A do Z'
 ascending_date: '{$label}, od najstarszych'
@@ -443,6 +858,8 @@ grouping_options: Opcje grupowania
 # Asset type filter and group labels
 type: Typ
 all: Wszystkie
+# Group option for the linked files, which can be hosted anywhere: the host name of the file’s URL
+domain: Domena
 # Asset type labels
 image: Obraz
 video: Wideo
@@ -461,6 +878,9 @@ all_assets: Wszystkie zasoby
 global_assets: Zasoby globalne
 # Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
 linked_files: Pliki dowiązane
+# Badge and message shown on a linked file that couldn’t be loaded, e.g. because it has been deleted
+file_unavailable: Niedostępny
+file_unavailable_description: Nie udało się załadować tego pliku. Mógł zostać przeniesiony lub usunięty.
 
 # ==============================================================================
 # Entry and Collection Actions
@@ -510,12 +930,27 @@ creating_entries_nearing_quota: |
     *    many {{ Ta kolekcja zbliża się do limitu {$quota} wpisów. Możesz utworzyć jeszcze tylko {$remaining} wpisów. }}
     *    *    {{ Ta kolekcja zbliża się do limitu {$quota} wpisów. Możesz utworzyć jeszcze tylko {$remaining} wpisów. }}
 
+# Read-only restrictions set with the `readonly` option: advisory messages
+readonly_cms: CMS działa w trybie tylko do odczytu. Możesz przeglądać treści i zasoby, ale nie możesz wprowadzać żadnych zmian.
+readonly_collection: Ta kolekcja jest tylko do odczytu. Możesz przeglądać jej treść, ale nie możesz wprowadzać żadnych zmian.
+readonly_entry: Ten wpis jest tylko do odczytu. Możesz go przeglądać, ale nie możesz wprowadzać żadnych zmian.
+readonly_asset_folder: Ten folder jest tylko do odczytu. Możesz przeglądać jego zasoby, ale nie możesz wprowadzać żadnych zmian.
+readonly_branch: Nie masz uprawnień do wypychania zmian do gałęzi “{$branch}”. Możesz przeglądać tę treść, ale nie możesz wprowadzać żadnych zmian.
+readonly_role: Masz dostęp tylko do wyświetlania. Możesz przeglądać treści i zasoby, ale nie możesz wprowadzać żadnych zmian.
+readonly_reference: Wpis jest tylko do odczytu, więc nie można usunąć odwołania.
+# {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
+cannot_rename_referenced_entry: 'Nie można zmienić nazwy tego wpisu, ponieważ następujące wpisy tylko do odczytu odwołują się do niego za pomocą jego obecnej nazwy: {$entries}.'
+# {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
+cannot_move_referenced_asset: 'Nie można przenieść tego zasobu ani zmienić jego nazwy, ponieważ używają go następujące wpisy tylko do odczytu: {$entries}.'
+
 # Navigation: back links and list labels
 back_to_collection: Powrót do kolekcji
 collection_list: Lista kolekcji
 back_to_collection_list: Powrót do listy kolekcji
 asset_folder_list: Lista folderów zasobów
 back_to_asset_folder_list: Powrót do listy folderów zasobów
+# Back button shown in place of the one above while browsing a subfolder of an asset folder
+back_to_parent_folder: Powrót do folderu nadrzędnego
 
 # ==============================================================================
 # Search
@@ -582,6 +1017,57 @@ no_entries_found: Nie znaleziono wpisów.
 # Upload dialog: title and button label
 upload_assets: Prześlij nowe zasoby
 
+# New Folder button and dialog in the Asset Library
+new_folder: Nowy folder
+new_folder_name: Nazwa folderu
+new_folder_create: Utwórz
+# {$folder} is the path of the folder the new one will be created in, starting with a slash
+new_folder_description: Nowy folder zostanie utworzony w “{$folder}”.
+# Validation errors for the new folder name
+new_folder_error:
+  empty: Nazwa folderu nie może być pusta.
+  invalid: Nazwa folderu nie może zawierać ukośników ani zaczynać się od kropki.
+  # A name the CMS itself is usually served from, e.g. `admin` or `cms`
+  reserved: Pliki w folderze o tej nazwie są tylko do odczytu, ponieważ zwykle z niego udostępniany jest sam CMS.
+  duplicate: Folder lub plik o tej nazwie już tutaj istnieje.
+# Progress and error messages while the folder is being created
+creating_folder: Tworzenie folderu…
+creating_folder_failed: Nie udało się utworzyć folderu.
+
+# Menu on a folder in the Asset Library, and the Rename Folder and Delete Folder dialogs
+folder_options: Opcje folderu
+show_folder_options: Pokaż opcje folderu
+rename_folder: Zmień nazwę folderu
+delete_folder: Usuń folder
+# Rename Folder dialog body text
+# {$count} is the number of assets in the folder, which are moved along with it
+enter_new_name_for_folder: |
+  .input {$count :integer}
+  .match $count
+    0    {{ Wprowadź nową nazwę poniżej. }}
+    one  {{ Wprowadź nową nazwę poniżej. Zasób w folderze zostanie przeniesiony razem z nim, a wpisy, które go używają, zostaną zaktualizowane. }}
+    few  {{ Wprowadź nową nazwę poniżej. {$count} zasoby w folderze zostaną przeniesione razem z nim, a wpisy, które ich używają, zostaną zaktualizowane. }}
+    many {{ Wprowadź nową nazwę poniżej. {$count} zasobów w folderze zostanie przeniesionych razem z nim, a wpisy, które ich używają, zostaną zaktualizowane. }}
+    *    {{ Wprowadź nową nazwę poniżej. {$count} zasobów w folderze zostanie przeniesionych razem z nim, a wpisy, które ich używają, zostaną zaktualizowane. }}
+# Delete Folder confirmation
+# {$name} is the folder name and {$count} is the number of assets in the folder
+confirm_deleting_folder: |
+  .input {$count :integer}
+  .match $count
+    0    {{ Czy na pewno chcesz usunąć pusty folder “{$name}”? }}
+    one  {{ Czy na pewno chcesz usunąć folder “{$name}” i znajdujący się w nim zasób? }}
+    few  {{ Czy na pewno chcesz usunąć folder “{$name}” i znajdujące się w nim {$count} zasoby? }}
+    many {{ Czy na pewno chcesz usunąć folder “{$name}” i znajdujących się w nim {$count} zasobów? }}
+    *    {{ Czy na pewno chcesz usunąć folder “{$name}” i znajdujących się w nim {$count} zasobów? }}
+# Progress and error messages while the folder is being renamed or deleted
+renaming_folder: Zmienianie nazwy folderu…
+renaming_folder_failed: Nie udało się zmienić nazwy folderu.
+deleting_folder: Usuwanie folderu…
+deleting_folder_failed: Nie udało się usunąć folderu.
+# Asset Library and asset picker: notice shown when a cloud storage service holds more files than
+# are listed at once
+external_assets_truncated: W usłudze jest zbyt wiele plików, aby wyświetlić je wszystkie, więc niektóre z nich zostały pominięte.
+
 # Edit options menu: button and item labels
 edit_options: Opcje edycji
 show_edit_options: Pokaż opcje edycji
@@ -594,6 +1080,51 @@ edit_x: Edytuj {$name}
 
 # Asset text editor: switch for line wrapping
 wrap_long_lines: Zawijaj długie wiersze
+
+# Move assets: dialog for moving assets to another folder in the repository
+move: Przenieś
+move_asset: Przenieś zasób
+# Dialog title. {$name} is the asset name when a single asset is moved, and {$count} is the number of
+# assets being moved
+move_assets_title: |
+  .input {$count :integer}
+  .match $count
+    one  {{ Przenieś {$name} }}
+    few  {{ Przenieś {$count} zasoby }}
+    many {{ Przenieś {$count} zasobów }}
+    *    {{ Przenieś {$count} zasobów }}
+# Dialog body text. {$count} is the number of entries that currently use the assets
+select_asset_move_destination: |
+  .input {$count :integer}
+  .match $count
+    0    {{ Wybierz folder docelowy. }}
+    one  {{ Wybierz folder docelowy. Wpis używający tych zasobów również zostanie zaktualizowany. }}
+    few  {{ Wybierz folder docelowy. {$count} wpisy używające tych zasobów również zostaną zaktualizowane. }}
+    many {{ Wybierz folder docelowy. {$count} wpisów używających tych zasobów również zostanie zaktualizowanych. }}
+    *    {{ Wybierz folder docelowy. {$count} wpisów używających tych zasobów również zostanie zaktualizowanych. }}
+# Accessible label of the folder tree in the Move dialog
+asset_move_destination: Folder docelowy
+# Shown when the assets being moved are all in the selected folder already
+assets_already_in_folder: |
+  .input {$count :integer}
+  .match $count
+    one {{ Zasób już znajduje się w tym folderze. }}
+    *   {{ Zasoby już znajdują się w tym folderze. }}
+# Shown when files with the same names exist in the selected folder. {$names} is a comma-separated
+# list of file names
+asset_move_conflict: 'Następujące pliki już istnieją w tym folderze: {$names}.'
+moving_assets: Przenoszenie zasobów…
+moving_assets_failed: Nie udało się przenieść zasobów.
+# Warning shown when files have been moved off a cloud storage service, but the originals couldn’t
+# be deleted from it
+asset_move_cleanup_failed: Pliki zostały przeniesione, ale nie udało się usunąć oryginałów z usługi przechowywania.
+# Shown when files on a cloud storage service can’t be renamed or moved, because the entries using
+# them can’t be updated, e.g. for an Open Authoring contributor. {$count} is the number of files
+cannot_change_used_external_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Nie można zmienić nazwy tego pliku ani go przenieść, ponieważ nie można zaktualizować wpisów, które go używają. }}
+    *   {{ Nie można zmienić nazwy tych plików ani ich przenieść, ponieważ nie można zaktualizować wpisów, które ich używają. }}
 
 # Rename asset: dialog and validation
 rename_asset: Zmień nazwę zasobu
@@ -614,6 +1145,15 @@ enter_new_name_for_asset_error:
   empty: Nazwa pliku nie może być pusta.
   character: Nazwa pliku nie może zawierać znaków specjalnych.
   duplicate: Ta nazwa pliku jest już używana przez inny zasób.
+  # A name starting with a dot hides the file, which the CMS wouldn’t list any more
+  leading_dot: Nazwa pliku nie może zaczynać się od kropki.
+  # The name of a file next to the asset that isn’t an asset, like an entry file
+  file_duplicate: Inny plik o tej nazwie już tutaj istnieje.
+  # The name of a folder next to the file
+  folder_duplicate: Folder o tej nazwie już tutaj istnieje.
+# Shown while renaming a file whose name will be changed on saving, e.g. by the `slugify_filename`
+# media library option
+file_will_be_saved_as: Plik zostanie zapisany jako “{$name}”.
 # Confirmation dialog shown when the file extension is changed while renaming an asset
 change_file_extension: Zmień rozszerzenie pliku
 # {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
@@ -627,6 +1167,11 @@ file_extension_change_warning: Plik może być wyświetlany lub obsługiwany nie
 replace_asset: Zastąp zasób
 # {$name} is the asset being replaced
 replace_x: Zastąp {$name}
+# File/Image field: labels of the Replace and Remove buttons
+replace_file: Zastąp plik
+replace_image: Zastąp obraz
+remove_file: Usuń plik
+remove_image: Usuń obraz
 
 # File selection prompts: drop zones and file pickers
 # Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
@@ -642,7 +1187,7 @@ drop_files_or_click_to_browse: |
     *   {{ Upuść pliki tutaj lub kliknij, aby przeglądać… }}
 # Partial drop zone text (ends with inline button)
 # {$count} is the number of files expected by the current picker mode
-# After the ”or” text, the inline buttons are rendered with the localized strings
+# After the “or” text, the inline buttons are rendered with the localized strings
 drop_files_or: |
   .input {$count :integer}
   .match $count
@@ -650,7 +1195,7 @@ drop_files_or: |
     *   {{ Upuść pliki tutaj lub }}
 # Image-specific drop zone text
 # {$count} is the number of image files expected by the current picker mode
-# After the ”or” text, the inline buttons are rendered with the localized strings
+# After the “or” text, the inline buttons are rendered with the localized strings
 drop_image_files_or: |
   .input {$count :integer}
   .match $count
@@ -718,6 +1263,31 @@ confirm_deleting_selected_assets: |
     many {{ Czy na pewno chcesz usunąć zaznaczonych {$count} zasobów? }}
     *    {{ Czy na pewno chcesz usunąć zaznaczonych {$count} zasobów? }}
 confirm_deleting_all_assets: Czy na pewno chcesz usunąć wszystkie zasoby?
+# Note added to the confirmation when entries use the assets being deleted; the references are
+# removed in the same commit. {$count} is the number of entries using them
+deleting_referenced_assets_note: |
+  .input {$count :integer}
+  .match $count
+    one  {{ Odwołanie do niego we wpisie również zostanie usunięte. }}
+    few  {{ Odwołania do niego w {$count} wpisach również zostaną usunięte. }}
+    many {{ Odwołania do niego w {$count} wpisach również zostaną usunięte. }}
+    *    {{ Odwołania do niego w {$count} wpisach również zostaną usunięte. }}
+# Shown in place of the confirmation when removing the references would leave a field in an entry
+# invalid, e.g. a required Image field with nothing left, so the deletion is refused. The fields are
+# listed below the message, each with the validation error it would have. {$count} is the number of
+# assets being deleted
+cannot_delete_referenced_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Nie można usunąć tego zasobu, ponieważ następujące pola we wpisach, które go używają, stałyby się bez niego nieprawidłowe. Najpierw zaktualizuj te wpisy. }}
+    *   {{ Nie można usunąć tych zasobów, ponieważ następujące pola we wpisach, które ich używają, stałyby się bez nich nieprawidłowe. Najpierw zaktualizuj te wpisy. }}
+# Error shown in the asset deletion dialog when the entries using the assets couldn’t be looked up,
+# so the deletion can’t go ahead. {$count} is the number of assets being deleted
+checking_asset_references_failed: |
+  .input {$count :integer}
+  .match $count
+    one {{ Nie udało się sprawdzić, które wpisy używają tego zasobu. Zamknij to okno i spróbuj ponownie. }}
+    *   {{ Nie udało się sprawdzić, które wpisy używają tych zasobów. Zamknij to okno i spróbuj ponownie. }}
 
 # Delete entries: dialog titles and confirmation messages
 # {$count} is the number of entries targeted by the action
@@ -754,6 +1324,25 @@ confirm_deleting_selected_entries_with_assets: |
     *    {{ Czy na pewno chcesz usunąć zaznaczonych {$count} wpisów i powiązane zasoby? }}
 confirm_deleting_all_entries: Czy na pewno chcesz usunąć wszystkie wpisy?
 confirm_deleting_all_entries_with_assets: Czy na pewno chcesz usunąć wszystkie wpisy i powiązane zasoby?
+# Note added to the confirmation when other entries reference the entries being deleted through
+# Relation fields; the references are removed in the same commit. {$count} is the number of
+# referencing entries
+deleting_referenced_entries_note: |
+  .input {$count :integer}
+  .match $count
+    one  {{ Odwołanie do niego w innym wpisie również zostanie usunięte. }}
+    few  {{ Odwołania do niego w {$count} innych wpisach również zostaną usunięte. }}
+    many {{ Odwołania do niego w {$count} innych wpisach również zostaną usunięte. }}
+    *    {{ Odwołania do niego w {$count} innych wpisach również zostaną usunięte. }}
+# Shown in place of the confirmation when removing the references would leave a Relation field in
+# another entry invalid, e.g. a required field with nothing selected, so the deletion is refused.
+# The fields are listed below the message, each with the validation error it would have. {$count}
+# is the number of entries being deleted
+cannot_delete_referenced_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Nie można usunąć tego wpisu, ponieważ następujące pola w innych wpisach stałyby się bez niego nieprawidłowe. Najpierw zaktualizuj te wpisy. }}
+    *   {{ Nie można usunąć tych wpisów, ponieważ następujące pola w innych wpisach stałyby się bez nich nieprawidłowe. Najpierw zaktualizuj te wpisy. }}
 
 # ==============================================================================
 # Entry Reordering
@@ -767,6 +1356,42 @@ cancel_reordering_entries: Anuluj zmianę kolejności wpisów
 
 # Reorder error message
 saving_reorder_failed: Nie udało się zapisać nowej kolejności wpisów. Spróbuj ponownie.
+
+# ==============================================================================
+# Bulk Entry Editing
+# ==============================================================================
+# Strings for editing the fields of many entries at once in a table.
+
+# Bulk edit mode: toggle buttons
+bulk_edit_entries: Edytuj wpisy zbiorczo
+save_bulk_edits: Zapisz zmiany zbiorcze
+cancel_bulk_edits: Anuluj edycję zbiorczą
+
+# Bulk edit table: column header of the entry titles
+bulk_edit_entry: Wpis
+
+# Bulk edit table: label of the table
+bulk_edit_table: Edytor zbiorczy
+
+# Bulk edit table: label of a cell input; {$field} is the field label, {$entry} is the entry title
+bulk_edit_cell: '{$field} – {$entry}'
+
+# Bulk edit status: number of changed fields
+bulk_edit_count: |
+  .input {$count :integer}
+  .match $count
+    0    {{ Brak zmian }}
+    one  {{ 1 zmiana }}
+    few  {{ {$count} zmiany }}
+    many {{ {$count} zmian }}
+    *    {{ {$count} zmian }}
+
+# Bulk edit error messages
+bulk_edit_invalid: Niektóre wartości są nieprawidłowe. Popraw wyróżnione pola i spróbuj ponownie.
+saving_bulk_edits_failed: Nie udało się zapisać zmian. Spróbuj ponownie.
+
+# Bulk edit: confirmation shown when leaving the mode with unsaved changes
+discard_bulk_edits_confirm: Czy odrzucić zmiany wprowadzone we wpisach?
 
 # ==============================================================================
 # File Upload and Processing
@@ -818,6 +1443,20 @@ warning_invalid_files: |
   .match $count
     one {{ Ten plik nie może zostać przesłany, ponieważ jest uszkodzony lub jego zawartość nie odpowiada rozszerzeniu pliku. Zdarza się to często, gdy zdjęcie zostało przemianowane zamiast przekonwertowane, np. obraz HEIC zapisany jako plik JPEG. Przekonwertuj plik i spróbuj ponownie. }}
     *   {{ Te pliki nie mogą zostać przesłane, ponieważ są uszkodzone lub ich zawartość nie odpowiada rozszerzeniom plików. Zdarza się to często, gdy zdjęcia zostały przemianowane zamiast przekonwertowane, np. obrazy HEIC zapisane jako pliki JPEG. Przekonwertuj pliki i spróbuj ponownie. }}
+# {$count} is the number of files that are not of a type the field accepts, even once transformed
+# {$types} is the list of accepted file types, such as “.pdf or .txt”
+warning_unsupported_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ten plik nie może zostać przesłany, ponieważ nie jest jednym z następujących typów: {$types}. }}
+    *   {{ Te pliki nie mogą zostać przesłane, ponieważ nie są jednym z następujących typów: {$types}. }}
+# {$count} is the number of files that are not of an image type the field accepts
+# {$types} is the list of accepted image formats, such as “PNG or WebP”
+warning_unsupported_image_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ten plik nie może zostać przesłany, ponieważ akceptowany jest tylko obraz następujących typów: {$types}. }}
+    *   {{ Te pliki nie mogą zostać przesłane, ponieważ akceptowane są tylko obrazy następujących typów: {$types}. }}
 
 # File format validation when replacing an asset
 # Warning section for replacement files that are in a different format
@@ -857,6 +1496,8 @@ uploading_files_failed: Przesyłanie nie powiodło się.
 # Errors shown when a file on a cloud storage service could not be deleted or renamed
 deleting_assets_failed: Usuwanie nie powiodło się.
 renaming_asset_failed: Zmiana nazwy nie powiodła się.
+# Error shown when an edited text file in the Asset Library could not be saved
+saving_asset_failed: Zapisywanie nie powiodło się.
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
@@ -872,7 +1513,7 @@ file_meta_converted_from_x: (skonwertowano z {$type})
 no_entries_created: Ta kolekcja nie ma jeszcze żadnych wpisów.
 # Button to create first entry
 create_new_entry: Utwórz nowy wpis
-# ”Entry” option label in the create button menu
+# “Entry” option label in the create button menu
 entry: Wpis
 
 # Special entry types
@@ -896,6 +1537,8 @@ entry_validation_errors: |
     few  {{ {$count} pola zawierają błędy. Popraw je, aby zapisać wpis. }}
     many {{ {$count} pól zawiera błędy. Popraw je, aby zapisać wpis. }}
     *    {{ {$count} pól zawiera błędy. Popraw je, aby zapisać wpis. }}
+# Button on the validation error toast that opens the Validation panel listing the errors
+show_errors: Pokaż błędy
 
 # ==============================================================================
 # Success Notifications
@@ -998,6 +1641,21 @@ assets_deleted: |
     few  {{ Usunięto {$count} zasoby. }}
     many {{ Usunięto {$count} zasobów. }}
     *    {{ Usunięto {$count} zasobów. }}
+folder_created: Folder utworzony.
+# Folder info panel in the Asset Library sidebar
+folder_path: Ścieżka folderu
+folder_contents: Zawartość
+# {$count} is the number of subfolders in the folder
+x_folders: |
+  .input {$count :integer}
+  .match $count
+    0    {{ Brak folderów }}
+    one  {{ {$count} folder }}
+    few  {{ {$count} foldery }}
+    many {{ {$count} folderów }}
+    *    {{ {$count} folderów }}
+folder_renamed: Zmieniono nazwę folderu.
+folder_deleted: Folder usunięty.
 
 # ==============================================================================
 # Content Editor
@@ -1038,6 +1696,9 @@ edit_singleton_announcement: Edytujesz teraz plik “{$file}”.
 # Shown when CI skip is enabled/disabled
 save_and_publish: Zapisz i opublikuj
 save_without_publishing: Zapisz bez publikowania
+# Shown disabled in place of `save_and_publish` while entries created or edited from a Relation
+# field are in a collection whose review can’t be skipped with the `direct_publish` option
+save_and_publish_needs_review: Zapisz i opublikuj (powiązane wpisy wymagają recenzji)
 
 # Editor options menu
 show_editor_options: Pokaż opcje edytora
@@ -1067,6 +1728,9 @@ swap_panes: Zamień panele
 # {$locale} is the localized language name for the current content pane, e.g., English
 edit_x_locale: Edytuj treść {$locale}
 preview_x_locale: Podgląd treści {$locale}
+# The content of a monolingual entry, which has no locale to name
+edit_content: Edytuj treść
+preview_content: Podgląd treści
 
 # Preview iframe labels
 content_preview: Podgląd treści
@@ -1075,6 +1739,8 @@ content_preview: Podgląd treści
 # {$locale} is the localized language name for the content options menu, e.g., English
 show_content_options_x_locale: Pokaż opcje treści {$locale}
 content_options_x_locale: Opcje treści {$locale}
+show_content_options: Pokaż opcje treści
+content_options: Opcje treści
 
 # Field container labels
 # {$field} is the field’s display label
@@ -1113,8 +1779,9 @@ deploy_preview:
   view: Zobacz podgląd
   # Shown while the site is still being built, with or without a URL to open yet
   building: Podgląd jest wciąż budowany.
-  # Shown when the build failed, so no preview is available
-  failed: Nie udało się zbudować podglądu.
+  # Shown when the build failed, so no preview is available. The failure may lie in the site’s own
+  # code rather than the entry, so the editor is told not to assume it’s theirs, and who to ask
+  build_failed: Nie udało się zbudować podglądu. Nie musi to być spowodowane Twoimi zmianami. Jeśli problem będzie się powtarzał, skontaktuj się z administratorem witryny.
   # Shown briefly while the CI/CD provider is being queried
   checking: Sprawdzanie podglądu…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
@@ -1148,9 +1815,20 @@ translate_from: Przetłumacz z…
 # {$locale} is the localized language name of the source content being translated, e.g., English
 translate_from_x: Przetłumacz z {$locale}
 
-# Revert changes
+# Revert changes, restore the default values or clear the fields. The field options menu offers
+# them for a field, the content options menu of an editor pane for the locale it shows, and the
+# editor options menu for the whole entry, the latter two asking for confirmation first
 revert_changes: Cofnij zmiany
 revert_all_changes: Cofnij wszystkie zmiany
+restore_default: Przywróć domyślne
+clear_all: Wyczyść wszystko
+confirm_reverting_changes: Czy na pewno chcesz cofnąć wszystkie zmiany wprowadzone w tym wpisie?
+# {$locale} is a locale name, e.g. French
+confirm_reverting_changes_x_locale: Czy na pewno chcesz cofnąć wszystkie zmiany wprowadzone w treści {$locale}?
+confirm_restoring_defaults: Czy na pewno chcesz przywrócić wartości domyślne wszystkich pól w tym wpisie? Twoje zmiany zostaną utracone.
+confirm_restoring_defaults_x_locale: Czy na pewno chcesz przywrócić wartości domyślne wszystkich pól w treści {$locale}? Twoje zmiany zostaną utracone.
+confirm_clearing_fields: Czy na pewno chcesz wyczyścić wszystkie pola w tym wpisie? Twoje zmiany zostaną utracone.
+confirm_clearing_fields_x_locale: Czy na pewno chcesz wyczyścić wszystkie pola w treści {$locale}? Twoje zmiany zostaną utracone.
 
 # Slug editing
 edit_slug: Edytuj przyjazny link
@@ -1158,6 +1836,8 @@ edit_slug_error:
   empty: Przyjazny link nie może być pusty.
   invalid: Przyjazny link nie może zawierać znaków specjalnych, w tym ukośników i spacji.
   duplicate: Ten przyjazny link jest już używany przez inny wpis.
+# {$slug} is the slug filled from the slug template, which a number is added to when another entry uses it
+slug_numbered: Przyjazny link “{$slug}” jest używany przez inny wpis, więc zostanie do niego dodany numer.
 
 # Entry path editing for nested entries
 # Heading for the parent folder picker shown when the `meta.path` option is enabled
@@ -1287,6 +1967,13 @@ validation:
     email: Wprowadź prawidłowy adres e-mail.
     url: Wprowadź prawidłowy adres URL.
 
+  # Value used for the same field in another entry of the collection
+  value_not_unique: Ta wartość jest używana w innym wpisie.
+  # Key of a keyed List field item used for another item of the same list
+  key_not_unique: Ten klucz jest używany przez inny element.
+  # Key of a keyed List field item that is a whole number, which doesn’t keep its order in a map
+  key_numeric: Klucz nie może być liczbą całkowitą, ponieważ elementy straciłyby swoją kolejność.
+
   # Custom field validation error
   invalid_value: Nieprawidłowa wartość.
   unexpected_error: Wystąpił nieoczekiwany błąd.
@@ -1308,6 +1995,12 @@ entry_sidebar:
     # Button in the panel header that validates the entry on demand
     validate: Sprawdź
 
+  # Slug panel: shows the entry slug and lets the user edit it
+  slug:
+    title: Przyjazny link
+    generated_on_save: Przyjazny link jest generowany na podstawie treści wpisu podczas zapisywania. Data i godzina w nim zawarte będą odpowiadać momentowi zapisu.
+    unavailable: Ten wpis nie ma przyjaznego linku.
+
   # History panel: shows entry commit history
   history:
     title: Historia
@@ -1319,11 +2012,55 @@ entry_sidebar:
     title: Odnośniki zwrotne
     no_entries: Żaden wpis nie odwołuje się do tego wpisu.
 
+  # Tab label of a panel with a count, e.g. of comments. {$title} is the panel title
+  title_with_count: '{$title} ({$count})'
+
+# Status shown next to the Save button while an entry with many new files is being saved
+# {$done} and {$total} are the number of files prepared and to prepare, or the number of commits
+# made and the estimated number of commits in all
+save_progress:
+  preparing: 'Przygotowywanie plików: {$done} z {$total}'
+  committing: 'Zapisywanie w GitHub: {$done} z około {$total} commitów'
+
 # Entry save error dialog
 saving_entry:
   error:
     title: Błąd
     description: Wystąpił błąd podczas zapisywania wpisu. Spróbuj ponownie później.
+
+# Dialog shown when saving the entry would overwrite a change someone else has made in the
+# repository since the entry was opened in the editor
+save_conflict:
+  title: Wpis zmieniony przez kogoś innego
+  # `{$name}` is the other person’s name, `{$date}` when they made the change
+  modified_by: '{$name} zmienił(-a) ten wpis {$date}, po tym jak go otworzono.'
+  # Shown instead of `modified_by` when the other person isn’t known
+  modified: Ten wpis został zmieniony w repozytorium po tym, jak go otworzono.
+  deleted: Ten wpis został usunięty z repozytorium po tym, jak go otworzono.
+  # Follows `modified_by` or `modified`
+  overwrite_warning: Jeśli zapiszesz teraz, zmiany tej osoby zostaną utracone.
+  # Follows `deleted`
+  recreate_warning: Jeśli zapiszesz teraz, wpis zostanie utworzony ponownie.
+  # Follows `modified_by`, `modified` or `deleted` for an entry stored in the same file as the other
+  # entries of the collection, which can’t be saved over the change
+  reload_warning: Ponieważ wpis jest przechowywany w tym samym pliku co inne wpisy, nie można go zapisać z nadpisaniem tej zmiany. Anuluj edycję, a następnie ponownie otwórz wpis z listy i wprowadź swoje zmiany.
+  # OK button label
+  save_anyway: Zapisz mimo to
+  # Error shown when the repository was updated between the check above and the commit itself
+  branch_moved: Repozytorium zostało zaktualizowane przez kogoś innego podczas zapisywania. Spróbuj ponownie.
+  # Error shown when saving would change an item in a file storing all the entries of a collection,
+  # which someone else has changed or moved since it was loaded
+  array_item_changed: Wpis przechowywany w tym samym pliku został zmieniony przez kogoś innego. Spróbuj ponownie.
+  # {$path} is the file path
+  array_file_invalid: Nie można zaktualizować pliku {$path}, ponieważ nie zawiera on prawidłowej listy wpisów.
+
+# Notice shown in the entry editor when someone else has changed or deleted the entry in the
+# repository while the user has it open. The change itself is described with the `save_conflict`
+# strings above
+remote_change:
+  reload_entry: Załaduj wpis ponownie
+  # Confirmation shown before reloading when the user has unsaved changes
+  confirm_reloading_entry: Czy na pewno chcesz ponownie załadować wpis? Twoje niezapisane zmiany zostaną utracone.
 
 # ==============================================================================
 # Asset Editor
@@ -1397,21 +2134,67 @@ map_lat_lng: Mapa pokazująca szerokość geograficzną {$latitude}, długość 
 remove_this_item: Usuń ten element
 move_up: Przenieś w górę
 move_down: Przenieś w dół
+# Menu of a list item or file with the extra reorder actions, shown in a list of 3 or more items
+reorder_options: Opcje kolejności
+move_to_top: Przenieś na górę
+move_to_bottom: Przenieś na dół
+# Opens a dialog asking for the position to move a list item to
+move_to: Przenieś na…
+# Dialog asking for the new position of an item. {$count} is the number of items in the list
+move_to_description: Wprowadź pozycję od 1 do {$count}.
+move_to_position: Pozycja
 # aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
 # or moved with the arrow keys while the handle has focus
 reorder_item: Zmień kolejność elementu
 # aria-label for the text input holding one item of a simple List field, which has no subfield to
 # take a label from
 list_item_value: Wartość elementu
+# aria-label for each item of a List field, giving its position in the list
+# {$position} is the 1-based position of the item, {$count} is the number of items
+list_item_position: Element {$position} z {$count}
+# Message shown in place of a removed List field item or Object field, next to a Restore button
+# that puts it back
+item_removed: Element usunięty.
 
-# Add item button label
-# Example: ”Add Image”, ”Add Author”
+# Add item button label, also used by the Relation field to create a new entry in the referenced
+# collection, with the collection’s singular label
+# Example: “Add Image”, “Add Author”
 # {$name} is the label of the item type that can be added
 add_x: Dodaj {$name}
 
 # List item context menu
+# aria-label for the button opening the menu, and for the menu itself
+list_item_options: Opcje elementu listy
 add_item_above: Dodaj element powyżej
 add_item_below: Dodaj element poniżej
+paste_item_above: Wklej element powyżej
+paste_item_below: Wklej element poniżej
+paste_item_to_replace: Wklej, zastępując
+
+# List item clipboard
+# Button in the list toolbar to paste a copied item, from any list in any entry, at the end of the
+# list, or at the start with the `add_to_top` option
+paste_item: Wklej element
+list_item_copied: Element skopiowany.
+# ⋮ stands for the icon of the item menu button; keep it, along with the button’s aria-label
+no_list_item_to_paste: Brak skopiowanego elementu do wklejenia. Aby skopiować element, otwórz jego menu ⋮ (Opcje elementu listy) i wybierz Kopiuj.
+list_item_not_compatible: Skopiowany element nie pasuje do tej listy.
+# {$count} is the number of the values left out, as the list doesn’t have the fields
+list_item_pasted_without_values: |
+  .input {$count :integer}
+  .match $count
+    one  {{ Element wklejony. Pominięto wartość, której ta lista nie obsługuje. }}
+    few  {{ Element wklejony. Pominięto {$count} wartości, których ta lista nie obsługuje. }}
+    many {{ Element wklejony. Pominięto {$count} wartości, których ta lista nie obsługuje. }}
+    *    {{ Element wklejony. Pominięto {$count} wartości, których ta lista nie obsługuje. }}
+# {$count} is the number of the files the pasted item references that couldn’t be found
+list_item_pasted_without_files: |
+  .input {$count :integer}
+  .match $count
+    one  {{ Element wklejony, ale nie znaleziono używanego przez niego pliku. Sprawdź pola plików w elemencie. }}
+    few  {{ Element wklejony, ale nie znaleziono {$count} używanych przez niego plików. Sprawdź pola plików w elemencie. }}
+    many {{ Element wklejony, ale nie znaleziono {$count} używanych przez niego plików. Sprawdź pola plików w elemencie. }}
+    *    {{ Element wklejony, ale nie znaleziono {$count} używanych przez niego plików. Sprawdź pola plików w elemencie. }}
 
 # Variable-type list selector
 select_list_type: Wybierz typ listy
@@ -1430,12 +2213,45 @@ opacity: Krycie
 # Select field: empty option placeholder
 unselected_option: (Brak)
 
+# Relation field: creating or editing a referenced entry without leaving the editor
+relation_field:
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  save_together_hint: Nowy element ({$name}) zostanie zapisany razem z edytowanym wpisem.
+  # Error shown when the entry couldn’t be prepared. {$name} is the singular label of the collection
+  add_failed: Nie udało się dodać elementu ({$name}). Sprawdź konsolę przeglądarki, aby uzyskać szczegóły.
+  # Title of the dialog to edit an entry selected in the field. {$name} is the singular label of the
+  # referenced collection
+  edit_entry_title: 'Edytowanie: {$name}'
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  edit_together_hint: Twoje zmiany w elemencie ({$name}) zostaną zapisane razem z edytowanym wpisem.
+  # Error shown when the changes couldn’t be prepared. {$name} is the singular label of the collection
+  edit_failed: Nie udało się zastosować zmian w elemencie ({$name}). Sprawdź konsolę przeglądarki, aby uzyskać szczegóły.
+  # Error shown when the changes would move the entry to another file path, e.g. through a path
+  # template using a field. {$name} is the singular label of the collection
+  move_unsupported: Te zmiany przeniosłyby element ({$name}) do innej lokalizacji, co można zrobić tylko podczas jego osobnej edycji.
+  # Error shown when saving, if someone else has changed an entry edited from the field since. {$name}
+  # is the summary of that entry
+  edit_conflict: Wpis “{$name}” został zmieniony przez kogoś innego od czasu Twojej edycji. Otwórz go ponownie z pola, aby porównać swoje zmiany z najnowszą wersją.
+  # Error shown when saving, if someone else has deleted an entry edited from the field since.
+  # {$name} is the summary of that entry
+  edit_deleted: Wpis “{$name}” został usunięty przez kogoś innego od czasu Twojej edycji. Usuń go z pola, aby zapisać wpis.
+  # Accessible label of the menu listing the selected entries that can be edited
+  select_entry_to_edit: Wybierz wpis do edycji
+  # Warning shown in the editor of an entry that has been edited from a Relation field of another
+  # entry, while the changes wait in that entry’s pull request. {$name} is the summary of that
+  # entry
+  edited_with_entry: Zmiany w tym wpisie czekają na publikację razem z wpisem “{$name}”. Jeśli zapiszesz go teraz, oba zestawy zmian zostaną połączone podczas publikacji tamtego wpisu, co może się nie udać, jeśli się pokrywają.
+  # Warning shown in the dialog when an entry edited from the field has been changed by someone else
+  # since. {$name} is the singular label of the collection
+  changed_since_edit: Ten element ({$name}) został zmieniony przez kogoś innego od czasu Twojej edycji. Twoje zmiany są wyświetlane na tle najnowszej wersji. Przejrzyj je przed aktualizacją.
+
 # Select Assets dialog
 assets_dialog:
   # Dialog titles for different selection modes
   title:
     file: Wybierz plik
     image: Wybierz obraz
+    folder: Wybierz folder
 
   # Search input labels
   search_for_file: Szukaj plików
@@ -1443,6 +2259,20 @@ assets_dialog:
 
   # Locations panel aria-label
   locations: Lokalizacje
+
+  # Folder selection mode for a File field with the `select_folder` option. {$path} is the public
+  # path of the folder to be selected, and {$count} is the number of folders selected
+  selected_folder: 'Wybrany folder: {$path}'
+  selected_folders: |
+    .input {$count :integer}
+    .match $count
+      one  {{ Wybrano {$count} folder }}
+      few  {{ Wybrano {$count} foldery }}
+      many {{ Wybrano {$count} folderów }}
+      *    {{ Wybrano {$count} folderów }}
+  no_subfolders: Ten folder nie ma podfolderów.
+  # Shown for a cloud storage service whose `prefix` option depends on fields of the entry
+  prefix_unresolved: Wypełnij pola, od których zależy ta lokalizacja, aby przeglądać i przesyłać jej pliki.
 
   # Asset folder options
   folder:
@@ -1460,6 +2290,7 @@ assets_dialog:
 
   # Stock photo panels
   available_images: Dostępne obrazy
+  available_files: Dostępne pliki
 
   # URL entry option
   enter_url: Wprowadź URL
@@ -1482,6 +2313,9 @@ assets_dialog:
   photo_credit:
     title: Informacja o autorze zdjęcia
     description: 'W miarę możliwości użyj następującej informacji o autorze:'
+    # {$field} is the label of the Markdown field the credit is added to
+    insert_to_field: Wstaw do pola {$field}
+    copy_as_markdown: Kopiuj jako Markdown
 
   # Unsaved asset badge
   unsaved: Niezapisany
@@ -1530,6 +2364,7 @@ editor_components:
   alt: Tekst alternatywny
   title: Tytuł
   link: Link
+  caption: Podpis
 
 # Key-Value field: column headers and validation
 key_value:
@@ -1594,6 +2429,15 @@ cloud_storage:
   uploadcare:
     auth_key_label: Tajny klucz API
 
+  azure_blob_storage:
+    auth_key_label: Token SAS
+
+  backblaze_b2:
+    auth_key_label: Klucz aplikacji
+
+  bunny_storage:
+    auth_key_label: Hasło strefy przechowywania
+
 # ==============================================================================
 # Configuration Validation
 # ==============================================================================
@@ -1647,16 +2491,42 @@ config:
     unsupported_backend_suggestion: Użyj jednego z <a>obsługiwanych backendów</a>.
     missing_repository: Repozytorium nie jest zdefiniowane.
     invalid_repository: Skonfigurowane repozytorium jest nieprawidłowe. Musi być w formacie “właściciel/repozytorium”.
+    # Don’t localize `api_root`
+    missing_api_root: Opcja `api_root` nie jest zdefiniowana. Jest wymagana dla backendu Forgejo.
+    invalid_root_dir: Katalog główny jest nieprawidłowy. Musi być ścieżką w obrębie repozytorium, bez “..”.
+    invalid_root_dir_branch: Katalogu głównego nie można użyć w nazwach gałęzi trybów publikacji `editorial_workflow` i `preview`. Żadna część jego ścieżki nie może zaczynać się od kropki, kończyć na “.lock” ani zawierać spacji lub znaku specjalnego, takiego jak dwukropek czy gwiazdka.
+    path_outside_root_dir: Ścieżka “{$path}” prowadzi poza katalog główny, w którym CMS nie może wyświetlać plików.
     oauth_implicit_flow: Skonfigurowana metoda uwierzytelniania (implicit flow) nie jest obsługiwana w Sveltia CMS. Użyj innej <a>metody uwierzytelniania</a>.
     github_pkce_unsupported: Autoryzacja PKCE nie jest jeszcze obsługiwana z powodu ograniczeń GitHub. Użyj innej <a>metody uwierzytelniania</a>.
+    additions_no_base_url: Opcja `base_url` musi być adresem URL Twojej usługi Sveltia CMS Additions.
     oauth_no_app_id: Identyfikator aplikacji OAuth nie jest zdefiniowany.
     # Don’t localize `open_authoring`, `editorial_workflow` and `preview`
-    open_authoring_no_workflow: Opcja `open_authoring` wymaga trybu publikacji `editorial_workflow`. Szczegóły znajdziesz w <a>dokumentacji</a>.
+    open_authoring_no_workflow: Opcja `open_authoring` wymaga trybu publikacji `editorial_workflow` lub `preview`. Szczegóły znajdziesz w <a>dokumentacji</a>.
     # Don’t localize `auth_methods`
     no_auth_methods: Opcja `auth_methods` musi zawierać co najmniej jedną metodę.
+    # Don’t localize `auth_scope`, `repo` and `public_repo`
+    auth_scope_no_repo: Opcja `auth_scope` musi zawierać `repo` lub `public_repo`.
     missing_media_folder: Folder multimediów nie jest zdefiniowany.
     public_folder_relative_path: Skonfigurowany folder publiczny jest nieprawidłowy. Musi być ścieżką bezwzględną zaczynającą się od “/”.
     public_folder_absolute_url: Bezwzględny adres URL dla opcji folderu publicznego nie jest obsługiwany w Sveltia CMS.
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    unsupported_folder_template_tag: Opcja `{$option}` zawiera znacznik szablonu `{$tag}`, który nie jest tam obsługiwany. Można używać tylko znaczników szablonu przyjaznego linku, takich jak `\{\{slug\}\}` i `\{\{year\}\}`, oraz znaczników `\{\{dirname\}\}`, `\{\{filename\}\}`, `\{\{extension\}\}`, `\{\{media_folder\}\}` i `\{\{public_folder\}\}`.
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    global_folder_template_tag: Opcja `{$option}` zawiera znacznik szablonu `{$tag}`, którego można używać tylko w opcji kolekcji, pliku kolekcji lub pola, gdzie istnieje wpis, z którego można go wypełnić.
+    # {$replacement} is the configured replacement string; Don’t localize `sanitize_replacement`
+    invalid_sanitize_replacement: Opcja `sanitize_replacement` ma wartość `{$replacement}`, ale zawiera znak, którego nie można użyć w przyjaznym linku, więc nie może go zastępować.
+    # {$option} is the option name (`site_url` or `display_url`) and {$url} is the configured value
+    invalid_url_option: Opcja `{$option}` ma wartość `{$url}`, ale musi być bezwzględnym adresem URL zaczynającym się od `https://` lub `http://`.
+    # Don’t localize `publish_mode`, `stages`, `draft`, `pending_review` and `pending_publish`
+    invalid_publish_mode_stages: Opcja `stages` w `publish_mode` musi zaczynać się od `draft` i wymieniać etapy w kolejności `draft`, `pending_review`, `pending_publish`, bez powtórzeń.
+    # Don’t localize `i18n` and `locales`
+    i18n_no_locales: Opcja `i18n.locales` musi zawierać co najmniej jeden język.
+    # {$locale} is the locale code from the configuration; Don’t localize `default_locale` and `locales`
+    i18n_invalid_default_locale: Opcja `default_locale` ma wartość `{$locale}`, ale nie jest ona jednym z języków w `locales`.
+    # {$locale} is the locale code from the configuration; Don’t localize `initial_locales` and `locales`
+    i18n_invalid_initial_locale: Opcja `initial_locales` zawiera `{$locale}`, ale nie jest to jeden z języków w `locales`.
+    # Don’t localize `i18n`
+    i18n_no_collections: 'Opcja `i18n` jest skonfigurowana na najwyższym poziomie, ale żadna z kolekcji ani wpisów pojedynczych nie ma opcji `i18n`, więc żadnej treści nie można przetłumaczyć. Dodaj `i18n: true` do kolekcji i wpisów pojedynczych, które mają być tłumaczone.'
     # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
     invalid_transformation_key: Opcja `transformations` zawiera nieobsługiwany klucz `{$key}`. Musi to być `raster_image`, `svg` lub obsługiwany format obrazu rastrowego.
     # {$key} is the transformation key; Don’t localize `quality`
@@ -1669,18 +2539,52 @@ config:
     invalid_asset_collection_name: Nazwa kolekcji zasobów `{$name}` jest nieprawidłowa. Nie może zawierać znaków specjalnych.
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: Nazwy kolekcji zasobów muszą być unikalne, ale `{$name}` jest użyta więcej niż raz.
-    # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_no_options: Kolekcja musi mieć zdefiniowaną opcję `folder`, `files` lub `divider`.
-    # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_multiple_options: Kolekcja nie może mieć jednocześnie opcji `folder`, `files` i `divider`.
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_no_options: Kolekcja musi mieć zdefiniowaną opcję `folder`, `file`, `files` lub `divider`.
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_multiple_options: Kolekcja nie może mieć więcej niż jednej z opcji `folder`, `file`, `files` i `divider`.
     # {$extension} is the file extension and {$format} is the configured content format
     file_format_mismatch: Rozszerzenie `{$extension}` nie odpowiada formatowi `{$format}`.
+    # {$name} is the field name from the configuration and {$widget} is its field type
+    front_matter_body_field_not_text: Pole `{$name}` jest zapisywane jako treść pod front matter, która może zawierać tylko tekst, a nie liczbę, wartość logiczną, listę ani obiekt, jak pole typu `{$widget}`. Użyj typu pola przechowującego tekst lub zmień nazwę pola.
+    # {$file} is the file path from the configuration; Don’t localize `file` and `locale`. The curly
+    # brackets are escaped with backslashes for MessageFormat 2
+    invalid_collection_data_file: Opcja `file` o wartości `{$file}` jest nieprawidłowa. Musi to być ścieżka do pliku JSON, bez symbolu zastępczego `\{\{locale\}\}`.
+    # {$prop} is the option name; Don’t localize `file`
+    unsupported_collection_data_file_option: Opcja `{$prop}` nie jest obsługiwana w kolekcji z opcją `file`.
+    # Don’t localize `file`, `publish_mode` and `simple`
+    collection_data_file_workflow: Obieg redakcyjny i obieg podglądu, w tym otwarte autorstwo, nie są obsługiwane w kolekcji z opcją `file`. Ustaw opcję `publish_mode` kolekcji na `simple`.
+    # {$prop} is the option name; Don’t localize `file` and `slug`. The curly brackets are escaped
+    # with backslashes for MessageFormat 2
+    collection_data_file_slug_tag: Opcja `{$prop}` nie może zawierać znacznika `\{\{slug\}\}` w kolekcji z opcją `file`, ponieważ przyjazny link wpisu to jego pozycja, która zmienia się, gdy wpisy są przestawiane lub usuwane. Zamiast tego użyj pola o unikalnej wartości.
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
     invalid_slug_slash: Szablon przyjaznego linku `{$slug}` jest nieprawidłowy, ponieważ nie może zawierać ukośników. Aby organizować wpisy w podfolderach, użyj opcji `path` zamiast `slug`.
+    # {$name} is the field name from the configuration; Don’t localize `identifier_field`
+    invalid_identifier_field: Opcja `identifier_field` odwołuje się do `{$name}`, ale takie pole nie jest zdefiniowane w kolekcji.
+    # {$name} is the field name from the configuration; Don’t localize `filter`
+    invalid_filter_field: Opcja `filter` odwołuje się do `{$name}`, ale takie pole nie jest zdefiniowane w kolekcji.
+    # Don’t localize `filter`, `value` and `pattern`
+    invalid_filter_no_condition: Opcja `filter` musi mieć opcję `value` lub `pattern`, według której dopasowywane są wpisy.
+    # {$option} is an option name such as `slug` or `summary` and {$name} is the field name or template tag from the configuration
+    option_field_not_found: Opcja `{$option}` odwołuje się do `{$name}`, ale takie pole nie jest zdefiniowane.
+    # {$name} is the field name from the configuration and {$widget} is its field type; Don’t localize `thumbnail`
+    thumbnail_field_not_media: Opcja `thumbnail` odwołuje się do `{$name}`, ale musi to być pole typu Image lub File, a nie pole typu `{$widget}`.
+    # Don’t localize `inline` or `multiple`
+    invalid_inline_component_fields: Tryb `inline` wymaga pojedynczego pola typu Boolean, Color, DateTime, Number, Relation, Select lub String. Pole typu Relation lub Select nie może mieć włączonej opcji `multiple`.
+    # {$option} is an option name such as `pattern` or `filter` and {$pattern} is the configured pattern
+    invalid_regex: Opcja `{$option}` zawiera nieprawidłowe wyrażenie regularne `{$pattern}`, które zostanie zignorowane.
     # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
     invalid_reorder_group: Opcja `reorder` odwołuje się do grupy widoku o nazwie `{$name}`, ale taka grupa nie jest zdefiniowana w opcji `view_groups`.
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit` and `fields`
+    invalid_bulk_edit_field: Lista `fields` opcji `bulk_edit` odwołuje się do pola o nazwie `{$name}`, ale takie pole najwyższego poziomu nie jest zdefiniowane w kolekcji.
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit`, `fields` and `multiple`
+    unsupported_bulk_edit_field: Pola `{$name}` z listy `fields` opcji `bulk_edit` nie można edytować zbiorczo. Obsługiwane jest tylko pole typu Boolean, Color, DateTime, Number, Relation, Select lub String, które nie jest tylko do odczytu, nie ma włączonej opcji `multiple` i nie jest ustawiane automatycznie podczas zapisywania.
     # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
     invalid_sortable_field: Opcja `sortable_fields` odwołuje się do pola o nazwie `{$name}`, ale takie pole nie jest zdefiniowane w kolekcji.
+    # Don’t localize `sortable_fields` and `default_sort`
+    multiple_sortable_field_defaults: Tylko jeden element opcji `sortable_fields` może mieć opcję `default_sort`.
+    # {$option} is `table_columns` or `summary_fields`, and {$name} is the field name from the configuration
+    invalid_table_column_field: Opcja `{$option}` odwołuje się do pola o nazwie `{$name}`, ale takie pole nie jest zdefiniowane w kolekcji.
     # {$name} is the field name from the configuration; Don’t localize `view_groups`
     invalid_view_group_field: Opcja `view_groups` odwołuje się do pola o nazwie `{$name}`, ale takie pole nie jest zdefiniowane w kolekcji.
     # {$name} is the field name from the configuration; Don’t localize `view_filters`
@@ -1692,9 +2596,15 @@ config:
     duplicate_view_group_name: Nazwy grup widoku muszą być unikalne, ale `{$name}` jest użyta więcej niż raz.
     # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
     missing_view_filter_name: Filtr widoku {$count} musi mieć opcję `name` zdefiniowaną jako niepusty ciąg znaków.
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `pattern`, `eq` and `gte`
+    invalid_view_filter_no_condition: Filtr widoku {$count} musi mieć opcję `pattern` lub opcję porównania, taką jak `eq` lub `gte`, według której dopasowywane są wpisy.
     # {$name} is the invalid or duplicate view filter name
     invalid_view_filter_name: Nazwa filtru widoku `{$name}` jest nieprawidłowa. Nie może zawierać znaków specjalnych.
     duplicate_view_filter_name: Nazwy filtrów widoku muszą być unikalne, ale `{$name}` jest użyta więcej niż raz.
+    # {$name} is the default view group name from the configuration; Don’t localize `default` and `view_groups`
+    invalid_view_group_default: Opcja `default` w `view_groups` ma wartość `{$name}`, ale żadna grupa widoku nie ma takiej nazwy.
+    # {$name} is the default view filter name from the configuration; Don’t localize `default` and `view_filters`
+    invalid_view_filter_default: Opcja `default` w `view_filters` ma wartość `{$name}`, ale żaden filtr widoku nie ma takiej nazwy.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: Kolekcja {$count} musi mieć opcję `name` zdefiniowaną jako niepusty ciąg znaków.
     # {$name} is the invalid or duplicate collection name
@@ -1709,8 +2619,19 @@ config:
     collection_no_fields: Kolekcja musi mieć opcję `fields` zdefiniowaną z co najmniej jednym polem.
     # Don’t localize `fields`
     collection_file_no_fields: Plik kolekcji musi mieć opcję `fields` zdefiniowaną z co najmniej jednym polem.
+    # Don’t localize `i18n`, `locale` and `folder`
+    collection_folder_i18n_required: Kolekcja musi mieć zdefiniowaną opcję `i18n`, jeśli w ścieżce `folder` użyto symbolu zastępczego `locale`.
+    # {$folder} is the invalid folder path; Don’t localize `locale`, `folder` and the example path. The
+    # curly brackets in the example are escaped with backslashes for MessageFormat 2
+    invalid_collection_folder_locale: Ścieżka `folder` o wartości `{$folder}` jest nieprawidłowa. Symbolu zastępczego `locale` można użyć tylko raz, jako całej nazwy folderu, np. `content/\{\{locale\}\}/posts`.
     # Don’t localize `i18n`, `locale` and `file`
     collection_file_i18n_required: Plik kolekcji musi mieć opcję `i18n` zdefiniowaną, jeśli w ścieżce `file` jest użyty znacznik `locale`.
+    # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
+    collection_i18n_no_fields: 'Kolekcja ma opcję `i18n`, ale żadne z jej pól nie ma opcji `i18n`, więc żadnego pola nie można przetłumaczyć. Dodaj `i18n: true` lub `i18n: duplicate` do pól, które mają być tłumaczone.'
+    # Don’t localize `i18n` and `i18n: true`
+    collection_i18n_no_files: 'Kolekcja ma opcję `i18n`, ale żaden z jej plików nie ma opcji `i18n`, więc żadnego pliku nie można przetłumaczyć. Dodaj `i18n: true` do plików, które mają być tłumaczone.'
+    # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
+    collection_file_i18n_no_fields: 'Plik kolekcji ma opcję `i18n`, ale żadne z jego pól nie ma opcji `i18n`, więc żadnego pola nie można przetłumaczyć. Dodaj `i18n: true` lub `i18n: duplicate` do pól, które mają być tłumaczone.'
     # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
     missing_field_name: Pole {$count} musi mieć opcję `name` zdefiniowaną jako niepusty ciąg znaków.
     # {$name} is the invalid or duplicate field name
@@ -1722,6 +2643,8 @@ config:
     invalid_variable_type: Nazwa typu zmiennej `{$name}` jest nieprawidłowa. Nie może zawierać znaków specjalnych.
     duplicate_variable_type: Nazwy typów zmiennych muszą być unikalne, ale `{$name}` jest użyta więcej niż raz.
     date_field_type: 'Przestarzały typ pola Date nie jest obsługiwany w Sveltia CMS. Użyj typu pola DateTime z opcją `type: date`.'
+    # curly brackets in the placeholder are escaped with backslashes for MessageFormat 2
+    hidden_field_locale_without_i18n: Opcja `default` pola typu Hidden używa symbolu zastępczego `\{\{locale\}\}`, ale internacjonalizacja nie jest włączona dla kolekcji, więc treść nie ma języka, którym można go wypełnić.
     # {$timeZone} is the invalid IANA timezone identifier from the configuration
     invalid_timezone: 'Nieprawidłowa strefa czasowa: {$timeZone}. Musi być prawidłowym identyfikatorem strefy czasowej IANA, np. `America/New_York` lub `Asia/Tokyo`.'
     # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
@@ -1734,12 +2657,85 @@ config:
     invalid_list_variable_type: Typ zmiennej pola List jest nieprawidłowy. Opcja `widget` jest ustawiona na `{$widget}`, ale musi być `object`.
     # Don’t localize `fields`, and `types`
     invalid_object_field: Pole typu Object nie może mieć jednocześnie opcji `fields` i `types`.
+    # {$min} and {$max} are option names such as `min` and `max` or `minlength` and `maxlength`
+    invalid_range_options: Opcja `{$min}` nie może być większa niż opcja `{$max}`.
+    # {$step} is the configured value; Don’t localize `step`
+    invalid_step: Opcja `step` ma wartość `{$step}`, ale musi być większa od zera lub równa `-1`, aby wyłączyć krokowanie.
+    # Don’t localize `options`
+    select_field_no_options: Pole typu Select musi mieć co najmniej jeden element w opcji `options`.
+    # {$value} is the option value from the configuration; Don’t localize `options`
+    select_field_duplicate_option: Wartości `options` pola typu Select muszą być unikalne, ale `{$value}` występuje więcej niż raz.
+    # {$value} is the default value from the configuration; Don’t localize `default` and `options`
+    select_field_invalid_default: Opcja `default` pola typu Select ma wartość `{$value}`, ale nie jest ona jedną z wartości `options`.
+    # Don’t localize `fields` and `types`
+    list_field_no_subfields: Opcja `fields` lub `types` pola typu List musi mieć co najmniej jeden element. Pomiń tę opcję w przypadku listy zwykłych wartości.
+    # Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_object: Opcja `default` pola typu List zawiera obiekt, ale każdy element musi być zwykłą wartością, ponieważ pole nie ma opcji `fields` ani `types`.
+    # {$value} is the default item from the configuration; Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_item: Opcja `default` pola typu List zawiera `{$value}`, ale każdy element musi być obiektem, ponieważ pole ma opcję `fields` lub `types`.
+    # {$key} is a property name of the default item from the configuration; Don’t localize `default`
+    list_field_invalid_default_key: Opcja `default` pola typu List zawiera element z właściwością `{$key}`, ale żadne podpole nie ma takiej nazwy.
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    list_field_default_missing_type: Opcja `default` pola typu List zawiera element bez właściwości `{$typeKey}`, która identyfikuje jeden z typów w `types`.
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default item; Don’t localize `default` and `types`
+    list_field_invalid_default_type: Opcja `default` pola typu List zawiera element, którego właściwość `{$typeKey}` ma wartość `{$value}`, ale nie jest to jeden z typów w `types`.
+    # Don’t localize `map_key_field`, `fields` and `types`
+    list_field_map_key_no_subfields: Opcja `map_key_field` pola typu List wymaga opcji `fields` lub `types`, ponieważ każdy klucz jest pobierany z podpola.
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_not_found: Opcja `map_key_field` pola typu List odwołuje się do `{$name}`, ale żadne podpole nie ma takiej nazwy.
+    # {$name} is the subfield name, and {$type} is the variable type name; Don’t localize `map_key_field`
+    list_field_map_key_missing_in_type: Opcja `map_key_field` pola typu List odwołuje się do `{$name}`, ale typ `{$type}` nie ma podpola o tej nazwie.
+    # {$name} is the subfield name, and {$widget} is its field type; Don’t localize `map_key_field`
+    list_field_map_key_invalid_type: Opcja `map_key_field` pola typu List odwołuje się do `{$name}`, ale musi to być pole typu String, Relation lub Select, a nie pole typu `{$widget}`.
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `multiple`
+    list_field_map_key_multiple: Opcja `map_key_field` pola typu List odwołuje się do `{$name}`, ale to podpole nie może przyjmować wielu wartości, ponieważ każdy element wymaga pojedynczego klucza. Usuń jego opcję `multiple`.
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_option_not_string: Opcja `map_key_field` pola typu List odwołuje się do `{$name}`, ale opcje tego podpola muszą mieć wartości tekstowe, ponieważ każdy klucz jest przechowywany jako ciąg znaków.
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `required`
+    list_field_map_key_not_required: Opcja `map_key_field` pola typu List odwołuje się do `{$name}`, ale to podpole nie może być opcjonalne, ponieważ każdy element wymaga klucza. Usuń jego opcję `required`.
+    # {$name} is the subfield name; Don’t localize `map_key_field`, `i18n: false` and `i18n: duplicate`
+    list_field_map_key_not_localized: 'Opcja `map_key_field` pola typu List odwołuje się do `{$name}`, ale to podpole nie może mieć `i18n: false`, ponieważ elementy wymagają klucza w każdym języku. Użyj `i18n: duplicate` lub usuń tę opcję.'
+    # Don’t localize `i18n`, `duplicate_if_empty`, `multiple` and `true`
+    duplicate_if_empty_multiple: 'Opcja `i18n: duplicate_if_empty` nie jest obsługiwana w polu z opcją `multiple`, więc pole działa jak pole z `i18n: true`.'
+    # Don’t localize `default` and `multiple`
+    invalid_default_multiple: Opcja `default` musi być tablicą, ponieważ opcja `multiple` ma wartość `true`.
+    invalid_default_single: Opcja `default` musi być pojedynczą wartością, a nie tablicą, ponieważ opcja `multiple` nie ma wartości `true`.
+    # {$key} is a property name of the default object from the configuration; Don’t localize `default`
+    object_field_invalid_default_key: Opcja `default` pola typu Object ma właściwość `{$key}`, ale żadne podpole nie ma takiej nazwy.
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    object_field_default_missing_type: Opcja `default` pola typu Object nie ma właściwości `{$typeKey}`, która identyfikuje jeden z typów w `types`.
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default object; Don’t localize `default` and `types`
+    object_field_invalid_default_type: Właściwość `{$typeKey}` opcji `default` pola typu Object ma wartość `{$value}`, ale nie jest to jeden z typów w `types`.
+    # Don’t localize `default` and `output_code_only`
+    code_field_invalid_default_object: Opcja `default` pola typu Code musi być ciągiem znaków, ponieważ opcja `output_code_only` ma wartość `true`.
+    # {$key} is a property name of the default object, {$code} and {$lang} are the configured property names; Don’t localize `default` and `keys`
+    code_field_invalid_default_key: Opcja `default` pola typu Code ma właściwość `{$key}`, ale opcja `keys` zezwala tylko na `{$code}` i `{$lang}`.
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_invalid_expression: Opcja `value` pola typu Compute musi być prawidłowym wyrażeniem arytmetycznym, np. `\{\{fields.price\}\} * \{\{fields.quantity\}\}`, ponieważ opcja `value_type` ma wartość `{$valueType}`.
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_uuid_in_expression: Opcja `value` pola typu Compute nie może używać znacznika UUID, takiego jak `\{\{uuid\}\}`, ponieważ opcja `value_type` ma wartość `{$valueType}`, co czyni ją wyrażeniem arytmetycznym.
+    # {$value} is the default value and {$valueType} is the configured value type; Don’t localize `default` and `value_type`
+    number_field_default_not_integer: Opcja `default` pola typu Number ma wartość `{$value}`, ale musi być liczbą całkowitą, ponieważ opcja `value_type` ma wartość `{$valueType}`.
+    number_field_default_not_number: Opcja `default` pola typu Number ma wartość `{$value}`, ale musi być liczbą, ponieważ opcja `value_type` ma wartość `{$valueType}`.
+    # Don’t localize `fields` and `types`
+    object_field_no_subfields: Opcja `fields` lub `types` pola typu Object musi mieć co najmniej jeden element.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: Odwołanie do kolekcji `{$collection}` jest nieprawidłowe lub kolekcja nie jest zdefiniowana.
     relation_field_invalid_collection_file: Odwołanie do pliku `{$file}` jest nieprawidłowe lub plik nie jest zdefiniowany.
     # Don’t localize `file`
     relation_field_missing_file_name: Opcja `file` musi być zdefiniowana dla relacji do kolekcji plików.
     relation_field_invalid_value_field: Odwołanie do pola wartości `{$field}` jest nieprawidłowe lub pole nie jest zdefiniowane.
+    # {$collection} is the referenced collection name; Don’t localize `file`, `value_field` and `slug`.
+    # The curly brackets are escaped with backslashes for MessageFormat 2
+    relation_field_array_file_slug: Relacja do kolekcji `{$collection}` nie może przechowywać wartości `\{\{slug\}\}`, ponieważ przyjazny link wpisu w kolekcji z opcją `file` to jego pozycja, która zmienia się, gdy wpisy są przestawiane lub usuwane. Zamiast tego ustaw opcję `value_field` na pole o unikalnej wartości.
+    # {$collection} is the referenced collection name; Don’t localize `file`
+    relation_field_array_file_workflow: Kolekcja z opcją `file` nie może mieć relacji do kolekcji `{$collection}`, która używa obiegu redakcyjnego lub obiegu podglądu, ponieważ odwołań do wpisu, którego nazwę zmieniono lub który usunięto w tamtej kolekcji, nie można zaktualizować w pliku.
+    relation_field_invalid_display_field: Odwołanie do pola wyświetlania `{$field}` jest nieprawidłowe lub pole nie jest zdefiniowane.
+    relation_field_invalid_search_field: Odwołanie do pola wyszukiwania `{$field}` jest nieprawidłowe lub pole nie jest zdefiniowane.
+    relation_field_invalid_filter_field: Odwołanie do pola filtrowania `{$field}` jest nieprawidłowe lub pole nie jest zdefiniowane.
+    relation_field_invalid_sort_field: Odwołanie do pola sortowania `{$field}` jest nieprawidłowe lub pole nie jest zdefiniowane.
+    # Don’t localize `sort_by` and `file`
+    relation_field_sort_by_file_ignored: Opcja `sort_by` nie dotyczy relacji do pliku, którego opcje są uporządkowane zgodnie z kolejnością elementów listy. Zostanie zignorowana.
     unexpected: Nieoczekiwany błąd
 
     # Schema validation errors, reported when the configuration doesn’t match the published JSON
@@ -1772,18 +2768,56 @@ config:
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: Identyfikator aplikacji OAuth nie jest zdefiniowany. Użytkownicy muszą podać token dostępu, aby się zalogować.
+    # Don’t localize `prefix`
+    site_library_prefix_template: Opcja `prefix` biblioteki multimediów zawiera znaczniki szablonu, które są obsługiwane tylko na poziomie pola, ponieważ na najwyższym poziomie nie ma wpisu, z którego można je wypełnić.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: Opcja `{$prop}` nie jest obsługiwana w Sveltia CMS. Zostanie zignorowana.
+    # Don’t localize `stages`, `publish_mode`, `editorial_workflow` and {$type}, which is `preview` or `simple`
+    publish_mode_stages_ignored: Opcja `stages` w `publish_mode` dotyczy tylko trybu publikacji `editorial_workflow`, więc przy `{$type}` jest ignorowana.
+    # Don’t localize `pattern`, `m` and `s`
+    inline_component_multiline_pattern: Wzorzec `pattern` tego komponentu śródliniowego ma flagę `m` lub `s` albo dopasowuje podziały wierszy, ale komponent śródliniowy jest dopasowywany tylko w obrębie akapitu.
+    # {$name} is a button or component name and {$option} is `buttons` or `editor_components`; Don’t localize them and `multiline: false`
+    single_line_block_item: 'Element `{$name}` opcji `{$option}` jest ignorowany, ponieważ pole z `multiline: false` może zawierać tylko treść śródliniową.'
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: Ustawiono zarówno `picker_utc`, jak i nowsze opcje stref czasowych (`input_timezone` lub `output_utc`). Nowe opcje mają pierwszeństwo. Rozważ usunięcie `picker_utc` z konfiguracji.
+    # Don’t localize `localize_format` and `format`
+    localize_format_without_format: Opcja `localize_format` nie ma żadnego efektu, ponieważ pole nie ma opcji `format`, a jego wartość jest przechowywana w formacie ISO 8601.
+    # {$name} is a template tag like `fields.lines.*.price`; Don’t localize `value`, `*` and `sum()`
+    compute_field_wildcard_without_item: Opcja `value` pola typu Compute odwołuje się do `{$name}`, ale pole nie znajduje się w elemencie listy, którą reprezentuje `*`, więc nie zwraca żadnej wartości. Tylko funkcja agregująca, taka jak `sum()`, może używać wszystkich elementów listy.
+    # {$name} is a template tag like `fields.lines.*.amount`; Don’t localize `value`
+    compute_field_self_reference: Opcja `value` pola typu Compute odwołuje się do samego pola jako `{$name}`, więc jego wartość zmienia się przy każdym obliczeniu i nigdy się nie stabilizuje.
+    # {$name} is a template tag like `fields.total`; Don’t localize `value`
+    compute_field_reference_cycle: Opcja `value` pola typu Compute odwołuje się do `{$name}`, innego pola typu Compute, które odwołuje się z powrotem do tego pola, bezpośrednio lub przez inne pola, więc ich wartości nigdy się nie stabilizują.
+    # Don’t localize `localize_format`, `true` and `de`
+    localize_format_without_i18n: Opcja `localize_format` ma wartość `true`, ale internacjonalizacja nie jest włączona dla kolekcji, więc wartość jest zapisywana po angielsku. Zamiast tego ustaw opcję na kod języka, np. `de`.
+    # {$locale} is the locale code from the configuration; Don’t localize `localize_format`
+    localize_format_unsupported_locale: Opcja `localize_format` ma wartość `{$locale}`, która nie jest obsługiwanym językiem, więc wartość jest zapisywana po angielsku.
     # Don’t localize `preview_path`
     preview_path_no_date_field: Opcja `preview_path` używa tagów daty i czasu, ale kolekcja nie ma pola DateTime, z którego można je odczytać, więc link do podglądu nie zostanie wyświetlony.
     # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
     preview_path_date_field_not_found: Opcja `preview_path_date_field` odwołuje się do pola o nazwie `{$name}`, ale pole DateTime o tej nazwie nie jest zdefiniowane, więc link do podglądu nie zostanie wyświetlony.
     # {$name} is the template tag from the configuration; Don’t localize `preview_path`
     preview_path_field_not_found: Opcja `preview_path` odwołuje się do `{$name}`, ale takie pole nie jest zdefiniowane w kolekcji, więc link do podglądu nie zostanie wyświetlony.
+    # {$name} is the default identifier field name; Don’t localize `identifier_field` and `slug`
+    missing_identifier_field: Kolekcja nie ma pola `{$name}`, z którego można nadawać nazwy nowym wpisom, więc każdy nowy wpis otrzymuje losowy przyjazny link. Dodaj pole `{$name}` lub ustaw opcję `identifier_field` albo `slug`.
+    # Don’t localize `slug`, `i18n`, `multiple_files`, `multiple_folders` and `multiple_root_folders`
+    slug_i18n_ineffective: Opcja `i18n` w `slug` nie ma żadnego efektu, ponieważ kolekcja nie używa struktury i18n `multiple_files`, `multiple_folders` ani `multiple_root_folders`, w której każdy język ma własny plik.
+    # Don’t localize `slug`, `template` and `auto_increment`
+    slug_template_ignored: Opcja `template` w `slug` jest ignorowana, ponieważ opcja `auto_increment` zamiast tego numeruje przyjazne linki.
+    # {$file} is the file path; Don’t localize `file`, `locale`, `i18n`, `false`,
+    # `omit_default_locale_from_file_path` and the example paths. The curly brackets in the examples
+    # are escaped with backslashes for MessageFormat 2
+    locale_not_omitted_from_file_path: Symbolu zastępczego `locale` nie można usunąć ze ścieżki `file` o wartości `{$file}`, więc domyślny język pozostaje w niej mimo opcji i18n `omit_default_locale_from_file_path`. Aby pominąć język, użyj symbolu zastępczego jako całej nazwy folderu, np. `\{\{locale\}\}/about.md`, lub między nazwą pliku a rozszerzeniem, np. `about.\{\{locale\}\}.md`. Aby go zachować, ustaw tę opcję na `false` w opcji `i18n` pliku.
+    # Don’t localize `i18n`
+    i18n_not_configured: Opcja `i18n` jest włączona, ale internacjonalizacja nie jest skonfigurowana na najwyższym poziomie konfiguracji ani w kolekcji, więc opcja nie ma żadnego efektu.
+    # Don’t localize `public_folder` and `media_folder`
+    empty_public_folder: Opcja `public_folder` jest pustym ciągiem znaków, więc zamiast niej dla ścieżek zasobów zapisywanych we wpisach używana jest ścieżka `media_folder`. Usuń tę opcję lub ustaw ją na ścieżkę, której chcesz używać, np. `/images`.
     # {$option} is an option path from the configuration, such as `filter.Regulation`
     schema_unknown_option: Opcja `{$option}` nie jest zdefiniowana w schemacie konfiguracji Sveltia CMS. Zostanie zignorowana. Sprawdź, czy nie ma literówki lub błędu składni.
+    # Don’t localize `default_localized`, `default` and `i18n`
+    default_localized_without_i18n: Opcja `default_localized` nie ma żadnego efektu, ponieważ internacjonalizacja nie jest włączona dla kolekcji. Zamiast niej użyj opcji `default`.
+    # {$locale} is a locale code from the configuration; Don’t localize `default_localized`
+    default_localized_unknown_locale: Opcja `default_localized` ma wartość dla `{$locale}`, który nie jest jednym z języków kolekcji, więc ta wartość nigdy nie jest używana.
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'Szczegóły znajdziesz w informacjach o kompatybilności: {$link}'
@@ -1816,6 +2850,11 @@ viewing_editorial_workflow: 'Przeglądasz teraz tablicę obiegu redakcyjnego. Sz
 # Same as above, for an Open Authoring contributor: their board has no Ready column, because only
 # a maintainer can publish
 viewing_open_authoring_workflow: 'Przeglądasz teraz tablicę obiegu redakcyjnego. Szkice: {$draft}. W recenzji: {$review}. Oczekujące na usunięcie: {$deletion}.'
+# Same as above, when the In Review stage is left out with the `stages` publish mode option
+viewing_editorial_workflow_without_review: 'Przeglądasz teraz tablicę obiegu redakcyjnego. Szkice: {$draft}. Gotowe: {$ready}. Oczekujące na usunięcie: {$deletion}.'
+# Same as above, when all the content uses Preview Workflow, which has no review stages, so the
+# page only lists the drafts
+viewing_preview_workflow: 'Przeglądasz teraz stronę Szkice. Szkice: {$draft}. Oczekujące na usunięcie: {$deletion}.'
 
 # Workflow status names. `drafts` is the plural form used as a column heading,
 # while `draft` is the singular form used in the editor’s status button.
@@ -1827,6 +2866,10 @@ status:
   # A pending removal, which is a status of its own rather than a stage: it has no review to go
   # through, only the deletion itself to carry out or call off
   pending_deletion: Oczekuje na usunięcie
+  # Merged changes the site hasn’t caught up with yet: it’s being rebuilt and deployed from the
+  # merge, so a published entry isn’t live and a deleted one is still up. Heading of the tray below
+  # the board that lists them until the site has caught up
+  deploying: Wdrażanie
 
 workflow:
   # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
@@ -1874,6 +2917,14 @@ workflow:
   status_updated: Status zaktualizowany.
   # Error notification when the status could not be changed
   status_change_failed: Nie udało się zmienić statusu. Spróbuj ponownie.
+  # Workflow page: toolbar button that reads the pull requests again, to pick up the changes made
+  # by anyone else since the board was loaded, and the toast notifications shown while doing so and
+  # once done
+  refresh: Odśwież
+  refreshing: Odświeżanie…
+  refreshed: Tablica jest aktualna.
+  # Error notification when the board could not be refreshed
+  refresh_failed: Nie udało się odświeżyć tablicy. Spróbuj ponownie.
   # Error notification when the status can’t be changed because the entry is incomplete. Required
   # fields can be left empty while the entry is a draft, but not once it moves on from there
   status_change_blocked: Wpis zawiera błędy. Popraw je przed zmianą statusu.
@@ -1884,6 +2935,10 @@ workflow:
   # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
   send_for_review: Wyślij do recenzji
   confirm_sending_for_review: Twoje zmiany zostały zapisane jako szkic. Czy wysłać wpis do recenzji, aby ktoś mógł go przejrzeć i opublikować?
+  # Same as above, when the In Review stage is left out with the `stages` publish mode option, so
+  # the next step is to mark the entry as ready to be published
+  mark_as_ready: Oznacz jako gotowe
+  confirm_marking_as_ready: Twoje zmiany zostały zapisane jako szkic. Czy oznaczyć wpis jako gotowy, aby można go było opublikować?
   # Editor toolbar: button shown when the entry is ready to be published
   publish_entry: Opublikuj wpis
   # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
@@ -1917,6 +2972,8 @@ workflow:
       few  {{ {$count} z nich nie zostały jeszcze opublikowane, więc Twoje nieopublikowane zmiany zostaną odrzucone. Opublikowane wersje pozostaną opublikowane. }}
       many {{ {$count} z nich nie zostało jeszcze opublikowanych, więc Twoje nieopublikowane zmiany zostaną odrzucone. Opublikowane wersje pozostaną opublikowane. }}
       *    {{ {$count} z nich nie zostało jeszcze opublikowanych, więc Twoje nieopublikowane zmiany zostaną odrzucone. Opublikowane wersje pozostaną opublikowane. }}
+  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
+  confirm_publishing_entry_after_build: Czy na pewno chcesz opublikować ten wpis? Twoje zmiany pojawią się w witrynie po jej ponownym zbudowaniu.
   # Workflow page: toast notifications shown while an entry is being published from a card, and
   # once publishing has completed
   publishing_entry: Publikowanie wpisu…
@@ -1928,10 +2985,55 @@ workflow:
   entry_deleted: Wpis usunięty.
   # Error notification when publishing fails
   publishing_entry_failed: Nie udało się opublikować wpisu. Spróbuj ponownie.
+  # Error notification when an entry can’t be published from the CMS, because its request also
+  # changes files that aren’t part of the entry and that the CMS doesn’t show, goes somewhere other
+  # than the site’s branch, or is too large to check. Keep the wording free of Git jargon
+  publish_refused_other_changes: Tego wpisu nie można tutaj opublikować, ponieważ zawiera inne zmiany, których CMS nie może Ci pokazać. Poproś programistę o ich przejrzenie.
+  # Error notification when an entry can’t be published because its branch has been committed to
+  # since the entry was opened, so what would be published isn’t what was reviewed
+  publish_refused_entry_changed: Wpis został zmieniony od czasu, gdy go otwarto. Załaduj stronę ponownie, aby przejrzeć najnowszą wersję przed publikacją.
+  review_on_x: Przejrzyj w {$service}
+  from_fork: Z forka
+  fork_entry_editable: Ten wpis pochodzi z pull requesta współtwórcy otwartego z “{$fork}”. Twoje zmiany są zapisywane w jego gałęzi. Przejrzyj i scal pull request w usłudze Git.
+  fork_entry_locked: Ten wpis pochodzi z pull requesta współtwórcy otwartego z “{$fork}”. Współtwórca nie zezwala opiekunom na jego edycję, więc można go tutaj tylko wyświetlić.
+  fork_not_editable: Współtwórca nie zezwala opiekunom na edycję tego pull requesta.
+  fork_entry_gone: Pull request współtwórcy nie jest już otwarty, więc nie można w nim zapisać zmian.
+  # Error shown in the save error dialog when an entry can’t be saved for review, because a request
+  # the CMS doesn’t show is already open from the branch the entry would be saved to. `{$number}` is
+  # the request number, e.g. `#12` on GitHub or `!12` on GitLab. Keep the wording free of Git jargon
+  branch_in_use: Poza CMS jest już otwarte inne zgłoszenie ({$number}) dla tego wpisu. Poproś programistę o jego zamknięcie.
   # Workflow page: empty column message
   no_entries: Brak wpisów.
   # Workflow page: aria-label for a draggable entry card
   drag_entry: Przeciągnij, aby zmienić status
+  # Workflow page: note on a card in the Deploying tray, marking an entry that’s being removed from
+  # the site rather than published to it
+  deploying_deletion: Usunięcie
+  # Workflow page: note on a card listing the new entries that were created from a Relation field
+  # of the entry and are published along with it, e.g. “Also adds Section: Getting Started”
+  companion_entries: 'Dodaje również: {$entries}'
+  # Workflow page: note on a card listing the existing entries that were edited from a Relation
+  # field of the entry and are published along with it, e.g. “Also changes Author: Ada Lovelace”
+  edited_companion_entries: 'Zmienia również: {$entries}'
+  # Workflow page: one of the entries listed by `companion_entries` or `edited_companion_entries`,
+  # named by its collection’s singular label and its title
+  companion_entry: '{$collection}: {$title}'
+
+# Dialog asking the user for a commit message every time changes are saved, when the site is
+# configured to. The message is recorded in the repository’s history along with the changes
+commit_message:
+  # Dialog title
+  title: Opis commita
+  # Description when the user writes the whole message, which the text box is filled in with
+  description_replace: Opisz swoje zmiany. Opis zostanie zapisany w historii razem z nimi.
+  # Description when the text the user enters is added before or after a message the CMS writes
+  description_addition: Dodaj notatkę do opisu zapisywanego w historii razem z Twoimi zmianami, np. numer zgłoszenia. Można pozostawić puste.
+  # Accessible name of the text box when the user writes the whole message
+  message: Opis commita
+  # Accessible name of the text box when the text is added before or after the message
+  addition: Notatka
+  # Preview of the message as it will be recorded. {$message} is the message
+  preview: 'Opis: {$message}'
 
 # Open Authoring: a contributor without write access to the configured repository works in a fork
 # of it, and their changes reach the site through a pull request a maintainer merges
@@ -1945,6 +3047,10 @@ open_authoring:
   fork_declined: Aby proponować zmiany, potrzebujesz forka repozytorium na swoim koncie.
   # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
   fork_failed: Nie udało się utworzyć forka repozytorium “{$repo}” na Twoim koncie.
+  # Error shown when the user’s fork doesn’t have the branch the CMS is configured with, so there’s
+  # nothing to start their changes from. {$fork} and {$repo} are repository identifiers in
+  # owner/repo format, {$branch} is the branch name
+  fork_branch_missing: Twój fork “{$fork}” nie ma gałęzi “{$branch}”. Zaktualizuj fork z repozytorium “{$repo}”, a następnie zaloguj się ponownie.
   # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
   # because the API rate limit is exhausted. {$repo} is the repository identifier
   permission_check_failed: Nie udało się sprawdzić Twojego dostępu do repozytorium “{$repo}”. Spróbuj ponownie za chwilę.
@@ -1959,6 +3065,10 @@ open_authoring:
   private_repo_scope_required: Twoje logowanie nie obejmuje dostępu do prywatnych repozytoriów, więc nie można odczytać repozytorium “{$repo}”. Poproś opiekuna o sprawdzenie ustawień uwierzytelniania CMS.
   # Error shown when a contributor tries to publish an entry, which only a maintainer can do
   publish_unsupported: Tylko opiekun może publikować zmiany w tej witrynie. Zamiast tego oznacz swój wpis jako “W recenzji”, a ktoś się nim zajmie.
+  # Error shown when a contributor changes the status of an entry whose request a maintainer has
+  # published since the page was loaded, leaving nothing to review. The entry then leaves the
+  # Editorial Workflow board and the editor closes. Keep the wording free of Git jargon
+  entry_already_published: Opiekun już opublikował ten wpis, więc nie ma już nic do recenzji.
   # Error shown when a change would go straight to the site instead of being reviewed, which a
   # contributor can’t do. It covers media library uploads and deletions, and entry reordering
   direct_commit_unsupported: Tej zmiany nie można wprowadzić bezpośrednio. Do recenzji można proponować tylko edycje wpisów.
@@ -1974,11 +3084,10 @@ open_authoring:
 # Settings page aria-label
 categories: Kategorie
 
-# Site Configuration Editor
-site_configuration_editor: Edytor konfiguracji witryny
-
 # Preferences panels
 prefs:
+  account:
+    title: Konto
   # API key management feedback messages
   changes:
     api_key_saved: Klucz API zapisany.
@@ -2028,8 +3137,8 @@ prefs:
         select_service: Wybierz usługę
       api_keys:
         title: Klucze API usług tłumaczeniowych
-        description: Zarządzaj kluczami API dla <a>usług tłumaczeniowych</a>.
-      # API key input label, e.g., ”DeepL Key”
+        description: Zarządzaj kluczami API dla <a>usług tłumaczeniowych</a>. Kluczami API ogólnych usług AI można zarządzać w ustawieniach AI.
+      # API key input label, e.g., “DeepL Key”
       # {$service} is the translation service name
       field_label: Klucz {$service}
       # Description with embedded links
@@ -2043,7 +3152,7 @@ prefs:
       api_keys:
         title: Klucze API usług zdjęć stockowych
         description: Zarządzaj kluczami API dla <a>usług zdjęć stockowych</a>.
-      # API key input label, e.g., ”Unsplash API Key”
+      # API key input label, e.g., “Unsplash API Key”
       # {$service} is the stock photo service name
       field_label: Klucz API {$service}
       # Description with embedded links
@@ -2062,6 +3171,16 @@ prefs:
       field_label: Klucz API {$service}
       no_services: Nie skonfigurowano żadnych <a>usług przechowywania w chmurze</a>.
 
+  # AI panel
+  ai:
+    title: AI
+    api_keys:
+      title: Klucze API usług AI
+      description: Zarządzaj kluczami API dla usług AI.
+    # API key input label, e.g., “OpenAI GPT API Key”
+    # {$service} is the AI service name
+    field_label: Klucz API {$service}
+
   # Accessibility panel
   accessibility:
     title: Dostępność
@@ -2072,6 +3191,7 @@ prefs:
 
   # Data Management panel
   data:
+    title: Zarządzanie danymi
     clear_data:
       title: Wyczyść dane
       # Clear File Cache button
@@ -2087,13 +3207,23 @@ prefs:
 
   # Developer panel
   developer:
+    title: Programista
     developer_mode:
       title: Tryb programisty
       description: Włącz niektóre funkcje skierowane do programistów, w tym szczegółowe logi w konsoli i natywne menu kontekstowe.
       switch_label: Włącz tryb programisty
+    local_git:
+      title: Commity Git
+      description: Zatwierdzaj zmiany w bieżącej gałęzi lokalnego repozytorium przy każdym zapisie, tak jak robi to CMS podczas pracy ze zdalnym repozytorium. Następnie możesz przejrzeć i wypchnąć commity za pomocą swoich zwykłych narzędzi Git.
+      switch_label: Zatwierdzaj zmiany w Git
+      checking: Sprawdzanie repozytorium…
+      # {$branch} is the branch name, {$name} and {$email} are the commit author’s name and email address
+      ready: Zmiany będą zatwierdzane w gałęzi {$branch} jako {$name} ({$email}).
+      # {$reason} is one of the `local_git_skip_reasons` strings
+      not_ready: Nie można teraz zatwierdzić zmian. {$reason}
     deploy_hook:
       title: Webhook wdrożeniowy
-      description: Wprowadź adres URL webhooka, który zostanie wywołany po ręcznym uruchomieniu wdrożenia poprzez wybranie Opublikuj zmiany. Można pozostawić puste, jeśli używasz GitHub Actions.
+      description: Wprowadź adres URL webhooka, który zostanie wywołany po ręcznym uruchomieniu wdrożenia poprzez wybranie Opublikuj zmiany. Można pozostawić puste, jeśli używasz GitHub Actions lub GitLab CI/CD.
       # Hook URL input
       url:
         field_label: Adres URL hooka

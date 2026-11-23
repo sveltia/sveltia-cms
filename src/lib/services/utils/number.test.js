@@ -65,6 +65,12 @@ describe('roundFloatError()', () => {
     expect(roundFloatError(42)).toBe(42);
     expect(Object.is(roundFloatError(-0), -0)).toBe(true);
   });
+
+  test('should keep a number with 16 or more integer digits as is', () => {
+    expect(roundFloatError(1234567890123456.5)).toBe(1234567890123456.5);
+    expect(roundFloatError(-1234567890123456.5)).toBe(-1234567890123456.5);
+    expect(roundFloatError(1e15 + 0.25)).toBe(1e15 + 0.25);
+  });
 });
 
 describe('toFixed', () => {

@@ -20,7 +20,7 @@ import {
 vi.mock('@sveltia/utils/crypto');
 vi.mock('@sveltia/utils/file');
 vi.mock('fast-deep-equal');
-vi.mock('$lib/services/assets', () => ({
+vi.mock('$lib/services/assets/entry-relative', () => ({
   fillInternalPathTemplate: vi.fn(),
 }));
 
@@ -38,6 +38,7 @@ vi.mock('$lib/services/assets/folders', () => ({
 vi.mock('$lib/services/assets/name', () => ({
   getPendingFileName: vi.fn(() => 'filled.png'),
 }));
+vi.mock('$lib/services/contents/collection', () => ({ getCollection: vi.fn() }));
 vi.mock('$lib/services/contents/draft/slugs', () => ({
   getSlugs: vi.fn(),
 }));
@@ -51,7 +52,7 @@ const { allAssetFolders } = await import('$lib/services/assets/folders');
 const { getHash } = await import('@sveltia/utils/crypto');
 const { getPathInfo, isValidFileType } = await import('@sveltia/utils/file');
 const { default: equal } = await import('fast-deep-equal');
-const { fillInternalPathTemplate } = await import('$lib/services/assets');
+const { fillInternalPathTemplate } = await import('$lib/services/assets/entry-relative');
 const { allAssets } = await import('$lib/services/assets/state');
 const { getSlugs } = await import('$lib/services/contents/draft/slugs');
 const { getPendingFileName } = await import('$lib/services/assets/name');
@@ -927,6 +928,38 @@ describe('contents/fields/file/helpers', () => {
         expect(result).toBe('content/posts/images');
       });
 
+      it('should return the folder named after an entry in subfolders', async () => {
+        const { getCollection } = await import('$lib/services/contents/collection');
+
+        vi.mocked(getPathInfo).mockImplementation(
+          (path) => /** @type {any} */ ({ dirname: path.slice(0, path.lastIndexOf('/')) }),
+        );
+        // The `path` option puts the entry in subfolders, so its relative assets are saved to a
+        // folder named after it, next to the entry file
+        vi.mocked(getCollection).mockReturnValue(
+          /** @type {any} */ ({
+            name: 'posts',
+            _type: 'entry',
+            _file: { basePath: 'content/posts', subPath: '{{year}}/{{month}}/{{slug}}' },
+          }),
+        );
+
+        const result = getTargetFolderPath({
+          entry: /** @type {any} */ ({
+            locales: { _default: { path: 'content/posts/2025/06/my-post.md' } },
+          }),
+          folder: /** @type {any} */ ({
+            collectionName: 'posts',
+            entryRelative: true,
+            internalPath: 'content/posts',
+            internalSubPath: '',
+          }),
+        });
+
+        expect(result).toBe('content/posts/2025/06/my-post');
+        expect(getCollection).toHaveBeenCalledWith('posts');
+      });
+
       it('should resolve against the repository root for an entry at the root', () => {
         vi.mocked(getPathInfo).mockReturnValue(/** @type {any} */ ({ dirname: undefined }));
 
@@ -1535,6 +1568,22 @@ describe('contents/fields/file/helpers', () => {
       });
 
       expect(result).toEqual([]);
+    });
+
+    it('should leave out the assets of a contributor’s pull request', () => {
+      allAssets.current = [
+        { ...makeAsset('own.jpg'), workflow: { branch: 'cms/posts/hello' } },
+        { ...makeAsset('fork.jpg'), workflow: { branch: 'alice/website:cms/posts/hello' } },
+      ];
+
+      const result = listAssets({
+        kind: undefined,
+        folder,
+        folderPath: 'content/posts/images',
+        unsavedAssets: [],
+      });
+
+      expect(result.map(({ name }) => name)).toEqual(['own.jpg']);
     });
 
     it('should include matching assets from the allAssets store', () => {

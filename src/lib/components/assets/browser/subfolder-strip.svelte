@@ -30,14 +30,12 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     subfolders,
     viewType = 'grid',
     onOpen = undefined,
     multiple = false,
     selectedPaths = [],
     onSelect = undefined,
-    /* eslint-enable prefer-const */
   } = $props();
 
   /** @type {HTMLElement | undefined} */

@@ -8,6 +8,16 @@ import { getCommitAuthorName } from '$lib/services/utils/commit-author';
  */
 
 /**
+ * Get the value to sort a file by its name. The file extension is excluded to sort numbered files
+ * properly, e.g. `hero.png`, `hero-1.png`, `hero-2.png` instead of `hero-1.png`, `hero-2.png`,
+ * `hero.png`. Only the extension is removed, so dots in the rest of the name, e.g. `v1.10.png`,
+ * still count.
+ * @param {string} name File name.
+ * @returns {string} Name without the extension.
+ */
+export const getNameSortValue = (name) => getPathInfo(name).filename;
+
+/**
  * Get an asset’s property value.
  * @param {Asset} asset Asset.
  * @param {string} key Sorting key. A field name of the asset or a special key like `commit_author`,
@@ -25,11 +35,8 @@ export const getValue = (asset, key) => {
     return commitDate;
   }
 
-  // Exclude the file extension when sorting by name to sort numbered files properly, e.g.
-  // `hero.png`, `hero-1.png`, `hero-2.png` instead of `hero-1.png`, `hero-2.png`, `hero.png`. Only
-  // the extension is removed, so dots in the rest of the name, e.g. `v1.10.png`, still count
   if (key === 'name') {
-    return getPathInfo(asset.name).filename;
+    return getNameSortValue(asset.name);
   }
 
   return /** @type {Record<string, any>} */ (asset)[key] ?? '';

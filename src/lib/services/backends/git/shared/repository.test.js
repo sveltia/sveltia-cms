@@ -8,6 +8,7 @@ import {
   getPullRequestPath,
   getRepositoryPath,
   getRepoURL,
+  getRestBranchPath,
   initRepositoryInfo,
   isSameRepository,
   REPOSITORY_INFO_PLACEHOLDER,
@@ -112,6 +113,14 @@ describe('git/shared/repository', () => {
 
     it('should encode the owner and repository names', () => {
       expect(getRepositoryPath({ owner: 'a b', repo: 'c/d' })).toBe('/repos/a%20b/c%2Fd');
+    });
+  });
+
+  describe('getRestBranchPath', () => {
+    it('should return the REST API path of the branch, keeping its slashes', () => {
+      expect(getRestBranchPath({ owner: 'owner', repo: 'repo' }, 'feature/a b')).toBe(
+        '/repos/owner/repo/branches/feature/a%20b',
+      );
     });
   });
 

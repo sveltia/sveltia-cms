@@ -1,11 +1,12 @@
 import { backend } from '$lib/services/backends';
+import { isViewer } from '$lib/services/config/readonly';
 import {
   deployments,
   lastCommitPublishHint,
   productionSHA,
   setLastCommitPublishHint,
 } from '$lib/services/deployments';
-import { prefs } from '$lib/services/user/prefs.svelte';
+import { getDeployHook } from '$lib/services/user/api-keys';
 import { isSecureURL } from '$lib/services/utils/networking';
 import { createDerivedState } from '$lib/services/utils/state.svelte';
 
@@ -45,23 +46,25 @@ export const isLastCommitPublished = createDerivedState(() => {
 
 /**
  * Whether a deployment can be triggered by hand: there has to be a way to do it — a deploy hook
- * URL configured by the user, or a backend that can trigger a build itself — and the last commit
- * has to be out of date.
+ * URL configured by the user or shared by an admin, or a backend that can trigger a build itself —
+ * and the last commit has to be out of date. A viewer can’t change the site, which includes
+ * publishing it.
  */
 export const canTriggerDeployment = createDerivedState(
   () =>
-    (!!prefs.deployHookURL || typeof backend.current?.triggerDeployment === 'function') &&
-    !isLastCommitPublished.current,
+    (!!getDeployHook() || typeof backend.current?.triggerDeployment === 'function') &&
+    !isLastCommitPublished.current &&
+    !isViewer(),
 );
 
 /**
- * Trigger a manual deployment on the CI/CD provider, by calling the deploy hook URL configured by
- * the user if there is one, or the backend’s own API otherwise. Once the request has been accepted,
+ * Trigger a manual deployment on the CI/CD provider, by calling the deploy hook if there is one,
+ * or the backend’s own API otherwise. Once the request has been accepted,
  * the last commit is expected to have started a deployment.
  * @throws {Error} When the deploy hook URL is not secure, or the request has failed.
  */
 export const triggerDeployment = async () => {
-  const { deployHookURL, deployHookAuthHeader } = prefs;
+  const { url: deployHookURL, authHeader: deployHookAuthHeader } = getDeployHook() ?? {};
 
   if (deployHookURL && !isSecureURL(deployHookURL)) {
     throw new Error('Deploy hook URL must use HTTPS or localhost');

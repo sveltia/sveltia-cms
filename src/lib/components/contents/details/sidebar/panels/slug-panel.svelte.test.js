@@ -1,9 +1,12 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
+import { getReadonlySlugs } from '$lib/services/contents/editor/slug';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 
 import SlugPanel from './slug-panel.svelte';
+
+vi.mock('$lib/services/contents/editor/slug', { spy: true });
 
 const i18n = {
   i18nEnabled: true,
@@ -103,6 +106,29 @@ describe('SlugPanel', () => {
 
     draft.currentValues.fr.title = 'Salut';
     await expect.element(panel.getByRole('textbox', { name: 'French' })).toHaveTextContent('salut');
+  });
+
+  test('tells why a number is added to a slug another entry uses', async () => {
+    vi.mocked(getReadonlySlugs).mockReturnValue([
+      ['_', { slug: 'hello-world-1', takenSlug: 'hello-world' }],
+    ]);
+
+    try {
+      await renderPanel({ slug: '{{title}}', draft: { slugEditor: {} } });
+
+      const panel = page.getByRole('group', { name: 'Slug' });
+
+      await expect
+        .element(panel.getByRole('textbox', { name: 'Slug' }))
+        .toHaveTextContent('hello-world-1');
+      await expect
+        .element(panel.getByRole('status'))
+        .toHaveTextContent(
+          'The slug “\u2068hello-world\u2069” is used for another entry, so a number will be added to it.',
+        );
+    } finally {
+      vi.mocked(getReadonlySlugs).mockRestore();
+    }
   });
 
   test('lets the slug of an existing entry be updated', async () => {

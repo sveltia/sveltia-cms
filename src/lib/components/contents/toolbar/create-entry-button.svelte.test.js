@@ -22,7 +22,7 @@ describe('CreateEntryButton', () => {
           folder: 'content/docs',
           nested: { depth: 3 },
           index_file: { name: '_index', label: 'Section Home', icon: 'home' },
-          meta: { path: { widget: 'string', label: 'Path' } },
+          meta: { path: {} },
           fields: [{ name: 'title', widget: 'string' }],
         },
       ],

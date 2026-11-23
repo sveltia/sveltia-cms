@@ -35,7 +35,7 @@
     warnUnknownType,
   } from '$lib/services/contents/fields/object/helpers';
   import { getDraftObjectThumbnail } from '$lib/services/contents/fields/object/thumbnail';
-  import { getFieldLabel, getLocalizedOption } from '$lib/services/contents/i18n/options';
+  import { getFieldLabel } from '$lib/services/contents/i18n/options';
 
   /**
    * @import {
@@ -71,7 +71,6 @@
 
   /** @type {FieldEditorProps & Props} */
   let {
-    /* eslint-disable prefer-const */
     locale,
     keyPath,
     typedKeyPath,
@@ -81,7 +80,6 @@
     // `FieldEditor` only renders the editor in a locale where the field is shown, and makes it
     // read-only in a locale whose values follow the default locale
     readonly = false,
-    /* eslint-enable prefer-const */
   } = $props();
 
   const fieldId = $props.id();
@@ -318,7 +316,7 @@
     bind:this={wrapper}
     role="group"
     class="wrapper"
-    class:unknown-type={unknownType}
+    class:object-unknown-type={unknownType}
     class:expanded={parentExpanded}
     aria-labelledby={labelledBy}
   >
@@ -356,9 +354,8 @@
         })}
         expanded={parentExpanded}
         {unknownType}
-        hint={readonly || !typeConfig
-          ? undefined
-          : getLocalizedOption({ config: typeConfig, option: 'hint', locale })}
+        {typeConfig}
+        {readonly}
         getSummary={() => summaryText}
         getThumbnail={() => thumbnailSource}
         {summaryId}
@@ -376,15 +373,6 @@
     &.expanded,
     &:has(:global(.summary)) {
       border-bottom-width: 2px;
-    }
-
-    &.unknown-type {
-      overflow: hidden;
-
-      :global(.alert) {
-        border-width: 0;
-        border-radius: 0;
-      }
     }
   }
 

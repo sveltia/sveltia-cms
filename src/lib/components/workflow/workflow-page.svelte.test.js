@@ -7,8 +7,8 @@ import { backendName } from '$lib/services/backends';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { deployments, productionSHA } from '$lib/services/deployments';
 import {
+  allUnpublishedEntries,
   publishingBranches,
-  unpublishedEntries,
   unpublishedEntriesLoaded,
 } from '$lib/services/workflow';
 import { resetDeployingEntries, trackDeployingEntry } from '$lib/services/workflow/deploy';
@@ -112,7 +112,7 @@ describe('WorkflowPage', () => {
     resetDeployingEntries();
     deployments.current = {};
     productionSHA.current = '';
-    unpublishedEntries.current = [
+    allUnpublishedEntries.current = [
       createEntry('draft-1', 'draft'),
       createEntry('draft-2', 'draft'),
       createEntry('review-1', 'pending_review'),
@@ -564,7 +564,7 @@ describe('WorkflowPage', () => {
 
     // The pull requests are read again while the dialog is open, and a colleague’s commit has
     // changed the entry since; the reload keeps its ID
-    const [, , , ready, ...rest] = unpublishedEntries.current;
+    const [, , , ready, ...rest] = allUnpublishedEntries.current;
     const { pullRequest } = ready.workflow;
 
     const reloaded = {
@@ -573,7 +573,11 @@ describe('WorkflowPage', () => {
       workflow: { ...ready.workflow, pullRequest: { ...pullRequest, headSHA: 'pushed-since' } },
     };
 
-    unpublishedEntries.current = [...unpublishedEntries.current.slice(0, 3), reloaded, ...rest];
+    allUnpublishedEntries.current = [
+      ...allUnpublishedEntries.current.slice(0, 3),
+      reloaded,
+      ...rest,
+    ];
     await dialog.getByRole('button', { name: 'Publish' }).click();
 
     // The entry is the one in the store, but the merge stays pinned to the version the dialog was
@@ -592,7 +596,7 @@ describe('WorkflowPage', () => {
     await expect.element(page.getByRole('alertdialog', { name: 'Publish Entry' })).toBeVisible();
 
     // Its pull request has been merged or closed on the Git service in the meantime
-    unpublishedEntries.current = unpublishedEntries.current.filter(
+    allUnpublishedEntries.current = allUnpublishedEntries.current.filter(
       ({ slug }) => slug !== 'ready-1',
     );
     await page
@@ -609,7 +613,7 @@ describe('WorkflowPage', () => {
       .nth(0)
       .click();
     await expect.element(page.getByRole('alertdialog', { name: 'Delete Entry' })).toBeVisible();
-    unpublishedEntries.current = unpublishedEntries.current.filter(
+    allUnpublishedEntries.current = allUnpublishedEntries.current.filter(
       ({ slug }) => slug !== 'draft-1',
     );
     await page
@@ -632,7 +636,7 @@ describe('WorkflowPage', () => {
     });
     backendName.current = 'github';
     unpublishedEntriesLoaded.current = false;
-    unpublishedEntries.current = [];
+    allUnpublishedEntries.current = [];
 
     await render(WorkflowPage);
 

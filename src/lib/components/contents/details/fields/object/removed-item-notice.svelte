@@ -14,13 +14,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    id,
-    disabled = false,
-    onRestore,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { id, disabled = false, onRestore } = $props();
 </script>
 
 <Alert status="info">

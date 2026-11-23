@@ -2,6 +2,25 @@ import { expect } from 'vitest';
 import { page } from 'vitest/browser';
 
 /**
+ * Get the alert in a Sveltia UI toast that’s currently shown.
+ * @param {string} [status] Alert status, e.g. `error`. Default: any.
+ * @returns {Element | null} Alert element.
+ */
+export const getShownToastAlert = (status) =>
+  document.querySelector(
+    `.sui.toast:not([aria-hidden="true"]) .sui.alert${status ? `.${status}` : ''}`,
+  );
+
+/**
+ * Get the text of the alert in a Sveltia UI toast that’s currently shown, with its whitespace
+ * collapsed, e.g. `error Error Upload failed.`, as the status icon and its label come first.
+ * @param {string} [status] Alert status, e.g. `error`. Default: any.
+ * @returns {string | undefined} Text.
+ */
+export const getShownToastText = (status) =>
+  getShownToastAlert(status)?.textContent?.replace(/\s+/g, ' ').trim();
+
+/**
  * Move the pointer to the top-left corner of the page, which the toast base, inset from the edges,
  * never covers. A Sveltia UI toast holds its auto-hide countdown while the pointer is over it, and
  * the pointer stays wherever an earlier test file run in the same browser tab left it, so a toast

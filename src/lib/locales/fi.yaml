@@ -11,6 +11,8 @@
 create: Luo
 select: Valitse
 select_all: Valitse kaikki
+# Accessible name of the checkbox that selects a single entry or asset in a list
+select_item: Valitse {$name}
 upload: Lähetä
 copy: Kopioi
 download: Lataa
@@ -69,6 +71,10 @@ primary: Ensisijainen
 secondary: Toissijainen
 collection: Kokoelma
 folder: Kansio
+# Label of the subfolder list in the asset picker
+folders: Kansiot
+# Menu in a breadcrumb holding the folders that don’t fit
+more_folders: Lisää kansioita
 
 # ==============================================================================
 # Miscellaneous Labels
@@ -113,6 +119,7 @@ welcome_message: Tervetuloa käyttämään {$name} -palvelua
 powered_by: Palvelun tarjoaa {$name}
 
 # Shown during initial configuration and data loading
+unsupported_browser_error: Selaintasi ei tueta. Päivitä se uusimpaan versioon tai käytä toista selainta.
 loading_cms_config: Ladataan CMS-asetuksia…
 loading_site_data: Ladataan sivuston tietoja…
 loading_site_data_error: Sivuston tietojen lataamisessa tapahtui virhe.
@@ -125,6 +132,8 @@ sign_in_with_x: Kirjaudu sisään palvelulla {$service}
 # Access token dialog: alternative authentication method
 sign_in_using_access_token: Kirjaudu sisään access tokenilla
 sign_in_using_access_token_description: Anna access tokenisi. Sillä on oltava luku- ja kirjoitusoikeus repositorion sisältöön.
+# Shown after the description above when Editorial Workflow is enabled, which opens and merges pull requests
+sign_in_using_access_token_workflow_note: Koska editoinnin työnkulku on käytössä, sillä on oltava myös luku- ja kirjoitusoikeus pull requesteihin.
 # Inline link text with embedded HTML anchor tag
 # {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
 sign_in_using_access_token_link: Voit luoda tunnuksen <a>{$service}-palvelun käyttäjäasetuksissa</a>.
@@ -143,6 +152,11 @@ work_with_local_repo_description: Kun sinulta pyydetään, valitse repositorion 
 work_with_local_repo_description_no_repo: Kun sinulta pyydetään, valitse Git-repositoriosi juurikansio.
 # Button label for demo/test repository
 work_with_test_repo: Työskentele testirepositorion kanssa
+# Button label for the test repository when sample content is seeded, e.g. on a demo site
+start_demo: Aloita demo
+# Shown below the disabled test repository option in a browser that can’t save files to its
+# storage, e.g. Safari before version 26
+test_repo_unsupported_browser: Selaimesi ei pysty tallentamaan testirepositorion tiedostoja. Päivitä se uusimpaan versioon tai käytä toista selainta.
 
 # Authentication errors
 # Error messages shown during sign-in failures
@@ -167,14 +181,28 @@ sign_in_error:
 backend_unsupported_version: Taustajärjestelmä {$name} vaatii version {$name} {$version} tai uudemman.
 # {$repo} is the repository identifier, typically in owner/repo format
 repository_no_access: Sinulla ei ole pääsyä repositorioon ”{$repo}”.
+# {$repo} is the repository identifier, typically in owner/repo format
+repository_no_write_access: Sinulla ei ole kirjoitusoikeutta repositorioon ”{$repo}”.
 repository_not_found: Repositoriota ”{$repo}” ei ole olemassa.
 repository_empty: Repositoriolla ”{$repo}” ei ole yhtään haaraa.
 # {$repo} is the repository identifier, and {$branch} is the configured branch name
 branch_not_found: Repositoriossa ”{$repo}” ei ole haaraa ”{$branch}”.
+# {$repo} is the repository identifier, and {$dir} is the configured root directory
+root_dir_not_found: Juurihakemistoa ”{$dir}” ei ole repositoriossa ”{$repo}”.
 
 # General errors
 # Fallback error dialog title for unexpected errors
 unexpected_error: Odottamaton virhe
+# Shown in place of the page when an unexpected error stops it from being displayed
+# {$message} is the error message
+page_crashed: Jokin meni vikaan, eikä tätä sivua voida näyttää. {$message}
+# Shown in place of a field editor or preview when an unexpected error stops it from being displayed
+# {$message} is the error message
+field_crashed: Jokin meni vikaan, eikä tätä kenttää voida näyttää. {$message}
+# Button label for displaying a part of the page again after an unexpected error
+try_again: Yritä uudelleen
+# Button label for reloading the CMS after an unexpected error
+reload_cms: Lataa CMS uudelleen
 
 # Entry file parsing errors
 # Toast notification when entry files fail to parse on initial load
@@ -203,6 +231,332 @@ sign_in: Kirjaudu sisään
 sign_in_with_mobile: Kirjaudu sisään mobiililla
 # Instructions shown in the mobile sign-in dialog for passwordless authentication
 sign_in_with_mobile_instruction: Skannaa alla oleva QR-koodi puhelimellasi tai tabletillasi kirjautuaksesi sisään ilman salasanaa. Asetuksesi kopioidaan automaattisesti.
+# Confirmation dialog shown when the CMS is opened with a sign-in link from the mobile sign-in
+# QR code. {$account} is the account name, {$service} is the Git service name, e.g. GitHub
+sign_in_with_link: Kirjaudu sisään linkillä
+sign_in_with_link_confirmation: Tämä linkki kirjaa sinut sisään käyttäjänä {$account} palveluun {$service} ja kopioi asetukset laitteesta, jolla linkki luotiin. Jatka vain, jos loit linkin itse.
+
+# Sign-in with Sveltia CMS Additions, which manages its own user accounts instead of the Git
+# service’s. Don’t localize “Sveltia CMS Additions”
+additions:
+  username: Käyttäjätunnus
+  password: Salasana
+  sign_in: Kirjaudu sisään
+  new_password_title: Valitse uusi salasana
+  new_password_description: Kirjauduit sisään väliaikaisella salasanalla. Valitse uusi salasana jatkaaksesi.
+  new_password: Uusi salasana
+  password_too_short: Salasana on liian lyhyt. Käytä vähintään 12 merkkiä.
+  change_password: Vaihda salasana
+  # {$name} is the user’s username, {$role} their role, e.g. Editor
+  signed_in_as_x_with_role: 'Kirjautuneena: {$name} ({$role})'
+  link_github: Yhdistä GitHub-tili
+  link_github_error: GitHub-tilin yhdistäminen epäonnistui
+  current_password: Nykyinen salasana
+  # {$username} is the username filled in from a magic link emailed to the user
+  filled_from_link: Käyttäjätunnus ja salasana täytettiin linkistä. Kirjaudu sisään vain, jos ”{$username}” on käyttäjätunnuksesi.
+  change_password_description: Pysyt kirjautuneena tässä, mutta sinut kirjataan ulos muilla laitteillasi.
+  password_changed: Salasanasi on vaihdettu.
+  # The Account settings panel of a Sveltia CMS Additions user
+  account:
+    profile: Profiili
+    profile_description: Nimesi näkyy muille käyttäjille CMS:ssä, esimerkiksi merkintöjen lukoissa ja kommenteissa, sekä commiteissasi.
+    username_description: Käyttäjätunnustasi ei voi vaihtaa.
+    email: Sähköposti
+    email_description: Sitä käytetään tekemissäsi commiteissa, jotta GitHub voi yhdistää ne tiliisi. Jos sitä ei ole, käytetään paikkamerkkiosoitetta. Vain ylläpitäjä voi muuttaa sitä.
+    change_name: Vaihda nimi
+    name_changed: Nimesi on vaihdettu.
+    password: Salasana
+    no_password: Tilisi kirjautuu sisään vain GitHubilla, joten sillä ei ole vaihdettavaa salasanaa. Ylläpitäjä voi antaa sinulle salasanan nollaamalla salasanasi.
+  setup:
+    use_admin_secret: Käytä ylläpitäjän salaista avainta
+    title: Ota Sveltia CMS Additions käyttöön
+    secret_description: Anna ylläpitäjän salainen avain, joka on asetettu Sveltia CMS Additions -palvelusi asetuksissa. Se säilytetään vain tässä välilehdessä käyttöönoton ajan.
+    admin_secret: Ylläpitäjän salainen avain
+    continue: Jatka
+    back: Takaisin kirjautumiseen
+    admin_title: Ylläpitäjän tili
+    admin_create_description: Luo ensimmäinen ylläpitäjän tili. Kirjaudut sillä sisään ja hallitset muita käyttäjiä.
+    admin_reset_description: Ylläpitäjän tili on jo olemassa. Päästäksesi takaisin sisään nollaa ylläpitäjän salasana tässä tai luo uusi ylläpitäjä.
+    admin_saved: Ylläpitäjän tili on valmis. Kirjaudu sisään juuri antamallasi salasanalla.
+    create_admin: Luo ylläpitäjä
+    reset_password: Tallenna ylläpitäjä
+    github_title: GitHub
+    # {$repo} is the repository, e.g. octocat/site
+    github_description: Luo tälle sivustolle GitHub App ja asenna se repositorioon ”{$repo}”. GitHub pyytää sinua vahvistamaan ja palauttaa sinut sitten tänne.
+    # {$repo} is the repository, {$app} is the name of the GitHub App
+    github_connected: Yhdistetty repositorioon ”{$repo}” GitHub Appilla ”{$app}”.
+    connect_github: Yhdistä GitHubiin
+    # {$step} is the number of the current step, {$total} the number of steps
+    step_x_of_y: Vaihe {$step}/{$total}
+    admin_exists: Ylläpitäjän tili on olemassa.
+    reset_admin_password: Nollaa ylläpitäjän salasana
+    setup_complete: Käyttöönotto on valmis. Kirjaudu sisään ylläpitäjän tilillä hallitaksesi käyttäjiä ja asetuksia. Voit palata tänne milloin tahansa ylläpitäjän salaisella avaimella.
+    manage_sites: Hallitse muita sivustoja
+    back_to_setup: Takaisin
+    sites_title: Muut sivustot
+    sites_description: Tämä palvelu voi palvella myös muita sivustoja, joilla kullakin on omat käyttäjänsä, asetuksensa ja GitHub Appinsa. Aseta sivuston CMS-asetuksissa ”base_url” sen URL-osoitteeksi ja ota sivusto sitten käyttöön siellä ylläpitäjän salaisella avaimella.
+    no_sites: Muita sivustoja ei ole vielä.
+    site_id: Sivuston tunniste
+    site_id_description: 1–32 pientä kirjainta, numeroa ja yhdysmerkkiä, esim. ”acme”. Se näkyy sivuston URL-osoitteessa, eikä sitä voi muuttaa.
+    site_name_optional: Nimi (valinnainen)
+    add_site: Lisää sivusto
+    # {$name} is the name of the site
+    site_added: ”{$name}” on lisätty. Aseta sen CMS-asetuksissa ”base_url” sen URL-osoitteeksi ja avaa sitten käyttöönottotoiminto siellä.
+    # {$name} is the name of the site
+    copy_site_url: Kopioi sivuston {$name} URL-osoite
+    delete_site: Poista sivusto
+    # {$name} is the name of the site
+    delete_site_x: Poista {$name}
+    # {$name} is the name of the site, {$id} is its ID
+    delete_site_confirmation: Sivuston ”{$name}” poistaminen poistaa myös sen käyttäjät, asetukset ja kommentit. Tätä ei voi kumota. GitHub App jää GitHubiin, josta voit poistaa sen. Vahvista kirjoittamalla ”{$id}”.
+    site_id_to_confirm: Vahvistettava sivuston tunniste
+    data_key_locked_title: Ylläpitäjän salainen avain vaihdettu
+    data_key_locked_description: Ylläpitäjän salainen avain on vaihdettu, joten tallennettuja asetuksia ei voi lukea. Anna aiempi salainen avain säilyttääksesi ne, tai aloita alusta, jos se on kadonnut.
+    previous_secret: Aiempi ylläpitäjän salainen avain
+    unlock: Avaa lukitus
+    rekey: Aloita alusta
+    rekey_confirmation: Alusta aloittaminen poistaa GitHub Appin tunnistetiedot ja muut tallennetut salaisuudet sekä kirjaa kaikki ulos. Salasanat säilytetään. Jatketaanko?
+    result:
+      ok: GitHub on yhdistetty. Voit nyt kirjautua sisään.
+      github_app_not_created: GitHub Appia ei luotu. Yritä uudelleen ylläpitäjän salaisella avaimella.
+      github_app_not_installed: GitHub Appia ei asennettu. Yritä uudelleen ylläpitäjän salaisella avaimella.
+      github_wrong_account: GitHub App asennettiin tilille, joka ei omista repositoriota. Asenna se tilille, joka omistaa repositorion, ja yritä uudelleen.
+      github_repository_not_included: GitHub App asennettiin ilman pääsyä repositorioon. Anna sille pääsy repositorioon GitHubissa ja yritä uudelleen.
+      unexpected: GitHubiin yhdistäminen epäonnistui odottamattoman virheen vuoksi. Yritä uudelleen.
+  locks:
+    # {$name} is the name of the person editing the entry, {$time} when they started
+    being_edited: '{$name} on muokannut tätä merkintää {$time} lähtien, joten voit vain katsella sitä.'
+    being_edited_by_you: Muokkaat tätä merkintää toisessa välilehdessä, joten voit vain katsella sitä tässä.
+    # {$name} is the name of the person who took over the entry
+    taken_over: '{$name} otti tämän merkinnän haltuunsa, joten voit nyt vain katsella sitä.'
+    take_over: Ota haltuun
+    unavailable: Merkintöjen lukot eivät ole käytettävissä, joten joku muu saattaa muokata tätä merkintää samanaikaisesti.
+    # {$name} is the name of the person editing the entry
+    being_edited_by_x: Muokkaajana {$name}
+    # {$names} is a list of the other people who have the entry open in the editor
+    also_open_by_x: 'Avoinna myös: {$names}'
+    # {$names} is a list of the people who have the entry open, besides anyone editing it
+    open_by_x: 'Avoinna: {$names}'
+  users:
+    title: Käyttäjät
+    add_user: Lisää käyttäjä
+    edit_user: Muokkaa käyttäjää
+    add: Lisää
+    name: Nimi
+    username_description: Käyttäjätunnusta ei voi muuttaa, kun käyttäjä on lisätty.
+    email_optional: Sähköposti (valinnainen)
+    email_description: Sitä käytetään tämän henkilön tekemissä commiteissa, jotta GitHub voi yhdistää ne hänen tiliinsä. Jos sitä ei ole, käytetään paikkamerkkiosoitetta.
+    role: Rooli
+    status: Tila
+    last_sign_in: Viimeisin kirjautuminen
+    sign_in_column: Kirjautuminen
+    methods:
+      password: Salasana
+      # {$login} is a GitHub username
+      github: GitHub ({$login})
+    actions: Toiminnot
+    you: (sinä)
+    never: Ei koskaan
+    roles:
+      admin: Ylläpitäjä
+      editor: Muokkaaja
+      viewer: Katselija
+    statuses:
+      active: Aktiivinen
+      temporary_password: Väliaikainen salasana
+      waiting_for_sign_in: Odottaa ensimmäistä kirjautumista
+      disabled: Poistettu käytöstä
+    # {$name} is the user’s name
+    show_options_for_x: Näytä käyttäjän {$name} asetukset
+    options: Käyttäjän asetukset
+    reset_password: Nollaa salasana
+    sign_out_everywhere: Kirjaa ulos kaikkialta
+    enable: Ota käyttäjä käyttöön
+    disable: Poista käyttäjä käytöstä
+    delete: Poista käyttäjä
+    # {$name} is the user’s name
+    reset_password_confirmation: Annetaanko käyttäjälle {$name} uusi väliaikainen salasana? Hänet kirjataan ulos kaikkialta, ja hänen on valittava uusi salasana seuraavalla kirjautumiskerralla.
+    delete_confirmation: Poistetaanko {$name}? Tätä ei voi kumota.
+    temporary_password: Väliaikainen salasana
+    # {$name} is the user’s name
+    temporary_password_description: Anna tämä käyttäjätunnus ja väliaikainen salasana käyttäjälle {$name}. Sitä ei näytetä uudelleen, ja hän valitsee oman salasanansa kirjautuessaan sisään.
+    copy_username: Kopioi käyttäjätunnus
+    copy_password: Kopioi salasana
+    # {$name} is the user’s name
+    email_credentials: Lähetä sähköpostilla käyttäjälle {$name}
+    # The emails the admin sends from their own email app, with the sign-in details: `new` to a user
+    # who has just been added, `reset` to one whose password has been reset. Each line is a string of
+    # its own, as line breaks aren’t kept in these files
+    credentials_email:
+      # {$name} is the user’s name
+      greeting: Hei {$name},
+      # {$url} is a link to the CMS that fills in the username and the temporary password
+      sign_in_link: 'Kirjautumislinkki: {$url}'
+      # {$username} is the username
+      username: 'Käyttäjätunnus: {$username}'
+      # {$password} is the temporary password
+      password: 'Väliaikainen salasana: {$password}'
+      new:
+        # {$app} is the name of the CMS
+        subject: Kirjautumistietosi palveluun {$app}
+        # {$app} is the name of the CMS
+        message: Voit nyt kirjautua sisään palveluun {$app}. Avaa alla oleva linkki, joka täyttää käyttäjätunnuksesi ja väliaikaisen salasanasi, ja valitse oma salasanasi kirjautuessasi sisään.
+      reset:
+        # {$app} is the name of the CMS
+        subject: Salasanasi palveluun {$app} on nollattu
+        # {$app} is the name of the CMS
+        message: Salasanasi palveluun {$app} on nollattu, ja sinut on kirjattu ulos kaikkialta. Avaa alla oleva linkki, joka täyttää käyttäjätunnuksesi ja väliaikaisen salasanasi, ja valitse uusi salasana kirjautuessasi sisään.
+    allowed_domains: Sallitut verkkotunnukset
+    allowed_domains_description: Sivustot, jotka voivat käyttää Sveltia CMS Additionsia, yksi isäntänimi riviä kohden. Jokerimerkki (*) vastaa mitä tahansa aliverkkotunnusta, esim. *.example.com. Luettele tarkat isäntänimet aina kun mahdollista. Luettelo koskee vain tätä sivustoa, vaikka sama Sveltia CMS Additions -instanssi palvelisi myös muita sivustoja.
+    save_allowed_domains: Tallenna sallitut verkkotunnukset
+    allowed_domains_saved: Sallitut verkkotunnukset on tallennettu.
+    sign_in_tab: Kirjautuminen
+    # {$latest} is the newest version of Sveltia CMS Additions, {$current} the one in use
+    update_available: Sveltia CMS Additions {$latest} on saatavilla. Käytössäsi on {$current}.
+    release_notes: Julkaisutiedot
+    github_username_optional: GitHub-käyttäjätunnus (valinnainen)
+    github_username_description: Jos GitHub-käyttäjätunnus on annettu, käyttäjä kirjautuu sisään kyseisellä GitHub-tilillä salasanan sijaan.
+    # {$name} is the user’s name
+    github_required: '{$name} voi kirjautua sisään vain GitHubilla, joten hänen GitHub-käyttäjätunnustaan ei voi poistaa. Nollaa ensin hänen salasanansa, jotta hänellä on salasana kirjautumista varten.'
+    adopt: Ota tili hallintaan
+    sign_in:
+      github: Salli kirjautuminen GitHubilla
+      github_description: Käyttäjät kirjautuvat sisään GitHub-tilillään ja saavat oman GitHub-tunnuksensa, joten heidän muutoksensa commitoidaan heidän nimissään. Ylläpitäjä lisää heidät ensin GitHub-käyttäjätunnuksella, ellei jokin rekisteröitymissääntö koske heitä.
+      # Shown when signing in with GitHub is being turned off while {$count} users can only sign in
+      # with it
+      github_only_warning: |
+        .input {$count :integer}
+        .match $count
+          one {{ Yksi käyttäjä voi kirjautua sisään vain GitHubilla, eikä hän voi kirjautua sisään, kun se on poistettu käytöstä, ennen kuin nollaat hänen salasanansa. }}
+          *   {{ {$count} käyttäjää voi kirjautua sisään vain GitHubilla, eivätkä he voi kirjautua sisään, kun se on poistettu käytöstä, ennen kuin nollaat heidän salasanansa. }}
+      rules: Rekisteröitymissäännöt
+      rules_description: GitHub-organisaation, johon sovellus on asennettu, jäsenet voivat kirjautua sisään ilman, että heidät lisätään ensin. Heidän tilinsä saa valitsemasi roolin, ja se poistetaan käytöstä, jos he eroavat organisaatiosta, ellet ota tiliä hallintaan.
+      org: GitHub-organisaatio
+      add_rule: Lisää sääntö
+      # {$org} is the name of a GitHub organization
+      remove_rule: Poista organisaation {$org} sääntö
+      # For a rule whose organization hasn’t been entered yet
+      remove_empty_rule: Poista sääntö
+      save: Tallenna kirjautumisasetukset
+      saved: Kirjautumisasetukset on tallennettu.
+    domains_tab: Verkkotunnukset
+    github_tab: GitHub
+    github:
+      app: GitHub App
+      repository: Repositorio
+      not_installed: Ei asennettu
+      statuses:
+        ok: Sovellus toimii.
+        not_registered: GitHub Appia ei ole vielä määritetty. Suorita käyttöönottotoiminto kirjautumissivulta ylläpitäjän salaisella avaimella.
+        key_missing: Sovelluksen yksityinen avain katosi, kun ylläpitäjän salainen avain vaihdettiin. Luo uusi yksityinen avain sovelluksen asetuksissa GitHubissa ja lähetä se alla.
+        key_rejected: GitHub ei hyväksy sovelluksen yksityistä avainta, esimerkiksi koska se on poistettu siellä. Luo uusi yksityinen avain sovelluksen asetuksissa GitHubissa ja lähetä se alla.
+        not_installed: Sovellusta ei ole asennettu repositorioon. Asenna se uudelleen sovelluksen sivulta GitHubissa tai suorita käyttöönottotoiminto.
+        suspended: Sovelluksen asennus on keskeytetty. Palauta se käyttöön asennuksen asetuksissa GitHubissa.
+        unreachable: GitHubiin ei saatu yhteyttä. Yritä myöhemmin uudelleen.
+      check_again: Tarkista uudelleen
+      # {$branch} is the name of the repository’s default branch
+      branch_protected: Säännöstöt suojaavat haaraa ”{$branch}” pakotetuilta pusheilta ja poistamiselta.
+      branch_bypassed: Säännöstöt suojaavat haaraa ”{$branch}”, mutta sovellus voi ohittaa ne, joten muokkaajat voisivat silti pakottaa pushin siihen tai poistaa sen. Poista sovellus näiden säännöstöjen ohitusluetteloista.
+      branch_unprotected: Mikään säännöstö ei suojaa haaraa ”{$branch}” pakotetuilta pusheilta ja poistamiselta, joten muokkaajat voisivat kirjoittaa sen historian uudelleen tai poistaa sen. Lisää repositorion asetuksiin säännöstö, joka estää molemmat, ilman sovellusta sen ohitusluettelossa.
+      repository_rules: Avaa repositorion säännöt
+      private_key: Yksityinen avain
+      private_key_description: Korvataksesi yksityisen avaimen luo uusi avain sovelluksen asetuksissa GitHubissa ja lähetä sitten ladattava .pem-tiedosto. Poista vanha avain sen jälkeen siellä.
+      app_settings: Avaa sovelluksen asetukset
+      upload_private_key: Lähetä yksityinen avain
+      replace_private_key: Korvaa yksityinen avain
+      private_key_summary: Palvelu käyttää sovelluksen yksityistä avainta päästäkseen repositorioon GitHubissa. Korvaa se, jos se on saattanut paljastua.
+      private_key_replaced: Yksityinen avain on korvattu.
+      commit_author: Commitin tekijä
+      commit_author_description: Valitse, kuka näkyy CMS:ssä tallennettujen muutosten tekijänä. GitHub allekirjoittaa vain sovelluksen tekemät commitit, joten valitse sovellus, jos jokin säännöstö edellyttää allekirjoitettuja committeja. Muut käyttäjät saavat muutoksen tunnin kuluessa.
+      commit_author_user: Muutoksen tehnyt henkilö
+      commit_author_bot: GitHub App, henkilö toisena tekijänä
+      commit_author_saved: Commitin tekijä on tallennettu.
+  # Administration section for the API keys and the deploy hook an admin shares with everyone
+  credentials:
+    title: Tunnistetiedot
+    description: Tässä annettuja API-avaimia ja julkaisu-webhookia käyttävät kaikki sisäänkirjautuneet, elleivät he anna omiaan asetuksissa. Kuka tahansa CMS:ään kirjautunut voi lukea ne, joten anna vain avaimia, jotka voit jakaa tiimisi kanssa.
+    save: Tallenna tunnistetiedot
+    saved: Tunnistetiedot on tallennettu.
+    # {$service} is the service name, e.g. DeepL
+    invalid_key: Palvelun {$service} API-avain ei näytä oikealta.
+  error:
+    unauthenticated: Istuntosi on vanhentunut. Kirjaudu uudelleen sisään.
+    wrong_admin_secret: Ylläpitäjän salainen avain on väärä.
+    admin_secret_missing: Ylläpitäjän salaista avainta ei ole asetettu Sveltia CMS Additions -palvelun asetuksissa.
+    admin_secret_too_short: Sveltia CMS Additions -palvelun asetuksissa asetettu ylläpitäjän salainen avain on liian lyhyt. Käytä vähintään 32 satunnaista merkkiä.
+    wrong_previous_secret: Aiempi ylläpitäjän salainen avain on väärä.
+    not_an_admin: Tämä käyttäjä ei ole ylläpitäjä. Valitse toinen käyttäjätunnus.
+    invalid_username: Käyttäjätunnuksessa on 3–30 pientä kirjainta, numeroa, pistettä, yhdysmerkkiä tai alaviivaa.
+    last_admin: Ylläpitäjiä on oltava vähintään yksi.
+    cannot_disable_self: Et voi poistaa omaa tiliäsi käytöstä.
+    cannot_delete_self: Et voi poistaa omaa tiliäsi.
+    username_taken: Tämä käyttäjätunnus on toisen käyttäjän käytössä.
+    email_taken: Tämä sähköpostiosoite on toisen käyttäjän käytössä.
+    invalid_name: Nimessä on oltava 1–100 merkkiä.
+    invalid_email: Sähköpostiosoite on virheellinen.
+    invalid_domains: Yksi sallituista verkkotunnuksista ei ole kelvollinen isäntänimi.
+    current_origin_removed: Sallittuihin verkkotunnuksiin on sisällyttävä sivusto, jota käytät nyt.
+    forbidden: Vain ylläpitäjät voivat tehdä tämän.
+    invalid_credentials: Käyttäjätunnus tai salasana on väärä.
+    user_disabled: Tämä tili on poistettu käytöstä. Pyydä apua ylläpitäjältäsi.
+    too_many_attempts: Liian monta yritystä. Yritä myöhemmin uudelleen.
+    wrong_password: Nykyinen salasana on väärä.
+    same_password: Valitse uusi salasana, joka eroaa nykyisestä.
+    invalid_github_login: Tämä ei ole kelvollinen GitHub-käyttäjätunnus.
+    github_user_not_found: Tämännimistä GitHub-käyttäjää ei ole.
+    github_account_taken: Toinen käyttäjä kirjautuu sisään tällä GitHub-tilillä.
+    invalid_rules: Rekisteröitymissääntö tarvitsee GitHub-organisaation nimen.
+    invalid_rule_role: Rekisteröitymissääntö voi antaa vain muokkaajan tai katselijan roolin.
+    rule_org_not_installed: GitHub App on asennettava rekisteröitymissäännön organisaatioon.
+    not_invited: Sinulla ei ole tiliä täällä. Pyydä ylläpitäjääsi lisäämään sinut.
+    method_disabled: Kirjautuminen GitHubilla on poistettu käytöstä.
+    access_denied: Kirjautuminen peruutettiin.
+    github_app_not_set_up: Sveltia CMS Additionsia ei ole vielä yhdistetty GitHubiin. Pyydä ylläpitäjääsi viimeistelemään käyttöönotto.
+    invalid_tenant_id: Sivuston tunnisteen on oltava 1–32 pientä kirjainta, numeroa ja yhdysmerkkiä, eikä se voi olla ”default”.
+    invalid_tenant_name: Sivuston nimessä voi olla enintään 100 merkkiä.
+    tenant_exists: Sivusto tällä tunnisteella on jo olemassa.
+    github_app_missing: GitHub Appia ei ole vielä määritetty.
+    invalid_private_key: Tiedosto ei ole kelvollinen yksityinen avain.
+    private_key_mismatch: GitHub ei hyväksy tätä yksityistä avainta sovellukselle. Varmista, että loit sen sovelluksen asetuksissa.
+    github_error: GitHub vastasi virheellä. Yritä myöhemmin uudelleen.
+    data_key_locked: Sveltia CMS Additionsia ei voi käyttää, ennen kuin ylläpitäjä on saanut sen salaisen ylläpitäjäavaimen vaihdon valmiiksi.
+    not_configured: Sveltia CMS Additionsia ei ole määritetty oikein. Pyydä apua ylläpitäjältäsi.
+    origin_not_allowed: Tämä sivusto ei saa käyttää Sveltia CMS Additionsia. Pyydä ylläpitäjääsi lisäämään se sallittuihin verkkotunnuksiin.
+    not_set_up: Sveltia CMS Additionsia ei ole vielä yhdistetty GitHubiin. Pyydä ylläpitäjääsi viimeistelemään käyttöönotto.
+    # A user whose password an admin has reset signs in another way, e.g. with GitHub
+    temporary_password: Salasanasi on nollattu. Kirjaudu sisään käyttäjätunnuksellasi ja ylläpitäjältäsi saamallasi väliaikaisella salasanalla ja valitse sitten uusi salasana.
+    # {$url} is the URL of the service
+    incompatible: Tämä Sveltia CMS -versio ei toimi osoitteessa {$url} olevan Sveltia CMS Additions -palvelun kanssa.
+    unreachable: Sveltia CMS Additionsiin ei saatu yhteyttä. Yritä myöhemmin uudelleen.
+    insecure_connection: Sveltia CMS Additions on tarjottava HTTPS-yhteydellä. Tarkista `base_url` CMS-asetuksissa.
+    unexpected: Pyyntö Sveltia CMS Additionsiin epäonnistui odottamattoman virheen vuoksi. Yritä myöhemmin uudelleen.
+
+  # Conversation panel: comments on the entry, kept by Sveltia CMS Additions
+  conversation:
+    title: Keskustelu
+    refresh: Päivitä keskustelu
+    empty: Ei vielä kommentteja.
+    # Button above a long conversation, which is loaded from its latest comments
+    show_older: Näytä vanhemmat kommentit
+    # Label of the list of comments
+    timeline: Kommentit
+    deleted_user: Poistettu käyttäjä
+    you: Sinä
+    edited: muokattu
+    comment_label: Kommentti
+    placeholder: Kirjoita kommentti (Markdown)
+    visible_to_cms_users: Näkyy vain CMS:n käyttäjille
+    send: Kommentoi
+    options: Kommentin asetukset
+    edit: Muokkaa
+    delete: Poista
+    save: Tallenna
+    delete_confirmation: Poistetaanko tämä kommentti? Tätä ei voi kumota.
+    send_failed: Kommenttia ei voitu lähettää.
+
+  # Placeholder of an API key or deploy hook field the user has left empty, while an admin of
+  # Sveltia CMS Additions has entered one for everyone
+  provided_by_admin: Ylläpitäjäsi antama
 
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
@@ -210,6 +564,15 @@ sign_in_with_mobile_instruction: Skannaa alla oleva QR-koodi puhelimellasi tai t
 signed_in_as_x: 'Kirjautuneena: {$name}'
 working_with_local_repo: Työskennellään paikallisen repositorion kanssa
 working_with_test_repo: Työskennellään testirepositorion kanssa
+working_in_demo_mode: Demotila
+
+# Demo welcome dialog: shown once after signing in to a demo site, where the test repository is
+# seeded with sample content and the changes are only stored in the browser
+demo_welcome:
+  title: Tervetuloa Sveltia CMS -demoon
+  description: Tutustu vapaasti CMS:ään ja muokkaa esimerkkisisältöä. Muutoksesi tallennetaan vain tähän selaimeen. Mitään ei julkaista verkossa, eikä kukaan muu näe niitä.
+  reset_hint: Aloittaaksesi alusta alkuperäisellä sisällöllä valitse Poista kaikki tiedot kohdasta Asetukset > Tiedonhallinta.
+  button_label: Aloita
 
 # Account menu: action items for sign-out and app installation
 sign_out: Kirjaudu ulos
@@ -225,9 +588,14 @@ install_as_app: Asenna sovelluksena
 contents: Sisältö
 assets: Assetit
 editorial_workflow: Editoinnin työnkulku
+# Name of the Editorial Workflow page when all the content uses Preview Workflow, which has no
+# review stages, so the page only lists the drafts
+drafts: Luonnokset
 cms_config: CMS-asetukset
 # Mobile menu page title (shown only on small screens)
 menu: Valikko
+# Mobile menu page section heading listing the custom pages registered by the site
+custom_pages: Sivut
 
 # Mobile promo infobar: encouraging users to try the mobile version
 mobile_promo_title: Sveltia CMS on nyt saatavilla mobiilille!
@@ -238,10 +606,36 @@ mobile_promo_button: Kokeile
 new_language_available: Sveltia CMS on nyt saatavilla kielellä {$locale}!
 change_language: Vaihda kieltä
 
+# Live reload infobar: shown when the CMS runs on a page that a framework’s development server (e.g.
+# Astro) reloads on every file change, instead of a static HTML file
+live_reload_warning: Kehityspalvelimesi lataa tämän sivun uudelleen aina, kun tiedosto muuttuu, mikä voi keskeyttää tallentamisen ja jättää tiedostosi rikkinäisiksi. Tarjoa CMS sen sijaan staattisesta HTML-tiedostosta. <a>Lue lisää</a>
+
 # Toast notification shown while the translation for the selected language is being downloaded
 # {$locale} is the localized language name, e.g., “French”
 switching_language: Vaihdetaan kieleen {$locale}…
 locale_load_failed: Käännöstä kielelle {$locale} ei voitu ladata. Yritä myöhemmin uudelleen.
+
+# Toast notification shown when changes saved with the local backend couldn’t be committed to Git
+# {$reason} is one of the `local_git_skip_reasons` strings below
+local_git_not_committed: Muutoksesi on tallennettu, mutta niitä ei ole commitoitu Gitiin. {$reason} Jos haluat vain tallentaa tiedostot, poista Git-commitit käytöstä kohdassa Asetukset > Kehittäjä.
+local_git_skip_reasons:
+  unsupported_repository: Repositoriosi käyttää Gitin ominaisuutta, jota CMS ei tue, kuten linkitettyä työpuuta (worktree), SHA-256-objektinimiä, reftable-muotoa, harvaa indeksiä (sparse index) tai version 3 tai 4 indeksiä, jota feature.manyFiles-asetus ja git add -N käyttävät.
+  missing_identity: Nimeäsi ja sähköpostiosoitettasi ei ole asetettu repositorion Git-asetuksissa, eikä CMS voi lukea globaaleja asetuksiasi. Aseta ne repositorioon komennoilla git config --local user.name "Your Name" ja git config --local user.email "you@example.com".
+  locked: Toinen Git-prosessi käyttää repositoriota. Jos mitään ei ole käynnissä, poista tiedosto .git/index.lock.
+  # The operation in progress, with how to finish or cancel it
+  operation_in_progress:
+    merge: Yhdistäminen (merge) on kesken. Viimeistele se komennolla git commit tai peruuta se komennolla git merge --abort.
+    rebase: Rebase on kesken. Viimeistele se komennolla git rebase --continue tai peruuta se komennolla git rebase --abort. Jos olet jo siirtynyt eteenpäin, git rebase --quit hylkää sen muuttamatta tiedostojasi.
+    cherry_pick: Cherry-pick on kesken. Viimeistele se komennolla git cherry-pick --continue tai peruuta se komennolla git cherry-pick --abort.
+    revert: Revert on kesken. Viimeistele se komennolla git revert --continue tai peruuta se komennolla git revert --abort.
+    am: Patchien soveltaminen komennolla git am on kesken. Viimeistele se komennolla git am --continue tai peruuta se komennolla git am --abort.
+    conflict: Joissakin tiedostoissa on ristiriitoja. Ratkaise ne ja lisää tulokset ensin valmisteluun (stage).
+  detached_head: Mitään haaraa ei ole otettu käyttöön (checkout).
+  staged_changes: Sinulla on muita muutoksia valmisteltuna commitia varten. Commitoi ne tai poista ne ensin valmistelusta.
+  # {$path} is the file path
+  lfs: '{$path} on Git LFS:n seuraama, eikä CMS voi commitoida siihen.'
+  # {$message} is the error message
+  error: Tapahtui odottamaton virhe. {$message}
 
 # Site and page navigation
 # Toolbar button aria-label for visiting the live site
@@ -276,6 +670,10 @@ account: Tili
 live_site: Julkaistu sivusto
 git_repository: Git-repositorio
 settings: Asetukset
+
+# Page for the people who look after the CMS, apart from the personal settings: user management
+# and the CMS configuration
+administration: Hallinta
 
 # Help menu: button aria-labels and section headings
 show_help_menu: Näytä ohjevalikko
@@ -369,6 +767,10 @@ viewing_x_asset_folder: |
 # Cloud storage service view announcement
 # {$service} is the cloud storage service name, e.g. Uploadcare
 viewing_x_external_location: Katselet nyt assetteja palvelussa {$service}.
+# Administration page announcements
+viewing_admin_section_list: Katselet nyt Hallinta-sivun osioiden listausta.
+# {$section} is the section label, e.g. Users
+viewing_x_admin_section: Katselet nyt Hallinta-sivun osiota ”{$section}”.
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
@@ -387,6 +789,7 @@ x_of_x_selected: '{$selected}/{$total} valittu'
 
 # View switcher: toggle between list and grid views
 switch_view: Vaihda näkymää
+table_view: Taulukkonäkymä
 list_view: Listausnäkymä
 grid_view: Ruudukkonäkymä
 switch_to_list_view: Vaihda listausnäkymään
@@ -400,6 +803,16 @@ switch_to_grid_view: Vaihda ruudukkonäkymään
 # Sort menu: button labels and options
 sort: Järjestä
 sorting_options: Järjestysasetukset
+# Table view column labels for the entry metadata used as `{{…}}` template tags
+table_column_keys:
+  # The folder containing the entry file
+  dirname: Kansio
+  # The entry file name without the extension
+  filename: Tiedostonimi
+  # The entry file extension
+  extension: Pääte
+  # The enabled locales of the entry
+  locales: Kielet
 # Sort key option labels
 sort_keys:
   # No sorting; entries appear in their natural repository order
@@ -439,6 +852,8 @@ grouping_options: Ryhmittelyasetukset
 # Asset type filter and group labels
 type: Tyyppi
 all: Kaikki
+# Group option for the linked files, which can be hosted anywhere: the host name of the file’s URL
+domain: Verkkotunnus
 # Asset type labels
 image: Kuva
 video: Video
@@ -457,6 +872,9 @@ all_assets: Kaikki assetit
 global_assets: Yleiset assetit
 # Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
 linked_files: Linkitetyt tiedostot
+# Badge and message shown on a linked file that couldn’t be loaded, e.g. because it has been deleted
+file_unavailable: Ei saatavilla
+file_unavailable_description: Tätä tiedostoa ei voitu ladata. Se on ehkä siirretty tai poistettu.
 
 # ==============================================================================
 # Entry and Collection Actions
@@ -492,12 +910,27 @@ creating_entries_nearing_quota: |
     *   one {{ Tämä kokoelma lähestyy enimmäismääräänsä {$quota} merkintää. Voit luoda vielä {$remaining} merkinnän. }}
     *   *   {{ Tämä kokoelma lähestyy enimmäismääräänsä {$quota} merkintää. Voit luoda vielä {$remaining} merkintää. }}
 
+# Read-only restrictions set with the `readonly` option: advisory messages
+readonly_cms: CMS on vain luku -tilassa. Voit katsella sisältöä ja assetteja, mutta et voi tehdä muutoksia.
+readonly_collection: Tämä kokoelma on vain luku -tilassa. Voit katsella sen sisältöä, mutta et voi tehdä muutoksia.
+readonly_entry: Tämä merkintä on vain luku -tilassa. Voit katsella sitä, mutta et voi tehdä muutoksia.
+readonly_asset_folder: Tämä kansio on vain luku -tilassa. Voit katsella sen assetteja, mutta et voi tehdä muutoksia.
+readonly_branch: Sinulla ei ole oikeutta pushata haaraan ”{$branch}”. Voit katsella tätä sisältöä, mutta et voi tehdä muutoksia.
+readonly_role: Sinulla on vain katseluoikeus. Voit katsella sisältöä ja assetteja, mutta et voi tehdä muutoksia.
+readonly_reference: Merkintä on vain luku -tilassa, joten viittausta ei voi poistaa.
+# {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
+cannot_rename_referenced_entry: 'Tätä merkintää ei voi nimetä uudelleen, koska seuraavat vain luku -tilassa olevat merkinnät viittaavat siihen sen nykyisellä nimellä: {$entries}.'
+# {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
+cannot_move_referenced_asset: 'Tätä assettia ei voi siirtää tai nimetä uudelleen, koska seuraavat vain luku -tilassa olevat merkinnät käyttävät sitä: {$entries}.'
+
 # Navigation: back links and list labels
 back_to_collection: Takaisin kokoelmaan
 collection_list: Kokoelmalistaus
 back_to_collection_list: Takaisin kokoelmalistaukseen
 asset_folder_list: Assettikansiolistaus
 back_to_asset_folder_list: Takaisin assettikansiolistaukseen
+# Back button shown in place of the one above while browsing a subfolder of an asset folder
+back_to_parent_folder: Takaisin yläkansioon
 
 # ==============================================================================
 # Search
@@ -556,6 +989,53 @@ no_entries_found: Merkintöjä ei löytynyt.
 # Upload dialog: title and button label
 upload_assets: Lähetä uusia assetteja
 
+# New Folder button and dialog in the Asset Library
+new_folder: Uusi kansio
+new_folder_name: Kansion nimi
+new_folder_create: Luo
+# {$folder} is the path of the folder the new one will be created in, starting with a slash
+new_folder_description: Uusi kansio luodaan kansioon ”{$folder}”.
+# Validation errors for the new folder name
+new_folder_error:
+  empty: Kansion nimi ei voi olla tyhjä.
+  invalid: Kansion nimi ei voi sisältää kauttaviivoja eikä alkaa pisteellä.
+  # A name the CMS itself is usually served from, e.g. `admin` or `cms`
+  reserved: Tämännimisen kansion tiedostot ovat vain luku -tilassa, koska itse CMS tarjoillaan yleensä siitä.
+  duplicate: Tässä on jo samanniminen kansio tai tiedosto.
+# Progress and error messages while the folder is being created
+creating_folder: Luodaan kansiota…
+creating_folder_failed: Kansion luominen epäonnistui.
+
+# Menu on a folder in the Asset Library, and the Rename Folder and Delete Folder dialogs
+folder_options: Kansion asetukset
+show_folder_options: Näytä kansion asetukset
+rename_folder: Nimeä kansio uudelleen
+delete_folder: Poista kansio
+# Rename Folder dialog body text
+# {$count} is the number of assets in the folder, which are moved along with it
+enter_new_name_for_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Anna uusi nimi alla. }}
+    one {{ Anna uusi nimi alla. Kansiossa oleva assetti siirretään sen mukana, ja sitä käyttävät merkinnät päivitetään. }}
+    *   {{ Anna uusi nimi alla. Kansiossa olevat {$count} assettia siirretään sen mukana, ja niitä käyttävät merkinnät päivitetään. }}
+# Delete Folder confirmation
+# {$name} is the folder name and {$count} is the number of assets in the folder
+confirm_deleting_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Haluatko varmasti poistaa tyhjän kansion ”{$name}”? }}
+    one {{ Haluatko varmasti poistaa kansion ”{$name}” ja siinä olevan assetin? }}
+    *   {{ Haluatko varmasti poistaa kansion ”{$name}” ja siinä olevat {$count} assettia? }}
+# Progress and error messages while the folder is being renamed or deleted
+renaming_folder: Nimetään kansiota uudelleen…
+renaming_folder_failed: Kansion uudelleennimeäminen epäonnistui.
+deleting_folder: Poistetaan kansiota…
+deleting_folder_failed: Kansion poistaminen epäonnistui.
+# Asset Library and asset picker: notice shown when a cloud storage service holds more files than
+# are listed at once
+external_assets_truncated: Palvelussa on liian monta tiedostoa kaikkien listaamiseen, joten osa niistä jätetään pois.
+
 # Edit options menu: button and item labels
 edit_options: Muokkausasetukset
 show_edit_options: Näytä muokkausasetukset
@@ -568,6 +1048,47 @@ edit_x: 'Muokkaa: {$name}'
 
 # Asset text editor: switch for line wrapping
 wrap_long_lines: Rivitä pitkät rivit
+
+# Move assets: dialog for moving assets to another folder in the repository
+move: Siirrä
+move_asset: Siirrä assetti
+# Dialog title. {$name} is the asset name when a single asset is moved, and {$count} is the number of
+# assets being moved
+move_assets_title: |
+  .input {$count :integer}
+  .match $count
+    one {{ Siirrä {$name} }}
+    *   {{ Siirrä {$count} assettia }}
+# Dialog body text. {$count} is the number of entries that currently use the assets
+select_asset_move_destination: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Valitse kansio, johon siirretään. }}
+    one {{ Valitse kansio, johon siirretään. Myös assetteja käyttävä merkintä päivitetään. }}
+    *   {{ Valitse kansio, johon siirretään. Myös {$count} assetteja käyttävää merkintää päivitetään. }}
+# Accessible label of the folder tree in the Move dialog
+asset_move_destination: Kohdekansio
+# Shown when the assets being moved are all in the selected folder already
+assets_already_in_folder: |
+  .input {$count :integer}
+  .match $count
+    one {{ Assetti on jo tässä kansiossa. }}
+    *   {{ Assetit ovat jo tässä kansiossa. }}
+# Shown when files with the same names exist in the selected folder. {$names} is a comma-separated
+# list of file names
+asset_move_conflict: 'Seuraavat tiedostot ovat jo tässä kansiossa: {$names}.'
+moving_assets: Siirretään assetteja…
+moving_assets_failed: Assettien siirtäminen epäonnistui.
+# Warning shown when files have been moved off a cloud storage service, but the originals couldn’t
+# be deleted from it
+asset_move_cleanup_failed: Tiedostot on siirretty, mutta alkuperäisiä ei voitu poistaa tallennuspalvelusta.
+# Shown when files on a cloud storage service can’t be renamed or moved, because the entries using
+# them can’t be updated, e.g. for an Open Authoring contributor. {$count} is the number of files
+cannot_change_used_external_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Tätä tiedostoa ei voi nimetä uudelleen tai siirtää, koska sitä käyttäviä merkintöjä ei voi päivittää. }}
+    *   {{ Näitä tiedostoja ei voi nimetä uudelleen tai siirtää, koska niitä käyttäviä merkintöjä ei voi päivittää. }}
 
 # Rename asset: dialog and validation
 rename_asset: Nimeä assetti uudelleen
@@ -586,6 +1107,15 @@ enter_new_name_for_asset_error:
   empty: Tiedostonimi ei voi olla tyhjä.
   character: Tiedostonimi ei voi sisältää erikoismerkkejä.
   duplicate: Tämä nimi on käytössä toisella assetilla.
+  # A name starting with a dot hides the file, which the CMS wouldn’t list any more
+  leading_dot: Tiedostonimi ei voi alkaa pisteellä.
+  # The name of a file next to the asset that isn’t an asset, like an entry file
+  file_duplicate: Tässä on jo toinen samanniminen tiedosto.
+  # The name of a folder next to the file
+  folder_duplicate: Tässä on jo samanniminen kansio.
+# Shown while renaming a file whose name will be changed on saving, e.g. by the `slugify_filename`
+# media library option
+file_will_be_saved_as: Tiedosto tallennetaan nimellä ”{$name}”.
 # Confirmation dialog shown when the file extension is changed while renaming an asset
 change_file_extension: Vaihda tiedostopääte
 # {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
@@ -599,6 +1129,11 @@ file_extension_change_warning: Tiedostoa ei välttämättä näytetä tai käsit
 replace_asset: Korvaa assetti
 # {$name} is the asset being replaced
 replace_x: 'Korvaa: {$name}'
+# File/Image field: labels of the Replace and Remove buttons
+replace_file: Korvaa tiedosto
+replace_image: Korvaa kuva
+remove_file: Poista tiedosto
+remove_image: Poista kuva
 
 # File selection prompts: drop zones and file pickers
 # Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
@@ -688,6 +1223,29 @@ confirm_deleting_selected_assets: |
     one {{ Haluatko varmasti poistaa valitun assetin? }}
     *   {{ Haluatko varmasti poistaa valitut {$count} assetit? }}
 confirm_deleting_all_assets: Haluatko varmasti poistaa kaikki assetit?
+# Note added to the confirmation when entries use the assets being deleted; the references are
+# removed in the same commit. {$count} is the number of entries using them
+deleting_referenced_assets_note: |
+  .input {$count :integer}
+  .match $count
+    one {{ Myös viittaus siihen merkinnässä poistetaan. }}
+    *   {{ Myös viittaukset siihen {$count} merkinnässä poistetaan. }}
+# Shown in place of the confirmation when removing the references would leave a field in an entry
+# invalid, e.g. a required Image field with nothing left, so the deletion is refused. The fields are
+# listed below the message, each with the validation error it would have. {$count} is the number of
+# assets being deleted
+cannot_delete_referenced_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Tätä assettia ei voi poistaa, koska seuraavat sitä käyttävien merkintöjen kentät eivät olisi enää kelvollisia ilman sitä. Päivitä nämä merkinnät ensin. }}
+    *   {{ Näitä assetteja ei voi poistaa, koska seuraavat niitä käyttävien merkintöjen kentät eivät olisi enää kelvollisia ilman niitä. Päivitä nämä merkinnät ensin. }}
+# Error shown in the asset deletion dialog when the entries using the assets couldn’t be looked up,
+# so the deletion can’t go ahead. {$count} is the number of assets being deleted
+checking_asset_references_failed: |
+  .input {$count :integer}
+  .match $count
+    one {{ Tätä assettia käyttäviä merkintöjä ei voitu tarkistaa. Sulje tämä valintaikkuna ja yritä uudelleen. }}
+    *   {{ Näitä assetteja käyttäviä merkintöjä ei voitu tarkistaa. Sulje tämä valintaikkuna ja yritä uudelleen. }}
 
 # Delete entries: dialog titles and confirmation messages
 # {$count} is the number of entries targeted by the action
@@ -720,6 +1278,23 @@ confirm_deleting_selected_entries_with_assets: |
     *   {{ Haluatko varmasti poistaa valitut {$count} merkintää ja niihin liittyvät assetit? }}
 confirm_deleting_all_entries: Haluatko varmasti poistaa kaikki merkinnät?
 confirm_deleting_all_entries_with_assets: Haluatko varmasti poistaa kaikki merkinnät ja niihin liittyvät assetit?
+# Note added to the confirmation when other entries reference the entries being deleted through
+# Relation fields; the references are removed in the same commit. {$count} is the number of
+# referencing entries
+deleting_referenced_entries_note: |
+  .input {$count :integer}
+  .match $count
+    one {{ Myös viittaus siihen toisessa merkinnässä poistetaan. }}
+    *   {{ Myös viittaukset siihen {$count} muussa merkinnässä poistetaan. }}
+# Shown in place of the confirmation when removing the references would leave a Relation field in
+# another entry invalid, e.g. a required field with nothing selected, so the deletion is refused.
+# The fields are listed below the message, each with the validation error it would have. {$count}
+# is the number of entries being deleted
+cannot_delete_referenced_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Tätä merkintää ei voi poistaa, koska seuraavat muiden merkintöjen kentät eivät olisi enää kelvollisia ilman sitä. Päivitä nämä merkinnät ensin. }}
+    *   {{ Näitä merkintöjä ei voi poistaa, koska seuraavat muiden merkintöjen kentät eivät olisi enää kelvollisia ilman niitä. Päivitä nämä merkinnät ensin. }}
 
 # ==============================================================================
 # Entry Reordering
@@ -733,6 +1308,40 @@ cancel_reordering_entries: Peruuta uudelleenjärjestely
 
 # Reorder error message
 saving_reorder_failed: Uuden järjestyksen tallentaminen epäonnistui. Yritä uudelleen.
+
+# ==============================================================================
+# Bulk Entry Editing
+# ==============================================================================
+# Strings for editing the fields of many entries at once in a table.
+
+# Bulk edit mode: toggle buttons
+bulk_edit_entries: Muokkaa merkintöjä joukkona
+save_bulk_edits: Tallenna joukkomuokkaukset
+cancel_bulk_edits: Peruuta joukkomuokkaukset
+
+# Bulk edit table: column header of the entry titles
+bulk_edit_entry: Merkintä
+
+# Bulk edit table: label of the table
+bulk_edit_table: Joukkomuokkain
+
+# Bulk edit table: label of a cell input; {$field} is the field label, {$entry} is the entry title
+bulk_edit_cell: '{$field} – {$entry}'
+
+# Bulk edit status: number of changed fields
+bulk_edit_count: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Ei muutoksia }}
+    one {{ 1 muutos }}
+    *   {{ {$count} muutosta }}
+
+# Bulk edit error messages
+bulk_edit_invalid: Osa arvoista on virheellisiä. Korjaa korostetut kentät ja yritä uudelleen.
+saving_bulk_edits_failed: Muutosten tallentaminen epäonnistui. Yritä uudelleen.
+
+# Bulk edit: confirmation shown when leaving the mode with unsaved changes
+discard_bulk_edits_confirm: Hylätäänkö merkintöihin tehdyt muutokset?
 
 # ==============================================================================
 # File Upload and Processing
@@ -782,6 +1391,20 @@ warning_invalid_files: |
   .match $count
     one {{ Tätä tiedostoa ei voi lähettää, koska se on vioittunut tai sen sisältö ei vastaa tiedostopäätettä. Näin käy usein, kun valokuva on nimetty uudelleen muuntamisen sijaan, esimerkiksi HEIC-kuva on tallennettu JPEG-tiedostona. Muunna tiedosto ja yritä uudelleen. }}
     *   {{ Näitä tiedostoja ei voi lähettää, koska ne ovat vioittuneet tai niiden sisältö ei vastaa tiedostopäätteitä. Näin käy usein, kun valokuvia on nimetty uudelleen muuntamisen sijaan, esimerkiksi HEIC-kuvia on tallennettu JPEG-tiedostoina. Muunna tiedostot ja yritä uudelleen. }}
+# {$count} is the number of files that are not of a type the field accepts, even once transformed
+# {$types} is the list of accepted file types, such as “.pdf or .txt”
+warning_unsupported_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Tätä tiedostoa ei voi lähettää, koska se ei ole mitään seuraavista tyypeistä: {$types}. }}
+    *   {{ Näitä tiedostoja ei voi lähettää, koska ne eivät ole mitään seuraavista tyypeistä: {$types}. }}
+# {$count} is the number of files that are not of an image type the field accepts
+# {$types} is the list of accepted image formats, such as “PNG or WebP”
+warning_unsupported_image_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Tätä tiedostoa ei voi lähettää, koska vain seuraavien tyyppien kuva hyväksytään: {$types}. }}
+    *   {{ Näitä tiedostoja ei voi lähettää, koska vain seuraavien tyyppien kuvat hyväksytään: {$types}. }}
 
 # File format validation when replacing an asset
 # Warning section for replacement files that are in a different format
@@ -817,6 +1440,8 @@ uploading_files_failed: Lähetys epäonnistui.
 # Errors shown when a file on a cloud storage service could not be deleted or renamed
 deleting_assets_failed: Poistaminen epäonnistui.
 renaming_asset_failed: Uudelleennimeäminen epäonnistui.
+# Error shown when an edited text file in the Asset Library could not be saved
+saving_asset_failed: Tallentaminen epäonnistui.
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
@@ -854,6 +1479,8 @@ entry_validation_errors: |
   .match $count
     one {{ Yhdessä kentässä on virhe. Korjaa se tallentaaksesi merkinnän. }}
     *   {{ {$count} kentässä on virheitä. Korjaa ne tallentaaksesi merkinnän. }}
+# Button on the validation error toast that opens the Validation panel listing the errors
+show_errors: Näytä virheet
 
 # ==============================================================================
 # Success Notifications
@@ -930,6 +1557,19 @@ assets_deleted: |
   .match $count
     one {{ Assetti poistettu. }}
     *   {{ {$count} assettia poistettu. }}
+folder_created: Kansio luotu.
+# Folder info panel in the Asset Library sidebar
+folder_path: Kansion polku
+folder_contents: Sisältö
+# {$count} is the number of subfolders in the folder
+x_folders: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Ei kansioita }}
+    one {{ {$count} kansio }}
+    *   {{ {$count} kansiota }}
+folder_renamed: Kansio nimetty uudelleen.
+folder_deleted: Kansio poistettu.
 
 # ==============================================================================
 # Content Editor
@@ -970,6 +1610,9 @@ edit_singleton_announcement: Muokkaat nyt tiedostoa ”{$file}”.
 # Shown when CI skip is enabled/disabled
 save_and_publish: Tallenna ja julkaise
 save_without_publishing: Tallenna julkaisematta
+# Shown disabled in place of `save_and_publish` while entries created or edited from a Relation
+# field are in a collection whose review can’t be skipped with the `direct_publish` option
+save_and_publish_needs_review: Tallenna ja julkaise (liittyvät merkinnät vaativat tarkistuksen)
 
 # Editor options menu
 show_editor_options: Näytä muokkainasetukset
@@ -999,6 +1642,9 @@ swap_panes: Vaihda paneelien paikkaa
 # {$locale} is the localized language name for the current content pane, e.g., English
 edit_x_locale: Muokkaa kielen {$locale} sisältöä
 preview_x_locale: Esikatsele kielen {$locale} sisältöä
+# The content of a monolingual entry, which has no locale to name
+edit_content: Muokkaa sisältöä
+preview_content: Esikatsele sisältöä
 
 # Preview iframe labels
 content_preview: Sisällön esikatselu
@@ -1007,6 +1653,8 @@ content_preview: Sisällön esikatselu
 # {$locale} is the localized language name for the content options menu, e.g., English
 show_content_options_x_locale: Näytä kielen {$locale} sisältöasetukset
 content_options_x_locale: Kielen {$locale} sisältöasetukset
+show_content_options: Näytä sisältöasetukset
+content_options: Sisältöasetukset
 
 # Field container labels
 # {$field} is the field’s display label
@@ -1045,8 +1693,9 @@ deploy_preview:
   view: Näytä esikatselu
   # Shown while the site is still being built, with or without a URL to open yet
   building: Esikatselua rakennetaan vielä.
-  # Shown when the build failed, so no preview is available
-  failed: Esikatselua ei voitu rakentaa.
+  # Shown when the build failed, so no preview is available. The failure may lie in the site’s own
+  # code rather than the entry, so the editor is told not to assume it’s theirs, and who to ask
+  build_failed: Esikatselua ei voitu rakentaa. Syy ei välttämättä ole muutoksissasi. Jos ongelma jatkuu, ota yhteyttä sivustosi ylläpitäjään.
   # Shown briefly while the CI/CD provider is being queried
   checking: Tarkistetaan esikatselua…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
@@ -1080,9 +1729,20 @@ translate_from: Käännä kielestä…
 # {$locale} is the localized language name of the source content being translated, e.g., English
 translate_from_x: Käännä kielestä {$locale}
 
-# Revert changes
+# Revert changes, restore the default values or clear the fields. The field options menu offers
+# them for a field, the content options menu of an editor pane for the locale it shows, and the
+# editor options menu for the whole entry, the latter two asking for confirmation first
 revert_changes: Kumoa muutokset
 revert_all_changes: Kumoa kaikki muutokset
+restore_default: Palauta oletus
+clear_all: Tyhjennä kaikki
+confirm_reverting_changes: Haluatko varmasti kumota kaikki tähän merkintään tehdyt muutokset?
+# {$locale} is a locale name, e.g. French
+confirm_reverting_changes_x_locale: Haluatko varmasti kumota kaikki kielen {$locale} sisältöön tehdyt muutokset?
+confirm_restoring_defaults: Haluatko varmasti palauttaa kaikkien tämän merkinnän kenttien oletusarvot? Muutoksesi menetetään.
+confirm_restoring_defaults_x_locale: Haluatko varmasti palauttaa kaikkien kielen {$locale} sisällön kenttien oletusarvot? Muutoksesi menetetään.
+confirm_clearing_fields: Haluatko varmasti tyhjentää kaikki tämän merkinnän kentät? Muutoksesi menetetään.
+confirm_clearing_fields_x_locale: Haluatko varmasti tyhjentää kaikki kielen {$locale} sisällön kentät? Muutoksesi menetetään.
 
 # Slug editing
 edit_slug: Muokkaa polkua
@@ -1090,6 +1750,8 @@ edit_slug_error:
   empty: Slug ei voi olla tyhjä.
   invalid: Slug ei voi sisältää erikoismerkkejä, mukaan lukien kauttaviivoja ja välilyöntejä.
   duplicate: Tämä slug on käytössä toisella merkinnällä.
+# {$slug} is the slug filled from the slug template, which a number is added to when another entry uses it
+slug_numbered: Slug ”{$slug}” on käytössä toisella merkinnällä, joten siihen lisätään numero.
 
 # Entry path editing for nested entries
 # Heading for the parent folder picker shown when the `meta.path` option is enabled
@@ -1203,6 +1865,13 @@ validation:
     email: Anna kelvollinen sähköpostiosoite.
     url: Anna kelvollinen URL-osoite.
 
+  # Value used for the same field in another entry of the collection
+  value_not_unique: Tämä arvo on käytössä toisella merkinnällä.
+  # Key of a keyed List field item used for another item of the same list
+  key_not_unique: Tämä avain on käytössä toisella kohteella.
+  # Key of a keyed List field item that is a whole number, which doesn’t keep its order in a map
+  key_numeric: Avain ei voi olla kokonaisluku, koska kohteet menettäisivät järjestyksensä.
+
   # Custom field validation error
   invalid_value: Virheellinen arvo.
   unexpected_error: Odottamaton virhe.
@@ -1224,6 +1893,12 @@ entry_sidebar:
     # Button in the panel header that validates the entry on demand
     validate: Validoi
 
+  # Slug panel: shows the entry slug and lets the user edit it
+  slug:
+    title: Slug
+    generated_on_save: Slug luodaan merkinnän sisällöstä, kun se tallennetaan. Siinä olevat päivämäärä ja kellonaika ovat tallennushetken mukaiset.
+    unavailable: Tällä merkinnällä ei ole slugia.
+
   # History panel: shows entry commit history
   history:
     title: Historia
@@ -1235,11 +1910,55 @@ entry_sidebar:
     title: Backlinkit
     no_entries: Yksikään merkintä ei viittaa tähän merkintään.
 
+  # Tab label of a panel with a count, e.g. of comments. {$title} is the panel title
+  title_with_count: '{$title} ({$count})'
+
+# Status shown next to the Save button while an entry with many new files is being saved
+# {$done} and {$total} are the number of files prepared and to prepare, or the number of commits
+# made and the estimated number of commits in all
+save_progress:
+  preparing: 'Valmistellaan tiedostoja: {$done}/{$total}'
+  committing: 'Tallennetaan GitHubiin: {$done}/noin {$total} commitia'
+
 # Entry save error dialog
 saving_entry:
   error:
     title: Virhe
     description: Merkinnän tallentamisessa tapahtui virhe. Yritä myöhemmin uudelleen.
+
+# Dialog shown when saving the entry would overwrite a change someone else has made in the
+# repository since the entry was opened in the editor
+save_conflict:
+  title: Joku muu on muuttanut merkintää
+  # `{$name}` is the other person’s name, `{$date}` when they made the change
+  modified_by: '{$name} muutti tätä merkintää {$date}, sen jälkeen kun avasit sen.'
+  # Shown instead of `modified_by` when the other person isn’t known
+  modified: Tätä merkintää on muutettu repositoriossa sen jälkeen, kun avasit sen.
+  deleted: Tämä merkintä on poistettu repositoriosta sen jälkeen, kun avasit sen.
+  # Follows `modified_by` or `modified`
+  overwrite_warning: Jos tallennat nyt, heidän muutoksensa menetetään.
+  # Follows `deleted`
+  recreate_warning: Jos tallennat nyt, merkintä luodaan uudelleen.
+  # Follows `modified_by`, `modified` or `deleted` for an entry stored in the same file as the other
+  # entries of the collection, which can’t be saved over the change
+  reload_warning: Koska merkintä on tallennettu samaan tiedostoon muiden merkintöjen kanssa, sitä ei voi tallentaa muutoksen päälle. Peruuta muokkaus, avaa merkintä uudelleen listauksesta ja tee muokkauksesi.
+  # OK button label
+  save_anyway: Tallenna silti
+  # Error shown when the repository was updated between the check above and the commit itself
+  branch_moved: Joku muu päivitti repositoriota tallennuksen aikana. Yritä uudelleen.
+  # Error shown when saving would change an item in a file storing all the entries of a collection,
+  # which someone else has changed or moved since it was loaded
+  array_item_changed: Joku muu on muuttanut samaan tiedostoon tallennettua merkintää. Yritä uudelleen.
+  # {$path} is the file path
+  array_file_invalid: Tiedostoa {$path} ei voi päivittää, koska se ei sisällä kelvollista merkintäluetteloa.
+
+# Notice shown in the entry editor when someone else has changed or deleted the entry in the
+# repository while the user has it open. The change itself is described with the `save_conflict`
+# strings above
+remote_change:
+  reload_entry: Lataa merkintä uudelleen
+  # Confirmation shown before reloading when the user has unsaved changes
+  confirm_reloading_entry: Haluatko varmasti ladata merkinnän uudelleen? Tallentamattomat muutoksesi menetetään.
 
 # ==============================================================================
 # Asset Editor
@@ -1313,21 +2032,63 @@ map_lat_lng: Kartta, joka näyttää leveysasteen {$latitude}, pituusasteen {$lo
 remove_this_item: Poista tämä kohde
 move_up: Siirrä ylös
 move_down: Siirrä alas
+# Menu of a list item or file with the extra reorder actions, shown in a list of 3 or more items
+reorder_options: Järjestysasetukset
+move_to_top: Siirrä ylimmäksi
+move_to_bottom: Siirrä alimmaksi
+# Opens a dialog asking for the position to move a list item to
+move_to: Siirrä kohtaan…
+# Dialog asking for the new position of an item. {$count} is the number of items in the list
+move_to_description: Anna sijainti väliltä 1–{$count}.
+move_to_position: Sijainti
 # aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
 # or moved with the arrow keys while the handle has focus
 reorder_item: Järjestä kohde uudelleen
 # aria-label for the text input holding one item of a simple List field, which has no subfield to
 # take a label from
 list_item_value: Kohteen arvo
+# aria-label for each item of a List field, giving its position in the list
+# {$position} is the 1-based position of the item, {$count} is the number of items
+list_item_position: Kohde {$position}/{$count}
+# Message shown in place of a removed List field item or Object field, next to a Restore button
+# that puts it back
+item_removed: Kohde poistettu.
 
-# Add item button label
+# Add item button label, also used by the Relation field to create a new entry in the referenced
+# collection, with the collection’s singular label
 # Example: “Add Image”, “Add Author”
 # {$name} is the label of the item type that can be added
 add_x: Lisää {$name}
 
 # List item context menu
+# aria-label for the button opening the menu, and for the menu itself
+list_item_options: Kohteen asetukset
 add_item_above: Lisää kohde yläpuolelle
 add_item_below: Lisää kohde alapuolelle
+paste_item_above: Liitä kohde yläpuolelle
+paste_item_below: Liitä kohde alapuolelle
+paste_item_to_replace: Liitä korvaten
+
+# List item clipboard
+# Button in the list toolbar to paste a copied item, from any list in any entry, at the end of the
+# list, or at the start with the `add_to_top` option
+paste_item: Liitä kohde
+list_item_copied: Kohde kopioitu.
+# ⋮ stands for the icon of the item menu button; keep it, along with the button’s aria-label
+no_list_item_to_paste: Liitettävää kopioitua kohdetta ei ole. Kopioidaksesi kohteen avaa sen ⋮ (Kohteen asetukset) -valikko ja valitse Kopioi.
+list_item_not_compatible: Kopioitu kohde ei sovi tähän luetteloon.
+# {$count} is the number of the values left out, as the list doesn’t have the fields
+list_item_pasted_without_values: |
+  .input {$count :integer}
+  .match $count
+    one {{ Kohde liitetty. Arvo, jota tämä luettelo ei hyväksy, jätettiin pois. }}
+    *   {{ Kohde liitetty. {$count} arvoa, joita tämä luettelo ei hyväksy, jätettiin pois. }}
+# {$count} is the number of the files the pasted item references that couldn’t be found
+list_item_pasted_without_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Kohde liitetty, mutta sen käyttämää tiedostoa ei löytynyt. Tarkista kohteen tiedostokentät. }}
+    *   {{ Kohde liitetty, mutta {$count} sen käyttämää tiedostoa ei löytynyt. Tarkista kohteen tiedostokentät. }}
 
 # Variable-type list selector
 select_list_type: Valitse luettelotyyppi
@@ -1346,12 +2107,45 @@ opacity: Opasiteetti
 # Select field: empty option placeholder
 unselected_option: (Ei valintaa)
 
+# Relation field: creating or editing a referenced entry without leaving the editor
+relation_field:
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  save_together_hint: Uusi kohde ({$name}) tallennetaan muokkaamasi merkinnän mukana.
+  # Error shown when the entry couldn’t be prepared. {$name} is the singular label of the collection
+  add_failed: Kohdetta ({$name}) ei voitu lisätä. Katso lisätietoja selaimen konsolista.
+  # Title of the dialog to edit an entry selected in the field. {$name} is the singular label of the
+  # referenced collection
+  edit_entry_title: 'Muokataan: {$name}'
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  edit_together_hint: Tähän kohteeseen ({$name}) tekemäsi muutokset tallennetaan muokkaamasi merkinnän mukana.
+  # Error shown when the changes couldn’t be prepared. {$name} is the singular label of the collection
+  edit_failed: Muutoksia kohteeseen ({$name}) ei voitu ottaa käyttöön. Katso lisätietoja selaimen konsolista.
+  # Error shown when the changes would move the entry to another file path, e.g. through a path
+  # template using a field. {$name} is the singular label of the collection
+  move_unsupported: Nämä muutokset siirtäisivät kohteen ({$name}) toiseen sijaintiin, mikä onnistuu vain muokkaamalla sitä erikseen.
+  # Error shown when saving, if someone else has changed an entry edited from the field since. {$name}
+  # is the summary of that entry
+  edit_conflict: Joku muu on muuttanut kohdetta ”{$name}” sen jälkeen, kun muokkasit sitä. Avaa se uudelleen kentästä ja vertaa muutoksiasi uusimpaan versioon.
+  # Error shown when saving, if someone else has deleted an entry edited from the field since.
+  # {$name} is the summary of that entry
+  edit_deleted: Joku muu on poistanut kohteen ”{$name}” sen jälkeen, kun muokkasit sitä. Poista se kentästä tallentaaksesi merkinnän.
+  # Accessible label of the menu listing the selected entries that can be edited
+  select_entry_to_edit: Valitse muokattava merkintä
+  # Warning shown in the editor of an entry that has been edited from a Relation field of another
+  # entry, while the changes wait in that entry’s pull request. {$name} is the summary of that
+  # entry
+  edited_with_entry: Tämän merkinnän muutokset odottavat julkaisua yhdessä merkinnän ”{$name}” kanssa. Jos tallennat sen nyt, muutokset yhdistetään, kun kyseinen merkintä julkaistaan, mikä voi epäonnistua, jos ne menevät päällekkäin.
+  # Warning shown in the dialog when an entry edited from the field has been changed by someone else
+  # since. {$name} is the singular label of the collection
+  changed_since_edit: Joku muu on muuttanut tätä kohdetta ({$name}) sen jälkeen, kun muokkasit sitä. Muutoksesi näytetään uusimman version päällä. Tarkista ne ennen päivittämistä.
+
 # Select Assets dialog
 assets_dialog:
   # Dialog titles for different selection modes
   title:
     file: Valitse tiedosto
     image: Valitse kuva
+    folder: Valitse kansio
 
   # Search input labels
   search_for_file: Hae tiedostoja
@@ -1359,6 +2153,18 @@ assets_dialog:
 
   # Locations panel aria-label
   locations: Sijainnit
+
+  # Folder selection mode for a File field with the `select_folder` option. {$path} is the public
+  # path of the folder to be selected, and {$count} is the number of folders selected
+  selected_folder: 'Valittu kansio: {$path}'
+  selected_folders: |
+    .input {$count :integer}
+    .match $count
+      one {{ {$count} kansio valittu }}
+      *   {{ {$count} kansiota valittu }}
+  no_subfolders: Tässä kansiossa ei ole alikansioita.
+  # Shown for a cloud storage service whose `prefix` option depends on fields of the entry
+  prefix_unresolved: Täytä kentät, joista tämä sijainti riippuu, selataksesi ja lähettääksesi sen tiedostoja.
 
   # Asset folder options
   folder:
@@ -1376,6 +2182,7 @@ assets_dialog:
 
   # Stock photo panels
   available_images: Saatavilla olevat kuvat
+  available_files: Saatavilla olevat tiedostot
 
   # URL entry option
   enter_url: Anna URL-osoite
@@ -1398,6 +2205,9 @@ assets_dialog:
   photo_credit:
     title: Kuvan lähde
     description: 'Käytä seuraavaa lähdettä mahdollisuuksien mukaan:'
+    # {$field} is the label of the Markdown field the credit is added to
+    insert_to_field: Lisää kenttään {$field}
+    copy_as_markdown: Kopioi Markdownina
 
   # Unsaved asset badge
   unsaved: Tallentamaton
@@ -1440,6 +2250,7 @@ editor_components:
   alt: Vaihtoehtoinen teksti
   title: Otsikko
   link: Linkki
+  caption: Kuvateksti
 
 # Key-Value field: column headers and validation
 key_value:
@@ -1504,6 +2315,15 @@ cloud_storage:
   uploadcare:
     auth_key_label: Salainen API-avain
 
+  azure_blob_storage:
+    auth_key_label: SAS-tunnus
+
+  backblaze_b2:
+    auth_key_label: Sovellusavain
+
+  bunny_storage:
+    auth_key_label: Storage Zonen salasana
+
 # ==============================================================================
 # Configuration Validation
 # ==============================================================================
@@ -1557,16 +2377,42 @@ config:
     unsupported_backend_suggestion: Käytä jotakin <a>tuetuista taustajärjestelmistä</a>.
     missing_repository: Repositoriota ei ole määritetty.
     invalid_repository: Määritetty repositorio on virheellinen. Sen on oltava muodossa ”omistaja/repositorio”.
+    # Don’t localize `api_root`
+    missing_api_root: Asetusta `api_root` ei ole määritetty. Se on pakollinen Forgejo-taustajärjestelmälle.
+    invalid_root_dir: Juurihakemisto on virheellinen. Sen on oltava repositorion sisäinen polku ilman osaa ”..”.
+    invalid_root_dir_branch: Juurihakemistoa ei voi käyttää julkaisutilojen `editorial_workflow` ja `preview` haarojen nimissä. Mikään sen polun osa ei voi alkaa pisteellä, päättyä merkkijonoon ”.lock” tai sisältää välilyöntiä tai erikoismerkkiä, kuten kaksoispistettä tai tähteä.
+    path_outside_root_dir: Polku ”{$path}” johtaa juurihakemiston ulkopuolelle, jossa CMS ei voi listata tiedostoja.
     oauth_implicit_flow: Määritettyä todennustapaa (implicit flow) ei tueta Sveltia CMS:ssä. Käytä toista <a>todennustapaa</a>.
     github_pkce_unsupported: PKCE-valtuutusta ei vielä tueta GitHubin rajoitusten vuoksi. Käytä toista <a>todennustapaa</a>.
+    additions_no_base_url: Asetuksen `base_url` on oltava Sveltia CMS Additions -palvelusi URL-osoite.
     oauth_no_app_id: OAuth-sovelluksen application ID:tä ei ole määritetty.
     # Don’t localize `open_authoring`, `editorial_workflow` and `preview`
-    open_authoring_no_workflow: Asetus `open_authoring` edellyttää julkaisutilaa `editorial_workflow`. Katso lisätietoja <a>dokumentaatiosta</a>.
+    open_authoring_no_workflow: Asetus `open_authoring` edellyttää julkaisutilaa `editorial_workflow` tai `preview`. Katso lisätietoja <a>dokumentaatiosta</a>.
     # Don’t localize `auth_methods`
     no_auth_methods: Asetuksen `auth_methods` on sisällettävä vähintään yksi metodi.
+    # Don’t localize `auth_scope`, `repo` and `public_repo`
+    auth_scope_no_repo: Asetuksen `auth_scope` on sisällettävä `repo` tai `public_repo`.
     missing_media_folder: Mediakansiota ei ole määritetty.
     public_folder_relative_path: Määritetty julkinen kansio on virheellinen. Sen on oltava absoluuttinen polku, joka alkaa merkillä ”/”.
     public_folder_absolute_url: Julkisen kansion absoluuttista URL-osoitetta ei tueta Sveltia CMS:ssä.
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    unsupported_folder_template_tag: Asetus `{$option}` sisältää templaattitagin `{$tag}`, jota ei tueta siinä. Vain slug-templaattitageja, kuten `\{\{slug\}\}` ja `\{\{year\}\}`, sekä tageja `\{\{dirname\}\}`, `\{\{filename\}\}`, `\{\{extension\}\}`, `\{\{media_folder\}\}` ja `\{\{public_folder\}\}` voi käyttää.
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    global_folder_template_tag: Asetus `{$option}` sisältää templaattitagin `{$tag}`, jota voi käyttää vain kokoelman, kokoelmatiedoston tai kentän asetuksessa, jossa on merkintä, jonka tiedoilla se täytetään.
+    # {$replacement} is the configured replacement string; Don’t localize `sanitize_replacement`
+    invalid_sanitize_replacement: Asetuksen `sanitize_replacement` arvo on `{$replacement}`, mutta se sisältää merkin, jota ei voi käyttää slugissa, joten se ei voi korvata sellaista.
+    # {$option} is the option name (`site_url` or `display_url`) and {$url} is the configured value
+    invalid_url_option: Asetuksen `{$option}` arvo on `{$url}`, mutta sen on oltava absoluuttinen URL-osoite, joka alkaa `https://` tai `http://`.
+    # Don’t localize `publish_mode`, `stages`, `draft`, `pending_review` and `pending_publish`
+    invalid_publish_mode_stages: Asetuksen `publish_mode` asetuksen `stages` on alettava vaiheella `draft` ja lueteltava vaiheet järjestyksessä `draft`, `pending_review`, `pending_publish` toistamatta yhtään.
+    # Don’t localize `i18n` and `locales`
+    i18n_no_locales: Asetuksessa `i18n.locales` on lueteltava vähintään yksi kieli.
+    # {$locale} is the locale code from the configuration; Don’t localize `default_locale` and `locales`
+    i18n_invalid_default_locale: Asetuksen `default_locale` arvo on `{$locale}`, mutta se ei ole mikään kielistä `locales`.
+    # {$locale} is the locale code from the configuration; Don’t localize `initial_locales` and `locales`
+    i18n_invalid_initial_locale: Asetus `initial_locales` sisältää arvon `{$locale}`, mutta se ei ole mikään kielistä `locales`.
+    # Don’t localize `i18n`
+    i18n_no_collections: 'Asetus `i18n` on määritetty ylimmällä tasolla, mutta yhdelläkään kokoelmalla tai singletonilla ei ole asetusta `i18n`, joten mitään sisältöä ei voi kääntää. Lisää `i18n: true` käännettäviin kokoelmiin ja singletoneihin.'
     # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
     invalid_transformation_key: Asetus `transformations` sisältää avaimen `{$key}`, jota ei tueta. Sen on oltava `raster_image`, `svg` tai tuettu rasterikuvamuoto.
     # {$key} is the transformation key; Don’t localize `quality`
@@ -1579,18 +2425,52 @@ config:
     invalid_asset_collection_name: Assettikokoelman nimi `{$name}` on virheellinen. Se ei saa sisältää erikoismerkkejä.
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: Assettikokoelmien nimien on oltava yksilöllisiä, mutta `{$name}` on käytössä useammin kuin kerran.
-    # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_no_options: Kokoelmalla on oltava jokin asetuksista `folder`, `files` tai `divider`.
-    # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_multiple_options: Kokoelmalla ei voi olla asetuksia `folder`, `files` ja `divider` samanaikaisesti.
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_no_options: Kokoelmalla on oltava jokin asetuksista `folder`, `file`, `files` tai `divider`.
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_multiple_options: Kokoelmalla voi olla vain yksi asetuksista `folder`, `file`, `files` ja `divider`.
     # {$extension} is the file extension and {$format} is the configured content format
     file_format_mismatch: Tiedostopääte `{$extension}` ei vastaa muotoa `{$format}`.
+    # {$name} is the field name from the configuration and {$widget} is its field type
+    front_matter_body_field_not_text: Kenttä `{$name}` tallennetaan front matterin alla olevaksi rungoksi, joka voi sisältää vain tekstiä, ei lukua, totuusarvoa, luetteloa tai objektia, kuten `{$widget}`-kenttä. Käytä tekstiä sisältävää kenttätyyppiä tai nimeä kenttä uudelleen.
+    # {$file} is the file path from the configuration; Don’t localize `file` and `locale`. The curly
+    # brackets are escaped with backslashes for MessageFormat 2
+    invalid_collection_data_file: Asetus `file` `{$file}` on virheellinen. Sen on oltava JSON-tiedoston polku ilman paikkamerkkiä `\{\{locale\}\}`.
+    # {$prop} is the option name; Don’t localize `file`
+    unsupported_collection_data_file_option: Asetusta `{$prop}` ei tueta kokoelmassa, jolla on asetus `file`.
+    # Don’t localize `file`, `publish_mode` and `simple`
+    collection_data_file_workflow: Editoinnin työnkulkua ja esikatselun työnkulkua, avoin osallistuminen mukaan lukien, ei tueta kokoelmassa, jolla on asetus `file`. Aseta kokoelman asetukseksi `publish_mode` arvo `simple`.
+    # {$prop} is the option name; Don’t localize `file` and `slug`. The curly brackets are escaped
+    # with backslashes for MessageFormat 2
+    collection_data_file_slug_tag: Asetus `{$prop}` ei voi sisältää tagia `\{\{slug\}\}` kokoelmassa, jolla on asetus `file`, koska merkinnän slug on sen sijainti, joka muuttuu, kun merkintöjä järjestetään uudelleen tai poistetaan. Käytä sen sijaan kenttää, jolla on yksilöllinen arvo.
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
     invalid_slug_slash: Polku-templaatti `{$slug}` on virheellinen, koska se ei voi sisältää kauttaviivoja. Järjestääksesi merkinnät alikansioihin, käytä asetusta `path` asetuksen `slug` sijaan.
+    # {$name} is the field name from the configuration; Don’t localize `identifier_field`
+    invalid_identifier_field: Asetus `identifier_field` viittaa kenttään `{$name}`, mutta sellaista kenttää ei ole määritetty kokoelmassa.
+    # {$name} is the field name from the configuration; Don’t localize `filter`
+    invalid_filter_field: Asetus `filter` viittaa kenttään `{$name}`, mutta sellaista kenttää ei ole määritetty kokoelmassa.
+    # Don’t localize `filter`, `value` and `pattern`
+    invalid_filter_no_condition: Asetuksella `filter` on oltava joko asetus `value` tai `pattern`, johon merkintöjä verrataan.
+    # {$option} is an option name such as `slug` or `summary` and {$name} is the field name or template tag from the configuration
+    option_field_not_found: Asetus `{$option}` viittaa kohteeseen `{$name}`, mutta sellaista kenttää ei ole määritetty.
+    # {$name} is the field name from the configuration and {$widget} is its field type; Don’t localize `thumbnail`
+    thumbnail_field_not_media: Asetus `thumbnail` viittaa kenttään `{$name}`, mutta sen on oltava Image- tai File-kenttä, ei `{$widget}`-kenttä.
+    # Don’t localize `inline` or `multiple`
+    invalid_inline_component_fields: Tila `inline` edellyttää yhtä Boolean-, Color-, DateTime-, Number-, Relation-, Select- tai String-kenttää. Relation- tai Select-kentällä ei voi olla asetusta `multiple` käytössä.
+    # {$option} is an option name such as `pattern` or `filter` and {$pattern} is the configured pattern
+    invalid_regex: Asetus `{$option}` sisältää virheellisen säännöllisen lausekkeen `{$pattern}`, joka jätetään huomiotta.
     # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
     invalid_reorder_group: Asetus `reorder` viittaa näkymäryhmään `{$name}`, mutta sellaista ryhmää ei ole määritetty asetuksessa `view_groups`.
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit` and `fields`
+    invalid_bulk_edit_field: Asetuksen `bulk_edit` luettelo `fields` viittaa kenttään `{$name}`, mutta sellaista ylimmän tason kenttää ei ole määritetty kokoelmassa.
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit`, `fields` and `multiple`
+    unsupported_bulk_edit_field: Asetuksen `bulk_edit` luettelossa `fields` olevaa kenttää `{$name}` ei voi muokata joukkona. Vain Boolean-, Color-, DateTime-, Number-, Relation-, Select- tai String-kenttää tuetaan, joka ei ole vain luku -tilassa, jolla ei ole asetusta `multiple` käytössä ja jota ei aseteta automaattisesti tallennettaessa.
     # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
     invalid_sortable_field: Asetus `sortable_fields` viittaa kenttään `{$name}`, mutta sellaista kenttää ei ole määritetty kokoelmassa.
+    # Don’t localize `sortable_fields` and `default_sort`
+    multiple_sortable_field_defaults: Vain yhdellä asetuksen `sortable_fields` kohteella voi olla asetus `default_sort`.
+    # {$option} is `table_columns` or `summary_fields`, and {$name} is the field name from the configuration
+    invalid_table_column_field: Asetus `{$option}` viittaa kenttään `{$name}`, mutta sellaista kenttää ei ole määritetty kokoelmassa.
     # {$name} is the field name from the configuration; Don’t localize `view_groups`
     invalid_view_group_field: Asetus `view_groups` viittaa kenttään `{$name}`, mutta sellaista kenttää ei ole määritetty kokoelmassa.
     # {$name} is the field name from the configuration; Don’t localize `view_filters`
@@ -1602,9 +2482,15 @@ config:
     duplicate_view_group_name: Näkymäryhmien nimien on oltava yksilöllisiä, mutta nimi `{$name}` on käytössä useammin kuin kerran.
     # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
     missing_view_filter_name: Näkymäsuodattimella {$count} on oltava asetus `name` ei-tyhjänä merkkijonona.
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `pattern`, `eq` and `gte`
+    invalid_view_filter_no_condition: Näkymäsuodattimella {$count} on oltava asetus `pattern` tai vertailuasetus, kuten `eq` tai `gte`, johon merkintöjä verrataan.
     # {$name} is the invalid or duplicate view filter name
     invalid_view_filter_name: Näkymäsuodattimen nimi `{$name}` on virheellinen. Se ei voi sisältää erikoismerkkejä.
     duplicate_view_filter_name: Näkymäsuodattimien nimien on oltava yksilöllisiä, mutta nimi `{$name}` on käytössä useammin kuin kerran.
+    # {$name} is the default view group name from the configuration; Don’t localize `default` and `view_groups`
+    invalid_view_group_default: Asetuksen `view_groups` asetuksen `default` arvo on `{$name}`, mutta millään näkymäryhmällä ei ole sitä nimeä.
+    # {$name} is the default view filter name from the configuration; Don’t localize `default` and `view_filters`
+    invalid_view_filter_default: Asetuksen `view_filters` asetuksen `default` arvo on `{$name}`, mutta millään näkymäsuodattimella ei ole sitä nimeä.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: Kokoelmalla {$count} on oltava asetus `name` ei-tyhjänä merkkijonona.
     # {$name} is the invalid or duplicate collection name
@@ -1619,8 +2505,19 @@ config:
     collection_no_fields: Kokoelmalla on oltava asetus `fields` määritettynä vähintään yhdellä kentällä.
     # Don’t localize `fields`
     collection_file_no_fields: Kokoelmatiedostolla on oltava asetus `fields` määritettynä vähintään yhdellä kentällä.
+    # Don’t localize `i18n`, `locale` and `folder`
+    collection_folder_i18n_required: Kokoelmalla on oltava asetus `i18n` määritettynä, jos `folder`-polussa käytetään `locale`-paikkamerkkiä.
+    # {$folder} is the invalid folder path; Don’t localize `locale`, `folder` and the example path. The
+    # curly brackets in the example are escaped with backslashes for MessageFormat 2
+    invalid_collection_folder_locale: '`folder`-polku `{$folder}` on virheellinen. `locale`-paikkamerkkiä saa käyttää vain kerran kokonaisena kansion nimenä, kuten `content/\{\{locale\}\}/posts`.'
     # Don’t localize `i18n`, `locale` and `file`
     collection_file_i18n_required: Kokoelmatiedostolla on oltava asetus `i18n` määritettynä, jos `file`-polussa käytetään `locale`-paikkamerkkiä.
+    # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
+    collection_i18n_no_fields: 'Kokoelmalla on asetus `i18n`, mutta yhdelläkään sen kentistä ei ole asetusta `i18n`, joten mitään kenttää ei voi kääntää. Lisää `i18n: true` tai `i18n: duplicate` käännettäviin kenttiin.'
+    # Don’t localize `i18n` and `i18n: true`
+    collection_i18n_no_files: 'Kokoelmalla on asetus `i18n`, mutta yhdelläkään sen tiedostoista ei ole asetusta `i18n`, joten mitään tiedostoa ei voi kääntää. Lisää `i18n: true` käännettäviin tiedostoihin.'
+    # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
+    collection_file_i18n_no_fields: 'Kokoelmatiedostolla on asetus `i18n`, mutta yhdelläkään sen kentistä ei ole asetusta `i18n`, joten mitään kenttää ei voi kääntää. Lisää `i18n: true` tai `i18n: duplicate` käännettäviin kenttiin.'
     # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
     missing_field_name: Kentällä {$count} on oltava asetus `name` määritettynä ei-tyhjänä merkkijonona.
     # {$name} is the invalid or duplicate field name
@@ -1632,6 +2529,8 @@ config:
     invalid_variable_type: Muuttujatyypin nimi `{$name}` on virheellinen. Se ei saa sisältää erikoismerkkejä.
     duplicate_variable_type: Muuttujatyyppien nimien on oltava yksilöllisiä, mutta `{$name}` on käytössä useammin kuin kerran.
     date_field_type: 'Vanhentunutta Date-kenttätyyppiä ei tueta Sveltia CMS:ssä. Käytä DateTime-kenttätyyppiä asetuksella `type: date`.'
+    # curly brackets in the placeholder are escaped with backslashes for MessageFormat 2
+    hidden_field_locale_without_i18n: Hidden-kentän asetus `default` käyttää paikkamerkkiä `\{\{locale\}\}`, mutta i18n ei ole käytössä kokoelmassa, joten sisällöllä ei ole kieltä, jolla se täytettäisiin.
     # {$timeZone} is the invalid IANA timezone identifier from the configuration
     invalid_timezone: 'Virheellinen aikavyöhyke: {$timeZone}. Sen on oltava kelvollinen IANA-aikavyöhyketunniste, kuten `America/New_York` tai `Asia/Tokyo`.'
     # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
@@ -1644,12 +2543,85 @@ config:
     invalid_list_variable_type: List-kentän muuttujatyyppi on virheellinen. Asetus `widget` on `{$widget}`, mutta sen on oltava `object`.
     # Don’t localize `fields`, and `types`
     invalid_object_field: Object-kentällä ei voi olla asetuksia `fields` ja `types` samanaikaisesti.
+    # {$min} and {$max} are option names such as `min` and `max` or `minlength` and `maxlength`
+    invalid_range_options: Asetus `{$min}` ei saa olla suurempi kuin asetus `{$max}`.
+    # {$step} is the configured value; Don’t localize `step`
+    invalid_step: Asetuksen `step` arvo on `{$step}`, mutta sen on oltava suurempi kuin nolla tai `-1` askelluksen poistamiseksi käytöstä.
+    # Don’t localize `options`
+    select_field_no_options: Select-kentän asetuksessa `options` on oltava vähintään yksi kohde.
+    # {$value} is the option value from the configuration; Don’t localize `options`
+    select_field_duplicate_option: Select-kentän asetuksen `options` arvojen on oltava yksilöllisiä, mutta `{$value}` on käytössä useammin kuin kerran.
+    # {$value} is the default value from the configuration; Don’t localize `default` and `options`
+    select_field_invalid_default: Select-kentän asetuksen `default` arvo on `{$value}`, mutta se ei ole mikään arvoista `options`.
+    # Don’t localize `fields` and `types`
+    list_field_no_subfields: List-kentän asetuksessa `fields` tai `types` on oltava vähintään yksi kohde. Jätä asetus pois, jos haluat luettelon pelkkiä arvoja.
+    # Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_object: List-kentän asetus `default` sisältää objektin, mutta jokaisen kohteen on oltava pelkkä arvo, koska kentällä ei ole asetusta `fields` tai `types`.
+    # {$value} is the default item from the configuration; Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_item: List-kentän asetus `default` sisältää arvon `{$value}`, mutta jokaisen kohteen on oltava objekti, koska kentällä on asetus `fields` tai `types`.
+    # {$key} is a property name of the default item from the configuration; Don’t localize `default`
+    list_field_invalid_default_key: List-kentän asetus `default` sisältää kohteen, jolla on ominaisuus `{$key}`, mutta millään alikentällä ei ole sitä nimeä.
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    list_field_default_missing_type: List-kentän asetus `default` sisältää kohteen ilman ominaisuutta `{$typeKey}`, joka yksilöi jonkin tyypeistä `types`.
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default item; Don’t localize `default` and `types`
+    list_field_invalid_default_type: List-kentän asetus `default` sisältää kohteen, jonka ominaisuus `{$typeKey}` on `{$value}`, mutta se ei ole mikään tyypeistä `types`.
+    # Don’t localize `map_key_field`, `fields` and `types`
+    list_field_map_key_no_subfields: List-kentän asetus `map_key_field` edellyttää asetusta `fields` tai `types`, koska jokainen avain otetaan alikentästä.
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_not_found: List-kentän asetus `map_key_field` viittaa kenttään `{$name}`, mutta millään alikentällä ei ole sitä nimeä.
+    # {$name} is the subfield name, and {$type} is the variable type name; Don’t localize `map_key_field`
+    list_field_map_key_missing_in_type: List-kentän asetus `map_key_field` viittaa kenttään `{$name}`, mutta tyypillä `{$type}` ei ole sennimistä alikenttää.
+    # {$name} is the subfield name, and {$widget} is its field type; Don’t localize `map_key_field`
+    list_field_map_key_invalid_type: List-kentän asetus `map_key_field` viittaa kenttään `{$name}`, mutta sen on oltava String-, Relation- tai Select-kenttä, ei `{$widget}`-kenttä.
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `multiple`
+    list_field_map_key_multiple: List-kentän asetus `map_key_field` viittaa kenttään `{$name}`, mutta alikenttä ei voi saada useita arvoja, koska jokainen kohde tarvitsee yhden avaimen. Poista sen asetus `multiple`.
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_option_not_string: List-kentän asetus `map_key_field` viittaa kenttään `{$name}`, mutta alikentän vaihtoehtojen arvojen on oltava merkkijonoja, koska jokainen avain tallennetaan merkkijonona.
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `required`
+    list_field_map_key_not_required: List-kentän asetus `map_key_field` viittaa kenttään `{$name}`, mutta alikenttä ei voi olla valinnainen, koska jokainen kohde tarvitsee avaimen. Poista sen asetus `required`.
+    # {$name} is the subfield name; Don’t localize `map_key_field`, `i18n: false` and `i18n: duplicate`
+    list_field_map_key_not_localized: 'List-kentän asetus `map_key_field` viittaa kenttään `{$name}`, mutta alikentällä ei voi olla asetusta `i18n: false`, koska kohteet tarvitsevat avaimen jokaisella kielellä. Käytä asetusta `i18n: duplicate` tai poista asetus.'
+    # Don’t localize `i18n`, `duplicate_if_empty`, `multiple` and `true`
+    duplicate_if_empty_multiple: 'Asetusta `i18n: duplicate_if_empty` ei tueta kentälle, jolla on asetus `multiple`, joten kenttä toimii kuin sillä olisi asetus `i18n: true`.'
+    # Don’t localize `default` and `multiple`
+    invalid_default_multiple: Asetuksen `default` on oltava taulukko, koska asetus `multiple` on `true`.
+    invalid_default_single: Asetuksen `default` on oltava yksittäinen arvo, ei taulukko, koska asetus `multiple` ei ole `true`.
+    # {$key} is a property name of the default object from the configuration; Don’t localize `default`
+    object_field_invalid_default_key: Object-kentän asetuksella `default` on ominaisuus `{$key}`, mutta millään alikentällä ei ole sitä nimeä.
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    object_field_default_missing_type: Object-kentän asetuksella `default` ei ole ominaisuutta `{$typeKey}`, joka yksilöi jonkin tyypeistä `types`.
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default object; Don’t localize `default` and `types`
+    object_field_invalid_default_type: Object-kentän asetuksen `default` ominaisuus `{$typeKey}` on `{$value}`, mutta se ei ole mikään tyypeistä `types`.
+    # Don’t localize `default` and `output_code_only`
+    code_field_invalid_default_object: Code-kentän asetuksen `default` on oltava merkkijono, koska asetus `output_code_only` on `true`.
+    # {$key} is a property name of the default object, {$code} and {$lang} are the configured property names; Don’t localize `default` and `keys`
+    code_field_invalid_default_key: Code-kentän asetuksella `default` on ominaisuus `{$key}`, mutta asetus `keys` sallii vain ominaisuudet `{$code}` ja `{$lang}`.
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_invalid_expression: Compute-kentän asetuksen `value` on oltava kelvollinen aritmeettinen lauseke, kuten `\{\{fields.price\}\} * \{\{fields.quantity\}\}`, koska asetus `value_type` on `{$valueType}`.
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_uuid_in_expression: Compute-kentän asetus `value` ei voi käyttää UUID-tagia, kuten `\{\{uuid\}\}`, koska asetus `value_type` on `{$valueType}`, mikä tekee siitä aritmeettisen lausekkeen.
+    # {$value} is the default value and {$valueType} is the configured value type; Don’t localize `default` and `value_type`
+    number_field_default_not_integer: Number-kentän asetuksen `default` arvo on `{$value}`, mutta sen on oltava kokonaisluku, koska asetus `value_type` on `{$valueType}`.
+    number_field_default_not_number: Number-kentän asetuksen `default` arvo on `{$value}`, mutta sen on oltava luku, koska asetus `value_type` on `{$valueType}`.
+    # Don’t localize `fields` and `types`
+    object_field_no_subfields: Object-kentän asetuksessa `fields` tai `types` on oltava vähintään yksi kohde.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: Viitattu kokoelma `{$collection}` on virheellinen tai sitä ei ole määritetty.
     relation_field_invalid_collection_file: Viitattu tiedosto `{$file}` on virheellinen tai sitä ei ole määritetty.
     # Don’t localize `file`
     relation_field_missing_file_name: Asetus `file` on määritettävä, kun viitataan tiedostokokoelmaan.
     relation_field_invalid_value_field: Viitattu arvokenttä `{$field}` on virheellinen tai sitä ei ole määritetty.
+    # {$collection} is the referenced collection name; Don’t localize `file`, `value_field` and `slug`.
+    # The curly brackets are escaped with backslashes for MessageFormat 2
+    relation_field_array_file_slug: Viittaus kokoelmaan `{$collection}` ei voi tallentaa arvoa `\{\{slug\}\}`, koska merkinnän slug kokoelmassa, jolla on asetus `file`, on sen sijainti, joka muuttuu, kun merkintöjä järjestetään uudelleen tai poistetaan. Aseta asetukseksi `value_field` sen sijaan kenttä, jolla on yksilöllinen arvo.
+    # {$collection} is the referenced collection name; Don’t localize `file`
+    relation_field_array_file_workflow: Kokoelmalla, jolla on asetus `file`, ei voi olla viittausta kokoelmaan `{$collection}`, joka käyttää editoinnin työnkulkua tai esikatselun työnkulkua, koska viittauksia siellä uudelleennimettyyn tai poistettuun merkintään ei voi päivittää tiedostoon.
+    relation_field_invalid_display_field: Viitattu näyttökenttä `{$field}` on virheellinen tai sitä ei ole määritetty.
+    relation_field_invalid_search_field: Viitattu hakukenttä `{$field}` on virheellinen tai sitä ei ole määritetty.
+    relation_field_invalid_filter_field: Viitattu suodatinkenttä `{$field}` on virheellinen tai sitä ei ole määritetty.
+    relation_field_invalid_sort_field: Viitattu järjestyskenttä `{$field}` on virheellinen tai sitä ei ole määritetty.
+    # Don’t localize `sort_by` and `file`
+    relation_field_sort_by_file_ignored: Asetus `sort_by` ei koske viittausta tiedostoon, jonka vaihtoehdot noudattavat luettelon kohteiden järjestystä. Se jätetään huomiotta.
     unexpected: Odottamaton virhe
 
     # Schema validation errors, reported when the configuration doesn’t match the published JSON
@@ -1682,18 +2654,56 @@ config:
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: OAuth-sovelluksen tunnusta ei ole määritetty. Käyttäjien on annettava pääsytunnus kirjautuakseen sisään.
+    # Don’t localize `prefix`
+    site_library_prefix_template: Mediakirjaston asetus `prefix` sisältää templaattitageja, joita tuetaan vain kenttätasolla, koska ylimmällä tasolla ei ole merkintää, jonka tiedoilla ne täytettäisiin.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: Asetusta `{$prop}` ei tueta Sveltia CMS:ssä. Se jätetään huomiotta.
+    # Don’t localize `stages`, `publish_mode`, `editorial_workflow` and {$type}, which is `preview` or `simple`
+    publish_mode_stages_ignored: Asetuksen `publish_mode` asetus `stages` koskee vain julkaisutilaa `editorial_workflow`, joten se jätetään huomiotta tilassa `{$type}`.
+    # Don’t localize `pattern`, `m` and `s`
+    inline_component_multiline_pattern: Tämän rivinsisäisen komponentin asetuksella `pattern` on lippu `m` tai `s` tai se vastaa rivinvaihtoja, mutta rivinsisäistä komponenttia etsitään vain kappaleen sisältä.
+    # {$name} is a button or component name and {$option} is `buttons` or `editor_components`; Don’t localize them and `multiline: false`
+    single_line_block_item: 'Asetuksen `{$option}` kohde `{$name}` jätetään huomiotta, koska kenttä, jolla on `multiline: false`, voi sisältää vain rivinsisäistä sisältöä.'
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: Sekä `picker_utc` että uudemmat aikavyöhykeasetukset (`input_timezone` tai `output_utc`) on asetettu. Uudet asetukset ovat ensisijaisia. Harkitse asetuksen `picker_utc` poistamista määrityksistäsi.
+    # Don’t localize `localize_format` and `format`
+    localize_format_without_format: Asetuksella `localize_format` ei ole vaikutusta, koska kentällä ei ole asetusta `format` ja sen arvo tallennetaan ISO 8601 -muodossa.
+    # {$name} is a template tag like `fields.lines.*.price`; Don’t localize `value`, `*` and `sum()`
+    compute_field_wildcard_without_item: Compute-kentän asetus `value` viittaa kohteeseen `{$name}`, mutta kenttä ei ole sen luettelon kohteessa, jota `*` edustaa, joten se ei saa mitään arvoa. Vain koostefunktio, kuten `sum()`, voi käyttää luettelon kaikkia kohteita.
+    # {$name} is a template tag like `fields.lines.*.amount`; Don’t localize `value`
+    compute_field_self_reference: Compute-kentän asetus `value` viittaa kenttään itseensä muodossa `{$name}`, joten sen arvo muuttuu joka laskentakerralla eikä koskaan vakiinnu.
+    # {$name} is a template tag like `fields.total`; Don’t localize `value`
+    compute_field_reference_cycle: Compute-kentän asetus `value` viittaa kohteeseen `{$name}`, toiseen Compute-kenttään, joka viittaa takaisin tähän kenttään suoraan tai muiden kenttien kautta, joten niiden arvot eivät koskaan vakiinnu.
+    # Don’t localize `localize_format`, `true` and `de`
+    localize_format_without_i18n: Asetus `localize_format` on `true`, mutta i18n ei ole käytössä kokoelmassa, joten arvo kirjoitetaan englanniksi. Aseta asetukseksi sen sijaan kielikoodi, kuten `de`.
+    # {$locale} is the locale code from the configuration; Don’t localize `localize_format`
+    localize_format_unsupported_locale: Asetuksen `localize_format` arvo on `{$locale}`, joka ei ole tuettu kieli, joten arvo kirjoitetaan englanniksi.
     # Don’t localize `preview_path`
     preview_path_no_date_field: Asetus `preview_path` käyttää päivämäärä- ja aikatageja, mutta kokoelmassa ei ole DateTime-kenttää, josta ne voitaisiin lukea, joten esikatselulinkkiä ei näytetä.
     # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
     preview_path_date_field_not_found: Asetus `preview_path_date_field` viittaa kenttään `{$name}`, mutta sennimistä DateTime-kenttää ei ole määritetty, joten esikatselulinkkiä ei näytetä.
     # {$name} is the template tag from the configuration; Don’t localize `preview_path`
     preview_path_field_not_found: Asetus `preview_path` viittaa kenttään `{$name}`, mutta sellaista kenttää ei ole määritetty kokoelmassa, joten esikatselulinkkiä ei näytetä.
+    # {$name} is the default identifier field name; Don’t localize `identifier_field` and `slug`
+    missing_identifier_field: Kokoelmassa ei ole kenttää `{$name}`, jolla uudet merkinnät nimettäisiin, joten jokainen uusi merkintä saa satunnaisen slugin. Lisää kenttä `{$name}` tai aseta asetus `identifier_field` tai `slug`.
+    # Don’t localize `slug`, `i18n`, `multiple_files`, `multiple_folders` and `multiple_root_folders`
+    slug_i18n_ineffective: Asetuksen `slug` asetuksella `i18n` ei ole vaikutusta, koska kokoelma ei käytä i18n-rakennetta `multiple_files`, `multiple_folders` tai `multiple_root_folders`, jossa jokaisella kielellä on oma tiedostonsa.
+    # Don’t localize `slug`, `template` and `auto_increment`
+    slug_template_ignored: Asetuksen `slug` asetus `template` jätetään huomiotta, koska asetus `auto_increment` numeroi slugit sen sijaan.
+    # {$file} is the file path; Don’t localize `file`, `locale`, `i18n`, `false`,
+    # `omit_default_locale_from_file_path` and the example paths. The curly brackets in the examples
+    # are escaped with backslashes for MessageFormat 2
+    locale_not_omitted_from_file_path: '`locale`-paikkamerkkiä ei voi poistaa `file`-polusta `{$file}`, joten oletuskieli säilytetään siinä i18n-asetuksesta `omit_default_locale_from_file_path` huolimatta. Jättääksesi kielen pois käytä paikkamerkkiä kokonaisena kansion nimenä, kuten `\{\{locale\}\}/about.md`, tai tiedostonimen ja päätteen välissä, kuten `about.\{\{locale\}\}.md`. Säilyttääksesi sen aseta asetukseksi `false` tiedoston asetuksessa `i18n`.'
+    # Don’t localize `i18n`
+    i18n_not_configured: Asetus `i18n` on käytössä, mutta i18n:ää ei ole määritetty asetusten ylimmällä tasolla tai kokoelmassa, joten asetuksella ei ole vaikutusta.
+    # Don’t localize `public_folder` and `media_folder`
+    empty_public_folder: Asetus `public_folder` on tyhjä merkkijono, joten merkintöihin tallennettaviin assettien polkuihin käytetään sen sijaan `media_folder`-polkua. Poista asetus tai aseta siihen polku, jota haluat käyttää, kuten `/images`.
     # {$option} is an option path from the configuration, such as `filter.Regulation`
     schema_unknown_option: Asetusta `{$option}` ei ole määritetty Sveltia CMS:n konfiguraatioskeemassa. Se jätetään huomiotta. Tarkista, ettei kyseessä ole kirjoitus- tai syntaksivirhe.
+    # Don’t localize `default_localized`, `default` and `i18n`
+    default_localized_without_i18n: Asetuksella `default_localized` ei ole vaikutusta, koska i18n ei ole käytössä kokoelmassa. Käytä sen sijaan asetusta `default`.
+    # {$locale} is a locale code from the configuration; Don’t localize `default_localized`
+    default_localized_unknown_locale: Asetuksella `default_localized` on arvo kielelle `{$locale}`, joka ei ole mikään kokoelman kielistä, joten arvoa ei koskaan käytetä.
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'Katso yhteensopivuustiedot: {$link}'
@@ -1726,6 +2736,11 @@ viewing_editorial_workflow: 'Katselet nyt editoinnin työnkulun taulua. Luonnoks
 # Same as above, for an Open Authoring contributor: their board has no Ready column, because only
 # a maintainer can publish
 viewing_open_authoring_workflow: 'Katselet nyt editoinnin työnkulun taulua. Luonnokset: {$draft}. Tarkistuksessa: {$review}. Odottaa poistoa: {$deletion}.'
+# Same as above, when the In Review stage is left out with the `stages` publish mode option
+viewing_editorial_workflow_without_review: 'Katselet nyt editoinnin työnkulun taulua. Luonnokset: {$draft}. Valmiit: {$ready}. Odottaa poistoa: {$deletion}.'
+# Same as above, when all the content uses Preview Workflow, which has no review stages, so the
+# page only lists the drafts
+viewing_preview_workflow: 'Katselet nyt Luonnokset-sivua. Luonnokset: {$draft}. Odottaa poistoa: {$deletion}.'
 
 # Workflow status names. `drafts` is the plural form used as a column heading,
 # while `draft` is the singular form used in the editor’s status button.
@@ -1737,6 +2752,10 @@ status:
   # A pending removal, which is a status of its own rather than a stage: it has no review to go
   # through, only the deletion itself to carry out or call off
   pending_deletion: Odottaa poistoa
+  # Merged changes the site hasn’t caught up with yet: it’s being rebuilt and deployed from the
+  # merge, so a published entry isn’t live and a deleted one is still up. Heading of the tray below
+  # the board that lists them until the site has caught up
+  deploying: Julkaistaan
 
 workflow:
   # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
@@ -1780,6 +2799,14 @@ workflow:
   status_updated: Tila päivitetty.
   # Error notification when the status could not be changed
   status_change_failed: Tilan vaihtaminen epäonnistui. Yritä uudelleen.
+  # Workflow page: toolbar button that reads the pull requests again, to pick up the changes made
+  # by anyone else since the board was loaded, and the toast notifications shown while doing so and
+  # once done
+  refresh: Päivitä
+  refreshing: Päivitetään…
+  refreshed: Taulu on ajan tasalla.
+  # Error notification when the board could not be refreshed
+  refresh_failed: Taulun päivittäminen epäonnistui. Yritä uudelleen.
   # Error notification when the status can’t be changed because the entry is incomplete. Required
   # fields can be left empty while the entry is a draft, but not once it moves on from there
   status_change_blocked: Merkinnässä on virheitä. Korjaa ne ennen tilan vaihtamista.
@@ -1790,6 +2817,10 @@ workflow:
   # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
   send_for_review: Lähetä tarkistettavaksi
   confirm_sending_for_review: Muutoksesi on tallennettu luonnoksena. Lähetetäänkö merkintä tarkistettavaksi, jotta joku voi katsoa sen ja julkaista sen?
+  # Same as above, when the In Review stage is left out with the `stages` publish mode option, so
+  # the next step is to mark the entry as ready to be published
+  mark_as_ready: Merkitse valmiiksi
+  confirm_marking_as_ready: Muutoksesi on tallennettu luonnoksena. Merkitäänkö merkintä valmiiksi, jotta se voidaan julkaista?
   # Editor toolbar: button shown when the entry is ready to be published
   publish_entry: Julkaise merkintä
   # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
@@ -1821,6 +2852,8 @@ workflow:
     .match $count
       one {{ Yhtä niistä ei ole vielä julkaistu, joten julkaisemattomat muutoksesi hylätään. Mahdollinen julkaistu versio pysyy julkaistuna. }}
       *   {{ {$count} niistä ei ole vielä julkaistu, joten julkaisemattomat muutoksesi hylätään. Mahdolliset julkaistut versiot pysyvät julkaistuina. }}
+  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
+  confirm_publishing_entry_after_build: Haluatko varmasti julkaista tämän merkinnän? Muutoksesi tulevat näkyviin, kun sivustosi on rakennettu uudelleen.
   # Workflow page: toast notifications shown while an entry is being published from a card, and
   # once publishing has completed
   publishing_entry: Julkaistaan merkintää…
@@ -1832,10 +2865,55 @@ workflow:
   entry_deleted: Merkintä poistettu.
   # Error notification when publishing fails
   publishing_entry_failed: Merkinnän julkaiseminen epäonnistui. Yritä uudelleen.
+  # Error notification when an entry can’t be published from the CMS, because its request also
+  # changes files that aren’t part of the entry and that the CMS doesn’t show, goes somewhere other
+  # than the site’s branch, or is too large to check. Keep the wording free of Git jargon
+  publish_refused_other_changes: Tätä merkintää ei voi julkaista täällä, koska sen mukana on muita muutoksia, joita CMS ei voi näyttää sinulle. Pyydä kehittäjää tarkistamaan se.
+  # Error notification when an entry can’t be published because its branch has been committed to
+  # since the entry was opened, so what would be published isn’t what was reviewed
+  publish_refused_entry_changed: Merkintää on muutettu sen jälkeen, kun avasit sen. Lataa sivu uudelleen tarkistaaksesi uusimman version ennen sen julkaisemista.
+  review_on_x: Tarkista palvelussa {$service}
+  from_fork: Forkista
+  fork_entry_editable: Tämä merkintä on peräisin osallistujan pull requestista, joka on avattu forkista ”{$fork}”. Muutoksesi tallennetaan hänen haaraansa. Tarkista ja yhdistä pull request Git-palvelussa.
+  fork_entry_locked: Tämä merkintä on peräisin osallistujan pull requestista, joka on avattu forkista ”{$fork}”. Osallistuja ei salli ylläpitäjien muokata sitä, joten sitä voi vain katsella täällä.
+  fork_not_editable: Osallistuja ei salli ylläpitäjien muokata tätä pull requestia.
+  fork_entry_gone: Osallistujan pull request ei ole enää avoinna, joten muutoksia ei voi tallentaa siihen.
+  # Error shown in the save error dialog when an entry can’t be saved for review, because a request
+  # the CMS doesn’t show is already open from the branch the entry would be saved to. `{$number}` is
+  # the request number, e.g. `#12` on GitHub or `!12` on GitLab. Keep the wording free of Git jargon
+  branch_in_use: Tälle merkinnälle on jo avoinna toinen pyyntö ({$number}) CMS:n ulkopuolella. Pyydä kehittäjää sulkemaan se ensin.
   # Workflow page: empty column message
   no_entries: Ei merkintöjä.
   # Workflow page: aria-label for a draggable entry card
   drag_entry: Vaihda tilaa vetämällä
+  # Workflow page: note on a card in the Deploying tray, marking an entry that’s being removed from
+  # the site rather than published to it
+  deploying_deletion: Poisto
+  # Workflow page: note on a card listing the new entries that were created from a Relation field
+  # of the entry and are published along with it, e.g. “Also adds Section: Getting Started”
+  companion_entries: 'Lisää myös: {$entries}'
+  # Workflow page: note on a card listing the existing entries that were edited from a Relation
+  # field of the entry and are published along with it, e.g. “Also changes Author: Ada Lovelace”
+  edited_companion_entries: 'Muuttaa myös: {$entries}'
+  # Workflow page: one of the entries listed by `companion_entries` or `edited_companion_entries`,
+  # named by its collection’s singular label and its title
+  companion_entry: '{$collection}: {$title}'
+
+# Dialog asking the user for a commit message every time changes are saved, when the site is
+# configured to. The message is recorded in the repository’s history along with the changes
+commit_message:
+  # Dialog title
+  title: Commit-viesti
+  # Description when the user writes the whole message, which the text box is filled in with
+  description_replace: Kuvaile muutoksesi. Viesti tallennetaan historiaan niiden mukana.
+  # Description when the text the user enters is added before or after a message the CMS writes
+  description_addition: Lisää huomautus viestiin, joka tallennetaan historiaan muutostesi mukana, esimerkiksi tikettinumero. Sen voi jättää tyhjäksi.
+  # Accessible name of the text box when the user writes the whole message
+  message: Commit-viesti
+  # Accessible name of the text box when the text is added before or after the message
+  addition: Huomautus
+  # Preview of the message as it will be recorded. {$message} is the message
+  preview: 'Viesti: {$message}'
 
 # Open Authoring: a contributor without write access to the configured repository works in a fork
 # of it, and their changes reach the site through a pull request a maintainer merges
@@ -1849,6 +2927,10 @@ open_authoring:
   fork_declined: Tarvitset repositorion forkin tilillesi voidaksesi ehdottaa muutoksia.
   # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
   fork_failed: Repositorion ”{$repo}” forkkia ei voitu luoda tilillesi.
+  # Error shown when the user’s fork doesn’t have the branch the CMS is configured with, so there’s
+  # nothing to start their changes from. {$fork} and {$repo} are repository identifiers in
+  # owner/repo format, {$branch} is the branch name
+  fork_branch_missing: Forkissasi ”{$fork}” ei ole haaraa ”{$branch}”. Päivitä forkki repositoriosta ”{$repo}” ja kirjaudu sitten uudelleen sisään.
   # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
   # because the API rate limit is exhausted. {$repo} is the repository identifier
   permission_check_failed: Käyttöoikeuttasi repositorioon ”{$repo}” ei voitu tarkistaa. Yritä hetken kuluttua uudelleen.
@@ -1863,6 +2945,10 @@ open_authoring:
   private_repo_scope_required: Kirjautumisesi ei sisällä pääsyä yksityisiin repositorioihin, joten repositoriota ”{$repo}” ei voi lukea. Pyydä ylläpitäjää tarkistamaan CMS:n todennusasetukset.
   # Error shown when a contributor tries to publish an entry, which only a maintainer can do
   publish_unsupported: Vain ylläpitäjä voi julkaista muutoksia tälle sivustolle. Merkitse merkintäsi sen sijaan tilaan ”Tarkistuksessa”, niin joku katsoo sen.
+  # Error shown when a contributor changes the status of an entry whose request a maintainer has
+  # published since the page was loaded, leaving nothing to review. The entry then leaves the
+  # Editorial Workflow board and the editor closes. Keep the wording free of Git jargon
+  entry_already_published: Ylläpitäjä on jo julkaissut tämän merkinnän, joten tarkistettavaa ei ole enää.
   # Error shown when a change would go straight to the site instead of being reviewed, which a
   # contributor can’t do. It covers media library uploads and deletions, and entry reordering
   direct_commit_unsupported: Tätä muutosta ei voi tehdä suoraan. Vain merkintöjen muokkauksia voi ehdottaa tarkistettavaksi.
@@ -1878,11 +2964,10 @@ open_authoring:
 # Settings page aria-label
 categories: Kategoriat
 
-# Site Configuration Editor
-site_configuration_editor: Sivuston asetusten muokkain
-
 # Preferences panels
 prefs:
+  account:
+    title: Tili
   # API key management feedback messages
   changes:
     api_key_saved: API-avain tallennettu.
@@ -1932,7 +3017,7 @@ prefs:
         select_service: Valitse palvelu
       api_keys:
         title: Käännöspalvelujen API-avaimet
-        description: Hallitse <a>käännöspalvelujen</a> API-avaimia.
+        description: Hallitse <a>käännöspalvelujen</a> API-avaimia. Yleisten tekoälypalvelujen API-avaimia voi hallita tekoälyasetuksissa.
       # API key input label, e.g., “DeepL Key”
       # {$service} is the translation service name
       field_label: '{$service}-avain'
@@ -1966,6 +3051,16 @@ prefs:
       field_label: '{$service}-API-avain'
       no_services: Yhtään <a>pilvitallennuspalvelua</a> ei ole määritetty.
 
+  # AI panel
+  ai:
+    title: Tekoäly
+    api_keys:
+      title: Tekoälypalvelujen API-avaimet
+      description: Hallitse tekoälypalvelujen API-avaimia.
+    # API key input label, e.g., “OpenAI GPT API Key”
+    # {$service} is the AI service name
+    field_label: '{$service}-API-avain'
+
   # Accessibility panel
   accessibility:
     title: Saavutettavuus
@@ -1976,6 +3071,7 @@ prefs:
 
   # Data Management panel
   data:
+    title: Tiedonhallinta
     clear_data:
       title: Tyhjennä tiedot
       # Clear File Cache button
@@ -1991,13 +3087,23 @@ prefs:
 
   # Developer panel
   developer:
+    title: Kehittäjä
     developer_mode:
       title: Kehittäjätila
       description: Ota käyttöön kehittäjille suunnattuja ominaisuuksia, kuten yksityiskohtaiset konsolilokit ja natiivit kontekstivalikot.
       switch_label: Ota kehittäjätila käyttöön
+    local_git:
+      title: Git-commitit
+      description: Commitoi muutoksesi paikallisen repositoriosi nykyiseen haaraan aina, kun tallennat ne, kuten CMS tekee, kun työskentelet etärepositorion kanssa. Voit sitten tarkistaa ja pushata commitit tavallisilla Git-työkaluillasi.
+      switch_label: Commitoi muutokset Gitiin
+      checking: Tarkistetaan repositoriota…
+      # {$branch} is the branch name, {$name} and {$email} are the commit author’s name and email address
+      ready: Muutokset commitoidaan haaraan {$branch} tekijänä {$name} ({$email}).
+      # {$reason} is one of the `local_git_skip_reasons` strings
+      not_ready: Muutoksia ei voi commitoida juuri nyt. {$reason}
     deploy_hook:
       title: Julkaisu-webhook
-      description: Anna webhook-URL-osoite, jota kutsutaan, kun käynnistät julkaisun manuaalisesti valitsemalla Julkaise muutokset. Voit jättää tämän tyhjäksi, jos käytät GitHub Actionsia.
+      description: Anna webhook-URL-osoite, jota kutsutaan, kun käynnistät julkaisun manuaalisesti valitsemalla Julkaise muutokset. Voit jättää tämän tyhjäksi, jos käytät GitHub Actionsia tai GitLab CI/CD:tä.
       # Hook URL input
       url:
         field_label: Hookin URL-osoite

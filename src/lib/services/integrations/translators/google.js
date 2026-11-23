@@ -1,7 +1,11 @@
 import { postJSON } from '$lib/services/integrations/ai/api';
+import { createLanguageResolver } from '$lib/services/integrations/translators/ai-translation';
+import { splitIntoSizedChunks } from '$lib/services/utils/array';
+import { getByteSize } from '$lib/services/utils/file';
+import { getLikelyLocale } from '$lib/services/utils/locale';
 
 /**
- * @import { LanguagePair, TranslationOptions, TranslationService } from '$lib/types/private';
+ * @import { TranslationOptions, TranslationService } from '$lib/types/private';
  */
 
 const serviceId = 'google';
@@ -57,20 +61,6 @@ const LANGUAGE_ALIASES = {
 };
 
 /**
- * Get the script a locale is most likely written in, e.g. `Arab` for `pa-PK` and `Guru` for `pa`.
- * @param {string} locale Locale code.
- * @returns {string | undefined} Script code, or `undefined` if the locale code is invalid or its
- * script is unknown.
- */
-const getLikelyScript = (locale) => {
-  try {
-    return new Intl.Locale(locale).maximize().script;
-  } catch {
-    return undefined;
-  }
-};
-
-/**
  * Normalize a locale code to a supported language code. A locale can have a script code, like
  * `zh-Hant` or `pa-Arab`, and a region code, like `fr-FR`, in either case and separated with a
  * hyphen or an underscore. Without a script code, the script is the one the region implies, e.g.
@@ -87,7 +77,7 @@ export const normalizeLanguage = (locale) => {
 
   const script = scriptTag
     ? `${scriptTag[0].toUpperCase()}${scriptTag.slice(1).toLowerCase()}`
-    : region && getLikelyScript(`${lang}-${region}`);
+    : region && getLikelyLocale(`${lang}-${region}`)?.script;
 
   // Chinese: We should not fall back to `zh` for Traditional Chinese, because it’s Simplified
   if (lang === 'zh') {
@@ -105,7 +95,7 @@ export const normalizeLanguage = (locale) => {
   if (
     script &&
     !SUPPORTED_LANGUAGES.includes(`${lang}-${script}`) &&
-    script !== getLikelyScript(lang)
+    script !== getLikelyLocale(lang)?.script
   ) {
     return undefined;
   }
@@ -120,12 +110,10 @@ export const normalizeLanguage = (locale) => {
 };
 
 /**
- * Check if the given source and target languages are supported.
- * @param {LanguagePair} languages Language pair.
- * @returns {Promise<boolean>} True if both source and target languages are supported.
+ * Check if the given source and target languages are supported, or normalize them, throwing when
+ * either is not supported.
  */
-export const availability = async ({ sourceLanguage, targetLanguage }) =>
-  !!normalizeLanguage(sourceLanguage) && !!normalizeLanguage(targetLanguage);
+export const { availability, resolveLanguages } = createLanguageResolver(normalizeLanguage);
 
 /**
  * Maximum number of text segments the Cloud Translation API v2 accepts in a request.
@@ -145,36 +133,12 @@ const MAX_BYTES_PER_REQUEST = 90_000;
  * @param {string[]} texts Texts.
  * @returns {string[][]} Chunks of texts in the original order.
  */
-export const chunkTexts = (texts) => {
-  const encoder = new TextEncoder();
-  /** @type {string[][]} */
-  const chunks = [];
-  /** @type {string[]} */
-  let chunk = [];
-  let chunkSize = 0;
-
-  texts.forEach((text) => {
-    const size = encoder.encode(text).length;
-
-    if (
-      chunk.length &&
-      (chunk.length >= MAX_SEGMENTS_PER_REQUEST || chunkSize + size > MAX_BYTES_PER_REQUEST)
-    ) {
-      chunks.push(chunk);
-      chunk = [];
-      chunkSize = 0;
-    }
-
-    chunk.push(text);
-    chunkSize += size;
+export const chunkTexts = (texts) =>
+  splitIntoSizedChunks(texts, {
+    maxItems: MAX_SEGMENTS_PER_REQUEST,
+    maxSize: MAX_BYTES_PER_REQUEST,
+    getSize: getByteSize,
   });
-
-  if (chunk.length) {
-    chunks.push(chunk);
-  }
-
-  return chunks;
-};
 
 /**
  * Translate the given text with Google Cloud Translation API using the basic model and HTML format.
@@ -188,16 +152,7 @@ export const chunkTexts = (texts) => {
  * @see https://cloud.google.com/docs/authentication/api-keys-use
  */
 const translate = async (texts, { sourceLanguage, targetLanguage, apiKey }) => {
-  sourceLanguage = normalizeLanguage(sourceLanguage) ?? '';
-  targetLanguage = normalizeLanguage(targetLanguage) ?? '';
-
-  if (!sourceLanguage) {
-    throw new Error('Source locale is not supported.');
-  }
-
-  if (!targetLanguage) {
-    throw new Error('Target locale is not supported.');
-  }
+  [sourceLanguage, targetLanguage] = resolveLanguages(sourceLanguage, targetLanguage);
 
   // Cloud Translation API v2 endpoint
   const url = 'https://translation.googleapis.com/language/translate/v2';

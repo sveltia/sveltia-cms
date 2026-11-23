@@ -113,7 +113,9 @@ test('says the deploy preview couldn’t be built', async ({ cms, github, page }
   // The live site is still offered, with the failure spelled out
   const control = editor.getByRole('button', { name: 'View on Live Site' });
 
-  await expect(control).toHaveAccessibleDescription('The preview couldn’t be built.');
+  await expect(control).toHaveAccessibleDescription(
+    'The preview couldn’t be built. This isn’t necessarily caused by your changes. If the problem persists, contact your site administrator.',
+  );
   expect(await getOpenedURL(page, control)).toBe('https://www.example.com/posts/second-post');
 });
 

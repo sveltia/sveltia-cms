@@ -4,7 +4,7 @@
   import { sleep } from '@sveltia/utils/misc';
 
   import { goto } from '$lib/services/app/navigation';
-  import { assetsLocked } from '$lib/services/assets/folders';
+  import { assetsLocked, canCreateAsset, globalAssetFolder } from '$lib/services/assets/folders';
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
   import { isReadonly } from '$lib/services/config/readonly';
   import { getValidCollections } from '$lib/services/contents/collection';
@@ -40,9 +40,12 @@
     }),
   );
   // The assets are uploaded to the global media folder, which is read-only along with the whole
-  // CMS. Uploading commits straight to the configured branch, so an Open Authoring contributor or a
-  // user who can’t push to the branch can’t do it either
-  const assetsDisabled = $derived(assetsLocked.current || isReadonly());
+  // CMS, and missing when only a cloud media library is configured. Uploading commits straight to
+  // the configured branch, so an Open Authoring contributor or a user who can’t push to the branch
+  // can’t do it either
+  const assetsDisabled = $derived(
+    assetsLocked.current || isReadonly() || !canCreateAsset(globalAssetFolder.current),
+  );
   // A menu with nothing to choose from isn’t worth opening, e.g. while the whole CMS is read-only
   const allDisabled = $derived(assetsDisabled && collectionItems.every(({ disabled }) => disabled));
 </script>
@@ -52,6 +55,7 @@
   iconic
   disabled={allDisabled}
   popupPosition="bottom-right"
+  tooltip={_('create_entry_or_assets')}
   aria-label={_('create_entry_or_assets')}
 >
   {#snippet endIcon()}

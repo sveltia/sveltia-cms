@@ -6,9 +6,9 @@ import {
   getEntriesByCollection,
   getEntriesInCollectionFolder,
 } from '$lib/services/contents/collection/entries';
-import { getSharedEntryFileName } from '$lib/services/contents/collection/nested';
+import { getNameInFolder, getSharedEntryFileName } from '$lib/services/contents/collection/nested';
 import { getSlugOptions } from '$lib/services/contents/collection/slug';
-import { getNewEntryDirPath } from '$lib/services/contents/draft/slugs';
+import { getSlugDirPath } from '$lib/services/contents/draft/slugs';
 import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import { getRegex } from '$lib/services/utils/regex';
 import { getPullRequestEntries } from '$lib/services/workflow';
@@ -33,16 +33,18 @@ import { getPullRequestEntries } from '$lib/services/workflow';
 
 /**
  * Get the other entries of the collection the draft belongs to: the published ones and the
- * unpublished ones, leaving out any version of the entry being edited. The published ones include
- * every entry stored in the collection folder, even those the collection’s `filter` option leaves
- * out: they can belong to another collection sharing the folder, and their files can’t be
- * overwritten either. With Editorial Workflow, a
- * draft that has already renamed the entry leaves the published version behind under the old slug,
- * so that version has to be recognized as the same entry — otherwise reverting the slug looks like
- * a conflict. The unpublished entries are concatenated rather than swapped over their published
- * versions, because a draft that renamed an entry leaves the published file behind, so both slugs
- * are still in use. The new entries riding along in the pull request of an entry of another
- * collection count too.
+ * unpublished ones, leaving out any version of the entry being edited, told apart by the draft’s
+ * ID as well as the original entry’s paths. A new entry has no original, yet it’s saved under the
+ * draft’s ID with Editorial Workflow, and once it is, the draft is validated again — to see whether
+ * the entry can be sent for review — while the saved entry already holds its slug and values. The
+ * published ones include every entry stored in the collection folder, even those the collection’s
+ * `filter` option leaves out: they can belong to another collection sharing the folder, and their
+ * files can’t be overwritten either. With Editorial Workflow, a draft that has already renamed the
+ * entry leaves the published version behind under the old slug, so that version has to be
+ * recognized as the same entry — otherwise reverting the slug looks like a conflict. The
+ * unpublished entries are concatenated rather than swapped over their published versions, because
+ * a draft that renamed an entry leaves the published file behind, so both slugs are still in use.
+ * The new entries riding along in the pull request of an entry of another collection count too.
  * @param {EntryDraft} draft Entry draft.
  * @param {object} [options] Options.
  * @param {boolean} [options.inFolder] Whether to include every published entry stored in the
@@ -52,7 +54,7 @@ import { getPullRequestEntries } from '$lib/services/workflow';
  */
 export const getOtherEntries = (draft, { inFolder = true } = {}) => {
   // An entry in the Editorial Workflow has previous paths
-  const { collectionName, originalEntry } =
+  const { id, collectionName, originalEntry } =
     /** @type {EntryDraft & { originalEntry?: UnpublishedEntry }} */ (draft);
 
   // Every file path this entry occupies
@@ -63,7 +65,10 @@ export const getOtherEntries = (draft, { inFolder = true } = {}) => {
   return [
     ...(inFolder ? getEntriesInCollectionFolder : getEntriesByCollection)(collectionName),
     ...getPullRequestEntries(collectionName),
-  ].filter((entry) => !Object.values(entry.locales).some(({ path }) => ownPaths.has(path)));
+  ].filter(
+    (entry) =>
+      entry.id !== id && !Object.values(entry.locales).some(({ path }) => ownPaths.has(path)),
+  );
 };
 
 /**
@@ -71,37 +76,24 @@ export const getOtherEntries = (draft, { inFolder = true } = {}) => {
  * A locale-agnostic slug, under the `_` key, can collide with another entry’s slug in any locale.
  * The entry’s own original slug in a locale never counts as taken in that locale; in another
  * locale, it can be another entry’s slug, which would be overwritten. For a new entry placed with
- * the path editor of a collection with nested entries, only the entries in the chosen folder count,
- * by their file names, because the slug of an entry there is its sub path.
+ * the path editor of a collection with nested entries, or a locale just enabled for an existing
+ * one, only the entries in the chosen folder count, by their file names, because the slug of an
+ * entry there is otherwise its sub path. With localized slugs, that’s the folder’s localized
+ * counterpart in each locale but the default one. See {@link getSlugDirPath}.
  * @param {EntryDraft} draft Entry draft.
  * @param {InternalLocaleCode[]} [locales] Locales to get the taken slugs for. Default: the locales
  * of the draft’s slugs.
  * @returns {Record<InternalLocaleCode, string[]>} Taken slugs for each locale.
  */
 export const getTakenSlugs = (draft, locales = Object.keys(draft.currentSlugs)) => {
-  const { collection, originalSlugs } = draft;
+  const { originalSlugs } = draft;
   const otherEntries = getOtherEntries(draft);
-  const dirPath = getNewEntryDirPath(draft);
-  const dirPrefix = dirPath ? `${dirPath}/` : '';
-
-  /**
-   * Get the file name of the given slug within the folder chosen with the path editor.
-   * @param {string} slug Slug, which is a sub path.
-   * @returns {string | undefined} File name, or `undefined` if the entry is in another folder.
-   */
-  const getNameInFolder = (slug) => {
-    const name = slug.startsWith(dirPrefix) ? slug.slice(dirPrefix.length) : undefined;
-
-    return name?.includes('/') ? undefined : name;
-  };
 
   return Object.fromEntries(
     locales.map((locale) => {
       const ownSlug = originalSlugs[locale] ?? originalSlugs._;
-
-      // The folder is chosen in the default locale; the localized folders aren’t looked up here
-      const inFolder =
-        dirPath !== undefined && (locale === '_' || locale === collection._i18n.defaultLocale);
+      // A locale-agnostic slug is stored in the folder chosen in the default locale
+      const dirPath = getSlugDirPath(draft, locale === '_' ? undefined : locale);
 
       return [
         locale,
@@ -116,7 +108,7 @@ export const getTakenSlugs = (draft, locales = Object.keys(draft.currentSlugs)) 
               return [];
             }
 
-            const name = inFolder ? getNameInFolder(slug) : slug;
+            const name = dirPath === undefined ? slug : getNameInFolder(slug, dirPath);
 
             return name === undefined ? [] : [name];
           }),

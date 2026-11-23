@@ -22,14 +22,12 @@
 
   /** @type {Props & Record<string, any>} */
   let {
-    /* eslint-disable prefer-const */
     viewType,
     // The `Grid` component takes its accessible name as a prop; a spread `aria-label` is dropped
     'aria-label': ariaLabel = undefined,
     scrollKey = undefined,
     children = undefined,
     ...rest
-    /* eslint-enable prefer-const */
   } = $props();
 
   /**

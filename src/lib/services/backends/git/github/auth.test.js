@@ -5,7 +5,26 @@ import { getUserProfile } from '$lib/services/backends/git/github/user';
 import { signInToBackend } from '$lib/services/backends/git/shared/auth';
 import { cmsConfig } from '$lib/services/config';
 
+const { additions } = vi.hoisted(() => ({
+  additions: {
+    signInWithAdditions: vi.fn(async () => ({ backendName: 'github', login: 'editor' })),
+    signOutFromAdditions: vi.fn(async () => undefined),
+  },
+}));
+
 // Mock dependencies
+vi.mock('$lib/services/app/additions', async () => {
+  const { cmsConfig: config } = await import('$lib/services/config');
+
+  return {
+    // The chunk comes with Sveltia CMS Additions only
+    loadAdditions: vi.fn(async () =>
+      /** @type {any} */ (config.current)?.backend.auth_type === 'additions'
+        ? additions
+        : undefined,
+    ),
+  };
+});
 vi.mock('$lib/services/backends/git/github/user');
 vi.mock('$lib/services/backends/git/shared/auth', () => ({
   signInToBackend: vi.fn(),
@@ -107,6 +126,29 @@ describe('GitHub auth service', () => {
   describe('signOut', () => {
     test('re-exports the shared sign-out', async () => {
       await expect(signOut()).resolves.toBeUndefined();
+      expect(additions.signOutFromAdditions).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('with Sveltia CMS Additions', () => {
+    beforeEach(() => {
+      cmsConfig.current = /** @type {any} */ ({
+        backend: { name: 'github', repo: 'owner/repo', auth_type: 'additions' },
+      });
+    });
+
+    test('signs in with Sveltia CMS Additions instead of GitHub', async () => {
+      const options = { auto: false, username: 'editor', password: 'secret' };
+
+      await expect(signIn(options)).resolves.toEqual({ backendName: 'github', login: 'editor' });
+      expect(additions.signInWithAdditions).toHaveBeenCalledWith(options);
+      expect(signInToBackend).not.toHaveBeenCalled();
+    });
+
+    test('signs out from Sveltia CMS Additions', async () => {
+      await signOut();
+
+      expect(additions.signOutFromAdditions).toHaveBeenCalled();
     });
   });
 });

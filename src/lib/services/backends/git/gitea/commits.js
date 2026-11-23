@@ -1,6 +1,6 @@
 import { encodeBase64 } from '@sveltia/utils/file';
 
-import { getWorkflowRepository } from '$lib/services/backends/git/gitea/fork';
+import { getBranchRepository } from '$lib/services/backends/git/gitea/fork';
 import { fetchBranch, repository } from '$lib/services/backends/git/gitea/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import {
@@ -79,8 +79,9 @@ const getKnownSha = async ({ action, path, previousPath, previousSha }, workflow
   // A workflow branch has moved on from the configured one, so the file is looked up on the branch
   // the commit lands on, in the repository it lives in. The Editorial Workflow service resolves
   // these ahead of the commit, so this is a fallback rather than the usual path
-  const repoPath = getRepositoryPath(workflowBranch ? getWorkflowRepository() : repository);
-  const ref = workflowBranch ?? repositoryHead.current;
+  const target = workflowBranch ? getBranchRepository(workflowBranch) : undefined;
+  const repoPath = getRepositoryPath(target ?? repository);
+  const ref = target?.branch ?? repositoryHead.current;
   const knownPath = (action === 'move' && previousPath) || path;
 
   if (!ref) {
@@ -106,11 +107,14 @@ const getKnownSha = async ({ action, path, previousPath, previousSha }, workflow
 export const commitChanges = async (changes, options) => {
   checkDirectCommitAllowed(options);
 
-  // A workflow branch lives in the contributor’s fork with Open Authoring, while the configured
-  // branch is only ever committed to by someone who can write to the configured repository
-  const repoPath = getRepositoryPath(options.branch ? getWorkflowRepository() : repository);
+  // A workflow branch lives in the contributor’s fork with Open Authoring, or in the fork of the
+  // contributor whose pull request a maintainer is editing, while the configured branch is only
+  // ever committed to by someone who can write to the configured repository
+  const target = options.branch ? getBranchRepository(options.branch) : undefined;
+  const repoPath = getRepositoryPath(target ?? repository);
   // An Editorial Workflow change lands on a workflow branch rather than the configured one
-  const { branch = repository.branch, startBranch } = options;
+  const branch = target?.branch ?? repository.branch;
+  const { startBranch } = options;
   const commitMessage = signOffCommitMessage(createCommitMessage(changes, options));
   const { name, email } = /** @type {User} */ (user.account);
   const date = new Date().toJSON();
@@ -257,5 +261,7 @@ export const fetchFileCommits = async (paths) =>
     authorEmail: commit.commit?.author?.email,
     authorAvatarURL: commit.author?.avatar_url,
     authorLogin: commit.author?.login,
-    date: new Date(commit.commit?.author?.date ?? commit.created),
+    // Date it by when it was committed, like GitHub and GitLab do, rather than authored, as a
+    // rebased or cherry-picked commit keeps its author date
+    date: new Date(commit.commit?.committer?.date ?? commit.created),
   }));

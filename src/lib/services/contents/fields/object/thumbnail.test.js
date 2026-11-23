@@ -381,7 +381,8 @@ describe('getObjectThumbnail()', () => {
     ).toEqual({ asset: imageAsset });
 
     expect(mockGetMediaFieldSource).toHaveBeenCalledExactlyOnceWith(
-      expect.objectContaining({ value: '/uploads/photo.png', typedKeyPath: 'images.*' }),
+      // The typed key path names the subfield, which a field-level media folder is registered under
+      expect.objectContaining({ value: '/uploads/photo.png', typedKeyPath: 'images.*.image' }),
     );
 
     // The option has to name that subfield
@@ -412,7 +413,7 @@ describe('getObjectThumbnail()', () => {
     ).toEqual({ asset: imageAsset });
 
     expect(mockGetMediaFieldSource).toHaveBeenCalledExactlyOnceWith(
-      expect.objectContaining({ value: '/uploads/photo.png', typedKeyPath: 'photos.*.src' }),
+      expect.objectContaining({ value: '/uploads/photo.png', typedKeyPath: 'photos.*.photo.src' }),
     );
 
     // The object itself isn’t a media field

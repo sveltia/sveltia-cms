@@ -3,6 +3,7 @@ import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import AssetUpdatesToast from '$lib/components/assets/shared/asset-updates-toast.svelte';
 import { moveAssets } from '$lib/services/assets/data/move';
 import { getAssetUsedEntries } from '$lib/services/assets/details';
 import { selectedAssetFolder } from '$lib/services/assets/folders';
@@ -17,11 +18,13 @@ import {
   setEntries,
 } from '$lib/test/config';
 import { expectFileNameSelected } from '$lib/test/dialog';
-import { waitForToastsToHide } from '$lib/test/toast';
+import { getShownToastAlert, getShownToastText, waitForToastsToHide } from '$lib/test/toast';
 
 import RenameDialog from './rename-dialog.svelte';
 
-vi.mock('$lib/services/assets/data/move', () => ({
+vi.mock('$lib/services/assets/data/move', async (importOriginal) => ({
+  // The message is worked out by the real function, with the mocked read-only checks below
+  getMoveBlockedMessage: /** @type {any} */ (await importOriginal()).getMoveBlockedMessage,
   getDraftBaseProps: vi.fn(),
   addSavingEntryData: vi.fn(),
   collectEntryChanges: vi.fn(),
@@ -283,6 +286,9 @@ describe('RenameDialog', () => {
   });
 
   test('reports a failure to rename the asset, leaving the URL alone', async () => {
+    // The toasts reporting the commit are rendered by the shared component
+    await render(AssetUpdatesToast, {});
+
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     window.location.hash = '#/assets/static/uploads/a.png';
@@ -300,14 +306,7 @@ describe('RenameDialog', () => {
       await dialog.getByRole('button', { name: 'Rename' }).click();
 
       await vi.waitFor(() => expect(moveAssets).toHaveBeenCalledOnce());
-      await expect
-        .poll(() =>
-          document
-            .querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error')
-            ?.textContent?.replace(/\s+/g, ' ')
-            .trim(),
-        )
-        .toBe('error Error Rename failed.');
+      await expect.poll(() => getShownToastText('error')).toBe('error Error Rename failed.');
       expect(error).toHaveBeenCalledWith(new Error('offline'));
       // The asset keeps its name, so the URL isn’t updated
       expect(window.location.hash).toBe('#/assets/static/uploads/a.png');
@@ -339,9 +338,7 @@ describe('RenameDialog', () => {
       await new Promise((resolve) => {
         setTimeout(resolve, 100);
       });
-      expect(
-        document.querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error'),
-      ).toBeNull();
+      expect(getShownToastAlert('error')).toBeNull();
       expect(error).not.toHaveBeenCalled();
       expect(window.location.hash).toBe('#/assets/static/uploads/a.png');
     } finally {

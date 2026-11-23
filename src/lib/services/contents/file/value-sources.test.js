@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, test } from 'vitest';
 import { parseDocument } from 'yaml';
 
+import { fileStates } from '$lib/services/contents/file/state';
 import {
   collectJSONFloatSources,
   collectYAMLFloatSources,
   getJSONSourceText,
-  getSavedValueSources,
   mayHaveWholeNumberFloat,
   moveArrayItemSources,
   rememberUniqueSource,
@@ -14,11 +14,10 @@ import {
   reviveWholeNumberFloat,
   SourcedValue,
   sourcedValueYAMLTag,
-  valueSources,
 } from '$lib/services/contents/file/value-sources';
 
 beforeEach(() => {
-  valueSources.clear();
+  fileStates.clear();
 });
 
 describe('mayHaveWholeNumberFloat()', () => {
@@ -182,10 +181,10 @@ describe('collectJSONFloatSources()', () => {
 describe('rememberValueSources()', () => {
   test('remembers a source map that isn’t empty', () => {
     rememberValueSources('a.yml', {});
-    expect(valueSources.has('a.yml')).toBe(false);
+    expect(fileStates.get('a.yml')?.valueSources).toBeUndefined();
 
     rememberValueSources('a.yml', { a: { value: 10, source: '10.0' } });
-    expect(valueSources.get('a.yml')).toEqual({ a: { value: 10, source: '10.0' } });
+    expect(fileStates.get('a.yml')?.valueSources).toEqual({ a: { value: 10, source: '10.0' } });
   });
 });
 
@@ -201,27 +200,6 @@ describe('rememberUniqueSource()', () => {
     expect(sources.get(10)).toBeNull();
     rememberUniqueSource(sources, 10, '10.0');
     expect(sources.get(10)).toBeNull();
-  });
-});
-
-describe('getSavedValueSources()', () => {
-  const sourceMap = { a: { value: 10, source: '10.0' } };
-
-  test('hands the source map of the previous file over to the saved file', () => {
-    valueSources.set('old.yml', sourceMap);
-
-    expect(getSavedValueSources({ previousPath: 'old.yml', path: 'new.yml' })).toBe(sourceMap);
-    expect(valueSources.get('new.yml')).toBe(sourceMap);
-  });
-
-  test('returns nothing for a new file or a file without a source map', () => {
-    // Remembered for a file deleted since
-    valueSources.set('new.yml', sourceMap);
-
-    expect(getSavedValueSources({ path: 'new.yml' })).toBeUndefined();
-    expect(valueSources.has('new.yml')).toBe(false);
-    expect(getSavedValueSources({ previousPath: 'old.yml', path: 'new.yml' })).toBeUndefined();
-    expect(valueSources.has('new.yml')).toBe(false);
   });
 });
 

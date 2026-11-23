@@ -305,13 +305,36 @@ export class CMS {
   }
 
   /**
-   * Read all the files in the test repository, to check what the CMS has written.
+   * Read all the files in the test repository, to check what the CMS has written. The CMS may be
+   * writing while the files are read: Chrome shows a `.crswap` file next to a file being written,
+   * and removes it once the write is done, so those are left out, as is any file removed while the
+   * files are read, rather than returning only the files read until then. A file written again
+   * while it’s read is read again.
    * @returns {Promise<Record<string, string>>} File content keyed by path.
    */
   async readRepo() {
     return this.page.evaluate(async (rootDirName) => {
       /** @type {Record<string, string>} */
       const files = {};
+
+      /**
+       * Read a file. A `File` is a snapshot, which can’t be read once the file has been written
+       * again, so it’s read again then.
+       * @param {FileSystemFileHandle} handle File handle.
+       * @returns {Promise<string>} Content.
+       */
+      const readText = async (handle) => {
+        for (let attempt = 1; ; attempt += 1) {
+          try {
+            // eslint-disable-next-line no-await-in-loop
+            return await (await handle.getFile()).text();
+          } catch (ex) {
+            if (/** @type {Error} */ (ex).name !== 'NotReadableError' || attempt === 10) {
+              throw ex;
+            }
+          }
+        }
+      };
 
       /**
        * Walk a directory recursively.
@@ -324,24 +347,37 @@ export class CMS {
         const handles = await Array.fromAsync(dir.values());
 
         await Promise.all(
-          handles.map(async (handle) => {
-            if (handle.kind === 'directory') {
-              await walk(handle, `${prefix}${handle.name}/`);
-            } else {
-              files[`${prefix}${handle.name}`] = await (await handle.getFile()).text();
-            }
-          }),
+          handles
+            .filter((handle) => !handle.name.endsWith('.crswap'))
+            .map(async (handle) => {
+              try {
+                if (handle.kind === 'directory') {
+                  await walk(handle, `${prefix}${handle.name}/`);
+                } else {
+                  files[`${prefix}${handle.name}`] = await readText(handle);
+                }
+              } catch (ex) {
+                if (/** @type {Error} */ (ex).name !== 'NotFoundError') {
+                  throw ex;
+                }
+              }
+            }),
         );
       };
 
+      /** @type {FileSystemDirectoryHandle} */
+      let rootDirHandle;
+
       try {
-        await walk(
-          await (await navigator.storage.getDirectory()).getDirectoryHandle(rootDirName),
-          '',
-        );
+        rootDirHandle = await (
+          await navigator.storage.getDirectory()
+        ).getDirectoryHandle(rootDirName);
       } catch {
         // The repository is empty
+        return files;
       }
+
+      await walk(rootDirHandle, '');
 
       return files;
     }, TEST_REPO_DIR_NAME);
@@ -525,6 +561,59 @@ export const test = base.extend({
     expect(gitea.unhandled, 'Requests the Gitea mock couldn’t answer').toEqual([]);
   },
 });
+
+/**
+ * Session cookie {@link recordCookies} sets, as a `Cookie` request header carries it.
+ */
+export const PROXY_COOKIE = 'proxy_session=e2e';
+
+/**
+ * Give the browser context a session cookie for a host, as a proxy in front of a self-hosted Git
+ * service would set, and record the cookies each request matching a filter carries, to check the
+ * `include_credentials` backend option.
+ * @param {Page} page Page.
+ * @param {object} args Arguments.
+ * @param {string} args.hostname Host the cookie is set for.
+ * @param {(url: URL) => boolean} args.filter Function telling whether a request is recorded.
+ * @returns {Promise<() => Promise<(string | undefined)[]>>} Function returning the `Cookie` header
+ * of each recorded request sent so far.
+ */
+export const recordCookies = async (page, { hostname, filter }) => {
+  /** @type {Promise<string | undefined | null>[]} */
+  const cookies = [];
+  const context = page.context();
+  const [name, value] = PROXY_COOKIE.split('=');
+
+  await context.addCookies([
+    {
+      name,
+      value,
+      domain: hostname,
+      path: '/',
+      secure: true,
+      // The CMS is served from another site, so the cookie has to allow cross-site requests
+      sameSite: 'None',
+    },
+  ]);
+
+  context.on('request', (request) => {
+    if (filter(new URL(request.url()))) {
+      cookies.push(
+        request.allHeaders().then(
+          ({ cookie }) => cookie,
+          // A request sent as the test ends, e.g. a scheduled check, can’t be read once the page
+          // has closed; it’s left out rather than failing the test after it’s over
+          () => null,
+        ),
+      );
+    }
+  });
+
+  return async () =>
+    /** @type {(string | undefined)[]} */ (
+      (await Promise.all(cookies)).filter((cookie) => cookie !== null)
+    );
+};
 
 /**
  * Add scripts to the admin page, the way a site extends the CMS: after the CMS `<script>`, and

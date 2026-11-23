@@ -36,7 +36,6 @@
 
   /** @type {FieldEditorProps & Props} */
   let {
-    /* eslint-disable prefer-const */
     locale,
     fieldId,
     fieldConfig,
@@ -44,7 +43,6 @@
     required = true,
     readonly = true,
     invalid = false,
-    /* eslint-enable prefer-const */
   } = $props();
 
   const defaultLocale = $derived(entryDraft.current?.defaultLocale);

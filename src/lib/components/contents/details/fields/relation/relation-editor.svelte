@@ -12,6 +12,7 @@
   import SelectEditor from '$lib/components/contents/details/fields/select/select-editor.svelte';
   import { getCollection, getCollectionLabel } from '$lib/services/contents/collection';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
+  import { getEditorEntryValues } from '$lib/services/contents/editor/entry-values';
   import { getFieldEditorContext } from '$lib/services/contents/editor/field-context';
   import { getOptions } from '$lib/services/contents/fields/relation/helpers';
   import {
@@ -23,7 +24,6 @@
     replaceEntryValues,
     selectPendingEntry,
   } from '$lib/services/contents/fields/relation/quick-add';
-  import { getDraftSharedValues } from '$lib/services/contents/i18n/shared-values';
 
   /**
    * @import { Entry, FieldEditorProps, InternalEntryCollection } from '$lib/types/private';
@@ -39,10 +39,11 @@
   const entryDraft = getEntryDraftContext();
 
   const { valueStoreKey = 'currentValues' } = getFieldEditorContext();
+  // The entry the field belongs to: the draft, or the row in the bulk editor, which has no draft
+  const editorEntry = getEditorEntryValues();
 
   /** @type {FieldEditorProps & Props} */
   let {
-    /* eslint-disable prefer-const */
     locale,
     keyPath,
     typedKeyPath,
@@ -53,7 +54,6 @@
     required = true,
     readonly = false,
     invalid = false,
-    /* eslint-enable prefer-const */
   } = $props();
 
   let showQuickAddDialog = $state(false);
@@ -71,10 +71,6 @@
   // The entries created from this field, or another one referring to the same collection, are
   // offered along with the saved ones until they’re saved too
   const refEntries = $derived(getRefEntriesWithPending({ draft: entryDraft.current, fieldConfig }));
-  const currentLocaleValues = $derived(entryDraft.current?.[valueStoreKey]?.[locale]);
-  const currentSlug = $derived(
-    entryDraft.current?.currentSlugs[locale] ?? entryDraft.current?.currentSlugs._,
-  );
   /** @type {SelectField} */
   const selectFieldConfig = $derived({
     ...fieldConfig,
@@ -83,14 +79,11 @@
       locale,
       fieldConfig,
       refEntries,
-      currentLocaleValues,
-      currentSlug,
+      currentLocaleValues: editorEntry.getValues(locale),
+      currentSlug: editorEntry.getSlug(locale),
       // A filter can refer to a field that isn’t localized, which only has a value in the default
-      // locale. The values of a rich text editor component are localized along with the document
-      sharedValues:
-        valueStoreKey === 'currentValues'
-          ? getDraftSharedValues(entryDraft.current, locale)
-          : undefined,
+      // locale
+      sharedValues: editorEntry.getSharedValues(locale),
       // A label can refer to another pending entry through a Relation field of the entry
       pendingEntries: getUnlistedEntries(entryDraft.current),
     }),

@@ -11,13 +11,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    key,
-    label,
-    defaultValue = true,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { key, label, defaultValue = true } = $props();
 
   /**
    * Preferences, cast to allow access by an arbitrary key.

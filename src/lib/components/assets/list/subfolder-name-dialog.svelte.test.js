@@ -122,25 +122,40 @@ describe('SubfolderNameDialog', () => {
     await expect.poll(() => props.open).toBe(false);
   });
 
-  test('shows a warning without keeping the name from being submitted', async () => {
+  test('explains why the folder can’t be renamed, and refuses the name', async () => {
     const onSubmit = vi.fn();
 
-    await render(SubfolderNameDialog, {
+    const props = $state({
       open: true,
       title: 'Rename',
       okLabel: 'Rename',
       description: 'Pick a name.',
-      warning: 'Links will break.',
       name: '2024',
       takenNames: [],
       onSubmit,
+      blockedMessage: /** @type {string | undefined} */ (undefined),
     });
 
-    const dialog = page.getByRole('dialog', { name: 'Rename' });
+    await render(SubfolderNameDialog, props);
 
-    await expect.element(dialog.getByRole('alert')).toHaveTextContent('Links will break.');
-    await dialog.getByRole('textbox').fill('2025');
-    await dialog.getByRole('button', { name: 'Rename' }).click();
-    await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledWith('2025'));
+    const dialog = page.getByRole('dialog', { name: 'Rename' });
+    const textbox = dialog.getByRole('textbox');
+    const ok = dialog.getByRole('button', { name: 'Rename' });
+
+    // A valid new name can be submitted until the rename is blocked
+    await expect.element(textbox).toHaveValue('2024');
+    await textbox.fill('2025');
+    await expect.element(ok).toBeEnabled();
+    expect(dialog.getByRole('alert').elements()).toHaveLength(0);
+
+    props.blockedMessage = 'A read-only entry uses a file in it.';
+
+    await expect
+      .element(dialog.getByRole('alert'))
+      .toHaveTextContent('A read-only entry uses a file in it.');
+    expect(dialog.getByText('Pick a name.').elements()).toHaveLength(0);
+    await expect.element(textbox).toBeDisabled();
+    await expect.element(ok).toBeDisabled();
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 });

@@ -1,6 +1,5 @@
-import equal from 'fast-deep-equal';
-
 import { backend } from '$lib/services/backends';
+import { compareEntries } from '$lib/services/contents/draft/save/conflict';
 import { getUnpublishedEntryByDraft } from '$lib/services/workflow';
 import { reloadUnpublishedEntries } from '$lib/services/workflow/load';
 
@@ -69,18 +68,8 @@ export const detectWorkflowConflict = async (draft) => {
     return undefined;
   }
 
-  const canOverwrite = originalEntry.arrayIndex === undefined;
-  const current = getUnpublishedEntryByDraft({ collectionName, fileName, originalEntry });
-
-  if (!current) {
-    return { type: 'deleted', canOverwrite };
-  }
-
-  // The parsed content is compared rather than the file, so a commit that rewrote the file without
-  // changing what it says doesn’t count — nor does one that only touched the entry’s assets
-  if (!equal(current.locales, originalEntry.locales)) {
-    return { type: 'modified', entry: current, canOverwrite };
-  }
-
-  return undefined;
+  return compareEntries(
+    originalEntry,
+    getUnpublishedEntryByDraft({ collectionName, fileName, originalEntry }),
+  );
 };

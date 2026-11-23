@@ -6,7 +6,7 @@ import { render } from 'vitest-browser-svelte';
 import { getCollection, selectedCollection } from '$lib/services/contents/collection';
 import { nestedFilterPath } from '$lib/services/contents/collection/nested';
 import { env } from '$lib/services/user/env.svelte';
-import { unpublishedEntries } from '$lib/services/workflow';
+import { allUnpublishedEntries } from '$lib/services/workflow';
 import { createMockEntry, initTestConfig, setEntries } from '$lib/test/config';
 
 import CollectionTreeItem from './collection-tree-item.svelte';
@@ -92,7 +92,7 @@ describe('CollectionTreeItem', () => {
   test('counts the unpublished entries in', async () => {
     env.isSmallScreen = false;
     selectedCollection.current = undefined;
-    unpublishedEntries.current = [
+    allUnpublishedEntries.current = [
       /** @type {any} */ ({
         ...createMockEntry({
           slug: 'team',
@@ -126,7 +126,7 @@ describe('CollectionTreeItem', () => {
         .element(page.getByRole('treeitem', { name: /^Pages/ }))
         .toHaveTextContent('chevron_right web Pages 3 folder docs');
     } finally {
-      unpublishedEntries.current = [];
+      allUnpublishedEntries.current = [];
     }
   });
 

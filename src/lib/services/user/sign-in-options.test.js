@@ -89,4 +89,18 @@ describe('getSignInOptions', () => {
       getSignInOptions({ name: 'test-repo', auth_methods: [] }, 'Test'),
     ).toMatchObject({ tokenOptionHidden: false, oauthOptionHidden: false });
   });
+
+  it('should replace the OAuth and token options with Sveltia CMS Additions', () => {
+    expect(
+      getSignInOptions(
+        {
+          name: 'github',
+          repo: 'user/repo',
+          auth_type: 'additions',
+          base_url: 'https://additions.example.com',
+        },
+        'GitHub',
+      ),
+    ).toMatchObject({ tokenOptionHidden: true, oauthOptionHidden: true });
+  });
 });

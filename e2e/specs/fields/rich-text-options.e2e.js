@@ -1,4 +1,4 @@
-import { moveCaretToEnd, selectText } from '../../fixtures/rich-text.js';
+import { moveCaretToEnd, selectText, toggleTaskListItem } from '../../fixtures/rich-text.js';
 import { expect, test } from '../../fixtures/test.js';
 import { getEditor } from '../../fixtures/ui.js';
 
@@ -412,6 +412,123 @@ test.describe('text alignment', () => {
   });
 });
 
+test.describe('underline', () => {
+  test.describe('HTML', () => {
+    test.use({ config: noteConfig({ format: 'html', buttons: ['bold', 'underline'] }) });
+
+    test('underlines the selected text, which is saved with `<u>`', async ({ cms, page }) => {
+      const { editor, field, body } = await openNote({
+        cms,
+        page,
+        body: '<p>Register by 1 March</p>',
+      });
+
+      await selectText(body, '1 March');
+      await field.getByRole('button', { name: 'Underline' }).click();
+      await expect(body.locator('.underline')).toHaveText('1 March');
+
+      await saveAndExpect({ cms, editor, body: '<p>Register by <u>1 March</u></p>' });
+    });
+  });
+
+  test.describe('Markdown', () => {
+    test.use({ config: noteConfig({ buttons: ['bold', 'underline'] }) });
+
+    test('offers no underline, which Markdown can’t hold', async ({ cms, page }) => {
+      const { field } = await openNote({ cms, page, body: 'Register by 1 March' });
+
+      await expect(field.getByRole('button', { name: 'Bold' })).toBeVisible();
+      await expect(field.getByRole('button', { name: 'Underline' })).toHaveCount(0);
+    });
+  });
+});
+
+test.describe('task lists', () => {
+  test.describe('Markdown', () => {
+    test.use({ config: noteConfig({ buttons: ['bold', 'bulleted-list', 'task-list'] }) });
+
+    test('toggles an item with a click, and shows check boxes in the preview', async ({
+      cms,
+      page,
+    }) => {
+      const { editor, body } = await openNote({ cms, page, body: '- [ ] Hat\n- [x] Sunscreen' });
+      const preview = editor.getByRole('document', { name: 'Content Preview' });
+      const items = body.getByRole('checkbox');
+
+      await expect(items).toHaveCount(2);
+      await expect(items.first()).toHaveAttribute('aria-checked', 'false');
+      await expect(preview.getByRole('checkbox')).toHaveCount(2);
+      await expect(preview.getByRole('checkbox').first()).not.toBeChecked();
+      await expect(preview.getByRole('checkbox').first()).toBeDisabled();
+
+      await toggleTaskListItem(items.first());
+      await expect(items.first()).toHaveAttribute('aria-checked', 'true');
+      await expect(preview.getByRole('checkbox').first()).toBeChecked();
+
+      await saveAndExpect({ cms, editor, body: '- [x] Hat\n- [x] Sunscreen' });
+    });
+
+    test('turns a paragraph into a task list item from the text style menu', async ({
+      cms,
+      page,
+    }) => {
+      const { editor, field, body } = await openNote({ cms, page, body: 'Water bottle' });
+
+      await body.getByText('Water bottle').click();
+      await cms.chooseMenuItem(
+        field.getByRole('button', { name: 'Show Text Style Options' }),
+        page.getByRole('menuitemcheckbox', { name: 'Task List' }),
+      );
+      await expect(body.getByRole('checkbox')).toHaveCount(1);
+
+      await saveAndExpect({ cms, editor, body: '- [ ] Water bottle' });
+    });
+  });
+
+  test.describe('HTML', () => {
+    test.use({ config: noteConfig({ format: 'html', buttons: ['bold', 'task-list'] }) });
+
+    test('saves a task list the way GitHub renders it', async ({ cms, page }) => {
+      const { editor, body } = await openNote({
+        cms,
+        page,
+        body:
+          '<ul class="contains-task-list">' +
+          '<li class="task-list-item"><input type="checkbox" disabled=""> Hat</li></ul>',
+      });
+
+      await toggleTaskListItem(body.getByRole('checkbox'));
+      await saveAndExpect({
+        cms,
+        editor,
+        body:
+          '<ul class="contains-task-list">' +
+          '<li class="task-list-item"><input type="checkbox" disabled="" checked=""> Hat</li>' +
+          '</ul>',
+      });
+    });
+  });
+
+  test.describe('default', () => {
+    test.use({ config: noteConfig({}) });
+
+    test('offers no task list, keeping the items as text', async ({ cms, page }) => {
+      const { editor, field, body } = await openNote({ cms, page, body: '- [ ] Hat' });
+
+      await field.getByRole('button', { name: 'Show Text Style Options' }).click();
+      await expect(page.getByRole('menuitemcheckbox', { name: 'Bulleted List' })).toBeVisible();
+      await expect(page.getByRole('menuitemcheckbox', { name: 'Task List' })).toHaveCount(0);
+      await page.keyboard.press('Escape');
+      await expect(body.getByRole('checkbox')).toHaveCount(0);
+      await expect(body.getByRole('listitem')).toHaveText('[ ] Hat');
+
+      await moveCaretToEnd(body);
+      await page.keyboard.type('s');
+      await saveAndExpect({ cms, editor, body: '- [ ] Hats' });
+    });
+  });
+});
+
 test.describe('link targets', () => {
   test.use({ config: noteConfig({ format: 'html' }) });
 
@@ -486,6 +603,112 @@ test.describe('linked images', () => {
       await alt.fill('The dome');
 
       await saveAndExpect({ cms, editor, body: '![The dome](/uploads/dome.png)' });
+    });
+  });
+});
+
+test.describe('captioned images', () => {
+  test.describe('default', () => {
+    test.use({ config: noteConfig({}) });
+
+    test('offers a caption for an image', async ({ cms, page }) => {
+      const { field } = await openNote({ cms, page, body: '![Dome](/uploads/dome.png)' });
+      const component = field.getByRole('group', { name: 'Image', exact: true });
+
+      await expect(component.getByRole('textbox', { name: 'Caption' })).toHaveCount(1);
+    });
+  });
+
+  test.describe('turned off', () => {
+    test.use({ config: noteConfig({ captioned_images: false }) });
+
+    test('offers no caption for an image', async ({ cms, page }) => {
+      const { editor, field } = await openNote({
+        cms,
+        page,
+        body: '[![Dome](/uploads/dome.png)](https://example.com/dome)',
+      });
+
+      const component = field.getByRole('group', { name: 'Image', exact: true });
+      const alt = component.getByRole('textbox', { name: 'Alt Text' });
+
+      await expect(alt).toHaveValue('Dome');
+      await expect(component.getByRole('textbox', { name: 'Link' })).toHaveValue(
+        'https://example.com/dome',
+      );
+      await expect(component.getByRole('textbox', { name: 'Caption' })).toHaveCount(0);
+      await alt.fill('The dome');
+
+      await saveAndExpect({
+        cms,
+        editor,
+        body: '[![The dome](/uploads/dome.png)](https://example.com/dome)',
+      });
+    });
+
+    test('leaves a figure as it is', async ({ cms, page }) => {
+      const figure =
+        '<figure><img src="/uploads/dome.png" alt="Dome"><figcaption>Photo</figcaption></figure>';
+
+      const { editor, field, body } = await openNote({ cms, page, body: `${figure}\n\nIntro.` });
+
+      await expect(field.getByRole('group', { name: 'Image', exact: true })).toHaveCount(0);
+      await expect(body.getByText('Intro.')).toBeVisible();
+      await moveCaretToEnd(body);
+      await page.keyboard.type(' More.');
+
+      await saveAndExpect({ cms, editor, body: `${figure}\n\nIntro. More.` });
+    });
+  });
+});
+
+test.describe('image captions in HTML', () => {
+  test.use({ config: noteConfig({ format: 'html' }), viewport: { width: 1280, height: 2000 } });
+
+  // The image component is inline, but a `<figure>` can’t be in a paragraph, so Sveltia UI splits
+  // the paragraph around it, and the figure is saved as it’s loaded
+  test('loads an image with a caption as a component', async ({ cms, page }) => {
+    const figure =
+      '<figure><a href="https://example.com/"><img src="/uploads/dome.png" alt="Dome"></a>' +
+      '<figcaption>Photo by <a href="https://example.com/jane">Jane</a></figcaption></figure>';
+
+    const { editor, field } = await openNote({ cms, page, body: `<p>Intro.</p>${figure}` });
+    const component = field.getByRole('group', { name: 'Image', exact: true });
+
+    await expect(component.getByRole('textbox', { name: 'Caption' })).toHaveValue(
+      'Photo by <a href="https://example.com/jane">Jane</a>',
+    );
+    await expect(component.getByRole('textbox', { name: 'Link' })).toHaveValue(
+      'https://example.com/',
+    );
+    await component.getByRole('textbox', { name: 'Alt Text' }).fill('The dome');
+
+    await saveAndExpect({
+      cms,
+      editor,
+      body: `<p>Intro.</p>${figure.replace('"Dome"', '"The dome"')}`,
+    });
+  });
+
+  // The paragraph the image was in is left out around the figure, as above
+  test('writes an image with a caption as a figure', async ({ cms, page }) => {
+    const { editor, field } = await openNote({
+      cms,
+      page,
+      body: '<p>Intro.</p><p><img src="/uploads/dome.png" alt="Dome"></p>',
+    });
+
+    await field
+      .getByRole('group', { name: 'Image', exact: true })
+      .getByRole('textbox', { name: 'Caption' })
+      .fill('The dome at <em>night</em>');
+
+    await saveAndExpect({
+      cms,
+      editor,
+      body:
+        '<p>Intro.</p><figure><img src="/uploads/dome.png" alt="Dome">' +
+        '<figcaption>The dome at <em>night</em></figcaption></figure>',
     });
   });
 });

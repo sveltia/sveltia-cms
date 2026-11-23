@@ -9,6 +9,7 @@
 
   import SelectMultiple from '$lib/components/contents/details/fields/select/select-multiple.svelte';
   import SelectSingle from '$lib/components/contents/details/fields/select/select-single.svelte';
+  import { createStableDerivedState } from '$lib/services/utils/state.svelte';
 
   /**
    * @import { FieldEditorProps, SelectFieldSelectorOption } from '$lib/types/private';
@@ -23,7 +24,6 @@
 
   /** @type {FieldEditorProps & Props} */
   let {
-    /* eslint-disable prefer-const */
     locale,
     keyPath,
     fieldId,
@@ -32,7 +32,6 @@
     required = true,
     readonly = false,
     invalid = false,
-    /* eslint-enable prefer-const */
   } = $props();
 
   const {
@@ -41,7 +40,13 @@
     multiple,
   } = $derived(fieldConfig);
   const Select = $derived(multiple ? SelectMultiple : SelectSingle);
-  const options = $derived(
+  /**
+   * Selector options. A Relation field hands over a new list whenever anything in the entry
+   * changes, so the list is kept as long as it holds the same options, and a different list means
+   * they have changed. The selector doesn’t follow a change to the options, so it’s rendered again
+   * then, which is cheaper to tell by the identity of the list than by serializing every option.
+   */
+  const options = createStableDerivedState(() =>
     fieldOptions.map(
       (option) =>
         /** @type {SelectFieldSelectorOption} */ (
@@ -51,7 +56,7 @@
   );
 </script>
 
-{#key JSON.stringify(options)}
+{#key options.current}
   <Select
     {locale}
     {keyPath}
@@ -61,6 +66,6 @@
     {readonly}
     {required}
     {invalid}
-    {options}
+    options={options.current}
   />
 {/key}

@@ -11,7 +11,12 @@
   import EntryReorderList from '$lib/components/contents/list/entry-reorder-list.svelte';
   import EntryTableHead from '$lib/components/contents/list/entry-table-head.svelte';
   import CreateEntryButton from '$lib/components/contents/toolbar/create-entry-button.svelte';
-  import { getGroupLabel, isGroupCollapsed, setGroupCollapsed } from '$lib/services/common/view';
+  import {
+    getGroupLabel,
+    isCollapsedByDefault,
+    isGroupCollapsed,
+    setGroupCollapsed,
+  } from '$lib/services/common/view';
   import { selectedCollection } from '$lib/services/contents/collection';
   import {
     bulkEditing,
@@ -20,6 +25,7 @@
     listedUnpublishedEntries,
     reordering,
   } from '$lib/services/contents/collection/view';
+  import { viewGroups } from '$lib/services/contents/collection/view/group';
   import {
     currentView,
     getEntryOrderKey,
@@ -53,6 +59,9 @@
       ? getTableColumns({ collection, sortKeys: sortKeys.current.map(({ key }) => key) })
       : [],
   );
+  const collapsedByDefault = $derived(
+    isCollapsedByDefault(viewGroups.current, currentView.current.group),
+  );
   const hasEntries = $derived(entryGroups.current.some(({ entries }) => entries.length));
   // Changes when the entries are sorted, filtered or grouped differently, which starts the list
   // again from the top: the rows are rendered anew a chunk at a time, rather than every row loaded
@@ -84,9 +93,14 @@
         ? _('workflow.published_entries')
         : undefined}
     collapsible={name !== '*'}
-    expanded={!isGroupCollapsed(currentView.current, name)}
+    expanded={!isGroupCollapsed(currentView.current, name, collapsedByDefault)}
     onChange={({ detail: { expanded } }) => {
-      currentView.current = setGroupCollapsed(currentView.current, name, !expanded);
+      currentView.current = setGroupCollapsed(
+        currentView.current,
+        name,
+        !expanded,
+        collapsedByDefault,
+      );
     }}
   >
     <InfiniteScroll

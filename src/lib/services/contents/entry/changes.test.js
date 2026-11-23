@@ -158,6 +158,30 @@ describe('buildEntryUpdateChanges()', () => {
     ]);
   });
 
+  test('takes the path of a single-file entry missing the default locale', async () => {
+    const collection = {
+      name: 'posts',
+      _file,
+      _i18n: {
+        i18nEnabled: true,
+        allLocales: ['en', 'fr'],
+        defaultLocale: 'en',
+        structureMap: { i18nSingleFile: true },
+      },
+    };
+
+    const entry = {
+      slug: 'bonjour',
+      locales: {
+        fr: { slug: 'bonjour', path: 'content/bonjour.md', content: { title: 'Bonjour' } },
+      },
+    };
+
+    expect(await buildEntryUpdateChanges({ collection, entry, draft: {} })).toEqual([
+      expect.objectContaining({ action: 'update', slug: 'bonjour', path: 'content/bonjour.md' }),
+    ]);
+  });
+
   test('passes the field comments for a single-file entry', async () => {
     const collection = {
       name: 'posts',

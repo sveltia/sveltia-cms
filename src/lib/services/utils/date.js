@@ -50,3 +50,28 @@ export const formatDate = (date, locale) => {
     () => new Intl.DateTimeFormat(locale ?? undefined, DATE_TIME_FORMAT_OPTIONS),
   ).format(date);
 };
+
+/**
+ * Format a recent date and time briefly, e.g. when a draft backup was made or someone started
+ * editing an entry. The date is omitted for today, and the year for this year. Both dates are
+ * compared in the user’s time zone, which the time is formatted in as well.
+ * @param {object} args Arguments.
+ * @param {Date} args.timestamp Date and time.
+ * @param {LocaleCode} [args.locale] Locale to format the time in, e.g. the app locale.
+ * @param {Date} [args.now] Current time, which defaults to the time of the call.
+ * @returns {string} Formatted date and time.
+ */
+export const formatRecentDateTime = ({ timestamp, locale, now = new Date() }) => {
+  const sameYear = now.getFullYear() === timestamp.getFullYear();
+
+  const sameDay =
+    sameYear && now.getMonth() === timestamp.getMonth() && now.getDate() === timestamp.getDate();
+
+  return timestamp.toLocaleString(locale, {
+    year: sameYear ? undefined : 'numeric',
+    month: sameDay ? undefined : 'short',
+    day: sameDay ? undefined : 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+  });
+};

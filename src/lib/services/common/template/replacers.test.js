@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { customStringTransformationRegistry } from '$lib/services/api/registries';
+import { loadTransliterator } from '$lib/services/common/slug/transliterate';
 import { cmsConfig } from '$lib/services/config';
 import { getField } from '$lib/services/contents/entry/fields';
 
@@ -9,6 +10,14 @@ import { replaceTemplatePlaceholder, replaceTemplateTag } from './replacers';
 /**
  * @import { ReplaceContext, ReplaceSubContext } from './replacers';
  */
+
+// The `clean_accents` option transliterates with the library the CMS loads from the CDN, so the
+// installed copy is loaded instead
+vi.mock('$lib/services/app/dependencies', () => ({
+  loadModule: vi.fn(() => import('@sindresorhus/transliterate')),
+}));
+
+beforeAll(loadTransliterator);
 
 vi.mock('$lib/services/config', () => ({
   cmsConfig: { current: undefined },
@@ -283,6 +292,24 @@ describe('replaceTemplateTag()', () => {
 });
 
 describe('replaceTemplatePlaceholder()', () => {
+  test('treats a null value, like that of an empty number field, as missing', () => {
+    const content = { release: null };
+    const randomValues = new Map();
+    const entryFilePath = 'content/posts/my-post.md';
+    const value = replaceTemplatePlaceholder('release', createContext({ content, randomValues }));
+
+    expect(value).toMatch(/^[0-9a-f]{12}$/);
+    expect(() =>
+      replaceTemplatePlaceholder(
+        'release',
+        createContext({ type: 'preview_path', content, entryFilePath }),
+      ),
+    ).toThrow();
+    expect(
+      replaceTemplatePlaceholder("release | default('none')", createContext({ content })),
+    ).toBe('none');
+  });
+
   test('slugifies a field value for a slug', () => {
     const context = createContext({ content: { title: 'Hello World!' } });
 
@@ -537,6 +564,46 @@ describe('replaceTemplatePlaceholder()', () => {
       'beta',
     );
     expect(replaceTemplatePlaceholder("draft | ternary('Yes', 'No')", context)).toBe('yes');
+  });
+
+  describe('with the `ternary` transformation for a missing value', () => {
+    test('uses the falsy value in a slug', () => {
+      const context = createContext({ content: { b: 'Beta' } });
+
+      expect(replaceTemplatePlaceholder("draft | ternary('drafts', 'posts')", context)).toBe(
+        'posts',
+      );
+      expect(replaceTemplatePlaceholder("draft | ternary('{{a}}', '{{b}}')", context)).toBe('beta');
+      expect(replaceTemplatePlaceholder("draft | ternary('Yes', 'No') | upper", context)).toBe(
+        'no',
+      );
+    });
+
+    test('falls back to a random ID if the falsy value slugifies to nothing', () => {
+      expect(replaceTemplatePlaceholder("draft | ternary('drafts', '')", createContext())).toMatch(
+        SHORT_ID_REGEX,
+      );
+    });
+
+    test('uses the falsy value in a preview path, even if it is empty', () => {
+      const context = createContext({ type: 'preview_path', entryFilePath: 'content/posts/a.md' });
+
+      expect(replaceTemplatePlaceholder("draft | ternary('drafts', 'posts')", context)).toBe(
+        'posts',
+      );
+      expect(replaceTemplatePlaceholder("draft | ternary('drafts', '')", context)).toBe('');
+    });
+
+    test('uses the falsy value in a media library prefix', () => {
+      const context = createContext({ type: 'library_prefix' });
+
+      expect(replaceTemplatePlaceholder("draft | ternary('drafts', 'posts')", context)).toBe(
+        'posts',
+      );
+      expect(() => replaceTemplatePlaceholder("draft | ternary('drafts', '!!!')", context)).toThrow(
+        'Unresolvable template tag: draft',
+      );
+    });
   });
 
   test('resolves every template in the `default` transformation', () => {

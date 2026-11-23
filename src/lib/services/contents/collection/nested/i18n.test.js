@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import {
-  getFolderName,
   getOwnFolderName,
   hasLocalizedFolders,
   localizeDirPath,
@@ -80,14 +79,6 @@ beforeEach(() => {
     ..._entries,
     ...drafts,
   ]);
-});
-
-describe('getFolderName()', () => {
-  test('returns the last segment', () => {
-    expect(getFolderName('about/team')).toBe('team');
-    expect(getFolderName('about')).toBe('about');
-    expect(getFolderName('')).toBe('');
-  });
 });
 
 describe('getOwnFolderName()', () => {

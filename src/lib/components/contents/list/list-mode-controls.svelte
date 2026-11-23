@@ -34,7 +34,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     saveLabel,
     saveAriaLabel,
     cancelAriaLabel,
@@ -48,7 +47,6 @@
     discardMessage = '',
     onExit = undefined,
     leading = undefined,
-    /* eslint-enable prefer-const */
   } = $props();
 
   let showDiscardDialog = $state(false);

@@ -1,22 +1,30 @@
 import { getPathInfo } from '@sveltia/utils/file';
 
 import { slugify } from '$lib/services/common/slug';
-import { renameIfNeeded, sanitizeFileName } from '$lib/services/utils/file';
+import {
+  foldFileName,
+  renameIfNeeded,
+  renameReservedFileName,
+  sanitizeFileName,
+} from '$lib/services/utils/file';
 
 /**
  * Format the file name for uploading, ensuring it is sanitized and optionally slugified. A leading
  * dot is dropped like the characters a file system won’t take, as a dot file is hidden: the CMS
- * doesn’t list one, so the file would be lost from sight once uploaded.
+ * doesn’t list one, so the file would be lost from sight once uploaded. A name Windows reserves for
+ * a device, like `aux.png`, is numbered as `aux-1.png`.
  * @param {string} originalName The original file name.
  * @param {object} [options] Options.
  * @param {boolean} [options.slugificationEnabled] Whether to slugify the file name.
  * @param {string[]} [options.assetNamesInSameFolder] List of asset names in the same folder to
  * avoid name conflicts.
+ * @param {Set<string>} [options.foldedNamesInSameFolder] The same names folded with
+ * `foldFileName()`, passed by a caller naming many files in the same folder.
  * @returns {string} The formatted file name, sanitized and possibly slugified.
  */
 export const formatFileName = (
   originalName,
-  { slugificationEnabled = false, assetNamesInSameFolder = [] } = {},
+  { slugificationEnabled = false, assetNamesInSameFolder = [], foldedNamesInSameFolder } = {},
 ) => {
   let fileName = sanitizeFileName(originalName).replace(/^\.+/, '');
 
@@ -29,7 +37,11 @@ export const formatFileName = (
     fileName = `${slug}${extension ? `.${extension.toLowerCase()}` : ''}`;
   }
 
-  return renameIfNeeded(fileName, assetNamesInSameFolder);
+  // Dropping a leading dot or slugifying can leave a name Windows reserves for a device, like
+  // `aux.png` from `.aux.png` or `Aux!.png`, which `sanitizeFileName()` has renamed otherwise
+  return renameIfNeeded(renameReservedFileName(fileName), assetNamesInSameFolder, {
+    foldedNames: foldedNamesInSameFolder,
+  });
 };
 
 /**
@@ -40,8 +52,7 @@ export const formatFileName = (
  * @returns {boolean} Result.
  */
 export const isSameFileName = (name1, name2) =>
-  formatFileName(name1).normalize().toLowerCase() ===
-  formatFileName(name2).normalize().toLowerCase();
+  foldFileName(formatFileName(name1)) === foldFileName(formatFileName(name2));
 
 /**
  * Check whether an asset can be renamed to the given name.
@@ -81,13 +92,13 @@ export const validateAssetName = ({
 
   // Case-insensitive, since `Photo.jpg` and `photo.jpg` clash on a case-insensitive file system
   // like macOS’s or Windows’s, and Unicode-normalized, as a name can be typed either way
-  const normalizedName = fileName.normalize().toLowerCase();
+  const foldedName = foldFileName(fileName);
   /**
    * Check if the name is taken.
    * @param {string[]} names Names to check against.
    * @returns {boolean} Result.
    */
-  const isTaken = (names) => names.some((n) => n.normalize().toLowerCase() === normalizedName);
+  const isTaken = (names) => names.some((n) => foldFileName(n) === foldedName);
 
   if (isTaken(otherNames)) {
     return 'duplicate';

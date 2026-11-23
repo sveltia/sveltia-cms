@@ -84,6 +84,14 @@ describe('GitHub deployment service', () => {
 
       await expect(fetchBranchHeadSHA()).resolves.toBeUndefined();
     });
+
+    test('sends no request before the default branch is known', async () => {
+      // The query would otherwise be sent without the `$branch` variable it requires, and fail
+      repository.branch = undefined;
+
+      await expect(fetchBranchHeadSHA()).resolves.toBeUndefined();
+      expect(fetchGraphQL).not.toHaveBeenCalled();
+    });
   });
 
   describe('fetchDeployments', () => {

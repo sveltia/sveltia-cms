@@ -2,6 +2,7 @@
   import { _ } from '@sveltia/i18n';
   import { Button, Icon, SelectButton, SelectButtonGroup } from '@sveltia/ui';
 
+  import { getAdminLink } from '$lib/services/app/admin';
   import {
     customPages,
     openCustomPage,
@@ -68,6 +69,7 @@
       assetsLink,
       workflowEnabled: workflowEnabled.current,
       workflowLabelKey: workflowPageLabelKey.current,
+      adminLink: getAdminLink(),
       customPages: listedCustomPages.filter(({ newTab }) => !newTab),
       selectedCustomPageId: selectedCustomPageId.current,
       isSmallScreen: env.isSmallScreen,
@@ -82,6 +84,7 @@
         variant="ghost"
         iconic
         {selected}
+        tooltip={label}
         aria-label={label}
         keyShortcuts={index < 9 ? `Alt+${index + 1}` : undefined}
         onclick={() => {
@@ -98,6 +101,7 @@
     <Button
       variant="ghost"
       iconic
+      tooltip={page.label}
       aria-label={page.label}
       onclick={() => {
         openCustomPage(page);

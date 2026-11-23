@@ -1,6 +1,6 @@
 import { flushSync } from 'svelte';
 import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
-import { page } from 'vitest/browser';
+import { page, userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
 import { getCollection, selectedCollection } from '$lib/services/contents/collection';
@@ -233,5 +233,87 @@ describe('EntryBulkEditList', () => {
     await textbox.fill('Alpha');
     await vi.waitFor(() => expect(bulkEditErrors.current).toEqual({}));
     expect(page.getByRole('alert').elements()).toHaveLength(0);
+  });
+});
+
+describe('EntryBulkEditList with a Relation field', () => {
+  beforeAll(async () => {
+    await initTestConfig({
+      collections: [
+        {
+          name: 'posts',
+          folder: 'content/posts',
+          bulk_edit: true,
+          fields: [
+            { name: 'title', label: 'Title', widget: 'string' },
+            { name: 'category', label: 'Category', widget: 'string', required: false },
+            {
+              name: 'related',
+              label: 'Related',
+              widget: 'relation',
+              collection: 'posts',
+              search_fields: ['title'],
+              display_fields: ['title'],
+              required: false,
+              // Another post in the same category, but not the post itself
+              filters: [
+                { field: 'slug', values: ['{{slug}}'], exclude: true },
+                { field: 'category', values: ['{{fields.category}}'] },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  /**
+   * Open the Relation dropdown list of a row and get the offered options.
+   * @param {string} title Entry title naming the row.
+   * @returns {Promise<string[]>} Option labels.
+   */
+  const getRelatedOptions = async (title) => {
+    const combobox = page.getByRole('combobox', {
+      name: `\u2068Related\u2069 of \u2068${title}\u2069`,
+    });
+
+    await combobox.click();
+
+    const options = page.getByRole('option');
+
+    await expect.poll(() => options.elements().length).toBeGreaterThan(0);
+
+    const labels = options.elements().map((el) => el.textContent?.trim() ?? '');
+
+    await userEvent.keyboard('{Escape}');
+    await expect.poll(() => options.elements().length).toBe(0);
+
+    return labels;
+  };
+
+  test('resolves the templates in the filters against the row’s entry and its edits', async () => {
+    setEntries([
+      createMockEntry({ slug: 'a', content: { _default: { title: 'A', category: 'news' } } }),
+      createMockEntry({ slug: 'b', content: { _default: { title: 'B', category: 'news' } } }),
+      createMockEntry({ slug: 'c', content: { _default: { title: 'C', category: 'blog' } } }),
+      createMockEntry({ slug: 'd', content: { _default: { title: 'D', category: 'blog' } } }),
+    ]);
+    entryListSettings.current = { posts: { type: 'list' } };
+    selectedCollection.current = getCollection('posts');
+    flushSync();
+    setBulkEditMode(true);
+
+    await render(EntryBulkEditList, { collection: /** @type {any} */ (getCollection('posts')) });
+
+    // Each row is resolved against its own entry, which isn’t offered to itself
+    expect(await getRelatedOptions('A')).toEqual(['(None)', 'B']);
+    expect(await getRelatedOptions('C')).toEqual(['(None)', 'D']);
+
+    // A pending edit of the row applies as well
+    await page.getByRole('textbox', { name: '\u2068Category\u2069 of \u2068A\u2069' }).fill('blog');
+    await expect.poll(() => bulkEdits.current).toEqual({ 'content/posts/a': { category: 'blog' } });
+    expect(await getRelatedOptions('A')).toEqual(['(None)', 'C', 'D']);
+    // Only in that row
+    expect(await getRelatedOptions('B')).toEqual(['(None)', 'A']);
   });
 });

@@ -6,20 +6,19 @@
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Alert, ConfirmationDialog, Toast } from '@sveltia/ui';
+  import { ConfirmationDialog } from '@sveltia/ui';
 
   import CascadeDeleteNote from '$lib/components/common/cascade-delete-note.svelte';
   import { planAssetDeletion } from '$lib/services/assets/data/cascade';
+  import { runAssetCommit } from '$lib/services/assets/data/commit';
   import { deleteSubfolder, getSubfolderAssets } from '$lib/services/assets/data/subfolder';
   import { deletingSubfolder } from '$lib/services/assets/subfolders';
-  import { runCommit } from '$lib/services/backends/commit-prompt';
 
   /**
    * @import { CascadeDeletePlan } from '$lib/types/private';
    */
 
   let open = $state(false);
-  let deletionFailed = $state(false);
   /**
    * Plan for the assets in the folder, or `undefined` while it’s being worked out.
    * @type {CascadeDeletePlan | undefined}
@@ -37,18 +36,15 @@
   /**
    * Delete the folder.
    */
-  const remove = async () => {
+  const remove = () => {
     /* v8 ignore next 3 -- the dialog is only open for a folder */
     if (!subfolder) {
       return;
     }
 
-    const { ok, cancelled } = await runCommit(() => deleteSubfolder(subfolder.path));
+    const { path } = subfolder;
 
-    // A cancellation at the commit message prompt isn’t a failure
-    if (!ok && !cancelled) {
-      deletionFailed = true;
-    }
+    runAssetCommit(() => deleteSubfolder(path), { failure: 'deleting_folder_failed' });
   };
 
   // Work out the plan whenever the dialog opens. The lookup is asynchronous, so the dialog starts
@@ -97,7 +93,3 @@
     <CascadeDeleteNote {plan} kind="asset" count={assets.length} />
   {/if}
 </ConfirmationDialog>
-
-<Toast bind:show={deletionFailed}>
-  <Alert status="error">{_('deleting_folder_failed')}</Alert>
-</Toast>

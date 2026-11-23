@@ -3,10 +3,15 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { createFileList } from '$lib/services/backends/process';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
-import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
+import {
+  getEntriesByCollection,
+  matchesCollectionFilter,
+} from '$lib/services/contents/collection/entries';
 import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
 import { prepareEntries } from '$lib/services/contents/file/process';
+import { getEntryFoldersByPath } from '$lib/services/contents/folders';
 import { convertPullRequest, convertPullRequests } from '$lib/services/workflow/entries';
+import { createMockForkPullRequest } from '$lib/test/factories';
 
 vi.mock('$lib/services/backends/process');
 vi.mock('$lib/services/backends/git/shared/parse-files', () => ({
@@ -51,6 +56,18 @@ vi.mock('$lib/services/contents/collection', () => ({
             canonicalSlug: { key: 'translationKey' },
           },
         },
+        posts: {
+          name,
+          _type: 'entry',
+          _file: {},
+          _i18n: { structureMap: {}, canonicalSlug: { key: 'translationKey' } },
+        },
+        players: {
+          name,
+          _type: 'entry',
+          _file: {},
+          _i18n: { structureMap: {}, canonicalSlug: { key: 'translationKey' } },
+        },
         places: {
           name,
           _type: 'entry',
@@ -64,6 +81,10 @@ vi.mock('$lib/services/contents/collection', () => ({
 }));
 vi.mock('$lib/services/contents/collection/entries', () => ({
   getEntriesByCollection: vi.fn(() => []),
+  matchesCollectionFilter: vi.fn(() => true),
+}));
+vi.mock('$lib/services/contents/folders', () => ({
+  getEntryFoldersByPath: vi.fn(() => []),
 }));
 vi.mock('$lib/services/contents/collection/files', () => ({
   getCollectionFileEntry: vi.fn(),
@@ -1179,6 +1200,381 @@ describe('workflow/entries', () => {
       });
     });
 
+    describe('other entries of the collection rewritten along with the entry', () => {
+      /**
+       * Create a published entry of the `posts` collection.
+       * @param {string} slug Slug, which is also the sub path.
+       * @returns {any} Entry.
+       */
+      const createPost = (slug) => ({
+        id: `published-${slug}`,
+        slug,
+        subPath: slug,
+        locales: { _default: { slug, path: `content/posts/${slug}.md`, content: {} } },
+      });
+
+      beforeEach(() => {
+        allEntries.current = [
+          createPost('hello'),
+          createPost('other'),
+          createPost('about'),
+          createPost('about/team'),
+        ];
+
+        // Classify the files like the real file list does
+        vi.mocked(createFileList).mockImplementation(
+          (files) =>
+            /** @type {any} */ ({
+              entryFiles: files
+                .filter(({ path }) => path.startsWith('content/posts/'))
+                .map((file) => ({ ...file, folder: { collectionName: 'posts' } })),
+              assetFiles: [],
+            }),
+        );
+
+        vi.mocked(prepareEntries).mockImplementation(async (files) => ({
+          entries: files.map(({ path }) => {
+            const slug = path.replace(/^content\/posts\/(.+)\.md$/, '$1');
+
+            return /** @type {any} */ ({
+              id: `parsed-${slug}`,
+              slug,
+              subPath: slug,
+              locales: { _default: { slug, path, content: {} } },
+            });
+          }),
+          errors: [],
+        }));
+      });
+
+      test('lists the deleted entry rather than an entry whose reference to it was removed', async () => {
+        const pullRequest = createPullRequest({
+          files: [
+            { path: 'content/posts/hello.md', sha: '', size: 0, deleted: true },
+            { path: 'content/posts/other.md', sha: 'b', size: 1, text: 'b', deleted: false },
+          ],
+        });
+
+        pullRequest.status = 'pending_deletion';
+
+        const { entries } = await convertPullRequest(pullRequest);
+
+        expect(entries.map(({ id, workflow }) => [id, workflow.status])).toEqual([
+          ['published-hello', 'pending_deletion'],
+        ]);
+      });
+
+      test('lists the renamed entry alone, found by the slug it was published with', async () => {
+        const { entries } = await convertPullRequest(
+          createPullRequest({
+            files: [
+              {
+                path: 'content/posts/hello-world.md',
+                sha: 'a',
+                size: 1,
+                text: 'a',
+                deleted: false,
+                previousPath: 'content/posts/hello.md',
+              },
+              { path: 'content/posts/other.md', sha: 'b', size: 1, text: 'b', deleted: false },
+            ],
+          }),
+        );
+
+        expect(entries.map(({ slug }) => slug)).toEqual(['hello-world']);
+        expect(entries[0].workflow.previousPaths).toEqual(['content/posts/hello.md']);
+      });
+
+      test('lists the renamed entry alone, found by the slug it was saved with', async () => {
+        const { entries } = await convertPullRequest(
+          createPullRequest({
+            branch: 'cms/posts/hello-world',
+            files: [
+              {
+                path: 'content/posts/hello-world.md',
+                sha: 'a',
+                size: 1,
+                text: 'a',
+                deleted: false,
+              },
+              { path: 'content/posts/hello.md', sha: '', size: 0, deleted: true },
+              { path: 'content/posts/other.md', sha: 'b', size: 1, text: 'b', deleted: false },
+            ],
+          }),
+        );
+
+        expect(entries.map(({ slug }) => slug)).toEqual(['hello-world']);
+      });
+
+      test('lists the moved entry alone, not the entries below it, once renamed again', async () => {
+        const { entries } = await convertPullRequest(
+          createPullRequest({
+            // The slug the entry was first saved with, which neither the published entry nor the
+            // one in the pull request has any more
+            branch: 'cms/posts/company%2Fabout',
+            files: [
+              {
+                path: 'content/posts/team/about/team.md',
+                sha: 'b',
+                size: 1,
+                text: 'b',
+                deleted: false,
+                previousPath: 'content/posts/about/team.md',
+              },
+              {
+                path: 'content/posts/team/about.md',
+                sha: 'a',
+                size: 1,
+                text: 'a',
+                deleted: false,
+                previousPath: 'content/posts/about.md',
+              },
+            ],
+          }),
+        );
+
+        expect(entries.map(({ slug }) => slug)).toEqual(['team/about']);
+      });
+
+      test('keeps every entry when none of them can be told apart', async () => {
+        const { entries } = await convertPullRequest(
+          createPullRequest({
+            branch: 'cms/posts/unknown',
+            files: [
+              { path: 'content/posts/hello.md', sha: 'a', size: 1, text: 'a', deleted: false },
+              { path: 'content/posts/other.md', sha: 'b', size: 1, text: 'b', deleted: false },
+            ],
+          }),
+        );
+
+        expect(entries.map(({ slug }) => slug)).toEqual(['hello', 'other']);
+      });
+
+      test('takes the collection file name from the file of the entry', async () => {
+        allEntries.current = [
+          /** @type {any} */ ({
+            id: 'published-site',
+            slug: 'site',
+            subPath: 'site',
+            locales: { _default: { slug: 'site', path: 'data/site.yml', content: {} } },
+          }),
+          /** @type {any} */ ({
+            id: 'published-menu',
+            slug: 'menu',
+            subPath: 'menu',
+            locales: { _default: { slug: 'menu', path: 'data/menu.yml', content: {} } },
+          }),
+        ];
+
+        vi.mocked(createFileList).mockImplementation(
+          (files) =>
+            /** @type {any} */ ({
+              entryFiles: files.map((file) => ({
+                ...file,
+                folder: {
+                  collectionName: 'settings',
+                  fileName: file.path.replace(/^data\/(.+)\.yml$/, '$1'),
+                },
+              })),
+              assetFiles: [],
+            }),
+        );
+
+        vi.mocked(prepareEntries).mockImplementation(async (files) => ({
+          entries: files.map(({ path, folder }) => {
+            const slug = /** @type {string} */ (folder?.fileName);
+
+            return /** @type {any} */ ({
+              id: `parsed-${slug}`,
+              slug,
+              subPath: slug,
+              locales: { _default: { slug, path, content: {} } },
+            });
+          }),
+          errors: [],
+        }));
+
+        const { entries } = await convertPullRequest(
+          createPullRequest({
+            branch: 'cms/settings/site',
+            files: [
+              { path: 'data/menu.yml', sha: 'b', size: 1, text: 'b', deleted: false },
+              { path: 'data/site.yml', sha: 'a', size: 1, text: 'a', deleted: false },
+            ],
+          }),
+        );
+
+        expect(entries.map(({ id }) => id)).toEqual(['parsed-site']);
+        expect(entries[0].workflow.fileName).toBe('site');
+      });
+    });
+
+    // @see https://github.com/sveltia/sveltia-cms/issues/1149
+    describe('collections sharing a folder', () => {
+      /**
+       * Get the `breadcrumb` value the mocked entry file at the given path stores.
+       * @param {string} path File path.
+       * @returns {string} Value.
+       */
+      const getBreadcrumb = (path) => (path.includes('player') ? 'player' : 'post');
+
+      beforeEach(() => {
+        // The file list assigns every file in `src` to `posts`, which comes first in the config
+        vi.mocked(createFileList).mockImplementation(
+          (files) =>
+            /** @type {any} */ ({
+              entryFiles: files.map((file) => ({ ...file, folder: { collectionName: 'posts' } })),
+              assetFiles: [],
+            }),
+        );
+
+        vi.mocked(getEntryFoldersByPath).mockImplementation(() => [
+          { collectionName: 'posts', folderPath: 'src' },
+          { collectionName: 'players', folderPath: 'src' },
+        ]);
+
+        vi.mocked(prepareEntries).mockImplementation(async (files) => ({
+          entries: files.map(({ path, folder }) => {
+            const slug = path.replace(/^src\/(.+)\.md$/, '$1');
+
+            return /** @type {any} */ ({
+              id: `${folder?.collectionName}-${slug}`,
+              slug,
+              subPath: slug,
+              locales: {
+                _default: { slug, path, content: { breadcrumb: getBreadcrumb(path) } },
+              },
+            });
+          }),
+          errors: [],
+        }));
+
+        vi.mocked(matchesCollectionFilter).mockImplementation(
+          (collection, entry) =>
+            entry.locales._default.content.breadcrumb ===
+            (collection.name === 'players' ? 'player' : 'post'),
+        );
+      });
+
+      afterEach(() => {
+        vi.mocked(getEntryFoldersByPath).mockReset().mockReturnValue([]);
+        vi.mocked(matchesCollectionFilter).mockReset().mockReturnValue(true);
+      });
+
+      test('lists the entry under the collection named in the branch, not the first one', async () => {
+        const { entries } = await convertPullRequest(
+          createPullRequest({
+            branch: 'cms/players/jane-player',
+            files: [{ path: 'src/jane-player.md', sha: 'a', size: 1, text: 'a', deleted: false }],
+          }),
+        );
+
+        expect(entries.map(({ id, workflow }) => [id, workflow.collectionName])).toEqual([
+          ['players-jane-player', 'players'],
+        ]);
+      });
+
+      test('lists the entry of the first collection as before', async () => {
+        const { entries } = await convertPullRequest(
+          createPullRequest({
+            branch: 'cms/posts/hello',
+            files: [{ path: 'src/hello.md', sha: 'a', size: 1, text: 'a', deleted: false }],
+          }),
+        );
+
+        expect(entries.map(({ id, workflow }) => [id, workflow.collectionName])).toEqual([
+          ['posts-hello', 'posts'],
+        ]);
+      });
+
+      test('hands an entry of the other collection over as a companion', async () => {
+        const { entries } = await convertPullRequest(
+          createPullRequest({
+            branch: 'cms/players/jane-player',
+            files: [
+              { path: 'src/jane-player.md', sha: 'a', size: 1, text: 'a', deleted: false },
+              { path: 'src/news.md', sha: 'b', size: 1, text: 'b', deleted: false },
+            ],
+          }),
+        );
+
+        expect(entries.map(({ id }) => id)).toEqual(['players-jane-player']);
+        expect(
+          entries[0].workflow.companions?.map(({ collectionName, entry }) => [
+            collectionName,
+            entry.id,
+          ]),
+        ).toEqual([['posts', 'posts-news']]);
+      });
+
+      test('keeps an entry no collection sharing the folder lets in', async () => {
+        vi.mocked(matchesCollectionFilter).mockReturnValue(false);
+
+        const { entries } = await convertPullRequest(
+          createPullRequest({
+            branch: 'cms/players/jane-player',
+            files: [{ path: 'src/jane-player.md', sha: 'a', size: 1, text: 'a', deleted: false }],
+          }),
+        );
+
+        expect(entries.map(({ id }) => id)).toEqual(['players-jane-player']);
+      });
+
+      test('keeps the entry the branch is named after when an edit took it out of the filter', async () => {
+        const { entries } = await convertPullRequest(
+          createPullRequest({
+            branch: 'cms/posts/jane-player',
+            files: [
+              { path: 'src/jane-player.md', sha: 'a', size: 1, text: 'a', deleted: false },
+              { path: 'src/bob-player.md', sha: 'b', size: 1, text: 'b', deleted: false },
+            ],
+          }),
+        );
+
+        expect(entries.map(({ id }) => id)).toEqual(['posts-jane-player']);
+        expect(
+          entries[0].workflow.companions?.map(({ collectionName, entry }) => [
+            collectionName,
+            entry.id,
+          ]),
+        ).toEqual([['players', 'players-bob-player']]);
+      });
+
+      test('keeps the entries when the filter would hand every one of them over', async () => {
+        const { entries } = await convertPullRequest(
+          createPullRequest({
+            branch: 'cms/players/jane',
+            files: [{ path: 'src/jane-player.md', sha: 'a', size: 1, text: 'a', deleted: false }],
+          }),
+        );
+
+        expect(entries.map(({ id }) => id)).toEqual(['players-jane-player']);
+      });
+
+      test('finds the renamed or deleted entry of the collection named in the branch', async () => {
+        allEntries.current = [
+          /** @type {any} */ ({
+            id: 'published-jane',
+            slug: 'jane',
+            subPath: 'jane',
+            locales: { _default: { slug: 'jane', path: 'src/jane.md', content: {} } },
+          }),
+        ];
+
+        const { entries } = await convertPullRequest(
+          createPullRequest({
+            branch: 'cms/players/jane',
+            files: [{ path: 'src/jane.md', sha: '', size: 0, deleted: true }],
+          }),
+        );
+
+        expect(entries.map(({ id, workflow }) => [id, workflow.collectionName])).toEqual([
+          ['published-jane', 'players'],
+        ]);
+        expect(entries[0].workflow.previousPaths).toEqual(['src/jane.md']);
+      });
+    });
+
     test('returns nothing when a pull request has no entry file at all', async () => {
       const { entries } = await convertPullRequest(
         createPullRequest({
@@ -1187,6 +1583,38 @@ describe('workflow/entries', () => {
       );
 
       expect(entries).toEqual([]);
+    });
+  });
+
+  describe('pull request from a fork', () => {
+    test('reads the collection from the branch name without the fork, and gives new IDs', async () => {
+      vi.mocked(createFileList).mockReturnValue(
+        /** @type {any} */ ({
+          entryFiles: [
+            { path: 'content/posts/hello.md', text: '#', folder: { collectionName: 'posts' } },
+          ],
+          assetFiles: [],
+        }),
+      );
+
+      vi.mocked(prepareEntries).mockResolvedValue({
+        entries: [/** @type {any} */ ({ id: 'x', slug: 'hello', subPath: 'hello', locales: {} })],
+        errors: [],
+      });
+
+      const pullRequest = createMockForkPullRequest({
+        pullRequest: {
+          files: [{ path: 'content/posts/hello.md', sha: 'a', size: 1, text: '#', deleted: false }],
+        },
+      });
+
+      const { entries } = await convertPullRequest(pullRequest);
+
+      expect(entries).toHaveLength(1);
+      expect(entries[0].workflow.collectionName).toBe('posts');
+      // Another pull request can stand for the same entry, so the ID is the entry’s own
+      expect(entries[0].id).not.toBe('x');
+      expect(entries[0].workflow.pullRequest).toBe(pullRequest);
     });
   });
 

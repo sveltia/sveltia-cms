@@ -25,6 +25,7 @@ import { backend } from '$lib/services/backends';
 import { getCollection, getCollectionLabel } from '$lib/services/contents/collection';
 import { getCollectionFile, getCollectionFileLabel } from '$lib/services/contents/collection/files';
 import { prefs } from '$lib/services/user/prefs.svelte';
+import { getBaseName } from '$lib/services/utils/file';
 import {
   createDerivedState,
   createRawState,
@@ -163,7 +164,7 @@ export const folderSummary = createDerivedState(() => {
 
   return {
     name:
-      selectedSubfolderPath.current.split('/').at(-1) ||
+      getBaseName(selectedSubfolderPath.current) ||
       // `appLocale.current` is a key, because the label can be localized
       (appLocale.current && getFolderLabelByCollection(folder)),
     // The All Assets folder has no path
@@ -177,14 +178,20 @@ export const folderSummary = createDerivedState(() => {
 /**
  * Find the assets listed right before and after the given one, for the previous/next navigation in
  * the details overlay. The list is the one the user sees, so the neighbors follow the current
- * sorting, filtering and grouping.
+ * sorting, filtering and grouping. An asset that can’t be previewed isn’t opened in the overlay
+ * from the list, so it’s skipped.
  * @template T
- * @param {T[]} assets Listed assets.
+ * @param {Record<string, T[]>} groups Listed assets, grouped as the list shows them.
  * @param {(asset: T) => boolean} isCurrent Whether an asset is the one shown in the overlay.
+ * @param {(asset: T) => boolean} canPreview Whether an asset can be shown in the overlay.
  * @returns {{ previous?: T, next?: T }} Neighbors, each omitted when the current asset is the first
  * or last one, or when it isn’t listed at all.
  */
-export const getAdjacentAssets = (assets, isCurrent) => {
+export const getAdjacentAssets = (groups, isCurrent, canPreview) => {
+  const assets = Object.values(groups)
+    .flat(1)
+    .filter((asset) => isCurrent(asset) || canPreview(asset));
+
   const index = assets.findIndex(isCurrent);
 
   if (index === -1) {

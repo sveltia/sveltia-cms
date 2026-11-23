@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { warnDeprecation } from '$lib/services/config/deprecations';
 import { checkI18nOverrides, parseI18nConfig } from '$lib/services/config/parser/i18n';
 import { addMessage } from '$lib/services/config/parser/utils/validator';
 
+vi.mock('$lib/services/config/deprecations');
 vi.mock('$lib/services/config/parser/utils/validator');
 
 /** @type {any} */
@@ -409,5 +411,92 @@ describe('checkI18nOverrides targets', () => {
 
       expectMessages([{ strKey: 'collection_file_i18n_no_fields', context }]);
     });
+  });
+});
+
+describe('deprecated i18n options', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  const deprecatedOptions = {
+    save_all_locales: false,
+    omit_default_locale_from_filename: true,
+    structure: 'multiple_folders_i18n_root',
+  };
+
+  const allKeys = [
+    ['save_all_locales'],
+    ['omit_default_locale_from_filename'],
+    ['multiple_folders_i18n_root'],
+  ];
+
+  test('warns about each option at the site level, even if no collection enables i18n', () => {
+    parseI18nConfig(
+      /** @type {any} */ ({
+        i18n: { locales: ['en', 'fr'], ...deprecatedOptions },
+        collections: [{ name: 'posts', folder: 'posts', fields: [] }],
+      }),
+      collectors,
+    );
+
+    expect(vi.mocked(warnDeprecation).mock.calls).toEqual(allKeys);
+  });
+
+  test('warns about a value of `false` or `true` alike', () => {
+    parseI18nConfig(
+      /** @type {any} */ ({
+        i18n: { save_all_locales: true, omit_default_locale_from_filename: false },
+      }),
+      collectors,
+    );
+
+    expect(vi.mocked(warnDeprecation).mock.calls).toEqual(allKeys.slice(0, 2));
+  });
+
+  test('warns about each option at the collection level, even without a site configuration', () => {
+    checkI18nOverrides(
+      /** @type {any} */ ({
+        cmsConfig: {},
+        collection: { name: 'posts', i18n: deprecatedOptions },
+      }),
+      collectors,
+    );
+
+    expect(vi.mocked(warnDeprecation).mock.calls).toEqual(allKeys);
+  });
+
+  test('warns about each option at the file level of a file collection', () => {
+    checkI18nOverrides(
+      /** @type {any} */ ({
+        cmsConfig: { i18n: { locales: ['en', 'fr'] } },
+        collection: { name: 'pages', i18n: true, files: [] },
+        collectionFile: { name: 'home', file: 'home.yml', i18n: deprecatedOptions },
+      }),
+      collectors,
+    );
+
+    expect(vi.mocked(warnDeprecation).mock.calls).toEqual(allKeys);
+  });
+
+  test('stays quiet about the current options', () => {
+    const i18n = {
+      locales: ['en', 'fr'],
+      initial_locales: 'all',
+      omit_default_locale_from_file_path: true,
+      structure: 'multiple_root_folders',
+    };
+
+    parseI18nConfig(/** @type {any} */ ({ i18n }), collectors);
+    checkI18nOverrides(
+      /** @type {any} */ ({ cmsConfig: { i18n }, collection: { name: 'posts', i18n } }),
+      collectors,
+    );
+    checkI18nOverrides(
+      /** @type {any} */ ({ cmsConfig: { i18n }, collection: { name: 'posts', i18n: true } }),
+      collectors,
+    );
+
+    expect(warnDeprecation).not.toHaveBeenCalled();
   });
 });

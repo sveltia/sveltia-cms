@@ -2,6 +2,10 @@ import { afterEach, beforeEach, describe, expect, onTestFinished, test, vi } fro
 import { page, userEvent } from 'vitest/browser';
 
 import { globalAssetFolder } from '$lib/services/assets/folders';
+import {
+  awaitPendingFieldUpdates,
+  fieldUpdatePending,
+} from '$lib/services/contents/editor/pending';
 import { listAssets } from '$lib/services/contents/fields/file/helpers';
 import { getUnsavedAssets } from '$lib/services/contents/fields/file/process';
 import { processResources } from '$lib/services/contents/fields/file/resources';
@@ -16,6 +20,7 @@ import {
   setAssets,
 } from '$lib/test/config';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
+import { createFileDropEvent } from '$lib/test/drop';
 
 import FileEditor from './file-editor.svelte';
 
@@ -24,51 +29,43 @@ vi.mock('$lib/services/contents/fields/file/process', { spy: true });
 vi.mock('$lib/services/contents/fields/file/resources', { spy: true });
 
 /**
- * Build a drop event carrying the given files.
- * @param {File[]} files Files.
- * @returns {Event} Event.
- */
-const createDropEvent = (files) => {
-  const event = new Event('drop', { bubbles: true, cancelable: true });
-
-  Object.defineProperty(event, 'dataTransfer', {
-    value: {
-      dropEffect: '',
-      items: files.map((file) => ({
-        /**
-         * Get the entry.
-         * @returns {any} File entry.
-         */
-        webkitGetAsEntry: () => ({
-          name: file.name,
-          isFile: true,
-          /**
-           * Read the file.
-           * @param {(file: File) => void} callback Callback.
-           * @returns {void} Nothing.
-           */
-          file: (callback) => callback(file),
-        }),
-      })),
-    },
-  });
-
-  return event;
-};
-
-/**
  * Render the editor within a draft.
  * @param {Record<string, any>} config Field options.
  * @param {any} currentValue Field value.
  * @param {Record<string, any>} [values] Flattened values.
  * @param {Record<string, any>} [props] Props to override.
  * @param {Record<string, any>} [context] Field editor context.
+ * @param {any[]} [otherFields] Other fields of the entry.
+ * @param {Record<string, Record<string, any>>} [localizedValues] Flattened values in each locale,
+ * for an entry in multiple locales. Takes precedence over `values`.
  * @returns {Promise<{ draft: any, props: any, container: HTMLElement, entryDraft: any }>} Draft,
  * props, container and the draft state, whose `current` can be replaced to open another entry.
  */
-const renderEditor = async (config, currentValue, values = {}, props = {}, context = undefined) => {
+const renderEditor = async (
+  config,
+  currentValue,
+  values = {},
+  props = {},
+  context = undefined,
+  otherFields = [],
+  localizedValues = undefined,
+) => {
   const fieldConfig = { name: 'image', widget: 'image', ...config };
-  const draft = createMockDraft({ fields: [fieldConfig], values: { _default: values } });
+
+  const draft = createMockDraft({
+    fields: [fieldConfig, ...otherFields],
+    values: localizedValues ?? { _default: values },
+    ...(localizedValues
+      ? {
+          i18n: {
+            i18nEnabled: true,
+            allLocales: Object.keys(localizedValues),
+            initialLocales: Object.keys(localizedValues),
+            defaultLocale: Object.keys(localizedValues)[0],
+          },
+        }
+      : {}),
+  });
 
   const _props = $state({
     locale: '_default',
@@ -124,7 +121,7 @@ describe('FileEditor', () => {
     const file = await createMockImageFile({ name: 'new.png' });
 
     /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
-      createDropEvent([file]),
+      createFileDropEvent([file]),
     );
 
     // The file is held in the draft under a temporary URL until the entry is saved
@@ -287,7 +284,7 @@ describe('FileEditor', () => {
     const file = await createMockImageFile({ name: 'c.png' });
 
     /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
-      createDropEvent([file]),
+      createFileDropEvent([file]),
     );
     await expect.poll(() => draft.currentValues._default['images.2']).toMatch(/^blob:/);
 
@@ -424,7 +421,7 @@ describe('FileEditor', () => {
     const file = new File(['hello'], 'notes.txt', { type: 'text/plain' });
 
     /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
-      createDropEvent([file]),
+      createFileDropEvent([file]),
     );
 
     await expect.poll(() => props.currentValue).toMatch(/^blob:/);
@@ -444,7 +441,7 @@ describe('FileEditor', () => {
     const file = await createMockImageFile({ name: 'new.png' });
 
     /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
-      createDropEvent([file]),
+      createFileDropEvent([file]),
     );
 
     await expect.poll(() => draft.currentValues._default['images.0']).toMatch(/^blob:/);
@@ -524,7 +521,7 @@ describe('FileEditor', () => {
     // Only the first of the two dropped files fits. The files differ, as a file with the same
     // content as an earlier one would be stored only once
     dropTarget.dispatchEvent(
-      createDropEvent([
+      createFileDropEvent([
         await createMockImageFile({ name: 'b.png', width: 5 }),
         await createMockImageFile({ name: 'c.png', width: 6 }),
       ]),
@@ -542,7 +539,7 @@ describe('FileEditor', () => {
     const files = { ...draft.files };
 
     dropTarget.dispatchEvent(
-      createDropEvent([await createMockImageFile({ name: 'd.png', width: 7 })]),
+      createFileDropEvent([await createMockImageFile({ name: 'd.png', width: 7 })]),
     );
     await new Promise((resolve) => {
       setTimeout(resolve, 100);
@@ -555,7 +552,7 @@ describe('FileEditor', () => {
     const { props, container } = await renderEditor({}, '');
 
     /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
-      createDropEvent([new File(['x'], 'broken.png', { type: 'image/png' })]),
+      createFileDropEvent([new File(['x'], 'broken.png', { type: 'image/png' })]),
     );
 
     const dialog = page.getByRole('alertdialog');
@@ -573,6 +570,7 @@ describe('FileEditor', () => {
   });
 
   describe('with a cloud storage service', () => {
+    const CREDIT = 'Photo by <a href="https://example.com/melvin?a=1&amp;b=2">Melvin</a>';
     /** @type {any} */
     const services = allCloudStorageServices;
     /** @type {string} */
@@ -587,7 +585,7 @@ describe('FileEditor', () => {
         list: vi.fn().mockResolvedValue([
           createMockExternalAsset({
             fileName: 'cloud.png',
-            asset: { downloadURL: imageURL, previewURL: imageURL, credit: 'Photo by Melvin' },
+            asset: { downloadURL: imageURL, previewURL: imageURL, credit: CREDIT },
           }),
         ]),
         upload: vi.fn(),
@@ -598,12 +596,12 @@ describe('FileEditor', () => {
       delete services.test_cloud;
     });
 
-    test('downloads a selected file, showing the credit', async () => {
-      // Two providers, so nothing can be dropped
-      const { props } = await renderEditor({}, '');
-
-      expect(document.querySelector('.drop-target')).toBeNull();
-
+    /**
+     * Select the image on the test service, and wait for the photo credit dialog.
+     * @param {any} props Editor props.
+     * @returns {Promise<import('vitest/browser').Locator>} Photo credit dialog.
+     */
+    const selectCloudImage = async (props) => {
       await page.getByRole('button', { name: 'Browse' }).click();
 
       const dialog = page.getByRole('dialog', { name: 'Select Image' });
@@ -626,19 +624,41 @@ describe('FileEditor', () => {
 
       const credit = page.getByRole('alertdialog', { name: 'Photo Credit' });
 
-      await expect.element(credit.getByRole('textbox')).toHaveValue('Photo by Melvin');
-      // The text is selected on click, ready to be copied
-      credit
-        .getByRole('textbox')
-        .element()
-        .dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      await expect.element(credit.getByRole('textbox')).toHaveFocus();
+      await expect.element(credit.getByRole('textbox')).toHaveValue(CREDIT);
 
+      return credit;
+    };
+
+    test('downloads a selected file, showing the credit', async () => {
+      // Two providers, so nothing can be dropped
+      const { props } = await renderEditor({}, '');
+
+      expect(document.querySelector('.drop-target')).toBeNull();
+
+      const credit = await selectCloudImage(props);
       const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue();
 
       await credit.getByRole('button', { name: 'Copy' }).click();
-      // The handler runs once the dialog is closed
-      await vi.waitFor(() => expect(writeText).toHaveBeenCalledWith('Photo by Melvin'));
+      expect(writeText).toHaveBeenCalledWith(CREDIT);
+      await expect.element(credit).not.toBeInTheDocument();
+    });
+
+    test('offers to insert the credit into the image component holding the field', async () => {
+      const { draft, props } = await renderEditor(
+        {},
+        '',
+        {},
+        { keyPath: 'body:c1:src' },
+        { valueStoreKey: 'extraValues', parentComponentNames: ['linked-image'] },
+        [{ name: 'body', label: 'Body', widget: 'markdown' }],
+      );
+
+      draft.extraValues._default = {};
+
+      const credit = await selectCloudImage(props);
+
+      await credit.getByRole('button', { name: 'Insert', exact: true }).click();
+      expect(draft.extraValues._default['body:c1:caption']).toBe(CREDIT);
     });
 
     test('hands dropped files to the service when the default library is off', async () => {
@@ -650,7 +670,7 @@ describe('FileEditor', () => {
       );
 
       /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
-        createDropEvent([file]),
+        createFileDropEvent([file]),
       );
 
       // The dialog opens on the service to upload the files there
@@ -658,6 +678,37 @@ describe('FileEditor', () => {
       await vi.waitFor(() =>
         expect(services.test_cloud.upload).toHaveBeenCalledWith([file], expect.anything()),
       );
+    });
+
+    test('hands dropped files to the service marked as the default', async () => {
+      const file = await createMockImageFile({ name: 'up.png' });
+
+      const { container, draft } = await renderEditor(
+        { media_libraries: { test_cloud: { default: true }, stock_assets: false } },
+        '',
+      );
+
+      // The repository is available too, but the mark tells where the files go
+      /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
+        createFileDropEvent([file]),
+      );
+
+      await expect.element(page.getByRole('dialog', { name: 'Select Image' })).toBeInTheDocument();
+      await vi.waitFor(() =>
+        expect(services.test_cloud.upload).toHaveBeenCalledWith([file], expect.anything()),
+      );
+      expect(draft.files).toEqual({});
+    });
+
+    test('takes no dropped files when the only service can’t upload them', async () => {
+      delete services.test_cloud.upload;
+
+      const { container } = await renderEditor(
+        { media_libraries: { default: false, stock_assets: false } },
+        '',
+      );
+
+      expect(container.querySelector('.drop-target')).toBeNull();
     });
   });
 
@@ -721,7 +772,7 @@ describe('FileEditor', () => {
     };
 
     /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
-      createDropEvent([await createMockImageFile({ name: 'kite.png' })]),
+      createFileDropEvent([await createMockImageFile({ name: 'kite.png' })]),
     );
     await expectRefused();
 
@@ -754,7 +805,7 @@ describe('FileEditor', () => {
 
     // A PNG image converted to WebP fits a field only taking WebP images
     /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
-      createDropEvent([await createMockImageFile({ name: 'kite.png' })]),
+      createFileDropEvent([await createMockImageFile({ name: 'kite.png' })]),
     );
 
     await expect.poll(() => props.currentValue).toMatch(/^blob:/);
@@ -781,7 +832,7 @@ describe('FileEditor', () => {
     const { container } = await renderEditor({}, '');
 
     /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
-      createDropEvent([await createMockImageFile({ name: 'big.png' })]),
+      createFileDropEvent([await createMockImageFile({ name: 'big.png' })]),
     );
 
     const dialog = page.getByRole('alertdialog', { name: 'Large File' });
@@ -792,10 +843,13 @@ describe('FileEditor', () => {
     await expect.poll(() => page.getByRole('alertdialog').elements().length).toBe(0);
   });
 
-  test('doesn’t take a file processed after another entry has been opened', async () => {
-    const { props, container, entryDraft } = await renderEditor({}, '');
+  /**
+   * Hold the processing of the next dropped files until the returned function is called.
+   * @returns {(value: any) => void} Function finishing the processing with the given results.
+   */
+  const holdProcessing = () => {
     /**
-     * Finish processing the dropped file.
+     * Finish processing the dropped files.
      * @type {(value: any) => void}
      */
     let resolve = () => undefined;
@@ -806,8 +860,16 @@ describe('FileEditor', () => {
           resolve = _resolve;
         }),
     );
+
+    return (value) => resolve(value);
+  };
+
+  test('doesn’t take a file processed after another entry has been opened', async () => {
+    const { props, container, entryDraft } = await renderEditor({}, '');
+    const finish = holdProcessing();
+
     /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
-      createDropEvent([await createMockImageFile({ name: 'new.png' })]),
+      createFileDropEvent([await createMockImageFile({ name: 'new.png' })]),
     );
     await vi.waitFor(() => expect(processResources).toHaveBeenCalled());
 
@@ -815,17 +877,97 @@ describe('FileEditor', () => {
     const otherDraft = createMockDraft({ fields: [{ name: 'image', widget: 'image' }] });
 
     entryDraft.current = otherDraft;
-    resolve([{ value: 'blob:late' }]);
+    finish([{ value: 'blob:late' }]);
     // The field is no longer processing, but the value isn’t taken
     await expect.element(page.getByText(/Drop an image file here/)).toBeInTheDocument();
     expect(props.currentValue).toBe('');
+  });
+
+  test('registers the processing of a file as a pending field update', async () => {
+    const { props, container } = await renderEditor({}, '/static/uploads/photo.png');
+    const finish = holdProcessing();
+
+    /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
+      createFileDropEvent([await createMockImageFile({ name: 'new.png' })]),
+    );
+    await vi.waitFor(() => expect(processResources).toHaveBeenCalled());
+    // The previous file is cleared while the new one is being processed, so a save made meanwhile
+    // has to wait for the new file rather than write the field empty
+    expect(props.currentValue).toBe('');
+    await expect.poll(() => fieldUpdatePending.current).toBe(true);
+
+    let settled = false;
+
+    const waiting = awaitPendingFieldUpdates().then(() => {
+      settled = true;
+    });
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, 50);
+    });
+    expect(settled).toBe(false);
+    finish([{ value: 'blob:new' }]);
+    await waiting;
+    // The new file is there once the update has settled
+    expect(props.currentValue).toBe('blob:new');
+    expect(fieldUpdatePending.current).toBe(false);
+  });
+
+  test('writes a file processed after the locale has changed to the locale it was picked in', async () => {
+    const { draft, props, container } = await renderEditor(
+      {},
+      '/static/uploads/photo.png',
+      {},
+      { locale: 'en' },
+      undefined,
+      [],
+      { en: { image: '/static/uploads/photo.png' }, fr: { image: '' } },
+    );
+
+    const finish = holdProcessing();
+
+    /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
+      createFileDropEvent([await createMockImageFile({ name: 'new.png' })]),
+    );
+    await vi.waitFor(() => expect(processResources).toHaveBeenCalled());
+    expect(vi.mocked(processResources).mock.calls[0][0].locale).toBe('en');
+    // The editor is reused for another locale while the file is being processed
+    props.locale = 'fr';
+    props.currentValue = '';
+    finish([{ value: 'blob:new' }]);
+    await expect.poll(() => draft.currentValues.en.image).toBe('blob:new');
+    expect(draft.currentValues.fr.image).toBe('');
+    expect(props.currentValue).toBe('');
+  });
+
+  test('adds files processed after the locale has changed to the locale they were picked in', async () => {
+    const { draft, props, container } = await renderEditor(
+      { name: 'images', multiple: true },
+      [],
+      {},
+      { locale: 'en', keyPath: 'images', typedKeyPath: 'images', fieldId: 'images' },
+      undefined,
+      [],
+      { en: {}, fr: {} },
+    );
+
+    const finish = holdProcessing();
+
+    /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
+      createFileDropEvent([await createMockImageFile({ name: 'new.png' })]),
+    );
+    await vi.waitFor(() => expect(processResources).toHaveBeenCalled());
+    props.locale = 'fr';
+    finish([{ value: 'blob:new' }]);
+    await expect.poll(() => draft.currentValues.en['images.0']).toBe('blob:new');
+    expect(draft.currentValues.fr['images.0']).toBeUndefined();
   });
 
   test('asks what to do with a file that has the name of an existing asset', async () => {
     const { props, container } = await renderEditor({}, '');
 
     /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
-      createDropEvent([await createMockImageFile({ name: 'photo.png' })]),
+      createFileDropEvent([await createMockImageFile({ name: 'photo.png' })]),
     );
 
     const dialog = page.getByRole('alertdialog');
@@ -870,7 +1012,7 @@ describe('FileEditor', () => {
 
     // The assets listed for the duplicate check are read when a file is dropped
     /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
-      createDropEvent([await createMockImageFile({ name: 'new.png' })]),
+      createFileDropEvent([await createMockImageFile({ name: 'new.png' })]),
     );
 
     await vi.waitFor(() => expect(listAssets).toHaveBeenCalled());
@@ -977,7 +1119,7 @@ describe('FileEditor', () => {
 
     // A dropped file is added to the list instead of replacing the same item again
     /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
-      createDropEvent([await createMockImageFile({ name: 'c.png' })]),
+      createFileDropEvent([await createMockImageFile({ name: 'c.png' })]),
     );
     await expect.poll(() => draft.currentValues._default['images.2']).toMatch(/^blob:/);
     expect(draft.currentValues._default['images.1']).toBe('/static/uploads/photo.png');

@@ -23,9 +23,8 @@ import { isNonEmptyString } from '$lib/services/utils/string';
  */
 
 /**
- * Normalized options for the `meta.path` entry path editor. The `widget` and `label` options are
- * accepted for compatibility with Netlify/Decap CMS but ignored: the editor is always a folder
- * picker with a built-in label.
+ * Normalized options for the `meta.path` entry path editor. The editor is always a folder picker
+ * with a built-in label, so the `widget` and `label` options of Netlify/Decap CMS aren’t supported.
  * @typedef {object} MetaPathConfig
  * @property {string | undefined} indexFileName File name, without an extension, used for every
  * entry in the collection, e.g. `_index`. If `undefined`, the entry’s own file name is used.
@@ -214,6 +213,22 @@ export const getEntryDirPath = (subPath) => {
   const index = subPath.lastIndexOf('/');
 
   return index === -1 ? '' : subPath.slice(0, index);
+};
+
+/**
+ * Get the name of an entry within the given folder, which is what a new slug filed in that
+ * folder has to differ from: the slug of an entry in a collection with nested entries is its sub
+ * path, e.g. `docs/intro`, while a new slug is a bare name, e.g. `intro`.
+ * @param {string} subPath Entry’s sub path.
+ * @param {string} dirPath Folder path without leading and trailing slashes. An empty string for the
+ * collection folder.
+ * @returns {string | undefined} Name, or `undefined` if the entry isn’t directly in the folder.
+ */
+export const getNameInFolder = (subPath, dirPath) => {
+  const prefix = dirPath ? `${dirPath}/` : '';
+  const name = subPath.startsWith(prefix) ? subPath.slice(prefix.length) : undefined;
+
+  return name?.includes('/') ? undefined : name;
 };
 
 /**

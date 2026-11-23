@@ -32,7 +32,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     collection,
     entry,
     viewType,
@@ -40,7 +39,6 @@
     canMoveDown = false,
     onMoveUp = undefined,
     onMoveDown = undefined,
-    /* eslint-enable prefer-const */
   } = $props();
 
   /**

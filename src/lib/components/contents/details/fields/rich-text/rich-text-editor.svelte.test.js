@@ -1,16 +1,21 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
 import { customComponentRegistry } from '$lib/services/api/registries';
 import { globalAssetFolder } from '$lib/services/assets/folders';
 import { cmsConfig } from '$lib/services/config';
 import { trackPendingFieldUpdate } from '$lib/services/contents/editor/pending';
+import { processResource } from '$lib/services/contents/fields/file/process';
+import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
 import { createMockImageFile, initTestConfig } from '$lib/test/config';
 import { createMockDraft } from '$lib/test/draft';
+import { createMockCloudService, createMockExternalAsset } from '$lib/test/factories';
 import { renderFieldEditor } from '$lib/test/field.svelte';
+import { getShownToastText, waitForToastsToHide } from '$lib/test/toast';
 
 import RichTextEditor from './rich-text-editor.svelte';
 
+vi.mock('$lib/services/contents/fields/file/process', { spy: true });
 vi.mock('$lib/services/contents/editor/pending', () => ({
   trackPendingFieldUpdate: vi.fn(),
   awaitPendingFieldUpdates: vi.fn(),
@@ -29,25 +34,44 @@ vi.mock('$lib/services/contents/editor/pending', () => ({
  * @param {string} [options.collectionName] Collection name.
  * @param {Record<string, any>} [options.context] Field editor context to override.
  * @param {Record<string, any>} [options.props] Props to override.
- * @returns {Promise<{ props: any, container: HTMLElement, draft: any }>} Props, container and
- * draft.
+ * @param {Record<string, string>} [options.otherValues] Values in other locales, keyed by locale,
+ * for an entry in multiple locales.
+ * @returns {Promise<{
+ * props: any,
+ * container: HTMLElement,
+ * draft: any,
+ * entryDraft: any,
+ * createDraft: (value: string) => any,
+ * }>} Props, container, draft, the draft state, whose `current` can be replaced to open another
+ * entry, and a function creating another draft for the field.
  */
 const renderEditor = async (
   currentValue,
   config = {},
-  { collectionName = 'posts', context = {}, props: extra = {} } = {},
+  { collectionName = 'posts', context = {}, props: extra = {}, otherValues = {} } = {},
 ) => {
   /** @type {RichTextField} */
   const fieldConfig = { name: 'body', widget: 'richtext', ...config };
 
-  const draft = createMockDraft({
-    collectionName,
-    fields: [fieldConfig],
-    i18n: { defaultLocale: 'en', allLocales: ['en'] },
-    values: { en: { body: currentValue } },
-  });
+  /**
+   * Create a draft holding the given value in the default locale.
+   * @param {string} value Markdown.
+   * @returns {any} Draft.
+   */
+  const createDraft = (value) =>
+    createMockDraft({
+      collectionName,
+      fields: [fieldConfig],
+      i18n: { defaultLocale: 'en', allLocales: ['en', ...Object.keys(otherValues)] },
+      values: {
+        en: { body: value },
+        ...Object.fromEntries(Object.entries(otherValues).map(([k, v]) => [k, { body: v }])),
+      },
+    });
 
-  const { props, container } = await renderFieldEditor(RichTextEditor, {
+  const draft = createDraft(currentValue);
+
+  const { props, container, entryDraft } = await renderFieldEditor(RichTextEditor, {
     fieldConfig,
     fieldLabel: 'Body',
     currentValue,
@@ -59,7 +83,7 @@ const renderEditor = async (
     },
   });
 
-  return { props, container, draft };
+  return { props, container, draft, entryDraft, createDraft };
 };
 
 describe('RichTextEditor', () => {
@@ -349,6 +373,102 @@ describe('RichTextEditor', () => {
     expect(Object.keys(draft.files)).toHaveLength(1);
   });
 
+  /**
+   * Drop an image onto the editor, holding its processing until the returned function is called.
+   * @returns {Promise<(value: string) => void>} Function finishing the processing with the given
+   * value.
+   */
+  const dropImageHeldInProcessing = async () => {
+    /**
+     * Finish processing the dropped image.
+     * @type {(value: any) => void}
+     */
+    let resolve = () => undefined;
+
+    vi.mocked(processResource).mockImplementationOnce(
+      () =>
+        new Promise((_resolve) => {
+          resolve = _resolve;
+        }),
+    );
+
+    const dataTransfer = new DataTransfer();
+
+    dataTransfer.items.add(await createMockImageFile({ name: 'photo.png' }));
+    page
+      .getByRole('textbox')
+      .element()
+      .dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer }));
+    await vi.waitFor(() => expect(processResource).toHaveBeenCalledOnce());
+
+    return (value) => resolve({ value });
+  };
+
+  test('tracks a pending update while a dropped image is processed', async () => {
+    const { props } = await renderEditor('Hello');
+    const editor = page.getByRole('textbox');
+
+    await expect.poll(() => editor.element().textContent).toBe('Hello');
+
+    const finish = await dropImageHeldInProcessing();
+
+    // A save or a locale switch made while the image is processed waits for it to be inserted
+    await vi.waitFor(() => expect(trackPendingFieldUpdate).toHaveBeenCalledOnce());
+
+    let settled = false;
+
+    vi.mocked(trackPendingFieldUpdate).mock.calls[0][0].then(() => {
+      settled = true;
+    });
+    await new Promise((resolve) => {
+      setTimeout(resolve, 50);
+    });
+    expect(settled).toBe(false);
+    finish('blob:held');
+    await expect.poll(() => props.currentValue).toContain('![](blob:held)');
+    await Promise.all(vi.mocked(trackPendingFieldUpdate).mock.calls.map(([promise]) => promise));
+  });
+
+  test('inserts no image processed after the locale has changed', async () => {
+    const { props } = await renderEditor('Hello', {}, { otherValues: { fr: 'Bonjour' } });
+    const editor = page.getByRole('textbox');
+
+    await expect.poll(() => editor.element().textContent).toBe('Hello');
+
+    const finish = await dropImageHeldInProcessing();
+
+    expect(vi.mocked(processResource).mock.calls[0][0].locale).toBe('en');
+    // The editor is reused for another locale while the image is being processed
+    props.locale = 'fr';
+    props.currentValue = 'Bonjour';
+    await expect.poll(() => editor.element().textContent).toBe('Bonjour');
+    finish('blob:late');
+    await new Promise((resolve) => {
+      setTimeout(resolve, 300);
+    });
+    expect(props.currentValue).toBe('Bonjour');
+    expect(editor.element().querySelector('img')).toBeNull();
+  });
+
+  test('inserts no image processed after another entry has been opened', async () => {
+    const { props, entryDraft, createDraft } = await renderEditor('Hello');
+    const editor = page.getByRole('textbox');
+
+    await expect.poll(() => editor.element().textContent).toBe('Hello');
+
+    const finish = await dropImageHeldInProcessing();
+
+    entryDraft.current = createDraft('Other');
+    props.currentValue = 'Other';
+    await expect.poll(() => editor.element().textContent).toBe('Other');
+    finish('blob:late');
+    await new Promise((resolve) => {
+      setTimeout(resolve, 300);
+    });
+    expect(props.currentValue).toBe('Other');
+    expect(editor.element().querySelector('img')).toBeNull();
+  });
+
   test('inserts a pasted image, and ignores other content', async () => {
     const { props } = await renderEditor('Hello');
     const editor = page.getByRole('textbox');
@@ -443,6 +563,96 @@ describe('RichTextEditor', () => {
     });
     expect(props.currentValue).toBe('Hello');
     expect(Object.keys(draft.files)).toHaveLength(0);
+  });
+
+  describe('with a cloud storage service', () => {
+    /** @type {any} */
+    const services = allCloudStorageServices;
+
+    /**
+     * Load the configuration with the given media library options, and drop an image onto the
+     * editor.
+     * @param {Record<string, any>} mediaLibraries Site-level `media_libraries` option.
+     * @returns {Promise<{ props: any, draft: any }>} Editor props and draft.
+     */
+    const dropImage = async (mediaLibraries) => {
+      await initTestConfig({
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'content/posts',
+            fields: [{ name: 'body', widget: 'richtext' }],
+          },
+        ],
+      });
+      // Set after the validation, which only knows the actual services
+      /** @type {any} */ (cmsConfig.current).media_libraries = mediaLibraries;
+
+      const { props, draft } = await renderEditor('Hello');
+      const editor = page.getByRole('textbox');
+
+      await expect.poll(() => editor.element().textContent).toBe('Hello');
+
+      const dataTransfer = new DataTransfer();
+
+      dataTransfer.items.add(await createMockImageFile({ name: 'up.png' }));
+      editor
+        .element()
+        .dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer }));
+
+      return { props, draft };
+    };
+
+    beforeEach(() => {
+      // Register a service that needs no network access
+      services.test_cloud = createMockCloudService({
+        upload: vi.fn(async (/** @type {File[]} */ files) =>
+          files.map(({ name }) => createMockExternalAsset({ fileName: name })),
+        ),
+      });
+    });
+
+    afterEach(() => {
+      delete services.test_cloud;
+    });
+
+    test.each([
+      ['marked as the default', { test_cloud: { default: true } }],
+      ['when the repository is disabled', { default: false }],
+    ])('uploads a dropped image to the service %s', async (_label, mediaLibraries) => {
+      const { props, draft } = await dropImage(mediaLibraries);
+      const dialog = page.getByRole('dialog', { name: 'Select Image' });
+
+      // The dialog opens on the service to upload the file there, and selects the uploaded image
+      await expect.element(dialog).toBeInTheDocument();
+      await vi.waitFor(() =>
+        expect(services.test_cloud.upload).toHaveBeenCalledWith(
+          [expect.objectContaining({ name: 'up.png' })],
+          expect.anything(),
+        ),
+      );
+      await expect.element(dialog.getByRole('button', { name: 'Insert' })).toBeEnabled();
+      await dialog.getByRole('button', { name: 'Insert' }).click();
+
+      // The image is inserted with its URL on the service, and nothing goes to the repository
+      await expect
+        .poll(() => props.currentValue)
+        .toContain('![](https://cdn.example.com/images/up.png)');
+      expect(draft.files).toEqual({});
+    });
+
+    test('rejects a dropped image when no location can take it', async () => {
+      delete services.test_cloud.upload;
+
+      const { props, draft } = await dropImage({ default: false });
+
+      await expect.poll(() => getShownToastText('error')).toBe('error Error Upload failed.');
+      expect(page.getByRole('dialog', { name: 'Select Image' }).query()).toBeNull();
+      expect(props.currentValue).toBe('Hello');
+      expect(draft.files).toEqual({});
+      await waitForToastsToHide();
+    });
   });
 
   test('locks the components in a read-only field', async () => {

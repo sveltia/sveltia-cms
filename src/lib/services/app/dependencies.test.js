@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   getChunkURLs,
   getLeafletMarkerIconURL,
+  getScriptVersionSpec,
   getUnpkgURL,
   loadChunk,
   loadModule,
@@ -197,6 +198,42 @@ describe('dependencies', () => {
     });
   });
 
+  describe('getScriptVersionSpec', () => {
+    it('should return an empty string for a CDN URL without a version', () => {
+      expect(getScriptVersionSpec('https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js')).toBe('');
+      // The module version is just as unpinned
+      expect(getScriptVersionSpec('https://unpkg.com/@sveltia/cms/dist/sveltia-cms.mjs')).toBe('');
+      expect(
+        getScriptVersionSpec('https://cdn.jsdelivr.net/npm/@sveltia/cms/dist/sveltia-cms.mjs'),
+      ).toBe('');
+    });
+
+    it('should return the version range or tag in the URL', () => {
+      expect(getScriptVersionSpec('https://unpkg.com/@sveltia/cms@^1/dist/sveltia-cms.js')).toBe(
+        '%5E1',
+      );
+      expect(
+        getScriptVersionSpec('https://cdn.jsdelivr.net/npm/@sveltia/cms@0/dist/sveltia-cms.js'),
+      ).toBe('0');
+    });
+
+    it('should return nothing for a pinned, self-hosted or unknown URL', () => {
+      expect(
+        getScriptVersionSpec('https://unpkg.com/@sveltia/cms@9.9.9/dist/sveltia-cms.js'),
+      ).toBeUndefined();
+      expect(
+        getScriptVersionSpec('https://example.com/node_modules/@sveltia/cms/dist/sveltia-cms.js'),
+      ).toBeUndefined();
+      expect(getScriptVersionSpec('https://example.com/admin/sveltia-cms.js')).toBeUndefined();
+      expect(getScriptVersionSpec('')).toBeUndefined();
+    });
+
+    it('should default to the running script’s URL', () => {
+      // In the test environment, that’s the module’s own URL, which isn’t a CDN URL
+      expect(getScriptVersionSpec()).toBeUndefined();
+    });
+  });
+
   describe('loadChunk', () => {
     it('should import the source entry of a known chunk in development', async () => {
       // Vitest runs in development mode, so the entry is imported rather than a built chunk
@@ -217,6 +254,28 @@ describe('dependencies', () => {
       expect(module.commit).toBeTypeOf('function');
       expect(module.Buffer).toBeTypeOf('function');
     });
+
+    it('should load the Map field chunk from its source entry in development', async () => {
+      const module = await loadChunk('map');
+
+      expect(module.createMapDrawController).toBeTypeOf('function');
+      expect(module.parseGeoJSON).toBeTypeOf('function');
+    });
+
+    // The chunk is compiled from source on first import, its Svelte components included, which can
+    // take longer than the default timeout on a busy CI runner
+    it('should load the Sveltia CMS Additions chunk from its source entry in development', async () => {
+      const module = await loadChunk('additions');
+
+      expect(module.adminSections.map((/** @type {{ key: string }} */ { key }) => key)).toEqual([
+        'users',
+        'sign-in',
+        'domains',
+        'github',
+        'credentials',
+      ]);
+      expect(module.startSession).toBeTypeOf('function');
+    }, 30_000);
 
     it('should reject with the last error once every location has failed', async () => {
       // A `file:` URL can’t be imported here, and neither can the CDN

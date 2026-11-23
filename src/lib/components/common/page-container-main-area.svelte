@@ -25,13 +25,11 @@
 
   /** @type {Props & Record<string, any>} */
   let {
-    /* eslint-disable prefer-const */
     primaryToolbar = undefined,
     secondaryToolbar = undefined,
     mainContent = undefined,
     secondarySidebar = undefined,
     ...rest
-    /* eslint-enable prefer-const */
   } = $props();
 
   const instance = {};

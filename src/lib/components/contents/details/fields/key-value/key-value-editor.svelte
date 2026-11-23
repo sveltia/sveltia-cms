@@ -52,15 +52,7 @@
   const { valueStoreKey = 'currentValues' } = getFieldEditorContext();
 
   /** @type {FieldEditorProps & Props} */
-  let {
-    /* eslint-disable prefer-const */
-    locale,
-    keyPath,
-    fieldId,
-    fieldConfig,
-    readonly = false,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { locale, keyPath, fieldId, fieldConfig, readonly = false } = $props();
 
   const {
     i18n = false,
@@ -88,8 +80,11 @@
   let tableBody = $state();
   /** @type {boolean[]} */
   let edited = $state([]);
-  /** @type {('empty' | 'duplicate' | undefined)[]} */
-  let validations = $state([]);
+  /**
+   * Validation results of the {@link rows}, one per row.
+   * @type {('empty' | 'duplicate' | undefined)[]}
+   */
+  const validations = $derived(validatePairs({ pairs: rows.values, edited }));
 
   // Removing the blank row offered for an empty field would just bring it back
   const isOnlyBlankRow = $derived(
@@ -225,8 +220,6 @@
   const updateStore = () => {
     const draft = entryDraft.current;
 
-    validations = validatePairs({ pairs: rows.values, edited });
-
     /* v8 ignore next 3 -- the editor is only rendered while the draft is there */
     if (!draft) {
       return;
@@ -306,7 +299,7 @@
       {#each sorter.displayOrder as index (rows.ids[index])}
         <tr
           bind:this={rowElements[index]}
-          class:dragging={sorter.dragIndex === index}
+          class:drag-placeholder={sorter.dragIndex === index}
           {...sorter.itemProps(index)}
           animate:flip={{ duration: 200 }}
         >
@@ -457,15 +450,6 @@
     &.reorder div {
       display: flex;
       align-items: center;
-    }
-  }
-
-  tr {
-    /* The dragged row is left as a faint placeholder marking the gap it would drop into, like the
-      items of a List field */
-
-    &.dragging {
-      opacity: 0.25;
     }
   }
 </style>

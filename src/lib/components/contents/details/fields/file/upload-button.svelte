@@ -22,7 +22,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     allowDrop,
     invalid,
     readonly,
@@ -33,7 +32,6 @@
     showSelectAssetsDialog = $bindable(false),
     replaceMode = $bindable(false),
     onFilePaste = undefined,
-    /* eslint-enable prefer-const */
   } = $props();
 
   const toast = $state({ show: false, message: '' });

@@ -13,11 +13,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    label = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { label = undefined } = $props();
 
   // Uploading to the media library commits straight to the configured branch rather than going
   // through review, so it’s not something an Open Authoring contributor or a user who can’t push to

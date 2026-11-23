@@ -109,6 +109,14 @@ describe('Test formatFileName()', () => {
     // Test with empty array
     expect(formatFileName('test.jpg', { assetNamesInSameFolder: [] })).toEqual('test.jpg');
 
+    // Test with the folded names passed along
+    expect(
+      formatFileName('Test.jpg', {
+        assetNamesInSameFolder: existingFiles,
+        foldedNamesInSameFolder: new Set(existingFiles),
+      }),
+    ).toEqual('Test-2.jpg');
+
     // Test when only base name exists (no numbered suffix) - should create test-1.jpg
     expect(formatFileName('test.jpg', { assetNamesInSameFolder: ['test.jpg'] })).toEqual(
       'test-1.jpg',
@@ -154,6 +162,19 @@ describe('Test formatFileName()', () => {
     expect(formatFileName('.gitignore')).toEqual('gitignore');
     expect(formatFileName('.hidden-file.txt', { slugificationEnabled: true })).toEqual(
       'hidden-file.txt',
+    );
+  });
+
+  test('Names Windows reserves for a device', () => {
+    // The name is numbered rather than dropped, keeping the extension
+    expect(formatFileName('aux.png')).toEqual('aux-1.png');
+    expect(formatFileName('CON.JPG', { slugificationEnabled: true })).toEqual('con-1.jpg');
+    // Dropping a leading dot or slugifying can leave a reserved name
+    expect(formatFileName('.nul.txt')).toEqual('nul-1.txt');
+    expect(formatFileName('Aux!.png', { slugificationEnabled: true })).toEqual('aux-1.png');
+    // A numbered name already taken is numbered again
+    expect(formatFileName('aux.png', { assetNamesInSameFolder: ['aux-1.png'] })).toEqual(
+      'aux-1-1.png',
     );
   });
 

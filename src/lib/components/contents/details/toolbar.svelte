@@ -26,6 +26,7 @@
   import SaveConflictDialog from '$lib/components/contents/details/save-conflict-dialog.svelte';
   import EntryStatusMenu from '$lib/components/workflow/entry-status-menu.svelte';
   import PublishEntryButton from '$lib/components/workflow/publish-entry-button.svelte';
+  import { getAdditions } from '$lib/services/app/additions';
   import { getEntryEditorBackPath, goBack, goto, overlayTitle } from '$lib/services/app/navigation';
   import { saveProgress } from '$lib/services/backends/commit-progress';
   import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
@@ -46,7 +47,11 @@
   import { fieldUpdatePending } from '$lib/services/contents/editor/pending';
   import { createResetMenuState } from '$lib/services/contents/editor/reset-menu.svelte';
   import { duplicateEntryDraft, saveEntryDraftFlow } from '$lib/services/contents/editor/save';
-  import { getSidebarPanels, showSidebarPanel } from '$lib/services/contents/editor/sidebar';
+  import {
+    getSidebarPanelLabel,
+    getSidebarPanels,
+    showSidebarPanel,
+  } from '$lib/services/contents/editor/sidebar';
   import { canUpdateSlug } from '$lib/services/contents/editor/slug';
   import { getEntryToolbarState } from '$lib/services/contents/editor/toolbar';
   import { getEntryRelativeAssets } from '$lib/services/contents/entry/assets';
@@ -63,11 +68,14 @@
     checkPublishedVersion,
     getUnpublishedEntryByDraft,
     isDirectPublishAllowed,
+    isDiscardableDraft,
+    isOrphanedForkDraft,
     isPendingDeletion,
     isWorkflowEnabled,
     workflowEnabled,
   } from '$lib/services/workflow';
   import { getDiscardDialogStrings } from '$lib/services/workflow/dialogs';
+  import { getForkHead } from '$lib/services/workflow/forks';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
   /**
@@ -81,13 +89,11 @@
    */
 
   const entryDraft = getEntryDraftContext();
+  // Sveltia CMS Additions, which shows who else has the entry open
+  const additions = $derived(getAdditions());
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    disabled = false,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { disabled = false } = $props();
 
   let showValidationToast = $state(false);
   // Number of invalid fields when the last save failed validation. A snapshot rather than a live
@@ -201,23 +207,32 @@
   const publishedVersionExists = $derived(checkPublishedVersion(unpublishedEntry));
   const pendingDeletion = $derived(isPendingDeletion(unpublishedEntry));
   const readonly = $derived(isDraftReadonly(entryDraft.current));
-  const { useWorkflow, discardsDraft, locked, canDuplicate, removalMenuItems } = $derived(
-    getEntryToolbarState({
-      collection,
-      collectionFile,
-      isIndexFile,
-      hasPullRequest: !!unpublishedEntry,
-      workflowEnabled: isWorkflowEnabled(collection),
-      publishedVersionExists,
-      pendingDeletion,
-      readonly,
-      openAuthoring: openAuthoring.current,
-      creationDisabled: collectionState.current.creationDisabled,
-    }),
-  );
+  const { useWorkflow, discardsDraft, locked, canDuplicate, removalMenuItems, showPublishControl } =
+    $derived(
+      getEntryToolbarState({
+        collection,
+        collectionFile,
+        isIndexFile,
+        hasPullRequest: !!unpublishedEntry,
+        workflowEnabled: isWorkflowEnabled(collection),
+        publishedVersionExists,
+        // Deleting an entry that was never published just throws the draft away; anything else
+        // takes an entry off the site
+        discardsDraft: isDiscardableDraft(unpublishedEntry),
+        pendingDeletion,
+        readonly,
+        openAuthoring: openAuthoring.current,
+        fork: getForkHead(unpublishedEntry),
+        creationDisabled: collectionState.current.creationDisabled,
+      }),
+    );
   // A workflow draft can also be saved and published in one go, if the publish mode allows it
+  // An entry from a contributor’s pull request that has been merged or closed since has nothing
+  // left to publish, nor to save, which the save refuses
   const directPublish = $derived(
-    useWorkflow && isDirectPublishAllowed(collection, unpublishedEntry),
+    useWorkflow &&
+      !isOrphanedForkDraft(entryDraft.current) &&
+      isDirectPublishAllowed(collection, unpublishedEntry),
   );
   // The entries created or edited from the Relation fields would be published along with it, and
   // one in a collection whose review can’t be skipped would miss its review
@@ -392,6 +407,9 @@
       {/if}
     </h2>
   {/if}
+  {#if additions}
+    <additions.EntryViewers />
+  {/if}
   {#if !env.isSmallScreen}
     {@render overflowButtons()}
   {/if}
@@ -468,7 +486,7 @@
       }}
     />
   {/if}
-  {#if unpublishedEntry && !readonly}
+  {#if unpublishedEntry && showPublishControl}
     <PublishEntryButton entry={unpublishedEntry} disabled={controlsDisabled} {modified} />
   {/if}
   <MenuButton
@@ -488,12 +506,13 @@
           <!-- The sidebar doesn’t fit on a small screen, so its panels open in a bottom sheet. The
             menu can’t be opened while the toolbar is disabled -->
           {#if !notFound}
-            {#each getSidebarPanels(entryDraft.current) as { key, disabled: panelDisabled } (key)}
+            {#each getSidebarPanels(entryDraft.current) as panel (panel.key)}
+              <!-- With the count shown on the sidebar button’s badge, e.g. of comments -->
               <MenuItem
-                label={_(`entry_sidebar.${key}.title`)}
-                disabled={panelDisabled}
+                label={getSidebarPanelLabel(panel)}
+                disabled={panel.disabled}
                 onclick={() => {
-                  showSidebarPanel(key);
+                  showSidebarPanel(panel.key);
                 }}
               />
             {/each}

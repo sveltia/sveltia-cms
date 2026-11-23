@@ -1,6 +1,9 @@
 import { fetchAllPages } from '$lib/services/backends/git/gitea/api';
 import { commitChanges } from '$lib/services/backends/git/gitea/commits';
-import { getWorkflowRepository } from '$lib/services/backends/git/gitea/fork';
+import {
+  getBranchRepository,
+  isOpenAuthoringConfigured,
+} from '$lib/services/backends/git/gitea/fork';
 import {
   createPullRequest,
   deleteBranch,
@@ -10,6 +13,7 @@ import {
   fetchPullRequestFileContents,
   fetchPullRequestFileList,
   isSameRepositoryPullRequest,
+  parseForkPullRequest,
   parsePullRequest,
   resolveChangeSHAs,
   updateDraftState,
@@ -40,6 +44,7 @@ import {
   saveWorkflowBranch,
   toChangedFilesWithModes,
   updateLabelledStatus,
+  updatePullRequestDescription,
 } from '$lib/services/backends/git/shared/workflow';
 import { encodePathSegments } from '$lib/services/utils/url';
 import { getAllStatusLabels } from '$lib/services/workflow/labels';
@@ -57,6 +62,29 @@ import { openAuthoring } from '$lib/services/workflow/open-authoring';
  * WorkflowStatus,
  * } from '$lib/types/private';
  */
+
+/**
+ * Fetch the open pull requests to the configured branch that contributors may have opened from
+ * their forks with Open Authoring, for the maintainers to review. A contributor can’t label a pull
+ * request on the configured repository, so these are matched by base branch rather than by label,
+ * and the ones from forks for an entry picked out by {@link parseForkPullRequest}, which also
+ * checks the branch: the base branch filter isn’t available on every Gitea or Forgejo version. The
+ * list is weeded here, so a code change from a fork isn’t read again on its own below.
+ * @returns {Promise<Record<string, any>[]>} Pull requests returned by the REST API.
+ * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoListPullRequests
+ */
+const fetchForkPullRequestItems = async () => {
+  if (!isOpenAuthoringConfigured()) {
+    return [];
+  }
+
+  const items = await fetchAllPages(
+    `${getRepositoryPath(repository)}/pulls?state=open&sort=recentupdate` +
+      `&base_branch=${encodeURIComponent(/** @type {string} */ (repository.branch))}`,
+  );
+
+  return items.filter((item) => parseForkPullRequest(item));
+};
 
 /**
  * Fetch all the open pull requests on the configured repository that carry a CMS status label,
@@ -79,21 +107,25 @@ export const fetchLabelledPullRequests = async () => {
     .filter(({ name }) => statusLabels.includes(name))
     .map(({ id }) => id);
 
-  // Without a status label on the repository, no pull request can carry one
-  if (!labelIds.length) {
-    return [];
-  }
-
   const labelQuery = labelIds.map((id) => `&labels=${id}`).join('');
 
-  const items = await fetchAllPages(
-    `${getRepositoryPath(repository)}/pulls?state=open&sort=recentupdate${labelQuery}`,
-  );
+  const [items, forkItems] = await Promise.all([
+    // Without a status label on the repository, no pull request can carry one
+    labelIds.length
+      ? fetchAllPages(
+          `${getRepositoryPath(repository)}/pulls?state=open&sort=recentupdate${labelQuery}`,
+        )
+      : [],
+    fetchForkPullRequestItems(),
+  ]);
 
   // A pull request carrying more than one status label is listed once for each. The list reports
   // the head commit as of the instance’s own reference, which can trail a push by a moment, so each
   // match is read on its own below for the branch’s current head
-  const numbers = [...new Set(items.map(({ number }) => /** @type {number} */ (number)))];
+  const numbers = [
+    ...new Set([...items, ...forkItems].map(({ number }) => /** @type {number} */ (number))),
+  ];
+
   /** @type {WorkflowPullRequest[]} */
   const pullRequests = [];
 
@@ -102,7 +134,11 @@ export const fetchLabelledPullRequests = async () => {
       await fetchAPI(getPullRequestPath(repository, number))
     );
 
-    const pullRequest = parsePullRequest(item);
+    // A pull request from a fork is only listed for review with Open Authoring turned on, even one
+    // a maintainer has labelled
+    const pullRequest =
+      parsePullRequest(item) ??
+      (isOpenAuthoringConfigured() ? parseForkPullRequest(item) : undefined);
 
     if (pullRequest) {
       pullRequests.push(pullRequest);
@@ -213,16 +249,28 @@ const commitToNewBranch = async (changes, options) => {
  */
 const commitToExistingBranch = async (changes, options, pullRequest) => {
   const { branch = '' } = options;
+  const { branch: _name, ...branchRepository } = getBranchRepository(branch);
 
   const headSHA = await assertBranchAtHead({
     branch,
     headSHA: pullRequest.headSHA,
     fetchBranchHead,
-    getWorkflowRepository,
+    getBranchRepository,
   });
 
-  return commitChanges(await resolveChangeSHAs(changes, headSHA), options);
+  // The blob SHAs are read in the repository the branch lives in, where the commit lands
+  return commitChanges(await resolveChangeSHAs(changes, headSHA, branchRepository), options);
 };
+
+/**
+ * Update the description of the given pull request with the given function.
+ * @param {WorkflowPullRequest} pullRequest Pull request.
+ * @param {(description: string) => string} transform Function to get the new description from the
+ * current one.
+ * @returns {Promise<string>} New description.
+ */
+const updateDescription = (pullRequest, transform) =>
+  updatePullRequestDescription(repository, pullRequest, transform);
 
 /**
  * Commit the given changes on the workflow branch, creating the branch and the pull request if they
@@ -232,7 +280,12 @@ const commitToExistingBranch = async (changes, options, pullRequest) => {
  * and the new or updated pull request.
  */
 export const savePullRequest = async (args) =>
-  saveWorkflowBranch(args, { commitToNewBranch, commitToExistingBranch, createPullRequest });
+  saveWorkflowBranch(args, {
+    commitToNewBranch,
+    commitToExistingBranch,
+    createPullRequest,
+    updateDescription,
+  });
 
 /**
  * Update the pull request’s status label and draft state. A pull request in the `draft` status is

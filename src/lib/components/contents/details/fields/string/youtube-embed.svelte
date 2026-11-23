@@ -12,11 +12,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    url,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { url } = $props();
 
   let embeddable = $state(true);
 

@@ -25,13 +25,7 @@
   const entryDraft = getEntryDraftContext();
 
   /** @type {FieldPreviewProps & Props} */
-  let {
-    /* eslint-disable prefer-const */
-    locale,
-    keyPath,
-    fieldConfig,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { locale, keyPath, fieldConfig } = $props();
 
   const {
     // Field type-specific options

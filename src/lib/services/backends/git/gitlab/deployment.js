@@ -5,7 +5,12 @@ import {
 } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
-import { collectSafely, resolveDeployments } from '$lib/services/backends/git/shared/deployment';
+import {
+  addCandidates,
+  collectSafely,
+  fetchRestBranchHeadSHA,
+  resolveDeployments,
+} from '$lib/services/backends/git/shared/deployment';
 
 /**
  * @import { DeployState, DeployStatus, DeployTarget } from '$lib/types/private';
@@ -76,18 +81,8 @@ export const triggerDeployment = async () =>
  * @returns {Promise<string | undefined>} Commit SHA, or `undefined` if it couldn’t be resolved.
  * @see https://docs.gitlab.com/api/branches/#get-single-repository-branch
  */
-export const fetchBranchHeadSHA = async () => {
-  const { branch } = repository;
-
-  if (!branch) {
-    // The default branch hasn’t been detected yet
-    return undefined;
-  }
-
-  const result = /** @type {Record<string, any>} */ (await fetchAPI(getBranchPath(branch)));
-
-  return result?.commit?.id ?? undefined;
-};
+export const fetchBranchHeadSHA = () =>
+  fetchRestBranchHeadSHA(repository.branch, (branch) => getBranchPath(branch));
 
 /**
  * Collect deploy candidates from the project’s recent deployments, which is how GitLab’s own Review
@@ -111,23 +106,22 @@ const collectDeploymentCandidates = async (candidateMap) => {
     )
   );
 
-  // The response is newest first, while {@link pickDeployment} expects the newest last
-  [...(deployments ?? [])].reverse().forEach(({ sha, status, environment }) => {
-    const state = DEPLOYMENT_STATUS_MAP[status];
-    // An older self-hosted GitLab omits `external_url` from the list response
-    const url = environment?.external_url ?? undefined;
+  // The response is newest first, while {@link pickDeployment} expects the newest last. Anything
+  // else within the window is some other commit’s deployment
+  const newestLast = [...(deployments ?? [])].reverse();
 
-    if (!state || !sha) {
-      return;
-    }
-
-    // Anything else within the window is some other commit’s deployment
-    candidateMap[sha]?.push({
-      name: environment?.name ?? '',
-      url,
-      state,
-      source: 'deployment',
-    });
+  Object.entries(candidateMap).forEach(([sha, list]) => {
+    addCandidates(
+      list,
+      newestLast.filter((deployment) => deployment.sha === sha),
+      ({ status }) => DEPLOYMENT_STATUS_MAP[status],
+      ({ environment }) => ({
+        name: environment?.name ?? '',
+        // An older self-hosted GitLab omits `external_url` from the list response
+        url: environment?.external_url,
+        source: 'deployment',
+      }),
+    );
   });
 };
 
@@ -146,19 +140,17 @@ const collectStatusCandidates = async ({ sha }, candidateMap) => {
     )
   );
 
-  (statuses ?? []).forEach(({ name, status, target_url: targetURL, description }) => {
-    const state = COMMIT_STATUS_MAP[status];
-
-    if (state) {
-      candidateMap[sha].push({
-        name: name ?? '',
-        url: targetURL ?? undefined,
-        state,
-        description: description ?? undefined,
-        source: 'status',
-      });
-    }
-  });
+  addCandidates(
+    candidateMap[sha],
+    statuses,
+    ({ status }) => COMMIT_STATUS_MAP[status],
+    ({ name, target_url: url, description }) => ({
+      name: name ?? '',
+      url,
+      description,
+      source: 'status',
+    }),
+  );
 };
 
 /**

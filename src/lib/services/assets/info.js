@@ -1,6 +1,6 @@
 import { escapeRegExp } from '@sveltia/utils/string';
-import mime from 'mime';
 
+import { getEntryRelativePublicPath } from '$lib/services/assets/entry-relative';
 import { getAssetFoldersByPath, globalAssetFolder } from '$lib/services/assets/folders';
 import { canCreateThumbnail, isPDF } from '$lib/services/assets/kinds';
 import { allAssets } from '$lib/services/assets/state';
@@ -10,16 +10,16 @@ import {
   TEMPLATE_TAG_REPLACE_REGEX,
 } from '$lib/services/common/template/constants';
 import { cmsConfig } from '$lib/services/config';
-import { getEntryFolderPath } from '$lib/services/contents/entry/paths';
 import { createLRUMap, shareInFlight } from '$lib/services/utils/cache';
 import { getRepositoryDatabase } from '$lib/services/utils/database';
-import { createPath, createPathRegEx, encodeFilePath, getDirName } from '$lib/services/utils/file';
+import { createPathRegEx, encodeFilePath } from '$lib/services/utils/file';
 import { createInertSVG } from '$lib/services/utils/media/image/svg';
 import {
   THUMBNAIL_TRANSFORM_OPTIONS,
   transformImage,
 } from '$lib/services/utils/media/image/transform';
 import { renderPDF } from '$lib/services/utils/media/pdf';
+import mime from '$lib/services/utils/mime';
 import { createConcurrencyLimiter } from '$lib/services/utils/scheduling';
 
 /**
@@ -612,43 +612,6 @@ const resolvePublicFolder = (asset) =>
       asset.folder);
 
 /**
- * Get the path of the given asset in an entry-relative folder, relative to the entry’s folder.
- * @param {Asset} asset Asset.
- * @param {Entry} [entry] Associated entry. Can be `undefined` when editing a new draft.
- * @param {InternalLocaleCode} [locale] Locale whose entry file the path is relative to.
- * @returns {string | undefined} Relative path, e.g. `images/photo.jpg`, or `undefined` if it
- * cannot be determined.
- */
-const getEntryRelativePath = (asset, entry, locale) => {
-  // A file at the repository root has no folder path
-  const assetFolderPath = getDirName(asset.path);
-  const entryFolderPath = entry ? getEntryFolderPath(entry, locale) : undefined;
-
-  if (entryFolderPath !== undefined) {
-    // If the asset is in the same folder as the entry, return the file name only
-    if (assetFolderPath === entryFolderPath) {
-      return asset.name;
-    }
-
-    // Return the path relative to the entry’s folder, e.g. `images/photo.jpg`, or `undefined` if
-    // the path cannot be determined
-    const prefix = entryFolderPath ? `${entryFolderPath}/` : '';
-
-    return asset.path.startsWith(prefix) ? asset.path.slice(prefix.length) : undefined;
-  }
-
-  const { internalPath, internalSubPath } = asset.folder;
-
-  // Resolve simple entry-relative paths like `images/photo.jpg` if the asset is in the same folder
-  // as the entry, which can be the repository root
-  if (asset.path === createPath([internalPath, internalSubPath, asset.name])) {
-    return internalPath ? asset.path.slice(internalPath.length + 1) : asset.path;
-  }
-
-  return undefined;
-};
-
-/**
  * Get the public URL for the given asset.
  * @param {Asset} asset Asset file, such as an image.
  * @param {object} [options] Options.
@@ -666,16 +629,24 @@ export const getAssetPublicURL = (
   asset,
   { pathOnly = false, allowSpecial = false, entry = undefined, locale = undefined } = {},
 ) => {
-  const { publicPath, entryRelative, hasTemplateTags } = resolvePublicFolder(asset);
+  const publicFolder = resolvePublicFolder(asset);
+  const { publicPath, entryRelative, hasTemplateTags } = publicFolder;
+
+  const { _baseURL: baseURL = '', output: { encode_file_path: encodingEnabled = false } = {} } =
+    /** @type {InternalCmsConfig} */ (cmsConfig.current);
 
   // Try to determine an entry-relative path if the asset is in the same folder as the entry, or a
   // sub-folder of it
   if (entryRelative) {
-    return pathOnly ? getEntryRelativePath(asset, entry, locale) : undefined;
-  }
+    if (!pathOnly) {
+      return undefined;
+    }
 
-  const { _baseURL: baseURL = '', output: { encode_file_path: encodingEnabled = false } = {} } =
-    /** @type {InternalCmsConfig} */ (cmsConfig.current);
+    const path = getEntryRelativePublicPath({ asset, folder: publicFolder, entry, locale });
+
+    // Only an absolute path is encoded; a relative one is stored as is
+    return encodingEnabled && path?.startsWith('/') ? encodeFilePath(path) : path;
+  }
 
   const internalPath = asset.folder.internalPath ?? '';
   const publicBasePath = publicPath === '/' ? '' : (publicPath ?? '');

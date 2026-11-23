@@ -11,13 +11,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    title,
-    actions = undefined,
-    children = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { title, actions = undefined, children = undefined } = $props();
 
   const id = $props.id();
 </script>

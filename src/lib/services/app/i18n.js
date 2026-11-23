@@ -10,7 +10,8 @@ import defaultComponentStrings from '@sveltia/ui/locales/en-US.yaml';
 import { getPathInfo } from '@sveltia/utils/file';
 import { LocalStorage } from '@sveltia/utils/storage';
 
-import defaultLocaleStrings from '$lib/locales/en-US.yaml';
+// The strings of Sveltia CMS Additions come with its chunk
+import defaultLocaleStrings from '$lib/locales/en-US.yaml?omit=additions';
 import { UNPKG_BASE_URL, version } from '$lib/services/app';
 import { PUBLISHED_LOCALE_LOADERS } from '$lib/services/app/published-locales';
 import { navigatorLocale, PREFS_STORAGE_KEY } from '$lib/services/user/prefs.svelte';

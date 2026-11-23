@@ -4,27 +4,29 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { saveProgress } from '$lib/services/backends/commit-progress';
 import {
   commitChanges,
-  estimateRemainingCommits,
   fetchFileCommits,
   fetchLastCommit,
   getNextPayloadSize,
-  getPayloadSize,
   INITIAL_COMMIT_PAYLOAD_SIZE,
-  isUploadFailure,
   MAX_COMMIT_PAYLOAD_SIZE,
   MIN_COMMIT_PAYLOAD_SIZE,
-  sortAdditions,
-  takeAdditions,
 } from '$lib/services/backends/git/github/commits';
-import { getWorkflowRepository } from '$lib/services/backends/git/github/fork';
+import { getBranchRepository, getWorkflowRepository } from '$lib/services/backends/git/github/fork';
+import { createGitDataCommit } from '$lib/services/backends/git/github/git-data';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchGraphQL } from '$lib/services/backends/git/shared/api';
-import { signOffCommitMessage } from '$lib/services/backends/git/shared/commits';
+import {
+  createCommitMessage,
+  signOffCommitMessage,
+} from '$lib/services/backends/git/shared/commits';
 import { repositoryHead } from '$lib/services/backends/git/shared/head';
+import { user } from '$lib/services/user/account.svelte';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 // Mock dependencies
 vi.mock('$lib/services/backends/git/github/fork');
+vi.mock('$lib/services/backends/git/github/git-data');
+vi.mock('$lib/services/user/account.svelte', () => ({ user: { account: undefined } }));
 vi.mock('$lib/services/backends/git/github/repository');
 vi.mock('$lib/services/backends/git/shared/api');
 vi.mock('$lib/services/backends/git/shared/commits', async (importOriginal) => ({
@@ -63,7 +65,12 @@ describe('GitHub commits service', () => {
     });
     forkedRepository.current = undefined;
     repositoryHead.current = '';
+    user.account = undefined;
     vi.mocked(getWorkflowRepository).mockReturnValue({ owner: 'test-owner', repo: 'test-repo' });
+    vi.mocked(getBranchRepository).mockImplementation((branch) => ({
+      ...getWorkflowRepository(),
+      branch,
+    }));
   });
 
   describe('fetchLastCommit', () => {
@@ -745,99 +752,6 @@ describe('GitHub commits service', () => {
     });
   });
 
-  describe('sortAdditions', () => {
-    /**
-     * Create a file addition.
-     * @param {number} index Index.
-     * @param {boolean} [isText] Whether the file is a text file, like an entry.
-     * @returns {any} File addition.
-     */
-    const addition = (index, isText = false) => ({
-      index,
-      path: `file-${index}`,
-      contents: 'a',
-      data: isText ? 'text' : new Blob(['x']),
-    });
-
-    test('puts text files last', () => {
-      const entry = addition(0, true);
-      const image1 = addition(1);
-      const image2 = addition(2);
-
-      expect(sortAdditions([entry, image1, image2])).toEqual({
-        queue: [image1, image2, entry],
-        addedAgain: [],
-      });
-    });
-
-    test('sets aside a file deleted and added again at the same path', () => {
-      const addedAgain = addition(0);
-      const image = addition(1);
-
-      expect(sortAdditions([addedAgain, image], new Set(['file-0']))).toEqual({
-        queue: [image],
-        addedAgain: [addedAgain],
-      });
-    });
-  });
-
-  describe('takeAdditions', () => {
-    /**
-     * Create a file addition.
-     * @param {number} index Index.
-     * @param {number} size Size of the encoded contents.
-     * @returns {any} File addition.
-     */
-    const addition = (index, size) => ({
-      index,
-      path: `file-${index}`,
-      contents: 'a'.repeat(size),
-    });
-
-    test('takes as many additions as fit', () => {
-      const queue = [addition(0, 40), addition(1, 60), addition(2, 1)];
-
-      expect(takeAdditions(queue, 100)).toEqual([addition(0, 40), addition(1, 60)]);
-      expect(queue).toEqual([addition(2, 1)]);
-    });
-
-    test('takes a single addition over the size on its own', () => {
-      const queue = [addition(0, 200), addition(1, 1)];
-
-      expect(takeAdditions(queue, 100)).toEqual([addition(0, 200)]);
-      expect(queue).toEqual([addition(1, 1)]);
-    });
-
-    test('takes nothing from an empty queue', () => {
-      expect(takeAdditions([], 100)).toEqual([]);
-    });
-  });
-
-  describe('getPayloadSize', () => {
-    test('adds up the size of the encoded contents', () => {
-      expect(getPayloadSize(/** @type {any[]} */ ([{ contents: 'abc' }, { contents: 'de' }]))).toBe(
-        5,
-      );
-    });
-
-    test('takes no additions for an empty payload', () => {
-      expect(getPayloadSize([])).toBe(0);
-    });
-  });
-
-  describe('estimateRemainingCommits', () => {
-    test('divides the payload by the commit size, rounding up', () => {
-      const queue = /** @type {any[]} */ ([{ contents: 'a'.repeat(150) }, { contents: 'a' }]);
-
-      expect(estimateRemainingCommits(queue, 100)).toBe(2);
-      expect(estimateRemainingCommits(queue, 50)).toBe(4);
-    });
-
-    test('counts the last commit even without additions left', () => {
-      expect(estimateRemainingCommits([], 100)).toBe(1);
-    });
-  });
-
   describe('getNextPayloadSize', () => {
     test('targets five seconds of upload at the measured speed', () => {
       // 6 MB in 12 seconds is 0.5 MB a second
@@ -848,24 +762,6 @@ describe('GitHub commits service', () => {
       expect(getNextPayloadSize(1024, 10000)).toBe(MIN_COMMIT_PAYLOAD_SIZE);
       expect(getNextPayloadSize(MAX_COMMIT_PAYLOAD_SIZE, 1000)).toBe(MAX_COMMIT_PAYLOAD_SIZE);
       expect(getNextPayloadSize(1024 * 1024, 0)).toBe(MAX_COMMIT_PAYLOAD_SIZE);
-    });
-  });
-
-  describe('isUploadFailure', () => {
-    test('tells a request that took too long from other failures', () => {
-      expect(isUploadFailure(new Error('Failed to send the request'))).toBe(true);
-
-      [408, 413, 499, 502, 504].forEach((status) => {
-        expect(
-          isUploadFailure(new Error('Server responded with an error', { cause: { status } })),
-        ).toBe(true);
-      });
-
-      expect(
-        isUploadFailure(new Error('Server responded with an error', { cause: { status: 422 } })),
-      ).toBe(false);
-      expect(isUploadFailure(new Error('Failed to fetch'))).toBe(false);
-      expect(isUploadFailure(undefined)).toBe(false);
     });
   });
 
@@ -1369,6 +1265,122 @@ describe('GitHub commits service', () => {
     });
   });
 
+  describe('commitChanges with Sveltia CMS Additions', () => {
+    const AUTHOR = { name: 'Ed Itor', email: 'ed@users.noreply.additions.example' };
+
+    const CHANGES = /** @type {any[]} */ ([
+      { action: 'create', path: 'content/a.md', data: 'A' },
+      { action: 'delete', path: 'content/b.md' },
+    ]);
+
+    test('credits the person as co-author of a commit the app authors', async () => {
+      user.account = /** @type {any} */ ({ commitAuthor: { mode: 'bot', ...AUTHOR } });
+      repositoryHead.current = 'head-sha';
+      vi.mocked(fetchGraphQL).mockResolvedValueOnce({
+        createCommitOnBranch: {
+          commit: { oid: 'new-sha', committedDate: '2026-10-13T00:00:00Z' },
+        },
+      });
+
+      await commitChanges(CHANGES, /** @type {any} */ ({ commitType: 'create' }));
+
+      expect(vi.mocked(fetchGraphQL).mock.calls[0][1]?.input.message).toEqual({
+        headline: 'Test commit message',
+        body: 'Co-authored-by: Ed Itor <ed@users.noreply.additions.example>',
+      });
+      expect(createGitDataCommit).not.toHaveBeenCalled();
+    });
+
+    test('puts the co-author after the body of a message that has one', async () => {
+      user.account = /** @type {any} */ ({ commitAuthor: { mode: 'bot', ...AUTHOR } });
+      repositoryHead.current = 'head-sha';
+      // Signed off as well, so the co-author joins the trailer block
+      vi.mocked(createCommitMessage).mockReturnValueOnce(
+        'Update a\n\nFix the typo\n\nSigned-off-by: Ed Itor <ed@example.com>',
+      );
+      vi.mocked(fetchGraphQL).mockResolvedValueOnce({
+        createCommitOnBranch: {
+          commit: { oid: 'new-sha', committedDate: '2026-10-13T00:00:00Z' },
+        },
+      });
+
+      await commitChanges(CHANGES, /** @type {any} */ ({ commitType: 'create' }));
+
+      expect(vi.mocked(fetchGraphQL).mock.calls[0][1]?.input.message).toEqual({
+        headline: 'Update a',
+        body:
+          'Fix the typo\n\nSigned-off-by: Ed Itor <ed@example.com>\n' +
+          'Co-authored-by: Ed Itor <ed@users.noreply.additions.example>',
+      });
+    });
+
+    test('makes the person the author through the Git Data API, in a single commit', async () => {
+      user.account = /** @type {any} */ ({ commitAuthor: { mode: 'user', ...AUTHOR } });
+      repositoryHead.current = 'head-sha';
+      vi.mocked(createGitDataCommit).mockResolvedValue({
+        oid: 'new-sha',
+        committedDate: '2026-10-13T00:00:00Z',
+        file_0: { oid: 'a-sha' },
+        file_1: { oid: 'big-sha' },
+      });
+
+      // Over the size at which GraphQL commits are split
+      const big = new Blob([new Uint8Array(MAX_COMMIT_PAYLOAD_SIZE + 1)]);
+
+      vi.mocked(encodeBase64).mockImplementation(async (data) =>
+        data === big ? 'x'.repeat(MAX_COMMIT_PAYLOAD_SIZE + 1) : 'base64content',
+      );
+
+      const result = await commitChanges(
+        [
+          ...CHANGES.slice(0, 1),
+          { action: 'create', path: 'images/big.jpg', data: big },
+          CHANGES[1],
+        ],
+        /** @type {any} */ ({ commitType: 'create' }),
+      );
+
+      expect(fetchGraphQL).not.toHaveBeenCalled();
+      expect(createGitDataCommit).toHaveBeenCalledOnce();
+      expect(createGitDataCommit).toHaveBeenCalledWith({
+        owner: 'test-owner',
+        repo: 'test-repo',
+        branch: 'main',
+        expectedHeadOid: 'head-sha',
+        // Assets first, as always
+        additions: [
+          expect.objectContaining({ index: 1, path: 'images/big.jpg' }),
+          expect.objectContaining({ index: 0, path: 'content/a.md' }),
+        ],
+        deletions: [{ path: 'content/b.md' }],
+        message: 'Test commit message',
+        author: { mode: 'user', ...AUTHOR },
+      });
+      expect(result.sha).toBe('new-sha');
+      expect(result.files['content/a.md']).toEqual({ sha: 'a-sha' });
+      expect(result.files['images/big.jpg']).toEqual({ sha: 'big-sha', file: big });
+    });
+
+    test('reports a commit refused because the branch has moved', async () => {
+      user.account = /** @type {any} */ ({ commitAuthor: { mode: 'user', ...AUTHOR } });
+      repositoryHead.current = 'head-sha';
+      vi.mocked(createGitDataCommit).mockRejectedValue(
+        new Error('Server responded with an error', {
+          cause: { status: 422, message: 'Update is not a fast forward' },
+        }),
+      );
+      vi.mocked(fetchGraphQL).mockResolvedValueOnce({
+        repository: {
+          ref: { target: { history: { nodes: [{ oid: 'someone-elses-sha', message: '' }] } } },
+        },
+      });
+
+      await expect(
+        commitChanges(CHANGES, /** @type {any} */ ({ commitType: 'create' })),
+      ).rejects.toThrow('The branch has moved since the site data was loaded.');
+    });
+  });
+
   describe('fetchFileCommits', () => {
     test('fetches and returns commits for a single path', async () => {
       vi.mocked(fetchGraphQL).mockResolvedValue({
@@ -1423,10 +1435,77 @@ describe('GitHub commits service', () => {
         message: '',
         authorName: 'Bob',
         authorEmail: 'bob@example.com',
-        authorAvatarURL: 'https://example.com/bob.png',
+        // Not a GitHub user, so GitHub’s default avatar is left out
+        authorAvatarURL: undefined,
         authorLogin: undefined,
         date: new Date('2024-05-01T10:00:00Z'),
       });
+    });
+
+    test('credits the person an app committed for, with their avatar rather than the app’s', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({
+        repository: {
+          history_0: {
+            target: {
+              history: {
+                nodes: [
+                  {
+                    oid: 'abc123',
+                    messageHeadline: 'Update Post “hello”',
+                    messageBody: 'Co-authored-by: Ada Lovelace <ada@example.com>',
+                    author: {
+                      name: 'my-app[bot]',
+                      email: 'bot@example.com',
+                      avatarUrl: 'https://example.com/bot.png',
+                      user: null,
+                    },
+                    authors: {
+                      nodes: [
+                        { email: 'bot@example.com', avatarUrl: 'https://example.com/bot.png' },
+                        {
+                          email: 'Ada@Example.com',
+                          avatarUrl: 'https://example.com/ada.png',
+                          user: { login: 'ada' },
+                        },
+                      ],
+                    },
+                    committedDate: '2024-06-01T12:00:00Z',
+                  },
+                  {
+                    oid: 'def456',
+                    messageHeadline: 'Update Post “hello”',
+                    // GitHub didn’t list the co-author
+                    messageBody: 'Co-authored-by: Bea <bea@example.com>',
+                    author: { name: 'my-app[bot]', email: 'bot@example.com', user: null },
+                    committedDate: '2024-05-01T12:00:00Z',
+                  },
+                ],
+              },
+            },
+          },
+        },
+      });
+
+      expect(await fetchFileCommits(['content/en/post.md'])).toEqual([
+        {
+          sha: 'abc123',
+          message: 'Update Post “hello”',
+          authorName: 'Ada Lovelace',
+          authorEmail: 'ada@example.com',
+          authorAvatarURL: 'https://example.com/ada.png',
+          authorLogin: 'ada',
+          date: new Date('2024-06-01T12:00:00Z'),
+        },
+        {
+          sha: 'def456',
+          message: 'Update Post “hello”',
+          authorName: 'Bea',
+          authorEmail: 'bea@example.com',
+          authorAvatarURL: undefined,
+          authorLogin: undefined,
+          date: new Date('2024-05-01T12:00:00Z'),
+        },
+      ]);
     });
 
     test('deduplicates commits across multiple paths', async () => {
@@ -1617,6 +1696,59 @@ describe('GitHub commits service', () => {
       expect(result).toHaveLength(60);
     });
   });
+  describe('pull request from a fork', () => {
+    beforeEach(() => {
+      vi.mocked(getBranchRepository).mockReturnValue({
+        owner: 'contributor',
+        repo: 'website',
+        branch: 'cms/posts/hello',
+      });
+    });
+
+    test('commits to the contributor’s branch in their fork', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({
+        createCommitOnBranch: { commit: { oid: 'sha', committedDate: '2026-01-01T00:00:00Z' } },
+      });
+
+      await commitChanges([{ action: 'update', path: 'content/posts/hello.md', data: 'x' }], {
+        commitType: 'update',
+        branch: 'contributor/website:cms/posts/hello',
+        headOid: 'abc',
+      });
+
+      expect(getBranchRepository).toHaveBeenCalledWith('contributor/website:cms/posts/hello');
+      expect(fetchGraphQL).toHaveBeenCalledWith(
+        expect.stringContaining('createCommitOnBranch'),
+        expect.objectContaining({
+          input: expect.objectContaining({
+            branch: {
+              repositoryNameWithOwner: 'contributor/website',
+              branchName: 'cms/posts/hello',
+            },
+            expectedHeadOid: 'abc',
+          }),
+        }),
+        { retryable: true },
+      );
+    });
+
+    test('looks up the last commit on the contributor’s branch in their fork', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({
+        repository: {
+          ref: { target: { history: { nodes: [{ oid: 'abc', message: 'm' }] } } },
+        },
+      });
+
+      await fetchLastCommit('contributor/website:cms/posts/hello');
+
+      expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('query'), {
+        owner: 'contributor',
+        repo: 'website',
+        branch: 'cms/posts/hello',
+      });
+    });
+  });
+
   describe('Open Authoring', () => {
     beforeEach(() => {
       forkedRepository.current = { owner: 'contributor', repo: 'test-repo' };

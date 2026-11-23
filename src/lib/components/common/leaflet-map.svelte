@@ -25,13 +25,11 @@
 
   /** @type {Props & Record<string, any>} */
   let {
-    /* eslint-disable prefer-const */
     coordinates,
     class: className = '',
     mapElement = $bindable(),
     onReady = undefined,
     ...rest
-    /* eslint-enable prefer-const */
   } = $props();
 
   /** @type {ResizeObserver | undefined} */

@@ -11,6 +11,20 @@ describe('StatusPill', () => {
     expect(pill).toHaveTextContent('In Review');
     expect(pill).toHaveClass('warning');
     expect(pill).toHaveAttribute('role', 'none');
+    expect(pill).not.toHaveAttribute('title');
+  });
+
+  test('shows the given title as a tooltip', async () => {
+    const { container } = await render(StatusPill, {
+      tone: 'error',
+      label: 'Build Failed',
+      title: 'Ask your site administrator.',
+    });
+
+    expect(container.querySelector('.status-pill')).toHaveAttribute(
+      'title',
+      'Ask your site administrator.',
+    );
   });
 
   test('adds the given class names', async () => {

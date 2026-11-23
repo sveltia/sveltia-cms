@@ -68,6 +68,20 @@ const getFocusedName = () =>
   document.querySelector('[role="option"].focused')?.getAttribute('data-label');
 
 describe('SubfolderStrip', () => {
+  test('follows a change to the listed subfolders, keeping each one by its path', async () => {
+    // Without a selection given, nothing is selected
+    const { props } = await renderStrip({ selectedPaths: undefined });
+
+    await expect.element(page.getByRole('option', { name: '2024' })).toBeVisible();
+
+    props.subfolders = [{ name: '2026', path: 'static/uploads/2026' }, ...subfolders.slice(1)];
+
+    await expect.element(page.getByRole('option', { name: '2026' })).toBeVisible();
+    await expect.element(page.getByRole('option', { name: '2025' })).toBeVisible();
+    await expect.element(page.getByRole('option', { name: '2024' })).not.toBeInTheDocument();
+    expect(page.getByRole('option').elements()).toHaveLength(2);
+  });
+
   test('opens a subfolder with a click, or moves to it with the arrow keys', async () => {
     const onOpen = vi.fn();
     const { container } = await renderStrip({ onOpen });

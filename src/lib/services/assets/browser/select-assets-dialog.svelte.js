@@ -1,5 +1,6 @@
 import { getFolderPublicPath } from '$lib/services/assets/info';
 import { canBrowseSubfolders, getRelativePath } from '$lib/services/assets/subfolders';
+import { findPreferredLibraryName } from '$lib/services/integrations/media-libraries/options';
 import {
   allStockAssetProviders,
   getStockAssetMediaLibraryOptions,
@@ -69,9 +70,10 @@ export const getFirstDefaultLibraryName = ({
 };
 
 /**
- * Get the name of the location selected when the dialog opens: the first repository folder
- * offered, or else the first cloud storage service if there are files to be uploaded to it, or else
- * the first external service.
+ * Get the name of the location selected when the dialog opens: the first location marked with the
+ * `default` option that’s offered, or else the first repository folder offered, or else
+ * the first cloud storage service if there are files to be uploaded to it, or else the first
+ * external service.
  * @param {object} args Arguments.
  * @param {AssetLibraryFolderMap} args.assetLibraryFolderMap Asset library folder map.
  * @param {boolean} args.isDefaultLibraryEnabled Whether the default media library is enabled.
@@ -81,6 +83,9 @@ export const getFirstDefaultLibraryName = ({
  * @param {[string, MediaLibraryService][]} args.cloudServiceEntries Cloud storage services offered.
  * @param {[string, MediaLibraryService][]} args.externalServiceEntries Cloud storage services and
  * stock asset providers offered, sorted by name.
+ * @param {string[]} [args.preferredLibraryNames] Names of the media libraries marked with the
+ * `default` option, in order of precedence. The default library, `default`, stands for the first
+ * repository folder offered.
  * @returns {string} Library name. Empty if no location is offered, which is the case when a folder
  * is to be selected but the field has no folder that can be browsed.
  */
@@ -91,12 +96,26 @@ export const getInitialLibraryName = ({
   hasPendingFiles,
   cloudServiceEntries,
   externalServiceEntries,
+  preferredLibraryNames = [],
 }) => {
   const firstDefaultLibraryName = getFirstDefaultLibraryName({
     assetLibraryFolderMap,
     isDefaultLibraryEnabled,
     selectFolder,
   });
+
+  // A cloud storage service isn’t offered when a folder is to be selected, or when it’s disabled
+  // for the field. Files waiting to be uploaded need a service that can take them.
+  const preferredName = findPreferredLibraryName({
+    preferredLibraryNames,
+    repositoryAvailable: !!firstDefaultLibraryName,
+    cloudServiceEntries,
+    uploadRequired: hasPendingFiles,
+  });
+
+  if (preferredName && preferredName !== 'default') {
+    return preferredName;
+  }
 
   if (firstDefaultLibraryName) {
     return firstDefaultLibraryName;
@@ -171,12 +190,8 @@ export const getPickedFolderPublicPaths = ({
     ? selectedSubfolderPaths.map((path) => getRelativePath(path, /** @type {string} */ (basePath)))
     : [subfolderPath];
 
-  // Cast outside the object literal: esrap, which Svelte prints compiled code with, turns a cast
-  // property value named like its key, e.g. `{ a: /** @type {T} */ (a) }`, into invalid shorthand
-  const _folder = /** @type {AssetFolderInfo} */ (folder);
-
   return subfolderPaths.map((path) =>
-    getFolderPublicPath({ folder: _folder, subfolderPath: path }),
+    getFolderPublicPath({ folder: /** @type {AssetFolderInfo} */ (folder), subfolderPath: path }),
   );
 };
 

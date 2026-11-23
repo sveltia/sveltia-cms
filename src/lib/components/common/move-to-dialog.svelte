@@ -18,14 +18,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    open = $bindable(false),
-    index,
-    itemCount,
-    onMove,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { open = $bindable(false), index, itemCount, onMove } = $props();
 
   /** @type {number | undefined} */
   let position = $state();

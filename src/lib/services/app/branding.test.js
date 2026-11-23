@@ -29,7 +29,7 @@ vi.mock('$lib/services/config', async () => {
 });
 
 // Mock the mime library
-vi.mock('mime', () => ({
+vi.mock('$lib/services/utils/mime', () => ({
   default: {
     getType: vi.fn((url) => {
       if (url.endsWith('.png')) return 'image/png';

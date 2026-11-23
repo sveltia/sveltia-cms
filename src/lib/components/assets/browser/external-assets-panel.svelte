@@ -5,14 +5,13 @@
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Alert, EmptyState, InfiniteScroll, Infobar, Toast } from '@sveltia/ui';
+  import { EmptyState, Infobar } from '@sveltia/ui';
   import { onMount } from 'svelte';
 
   import AssetPath from '$lib/components/assets/browser/asset-path.svelte';
   import PickerBreadcrumb from '$lib/components/assets/browser/picker-breadcrumb.svelte';
   import SimpleImageGridItem from '$lib/components/assets/browser/simple-image-grid-item.svelte';
   import SimpleImageGrid from '$lib/components/assets/browser/simple-image-grid.svelte';
-  import SubfolderStrip from '$lib/components/assets/browser/subfolder-strip.svelte';
   import SubfolderNameDialog from '$lib/components/assets/list/subfolder-name-dialog.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import CloudServiceAuth from '$lib/components/assets/shared/cloud-service-auth.svelte';
@@ -22,6 +21,7 @@
     getSelectionWithResource,
     trackInsertedExternalAssets,
   } from '$lib/services/assets/browser/select-assets-dialog.svelte';
+  import { runAssetCommit } from '$lib/services/assets/data/commit';
   import { getFetchOptions, mergeUploadedExternalAssets } from '$lib/services/assets/external';
   import {
     fetchExternalAssetBlob,
@@ -41,6 +41,7 @@
 
   /**
    * @import {
+   * EntryDraft,
    * ExternalAsset,
    * MediaLibraryAssetKind,
    * MediaLibraryFetchOptions,
@@ -53,6 +54,8 @@
   /**
    * @typedef {object} Props
    * @property {MediaField} [fieldConfig] File/Image field configuration.
+   * @property {EntryDraft | null} [draft] Draft of the entry the files are selected for, whose
+   * values fill the `filename_template` option of an uploaded file.
    * @property {MediaLibraryAssetKind} [kind] Asset kind.
    * @property {boolean} [multiple] Whether to allow selecting multiple assets.
    * @property {string} [searchTerms] Search terms for filtering assets.
@@ -63,15 +66,14 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     kind,
     fieldConfig = undefined,
+    draft = undefined,
     multiple = false,
     searchTerms = '',
     serviceProps,
     gridId = undefined,
     selectedResources = $bindable([]),
-    /* eslint-enable prefer-const */
   } = $props();
 
   const {
@@ -127,12 +129,8 @@
    */
   let truncated = $state(false);
   let newFolderDialogOpen = $state(false);
-  let folderCreationFailed = $state(false);
   /** @type {string | undefined} */
   let error = $state();
-  /** Whether files are being uploaded, which shows a progress toast until the upload settles. */
-  let uploading = $state(false);
-  let uploadFailed = $state(false);
   /** @type {RejectedFilesAlertDialog | undefined} */
   let rejectedFilesAlert = $state();
 
@@ -253,15 +251,23 @@
   };
 
   /**
+   * Whether files can be uploaded, which takes a service that supports it and the credentials,
+   * which the user may not have provided yet.
+   * @returns {boolean} Result.
+   */
+  export const canUpload = () => hasAuthInfo && !!upload;
+
+  /**
    * Handle `Drop` event to upload files.
    * @param {File[]} files Dropped files.
    */
   export const uploadFiles = async (files) => {
-    if (!upload) {
+    // A request without the credentials would only fail
+    if (!canUpload()) {
       return;
     }
 
-    const prepared = await prepareExternalUploads(files, allMediaLibraryOptions);
+    const prepared = await prepareExternalUploads(files, allMediaLibraryOptions, { draft });
 
     files = prepared.validFiles;
     rejectedFilesAlert?.report(prepared);
@@ -270,26 +276,27 @@
       return;
     }
 
-    uploading = true;
-    uploadFailed = false;
+    const { ok } = await runAssetCommit(
+      async () => {
+        // The files go to the folder being browsed, or the one the search started from
+        const uploaded = await /** @type {NonNullable<typeof upload>} */ (upload)(files, {
+          ...listFetchOptions,
+          dirPath,
+        });
 
-    try {
-      // The files go to the folder being browsed, or the one the search started from
-      const uploaded = await upload(files, { ...listFetchOptions, dirPath });
-      const resources = await Promise.all(uploaded.map((asset) => getResource(asset)));
+        const resources = await Promise.all(uploaded.map((asset) => getResource(asset)));
 
-      // The uploaded files, listed first and selected, confirm the upload
-      selectedResources = resources.filter((r) => !!r).slice(0, multiple ? undefined : 1);
-      listedAssets = mergeUploadedExternalAssets(uploaded, listedAssets ?? []);
-    } catch (ex) {
-      uploadFailed = true;
-      // eslint-disable-next-line no-console
-      console.error(ex);
+        // The uploaded files, listed first and selected, confirm the upload
+        selectedResources = resources.filter((r) => !!r).slice(0, multiple ? undefined : 1);
+        listedAssets = mergeUploadedExternalAssets(uploaded, listedAssets ?? []);
+      },
+      { progress: 'uploading_files_progress', failure: 'uploading_files_failed' },
+    );
+
+    if (!ok) {
       // The files are uploaded one by one, so those uploaded before the failure are on the service
       // already. Reload the list to show them rather than leave them out until the next reload
       getAssets(searchQuery);
-    } finally {
-      uploading = false;
     }
   };
 
@@ -311,17 +318,19 @@
    * Create a folder in the folder being browsed, which is then listed along with the others.
    * @param {string} name Folder name.
    */
-  const createNewFolder = async (name) => {
+  const createNewFolder = (name) => {
     const path = dirPath ? `${dirPath}/${name}` : name;
 
-    try {
-      await /** @type {NonNullable<typeof createFolder>} */ (createFolder)(path, listFetchOptions);
-      folders = [...folders, path];
-    } catch (ex) {
-      folderCreationFailed = true;
-      // eslint-disable-next-line no-console
-      console.error(ex);
-    }
+    runAssetCommit(
+      async () => {
+        await /** @type {NonNullable<typeof createFolder>} */ (createFolder)(
+          path,
+          listFetchOptions,
+        );
+        folders = [...folders, path];
+      },
+      { failure: 'creating_folder_failed' },
+    );
   };
 
   /**
@@ -483,47 +492,47 @@
       </Infobar>
     {/if}
     <div role="none" class="grid-wrapper">
-      {#if subfolders.length}
-        <SubfolderStrip
-          {subfolders}
-          {viewType}
-          onOpen={({ path }) => {
-            dirPath = path;
-          }}
-        />
-      {/if}
-      <SimpleImageGrid {viewType} {gridId} {multiple}>
-        <InfiniteScroll items={panelAssets} itemKey="id">
-          {#snippet renderItem(/** @type {ExternalAsset} */ asset)}
-            {@const { id, previewURL, description, kind: _kind } = asset}
-            <SimpleImageGridItem
-              value={id}
-              ariaLabel={description}
-              {viewType}
-              {multiple}
-              selected={isSelected(asset)}
-              onChange={({ detail: { selected } }) => {
-                onSelectionChange(asset, selected);
-              }}
-            >
-              <AssetPreview
-                kind={_kind}
-                src={previewURL}
-                alt={description}
-                variant="tile"
-                crossorigin="anonymous"
+      <SimpleImageGrid
+        {viewType}
+        {gridId}
+        {multiple}
+        {kind}
+        {subfolders}
+        onOpenSubfolder={({ path }) => {
+          dirPath = path;
+        }}
+        items={panelAssets}
+        itemKey="id"
+      >
+        {#snippet renderItem(/** @type {ExternalAsset} */ asset)}
+          {@const { id, previewURL, description, kind: _kind } = asset}
+          <SimpleImageGridItem
+            value={id}
+            ariaLabel={description}
+            {viewType}
+            {multiple}
+            selected={isSelected(asset)}
+            onChange={({ detail: { selected } }) => {
+              onSelectionChange(asset, selected);
+            }}
+          >
+            <AssetPreview
+              kind={_kind}
+              src={previewURL}
+              alt={description}
+              variant="tile"
+              crossorigin="anonymous"
+            />
+            {#if viewType === 'list' || (!env.isSmallScreen && !isStockAssets)}
+              <!-- The path is relative to the folder being browsed -->
+              <AssetPath
+                {...isStockAssets
+                  ? { caption: description }
+                  : { path: browsing ? getRelativePath(description, dirPath) : description }}
               />
-              {#if viewType === 'list' || (!env.isSmallScreen && !isStockAssets)}
-                <!-- The path is relative to the folder being browsed -->
-                <AssetPath
-                  {...isStockAssets
-                    ? { caption: description }
-                    : { path: browsing ? getRelativePath(description, dirPath) : description }}
-                />
-              {/if}
-            </SimpleImageGridItem>
-          {/snippet}
-        </InfiniteScroll>
+            {/if}
+          </SimpleImageGridItem>
+        {/snippet}
       </SimpleImageGrid>
     </div>
   {/if}
@@ -549,20 +558,7 @@
   </EmptyState>
 {/if}
 
-<!-- `duration={0}` keeps this up until the upload settles, however long it takes -->
-<Toast show={uploading} duration={0}>
-  <Alert status="info">{_('uploading_files_progress')}</Alert>
-</Toast>
-
-<Toast bind:show={uploadFailed}>
-  <Alert status="error">{_('uploading_files_failed')}</Alert>
-</Toast>
-
 <RejectedFilesAlertDialog bind:this={rejectedFilesAlert} {maxSize} />
-
-<Toast bind:show={folderCreationFailed}>
-  <Alert status="error">{_('creating_folder_failed')}</Alert>
-</Toast>
 
 {#if createFolder}
   <SubfolderNameDialog

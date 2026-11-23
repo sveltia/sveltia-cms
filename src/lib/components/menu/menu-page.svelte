@@ -6,8 +6,13 @@
   import PageContainer from '$lib/components/common/page-container.svelte';
   import AccountMenu from '$lib/components/global/toolbar/items/account-menu.svelte';
   import HelpMenu from '$lib/components/global/toolbar/items/help-menu.svelte';
+  import { getAdminSectionPath, getAdminSections } from '$lib/services/app/admin';
   import { customPages, openCustomPage } from '$lib/services/app/custom-pages';
+  import { goto } from '$lib/services/app/navigation';
   import { prefs } from '$lib/services/user/prefs.svelte';
+
+  // Listed here rather than in the bottom navigation, which has little room
+  const adminSections = $derived(getAdminSections());
 </script>
 
 <PageContainer aria-label={_('menu')}>
@@ -34,6 +39,25 @@
                   >
                     {#snippet startIcon()}
                       <Icon name={page.icon} />
+                    {/snippet}
+                  </MenuItem>
+                {/each}
+              </Menu>
+            </section>
+          {/if}
+          {#if adminSections.length}
+            <section>
+              <h3>{_('administration')}</h3>
+              <Menu ariaLabel={_('administration')}>
+                {#each adminSections as { key, labelKey, icon } (key)}
+                  <MenuItem
+                    label={_(labelKey)}
+                    onclick={() => {
+                      goto(getAdminSectionPath(key), { transitionType: 'forwards' });
+                    }}
+                  >
+                    {#snippet startIcon()}
+                      <Icon name={icon} />
                     {/snippet}
                   </MenuItem>
                 {/each}

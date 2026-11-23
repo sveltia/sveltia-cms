@@ -2,7 +2,7 @@ import { isObject } from '@sveltia/utils/object';
 
 import { isRelativePath } from '$lib/services/assets';
 import { MEDIA_FIELD_TYPES, RICH_TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
-import { getTypeSubFields, getValueSubFields } from '$lib/services/contents/fields/list/subfields';
+import { getTypeSubFields, mapSubValues } from '$lib/services/contents/fields/list/subfields';
 import { getTypedKeyPath } from '$lib/services/contents/fields/object/helpers';
 import { getValueFormat } from '$lib/services/contents/fields/rich-text';
 
@@ -15,7 +15,6 @@ import { getValueFormat } from '$lib/services/contents/fields/rich-text';
  * ListFieldWithSubFields,
  * ListFieldWithTypes,
  * MarkdownField,
- * ObjectField,
  * RichTextField,
  * RichTextValueFormat,
  * } from '$lib/types/public';
@@ -31,25 +30,6 @@ import { getValueFormat } from '$lib/services/contents/fields/rich-text';
  * set: (newValue: string) => void,
  * }) => void} AssetValueCallback
  */
-
-/**
- * Get the subfields of a List or Object field value, and the typed key path the subfields are
- * under, resolving the variable type against the type name stored in the value.
- * @param {ComplexListField | ObjectField} fieldConfig Field configuration.
- * @param {Record<string, any>} value Object value or list item.
- * @param {TypedFieldKeyPath} typedKeyPath Typed key path of the value, e.g. `blocks.*`.
- * @returns {{ fields: Field[], typedKeyPath: TypedFieldKeyPath }} Subfields and typed key path.
- */
-const resolveValueFields = (fieldConfig, value, typedKeyPath) => {
-  const { fields } = /** @type {ListFieldWithSubFields} */ (fieldConfig);
-  const { types, typeKey = 'type' } = /** @type {ListFieldWithTypes} */ (fieldConfig);
-  const type = types ? value[typeKey] : undefined;
-
-  return {
-    fields: getValueSubFields({ value, fields, types, typeKey }),
-    typedKeyPath: getTypedKeyPath(typedKeyPath, type),
-  };
-};
 
 /**
  * Find the values that can reference an asset in a field value: the value of a File or Image
@@ -97,43 +77,35 @@ const walkFieldValue = ({ container, key, fieldConfig, typedKeyPath, callback })
     return;
   }
 
-  if (fieldType === 'object' && isObject(value)) {
-    // eslint-disable-next-line no-use-before-define
-    walkObject({
-      obj: value,
-      ...resolveValueFields(/** @type {ObjectField} */ (fieldConfig), value, typedKeyPath),
-      callback,
-    });
+  const { types, typeKey = 'type' } = /** @type {ListFieldWithTypes} */ (fieldConfig);
 
-    return;
-  }
-
-  if (fieldType === 'list' && Array.isArray(value)) {
-    const { field } = /** @type {ListFieldWithSubField} */ (fieldConfig);
-
-    value.forEach((item, index) => {
-      if (field) {
-        walkFieldValue({
-          container: value,
-          key: index,
-          fieldConfig: field,
-          typedKeyPath: `${typedKeyPath}.*.${field.name}`,
-          callback,
-        });
-      } else if (isObject(item)) {
+  mapSubValues(
+    value,
+    fieldConfig,
+    (obj, fields, index) => {
+      if (isObject(obj)) {
         // eslint-disable-next-line no-use-before-define
         walkObject({
-          obj: item,
-          ...resolveValueFields(
-            /** @type {ComplexListField} */ (fieldConfig),
-            item,
-            `${typedKeyPath}.*`,
+          obj,
+          fields,
+          typedKeyPath: getTypedKeyPath(
+            index === undefined ? typedKeyPath : `${typedKeyPath}.*`,
+            types ? obj[typeKey] : undefined,
           ),
           callback,
         });
       }
-    });
-  }
+    },
+    (_item, field, index) => {
+      walkFieldValue({
+        container: value,
+        key: index,
+        fieldConfig: field,
+        typedKeyPath: `${typedKeyPath}.*.${field.name}`,
+        callback,
+      });
+    },
+  );
 };
 
 /**

@@ -157,7 +157,7 @@ describe('Template handler functions', () => {
             fields: [],
             _type: 'entry',
             nested: {},
-            meta: { path: { widget: 'string', index_file: '_index' } },
+            meta: { path: { index_file: '_index' } },
           }),
         });
 

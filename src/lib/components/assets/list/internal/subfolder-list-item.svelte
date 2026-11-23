@@ -6,6 +6,7 @@
 <script>
   import SubfolderListItem from '$lib/components/assets/list/subfolder-list-item.svelte';
   import { goto } from '$lib/services/app/navigation';
+  import { createAssetDropTarget } from '$lib/services/assets/drag';
   import { assetsLocked, selectedAssetFolder } from '$lib/services/assets/folders';
   import { isCmsFolderPath } from '$lib/services/assets/reserved';
   import { focusedAsset } from '$lib/services/assets/state';
@@ -29,13 +30,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    subfolder,
-    rowIndex,
-    viewType,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { subfolder, rowIndex, viewType } = $props();
 
   /**
    * Browse the subfolder. The selected asset folder travels as history state, the same way it does
@@ -71,6 +66,9 @@
   onDelete={() => {
     deletingSubfolder.current = subfolder;
   }}
+  dropTarget={selectedAssetFolder.current
+    ? createAssetDropTarget({ folder: selectedAssetFolder.current, dirPath: subfolder.path })
+    : undefined}
   actionsDisabled={assetsLocked.current ||
     !!selectedAssetFolder.current?.readonly ||
     isCmsFolderPath(subfolder.path)}

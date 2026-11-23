@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { splitIntoChunks, toggleListItem } from '$lib/services/utils/array';
+import { splitIntoChunks, splitIntoSizedChunks, toggleListItem } from '$lib/services/utils/array';
 
 describe('toggleListItem()', () => {
   const a = { id: 'a' };
@@ -48,5 +48,41 @@ describe('splitIntoChunks()', () => {
     expect(splitIntoChunks([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]]);
     expect(splitIntoChunks([1, 2], 2)).toEqual([[1, 2]]);
     expect(splitIntoChunks([], 2)).toEqual([]);
+  });
+});
+
+describe('splitIntoSizedChunks()', () => {
+  /**
+   * Get the size of a number item.
+   * @param {number} n Item.
+   * @returns {number} Size.
+   */
+  const getSize = (n) => n;
+
+  test('closes a chunk at the item limit', () => {
+    expect(splitIntoSizedChunks([1, 1, 1, 1, 1], { maxItems: 2, maxSize: 100, getSize })).toEqual([
+      [1, 1],
+      [1, 1],
+      [1],
+    ]);
+  });
+
+  test('closes a chunk before the item that would exceed the size limit', () => {
+    expect(splitIntoSizedChunks([3, 4, 2, 5], { maxItems: 10, maxSize: 7, getSize })).toEqual([
+      [3, 4],
+      [2, 5],
+    ]);
+  });
+
+  test('gives an item exceeding the size limit a chunk of its own', () => {
+    expect(splitIntoSizedChunks([1, 20, 1], { maxItems: 10, maxSize: 5, getSize })).toEqual([
+      [1],
+      [20],
+      [1],
+    ]);
+  });
+
+  test('returns no chunks for an empty list', () => {
+    expect(splitIntoSizedChunks([], { maxItems: 10, maxSize: 5, getSize })).toEqual([]);
   });
 });

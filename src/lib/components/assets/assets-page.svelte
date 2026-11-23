@@ -10,6 +10,7 @@
   import EditAssetDialog from '$lib/components/assets/list/internal/edit-asset-dialog.svelte';
   import FolderInfoPanel from '$lib/components/assets/list/internal/folder-info-panel.svelte';
   import InfoPanel from '$lib/components/assets/list/internal/info-panel.svelte';
+  import MoveAssetsDialog from '$lib/components/assets/list/internal/move-dialog.svelte';
   import NewFolderDialog from '$lib/components/assets/list/internal/new-folder-dialog.svelte';
   import PrimaryToolbar from '$lib/components/assets/list/internal/primary-toolbar.svelte';
   import RenameAssetDialog from '$lib/components/assets/list/internal/rename-dialog.svelte';
@@ -32,7 +33,12 @@
     resolveAssetsRoute,
   } from '$lib/services/assets/navigation';
   import { focusedAsset, selectedAssets } from '$lib/services/assets/state';
-  import { assetGroups, listedAssets, showAssetOverlay } from '$lib/services/assets/view';
+  import {
+    assetGroups,
+    folderSummary,
+    listedAssets,
+    showAssetOverlay,
+  } from '$lib/services/assets/view';
   import { sortKeys } from '$lib/services/assets/view/sort-keys';
   import { env } from '$lib/services/user/env.svelte';
 
@@ -89,6 +95,10 @@
   }}
 />
 
+{#snippet folderInfo()}
+  <FolderInfoPanel />
+{/snippet}
+
 <PageContainer uiSettingsKey="assets-page" aria-label={_('asset_library')}>
   {#snippet primarySidebar()}
     {#if !env.isSmallScreen || isIndexPage}
@@ -128,12 +138,14 @@
           <AssetList />
         {/snippet}
         {#snippet secondarySidebar()}
-          <SecondarySidebar asset={focusedAsset.current}>
+          <!-- There is no folder to show the info of while the route leaves none selected, e.g. for
+          an asset outside any configured folder, opened from search results or a link -->
+          <SecondarySidebar
+            asset={focusedAsset.current}
+            fallback={folderSummary.current ? folderInfo : undefined}
+          >
             {#snippet children(/** @type {Asset} */ asset)}
               <InfoPanel {asset} showPreview={true} />
-            {/snippet}
-            {#snippet fallback()}
-              <FolderInfoPanel />
             {/snippet}
           </SecondarySidebar>
         {/snippet}
@@ -152,6 +164,7 @@
 
 <EditAssetDialog />
 <RenameAssetDialog />
+<MoveAssetsDialog />
 <NewFolderDialog />
 <RenameFolderDialog />
 <DeleteFolderDialog />

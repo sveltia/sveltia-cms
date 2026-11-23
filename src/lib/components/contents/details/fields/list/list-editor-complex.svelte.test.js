@@ -923,7 +923,7 @@ describe('ListEditorComplex (more)', () => {
     inner.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer }));
     inner.dispatchEvent(new DragEvent('dragend', { bubbles: true }));
     expect(dataTransfer.getData('text/plain')).toBe('');
-    expect(item).not.toHaveClass('dragging');
+    expect(item).not.toHaveClass('drag-placeholder');
   });
 
   test('offers the types to add around an item, and warns about a missing type key', async () => {

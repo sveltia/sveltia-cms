@@ -11,6 +11,7 @@
   import { opensOnClick } from '$lib/services/user/env.svelte';
 
   /**
+   * @import { Attachment } from 'svelte/attachments';
    * @import { AssetSubfolder, ViewType } from '$lib/types/private';
    */
 
@@ -27,11 +28,12 @@
    * only when this or `onDelete` is given.
    * @property {() => void} [onDelete] Called from the menu to delete the folder.
    * @property {boolean} [actionsDisabled] Whether the rename and delete actions are disabled.
+   * @property {Attachment<HTMLElement>} [dropTarget] Attachment that lets assets be dropped on the
+   * folder to be moved there.
    */
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     subfolder,
     rowIndex,
     viewType,
@@ -41,7 +43,7 @@
     onRename = undefined,
     onDelete = undefined,
     actionsDisabled = false,
-    /* eslint-enable prefer-const */
+    dropTarget = undefined,
   } = $props();
 
   /**
@@ -54,6 +56,7 @@
 </script>
 
 <GridRow
+  {@attach dropTarget}
   class="subfolder"
   aria-rowindex={rowIndex + 1}
   aria-label={subfolder.name}
@@ -155,6 +158,16 @@
   }
 
   :global {
+    /* Highlight a folder the dragged assets can be dropped on, like a folder in the sidebar */
+    .grid-row.subfolder.dragover {
+      color: var(--sui-primary-accent-color-inverted) !important;
+      background-color: var(--sui-primary-accent-color) !important;
+
+      .preview {
+        color: inherit;
+      }
+    }
+
     /* A folder is a compact tile in the grid view, with the icon, the name and the menu in a row,
     unlike an asset, which needs the room for its thumbnail. The selectors are specific enough to
     win over the tile styles of the listing grid */

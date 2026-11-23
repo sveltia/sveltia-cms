@@ -11,20 +11,17 @@
    * @typedef {object} Props
    * @property {boolean} [disabled] Whether creating a folder is disabled.
    * @property {() => void} onclick Click handler.
+   * @property {boolean} [floating] Whether the button becomes a floating button on a small screen,
+   * like the one on the Asset Library page.
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    disabled = false,
-    onclick,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { disabled = false, onclick, floating = true } = $props();
 </script>
 
 <!-- The ghost button becomes a floating button on a small screen, where it needs a surface -->
 <Button
-  variant={env.isSmallScreen ? 'secondary' : 'ghost'}
+  variant={floating && env.isSmallScreen ? 'secondary' : 'ghost'}
   iconic
   {disabled}
   aria-label={_('new_folder')}

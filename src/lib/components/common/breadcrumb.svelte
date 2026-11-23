@@ -21,12 +21,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    items,
-    class: className = '',
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { items, class: className = '' } = $props();
 
   /**
    * Width between the items.

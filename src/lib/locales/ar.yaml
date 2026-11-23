@@ -11,6 +11,8 @@
 create: إنشاء
 select: تحديد
 select_all: تحديد الكل
+# Accessible name of the checkbox that selects a single entry or asset in a list
+select_item: تحديد {$name}
 upload: رفع
 copy: نسخ
 download: تنزيل
@@ -69,6 +71,10 @@ primary: رئيسي
 secondary: ثانوي
 collection: المجموعة
 folder: المجلد
+# Label of the subfolder list in the asset picker
+folders: المجلدات
+# Menu in a breadcrumb holding the folders that don’t fit
+more_folders: مجلدات أخرى
 
 # ==============================================================================
 # Miscellaneous Labels
@@ -113,6 +119,7 @@ welcome_message: مرحباً بك في {$name}
 powered_by: مدعوم بواسطة {$name}
 
 # Shown during initial configuration and data loading
+unsupported_browser_error: متصفحك غير مدعوم. يرجى تحديثه إلى أحدث إصدار أو استخدام متصفح آخر.
 loading_cms_config: تحميل إعدادات نظام إدارة المحتوى…
 loading_site_data: جاري تحميل بيانات الموقع…
 loading_site_data_error: حدث خطأ أثناء تحميل بيانات الموقع.
@@ -125,6 +132,8 @@ sign_in_with_x: تسجيل الدخول باستخدام {$service}
 # Access token dialog: alternative authentication method
 sign_in_using_access_token: تسجيل الدخول باستخدام رمز الوصول (Access Token)
 sign_in_using_access_token_description: أدخل رمزك أدناه. يجب أن يمتلك صلاحية القراءة/الكتابة لمحتوى المستودع (Repository).
+# Shown after the description above when Editorial Workflow is enabled, which opens and merges pull requests
+sign_in_using_access_token_workflow_note: نظراً لتفعيل سير العمل التحريري، يجب أن يمتلك أيضاً صلاحية القراءة/الكتابة لطلبات السحب (Pull Requests).
 # Inline link text with embedded HTML anchor tag
 # {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
 sign_in_using_access_token_link: يمكنك إنشاء رمز من <a>صفحة إعدادات المستخدم في {$service}</a>.
@@ -143,6 +152,11 @@ work_with_local_repo_description: عند مطالبتك، حدد المجلد ا
 work_with_local_repo_description_no_repo: عند مطالبتك، حدد المجلد الرئيسي لمستودع Git الخاص بك.
 # Button label for demo/test repository
 work_with_test_repo: العمل مع مستودع تجريبي
+# Button label for the test repository when sample content is seeded, e.g. on a demo site
+start_demo: بدء العرض التجريبي
+# Shown below the disabled test repository option in a browser that can’t save files to its
+# storage, e.g. Safari before version 26
+test_repo_unsupported_browser: لا يمكن لمتصفحك حفظ ملفات المستودع التجريبي. يرجى تحديثه إلى أحدث إصدار أو استخدام متصفح آخر.
 
 # Authentication errors
 # Error messages shown during sign-in failures
@@ -167,14 +181,28 @@ sign_in_error:
 backend_unsupported_version: يتطلب خادم {$name} الإصدار {$version} من {$name} أو أحدث.
 # {$repo} is the repository identifier, typically in owner/repo format
 repository_no_access: ليس لديك صلاحية الوصول إلى مستودع "{$repo}".
+# {$repo} is the repository identifier, typically in owner/repo format
+repository_no_write_access: ليس لديك صلاحية الكتابة في مستودع “{$repo}”.
 repository_not_found: المستودع "{$repo}" غير موجود.
 repository_empty: المستودع "{$repo}" لا يحتوي على أي فروع.
 # {$repo} is the repository identifier, and {$branch} is the configured branch name
 branch_not_found: المستودع "{$repo}" لا يحتوي على الفرع "{$branch}".
+# {$repo} is the repository identifier, and {$dir} is the configured root directory
+root_dir_not_found: المجلد الجذر “{$dir}” غير موجود في مستودع “{$repo}”.
 
 # General errors
 # Fallback error dialog title for unexpected errors
 unexpected_error: خطأ غير متوقع
+# Shown in place of the page when an unexpected error stops it from being displayed
+# {$message} is the error message
+page_crashed: حدث خطأ ما، ولا يمكن عرض هذه الصفحة. {$message}
+# Shown in place of a field editor or preview when an unexpected error stops it from being displayed
+# {$message} is the error message
+field_crashed: حدث خطأ ما، ولا يمكن عرض هذا الحقل. {$message}
+# Button label for displaying a part of the page again after an unexpected error
+try_again: المحاولة مرة أخرى
+# Button label for reloading the CMS after an unexpected error
+reload_cms: إعادة تحميل نظام إدارة المحتوى
 
 # Entry file parsing errors
 # Toast notification when entry files fail to parse on initial load
@@ -207,6 +235,336 @@ sign_in: تسجيل الدخول
 sign_in_with_mobile: تسجيل الدخول باستخدام الجوال
 # Instructions shown in the mobile sign-in dialog for passwordless authentication
 sign_in_with_mobile_instruction: امسح رمز QR أدناه باستخدام هاتفك أو جهازك اللوحي لتسجيل الدخول بدون كلمة مرور. سيتم نسخ إعداداتك تلقائياً.
+# Confirmation dialog shown when the CMS is opened with a sign-in link from the mobile sign-in
+# QR code. {$account} is the account name, {$service} is the Git service name, e.g. GitHub
+sign_in_with_link: تسجيل الدخول باستخدام رابط
+sign_in_with_link_confirmation: يسجّل هذا الرابط دخولك باسم {$account} على {$service} وينسخ الإعدادات من الجهاز الذي أُنشئ عليه. لا تتابع إلا إذا كنت قد أنشأت الرابط بنفسك.
+
+# Sign-in with Sveltia CMS Additions, which manages its own user accounts instead of the Git
+# service’s. Don’t localize “Sveltia CMS Additions”
+additions:
+  username: اسم المستخدم
+  password: كلمة المرور
+  sign_in: تسجيل الدخول
+  new_password_title: اختيار كلمة مرور جديدة
+  new_password_description: لقد سجّلت الدخول باستخدام كلمة مرور مؤقتة. اختر كلمة مرور جديدة للمتابعة.
+  new_password: كلمة المرور الجديدة
+  password_too_short: كلمة المرور قصيرة جداً. استخدم 12 حرفاً على الأقل.
+  change_password: تغيير كلمة المرور
+  # {$name} is the user’s username, {$role} their role, e.g. Editor
+  signed_in_as_x_with_role: تم تسجيل الدخول باسم {$name} ({$role})
+  link_github: ربط حساب GitHub
+  link_github_error: تعذر ربط حساب GitHub
+  current_password: كلمة المرور الحالية
+  # {$username} is the username filled in from a magic link emailed to the user
+  filled_from_link: تم ملء اسم المستخدم وكلمة المرور من رابط. لا تسجّل الدخول إلا إذا كان “{$username}” هو اسم المستخدم الخاص بك.
+  change_password_description: ستبقى مسجّلاً الدخول هنا، وسيتم تسجيل خروجك من أجهزتك الأخرى.
+  password_changed: تم تغيير كلمة المرور الخاصة بك.
+  # The Account settings panel of a Sveltia CMS Additions user
+  account:
+    profile: الملف الشخصي
+    profile_description: يظهر اسمك للمستخدمين الآخرين في نظام إدارة المحتوى، مثل أقفال العناصر والتعليقات، وفي عمليات الإيداع (Commits) الخاصة بك.
+    username_description: لا يمكن تغيير اسم المستخدم الخاص بك.
+    email: البريد الإلكتروني
+    email_description: يُستخدم في عمليات الإيداع التي تجريها، ليتمكن GitHub من ربطها بحسابك. إذا لم يكن موجوداً، يُستخدم عنوان بديل. يمكن للمسؤول فقط تغييره.
+    change_name: تغيير الاسم
+    name_changed: تم تغيير اسمك.
+    password: كلمة المرور
+    no_password: يسجّل حسابك الدخول باستخدام GitHub فقط، لذلك لا توجد كلمة مرور لتغييرها. يمكن للمسؤول منحك كلمة مرور عن طريق إعادة تعيين كلمة مرورك.
+  setup:
+    use_admin_secret: استخدام سر المسؤول
+    title: إعداد Sveltia CMS Additions
+    secret_description: أدخل سر المسؤول المحدد في إعدادات خدمة Sveltia CMS Additions الخاصة بك. يُحتفظ به في علامة التبويب هذه فقط أثناء الإعداد.
+    admin_secret: سر المسؤول
+    continue: متابعة
+    back: العودة إلى تسجيل الدخول
+    admin_title: حساب المسؤول
+    admin_create_description: أنشئ حساب المسؤول الأول. ستسجّل الدخول به وتدير المستخدمين الآخرين.
+    admin_reset_description: يوجد حساب مسؤول بالفعل. لاستعادة الوصول، أعد تعيين كلمة مرور أحد المسؤولين هنا، أو أنشئ حساباً آخر.
+    admin_saved: حساب المسؤول جاهز. سجّل الدخول باستخدام كلمة المرور التي أدخلتها للتو.
+    create_admin: إنشاء مسؤول
+    reset_password: حفظ المسؤول
+    github_title: GitHub
+    # {$repo} is the repository, e.g. octocat/site
+    github_description: أنشئ تطبيق GitHub (GitHub App) لهذا الموقع وثبّته على مستودع “{$repo}”. سيطلب منك GitHub التأكيد، ثم يعيدك إلى هنا.
+    # {$repo} is the repository, {$app} is the name of the GitHub App
+    github_connected: متصل بمستودع “{$repo}” عبر تطبيق GitHub “{$app}”.
+    connect_github: الاتصال بـ GitHub
+    # {$step} is the number of the current step, {$total} the number of steps
+    step_x_of_y: الخطوة {$step} من {$total}
+    admin_exists: يوجد حساب مسؤول.
+    reset_admin_password: إعادة تعيين كلمة مرور المسؤول
+    setup_complete: اكتمل الإعداد. سجّل الدخول بحساب مسؤول لإدارة المستخدمين والإعدادات. يمكنك العودة إلى هنا باستخدام سر المسؤول في أي وقت.
+    manage_sites: إدارة المواقع الأخرى
+    back_to_setup: رجوع
+    sites_title: المواقع الأخرى
+    sites_description: يمكن لهذه الخدمة أيضاً خدمة مواقع أخرى، لكل منها مستخدموه وإعداداته وتطبيق GitHub الخاص به. اضبط “base_url” في إعدادات نظام إدارة المحتوى للموقع على رابطه، ثم أعدّ الموقع هناك باستخدام سر المسؤول.
+    no_sites: لا توجد مواقع أخرى بعد.
+    site_id: معرّف الموقع
+    site_id_description: من 1 إلى 32 حرفاً لاتينياً صغيراً أو رقماً أو شرطة، مثل “acme”. يظهر في رابط الموقع ولا يمكن تغييره.
+    site_name_optional: الاسم (اختياري)
+    add_site: إضافة موقع
+    # {$name} is the name of the site
+    site_added: تمت إضافة “{$name}”. اضبط “base_url” في إعدادات نظام إدارة المحتوى الخاصة به على رابطه، ثم افتح معالج الإعداد هناك.
+    # {$name} is the name of the site
+    copy_site_url: نسخ رابط {$name}
+    delete_site: حذف الموقع
+    # {$name} is the name of the site
+    delete_site_x: حذف {$name}
+    # {$name} is the name of the site, {$id} is its ID
+    delete_site_confirmation: يؤدي حذف “{$name}” أيضاً إلى حذف مستخدميه وإعداداته وتعليقاته. لا يمكن التراجع عن ذلك. يبقى تطبيق GitHub على GitHub، حيث يمكنك حذفه. اكتب “{$id}” للتأكيد.
+    site_id_to_confirm: معرّف الموقع للتأكيد
+    data_key_locked_title: تم تغيير سر المسؤول
+    data_key_locked_description: تم تغيير سر المسؤول، لذلك لا يمكن قراءة الإعدادات المخزنة. أدخل السر السابق للاحتفاظ بها، أو ابدأ من جديد إذا فُقد.
+    previous_secret: سر المسؤول السابق
+    unlock: إلغاء القفل
+    rekey: البدء من جديد
+    rekey_confirmation: يؤدي البدء من جديد إلى حذف بيانات اعتماد تطبيق GitHub والأسرار المخزنة الأخرى، وتسجيل خروج الجميع. سيتم الاحتفاظ بكلمات المرور. هل تريد المتابعة؟
+    result:
+      ok: تم الاتصال بـ GitHub. يمكنك الآن تسجيل الدخول.
+      github_app_not_created: لم يتم إنشاء تطبيق GitHub. استخدم سر المسؤول للمحاولة مرة أخرى.
+      github_app_not_installed: لم يتم تثبيت تطبيق GitHub. استخدم سر المسؤول للمحاولة مرة أخرى.
+      github_wrong_account: تم تثبيت تطبيق GitHub على حساب لا يملك المستودع. ثبّته على الحساب الذي يملك المستودع وحاول مرة أخرى.
+      github_repository_not_included: تم تثبيت تطبيق GitHub دون صلاحية الوصول إلى المستودع. امنحه صلاحية الوصول إلى المستودع على GitHub وحاول مرة أخرى.
+      unexpected: فشل الاتصال بـ GitHub بسبب خطأ غير متوقع. يرجى المحاولة مرة أخرى.
+  locks:
+    # {$name} is the name of the person editing the entry, {$time} when they started
+    being_edited: يحرر {$name} هذا العنصر منذ {$time}، لذلك يمكنك عرضه فقط.
+    being_edited_by_you: أنت تحرر هذا العنصر في علامة تبويب أخرى، لذلك يمكنك عرضه فقط هنا.
+    # {$name} is the name of the person who took over the entry
+    taken_over: تولّى {$name} تحرير هذا العنصر، لذلك يمكنك الآن عرضه فقط.
+    take_over: تولّي التحرير
+    unavailable: أقفال العناصر غير متاحة، لذلك قد يكون شخص آخر يحرر هذا العنصر في الوقت نفسه.
+    # {$name} is the name of the person editing the entry
+    being_edited_by_x: قيد التحرير بواسطة {$name}
+    # {$names} is a list of the other people who have the entry open in the editor
+    also_open_by_x: مفتوح أيضاً لدى {$names}
+    # {$names} is a list of the people who have the entry open, besides anyone editing it
+    open_by_x: مفتوح لدى {$names}
+  users:
+    title: المستخدمون
+    add_user: إضافة مستخدم
+    edit_user: تعديل المستخدم
+    add: إضافة
+    name: الاسم
+    username_description: لا يمكن تغيير اسم المستخدم بعد إضافة المستخدم.
+    email_optional: البريد الإلكتروني (اختياري)
+    email_description: يُستخدم في عمليات الإيداع التي يجريها هذا الشخص، ليتمكن GitHub من ربطها بحسابه. إذا لم يكن موجوداً، يُستخدم عنوان بديل.
+    role: الدور
+    status: الحالة
+    last_sign_in: آخر تسجيل دخول
+    sign_in_column: تسجيل الدخول
+    methods:
+      password: كلمة المرور
+      # {$login} is a GitHub username
+      github: GitHub ({$login})
+    actions: الإجراءات
+    you: (أنت)
+    never: أبداً
+    roles:
+      admin: مسؤول
+      editor: محرر
+      viewer: مشاهد
+    statuses:
+      active: نشط
+      temporary_password: كلمة مرور مؤقتة
+      waiting_for_sign_in: بانتظار تسجيل الدخول الأول
+      disabled: معطّل
+    # {$name} is the user’s name
+    show_options_for_x: إظهار خيارات {$name}
+    options: خيارات المستخدم
+    reset_password: إعادة تعيين كلمة المرور
+    sign_out_everywhere: تسجيل الخروج من كل الأجهزة
+    enable: تفعيل المستخدم
+    disable: تعطيل المستخدم
+    delete: حذف المستخدم
+    # {$name} is the user’s name
+    reset_password_confirmation: هل تريد منح {$name} كلمة مرور مؤقتة جديدة؟ سيتم تسجيل خروجه من كل الأجهزة، وسيتعين عليه اختيار كلمة مرور جديدة عند تسجيل الدخول التالي.
+    delete_confirmation: هل تريد حذف {$name}؟ لا يمكن التراجع عن ذلك.
+    temporary_password: كلمة مرور مؤقتة
+    # {$name} is the user’s name
+    temporary_password_description: أعطِ اسم المستخدم وكلمة المرور المؤقتة هذين إلى {$name}. لن يتم عرضهما مرة أخرى، وسيختار كلمة المرور الخاصة به عند تسجيل الدخول.
+    copy_username: نسخ اسم المستخدم
+    copy_password: نسخ كلمة المرور
+    # {$name} is the user’s name
+    email_credentials: إرسال بريد إلكتروني إلى {$name}
+    # The emails the admin sends from their own email app, with the sign-in details: `new` to a user
+    # who has just been added, `reset` to one whose password has been reset. Each line is a string of
+    # its own, as line breaks aren’t kept in these files
+    credentials_email:
+      # {$name} is the user’s name
+      greeting: مرحباً {$name}،
+      # {$url} is a link to the CMS that fills in the username and the temporary password
+      sign_in_link: 'رابط تسجيل الدخول: {$url}'
+      # {$username} is the username
+      username: 'اسم المستخدم: {$username}'
+      # {$password} is the temporary password
+      password: 'كلمة المرور المؤقتة: {$password}'
+      new:
+        # {$app} is the name of the CMS
+        subject: بيانات تسجيل الدخول الخاصة بك إلى {$app}
+        # {$app} is the name of the CMS
+        message: يمكنك الآن تسجيل الدخول إلى {$app}. افتح الرابط أدناه، الذي يملأ اسم المستخدم وكلمة المرور المؤقتة، واختر كلمة المرور الخاصة بك عند تسجيل الدخول.
+      reset:
+        # {$app} is the name of the CMS
+        subject: تمت إعادة تعيين كلمة المرور الخاصة بك إلى {$app}
+        # {$app} is the name of the CMS
+        message: تمت إعادة تعيين كلمة المرور الخاصة بك إلى {$app}، وتم تسجيل خروجك من كل الأجهزة. افتح الرابط أدناه، الذي يملأ اسم المستخدم وكلمة المرور المؤقتة، واختر كلمة مرور جديدة عند تسجيل الدخول.
+    allowed_domains: النطاقات المسموح بها
+    allowed_domains_description: المواقع التي يمكنها استخدام Sveltia CMS Additions، اسم مضيف واحد في كل سطر. يطابق حرف البدل (*) أي نطاق فرعي، مثل *.example.com. أدرج أسماء المضيفين الدقيقة كلما أمكن. تنطبق القائمة على هذا الموقع فقط، حتى لو كان مثيل Sveltia CMS Additions نفسه يخدم مواقع أخرى أيضاً.
+    save_allowed_domains: حفظ النطاقات المسموح بها
+    allowed_domains_saved: تم حفظ النطاقات المسموح بها.
+    sign_in_tab: تسجيل الدخول
+    # {$latest} is the newest version of Sveltia CMS Additions, {$current} the one in use
+    update_available: الإصدار {$latest} من Sveltia CMS Additions متاح. أنت تستخدم الإصدار {$current}.
+    release_notes: ملاحظات الإصدار
+    github_username_optional: اسم مستخدم GitHub (اختياري)
+    github_username_description: باستخدام اسم مستخدم GitHub، يسجّل المستخدم الدخول بحساب GitHub هذا بدلاً من كلمة المرور.
+    # {$name} is the user’s name
+    github_required: لا يمكن لـ {$name} تسجيل الدخول إلا باستخدام GitHub، لذلك لا يمكن إزالة اسم مستخدم GitHub الخاص به. أعد تعيين كلمة مروره أولاً لمنحه كلمة مرور لتسجيل الدخول بها.
+    adopt: تبنّي الحساب
+    sign_in:
+      github: السماح بتسجيل الدخول باستخدام GitHub
+      github_description: يسجّل المستخدمون الدخول بحساب GitHub الخاص بهم ويحصلون على رمز GitHub خاص بهم، لذلك تُودَع تغييراتهم بأسمائهم. يضيفهم المسؤول أولاً، مع اسم مستخدم GitHub الخاص بهم، ما لم تشملهم قاعدة تسجيل.
+      # Shown when signing in with GitHub is being turned off while {$count} users can only sign in
+      # with it
+      github_only_warning: |
+        .input {$count :integer}
+        .match $count
+          0    {{ لا يوجد مستخدمون يمكنهم تسجيل الدخول باستخدام GitHub فقط. }}
+          one  {{ يمكن لمستخدم واحد تسجيل الدخول باستخدام GitHub فقط، ولن يتمكن من تسجيل الدخول بعد إيقافه، حتى تعيد تعيين كلمة مروره. }}
+          two  {{ يمكن لمستخدمَين اثنين تسجيل الدخول باستخدام GitHub فقط، ولن يتمكنا من تسجيل الدخول بعد إيقافه، حتى تعيد تعيين كلمتي مرورهما. }}
+          few  {{ يمكن لـ {$count} مستخدمين تسجيل الدخول باستخدام GitHub فقط، ولن يتمكنوا من تسجيل الدخول بعد إيقافه، حتى تعيد تعيين كلمات مرورهم. }}
+          many {{ يمكن لـ {$count} مستخدماً تسجيل الدخول باستخدام GitHub فقط، ولن يتمكنوا من تسجيل الدخول بعد إيقافه، حتى تعيد تعيين كلمات مرورهم. }}
+          *    {{ يمكن لـ {$count} مستخدم تسجيل الدخول باستخدام GitHub فقط، ولن يتمكنوا من تسجيل الدخول بعد إيقافه، حتى تعيد تعيين كلمات مرورهم. }}
+      rules: قواعد التسجيل
+      rules_description: يمكن لأعضاء مؤسسة GitHub المثبت عليها التطبيق تسجيل الدخول دون إضافتهم أولاً. يحصل حسابهم على الدور الذي تختاره، ويُعطَّل إذا غادروا المؤسسة، ما لم تتبنَّه.
+      org: مؤسسة GitHub
+      add_rule: إضافة قاعدة
+      # {$org} is the name of a GitHub organization
+      remove_rule: إزالة قاعدة {$org}
+      # For a rule whose organization hasn’t been entered yet
+      remove_empty_rule: إزالة القاعدة
+      save: حفظ إعدادات تسجيل الدخول
+      saved: تم حفظ إعدادات تسجيل الدخول.
+    domains_tab: النطاقات
+    github_tab: GitHub
+    github:
+      app: تطبيق GitHub
+      repository: المستودع
+      not_installed: غير مثبت
+      statuses:
+        ok: التطبيق يعمل.
+        not_registered: لم يتم إعداد أي تطبيق GitHub بعد. شغّل معالج الإعداد من صفحة تسجيل الدخول باستخدام سر المسؤول.
+        key_missing: فُقد المفتاح الخاص للتطبيق عند استبدال سر المسؤول. أنشئ مفتاحاً خاصاً جديداً في إعدادات التطبيق على GitHub وارفعه أدناه.
+        key_rejected: لا يقبل GitHub المفتاح الخاص للتطبيق، على سبيل المثال لأنه حُذف هناك. أنشئ مفتاحاً خاصاً جديداً في إعدادات التطبيق على GitHub وارفعه أدناه.
+        not_installed: التطبيق غير مثبت على المستودع. ثبّته مرة أخرى من صفحة التطبيق على GitHub، أو شغّل معالج الإعداد.
+        suspended: تثبيت التطبيق معلّق. ألغِ تعليقه في إعدادات التثبيت على GitHub.
+        unreachable: تعذر الوصول إلى GitHub. يرجى المحاولة مرة أخرى لاحقاً.
+      check_again: التحقق مرة أخرى
+      # {$branch} is the name of the repository’s default branch
+      branch_protected: تحمي مجموعات القواعد (Rulesets) الفرع “{$branch}” من الدفع القسري (Force Push) والحذف.
+      branch_bypassed: تحمي مجموعات القواعد الفرع “{$branch}”، لكن التطبيق يمكنه تجاوزها، لذلك قد يظل المحررون قادرين على الدفع القسري إليه أو حذفه. أزل التطبيق من قوائم التجاوز في مجموعات القواعد تلك.
+      branch_unprotected: لا توجد مجموعة قواعد تحمي الفرع “{$branch}” من الدفع القسري والحذف، لذلك قد يتمكن المحررون من إعادة كتابة سجله أو حذفه. أضف مجموعة قواعد في إعدادات المستودع تمنع كليهما، دون إدراج التطبيق في قائمة التجاوز الخاصة بها.
+      repository_rules: فتح قواعد المستودع
+      private_key: المفتاح الخاص
+      private_key_description: لاستبدال المفتاح الخاص، أنشئ مفتاحاً جديداً في إعدادات التطبيق على GitHub، ثم ارفع ملف .pem الذي يتم تنزيله. احذف المفتاح القديم هناك بعد ذلك.
+      app_settings: فتح إعدادات التطبيق
+      upload_private_key: رفع المفتاح الخاص
+      replace_private_key: استبدال المفتاح الخاص
+      private_key_summary: تستخدم الخدمة المفتاح الخاص للتطبيق للوصول إلى المستودع على GitHub. استبدله إذا كان من المحتمل أنه قد كُشف.
+      private_key_replaced: تم استبدال المفتاح الخاص.
+      commit_author: مؤلف الإيداع
+      commit_author_description: اختر من يظهر كمؤلف للتغييرات المحفوظة في نظام إدارة المحتوى. لا يوقّع GitHub إلا عمليات الإيداع التي يؤلفها التطبيق، لذلك اختر التطبيق إذا كانت إحدى مجموعات القواعد تتطلب إيداعات موقّعة. يحصل المستخدمون الآخرون على هذا التغيير خلال ساعة.
+      commit_author_user: الشخص الذي أجرى التغيير
+      commit_author_bot: تطبيق GitHub، مع الشخص كمؤلف مشارك
+      commit_author_saved: تم حفظ مؤلف الإيداع.
+  # Administration section for the API keys and the deploy hook an admin shares with everyone
+  credentials:
+    title: بيانات الاعتماد
+    description: يستخدم مفاتيح API وخطاف النشر المُدخلة هنا كلُّ من يسجّل الدخول، ما لم يُدخل مفاتيحه الخاصة في الإعدادات. يمكن لأي شخص مسجّل الدخول إلى نظام إدارة المحتوى قراءتها، لذلك أدخل فقط المفاتيح التي لا تمانع مشاركتها مع فريقك.
+    save: حفظ بيانات الاعتماد
+    saved: تم حفظ بيانات الاعتماد.
+    # {$service} is the service name, e.g. DeepL
+    invalid_key: يبدو أن مفتاح API الخاص بـ {$service} غير صحيح.
+  error:
+    unauthenticated: انتهت صلاحية جلستك. يرجى تسجيل الدخول مرة أخرى.
+    wrong_admin_secret: سر المسؤول غير صحيح.
+    admin_secret_missing: لم يتم تعيين سر المسؤول في إعدادات خدمة Sveltia CMS Additions.
+    admin_secret_too_short: سر المسؤول المعيّن في إعدادات خدمة Sveltia CMS Additions قصير جداً. استخدم 32 حرفاً عشوائياً على الأقل.
+    wrong_previous_secret: سر المسؤول السابق غير صحيح.
+    not_an_admin: هذا المستخدم ليس مسؤولاً. اختر اسم مستخدم آخر.
+    invalid_username: يتكون اسم المستخدم من 3 إلى 30 حرفاً لاتينياً صغيراً أو رقماً أو نقطة أو شرطة أو شرطة سفلية.
+    last_admin: يجب أن يكون هناك مسؤول واحد على الأقل.
+    cannot_disable_self: لا يمكنك تعطيل حسابك الخاص.
+    cannot_delete_self: لا يمكنك حذف حسابك الخاص.
+    username_taken: اسم المستخدم هذا مستخدم من قِبل مستخدم آخر.
+    email_taken: عنوان البريد الإلكتروني هذا مستخدم من قِبل مستخدم آخر.
+    invalid_name: يجب أن يتكون الاسم من 1 إلى 100 حرف.
+    invalid_email: عنوان البريد الإلكتروني غير صالح.
+    invalid_domains: أحد النطاقات المسموح بها ليس اسم مضيف صالحاً.
+    current_origin_removed: يجب أن تتضمن النطاقات المسموح بها الموقع الذي تستخدمه الآن.
+    forbidden: يمكن للمسؤولين فقط القيام بذلك.
+    invalid_credentials: اسم المستخدم أو كلمة المرور غير صحيحة.
+    user_disabled: هذا الحساب معطّل. اطلب المساعدة من المسؤول.
+    too_many_attempts: محاولات كثيرة جداً. يرجى المحاولة مرة أخرى لاحقاً.
+    wrong_password: كلمة المرور الحالية غير صحيحة.
+    same_password: اختر كلمة مرور جديدة مختلفة عن كلمة المرور الحالية.
+    invalid_github_login: هذا ليس اسم مستخدم GitHub صالحاً.
+    github_user_not_found: لا يوجد مستخدم GitHub بهذا الاسم.
+    github_account_taken: يسجّل مستخدم آخر الدخول بحساب GitHub هذا.
+    invalid_rules: تحتاج قاعدة التسجيل إلى اسم مؤسسة GitHub.
+    invalid_rule_role: يمكن لقاعدة التسجيل منح دور المحرر أو المشاهد فقط.
+    rule_org_not_installed: يجب تثبيت تطبيق GitHub على المؤسسة الخاصة بقاعدة التسجيل.
+    not_invited: ليس لديك حساب هنا. اطلب من المسؤول إضافتك.
+    method_disabled: تسجيل الدخول باستخدام GitHub متوقف.
+    access_denied: تم إلغاء تسجيل الدخول.
+    github_app_not_set_up: لم يتم ربط Sveltia CMS Additions بـ GitHub بعد. اطلب من المسؤول إكمال الإعداد.
+    invalid_tenant_id: يجب أن يتكون معرّف الموقع من 1 إلى 32 حرفاً لاتينياً صغيراً أو رقماً أو شرطة، ولا يمكن أن يكون “default”.
+    invalid_tenant_name: يجب ألا يتجاوز اسم الموقع 100 حرف.
+    tenant_exists: يوجد موقع بهذا المعرّف بالفعل.
+    github_app_missing: لم يتم إعداد أي تطبيق GitHub بعد.
+    invalid_private_key: الملف ليس مفتاحاً خاصاً صالحاً.
+    private_key_mismatch: لا يقبل GitHub هذا المفتاح الخاص للتطبيق. تأكد من أنك أنشأته في إعدادات التطبيق.
+    github_error: استجاب GitHub بخطأ. يرجى المحاولة مرة أخرى لاحقاً.
+    data_key_locked: لا يمكن استخدام Sveltia CMS Additions حتى ينتهي المسؤول من تغيير سر المسؤول الخاص به.
+    not_configured: لم يتم إعداد Sveltia CMS Additions بشكل صحيح. اطلب المساعدة من المسؤول.
+    origin_not_allowed: هذا الموقع غير مسموح له باستخدام Sveltia CMS Additions. اطلب من المسؤول إضافته إلى النطاقات المسموح بها.
+    not_set_up: لم يتم ربط Sveltia CMS Additions بـ GitHub بعد. اطلب من المسؤول إكمال الإعداد.
+    # A user whose password an admin has reset signs in another way, e.g. with GitHub
+    temporary_password: تمت إعادة تعيين كلمة المرور الخاصة بك. سجّل الدخول باسم المستخدم وكلمة المرور المؤقتة التي أعطاك إياها المسؤول، ثم اختر كلمة مرور جديدة.
+    # {$url} is the URL of the service
+    incompatible: هذا الإصدار من Sveltia CMS لا يعمل مع خدمة Sveltia CMS Additions على {$url}.
+    unreachable: تعذر الوصول إلى Sveltia CMS Additions. يرجى المحاولة مرة أخرى لاحقاً.
+    insecure_connection: يجب تقديم Sveltia CMS Additions عبر HTTPS. تحقق من `base_url` في إعدادات نظام إدارة المحتوى.
+    unexpected: فشل الطلب إلى Sveltia CMS Additions بسبب خطأ غير متوقع. يرجى المحاولة مرة أخرى لاحقاً.
+
+  # Conversation panel: comments on the entry, kept by Sveltia CMS Additions
+  conversation:
+    title: المحادثة
+    refresh: تحديث المحادثة
+    empty: لا توجد تعليقات بعد.
+    # Button above a long conversation, which is loaded from its latest comments
+    show_older: إظهار التعليقات الأقدم
+    # Label of the list of comments
+    timeline: التعليقات
+    deleted_user: مستخدم محذوف
+    you: أنت
+    edited: معدّل
+    comment_label: التعليق
+    placeholder: اكتب تعليقاً (Markdown)
+    visible_to_cms_users: مرئي لمستخدمي نظام إدارة المحتوى فقط
+    send: تعليق
+    options: خيارات التعليق
+    edit: تعديل
+    delete: حذف
+    save: حفظ
+    delete_confirmation: هل تريد حذف هذا التعليق؟ لا يمكن التراجع عن ذلك.
+    send_failed: تعذر إرسال التعليق.
+
+  # Placeholder of an API key or deploy hook field the user has left empty, while an admin of
+  # Sveltia CMS Additions has entered one for everyone
+  provided_by_admin: مقدَّم من المسؤول
 
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
@@ -214,6 +572,15 @@ sign_in_with_mobile_instruction: امسح رمز QR أدناه باستخدام 
 signed_in_as_x: تم تسجيل الدخول باسم {$name}
 working_with_local_repo: العمل مع مستودع محلي
 working_with_test_repo: العمل مع مستودع تجريبي
+working_in_demo_mode: الوضع التجريبي
+
+# Demo welcome dialog: shown once after signing in to a demo site, where the test repository is
+# seeded with sample content and the changes are only stored in the browser
+demo_welcome:
+  title: مرحباً بك في العرض التجريبي لـ Sveltia CMS
+  description: لا تتردد في استكشاف نظام إدارة المحتوى وتعديل المحتوى النموذجي. يتم حفظ تغييراتك في هذا المتصفح فقط. لا يُنشر أي شيء على الإنترنت، ولا يمكن لأي شخص آخر رؤيتها.
+  reset_hint: للبدء من جديد بالمحتوى الأصلي، حدد “مسح جميع البيانات” ضمن الإعدادات > إدارة البيانات.
+  button_label: البدء
 
 # Account menu: action items for sign-out and app installation
 sign_out: تسجيل الخروج
@@ -229,9 +596,14 @@ install_as_app: التثبيت كتطبيق
 contents: المحتويات
 assets: الوسائط
 editorial_workflow: سير العمل التحريري
+# Name of the Editorial Workflow page when all the content uses Preview Workflow, which has no
+# review stages, so the page only lists the drafts
+drafts: المسودات
 cms_config: إعدادات نظام إدارة المحتوى
 # Mobile menu page title (shown only on small screens)
 menu: القائمة
+# Mobile menu page section heading listing the custom pages registered by the site
+custom_pages: الصفحات
 
 # Mobile promo infobar: encouraging users to try the mobile version
 mobile_promo_title: Sveltia CMS متاح الآن على الجوال!
@@ -242,10 +614,36 @@ mobile_promo_button: جربه الآن
 new_language_available: Sveltia CMS متاح الآن باللغة {$locale}!
 change_language: تغيير اللغة
 
+# Live reload infobar: shown when the CMS runs on a page that a framework’s development server (e.g.
+# Astro) reloads on every file change, instead of a static HTML file
+live_reload_warning: يعيد خادم التطوير الخاص بك تحميل هذه الصفحة كلما تغيّر ملف، مما قد يقطع عملية الحفظ ويترك ملفاتك تالفة. قدّم نظام إدارة المحتوى من ملف HTML ثابت بدلاً من ذلك. <a>اعرف المزيد</a>
+
 # Toast notification shown while the translation for the selected language is being downloaded
 # {$locale} is the localized language name, e.g., “French”
 switching_language: جارٍ التبديل إلى {$locale}…
 locale_load_failed: تعذر تحميل ترجمة {$locale}. يرجى المحاولة مرة أخرى لاحقاً.
+
+# Toast notification shown when changes saved with the local backend couldn’t be committed to Git
+# {$reason} is one of the `local_git_skip_reasons` strings below
+local_git_not_committed: تم حفظ تغييراتك ولكن لم يتم إيداعها في Git. {$reason} لحفظ الملفات فقط، أوقف إيداعات Git ضمن الإعدادات > المطور.
+local_git_skip_reasons:
+  unsupported_repository: يستخدم مستودعك ميزة في Git لا يدعمها نظام إدارة المحتوى، مثل شجرة عمل مرتبطة (Linked Worktree)، أو أسماء كائنات SHA-256، أو تنسيق reftable، أو فهرس متفرق (Sparse Index)، أو فهرس بالإصدار 3 أو 4، الذي يستخدمه الخيار feature.manyFiles والأمر git add -N.
+  missing_identity: لم يتم تعيين اسمك وعنوان بريدك الإلكتروني في إعدادات Git الخاصة بالمستودع، ولا يمكن لنظام إدارة المحتوى قراءة إعداداتك العامة. عيّنهما في المستودع باستخدام git config --local user.name "Your Name" و git config --local user.email "you@example.com".
+  locked: تستخدم عملية Git أخرى المستودع. إذا لم تكن هناك أي عملية قيد التشغيل، فاحذف الملف .git/index.lock.
+  # The operation in progress, with how to finish or cancel it
+  operation_in_progress:
+    merge: عملية دمج (Merge) قيد التنفيذ. أكملها باستخدام git commit، أو ألغها باستخدام git merge --abort.
+    rebase: عملية إعادة تأسيس (Rebase) قيد التنفيذ. أكملها باستخدام git rebase --continue، أو ألغها باستخدام git rebase --abort. إذا كنت قد تجاوزتها، فإن git rebase --quit يتخلى عنها دون تغيير ملفاتك.
+    cherry_pick: عملية انتقاء (Cherry-pick) قيد التنفيذ. أكملها باستخدام git cherry-pick --continue، أو ألغها باستخدام git cherry-pick --abort.
+    revert: عملية تراجع (Revert) قيد التنفيذ. أكملها باستخدام git revert --continue، أو ألغها باستخدام git revert --abort.
+    am: تطبيق التصحيحات باستخدام git am قيد التنفيذ. أكمله باستخدام git am --continue، أو ألغه باستخدام git am --abort.
+    conflict: تحتوي بعض الملفات على تعارضات. قم بحلها وأضف النتائج إلى منطقة التجهيز (Staging) أولاً.
+  detached_head: لم يتم سحب أي فرع (Checkout).
+  staged_changes: لديك تغييرات أخرى مجهّزة للإيداع. أودعها أو ألغِ تجهيزها أولاً.
+  # {$path} is the file path
+  lfs: يتم تتبع {$path} باستخدام Git LFS، الذي لا يمكن لنظام إدارة المحتوى الإيداع فيه.
+  # {$message} is the error message
+  error: حدث خطأ غير متوقع. {$message}
 
 # Site and page navigation
 # Toolbar button aria-label for visiting the live site
@@ -280,6 +678,10 @@ account: الحساب
 live_site: الموقع المباشر
 git_repository: مستودع Git
 settings: الإعدادات
+
+# Page for the people who look after the CMS, apart from the personal settings: user management
+# and the CMS configuration
+administration: الإدارة
 
 # Help menu: button aria-labels and section headings
 show_help_menu: إظهار قائمة المساعدة
@@ -379,6 +781,10 @@ viewing_x_asset_folder: |
 # Cloud storage service view announcement
 # {$service} is the cloud storage service name, e.g. Uploadcare
 viewing_x_external_location: أنت تعرض الآن الوسائط على {$service}.
+# Administration page announcements
+viewing_admin_section_list: أنت تعرض الآن قائمة أقسام الإدارة.
+# {$section} is the section label, e.g. Users
+viewing_x_admin_section: أنت تعرض الآن قسم “{$section}” في صفحة الإدارة.
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
@@ -397,6 +803,7 @@ x_of_x_selected: تم تحديد {$selected} من أصل {$total}
 
 # View switcher: toggle between list and grid views
 switch_view: تبديل العرض
+table_view: عرض الجدول
 list_view: عرض القائمة
 grid_view: عرض الشبكة
 switch_to_list_view: التبديل إلى عرض القائمة
@@ -410,6 +817,16 @@ switch_to_grid_view: التبديل إلى عرض الشبكة
 # Sort menu: button labels and options
 sort: فرز
 sorting_options: خيارات الفرز
+# Table view column labels for the entry metadata used as `{{…}}` template tags
+table_column_keys:
+  # The folder containing the entry file
+  dirname: المجلد
+  # The entry file name without the extension
+  filename: اسم الملف
+  # The entry file extension
+  extension: الامتداد
+  # The enabled locales of the entry
+  locales: اللغات
 # Sort key option labels
 sort_keys:
   # No sorting; entries appear in their natural repository order
@@ -449,6 +866,8 @@ grouping_options: خيارات التجميع
 # Asset type filter and group labels
 type: النوع
 all: الكل
+# Group option for the linked files, which can be hosted anywhere: the host name of the file’s URL
+domain: النطاق
 # Asset type labels
 image: صورة
 video: فيديو
@@ -467,6 +886,9 @@ all_assets: كل الوسائط
 global_assets: الوسائط العامة
 # Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
 linked_files: الملفات المرتبطة
+# Badge and message shown on a linked file that couldn’t be loaded, e.g. because it has been deleted
+file_unavailable: غير متاح
+file_unavailable_description: تعذر تحميل هذا الملف. ربما تم نقله أو حذفه.
 
 # ==============================================================================
 # Entry and Collection Actions
@@ -526,12 +948,27 @@ creating_entries_nearing_quota: |
     *    few {{ تقترب هذه المجموعة من حدها الأقصى البالغ {$quota} عنصر. يمكنك إنشاء {$remaining} عناصر فقط بعد. }}
     *    *   {{ تقترب هذه المجموعة من حدها الأقصى البالغ {$quota} عنصر. يمكنك إنشاء {$remaining} عنصر فقط بعد. }}
 
+# Read-only restrictions set with the `readonly` option: advisory messages
+readonly_cms: نظام إدارة المحتوى في وضع القراءة فقط. يمكنك عرض المحتوى والوسائط ولكن لا يمكنك إجراء أي تغييرات.
+readonly_collection: هذه المجموعة للقراءة فقط. يمكنك عرض محتواها ولكن لا يمكنك إجراء أي تغييرات.
+readonly_entry: هذا العنصر للقراءة فقط. يمكنك عرضه ولكن لا يمكنك إجراء أي تغييرات.
+readonly_asset_folder: هذا المجلد للقراءة فقط. يمكنك عرض وسائطه ولكن لا يمكنك إجراء أي تغييرات.
+readonly_branch: ليس لديك صلاحية الدفع (Push) إلى الفرع “{$branch}”. يمكنك عرض هذا المحتوى ولكن لا يمكنك إجراء أي تغييرات.
+readonly_role: لديك صلاحية العرض فقط. يمكنك عرض المحتوى والوسائط ولكن لا يمكنك إجراء أي تغييرات.
+readonly_reference: العنصر للقراءة فقط، لذلك لا يمكن إزالة الإشارة إليه.
+# {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
+cannot_rename_referenced_entry: 'لا يمكن إعادة تسمية هذا العنصر، لأن العناصر التالية المخصصة للقراءة فقط تشير إليه باسمه الحالي: {$entries}.'
+# {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
+cannot_move_referenced_asset: 'لا يمكن نقل هذا الوسيط أو إعادة تسميته، لأن العناصر التالية المخصصة للقراءة فقط تستخدمه: {$entries}.'
+
 # Navigation: back links and list labels
 back_to_collection: العودة إلى المجموعة
 collection_list: قائمة المجموعات
 back_to_collection_list: العودة إلى قائمة المجموعات
 asset_folder_list: قائمة مجلدات الوسائط
 back_to_asset_folder_list: العودة إلى قائمة مجلدات الوسائط
+# Back button shown in place of the one above while browsing a subfolder of an asset folder
+back_to_parent_folder: العودة إلى المجلد الأصلي
 
 # ==============================================================================
 # Search
@@ -602,6 +1039,59 @@ no_entries_found: لم يتم العثور على عناصر.
 # Upload dialog: title and button label
 upload_assets: رفع وسائط جديدة
 
+# New Folder button and dialog in the Asset Library
+new_folder: مجلد جديد
+new_folder_name: اسم المجلد
+new_folder_create: إنشاء
+# {$folder} is the path of the folder the new one will be created in, starting with a slash
+new_folder_description: سيتم إنشاء المجلد الجديد داخل “{$folder}”.
+# Validation errors for the new folder name
+new_folder_error:
+  empty: لا يمكن أن يكون اسم المجلد فارغاً.
+  invalid: لا يمكن أن يحتوي اسم المجلد على شرطات مائلة أو أن يبدأ بنقطة.
+  # A name the CMS itself is usually served from, e.g. `admin` or `cms`
+  reserved: الملفات الموجودة في مجلد بهذا الاسم للقراءة فقط، لأن نظام إدارة المحتوى نفسه يُقدَّم منه عادةً.
+  duplicate: يوجد مجلد أو ملف بهذا الاسم هنا بالفعل.
+# Progress and error messages while the folder is being created
+creating_folder: جارٍ إنشاء المجلد…
+creating_folder_failed: تعذر إنشاء المجلد.
+
+# Menu on a folder in the Asset Library, and the Rename Folder and Delete Folder dialogs
+folder_options: خيارات المجلد
+show_folder_options: إظهار خيارات المجلد
+rename_folder: إعادة تسمية المجلد
+delete_folder: حذف المجلد
+# Rename Folder dialog body text
+# {$count} is the number of assets in the folder, which are moved along with it
+enter_new_name_for_folder: |
+  .input {$count :integer}
+  .match $count
+    0    {{ أدخل اسماً جديداً أدناه. }}
+    one  {{ أدخل اسماً جديداً أدناه. سيتم نقل الوسيط الموجود في المجلد معه، وسيتم تحديث أي عنصر يستخدمه. }}
+    two  {{ أدخل اسماً جديداً أدناه. سيتم نقل الوسيطين الموجودين في المجلد معه، وسيتم تحديث أي عناصر تستخدمهما. }}
+    few  {{ أدخل اسماً جديداً أدناه. سيتم نقل الـ {$count} وسائط الموجودة في المجلد معه، وسيتم تحديث أي عناصر تستخدمها. }}
+    many {{ أدخل اسماً جديداً أدناه. سيتم نقل الـ {$count} وسيطاً الموجودة في المجلد معه، وسيتم تحديث أي عناصر تستخدمها. }}
+    *    {{ أدخل اسماً جديداً أدناه. سيتم نقل الـ {$count} وسيط الموجودة في المجلد معه، وسيتم تحديث أي عناصر تستخدمها. }}
+# Delete Folder confirmation
+# {$name} is the folder name and {$count} is the number of assets in the folder
+confirm_deleting_folder: |
+  .input {$count :integer}
+  .match $count
+    0    {{ هل أنت متأكد من أنك تريد حذف المجلد الفارغ “{$name}”؟ }}
+    one  {{ هل أنت متأكد من أنك تريد حذف المجلد “{$name}” والوسيط الموجود فيه؟ }}
+    two  {{ هل أنت متأكد من أنك تريد حذف المجلد “{$name}” والوسيطين الموجودين فيه؟ }}
+    few  {{ هل أنت متأكد من أنك تريد حذف المجلد “{$name}” والـ {$count} وسائط الموجودة فيه؟ }}
+    many {{ هل أنت متأكد من أنك تريد حذف المجلد “{$name}” والـ {$count} وسيطاً الموجودة فيه؟ }}
+    *    {{ هل أنت متأكد من أنك تريد حذف المجلد “{$name}” والـ {$count} وسيط الموجودة فيه؟ }}
+# Progress and error messages while the folder is being renamed or deleted
+renaming_folder: جارٍ إعادة تسمية المجلد…
+renaming_folder_failed: تعذرت إعادة تسمية المجلد.
+deleting_folder: جارٍ حذف المجلد…
+deleting_folder_failed: تعذر حذف المجلد.
+# Asset Library and asset picker: notice shown when a cloud storage service holds more files than
+# are listed at once
+external_assets_truncated: توجد ملفات كثيرة جداً على الخدمة بحيث لا يمكن عرضها كلها، لذلك تم استبعاد بعضها.
+
 # Edit options menu: button and item labels
 edit_options: خيارات التعديل
 show_edit_options: إظهار خيارات التعديل
@@ -614,6 +1104,54 @@ edit_x: تعديل {$name}
 
 # Asset text editor: switch for line wrapping
 wrap_long_lines: التفاف الأسطر الطويلة
+
+# Move assets: dialog for moving assets to another folder in the repository
+move: نقل
+move_asset: نقل الوسيط
+# Dialog title. {$name} is the asset name when a single asset is moved, and {$count} is the number of
+# assets being moved
+move_assets_title: |
+  .input {$count :integer}
+  .match $count
+    0    {{ نقل الوسائط }}
+    one  {{ نقل {$name} }}
+    two  {{ نقل وسيطين }}
+    few  {{ نقل {$count} وسائط }}
+    many {{ نقل {$count} وسيطاً }}
+    *    {{ نقل {$count} وسيط }}
+# Dialog body text. {$count} is the number of entries that currently use the assets
+select_asset_move_destination: |
+  .input {$count :integer}
+  .match $count
+    0    {{ حدد المجلد المراد النقل إليه. }}
+    one  {{ حدد المجلد المراد النقل إليه. سيتم أيضاً تحديث عنصر واحد يستخدم الوسائط. }}
+    two  {{ حدد المجلد المراد النقل إليه. سيتم أيضاً تحديث عنصرين يستخدمان الوسائط. }}
+    few  {{ حدد المجلد المراد النقل إليه. سيتم أيضاً تحديث {$count} عناصر تستخدم الوسائط. }}
+    many {{ حدد المجلد المراد النقل إليه. سيتم أيضاً تحديث {$count} عنصراً يستخدم الوسائط. }}
+    *    {{ حدد المجلد المراد النقل إليه. سيتم أيضاً تحديث {$count} عنصر يستخدم الوسائط. }}
+# Accessible label of the folder tree in the Move dialog
+asset_move_destination: المجلد الوجهة
+# Shown when the assets being moved are all in the selected folder already
+assets_already_in_folder: |
+  .input {$count :integer}
+  .match $count
+    one {{ الوسيط موجود بالفعل في هذا المجلد. }}
+    *   {{ الوسائط موجودة بالفعل في هذا المجلد. }}
+# Shown when files with the same names exist in the selected folder. {$names} is a comma-separated
+# list of file names
+asset_move_conflict: 'الملفات التالية موجودة بالفعل في هذا المجلد: {$names}.'
+moving_assets: جارٍ نقل الوسائط…
+moving_assets_failed: تعذر نقل الوسائط.
+# Warning shown when files have been moved off a cloud storage service, but the originals couldn’t
+# be deleted from it
+asset_move_cleanup_failed: تم نقل الملفات، لكن تعذر حذف الملفات الأصلية من خدمة التخزين.
+# Shown when files on a cloud storage service can’t be renamed or moved, because the entries using
+# them can’t be updated, e.g. for an Open Authoring contributor. {$count} is the number of files
+cannot_change_used_external_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ لا يمكن إعادة تسمية هذا الملف أو نقله، لأنه لا يمكن تحديث العناصر التي تستخدمه. }}
+    *   {{ لا يمكن إعادة تسمية هذه الملفات أو نقلها، لأنه لا يمكن تحديث العناصر التي تستخدمها. }}
 
 # Rename asset: dialog and validation
 rename_asset: إعادة تسمية الوسيط
@@ -635,6 +1173,15 @@ enter_new_name_for_asset_error:
   empty: لا يمكن أن يكون اسم الملف فارغاً.
   character: لا يمكن أن يحتوي اسم الملف على رموز خاصة.
   duplicate: اسم الملف هذا مستخدم بالفعل لوسيط آخر.
+  # A name starting with a dot hides the file, which the CMS wouldn’t list any more
+  leading_dot: لا يمكن أن يبدأ اسم الملف بنقطة.
+  # The name of a file next to the asset that isn’t an asset, like an entry file
+  file_duplicate: يوجد ملف آخر بهذا الاسم هنا بالفعل.
+  # The name of a folder next to the file
+  folder_duplicate: يوجد مجلد بهذا الاسم هنا بالفعل.
+# Shown while renaming a file whose name will be changed on saving, e.g. by the `slugify_filename`
+# media library option
+file_will_be_saved_as: سيتم حفظ الملف باسم “{$name}”.
 # Confirmation dialog shown when the file extension is changed while renaming an asset
 change_file_extension: تغيير امتداد الملف
 # {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
@@ -648,6 +1195,11 @@ file_extension_change_warning: قد لا يتم عرض الملف أو معال�
 replace_asset: استبدال الوسيط
 # {$name} is the asset being replaced
 replace_x: استبدال {$name}
+# File/Image field: labels of the Replace and Remove buttons
+replace_file: استبدال الملف
+replace_image: استبدال الصورة
+remove_file: إزالة الملف
+remove_image: إزالة الصورة
 
 # File selection prompts: drop zones and file pickers
 # Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
@@ -769,6 +1321,33 @@ confirm_deleting_selected_assets: |
     many {{ حذف {$count} عنصر وسائط محدداً }}
     *    {{ حذف {$count} عنصر وسائط محدد }}
 confirm_deleting_all_assets: هل أنت متأكد من أنك تريد حذف جميع الوسائط؟
+# Note added to the confirmation when entries use the assets being deleted; the references are
+# removed in the same commit. {$count} is the number of entries using them
+deleting_referenced_assets_note: |
+  .input {$count :integer}
+  .match $count
+    0    {{ لا توجد إشارات إليه في أي عنصر. }}
+    one  {{ ستتم أيضاً إزالة الإشارة إليه في عنصر واحد. }}
+    two  {{ ستتم أيضاً إزالة الإشارات إليه في عنصرين. }}
+    few  {{ ستتم أيضاً إزالة الإشارات إليه في {$count} عناصر. }}
+    many {{ ستتم أيضاً إزالة الإشارات إليه في {$count} عنصراً. }}
+    *    {{ ستتم أيضاً إزالة الإشارات إليه في {$count} عنصر. }}
+# Shown in place of the confirmation when removing the references would leave a field in an entry
+# invalid, e.g. a required Image field with nothing left, so the deletion is refused. The fields are
+# listed below the message, each with the validation error it would have. {$count} is the number of
+# assets being deleted
+cannot_delete_referenced_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ لا يمكن حذف هذا الوسيط، لأن الحقول التالية في العناصر التي تستخدمه لن تكون صالحة بدونه. حدّث تلك العناصر أولاً. }}
+    *   {{ لا يمكن حذف هذه الوسائط، لأن الحقول التالية في العناصر التي تستخدمها لن تكون صالحة بدونها. حدّث تلك العناصر أولاً. }}
+# Error shown in the asset deletion dialog when the entries using the assets couldn’t be looked up,
+# so the deletion can’t go ahead. {$count} is the number of assets being deleted
+checking_asset_references_failed: |
+  .input {$count :integer}
+  .match $count
+    one {{ تعذر التحقق من العناصر التي تستخدم هذا الوسيط. أغلق مربع الحوار هذا وحاول مرة أخرى. }}
+    *   {{ تعذر التحقق من العناصر التي تستخدم هذه الوسائط. أغلق مربع الحوار هذا وحاول مرة أخرى. }}
 
 # Delete entries: dialog titles and confirmation messages
 # {$count} is the number of entries targeted by the action
@@ -817,6 +1396,27 @@ confirm_deleting_selected_entries_with_assets: |
     *    {{ هل أنت متأكد من أنك تريد حذف {$count} عنصر محدد والوسائط المرتبطة بها؟ }}
 confirm_deleting_all_entries: هل أنت متأكد من أنك تريد حذف جميع العناصر؟
 confirm_deleting_all_entries_with_assets: هل أنت متأكد من أنك تريد حذف جميع العناصر والوسائط المرتبطة بها؟
+# Note added to the confirmation when other entries reference the entries being deleted through
+# Relation fields; the references are removed in the same commit. {$count} is the number of
+# referencing entries
+deleting_referenced_entries_note: |
+  .input {$count :integer}
+  .match $count
+    0    {{ لا توجد إشارات إليه في عناصر أخرى. }}
+    one  {{ ستتم أيضاً إزالة الإشارة إليه في عنصر آخر. }}
+    two  {{ ستتم أيضاً إزالة الإشارات إليه في عنصرين آخرين. }}
+    few  {{ ستتم أيضاً إزالة الإشارات إليه في {$count} عناصر أخرى. }}
+    many {{ ستتم أيضاً إزالة الإشارات إليه في {$count} عنصراً آخر. }}
+    *    {{ ستتم أيضاً إزالة الإشارات إليه في {$count} عنصر آخر. }}
+# Shown in place of the confirmation when removing the references would leave a Relation field in
+# another entry invalid, e.g. a required field with nothing selected, so the deletion is refused.
+# The fields are listed below the message, each with the validation error it would have. {$count}
+# is the number of entries being deleted
+cannot_delete_referenced_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ لا يمكن حذف هذا العنصر، لأن الحقول التالية في عناصر أخرى لن تكون صالحة بدونه. حدّث تلك العناصر أولاً. }}
+    *   {{ لا يمكن حذف هذه العناصر، لأن الحقول التالية في عناصر أخرى لن تكون صالحة بدونها. حدّث تلك العناصر أولاً. }}
 
 # ==============================================================================
 # Entry Reordering
@@ -830,6 +1430,43 @@ cancel_reordering_entries: إلغاء إعادة ترتيب العناصر
 
 # Reorder error message
 saving_reorder_failed: فشل في حفظ الترتيب الجديد للعناصر. يرجى المحاولة مرة أخرى.
+
+# ==============================================================================
+# Bulk Entry Editing
+# ==============================================================================
+# Strings for editing the fields of many entries at once in a table.
+
+# Bulk edit mode: toggle buttons
+bulk_edit_entries: تعديل العناصر بشكل جماعي
+save_bulk_edits: حفظ التعديلات الجماعية
+cancel_bulk_edits: إلغاء التعديلات الجماعية
+
+# Bulk edit table: column header of the entry titles
+bulk_edit_entry: العنصر
+
+# Bulk edit table: label of the table
+bulk_edit_table: المحرر الجماعي
+
+# Bulk edit table: label of a cell input; {$field} is the field label, {$entry} is the entry title
+bulk_edit_cell: '{$field} في {$entry}'
+
+# Bulk edit status: number of changed fields
+bulk_edit_count: |
+  .input {$count :integer}
+  .match $count
+    0    {{ لا توجد تغييرات }}
+    one  {{ تغيير واحد }}
+    two  {{ تغييران }}
+    few  {{ {$count} تغييرات }}
+    many {{ {$count} تغييراً }}
+    *    {{ {$count} تغيير }}
+
+# Bulk edit error messages
+bulk_edit_invalid: بعض القيم غير صالحة. صحّح الحقول المميزة وحاول مرة أخرى.
+saving_bulk_edits_failed: فشل حفظ التغييرات. يرجى المحاولة مرة أخرى.
+
+# Bulk edit: confirmation shown when leaving the mode with unsaved changes
+discard_bulk_edits_confirm: هل تريد تجاهل التغييرات التي أُجريت على العناصر؟
 
 # ==============================================================================
 # File Upload and Processing
@@ -891,6 +1528,20 @@ warning_invalid_files: |
   .match $count
     one {{ لا يمكن رفع هذا الملف لأنه تالف أو لأن محتواه لا يطابق امتداده. يحدث هذا غالباً عند إعادة تسمية صورة بدلاً من تحويلها، مثل صورة HEIC محفوظة كملف JPEG. يرجى تحويل الملف والمحاولة مرة أخرى. }}
     *   {{ لا يمكن رفع هذه الملفات لأنها تالفة أو لأن محتواها لا يطابق امتداداتها. يحدث هذا غالباً عند إعادة تسمية الصور بدلاً من تحويلها، مثل صور HEIC محفوظة كملفات JPEG. يرجى تحويل الملفات والمحاولة مرة أخرى. }}
+# {$count} is the number of files that are not of a type the field accepts, even once transformed
+# {$types} is the list of accepted file types, such as “.pdf or .txt”
+warning_unsupported_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ لا يمكن رفع هذا الملف لأنه ليس من أحد الأنواع التالية: {$types}. }}
+    *   {{ لا يمكن رفع هذه الملفات لأنها ليست من أحد الأنواع التالية: {$types}. }}
+# {$count} is the number of files that are not of an image type the field accepts
+# {$types} is the list of accepted image formats, such as “PNG or WebP”
+warning_unsupported_image_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ لا يمكن رفع هذا الملف لأنه يتم قبول الصور من الأنواع التالية فقط: {$types}. }}
+    *   {{ لا يمكن رفع هذه الملفات لأنه يتم قبول الصور من الأنواع التالية فقط: {$types}. }}
 
 # File format validation when replacing an asset
 # Warning section for replacement files that are in a different format
@@ -934,6 +1585,8 @@ uploading_files_failed: فشل الرفع.
 # Errors shown when a file on a cloud storage service could not be deleted or renamed
 deleting_assets_failed: فشل الحذف.
 renaming_asset_failed: فشلت إعادة التسمية.
+# Error shown when an edited text file in the Asset Library could not be saved
+saving_asset_failed: فشل الحفظ.
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
@@ -975,6 +1628,8 @@ entry_validation_errors: |
     few  {{ تحتوي {$count} حقول على أخطاء. يرجى تصحيحها لحفظ العنصر. }}
     many {{ يحتوي {$count} حشلاً على أخطاء. يرجى تصحيحها لحفظ العنصر. }}
     *    {{ يحتوي {$count} حقل على أخطاء. يرجى تصحيحها لحفظ العنصر. }}
+# Button on the validation error toast that opens the Validation panel listing the errors
+show_errors: إظهار الأخطاء
 
 # ==============================================================================
 # Success Notifications
@@ -1103,6 +1758,22 @@ assets_deleted: |
     few  {{ تم حذف {$count} وسائط. }}
     many {{ تم حذف {$count} وسيطاً. }}
     *    {{ تم حذف {$count} وسيط. }}
+folder_created: تم إنشاء المجلد.
+# Folder info panel in the Asset Library sidebar
+folder_path: مسار المجلد
+folder_contents: المحتويات
+# {$count} is the number of subfolders in the folder
+x_folders: |
+  .input {$count :integer}
+  .match $count
+    0    {{ لا توجد مجلدات }}
+    one  {{ مجلد واحد }}
+    two  {{ مجلدان }}
+    few  {{ {$count} مجلدات }}
+    many {{ {$count} مجلداً }}
+    *    {{ {$count} مجلد }}
+folder_renamed: تمت إعادة تسمية المجلد.
+folder_deleted: تم حذف المجلد.
 
 # ==============================================================================
 # Content Editor
@@ -1143,6 +1814,9 @@ edit_singleton_announcement: أنت تقوم الآن بتعديل الملف �
 # Shown when CI skip is enabled/disabled
 save_and_publish: حفظ ونشر
 save_without_publishing: حفظ دون نشر
+# Shown disabled in place of `save_and_publish` while entries created or edited from a Relation
+# field are in a collection whose review can’t be skipped with the `direct_publish` option
+save_and_publish_needs_review: حفظ ونشر (العناصر المرتبطة تحتاج إلى مراجعة)
 
 # Editor options menu
 show_editor_options: إظهار خيارات المحرر
@@ -1172,6 +1846,9 @@ swap_panes: تبديل اللوحات
 # {$locale} is the localized language name for the current content pane, e.g., English
 edit_x_locale: تحرير محتوى {$locale}
 preview_x_locale: معاينة محتوى {$locale}
+# The content of a monolingual entry, which has no locale to name
+edit_content: تحرير المحتوى
+preview_content: معاينة المحتوى
 
 # Preview iframe labels
 content_preview: معاينة المحتوى
@@ -1180,6 +1857,8 @@ content_preview: معاينة المحتوى
 # {$locale} is the localized language name for the content options menu, e.g., English
 show_content_options_x_locale: إظهار خيارات محتوى {$locale}
 content_options_x_locale: خيارات محتوى {$locale}
+show_content_options: إظهار خيارات المحتوى
+content_options: خيارات المحتوى
 
 # Field container labels
 # {$field} is the field’s display label
@@ -1218,8 +1897,9 @@ deploy_preview:
   view: عرض المعاينة
   # Shown while the site is still being built, with or without a URL to open yet
   building: ما زالت المعاينة قيد الإنشاء.
-  # Shown when the build failed, so no preview is available
-  failed: تعذر إنشاء المعاينة.
+  # Shown when the build failed, so no preview is available. The failure may lie in the site’s own
+  # code rather than the entry, so the editor is told not to assume it’s theirs, and who to ask
+  build_failed: تعذر إنشاء المعاينة. ليس بالضرورة أن تكون تغييراتك هي السبب. إذا استمرت المشكلة، فاتصل بمسؤول موقعك.
   # Shown briefly while the CI/CD provider is being queried
   checking: جارٍ التحقق من وجود معاينة…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
@@ -1253,9 +1933,20 @@ translate_from: ترجمة من…
 # {$locale} is the localized language name of the source content being translated, e.g., English
 translate_from_x: ترجمة من {$locale}
 
-# Revert changes
+# Revert changes, restore the default values or clear the fields. The field options menu offers
+# them for a field, the content options menu of an editor pane for the locale it shows, and the
+# editor options menu for the whole entry, the latter two asking for confirmation first
 revert_changes: التراجع عن التغييرات
 revert_all_changes: التراجع عن جميع التغييرات
+restore_default: استعادة الافتراضي
+clear_all: مسح الكل
+confirm_reverting_changes: هل أنت متأكد من أنك تريد التراجع عن جميع التغييرات التي أُجريت على هذا العنصر؟
+# {$locale} is a locale name, e.g. French
+confirm_reverting_changes_x_locale: هل أنت متأكد من أنك تريد التراجع عن جميع التغييرات التي أُجريت على محتوى {$locale}؟
+confirm_restoring_defaults: هل أنت متأكد من أنك تريد استعادة القيم الافتراضية لجميع الحقول في هذا العنصر؟ ستفقد تغييراتك.
+confirm_restoring_defaults_x_locale: هل أنت متأكد من أنك تريد استعادة القيم الافتراضية لجميع الحقول في محتوى {$locale}؟ ستفقد تغييراتك.
+confirm_clearing_fields: هل أنت متأكد من أنك تريد مسح جميع الحقول في هذا العنصر؟ ستفقد تغييراتك.
+confirm_clearing_fields_x_locale: هل أنت متأكد من أنك تريد مسح جميع الحقول في محتوى {$locale}؟ ستفقد تغييراتك.
 
 # Slug editing
 edit_slug: تعديل المعرف الفريد (Slug)
@@ -1263,6 +1954,8 @@ edit_slug_error:
   empty: لا يمكن أن يكون المعرف الفريد (Slug) فارغاً.
   invalid: لا يمكن أن يحتوي المعرف الفريد (Slug) على رموز خاصة، بما في ذلك الشرطات المائلة والمسافات.
   duplicate: هذا المعرف الفريد (Slug) مستخدم بالفعل لعنصر آخر.
+# {$slug} is the slug filled from the slug template, which a number is added to when another entry uses it
+slug_numbered: المعرف الفريد (Slug) “{$slug}” مستخدم لعنصر آخر، لذلك ستتم إضافة رقم إليه.
 
 # Entry path editing for nested entries
 # Heading for the parent folder picker shown when the `meta.path` option is enabled
@@ -1406,6 +2099,13 @@ validation:
     email: يرجى إدخال بريد إلكتروني صالح.
     url: يرجى إدخال رابط URL صالح.
 
+  # Value used for the same field in another entry of the collection
+  value_not_unique: هذه القيمة مستخدمة لعنصر آخر.
+  # Key of a keyed List field item used for another item of the same list
+  key_not_unique: هذا المفتاح مستخدم لعنصر آخر.
+  # Key of a keyed List field item that is a whole number, which doesn’t keep its order in a map
+  key_numeric: لا يمكن أن يكون المفتاح عدداً صحيحاً، لأن العناصر ستفقد ترتيبها.
+
   # Custom field validation error
   invalid_value: قيمة غير صالحة.
   unexpected_error: حدث خطأ غير متوقع.
@@ -1427,6 +2127,12 @@ entry_sidebar:
     # Button in the panel header that validates the entry on demand
     validate: تحقق
 
+  # Slug panel: shows the entry slug and lets the user edit it
+  slug:
+    title: المعرف الفريد (Slug)
+    generated_on_save: يتم إنشاء المعرف الفريد من محتوى العنصر عند حفظه. سيكون أي تاريخ ووقت فيه هما تاريخ ووقت الحفظ.
+    unavailable: لا يحتوي هذا العنصر على معرف فريد (Slug).
+
   # History panel: shows entry commit history
   history:
     title: السجل
@@ -1438,11 +2144,55 @@ entry_sidebar:
     title: الروابط الخلفية
     no_entries: لا توجد عناصر تشير إلى هذا العنصر.
 
+  # Tab label of a panel with a count, e.g. of comments. {$title} is the panel title
+  title_with_count: '{$title} ({$count})'
+
+# Status shown next to the Save button while an entry with many new files is being saved
+# {$done} and {$total} are the number of files prepared and to prepare, or the number of commits
+# made and the estimated number of commits in all
+save_progress:
+  preparing: 'تجهيز الملفات: {$done} من {$total}'
+  committing: 'الحفظ على GitHub: {$done} من حوالي {$total} إيداع'
+
 # Entry save error dialog
 saving_entry:
   error:
     title: خطأ
     description: حدث خطأ أثناء حفظ العنصر. يرجى المحاولة مرة أخرى لاحقاً.
+
+# Dialog shown when saving the entry would overwrite a change someone else has made in the
+# repository since the entry was opened in the editor
+save_conflict:
+  title: تم تغيير العنصر بواسطة شخص آخر
+  # `{$name}` is the other person’s name, `{$date}` when they made the change
+  modified_by: غيّر {$name} هذا العنصر في {$date}، بعد أن فتحته.
+  # Shown instead of `modified_by` when the other person isn’t known
+  modified: تم تغيير هذا العنصر في المستودع بعد أن فتحته.
+  deleted: تم حذف هذا العنصر من المستودع بعد أن فتحته.
+  # Follows `modified_by` or `modified`
+  overwrite_warning: إذا حفظت الآن، فستفقد تغييراتهم.
+  # Follows `deleted`
+  recreate_warning: إذا حفظت الآن، فسيتم إنشاء العنصر مرة أخرى.
+  # Follows `modified_by`, `modified` or `deleted` for an entry stored in the same file as the other
+  # entries of the collection, which can’t be saved over the change
+  reload_warning: نظراً لأن العنصر مخزن في الملف نفسه مع عناصر أخرى، لا يمكن حفظه فوق التغيير. ألغِ التحرير، ثم افتح العنصر مرة أخرى من القائمة وأجرِ تعديلاتك.
+  # OK button label
+  save_anyway: الحفظ على أي حال
+  # Error shown when the repository was updated between the check above and the commit itself
+  branch_moved: تم تحديث المستودع بواسطة شخص آخر أثناء الحفظ. يرجى المحاولة مرة أخرى.
+  # Error shown when saving would change an item in a file storing all the entries of a collection,
+  # which someone else has changed or moved since it was loaded
+  array_item_changed: تم تغيير عنصر مخزن في الملف نفسه بواسطة شخص آخر. يرجى المحاولة مرة أخرى.
+  # {$path} is the file path
+  array_file_invalid: لا يمكن تحديث الملف {$path}، لأنه لا يحتوي على قائمة صالحة من العناصر.
+
+# Notice shown in the entry editor when someone else has changed or deleted the entry in the
+# repository while the user has it open. The change itself is described with the `save_conflict`
+# strings above
+remote_change:
+  reload_entry: إعادة تحميل العنصر
+  # Confirmation shown before reloading when the user has unsaved changes
+  confirm_reloading_entry: هل أنت متأكد من أنك تريد إعادة تحميل العنصر؟ ستفقد تغييراتك غير المحفوظة.
 
 # ==============================================================================
 # Asset Editor
@@ -1524,21 +2274,71 @@ map_lat_lng: خريطة توضح خط العرض {$latitude}، وخط الطول
 remove_this_item: إزالة هذا العنصر
 move_up: تحريك لأعلى
 move_down: تحريك لأسفل
+# Menu of a list item or file with the extra reorder actions, shown in a list of 3 or more items
+reorder_options: خيارات إعادة الترتيب
+move_to_top: نقل إلى الأعلى
+move_to_bottom: نقل إلى الأسفل
+# Opens a dialog asking for the position to move a list item to
+move_to: نقل إلى…
+# Dialog asking for the new position of an item. {$count} is the number of items in the list
+move_to_description: أدخل موضعاً من 1 إلى {$count}.
+move_to_position: الموضع
 # aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
 # or moved with the arrow keys while the handle has focus
 reorder_item: إعادة ترتيب العنصر
 # aria-label for the text input holding one item of a simple List field, which has no subfield to
 # take a label from
 list_item_value: قيمة العنصر
+# aria-label for each item of a List field, giving its position in the list
+# {$position} is the 1-based position of the item, {$count} is the number of items
+list_item_position: العنصر {$position} من {$count}
+# Message shown in place of a removed List field item or Object field, next to a Restore button
+# that puts it back
+item_removed: تمت إزالة العنصر.
 
-# Add item button label
+# Add item button label, also used by the Relation field to create a new entry in the referenced
+# collection, with the collection’s singular label
 # Example: “Add Image”, “Add Author”
 # {$name} is the label of the item type that can be added
 add_x: إضافة {$name}
 
 # List item context menu
+# aria-label for the button opening the menu, and for the menu itself
+list_item_options: خيارات عنصر القائمة
 add_item_above: إضافة عنصر أعلاه
 add_item_below: إضافة عنصر أدناه
+paste_item_above: لصق العنصر أعلاه
+paste_item_below: لصق العنصر أدناه
+paste_item_to_replace: لصق للاستبدال
+
+# List item clipboard
+# Button in the list toolbar to paste a copied item, from any list in any entry, at the end of the
+# list, or at the start with the `add_to_top` option
+paste_item: لصق العنصر
+list_item_copied: تم نسخ العنصر.
+# ⋮ stands for the icon of the item menu button; keep it, along with the button’s aria-label
+no_list_item_to_paste: لا يوجد عنصر منسوخ للصقه. لنسخ عنصر، افتح قائمة ⋮ (خيارات عنصر القائمة) الخاصة به وحدد “نسخ”.
+list_item_not_compatible: العنصر المنسوخ لا يتوافق مع هذه القائمة.
+# {$count} is the number of the values left out, as the list doesn’t have the fields
+list_item_pasted_without_values: |
+  .input {$count :integer}
+  .match $count
+    0    {{ تم لصق العنصر. }}
+    one  {{ تم لصق العنصر. تم استبعاد قيمة واحدة لا تقبلها هذه القائمة. }}
+    two  {{ تم لصق العنصر. تم استبعاد قيمتين لا تقبلهما هذه القائمة. }}
+    few  {{ تم لصق العنصر. تم استبعاد {$count} قيم لا تقبلها هذه القائمة. }}
+    many {{ تم لصق العنصر. تم استبعاد {$count} قيمة لا تقبلها هذه القائمة. }}
+    *    {{ تم لصق العنصر. تم استبعاد {$count} قيمة لا تقبلها هذه القائمة. }}
+# {$count} is the number of the files the pasted item references that couldn’t be found
+list_item_pasted_without_files: |
+  .input {$count :integer}
+  .match $count
+    0    {{ تم لصق العنصر. }}
+    one  {{ تم لصق العنصر، لكن تعذر العثور على ملف يستخدمه. تحقق من حقول الملفات في العنصر. }}
+    two  {{ تم لصق العنصر، لكن تعذر العثور على ملفين يستخدمهما. تحقق من حقول الملفات في العنصر. }}
+    few  {{ تم لصق العنصر، لكن تعذر العثور على {$count} ملفات يستخدمها. تحقق من حقول الملفات في العنصر. }}
+    many {{ تم لصق العنصر، لكن تعذر العثور على {$count} ملفاً يستخدمها. تحقق من حقول الملفات في العنصر. }}
+    *    {{ تم لصق العنصر، لكن تعذر العثور على {$count} ملف يستخدمها. تحقق من حقول الملفات في العنصر. }}
 
 # Variable-type list selector
 select_list_type: حدد نوع القائمة
@@ -1557,12 +2357,45 @@ opacity: الشفافية
 # Select field: empty option placeholder
 unselected_option: (لاشيء)
 
+# Relation field: creating or editing a referenced entry without leaving the editor
+relation_field:
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  save_together_hint: سيتم حفظ {$name} الجديد مع العنصر الذي تحرره.
+  # Error shown when the entry couldn’t be prepared. {$name} is the singular label of the collection
+  add_failed: تعذرت إضافة {$name}. تحقق من الـ Console الخاص بالمتصفح للحصول على التفاصيل.
+  # Title of the dialog to edit an entry selected in the field. {$name} is the singular label of the
+  # referenced collection
+  edit_entry_title: تحرير {$name}
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  edit_together_hint: سيتم حفظ تغييراتك على {$name} مع العنصر الذي تحرره.
+  # Error shown when the changes couldn’t be prepared. {$name} is the singular label of the collection
+  edit_failed: تعذر تطبيق التغييرات على {$name}. تحقق من الـ Console الخاص بالمتصفح للحصول على التفاصيل.
+  # Error shown when the changes would move the entry to another file path, e.g. through a path
+  # template using a field. {$name} is the singular label of the collection
+  move_unsupported: ستؤدي هذه التغييرات إلى نقل {$name} إلى موقع آخر، وهو ما لا يمكن القيام به إلا بتحريره بشكل مستقل.
+  # Error shown when saving, if someone else has changed an entry edited from the field since. {$name}
+  # is the summary of that entry
+  edit_conflict: تم تغيير “{$name}” بواسطة شخص آخر منذ أن حررته. افتحه مرة أخرى من الحقل لمراجعة تغييراتك مقارنةً بأحدث نسخة.
+  # Error shown when saving, if someone else has deleted an entry edited from the field since.
+  # {$name} is the summary of that entry
+  edit_deleted: تم حذف “{$name}” بواسطة شخص آخر منذ أن حررته. أزله من الحقل لحفظ العنصر.
+  # Accessible label of the menu listing the selected entries that can be edited
+  select_entry_to_edit: تحديد عنصر لتحريره
+  # Warning shown in the editor of an entry that has been edited from a Relation field of another
+  # entry, while the changes wait in that entry’s pull request. {$name} is the summary of that
+  # entry
+  edited_with_entry: التغييرات على هذا العنصر بانتظار النشر مع “{$name}”. إذا حفظته الآن، فسيتم دمج مجموعتي التغييرات عند نشر ذلك العنصر، وقد يفشل ذلك إذا تداخلتا.
+  # Warning shown in the dialog when an entry edited from the field has been changed by someone else
+  # since. {$name} is the singular label of the collection
+  changed_since_edit: تم تغيير {$name} هذا بواسطة شخص آخر منذ أن حررته. تظهر تغييراتك فوق أحدث نسخة. راجعها قبل التحديث.
+
 # Select Assets dialog
 assets_dialog:
   # Dialog titles for different selection modes
   title:
     file: تحديد ملف
     image: تحديد صورة
+    folder: تحديد مجلد
 
   # Search input labels
   search_for_file: البحث عن ملفات
@@ -1570,6 +2403,22 @@ assets_dialog:
 
   # Locations panel aria-label
   locations: المواقع
+
+  # Folder selection mode for a File field with the `select_folder` option. {$path} is the public
+  # path of the folder to be selected, and {$count} is the number of folders selected
+  selected_folder: 'المجلد المحدد: {$path}'
+  selected_folders: |
+    .input {$count :integer}
+    .match $count
+      0    {{ لم يتم تحديد أي مجلد }}
+      one  {{ تم تحديد مجلد واحد }}
+      two  {{ تم تحديد مجلدين }}
+      few  {{ تم تحديد {$count} مجلدات }}
+      many {{ تم تحديد {$count} مجلداً }}
+      *    {{ تم تحديد {$count} مجلد }}
+  no_subfolders: لا يحتوي هذا المجلد على مجلدات فرعية.
+  # Shown for a cloud storage service whose `prefix` option depends on fields of the entry
+  prefix_unresolved: املأ الحقول التي يعتمد عليها هذا الموقع لتصفح ملفاته ورفعها.
 
   # Asset folder options
   folder:
@@ -1587,6 +2436,7 @@ assets_dialog:
 
   # Stock photo panels
   available_images: الصور المتاحة
+  available_files: الملفات المتاحة
 
   # URL entry option
   enter_url: إدخال رابط URL
@@ -1609,6 +2459,9 @@ assets_dialog:
   photo_credit:
     title: إسناد الصورة
     description: 'يرجى استخدام الإسناد التالي إن أمكن:'
+    # {$field} is the label of the Markdown field the credit is added to
+    insert_to_field: إدراج في {$field}
+    copy_as_markdown: نسخ بتنسيق Markdown
 
   # Unsaved asset badge
   unsaved: غير محفوظ
@@ -1660,6 +2513,7 @@ editor_components:
   alt: النص البديل
   title: العنوان
   link: الرابط
+  caption: التعليق التوضيحي
 
 # Key-Value field: column headers and validation
 key_value:
@@ -1724,6 +2578,15 @@ cloud_storage:
   uploadcare:
     auth_key_label: مفتاح السر الخاص بـ API
 
+  azure_blob_storage:
+    auth_key_label: رمز SAS
+
+  backblaze_b2:
+    auth_key_label: مفتاح التطبيق
+
+  bunny_storage:
+    auth_key_label: كلمة مرور منطقة التخزين
+
 # ==============================================================================
 # Configuration Validation
 # ==============================================================================
@@ -1741,6 +2604,7 @@ config:
       few  {{ هناك {$count} أخطاء في إعداد الـ CMS. يرجى حل المشكلات والمحاولة مرة أخرى. }}
       many {{ هناك {$count} خطأً في إعداد الـ CMS. يرجى حل المشكلات والمحاولة مرة أخرى. }}
       *    {{ هناك {$count} خطأ في إعداد الـ CMS. يرجى حل المشكلات والمحاولة مرة أخرى. }}
+
   # Error location prefixes
   error_locator:
     # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
@@ -1784,16 +2648,42 @@ config:
     unsupported_backend_suggestion: استخدم أحد <a>الخوادم الخلفية (Backends) المدعومة</a> بدلاً من ذلك.
     missing_repository: لم يتم تعريف المستودع.
     invalid_repository: المستودع المعد غير صالح. يجب أن يكون بصيغة “owner/repo”.
+    # Don’t localize `api_root`
+    missing_api_root: الخيار `api_root` غير معرّف. وهو مطلوب للخادم الخلفي Forgejo.
+    invalid_root_dir: المجلد الجذر غير صالح. يجب أن يكون مساراً داخل المستودع، بدون “..”.
+    invalid_root_dir_branch: لا يمكن استخدام المجلد الجذر في أسماء الفروع لوضعي النشر `editorial_workflow` و `preview`. لا يمكن لأي جزء من مساره أن يبدأ بنقطة، أو ينتهي بـ “.lock”، أو يحتوي على مسافة أو رمز خاص مثل النقطتين أو النجمة.
+    path_outside_root_dir: يؤدي المسار “{$path}” إلى خارج المجلد الجذر، حيث لا يمكن لنظام إدارة المحتوى عرض الملفات.
     oauth_implicit_flow: طريقة المصادقة المُعدة (الانسياب الضمني) غير مدعومة في Sveltia CMS. استخدم <a>طريقة مصادقة</a> مختلفة بدلاً من ذلك.
     github_pkce_unsupported: تفويض PKCE غير مدعوم بعد بسبب قيود GitHub. استخدم <a>طريقة مصادقة</a> مختلفة بدلاً من ذلك.
+    additions_no_base_url: يجب أن يكون الخيار `base_url` رابط URL لخدمة Sveltia CMS Additions الخاصة بك.
     oauth_no_app_id: معرف تطبيق OAuth غير محدد.
     # Don’t localize `open_authoring`, `editorial_workflow` and `preview`
-    open_authoring_no_workflow: يتطلب الخيار `open_authoring` وضع النشر `editorial_workflow`. راجع <a>الوثائق</a> للحصول على التفاصيل.
+    open_authoring_no_workflow: يتطلب الخيار `open_authoring` وضع النشر `editorial_workflow` أو `preview`. راجع <a>الوثائق</a> للحصول على التفاصيل.
     # Don’t localize `auth_methods`
     no_auth_methods: يجب أن يحتوي الخيار `auth_methods` على طريقة واحدة على الأقل.
+    # Don’t localize `auth_scope`, `repo` and `public_repo`
+    auth_scope_no_repo: يجب أن يتضمن الخيار `auth_scope` القيمة `repo` أو `public_repo`.
     missing_media_folder: مجلد الوسائط غير محدد.
     public_folder_relative_path: المجلد العام المعد غير صالح. يجب أن يكون مساراً مطلقاً يبدأ بـ “/”.
     public_folder_absolute_url: استخدام رابط URL مطلق لخيار المجلد العام غير مدعوم في Sveltia CMS.
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    unsupported_folder_template_tag: يحتوي الخيار `{$option}` على وسم القالب `{$tag}`، وهو غير مدعوم هناك. يمكن استخدام وسوم قالب المعرف الفريد (Slug) فقط، مثل `\{\{slug\}\}` و `\{\{year\}\}`، والوسوم `\{\{dirname\}\}` و `\{\{filename\}\}` و `\{\{extension\}\}` و `\{\{media_folder\}\}` و `\{\{public_folder\}\}`.
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    global_folder_template_tag: يحتوي الخيار `{$option}` على وسم القالب `{$tag}`، الذي لا يمكن استخدامه إلا في خيار مجموعة أو ملف مجموعة أو حقل، حيث يوجد عنصر لملئه منه.
+    # {$replacement} is the configured replacement string; Don’t localize `sanitize_replacement`
+    invalid_sanitize_replacement: الخيار `sanitize_replacement` مضبوط على `{$replacement}`، لكنه يحتوي على رمز لا يمكن استخدامه في المعرف الفريد (Slug)، لذلك لا يمكن أن يحل محل رمز آخر.
+    # {$option} is the option name (`site_url` or `display_url`) and {$url} is the configured value
+    invalid_url_option: الخيار `{$option}` مضبوط على `{$url}`، لكن يجب أن يكون رابط URL مطلقاً يبدأ بـ `https://` أو `http://`.
+    # Don’t localize `publish_mode`, `stages`, `draft`, `pending_review` and `pending_publish`
+    invalid_publish_mode_stages: يجب أن يبدأ الخيار `stages` الخاص بـ `publish_mode` بـ `draft` وأن يسرد المراحل بالترتيب `draft` و `pending_review` و `pending_publish`، دون تكرار أي منها.
+    # Don’t localize `i18n` and `locales`
+    i18n_no_locales: يجب أن يسرد الخيار `i18n.locales` لغة واحدة على الأقل.
+    # {$locale} is the locale code from the configuration; Don’t localize `default_locale` and `locales`
+    i18n_invalid_default_locale: الخيار `default_locale` مضبوط على `{$locale}`، لكنها ليست إحدى `locales`.
+    # {$locale} is the locale code from the configuration; Don’t localize `initial_locales` and `locales`
+    i18n_invalid_initial_locale: يحتوي الخيار `initial_locales` على `{$locale}`، لكنها ليست إحدى `locales`.
+    # Don’t localize `i18n`
+    i18n_no_collections: 'تم إعداد الخيار `i18n` على المستوى الأعلى، لكن لا تحتوي أي من المجموعات أو المفردات على الخيار `i18n`، لذلك لا يمكن ترجمة أي محتوى. أضف `i18n: true` إلى المجموعات والمفردات المراد ترجمتها.'
     # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
     invalid_transformation_key: يحتوي الخيار `transformations` على مفتاح `{$key}` غير مدعوم. يجب أن يكون `raster_image` أو `svg` أو تنسيق صور نقطية مدعوم.
     # {$key} is the transformation key; Don’t localize `quality`
@@ -1806,18 +2696,52 @@ config:
     invalid_asset_collection_name: اسم مجموعة الوسائط `{$name}` غير صالح. يجب ألا يحتوي على رموز خاصة.
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: يجب أن تكون أسماء مجموعات الوسائط فريدة، ولكن `{$name}` مستخدم أكثر من مرة.
-    # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_no_options: يجب أن تحتوي المجموعة إما على خيار `folder` أو `files` أو `divider`.
-    # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_multiple_options: لا يمكن للمجموعة أن تحتوي على الخيارات `folder` و `files` و `divider` معاً.
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_no_options: يجب أن تحتوي المجموعة على أحد الخيارات `folder` أو `file` أو `files` أو `divider`.
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_multiple_options: لا يمكن للمجموعة أن تحتوي على أكثر من خيار واحد من الخيارات `folder` و `file` و `files` و `divider`.
     # {$extension} is the file extension and {$format} is the configured content format
     file_format_mismatch: الامتداد `{$extension}` لا يتطابق مع التنسيق `{$format}`.
+    # {$name} is the field name from the configuration and {$widget} is its field type
+    front_matter_body_field_not_text: يتم حفظ الحقل `{$name}` كمتن أسفل الـ Front Matter، الذي لا يمكن أن يحتوي إلا على نص، وليس رقماً أو قيمة منطقية أو قائمة أو كائناً كما يفعل حقل `{$widget}`. استخدم نوع حقل يحتوي على نص، أو أعد تسمية الحقل.
+    # {$file} is the file path from the configuration; Don’t localize `file` and `locale`. The curly
+    # brackets are escaped with backslashes for MessageFormat 2
+    invalid_collection_data_file: الخيار `file` بالقيمة `{$file}` غير صالح. يجب أن يكون مسار ملف JSON، بدون العنصر النائب `\{\{locale\}\}`.
+    # {$prop} is the option name; Don’t localize `file`
+    unsupported_collection_data_file_option: الخيار `{$prop}` غير مدعوم في مجموعة تحتوي على الخيار `file`.
+    # Don’t localize `file`, `publish_mode` and `simple`
+    collection_data_file_workflow: سير العمل التحريري وسير عمل المعاينة، بما في ذلك التأليف المفتوح، غير مدعومين في مجموعة تحتوي على الخيار `file`. اضبط الخيار `publish_mode` للمجموعة على `simple`.
+    # {$prop} is the option name; Don’t localize `file` and `slug`. The curly brackets are escaped
+    # with backslashes for MessageFormat 2
+    collection_data_file_slug_tag: لا يمكن أن يحتوي الخيار `{$prop}` على الوسم `\{\{slug\}\}` في مجموعة تحتوي على الخيار `file`، لأن المعرف الفريد للعنصر هو موضعه، الذي يتغير عند إعادة ترتيب العناصر أو حذفها. استخدم حقلاً ذا قيمة فريدة بدلاً من ذلك.
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
     invalid_slug_slash: قالب المعرف الفريد (Slug) `{$slug}` غير صالح لأنه لا يمكن أن يحتوي على شرطات مائلة. لتنظيم العناصر في مجلدات فرعية، استخدم الخيار `path` بدلاً من `slug`.
+    # {$name} is the field name from the configuration; Don’t localize `identifier_field`
+    invalid_identifier_field: يشير الخيار `identifier_field` إلى `{$name}`، لكن لم يتم تعريف حقل بهذا الاسم في المجموعة.
+    # {$name} is the field name from the configuration; Don’t localize `filter`
+    invalid_filter_field: يشير الخيار `filter` إلى `{$name}`، لكن لم يتم تعريف حقل بهذا الاسم في المجموعة.
+    # Don’t localize `filter`, `value` and `pattern`
+    invalid_filter_no_condition: يجب أن يحتوي الخيار `filter` على الخيار `value` أو `pattern` لمطابقة العناصر.
+    # {$option} is an option name such as `slug` or `summary` and {$name} is the field name or template tag from the configuration
+    option_field_not_found: يشير الخيار `{$option}` إلى `{$name}`، لكن لم يتم تعريف حقل بهذا الاسم.
+    # {$name} is the field name from the configuration and {$widget} is its field type; Don’t localize `thumbnail`
+    thumbnail_field_not_media: يشير الخيار `thumbnail` إلى `{$name}`، لكن يجب أن يكون حقل Image أو File، وليس حقل `{$widget}`.
+    # Don’t localize `inline` or `multiple`
+    invalid_inline_component_fields: يتطلب الوضع `inline` حقلاً واحداً من نوع Boolean أو Color أو DateTime أو Number أو Relation أو Select أو String. لا يمكن تفعيل الخيار `multiple` لحقل Relation أو Select.
+    # {$option} is an option name such as `pattern` or `filter` and {$pattern} is the configured pattern
+    invalid_regex: يحتوي الخيار `{$option}` على تعبير نمطي غير صالح `{$pattern}`، وسيتم تجاهله.
     # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
     invalid_reorder_group: يشير الخيار `reorder` إلى مجموعة عرض باسم `{$name}`، لكن لم يتم تعريف مجموعة بهذا الاسم في الخيار `view_groups`.
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit` and `fields`
+    invalid_bulk_edit_field: تشير قائمة `fields` الخاصة بالخيار `bulk_edit` إلى حقل باسم `{$name}`، لكن لم يتم تعريف حقل بهذا الاسم في المستوى الأعلى من المجموعة.
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit`, `fields` and `multiple`
+    unsupported_bulk_edit_field: لا يمكن تعديل الحقل `{$name}` الموجود في قائمة `fields` الخاصة بالخيار `bulk_edit` بشكل جماعي. يتم دعم حقول Boolean أو Color أو DateTime أو Number أو Relation أو Select أو String فقط، بشرط ألا تكون للقراءة فقط، وألا يكون الخيار `multiple` مفعّلاً فيها، وألا يتم تعيينها تلقائياً عند الحفظ.
     # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
     invalid_sortable_field: يشير الخيار `sortable_fields` إلى حقل باسم `{$name}`، لكن لم يتم تعريف حقل بهذا الاسم في المجموعة.
+    # Don’t localize `sortable_fields` and `default_sort`
+    multiple_sortable_field_defaults: يمكن لعنصر واحد فقط في الخيار `sortable_fields` أن يحتوي على الخيار `default_sort`.
+    # {$option} is `table_columns` or `summary_fields`, and {$name} is the field name from the configuration
+    invalid_table_column_field: يشير الخيار `{$option}` إلى حقل باسم `{$name}`، لكن لم يتم تعريف حقل بهذا الاسم في المجموعة.
     # {$name} is the field name from the configuration; Don’t localize `view_groups`
     invalid_view_group_field: يشير الخيار `view_groups` إلى حقل باسم `{$name}`، لكن لم يتم تعريف حقل بهذا الاسم في المجموعة.
     # {$name} is the field name from the configuration; Don’t localize `view_filters`
@@ -1829,9 +2753,15 @@ config:
     duplicate_view_group_name: يجب أن تكون أسماء مجموعات العرض فريدة، لكن `{$name}` مستخدم أكثر من مرة.
     # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
     missing_view_filter_name: يجب أن يتضمن مرشح العرض {$count} الخيار `name` محددًا كسلسلة نصية غير فارغة.
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `pattern`, `eq` and `gte`
+    invalid_view_filter_no_condition: يجب أن يحتوي مرشح العرض {$count} على الخيار `pattern` أو خيار مقارنة مثل `eq` أو `gte` لمطابقة العناصر.
     # {$name} is the invalid or duplicate view filter name
     invalid_view_filter_name: اسم مرشح العرض `{$name}` غير صالح. يجب ألا يحتوي على رموز خاصة.
     duplicate_view_filter_name: يجب أن تكون أسماء مرشحات العرض فريدة، لكن `{$name}` مستخدم أكثر من مرة.
+    # {$name} is the default view group name from the configuration; Don’t localize `default` and `view_groups`
+    invalid_view_group_default: الخيار `default` الخاص بـ `view_groups` مضبوط على `{$name}`، لكن لا توجد مجموعة عرض بهذا الاسم.
+    # {$name} is the default view filter name from the configuration; Don’t localize `default` and `view_filters`
+    invalid_view_filter_default: الخيار `default` الخاص بـ `view_filters` مضبوط على `{$name}`، لكن لا يوجد مرشح عرض بهذا الاسم.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: يجب أن تتضمن المجموعة {$count} الخيار `name` محددًا كسلسلة نصية غير فارغة.
     # {$name} is the invalid or duplicate collection name
@@ -1846,8 +2776,19 @@ config:
     collection_no_fields: يجب أن تحتوي المجموعة على الخيار `fields` محددًا بحقل واحد على الأقل.
     # Don’t localize `fields`
     collection_file_no_fields: يجب أن يحتوي ملف المجموعة على الخيار `fields` محددًا بحقل واحد على الأقل.
+    # Don’t localize `i18n`, `locale` and `folder`
+    collection_folder_i18n_required: يجب أن تحتوي المجموعة على الخيار `i18n` معرّفاً إذا تم استخدام العنصر النائب `locale` في مسار `folder`.
+    # {$folder} is the invalid folder path; Don’t localize `locale`, `folder` and the example path. The
+    # curly brackets in the example are escaped with backslashes for MessageFormat 2
+    invalid_collection_folder_locale: مسار `folder` بالقيمة `{$folder}` غير صالح. يجب استخدام العنصر النائب `locale` مرة واحدة فقط كاسم مجلد كامل، مثل `content/\{\{locale\}\}/posts`.
     # Don’t localize `i18n`, `locale` and `file`
     collection_file_i18n_required: يجب أن يحتوي ملف المجموعة على الخيار `i18n` محددًا إذا تم استخدام العنصر البديل `locale` في مسار `file`.
+    # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
+    collection_i18n_no_fields: 'تحتوي المجموعة على الخيار `i18n`، لكن لا يحتوي أي من حقولها على الخيار `i18n`، لذلك لا يمكن ترجمة أي حقل. أضف `i18n: true` أو `i18n: duplicate` إلى الحقول المراد ترجمتها.'
+    # Don’t localize `i18n` and `i18n: true`
+    collection_i18n_no_files: 'تحتوي المجموعة على الخيار `i18n`، لكن لا يحتوي أي من ملفاتها على الخيار `i18n`، لذلك لا يمكن ترجمة أي ملف. أضف `i18n: true` إلى الملفات المراد ترجمتها.'
+    # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
+    collection_file_i18n_no_fields: 'يحتوي ملف المجموعة على الخيار `i18n`، لكن لا يحتوي أي من حقوله على الخيار `i18n`، لذلك لا يمكن ترجمة أي حقل. أضف `i18n: true` أو `i18n: duplicate` إلى الحقول المراد ترجمتها.'
     # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
     missing_field_name: يجب أن يحتوي الحقل {$count} على الخيار `name` محددًا كسلسلة نصية غير فارغة.
     # {$name} is the invalid or duplicate field name
@@ -1859,6 +2800,8 @@ config:
     invalid_variable_type: اسم نوع المتغير `{$name}` غير صالح. يجب ألا يحتوي على رموز خاصة.
     duplicate_variable_type: يجب أن تكون أسماء أنواع المتغيرات فريدة، ولكن `{$name}` مستخدم أكثر من مرة.
     date_field_type: 'نوع الحقل Date المهجور غير مدعوم في Sveltia CMS. استخدم نوع الحقل DateTime مع الخيار `type: date` بدلاً من ذلك.'
+    # curly brackets in the placeholder are escaped with backslashes for MessageFormat 2
+    hidden_field_locale_without_i18n: يستخدم الخيار `default` لحقل Hidden العنصر النائب `\{\{locale\}\}`، لكن التدويل (i18n) غير مفعّل للمجموعة، لذلك لا توجد لغة للمحتوى لملئه بها.
     # {$timeZone} is the invalid IANA timezone identifier from the configuration
     invalid_timezone: 'منطقة زمنية غير صالحة: {$timeZone}. يجب أن تكون معرف منطقة زمنية صالحة من IANA مثل `America/New_York` أو `Asia/Tokyo`.'
     # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
@@ -1871,12 +2814,85 @@ config:
     invalid_list_variable_type: نوع المتغير لحقل List غير صالح. الخيار `widget` مضبوط على `{$widget}` ولكن يجب أن يكون `object`.
     # Don’t localize `fields`, and `types`
     invalid_object_field: لا يمكن لحقل Object أن يحتوي على الخيارين `fields` و `types` معاً.
+    # {$min} and {$max} are option names such as `min` and `max` or `minlength` and `maxlength`
+    invalid_range_options: يجب ألا يكون الخيار `{$min}` أكبر من الخيار `{$max}`.
+    # {$step} is the configured value; Don’t localize `step`
+    invalid_step: الخيار `step` مضبوط على `{$step}`، لكن يجب أن يكون أكبر من صفر، أو `-1` لإيقاف التدرج.
+    # Don’t localize `options`
+    select_field_no_options: يجب أن يحتوي حقل Select على عنصر واحد على الأقل في الخيار `options`.
+    # {$value} is the option value from the configuration; Don’t localize `options`
+    select_field_duplicate_option: يجب أن تكون قيم `options` لحقل Select فريدة، لكن `{$value}` مستخدمة أكثر من مرة.
+    # {$value} is the default value from the configuration; Don’t localize `default` and `options`
+    select_field_invalid_default: الخيار `default` لحقل Select مضبوط على `{$value}`، لكنها ليست إحدى قيم `options`.
+    # Don’t localize `fields` and `types`
+    list_field_no_subfields: يجب أن يحتوي الخيار `fields` أو `types` لحقل List على عنصر واحد على الأقل. احذف الخيار للحصول على قائمة من القيم البسيطة.
+    # Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_object: يحتوي الخيار `default` لحقل List على كائن، لكن يجب أن يكون كل عنصر قيمة بسيطة لأن الحقل لا يحتوي على `fields` أو `types`.
+    # {$value} is the default item from the configuration; Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_item: يحتوي الخيار `default` لحقل List على `{$value}`، لكن يجب أن يكون كل عنصر كائناً لأن الحقل يحتوي على `fields` أو `types`.
+    # {$key} is a property name of the default item from the configuration; Don’t localize `default`
+    list_field_invalid_default_key: يحتوي الخيار `default` لحقل List على عنصر بالخاصية `{$key}`، لكن لا يوجد حقل فرعي بهذا الاسم.
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    list_field_default_missing_type: يحتوي الخيار `default` لحقل List على عنصر بدون الخاصية `{$typeKey}`، التي تحدد أحد `types`.
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default item; Don’t localize `default` and `types`
+    list_field_invalid_default_type: يحتوي الخيار `default` لحقل List على عنصر قيمة خاصيته `{$typeKey}` هي `{$value}`، لكنها ليست أحد `types`.
+    # Don’t localize `map_key_field`, `fields` and `types`
+    list_field_map_key_no_subfields: يتطلب الخيار `map_key_field` لحقل List الخيار `fields` أو `types`، لأن كل مفتاح يؤخذ من حقل فرعي.
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_not_found: يشير الخيار `map_key_field` لحقل List إلى `{$name}`، لكن لا يوجد حقل فرعي بهذا الاسم.
+    # {$name} is the subfield name, and {$type} is the variable type name; Don’t localize `map_key_field`
+    list_field_map_key_missing_in_type: يشير الخيار `map_key_field` لحقل List إلى `{$name}`، لكن النوع `{$type}` لا يحتوي على حقل فرعي بهذا الاسم.
+    # {$name} is the subfield name, and {$widget} is its field type; Don’t localize `map_key_field`
+    list_field_map_key_invalid_type: يشير الخيار `map_key_field` لحقل List إلى `{$name}`، لكن يجب أن يكون حقل String أو Relation أو Select، وليس حقل `{$widget}`.
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `multiple`
+    list_field_map_key_multiple: يشير الخيار `map_key_field` لحقل List إلى `{$name}`، لكن لا يمكن للحقل الفرعي قبول قيم متعددة، لأن كل عنصر يحتاج إلى مفتاح واحد. أزل الخيار `multiple` الخاص به.
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_option_not_string: يشير الخيار `map_key_field` لحقل List إلى `{$name}`، لكن يجب أن تكون قيم خيارات الحقل الفرعي سلاسل نصية، لأن كل مفتاح يُخزَّن كسلسلة نصية.
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `required`
+    list_field_map_key_not_required: يشير الخيار `map_key_field` لحقل List إلى `{$name}`، لكن لا يمكن أن يكون الحقل الفرعي اختيارياً، لأن كل عنصر يحتاج إلى مفتاح. أزل الخيار `required` الخاص به.
+    # {$name} is the subfield name; Don’t localize `map_key_field`, `i18n: false` and `i18n: duplicate`
+    list_field_map_key_not_localized: 'يشير الخيار `map_key_field` لحقل List إلى `{$name}`، لكن لا يمكن أن يحتوي الحقل الفرعي على `i18n: false`، لأن العناصر تحتاج إلى مفتاح في كل لغة. استخدم `i18n: duplicate` أو أزل الخيار.'
+    # Don’t localize `i18n`, `duplicate_if_empty`, `multiple` and `true`
+    duplicate_if_empty_multiple: 'الخيار `i18n: duplicate_if_empty` غير مدعوم لحقل يحتوي على الخيار `multiple`، لذلك يعمل الحقل كما لو كان يحتوي على `i18n: true`.'
+    # Don’t localize `default` and `multiple`
+    invalid_default_multiple: يجب أن يكون الخيار `default` مصفوفة لأن الخيار `multiple` هو `true`.
+    invalid_default_single: يجب أن يكون الخيار `default` قيمة واحدة، وليس مصفوفة، لأن الخيار `multiple` ليس `true`.
+    # {$key} is a property name of the default object from the configuration; Don’t localize `default`
+    object_field_invalid_default_key: يحتوي الخيار `default` لحقل Object على الخاصية `{$key}`، لكن لا يوجد حقل فرعي بهذا الاسم.
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    object_field_default_missing_type: لا يحتوي الخيار `default` لحقل Object على الخاصية `{$typeKey}`، التي تحدد أحد `types`.
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default object; Don’t localize `default` and `types`
+    object_field_invalid_default_type: قيمة الخاصية `{$typeKey}` في الخيار `default` لحقل Object هي `{$value}`، لكنها ليست أحد `types`.
+    # Don’t localize `default` and `output_code_only`
+    code_field_invalid_default_object: يجب أن يكون الخيار `default` لحقل Code سلسلة نصية لأن الخيار `output_code_only` هو `true`.
+    # {$key} is a property name of the default object, {$code} and {$lang} are the configured property names; Don’t localize `default` and `keys`
+    code_field_invalid_default_key: يحتوي الخيار `default` لحقل Code على الخاصية `{$key}`، لكن الخيار `keys` يسمح فقط بـ `{$code}` و `{$lang}`.
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_invalid_expression: يجب أن يكون الخيار `value` لحقل Compute تعبيراً حسابياً صالحاً، مثل `\{\{fields.price\}\} * \{\{fields.quantity\}\}`، لأن الخيار `value_type` هو `{$valueType}`.
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_uuid_in_expression: لا يمكن للخيار `value` لحقل Compute استخدام وسم UUID مثل `\{\{uuid\}\}` لأن الخيار `value_type` هو `{$valueType}`، مما يجعله تعبيراً حسابياً.
+    # {$value} is the default value and {$valueType} is the configured value type; Don’t localize `default` and `value_type`
+    number_field_default_not_integer: الخيار `default` لحقل Number مضبوط على `{$value}`، لكن يجب أن يكون عدداً صحيحاً لأن الخيار `value_type` هو `{$valueType}`.
+    number_field_default_not_number: الخيار `default` لحقل Number مضبوط على `{$value}`، لكن يجب أن يكون رقماً لأن الخيار `value_type` هو `{$valueType}`.
+    # Don’t localize `fields` and `types`
+    object_field_no_subfields: يجب أن يحتوي الخيار `fields` أو `types` لحقل Object على عنصر واحد على الأقل.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: المجموعة المشار إليها `{$collection}` غير صالحة أو غير معرفة.
     relation_field_invalid_collection_file: الملف المشار إليه `{$file}` غير صالح أو غير معرف.
     # Don’t localize `file`
     relation_field_missing_file_name: يجب تحديد الخيار `file` للربط بملف مجموعة.
     relation_field_invalid_value_field: حقل القيمة المشار إليه `{$field}` غير صالح أو غير معرف.
+    # {$collection} is the referenced collection name; Don’t localize `file`, `value_field` and `slug`.
+    # The curly brackets are escaped with backslashes for MessageFormat 2
+    relation_field_array_file_slug: لا يمكن للعلاقة بالمجموعة `{$collection}` تخزين القيمة `\{\{slug\}\}`، لأن المعرف الفريد للعنصر في مجموعة تحتوي على الخيار `file` هو موضعه، الذي يتغير عند إعادة ترتيب العناصر أو حذفها. اضبط الخيار `value_field` على حقل ذي قيمة فريدة بدلاً من ذلك.
+    # {$collection} is the referenced collection name; Don’t localize `file`
+    relation_field_array_file_workflow: لا يمكن لمجموعة تحتوي على الخيار `file` أن تكون لها علاقة بالمجموعة `{$collection}`، التي تستخدم سير العمل التحريري أو سير عمل المعاينة، لأنه لا يمكن تحديث الإشارات في الملف إلى عنصر أُعيدت تسميته أو حُذف هناك.
+    relation_field_invalid_display_field: حقل العرض المشار إليه `{$field}` غير صالح أو غير معرّف.
+    relation_field_invalid_search_field: حقل البحث المشار إليه `{$field}` غير صالح أو غير معرّف.
+    relation_field_invalid_filter_field: حقل التصفية المشار إليه `{$field}` غير صالح أو غير معرّف.
+    relation_field_invalid_sort_field: حقل الفرز المشار إليه `{$field}` غير صالح أو غير معرّف.
+    # Don’t localize `sort_by` and `file`
+    relation_field_sort_by_file_ignored: لا ينطبق الخيار `sort_by` على علاقة بملف، تتبع خياراتها ترتيب عناصر القائمة. سيتم تجاهله.
     unexpected: خطأ غير متوقع
 
     # Schema validation errors, reported when the configuration doesn’t match the published JSON
@@ -1909,18 +2925,56 @@ config:
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: معرف تطبيق OAuth غير محدد. يلزم المستخدمون بتوفير رمز وصول لتسجيل الدخول.
+    # Don’t localize `prefix`
+    site_library_prefix_template: يحتوي الخيار `prefix` لمكتبة وسائط على وسوم قالب، وهي مدعومة على مستوى الحقل فقط، لأنه لا يوجد عنصر لملئها منه على المستوى الأعلى.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: الخيار `{$prop}` غير مدعوم في Sveltia CMS. سيتم تجاهله.
+    # Don’t localize `stages`, `publish_mode`, `editorial_workflow` and {$type}, which is `preview` or `simple`
+    publish_mode_stages_ignored: ينطبق الخيار `stages` الخاص بـ `publish_mode` على وضع النشر `editorial_workflow` فقط، لذلك يتم تجاهله مع `{$type}`.
+    # Don’t localize `pattern`, `m` and `s`
+    inline_component_multiline_pattern: يحتوي `pattern` لهذا المكون المضمن على العلامة `m` أو `s` أو يطابق فواصل الأسطر، لكن المكون المضمن لا تتم مطابقته إلا داخل فقرة.
+    # {$name} is a button or component name and {$option} is `buttons` or `editor_components`; Don’t localize them and `multiline: false`
+    single_line_block_item: 'يتم تجاهل العنصر `{$name}` في الخيار `{$option}`، لأن الحقل الذي يحتوي على `multiline: false` لا يمكن أن يحتوي إلا على محتوى مضمن.'
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: تم ضبط كل من `picker_utc` وخيارات المنطقة الزمنية الأحدث (`input_timezone` أو `output_utc`). الخيارات الجديدة لها الأسبقية. يرجى النظر في إزالة `picker_utc` من الأعدادات الخاص بك.
+    # Don’t localize `localize_format` and `format`
+    localize_format_without_format: ليس للخيار `localize_format` أي تأثير، لأن الحقل لا يحتوي على الخيار `format` وقيمته مخزنة بتنسيق ISO 8601.
+    # {$name} is a template tag like `fields.lines.*.price`; Don’t localize `value`, `*` and `sum()`
+    compute_field_wildcard_without_item: يشير الخيار `value` لحقل Compute إلى `{$name}`، لكن الحقل ليس داخل عنصر من القائمة التي يمثلها `*`، لذلك لا يُنتج أي قيمة. يمكن فقط لدالة تجميعية مثل `sum()` استخدام كل عناصر القائمة.
+    # {$name} is a template tag like `fields.lines.*.amount`; Don’t localize `value`
+    compute_field_self_reference: يشير الخيار `value` لحقل Compute إلى الحقل نفسه باسم `{$name}`، لذلك تتغير قيمته في كل مرة يتم حسابها ولا تستقر أبداً.
+    # {$name} is a template tag like `fields.total`; Don’t localize `value`
+    compute_field_reference_cycle: يشير الخيار `value` لحقل Compute إلى `{$name}`، وهو حقل Compute آخر يشير مرة أخرى إلى هذا الحقل، مباشرةً أو عبر حقول أخرى، لذلك لا تستقر قيمهما أبداً.
+    # Don’t localize `localize_format`, `true` and `de`
+    localize_format_without_i18n: الخيار `localize_format` هو `true`، لكن التدويل (i18n) غير مفعّل للمجموعة، لذلك تُكتب القيمة باللغة الإنجليزية. اضبط الخيار على رمز لغة مثل `de` بدلاً من ذلك.
+    # {$locale} is the locale code from the configuration; Don’t localize `localize_format`
+    localize_format_unsupported_locale: الخيار `localize_format` مضبوط على `{$locale}`، وهي ليست لغة مدعومة، لذلك تُكتب القيمة باللغة الإنجليزية.
     # Don’t localize `preview_path`
     preview_path_no_date_field: يستخدم الخيار `preview_path` وسوم التاريخ والوقت، لكن المجموعة لا تحتوي على حقل DateTime لقراءتها منه، لذلك لن يتم عرض رابط المعاينة.
     # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
     preview_path_date_field_not_found: يشير الخيار `preview_path_date_field` إلى حقل باسم `{$name}`، لكن لم يتم تعريف حقل DateTime بهذا الاسم، لذلك لن يتم عرض رابط المعاينة.
     # {$name} is the template tag from the configuration; Don’t localize `preview_path`
     preview_path_field_not_found: يشير الخيار `preview_path` إلى `{$name}`، لكن لم يتم تعريف حقل بهذا الاسم في المجموعة، لذلك لن يتم عرض رابط المعاينة.
+    # {$name} is the default identifier field name; Don’t localize `identifier_field` and `slug`
+    missing_identifier_field: لا تحتوي المجموعة على حقل `{$name}` لتسمية العناصر الجديدة به، لذلك يحصل كل عنصر جديد على معرف فريد عشوائي. أضف حقل `{$name}`، أو اضبط الخيار `identifier_field` أو `slug`.
+    # Don’t localize `slug`, `i18n`, `multiple_files`, `multiple_folders` and `multiple_root_folders`
+    slug_i18n_ineffective: ليس للخيار `i18n` الخاص بـ `slug` أي تأثير، لأن المجموعة لا تستخدم بنية التدويل `multiple_files` أو `multiple_folders` أو `multiple_root_folders`، حيث يكون لكل لغة ملف خاص بها.
+    # Don’t localize `slug`, `template` and `auto_increment`
+    slug_template_ignored: يتم تجاهل الخيار `template` الخاص بـ `slug`، لأن الخيار `auto_increment` يرقّم المعرفات الفريدة بدلاً من ذلك.
+    # {$file} is the file path; Don’t localize `file`, `locale`, `i18n`, `false`,
+    # `omit_default_locale_from_file_path` and the example paths. The curly brackets in the examples
+    # are escaped with backslashes for MessageFormat 2
+    locale_not_omitted_from_file_path: لا يمكن إزالة العنصر النائب `locale` من مسار `file` بالقيمة `{$file}`، لذلك تبقى اللغة الافتراضية فيه على الرغم من خيار التدويل `omit_default_locale_from_file_path`. لاستبعاد اللغة، استخدم العنصر النائب كاسم مجلد كامل، مثل `\{\{locale\}\}/about.md`، أو بين اسم الملف والامتداد، مثل `about.\{\{locale\}\}.md`. للإبقاء عليها، اضبط الخيار على `false` في الخيار `i18n` الخاص بالملف.
+    # Don’t localize `i18n`
+    i18n_not_configured: الخيار `i18n` مفعّل، لكن التدويل غير مُعد على المستوى الأعلى من الإعدادات أو في المجموعة، لذلك ليس للخيار أي تأثير.
+    # Don’t localize `public_folder` and `media_folder`
+    empty_public_folder: الخيار `public_folder` سلسلة نصية فارغة، لذلك يُستخدم مسار `media_folder` لمسارات الوسائط المحفوظة في العناصر بدلاً من ذلك. أزل الخيار، أو اضبطه على المسار الذي تريد استخدامه، مثل `/images`.
     # {$option} is an option path from the configuration, such as `filter.Regulation`
     schema_unknown_option: الخيار `{$option}` غير معرّف في مخطط إعدادات Sveltia CMS. سيتم تجاهله. تحقق من وجود خطأ إملائي أو خطأ في الصياغة.
+    # Don’t localize `default_localized`, `default` and `i18n`
+    default_localized_without_i18n: ليس للخيار `default_localized` أي تأثير، لأن التدويل (i18n) غير مفعّل للمجموعة. استخدم الخيار `default` بدلاً من ذلك.
+    # {$locale} is a locale code from the configuration; Don’t localize `default_localized`
+    default_localized_unknown_locale: يحتوي الخيار `default_localized` على قيمة لـ `{$locale}`، وهي ليست إحدى لغات المجموعة، لذلك لا تُستخدم القيمة أبداً.
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'راجع ملاحظات التوافق لمعرفة التفاصيل: {$link}'
@@ -1953,6 +3007,11 @@ viewing_editorial_workflow: 'أنت تعرض الآن لوحة سير عمل ا�
 # Same as above, for an Open Authoring contributor: their board has no Ready column, because only
 # a maintainer can publish
 viewing_open_authoring_workflow: 'أنت تعرض الآن لوحة سير عمل التحرير. المسودات: {$draft}. قيد المراجعة: {$review}. بانتظار الحذف: {$deletion}.'
+# Same as above, when the In Review stage is left out with the `stages` publish mode option
+viewing_editorial_workflow_without_review: 'أنت تعرض الآن لوحة سير العمل التحريري. المسودات: {$draft}. جاهز: {$ready}. بانتظار الحذف: {$deletion}.'
+# Same as above, when all the content uses Preview Workflow, which has no review stages, so the
+# page only lists the drafts
+viewing_preview_workflow: 'أنت تعرض الآن صفحة المسودات. المسودات: {$draft}. بانتظار الحذف: {$deletion}.'
 
 # Workflow status names. `drafts` is the plural form used as a column heading,
 # while `draft` is the singular form used in the editor’s status button.
@@ -1964,6 +3023,10 @@ status:
   # A pending removal, which is a status of its own rather than a stage: it has no review to go
   # through, only the deletion itself to carry out or call off
   pending_deletion: بانتظار الحذف
+  # Merged changes the site hasn’t caught up with yet: it’s being rebuilt and deployed from the
+  # merge, so a published entry isn’t live and a deleted one is still up. Heading of the tray below
+  # the board that lists them until the site has caught up
+  deploying: جارٍ النشر على الموقع
 
 workflow:
   # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
@@ -2015,6 +3078,14 @@ workflow:
   status_updated: تم تحديث الحالة.
   # Error notification when the status could not be changed
   status_change_failed: تعذر تغيير الحالة. يرجى المحاولة مرة أخرى.
+  # Workflow page: toolbar button that reads the pull requests again, to pick up the changes made
+  # by anyone else since the board was loaded, and the toast notifications shown while doing so and
+  # once done
+  refresh: تحديث
+  refreshing: جارٍ التحديث…
+  refreshed: اللوحة محدّثة.
+  # Error notification when the board could not be refreshed
+  refresh_failed: تعذر تحديث اللوحة. يرجى المحاولة مرة أخرى.
   # Error notification when the status can’t be changed because the entry is incomplete. Required
   # fields can be left empty while the entry is a draft, but not once it moves on from there
   status_change_blocked: يحتوي العنصر على أخطاء. يرجى تصحيحها قبل تغيير الحالة.
@@ -2025,6 +3096,10 @@ workflow:
   # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
   send_for_review: إرسال للمراجعة
   confirm_sending_for_review: تم حفظ تغييراتك كمسودة. هل تريد إرسال العنصر للمراجعة ليتمكن شخص ما من الاطلاع عليه ونشره؟
+  # Same as above, when the In Review stage is left out with the `stages` publish mode option, so
+  # the next step is to mark the entry as ready to be published
+  mark_as_ready: وضع علامة “جاهز”
+  confirm_marking_as_ready: تم حفظ تغييراتك كمسودة. هل تريد وضع علامة “جاهز” على العنصر ليتمكن أحد من نشره؟
   # Editor toolbar: button shown when the entry is ready to be published
   publish_entry: نشر العنصر
   # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
@@ -2060,6 +3135,8 @@ workflow:
       few  {{ لم يتم نشر {$count} منها بعد، لذلك سيتم تجاهل تغييراتك غير المنشورة. ستبقى أي نسخ منشورة كما هي. }}
       many {{ لم يتم نشر {$count} منها بعد، لذلك سيتم تجاهل تغييراتك غير المنشورة. ستبقى أي نسخ منشورة كما هي. }}
       *    {{ لم يتم نشر {$count} منها بعد، لذلك سيتم تجاهل تغييراتك غير المنشورة. ستبقى أي نسخ منشورة كما هي. }}
+  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
+  confirm_publishing_entry_after_build: هل أنت متأكد من أنك تريد نشر هذا العنصر؟ ستظهر تغييراتك على الموقع المباشر بعد إعادة بناء موقعك.
   # Workflow page: toast notifications shown while an entry is being published from a card, and
   # once publishing has completed
   publishing_entry: جارٍ نشر العنصر…
@@ -2071,10 +3148,55 @@ workflow:
   entry_deleted: تم حذف العنصر.
   # Error notification when publishing fails
   publishing_entry_failed: تعذر نشر العنصر. يرجى المحاولة مرة أخرى.
+  # Error notification when an entry can’t be published from the CMS, because its request also
+  # changes files that aren’t part of the entry and that the CMS doesn’t show, goes somewhere other
+  # than the site’s branch, or is too large to check. Keep the wording free of Git jargon
+  publish_refused_other_changes: لا يمكن نشر هذا العنصر هنا، لأنه يتضمن تغييرات أخرى لا يمكن لنظام إدارة المحتوى عرضها لك. اطلب من أحد المطورين مراجعته.
+  # Error notification when an entry can’t be published because its branch has been committed to
+  # since the entry was opened, so what would be published isn’t what was reviewed
+  publish_refused_entry_changed: تم تغيير العنصر منذ أن فتحته. أعد تحميل الصفحة لمراجعة أحدث نسخة قبل نشره.
+  review_on_x: المراجعة على {$service}
+  from_fork: من نسخة متفرعة
+  fork_entry_editable: يأتي هذا العنصر من طلب سحب لأحد المساهمين تم فتحه من “{$fork}”. يتم حفظ تغييراتك في الفرع الخاص به. راجع طلب السحب وادمجه على خدمة Git.
+  fork_entry_locked: يأتي هذا العنصر من طلب سحب لأحد المساهمين تم فتحه من “{$fork}”. لا يسمح المساهم للمشرفين بتعديله، لذلك يمكن عرضه فقط هنا.
+  fork_not_editable: لا يسمح المساهم للمشرفين بتعديل طلب السحب هذا.
+  fork_entry_gone: لم يعد طلب السحب الخاص بالمساهم مفتوحاً، لذلك لا يمكن حفظ التغييرات فيه.
+  # Error shown in the save error dialog when an entry can’t be saved for review, because a request
+  # the CMS doesn’t show is already open from the branch the entry would be saved to. `{$number}` is
+  # the request number, e.g. `#12` on GitHub or `!12` on GitLab. Keep the wording free of Git jargon
+  branch_in_use: يوجد طلب آخر ({$number}) مفتوح بالفعل لهذا العنصر خارج نظام إدارة المحتوى. اطلب من أحد المطورين إغلاقه أولاً.
   # Workflow page: empty column message
   no_entries: لا توجد عناصر.
   # Workflow page: aria-label for a draggable entry card
   drag_entry: اسحب لتغيير الحالة
+  # Workflow page: note on a card in the Deploying tray, marking an entry that’s being removed from
+  # the site rather than published to it
+  deploying_deletion: حذف
+  # Workflow page: note on a card listing the new entries that were created from a Relation field
+  # of the entry and are published along with it, e.g. “Also adds Section: Getting Started”
+  companion_entries: يضيف أيضاً {$entries}
+  # Workflow page: note on a card listing the existing entries that were edited from a Relation
+  # field of the entry and are published along with it, e.g. “Also changes Author: Ada Lovelace”
+  edited_companion_entries: يغيّر أيضاً {$entries}
+  # Workflow page: one of the entries listed by `companion_entries` or `edited_companion_entries`,
+  # named by its collection’s singular label and its title
+  companion_entry: '{$collection}: {$title}'
+
+# Dialog asking the user for a commit message every time changes are saved, when the site is
+# configured to. The message is recorded in the repository’s history along with the changes
+commit_message:
+  # Dialog title
+  title: رسالة الإيداع
+  # Description when the user writes the whole message, which the text box is filled in with
+  description_replace: صف تغييراتك. يتم تسجيل الرسالة في السجل مع التغييرات.
+  # Description when the text the user enters is added before or after a message the CMS writes
+  description_addition: أضف ملاحظة إلى الرسالة المسجلة في السجل مع تغييراتك، مثل رقم مشكلة. يمكن تركها فارغة.
+  # Accessible name of the text box when the user writes the whole message
+  message: رسالة الإيداع
+  # Accessible name of the text box when the text is added before or after the message
+  addition: ملاحظة
+  # Preview of the message as it will be recorded. {$message} is the message
+  preview: 'الرسالة: {$message}'
 
 # Open Authoring: a contributor without write access to the configured repository works in a fork
 # of it, and their changes reach the site through a pull request a maintainer merges
@@ -2088,6 +3210,10 @@ open_authoring:
   fork_declined: تحتاج إلى نسخة متفرعة (Fork) من المستودع في حسابك لاقتراح التغييرات.
   # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
   fork_failed: تعذر إنشاء نسخة متفرعة من مستودع "{$repo}" في حسابك.
+  # Error shown when the user’s fork doesn’t have the branch the CMS is configured with, so there’s
+  # nothing to start their changes from. {$fork} and {$repo} are repository identifiers in
+  # owner/repo format, {$branch} is the branch name
+  fork_branch_missing: لا تحتوي نسختك المتفرعة “{$fork}” على الفرع “{$branch}”. حدّث النسخة المتفرعة من مستودع “{$repo}”، ثم سجّل الدخول مرة أخرى.
   # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
   # because the API rate limit is exhausted. {$repo} is the repository identifier
   permission_check_failed: تعذر التحقق من صلاحية وصولك إلى مستودع "{$repo}". يرجى المحاولة مرة أخرى بعد قليل.
@@ -2102,6 +3228,10 @@ open_authoring:
   private_repo_scope_required: لا يتضمن تسجيل دخولك صلاحية الوصول إلى المستودعات الخاصة، لذلك لا يمكن قراءة مستودع "{$repo}". اطلب من أحد المشرفين التحقق من إعدادات المصادقة في نظام إدارة المحتوى.
   # Error shown when a contributor tries to publish an entry, which only a maintainer can do
   publish_unsupported: يمكن للمشرف فقط نشر التغييرات على هذا الموقع. بدلاً من ذلك، ضع علامة "قيد المراجعة" على عنصرك وسيطّلع عليه شخص ما.
+  # Error shown when a contributor changes the status of an entry whose request a maintainer has
+  # published since the page was loaded, leaving nothing to review. The entry then leaves the
+  # Editorial Workflow board and the editor closes. Keep the wording free of Git jargon
+  entry_already_published: نشر أحد المشرفين هذا العنصر بالفعل، لذلك لم يتبقَّ شيء لمراجعته.
   # Error shown when a change would go straight to the site instead of being reviewed, which a
   # contributor can’t do. It covers media library uploads and deletions, and entry reordering
   direct_commit_unsupported: لا يمكن إجراء هذا التغيير مباشرةً. يمكن اقتراح تعديلات العناصر فقط للمراجعة.
@@ -2117,11 +3247,10 @@ open_authoring:
 # Settings page aria-label
 categories: الفئات
 
-# Site Configuration Editor
-site_configuration_editor: محرر إعدادات الموقع
-
 # Preferences panels
 prefs:
+  account:
+    title: الحساب
   # API key management feedback messages
   changes:
     api_key_saved: تم حفظ مفتاح API.
@@ -2171,7 +3300,7 @@ prefs:
         select_service: حدد الخدمة
       api_keys:
         title: مفاتيح API لخدمة الترجمة
-        description: إدارة مفاتيح API لـ <a>خدمات الترجمة</a>.
+        description: إدارة مفاتيح API لـ <a>خدمات الترجمة</a>. يمكن إدارة مفاتيح API لخدمات الذكاء الاصطناعي العامة في إعدادات الذكاء الاصطناعي.
       # API key input label, e.g., “DeepL Key”
       # {$service} is the translation service name
       field_label: مفتاح {$service}
@@ -2205,6 +3334,16 @@ prefs:
       field_label: مفتاح API لـ {$service}
       no_services: لم يتم إعداد أي <a>خدمات تخزين سحابي</a>.
 
+  # AI panel
+  ai:
+    title: الذكاء الاصطناعي
+    api_keys:
+      title: مفاتيح API لخدمات الذكاء الاصطناعي
+      description: إدارة مفاتيح API لخدمات الذكاء الاصطناعي.
+    # API key input label, e.g., “OpenAI GPT API Key”
+    # {$service} is the AI service name
+    field_label: مفتاح API لـ {$service}
+
   # Accessibility panel
   accessibility:
     title: إمكانية الوصول
@@ -2215,6 +3354,7 @@ prefs:
 
   # Data Management panel
   data:
+    title: إدارة البيانات
     clear_data:
       title: مسح البيانات
       # Clear File Cache button
@@ -2230,13 +3370,23 @@ prefs:
 
   # Developer panel
   developer:
+    title: المطور
     developer_mode:
       title: وضع المطور
       description: تمكين بعض الميزات الموجهة للمطورين، بما في ذلك سجلات Console التفصيلية وقوائم الـ Context.
       switch_label: تمكين وضع المطور
+    local_git:
+      title: إيداعات Git
+      description: أودع تغييراتك في الفرع الحالي لمستودعك المحلي كلما حفظتها، كما يفعل نظام إدارة المحتوى عند العمل مع مستودع بعيد. يمكنك بعد ذلك مراجعة الإيداعات ودفعها باستخدام أدوات Git المعتادة.
+      switch_label: إيداع التغييرات في Git
+      checking: جارٍ التحقق من المستودع…
+      # {$branch} is the branch name, {$name} and {$email} are the commit author’s name and email address
+      ready: سيتم إيداع التغييرات في الفرع {$branch} باسم {$name} ({$email}).
+      # {$reason} is one of the `local_git_skip_reasons` strings
+      not_ready: لا يمكن إيداع التغييرات الآن. {$reason}
     deploy_hook:
       title: خطاف النشر (Deploy Hook)
-      description: أدخل رابط Webhook ليتم تنفيذه عند تشغيل النشر يدوياً من خلال تحديد نشر التغييرات. يمكن ترك هذا الحقل فارغاً إذا كنت تستخدم GitHub Actions.
+      description: أدخل رابط Webhook ليتم استدعاؤه عند تشغيل النشر يدوياً من خلال تحديد “نشر التغييرات”. يمكن ترك هذا الحقل فارغاً إذا كنت تستخدم GitHub Actions أو GitLab CI/CD.
       # Hook URL input
       url:
         field_label: رابط الـ Hook

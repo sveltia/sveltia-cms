@@ -59,6 +59,57 @@ describe('BackupFeedback', () => {
     await vi.waitFor(() => expect(resolve).toHaveBeenCalledWith(false));
   });
 
+  test('compares the backup time with the time the dialog is opened', async () => {
+    const resolve = vi.fn();
+    const dialog = page.getByRole('alertdialog', { name: 'Restore Draft' });
+
+    vi.useFakeTimers({ toFake: ['Date'] });
+
+    try {
+      await render(BackupFeedback);
+
+      vi.setSystemTime(new Date('2026-11-06T20:00:00Z'));
+      restoreDialogState.current = {
+        show: true,
+        timestamp: new Date('2026-11-06T10:30:00Z'),
+        resolve,
+      };
+      await expect
+        .element(dialog)
+        .toMatchTextContent('This entry has a backup from \u206810:30 AM\u2069.');
+      await dialog.getByRole('button', { name: 'Discard' }).click();
+      await vi.waitFor(() => expect(resolve).toHaveBeenCalledWith(false));
+
+      // The component stays mounted with the Content Library, maybe until the next day
+      vi.setSystemTime(new Date('2026-11-07T20:00:00Z'));
+      restoreDialogState.current = {
+        show: true,
+        timestamp: new Date('2026-11-07T09:15:00Z'),
+        resolve,
+      };
+      await expect
+        .element(dialog)
+        .toMatchTextContent('This entry has a backup from \u20689:15 AM\u2069.');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('leaves the page usable and lets the dialog be moved', async () => {
+    // @see https://github.com/sveltia/sveltia-cms/issues/566
+    await render(BackupFeedback);
+
+    restoreDialogState.current = { show: true, timestamp: new Date(), resolve: vi.fn() };
+
+    const dialog = page.getByRole('alertdialog', { name: 'Restore Draft' });
+
+    await expect.element(dialog).toBeVisible();
+    expect(dialog.element().matches(':modal')).toBe(false);
+    // The editor is dimmed, but not blocked
+    expect(dialog.element().classList.contains('backdrop')).toBe(true);
+    expect(dialog.element().querySelector('.header')?.classList.contains('movable')).toBe(true);
+  });
+
   test('closes the dialog along with the editor', async () => {
     const resolve = vi.fn();
 

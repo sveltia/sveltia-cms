@@ -1,4 +1,5 @@
 import { getField } from '$lib/services/contents/entry/fields';
+import { getCodeKeys, isCodeValueKey } from '$lib/services/contents/fields/code/helpers';
 
 /**
  * @import { FlattenedEntryContent, GetFieldArgs, LocaleValidityMap } from '$lib/types/private';
@@ -29,12 +30,7 @@ export const getCodeField = (args) => {
     return undefined;
   }
 
-  const {
-    output_code_only: outputCodeOnly = false,
-    keys: outputKeys = { code: 'code', lang: 'lang' },
-  } = /** @type {CodeField} */ (fieldConfig);
-
-  return !outputCodeOnly && [outputKeys.code, outputKeys.lang].includes(keyPath.slice(index + 1))
+  return isCodeValueKey(/** @type {CodeField} */ (fieldConfig), keyPath.slice(index + 1))
     ? /** @type {CodeField} */ (fieldConfig)
     : undefined;
 };
@@ -53,17 +49,14 @@ export const getCodeField = (args) => {
  * path and value.
  */
 export const resolveCodeField = ({ keyPath, value, valueMap, fieldConfig, validities, locale }) => {
-  const {
-    output_code_only: outputCodeOnly = false,
-    keys: outputKeys = { code: 'code', lang: 'lang' },
-  } = fieldConfig;
+  const keys = getCodeKeys(fieldConfig);
 
   // The field is validated only once, whether through its own key path or its sub-keys
   if (keyPath in validities[locale]) {
     return { skip: true, keyPath, value };
   }
 
-  const resolvedValue = !outputCodeOnly ? valueMap[`${keyPath}.${outputKeys.code}`] : value;
+  const resolvedValue = keys ? valueMap[`${keyPath}.${keys.code}`] : value;
 
   return { skip: false, keyPath, value: resolvedValue };
 };

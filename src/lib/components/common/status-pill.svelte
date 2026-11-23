@@ -12,20 +12,15 @@
    * @typedef {object} Props
    * @property {StatusPillTone} tone Color tone of the pill.
    * @property {string} label Text to be shown.
+   * @property {string} [title] Further detail shown as a tooltip on hover.
    * @property {string} [class] Additional class names for the element.
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    tone,
-    label,
-    class: className = '',
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { tone, label, title, class: className = '' } = $props();
 </script>
 
-<span role="none" class={['status-pill', tone, className]}>
+<span role="none" class={['status-pill', tone, className]} {title}>
   {label}
 </span>
 

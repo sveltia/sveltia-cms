@@ -11,6 +11,8 @@
 create: Nou
 select: Selecciona
 select_all: Selecciona-ho tot
+# Accessible name of the checkbox that selects a single entry or asset in a list
+select_item: Selecciona {$name}
 upload: Puja
 copy: Copia
 download: Baixa
@@ -69,6 +71,10 @@ primary: Primari
 secondary: Secundari
 collection: Col·lecció
 folder: Carpeta
+# Label of the subfolder list in the asset picker
+folders: Carpetes
+# Menu in a breadcrumb holding the folders that don’t fit
+more_folders: Més carpetes
 
 # ==============================================================================
 # Miscellaneous Labels
@@ -113,6 +119,7 @@ welcome_message: Benvinguts al {$name}
 powered_by: Amb la tecnologia del {$name}
 
 # Shown during initial configuration and data loading
+unsupported_browser_error: El vostre navegador no és compatible. Actualitzeu-lo a la versió més recent o useu un altre navegador.
 loading_cms_config: S’està carregant la configuració del CMS…
 loading_site_data: S’estan carregant les dades del lloc…
 loading_site_data_error: S’ha produït un error en carregar les dades del lloc.
@@ -125,6 +132,8 @@ sign_in_with_x: Inicia la sessió amb {$service}
 # Access token dialog: alternative authentication method
 sign_in_using_access_token: Inicia la sessió amb un testimoni d’accés
 sign_in_using_access_token_description: Introduïu el vostre testimoni a continuació. Ha de tenir accés de lectura/escriptura al contingut del repositori.
+# Shown after the description above when Editorial Workflow is enabled, which opens and merges pull requests
+sign_in_using_access_token_workflow_note: Com que el flux editorial està habilitat, també ha de tenir accés de lectura/escriptura a les sol·licituds d’incorporació.
 # Inline link text with embedded HTML anchor tag
 # {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
 sign_in_using_access_token_link: Podeu generar un testimoni a la <a>pàgina de configuració d’usuari del {$service}</a>.
@@ -143,6 +152,11 @@ work_with_local_repo_description: Quan se us demani, seleccioneu el directori ar
 work_with_local_repo_description_no_repo: Quan se us demani, seleccioneu el directori arrel del vostre repositori Git.
 # Button label for demo/test repository
 work_with_test_repo: Treballa amb un repositori de prova
+# Button label for the test repository when sample content is seeded, e.g. on a demo site
+start_demo: Inicia la demostració
+# Shown below the disabled test repository option in a browser that can’t save files to its
+# storage, e.g. Safari before version 26
+test_repo_unsupported_browser: El vostre navegador no pot desar els fitxers del repositori de prova. Actualitzeu-lo a la versió més recent o useu un altre navegador.
 
 # Authentication errors
 # Error messages shown during sign-in failures
@@ -167,14 +181,28 @@ sign_in_error:
 backend_unsupported_version: El rerefons {$name} requereix {$name} {$version} o posterior.
 # {$repo} is the repository identifier, typically in owner/repo format
 repository_no_access: No teniu accés al repositori «{$repo}».
+# {$repo} is the repository identifier, typically in owner/repo format
+repository_no_write_access: No teniu accés d’escriptura al repositori «{$repo}».
 repository_not_found: El repositori «{$repo}» no existeix.
 repository_empty: El repositori «{$repo}» no té cap branca.
 # {$repo} is the repository identifier, and {$branch} is the configured branch name
 branch_not_found: El repositori «{$repo}» no té la branca «{$branch}».
+# {$repo} is the repository identifier, and {$dir} is the configured root directory
+root_dir_not_found: El directori arrel «{$dir}» no existeix al repositori «{$repo}».
 
 # General errors
 # Fallback error dialog title for unexpected errors
 unexpected_error: Error inesperat
+# Shown in place of the page when an unexpected error stops it from being displayed
+# {$message} is the error message
+page_crashed: Alguna cosa ha anat malament i aquesta pàgina no es pot mostrar. {$message}
+# Shown in place of a field editor or preview when an unexpected error stops it from being displayed
+# {$message} is the error message
+field_crashed: Alguna cosa ha anat malament i aquest camp no es pot mostrar. {$message}
+# Button label for displaying a part of the page again after an unexpected error
+try_again: Torna-ho a provar
+# Button label for reloading the CMS after an unexpected error
+reload_cms: Torna a carregar el CMS
 
 # Entry file parsing errors
 # Toast notification when entry files fail to parse on initial load
@@ -203,6 +231,332 @@ sign_in: Inicia la sessió
 sign_in_with_mobile: Inicia la sessió amb el mòbil
 # Instructions shown in the mobile sign-in dialog for passwordless authentication
 sign_in_with_mobile_instruction: Escanegeu el codi QR següent amb el telèfon o la tauleta per a una sessió sense contrasenya. La vostra configuració es copiarà automàticament.
+# Confirmation dialog shown when the CMS is opened with a sign-in link from the mobile sign-in
+# QR code. {$account} is the account name, {$service} is the Git service name, e.g. GitHub
+sign_in_with_link: Inicia la sessió amb un enllaç
+sign_in_with_link_confirmation: Aquest enllaç inicia la vostra sessió com a {$account} a {$service} i copia la configuració del dispositiu on es va crear. Continueu només si heu creat l’enllaç vosaltres mateixos.
+
+# Sign-in with Sveltia CMS Additions, which manages its own user accounts instead of the Git
+# service’s. Don’t localize “Sveltia CMS Additions”
+additions:
+  username: Nom d’usuari
+  password: Contrasenya
+  sign_in: Inicia la sessió
+  new_password_title: Trieu una contrasenya nova
+  new_password_description: Heu iniciat la sessió amb una contrasenya temporal. Trieu-ne una de nova per continuar.
+  new_password: Contrasenya nova
+  password_too_short: La contrasenya és massa curta. Useu almenys 12 caràcters.
+  change_password: Canvia la contrasenya
+  # {$name} is the user’s username, {$role} their role, e.g. Editor
+  signed_in_as_x_with_role: Sessió iniciada com a {$name} ({$role})
+  link_github: Vincula el compte de GitHub
+  link_github_error: No s’ha pogut vincular el compte de GitHub
+  current_password: Contrasenya actual
+  # {$username} is the username filled in from a magic link emailed to the user
+  filled_from_link: El nom d’usuari i la contrasenya s’han emplenat a partir d’un enllaç. Inicieu la sessió només si «{$username}» és el vostre nom d’usuari.
+  change_password_description: Mantindreu la sessió iniciada aquí i es tancarà als altres dispositius.
+  password_changed: S’ha canviat la contrasenya.
+  # The Account settings panel of a Sveltia CMS Additions user
+  account:
+    profile: Perfil
+    profile_description: El vostre nom és visible per a altres usuaris al CMS, per exemple en els bloquejos d’entrades i els comentaris, i també en les vostres confirmacions.
+    username_description: El vostre nom d’usuari no es pot canviar.
+    email: Correu electrònic
+    email_description: S’usa a les confirmacions que feu perquè GitHub les pugui vincular al vostre compte. Si no n’hi ha cap, s’usa una adreça provisional. Només un administrador el pot canviar.
+    change_name: Canvia el nom
+    name_changed: S’ha canviat el nom.
+    password: Contrasenya
+    no_password: El vostre compte només inicia la sessió amb GitHub, de manera que no té cap contrasenya per canviar. Un administrador us en pot donar una restablint-vos la contrasenya.
+  setup:
+    use_admin_secret: Usa el secret d’administrador
+    title: Configura Sveltia CMS Additions
+    secret_description: Introduïu el secret d’administrador definit a la configuració del vostre servei de Sveltia CMS Additions. Només es conserva en aquesta pestanya mentre feu la configuració.
+    admin_secret: Secret d’administrador
+    continue: Continua
+    back: Torna a l’inici de sessió
+    admin_title: Compte d’administrador
+    admin_create_description: Creeu el primer compte d’administrador. L’usareu per iniciar la sessió i gestionar els altres usuaris.
+    admin_reset_description: Ja existeix un compte d’administrador. Per tornar a entrar, restabliu aquí la contrasenya d’un administrador o creeu-ne un altre.
+    admin_saved: El compte d’administrador està llest. Inicieu la sessió amb la contrasenya que acabeu d’introduir.
+    create_admin: Crea l’administrador
+    reset_password: Desa l’administrador
+    github_title: GitHub
+    # {$repo} is the repository, e.g. octocat/site
+    github_description: Creeu una GitHub App per a aquest lloc i instal·leu-la al repositori «{$repo}». GitHub us demanarà que ho confirmeu i després us tornarà aquí.
+    # {$repo} is the repository, {$app} is the name of the GitHub App
+    github_connected: Connectat al repositori «{$repo}» amb la GitHub App «{$app}».
+    connect_github: Connecta amb GitHub
+    # {$step} is the number of the current step, {$total} the number of steps
+    step_x_of_y: Pas {$step} de {$total}
+    admin_exists: Ja existeix un compte d’administrador.
+    reset_admin_password: Restableix la contrasenya de l’administrador
+    setup_complete: La configuració s’ha completat. Inicieu la sessió amb un compte d’administrador per gestionar els usuaris i la configuració. Podeu tornar aquí amb el secret d’administrador en qualsevol moment.
+    manage_sites: Gestiona altres llocs
+    back_to_setup: Enrere
+    sites_title: Altres llocs
+    sites_description: Aquest servei també pot donar servei a altres llocs, cadascun amb els seus propis usuaris, configuració i GitHub App. Definiu «base_url» a la configuració del CMS d’un lloc amb l’URL corresponent i després configureu-hi el lloc amb el secret d’administrador.
+    no_sites: Encara no hi ha cap altre lloc.
+    site_id: ID del lloc
+    site_id_description: D’1 a 32 lletres minúscules, xifres i guionets, p. ex., «acme». Apareix a l’URL del lloc i no es pot canviar.
+    site_name_optional: Nom (opcional)
+    add_site: Afegeix un lloc
+    # {$name} is the name of the site
+    site_added: S’ha afegit «{$name}». Definiu «base_url» a la seva configuració del CMS amb el seu URL i després obriu-hi l’assistent de configuració.
+    # {$name} is the name of the site
+    copy_site_url: Copia l’URL de {$name}
+    delete_site: Suprimeix el lloc
+    # {$name} is the name of the site
+    delete_site_x: Suprimeix {$name}
+    # {$name} is the name of the site, {$id} is its ID
+    delete_site_confirmation: Suprimir «{$name}» també en suprimeix els usuaris, la configuració i els comentaris. Aquesta acció no es pot desfer. La GitHub App es manté a GitHub, on la podeu suprimir. Escriviu «{$id}» per confirmar-ho.
+    site_id_to_confirm: ID del lloc per confirmar
+    data_key_locked_title: S’ha canviat el secret d’administrador
+    data_key_locked_description: El secret d’administrador s’ha canviat, de manera que la configuració emmagatzemada no es pot llegir. Introduïu el secret anterior per conservar-la, o torneu a començar si l’heu perdut.
+    previous_secret: Secret d’administrador anterior
+    unlock: Desbloqueja
+    rekey: Torna a començar
+    rekey_confirmation: Tornar a començar suprimeix les credencials de la GitHub App i els altres secrets emmagatzemats, i tanca la sessió de tothom. Les contrasenyes es conserven. Voleu continuar?
+    result:
+      ok: GitHub està connectat. Ara podeu iniciar la sessió.
+      github_app_not_created: No s’ha creat la GitHub App. Useu el secret d’administrador per tornar-ho a provar.
+      github_app_not_installed: No s’ha instal·lat la GitHub App. Useu el secret d’administrador per tornar-ho a provar.
+      github_wrong_account: La GitHub App s’ha instal·lat en un compte que no és el propietari del repositori. Instal·leu-la al compte propietari del repositori i torneu-ho a provar.
+      github_repository_not_included: La GitHub App s’ha instal·lat sense accés al repositori. Doneu-li accés al repositori a GitHub i torneu-ho a provar.
+      unexpected: La connexió amb GitHub ha fallat a causa d’un error inesperat. Torneu-ho a provar.
+  locks:
+    # {$name} is the name of the person editing the entry, {$time} when they started
+    being_edited: '{$name} està editant aquesta entrada des de {$time}, de manera que només la podeu veure.'
+    being_edited_by_you: Esteu editant aquesta entrada en una altra pestanya, de manera que aquí només la podeu veure.
+    # {$name} is the name of the person who took over the entry
+    taken_over: '{$name} ha pres el control d’aquesta entrada, de manera que ara només la podeu veure.'
+    take_over: Pren el control
+    unavailable: Els bloquejos d’entrades no estan disponibles, de manera que és possible que algú altre estigui editant aquesta entrada alhora.
+    # {$name} is the name of the person editing the entry
+    being_edited_by_x: En edició per {$name}
+    # {$names} is a list of the other people who have the entry open in the editor
+    also_open_by_x: També oberta per {$names}
+    # {$names} is a list of the people who have the entry open, besides anyone editing it
+    open_by_x: Oberta per {$names}
+  users:
+    title: Usuaris
+    add_user: Afegeix un usuari
+    edit_user: Edita l’usuari
+    add: Afegeix
+    name: Nom
+    username_description: Un nom d’usuari no es pot canviar un cop s’ha afegit l’usuari.
+    email_optional: Correu electrònic (opcional)
+    email_description: S’usa a les confirmacions que fa aquesta persona perquè GitHub les pugui vincular al seu compte. Si no n’hi ha cap, s’usa una adreça provisional.
+    role: Rol
+    status: Estat
+    last_sign_in: Últim inici de sessió
+    sign_in_column: Inici de sessió
+    methods:
+      password: Contrasenya
+      # {$login} is a GitHub username
+      github: GitHub ({$login})
+    actions: Accions
+    you: (vós)
+    never: Mai
+    roles:
+      admin: Administrador
+      editor: Editor
+      viewer: Lector
+    statuses:
+      active: Actiu
+      temporary_password: Contrasenya temporal
+      waiting_for_sign_in: Pendent del primer inici de sessió
+      disabled: Desactivat
+    # {$name} is the user’s name
+    show_options_for_x: Mostra les opcions de {$name}
+    options: Opcions de l’usuari
+    reset_password: Restableix la contrasenya
+    sign_out_everywhere: Tanca la sessió a tot arreu
+    enable: Activa l’usuari
+    disable: Desactiva l’usuari
+    delete: Suprimeix l’usuari
+    # {$name} is the user’s name
+    reset_password_confirmation: Voleu donar una contrasenya temporal nova a {$name}? Se li tancarà la sessió a tot arreu i haurà de triar una contrasenya nova en el pròxim inici de sessió.
+    delete_confirmation: Voleu suprimir {$name}? Aquesta acció no es pot desfer.
+    temporary_password: Contrasenya temporal
+    # {$name} is the user’s name
+    temporary_password_description: Doneu aquest nom d’usuari i aquesta contrasenya temporal a {$name}. No es tornarà a mostrar, i triarà la seva pròpia contrasenya quan iniciï la sessió.
+    copy_username: Copia el nom d’usuari
+    copy_password: Copia la contrasenya
+    # {$name} is the user’s name
+    email_credentials: Envia per correu a {$name}
+    # The emails the admin sends from their own email app, with the sign-in details: `new` to a user
+    # who has just been added, `reset` to one whose password has been reset. Each line is a string of
+    # its own, as line breaks aren’t kept in these files
+    credentials_email:
+      # {$name} is the user’s name
+      greeting: 'Hola, {$name}:'
+      # {$url} is a link to the CMS that fills in the username and the temporary password
+      sign_in_link: 'Enllaç d’inici de sessió: {$url}'
+      # {$username} is the username
+      username: 'Nom d’usuari: {$username}'
+      # {$password} is the temporary password
+      password: 'Contrasenya temporal: {$password}'
+      new:
+        # {$app} is the name of the CMS
+        subject: Les vostres dades d’inici de sessió per a {$app}
+        # {$app} is the name of the CMS
+        message: Ja podeu iniciar la sessió a {$app}. Obriu l’enllaç següent, que emplena el vostre nom d’usuari i la contrasenya temporal, i trieu la vostra pròpia contrasenya quan inicieu la sessió.
+      reset:
+        # {$app} is the name of the CMS
+        subject: S’ha restablert la vostra contrasenya per a {$app}
+        # {$app} is the name of the CMS
+        message: S’ha restablert la vostra contrasenya per a {$app} i s’ha tancat la vostra sessió a tot arreu. Obriu l’enllaç següent, que emplena el vostre nom d’usuari i la contrasenya temporal, i trieu una contrasenya nova quan inicieu la sessió.
+    allowed_domains: Dominis permesos
+    allowed_domains_description: Els llocs que poden usar Sveltia CMS Additions, un nom d’amfitrió per línia. Un comodí (*) coincideix amb qualsevol subdomini, p. ex., *.example.com. Indiqueu noms d’amfitrió exactes sempre que pugueu. La llista només s’aplica a aquest lloc, encara que la mateixa instància de Sveltia CMS Additions també doni servei a altres llocs.
+    save_allowed_domains: Desa els dominis permesos
+    allowed_domains_saved: S’han desat els dominis permesos.
+    sign_in_tab: Inici de sessió
+    # {$latest} is the newest version of Sveltia CMS Additions, {$current} the one in use
+    update_available: Sveltia CMS Additions {$latest} ja és disponible. Esteu executant la versió {$current}.
+    release_notes: Notes de la versió
+    github_username_optional: Nom d’usuari de GitHub (opcional)
+    github_username_description: Amb un nom d’usuari de GitHub, l’usuari inicia la sessió amb aquest compte de GitHub en lloc d’una contrasenya.
+    # {$name} is the user’s name
+    github_required: '{$name} només pot iniciar la sessió amb GitHub, de manera que el seu nom d’usuari de GitHub no es pot suprimir. Primer restabliu-li la contrasenya perquè tingui una contrasenya amb què iniciar la sessió.'
+    adopt: Adopta el compte
+    sign_in:
+      github: Permet iniciar la sessió amb GitHub
+      github_description: Els usuaris inicien la sessió amb el seu compte de GitHub i obtenen el seu propi testimoni de GitHub, de manera que els seus canvis es confirmen al seu nom. Primer els ha d’afegir un administrador amb el seu nom d’usuari de GitHub, tret que els cobreixi una regla de registre.
+      # Shown when signing in with GitHub is being turned off while {$count} users can only sign in
+      # with it
+      github_only_warning: |
+        .input {$count :integer}
+        .match $count
+          one {{ Un usuari només pot iniciar la sessió amb GitHub i no ho podrà fer un cop es desactivi, fins que no li restabliu la contrasenya. }}
+          *   {{ {$count} usuaris només poden iniciar la sessió amb GitHub i no ho podran fer un cop es desactivi, fins que no els restabliu la contrasenya. }}
+      rules: Regles de registre
+      rules_description: Els membres de l’organització de GitHub on està instal·lada l’aplicació poden iniciar la sessió sense que se’ls hagi d’afegir abans. El seu compte rep el rol que trieu i es desactiva si abandonen l’organització, tret que l’adopteu.
+      org: Organització de GitHub
+      add_rule: Afegeix una regla
+      # {$org} is the name of a GitHub organization
+      remove_rule: Suprimeix la regla de {$org}
+      # For a rule whose organization hasn’t been entered yet
+      remove_empty_rule: Suprimeix la regla
+      save: Desa la configuració d’inici de sessió
+      saved: S’ha desat la configuració d’inici de sessió.
+    domains_tab: Dominis
+    github_tab: GitHub
+    github:
+      app: GitHub App
+      repository: Repositori
+      not_installed: No instal·lada
+      statuses:
+        ok: L’aplicació funciona.
+        not_registered: Encara no hi ha cap GitHub App configurada. Executeu l’assistent de configuració des de la pàgina d’inici de sessió amb el secret d’administrador.
+        key_missing: La clau privada de l’aplicació es va perdre quan es va reemplaçar el secret d’administrador. Genereu una clau privada nova a la configuració de l’aplicació a GitHub i pugeu-la a continuació.
+        key_rejected: GitHub no accepta la clau privada de l’aplicació, per exemple perquè s’hi ha suprimit. Genereu una clau privada nova a la configuració de l’aplicació a GitHub i pugeu-la a continuació.
+        not_installed: L’aplicació no està instal·lada al repositori. Torneu-la a instal·lar des de la pàgina de l’aplicació a GitHub o executeu l’assistent de configuració.
+        suspended: La instal·lació de l’aplicació està suspesa. Reactiveu-la a la configuració de la instal·lació a GitHub.
+        unreachable: No s’ha pogut connectar amb GitHub. Torneu-ho a provar més tard.
+      check_again: Torna a comprovar
+      # {$branch} is the name of the repository’s default branch
+      branch_protected: Hi ha conjunts de regles que protegeixen la branca «{$branch}» contra les pujades forçades i la supressió.
+      branch_bypassed: Hi ha conjunts de regles que protegeixen la branca «{$branch}», però l’aplicació els pot eludir, de manera que els editors encara hi podrien fer pujades forçades o suprimir-la. Traieu l’aplicació de les llistes d’exempció d’aquests conjunts de regles.
+      branch_unprotected: Cap conjunt de regles protegeix la branca «{$branch}» contra les pujades forçades i la supressió, de manera que els editors en podrien reescriure l’historial o suprimir-la. Afegiu un conjunt de regles a la configuració del repositori que bloquegi totes dues coses, sense l’aplicació a la llista d’exempcions.
+      repository_rules: Obre les regles del repositori
+      private_key: Clau privada
+      private_key_description: Per reemplaçar la clau privada, genereu-ne una de nova a la configuració de l’aplicació a GitHub i després pugeu el fitxer .pem que es baixa. Després suprimiu-hi la clau antiga.
+      app_settings: Obre la configuració de l’aplicació
+      upload_private_key: Puja la clau privada
+      replace_private_key: Reemplaça la clau privada
+      private_key_summary: El servei usa la clau privada de l’aplicació per accedir al repositori a GitHub. Reemplaceu-la si és possible que hagi quedat exposada.
+      private_key_replaced: S’ha reemplaçat la clau privada.
+      commit_author: Autor de les confirmacions
+      commit_author_description: Trieu qui apareix com a autor dels canvis desats al CMS. GitHub només signa les confirmacions de les quals l’aplicació és autora, així que trieu l’aplicació si un conjunt de regles exigeix confirmacions signades. Els altres usuaris rebran el canvi en menys d’una hora.
+      commit_author_user: La persona que ha fet el canvi
+      commit_author_bot: La GitHub App, amb la persona com a coautora
+      commit_author_saved: S’ha desat l’autor de les confirmacions.
+  # Administration section for the API keys and the deploy hook an admin shares with everyone
+  credentials:
+    title: Credencials
+    description: Les claus API i el ganxo de desplegament introduïts aquí els usa tothom que inicia la sessió, tret que introdueixin els seus propis a la configuració. Qualsevol persona amb la sessió iniciada al CMS els pot llegir, així que introduïu només claus que no us importi compartir amb el vostre equip.
+    save: Desa les credencials
+    saved: S’han desat les credencials.
+    # {$service} is the service name, e.g. DeepL
+    invalid_key: La clau API de {$service} no sembla correcta.
+  error:
+    unauthenticated: La sessió ha caducat. Torneu a iniciar la sessió.
+    wrong_admin_secret: El secret d’administrador no és correcte.
+    admin_secret_missing: El secret d’administrador no està definit a la configuració del servei de Sveltia CMS Additions.
+    admin_secret_too_short: El secret d’administrador definit a la configuració del servei de Sveltia CMS Additions és massa curt. Useu almenys 32 caràcters aleatoris.
+    wrong_previous_secret: El secret d’administrador anterior no és correcte.
+    not_an_admin: Aquest usuari no és administrador. Trieu un altre nom d’usuari.
+    invalid_username: Un nom d’usuari té de 3 a 30 lletres minúscules, xifres, punts, guionets o guions baixos.
+    last_admin: Hi ha d’haver almenys un administrador.
+    cannot_disable_self: No podeu desactivar el vostre propi compte.
+    cannot_delete_self: No podeu suprimir el vostre propi compte.
+    username_taken: Un altre usuari ja té aquest nom d’usuari.
+    email_taken: Un altre usuari ja té aquesta adreça electrònica.
+    invalid_name: El nom ha de tenir entre 1 i 100 caràcters.
+    invalid_email: L’adreça electrònica no és vàlida.
+    invalid_domains: Un dels dominis permesos no és un nom d’amfitrió vàlid.
+    current_origin_removed: Els dominis permesos han d’incloure el lloc que esteu usant ara.
+    forbidden: Només els administradors poden fer això.
+    invalid_credentials: El nom d’usuari o la contrasenya no són correctes.
+    user_disabled: Aquest compte està desactivat. Demaneu ajuda al vostre administrador.
+    too_many_attempts: Massa intents. Torneu-ho a provar més tard.
+    wrong_password: La contrasenya actual no és correcta.
+    same_password: Trieu una contrasenya nova que sigui diferent de l’actual.
+    invalid_github_login: Aquest no és un nom d’usuari de GitHub vàlid.
+    github_user_not_found: No hi ha cap usuari de GitHub amb aquest nom.
+    github_account_taken: Un altre usuari ja inicia la sessió amb aquest compte de GitHub.
+    invalid_rules: Una regla de registre necessita el nom d’una organització de GitHub.
+    invalid_rule_role: Una regla de registre només pot assignar el rol d’editor o de lector.
+    rule_org_not_installed: La GitHub App s’ha d’instal·lar a l’organització d’una regla de registre.
+    not_invited: No teniu cap compte aquí. Demaneu al vostre administrador que us hi afegeixi.
+    method_disabled: L’inici de sessió amb GitHub està desactivat.
+    access_denied: S’ha cancel·lat l’inici de sessió.
+    github_app_not_set_up: Sveltia CMS Additions encara no està connectat a GitHub. Demaneu al vostre administrador que acabi la configuració.
+    invalid_tenant_id: L’ID del lloc ha de tenir d’1 a 32 lletres minúscules, xifres i guionets, i no pot ser «default».
+    invalid_tenant_name: El nom del lloc pot tenir 100 caràcters com a màxim.
+    tenant_exists: Ja existeix un lloc amb aquest ID.
+    github_app_missing: Encara no hi ha cap GitHub App configurada.
+    invalid_private_key: El fitxer no és una clau privada vàlida.
+    private_key_mismatch: GitHub no accepta aquesta clau privada per a l’aplicació. Assegureu-vos que l’heu generada a la configuració de l’aplicació.
+    github_error: GitHub ha respost amb un error. Torneu-ho a provar més tard.
+    data_key_locked: Sveltia CMS Additions no es pot usar fins que un administrador acabi de canviar-ne el secret d’administrador.
+    not_configured: Sveltia CMS Additions no està configurat correctament. Demaneu ajuda al vostre administrador.
+    origin_not_allowed: Aquest lloc no té permís per usar Sveltia CMS Additions. Demaneu al vostre administrador que l’afegeixi als dominis permesos.
+    not_set_up: Sveltia CMS Additions encara no està connectat a GitHub. Demaneu al vostre administrador que acabi la configuració.
+    # A user whose password an admin has reset signs in another way, e.g. with GitHub
+    temporary_password: S’ha restablert la vostra contrasenya. Inicieu la sessió amb el vostre nom d’usuari i la contrasenya temporal que us ha donat l’administrador i després trieu-ne una de nova.
+    # {$url} is the URL of the service
+    incompatible: Aquesta versió de Sveltia CMS no funciona amb el servei de Sveltia CMS Additions a {$url}.
+    unreachable: No s’ha pogut connectar amb Sveltia CMS Additions. Torneu-ho a provar més tard.
+    insecure_connection: Sveltia CMS Additions s’ha de servir mitjançant HTTPS. Comproveu l’opció `base_url` a la configuració del CMS.
+    unexpected: La sol·licitud a Sveltia CMS Additions ha fallat a causa d’un error inesperat. Torneu-ho a provar més tard.
+
+  # Conversation panel: comments on the entry, kept by Sveltia CMS Additions
+  conversation:
+    title: Conversa
+    refresh: Actualitza la conversa
+    empty: Encara no hi ha cap comentari.
+    # Button above a long conversation, which is loaded from its latest comments
+    show_older: Mostra els comentaris més antics
+    # Label of the list of comments
+    timeline: Comentaris
+    deleted_user: Usuari suprimit
+    you: Vós
+    edited: editat
+    comment_label: Comentari
+    placeholder: Deixeu un comentari (Markdown)
+    visible_to_cms_users: Només visible per als usuaris del CMS
+    send: Comenta
+    options: Opcions del comentari
+    edit: Edita
+    delete: Suprimeix
+    save: Desa
+    delete_confirmation: Voleu suprimir aquest comentari? Aquesta acció no es pot desfer.
+    send_failed: No s’ha pogut enviar el comentari.
+
+  # Placeholder of an API key or deploy hook field the user has left empty, while an admin of
+  # Sveltia CMS Additions has entered one for everyone
+  provided_by_admin: Proporcionada pel vostre administrador
 
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
@@ -210,6 +564,15 @@ sign_in_with_mobile_instruction: Escanegeu el codi QR següent amb el telèfon o
 signed_in_as_x: Sessió iniciada com a {$name}
 working_with_local_repo: S’està treballant amb un repositori local
 working_with_test_repo: S’està treballant amb un repositori de prova
+working_in_demo_mode: Mode de demostració
+
+# Demo welcome dialog: shown once after signing in to a demo site, where the test repository is
+# seeded with sample content and the changes are only stored in the browser
+demo_welcome:
+  title: Benvinguts a la demostració de Sveltia CMS
+  description: Exploreu el CMS i editeu el contingut de mostra amb tota llibertat. Els vostres canvis només es desen en aquest navegador. No es publica res en línia i ningú més els pot veure.
+  reset_hint: Per tornar a començar amb el contingut original, seleccioneu Esborra totes les dades a Configuració > Gestió de dades.
+  button_label: Comença
 
 # Account menu: action items for sign-out and app installation
 sign_out: Tanca la sessió
@@ -225,9 +588,14 @@ install_as_app: Instal·la com a aplicació
 contents: Continguts
 assets: Recursos
 editorial_workflow: Flux editorial
+# Name of the Editorial Workflow page when all the content uses Preview Workflow, which has no
+# review stages, so the page only lists the drafts
+drafts: Esborranys
 cms_config: Configuració del CMS
 # Mobile menu page title (shown only on small screens)
 menu: Menú
+# Mobile menu page section heading listing the custom pages registered by the site
+custom_pages: Pàgines
 
 # Mobile promo infobar: encouraging users to try the mobile version
 mobile_promo_title: Sveltia CMS ja és disponible en mòbil!
@@ -238,10 +606,36 @@ mobile_promo_button: Proveu-lo
 new_language_available: Sveltia CMS ja és disponible en {$locale}!
 change_language: Canvia la llengua
 
+# Live reload infobar: shown when the CMS runs on a page that a framework’s development server (e.g.
+# Astro) reloads on every file change, instead of a static HTML file
+live_reload_warning: El vostre servidor de desenvolupament torna a carregar aquesta pàgina cada vegada que canvia un fitxer, cosa que pot interrompre el desament i deixar els fitxers malmesos. Serviu el CMS des d’un fitxer HTML estàtic. <a>Més informació</a>
+
 # Toast notification shown while the translation for the selected language is being downloaded
 # {$locale} is the localized language name, e.g., “French”
 switching_language: S’està canviant a {$locale}…
 locale_load_failed: No s’ha pogut carregar la traducció en {$locale}. Torneu-ho a provar més tard.
+
+# Toast notification shown when changes saved with the local backend couldn’t be committed to Git
+# {$reason} is one of the `local_git_skip_reasons` strings below
+local_git_not_committed: Els vostres canvis s’han desat, però no s’han confirmat a Git. {$reason} Per desar només els fitxers, desactiveu les confirmacions de Git a Configuració > Desenvolupador.
+local_git_skip_reasons:
+  unsupported_repository: El vostre repositori usa una funcionalitat de Git que el CMS no admet, com ara un arbre de treball enllaçat, noms d’objecte SHA-256, el format reftable, un índex dispers o un índex de la versió 3 o 4, que usen l’opció feature.manyFiles i git add -N.
+  missing_identity: El vostre nom i la vostra adreça electrònica no estan definits a la configuració de Git del repositori, i el CMS no pot llegir la vostra configuració global. Definiu-los al repositori amb git config --local user.name "Your Name" i git config --local user.email "you@example.com".
+  locked: Un altre procés de Git està usant el repositori. Si no n’hi ha cap en execució, suprimiu el fitxer .git/index.lock.
+  # The operation in progress, with how to finish or cancel it
+  operation_in_progress:
+    merge: Hi ha una fusió en curs. Acabeu-la amb git commit o cancel·leu-la amb git merge --abort.
+    rebase: Hi ha un canvi de base en curs. Acabeu-lo amb git rebase --continue o cancel·leu-lo amb git rebase --abort. Si ja heu passat a una altra cosa, git rebase --quit l’abandona sense modificar els vostres fitxers.
+    cherry_pick: Hi ha una selecció de confirmacions (cherry-pick) en curs. Acabeu-la amb git cherry-pick --continue o cancel·leu-la amb git cherry-pick --abort.
+    revert: Hi ha una reversió en curs. Acabeu-la amb git revert --continue o cancel·leu-la amb git revert --abort.
+    am: Hi ha una aplicació de pedaços amb git am en curs. Acabeu-la amb git am --continue o cancel·leu-la amb git am --abort.
+    conflict: Alguns fitxers tenen conflictes. Primer resoleu-los i prepareu-ne els resultats.
+  detached_head: No hi ha cap branca extreta.
+  staged_changes: Teniu altres canvis preparats per confirmar. Primer confirmeu-los o traieu-los de la preparació.
+  # {$path} is the file path
+  lfs: '{$path} se segueix amb Git LFS, on el CMS no pot fer confirmacions.'
+  # {$message} is the error message
+  error: S’ha produït un error inesperat. {$message}
 
 # Site and page navigation
 # Toolbar button aria-label for visiting the live site
@@ -276,6 +670,10 @@ account: Compte
 live_site: Lloc en línia
 git_repository: Repositori Git
 settings: Configuració
+
+# Page for the people who look after the CMS, apart from the personal settings: user management
+# and the CMS configuration
+administration: Administració
 
 # Help menu: button aria-labels and section headings
 show_help_menu: Mostra el menú d’ajuda
@@ -369,6 +767,10 @@ viewing_x_asset_folder: |
 # Cloud storage service view announcement
 # {$service} is the cloud storage service name, e.g. Uploadcare
 viewing_x_external_location: Ara esteu veient els recursos a {$service}.
+# Administration page announcements
+viewing_admin_section_list: Ara esteu veient la llista de seccions d’Administració.
+# {$section} is the section label, e.g. Users
+viewing_x_admin_section: Ara esteu veient la secció «{$section}» de la pàgina d’Administració.
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
@@ -387,6 +789,7 @@ x_of_x_selected: '{$selected} de {$total} seleccionats'
 
 # View switcher: toggle between list and grid views
 switch_view: Canvia la vista
+table_view: Vista de taula
 list_view: Vista de llista
 grid_view: Vista de graella
 switch_to_list_view: Canvia a la vista de llista
@@ -400,6 +803,16 @@ switch_to_grid_view: Canvia a la vista de graella
 # Sort menu: button labels and options
 sort: Ordena
 sorting_options: Opcions d’ordenació
+# Table view column labels for the entry metadata used as `{{…}}` template tags
+table_column_keys:
+  # The folder containing the entry file
+  dirname: Carpeta
+  # The entry file name without the extension
+  filename: Nom del fitxer
+  # The entry file extension
+  extension: Extensió
+  # The enabled locales of the entry
+  locales: Llengües
 # Sort key option labels
 sort_keys:
   # No sorting; entries appear in their natural repository order
@@ -439,6 +852,8 @@ grouping_options: Opcions d’agrupació
 # Asset type filter and group labels
 type: Tipus
 all: Tots
+# Group option for the linked files, which can be hosted anywhere: the host name of the file’s URL
+domain: Domini
 # Asset type labels
 image: Imatge
 video: Vídeo
@@ -457,6 +872,9 @@ all_assets: Tots els recursos
 global_assets: Recursos globals
 # Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
 linked_files: Fitxers enllaçats
+# Badge and message shown on a linked file that couldn’t be loaded, e.g. because it has been deleted
+file_unavailable: No disponible
+file_unavailable_description: No s’ha pogut carregar aquest fitxer. És possible que s’hagi mogut o suprimit.
 
 # ==============================================================================
 # Entry and Collection Actions
@@ -492,12 +910,27 @@ creating_entries_nearing_quota: |
     *   one {{ Aquesta col·lecció s’acosta al seu límit de {$quota} entrades. Només podeu crear {$remaining} entrada més. }}
     *   *   {{ Aquesta col·lecció s’acosta al seu límit de {$quota} entrades. Només podeu crear {$remaining} entrades més. }}
 
+# Read-only restrictions set with the `readonly` option: advisory messages
+readonly_cms: El CMS està en mode de només lectura. Podeu veure els continguts i els recursos, però no hi podeu fer cap canvi.
+readonly_collection: Aquesta col·lecció és de només lectura. Podeu veure’n el contingut, però no hi podeu fer cap canvi.
+readonly_entry: Aquesta entrada és de només lectura. La podeu veure, però no hi podeu fer cap canvi.
+readonly_asset_folder: Aquesta carpeta és de només lectura. Podeu veure’n els recursos, però no hi podeu fer cap canvi.
+readonly_branch: No teniu permís per pujar a la branca «{$branch}». Podeu veure aquest contingut, però no hi podeu fer cap canvi.
+readonly_role: Teniu accés de només lectura. Podeu veure els continguts i els recursos, però no hi podeu fer cap canvi.
+readonly_reference: L’entrada és de només lectura, de manera que la referència no es pot suprimir.
+# {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
+cannot_rename_referenced_entry: 'Aquesta entrada no es pot reanomenar perquè les entrades de només lectura següents hi fan referència pel seu nom actual: {$entries}.'
+# {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
+cannot_move_referenced_asset: 'Aquest recurs no es pot moure ni reanomenar perquè l’usen les entrades de només lectura següents: {$entries}.'
+
 # Navigation: back links and list labels
 back_to_collection: Torna a la col·lecció
 collection_list: Llista de col·leccions
 back_to_collection_list: Torna a la llista de col·leccions
 asset_folder_list: Llista de carpetes de recursos
 back_to_asset_folder_list: Torna a la llista de carpetes de recursos
+# Back button shown in place of the one above while browsing a subfolder of an asset folder
+back_to_parent_folder: Torna a la carpeta superior
 
 # ==============================================================================
 # Search
@@ -556,6 +989,53 @@ no_entries_found: No s’ha trobat cap entrada.
 # Upload dialog: title and button label
 upload_assets: Puja recursos nous
 
+# New Folder button and dialog in the Asset Library
+new_folder: Carpeta nova
+new_folder_name: Nom de la carpeta
+new_folder_create: Crea
+# {$folder} is the path of the folder the new one will be created in, starting with a slash
+new_folder_description: La carpeta nova es crearà a «{$folder}».
+# Validation errors for the new folder name
+new_folder_error:
+  empty: El nom de la carpeta no pot ser buit.
+  invalid: El nom de la carpeta no pot contenir barres ni començar amb un punt.
+  # A name the CMS itself is usually served from, e.g. `admin` or `cms`
+  reserved: Els fitxers d’una carpeta amb aquest nom són de només lectura, ja que normalment és des d’on se serveix el mateix CMS.
+  duplicate: Ja hi ha una carpeta o un fitxer amb aquest nom aquí.
+# Progress and error messages while the folder is being created
+creating_folder: S’està creant la carpeta…
+creating_folder_failed: No s’ha pogut crear la carpeta.
+
+# Menu on a folder in the Asset Library, and the Rename Folder and Delete Folder dialogs
+folder_options: Opcions de la carpeta
+show_folder_options: Mostra les opcions de la carpeta
+rename_folder: Reanomena la carpeta
+delete_folder: Suprimeix la carpeta
+# Rename Folder dialog body text
+# {$count} is the number of assets in the folder, which are moved along with it
+enter_new_name_for_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Introduïu un nom nou a continuació. }}
+    one {{ Introduïu un nom nou a continuació. El recurs de la carpeta es mourà amb ella i s’actualitzarà qualsevol entrada que l’usi. }}
+    *   {{ Introduïu un nom nou a continuació. Els {$count} recursos de la carpeta es mouran amb ella i s’actualitzaran les entrades que els usin. }}
+# Delete Folder confirmation
+# {$name} is the folder name and {$count} is the number of assets in the folder
+confirm_deleting_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Segur que voleu suprimir la carpeta buida «{$name}»? }}
+    one {{ Segur que voleu suprimir la carpeta «{$name}» i el recurs que conté? }}
+    *   {{ Segur que voleu suprimir la carpeta «{$name}» i els {$count} recursos que conté? }}
+# Progress and error messages while the folder is being renamed or deleted
+renaming_folder: S’està reanomenant la carpeta…
+renaming_folder_failed: No s’ha pogut reanomenar la carpeta.
+deleting_folder: S’està suprimint la carpeta…
+deleting_folder_failed: No s’ha pogut suprimir la carpeta.
+# Asset Library and asset picker: notice shown when a cloud storage service holds more files than
+# are listed at once
+external_assets_truncated: Hi ha massa fitxers al servei per llistar-los tots, de manera que alguns no es mostren.
+
 # Edit options menu: button and item labels
 edit_options: Opcions d’edició
 show_edit_options: Mostra les opcions d’edició
@@ -568,6 +1048,47 @@ edit_x: Edita {$name}
 
 # Asset text editor: switch for line wrapping
 wrap_long_lines: Ajusta les línies llargues
+
+# Move assets: dialog for moving assets to another folder in the repository
+move: Mou
+move_asset: Mou el recurs
+# Dialog title. {$name} is the asset name when a single asset is moved, and {$count} is the number of
+# assets being moved
+move_assets_title: |
+  .input {$count :integer}
+  .match $count
+    one {{ Mou {$name} }}
+    *   {{ Mou {$count} recursos }}
+# Dialog body text. {$count} is the number of entries that currently use the assets
+select_asset_move_destination: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Seleccioneu la carpeta de destinació. }}
+    one {{ Seleccioneu la carpeta de destinació. També s’actualitzarà una entrada que usa els recursos. }}
+    *   {{ Seleccioneu la carpeta de destinació. També s’actualitzaran {$count} entrades que usen els recursos. }}
+# Accessible label of the folder tree in the Move dialog
+asset_move_destination: Carpeta de destinació
+# Shown when the assets being moved are all in the selected folder already
+assets_already_in_folder: |
+  .input {$count :integer}
+  .match $count
+    one {{ El recurs ja és en aquesta carpeta. }}
+    *   {{ Els recursos ja són en aquesta carpeta. }}
+# Shown when files with the same names exist in the selected folder. {$names} is a comma-separated
+# list of file names
+asset_move_conflict: 'Els fitxers següents ja existeixen en aquesta carpeta: {$names}.'
+moving_assets: S’estan movent els recursos…
+moving_assets_failed: No s’han pogut moure els recursos.
+# Warning shown when files have been moved off a cloud storage service, but the originals couldn’t
+# be deleted from it
+asset_move_cleanup_failed: Els fitxers s’han mogut, però no s’han pogut suprimir els originals del servei d’emmagatzematge.
+# Shown when files on a cloud storage service can’t be renamed or moved, because the entries using
+# them can’t be updated, e.g. for an Open Authoring contributor. {$count} is the number of files
+cannot_change_used_external_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Aquest fitxer no es pot reanomenar ni moure perquè les entrades que l’usen no es poden actualitzar. }}
+    *   {{ Aquests fitxers no es poden reanomenar ni moure perquè les entrades que els usen no es poden actualitzar. }}
 
 # Rename asset: dialog and validation
 rename_asset: Reanomena el recurs
@@ -586,6 +1107,15 @@ enter_new_name_for_asset_error:
   empty: El nom del fitxer no pot ser buit.
   character: El nom del fitxer no pot contenir caràcters especials.
   duplicate: Aquest nom de fitxer ja s’usa per a un altre recurs.
+  # A name starting with a dot hides the file, which the CMS wouldn’t list any more
+  leading_dot: El nom del fitxer no pot començar amb un punt.
+  # The name of a file next to the asset that isn’t an asset, like an entry file
+  file_duplicate: Ja hi ha un altre fitxer amb aquest nom aquí.
+  # The name of a folder next to the file
+  folder_duplicate: Ja hi ha una carpeta amb aquest nom aquí.
+# Shown while renaming a file whose name will be changed on saving, e.g. by the `slugify_filename`
+# media library option
+file_will_be_saved_as: El fitxer es desarà com a «{$name}».
 # Confirmation dialog shown when the file extension is changed while renaming an asset
 change_file_extension: Canvia l’extensió del fitxer
 # {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
@@ -599,6 +1129,11 @@ file_extension_change_warning: És possible que el fitxer no es mostri o no es p
 replace_asset: Reemplaça el recurs
 # {$name} is the asset being replaced
 replace_x: Reemplaça {$name}
+# File/Image field: labels of the Replace and Remove buttons
+replace_file: Reemplaça el fitxer
+replace_image: Reemplaça la imatge
+remove_file: Suprimeix el fitxer
+remove_image: Suprimeix la imatge
 
 # File selection prompts: drop zones and file pickers
 # Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
@@ -688,6 +1223,29 @@ confirm_deleting_selected_assets: |
     one {{ Segur que voleu suprimir el recurs seleccionat? }}
     *   {{ Segur que voleu suprimir els {$count} recursos seleccionats? }}
 confirm_deleting_all_assets: Segur que voleu suprimir tots els recursos?
+# Note added to the confirmation when entries use the assets being deleted; the references are
+# removed in the same commit. {$count} is the number of entries using them
+deleting_referenced_assets_note: |
+  .input {$count :integer}
+  .match $count
+    one {{ També se suprimirà la referència que en fa una entrada. }}
+    *   {{ També se suprimiran les referències que en fan {$count} entrades. }}
+# Shown in place of the confirmation when removing the references would leave a field in an entry
+# invalid, e.g. a required Image field with nothing left, so the deletion is refused. The fields are
+# listed below the message, each with the validation error it would have. {$count} is the number of
+# assets being deleted
+cannot_delete_referenced_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Aquest recurs no es pot suprimir perquè els camps següents de les entrades que l’usen deixarien de ser vàlids sense ell. Primer actualitzeu aquestes entrades. }}
+    *   {{ Aquests recursos no es poden suprimir perquè els camps següents de les entrades que els usen deixarien de ser vàlids sense ells. Primer actualitzeu aquestes entrades. }}
+# Error shown in the asset deletion dialog when the entries using the assets couldn’t be looked up,
+# so the deletion can’t go ahead. {$count} is the number of assets being deleted
+checking_asset_references_failed: |
+  .input {$count :integer}
+  .match $count
+    one {{ No s’ha pogut comprovar quines entrades usen aquest recurs. Tanqueu aquest diàleg i torneu-ho a provar. }}
+    *   {{ No s’ha pogut comprovar quines entrades usen aquests recursos. Tanqueu aquest diàleg i torneu-ho a provar. }}
 
 # Delete entries: dialog titles and confirmation messages
 # {$count} is the number of entries targeted by the action
@@ -720,6 +1278,23 @@ confirm_deleting_selected_entries_with_assets: |
     *   {{ Segur que voleu suprimir les {$count} entrades seleccionades i els recursos associats? }}
 confirm_deleting_all_entries: Segur que voleu suprimir totes les entrades?
 confirm_deleting_all_entries_with_assets: Segur que voleu suprimir totes les entrades i els recursos associats?
+# Note added to the confirmation when other entries reference the entries being deleted through
+# Relation fields; the references are removed in the same commit. {$count} is the number of
+# referencing entries
+deleting_referenced_entries_note: |
+  .input {$count :integer}
+  .match $count
+    one {{ També se suprimirà la referència que en fa una altra entrada. }}
+    *   {{ També se suprimiran les referències que en fan {$count} entrades més. }}
+# Shown in place of the confirmation when removing the references would leave a Relation field in
+# another entry invalid, e.g. a required field with nothing selected, so the deletion is refused.
+# The fields are listed below the message, each with the validation error it would have. {$count}
+# is the number of entries being deleted
+cannot_delete_referenced_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Aquesta entrada no es pot suprimir perquè els camps següents d’altres entrades deixarien de ser vàlids sense ella. Primer actualitzeu aquestes entrades. }}
+    *   {{ Aquestes entrades no es poden suprimir perquè els camps següents d’altres entrades deixarien de ser vàlids sense elles. Primer actualitzeu aquestes entrades. }}
 
 # ==============================================================================
 # Entry Reordering
@@ -733,6 +1308,40 @@ cancel_reordering_entries: Cancel·la la reordenació de les entrades
 
 # Reorder error message
 saving_reorder_failed: No s’ha pogut desar l’ordre nou de les entrades. Torneu-ho a provar.
+
+# ==============================================================================
+# Bulk Entry Editing
+# ==============================================================================
+# Strings for editing the fields of many entries at once in a table.
+
+# Bulk edit mode: toggle buttons
+bulk_edit_entries: Edita entrades en bloc
+save_bulk_edits: Desa les edicions en bloc
+cancel_bulk_edits: Cancel·la les edicions en bloc
+
+# Bulk edit table: column header of the entry titles
+bulk_edit_entry: Entrada
+
+# Bulk edit table: label of the table
+bulk_edit_table: Editor en bloc
+
+# Bulk edit table: label of a cell input; {$field} is the field label, {$entry} is the entry title
+bulk_edit_cell: '{$field} de {$entry}'
+
+# Bulk edit status: number of changed fields
+bulk_edit_count: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Cap canvi }}
+    one {{ {$count} canvi }}
+    *   {{ {$count} canvis }}
+
+# Bulk edit error messages
+bulk_edit_invalid: Alguns dels valors no són vàlids. Corregiu els camps ressaltats i torneu-ho a provar.
+saving_bulk_edits_failed: No s’han pogut desar els canvis. Torneu-ho a provar.
+
+# Bulk edit: confirmation shown when leaving the mode with unsaved changes
+discard_bulk_edits_confirm: Voleu descartar els canvis fets a les entrades?
 
 # ==============================================================================
 # File Upload and Processing
@@ -782,6 +1391,20 @@ warning_invalid_files: |
   .match $count
     one {{ Aquest fitxer no es pot pujar perquè està malmès o el seu contingut no coincideix amb l’extensió del fitxer. Això sol passar quan es canvia el nom d’una foto en lloc de convertir-la, com ara una imatge HEIC desada com a fitxer JPEG. Convertiu el fitxer i torneu-ho a provar. }}
     *   {{ Aquests fitxers no es poden pujar perquè estan malmesos o el seu contingut no coincideix amb les extensions dels fitxers. Això sol passar quan es canvia el nom de les fotos en lloc de convertir-les, com ara imatges HEIC desades com a fitxers JPEG. Convertiu els fitxers i torneu-ho a provar. }}
+# {$count} is the number of files that are not of a type the field accepts, even once transformed
+# {$types} is the list of accepted file types, such as “.pdf or .txt”
+warning_unsupported_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Aquest fitxer no es pot pujar perquè no és de cap dels tipus següents: {$types}. }}
+    *   {{ Aquests fitxers no es poden pujar perquè no són de cap dels tipus següents: {$types}. }}
+# {$count} is the number of files that are not of an image type the field accepts
+# {$types} is the list of accepted image formats, such as “PNG or WebP”
+warning_unsupported_image_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Aquest fitxer no es pot pujar perquè només s’accepta una imatge dels tipus següents: {$types}. }}
+    *   {{ Aquests fitxers no es poden pujar perquè només s’accepten imatges dels tipus següents: {$types}. }}
 
 # File format validation when replacing an asset
 # Warning section for replacement files that are in a different format
@@ -817,6 +1440,8 @@ uploading_files_failed: No s’ha pogut pujar.
 # Errors shown when a file on a cloud storage service could not be deleted or renamed
 deleting_assets_failed: No s’ha pogut suprimir.
 renaming_asset_failed: No s’ha pogut canviar el nom.
+# Error shown when an edited text file in the Asset Library could not be saved
+saving_asset_failed: No s’ha pogut desar.
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
@@ -854,6 +1479,8 @@ entry_validation_errors: |
   .match $count
     one {{ Un camp té un error. Corretgeu-lo per desar l’entrada. }}
     *   {{ {$count} camps tenen errors. Corretgiu-los per desar l’entrada. }}
+# Button on the validation error toast that opens the Validation panel listing the errors
+show_errors: Mostra els errors
 
 # ==============================================================================
 # Success Notifications
@@ -930,6 +1557,19 @@ assets_deleted: |
   .match $count
     one {{ Recurs suprimit. }}
     *   {{ {$count} recursos suprimits. }}
+folder_created: Carpeta creada.
+# Folder info panel in the Asset Library sidebar
+folder_path: Camí de la carpeta
+folder_contents: Contingut
+# {$count} is the number of subfolders in the folder
+x_folders: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Cap carpeta }}
+    one {{ {$count} carpeta }}
+    *   {{ {$count} carpetes }}
+folder_renamed: Carpeta reanomenada.
+folder_deleted: Carpeta suprimida.
 
 # ==============================================================================
 # Content Editor
@@ -970,6 +1610,9 @@ edit_singleton_announcement: Ara esteu editant el fitxer «{$file}».
 # Shown when CI skip is enabled/disabled
 save_and_publish: Desa i publica
 save_without_publishing: Desa sense publicar
+# Shown disabled in place of `save_and_publish` while entries created or edited from a Relation
+# field are in a collection whose review can’t be skipped with the `direct_publish` option
+save_and_publish_needs_review: Desa i publica (les entrades relacionades necessiten revisió)
 
 # Editor options menu
 show_editor_options: Mostra les opcions de l’editor
@@ -999,6 +1642,9 @@ swap_panes: Intercanvia les subfinestres
 # {$locale} is the localized language name for the current content pane, e.g., English
 edit_x_locale: Edita el contingut en {$locale}
 preview_x_locale: Previsualitza el contingut en {$locale}
+# The content of a monolingual entry, which has no locale to name
+edit_content: Edita el contingut
+preview_content: Previsualitza el contingut
 
 # Preview iframe labels
 content_preview: Previsualització del contingut
@@ -1007,6 +1653,8 @@ content_preview: Previsualització del contingut
 # {$locale} is the localized language name for the content options menu, e.g., English
 show_content_options_x_locale: Mostra les opcions de contingut en {$locale}
 content_options_x_locale: Opcions de contingut en {$locale}
+show_content_options: Mostra les opcions de contingut
+content_options: Opcions de contingut
 
 # Field container labels
 # {$field} is the field’s display label
@@ -1045,8 +1693,9 @@ deploy_preview:
   view: Mostra la previsualització
   # Shown while the site is still being built, with or without a URL to open yet
   building: La previsualització encara s’està generant.
-  # Shown when the build failed, so no preview is available
-  failed: No s’ha pogut generar la previsualització.
+  # Shown when the build failed, so no preview is available. The failure may lie in the site’s own
+  # code rather than the entry, so the editor is told not to assume it’s theirs, and who to ask
+  build_failed: No s’ha pogut generar la previsualització. No necessàriament és a causa dels vostres canvis. Si el problema persisteix, poseu-vos en contacte amb l’administrador del lloc.
   # Shown briefly while the CI/CD provider is being queried
   checking: S’està cercant una previsualització…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
@@ -1080,9 +1729,20 @@ translate_from: Tradueix de…
 # {$locale} is the localized language name of the source content being translated, e.g., English
 translate_from_x: Tradueix de {$locale}
 
-# Revert changes
+# Revert changes, restore the default values or clear the fields. The field options menu offers
+# them for a field, the content options menu of an editor pane for the locale it shows, and the
+# editor options menu for the whole entry, the latter two asking for confirmation first
 revert_changes: Reverteix els canvis
 revert_all_changes: Reverteix tots els canvis
+restore_default: Restaura els valors per defecte
+clear_all: Neteja-ho tot
+confirm_reverting_changes: Segur que voleu revertir tots els canvis fets en aquesta entrada?
+# {$locale} is a locale name, e.g. French
+confirm_reverting_changes_x_locale: Segur que voleu revertir tots els canvis fets en el contingut en {$locale}?
+confirm_restoring_defaults: Segur que voleu restaurar els valors per defecte de tots els camps d’aquesta entrada? Es perdran els vostres canvis.
+confirm_restoring_defaults_x_locale: Segur que voleu restaurar els valors per defecte de tots els camps del contingut en {$locale}? Es perdran els vostres canvis.
+confirm_clearing_fields: Segur que voleu netejar tots els camps d’aquesta entrada? Es perdran els vostres canvis.
+confirm_clearing_fields_x_locale: Segur que voleu netejar tots els camps del contingut en {$locale}? Es perdran els vostres canvis.
 
 # Slug editing
 edit_slug: Edita el slug
@@ -1090,6 +1750,8 @@ edit_slug_error:
   empty: El slug no pot ser buit.
   invalid: El slug no pot contenir caràcters especials, incloses les barres i els espais.
   duplicate: Aquest slug ja s’usa per a una altra entrada.
+# {$slug} is the slug filled from the slug template, which a number is added to when another entry uses it
+slug_numbered: El slug «{$slug}» ja s’usa per a una altra entrada, de manera que s’hi afegirà un número.
 
 # Entry path editing for nested entries
 # Heading for the parent folder picker shown when the `meta.path` option is enabled
@@ -1203,6 +1865,13 @@ validation:
     email: Introduïu un correu electrònic vàlid.
     url: Introduïu un URL vàlid.
 
+  # Value used for the same field in another entry of the collection
+  value_not_unique: Aquest valor ja s’usa per a una altra entrada.
+  # Key of a keyed List field item used for another item of the same list
+  key_not_unique: Aquesta clau ja s’usa per a un altre element.
+  # Key of a keyed List field item that is a whole number, which doesn’t keep its order in a map
+  key_numeric: La clau no pot ser un nombre enter, ja que els elements perdrien l’ordre.
+
   # Custom field validation error
   invalid_value: Valor no vàlid.
   unexpected_error: S’ha produït un error inesperat.
@@ -1224,6 +1893,12 @@ entry_sidebar:
     # Button in the panel header that validates the entry on demand
     validate: Valida
 
+  # Slug panel: shows the entry slug and lets the user edit it
+  slug:
+    title: Slug
+    generated_on_save: El slug es genera a partir del contingut de l’entrada quan es desa. Qualsevol data i hora que contingui seran les del moment del desament.
+    unavailable: Aquesta entrada no té slug.
+
   # History panel: shows entry commit history
   history:
     title: Historial
@@ -1235,11 +1910,55 @@ entry_sidebar:
     title: Retroenllaços
     no_entries: No hi ha cap entrada que faci referència a aquesta entrada.
 
+  # Tab label of a panel with a count, e.g. of comments. {$title} is the panel title
+  title_with_count: '{$title} ({$count})'
+
+# Status shown next to the Save button while an entry with many new files is being saved
+# {$done} and {$total} are the number of files prepared and to prepare, or the number of commits
+# made and the estimated number of commits in all
+save_progress:
+  preparing: 'S’estan preparant els fitxers: {$done} de {$total}'
+  committing: 'S’està desant a GitHub: {$done} de {$total} confirmacions aproximadament'
+
 # Entry save error dialog
 saving_entry:
   error:
     title: Error
     description: S’ha produït un error en desar l’entrada. Proveu-ho de nou més tard.
+
+# Dialog shown when saving the entry would overwrite a change someone else has made in the
+# repository since the entry was opened in the editor
+save_conflict:
+  title: Entrada modificada per una altra persona
+  # `{$name}` is the other person’s name, `{$date}` when they made the change
+  modified_by: '{$name} ha modificat aquesta entrada el {$date}, després que l’obrísseu.'
+  # Shown instead of `modified_by` when the other person isn’t known
+  modified: Aquesta entrada s’ha modificat al repositori després que l’obrísseu.
+  deleted: Aquesta entrada s’ha suprimit del repositori després que l’obrísseu.
+  # Follows `modified_by` or `modified`
+  overwrite_warning: Si deseu ara, es perdran els seus canvis.
+  # Follows `deleted`
+  recreate_warning: Si deseu ara, l’entrada es tornarà a crear.
+  # Follows `modified_by`, `modified` or `deleted` for an entry stored in the same file as the other
+  # entries of the collection, which can’t be saved over the change
+  reload_warning: Com que l’entrada està emmagatzemada al mateix fitxer que altres entrades, no es pot desar per sobre del canvi. Cancel·leu l’edició, torneu a obrir l’entrada des de la llista i feu-hi les vostres modificacions.
+  # OK button label
+  save_anyway: Desa igualment
+  # Error shown when the repository was updated between the check above and the commit itself
+  branch_moved: Una altra persona ha actualitzat el repositori mentre es desava. Torneu-ho a provar.
+  # Error shown when saving would change an item in a file storing all the entries of a collection,
+  # which someone else has changed or moved since it was loaded
+  array_item_changed: Una altra persona ha modificat una entrada emmagatzemada al mateix fitxer. Torneu-ho a provar.
+  # {$path} is the file path
+  array_file_invalid: El fitxer {$path} no es pot actualitzar perquè no conté una llista d’entrades vàlida.
+
+# Notice shown in the entry editor when someone else has changed or deleted the entry in the
+# repository while the user has it open. The change itself is described with the `save_conflict`
+# strings above
+remote_change:
+  reload_entry: Torna a carregar l’entrada
+  # Confirmation shown before reloading when the user has unsaved changes
+  confirm_reloading_entry: Segur que voleu tornar a carregar l’entrada? Es perdran els canvis no desats.
 
 # ==============================================================================
 # Asset Editor
@@ -1313,21 +2032,63 @@ map_lat_lng: Mapa que mostra la latitud {$latitude}, longitud {$longitude}
 remove_this_item: Suprimeix aquest element
 move_up: Mou amunt
 move_down: Mou avall
+# Menu of a list item or file with the extra reorder actions, shown in a list of 3 or more items
+reorder_options: Opcions d’ordenació
+move_to_top: Mou al principi
+move_to_bottom: Mou al final
+# Opens a dialog asking for the position to move a list item to
+move_to: Mou a…
+# Dialog asking for the new position of an item. {$count} is the number of items in the list
+move_to_description: Introduïu una posició de l’1 al {$count}.
+move_to_position: Posició
 # aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
 # or moved with the arrow keys while the handle has focus
 reorder_item: Reordena l’element
 # aria-label for the text input holding one item of a simple List field, which has no subfield to
 # take a label from
 list_item_value: Valor de l’element
+# aria-label for each item of a List field, giving its position in the list
+# {$position} is the 1-based position of the item, {$count} is the number of items
+list_item_position: Element {$position} de {$count}
+# Message shown in place of a removed List field item or Object field, next to a Restore button
+# that puts it back
+item_removed: Element suprimit.
 
-# Add item button label
+# Add item button label, also used by the Relation field to create a new entry in the referenced
+# collection, with the collection’s singular label
 # Example: “Add Image”, “Add Author”
 # {$name} is the label of the item type that can be added
 add_x: Afegeix {$name}
 
 # List item context menu
+# aria-label for the button opening the menu, and for the menu itself
+list_item_options: Opcions de l’element de la llista
 add_item_above: Afegeix un element a dalt
 add_item_below: Afegeix un element a baix
+paste_item_above: Enganxa l’element a dalt
+paste_item_below: Enganxa l’element a baix
+paste_item_to_replace: Enganxa i reemplaça
+
+# List item clipboard
+# Button in the list toolbar to paste a copied item, from any list in any entry, at the end of the
+# list, or at the start with the `add_to_top` option
+paste_item: Enganxa l’element
+list_item_copied: Element copiat.
+# ⋮ stands for the icon of the item menu button; keep it, along with the button’s aria-label
+no_list_item_to_paste: No hi ha cap element copiat per enganxar. Per copiar-ne un, obriu el menú ⋮ (Opcions de l’element de la llista) d’un element i seleccioneu Copia.
+list_item_not_compatible: L’element copiat no encaixa en aquesta llista.
+# {$count} is the number of the values left out, as the list doesn’t have the fields
+list_item_pasted_without_values: |
+  .input {$count :integer}
+  .match $count
+    one {{ Element enganxat. S’ha omès un valor que aquesta llista no admet. }}
+    *   {{ Element enganxat. S’han omès {$count} valors que aquesta llista no admet. }}
+# {$count} is the number of the files the pasted item references that couldn’t be found
+list_item_pasted_without_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Element enganxat, però no s’ha trobat un fitxer que usa. Comproveu els camps de fitxer de l’element. }}
+    *   {{ Element enganxat, però no s’han trobat {$count} fitxers que usa. Comproveu els camps de fitxer de l’element. }}
 
 # Variable-type list selector
 select_list_type: Selecciona el tipus de llista
@@ -1346,12 +2107,45 @@ opacity: Opacitat
 # Select field: empty option placeholder
 unselected_option: (Cap)
 
+# Relation field: creating or editing a referenced entry without leaving the editor
+relation_field:
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  save_together_hint: L’element nou de tipus «{$name}» es desarà juntament amb l’entrada que esteu editant.
+  # Error shown when the entry couldn’t be prepared. {$name} is the singular label of the collection
+  add_failed: No s’ha pogut afegir l’element de tipus «{$name}». Comproveu la consola del navegador per a més detalls.
+  # Title of the dialog to edit an entry selected in the field. {$name} is the singular label of the
+  # referenced collection
+  edit_entry_title: 'S’està editant: {$name}'
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  edit_together_hint: Els vostres canvis a l’element de tipus «{$name}» es desaran juntament amb l’entrada que esteu editant.
+  # Error shown when the changes couldn’t be prepared. {$name} is the singular label of the collection
+  edit_failed: No s’han pogut aplicar els canvis a l’element de tipus «{$name}». Comproveu la consola del navegador per a més detalls.
+  # Error shown when the changes would move the entry to another file path, e.g. through a path
+  # template using a field. {$name} is the singular label of the collection
+  move_unsupported: Aquests canvis mourien l’element de tipus «{$name}» a una altra ubicació, cosa que només es pot fer editant-lo per separat.
+  # Error shown when saving, if someone else has changed an entry edited from the field since. {$name}
+  # is the summary of that entry
+  edit_conflict: Una altra persona ha modificat «{$name}» des que l’heu editat. Torneu-lo a obrir des del camp per revisar els vostres canvis respecte a la versió més recent.
+  # Error shown when saving, if someone else has deleted an entry edited from the field since.
+  # {$name} is the summary of that entry
+  edit_deleted: Una altra persona ha suprimit «{$name}» des que l’heu editat. Traieu-lo del camp per desar l’entrada.
+  # Accessible label of the menu listing the selected entries that can be edited
+  select_entry_to_edit: Seleccioneu una entrada per editar
+  # Warning shown in the editor of an entry that has been edited from a Relation field of another
+  # entry, while the changes wait in that entry’s pull request. {$name} is the summary of that
+  # entry
+  edited_with_entry: Els canvis d’aquesta entrada estan pendents de publicar-se juntament amb «{$name}». Si la deseu ara, els dos conjunts de canvis es combinaran quan es publiqui aquella entrada, cosa que pot fallar si se superposen.
+  # Warning shown in the dialog when an entry edited from the field has been changed by someone else
+  # since. {$name} is the singular label of the collection
+  changed_since_edit: Una altra persona ha modificat aquest element de tipus «{$name}» des que l’heu editat. Els vostres canvis es mostren sobre la versió més recent. Reviseu-los abans d’actualitzar.
+
 # Select Assets dialog
 assets_dialog:
   # Dialog titles for different selection modes
   title:
     file: Selecciona un fitxer
     image: Selecciona una imatge
+    folder: Selecciona una carpeta
 
   # Search input labels
   search_for_file: Cerca fitxers
@@ -1359,6 +2153,18 @@ assets_dialog:
 
   # Locations panel aria-label
   locations: Ubicacions
+
+  # Folder selection mode for a File field with the `select_folder` option. {$path} is the public
+  # path of the folder to be selected, and {$count} is the number of folders selected
+  selected_folder: 'Carpeta seleccionada: {$path}'
+  selected_folders: |
+    .input {$count :integer}
+    .match $count
+      one {{ {$count} carpeta seleccionada }}
+      *   {{ {$count} carpetes seleccionades }}
+  no_subfolders: Aquesta carpeta no té subcarpetes.
+  # Shown for a cloud storage service whose `prefix` option depends on fields of the entry
+  prefix_unresolved: Empleneu els camps dels quals depèn aquesta ubicació per explorar-ne i pujar-hi fitxers.
 
   # Asset folder options
   folder:
@@ -1376,6 +2182,7 @@ assets_dialog:
 
   # Stock photo panels
   available_images: Imatges disponibles
+  available_files: Fitxers disponibles
 
   # URL entry option
   enter_url: Introduïu un URL
@@ -1398,6 +2205,9 @@ assets_dialog:
   photo_credit:
     title: Crèdit de la foto
     description: 'Useu el crèdit següent si és possible:'
+    # {$field} is the label of the Markdown field the credit is added to
+    insert_to_field: Insereix a {$field}
+    copy_as_markdown: Copia com a Markdown
 
   # Unsaved asset badge
   unsaved: No desat
@@ -1440,6 +2250,7 @@ editor_components:
   alt: Text alternatiu
   title: Títol
   link: Enllaç
+  caption: Llegenda
 
 # Key-Value field: column headers and validation
 key_value:
@@ -1504,6 +2315,15 @@ cloud_storage:
   uploadcare:
     auth_key_label: API Secret Key
 
+  azure_blob_storage:
+    auth_key_label: SAS Token
+
+  backblaze_b2:
+    auth_key_label: Application Key
+
+  bunny_storage:
+    auth_key_label: Storage Zone Password
+
 # ==============================================================================
 # Configuration Validation
 # ==============================================================================
@@ -1557,16 +2377,42 @@ config:
     unsupported_backend_suggestion: Useu un dels <a>rerefons suportats</a> en el seu lloc.
     missing_repository: No s’ha definit el repositori.
     invalid_repository: El repositori configurat no és vàlid. Ha de tenir el format «owner/repo».
+    # Don’t localize `api_root`
+    missing_api_root: L’opció `api_root` no està definida. És obligatòria per al rerefons Forgejo.
+    invalid_root_dir: El directori arrel no és vàlid. Ha de ser un camí dins del repositori, sense «..».
+    invalid_root_dir_branch: El directori arrel no es pot usar als noms de branca dels modes de publicació `editorial_workflow` i `preview`. Cap part del camí pot començar amb un punt, acabar amb «.lock» ni contenir un espai o un caràcter especial com ara dos punts o un asterisc.
+    path_outside_root_dir: El camí «{$path}» surt fora del directori arrel, on el CMS no pot llistar fitxers.
     oauth_implicit_flow: El mètode d’autenticació configurat (flux implícit) no és compatible amb Sveltia CMS. Useu un <a>mètode d’autenticació</a> diferent.
     github_pkce_unsupported: L’autorització PKCE encara no és compatible a causa de les limitacions de GitHub. Useu un <a>mètode d’autenticació</a> diferent.
+    additions_no_base_url: L’opció `base_url` ha de ser l’URL del vostre servei de Sveltia CMS Additions.
     oauth_no_app_id: No s’ha definit l’ID de l’aplicació OAuth.
     # Don’t localize `open_authoring`, `editorial_workflow` and `preview`
-    open_authoring_no_workflow: L’opció `open_authoring` requereix el mode de publicació `editorial_workflow`. Consulteu la <a>documentació</a> per a més detalls.
+    open_authoring_no_workflow: L’opció `open_authoring` requereix el mode de publicació `editorial_workflow` o `preview`. Consulteu la <a>documentació</a> per a més detalls.
     # Don’t localize `auth_methods`
     no_auth_methods: L’opció `auth_methods` ha de contenir almenys un mètode.
+    # Don’t localize `auth_scope`, `repo` and `public_repo`
+    auth_scope_no_repo: L’opció `auth_scope` ha d’incloure `repo` o `public_repo`.
     missing_media_folder: No s’ha definit la carpeta multimèdia.
     public_folder_relative_path: La carpeta pública configurada no és vàlida. Ha de ser un camí absolut que comenci per «/».
     public_folder_absolute_url: No s’admet un URL absolut per a l’opció de carpeta pública a Sveltia CMS.
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    unsupported_folder_template_tag: L’opció `{$option}` conté l’etiqueta de plantilla `{$tag}`, que no s’admet en aquest lloc. Només es poden usar les etiquetes de plantilla del slug, com ara `\{\{slug\}\}` i `\{\{year\}\}`, i les etiquetes `\{\{dirname\}\}`, `\{\{filename\}\}`, `\{\{extension\}\}`, `\{\{media_folder\}\}` i `\{\{public_folder\}\}`.
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    global_folder_template_tag: L’opció `{$option}` conté l’etiqueta de plantilla `{$tag}`, que només es pot usar a l’opció d’una col·lecció, d’un fitxer de col·lecció o d’un camp, on hi ha una entrada amb què emplenar-la.
+    # {$replacement} is the configured replacement string; Don’t localize `sanitize_replacement`
+    invalid_sanitize_replacement: L’opció `sanitize_replacement` està definida com a `{$replacement}`, però conté un caràcter que no es pot usar en un slug, de manera que no pot substituir-ne cap.
+    # {$option} is the option name (`site_url` or `display_url`) and {$url} is the configured value
+    invalid_url_option: L’opció `{$option}` està definida com a `{$url}`, però ha de ser un URL absolut que comenci per `https://` o `http://`.
+    # Don’t localize `publish_mode`, `stages`, `draft`, `pending_review` and `pending_publish`
+    invalid_publish_mode_stages: L’opció `stages` de `publish_mode` ha de començar amb `draft` i llistar les etapes en l’ordre `draft`, `pending_review`, `pending_publish`, sense repetir-ne cap.
+    # Don’t localize `i18n` and `locales`
+    i18n_no_locales: L’opció `i18n.locales` ha de llistar almenys una llengua.
+    # {$locale} is the locale code from the configuration; Don’t localize `default_locale` and `locales`
+    i18n_invalid_default_locale: L’opció `default_locale` està definida com a `{$locale}`, però no és cap de les `locales`.
+    # {$locale} is the locale code from the configuration; Don’t localize `initial_locales` and `locales`
+    i18n_invalid_initial_locale: L’opció `initial_locales` conté `{$locale}`, però no és cap de les `locales`.
+    # Don’t localize `i18n`
+    i18n_no_collections: 'L’opció `i18n` està configurada al nivell superior, però cap de les col·leccions ni dels singletons no té l’opció `i18n`, de manera que no es pot traduir cap contingut. Afegiu `i18n: true` a les col·leccions i els singletons que vulgueu traduir.'
     # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
     invalid_transformation_key: L’opció `transformations` conté una clau `{$key}` no compatible. Ha de ser `raster_image`, `svg` o un format d’imatge ràster compatible.
     # {$key} is the transformation key; Don’t localize `quality`
@@ -1579,18 +2425,52 @@ config:
     invalid_asset_collection_name: El nom de la col·lecció de recursos `{$name}` no és vàlid. No pot contenir caràcters especials.
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: Els noms de les col·leccions de recursos han de ser únics, però `{$name}` s’usa més d’una vegada.
-    # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_no_options: La col·lecció ha de tenir definida l’opció `folder`, `files` o `divider`.
-    # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_multiple_options: La col·lecció no pot tenir alhora les opcions `folder`, `files` i `divider`.
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_no_options: La col·lecció ha de tenir definida l’opció `folder`, `file`, `files` o `divider`.
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_multiple_options: La col·lecció no pot tenir més d’una de les opcions `folder`, `file`, `files` i `divider`.
     # {$extension} is the file extension and {$format} is the configured content format
     file_format_mismatch: L’extensió `{$extension}` no coincideix amb el format `{$format}`.
+    # {$name} is the field name from the configuration and {$widget} is its field type
+    front_matter_body_field_not_text: El camp `{$name}` es desa com a cos sota la capçalera (front matter), que només pot contenir text, no un número, un booleà, una llista o un objecte com fa un camp `{$widget}`. Useu un tipus de camp que contingui text o reanomeneu el camp.
+    # {$file} is the file path from the configuration; Don’t localize `file` and `locale`. The curly
+    # brackets are escaped with backslashes for MessageFormat 2
+    invalid_collection_data_file: L’opció `file` `{$file}` no és vàlida. Ha de ser el camí a un fitxer JSON, sense el marcador `\{\{locale\}\}`.
+    # {$prop} is the option name; Don’t localize `file`
+    unsupported_collection_data_file_option: L’opció `{$prop}` no s’admet en una col·lecció amb l’opció `file`.
+    # Don’t localize `file`, `publish_mode` and `simple`
+    collection_data_file_workflow: El flux editorial i el flux de previsualització, inclosa l’autoria oberta, no s’admeten en una col·lecció amb l’opció `file`. Definiu l’opció `publish_mode` de la col·lecció com a `simple`.
+    # {$prop} is the option name; Don’t localize `file` and `slug`. The curly brackets are escaped
+    # with backslashes for MessageFormat 2
+    collection_data_file_slug_tag: L’opció `{$prop}` no pot contenir l’etiqueta `\{\{slug\}\}` en una col·lecció amb l’opció `file`, ja que el slug d’una entrada és la seva posició, que canvia quan les entrades es reordenen o se suprimeixen. Useu un camp amb un valor únic en el seu lloc.
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
     invalid_slug_slash: La plantilla de slug `{$slug}` no és vàlida perquè no pot contenir barres. Per organitzar les entrades en subcarpetes, useu l’opció `path` en lloc de `slug`.
+    # {$name} is the field name from the configuration; Don’t localize `identifier_field`
+    invalid_identifier_field: L’opció `identifier_field` fa referència a `{$name}`, però no hi ha cap camp amb aquest nom definit a la col·lecció.
+    # {$name} is the field name from the configuration; Don’t localize `filter`
+    invalid_filter_field: L’opció `filter` fa referència a `{$name}`, però no hi ha cap camp amb aquest nom definit a la col·lecció.
+    # Don’t localize `filter`, `value` and `pattern`
+    invalid_filter_no_condition: L’opció `filter` ha de tenir l’opció `value` o `pattern` amb què comparar les entrades.
+    # {$option} is an option name such as `slug` or `summary` and {$name} is the field name or template tag from the configuration
+    option_field_not_found: L’opció `{$option}` fa referència a `{$name}`, però no hi ha cap camp amb aquest nom definit.
+    # {$name} is the field name from the configuration and {$widget} is its field type; Don’t localize `thumbnail`
+    thumbnail_field_not_media: L’opció `thumbnail` fa referència a `{$name}`, però ha de ser un camp Image o File, no un camp `{$widget}`.
+    # Don’t localize `inline` or `multiple`
+    invalid_inline_component_fields: El mode `inline` requereix un únic camp Boolean, Color, DateTime, Number, Relation, Select o String. Un camp Relation o Select no pot tenir habilitada l’opció `multiple`.
+    # {$option} is an option name such as `pattern` or `filter` and {$pattern} is the configured pattern
+    invalid_regex: L’opció `{$option}` conté una expressió regular no vàlida, `{$pattern}`, que s’ignora.
     # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
     invalid_reorder_group: L’opció `reorder` fa referència a un grup de visualització anomenat `{$name}`, però no hi ha cap grup amb aquest nom definit a l’opció `view_groups`.
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit` and `fields`
+    invalid_bulk_edit_field: La llista `fields` de l’opció `bulk_edit` fa referència a un camp anomenat `{$name}`, però no hi ha cap camp de nivell superior amb aquest nom definit a la col·lecció.
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit`, `fields` and `multiple`
+    unsupported_bulk_edit_field: El camp `{$name}` de la llista `fields` de l’opció `bulk_edit` no es pot editar en bloc. Només s’admeten els camps Boolean, Color, DateTime, Number, Relation, Select o String que no siguin de només lectura, que no tinguin habilitada l’opció `multiple` i que no s’emplenin automàticament en desar.
     # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
     invalid_sortable_field: L’opció `sortable_fields` fa referència a un camp anomenat `{$name}`, però no hi ha cap camp amb aquest nom definit a la col·lecció.
+    # Don’t localize `sortable_fields` and `default_sort`
+    multiple_sortable_field_defaults: Només un element de l’opció `sortable_fields` pot tenir l’opció `default_sort`.
+    # {$option} is `table_columns` or `summary_fields`, and {$name} is the field name from the configuration
+    invalid_table_column_field: L’opció `{$option}` fa referència a un camp anomenat `{$name}`, però no hi ha cap camp amb aquest nom definit a la col·lecció.
     # {$name} is the field name from the configuration; Don’t localize `view_groups`
     invalid_view_group_field: L’opció `view_groups` fa referència a un camp anomenat `{$name}`, però no hi ha cap camp amb aquest nom definit a la col·lecció.
     # {$name} is the field name from the configuration; Don’t localize `view_filters`
@@ -1602,9 +2482,15 @@ config:
     duplicate_view_group_name: Els noms dels grups de visualització han de ser únics, però `{$name}` s’usa més d’una vegada.
     # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
     missing_view_filter_name: El filtre de visualització {$count} ha de tenir l’opció `name` definida com a cadena no buida.
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `pattern`, `eq` and `gte`
+    invalid_view_filter_no_condition: El filtre de vista {$count} ha de tenir l’opció `pattern` o una opció de comparació com ara `eq` o `gte` amb què comparar les entrades.
     # {$name} is the invalid or duplicate view filter name
     invalid_view_filter_name: El nom del filtre de visualització `{$name}` no és vàlid. No pot contenir caràcters especials.
     duplicate_view_filter_name: Els noms dels filtres de visualització han de ser únics, però `{$name}` s’usa més d’una vegada.
+    # {$name} is the default view group name from the configuration; Don’t localize `default` and `view_groups`
+    invalid_view_group_default: L’opció `default` de `view_groups` està definida com a `{$name}`, però cap grup de vista no té aquest nom.
+    # {$name} is the default view filter name from the configuration; Don’t localize `default` and `view_filters`
+    invalid_view_filter_default: L’opció `default` de `view_filters` està definida com a `{$name}`, però cap filtre de vista no té aquest nom.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: La col·lecció {$count} ha de tenir l’opció `name` definida com a cadena no buida.
     # {$name} is the invalid or duplicate collection name
@@ -1619,8 +2505,19 @@ config:
     collection_no_fields: La col·lecció ha de tenir l’opció `fields` definida amb almenys un camp.
     # Don’t localize `fields`
     collection_file_no_fields: El fitxer de col·lecció ha de tenir l’opció `fields` definida amb almenys un camp.
+    # Don’t localize `i18n`, `locale` and `folder`
+    collection_folder_i18n_required: La col·lecció ha de tenir definida l’opció `i18n` si el marcador `locale` s’usa al camí `folder`.
+    # {$folder} is the invalid folder path; Don’t localize `locale`, `folder` and the example path. The
+    # curly brackets in the example are escaped with backslashes for MessageFormat 2
+    invalid_collection_folder_locale: El camí `folder` `{$folder}` no és vàlid. El marcador `locale` només es pot usar una vegada i com a nom de carpeta complet, com ara `content/\{\{locale\}\}/posts`.
     # Don’t localize `i18n`, `locale` and `file`
     collection_file_i18n_required: El fitxer de col·lecció ha de tenir definida l’opció `i18n` si el marcador `locale` s’usa al camí `file`.
+    # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
+    collection_i18n_no_fields: 'La col·lecció té l’opció `i18n`, però cap dels seus camps no té l’opció `i18n`, de manera que no es pot traduir cap camp. Afegiu `i18n: true` o `i18n: duplicate` als camps que vulgueu traduir.'
+    # Don’t localize `i18n` and `i18n: true`
+    collection_i18n_no_files: 'La col·lecció té l’opció `i18n`, però cap dels seus fitxers no té l’opció `i18n`, de manera que no es pot traduir cap fitxer. Afegiu `i18n: true` als fitxers que vulgueu traduir.'
+    # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
+    collection_file_i18n_no_fields: 'El fitxer de col·lecció té l’opció `i18n`, però cap dels seus camps no té l’opció `i18n`, de manera que no es pot traduir cap camp. Afegiu `i18n: true` o `i18n: duplicate` als camps que vulgueu traduir.'
     # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
     missing_field_name: El camp {$count} ha de tenir l’opció `name` definida com a cadena no buida.
     # {$name} is the invalid or duplicate field name
@@ -1632,6 +2529,8 @@ config:
     invalid_variable_type: El nom del tipus variable `{$name}` no és vàlid. No pot contenir caràcters especials.
     duplicate_variable_type: Els noms dels tipus variables han de ser únics, però `{$name}` s’usa més d’una vegada.
     date_field_type: 'El tipus de camp Date obsolet no és compatible amb Sveltia CMS. Useu el tipus de camp DateTime amb l’opció `type: date` en el seu lloc.'
+    # curly brackets in the placeholder are escaped with backslashes for MessageFormat 2
+    hidden_field_locale_without_i18n: L’opció `default` d’un camp Hidden usa el marcador `\{\{locale\}\}`, però la i18n no està habilitada per a la col·lecció, de manera que el contingut no té cap llengua amb què emplenar-lo.
     # {$timeZone} is the invalid IANA timezone identifier from the configuration
     invalid_timezone: 'Zona horària no vàlida: {$timeZone}. Ha de ser un identificador de zona horària IANA vàlid com `America/New_York` o `Asia/Tokyo`.'
     # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
@@ -1644,12 +2543,85 @@ config:
     invalid_list_variable_type: El tipus variable del camp List no és vàlid. L’opció `widget` està definida com a `{$widget}` però ha de ser `object`.
     # Don’t localize `fields`, and `types`
     invalid_object_field: El camp Object no pot tenir alhora les opcions `fields` i `types`.
+    # {$min} and {$max} are option names such as `min` and `max` or `minlength` and `maxlength`
+    invalid_range_options: L’opció `{$min}` no pot ser superior a l’opció `{$max}`.
+    # {$step} is the configured value; Don’t localize `step`
+    invalid_step: L’opció `step` està definida com a `{$step}`, però ha de ser superior a zero, o `-1` per desactivar els increments.
+    # Don’t localize `options`
+    select_field_no_options: El camp Select ha de tenir almenys un element a l’opció `options`.
+    # {$value} is the option value from the configuration; Don’t localize `options`
+    select_field_duplicate_option: Les `options` del camp Select han de ser úniques, però `{$value}` s’usa més d’una vegada.
+    # {$value} is the default value from the configuration; Don’t localize `default` and `options`
+    select_field_invalid_default: L’opció `default` del camp Select està definida com a `{$value}`, però no és cap de les `options`.
+    # Don’t localize `fields` and `types`
+    list_field_no_subfields: L’opció `fields` o `types` del camp List ha de tenir almenys un element. Ometeu l’opció per a una llista de valors simples.
+    # Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_object: L’opció `default` del camp List conté un objecte, però cada element ha de ser un valor simple perquè el camp no té `fields` ni `types`.
+    # {$value} is the default item from the configuration; Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_item: L’opció `default` del camp List conté `{$value}`, però cada element ha de ser un objecte perquè el camp té `fields` o `types`.
+    # {$key} is a property name of the default item from the configuration; Don’t localize `default`
+    list_field_invalid_default_key: L’opció `default` del camp List conté un element amb la propietat `{$key}`, però cap subcamp no té aquest nom.
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    list_field_default_missing_type: L’opció `default` del camp List conté un element sense la propietat `{$typeKey}`, que identifica un dels `types`.
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default item; Don’t localize `default` and `types`
+    list_field_invalid_default_type: L’opció `default` del camp List conté un element la propietat `{$typeKey}` del qual és `{$value}`, però no és cap dels `types`.
+    # Don’t localize `map_key_field`, `fields` and `types`
+    list_field_map_key_no_subfields: L’opció `map_key_field` del camp List requereix l’opció `fields` o `types`, ja que cada clau s’obté d’un subcamp.
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_not_found: L’opció `map_key_field` del camp List fa referència a `{$name}`, però cap subcamp no té aquest nom.
+    # {$name} is the subfield name, and {$type} is the variable type name; Don’t localize `map_key_field`
+    list_field_map_key_missing_in_type: L’opció `map_key_field` del camp List fa referència a `{$name}`, però el tipus `{$type}` no té cap subcamp amb aquest nom.
+    # {$name} is the subfield name, and {$widget} is its field type; Don’t localize `map_key_field`
+    list_field_map_key_invalid_type: L’opció `map_key_field` del camp List fa referència a `{$name}`, però ha de ser un camp String, Relation o Select, no un camp `{$widget}`.
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `multiple`
+    list_field_map_key_multiple: L’opció `map_key_field` del camp List fa referència a `{$name}`, però el subcamp no pot admetre diversos valors, ja que cada element necessita una única clau. Suprimiu-ne l’opció `multiple`.
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_option_not_string: L’opció `map_key_field` del camp List fa referència a `{$name}`, però les opcions del subcamp han de tenir valors de cadena, ja que cada clau s’emmagatzema com a cadena.
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `required`
+    list_field_map_key_not_required: L’opció `map_key_field` del camp List fa referència a `{$name}`, però el subcamp no pot ser opcional, ja que cada element necessita una clau. Suprimiu-ne l’opció `required`.
+    # {$name} is the subfield name; Don’t localize `map_key_field`, `i18n: false` and `i18n: duplicate`
+    list_field_map_key_not_localized: 'L’opció `map_key_field` del camp List fa referència a `{$name}`, però el subcamp no pot tenir `i18n: false`, ja que els elements necessiten una clau en cada llengua. Useu `i18n: duplicate` o suprimiu l’opció.'
+    # Don’t localize `i18n`, `duplicate_if_empty`, `multiple` and `true`
+    duplicate_if_empty_multiple: 'L’opció `i18n: duplicate_if_empty` no s’admet per a un camp amb l’opció `multiple`, de manera que el camp funciona com un amb `i18n: true`.'
+    # Don’t localize `default` and `multiple`
+    invalid_default_multiple: L’opció `default` ha de ser una matriu perquè l’opció `multiple` és `true`.
+    invalid_default_single: L’opció `default` ha de ser un valor únic, no una matriu, perquè l’opció `multiple` no és `true`.
+    # {$key} is a property name of the default object from the configuration; Don’t localize `default`
+    object_field_invalid_default_key: L’opció `default` del camp Object té la propietat `{$key}`, però cap subcamp no té aquest nom.
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    object_field_default_missing_type: L’opció `default` del camp Object no té la propietat `{$typeKey}`, que identifica un dels `types`.
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default object; Don’t localize `default` and `types`
+    object_field_invalid_default_type: La propietat `{$typeKey}` de l’opció `default` del camp Object és `{$value}`, però no és cap dels `types`.
+    # Don’t localize `default` and `output_code_only`
+    code_field_invalid_default_object: L’opció `default` del camp Code ha de ser una cadena perquè l’opció `output_code_only` és `true`.
+    # {$key} is a property name of the default object, {$code} and {$lang} are the configured property names; Don’t localize `default` and `keys`
+    code_field_invalid_default_key: L’opció `default` del camp Code té la propietat `{$key}`, però l’opció `keys` només permet `{$code}` i `{$lang}`.
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_invalid_expression: L’opció `value` del camp Compute ha de ser una expressió aritmètica vàlida, com ara `\{\{fields.price\}\} * \{\{fields.quantity\}\}`, perquè l’opció `value_type` és `{$valueType}`.
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_uuid_in_expression: L’opció `value` del camp Compute no pot usar una etiqueta UUID com ara `\{\{uuid\}\}` perquè l’opció `value_type` és `{$valueType}`, cosa que la converteix en una expressió aritmètica.
+    # {$value} is the default value and {$valueType} is the configured value type; Don’t localize `default` and `value_type`
+    number_field_default_not_integer: L’opció `default` del camp Number està definida com a `{$value}`, però ha de ser un nombre enter perquè l’opció `value_type` és `{$valueType}`.
+    number_field_default_not_number: L’opció `default` del camp Number està definida com a `{$value}`, però ha de ser un número perquè l’opció `value_type` és `{$valueType}`.
+    # Don’t localize `fields` and `types`
+    object_field_no_subfields: L’opció `fields` o `types` del camp Object ha de tenir almenys un element.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: La col·lecció referenciada `{$collection}` no és vàlida o no està definida.
     relation_field_invalid_collection_file: El fitxer referenciat `{$file}` no és vàlid o no està definit.
     # Don’t localize `file`
     relation_field_missing_file_name: L’opció `file` ha de estar definida per a una relació amb una col·lecció de fitxers.
     relation_field_invalid_value_field: El camp de valor referenciat `{$field}` no és vàlid o no està definit.
+    # {$collection} is the referenced collection name; Don’t localize `file`, `value_field` and `slug`.
+    # The curly brackets are escaped with backslashes for MessageFormat 2
+    relation_field_array_file_slug: La relació amb la col·lecció `{$collection}` no pot emmagatzemar el valor `\{\{slug\}\}`, ja que el slug d’una entrada en una col·lecció amb l’opció `file` és la seva posició, que canvia quan les entrades es reordenen o se suprimeixen. Definiu l’opció `value_field` amb un camp amb un valor únic en el seu lloc.
+    # {$collection} is the referenced collection name; Don’t localize `file`
+    relation_field_array_file_workflow: Una col·lecció amb l’opció `file` no pot tenir una relació amb la col·lecció `{$collection}`, que usa el flux editorial o el flux de previsualització, ja que les referències a una entrada reanomenada o suprimida allà no es poden actualitzar al fitxer.
+    relation_field_invalid_display_field: El camp de visualització referenciat `{$field}` no és vàlid o no està definit.
+    relation_field_invalid_search_field: El camp de cerca referenciat `{$field}` no és vàlid o no està definit.
+    relation_field_invalid_filter_field: El camp de filtre referenciat `{$field}` no és vàlid o no està definit.
+    relation_field_invalid_sort_field: El camp d’ordenació referenciat `{$field}` no és vàlid o no està definit.
+    # Don’t localize `sort_by` and `file`
+    relation_field_sort_by_file_ignored: L’opció `sort_by` no s’aplica a una relació amb un fitxer, les opcions del qual segueixen l’ordre dels elements de la llista. S’ignorarà.
     unexpected: Error inesperat
 
     # Schema validation errors, reported when the configuration doesn’t match the published JSON
@@ -1682,18 +2654,56 @@ config:
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: No s’ha definit l’ID de l’aplicació OAuth. Es demanarà als usuaris que proporcioneu un testimoni d’accés per iniciar la sessió.
+    # Don’t localize `prefix`
+    site_library_prefix_template: L’opció `prefix` d’una biblioteca multimèdia conté etiquetes de plantilla, que només s’admeten al nivell del camp, ja que al nivell superior no hi ha cap entrada amb què emplenar-les.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: L’opció `{$prop}` no és compatible amb Sveltia CMS. S’ignorarà.
+    # Don’t localize `stages`, `publish_mode`, `editorial_workflow` and {$type}, which is `preview` or `simple`
+    publish_mode_stages_ignored: L’opció `stages` de `publish_mode` només s’aplica al mode de publicació `editorial_workflow`, de manera que s’ignora amb `{$type}`.
+    # Don’t localize `pattern`, `m` and `s`
+    inline_component_multiline_pattern: El `pattern` d’aquest component en línia té el marcador `m` o `s` o coincideix amb salts de línia, però un component en línia només es cerca dins d’un paràgraf.
+    # {$name} is a button or component name and {$option} is `buttons` or `editor_components`; Don’t localize them and `multiline: false`
+    single_line_block_item: 'L’element `{$name}` de l’opció `{$option}` s’ignora, ja que un camp amb `multiline: false` només pot contenir contingut en línia.'
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: Tant `picker_utc` com les opcions més noves de zona horària (`input_timezone` o `output_utc`) estan definides. Les opcions noves tenen precedència. Considereu eliminar `picker_utc` de la vostra configuració.
+    # Don’t localize `localize_format` and `format`
+    localize_format_without_format: L’opció `localize_format` no té cap efecte, perquè el camp no té l’opció `format` i el seu valor s’emmagatzema en format ISO 8601.
+    # {$name} is a template tag like `fields.lines.*.price`; Don’t localize `value`, `*` and `sum()`
+    compute_field_wildcard_without_item: L’opció `value` del camp Compute fa referència a `{$name}`, però el camp no és dins d’un element de la llista que representa `*`, de manera que no es resol en res. Només una funció d’agregació com ara `sum()` pot usar tots els elements d’una llista.
+    # {$name} is a template tag like `fields.lines.*.amount`; Don’t localize `value`
+    compute_field_self_reference: L’opció `value` del camp Compute fa referència al mateix camp com a `{$name}`, de manera que el seu valor canvia cada vegada que es calcula i no s’estabilitza mai.
+    # {$name} is a template tag like `fields.total`; Don’t localize `value`
+    compute_field_reference_cycle: L’opció `value` del camp Compute fa referència a `{$name}`, un altre camp Compute que fa referència a aquest camp, directament o a través d’altres camps, de manera que els seus valors no s’estabilitzen mai.
+    # Don’t localize `localize_format`, `true` and `de`
+    localize_format_without_i18n: L’opció `localize_format` és `true`, però la i18n no està habilitada per a la col·lecció, de manera que el valor s’escriu en anglès. Definiu l’opció amb un codi de llengua com ara `de` en el seu lloc.
+    # {$locale} is the locale code from the configuration; Don’t localize `localize_format`
+    localize_format_unsupported_locale: L’opció `localize_format` està definida com a `{$locale}`, que no és una llengua compatible, de manera que el valor s’escriu en anglès.
     # Don’t localize `preview_path`
     preview_path_no_date_field: L’opció `preview_path` usa etiquetes de data i hora, però la col·lecció no té cap camp DateTime d’on llegir-les, de manera que no es mostrarà l’enllaç de previsualització.
     # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
     preview_path_date_field_not_found: L’opció `preview_path_date_field` fa referència a un camp anomenat `{$name}`, però no hi ha cap camp DateTime definit amb aquest nom, de manera que no es mostrarà l’enllaç de previsualització.
     # {$name} is the template tag from the configuration; Don’t localize `preview_path`
     preview_path_field_not_found: L’opció `preview_path` fa referència a `{$name}`, però no hi ha cap camp amb aquest nom definit a la col·lecció, de manera que no es mostrarà l’enllaç de previsualització.
+    # {$name} is the default identifier field name; Don’t localize `identifier_field` and `slug`
+    missing_identifier_field: La col·lecció no té cap camp `{$name}` per anomenar les entrades noves, de manera que cada entrada nova rep un slug aleatori. Afegiu un camp `{$name}` o definiu l’opció `identifier_field` o `slug`.
+    # Don’t localize `slug`, `i18n`, `multiple_files`, `multiple_folders` and `multiple_root_folders`
+    slug_i18n_ineffective: L’opció `i18n` de `slug` no té cap efecte, perquè la col·lecció no usa l’estructura i18n `multiple_files`, `multiple_folders` o `multiple_root_folders`, on cada llengua té el seu propi fitxer.
+    # Don’t localize `slug`, `template` and `auto_increment`
+    slug_template_ignored: L’opció `template` de `slug` s’ignora, perquè l’opció `auto_increment` numera els slugs en el seu lloc.
+    # {$file} is the file path; Don’t localize `file`, `locale`, `i18n`, `false`,
+    # `omit_default_locale_from_file_path` and the example paths. The curly brackets in the examples
+    # are escaped with backslashes for MessageFormat 2
+    locale_not_omitted_from_file_path: El marcador `locale` no es pot treure del camí `file` `{$file}`, de manera que la llengua per defecte s’hi manté malgrat l’opció i18n `omit_default_locale_from_file_path`. Per ometre la llengua, useu el marcador com a nom de carpeta complet, com ara `\{\{locale\}\}/about.md`, o entre el nom del fitxer i l’extensió, com ara `about.\{\{locale\}\}.md`. Per mantenir-la, definiu l’opció com a `false` a l’opció `i18n` del fitxer.
+    # Don’t localize `i18n`
+    i18n_not_configured: L’opció `i18n` està habilitada, però la i18n no està configurada al nivell superior de la configuració ni a la col·lecció, de manera que l’opció no té cap efecte.
+    # Don’t localize `public_folder` and `media_folder`
+    empty_public_folder: L’opció `public_folder` és una cadena buida, de manera que per als camins de recursos desats a les entrades s’usa el camí `media_folder`. Suprimiu l’opció o definiu-la amb el camí que vulgueu usar, com ara `/images`.
     # {$option} is an option path from the configuration, such as `filter.Regulation`
     schema_unknown_option: L’opció `{$option}` no està definida a l’esquema de configuració de Sveltia CMS. S’ignorarà. Comproveu si hi ha un error tipogràfic o de sintaxi.
+    # Don’t localize `default_localized`, `default` and `i18n`
+    default_localized_without_i18n: L’opció `default_localized` no té cap efecte, perquè la i18n no està habilitada per a la col·lecció. Useu l’opció `default` en el seu lloc.
+    # {$locale} is a locale code from the configuration; Don’t localize `default_localized`
+    default_localized_unknown_locale: L’opció `default_localized` té un valor per a `{$locale}`, que no és cap de les llengües de la col·lecció, de manera que el valor no s’usa mai.
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'Vegeu les notes de compatibilitat per a més detalls: {$link}'
@@ -1726,6 +2736,11 @@ viewing_editorial_workflow: 'Ara esteu veient el tauler del flux editorial. Esbo
 # Same as above, for an Open Authoring contributor: their board has no Ready column, because only
 # a maintainer can publish
 viewing_open_authoring_workflow: 'Ara esteu veient el tauler del flux editorial. Esborranys: {$draft}. En revisió: {$review}. Pendents de supressió: {$deletion}.'
+# Same as above, when the In Review stage is left out with the `stages` publish mode option
+viewing_editorial_workflow_without_review: 'Ara esteu veient el tauler del flux editorial. Esborranys: {$draft}. Llestes: {$ready}. Pendents de supressió: {$deletion}.'
+# Same as above, when all the content uses Preview Workflow, which has no review stages, so the
+# page only lists the drafts
+viewing_preview_workflow: 'Ara esteu veient la pàgina d’esborranys. Esborranys: {$draft}. Pendents de supressió: {$deletion}.'
 
 # Workflow status names. `drafts` is the plural form used as a column heading,
 # while `draft` is the singular form used in the editor’s status button.
@@ -1737,6 +2752,10 @@ status:
   # A pending removal, which is a status of its own rather than a stage: it has no review to go
   # through, only the deletion itself to carry out or call off
   pending_deletion: Pendent de supressió
+  # Merged changes the site hasn’t caught up with yet: it’s being rebuilt and deployed from the
+  # merge, so a published entry isn’t live and a deleted one is still up. Heading of the tray below
+  # the board that lists them until the site has caught up
+  deploying: En desplegament
 
 workflow:
   # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
@@ -1780,6 +2799,14 @@ workflow:
   status_updated: Estat actualitzat.
   # Error notification when the status could not be changed
   status_change_failed: No s’ha pogut canviar l’estat. Torneu-ho a provar.
+  # Workflow page: toolbar button that reads the pull requests again, to pick up the changes made
+  # by anyone else since the board was loaded, and the toast notifications shown while doing so and
+  # once done
+  refresh: Actualitza
+  refreshing: S’està actualitzant…
+  refreshed: El tauler està actualitzat.
+  # Error notification when the board could not be refreshed
+  refresh_failed: No s’ha pogut actualitzar el tauler. Torneu-ho a provar.
   # Error notification when the status can’t be changed because the entry is incomplete. Required
   # fields can be left empty while the entry is a draft, but not once it moves on from there
   status_change_blocked: L’entrada té errors. Corregiu-los abans de canviar l’estat.
@@ -1790,6 +2817,10 @@ workflow:
   # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
   send_for_review: Envia a revisió
   confirm_sending_for_review: Els canvis s’han desat com a esborrany. Voleu enviar l’entrada a revisió perquè algú la pugui revisar i publicar?
+  # Same as above, when the In Review stage is left out with the `stages` publish mode option, so
+  # the next step is to mark the entry as ready to be published
+  mark_as_ready: Marca com a llesta
+  confirm_marking_as_ready: Els canvis s’han desat com a esborrany. Voleu marcar l’entrada com a llesta perquè es pugui publicar?
   # Editor toolbar: button shown when the entry is ready to be published
   publish_entry: Publica l’entrada
   # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
@@ -1821,6 +2852,8 @@ workflow:
     .match $count
       one {{ Una d’elles encara no s’ha publicat, de manera que els canvis no publicats es descartaran. Qualsevol versió publicada continuarà publicada. }}
       *   {{ {$count} d’elles encara no s’han publicat, de manera que els canvis no publicats es descartaran. Qualsevol versió publicada continuarà publicada. }}
+  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
+  confirm_publishing_entry_after_build: Segur que voleu publicar aquesta entrada? Els vostres canvis seran visibles un cop s’hagi tornat a generar el lloc.
   # Workflow page: toast notifications shown while an entry is being published from a card, and
   # once publishing has completed
   publishing_entry: S’està publicant l’entrada…
@@ -1832,10 +2865,55 @@ workflow:
   entry_deleted: Entrada suprimida.
   # Error notification when publishing fails
   publishing_entry_failed: No s’ha pogut publicar l’entrada. Torneu-ho a provar.
+  # Error notification when an entry can’t be published from the CMS, because its request also
+  # changes files that aren’t part of the entry and that the CMS doesn’t show, goes somewhere other
+  # than the site’s branch, or is too large to check. Keep the wording free of Git jargon
+  publish_refused_other_changes: Aquesta entrada no es pot publicar aquí perquè inclou altres canvis que el CMS no us pot mostrar. Demaneu a un desenvolupador que la revisi.
+  # Error notification when an entry can’t be published because its branch has been committed to
+  # since the entry was opened, so what would be published isn’t what was reviewed
+  publish_refused_entry_changed: L’entrada s’ha modificat des que la vau obrir. Torneu a carregar la pàgina per revisar-ne la versió més recent abans de publicar-la.
+  review_on_x: Revisa a {$service}
+  from_fork: Des d’una bifurcació
+  fork_entry_editable: Aquesta entrada prové d’una sol·licitud d’incorporació d’un col·laborador oberta des de «{$fork}». Els vostres canvis es desen a la seva branca. Reviseu i fusioneu la sol·licitud d’incorporació al servei Git.
+  fork_entry_locked: Aquesta entrada prové d’una sol·licitud d’incorporació d’un col·laborador oberta des de «{$fork}». El col·laborador no permet que els mantenidors l’editin, de manera que aquí només es pot veure.
+  fork_not_editable: El col·laborador no permet que els mantenidors editin aquesta sol·licitud d’incorporació.
+  fork_entry_gone: La sol·licitud d’incorporació del col·laborador ja no està oberta, de manera que els canvis no s’hi poden desar.
+  # Error shown in the save error dialog when an entry can’t be saved for review, because a request
+  # the CMS doesn’t show is already open from the branch the entry would be saved to. `{$number}` is
+  # the request number, e.g. `#12` on GitHub or `!12` on GitLab. Keep the wording free of Git jargon
+  branch_in_use: Ja hi ha una altra sol·licitud ({$number}) oberta per a aquesta entrada fora del CMS. Demaneu a un desenvolupador que primer la tanqui.
   # Workflow page: empty column message
   no_entries: No hi ha cap entrada.
   # Workflow page: aria-label for a draggable entry card
   drag_entry: Arrossegueu per canviar l’estat
+  # Workflow page: note on a card in the Deploying tray, marking an entry that’s being removed from
+  # the site rather than published to it
+  deploying_deletion: Supressió
+  # Workflow page: note on a card listing the new entries that were created from a Relation field
+  # of the entry and are published along with it, e.g. “Also adds Section: Getting Started”
+  companion_entries: També afegeix {$entries}
+  # Workflow page: note on a card listing the existing entries that were edited from a Relation
+  # field of the entry and are published along with it, e.g. “Also changes Author: Ada Lovelace”
+  edited_companion_entries: També modifica {$entries}
+  # Workflow page: one of the entries listed by `companion_entries` or `edited_companion_entries`,
+  # named by its collection’s singular label and its title
+  companion_entry: '{$collection}: {$title}'
+
+# Dialog asking the user for a commit message every time changes are saved, when the site is
+# configured to. The message is recorded in the repository’s history along with the changes
+commit_message:
+  # Dialog title
+  title: Missatge de confirmació
+  # Description when the user writes the whole message, which the text box is filled in with
+  description_replace: Descriviu els vostres canvis. El missatge es registra a l’historial juntament amb ells.
+  # Description when the text the user enters is added before or after a message the CMS writes
+  description_addition: Afegiu una nota al missatge que es registra a l’historial juntament amb els vostres canvis, com ara un número d’incidència. Es pot deixar en blanc.
+  # Accessible name of the text box when the user writes the whole message
+  message: Missatge de confirmació
+  # Accessible name of the text box when the text is added before or after the message
+  addition: Nota
+  # Preview of the message as it will be recorded. {$message} is the message
+  preview: 'Missatge: {$message}'
 
 # Open Authoring: a contributor without write access to the configured repository works in a fork
 # of it, and their changes reach the site through a pull request a maintainer merges
@@ -1849,6 +2927,10 @@ open_authoring:
   fork_declined: Necessiteu una bifurcació del repositori al vostre compte per suggerir canvis.
   # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
   fork_failed: No s’ha pogut crear una bifurcació del repositori «{$repo}» al vostre compte.
+  # Error shown when the user’s fork doesn’t have the branch the CMS is configured with, so there’s
+  # nothing to start their changes from. {$fork} and {$repo} are repository identifiers in
+  # owner/repo format, {$branch} is the branch name
+  fork_branch_missing: La vostra bifurcació «{$fork}» no té la branca «{$branch}». Actualitzeu la bifurcació a partir del repositori «{$repo}» i torneu a iniciar la sessió.
   # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
   # because the API rate limit is exhausted. {$repo} is the repository identifier
   permission_check_failed: No s’ha pogut comprovar el vostre accés al repositori «{$repo}». Torneu-ho a provar d’aquí a un moment.
@@ -1863,6 +2945,10 @@ open_authoring:
   private_repo_scope_required: El vostre inici de sessió no inclou accés als repositoris privats, de manera que no es pot llegir el repositori «{$repo}». Demaneu a un mantenidor que comprovi la configuració d’autenticació del CMS.
   # Error shown when a contributor tries to publish an entry, which only a maintainer can do
   publish_unsupported: Només un mantenidor pot publicar canvis en aquest lloc. En lloc d’això, marqueu l’entrada com a «En revisió» i algú se la mirarà.
+  # Error shown when a contributor changes the status of an entry whose request a maintainer has
+  # published since the page was loaded, leaving nothing to review. The entry then leaves the
+  # Editorial Workflow board and the editor closes. Keep the wording free of Git jargon
+  entry_already_published: Un mantenidor ja ha publicat aquesta entrada, de manera que no queda res per revisar.
   # Error shown when a change would go straight to the site instead of being reviewed, which a
   # contributor can’t do. It covers media library uploads and deletions, and entry reordering
   direct_commit_unsupported: Aquest canvi no es pot fer directament. Només es poden suggerir per a revisió les edicions d’entrades.
@@ -1878,11 +2964,10 @@ open_authoring:
 # Settings page aria-label
 categories: Categories
 
-# Site Configuration Editor
-site_configuration_editor: Editor de configuració del lloc
-
 # Preferences panels
 prefs:
+  account:
+    title: Compte
   # API key management feedback messages
   changes:
     api_key_saved: Clau API desada.
@@ -1932,7 +3017,7 @@ prefs:
         select_service: Selecciona un servei
       api_keys:
         title: Claus API dels serveis de traducció
-        description: Gestionar les claus API per als <a>serveis de traducció</a>.
+        description: Gestionar les claus API per als <a>serveis de traducció</a>. Les claus API dels serveis d’IA genèrics es poden gestionar a la configuració d’IA.
       # API key input label, e.g., “DeepL Key”
       # {$service} is the translation service name
       field_label: Clau de {$service}
@@ -1966,6 +3051,16 @@ prefs:
       field_label: Clau API de {$service}
       no_services: No hi ha cap <a>servei d’emmagatzematge al núvol</a> configurat.
 
+  # AI panel
+  ai:
+    title: IA
+    api_keys:
+      title: Claus API dels serveis d’IA
+      description: Gestionar les claus API per als serveis d’IA.
+    # API key input label, e.g., “OpenAI GPT API Key”
+    # {$service} is the AI service name
+    field_label: Clau API de {$service}
+
   # Accessibility panel
   accessibility:
     title: Accessibilitat
@@ -1976,6 +3071,7 @@ prefs:
 
   # Data Management panel
   data:
+    title: Gestió de dades
     clear_data:
       title: Esborra les dades
       # Clear File Cache button
@@ -1991,13 +3087,23 @@ prefs:
 
   # Developer panel
   developer:
+    title: Desenvolupador
     developer_mode:
       title: Mode de desenvolupador
       description: Habilita algunes funcionalitats orientades al desenvolupador, inclosos els registres detallats de la consola i els menús de context nadius.
       switch_label: Habilita el mode de desenvolupador
+    local_git:
+      title: Confirmacions de Git
+      description: Confirmeu els vostres canvis a la branca actual del repositori local cada vegada que els deseu, tal com fa el CMS quan treballeu amb un repositori remot. Després podeu revisar i pujar les confirmacions amb les vostres eines de Git habituals.
+      switch_label: Confirma els canvis a Git
+      checking: S’està comprovant el repositori…
+      # {$branch} is the branch name, {$name} and {$email} are the commit author’s name and email address
+      ready: Els canvis es confirmaran a la branca {$branch} com a {$name} ({$email}).
+      # {$reason} is one of the `local_git_skip_reasons` strings
+      not_ready: Ara mateix no es poden confirmar els canvis. {$reason}
     deploy_hook:
       title: Ganxo de desplegament
-      description: Introduïu un URL de webhook que es cridarà quan activeu manualment un desplegament seleccionant Publica els canvis. Es pot deixar en blanc si useu GitHub Actions.
+      description: Introduïu un URL de webhook que es cridarà quan activeu manualment un desplegament seleccionant Publica els canvis. Es pot deixar en blanc si useu GitHub Actions o GitLab CI/CD.
       # Hook URL input
       url:
         field_label: URL del ganxo

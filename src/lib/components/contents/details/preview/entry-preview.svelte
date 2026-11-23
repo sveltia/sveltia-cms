@@ -25,12 +25,7 @@
   const entryDraft = getEntryDraftContext();
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    locale,
-    onFrameLoad,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { locale, onFrameLoad } = $props();
 
   const {
     collectionName,

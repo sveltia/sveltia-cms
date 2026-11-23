@@ -98,4 +98,29 @@ describe('AssetListItem', () => {
     await renderItem({ viewType: 'list' });
     await expect.element(page.getByText('photo.png')).toBeInTheDocument();
   });
+
+  test('attaches the drag source to the row, when given', async () => {
+    const cleanup = vi.fn();
+
+    const dragSource = vi.fn((/** @type {HTMLElement} */ element) => {
+      element.draggable = true;
+
+      return cleanup;
+    });
+
+    await renderItem({ dragSource });
+
+    const row = page.getByRole('row', { name: 'photo.png' });
+
+    await expect.element(row).toHaveAttribute('draggable', 'true');
+    expect(dragSource).toHaveBeenCalledWith(row.element());
+  });
+
+  test('leaves the row undraggable without a drag source', async () => {
+    await renderItem();
+
+    await expect
+      .element(page.getByRole('row', { name: 'photo.png' }))
+      .not.toHaveAttribute('draggable', 'true');
+  });
 });

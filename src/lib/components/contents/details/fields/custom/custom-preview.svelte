@@ -30,15 +30,7 @@
   const entryDraft = getEntryDraftContext();
 
   /** @type {FieldPreviewProps & Props} */
-  let {
-    /* eslint-disable prefer-const */
-    locale,
-    keyPath,
-    fieldConfig,
-    currentValue,
-    preview,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { locale, keyPath, fieldConfig, currentValue, preview } = $props();
 
   /** @type {HTMLDivElement | undefined} */
   let container = $state();

@@ -59,23 +59,11 @@ const CONFIG = {
   ],
 };
 
-const { dependencies } = JSON.parse(
-  await readFile(new URL('../../../package.json', import.meta.url), 'utf8'),
-);
-
 /**
- * URL the CMS loads Terra Draw from, which the Leaflet adapter has to import as well, so both share
- * one copy of the library.
+ * URL of a file of Leaflet or Terra Draw on UNPKG, capturing the package name and the path of the
+ * file.
  */
-const TERRA_DRAW_URL = `https://unpkg.com/terra-draw@${dependencies['terra-draw'].replace(/^\D/, '')}/dist/terra-draw.module.js`;
-
-/**
- * URL of a file of Leaflet, Terra Draw or its Leaflet adapter on UNPKG, capturing the package name
- * and the path of the file.
- */
-const MODULE_URL_REGEX =
-  /^https:\/\/unpkg\.com\/(leaflet|terra-draw|terra-draw-leaflet-adapter)@[^/]+\/([^?]+)/;
-
+const MODULE_URL_REGEX = /^https:\/\/unpkg\.com\/(leaflet|terra-draw)@[^/]+\/([^?]+)/;
 /**
  * An empty map tile.
  */
@@ -91,8 +79,8 @@ test.use({ config: CONFIG, viewport: { width: 1280, height: 2000 } });
 test.beforeEach(async ({ cms, context }) => {
   tileRequests = [];
 
-  // Leaflet, Terra Draw and its Leaflet adapter are loaded from UNPKG on first use; serve the
-  // copies installed with the CMS instead, so the tests don’t depend on the network
+  // Leaflet and Terra Draw are loaded from UNPKG on first use; serve the copies installed with the
+  // CMS instead, so the tests don’t depend on the network
   await context.route(MODULE_URL_REGEX, async (route) => {
     const [, name, path] = /** @type {RegExpMatchArray} */ (
       route.request().url().match(MODULE_URL_REGEX)
@@ -103,11 +91,7 @@ test.beforeEach(async ({ cms, context }) => {
     await route.fulfill({
       contentType: path.endsWith('.png') ? 'image/png' : 'text/javascript',
       headers: { 'Access-Control-Allow-Origin': '*' },
-      // UNPKG’s `?module` rewrites the bare import of Terra Draw in the adapter
-      body:
-        name === 'terra-draw-leaflet-adapter'
-          ? body.toString().replaceAll('from"terra-draw"', `from"${TERRA_DRAW_URL}"`)
-          : body,
+      body,
     });
   });
   // Never ask OpenStreetMap for the tiles: answer with an empty one, noting which was asked for

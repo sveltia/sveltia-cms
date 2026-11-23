@@ -8,8 +8,9 @@ import { sanitize } from 'isomorphic-dompurify';
  * The preview is rendered in the app’s own document, so content written by other users must not be
  * able to restyle or cover the app, e.g. with a fake sign-in form asking for an access token. A
  * `<style>` element would apply to the whole app, and form controls could collect and send data, so
- * they’re removed. Inline styles are kept, because the syntax highlighting relies on them, but
- * filtered by {@link filterInlineStyle}.
+ * they’re removed, except the disabled check boxes of a task list, which {@link filterInputs}
+ * enforces. Inline styles are kept, because the syntax highlighting relies on them, but filtered by
+ * {@link filterInlineStyle}.
  * @see https://github.com/cure53/DOMPurify/issues/549
  * @see https://github.com/cure53/DOMPurify#control-permitted-attribute-values.
  * @see https://github.com/cure53/DOMPurify/wiki/Default-TAGs-ATTRIBUTEs-allow-list-&-blocklist
@@ -18,7 +19,38 @@ export const SANITIZE_OPTIONS = {
   ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|blob):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
   ADD_TAGS: ['iframe'],
   ADD_ATTR: ['allow', 'allowfullscreen', 'referrerpolicy', 'sandbox'],
-  FORBID_TAGS: ['style', 'form', 'input', 'button', 'textarea', 'select', 'option'],
+  FORBID_TAGS: ['style', 'form', 'button', 'textarea', 'select', 'option'],
+};
+
+/**
+ * Attributes the check box of a task list item can keep in the preview.
+ */
+const ALLOWED_CHECKBOX_ATTRIBUTES = ['type', 'checked', 'disabled'];
+
+/**
+ * Remove every `<input>` element but a check box, which a task list item has, e.g. `- [x] Done` in
+ * Markdown is rendered as `<li><input checked="" disabled="" type="checkbox"> Done</li>`. A check
+ * box is disabled, and loses any attribute other than {@link ALLOWED_CHECKBOX_ATTRIBUTES}, like
+ * `name`, `form` or `autofocus`, so it can’t send data, join a form in the app or take the focus.
+ * @param {HTMLElement} body Sanitized content.
+ */
+const filterInputs = (body) => {
+  body.querySelectorAll('input').forEach((input) => {
+    if (input.getAttribute('type')?.trim().toLowerCase() !== 'checkbox') {
+      input.remove();
+
+      return;
+    }
+
+    [...input.attributes].forEach(({ name }) => {
+      if (!ALLOWED_CHECKBOX_ATTRIBUTES.includes(name)) {
+        input.removeAttribute(name);
+      }
+    });
+
+    input.setAttribute('type', 'checkbox');
+    input.disabled = true;
+  });
 };
 
 /**
@@ -29,7 +61,9 @@ export const SANITIZE_OPTIONS = {
  * load a remote resource. The browser expands a shorthand like `background` into its individual
  * properties when parsing the style, so only the harmless part of a shorthand is kept.
  * `text-decoration` is also listed for a DOM implementation that doesn’t expand it; it can’t load
- * anything either way.
+ * anything either way. Likewise, `text-align` is a shorthand for `text-align-all` and
+ * `text-align-last` in CSS Text Level 4, which jsdom implements but browsers don’t yet, so all
+ * three are listed.
  */
 const ALLOWED_STYLE_PROPERTIES = [
   'color',
@@ -42,6 +76,8 @@ const ALLOWED_STYLE_PROPERTIES = [
   'text-decoration-color',
   'text-decoration-thickness',
   'text-align',
+  'text-align-all',
+  'text-align-last',
   'width',
   'height',
   'max-width',
@@ -207,7 +243,10 @@ export const sanitizeRichTextHTML = (html, options = {}) => {
     }
   });
 
-  // Third pass: remove any CSS that could move content outside the preview
+  // Third pass: keep only the disabled check boxes of task lists
+  filterInputs(body);
+
+  // Fourth pass: remove any CSS that could move content outside the preview
   body.querySelectorAll('[style]').forEach((element) => {
     filterInlineStyle(/** @type {HTMLElement} */ (element));
   });

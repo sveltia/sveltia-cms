@@ -1,7 +1,8 @@
 import { isURL } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 
-import { fillInternalPathTemplate } from '$lib/services/assets';
+import { getExistingEntryAssetFolderPath } from '$lib/services/assets/entry-folder';
+import { fillInternalPathTemplate } from '$lib/services/assets/entry-relative';
 import { formatFileName } from '$lib/services/assets/file-name';
 import { allAssetFolders, getAssetFolder, globalAssetFolder } from '$lib/services/assets/folders';
 import { getPendingFileName } from '$lib/services/assets/name';
@@ -10,11 +11,11 @@ import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/consta
 import { hasTemplateTags } from '$lib/services/common/template/tags';
 import { createPublicURL, getAssetFolderPaths } from '$lib/services/contents/draft/save/assets';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
-import { getEntryFolderPath } from '$lib/services/contents/entry/paths';
 import { isAcceptedFile } from '$lib/services/integrations/media-libraries/default';
 import { getOrCreate } from '$lib/services/utils/cache';
 import { createPath, getDirName } from '$lib/services/utils/file';
 import { decodeURISafely } from '$lib/services/utils/url';
+import { parseForkBranchName } from '$lib/services/workflow/forks';
 
 /**
  * @import {
@@ -108,18 +109,19 @@ export const getAssetLibraryFolderMap = ({
 /**
  * Get the default asset library folder for a File/Image field.
  * @param {AssetLibraryFolderMap} folderMap Asset library folder map.
- * @returns {AssetFolderInfo} Default asset library folder.
+ * @returns {AssetFolderInfo | undefined} Default asset library folder, or `undefined` if no folder
+ * is enabled, which happens when no internal `media_folder` is configured and only an external
+ * media library like Cloudinary is used.
  */
 export const getDefaultAssetFolder = (folderMap) =>
-  // There is always at least one enabled folder in the map, so this will never be undefined
-  /** @type {AssetFolderInfo} */ (Object.values(folderMap).find(({ enabled }) => enabled)?.folder);
+  Object.values(folderMap).find(({ enabled }) => enabled)?.folder;
 
 /**
  * Get the folder the field editor puts a newly picked file in, i.e. The default asset library
  * folder of a File/Image field, so a copy of a file ends up in the same place.
  * @param {Parameters<typeof getAssetLibraryFolderMap>[0]} args Arguments. See
  * {@link getAssetLibraryFolderMap}.
- * @returns {AssetFolderInfo} Folder.
+ * @returns {AssetFolderInfo | undefined} Folder, or `undefined` if there is no internal folder.
  */
 export const getFieldAssetFolder = (args) => getDefaultAssetFolder(getAssetLibraryFolderMap(args));
 
@@ -154,8 +156,14 @@ export const getTargetFolderPath = ({ entry, folder, locale }) => {
   // not assets from sibling field folders (e.g. `images2`).
   const subPath = internalSubPath || undefined;
 
+  // The folder the entry’s relative assets are saved to, which is the folder the entry occupies if
+  // it has one of its own, e.g. `content/posts/2025/06/hello` for `content/posts/2025/06/hello.md`
+  // with a `{{year}}/{{month}}/{{slug}}` path option
   if (entry) {
-    return createPath([getEntryFolderPath(entry, locale), subPath]);
+    return createPath([
+      getExistingEntryAssetFolderPath({ entry, locale, collectionName }),
+      subPath,
+    ]);
   }
 
   // Append a placeholder because the complete path is not determined until the entry is saved
@@ -401,7 +409,11 @@ export const listAssets = ({
   const isInSelectedFolder = (asset) => isAssetInSelectedFolder({ asset, folder, folderPath });
 
   const resolved = resolveUnsavedAssetPaths({
-    savedAssets: allAssets.current.filter(isInSelectedFolder),
+    // An asset from a contributor’s pull request is theirs to show with their entry, not one to
+    // offer for any other: it isn’t on the configured branch, and it may shadow a published file
+    savedAssets: allAssets.current.filter(
+      (asset) => isInSelectedFolder(asset) && !parseForkBranchName(asset.workflow?.branch ?? ''),
+    ),
     unsavedAssets: unsavedAssets.filter(isInSelectedFolder),
     slugificationEnabled,
   });

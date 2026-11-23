@@ -287,6 +287,21 @@ describe('Token refresh across tabs', () => {
     expect(tab.user.account).toBeNull();
   });
 
+  it('should not take the tokens of another account without an ID', async () => {
+    // Accounts of Sveltia CMS Additions have none, only a username
+    const ada = { ...ALICE, id: undefined, login: 'ada' };
+    const tab = await openTab(ada);
+    const [onStorageChange] = storageListeners;
+    const { account } = tab.user;
+
+    // Ada signed out on another tab, and Bob signed in there
+    onStorageChange({
+      key: USER_STORAGE_KEY,
+      newValue: JSON.stringify({ ...ada, login: 'bob', token: 'bob', refreshToken: 'bob' }),
+    });
+    expect(tab.user.account).toBe(account);
+  });
+
   it('should take a stored token without a refresh token', async () => {
     const { refreshToken: _refreshToken, ...account } = ALICE;
     const tab = await openTab(account);

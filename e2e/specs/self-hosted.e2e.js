@@ -1,9 +1,19 @@
-import { expect, GITEA_CONFIG, GITHUB_CONFIG, GITLAB_CONFIG, test } from '../fixtures/test.js';
+import {
+  expect,
+  GITEA_CONFIG,
+  GITHUB_CONFIG,
+  GITLAB_CONFIG,
+  PROXY_COOKIE,
+  recordCookies,
+  test,
+} from '../fixtures/test.js';
 import { openFirstPost } from '../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
  * @import { MockGitRepository } from '../fixtures/git.js';
+ * @import { MockGitHub } from '../fixtures/github.js';
+ * @import { MockGitLab } from '../fixtures/gitlab.js';
  */
 
 const POST_PATH = 'content/posts/first-post.md';
@@ -65,6 +75,26 @@ const recordRequests = (page) => {
   return urls;
 };
 
+/**
+ * Record the cookies each request to the REST and GraphQL APIs of an instance carries, once it has
+ * a session cookie. See {@link recordCookies}.
+ * @param {Page} page Page.
+ * @param {MockGitHub | MockGitLab} mock Mocked repository.
+ * @returns {Promise<() => Promise<(string | undefined)[]>>} Function returning the `Cookie` header
+ * of each request sent so far.
+ */
+const recordAPICookies = (page, mock) =>
+  recordCookies(page, {
+    hostname: new URL(mock.apiRoot).hostname,
+    /**
+     * Tell whether a request goes to the REST or GraphQL API of the instance.
+     * @param {URL} url Request URL.
+     * @returns {boolean} Result.
+     */
+    filter: ({ href, origin, pathname }) =>
+      href.startsWith(`${mock.apiRoot}/`) || `${origin}${pathname}` === mock.graphqlURL,
+  });
+
 test.describe('GitHub Enterprise Server', () => {
   // The REST and GraphQL roots are worked out from the host
   test.use({
@@ -105,13 +135,16 @@ test.describe('GitHub Enterprise Server', () => {
   });
 });
 
+/**
+ * Configuration of a self-managed GitLab instance.
+ */
+const SELF_MANAGED_GITLAB_CONFIG = {
+  ...GITLAB_CONFIG,
+  backend: { ...GITLAB_CONFIG.backend, api_root: 'https://gitlab.example.com/api/v4' },
+};
+
 test.describe('self-managed GitLab', () => {
-  test.use({
-    config: {
-      ...GITLAB_CONFIG,
-      backend: { ...GITLAB_CONFIG.backend, api_root: 'https://gitlab.example.com/api/v4' },
-    },
-  });
+  test.use({ config: SELF_MANAGED_GITLAB_CONFIG });
 
   test.beforeEach(({ gitlab }) => {
     Object.assign(gitlab, {
@@ -166,6 +199,104 @@ test.describe('self-managed GitLab', () => {
     expect(await getCommitURL(page, 'https://gitlab.example.com/sveltia/**')).toBe(
       `https://gitlab.example.com/sveltia/e2e-site/-/commit/${gitlab.head.oid}`,
     );
+  });
+
+  test('leaves the instance’s cookies out of the API requests', async ({ cms, gitlab, page }) => {
+    const readCookies = await recordAPICookies(page, gitlab);
+
+    await cms.open();
+    await expect(page.getByRole('row', { name: /First Post/ })).toBeVisible();
+
+    const cookies = await readCookies();
+
+    expect(cookies.length).toBeGreaterThan(0);
+    expect(cookies.filter(Boolean)).toEqual([]);
+  });
+
+  // For an instance behind a proxy that authenticates with a cookie
+  test.describe('with `include_credentials`', () => {
+    test.use({
+      config: {
+        ...SELF_MANAGED_GITLAB_CONFIG,
+        backend: { ...SELF_MANAGED_GITLAB_CONFIG.backend, include_credentials: true },
+      },
+    });
+
+    test('sends the instance’s cookies with every API request', async ({ cms, gitlab, page }) => {
+      const readCookies = await recordAPICookies(page, gitlab);
+
+      await cms.open();
+      await expect(page.getByRole('row', { name: /First Post/ })).toBeVisible();
+      await saveChange(page, gitlab);
+
+      const cookies = await readCookies();
+
+      expect(cookies.length).toBeGreaterThan(0);
+      expect(new Set(cookies)).toEqual(new Set([PROXY_COOKIE]));
+    });
+  });
+});
+
+// A GraphQL endpoint of its own, e.g. a proxy, instead of the one worked out from `api_root`
+test.describe('with `graphql_api_root`', () => {
+  test.describe('on GitHub', () => {
+    test.use({
+      config: {
+        ...GITHUB_CONFIG,
+        backend: {
+          ...GITHUB_CONFIG.backend,
+          graphql_api_root: 'https://proxy.example.com/github/graphql',
+        },
+      },
+    });
+
+    test('sends the GraphQL queries there, and the rest to the REST API', async ({
+      cms,
+      github,
+      page,
+    }) => {
+      github.graphqlURL = 'https://proxy.example.com/github/graphql';
+      github.commit({ [POST_PATH]: FIRST_POST });
+
+      const urls = recordRequests(page);
+
+      await cms.open();
+      await saveChange(page, github);
+
+      expect(urls).toContain(github.graphqlURL);
+      expect(urls.filter((url) => url.startsWith('https://api.github.com/graphql'))).toEqual([]);
+      expect(urls.some((url) => url.startsWith('https://api.github.com/repos/'))).toBe(true);
+    });
+  });
+
+  test.describe('on GitLab', () => {
+    test.use({
+      config: {
+        ...GITLAB_CONFIG,
+        backend: {
+          ...GITLAB_CONFIG.backend,
+          graphql_api_root: 'https://proxy.example.com/gitlab/api/graphql',
+        },
+      },
+    });
+
+    test('sends the GraphQL queries there, and the rest to the REST API', async ({
+      cms,
+      gitlab,
+      page,
+    }) => {
+      gitlab.graphqlURL = 'https://proxy.example.com/gitlab/api/graphql';
+      gitlab.commit({ [POST_PATH]: FIRST_POST });
+
+      const urls = recordRequests(page);
+
+      await cms.open();
+      await saveChange(page, gitlab);
+
+      expect(urls).toContain(gitlab.graphqlURL);
+      expect(urls.filter((url) => url.startsWith('https://gitlab.com/api/graphql'))).toEqual([]);
+      expect(urls.some((url) => url.startsWith('https://gitlab.com/api/v4/'))).toBe(true);
+    });
   });
 });
 

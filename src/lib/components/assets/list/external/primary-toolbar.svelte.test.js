@@ -10,6 +10,7 @@ import {
   selectedExternalAssets,
   selectedExternalDirPath,
 } from '$lib/services/assets/external';
+import { assetMoveRequest } from '$lib/services/assets/state';
 import { env } from '$lib/services/user/env.svelte';
 import { createMockCloudService, createMockExternalAsset } from '$lib/test/config';
 
@@ -185,6 +186,31 @@ describe('PrimaryToolbar', () => {
         'Delete Assets Are you sure you want to delete all the assets? Delete Cancel',
       );
     await page.getByRole('alertdialog').getByRole('button', { name: 'Cancel' }).click();
+  });
+
+  test('offers to move the selected assets on a service that can only delete them', async () => {
+    const service = createMockCloudService({ upload: vi.fn(), delete: vi.fn() });
+
+    selectedCloudService.current = service;
+    focusedExternalAsset.current = firstAsset;
+    selectedExternalAssets.current = [...assets];
+    assetMoveRequest.current = undefined;
+
+    await render(PrimaryToolbar);
+    await page
+      .getByRole('toolbar', { name: 'Folder' })
+      .getByRole('button', { name: 'Show Edit Options' })
+      .click();
+
+    expect(
+      page
+        .getByRole('menuitem')
+        .elements()
+        .map((el) => el.textContent?.trim()),
+    ).toEqual(['Move']);
+    await page.getByRole('menuitem', { name: 'Move Asset' }).click();
+    expect(assetMoveRequest.current).toEqual({ externalAssets: assets, service });
+    assetMoveRequest.current = undefined;
   });
 
   test('hides the controls for operations the service doesn’t support', async () => {

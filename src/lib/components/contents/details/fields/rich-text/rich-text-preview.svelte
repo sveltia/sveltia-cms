@@ -100,14 +100,7 @@
   let blockItems = new Map();
 
   /** @type {FieldPreviewProps & Props} */
-  let {
-    /* eslint-disable prefer-const */
-    locale,
-    typedKeyPath,
-    fieldConfig,
-    currentValue,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { locale, typedKeyPath, fieldConfig, currentValue } = $props();
 
   /** @type {HTMLElement | undefined} */
   let container = $state();

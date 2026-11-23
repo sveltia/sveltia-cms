@@ -392,12 +392,15 @@ export const getReferencedOptionLabel = ({
 
   const refOptions = getOptions({ locale, fieldConfig, refEntries, pendingEntries });
   const optionLabelMap = getOptionLabelMap(refOptions);
+
   /**
-   * Get the label by value.
+   * Get the label by value. The option values are strings, while a stored value can be a number
+   * read from a file, e.g. `author: 3`, so it’s looked up as a string, like the preview does.
    * @param {any} _value Stored value.
    * @returns {string} Label.
    */
-  const getLabel = (_value) => optionLabelMap.get(_value) || _value;
+  const getLabel = (_value) =>
+    (_value !== null && _value !== undefined && optionLabelMap.get(String(_value))) || _value;
 
   if (multiple) {
     return getListItemKeys(valueMap, keyPath).map((key) => getLabel(valueMap[key]));

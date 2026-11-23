@@ -1,7 +1,8 @@
+import { findEntriesByAssets } from '$lib/services/assets/references';
 import { allAssets } from '$lib/services/assets/state';
 
 /**
- * @import { Asset, Entry, UnpublishedEntry } from '$lib/types/private';
+ * @import { Asset, CompanionEntry, Entry, UnpublishedEntry } from '$lib/types/private';
  */
 
 /**
@@ -25,6 +26,29 @@ export const getEntryAssetVersion = (asset, entry) => {
   }
 
   return /** @type {Asset} */ (asset).workflow?.replacedAsset;
+};
+
+/**
+ * Get those of the given asset paths that the given entry uses, in a media field or as a media URL
+ * in a Markdown or RichText field, the way the editor resolves them to display the files. So do the
+ * new entries created or edited from a Relation field of the entry, which are committed along with
+ * it.
+ * @param {Entry} entry Entry, published or not.
+ * @param {CompanionEntry[]} companions Entries of other collections committed along with it.
+ * @param {string[]} paths Asset paths.
+ * @returns {Set<string>} Paths used.
+ */
+export const getUsedAssetPaths = (entry, companions, paths) => {
+  if (!paths.length) {
+    return new Set();
+  }
+
+  const results = findEntriesByAssets(
+    paths.map((path) => ({ asset: /** @type {Asset} */ ({ path }) })),
+    { entries: [entry, ...companions.map(({ entry: companion }) => companion)] },
+  );
+
+  return new Set(paths.filter((_path, index) => results[index].length));
 };
 
 /**
@@ -60,13 +84,35 @@ export const mergeWorkflowAssets = (assets) => {
 
 /**
  * Remove the assets committed to the given workflow branch, restoring any published version they
+ * were shadowing.
+ * @param {string} branch Workflow branch name.
+ * @param {(asset: Asset) => boolean} filter Function to pick the assets to remove.
+ */
+const removeBranchAssets = (branch, filter) => {
+  allAssets.current = allAssets.current.flatMap((asset) =>
+    asset.workflow?.branch === branch && filter(asset)
+      ? (asset.workflow.replacedAsset ?? [])
+      : asset,
+  );
+};
+
+/**
+ * Remove the assets committed to the given workflow branch, restoring any published version they
  * were shadowing. Used when a draft is discarded, as the branch and its files are then gone.
  * @param {string} branch Workflow branch name.
  */
 export const removeWorkflowAssets = (branch) => {
-  allAssets.current = allAssets.current.flatMap((asset) =>
-    asset.workflow?.branch === branch ? (asset.workflow.replacedAsset ?? []) : asset,
-  );
+  removeBranchAssets(branch, () => true);
+};
+
+/**
+ * Remove the assets committed to the given workflow branch at the given paths, restoring any
+ * published version they were shadowing. Used when a save takes the files off the branch again.
+ * @param {string} branch Workflow branch name.
+ * @param {Set<string>} paths File paths.
+ */
+export const removeWorkflowAssetsAt = (branch, paths) => {
+  removeBranchAssets(branch, ({ path }) => paths.has(path));
 };
 
 /**

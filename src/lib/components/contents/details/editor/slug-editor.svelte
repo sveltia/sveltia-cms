@@ -13,7 +13,7 @@
     getTakenSlugs,
     validateSlug,
   } from '$lib/services/contents/draft/validate/slugs';
-  import { getSlugPreviews } from '$lib/services/contents/editor/slug';
+  import { getSlugPreviewDetails } from '$lib/services/contents/editor/slug';
   import { watch } from '$lib/services/utils/state.svelte';
 
   /**
@@ -30,12 +30,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    locale,
-    ariaLabelledby = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { locale, ariaLabelledby = undefined } = $props();
 
   const fieldId = $props.id();
   const labelId = $derived(ariaLabelledby ?? `${fieldId}-label`);
@@ -69,17 +64,18 @@
    * default locale’s slug, which is shown once it’s typed in. It’s only read while the editor is
    * rendered, when the draft is there.
    */
-  const templateSlug = $derived.by(() => {
+  const templatePreview = $derived.by(() => {
     if (slugOptions.editorRequired) {
-      return '';
+      return undefined;
     }
 
-    const previews = getSlugPreviews(/** @type {EntryDraft} */ (entryDraft.current), {
+    const previews = getSlugPreviewDetails(/** @type {EntryDraft} */ (entryDraft.current), {
       templateOnly: true,
     });
 
     return previews[locale] ?? previews._;
   });
+  const templateSlug = $derived(templatePreview?.slug ?? '');
   /**
    * Slug the entry would be saved with.
    */
@@ -88,6 +84,12 @@
   let editing = $state(false);
   /** Slug being edited, or typed in the regular text field. */
   let text = $state('');
+
+  /**
+   * Slug the template fills that another entry uses, so the entry is saved with a number added to
+   * it. The user is told why, while the entry follows the template.
+   */
+  const takenTemplateSlug = $derived(draftSlug || editing ? undefined : templatePreview?.takenSlug);
 
   /**
    * Slugs taken by the other entries in this locale. Kept apart from the check below, which runs on
@@ -217,5 +219,20 @@
         />
       {/if}
     </div>
+    <!-- Kept in place so a screen reader announces the note when it appears -->
+    <div role="status">
+      {#if takenTemplateSlug}
+        <p class="note">{_('slug_numbered', { values: { slug: takenTemplateSlug } })}</p>
+      {/if}
+    </div>
   </FieldEditorGroup>
 {/if}
+
+<style>
+  .note {
+    margin-block: 4px 0;
+    font-size: var(--sui-font-size-small);
+    line-height: var(--sui-line-height-compact);
+    color: var(--sui-tertiary-foreground-color);
+  }
+</style>

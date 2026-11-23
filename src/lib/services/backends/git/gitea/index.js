@@ -21,6 +21,7 @@ import { fetchBlob, fetchDirSHA, fetchFiles } from '$lib/services/backends/git/g
 import { getBaseURLs, repository } from '$lib/services/backends/git/gitea/repository';
 import workflow from '$lib/services/backends/git/gitea/workflow';
 import { initGitBackend } from '$lib/services/backends/git/shared/init';
+import { toRepositoryPath } from '$lib/services/backends/git/shared/repository';
 import { cmsConfig } from '$lib/services/config';
 import { isWorkflowConfigured } from '$lib/services/workflow/config';
 
@@ -54,7 +55,7 @@ export const init = () => {
     include_credentials: includeCredentials = false,
   } = options;
 
-  const [owner, repo] = /** @type {string} */ (projectPath).split('/');
+  const { owner, repo } = toRepositoryPath(/** @type {string} */ (projectPath));
 
   initGitBackend(repository, {
     service,

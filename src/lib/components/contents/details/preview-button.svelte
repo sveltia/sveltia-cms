@@ -14,11 +14,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    thisPane,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { thisPane } = $props();
 </script>
 
 <Button

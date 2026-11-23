@@ -27,14 +27,12 @@
 
   /** @type {FieldEditorProps & Props} */
   let {
-    /* eslint-disable prefer-const */
     fieldId,
     fieldConfig,
     currentValue = $bindable(),
     required = true,
     readonly = false,
     invalid = false,
-    /* eslint-enable prefer-const */
   } = $props();
 
   /** @type {number | undefined} */

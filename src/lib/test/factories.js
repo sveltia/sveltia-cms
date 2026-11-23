@@ -10,6 +10,7 @@
  * InternalLocaleCode,
  * MediaLibraryService,
  * UnpublishedEntry,
+ * WorkflowPullRequest,
  * } from '$lib/types/private';
  */
 
@@ -100,6 +101,33 @@ export const createMockWorkflowEntry = ({
       }),
     })
   );
+
+/**
+ * Build the pull request a contributor opened from their fork, `alice/website`, as a maintainer’s
+ * session parses it. Its branch is named the Open Authoring way, with the fork’s path, and
+ * qualified with the fork, e.g. `alice/website:cms/alice/website/posts/hello`.
+ * @param {object} [args] Arguments.
+ * @param {number} [args.number] Pull request number.
+ * @param {string} [args.collectionName] Collection name the branch is named after.
+ * @param {string} [args.slug] Entry slug the branch is named after.
+ * @param {boolean} [args.editable] Whether the contributor lets maintainers push to the branch.
+ * @param {Record<string, any>} [args.pullRequest] Any other pull request property.
+ * @returns {WorkflowPullRequest} Pull request.
+ */
+export const createMockForkPullRequest = ({
+  number = 7,
+  collectionName = 'posts',
+  slug = 'hello',
+  editable = true,
+  pullRequest = {},
+} = {}) =>
+  /** @type {WorkflowPullRequest} */ ({
+    number,
+    branch: `alice/website:cms/alice/website/${collectionName}/${slug}`,
+    url: `https://github.com/owner/repo/pull/${number}`,
+    fork: { owner: 'alice', repo: 'website', editable },
+    ...pullRequest,
+  });
 
 /**
  * Build the info of a global asset folder, which isn’t entry-relative and has no template tags.

@@ -2,8 +2,10 @@ import { _ } from '@sveltia/i18n';
 import { getPathInfo } from '@sveltia/utils/file';
 
 import { assetUpdatesToast, refreshFocusedAssets } from '$lib/services/assets/data';
+import { createAssetMoveChange } from '$lib/services/assets/data/move-change';
 import { getAssetFoldersByPath, globalAssetFolder } from '$lib/services/assets/folders';
-import { getAssetBlob, getAssetPublicURL } from '$lib/services/assets/info';
+import { getAssetPublicURL } from '$lib/services/assets/info';
+import { getAssetReferenceTarget } from '$lib/services/assets/reference-target';
 import { getEntriesByAssets } from '$lib/services/assets/references';
 import { assertOutsideCmsFolders } from '$lib/services/assets/reserved';
 import { saveChanges } from '$lib/services/backends/save';
@@ -14,7 +16,7 @@ import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { getEntryCollectionContexts } from '$lib/services/contents/entry/contexts';
 import { getReadonlyEntryLabel, isEntryReadonly } from '$lib/services/contents/entry/readonly';
 import { getOrCreate } from '$lib/services/utils/cache';
-import { encodeFilePath } from '$lib/services/utils/file';
+import { encodeFilePath, getBaseName } from '$lib/services/utils/file';
 
 /**
  * @import {
@@ -169,84 +171,86 @@ const getRenamedReference = (oldName, newName) => (src) => {
 };
 
 /**
- * Rewrite the references to the given assets in the entries that use them, so these point at the
- * assets’ new paths. The entries are searched once for all the assets, however many there are.
- * @param {object} args Arguments.
- * @param {AssetFolderInfo | undefined} args._globalAssetFolder Global asset folder, if any.
- * @param {MovingAsset[]} args.movingAssets Assets being moved, with their new paths.
- * @param {Map<string, Entry>} args.updatingEntryMap Copies of the entries being rewritten, keyed by
- * entry ID. An entry using several of the moved assets is copied once and has every reference
- * replaced in that copy, so it’s saved once with all of them; a copy per asset would each hold a
- * single replacement and overwrite the others. The caller collects the changes from the copies.
- * @throws {Error} When an entry using the assets is read-only, with a message naming the entries.
+ * Get the message explaining why assets can’t be moved or renamed: some of the entries using them
+ * are read-only, so the references in them can’t be updated, and leaving them pointing at a file
+ * that’s no longer there would break them.
+ * @param {Entry[]} entries Entries using the assets.
+ * @returns {string | undefined} Message naming the read-only entries, or `undefined` if there is
+ * none.
  */
-export const collectEntryChangesFromAssets = async ({
-  _globalAssetFolder,
-  movingAssets,
-  updatingEntryMap,
-}) => {
-  /** @type {AssetReferenceTarget[]} */
-  const targets = movingAssets.map(({ asset }) => {
-    // An asset without a public URL, as in an entry-relative folder, is matched by the asset its
-    // references resolve to, which works whether or not the asset has been loaded
-    const url = getAssetPublicURL(asset);
+export const getMoveBlockedMessage = (entries) => {
+  const readonlyEntries = entries.filter((entry) => isEntryReadonly(entry));
 
-    return url ? { url } : { asset };
-  });
+  return readonlyEntries.length
+    ? _('cannot_move_referenced_asset', {
+        values: {
+          entries: readonlyEntries.map((entry) => getReadonlyEntryLabel(entry)).join(', '),
+        },
+      })
+    : undefined;
+};
 
-  if (!targets.length) {
-    return;
+/**
+ * Entries found to use some files, ahead of rewriting the references to the files once their new
+ * locations are known.
+ * @typedef {object} ReferenceRewritePlan
+ * @property {AssetReferenceTarget[]} targets What the references to each file are matched by.
+ * @property {Entry[][]} usedEntries Entries using each file, in the same order.
+ */
+
+/**
+ * Find the entries using some files, before the files are moved, and refuse the move if any of
+ * them is read-only: its references can’t be rewritten, and leaving it pointing at a file that’s no
+ * longer there would break it. The entries are searched once for all the files, however many there
+ * are. Nothing is replaced yet, so the originals are left alone until the change is saved.
+ * @param {AssetReferenceTarget[]} targets What the references to each file are matched by.
+ * @returns {Promise<ReferenceRewritePlan>} Plan to pass to {@link rewriteEntryReferences}.
+ * @throws {Error} When an entry using the files is read-only, with a message naming the entries.
+ */
+export const planReferenceRewrite = async (targets) => {
+  const usedEntries = targets.length ? await getEntriesByAssets(targets) : [];
+  const blockedMessage = getMoveBlockedMessage([...new Set(usedEntries.flat())]);
+
+  if (blockedMessage) {
+    throw new Error(blockedMessage);
   }
 
-  // Find the entries first, without replacing anything, so the originals are left alone until the
-  // change is saved
-  const usedEntries = await getEntriesByAssets(targets);
+  return { targets, usedEntries };
+};
+
+/**
+ * Rewrite the references to some files in the entries found to use them, so these point at the
+ * files’ new locations, which may be anywhere: another repository folder, or a cloud storage
+ * service.
+ * @param {object} args Arguments.
+ * @param {ReferenceRewritePlan} args.plan Entries using the files, from
+ * {@link planReferenceRewrite}.
+ * @param {(index: number) => AssetReferenceTarget['newURL']} args.getNewURL Function returning the
+ * new reference to the file at the given index, only called for a file some entry uses.
+ * @param {Map<string, Entry>} args.updatingEntryMap Copies of the entries being rewritten, keyed by
+ * entry ID. An entry using several of the files is copied once and has every reference replaced in
+ * that copy, so it’s saved once with all of them; a copy per file would each hold a single
+ * replacement and overwrite the others. The caller collects the changes from the copies.
+ */
+export const rewriteEntryReferences = async ({
+  plan: { targets, usedEntries },
+  getNewURL,
+  updatingEntryMap,
+}) => {
   /** @type {AssetReferenceTarget[]} */
   const replacingTargets = [];
   /** @type {Set<Entry>} */
   const updatingEntries = new Set();
 
-  movingAssets.forEach(({ asset, path: newPath }, index) => {
-    if (!usedEntries[index].length) {
-      return;
+  targets.forEach((target, index) => {
+    if (usedEntries[index].length) {
+      replacingTargets.push({ ...target, newURL: getNewURL(index) });
+      usedEntries[index].forEach((entry) => updatingEntries.add(entry));
     }
-
-    // The new URL is worked out the same way as the current one, so that the public folder, the
-    // `encode_file_path` option and template tags are all dealt with alike. A move stays within the
-    // asset’s folder, so the folder still applies
-    const newName = newPath.slice(newPath.lastIndexOf('/') + 1);
-
-    const newURL =
-      getAssetPublicURL(
-        { ...asset, path: newPath, name: newName },
-        { pathOnly: true, allowSpecial: true },
-      ) ??
-      // A rename can be applied to a reference relative to the entry holding it
-      (asset.folder.entryRelative &&
-      newPath.slice(0, -newName.length) === asset.path.slice(0, -asset.name.length)
-        ? getRenamedReference(asset.name, newName)
-        : getFallbackURL({ _globalAssetFolder, newPath, asset }));
-
-    replacingTargets.push({ ...targets[index], newURL });
-    usedEntries[index].forEach((entry) => updatingEntries.add(entry));
   });
 
   if (!replacingTargets.length) {
     return;
-  }
-
-  // A read-only entry can’t be rewritten, and leaving it pointing at a file that’s no longer there
-  // would break it, so the move is refused
-  const readonlyEntries = [...updatingEntries].filter((entry) => isEntryReadonly(entry));
-
-  if (readonlyEntries.length) {
-    throw new Error(
-      _('cannot_move_referenced_asset', {
-        values: {
-          entries: readonlyEntries.map((entry) => getReadonlyEntryLabel(entry)).join(', '),
-        },
-      }),
-    );
   }
 
   const entries = [...updatingEntries].map((entry) =>
@@ -255,6 +259,136 @@ export const collectEntryChangesFromAssets = async ({
 
   // The references are replaced in place, in one pass over the copies
   await getEntriesByAssets(replacingTargets, { entries });
+};
+
+/**
+ * Get the reference to an asset once it has been moved to another path in the repository. It’s
+ * worked out the same way as the current one, so that the public folder, the `encode_file_path`
+ * option and template tags are all dealt with alike. A move to another folder takes that folder’s
+ * public path; otherwise the asset’s own folder still applies.
+ * @param {MovingAsset & { _globalAssetFolder: AssetFolderInfo | undefined }} args Asset being
+ * moved, its new path and folder, and the global asset folder, if any.
+ * @returns {AssetReferenceTarget['newURL']} New reference, or a function rewriting a reference
+ * relative to the entry holding it.
+ */
+const getNewAssetReference = ({
+  _globalAssetFolder,
+  asset,
+  path: newPath,
+  folder = asset.folder,
+}) => {
+  const newName = getBaseName(newPath);
+
+  // A rename of an entry-relative asset is applied to each reference as the entry holding it has
+  // it, which is the form it was saved in, e.g. `./photo.jpg` with `public_folder: ./`, or an
+  // encoded name with the `encode_file_path` option. The path `getAssetPublicURL()` gives such an
+  // asset is relative to its folder, regardless of the public folder, and isn’t encoded
+  if (
+    asset.folder.entryRelative &&
+    newPath.slice(0, -newName.length) === asset.path.slice(0, -asset.name.length)
+  ) {
+    return getRenamedReference(asset.name, newName);
+  }
+
+  return (
+    getAssetPublicURL(
+      { ...asset, path: newPath, name: newName, folder },
+      { pathOnly: true, allowSpecial: true },
+    ) ?? getFallbackURL({ _globalAssetFolder, newPath, asset })
+  );
+};
+
+/**
+ * Rewrite the references to the given assets in the entries that use them, so these point at the
+ * assets’ new paths in the repository.
+ * @param {object} args Arguments.
+ * @param {AssetFolderInfo | undefined} args._globalAssetFolder Global asset folder, if any.
+ * @param {MovingAsset[]} args.movingAssets Assets being moved, with their new paths.
+ * @param {Map<string, Entry>} args.updatingEntryMap Copies of the entries being rewritten, see
+ * {@link rewriteEntryReferences}.
+ * @throws {Error} When an entry using the assets is read-only, with a message naming the entries.
+ */
+export const collectEntryChangesFromAssets = async ({
+  _globalAssetFolder,
+  movingAssets,
+  updatingEntryMap,
+}) => {
+  await rewriteEntryReferences({
+    // Matched the same way as everywhere else, e.g. the count of the entries using an asset: by its
+    // public path, or else by the asset itself, as in an entry-relative folder, which works whether
+    // or not the asset has been loaded
+    plan: await planReferenceRewrite(
+      movingAssets.map(({ asset }) => getAssetReferenceTarget(asset)),
+    ),
+    // eslint-disable-next-line jsdoc/require-jsdoc
+    getNewURL: (index) => getNewAssetReference({ _globalAssetFolder, ...movingAssets[index] }),
+    updatingEntryMap,
+  });
+};
+
+/**
+ * Rewrite the references to some files in the entries found to use them, as
+ * {@link rewriteEntryReferences} does, and collect the changes to save the entries with.
+ * @param {object} args Arguments.
+ * @param {ReferenceRewritePlan} args.plan Entries using the files, from
+ * {@link planReferenceRewrite}.
+ * @param {(index: number) => AssetReferenceTarget['newURL']} args.getNewURL Function returning the
+ * new reference to the file at the given index.
+ * @returns {Promise<{ savingEntries: Entry[], changes: FileChange[] }>} Entries to be saved, and
+ * the changes to their files. Both are empty when no entry uses the files.
+ */
+export const collectReferenceChanges = async ({ plan, getNewURL }) => {
+  /** @type {Map<string, Entry>} */
+  const updatingEntryMap = new Map();
+  /** @type {Entry[]} */
+  const savingEntries = [];
+  /** @type {FileChange[]} */
+  const changes = [];
+
+  await rewriteEntryReferences({ plan, getNewURL, updatingEntryMap });
+  await Promise.all(
+    [...updatingEntryMap.values()].map((entry) =>
+      collectEntryChanges({ entry, savingEntries, changes }),
+    ),
+  );
+
+  return { savingEntries, changes };
+};
+
+/**
+ * Save the changes to the entries using some moved files, if any, along with changes to other
+ * files, e.g. the repository files being created or deleted, in one commit. Nothing is committed
+ * when there’s nothing to change, as when a file on a cloud storage service that no entry uses is
+ * moved.
+ * @param {object} args Arguments.
+ * @param {ReferenceRewritePlan} args.plan Entries using the files, from
+ * {@link planReferenceRewrite}.
+ * @param {string[]} args.newURLs New references to the files, in the same order.
+ * @param {FileChange[]} [args.changes] Changes to other files.
+ * @param {Asset[]} [args.savingAssets] Repository assets being saved.
+ * @param {'uploadMedia' | 'deleteMedia'} args.commitType Commit type.
+ */
+export const saveReferenceChanges = async ({
+  plan,
+  newURLs,
+  changes = [],
+  savingAssets = [],
+  commitType,
+}) => {
+  const { savingEntries, changes: entryChanges } = await collectReferenceChanges({
+    plan,
+    // eslint-disable-next-line jsdoc/require-jsdoc
+    getNewURL: (index) => newURLs[index],
+  });
+
+  if (changes.length || entryChanges.length) {
+    await saveChanges({
+      changes: [...changes, ...entryChanges],
+      savingEntries,
+      savingAssets,
+      options: { commitType },
+    });
+  }
 };
 
 /**
@@ -311,23 +445,11 @@ export const moveAssets = async (
   const updatingEntryMap = new Map();
 
   await Promise.all(
-    movingAssets.map(async ({ asset, path }) => {
-      const newPath = path;
-      const newName = getPathInfo(newPath).basename;
-      const blob = asset.file ?? (await getAssetBlob(asset));
+    movingAssets.map(async ({ asset, path, folder = asset.folder }) => {
+      const name = getPathInfo(path).basename;
 
-      savingAssets.push({ ...asset, path: newPath, name: newName });
-
-      changes.push({
-        action: 'move',
-        path: newPath,
-        previousPath: asset.path,
-        previousSha: asset.sha,
-        // Read the bytes up front. A blob backed by the file system points at the file about to be
-        // moved away, and reading it afterwards — to write the copy or to hash it — fails because
-        // there’s nothing at that path anymore
-        data: new File([await blob.arrayBuffer()], newName, { type: blob.type }),
-      });
+      savingAssets.push({ ...asset, path, name, folder });
+      changes.push(await createAssetMoveChange(asset, path, name));
     }),
   );
 

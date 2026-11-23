@@ -3,6 +3,7 @@ import { isObject } from '@sveltia/utils/object';
 import { cmsConfig } from '$lib/services/config/state';
 
 /**
+ * @import { MediaLibraryService } from '$lib/types/private';
  * @import { CmsConfig, MediaField, MediaLibraries } from '$lib/types/public';
  */
 
@@ -14,10 +15,14 @@ import { cmsConfig } from '$lib/services/config/state';
  * @template {keyof MediaLibraries} T
  * @param {T} libraryName Library name.
  * @param {CmsConfig | MediaField | undefined} config Site or field configuration.
+ * @param {string} [siteDefaultName] Name of the library the site-level legacy option configures
+ * when it has no `name`, e.g. `default`. When given, a legacy option, even a field-level one
+ * naming the library, only applies to the library the site-level legacy option configures.
+ * Default: none, so a nameless site-level legacy option configures no library.
  * @returns {MediaLibraries[T] | undefined} Options, `false` if the library is explicitly disabled,
  * or `undefined` if the library is not configured.
  */
-export const findLibraryOptions = (libraryName, config) => {
+export const findLibraryOptions = (libraryName, config, siteDefaultName) => {
   const options = config?.media_libraries?.[libraryName];
 
   if (options !== undefined && options !== null) {
@@ -25,9 +30,11 @@ export const findLibraryOptions = (libraryName, config) => {
   }
 
   const { media_library: legacyOptions } = config ?? {};
-  const legacyName = legacyOptions?.name ?? cmsConfig.current?.media_library?.name;
+  const siteName = cmsConfig.current?.media_library?.name ?? siteDefaultName;
 
-  return legacyOptions && legacyName === libraryName
+  return legacyOptions &&
+    (legacyOptions.name ?? siteName) === libraryName &&
+    (!siteDefaultName || siteName === libraryName)
     ? /** @type {MediaLibraries[T]} */ (legacyOptions)
     : undefined;
 };
@@ -80,3 +87,85 @@ export const resolveLibraryOptions = (libraryName, fieldConfig) =>
       /** @type {any} */ (findLibraryOptions(libraryName, fieldConfig)),
     )
   );
+
+/**
+ * Get the names of the media libraries marked with the `default` option, which the Select Assets
+ * dialog opens on instead of the first repository folder: those marked at the field level first,
+ * then those marked at the site level, so the first one offered can be picked. A field can clear
+ * the mark of a site-level one with `default: false`. Only the `media_libraries` map is read, as
+ * the legacy `media_library` option configures a single library.
+ * @param {MediaField} [fieldConfig] Field configuration.
+ * @returns {(keyof MediaLibraries)[]} Library names.
+ */
+export const getPreferredLibraryNames = (fieldConfig) => {
+  const fieldLibraries = fieldConfig?.media_libraries ?? {};
+  const siteLibraries = cmsConfig.current?.media_libraries ?? {};
+  /**
+   * Get a library’s options in the given map, treating `null`, e.g. an empty YAML key, as not
+   * configured, like {@link findLibraryOptions} does.
+   * @param {Record<string, any>} libraries Library option map.
+   * @param {string} name Library name.
+   * @returns {any} Options.
+   */
+  const get = (libraries, name) => libraries[name] ?? undefined;
+
+  // A library marked in the field itself comes first, then the site’s libraries in their order. A
+  // library whose mark is inherited from the site is among the latter, even when the field
+  // configures it too.
+  const names = /** @type {(keyof MediaLibraries)[]} */ ([
+    ...new Set([
+      ...Object.keys(fieldLibraries).filter((name) => get(fieldLibraries, name)?.default === true),
+      ...Object.keys(siteLibraries),
+    ]),
+  ]);
+
+  return names.filter((name) => {
+    // `all` holds shared defaults, not the options of a library
+    if (name === 'all') {
+      return false;
+    }
+
+    const options = mergeLibraryOptions(get(siteLibraries, name), get(fieldLibraries, name));
+
+    return isObject(options) && options.default === true;
+  });
+};
+
+/**
+ * Get the cloud storage services that can take files from the CMS. A service without an upload
+ * function, like Cloudinary, only takes files through its own widget.
+ * @param {[string, MediaLibraryService][]} cloudServiceEntries Cloud storage services.
+ * @returns {[string, MediaLibraryService][]} Services that can upload files.
+ */
+export const getUploadableServiceEntries = (cloudServiceEntries) =>
+  cloudServiceEntries.filter(([, { upload }]) => !!upload);
+
+/**
+ * Find the first media library marked with the `default` option that’s offered.
+ * @param {object} args Arguments.
+ * @param {string[]} args.preferredLibraryNames Names of the media libraries marked with the
+ * `default` option, in order of precedence, as returned by {@link getPreferredLibraryNames}.
+ * `default` stands for the repository.
+ * @param {boolean} args.repositoryAvailable Whether a repository folder is offered.
+ * @param {[string, MediaLibraryService][]} args.cloudServiceEntries Cloud storage services offered.
+ * @param {boolean} [args.uploadRequired] Whether the library has to take files to be uploaded,
+ * which leaves out a cloud storage service that can’t upload them.
+ * @returns {string | undefined} Library name, or `undefined` if none of the marked libraries is
+ * offered.
+ */
+export const findPreferredLibraryName = ({
+  preferredLibraryNames,
+  repositoryAvailable,
+  cloudServiceEntries,
+  uploadRequired = false,
+}) => {
+  const serviceEntries = uploadRequired
+    ? getUploadableServiceEntries(cloudServiceEntries)
+    : cloudServiceEntries;
+
+  return preferredLibraryNames.find((name) =>
+    name === 'default'
+      ? repositoryAvailable
+      : serviceEntries.some(([serviceId]) => serviceId === name),
+  );
+};

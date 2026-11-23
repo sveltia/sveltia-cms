@@ -11,7 +11,7 @@ import {
 } from '$lib/services/contents/file/array';
 import { formatEntryFile } from '$lib/services/contents/file/format';
 import { arrayFileItems, createArrayItemEntry } from '$lib/services/contents/file/process';
-import { valueSources } from '$lib/services/contents/file/value-sources';
+import { fileStates, updateFileState } from '$lib/services/contents/file/state';
 import { getEntryFoldersByPath } from '$lib/services/contents/folders';
 import { getRepositoryDatabase } from '$lib/services/utils/database';
 
@@ -98,7 +98,8 @@ const localesOf = (item, index) => createArrayItemEntry({ collection, item, inde
 
 beforeEach(() => {
   arrayFileItems.clear();
-  valueSources.clear();
+  fileStates.clear();
+  fileStates.clear();
   allEntries.current = [];
   // @ts-ignore
   backend.current = undefined;
@@ -416,18 +417,18 @@ describe('Test combineArrayFileChanges()', () => {
       { title: 'A', price: 1 },
       { title: 'B', price: 2 },
     ]);
-    valueSources.set(path, { '0.price': a, '1.price': b });
+    updateFileState(path, { valueSources: { '0.price': a, '1.price': b } });
 
     const { arrayFileUpdates } = await combineArrayFileChanges([
       { action: 'update', path, slug: '1', arrayOrder: [{ index: 1 }, { index: 0 }] },
     ]);
 
     expect(formatEntryFile).toHaveBeenLastCalledWith(
-      expect.objectContaining({ valueSources: { '0.price': b, '1.price': a } }),
+      expect.objectContaining({ state: { valueSources: { '0.price': b, '1.price': a } } }),
     );
     expect(arrayFileUpdates[0].sourceMap).toEqual({ '0.price': b, '1.price': a });
     // Not remembered until the change has been committed
-    expect(valueSources.get(path)).toEqual({ '0.price': a, '1.price': b });
+    expect(fileStates.get(path)?.valueSources).toEqual({ '0.price': a, '1.price': b });
 
     createArrayFileEntries({
       arrayFileUpdates,
@@ -436,7 +437,19 @@ describe('Test combineArrayFileChanges()', () => {
       meta: {},
     });
 
-    expect(valueSources.get(path)).toEqual({ '0.price': b, '1.price': a });
+    expect(fileStates.get(path)?.valueSources).toEqual({ '0.price': b, '1.price': a });
+  });
+
+  test('keeps the comments at the top of the file', async () => {
+    registerArrayFile();
+    arrayFileItems.set(path, [{ title: 'A' }]);
+    updateFileState(path, { leadingComment: '# Managed by the CMS' });
+
+    await combineArrayFileChanges([{ action: 'create', path, slug: 'B', data: '{"title":"B"}' }]);
+
+    expect(formatEntryFile).toHaveBeenLastCalledWith(
+      expect.objectContaining({ state: { leadingComment: '# Managed by the CMS' } }),
+    );
   });
 
   test('takes the label of a deleted item from the file', async () => {

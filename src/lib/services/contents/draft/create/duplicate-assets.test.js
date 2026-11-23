@@ -42,7 +42,7 @@ vi.mock('$lib/services/assets/info', () => ({
   createDisplayBlobURL: vi.fn(async (/** @type {Blob} */ blob) => URL.createObjectURL(blob)),
 }));
 
-vi.mock('$lib/services/contents/draft/save/assets', () => ({
+vi.mock('$lib/services/assets/entry-folder', () => ({
   getOwnedEntryFolderPath: mockGetOwnedEntryFolderPath,
 }));
 
@@ -469,6 +469,18 @@ describe('copyEntryRelativeAssets()', () => {
     await expect(copyEntryRelativeAssets({ draft, currentValues })).resolves.toEqual({});
     expect(mockGetAssetByPath).not.toHaveBeenCalled();
     expect(currentValues.en.image).toBe('photo.jpg');
+  });
+
+  test('leaves the values alone when only an external media library is configured', async () => {
+    // Without an internal `media_folder`, no folder is enabled in the library folder map
+    mockGetDefaultAssetFolder.mockReturnValue(undefined);
+    currentValues = {
+      en: { image: 'https://res.cloudinary.com/demo/image/upload/photo.jpg', body: 'Text' },
+    };
+
+    await expect(copyEntryRelativeAssets({ draft, currentValues })).resolves.toEqual({});
+    expect(mockGetAssetByPath).not.toHaveBeenCalled();
+    expect(currentValues.en.image).toBe('https://res.cloudinary.com/demo/image/upload/photo.jpg');
   });
 
   test('leaves a value that does not resolve to an asset alone', async () => {

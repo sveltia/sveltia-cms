@@ -15,7 +15,7 @@ vi.mock('$lib/services/backends', () => ({ backend: { current: undefined } }));
 vi.mock('$lib/services/config', () => ({ cmsConfig: { current: undefined } }));
 vi.mock('$lib/services/user/prefs.svelte', () => ({ prefs: { devModeEnabled: false } }));
 // Report an empty list, so only the production commit is tracked
-vi.mock('$lib/services/workflow', () => ({ unpublishedEntries: { current: [] } }));
+vi.mock('$lib/services/workflow', () => ({ allUnpublishedEntries: { current: [] } }));
 
 // The poll unit tests stand in for the target store, so this covers the seam between them: the
 // poller reacting to the real derived store as a save moves the tracked commit

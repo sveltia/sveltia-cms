@@ -26,14 +26,12 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     title,
     description,
     docsURL = undefined,
     entries,
     getFieldLabel,
     onChange = undefined,
-    /* eslint-enable prefer-const */
   } = $props();
 </script>
 

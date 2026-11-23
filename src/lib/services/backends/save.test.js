@@ -5,8 +5,10 @@ import { backend } from '$lib/services/backends';
 import { promptCommitMessage } from '$lib/services/backends/commit-prompt';
 import { repositoryHead } from '$lib/services/backends/git/shared/head';
 import { checkForRemoteChanges, suspendChecksWhile } from '$lib/services/backends/refresh';
+import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
 import { combineArrayFileChanges, createArrayFileEntries } from '$lib/services/contents/file/array';
+import { lastCommitPublishHint, productionSHA } from '$lib/services/deployments';
 import { createMockAssetFolder } from '$lib/test/factories';
 
 import { getCommitAuthor, saveChanges, updateCache, updateStores } from './save.js';
@@ -108,6 +110,7 @@ describe('save', () => {
     }));
     vi.mocked(createArrayFileEntries).mockReturnValue({ entries: [], savedEntries: new Map() });
     repositoryHead.current = '';
+    cmsConfig.current = undefined;
     mockPrefs.devModeEnabled = false;
     mockUserState.account = {
       name: 'Test User',
@@ -709,6 +712,33 @@ describe('save', () => {
 
     /** @type {CommitOptions} */
     const simpleOptions = { commitType: /** @type {CommitType} */ ('create') };
+
+    test('records whether the commit is expected to start a deployment', async () => {
+      cmsConfig.current = /** @type {any} */ ({ backend: { name: 'github', skip_ci: true } });
+      lastCommitPublishHint.current = { published: true, time: 0 };
+
+      // The site is rebuilt from the commit, which skips CI as configured, so the Publish Changes
+      // button has to offer a deployment again, whatever the previous commit did
+      await saveChanges({ changes: simpleChanges, options: { commitType: 'uploadMedia' } });
+      expect(productionSHA.current).toBe('commit123');
+      expect(lastCommitPublishHint.current.published).toBe(false);
+
+      // A deletion is always deployed, so the content doesn’t stay online
+      await saveChanges({ changes: simpleChanges, options: { commitType: 'delete' } });
+      expect(lastCommitPublishHint.current.published).toBe(true);
+
+      await saveChanges({
+        changes: simpleChanges,
+        options: { commitType: 'update', skipCI: true },
+      });
+      expect(lastCommitPublishHint.current.published).toBe(false);
+
+      await saveChanges({
+        changes: simpleChanges,
+        options: { commitType: 'update', skipCI: false },
+      });
+      expect(lastCommitPublishHint.current.published).toBe(true);
+    });
 
     test('should check the repository for changes before committing', async () => {
       /** @type {string[]} */

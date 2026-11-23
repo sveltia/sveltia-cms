@@ -5,7 +5,8 @@
   @see https://sveltiacms.app/en/docs/fields/richtext
 -->
 <script>
-  import { TextEditor } from '@sveltia/ui';
+  import { _ } from '@sveltia/i18n';
+  import { Alert, TextEditor, Toast } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import {
     $createParagraphNode as createParagraphNode,
@@ -13,6 +14,7 @@
     $insertNodes as insertNodes,
   } from 'lexical';
 
+  import SelectAssetsDialog from '$lib/components/assets/browser/select-assets-dialog.svelte';
   import { EditorComponent } from '$lib/components/contents/details/fields/rich-text/custom-node-features';
   import { cmsConfig } from '$lib/services/config';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
@@ -23,17 +25,22 @@
   } from '$lib/services/contents/editor/field-context';
   import { trackPendingWhile } from '$lib/services/contents/editor/pending.svelte';
   import { getField } from '$lib/services/contents/entry/fields';
-  import {
-    getAssetLibraryFolderMap,
-    getDefaultAssetFolder,
-  } from '$lib/services/contents/fields/file/helpers';
   import { processResource } from '$lib/services/contents/fields/file/process';
+  import {
+    getMediaFieldAssetOptions,
+    processResources,
+  } from '$lib/services/contents/fields/file/resources';
   import {
     DEFAULT_BUTTONS,
     DEFAULT_MODES,
     getValueFormat,
     NODE_NAME_MAP,
   } from '$lib/services/contents/fields/rich-text';
+  import { IMAGE_COMPONENT_IDS } from '$lib/services/contents/fields/rich-text/components/definitions';
+  import {
+    getImageSrcFieldConfig,
+    sortDroppedImages,
+  } from '$lib/services/contents/fields/rich-text/image-uploads';
   import {
     getDroppedImages,
     getPastedImages,
@@ -47,12 +54,11 @@
     resolveAllowNestedComponents,
   } from '$lib/services/contents/fields/rich-text/options';
   import { getCanonicalLocale, getDirection } from '$lib/services/contents/i18n';
-  import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
   import { syncValues, watch } from '$lib/services/utils/state.svelte';
 
   /**
    * @import { ImageEntry } from '$lib/services/contents/fields/rich-text/images';
-   * @import { FieldEditorProps } from '$lib/types/private';
+   * @import { FieldEditorProps, SelectedResource } from '$lib/types/private';
    * @import {
    * EditorComponentDefinition,
    * ImageField,
@@ -78,7 +84,6 @@
 
   /** @type {FieldEditorProps & Props} */
   let {
-    /* eslint-disable prefer-const */
     locale,
     keyPath,
     typedKeyPath,
@@ -88,7 +93,6 @@
     required = true,
     readonly = false,
     invalid = false,
-    /* eslint-enable prefer-const */
   } = $props();
 
   /** @type {HTMLElement | undefined} */
@@ -100,6 +104,25 @@
    * Whether the editor has yet to write a change made by the user back to {@link inputValue}.
    */
   let pending = $state(false);
+  /**
+   * Number of dropped or pasted image batches being processed before they’re inserted.
+   */
+  let processingImages = $state(0);
+  let showSelectAssetsDialog = $state(false);
+  /**
+   * Files dropped or pasted into the editor, to be uploaded to a cloud storage service in the
+   * Select Assets dialog.
+   * @type {File[]}
+   */
+  let pendingFiles = $state([]);
+  /**
+   * Inserts the images uploaded in the Select Assets dialog into the editor the files were dropped
+   * or pasted into.
+   * @type {((resources: SelectedResource[]) => Promise<void>) | undefined}
+   */
+  let insertUploadedImages = undefined;
+  /** Whether dropped or pasted files have been rejected, as no location can take them. */
+  let filesRejected = $state(false);
 
   const {
     // Field type-specific options
@@ -149,19 +172,23 @@
       (def) => /** @type {import('@sveltia/ui').TextEditorComponent} */ (new EditorComponent(def)),
     ),
   );
-  const imageComponent = $derived(
-    components.find(({ id }) => id === 'image' || id === 'linked-image'),
-  );
-  const targetAssetFolder = $derived(
-    getDefaultAssetFolder(
-      getAssetLibraryFolderMap({
-        collectionName,
-        fileName,
-        componentName,
-        typedKeyPath,
-        isIndexFile,
-      }),
+  const imageComponent = $derived(components.find(({ id }) => IMAGE_COMPONENT_IDS.includes(id)));
+  const srcFieldConfig = $derived(
+    getImageSrcFieldConfig(
+      /** @type {import('@sveltia/ui').TextEditorComponent & EditorComponentDefinition} */ (
+        imageComponent
+      ),
     ),
+  );
+  const assetOptions = $derived(
+    getMediaFieldAssetOptions({
+      collectionName,
+      fileName,
+      isIndexFile,
+      componentName,
+      typedKeyPath,
+      fieldConfig: /** @type {ImageField} */ (srcFieldConfig),
+    }),
   );
 
   /**
@@ -178,55 +205,121 @@
       return;
     }
 
-    const srcFieldConfig =
-      /** @type {import('@sveltia/ui').TextEditorComponent & EditorComponentDefinition} */ (
-        imageComponent
-      ).fields?.find(({ name }) => name === 'src');
+    const { folder, libraryConfig } = assetOptions;
+    const draft = entryDraft.current;
+    const _locale = locale;
+    const component = imageComponent;
 
-    const { config: libraryConfig } = getDefaultMediaLibraryOptions({
-      fieldConfig: /** @type {ImageField} */ (srcFieldConfig),
+    const { inlineImages, uploadFiles, rejected } = sortDroppedImages({
+      images,
+      srcFieldConfig,
+      assetOptions,
     });
 
-    const draft = entryDraft.current;
-    const folder = targetAssetFolder;
+    /**
+     * Whether the editor still shows the content the images were dropped in. The editor is reused
+     * when the pane switches to another locale or another entry is opened, so the image would be
+     * inserted into the content it shows now, with a path resolved for the one it was dropped in.
+     * @returns {boolean} Result.
+     */
+    const isSameContent = () => entryDraft.current === draft && locale === _locale;
 
-    // eslint-disable-next-line no-restricted-syntax
-    for (const { file, src: externalSrc, alt = '' } of images) {
-      let src = externalSrc;
-
-      if (file) {
-        // eslint-disable-next-line no-await-in-loop
-        const { value } = await processResource({
-          draft,
-          resource: { file, folder },
-          libraryConfig,
-          locale,
-        });
-
-        src = value;
-      }
-
-      if (!src) {
-        // eslint-disable-next-line no-continue
-        continue;
-      }
-
-      const _src = src;
-
+    /**
+     * Insert an image.
+     * @param {string} src Image URL.
+     * @param {string} alt Alternative text.
+     */
+    const insertImage = (src, alt) => {
       editor.update(() => {
-        const node = imageComponent.createNode({ src: _src, alt });
+        const node = component.createNode({ src, alt });
 
         // Start a new paragraph after the image, unless the field holds a single one
         insertNodes(multiline ? [node, createParagraphNode()] : [node]);
       });
+    };
+
+    processingImages += 1;
+
+    try {
+      // eslint-disable-next-line no-restricted-syntax
+      for (const { file, src: externalSrc, alt = '' } of inlineImages) {
+        let src = externalSrc;
+
+        if (file) {
+          // eslint-disable-next-line no-await-in-loop
+          const { value } = await processResource({
+            draft,
+            resource: { file, folder },
+            libraryConfig,
+            locale: _locale,
+          });
+
+          if (!isSameContent()) {
+            return;
+          }
+
+          src = value;
+        }
+
+        if (src) {
+          insertImage(src, alt);
+        }
+      }
+    } finally {
+      processingImages -= 1;
     }
+
+    if (rejected) {
+      filesRejected = true;
+    }
+
+    if (!uploadFiles.length) {
+      return;
+    }
+
+    /**
+     * Insert the images the user has selected in the Select Assets dialog, which uploads the files
+     * to the cloud storage service, asking for the credentials if needed.
+     * @param {SelectedResource[]} resources Selected resources.
+     */
+    insertUploadedImages = async (resources) => {
+      // A save made right after the images have been selected waits for them to be inserted
+      processingImages += 1;
+
+      try {
+        const results = await processResources({
+          draft,
+          resources,
+          folder,
+          libraryConfig,
+          locale: _locale,
+        });
+
+        if (isSameContent()) {
+          results.forEach(({ value }) => {
+            if (value) {
+              insertImage(value, '');
+            }
+          });
+        }
+      } finally {
+        processingImages -= 1;
+      }
+    };
+
+    pendingFiles = uploadFiles;
+    showSelectAssetsDialog = true;
   };
 
   /**
-   * Handle pasted content. If it includes images, insert them to the editor content.
-   * @param {ClipboardEvent} event `paste` event.
+   * Create a handler for pasted or dropped content. If it includes images, they’re inserted to the
+   * editor content.
+   * @template {ClipboardEvent | DragEvent} E
+   * @param {(event: E) => Promise<ImageEntry[]>} getImages Function getting the images from the
+   * event.
+   * @returns {(event: E) => Promise<void>} Event handler.
    */
-  const onPaste = async (event) => {
+  const createImageHandler = (getImages) => async (event) => {
     // Lexical applies an update even while the editor isn’t editable, so nothing is inserted to a
     // read-only field, nor is the file added to the draft
     if (readonly) {
@@ -234,30 +327,15 @@
     }
 
     const { target } = event;
-    const images = await getPastedImages(event);
+    const images = await getImages(event);
 
     if (images.length) {
       await insertImages({ target, images });
     }
   };
 
-  /**
-   * Handle dropped content. If it includes images, insert them to the editor content.
-   * @param {DragEvent} event `drop` event.
-   */
-  const onDrop = async (event) => {
-    // Same as above
-    if (readonly) {
-      return;
-    }
-
-    const { target } = event;
-    const images = await getDroppedImages(event);
-
-    if (images.length) {
-      await insertImages({ target, images });
-    }
-  };
+  const onPaste = createImageHandler(getPastedImages);
+  const onDrop = createImageHandler(getDroppedImages);
 
   /**
    * Remove the extra values of the components that are no longer present in the editor, shortly
@@ -316,8 +394,10 @@
 
   // While the editor holds a change made by the user, register it as a pending update: the editor
   // converts the content to Markdown with a short delay, so a save right after a change would
-  // otherwise validate and write the previous value
-  trackPendingWhile(() => pending);
+  // otherwise validate and write the previous value. A dropped or pasted image is only inserted
+  // once it has been processed, which can take a while, e.g. converting a large HEIC photo, so a
+  // save or a locale switch has to wait for that as well
+  trackPendingWhile(() => pending || !!processingImages);
 </script>
 
 <div role="none" class="wrapper" bind:this={wrapper}>
@@ -358,6 +438,30 @@
     {/key}
   {/await}
 </div>
+
+{#if srcFieldConfig}
+  <SelectAssetsDialog
+    kind="image"
+    multiple
+    draft={entryDraft.current}
+    {locale}
+    fieldConfig={srcFieldConfig}
+    assetLibraryFolderMap={assetOptions.folderMap}
+    enabledCloudServiceEntries={assetOptions.cloudServiceEntries}
+    bind:open={showSelectAssetsDialog}
+    bind:pendingFiles
+    onSelect={(resources) => {
+      insertUploadedImages?.(resources);
+    }}
+    onClose={() => {
+      insertUploadedImages = undefined;
+    }}
+  />
+{/if}
+
+<Toast bind:show={filesRejected}>
+  <Alert status="error">{_('uploading_files_failed')}</Alert>
+</Toast>
 
 <style>
   .wrapper {

@@ -28,16 +28,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    items,
-    itemKey,
-    label,
-    emptyMessage,
-    statusMessageKey,
-    renderItem,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { items, itemKey, label, emptyMessage, statusMessageKey, renderItem } = $props();
 
   $effect(() => {
     announcedPageStatus.current = _(statusMessageKey, {

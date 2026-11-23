@@ -2,14 +2,14 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { cmsConfig } from '$lib/services/config';
 import { isRequiredEnforced } from '$lib/services/contents/draft/validate/required';
-import { isWorkflowDraft, unpublishedEntries } from '$lib/services/workflow';
+import { allUnpublishedEntries, isWorkflowDraft } from '$lib/services/workflow';
 
 vi.mock('$lib/services/workflow', async (importOriginal) => ({
   .../** @type {object} */ (await importOriginal()),
   isWorkflowDraft: vi.fn(),
 }));
 
-const entries = /** @type {any} */ (unpublishedEntries);
+const entries = /** @type {any} */ (allUnpublishedEntries);
 /** @type {any} */
 const collection = { name: 'posts' };
 

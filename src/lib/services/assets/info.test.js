@@ -36,7 +36,7 @@ vi.mock('@sveltia/utils/file');
 vi.mock('@sveltia/utils/misc');
 vi.mock('@sveltia/utils/storage');
 vi.mock('@sveltia/utils/string');
-vi.mock('mime');
+vi.mock('$lib/services/utils/mime');
 
 /** @type {{ current: any }} */
 const mockBackendState = vi.hoisted(() => ({ current: undefined }));
@@ -58,6 +58,11 @@ vi.mock('$lib/services/assets', () => ({
   isRelativePath: vi.fn((path) => !/^[/@]/.test(path)),
 }));
 
+vi.mock('$lib/services/assets/entry-relative', async (importOriginal) => {
+  const actual = /** @type {Record<string, any>} */ (await importOriginal());
+
+  return { ...actual, getEntryRelativePublicPath: vi.fn(actual.getEntryRelativePublicPath) };
+});
 vi.mock('$lib/services/assets/state', () => ({
   focusedAsset: { current: undefined },
   allAssets: mockAllAssets,
@@ -74,6 +79,7 @@ vi.mock('$lib/services/assets/folders', () => ({
   selectedAssetFolder: { current: undefined },
 }));
 vi.mock('$lib/services/assets/references');
+vi.mock('$lib/services/contents/collection', () => ({ getCollection: vi.fn() }));
 vi.mock('$lib/services/utils/file', async (importOriginal) => {
   const actual = /** @type {Record<string, any>} */ (await importOriginal());
 
@@ -216,7 +222,7 @@ describe('assets/info', () => {
 
       mockBackend.fetchBlob.mockResolvedValue(remoteBlob);
 
-      const { default: mime } = await import('mime');
+      const { default: mime } = await import('$lib/services/utils/mime');
       const mimeMock = vi.mocked(mime);
 
       mimeMock.getType.mockReturnValue('image/jpeg');
@@ -231,7 +237,7 @@ describe('assets/info', () => {
 
     it('should give an SVG image the URL of an inert wrapper, but return the original', async () => {
       const { createInertSVG } = await import('$lib/services/utils/media/image/svg');
-      const { default: mime } = await import('mime');
+      const { default: mime } = await import('$lib/services/utils/mime');
       const svgAsset = { ...mockAsset, path: 'assets/images/test.svg', name: 'test.svg' };
       const wrapper = new Blob(['<svg/>'], { type: 'image/svg+xml' });
 
@@ -267,7 +273,7 @@ describe('assets/info', () => {
 
     it('should not wrap other file types', async () => {
       const { createInertSVG } = await import('$lib/services/utils/media/image/svg');
-      const { default: mime } = await import('mime');
+      const { default: mime } = await import('$lib/services/utils/mime');
 
       vi.mocked(mime).getType.mockReturnValue('image/jpeg');
       mockBackend.fetchBlob.mockResolvedValue(new Blob(['data']));
@@ -371,7 +377,7 @@ describe('assets/info', () => {
 
       mockBackend.fetchBlob.mockResolvedValue(new Blob(['test data'], { type: 'image/jpeg' }));
 
-      const { default: mime } = await import('mime');
+      const { default: mime } = await import('$lib/services/utils/mime');
       const mimeMock = vi.mocked(mime);
 
       mimeMock.getType.mockReturnValue('image/jpeg');
@@ -1047,6 +1053,7 @@ describe('assets/info', () => {
         ...mockAsset,
         folder: {
           ...mockAsset.folder,
+          publicPath: 'images',
           entryRelative: true,
         },
       };
@@ -1073,6 +1080,7 @@ describe('assets/info', () => {
         name: 'photo.jpg',
         folder: {
           ...mockAsset.folder,
+          publicPath: 'images',
           internalPath: 'content/posts',
           internalSubPath: 'images',
           entryRelative: true,
@@ -1105,6 +1113,7 @@ describe('assets/info', () => {
         name: 'photo.jpg',
         folder: {
           ...mockAsset.folder,
+          publicPath: 'images',
           internalPath: 'content/posts',
           internalSubPath: 'images',
           entryRelative: true,
@@ -1134,6 +1143,7 @@ describe('assets/info', () => {
         ...mockAsset,
         folder: {
           ...mockAsset.folder,
+          publicPath: 'images',
           entryRelative: true,
         },
       };
@@ -1168,7 +1178,12 @@ describe('assets/info', () => {
         ...mockAsset,
         path: 'content/posts/fr/hello/photo-fr.jpg',
         name: 'photo-fr.jpg',
-        folder: { ...mockAsset.folder, internalPath: 'content/posts', entryRelative: true },
+        folder: {
+          ...mockAsset.folder,
+          publicPath: 'images',
+          internalPath: 'content/posts',
+          entryRelative: true,
+        },
       };
 
       const mockEntry = /** @type {any} */ ({
@@ -1188,6 +1203,126 @@ describe('assets/info', () => {
       expect(
         getAssetPublicURL(entryRelativeAsset, { pathOnly: true, entry: mockEntry }),
       ).toBeUndefined();
+    });
+
+    it('should return the path relative to the folder named after an entry in subfolders', async () => {
+      const { getPathInfo } = await import('@sveltia/utils/file');
+      const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
+      const { getCollection } = await import('$lib/services/contents/collection');
+
+      vi.mocked(getPathInfo).mockImplementation(
+        (path) => /** @type {any} */ ({ dirname: path.slice(0, path.lastIndexOf('/')) }),
+      );
+
+      const folder = /** @type {any} */ ({
+        collectionName: 'posts',
+        internalPath: 'content/posts',
+        internalSubPath: '',
+        publicPath: '',
+        entryRelative: true,
+      });
+
+      vi.mocked(getAssetFoldersByPath).mockReturnValue([folder]);
+      // The `path` option puts the entry in subfolders, so its relative assets are saved to a
+      // folder named after it, next to the entry file
+      vi.mocked(getCollection).mockReturnValue(
+        /** @type {any} */ ({
+          name: 'posts',
+          _type: 'entry',
+          _file: { basePath: 'content/posts', subPath: '{{year}}/{{month}}/{{slug}}' },
+        }),
+      );
+
+      const mockEntry = /** @type {any} */ ({
+        id: 'my-post',
+        slug: 'my-post',
+        locales: { _default: { path: 'content/posts/2025/06/my-post.md' } },
+      });
+
+      const ownAsset = {
+        ...mockAsset,
+        path: 'content/posts/2025/06/my-post/cover.png',
+        name: 'cover.png',
+        folder,
+      };
+
+      expect(getAssetPublicURL(ownAsset, { pathOnly: true, entry: mockEntry })).toBe('cover.png');
+      expect(getCollection).toHaveBeenCalledWith('posts');
+
+      // An asset next to the entry file isn’t in the entry’s folder, so the reader wouldn’t find it
+      // for a relative value
+      const siblingAsset = { ...ownAsset, path: 'content/posts/2025/06/cover.png' };
+
+      expect(getAssetPublicURL(siblingAsset, { pathOnly: true, entry: mockEntry })).toBeUndefined();
+    });
+
+    describe('with an absolute public path of an entry-relative folder', () => {
+      // `media_folder: images` with `public_folder: /blog/{{slug}}/images`; the path itself is
+      // tested in `entry-relative.test.js`
+      const asset = {
+        ...mockAsset,
+        path: 'content/posts/hello/images/my photo.jpg',
+        name: 'my photo.jpg',
+        folder: /** @type {any} */ ({
+          collectionName: 'posts',
+          internalPath: 'content/posts',
+          internalSubPath: 'images',
+          publicPath: '/blog/{{slug}}/images',
+          entryRelative: true,
+        }),
+      };
+
+      const entry = /** @type {any} */ ({ id: 'hello', slug: 'hello', locales: {} });
+
+      beforeEach(async () => {
+        const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
+        const { encodeFilePath } = await import('$lib/services/utils/file');
+
+        vi.mocked(getAssetFoldersByPath).mockReturnValue([asset.folder]);
+        vi.mocked(encodeFilePath).mockImplementation((path) => encodeURI(path));
+      });
+
+      it('should return the path given for the asset and the entry', async () => {
+        const { getEntryRelativePublicPath } = await import('$lib/services/assets/entry-relative');
+
+        vi.mocked(getEntryRelativePublicPath).mockReturnValueOnce(
+          '/blog/hello/images/my photo.jpg',
+        );
+
+        expect(getAssetPublicURL(asset, { pathOnly: true, entry, locale: 'fr' })).toBe(
+          '/blog/hello/images/my photo.jpg',
+        );
+        expect(getEntryRelativePublicPath).toHaveBeenCalledWith({
+          asset,
+          folder: asset.folder,
+          entry,
+          locale: 'fr',
+        });
+        // No public URL can be given for a link
+        expect(getAssetPublicURL(asset, { entry })).toBeUndefined();
+      });
+
+      it('should only encode an absolute path with the `encode_file_path` option', async () => {
+        const { getEntryRelativePublicPath } = await import('$lib/services/assets/entry-relative');
+
+        mockCmsConfig.output.encode_file_path = true;
+        vi.mocked(getEntryRelativePublicPath).mockReturnValueOnce(
+          '/blog/hello/images/my photo.jpg',
+        );
+
+        expect(getAssetPublicURL(asset, { pathOnly: true, entry })).toBe(
+          '/blog/hello/images/my%20photo.jpg',
+        );
+
+        // A relative path is stored as is
+        vi.mocked(getEntryRelativePublicPath).mockReturnValueOnce('images/my photo.jpg');
+
+        expect(getAssetPublicURL(asset, { pathOnly: true, entry })).toBe('images/my photo.jpg');
+
+        vi.mocked(getEntryRelativePublicPath).mockReturnValueOnce(undefined);
+
+        expect(getAssetPublicURL(asset, { pathOnly: true, entry })).toBeUndefined();
+      });
     });
 
     it('should return relative path for entry-relative asset in sub-folder', async () => {
@@ -1219,6 +1354,7 @@ describe('assets/info', () => {
         name: 'photo.jpg',
         folder: {
           ...mockAsset.folder,
+          publicPath: 'images',
           entryRelative: true,
         },
       };
@@ -1255,7 +1391,7 @@ describe('assets/info', () => {
         ...mockAsset,
         path: 'photo.jpg',
         name: 'photo.jpg',
-        folder: { ...mockAsset.folder, entryRelative: true },
+        folder: { ...mockAsset.folder, publicPath: 'images', entryRelative: true },
       };
 
       const mockEntry = /** @type {any} */ ({
@@ -1284,7 +1420,12 @@ describe('assets/info', () => {
         ...mockAsset,
         path: 'images/sub/photo.jpg',
         name: 'photo.jpg',
-        folder: { ...mockAsset.folder, internalPath: '', entryRelative: true },
+        folder: {
+          ...mockAsset.folder,
+          publicPath: 'images',
+          internalPath: '',
+          entryRelative: true,
+        },
       };
 
       const mockEntry = /** @type {any} */ ({
@@ -1314,6 +1455,7 @@ describe('assets/info', () => {
         name: 'photo.jpg',
         folder: {
           ...mockAsset.folder,
+          publicPath: 'images',
           internalPath: '',
           internalSubPath: 'images',
           entryRelative: true,
@@ -1338,6 +1480,7 @@ describe('assets/info', () => {
         ...mockAsset,
         folder: {
           ...mockAsset.folder,
+          publicPath: 'images',
           entryRelative: true,
         },
       };
@@ -1678,7 +1821,13 @@ describe('assets/info', () => {
       mockBackend.fetchBlob.mockResolvedValueOnce(null);
       mockBackend.fetchBlob.mockResolvedValueOnce(new Blob(['test'], { type: 'image/jpeg' }));
 
-      await expect(getAssetDetails(assetWithoutHandle)).rejects.toThrow('Failed to retrieve blob');
+      const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      // The media metadata is left out
+      expect((await getAssetDetails(assetWithoutHandle)).dimensions).toBeUndefined();
+      expect(error).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Failed to retrieve blob' }),
+      );
 
       const result = await getAssetDetails(assetWithoutHandle);
 
@@ -1775,7 +1924,7 @@ describe('assets/info', () => {
     });
 
     it('should handle mime.getType returning null', async () => {
-      const { default: mime } = await import('mime');
+      const { default: mime } = await import('$lib/services/utils/mime');
       const mimeMock = vi.mocked(mime);
 
       mimeMock.getType.mockReturnValue(null);
@@ -1860,7 +2009,7 @@ describe('assets/info', () => {
     });
 
     it('should handle missing mime type in blob creation', async () => {
-      const { default: mime } = await import('mime');
+      const { default: mime } = await import('$lib/services/utils/mime');
 
       vi.mocked(mime).getType.mockReturnValue('application/octet-stream');
 
@@ -1964,6 +2113,7 @@ describe('assets/info', () => {
         ...mockAsset,
         folder: {
           ...mockAsset.folder,
+          publicPath: 'images',
           entryRelative: true,
         },
       };
@@ -2234,6 +2384,7 @@ describe('assets/info', () => {
         ...mockAsset,
         folder: {
           ...mockAsset.folder,
+          publicPath: 'images',
           entryRelative: true,
         },
       };
@@ -2416,6 +2567,7 @@ describe('assets/info', () => {
         ...mockAsset,
         folder: {
           ...mockAsset.folder,
+          publicPath: 'images',
           entryRelative: true,
         },
       };
@@ -2474,6 +2626,7 @@ describe('assets/info', () => {
         path: 'other/assets/photo.jpg',
         folder: {
           ...mockAsset.folder,
+          publicPath: 'images',
           entryRelative: true,
         },
       };

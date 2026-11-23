@@ -3,6 +3,9 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { deleteEntries, updateStores } from './delete';
 
 // Mock dependencies
+const { additions } = vi.hoisted(() => ({ additions: { deleteEntryComments: vi.fn() } }));
+
+vi.mock('$lib/services/app/additions', () => ({ getAdditions: vi.fn(() => additions) }));
 vi.mock('$lib/services/assets/state', () => ({
   allAssets: { current: [] },
 }));
@@ -196,6 +199,9 @@ describe('Test deleteEntries()', () => {
     selectedCollection.current = /** @type {any} */ ({ name: 'posts' });
 
     await deleteEntries(/** @type {any} */ (mockEntries));
+
+    // Their comments go with them
+    expect(additions.deleteEntryComments).toHaveBeenCalledTimes(2);
 
     expect(vi.mocked(saveChanges)).toHaveBeenCalledWith({
       changes: [

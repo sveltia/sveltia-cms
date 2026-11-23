@@ -333,7 +333,7 @@ describe('KeyValueEditor', () => {
 
     first.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer }));
     expect(dataTransfer.getData('text/plain')).toBe('color');
-    await expect.poll(() => first.classList.contains('dragging')).toBe(true);
+    await expect.poll(() => first.classList.contains('drag-placeholder')).toBe(true);
 
     const { bottom } = second.getBoundingClientRect();
 

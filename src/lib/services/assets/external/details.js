@@ -1,5 +1,5 @@
 import { isMediaKind } from '$lib/services/assets/kinds';
-import { getEntriesByAssets, getEntriesByAssetURL } from '$lib/services/assets/references';
+import { getEntriesByAssetURL, getEntriesUsingTargets } from '$lib/services/assets/references';
 import { getOrCreateAsync } from '$lib/services/utils/cache';
 import { getSourceInfo } from '$lib/services/utils/media';
 
@@ -64,12 +64,5 @@ export const getExternalAssetUsedEntries = async ({ downloadURL }) =>
  * @param {ExternalAsset[]} assets Assets.
  * @returns {Promise<Entry[]>} List of entries using any of the assets.
  */
-export const getExternalAssetsUsedEntries = async (assets) => {
-  if (!assets.length) {
-    return [];
-  }
-
-  const results = await getEntriesByAssets(assets.map(({ downloadURL }) => ({ url: downloadURL })));
-
-  return [...new Set(results.flat())];
-};
+export const getExternalAssetsUsedEntries = async (assets) =>
+  getEntriesUsingTargets(assets.map(({ downloadURL }) => ({ url: downloadURL })));

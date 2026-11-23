@@ -2,6 +2,7 @@ import { getAssetKind } from '$lib/services/assets/kinds';
 import { getRelativeKey } from '$lib/services/integrations/media-libraries/cloud/shared/keys';
 import { createObjectStorageOperations } from '$lib/services/integrations/media-libraries/cloud/shared/object-storage';
 import { ObjectStorageService } from '$lib/services/integrations/media-libraries/cloud/shared/service';
+import { getBaseName } from '$lib/services/utils/file';
 import { assertResponseOK } from '$lib/services/utils/networking';
 import { encodePathSegments, trimTrailingSlashes } from '$lib/services/utils/url';
 import { parseXml, toArray } from '$lib/services/utils/xml';
@@ -101,7 +102,7 @@ export const parseBlobResults = (blobs, config, token) => {
   const containerUrl = buildContainerUrl(config);
 
   return blobs.map(({ Name: key, Properties: properties = {} }) => {
-    const fileName = key.split('/').pop() || key;
+    const fileName = getBaseName(key) || key;
     const displayKey = getRelativeKey(config, key);
     const encodedKey = encodePathSegments(key);
     const blobUrl = `${containerUrl}/${encodedKey}`;
@@ -227,7 +228,7 @@ const deleteBlob = async ({ key, config, credential: token, allowNotFound = fals
  * @see https://learn.microsoft.com/en-us/rest/api/storageservices/put-blob-from-url
  */
 const copyBlob = async ({ asset, key: newKey, config, credential: token }) => {
-  const { id: key, size, lastModified } = asset;
+  const { id: key, size } = asset;
 
   const response = await fetch(buildBlobRequestUrl(config, newKey, token), {
     method: 'PUT',
@@ -247,10 +248,11 @@ const copyBlob = async ({ asset, key: newKey, config, credential: token }) => {
     throw new Error(`Failed to copy blob ${key}: the copy operation is still pending`);
   }
 
+  // The copy is a new blob, modified just now rather than when the source was
   return {
     Name: newKey,
     Properties: {
-      ...(lastModified && { 'Last-Modified': lastModified.toUTCString() }),
+      'Last-Modified': new Date().toUTCString(),
       ...(size && { 'Content-Length': String(size) }),
     },
   };

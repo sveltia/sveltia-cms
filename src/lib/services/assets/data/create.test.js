@@ -38,7 +38,8 @@ vi.mock('$lib/services/integrations/media-libraries/default', () => ({
   }),
 }));
 
-vi.mock('$lib/services/utils/file', () => ({
+vi.mock('$lib/services/utils/file', async (importOriginal) => ({
+  ...(await importOriginal()),
   createPath: vi.fn((/** @type {string[]} */ segments) => segments.filter(Boolean).join('/')),
 }));
 
@@ -55,14 +56,18 @@ vi.mock('$lib/services/contents/collection/data', () => ({
   },
 }));
 
-vi.mock('$lib/services/backends/git/shared/integration', () => ({
-  skipCIConfigured: {
-    current: false,
-  },
-  skipCIEnabled: {
-    current: false,
-  },
-}));
+vi.mock('$lib/services/backends/git/shared/integration', async () => {
+  const { isDeployingCommit } = await import('$lib/services/backends/git/shared/commits');
+  const configured = { current: false };
+
+  return {
+    skipCIConfigured: configured,
+    // Mirror the real helper so the tests can drive it through the configuration
+    isPublishingCommit: vi.fn(
+      (/** @type {any} */ options) => configured.current && isDeployingCommit(options),
+    ),
+  };
+});
 
 // Mock dependencies
 vi.mock('$lib/services/assets', () => {
@@ -102,7 +107,8 @@ vi.mock('$lib/services/config', () => ({
   },
 }));
 
-vi.mock('$lib/services/utils/file', () => ({
+vi.mock('$lib/services/utils/file', async (importOriginal) => ({
+  ...(await importOriginal()),
   createPath: vi.fn((/** @type {string[]} */ segments) => segments.filter(Boolean).join('/')),
 }));
 
@@ -205,6 +211,7 @@ describe('assets/data/create', () => {
       expect(formatFileName).toHaveBeenCalledWith('index.md', {
         slugificationEnabled: false,
         assetNamesInSameFolder: ['index.md', 'images'],
+        foldedNamesInSameFolder: new Set(['index.md', 'images']),
       });
     });
 
@@ -375,6 +382,41 @@ describe('assets/data/create', () => {
       ]);
     });
 
+    it('should overwrite the first of the assets whose names only differ in case', async () => {
+      const { getAssetsByDirName } = await import('$lib/services/assets');
+
+      /** @type {any} */
+      const folder = createMockAssetFolder({
+        collectionName: 'assets',
+        internalPath: '/images',
+        publicPath: '/images',
+      });
+
+      // A case-sensitive repository can hold both
+      vi.mocked(getAssetsByDirName).mockReturnValue(
+        ['Ocean.png', 'ocean.png'].map((name) => ({
+          name,
+          path: `/images/${name}`,
+          sha: name,
+          size: 1,
+          kind: 'image',
+          folder,
+        })),
+      );
+
+      const result = createFileList({
+        files: [new File(['new'], 'OCEAN.png', { type: 'image/png' })],
+        folder,
+        replaceDuplicates: true,
+      });
+
+      expect(result[0]).toMatchObject({
+        action: 'update',
+        name: 'Ocean.png',
+        path: '/images/Ocean.png',
+      });
+    });
+
     it('should only overwrite a same-named asset with the first of the same-named files', async () => {
       const { getAssetsByDirName } = await import('$lib/services/assets');
       const { formatFileName } = await import('$lib/services/assets/file-name');
@@ -457,6 +499,7 @@ describe('assets/data/create', () => {
       expect(formatFileName).toHaveBeenCalledWith('existing.jpg', {
         slugificationEnabled: false,
         assetNamesInSameFolder: ['existing.jpg'],
+        foldedNamesInSameFolder: new Set(['existing.jpg']),
       });
       expect(result[0].action).toBe('create');
     });
@@ -668,7 +711,7 @@ describe('assets/data/create', () => {
 
       /** @type {any} */ (skipCIConfigured).current = false;
 
-      updateStores({ count: 3 });
+      updateStores({ count: 3, options: { commitType: 'uploadMedia' } });
 
       expect(assetUpdatesToast.current).toEqual({
         saved: true,
@@ -680,14 +723,13 @@ describe('assets/data/create', () => {
 
     it('should set published to true when skipCIConfigured is true and skipCI is disabled', async () => {
       const { assetUpdatesToast } = await import('$lib/services/assets/data');
-
-      const { skipCIConfigured, skipCIEnabled } =
-        await import('$lib/services/backends/git/shared/integration');
+      const { skipCIConfigured } = await import('$lib/services/backends/git/shared/integration');
+      const { cmsConfig } = await import('$lib/services/config');
 
       /** @type {any} */ (skipCIConfigured).current = true;
-      /** @type {any} */ (skipCIEnabled).current = false;
+      /** @type {any} */ (cmsConfig).current = { backend: { skip_ci: false } };
 
-      updateStores({ count: 1 });
+      updateStores({ count: 1, options: { commitType: 'uploadMedia' } });
 
       expect(assetUpdatesToast.current).toEqual(
         expect.objectContaining({ saved: true, published: true, count: 1 }),
@@ -696,18 +738,36 @@ describe('assets/data/create', () => {
 
     it('should set published to false when skipCI is enabled', async () => {
       const { assetUpdatesToast } = await import('$lib/services/assets/data');
-
-      const { skipCIConfigured, skipCIEnabled } =
-        await import('$lib/services/backends/git/shared/integration');
+      const { skipCIConfigured } = await import('$lib/services/backends/git/shared/integration');
+      const { cmsConfig } = await import('$lib/services/config');
 
       /** @type {any} */ (skipCIConfigured).current = true;
-      /** @type {any} */ (skipCIEnabled).current = true;
+      /** @type {any} */ (cmsConfig).current = { backend: { skip_ci: true } };
 
-      updateStores({ count: 1 });
+      updateStores({ count: 1, options: { commitType: 'uploadMedia' } });
 
       expect(assetUpdatesToast.current).toEqual(
         expect.objectContaining({ saved: true, published: false, count: 1 }),
       );
+    });
+
+    it('should follow the commit’s own skipCI option over the configuration', async () => {
+      const { assetUpdatesToast } = await import('$lib/services/assets/data');
+      const { skipCIConfigured } = await import('$lib/services/backends/git/shared/integration');
+      const { cmsConfig } = await import('$lib/services/config');
+
+      /** @type {any} */ (skipCIConfigured).current = true;
+      /** @type {any} */ (cmsConfig).current = { backend: { skip_ci: false } };
+
+      updateStores({ count: 1, options: { commitType: 'uploadMedia', skipCI: true } });
+
+      expect(assetUpdatesToast.current).toEqual(expect.objectContaining({ published: false }));
+
+      /** @type {any} */ (cmsConfig).current = { backend: { skip_ci: true } };
+
+      updateStores({ count: 1, options: { commitType: 'uploadMedia', skipCI: false } });
+
+      expect(assetUpdatesToast.current).toEqual(expect.objectContaining({ published: true }));
     });
 
     it('should update focusedAsset when it exists', async () => {
@@ -731,7 +791,7 @@ describe('assets/data/create', () => {
       focusedAsset.current = /** @type {any} */ (oldAsset);
       vi.mocked(getAssetByInternalPath).mockReturnValue(/** @type {any} */ (newAsset));
 
-      updateStores({ count: 1 });
+      updateStores({ count: 1, options: { commitType: 'uploadMedia' } });
 
       expect(getAssetByInternalPath).toHaveBeenCalledWith('/images/old.jpg');
       expect(focusedAsset.current).toEqual(newAsset);
@@ -758,7 +818,7 @@ describe('assets/data/create', () => {
       overlaidAsset.current = /** @type {any} */ (oldAsset);
       vi.mocked(getAssetByInternalPath).mockReturnValue(/** @type {any} */ (newAsset));
 
-      updateStores({ count: 1 });
+      updateStores({ count: 1, options: { commitType: 'uploadMedia' } });
 
       expect(getAssetByInternalPath).toHaveBeenCalledWith('/images/old.jpg');
       expect(overlaidAsset.current).toEqual(newAsset);
@@ -796,7 +856,7 @@ describe('assets/data/create', () => {
         (path) => /** @type {any} */ (path === '/images/focused.jpg' ? newFocused : newOverlaid),
       );
 
-      updateStores({ count: 2 });
+      updateStores({ count: 2, options: { commitType: 'uploadMedia' } });
 
       expect(getAssetByInternalPath).toHaveBeenCalledWith('/images/focused.jpg');
       expect(getAssetByInternalPath).toHaveBeenCalledWith('/images/overlaid.jpg');

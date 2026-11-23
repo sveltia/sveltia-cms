@@ -1,6 +1,7 @@
 import { isTextFileType } from '@sveltia/utils/file';
 import { isURL } from '@sveltia/utils/string';
-import mime from 'mime';
+
+import mime from '$lib/services/utils/mime';
 
 /**
  * @import { Asset, AssetKind } from '$lib/types/private';

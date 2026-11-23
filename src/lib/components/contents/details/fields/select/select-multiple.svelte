@@ -21,7 +21,6 @@
 
   /** @type {SelectFieldSelectorProps & Props} */
   let {
-    /* eslint-disable prefer-const */
     locale,
     keyPath,
     fieldId,
@@ -31,7 +30,6 @@
     readonly = false,
     invalid = false,
     options,
-    /* eslint-enable prefer-const */
   } = $props();
 
   const { i18n, max, dropdown_threshold: dropdownThreshold = 5 } = $derived(fieldConfig);

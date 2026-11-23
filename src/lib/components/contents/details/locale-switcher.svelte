@@ -27,14 +27,7 @@
   const entryDraft = getEntryDraftContext();
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    id,
-    thisPane,
-    thatPane = createRawState(null),
-    previewInThisPane = false,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { id, thisPane, thatPane = createRawState(null), previewInThisPane = false } = $props();
 
   const { i18nEnabled, allLocales } = $derived(getDraftI18nConfig(entryDraft.current));
   // With a single locale, the only option is the editor, which takes turns with the preview

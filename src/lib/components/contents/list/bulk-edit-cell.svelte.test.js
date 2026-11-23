@@ -3,8 +3,15 @@ import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
 import { editors } from '$lib/components/contents/details/fields';
+import { getEditorEntryValues } from '$lib/services/contents/editor/entry-values';
+import { createMockEntry } from '$lib/test/config';
 
 import BulkEditCell from './bulk-edit-cell.svelte';
+
+const entry = createMockEntry({
+  slug: 'hello',
+  content: { en: { title: 'Hello', category: 'news' }, _default: { title: 'Hello' } },
+});
 
 describe('BulkEditCell', () => {
   test('renders the field control named after the field and the entry', async () => {
@@ -14,6 +21,7 @@ describe('BulkEditCell', () => {
       locale: '_default',
       fieldConfig: { name: 'title', label: 'Title', widget: 'string' },
       entryLabel: 'Hello',
+      entry,
       value: 'Hello',
       onChange,
     });
@@ -39,6 +47,7 @@ describe('BulkEditCell', () => {
       locale: '_default',
       fieldConfig: { name: 'subtitle' },
       entryLabel: 'Hello',
+      entry,
       value: undefined,
       onChange: vi.fn(),
     });
@@ -56,6 +65,7 @@ describe('BulkEditCell', () => {
       locale: '_default',
       fieldConfig: { name: 'title', label: 'Title', widget: 'string' },
       entryLabel: 'Hello',
+      entry,
       value: '',
       edited: true,
       errors: ['This field is required.', 'Too short.'],
@@ -84,6 +94,7 @@ describe('BulkEditCell', () => {
         options: ['News', 'Events'],
       },
       entryLabel: 'Hello',
+      entry,
       value: 'News',
       onChange,
     });
@@ -107,6 +118,7 @@ describe('BulkEditCell', () => {
       locale: '_default',
       fieldConfig: { name: 'draft', label: 'Draft', widget: 'boolean' },
       entryLabel: 'Hello',
+      entry,
       value: false,
       onChange,
     });
@@ -117,7 +129,7 @@ describe('BulkEditCell', () => {
     await vi.waitFor(() => expect(onChange).toHaveBeenLastCalledWith(true));
   });
 
-  test('gives the editor the field’s identity, as the entry editor does', async () => {
+  test('gives the editor the field’s identity and the row’s entry, as the entry editor does', async () => {
     /** @type {Record<string, any>} */
     let editorProps = {};
 
@@ -130,6 +142,9 @@ describe('BulkEditCell', () => {
        * @param {Record<string, any>} props Props.
        */
       (_anchor, props) => {
+        // Read the entry the way a field editor does
+        const { getValues, getSlug } = getEditorEntryValues();
+
         editorProps = {
           locale: props.locale,
           keyPath: props.keyPath,
@@ -137,6 +152,8 @@ describe('BulkEditCell', () => {
           fieldLabel: props.fieldLabel,
           required: props.required,
           invalid: props.invalid,
+          // The entry of the row, read in place of a draft
+          row: { values: getValues(props.locale), slug: getSlug(props.locale) },
         };
       }
     );
@@ -147,6 +164,8 @@ describe('BulkEditCell', () => {
         fieldConfig: { name: 'title', label: 'Title', widget: 'stub', required: false },
         entryLabel: 'Hello',
         value: 'Hello',
+        entry,
+        entryEdits: { category: 'events' },
         onChange: vi.fn(),
       });
 
@@ -157,6 +176,7 @@ describe('BulkEditCell', () => {
         fieldLabel: 'Title',
         required: false,
         invalid: false,
+        row: { values: { title: 'Hello', category: 'events' }, slug: 'hello' },
       });
     } finally {
       delete editors.stub;

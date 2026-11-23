@@ -14,11 +14,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    menuButton,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { menuButton } = $props();
 </script>
 
 {#snippet link(/** @type {string} */ labelKey, /** @type {string} */ url)}

@@ -1,6 +1,8 @@
 <script>
   import AssetListItem from '$lib/components/assets/list/asset-list-item.svelte';
+  import { createAssetDragSource } from '$lib/services/assets/drag';
   import { canPreviewAsset } from '$lib/services/assets/kinds';
+  import { canMoveAssets, getDraggedAssets } from '$lib/services/assets/movable';
   import { showAssetDetails } from '$lib/services/assets/navigation';
   import { focusedAsset, selectedAssetPathSet, selectedAssets } from '$lib/services/assets/state';
   import { focusedSubfolder } from '$lib/services/assets/subfolders';
@@ -18,12 +20,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    asset,
-    viewType,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { asset, viewType } = $props();
 
   /**
    * Update the asset selection.
@@ -43,6 +40,9 @@
   selected={selectedAssetPathSet.current.has(asset.path)}
   canPreview={canPreviewAsset(asset)}
   onSelectionChange={updateSelection}
+  dragSource={canMoveAssets([asset])
+    ? createAssetDragSource(() => getDraggedAssets(asset))
+    : undefined}
   onFocus={() => {
     focusedAsset.current = asset;
     // Show the asset’s info in the sidebar in place of a folder’s

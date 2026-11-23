@@ -128,7 +128,7 @@ describe('api.js', () => {
     });
 
     it('should update user state when refreshing token successfully', async () => {
-      mockUserState.account = { token: 'old-token', refreshToken: 'old-refresh' };
+      mockUserState.account = { token: 'old-token', refreshToken: 'old-refresh-token' };
 
       const mockResponse = new Response(
         JSON.stringify({
@@ -149,6 +149,61 @@ describe('api.js', () => {
       expect(mockUserState.account).toEqual({
         token: 'new-access-token',
         refreshToken: 'new-refresh-token',
+      });
+    });
+
+    it('should update the role and commit author that Sveltia CMS Additions returns', async () => {
+      mockUserState.account = {
+        backendName: 'github',
+        token: 'old',
+        refreshToken: 'session-token',
+        role: 'editor',
+      };
+
+      vi.mocked(fetch).mockResolvedValue(
+        Response.json({
+          access_token: 'new-access-token',
+          refresh_token: 'session-token',
+          user: { role: 'viewer' },
+          git: {
+            kind: 'installation',
+            commit_author: { mode: 'bot', name: 'Ed', email: 'ed@example.com' },
+          },
+        }),
+      );
+
+      await refreshAccessToken({
+        clientId: '',
+        tokenURL: 'https://additions.example.com/v1/auth/token',
+        refreshToken: 'session-token',
+      });
+
+      expect(mockUserState.account).toEqual({
+        backendName: 'github',
+        token: 'new-access-token',
+        refreshToken: 'session-token',
+        role: 'viewer',
+        commitAuthor: { mode: 'bot', name: 'Ed', email: 'ed@example.com' },
+        ownGitHubToken: false,
+      });
+    });
+
+    it('should not update an account that has moved on during the refresh', async () => {
+      // A new session, e.g. after a password change, or another user signed in meanwhile
+      mockUserState.account = { token: 'other-token', refreshToken: 'other-session' };
+      vi.mocked(fetch).mockResolvedValue(
+        Response.json({ access_token: 'new-access-token', refresh_token: 'old-session' }),
+      );
+
+      await refreshAccessToken({
+        clientId: '',
+        tokenURL: 'https://additions.example.com/v1/auth/token',
+        refreshToken: 'old-session',
+      });
+
+      expect(mockUserState.account).toEqual({
+        token: 'other-token',
+        refreshToken: 'other-session',
       });
     });
 

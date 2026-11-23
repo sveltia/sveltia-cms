@@ -1,7 +1,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { Dialog, FilePicker } from '@sveltia/ui';
-  import mime from 'mime';
   import { untrack } from 'svelte';
 
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
@@ -10,6 +9,7 @@
   import { selectedSubfolderPath } from '$lib/services/assets/subfolders';
   import { showAssetOverlay, showUploadAssetsDialog } from '$lib/services/assets/view';
   import { env } from '$lib/services/user/env.svelte';
+  import mime from '$lib/services/utils/mime';
 
   /** @type {FilePicker | undefined} */
   let filePicker = $state();

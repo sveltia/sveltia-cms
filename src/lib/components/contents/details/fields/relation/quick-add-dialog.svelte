@@ -12,6 +12,7 @@
   import { Alert, Button, Dialog, Spacer, Toast } from '@sveltia/ui';
   import { untrack } from 'svelte';
 
+  import DisabledLocaleState from '$lib/components/contents/details/disabled-locale-state.svelte';
   import EntryEditor from '$lib/components/contents/details/editor/entry-editor.svelte';
   import SlugEditor from '$lib/components/contents/details/editor/slug-editor.svelte';
   import ValidationErrorsToast from '$lib/components/contents/details/editor/validation-errors-toast.svelte';
@@ -28,6 +29,8 @@
     countInvalidFields,
     validateAndRevealErrors,
   } from '$lib/services/contents/draft/validate/reveal';
+  import { setFieldEditorContext } from '$lib/services/contents/editor/field-context';
+  import { awaitPendingFieldUpdates } from '$lib/services/contents/editor/pending';
   import { needsSlugInput } from '$lib/services/contents/editor/slug';
   import {
     addPendingEntries,
@@ -41,8 +44,14 @@
   import { createRawState } from '$lib/services/utils/state.svelte';
 
   /**
-   * @import { Entry, EntryDraft, EntryEditorPane, InternalEntryCollection, PendingEntry }
-   * from '$lib/types/private';
+   * @import {
+   * Entry,
+   * EntryDraft,
+   * EntryEditorPane,
+   * FieldEditorContext,
+   * InternalEntryCollection,
+   * PendingEntry,
+   * } from '$lib/types/private';
    * @import { RelationField } from '$lib/types/public';
    */
 
@@ -60,20 +69,17 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    open = $bindable(false),
-    collection,
-    fieldConfig,
-    entry = undefined,
-    onAdd,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { open = $bindable(false), collection, fieldConfig, entry = undefined, onAdd } = $props();
 
   // The parent draft is the one provided by the editor this dialog is opened from. The new entry’s
   // draft is provided to the field editors below in its place, so they edit the new entry
   const parentDraft = getEntryDraftContext();
   const entryDraft = setEntryDraftContext(new EntryDraftState());
+
+  // The fields of the entry are rendered at the top level of its draft, like in the entry editor,
+  // not as the subfields of the Relation field, which may be in a rich text editor component whose
+  // values are stored in `extraValues` instead of `currentValues`
+  setFieldEditorContext(/** @type {FieldEditorContext} */ ({}));
 
   /**
    * Locale being edited. The dialog has a single pane, so the locale switcher is the only way to
@@ -180,19 +186,30 @@
       return;
     }
 
-    // Nothing to save for an entry opened only to have a look
-    if (isEditUnchanged({ draft, parentDraft: parentDraft.current })) {
-      open = false;
-
-      return;
-    }
-
     adding = true;
 
     try {
-      // The entry is committed along with the parent, so it has to be complete. Wait for what was
-      // just typed and for custom validators to report, the same way a save does
-      if (!(await validateAndRevealErrors({ draft, enforceRequired: true }))) {
+      // Wait for what was just typed to reach the draft first, e.g. in a rich text editor, which
+      // converts its content with a short delay, or the change would be taken for no change at all
+      await awaitPendingFieldUpdates();
+
+      // The dialog can be closed with the Escape key in the meantime
+      if (!open || entryDraft.current !== draft) {
+        return;
+      }
+
+      // Nothing to save for an entry opened only to have a look
+      if (isEditUnchanged({ draft, parentDraft: parentDraft.current })) {
+        open = false;
+
+        return;
+      }
+
+      // The entry is committed along with the parent, so it has to be complete. Wait for custom
+      // validators to report, the same way a save does
+      if (
+        !(await validateAndRevealErrors({ draft, enforceRequired: true, awaitFieldUpdates: false }))
+      ) {
         errorCount = countInvalidFields(draft.validities);
         showValidationToast = true;
 
@@ -278,15 +295,23 @@
     {/if}
     {#if entryDraft.current && pane.current}
       {@const { locale } = pane.current}
-      <div role="none" id="{componentId}-body" class="fields">
+      <!-- A rich text editor component, mounted outside the component tree, reads the locale from
+        `data-locale` through the DOM, like in the entry editor’s pane -->
+      <div role="none" id="{componentId}-body" class="fields" data-locale={locale}>
         <!-- There’s no sidebar with the Slug panel in the dialog, so a slug that has to be typed
           in is edited here. Otherwise, the slug template fills it -->
-        {#if needsSlugInput(entryDraft.current) && entryDraft.current.slugEditor[locale]}
-          {#key locale}
-            <SlugEditor {locale} />
-          {/key}
+        {#if !entryDraft.current.currentLocales[locale]}
+          <!-- A disabled locale has no values to edit, so it has to be enabled first, like in the
+            entry editor’s pane -->
+          <DisabledLocaleState {locale} />
+        {:else}
+          {#if needsSlugInput(entryDraft.current) && entryDraft.current.slugEditor[locale]}
+            {#key locale}
+              <SlugEditor {locale} />
+            {/key}
+          {/if}
+          <EntryEditor {locale} />
         {/if}
-        <EntryEditor {locale} />
       </div>
     {/if}
   </div>

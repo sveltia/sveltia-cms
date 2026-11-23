@@ -2,11 +2,12 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import { allAssetFolders, globalAssetFolder } from '$lib/services/assets/folders';
 import { showUploadAssetsDialog } from '$lib/services/assets/view';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
 import { collectionCacheMap } from '$lib/services/contents/collection';
-import { unpublishedEntries } from '$lib/services/workflow';
+import { allUnpublishedEntries } from '$lib/services/workflow';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import { createMockEntry, initTestConfig, setEntries } from '$lib/test/config';
 
@@ -22,7 +23,17 @@ describe('CreateButton', () => {
     showUploadAssetsDialog.current = false;
     forkedRepository.current = undefined;
     allEntries.current = [];
-    unpublishedEntries.current = [];
+    allUnpublishedEntries.current = [];
+    // The global media folder the assets are uploaded to
+    allAssetFolders.current = [
+      {
+        collectionName: undefined,
+        internalPath: 'static/uploads',
+        publicPath: '/uploads',
+        entryRelative: false,
+        hasTemplateTags: false,
+      },
+    ];
     cmsConfig.current = /** @type {any} */ ({
       collections: [
         { name: 'posts', label: 'Posts', label_singular: 'Post', folder: 'posts', fields: [] },
@@ -181,7 +192,7 @@ describe('CreateButton', () => {
       ],
     });
     setEntries([]);
-    unpublishedEntries.current = [
+    allUnpublishedEntries.current = [
       /** @type {any} */ (
         createMockEntry({
           slug: 'hello',
@@ -206,6 +217,27 @@ describe('CreateButton', () => {
 
     await expect.poll(() => window.location.hash).toBe('#/assets');
     await expect.poll(() => showUploadAssetsDialog.current).toBe(true);
+  });
+
+  test('disables uploading assets without a global media folder', async () => {
+    // A cloud media library doesn’t need one, but then there’s nowhere in the repository to upload
+    // the assets to
+    await initTestConfig({
+      media_folder: undefined,
+      media_libraries: { cloudinary: { config: { cloud_name: 'demo', api_key: '123' } } },
+    });
+
+    expect(globalAssetFolder.current).toBeUndefined();
+
+    await render(CreateButton, {});
+    await page.getByRole('button', { name: 'Create Entry or Assets' }).click();
+    await expect
+      .element(page.getByRole('menuitem', { name: 'Assets' }))
+      .toHaveAttribute('aria-disabled', 'true');
+    // An entry can still be created
+    await expect
+      .element(page.getByRole('menuitem', { name: 'Posts' }))
+      .not.toHaveAttribute('aria-disabled', 'true');
   });
 
   test('disables uploading assets while working on a fork', async () => {

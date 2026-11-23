@@ -7,6 +7,7 @@ import {
   fetchForkFromNetwork,
   fetchProjectDetails,
   fetchRepositoryAccess,
+  getBranchRepository,
   getWorkflowRepository,
   initOpenAuthoring,
   isOpenAuthoringConfigured,
@@ -115,6 +116,21 @@ describe('GitLab Open Authoring service', () => {
     });
   });
 
+  describe('getBranchRepository', () => {
+    test('is the project a branch lives in', () => {
+      expect(getBranchRepository('cms/posts/hello')).toEqual({
+        owner: 'group/sub',
+        repo: 'project',
+        branch: 'cms/posts/hello',
+      });
+      expect(getBranchRepository('alice/website:cms/alice/website/posts/hello')).toEqual({
+        owner: 'alice',
+        repo: 'website',
+        branch: 'cms/alice/website/posts/hello',
+      });
+    });
+  });
+
   describe('getWorkflowRepository', () => {
     test('is the configured project without a fork', () => {
       expect(getWorkflowRepository()).toEqual({ owner: 'group/sub', repo: 'project' });
@@ -146,14 +162,14 @@ describe('GitLab Open Authoring service', () => {
       await expect(fetchRepositoryAccess()).rejects.toThrow('Not a collaborator of the repository');
     });
 
-    test('leaves an unanswered question visible rather than assuming no write access', async () => {
-      vi.mocked(fetchProjectPermissions).mockRejectedValue(
-        new Error('Too Many Requests', { cause: { status: 429 } }),
-      );
+    test('passes on the error the permission query was answered with', async () => {
+      // `fetchProjectPermissions` tells no access from a failed check the same way for both
+      // sign-in paths, e.g. an expired token is no access, so the cached credentials are dropped
+      const error = new Error('Not a collaborator of the repository');
 
-      await expect(fetchRepositoryAccess()).rejects.toThrow(
-        'Failed to check the repository permission.',
-      );
+      vi.mocked(fetchProjectPermissions).mockRejectedValue(error);
+
+      await expect(fetchRepositoryAccess()).rejects.toBe(error);
     });
   });
 

@@ -85,24 +85,12 @@ export const createPermissionError = (repo, canRead) =>
  * @param {number | undefined} status HTTP status the request was refused with. `undefined` for a
  * request that wasn’t answered, or one whose status doesn’t tell, like a rate limit answered with a
  * 403.
- * @param {object} [options] Options.
- * @param {boolean} [options.reportNotFound] Whether to report a 404 as a missing repository rather
- * than as a refusal. A private repository answers a request from someone without access with a 404
- * as well, so its existence isn’t leaked.
  * @returns {Error} Error.
  */
-export const toRepositoryAccessError = (
-  { owner, repo },
-  status,
-  { reportNotFound = false } = {},
-) => {
-  if (status === 404 && reportNotFound) {
-    return createLocalizedError('Failed to check repository access', 'repository_not_found', {
-      repo,
-    });
-  }
-
-  // A 401 means the token has expired or been revoked, and a 403 that it lacks the scope
+export const toRepositoryAccessError = ({ owner, repo }, status) => {
+  // A 401 means the token has expired or been revoked, and a 403 that it lacks the scope. A private
+  // repository answers someone without access with a 404, so its existence isn’t leaked; a mistyped
+  // name can’t be told apart from that, but the message names the repository it looked for
   if (status === 401 || status === 403 || status === 404) {
     return createNoAccessError(repo);
   }

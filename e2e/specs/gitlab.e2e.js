@@ -1,3 +1,5 @@
+import { randomBytes } from 'node:crypto';
+
 import { createPNG } from '../fixtures/files.js';
 import { getBlobSHA } from '../fixtures/git.js';
 import { expect, GITLAB_CONFIG, test } from '../fixtures/test.js';
@@ -195,6 +197,101 @@ test('uploads an image', async ({ cms, gitlab, page }) => {
   ]);
 });
 
+test('splits an upload over the request size limit of the instance into several commits', async ({
+  cms,
+  gitlab,
+  page,
+}) => {
+  // An image padded with random bytes, which don’t compress, takes 1 MB, or 1.3 MB once encoded
+  const files = ['one.png', 'two.png', 'three.png'].map((name) => ({
+    name,
+    mimeType: 'image/png',
+    buffer: Buffer.concat([createPNG({ color: [0, 0, 255] }), randomBytes(1024 * 1024)]),
+  }));
+
+  let refusals = 0;
+
+  // An instance that takes 2 MB at most, like NGINX with a low `client_max_body_size`, answers a
+  // larger request with 413 Content Too Large, without CORS headers
+  await page.route(`${gitlab.apiRoot}/**`, async (route) => {
+    const request = route.request();
+
+    if (
+      request.method() === 'POST' &&
+      request.url().endsWith('/repository/commits') &&
+      (request.postDataBuffer()?.length ?? 0) > 2 * 1024 * 1024
+    ) {
+      refusals += 1;
+      await route.fulfill({ status: 413, contentType: 'text/html', body: '413' });
+    } else {
+      await route.fallback();
+    }
+  });
+
+  await cms.open();
+  await page.getByRole('radio', { name: 'Assets' }).click();
+  await page.getByRole('button', { name: 'Upload New Assets' }).first().click();
+
+  const [chooser] = await Promise.all([
+    page.waitForEvent('filechooser'),
+    page
+      .getByRole('dialog', { name: 'Upload New Assets' })
+      .getByRole('button', { name: 'Choose Files' })
+      .click(),
+  ]);
+
+  await chooser.setFiles(files);
+  await page
+    .getByRole('alertdialog', { name: 'Upload New Assets' })
+    .getByRole('button', { name: 'Upload' })
+    .click();
+
+  await expect
+    .poll(() => files.map(({ name }) => gitlab.head.tree.get(`static/images/${name}`)))
+    .toEqual(files.map(({ buffer }) => getBlobSHA(buffer)));
+  // The three files are sent again in commits of half the size, one file each
+  expect(refusals).toBe(1);
+  expect(gitlab.received.map(({ actions }) => actions.length)).toEqual([1, 1, 1]);
+});
+
+test('renames an image without sending its content again, which keeps it in Git LFS', async ({
+  cms,
+  gitlab,
+  page,
+}) => {
+  const sunset = createPNG({ color: [255, 128, 0] });
+
+  gitlab.commit({ 'static/images/sunset.png': sunset });
+
+  const loadedHead = gitlab.head.oid;
+
+  await cms.open();
+  await page.getByRole('radio', { name: 'Assets' }).click();
+  await page.getByRole('row', { name: 'sunset.png' }).click();
+  await cms.chooseMenuItem(
+    page.getByRole('button', { name: 'Show Edit Options' }),
+    page.getByRole('menuitem', { name: 'Rename Asset' }),
+  );
+
+  const dialog = page.getByRole('dialog', { name: /Rename/ });
+
+  await dialog.getByRole('textbox').fill('dusk.png');
+  await dialog.getByRole('button', { name: 'Rename' }).click();
+
+  await expect.poll(() => gitlab.head.tree.get('static/images/dusk.png')).toBe(getBlobSHA(sunset));
+  expect(gitlab.head.tree.has('static/images/sunset.png')).toBe(false);
+  // GitLab takes the existing blob for a move without content, which for a file tracked with Git
+  // LFS is the pointer, while a move with content would commit the bytes as a regular blob
+  expect(gitlab.received[0].actions).toEqual([
+    {
+      action: 'move',
+      file_path: 'static/images/dusk.png',
+      previous_path: 'static/images/sunset.png',
+      last_commit_id: loadedHead,
+    },
+  ]);
+});
+
 test('lists an entry a colleague has added, on the next scheduled check', async ({
   cms,
   gitlab,
@@ -326,5 +423,74 @@ test.describe('with `prompt_commit_messages` on', () => {
     expect(popup.url()).toBe(
       `https://gitlab.com/sveltia/e2e-site/-/commit/${gitlab.commits.at(-3)?.oid}`,
     );
+  });
+});
+
+test.describe('with a gallery of entry-relative media', () => {
+  test.use({
+    config: {
+      ...GITLAB_CONFIG,
+      collections: [
+        {
+          name: 'galleries',
+          label: 'Galleries',
+          folder: 'content/gallery',
+          path: '{{slug}}/index',
+          media_folder: '.',
+          public_folder: '.',
+          create: true,
+          fields: [{ name: 'title', label: 'Title' }],
+        },
+      ],
+    },
+  });
+
+  test('lists only the folders a colleague’s commit has changed when loading again', async ({
+    cms,
+    gitlab,
+    page,
+  }) => {
+    const png = createPNG();
+
+    gitlab.commit({
+      'content/gallery/spring/index.md': '---\ntitle: Spring\n---\n',
+      'content/gallery/spring/a.png': png,
+      'content/gallery/summer/index.md': '---\ntitle: Summer\n---\n',
+      'content/gallery/summer/b.png': png,
+    });
+
+    /** @type {string[]} */
+    const listed = [];
+
+    page.on('request', (request) => {
+      const url = new URL(request.url());
+
+      if (url.pathname.endsWith('/repository/tree')) {
+        listed.push(url.searchParams.get('path') ?? '');
+      }
+    });
+
+    await cms.open();
+    await expect(page.getByRole('row', { name: 'Summer' })).toBeVisible();
+    expect(listed.sort()).toEqual([
+      'content/gallery',
+      'content/gallery/spring',
+      'content/gallery/summer',
+    ]);
+
+    gitlab.commit({
+      'content/gallery/autumn/index.md': '---\ntitle: Autumn\n---\n',
+      'content/gallery/autumn/c.png': png,
+    });
+    listed.length = 0;
+    await page.reload();
+
+    // The albums that haven’t changed come from the cache
+    await expect(page.getByRole('row', { name: 'Autumn' })).toBeVisible();
+    await expect(page.getByRole('row', { name: 'Spring' })).toBeVisible();
+    expect(listed.sort()).toEqual(['content/gallery', 'content/gallery/autumn']);
+
+    await page.getByRole('radio', { name: 'Assets' }).click();
+    await expect(page.getByRole('row', { name: /^[abc]\.png$/ })).toHaveCount(3);
   });
 });

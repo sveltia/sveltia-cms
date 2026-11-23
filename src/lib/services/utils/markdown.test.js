@@ -1,8 +1,16 @@
-import { describe, expect, test } from 'vitest';
+import { sanitize } from 'isomorphic-dompurify';
+import { describe, expect, test, vi } from 'vitest';
 
 import { expectLinearTime } from '$lib/test/complexity';
 
 import { removeMarkdownSyntax, stripMarkdown } from './markdown';
+
+vi.mock('isomorphic-dompurify', async (importOriginal) => {
+  /** @type {typeof import('isomorphic-dompurify')} */
+  const original = await importOriginal();
+
+  return { ...original, sanitize: vi.fn(original.sanitize) };
+});
 
 describe('removeMarkdownSyntax', () => {
   test('should remove matching bold markdown characters', () => {
@@ -343,5 +351,13 @@ describe('stripMarkdown', () => {
 
   test('should return an empty string for an empty value', () => {
     expect(stripMarkdown('')).toBe('');
+  });
+
+  test('should parse the same value only once', () => {
+    const value = 'A **value** that is only used by this test';
+
+    expect(stripMarkdown(value)).toBe('A value that is only used by this test');
+    expect(stripMarkdown(value)).toBe('A value that is only used by this test');
+    expect(sanitize).toHaveBeenCalledTimes(1);
   });
 });

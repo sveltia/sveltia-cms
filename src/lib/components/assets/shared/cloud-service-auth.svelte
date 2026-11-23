@@ -32,13 +32,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    serviceProps,
-    error = undefined,
-    onAuth = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { serviceProps, error = undefined, onAuth = undefined } = $props();
 
   const {
     serviceType = 'stock_assets',

@@ -1,4 +1,3 @@
-import transliterate from '@sindresorhus/transliterate';
 import { generateUUID } from '@sveltia/utils/crypto';
 import { escapeRegExp, truncate } from '@sveltia/utils/string';
 
@@ -6,8 +5,10 @@ import {
   UNSAFE_ASCII_SLUG_CHARS_REGEX,
   UNSAFE_UNICODE_SLUG_CHARS_REGEX,
 } from '$lib/services/common/slug/constants';
+import { transliterateString } from '$lib/services/common/slug/transliterate';
 import { cmsConfig } from '$lib/services/config';
 import { getOrCreate } from '$lib/services/utils/cache';
+import { foldFileName } from '$lib/services/utils/file';
 
 /**
  * @import { InternalCmsConfig } from '$lib/types/private';
@@ -101,8 +102,10 @@ export const getSlugTimeZone = () =>
  * @param {object} [options] Options.
  * @param {boolean} [options.fallback] Whether to return a fallback value if the slug is empty.
  * Defaults to `true`, which returns a part of a UUID.
- * @param {string} [options.locale] BCP 47 language tag passed to the transliterate library when
- * `clean_accents` is enabled.
+ * @param {string} [options.locale] Locale of the entry, as a BCP 47 language tag, passed to the
+ * transliterate library when `clean_accents` is enabled. The global `transliterate_locale` option
+ * stands in for it where there is none: a site without i18n support, a collection without it
+ * (`_default`), a slug shared by every locale (`_`), or an asset file name.
  * @param {number} [options.maxLength] Maximum length of the slug.
  * @returns {string} Slug.
  * @see https://decapcms.org/docs/configuration-options/#slug-type
@@ -116,6 +119,7 @@ export const slugify = (
     slug: {
       encoding = 'unicode',
       clean_accents: cleanAccents = false,
+      transliterate_locale: transliterateLocale = undefined,
       sanitize_replacement: sanitizeReplacement = '-',
       maxlength: maxLengthOption = undefined,
       trim: trimReplacement = true,
@@ -127,12 +131,11 @@ export const slugify = (
   let slug = string;
 
   if (cleanAccents) {
-    // Remove any accented characters by transliterating them to their ASCII equivalents. The
-    // library takes a BCP 47 tag and picks the rules for its language, e.g. `tr` for `tr-TR`, and
-    // `nb` for `no`, while ignoring a locale it has no rules for. An underscore, as in `pt_BR`, is
-    // turned into a hyphen it understands
-    // @see https://www.npmjs.com/package/@sindresorhus/transliterate
-    slug = transliterate(slug.normalize('NFD'), { locale: locale?.replaceAll('_', '-') });
+    // Remove any accented characters by transliterating them to their ASCII equivalents
+    slug = transliterateString(
+      slug,
+      locale && !locale.startsWith('_') ? locale : transliterateLocale,
+    );
   }
 
   // Turn every unsafe character into a space, which is then replaced below
@@ -205,30 +208,53 @@ export const slugify = (
 export const getNewFolderName = (name) => slugify(name.trim(), { fallback: false });
 
 /**
- * Check whether a folder can be given the name typed in, either while creating one with the parent
- * folder picker or while renaming one with the slug editor.
+ * Check whether a folder can be given the name typed in: an entry folder, while creating one with
+ * the parent folder picker or renaming one with the slug editor, or an asset subfolder, with its
+ * own formatting and reserved names.
  * @param {object} args Arguments.
- * @param {string[]} args.takenNames Names of the folders already sharing the parent folder.
+ * @param {string[]} args.takenNames Names already taken in the parent folder.
  * @param {string} args.name Name to check, as typed.
- * @returns {'empty' | 'invalid' | 'duplicate' | undefined} What stops the name from being used, or
- * `undefined` if it can be used.
+ * @param {(name: string) => string} [args.format] Function turning the trimmed name into the folder
+ * name. Default: {@link getNewFolderName}.
+ * @param {(folderName: string) => boolean} [args.isReserved] Function telling whether a folder name
+ * is reserved.
+ * @returns {'empty' | 'invalid' | 'reserved' | 'duplicate' | undefined} What stops the name from
+ * being used, or `undefined` if it can be used.
  */
-export const validateNewFolderName = ({ takenNames, name }) => {
+export const validateNewFolderName = ({
+  takenNames,
+  name,
+  format = getNewFolderName,
+  isReserved = undefined,
+}) => {
   const trimmedName = name.trim();
 
   if (!trimmedName) {
     return 'empty';
   }
 
-  const folderName = getNewFolderName(trimmedName);
+  const folderName = format(trimmedName);
 
   // A name has to stay a single folder, a leading dot would hide the folder from the site and from
-  // most file listings, and slugification can leave nothing to name the folder with. The dot is
-  // looked for in what was typed: slugification removes it, but a name meant to be hidden is
+  // most file listings, and formatting can leave nothing to name the folder with. The dot is looked
+  // for in what was typed as well: slugification removes it, but a name meant to be hidden is
   // rejected rather than silently given another one
-  if (!folderName || trimmedName.includes('/') || trimmedName.startsWith('.')) {
+  if (
+    !folderName ||
+    trimmedName.includes('/') ||
+    trimmedName.startsWith('.') ||
+    folderName.startsWith('.')
+  ) {
     return 'invalid';
   }
 
-  return takenNames.includes(folderName) ? 'duplicate' : undefined;
+  if (isReserved?.(folderName)) {
+    return 'reserved';
+  }
+
+  // A repository is often checked out on a file system that ignores case, where `Docs` and `docs`
+  // would be the same folder
+  const foldedName = foldFileName(folderName);
+
+  return takenNames.some((taken) => foldFileName(taken) === foldedName) ? 'duplicate' : undefined;
 };

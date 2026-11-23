@@ -189,7 +189,7 @@
           <div
             role="row"
             class="sui grid-row"
-            class:drag-source={draggedEntry?.id === entry.id}
+            class:drag-placeholder={draggedEntry?.id === entry.id}
             tabindex="0"
             aria-rowindex={rowIndex(entry)}
             aria-selected="false"
@@ -275,16 +275,12 @@
         height: var(--sui-primary-row-height);
       }
 
-      /* The dragged row is left as a faint placeholder marking the gap it would drop into. The
-        pointer already carries the browser’s own drag image of it, so showing it twice at full
-        strength would just be confusing. */
-
-      .grid-row.drag-source {
-        opacity: 0.25;
+      /* The dragged row is left as a faint placeholder by the global `drag-placeholder` rule */
+      .grid-row.drag-placeholder {
         cursor: grabbing;
       }
 
-      .grid-row[draggable='true']:not(.drag-source) {
+      .grid-row[draggable='true']:not(.drag-placeholder) {
         cursor: grab;
       }
     }

@@ -2,9 +2,9 @@ import { getDateTimeParts } from '@sveltia/utils/datetime';
 
 import {
   DATE_TIME_FIELDS,
-  TEMPLATE_TAG_REGEX,
   TEMPLATE_TAG_REPLACE_REGEX,
 } from '$lib/services/common/template/constants';
+import { hasTemplateTags } from '$lib/services/common/template/tags';
 import { COMPARISON_OPERATORS, matchesFilter } from '$lib/services/common/view';
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
 import { getDate, isValidDate } from '$lib/services/contents/fields/date-time/parse';
@@ -59,7 +59,7 @@ const DATE_ONLY_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 const hasTemplateTag = (value) =>
   Array.isArray(value)
     ? value.some(hasTemplateTag)
-    : typeof value === 'string' && TEMPLATE_TAG_REGEX.test(value);
+    : typeof value === 'string' && hasTemplateTags(value);
 
 /**
  * Check whether the conditions of a view filter or group depend on the current time, which is the
@@ -85,7 +85,7 @@ export const usesCurrentTime = (conditions) =>
  * parsed the same way. Anything but a string is returned as is, and so is an unknown tag.
  */
 export const resolveComparisonValue = (value, now = new Date()) => {
-  if (typeof value !== 'string' || !TEMPLATE_TAG_REGEX.test(value)) {
+  if (typeof value !== 'string' || !hasTemplateTags(value)) {
     return value;
   }
 

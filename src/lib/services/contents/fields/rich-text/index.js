@@ -48,15 +48,13 @@ export const NODE_NAME_MAP = {
  * use. The other buttons format a whole block.
  * @type {RichTextEditorButtonName[]}
  */
-export const INLINE_BUTTONS = ['bold', 'italic', 'strikethrough', 'code', 'link'];
+export const INLINE_BUTTONS = ['bold', 'italic', 'underline', 'strikethrough', 'code', 'link'];
 
 /**
- * The default `buttons` property options. `align` is left out: it has to be enabled with the
- * `buttons` option.
+ * Buttons that format a whole block, which a field with `multiline: false` can’t use.
  * @type {RichTextEditorButtonName[]}
  */
-export const DEFAULT_BUTTONS = [
-  ...INLINE_BUTTONS,
+export const BLOCK_BUTTONS = [
   'heading-one',
   'heading-two',
   'heading-three',
@@ -65,8 +63,32 @@ export const DEFAULT_BUTTONS = [
   'heading-six',
   'bulleted-list',
   'numbered-list',
+  'task-list',
   'quote',
+  'align',
 ];
+
+/**
+ * Buttons only available with the `html` format, as Markdown has no syntax for them. They’re not
+ * enabled by default: they have to be listed in the `buttons` option.
+ * @type {RichTextEditorButtonName[]}
+ */
+export const HTML_ONLY_BUTTONS = ['underline', 'align'];
+
+/**
+ * Buttons not enabled by default: the HTML-only ones, and `task-list`, as task lists are a GitHub
+ * Flavored Markdown extension that not every Markdown renderer supports.
+ * @type {RichTextEditorButtonName[]}
+ */
+export const OPTIONAL_BUTTONS = [...HTML_ONLY_BUTTONS, 'task-list'];
+
+/**
+ * The default `buttons` property options: all the buttons but the optional ones.
+ * @type {RichTextEditorButtonName[]}
+ */
+export const DEFAULT_BUTTONS = [...INLINE_BUTTONS, ...BLOCK_BUTTONS].filter(
+  (name) => !OPTIONAL_BUTTONS.includes(name),
+);
 
 /**
  * Key is a name used in Netlify/Decap CMS, value is a name used in Sveltia UI. The built-in
@@ -76,6 +98,7 @@ export const DEFAULT_BUTTONS = [
 export const BUTTON_NAME_MAP = {
   bold: 'bold',
   italic: 'italic',
+  underline: 'underline',
   strikethrough: 'strikethrough',
   code: 'code',
   link: 'link',
@@ -87,6 +110,7 @@ export const BUTTON_NAME_MAP = {
   'heading-six': 'heading-6',
   'bulleted-list': 'bulleted-list',
   'numbered-list': 'numbered-list',
+  'task-list': 'task-list',
   quote: 'blockquote',
   align: 'align',
   'code-block': 'code-block',

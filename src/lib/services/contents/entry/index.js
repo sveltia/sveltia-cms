@@ -90,6 +90,8 @@ export const extractDateTime = ({ dateFieldName, fields, content, locale, inSlug
  * If omitted, the first DateTime field is used.
  * @param {Field[]} args.fields Fields of the collection or collection file.
  * @param {InternalCollection} args.collection Collection.
+ * @param {InternalCollectionFile} [args.collectionFile] Collection file. File/singleton collection
+ * only. Its fields and i18n configuration are used instead of the collection’s.
  * @param {InternalLocaleCode} args.locale Locale.
  * @param {string} [args.slug] Entry slug for the locale.
  * @param {string} args.entryFilePath Entry file path for the locale.
@@ -104,6 +106,7 @@ export const fillEntryPathTemplate = ({
   dateFieldName,
   fields,
   collection,
+  collectionFile,
   locale,
   slug,
   entryFilePath,
@@ -126,6 +129,7 @@ export const fillEntryPathTemplate = ({
     return fillTemplate(pathTemplate, {
       type: 'preview_path',
       collection,
+      collectionFile,
       content,
       locale,
       currentSlug: slug,
@@ -193,6 +197,7 @@ export const getPreviewPath = ({
     dateFieldName,
     fields: indexFile?.fields ?? regularFields,
     collection,
+    collectionFile,
     locale,
     slug,
     entryFilePath,

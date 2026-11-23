@@ -233,6 +233,324 @@ sign_in_with_mobile_instruction: 以下の QR コードを携帯電話かタブ�
 sign_in_with_link: リンクでログイン
 sign_in_with_link_confirmation: このリンクを使うと {$service} に {$account} としてログインし、リンクを作成したデバイスのユーザー設定がコピーされます。ご自身で作成したリンクの場合のみ続行してください。
 
+# Sign-in with Sveltia CMS Additions, which manages its own user accounts instead of the Git
+# service’s. Don’t localize “Sveltia CMS Additions”
+additions:
+  username: ユーザー名
+  password: パスワード
+  sign_in: ログイン
+  new_password_title: 新しいパスワードを設定
+  new_password_description: 仮のパスワードでログインしました。続行するには新しいパスワードを設定してください。
+  new_password: 新しいパスワード
+  password_too_short: パスワードが短すぎます。12 文字以上にしてください。
+  change_password: パスワードを変更
+  # {$name} is the user’s username, {$role} their role, e.g. Editor
+  signed_in_as_x_with_role: '{$name} としてログイン中 ({$role})'
+  link_github: GitHub アカウントを連携
+  link_github_error: GitHub アカウントを連携できませんでした
+  current_password: 現在のパスワード
+  # {$username} is the username filled in from a magic link emailed to the user
+  filled_from_link: ユーザー名とパスワードがリンクから入力されました。「{$username}」があなたのユーザー名である場合のみログインしてください。
+  change_password_description: このデバイスではサインインしたまま、他のデバイスからはサインアウトされます。
+  password_changed: パスワードを変更しました。
+  # The Account settings panel of a Sveltia CMS Additions user
+  account:
+    profile: プロフィール
+    profile_description: 名前は CMS 上で他のユーザーに表示されるほか (例：エントリーのロックやコメント)、あなたのコミットにも使われます。
+    username_description: ユーザー名は変更できません。
+    email: メールアドレス
+    email_description: あなたのコミットに使われ、GitHub がコミットをあなたのアカウントに関連付けられるようになります。空の場合は代わりのアドレスが使われます。変更できるのは管理者のみです。
+    change_name: 名前を変更
+    name_changed: 名前を変更しました。
+    password: パスワード
+    no_password: このアカウントは GitHub でのみサインインするため、変更するパスワードはありません。管理者がパスワードをリセットすると、パスワードを設定できます。
+  setup:
+    use_admin_secret: 管理用シークレットを使用
+    title: Sveltia CMS Additions のセットアップ
+    secret_description: Sveltia CMS Additions サービスの設定で指定した管理用シークレットを入力してください。セットアップ中はこのタブ内でのみ保持されます。
+    admin_secret: 管理用シークレット
+    continue: 続行
+    back: ログイン画面に戻る
+    admin_title: 管理者アカウント
+    admin_create_description: 最初の管理者アカウントを作成します。このアカウントでログインし、他のユーザーを管理します。
+    admin_reset_description: 管理者アカウントはすでに存在します。ログインできない場合は、ここで管理者のパスワードを再設定するか、別の管理者を作成してください。
+    admin_saved: 管理者アカウントの準備ができました。入力したパスワードでログインしてください。
+    create_admin: 管理者を作成
+    reset_password: 管理者を保存
+    github_title: GitHub
+    # {$repo} is the repository, e.g. octocat/site
+    github_description: このサイト用の GitHub App を作成し、「{$repo}」リポジトリにインストールします。GitHub で確認した後、この画面に戻ります。
+    # {$repo} is the repository, {$app} is the name of the GitHub App
+    github_connected: GitHub App「{$app}」で「{$repo}」リポジトリに接続されています。
+    connect_github: GitHub に接続
+    # {$step} is the number of the current step, {$total} the number of steps
+    step_x_of_y: ステップ {$step}/{$total}
+    admin_exists: 管理者アカウントは作成済みです。
+    reset_admin_password: 管理者のパスワードをリセット
+    setup_complete: セットアップは完了しています。管理者アカウントでログインして、ユーザーや設定を管理してください。管理者シークレットを使えば、いつでもここに戻れます。
+    manage_sites: 他のサイトを管理
+    back_to_setup: 戻る
+    sites_title: 他のサイト
+    sites_description: このサービスでは他のサイトも提供でき、それぞれに独自のユーザー、設定、GitHub App があります。サイトの CMS 設定の “base_url” をその URL に設定してから、そちらで管理者シークレットを使ってセットアップしてください。
+    no_sites: 他のサイトはまだありません。
+    site_id: サイト ID
+    site_id_description: 1〜32 文字の小文字の英字、数字、ハイフン (“acme” など)。サイトの URL に使われ、後から変更できません。
+    site_name_optional: 名前 (任意)
+    add_site: サイトを追加
+    # {$name} is the name of the site
+    site_added: “{$name}” を追加しました。その CMS 設定の “base_url” をこの URL に設定してから、そちらでセットアップウィザードを開いてください。
+    # {$name} is the name of the site
+    copy_site_url: '{$name} の URL をコピー'
+    delete_site: サイトを削除
+    # {$name} is the name of the site
+    delete_site_x: '{$name} を削除'
+    # {$name} is the name of the site, {$id} is its ID
+    delete_site_confirmation: “{$name}” を削除すると、そのユーザー、設定、コメントも削除されます。この操作は元に戻せません。GitHub App は GitHub に残るので、そちらで削除できます。確認のため “{$id}” と入力してください。
+    site_id_to_confirm: 確認用のサイト ID
+    data_key_locked_title: 管理用シークレットが変更されました
+    data_key_locked_description: 管理用シークレットが変更されたため、保存された設定を読み取れません。設定を維持するには以前のシークレットを入力してください。紛失した場合はやり直してください。
+    previous_secret: 以前の管理用シークレット
+    unlock: ロック解除
+    rekey: やり直す
+    rekey_confirmation: やり直すと、GitHub App の認証情報やその他の保存されたシークレットが削除され、全員がログアウトされます。パスワードは保持されます。続行しますか？
+    result:
+      ok: GitHub に接続されました。ログインできます。
+      github_app_not_created: GitHub App が作成されませんでした。管理用シークレットを使用してやり直してください。
+      github_app_not_installed: GitHub App がインストールされませんでした。管理用シークレットを使用してやり直してください。
+      github_wrong_account: GitHub App がリポジトリを所有していないアカウントにインストールされました。リポジトリを所有するアカウントにインストールしてやり直してください。
+      github_repository_not_included: GitHub App がリポジトリへのアクセス権なしでインストールされました。GitHub でリポジトリへのアクセスを許可してやり直してください。
+      unexpected: 予期しないエラーにより GitHub への接続に失敗しました。もう一度お試しください。
+  locks:
+    # {$name} is the name of the person editing the entry, {$time} when they started
+    being_edited: '{$name} が {$time} からこのエントリーを編集しているため、閲覧のみ可能です。'
+    being_edited_by_you: 別のタブでこのエントリーを編集しているため、ここでは閲覧のみ可能です。
+    # {$name} is the name of the person who took over the entry
+    taken_over: '{$name} がこのエントリーの編集を引き継いだため、閲覧のみ可能になりました。'
+    take_over: 編集を引き継ぐ
+    unavailable: エントリーのロックを利用できないため、他の人が同時にこのエントリーを編集している可能性があります。
+    # {$name} is the name of the person editing the entry
+    being_edited_by_x: '{$name} が編集中'
+    # {$names} is a list of the other people who have the entry open in the editor
+    also_open_by_x: '{$names} もこのエントリーを開いています'
+    # {$names} is a list of the people who have the entry open, besides anyone editing it
+    open_by_x: '{$names} が開いています'
+  users:
+    title: ユーザー
+    add_user: ユーザーを追加
+    edit_user: ユーザーを編集
+    add: 追加
+    name: 名前
+    username_description: ユーザー名は追加した後に変更できません。
+    email_optional: メールアドレス (任意)
+    email_description: このユーザーのコミットに使われ、GitHub がコミットをそのアカウントに関連付けられるようになります。空の場合は代わりのアドレスが使われます。
+    role: 役割
+    status: 状態
+    last_sign_in: 最終ログイン
+    sign_in_column: サインイン方法
+    methods:
+      password: パスワード
+      # {$login} is a GitHub username
+      github: GitHub ({$login})
+    actions: 操作
+    you: (自分)
+    never: なし
+    roles:
+      admin: 管理者
+      editor: 編集者
+      viewer: 閲覧者
+    statuses:
+      active: 有効
+      temporary_password: 仮パスワード
+      waiting_for_sign_in: 初回サインイン待ち
+      disabled: 無効
+    # {$name} is the user’s name
+    show_options_for_x: '{$name} のオプションを表示'
+    options: ユーザーのオプション
+    reset_password: パスワードを再設定
+    sign_out_everywhere: すべてのデバイスからログアウト
+    enable: ユーザーを有効にする
+    disable: ユーザーを無効にする
+    delete: ユーザーを削除
+    # {$name} is the user’s name
+    reset_password_confirmation: '{$name} に新しい仮パスワードを発行しますか？すべてのデバイスからログアウトされ、次回のログイン時に新しいパスワードを設定する必要があります。'
+    delete_confirmation: '{$name} を削除しますか？この操作は元に戻せません。'
+    temporary_password: 仮パスワード
+    # {$name} is the user’s name
+    temporary_password_description: このユーザー名と仮パスワードを {$name} に伝えてください。パスワードは再表示されません。ログイン時に自分のパスワードを設定してもらいます。
+    copy_username: ユーザー名をコピー
+    copy_password: パスワードをコピー
+    # {$name} is the user’s name
+    email_credentials: '{$name} にメールで送る'
+    # The emails the admin sends from their own email app, with the sign-in details: `new` to a user
+    # who has just been added, `reset` to one whose password has been reset. Each line is a string of
+    # its own, as line breaks aren’t kept in these files
+    credentials_email:
+      # {$name} is the user’s name
+      greeting: '{$name} さん'
+      # {$url} is a link to the CMS that fills in the username and the temporary password
+      sign_in_link: 'ログイン用リンク: {$url}'
+      # {$username} is the username
+      username: 'ユーザー名: {$username}'
+      # {$password} is the temporary password
+      password: '仮パスワード: {$password}'
+      new:
+        # {$app} is the name of the CMS
+        subject: '{$app} のログイン情報'
+        # {$app} is the name of the CMS
+        message: '{$app} にログインできるようになりました。下のリンクを開くとユーザー名と仮パスワードが入力されるので、ログインして自分のパスワードを設定してください。'
+      reset:
+        # {$app} is the name of the CMS
+        subject: '{$app} のパスワードがリセットされました'
+        # {$app} is the name of the CMS
+        message: '{$app} のパスワードがリセットされ、すべての端末からログアウトしました。下のリンクを開くとユーザー名と仮パスワードが入力されるので、ログインして新しいパスワードを設定してください。'
+    allowed_domains: 許可されたドメイン
+    allowed_domains_description: Sveltia CMS Additions を使用できるサイトのホスト名を 1 行に 1 つずつ指定します。ワイルドカード (*) は任意のサブドメインに一致します (例：*.example.com)。可能な限り正確なホスト名を指定してください。同じ Sveltia CMS Additions インスタンスが他のサイトも提供している場合でも、このリストはこのサイトにのみ適用されます。
+    save_allowed_domains: 許可されたドメインを保存
+    allowed_domains_saved: 許可されたドメインを保存しました。
+    sign_in_tab: サインイン
+    # {$latest} is the newest version of Sveltia CMS Additions, {$current} the one in use
+    update_available: Sveltia CMS Additions {$latest} が利用可能です。現在のバージョンは {$current} です。
+    release_notes: リリースノート
+    github_username_optional: GitHub ユーザー名 (任意)
+    github_username_description: GitHub ユーザー名を入力すると、パスワードの代わりにその GitHub アカウントでサインインします。
+    # {$name} is the user’s name
+    github_required: '{$name} は GitHub でのみサインインできるため、GitHub ユーザー名は削除できません。先にパスワードをリセットして、パスワードでサインインできるようにしてください。'
+    adopt: アカウントを引き取る
+    sign_in:
+      github: GitHub でのサインインを許可
+      github_description: GitHub アカウントでサインインしたユーザーは自分の GitHub トークンを受け取るため、変更は本人の名前でコミットされます。サインアップルールの対象でない限り、事前に管理者が GitHub ユーザー名で追加する必要があります。
+      # Shown when signing in with GitHub is being turned off while {$count} users can only sign in
+      # with it
+      github_only_warning: '{$count} 人のユーザーは GitHub でしかサインインできないため、オフにするとパスワードをリセットするまでサインインできなくなります。'
+      rules: サインアップルール
+      rules_description: アプリがインストールされている GitHub Organization のメンバーは、事前に追加されていなくてもサインインできます。アカウントは選択した役割で作成され、組織を離れると無効になります (引き取った場合を除く)。
+      org: GitHub Organization
+      add_rule: ルールを追加
+      # {$org} is the name of a GitHub organization
+      remove_rule: '{$org} のルールを削除'
+      # For a rule whose organization hasn’t been entered yet
+      remove_empty_rule: ルールを削除
+      save: サインイン設定を保存
+      saved: サインイン設定を保存しました。
+    domains_tab: ドメイン
+    github_tab: GitHub
+    github:
+      app: GitHub アプリ
+      repository: リポジトリ
+      not_installed: 未インストール
+      statuses:
+        ok: アプリは正常に動作しています。
+        not_registered: GitHub アプリがまだ設定されていません。サインインページから管理者シークレットを使ってセットアップウィザードを実行してください。
+        key_missing: 管理者シークレットが置き換えられたため、アプリの秘密鍵が失われました。GitHub のアプリ設定で新しい秘密鍵を生成し、以下からアップロードしてください。
+        key_rejected: アプリの秘密鍵が GitHub に受け付けられません。GitHub で削除された可能性があります。GitHub のアプリ設定で新しい秘密鍵を生成し、以下からアップロードしてください。
+        not_installed: アプリがリポジトリにインストールされていません。GitHub のアプリページから再度インストールするか、セットアップウィザードを実行してください。
+        suspended: アプリのインストールが停止されています。GitHub のインストール設定で再開してください。
+        unreachable: GitHub に接続できませんでした。しばらくしてからもう一度お試しください。
+      check_again: 再確認
+      # {$branch} is the name of the repository’s default branch
+      branch_protected: ルールセットにより「{$branch}」ブランチは強制プッシュと削除から保護されています。
+      branch_bypassed: ルールセットにより「{$branch}」ブランチは保護されていますが、アプリがルールを回避できるため、編集者が強制プッシュや削除を行える状態です。それらのルールセットの回避リストからアプリを外してください。
+      branch_unprotected: 「{$branch}」ブランチを強制プッシュと削除から保護するルールセットがないため、編集者が履歴を書き換えたりブランチを削除したりできる状態です。リポジトリ設定で両方を禁止するルールセットを、回避リストにアプリを含めずに追加してください。
+      repository_rules: リポジトリのルールを開く
+      private_key: 秘密鍵
+      private_key_description: 秘密鍵を置き換えるには、GitHub のアプリ設定で新しい秘密鍵を生成し、ダウンロードされた .pem ファイルをアップロードしてください。その後、古い鍵を GitHub で削除してください。
+      app_settings: アプリ設定を開く
+      upload_private_key: 秘密鍵をアップロード
+      replace_private_key: 秘密鍵を置き換える
+      private_key_summary: サービスはアプリの秘密鍵を使って GitHub のリポジトリにアクセスします。秘密鍵が漏洩したおそれがある場合は置き換えてください。
+      private_key_replaced: 秘密鍵を置き換えました。
+      commit_author: コミットの作成者
+      commit_author_description: CMS で保存した変更の作成者として表示する名前を選択してください。GitHub が署名するのはアプリが作成したコミットだけなので、署名付きコミットを必須とするルールセットがある場合はアプリを選択してください。他のユーザーには 1 時間以内に反映されます。
+      commit_author_user: 変更を行った人
+      commit_author_bot: GitHub アプリ (変更を行った人を共同作成者として記載)
+      commit_author_saved: コミットの作成者を保存しました。
+  # Administration section for the API keys and the deploy hook an admin shares with everyone
+  credentials:
+    title: 認証情報
+    description: ここで入力した API キーとデプロイフックは、サインインするすべての人が使用します。各自が設定で自分のものを入力した場合はそちらが優先されます。CMS にサインインできる人は誰でも内容を読み取れるので、チームで共有して構わないキーだけを入力してください。
+    save: 認証情報を保存
+    saved: 認証情報を保存しました。
+    # {$service} is the service name, e.g. DeepL
+    invalid_key: '{$service} の API キーが正しくないようです。'
+  error:
+    unauthenticated: セッションの有効期限が切れました。もう一度ログインしてください。
+    wrong_admin_secret: 管理用シークレットが正しくありません。
+    admin_secret_missing: Sveltia CMS Additions サービスの設定で管理用シークレットが指定されていません。
+    admin_secret_too_short: Sveltia CMS Additions サービスの設定で指定された管理用シークレットが短すぎます。32 文字以上のランダムな文字列を使用してください。
+    wrong_previous_secret: 以前の管理用シークレットが正しくありません。
+    not_an_admin: このユーザーは管理者ではありません。別のユーザー名を選んでください。
+    invalid_username: ユーザー名は 3〜30 文字の小文字の英字、数字、ピリオド、ハイフン、アンダースコアで指定してください。
+    last_admin: 管理者が少なくとも 1 人必要です。
+    cannot_disable_self: 自分のアカウントは無効にできません。
+    cannot_delete_self: 自分のアカウントは削除できません。
+    username_taken: このユーザー名は他のユーザーが使用しています。
+    email_taken: このメールアドレスは他のユーザーが使用しています。
+    invalid_name: 名前は 1〜100 文字で指定してください。
+    invalid_email: メールアドレスが正しくありません。
+    invalid_domains: 許可されたドメインのいずれかが有効なホスト名ではありません。
+    current_origin_removed: 許可されたドメインには、現在使用しているサイトを含める必要があります。
+    forbidden: この操作は管理者のみ行えます。
+    invalid_credentials: ユーザー名またはパスワードが正しくありません。
+    user_disabled: このアカウントは無効になっています。管理者にお問い合わせください。
+    too_many_attempts: 試行回数が多すぎます。しばらくしてから再度お試しください。
+    wrong_password: 現在のパスワードが正しくありません。
+    same_password: 現在のパスワードとは異なるパスワードを選んでください。
+    invalid_github_login: 有効な GitHub ユーザー名ではありません。
+    github_user_not_found: この名前の GitHub ユーザーは存在しません。
+    github_account_taken: この GitHub アカウントでは別のユーザーがサインインしています。
+    invalid_rules: サインアップルールには GitHub Organization 名が必要です。
+    invalid_rule_role: サインアップルールで付与できるのは編集者または閲覧者の役割のみです。
+    rule_org_not_installed: サインアップルールの Organization に GitHub アプリがインストールされている必要があります。
+    not_invited: このサイトのアカウントがありません。管理者に追加を依頼してください。
+    method_disabled: GitHub でのサインインは無効になっています。
+    access_denied: サインインがキャンセルされました。
+    github_app_not_set_up: Sveltia CMS Additions はまだ GitHub に接続されていません。管理者にセットアップの完了を依頼してください。
+    invalid_tenant_id: サイト ID は 1〜32 文字の小文字の英字、数字、ハイフンで、“default” 以外にしてください。
+    invalid_tenant_name: サイト名は 100 文字以内にしてください。
+    tenant_exists: この ID のサイトはすでに存在します。
+    github_app_missing: GitHub アプリがまだ設定されていません。
+    invalid_private_key: このファイルは有効な秘密鍵ではありません。
+    private_key_mismatch: この秘密鍵は GitHub でアプリ用として受け付けられません。アプリの設定で生成したものか確認してください。
+    github_error: GitHub がエラーを返しました。しばらくしてからもう一度お試しください。
+    data_key_locked: 管理者が管理用シークレットの変更を完了するまで Sveltia CMS Additions は使用できません。
+    not_configured: Sveltia CMS Additions が正しく設定されていません。管理者にお問い合わせください。
+    origin_not_allowed: このサイトは Sveltia CMS Additions の使用を許可されていません。許可されたドメインに追加するよう管理者に依頼してください。
+    not_set_up: Sveltia CMS Additions はまだ GitHub に接続されていません。セットアップを完了するよう管理者に依頼してください。
+    # A user whose password an admin has reset signs in another way, e.g. with GitHub
+    temporary_password: パスワードがリセットされました。ユーザー名と管理者から受け取った一時パスワードでサインインし、新しいパスワードを設定してください。
+    # {$url} is the URL of the service
+    incompatible: このバージョンの Sveltia CMS は {$url} の Sveltia CMS Additions サービスでは動作しません。
+    unreachable: Sveltia CMS Additions に接続できませんでした。しばらくしてから再度お試しください。
+    insecure_connection: Sveltia CMS Additions は HTTPS で提供されている必要があります。CMS 設定の `base_url` を確認してください。
+    unexpected: 予期しないエラーにより Sveltia CMS Additions へのリクエストが失敗しました。しばらくしてから再度お試しください。
+
+  # Conversation panel: comments on the entry, kept by Sveltia CMS Additions
+  conversation:
+    title: 会話
+    refresh: 会話を更新
+    empty: まだコメントはありません。
+    # Button above a long conversation, which is loaded from its latest comments
+    show_older: 以前のコメントを表示
+    # Label of the list of comments
+    timeline: コメント
+    deleted_user: 削除されたユーザー
+    you: あなた
+    edited: 編集済み
+    comment_label: コメント
+    placeholder: コメントを入力 (Markdown)
+    visible_to_cms_users: CMS のユーザーにのみ表示されます
+    send: コメント
+    options: コメントのオプション
+    edit: 編集
+    delete: 削除
+    save: 保存
+    delete_confirmation: このコメントを削除しますか？この操作は元に戻せません。
+    send_failed: コメントを送信できませんでした。
+
+  # Placeholder of an API key or deploy hook field the user has left empty, while an admin of
+  # Sveltia CMS Additions has entered one for everyone
+  provided_by_admin: 管理者が設定済み
+
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
 # {$name} is the signed-in user’s login name
@@ -346,6 +664,10 @@ live_site: 管理対象サイト
 git_repository: Git リポジトリ
 settings: 設定
 
+# Page for the people who look after the CMS, apart from the personal settings: user management
+# and the CMS configuration
+administration: 管理
+
 # Help menu: button aria-labels and section headings
 show_help_menu: ヘルプメニューを表示
 # Help section heading in dropdowns and mobile menu
@@ -438,6 +760,10 @@ viewing_x_asset_folder: |
 # Cloud storage service view announcement
 # {$service} is the cloud storage service name, e.g. Uploadcare
 viewing_x_external_location: '{$service} 上のアセットを表示しています。'
+# Administration page announcements
+viewing_admin_section_list: 管理ページのセクション一覧を表示しています。
+# {$section} is the section label, e.g. Users
+viewing_x_admin_section: 管理ページの「{$section}」セクションを表示しています。
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
@@ -569,6 +895,7 @@ readonly_collection: このコレクションは読み取り専用です。コ�
 readonly_entry: このエントリーは読み取り専用です。閲覧することはできますが、変更することはできません。
 readonly_asset_folder: このフォルダーは読み取り専用です。アセットを閲覧することはできますが、変更することはできません。
 readonly_branch: 「{$branch}」ブランチへのプッシュ権限がありません。このコンテンツを閲覧することはできますが、変更することはできません。
+readonly_role: 閲覧のみの権限があります。コンテンツやアセットを閲覧することはできますが、変更することはできません。
 readonly_reference: このエントリーは読み取り専用のため、参照を削除できません。
 # {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
 cannot_rename_referenced_entry: '以下の読み取り専用エントリーが現在の名前で参照しているため、このエントリーの名前を変更できません: {$entries}'
@@ -661,20 +988,6 @@ enter_new_name_for_folder: |
     0   {{ 新しい名前を以下に入力してください。 }}
     1   {{ 新しい名前を以下に入力してください。フォルダー内のアセットも一緒に移動され、それを使用しているエントリーも更新されます。 }}
     *   {{ 新しい名前を以下に入力してください。フォルダー内の {$count} 個のアセットも一緒に移動され、それらを使用しているエントリーも更新されます。 }}
-# クラウドストレージサービスのフォルダー名変更ダイアログの本文。ファイルは直接リンクされているため、移動すると
-# URL が変わり、エントリーは更新されない
-enter_new_name_for_external_folder: |
-  .input {$count :integer}
-  .match $count
-    0   {{ 新しい名前を以下に入力してください。 }}
-    1   {{ 新しい名前を以下に入力してください。フォルダー内のファイルも一緒に移動され、URL が変わるため、それを使用しているエントリーは更新してください。 }}
-    *   {{ 新しい名前を以下に入力してください。フォルダー内の {$count} 個のファイルも一緒に移動され、URL が変わるため、それらを使用しているエントリーは更新してください。 }}
-# Rename Folder dialog for a cloud storage service: warning shown when entries link to files in the
-# folder, which aren’t updated. {$count} is the number of entries
-renaming_external_folder_breaks_links: |
-  .input {$count :integer}
-  .match $count
-    *   {{ {$count} 個のエントリーがこのフォルダー内のファイルにリンクしています。エントリーは更新されないため、フォルダー名を変更するとリンクが切れます。 }}
 # Delete Folder confirmation
 # {$name} is the folder name and {$count} is the number of assets in the folder
 confirm_deleting_folder: |
@@ -705,6 +1018,44 @@ edit_x: '{$name} を編集'
 # Asset text editor: switch for line wrapping
 wrap_long_lines: 長い行を折り返す
 
+# Move assets: dialog for moving assets to another folder in the repository
+move: 移動
+move_asset: アセットを移動
+# Dialog title. {$name} is the asset name when a single asset is moved, and {$count} is the number of
+# assets being moved
+move_assets_title: |
+  .input {$count :integer}
+  .match $count
+    1   {{ {$name} を移動 }}
+    *   {{ {$count} 件のアセットを移動 }}
+# Dialog body text. {$count} is the number of entries that currently use the assets
+select_asset_move_destination: |
+  .input {$count :integer}
+  .match $count
+    0   {{ 移動先のフォルダーを選択してください。 }}
+    *   {{ 移動先のフォルダーを選択してください。アセットを使用している {$count} 件のエントリーも更新されます。 }}
+# Accessible label of the folder tree in the Move dialog
+asset_move_destination: 移動先フォルダー
+# Shown when the assets being moved are all in the selected folder already
+assets_already_in_folder: |
+  .input {$count :integer}
+  .match $count
+    *   {{ アセットは既にこのフォルダーにあります。 }}
+# Shown when files with the same names exist in the selected folder. {$names} is a comma-separated
+# list of file names
+asset_move_conflict: '次のファイルは既にこのフォルダーに存在します: {$names}'
+moving_assets: アセットを移動中…
+moving_assets_failed: アセットを移動できませんでした。
+# Warning shown when files have been moved off a cloud storage service, but the originals couldn’t
+# be deleted from it
+asset_move_cleanup_failed: ファイルは移動されましたが、ストレージサービスから元のファイルを削除できませんでした。
+# Shown when files on a cloud storage service can’t be renamed or moved, because the entries using
+# them can’t be updated, e.g. for an Open Authoring contributor. {$count} is the number of files
+cannot_change_used_external_files: |
+  .input {$count :integer}
+  .match $count
+    *   {{ 使用しているエントリーを更新できないため、ファイルの名前変更や移動はできません。 }}
+
 # Rename asset: dialog and validation
 rename_asset: アセットの名前を変更
 # {$name} is the current asset name
@@ -717,12 +1068,6 @@ enter_new_name_for_asset: |
     0   {{ 新しい名前を以下に入力してください。 }}
     1   {{ 新しい名前を以下に入力してください。このアセットを使用している 1 個のエントリーも更新されます。 }}
     *   {{ 新しい名前を以下に入力してください。このアセットを使用している {$count} 個のエントリーも更新されます。 }}
-# Rename Asset dialog for a file on a cloud storage service: warning shown when entries link to the
-# file, which aren’t updated. {$count} is the number of entries
-renaming_external_asset_breaks_links: |
-  .input {$count :integer}
-  .match $count
-    *   {{ {$count} 個のエントリーがこのファイルにリンクしています。エントリーは更新されないため、ファイル名を変更するとリンクが切れます。 }}
 # Validation errors for asset renaming
 enter_new_name_for_asset_error:
   empty: ファイル名を空白にすることはできません。
@@ -1281,8 +1626,9 @@ deploy_preview:
   view: プレビューを見る
   # Shown while the site is still being built, with or without a URL to open yet
   building: プレビューをビルド中です。
-  # Shown when the build failed, so no preview is available
-  failed: プレビューをビルドできませんでした。
+  # Shown when the build failed, so no preview is available. The failure may lie in the site’s own
+  # code rather than the entry, so the editor is told not to assume it’s theirs, and who to ask
+  build_failed: プレビューをビルドできませんでした。変更内容が原因とは限りません。問題が解決しない場合は、サイト管理者にお問い合わせください。
   # Shown briefly while the CI/CD provider is being queried
   checking: プレビューを確認中…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
@@ -1331,6 +1677,8 @@ edit_slug_error:
   empty: スラッグは空白にはできません。
   invalid: スラッグにはスラッシュや空白を含む特殊文字を使用できません。
   duplicate: このスラッグは他のエントリーに使われています。
+# {$slug} is the slug filled from the slug template, which a number is added to when another entry uses it
+slug_numbered: スラッグ「{$slug}」は他のエントリーに使われているため、番号が追加されます。
 
 # Entry path editing for nested entries
 # Heading for the parent folder picker shown when the `meta.path` option is enabled
@@ -1470,6 +1818,9 @@ entry_sidebar:
   backlinks:
     title: バックリンク
     no_entries: このエントリーを参照しているエントリーはありません。
+
+  # Tab label of a panel with a count, e.g. of comments. {$title} is the panel title
+  title_with_count: '{$title} ({$count})'
 
 # Status shown next to the Save button while an entry with many new files is being saved
 # {$done} and {$total} are the number of files prepared and to prepare, or the number of commits
@@ -1750,6 +2101,9 @@ assets_dialog:
   photo_credit:
     title: 写真クレジット
     description: '可能であれば以下のクレジットを使ってください:'
+    # {$field} is the label of the Markdown field the credit is added to
+    insert_to_field: '{$field} に挿入'
+    copy_as_markdown: Markdown としてコピー
 
   # Unsaved asset badge
   unsaved: 未保存
@@ -1789,6 +2143,7 @@ editor_components:
   alt: 代替テキスト
   title: タイトル
   link: リンク
+  caption: キャプション
 
 # Key-Value field: column headers and validation
 key_value:
@@ -1919,6 +2274,7 @@ config:
     path_outside_root_dir: パス「{$path}」はルートディレクトリの外を指しています。CMS はルートディレクトリの外のファイルを一覧表示できません。
     oauth_implicit_flow: 設定されている認証方式 (暗黙的フロー) は Sveltia CMS では非対応です。代わりに他の <a>認証方法</a> を使用してください。
     github_pkce_unsupported: GitHub の制約により PKCE 認証はまだサポートされていません。代わりに他の <a>認証方法</a> を使用してください。
+    additions_no_base_url: '`base_url` オプションには Sveltia CMS Additions サービスの URL を指定してください。'
     oauth_no_app_id: ' OAuth アプリケーション ID が定義されていません。'
     # Don’t localize `open_authoring`, `editorial_workflow` and `preview`
     open_authoring_no_workflow: '`open_authoring` オプションには `editorial_workflow` または `preview` 公開モードが必要です。詳しくは <a>ドキュメント</a> を参照してください。'
@@ -2402,6 +2758,12 @@ workflow:
   # Error notification when an entry can’t be published because its branch has been committed to
   # since the entry was opened, so what would be published isn’t what was reviewed
   publish_refused_entry_changed: エントリーを開いた後に変更が加えられました。ページを再読み込みして最新の内容を確認してから公開してください。
+  review_on_x: '{$service} でレビュー'
+  from_fork: フォークから
+  fork_entry_editable: このエントリーは「{$fork}」から作成された貢献者のプルリクエストに含まれています。変更は貢献者のブランチに保存されます。プルリクエストのレビューとマージは Git サービス上で行ってください。
+  fork_entry_locked: このエントリーは「{$fork}」から作成された貢献者のプルリクエストに含まれています。貢献者がメンテナーによる編集を許可していないため、ここでは閲覧のみ可能です。
+  fork_not_editable: 貢献者がこのプルリクエストのメンテナーによる編集を許可していません。
+  fork_entry_gone: 貢献者のプルリクエストがすでに閉じられているため、変更を保存できません。
   # Error shown in the save error dialog when an entry can’t be saved for review, because a request
   # the CMS doesn’t show is already open from the branch the entry would be saved to. `{$number}` is
   # the request number, e.g. `#12` on GitHub or `!12` on GitLab. Keep the wording free of Git jargon
@@ -2488,11 +2850,10 @@ open_authoring:
 # Settings page aria-label
 categories: カテゴリ
 
-# Site Configuration Editor
-site_configuration_editor: サイト設定エディター
-
 # Preferences panels
 prefs:
+  account:
+    title: アカウント
   # API key management feedback messages
   changes:
     api_key_saved: API キーが保存されました。

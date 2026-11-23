@@ -9,6 +9,7 @@ import {
   getSortConfig,
   getSortKeyLabel,
   getSortKeyType,
+  resolveSortFieldKey,
   sortKeys,
   SPECIAL_SORT_KEY_TYPES,
   SPECIAL_SORT_KEYS,
@@ -1169,6 +1170,40 @@ describe('Test getSortKeyType()', () => {
   });
 });
 
+describe('Test resolveSortFieldKey()', () => {
+  /** @type {any} */
+  const collection = { name: 'faq', _type: 'entry', reorder: { key: 'weight' } };
+
+  test('resolves _manual to a configured order field', async () => {
+    const { getField } = await import('$lib/services/contents/entry/fields');
+
+    vi.mocked(getField).mockReturnValueOnce({ name: 'weight', widget: 'number' });
+    expect(resolveSortFieldKey(collection, '_manual')).toBe('weight');
+    expect(getField).toHaveBeenCalledWith({ collectionName: 'faq', keyPath: 'weight' });
+  });
+
+  test('keeps _manual when the order field is not configured', async () => {
+    const { getField } = await import('$lib/services/contents/entry/fields');
+
+    vi.mocked(getField).mockReturnValueOnce(undefined);
+    expect(resolveSortFieldKey(collection, '_manual')).toBe('_manual');
+  });
+
+  test('keeps _manual when reordering is not enabled', async () => {
+    const { getField } = await import('$lib/services/contents/entry/fields');
+
+    expect(resolveSortFieldKey({ ...collection, reorder: undefined }, '_manual')).toBe('_manual');
+    expect(getField).not.toHaveBeenCalled();
+  });
+
+  test('keeps any other key', async () => {
+    const { getField } = await import('$lib/services/contents/entry/fields');
+
+    expect(resolveSortFieldKey(collection, 'title')).toBe('title');
+    expect(getField).not.toHaveBeenCalled();
+  });
+});
+
 describe('Test getSortKeyLabel()', () => {
   /** @type {any} */
   const mockCollection = {
@@ -1357,6 +1392,91 @@ describe('Test sortKeys state', () => {
       { key: 'price', label: 'Price', type: 'number' },
       { key: 'code', label: 'Code' },
     ]);
+
+    // Clean up
+    selectedCollection.current = undefined;
+  });
+
+  test('words the manual order like a configured Number order field', async () => {
+    const { getField } = await import('$lib/services/contents/entry/fields');
+
+    /** @type {Record<string, any>} */
+    const fields = {
+      title: { name: 'title', label: 'Title', widget: 'string' },
+      weight: { name: 'weight', label: 'Weight', widget: 'number' },
+    };
+
+    vi.mocked(getField).mockImplementation(({ keyPath }) => fields[keyPath]);
+
+    allEntries.current = [];
+    selectedCollection.current = /** @type {any} */ ({
+      name: 'faq',
+      _type: 'entry',
+      folder: 'content/faq',
+      reorder: { key: 'weight' },
+      sortable_fields: ['weight', 'title'],
+      fields: Object.values(fields),
+      _i18n: { i18nEnabled: false },
+    });
+
+    // @see https://github.com/sveltia/sveltia-cms/issues/1169
+    expect(sortKeys.current).toEqual([
+      { key: '_manual', label: 'Weight', type: 'number' },
+      { key: 'title', label: 'Title' },
+    ]);
+
+    // The order field isn’t configured
+    selectedCollection.current = /** @type {any} */ ({
+      name: 'faq',
+      _type: 'entry',
+      folder: 'content/faq',
+      reorder: { key: 'position' },
+      sortable_fields: ['title'],
+      fields: [fields.title],
+      _i18n: { i18nEnabled: false },
+    });
+
+    expect(sortKeys.current).toEqual([
+      { key: '_manual', label: 'sort_keys._manual' },
+      { key: 'title', label: 'Title' },
+    ]);
+
+    // Clean up
+    selectedCollection.current = undefined;
+  });
+
+  test('labels the manual order with a custom label given in sortable_fields', async () => {
+    const { getField } = await import('$lib/services/contents/entry/fields');
+    /** @type {Record<string, any>} */
+    const fields = { weight: { name: 'weight', label: 'Weight', widget: 'number' } };
+
+    vi.mocked(getField).mockImplementation(({ keyPath }) => fields[keyPath]);
+
+    allEntries.current = [];
+
+    /** @type {any} */
+    const collection = {
+      name: 'faq',
+      _type: 'entry',
+      folder: 'content/faq',
+      reorder: { key: 'weight' },
+      sortable_fields: [{ field: 'weight', label: 'Position' }],
+      fields: Object.values(fields),
+      _i18n: { i18nEnabled: false },
+    };
+
+    selectedCollection.current = collection;
+    expect(sortKeys.current).toEqual([{ key: '_manual', label: 'Position', type: 'number' }]);
+
+    // A label given to `_manual` comes first
+    selectedCollection.current = {
+      ...collection,
+      sortable_fields: [
+        { field: '_manual', label: 'Custom' },
+        { field: 'weight', label: 'Position' },
+      ],
+    };
+    expect(sortKeys.current).toEqual([{ key: '_manual', label: 'Custom', type: 'number' }]);
 
     // Clean up
     selectedCollection.current = undefined;

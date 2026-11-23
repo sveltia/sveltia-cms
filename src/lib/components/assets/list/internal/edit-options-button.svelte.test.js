@@ -4,7 +4,12 @@ import { page, userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
 import { getAssetDetails } from '$lib/services/assets/details';
-import { editingAsset, renamingAsset, uploadingAssets } from '$lib/services/assets/state';
+import {
+  assetMoveRequest,
+  editingAsset,
+  renamingAsset,
+  uploadingAssets,
+} from '$lib/services/assets/state';
 import { showUploadAssetsDialog } from '$lib/services/assets/view';
 import { backendName } from '$lib/services/backends';
 import { repository } from '$lib/services/backends/git/github/repository';
@@ -48,10 +53,11 @@ describe('EditOptionsButton', () => {
     prefs.devModeEnabled = false;
     editingAsset.current = undefined;
     renamingAsset.current = undefined;
+    assetMoveRequest.current = undefined;
     showUploadAssetsDialog.current = false;
   });
 
-  test('starts editing, renaming or replacing the asset', async () => {
+  test('starts editing, renaming, moving or replacing the asset', async () => {
     await render(EditOptionsButton, { asset: textAsset });
     await openMenu();
 
@@ -60,7 +66,7 @@ describe('EditOptionsButton', () => {
         .getByRole('menuitem')
         .elements()
         .map((el) => el.textContent?.trim()),
-    ).toEqual(['Edit', 'Rename', 'Replace', 'View on Live Site']);
+    ).toEqual(['Edit', 'Rename', 'Move', 'Replace', 'View on Live Site']);
 
     await page.getByRole('menuitem', { name: 'Edit Asset' }).click();
     expect(editingAsset.current).toBe(textAsset);
@@ -68,6 +74,10 @@ describe('EditOptionsButton', () => {
     await openMenu();
     await page.getByRole('menuitem', { name: 'Rename Asset' }).click();
     expect(renamingAsset.current).toBe(textAsset);
+
+    await openMenu();
+    await page.getByRole('menuitem', { name: 'Move Asset' }).click();
+    expect(assetMoveRequest.current).toEqual({ assets: [textAsset] });
 
     await openMenu();
     await page.getByRole('menuitem', { name: 'Replace Asset' }).click();
@@ -83,6 +93,37 @@ describe('EditOptionsButton', () => {
     await vi.waitFor(() =>
       expect(openNewTab).toHaveBeenCalledWith('https://example.com/uploads/notes.txt'),
     );
+  });
+
+  test('moves every asset selected in the list', async () => {
+    const assets = [textAsset, imageAsset];
+
+    await render(EditOptionsButton, { asset: textAsset, assets });
+    await openMenu();
+    await page.getByRole('menuitem', { name: 'Move Asset' }).click();
+    expect(assetMoveRequest.current).toEqual({ assets });
+    // The request holds its own copy of the list
+    expect(assetMoveRequest.current?.assets).not.toBe(assets);
+  });
+
+  test('moves the asset focused last when the assets aren’t given', async () => {
+    const { rerender } = await render(EditOptionsButton, { asset: textAsset });
+
+    await rerender({ asset: imageAsset });
+    await openMenu();
+    await page.getByRole('menuitem', { name: 'Move Asset' }).click();
+    expect(assetMoveRequest.current).toEqual({ assets: [imageAsset] });
+  });
+
+  test('can’t move the selection when one of the assets is read-only', async () => {
+    const readonlyAsset = { ...imageAsset, folder: { ...imageAsset.folder, readonly: true } };
+
+    await render(EditOptionsButton, { asset: textAsset, assets: [textAsset, readonlyAsset] });
+    await openMenu();
+
+    await expect.element(page.getByRole('menuitem', { name: 'Move Asset' })).toBeDisabled();
+    // The other actions only apply to the focused asset
+    await expect.element(page.getByRole('menuitem', { name: 'Rename Asset' })).toBeEnabled();
   });
 
   test('can’t edit a binary file', async () => {
@@ -113,6 +154,7 @@ describe('EditOptionsButton', () => {
 
     await expect.element(page.getByRole('menuitem', { name: 'Edit Asset' })).toBeDisabled();
     await expect.element(page.getByRole('menuitem', { name: 'Rename Asset' })).toBeDisabled();
+    await expect.element(page.getByRole('menuitem', { name: 'Move Asset' })).toBeDisabled();
     await expect.element(page.getByRole('menuitem', { name: 'Replace Asset' })).toBeDisabled();
     await expect.element(page.getByRole('menuitem', { name: 'View on Live Site' })).toBeEnabled();
   });
@@ -125,6 +167,7 @@ describe('EditOptionsButton', () => {
 
     await expect.element(page.getByRole('menuitem', { name: 'Edit Asset' })).toBeDisabled();
     await expect.element(page.getByRole('menuitem', { name: 'Rename Asset' })).toBeDisabled();
+    await expect.element(page.getByRole('menuitem', { name: 'Move Asset' })).toBeDisabled();
     await expect.element(page.getByRole('menuitem', { name: 'Replace Asset' })).toBeDisabled();
     await expect.element(page.getByRole('menuitem', { name: 'View on Live Site' })).toBeEnabled();
   });
@@ -159,7 +202,7 @@ describe('EditOptionsButton', () => {
     }
   });
 
-  test('has no public URL for a file that can’t be read', async () => {
+  test('has a public URL for a file that can’t be read', async () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     // The test backend can’t download a file that isn’t held in memory
@@ -171,7 +214,8 @@ describe('EditOptionsButton', () => {
         expect.objectContaining({ message: 'Failed to retrieve blob' }),
       ),
     );
-    await expect.element(page.getByRole('menuitem', { name: 'View on Live Site' })).toBeDisabled();
+    // The URL doesn’t depend on the file’s content
+    await expect.element(page.getByRole('menuitem', { name: 'View on Live Site' })).toBeEnabled();
   });
 
   test('ignores the details of an asset focused earlier that arrive late', async () => {

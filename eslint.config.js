@@ -23,8 +23,9 @@ export default [
     ],
   },
 
-  // Register @stylistic and import-x plugins for all files (including .svelte)
-  (({ files: _f, ...c }) => c)(airbnbPlugins.stylistic),
+  // Register @stylistic and import-x plugins for all files (including .svelte). Use our own
+  // @stylistic instead of the older version bundled with Airbnb, which can't be registered twice
+  { name: airbnbPlugins.stylistic.name, plugins: { '@stylistic': stylistic } },
   (({ files: _f, ...c }) => c)(airbnbPlugins.importX),
 
   // Airbnb extended base rules, applied to all files (strip the `files` restriction
@@ -74,7 +75,6 @@ export default [
       },
     },
     plugins: {
-      '@stylistic': stylistic,
       'unused-imports': unusedImportsPlugin,
       jsdoc: jsdocPlugin,
     },
@@ -163,6 +163,13 @@ export default [
       'no-nested-ternary': 'off',
       'no-param-reassign': 'off',
       'no-void': 'off',
+      // The core rule wants the props never written back to be `const`, which can’t be done while
+      // `$props()` is destructured along with a `$bindable()` prop. The options are Airbnb’s
+      'prefer-const': 'off',
+      'svelte/prefer-const': [
+        'error',
+        { destructuring: 'any', ignoreReadBeforeAssign: true, excludedRunes: ['$props'] },
+      ],
       // https://github.com/sveltejs/eslint-plugin-svelte#white_check_mark-rules
       'svelte/no-at-html-tags': 'off',
       // Ignore false errors

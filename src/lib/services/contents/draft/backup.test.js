@@ -6,11 +6,16 @@ import { isProxy } from 'node:util/types';
 import { IndexedDB } from '@sveltia/utils/storage';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { entryLocks, getDraftLockKey, getOthersLock } from '$lib/services/additions/locks.svelte';
+import { getAdditions } from '$lib/services/app/additions';
 import { cmsConfigVersion } from '$lib/services/config';
 import { isDraftModified } from '$lib/services/contents/draft';
 import { createState } from '$lib/services/utils/state.svelte';
+import { createMockForkPullRequest } from '$lib/test/factories';
 
 vi.mock('@sveltia/utils/storage');
+// Sveltia CMS Additions is loaded, with its real entry locks
+vi.mock('$lib/services/app/additions', () => ({ getAdditions: vi.fn() }));
 vi.mock('@sveltia/utils/file', () => ({
   getBlobRegex: vi.fn((flags = '') => new RegExp('\\bblob:http://localhost/[\\w-]+\\b', flags)),
 }));
@@ -127,6 +132,8 @@ describe('draft/backup', () => {
     mockPrefs.useDraftBackup = true;
     cmsConfigVersion.current = 'v1.0.0';
     backupModule.backupToastState.current = { saved: false, restored: false, deleted: false };
+    // A test may leave the dialog waiting for an answer
+    backupModule.restoreDialogState.current = { show: false };
     vi.mocked(isDraftModified).mockReturnValue(false);
     interacted = false;
   });
@@ -222,6 +229,44 @@ describe('draft/backup', () => {
   });
 
   describe('saveBackup', () => {
+    beforeEach(() => {
+      vi.mocked(getAdditions).mockReturnValue(
+        /** @type {any} */ ({ getDraftLockKey, getOthersLock }),
+      );
+    });
+
+    it('should still save the changes made before someone took over the entry', async () => {
+      mockPrefs.useDraftBackup = true;
+      vi.mocked(isDraftModified).mockReturnValue(true);
+
+      const draft = {
+        collectionName: 'posts',
+        originalEntry: { slug: 'my-post', subPath: 'my-post' },
+        currentLocales: { en: true },
+        currentSlugs: { en: 'my-post' },
+        currentValues: { en: { title: 'My Post' } },
+        files: {},
+        interacted: true,
+      };
+
+      const key = /** @type {string} */ (getDraftLockKey(draft));
+
+      Object.assign(entryLocks, {
+        connection: 'mine',
+        locks: { [key]: { key, user_id: 'u2', name: 'Bob', since: '', connection: 'theirs' } },
+      });
+
+      try {
+        await saveBackup(draft);
+      } finally {
+        Object.assign(entryLocks, { connection: '', locks: {} });
+      }
+
+      expect(mockBackupDB.put).toHaveBeenCalledWith(
+        expect.objectContaining({ collectionName: 'posts', slug: 'my-post' }),
+      );
+    });
+
     it('should save backup when draft is modified', async () => {
       mockPrefs.useDraftBackup = true;
       cmsConfigVersion.current = 'v1.0.0';
@@ -665,6 +710,48 @@ describe('draft/backup', () => {
       await saveBackup(draft);
 
       expect(mockBackupDB.put).not.toHaveBeenCalled();
+    });
+
+    it('should keep the backup while the user is asked whether to restore it', async () => {
+      mockPrefs.useDraftBackup = true;
+      // Nothing has been changed, which would otherwise delete the backup
+      vi.mocked(isDraftModified).mockReturnValue(false);
+
+      await saveBackup({
+        collectionName: 'posts',
+        originalEntry: { slug: 'my-post', subPath: 'my-post' },
+        interacted: true,
+        restorePending: true,
+      });
+
+      expect(mockBackupDB.delete).not.toHaveBeenCalled();
+      expect(mockBackupDB.put).not.toHaveBeenCalled();
+    });
+
+    it('should keep the backup of an unchanged entry someone else is editing', async () => {
+      mockPrefs.useDraftBackup = true;
+      vi.mocked(isDraftModified).mockReturnValue(false);
+
+      const draft = {
+        collectionName: 'posts',
+        originalEntry: { slug: 'my-post', subPath: 'my-post' },
+        interacted: true,
+      };
+
+      const key = /** @type {string} */ (getDraftLockKey(draft));
+
+      Object.assign(entryLocks, {
+        connection: 'mine',
+        locks: { [key]: { key, user_id: 'u2', name: 'Bob', since: '', connection: 'theirs' } },
+      });
+
+      try {
+        await saveBackup(draft);
+      } finally {
+        Object.assign(entryLocks, { connection: '', locks: {} });
+      }
+
+      expect(mockBackupDB.delete).not.toHaveBeenCalled();
     });
 
     it('should not save backup for a read-only entry', async () => {
@@ -1445,6 +1532,120 @@ describe('draft/backup', () => {
     });
   });
 
+  describe('draft lock while the restore dialog is open', () => {
+    // @see https://github.com/sveltia/sveltia-cms/issues/566
+    const backup = {
+      timestamp: new Date(),
+      cmsConfigVersion: 'v1.0.0',
+      collectionName: 'posts',
+      slug: 'my-post',
+      currentLocales: { en: true },
+      currentSlugs: { en: 'my-post' },
+      currentValues: { en: { title: 'Backup' } },
+      files: {},
+    };
+
+    /**
+     * Create a draft of an existing entry.
+     * @returns {any} Draft.
+     */
+    const createDraft = () => ({
+      collectionName: 'posts',
+      fileName: undefined,
+      originalEntry: { slug: 'my-post', subPath: 'my-post' },
+      currentLocales: { en: true },
+      currentSlugs: { en: 'my-post' },
+      currentValues: { en: { title: 'Current' } },
+      originalValues: { en: {} },
+      files: {},
+      interacted: false,
+    });
+
+    it.each([
+      ['restored', true],
+      ['discarded', false],
+      ['left unanswered', undefined],
+    ])('should lock the draft until the backup is %s', async (_label, answer) => {
+      mockBackupDB.get.mockResolvedValue(backup);
+
+      const draft = createDraft();
+      const promise = restoreBackupIfNeeded({ draft });
+
+      await vi.waitFor(() => expect(restoreDialogState.current.show).toBe(true));
+      expect(draft.restorePending).toBe(true);
+      restoreDialogState.current.resolve(answer);
+      await promise;
+      expect(draft.restorePending).toBe(false);
+      expect(draft.currentValues.en.title).toBe(answer ? 'Backup' : 'Current');
+    });
+
+    it('should unlock the draft even if the restore fails', async () => {
+      mockBackupDB.get.mockResolvedValue(backup);
+      mockBackupDB.delete.mockRejectedValueOnce(new Error('Failed'));
+
+      const draft = createDraft();
+      const promise = restoreBackupIfNeeded({ draft });
+
+      await vi.waitFor(() => expect(restoreDialogState.current.show).toBe(true));
+      restoreDialogState.current.resolve(false);
+      await expect(promise).rejects.toThrow('Failed');
+      expect(draft.restorePending).toBe(false);
+    });
+
+    it('should not ask about the backup of a draft replaced while it was looked up', async () => {
+      /**
+       * Resolve the first backup lookup.
+       * @type {(value: any) => void}
+       */
+      let resolveLookup = () => {};
+
+      mockBackupDB.get.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveLookup = resolve;
+          }),
+      );
+      mockBackupDB.get.mockResolvedValueOnce(undefined);
+
+      const staleDraft = createDraft();
+      const stale = restoreBackupIfNeeded({ draft: staleDraft });
+
+      // Another entry is opened before the first lookup is done
+      await restoreBackupIfNeeded({ draft: createDraft() });
+      resolveLookup(backup);
+      await stale;
+
+      expect(restoreDialogState.current.show).toBe(false);
+      expect(staleDraft.restorePending).toBeUndefined();
+    });
+
+    it('should close a dialog left open for a draft that has been replaced', async () => {
+      const resolve = vi.fn();
+
+      restoreDialogState.current = { show: true, timestamp: new Date(), resolve };
+      mockBackupDB.get.mockResolvedValue(undefined);
+
+      await restoreBackupIfNeeded({ draft: createDraft() });
+      expect(restoreDialogState.current.show).toBe(false);
+      expect(resolve).toHaveBeenCalledWith();
+      expect(mockBackupDB.delete).not.toHaveBeenCalled();
+
+      // A dialog without a resolver is just closed
+      restoreDialogState.current = { show: true };
+      await restoreBackupIfNeeded({ draft: createDraft() });
+      expect(restoreDialogState.current.show).toBe(false);
+    });
+
+    it('should not lock a draft without a backup', async () => {
+      mockBackupDB.get.mockResolvedValue(undefined);
+
+      const draft = createDraft();
+
+      await restoreBackupIfNeeded({ draft });
+      expect(draft.restorePending).toBeUndefined();
+    });
+  });
+
   describe('restoreBackupIfNeeded', () => {
     /**
      * Create a draft to restore a backup to.
@@ -2105,6 +2306,35 @@ describe('draft/backup', () => {
       await _deleteBackup('posts', 'my-post');
 
       expect(mockBackupDB.delete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getBackupSlug()', () => {
+    it('keys the backup of an entry from a contributor’s pull request apart', async () => {
+      const { getBackupSlug } = await import('./backup');
+      const collection = /** @type {any} */ ({ name: 'posts' });
+
+      /**
+       * Create an entry with the given pull request.
+       * @param {any} [pullRequest] Pull request.
+       * @returns {any} Entry.
+       */
+      const entry = (pullRequest) => ({
+        subPath: '2024/hello',
+        ...(pullRequest ? { workflow: { pullRequest } } : {}),
+      });
+
+      expect(getBackupSlug({ collection, originalEntry: entry() })).toBe('2024/hello');
+      expect(
+        getBackupSlug({ collection, originalEntry: entry({ branch: 'cms/posts/2024%2Fhello' }) }),
+      ).toBe('2024/hello');
+      expect(
+        getBackupSlug({
+          collection,
+          originalEntry: entry(createMockForkPullRequest({ slug: '2024%2Fhello' })),
+        }),
+      ).toBe('2024/hello?_pr=7');
+      expect(getBackupSlug({ collection, fileName: 'site' })).toBe('site');
     });
   });
 });

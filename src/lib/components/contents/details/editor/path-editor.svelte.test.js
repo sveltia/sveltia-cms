@@ -2,7 +2,7 @@ import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { getCollection } from '$lib/services/contents/collection';
-import { unpublishedEntries } from '$lib/services/workflow';
+import { allUnpublishedEntries } from '$lib/services/workflow';
 import { createMockEntry, initTestConfig, setEntries } from '$lib/test/config';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 
@@ -18,7 +18,7 @@ const pagesCollection = {
   label: 'Pages',
   folder: 'content/pages',
   nested: { depth: 4 },
-  meta: { path: { widget: 'string', index_file: 'index' } },
+  meta: { path: { index_file: 'index' } },
   fields: [{ name: 'title', widget: 'string' }],
 };
 
@@ -66,7 +66,7 @@ const localizedCollection = {
   folder: 'content/localized',
   nested: { depth: 3 },
   i18n: { structure: 'multiple_folders', locales: ['en', 'fr'], default_locale: 'en' },
-  meta: { path: { widget: 'string', index_file: 'index' } },
+  meta: { path: { index_file: 'index' } },
   fields: [{ name: 'title', widget: 'string' }],
 };
 
@@ -76,7 +76,7 @@ const docsCollection = {
   label: 'Docs',
   folder: 'content/docs',
   nested: { depth: 3, subfolders: false },
-  meta: { path: { widget: 'string' } },
+  meta: { path: {} },
   fields: [{ name: 'title', widget: 'string' }],
 };
 
@@ -129,7 +129,7 @@ describe('PathEditor', () => {
   });
 
   beforeEach(() => {
-    unpublishedEntries.current = [];
+    allUnpublishedEntries.current = [];
   });
 
   test('offers the folders in a tree, opened down to the current one', async () => {
@@ -200,7 +200,7 @@ describe('PathEditor', () => {
   });
 
   test('counts the unpublished entries in', async () => {
-    unpublishedEntries.current = [
+    allUnpublishedEntries.current = [
       /** @type {any} */ ({
         ...createMockEntry({
           slug: 'blog/index',

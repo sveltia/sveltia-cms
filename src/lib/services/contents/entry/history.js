@@ -1,8 +1,10 @@
 import { backend } from '$lib/services/backends';
+import { getEarlierEntryPaths } from '$lib/services/contents/entry/earlier-paths';
 import { getEntryPaths } from '$lib/services/contents/entry/paths';
 
 /**
- * @import { Entry, FileCommit } from '$lib/types/private';
+ * @import { Entry, FileCommit, InternalCollection } from '$lib/types/private';
+ * @import { Field } from '$lib/types/public';
  */
 
 /**
@@ -19,9 +21,14 @@ const historyCache = new Map();
  * Fetch the commit history for the current entry draft, using a cache to avoid redundant requests.
  * Returns immediately if the data is already cached for the same entry.
  * @param {Entry} entry The entry to fetch the history for.
+ * @param {object} [options] Options.
+ * @param {InternalCollection} [options.collection] Collection of the entry, to include the history
+ * of the files it had before it was renamed outside the CMS, which the Git host doesn’t carry over;
+ * see {@link getEarlierEntryPaths}.
+ * @param {Field[]} [options.fields] Field list of the collection.
  * @returns {Promise<EntryHistory>} The commit history result.
  */
-export const fetchEntryHistory = async (entry) => {
+export const fetchEntryHistory = async (entry, { collection, fields } = {}) => {
   const { id } = entry;
   const cached = historyCache.get(id);
 
@@ -35,7 +42,12 @@ export const fetchEntryHistory = async (entry) => {
     return { commits: [], loading: false, error: false };
   }
 
-  const paths = getEntryPaths(entry);
+  const paths = [
+    ...getEntryPaths(entry),
+    ...(collection
+      ? getEarlierEntryPaths({ collection, fields, entry }).flatMap((earlier) => earlier.paths)
+      : []),
+  ];
 
   try {
     const commits = await _backend.fetchFileCommits(paths);

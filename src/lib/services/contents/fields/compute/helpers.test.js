@@ -906,6 +906,23 @@ describe('getNumericValue()', () => {
     expect(getNumericValue(2.4, config('int/string'))).toBe('2');
   });
 
+  test('should round an integer result like the `round()` function of an expression', () => {
+    // `1.005 * 100` is `100.49999999999999`, and the floating-point error is dropped first
+    expect(getNumericValue(1.005 * 100, config('int'))).toBe(101);
+    expect(getNumericValue(1.005 * 100, config('int/string'))).toBe('101');
+    expect(getNumericValue(1.005 * 100, config('custom'))).toBe('101');
+    // `0.3 - 1.8` is `-1.5`, and a half is rounded away from zero
+    expect(getNumericValue(0.3 - 1.8, config('int'))).toBe(-2);
+    expect(getNumericValue(-2.5, config('int'))).toBe(-3);
+  });
+
+  test('should keep every digit of a large result of an integer type', () => {
+    expect(getNumericValue(1234567890123456, config('int'))).toBe(1234567890123456);
+    expect(getNumericValue(2 ** 53 - 1, config('int/string'))).toBe(String(2 ** 53 - 1));
+    expect(getNumericValue(1234567890123456.5, config('int'))).toBe(1234567890123457);
+    expect(getNumericValue(-1234567890123456.5, config('int'))).toBe(-1234567890123457);
+  });
+
   test('should turn negative zero into zero', () => {
     expect(Object.is(getNumericValue(-0, config('float')), 0)).toBe(true);
     expect(Object.is(getNumericValue(-0.4, config('int')), 0)).toBe(true);
@@ -933,6 +950,7 @@ describe('getNumericValue()', () => {
   test('should keep every digit of a large integer result of a floating-point type', () => {
     expect(getNumericValue(1234567890123456, config('float'))).toBe(1234567890123456);
     expect(getNumericValue(1e21, config('float/string'))).toBe('1e+21');
+    expect(getNumericValue(1234567890123456.5, config('float'))).toBe(1234567890123456.5);
   });
 });
 

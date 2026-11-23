@@ -8,6 +8,7 @@ import {
 } from '$lib/services/contents/collection/nested';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { getOrCreate } from '$lib/services/utils/cache';
+import { getBaseName } from '$lib/services/utils/file';
 
 /**
  * @import { Entry, InternalCollection, InternalLocaleCode } from '$lib/types/private';
@@ -108,7 +109,7 @@ const collectFolders = ({ entries, indexFileName, subfolders }) => {
  * @returns {string} Label.
  */
 const getNodeLabel = ({ collection, path, indexEntry, summaryTemplate, locale }) => {
-  const folderName = path.slice(path.lastIndexOf('/') + 1);
+  const folderName = getBaseName(path);
 
   if (!indexEntry) {
     return folderName;
@@ -350,7 +351,7 @@ export const getMovableFolderName = ({ collection, subPath, isNew = false }) => 
 
   const dirPath = getEntryDirPath(subPath);
 
-  return dirPath ? dirPath.slice(dirPath.lastIndexOf('/') + 1) : undefined;
+  return dirPath ? getBaseName(dirPath) : undefined;
 };
 
 /**
@@ -388,4 +389,4 @@ export const getParentFolderPickerTree = ({
  * @returns {string[]} Folder names.
  */
 export const getChildFolderNames = (node) =>
-  (node?.children ?? []).map(({ path }) => path.slice(path.lastIndexOf('/') + 1));
+  (node?.children ?? []).map(({ path }) => getBaseName(path));

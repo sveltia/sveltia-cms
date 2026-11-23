@@ -4,8 +4,6 @@ import {
   createPublicURL,
   getAssetFolderPaths,
   getAssetSavingInfo,
-  getEntryAssetFolderPath,
-  getOwnedEntryFolderPath,
   replaceBlobURL,
   resolveAssetFolderPaths,
 } from '$lib/services/contents/draft/save/assets';
@@ -30,7 +28,6 @@ vi.mock('$lib/services/utils/file', async (importOriginal) => ({
   getGitHash: vi.fn(),
   encodeFilePath: vi.fn((path) => encodeURIComponent(path)),
   createPath: vi.fn((parts) => parts.filter(Boolean).join('/')),
-  resolvePath: vi.fn((path) => path),
   getDirName: vi.fn((path) => path.split('/').slice(0, -1).join('/')),
   sanitizePath: vi.fn((path) =>
     path
@@ -225,7 +222,7 @@ describe('Test resolveAssetFolderPaths()', () => {
       ...collectionBase,
       folder: 'src/dokument',
       nested: { depth: 10 },
-      meta: { path: { widget: 'string', index_file: '_index' } },
+      meta: { path: { index_file: '_index' } },
       _file: { ..._file, basePath: 'src/dokument', subPath: undefined },
     };
 
@@ -1727,6 +1724,56 @@ describe('Test resolveAssetFolderPaths()', () => {
       ).toBe('content/pages/about');
     });
   });
+
+  describe('value stored for an entry-relative `media_folder: images`', () => {
+    /** @type {InternalCollection} */
+    const collection = {
+      ...collectionBase,
+      _file: { ..._file, subPath: '{{slug}}/index' },
+      _i18n: i18nSingleFile,
+    };
+
+    test.each([
+      // No `public_folder` falls back to the media folder, relative to the entry, as with Decap CMS
+      [undefined, 'images/photo.jpg'],
+      ['images', 'images/photo.jpg'],
+      ['images/', 'images/photo.jpg'],
+      ['./images', './images/photo.jpg'],
+      ['.', './photo.jpg'],
+      ['', 'photo.jpg'],
+      // A leading slash makes the path absolute
+      ['/images', '/images/photo.jpg'],
+      ['/blog/{{slug}}/images', '/blog/hello/images/photo.jpg'],
+      ['/', '/photo.jpg'],
+    ])('`public_folder: %j` stores `%s`', async (publicFolder, expected) => {
+      const { normalizeAssetFolder } = await import('$lib/services/config/folders/assets');
+
+      const folder = /** @type {AssetFolderInfo} */ (
+        normalizeAssetFolder({
+          collectionName: 'blog',
+          mediaFolder: 'images',
+          publicFolder,
+          baseFolder: 'src/content/blog',
+          globalFolders: undefined,
+        })
+      );
+
+      const { resolvedInternalPath, resolvedPublicPath } = resolveAssetFolderPaths({
+        folder,
+        fillSlugOptions: {
+          type: 'media_folder',
+          collection,
+          content: {},
+          currentSlug: 'hello',
+          entryFilePath: 'src/content/blog/hello/index.md',
+        },
+      });
+
+      // The file is saved beside the entry either way
+      expect(resolvedInternalPath).toBe('src/content/blog/hello/images');
+      expect(createPublicURL(resolvedPublicPath, 'photo.jpg')).toBe(expected);
+    });
+  });
 });
 
 describe('Test replaceBlobURL()', () => {
@@ -2675,6 +2722,53 @@ describe('Test replaceBlobURL()', () => {
     vi.mocked(formatFileName).mockImplementation((name) => name.toLowerCase());
   });
 
+  test('should overwrite an existing file whose name is spelled in another normalization form when replace is true', async () => {
+    const { getAssetsByDirName } = await import('$lib/services/assets');
+    const { formatFileName } = await import('$lib/services/assets/file-name');
+    const decomposedName = 'cafe\u0301.jpg';
+
+    const mockFile = new File(['test content'], decomposedName.normalize(), {
+      type: 'image/jpeg',
+    });
+
+    const blobURL = 'blob:http://localhost:5173/replace-nfd-123';
+
+    // The name as saved on macOS, in the decomposed form
+    vi.mocked(getAssetsByDirName).mockReturnValue(/** @type {any} */ ([{ name: decomposedName }]));
+    vi.mocked(formatFileName).mockImplementation((name) => name.normalize());
+
+    const draft = createPostDraft();
+    const folder = createImagesFolder();
+    const content = { image: blobURL };
+    /** @type {any[]} */
+    const changes = [];
+    /** @type {any[]} */
+    const savingAssets = [];
+
+    await replaceBlobURL({
+      file: mockFile,
+      folder,
+      replace: true,
+      blobURL,
+      draft,
+      defaultLocaleSlug: 'test-post',
+      keyPath: 'image',
+      content,
+      changes,
+      savingAssets,
+      encodingEnabled: false,
+    });
+
+    // The composed name would be another path in Git, leaving the original file behind
+    expect(changes).toHaveLength(1);
+    expect(changes[0].action).toBe('update');
+    expect(changes[0].path).toBe(`static/images/${decomposedName}`);
+    expect(savingAssets[0].name).toBe(decomposedName);
+    expect(content.image).toBe(`/images/${decomposedName}`);
+
+    vi.mocked(formatFileName).mockImplementation((name) => name.toLowerCase());
+  });
+
   test('should give a different name to another file with the same name in the same save', async () => {
     const { getGitHash } = await import('$lib/services/utils/file');
     const { formatFileName } = await import('$lib/services/assets/file-name');
@@ -3096,7 +3190,7 @@ describe('Test getAssetSavingInfo()', () => {
     ).toBe('src/content/blog/en');
   });
 
-  test('should normalize asset names', async () => {
+  test('should keep asset names as they are spelled in the repository', async () => {
     /** @type {any} */
     const draft = {
       collection: {
@@ -3120,10 +3214,10 @@ describe('Test getAssetSavingInfo()', () => {
 
     const defaultLocaleSlug = 'test';
 
-    // Asset names with different normalizations (e.g., composed vs decomposed Unicode)
+    // A decomposed name, as saved on macOS, and a composed one
     mockGetAssetsByDirName.mockReturnValue([
-      { name: 'café.jpg' }, // May have different Unicode representations
-      { name: 'naïve.png' },
+      { name: 'cafe\u0301.jpg' },
+      { name: 'na\u00efve.png' },
     ]);
 
     mockGetFillSlugOptions.mockReturnValue({
@@ -3135,10 +3229,8 @@ describe('Test getAssetSavingInfo()', () => {
 
     const result = getAssetSavingInfo({ draft, defaultLocaleSlug, folder });
 
-    // Names should be normalized
-    expect(result.assetNamesInSameFolder).toHaveLength(2);
-    expect(result.assetNamesInSameFolder[0]).toBe('café.jpg'.normalize());
-    expect(result.assetNamesInSameFolder[1]).toBe('naïve.png'.normalize());
+    // A file replacing one of them has to be written to the same path
+    expect(result.assetNamesInSameFolder).toEqual(['cafe\u0301.jpg', 'na\u00efve.png']);
   });
 
   test('should handle collection file i18n configuration', async () => {
@@ -3506,129 +3598,6 @@ describe('Test createPublicURL()', () => {
 
   test('should keep the dot prefix for an entry-relative public path', () => {
     expect(createPublicURL('.', 'image.png')).toBe('./image.png');
-  });
-});
-
-describe('Test getOwnedEntryFolderPath()', () => {
-  /**
-   * Create an entry collection.
-   * @param {Record<string, any>} [props] Properties to override.
-   * @returns {any} Collection.
-   */
-  const createCollection = (props = {}) => ({
-    name: 'blog',
-    folder: 'content/blog',
-    fields: [],
-    _type: 'entry',
-    _file: { basePath: 'content/blog', subPath: undefined },
-    ...props,
-  });
-
-  test('returns the folder holding an entry file with a fixed name', () => {
-    const collection = createCollection({
-      _file: { basePath: 'content/blog', subPath: '{{slug}}/index' },
-    });
-
-    expect(getOwnedEntryFolderPath(collection, 'content/blog/hello-world/index.md')).toBe(
-      'content/blog/hello-world',
-    );
-  });
-
-  test('returns the folder named after an entry file whose name is the slug', () => {
-    const collection = createCollection({
-      _file: { basePath: 'content/blog', subPath: '{{year}}/{{month}}/{{slug}}' },
-    });
-
-    expect(getOwnedEntryFolderPath(collection, 'content/blog/2025/06/hello-world.md')).toBe(
-      'content/blog/2025/06/hello-world',
-    );
-  });
-
-  test('returns the folder holding the index file of a collection with nested entries', () => {
-    const collection = createCollection({
-      nested: { depth: 100 },
-      meta: { path: { index_file: '_index' } },
-    });
-
-    expect(getOwnedEntryFolderPath(collection, 'content/pages/about/_index.md')).toBe(
-      'content/pages/about',
-    );
-    expect(getOwnedEntryFolderPath(collection, 'content/pages/about/_index.fr.md')).toBe(
-      'content/pages/about',
-    );
-    expect(getOwnedEntryFolderPath(collection, 'content/pages/about/notes.md')).toBeUndefined();
-  });
-
-  test('returns nothing for an entry sharing the collection folder', () => {
-    expect(
-      getOwnedEntryFolderPath(createCollection(), 'content/blog/hello-world.md'),
-    ).toBeUndefined();
-    expect(
-      getOwnedEntryFolderPath(
-        createCollection({ _file: { basePath: 'content/blog', subPath: '{{slug}}' } }),
-        'content/blog/hello-world.md',
-      ),
-    ).toBeUndefined();
-  });
-
-  test('returns nothing for a file collection', () => {
-    expect(
-      getOwnedEntryFolderPath(/** @type {any} */ ({ _type: 'file' }), 'data/settings.json'),
-    ).toBeUndefined();
-  });
-});
-
-describe('Test getEntryAssetFolderPath()', () => {
-  const ownFolderCollection = /** @type {any} */ ({
-    name: 'blog',
-    _type: 'entry',
-    _file: { basePath: 'content/blog', subPath: '{{slug}}/index' },
-  });
-
-  const sharedFolderCollection = /** @type {any} */ ({
-    name: 'blog',
-    _type: 'entry',
-    _file: { basePath: 'content/blog', subPath: undefined },
-  });
-
-  test('returns the folder the entry occupies', () => {
-    expect(
-      getEntryAssetFolderPath({
-        collection: ownFolderCollection,
-        entryFilePath: 'content/blog/hello/index.md',
-        internalPath: 'content/blog',
-      }),
-    ).toBe('content/blog/hello');
-  });
-
-  test('returns the folder the entry file is stored in', () => {
-    expect(
-      getEntryAssetFolderPath({
-        collection: sharedFolderCollection,
-        entryFilePath: 'content/blog/en/hello.md',
-        internalPath: 'content/blog',
-      }),
-    ).toBe('content/blog/en');
-  });
-
-  test('falls back to the internal path for a file at the repository root', () => {
-    expect(
-      getEntryAssetFolderPath({
-        collection: sharedFolderCollection,
-        entryFilePath: 'hello.md',
-        internalPath: 'content/blog',
-      }),
-    ).toBe('content/blog');
-  });
-
-  test('returns the internal path for a file collection', () => {
-    expect(
-      getEntryAssetFolderPath({
-        collection: /** @type {any} */ ({ name: 'data', _type: 'file' }),
-        entryFilePath: 'data/settings.json',
-        internalPath: 'static/uploads',
-      }),
-    ).toBe('static/uploads');
   });
 });
 

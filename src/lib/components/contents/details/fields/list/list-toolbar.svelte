@@ -44,7 +44,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     position,
     element = $bindable(),
     fieldId,
@@ -66,7 +65,6 @@
     addItem,
     pasteItem,
     updateExpanderStates,
-    /* eslint-enable prefer-const */
   } = $props();
 </script>
 

@@ -38,15 +38,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    fieldConfig,
-    kind,
-    multiple = false,
-    hidden = false,
-    onSelect,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { fieldConfig, kind, multiple = false, hidden = false, onSelect } = $props();
 
   // The merged options always have the `config` object
   const libOptions = $derived(

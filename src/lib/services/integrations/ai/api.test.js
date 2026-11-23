@@ -727,6 +727,7 @@ describe('API key patterns', () => {
     ['google', `AIza${'SyAbCdEfGh'.repeat(3)}IjKlM`],
     ['google', `AQ.Ab8RN6${'aB3_-x.'.repeat(6)}`],
     ['mistral', 'abcdefghijklmnopqrstuvwxyz123456'],
+    ['mistral', `mstrl_${'aB3x'.repeat(8)}_${'cD4y'.repeat(2)}`],
     ['openai', `sk-proj-${'aB3_-x'.repeat(10)}`],
   ];
 

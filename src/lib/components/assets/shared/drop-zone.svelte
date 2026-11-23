@@ -5,6 +5,7 @@
   import { onMount } from 'svelte';
 
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
+  import { isAssetDrag } from '$lib/services/assets/drag';
   import { getListFormatter } from '$lib/services/contents/i18n';
   import { env } from '$lib/services/user/env.svelte';
   import { getAcceptedImageFormatLabels } from '$lib/services/utils/media/image';
@@ -29,7 +30,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     accept = undefined,
     disabled = false,
     multiple = false,
@@ -38,7 +38,6 @@
     filterDroppedFiles = true,
     onDrop = undefined,
     children = undefined,
-    /* eslint-enable prefer-const */
   } = $props();
 
   /** @type {HTMLElement | undefined} */
@@ -130,6 +129,11 @@
   role="none"
   class="drop-target"
   ondragover={(event) => {
+    // Assets dragged from the list are moved by dropping them on a folder, not uploaded
+    if (isAssetDrag(event)) {
+      return;
+    }
+
     event.preventDefault();
 
     if (disabled || !event.dataTransfer) {
@@ -159,6 +163,10 @@
     dragging = false;
   }}
   ondrop={async (event) => {
+    if (isAssetDrag(event)) {
+      return;
+    }
+
     event.preventDefault();
 
     if (disabled || !event.dataTransfer) {

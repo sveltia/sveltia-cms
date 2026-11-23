@@ -6,7 +6,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { EmptyState } from '@sveltia/ui';
-  import mime from 'mime';
 
   import AssetPreviewContent from '$lib/components/assets/list/asset-preview-content.svelte';
   import DeleteAssetsButton from '$lib/components/assets/list/delete-assets-button.svelte';
@@ -18,6 +17,7 @@
   import NotFound from '$lib/components/global/not-found.svelte';
   import { goBack, goto } from '$lib/services/app/navigation';
   import {
+    canPreviewExternalAsset,
     externalAssets,
     getCloudServicePath,
     getExternalAssetPath,
@@ -25,9 +25,10 @@
     selectedCloudService,
   } from '$lib/services/assets/external';
   import { deleteExternalAssets, fetchExternalAssetBlob } from '$lib/services/assets/external/data';
-  import { listedExternalAssets } from '$lib/services/assets/external/view';
+  import { externalAssetGroups } from '$lib/services/assets/external/view';
   import { getAdjacentAssets } from '$lib/services/assets/view';
   import { env } from '$lib/services/user/env.svelte';
+  import mime from '$lib/services/utils/mime';
 
   /**
    * @import { ViewTransitionType } from '$lib/services/app/navigation';
@@ -51,7 +52,11 @@
   const backPath = $derived(getCloudServicePath(service));
   /** The assets right before and after the shown one in the list the overlay was opened from. */
   const { previous, next } = $derived(
-    getAdjacentAssets(listedExternalAssets.current, ({ id }) => id === asset?.id),
+    getAdjacentAssets(
+      externalAssetGroups.current,
+      ({ id }) => id === asset?.id,
+      canPreviewExternalAsset,
+    ),
   );
 
   /**
@@ -86,8 +91,6 @@
       <DeleteAssetsButton
         {assets}
         deleteAssets={deleteExternalAssets}
-        buttonDescription={_('delete_assets', { values: { count: 1 } })}
-        dialogDescription={_('confirm_deleting_this_asset')}
         onDelete={() => {
           goBack(backPath);
         }}

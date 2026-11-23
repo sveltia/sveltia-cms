@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { customComponentRegistry } from '$lib/services/api/registries';
 import { lockedBranch } from '$lib/services/backends/branch-access';
+import { user } from '$lib/services/user/account.svelte';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import { createMockAssetFolder } from '$lib/test/factories';
 
@@ -564,6 +565,31 @@ describe('assets/folders', () => {
       ];
 
       allAssetFolders.current = mockFolders;
+    });
+
+    it('should cache the matches per directory and mode until the folders are replaced', () => {
+      getPathInfoMock.mockReturnValue({
+        filename: 'image.jpg',
+        basename: 'image.jpg',
+        dirname: 'content/posts/images/2024',
+      });
+
+      const sub = getAssetFoldersByPath('content/posts/images/2024/image.jpg');
+
+      expect(sub.map(({ internalPath }) => internalPath)).toContain('content/posts/images');
+      // The exact-match lookup of the same directory isn’t served the subfolder matches
+      expect(
+        getAssetFoldersByPath('content/posts/images/2024/image.jpg', {
+          matchSubFolders: false,
+        }).map(({ internalPath }) => internalPath),
+      ).not.toContain('content/posts/images');
+      // A cached result is handed out as a new array
+      expect(getAssetFoldersByPath('content/posts/images/2024/image.jpg')).toEqual(sub);
+      expect(getAssetFoldersByPath('content/posts/images/2024/image.jpg')).not.toBe(sub);
+
+      allAssetFolders.current = [];
+
+      expect(getAssetFoldersByPath('content/posts/images/2024/image.jpg')).toEqual([]);
     });
 
     it('should find folders matching exact path', () => {
@@ -1839,6 +1865,18 @@ describe('assets/folders', () => {
       lockedBranch.current = 'main';
 
       expect(assetsLocked.current).toBe(true);
+    });
+
+    it('should be true for a Sveltia CMS Additions viewer', () => {
+      user.account = { backendName: 'github', role: 'viewer' };
+
+      expect(assetsLocked.current).toBe(true);
+
+      user.account = { backendName: 'github', role: 'editor' };
+
+      expect(assetsLocked.current).toBe(false);
+
+      user.account = undefined;
     });
   });
 

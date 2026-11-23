@@ -41,7 +41,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     id,
     value,
     initialText = undefined,
@@ -62,7 +61,6 @@
     ariaErrormessage = undefined,
     getSelectionEnd = undefined,
     onApply = undefined,
-    /* eslint-enable prefer-const */
   } = $props();
 
   /** @type {HTMLButtonElement | undefined} */

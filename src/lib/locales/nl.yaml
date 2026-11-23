@@ -11,6 +11,8 @@
 create: Nieuw
 select: Selecteren
 select_all: Alles selecteren
+# Accessible name of the checkbox that selects a single entry or asset in a list
+select_item: '{$name} selecteren'
 upload: Uploaden
 copy: Kopiëren
 download: Downloaden
@@ -69,6 +71,10 @@ primary: Primair
 secondary: Secundair
 collection: Collectie
 folder: Map
+# Label of the subfolder list in the asset picker
+folders: Mappen
+# Menu in a breadcrumb holding the folders that don’t fit
+more_folders: Meer mappen
 
 # ==============================================================================
 # Miscellaneous Labels
@@ -113,6 +119,7 @@ welcome_message: Welkom bij {$name}
 powered_by: Mogelijk gemaakt door {$name}
 
 # Shown during initial configuration and data loading
+unsupported_browser_error: Je browser wordt niet ondersteund. Werk deze bij naar de nieuwste versie of gebruik een andere browser.
 loading_cms_config: Bezig met laden van de CMS-configuratie…
 loading_site_data: Bezig met laden van de sitegegevens…
 loading_site_data_error: Er is een fout opgetreden bij het laden van de sitegegevens.
@@ -125,6 +132,8 @@ sign_in_with_x: Inloggen met {$service}
 # Access token dialog: alternative authentication method
 sign_in_using_access_token: Inloggen met een toegangstoken
 sign_in_using_access_token_description: Voer hieronder je token in. Het moet lees- en schrijftoegang hebben tot de inhoud van de repository.
+# Shown after the description above when Editorial Workflow is enabled, which opens and merges pull requests
+sign_in_using_access_token_workflow_note: Omdat de redactionele workflow is ingeschakeld, moet het ook lees- en schrijftoegang hebben tot pull requests.
 # Inline link text with embedded HTML anchor tag
 # {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
 sign_in_using_access_token_link: Je kunt een token aanmaken op de <a>{$service}-gebruikersinstellingenpagina</a>.
@@ -143,6 +152,11 @@ work_with_local_repo_description: Selecteer, wanneer gevraagd, de hoofdmap van d
 work_with_local_repo_description_no_repo: Selecteer, wanneer gevraagd, de hoofdmap van je Git-repository.
 # Button label for demo/test repository
 work_with_test_repo: Werken met een testrepository
+# Button label for the test repository when sample content is seeded, e.g. on a demo site
+start_demo: Demo starten
+# Shown below the disabled test repository option in a browser that can’t save files to its
+# storage, e.g. Safari before version 26
+test_repo_unsupported_browser: Je browser kan de bestanden van de testrepository niet opslaan. Werk deze bij naar de nieuwste versie of gebruik een andere browser.
 
 # Authentication errors
 # Error messages shown during sign-in failures
@@ -167,14 +181,28 @@ sign_in_error:
 backend_unsupported_version: De {$name}-backend vereist {$name} {$version} of nieuwer.
 # {$repo} is the repository identifier, typically in owner/repo format
 repository_no_access: Je hebt geen toegang tot de repository “{$repo}”.
+# {$repo} is the repository identifier, typically in owner/repo format
+repository_no_write_access: Je hebt geen schrijftoegang tot de repository “{$repo}”.
 repository_not_found: De repository “{$repo}” bestaat niet.
 repository_empty: De repository “{$repo}” heeft geen branches.
 # {$repo} is the repository identifier, and {$branch} is the configured branch name
 branch_not_found: De repository “{$repo}” heeft geen branch “{$branch}”.
+# {$repo} is the repository identifier, and {$dir} is the configured root directory
+root_dir_not_found: De hoofdmap “{$dir}” bestaat niet in de repository “{$repo}”.
 
 # General errors
 # Fallback error dialog title for unexpected errors
 unexpected_error: Onverwachte fout
+# Shown in place of the page when an unexpected error stops it from being displayed
+# {$message} is the error message
+page_crashed: Er is iets misgegaan en deze pagina kan niet worden weergegeven. {$message}
+# Shown in place of a field editor or preview when an unexpected error stops it from being displayed
+# {$message} is the error message
+field_crashed: Er is iets misgegaan en dit veld kan niet worden weergegeven. {$message}
+# Button label for displaying a part of the page again after an unexpected error
+try_again: Opnieuw proberen
+# Button label for reloading the CMS after an unexpected error
+reload_cms: CMS opnieuw laden
 
 # Entry file parsing errors
 # Toast notification when entry files fail to parse on initial load
@@ -203,6 +231,332 @@ sign_in: Inloggen
 sign_in_with_mobile: Inloggen met je mobiel
 # Instructions shown in the mobile sign-in dialog for passwordless authentication
 sign_in_with_mobile_instruction: Scan de onderstaande QR-code met je telefoon of tablet om zonder wachtwoord in te loggen. Je instellingen worden automatisch gekopieerd.
+# Confirmation dialog shown when the CMS is opened with a sign-in link from the mobile sign-in
+# QR code. {$account} is the account name, {$service} is the Git service name, e.g. GitHub
+sign_in_with_link: Inloggen met link
+sign_in_with_link_confirmation: Met deze link log je in als {$account} op {$service} en worden de instellingen gekopieerd van het apparaat waarop de link is aangemaakt. Ga alleen verder als je de link zelf hebt aangemaakt.
+
+# Sign-in with Sveltia CMS Additions, which manages its own user accounts instead of the Git
+# service’s. Don’t localize “Sveltia CMS Additions”
+additions:
+  username: Gebruikersnaam
+  password: Wachtwoord
+  sign_in: Inloggen
+  new_password_title: Kies een nieuw wachtwoord
+  new_password_description: Je bent ingelogd met een tijdelijk wachtwoord. Kies een nieuw wachtwoord om verder te gaan.
+  new_password: Nieuw wachtwoord
+  password_too_short: Het wachtwoord is te kort. Gebruik minstens 12 tekens.
+  change_password: Wachtwoord wijzigen
+  # {$name} is the user’s username, {$role} their role, e.g. Editor
+  signed_in_as_x_with_role: Ingelogd als {$name} ({$role})
+  link_github: GitHub-account koppelen
+  link_github_error: GitHub-account kon niet worden gekoppeld
+  current_password: Huidig wachtwoord
+  # {$username} is the username filled in from a magic link emailed to the user
+  filled_from_link: De gebruikersnaam en het wachtwoord zijn ingevuld via een link. Log alleen in als “{$username}” jouw gebruikersnaam is.
+  change_password_description: Je blijft hier ingelogd en wordt op je andere apparaten uitgelogd.
+  password_changed: Je wachtwoord is gewijzigd.
+  # The Account settings panel of a Sveltia CMS Additions user
+  account:
+    profile: Profiel
+    profile_description: Je naam is zichtbaar voor andere gebruikers in het CMS, bijvoorbeeld bij itemvergrendelingen en opmerkingen, en in je commits.
+    username_description: Je gebruikersnaam kan niet worden gewijzigd.
+    email: E-mailadres
+    email_description: Dit wordt gebruikt in de commits die je maakt, zodat GitHub ze aan je account kan koppelen. Zonder e-mailadres wordt een plaatsvervangend adres gebruikt. Alleen een beheerder kan het wijzigen.
+    change_name: Naam wijzigen
+    name_changed: Je naam is gewijzigd.
+    password: Wachtwoord
+    no_password: Je account logt alleen in met GitHub, dus het heeft geen wachtwoord om te wijzigen. Een beheerder kan je er een geven door je wachtwoord opnieuw in te stellen.
+  setup:
+    use_admin_secret: Beheerdersgeheim gebruiken
+    title: Sveltia CMS Additions instellen
+    secret_description: Voer het beheerdersgeheim in dat is ingesteld in de instellingen van je Sveltia CMS Additions-service. Het wordt alleen in dit tabblad bewaard zolang je de installatie uitvoert.
+    admin_secret: Beheerdersgeheim
+    continue: Doorgaan
+    back: Terug naar inloggen
+    admin_title: Beheerdersaccount
+    admin_create_description: Maak het eerste beheerdersaccount aan. Hiermee log je in en beheer je de andere gebruikers.
+    admin_reset_description: Er bestaat al een beheerdersaccount. Stel hier het wachtwoord van een beheerder opnieuw in om weer toegang te krijgen, of maak een nieuw account aan.
+    admin_saved: Het beheerdersaccount is klaar. Log in met het wachtwoord dat je zojuist hebt ingevoerd.
+    create_admin: Beheerder aanmaken
+    reset_password: Beheerder opslaan
+    github_title: GitHub
+    # {$repo} is the repository, e.g. octocat/site
+    github_description: Maak een GitHub App aan voor deze site en installeer deze op de repository “{$repo}”. GitHub vraagt je om te bevestigen en brengt je daarna hier terug.
+    # {$repo} is the repository, {$app} is the name of the GitHub App
+    github_connected: Verbonden met de repository “{$repo}” via de GitHub App “{$app}”.
+    connect_github: Verbinden met GitHub
+    # {$step} is the number of the current step, {$total} the number of steps
+    step_x_of_y: Stap {$step} van {$total}
+    admin_exists: Er bestaat een beheerdersaccount.
+    reset_admin_password: Beheerderswachtwoord opnieuw instellen
+    setup_complete: De installatie is voltooid. Log in met een beheerdersaccount om gebruikers en instellingen te beheren. Je kunt hier op elk moment terugkomen met het beheerdersgeheim.
+    manage_sites: Andere sites beheren
+    back_to_setup: Terug
+    sites_title: Andere sites
+    sites_description: Deze service kan ook andere sites bedienen, elk met eigen gebruikers, instellingen en GitHub App. Stel “base_url” in de CMS-configuratie van een site in op de URL ervan en stel de site daar vervolgens in met het beheerdersgeheim.
+    no_sites: Er zijn nog geen andere sites.
+    site_id: Site-ID
+    site_id_description: 1 tot 32 kleine letters, cijfers en koppeltekens, bijvoorbeeld “acme”. Deze ID verschijnt in de URL van de site en kan niet worden gewijzigd.
+    site_name_optional: Naam (optioneel)
+    add_site: Site toevoegen
+    # {$name} is the name of the site
+    site_added: “{$name}” is toegevoegd. Stel “base_url” in de CMS-configuratie in op de URL van de site en open daar de installatiewizard.
+    # {$name} is the name of the site
+    copy_site_url: URL van {$name} kopiëren
+    delete_site: Site verwijderen
+    # {$name} is the name of the site
+    delete_site_x: '{$name} verwijderen'
+    # {$name} is the name of the site, {$id} is its ID
+    delete_site_confirmation: Als je “{$name}” verwijdert, worden ook de gebruikers, instellingen en opmerkingen ervan verwijderd. Dit kan niet ongedaan worden gemaakt. De GitHub App blijft op GitHub staan, waar je deze kunt verwijderen. Typ “{$id}” om te bevestigen.
+    site_id_to_confirm: Site-ID ter bevestiging
+    data_key_locked_title: Beheerdersgeheim gewijzigd
+    data_key_locked_description: Het beheerdersgeheim is gewijzigd, dus de opgeslagen instellingen kunnen niet worden gelezen. Voer het vorige geheim in om ze te behouden, of begin opnieuw als je het kwijt bent.
+    previous_secret: Vorig beheerdersgeheim
+    unlock: Ontgrendelen
+    rekey: Opnieuw beginnen
+    rekey_confirmation: Als je opnieuw begint, worden de gegevens van de GitHub App en de andere opgeslagen geheimen verwijderd en wordt iedereen uitgelogd. Wachtwoorden blijven behouden. Doorgaan?
+    result:
+      ok: GitHub is verbonden. Je kunt nu inloggen.
+      github_app_not_created: De GitHub App is niet aangemaakt. Gebruik het beheerdersgeheim om het opnieuw te proberen.
+      github_app_not_installed: De GitHub App is niet geïnstalleerd. Gebruik het beheerdersgeheim om het opnieuw te proberen.
+      github_wrong_account: De GitHub App is geïnstalleerd op een account dat niet de eigenaar van de repository is. Installeer de app op het account dat eigenaar van de repository is en probeer het opnieuw.
+      github_repository_not_included: De GitHub App is geïnstalleerd zonder toegang tot de repository. Geef de app op GitHub toegang tot de repository en probeer het opnieuw.
+      unexpected: Verbinden met GitHub is mislukt door een onverwachte fout. Probeer het opnieuw.
+  locks:
+    # {$name} is the name of the person editing the entry, {$time} when they started
+    being_edited: '{$name} bewerkt dit item sinds {$time}, dus je kunt het alleen bekijken.'
+    being_edited_by_you: Je bewerkt dit item in een ander tabblad, dus je kunt het hier alleen bekijken.
+    # {$name} is the name of the person who took over the entry
+    taken_over: '{$name} heeft dit item overgenomen, dus je kunt het nu alleen bekijken.'
+    take_over: Overnemen
+    unavailable: Itemvergrendelingen zijn niet beschikbaar, dus iemand anders bewerkt dit item mogelijk tegelijkertijd.
+    # {$name} is the name of the person editing the entry
+    being_edited_by_x: Wordt bewerkt door {$name}
+    # {$names} is a list of the other people who have the entry open in the editor
+    also_open_by_x: Ook geopend door {$names}
+    # {$names} is a list of the people who have the entry open, besides anyone editing it
+    open_by_x: Geopend door {$names}
+  users:
+    title: Gebruikers
+    add_user: Gebruiker toevoegen
+    edit_user: Gebruiker bewerken
+    add: Toevoegen
+    name: Naam
+    username_description: Een gebruikersnaam kan niet meer worden gewijzigd nadat de gebruiker is toegevoegd.
+    email_optional: E-mailadres (optioneel)
+    email_description: Dit wordt gebruikt in de commits die deze persoon maakt, zodat GitHub ze aan diens account kan koppelen. Zonder e-mailadres wordt een plaatsvervangend adres gebruikt.
+    role: Rol
+    status: Status
+    last_sign_in: Laatst ingelogd
+    sign_in_column: Inloggen
+    methods:
+      password: Wachtwoord
+      # {$login} is a GitHub username
+      github: GitHub ({$login})
+    actions: Acties
+    you: (jij)
+    never: Nooit
+    roles:
+      admin: Beheerder
+      editor: Redacteur
+      viewer: Lezer
+    statuses:
+      active: Actief
+      temporary_password: Tijdelijk wachtwoord
+      waiting_for_sign_in: Wacht op eerste login
+      disabled: Uitgeschakeld
+    # {$name} is the user’s name
+    show_options_for_x: Opties voor {$name} tonen
+    options: Gebruikersopties
+    reset_password: Wachtwoord opnieuw instellen
+    sign_out_everywhere: Overal uitloggen
+    enable: Gebruiker inschakelen
+    disable: Gebruiker uitschakelen
+    delete: Gebruiker verwijderen
+    # {$name} is the user’s name
+    reset_password_confirmation: '{$name} een nieuw tijdelijk wachtwoord geven? Deze persoon wordt overal uitgelogd en moet bij de volgende login een nieuw wachtwoord kiezen.'
+    delete_confirmation: '{$name} verwijderen? Dit kan niet ongedaan worden gemaakt.'
+    temporary_password: Tijdelijk wachtwoord
+    # {$name} is the user’s name
+    temporary_password_description: Geef deze gebruikersnaam en dit tijdelijke wachtwoord aan {$name}. Het wordt niet opnieuw getoond, en bij het inloggen kiest deze persoon een eigen wachtwoord.
+    copy_username: Gebruikersnaam kopiëren
+    copy_password: Wachtwoord kopiëren
+    # {$name} is the user’s name
+    email_credentials: E-mailen naar {$name}
+    # The emails the admin sends from their own email app, with the sign-in details: `new` to a user
+    # who has just been added, `reset` to one whose password has been reset. Each line is a string of
+    # its own, as line breaks aren’t kept in these files
+    credentials_email:
+      # {$name} is the user’s name
+      greeting: Hallo {$name},
+      # {$url} is a link to the CMS that fills in the username and the temporary password
+      sign_in_link: 'Inloglink: {$url}'
+      # {$username} is the username
+      username: 'Gebruikersnaam: {$username}'
+      # {$password} is the temporary password
+      password: 'Tijdelijk wachtwoord: {$password}'
+      new:
+        # {$app} is the name of the CMS
+        subject: Je inloggegevens voor {$app}
+        # {$app} is the name of the CMS
+        message: Je kunt nu inloggen bij {$app}. Open de onderstaande link, die je gebruikersnaam en tijdelijke wachtwoord invult, en kies bij het inloggen je eigen wachtwoord.
+      reset:
+        # {$app} is the name of the CMS
+        subject: Je wachtwoord voor {$app} is opnieuw ingesteld
+        # {$app} is the name of the CMS
+        message: Je wachtwoord voor {$app} is opnieuw ingesteld en je bent overal uitgelogd. Open de onderstaande link, die je gebruikersnaam en tijdelijke wachtwoord invult, en kies bij het inloggen een nieuw wachtwoord.
+    allowed_domains: Toegestane domeinen
+    allowed_domains_description: De sites die Sveltia CMS Additions mogen gebruiken, één hostnaam per regel. Een wildcard (*) komt overeen met elk subdomein, bijvoorbeeld *.example.com. Vermeld waar mogelijk exacte hostnamen. De lijst geldt alleen voor deze site, ook als dezelfde Sveltia CMS Additions-instantie ook andere sites bedient.
+    save_allowed_domains: Toegestane domeinen opslaan
+    allowed_domains_saved: De toegestane domeinen zijn opgeslagen.
+    sign_in_tab: Inloggen
+    # {$latest} is the newest version of Sveltia CMS Additions, {$current} the one in use
+    update_available: Sveltia CMS Additions {$latest} is beschikbaar. Je gebruikt {$current}.
+    release_notes: Release notes
+    github_username_optional: GitHub-gebruikersnaam (optioneel)
+    github_username_description: Met een GitHub-gebruikersnaam logt de gebruiker in met dat GitHub-account in plaats van met een wachtwoord.
+    # {$name} is the user’s name
+    github_required: '{$name} kan alleen inloggen met GitHub, dus de GitHub-gebruikersnaam kan niet worden verwijderd. Stel eerst het wachtwoord opnieuw in om deze persoon een wachtwoord te geven om mee in te loggen.'
+    adopt: Account overnemen
+    sign_in:
+      github: Inloggen met GitHub toestaan
+      github_description: Gebruikers loggen in met hun GitHub-account en krijgen een eigen GitHub-token, zodat hun wijzigingen op hun eigen naam worden gecommit. Een beheerder voegt ze eerst toe met hun GitHub-gebruikersnaam, tenzij een aanmeldregel op hen van toepassing is.
+      # Shown when signing in with GitHub is being turned off while {$count} users can only sign in
+      # with it
+      github_only_warning: |
+        .input {$count :integer}
+        .match $count
+          one {{ Eén gebruiker kan alleen inloggen met GitHub en kan niet meer inloggen zodra dit is uitgeschakeld, totdat je het wachtwoord van deze gebruiker opnieuw instelt. }}
+          *   {{ {$count} gebruikers kunnen alleen inloggen met GitHub en kunnen niet meer inloggen zodra dit is uitgeschakeld, totdat je hun wachtwoorden opnieuw instelt. }}
+      rules: Aanmeldregels
+      rules_description: Leden van de GitHub-organisatie waarop de app is geïnstalleerd, kunnen inloggen zonder eerst te worden toegevoegd. Hun account krijgt de rol die je kiest en wordt uitgeschakeld als ze de organisatie verlaten, tenzij je het account overneemt.
+      org: GitHub-organisatie
+      add_rule: Regel toevoegen
+      # {$org} is the name of a GitHub organization
+      remove_rule: Regel voor {$org} verwijderen
+      # For a rule whose organization hasn’t been entered yet
+      remove_empty_rule: Regel verwijderen
+      save: Inloginstellingen opslaan
+      saved: De inloginstellingen zijn opgeslagen.
+    domains_tab: Domeinen
+    github_tab: GitHub
+    github:
+      app: GitHub App
+      repository: Repository
+      not_installed: Niet geïnstalleerd
+      statuses:
+        ok: De app werkt.
+        not_registered: Er is nog geen GitHub App ingesteld. Start de installatiewizard vanaf de inlogpagina met het beheerdersgeheim.
+        key_missing: De privésleutel van de app is verloren gegaan toen het beheerdersgeheim werd vervangen. Genereer een nieuwe privésleutel in de app-instellingen op GitHub en upload deze hieronder.
+        key_rejected: GitHub accepteert de privésleutel van de app niet, bijvoorbeeld omdat deze daar is verwijderd. Genereer een nieuwe privésleutel in de app-instellingen op GitHub en upload deze hieronder.
+        not_installed: De app is niet geïnstalleerd op de repository. Installeer de app opnieuw vanaf de app-pagina op GitHub of start de installatiewizard.
+        suspended: De installatie van de app is opgeschort. Hef de opschorting op in de installatie-instellingen op GitHub.
+        unreachable: GitHub kon niet worden bereikt. Probeer het later opnieuw.
+      check_again: Opnieuw controleren
+      # {$branch} is the name of the repository’s default branch
+      branch_protected: Rulesets beschermen de branch “{$branch}” tegen force pushes en verwijdering.
+      branch_bypassed: Rulesets beschermen de branch “{$branch}”, maar de app kan ze omzeilen, dus redacteuren kunnen nog steeds een force push naar de branch uitvoeren of deze verwijderen. Verwijder de app uit de bypasslijsten van die rulesets.
+      branch_unprotected: Geen enkele ruleset beschermt de branch “{$branch}” tegen force pushes en verwijdering, dus redacteuren kunnen de geschiedenis ervan herschrijven of de branch verwijderen. Voeg in de repository-instellingen een ruleset toe die beide blokkeert, zonder de app op de bypasslijst.
+      repository_rules: Repositoryregels openen
+      private_key: Privésleutel
+      private_key_description: Om de privésleutel te vervangen, genereer je een nieuwe in de app-instellingen op GitHub en upload je vervolgens het .pem-bestand dat wordt gedownload. Verwijder daarna de oude sleutel daar.
+      app_settings: App-instellingen openen
+      upload_private_key: Privésleutel uploaden
+      replace_private_key: Privésleutel vervangen
+      private_key_summary: De service gebruikt de privésleutel van de app om toegang te krijgen tot de repository op GitHub. Vervang de sleutel als deze mogelijk is uitgelekt.
+      private_key_replaced: De privésleutel is vervangen.
+      commit_author: Auteur van commits
+      commit_author_description: Kies wie wordt vermeld als auteur van de wijzigingen die in het CMS worden opgeslagen. GitHub ondertekent alleen de commits waarvan de app de auteur is, dus kies de app als een ruleset ondertekende commits vereist. Andere gebruikers krijgen de wijziging binnen een uur.
+      commit_author_user: De persoon die de wijziging heeft aangebracht
+      commit_author_bot: De GitHub App, met de persoon als co-auteur
+      commit_author_saved: De auteur van commits is opgeslagen.
+  # Administration section for the API keys and the deploy hook an admin shares with everyone
+  credentials:
+    title: Toegangsgegevens
+    description: API keys en de deploy hook die je hier invoert, worden gebruikt door iedereen die inlogt, tenzij ze hun eigen gegevens invoeren in Instellingen. Iedereen die is ingelogd bij het CMS kan ze lezen, dus voer alleen keys in die je met je team wilt delen.
+    save: Toegangsgegevens opslaan
+    saved: De toegangsgegevens zijn opgeslagen.
+    # {$service} is the service name, e.g. DeepL
+    invalid_key: De API key voor {$service} lijkt niet te kloppen.
+  error:
+    unauthenticated: Je sessie is verlopen. Log opnieuw in.
+    wrong_admin_secret: Het beheerdersgeheim is onjuist.
+    admin_secret_missing: Het beheerdersgeheim is niet ingesteld in de instellingen van de Sveltia CMS Additions-service.
+    admin_secret_too_short: Het beheerdersgeheim dat is ingesteld in de instellingen van de Sveltia CMS Additions-service is te kort. Gebruik minstens 32 willekeurige tekens.
+    wrong_previous_secret: Het vorige beheerdersgeheim is onjuist.
+    not_an_admin: Deze gebruiker is geen beheerder. Kies een andere gebruikersnaam.
+    invalid_username: Een gebruikersnaam bestaat uit 3 tot 30 kleine letters, cijfers, punten, koppeltekens of underscores.
+    last_admin: Er moet minstens één beheerder zijn.
+    cannot_disable_self: Je kunt je eigen account niet uitschakelen.
+    cannot_delete_self: Je kunt je eigen account niet verwijderen.
+    username_taken: Een andere gebruiker heeft deze gebruikersnaam al.
+    email_taken: Een andere gebruiker heeft dit e-mailadres al.
+    invalid_name: De naam moet 1 tot 100 tekens bevatten.
+    invalid_email: Het e-mailadres is ongeldig.
+    invalid_domains: Een van de toegestane domeinen is geen geldige hostnaam.
+    current_origin_removed: De toegestane domeinen moeten de site bevatten die je nu gebruikt.
+    forbidden: Alleen beheerders kunnen dit doen.
+    invalid_credentials: De gebruikersnaam of het wachtwoord is onjuist.
+    user_disabled: Dit account is uitgeschakeld. Vraag je beheerder om hulp.
+    too_many_attempts: Te veel pogingen. Probeer het later opnieuw.
+    wrong_password: Het huidige wachtwoord is onjuist.
+    same_password: Kies een nieuw wachtwoord dat verschilt van het huidige.
+    invalid_github_login: Dit is geen geldige GitHub-gebruikersnaam.
+    github_user_not_found: Er bestaat geen GitHub-gebruiker met deze naam.
+    github_account_taken: Een andere gebruiker logt al in met dit GitHub-account.
+    invalid_rules: Een aanmeldregel heeft de naam van een GitHub-organisatie nodig.
+    invalid_rule_role: Een aanmeldregel kan alleen de rol Redacteur of Lezer toekennen.
+    rule_org_not_installed: De GitHub App moet zijn geïnstalleerd op de organisatie van een aanmeldregel.
+    not_invited: Je hebt hier geen account. Vraag je beheerder om je toe te voegen.
+    method_disabled: Inloggen met GitHub is uitgeschakeld.
+    access_denied: Het inloggen is geannuleerd.
+    github_app_not_set_up: Sveltia CMS Additions is nog niet verbonden met GitHub. Vraag je beheerder om de installatie te voltooien.
+    invalid_tenant_id: De site-ID moet bestaan uit 1 tot 32 kleine letters, cijfers en koppeltekens, en mag niet “default” zijn.
+    invalid_tenant_name: De sitenaam mag maximaal 100 tekens bevatten.
+    tenant_exists: Er bestaat al een site met deze ID.
+    github_app_missing: Er is nog geen GitHub App ingesteld.
+    invalid_private_key: Het bestand is geen geldige privésleutel.
+    private_key_mismatch: GitHub accepteert deze privésleutel niet voor de app. Controleer of je de sleutel hebt gegenereerd in de instellingen van de app.
+    github_error: GitHub heeft een fout teruggegeven. Probeer het later opnieuw.
+    data_key_locked: Sveltia CMS Additions kan niet worden gebruikt totdat een beheerder klaar is met het wijzigen van het beheerdersgeheim.
+    not_configured: Sveltia CMS Additions is niet correct geconfigureerd. Vraag je beheerder om hulp.
+    origin_not_allowed: Deze site mag Sveltia CMS Additions niet gebruiken. Vraag je beheerder om de site toe te voegen aan de toegestane domeinen.
+    not_set_up: Sveltia CMS Additions is nog niet verbonden met GitHub. Vraag je beheerder om de installatie te voltooien.
+    # A user whose password an admin has reset signs in another way, e.g. with GitHub
+    temporary_password: Je wachtwoord is opnieuw ingesteld. Log in met je gebruikersnaam en het tijdelijke wachtwoord dat je beheerder je heeft gegeven en kies daarna een nieuw wachtwoord.
+    # {$url} is the URL of the service
+    incompatible: Deze versie van Sveltia CMS werkt niet met de Sveltia CMS Additions-service op {$url}.
+    unreachable: Sveltia CMS Additions kon niet worden bereikt. Probeer het later opnieuw.
+    insecure_connection: Sveltia CMS Additions moet via HTTPS worden aangeboden. Controleer de `base_url` in de CMS-configuratie.
+    unexpected: Het verzoek aan Sveltia CMS Additions is mislukt door een onverwachte fout. Probeer het later opnieuw.
+
+  # Conversation panel: comments on the entry, kept by Sveltia CMS Additions
+  conversation:
+    title: Gesprek
+    refresh: Gesprek vernieuwen
+    empty: Nog geen opmerkingen.
+    # Button above a long conversation, which is loaded from its latest comments
+    show_older: Oudere opmerkingen tonen
+    # Label of the list of comments
+    timeline: Opmerkingen
+    deleted_user: Verwijderde gebruiker
+    you: Jij
+    edited: bewerkt
+    comment_label: Opmerking
+    placeholder: Laat een opmerking achter (Markdown)
+    visible_to_cms_users: Alleen zichtbaar voor CMS-gebruikers
+    send: Plaatsen
+    options: Opties voor opmerking
+    edit: Bewerken
+    delete: Verwijderen
+    save: Opslaan
+    delete_confirmation: Deze opmerking verwijderen? Dit kan niet ongedaan worden gemaakt.
+    send_failed: De opmerking kon niet worden verzonden.
+
+  # Placeholder of an API key or deploy hook field the user has left empty, while an admin of
+  # Sveltia CMS Additions has entered one for everyone
+  provided_by_admin: Verstrekt door je beheerder
 
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
@@ -210,6 +564,15 @@ sign_in_with_mobile_instruction: Scan de onderstaande QR-code met je telefoon of
 signed_in_as_x: Ingelogd als {$name}
 working_with_local_repo: Werken met een lokale repository
 working_with_test_repo: Werken met een testrepository
+working_in_demo_mode: Demomodus
+
+# Demo welcome dialog: shown once after signing in to a demo site, where the test repository is
+# seeded with sample content and the changes are only stored in the browser
+demo_welcome:
+  title: Welkom bij de demo van Sveltia CMS
+  description: Verken gerust het CMS en bewerk de voorbeeldinhoud. Je wijzigingen worden alleen in deze browser opgeslagen. Er wordt niets online gepubliceerd en niemand anders kan ze zien.
+  reset_hint: Als je opnieuw wilt beginnen met de oorspronkelijke inhoud, kies je Alle gegevens wissen onder Instellingen > Gegevensbeheer.
+  button_label: Aan de slag
 
 # Account menu: action items for sign-out and app installation
 sign_out: Uitloggen
@@ -225,9 +588,14 @@ install_as_app: Installeren als app
 contents: Inhoud
 assets: Media
 editorial_workflow: Redactionele workflow
+# Name of the Editorial Workflow page when all the content uses Preview Workflow, which has no
+# review stages, so the page only lists the drafts
+drafts: Concepten
 cms_config: CMS-configuratie
 # Mobile menu page title (shown only on small screens)
 menu: Menu
+# Mobile menu page section heading listing the custom pages registered by the site
+custom_pages: Pagina’s
 
 # Mobile promo infobar: encouraging users to try the mobile version
 mobile_promo_title: Sveltia CMS is nu beschikbaar op mobiel!
@@ -238,10 +606,36 @@ mobile_promo_button: Probeer het uit
 new_language_available: Sveltia CMS is nu beschikbaar in het {$locale}!
 change_language: Taal wijzigen
 
+# Live reload infobar: shown when the CMS runs on a page that a framework’s development server (e.g.
+# Astro) reloads on every file change, instead of a static HTML file
+live_reload_warning: Je ontwikkelserver laadt deze pagina opnieuw telkens wanneer een bestand verandert. Dat kan het opslaan onderbreken en je bestanden beschadigd achterlaten. Lever het CMS in plaats daarvan vanuit een statisch HTML-bestand. <a>Meer informatie</a>
+
 # Toast notification shown while the translation for the selected language is being downloaded
 # {$locale} is the localized language name, e.g., “French”
 switching_language: Overschakelen naar het {$locale}…
 locale_load_failed: De vertaling voor het {$locale} kon niet worden geladen. Probeer het later opnieuw.
+
+# Toast notification shown when changes saved with the local backend couldn’t be committed to Git
+# {$reason} is one of the `local_git_skip_reasons` strings below
+local_git_not_committed: Je wijzigingen zijn opgeslagen, maar niet gecommit naar Git. {$reason} Als je alleen de bestanden wilt opslaan, schakel je Git-commits uit onder Instellingen > Ontwikkelaar.
+local_git_skip_reasons:
+  unsupported_repository: Je repository gebruikt een Git-functie die het CMS niet ondersteunt, zoals een gekoppelde worktree, SHA-256-objectnamen, het reftable-formaat, een sparse index of een index in versie 3 of 4, die door de optie feature.manyFiles en git add -N wordt gebruikt.
+  missing_identity: Je naam en e-mailadres zijn niet ingesteld in de Git-configuratie van de repository, en het CMS kan je globale configuratie niet lezen. Stel ze in de repository in met git config --local user.name "Je naam" en git config --local user.email "jij@example.com".
+  locked: Een ander Git-proces gebruikt de repository. Als er geen proces actief is, verwijder dan het bestand .git/index.lock.
+  # The operation in progress, with how to finish or cancel it
+  operation_in_progress:
+    merge: Er is een merge bezig. Voltooi deze met git commit of annuleer deze met git merge --abort.
+    rebase: Er is een rebase bezig. Voltooi deze met git rebase --continue of annuleer deze met git rebase --abort. Als je verder bent gegaan, stopt git rebase --quit de rebase zonder je bestanden te wijzigen.
+    cherry_pick: Er is een cherry-pick bezig. Voltooi deze met git cherry-pick --continue of annuleer deze met git cherry-pick --abort.
+    revert: Er is een revert bezig. Voltooi deze met git revert --continue of annuleer deze met git revert --abort.
+    am: Er worden patches toegepast met git am. Voltooi dit met git am --continue of annuleer het met git am --abort.
+    conflict: Sommige bestanden bevatten conflicten. Los ze op en stage eerst de resultaten.
+  detached_head: Er is geen branch uitgecheckt.
+  staged_changes: Je hebt andere wijzigingen gestaged voor een commit. Commit ze of haal ze eerst uit de staging.
+  # {$path} is the file path
+  lfs: '{$path} wordt bijgehouden met Git LFS, waarnaar het CMS niet kan committen.'
+  # {$message} is the error message
+  error: Er is een onverwachte fout opgetreden. {$message}
 
 # Site and page navigation
 # Toolbar button aria-label for visiting the live site
@@ -276,6 +670,10 @@ account: Account
 live_site: Live site
 git_repository: Git-repository
 settings: Instellingen
+
+# Page for the people who look after the CMS, apart from the personal settings: user management
+# and the CMS configuration
+administration: Beheer
 
 # Help menu: button aria-labels and section headings
 show_help_menu: Helpmenu tonen
@@ -369,6 +767,10 @@ viewing_x_asset_folder: |
 # Cloud storage service view announcement
 # {$service} is the cloud storage service name, e.g. Uploadcare
 viewing_x_external_location: Je bekijkt nu de mediabestanden op {$service}.
+# Administration page announcements
+viewing_admin_section_list: Je bekijkt nu de lijst met beheersecties.
+# {$section} is the section label, e.g. Users
+viewing_x_admin_section: Je bekijkt nu de sectie “{$section}” van de beheerpagina.
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
@@ -387,6 +789,7 @@ x_of_x_selected: '{$selected} van {$total} geselecteerd'
 
 # View switcher: toggle between list and grid views
 switch_view: Weergave wisselen
+table_view: Tabelweergave
 list_view: Lijstweergave
 grid_view: Rasterweergave
 switch_to_list_view: Overschakelen naar lijstweergave
@@ -400,6 +803,16 @@ switch_to_grid_view: Overschakelen naar rasterweergave
 # Sort menu: button labels and options
 sort: Sorteren
 sorting_options: Sorteeropties
+# Table view column labels for the entry metadata used as `{{…}}` template tags
+table_column_keys:
+  # The folder containing the entry file
+  dirname: Map
+  # The entry file name without the extension
+  filename: Bestandsnaam
+  # The entry file extension
+  extension: Extensie
+  # The enabled locales of the entry
+  locales: Talen
 # Sort key option labels
 sort_keys:
   # No sorting; entries appear in their natural repository order
@@ -439,6 +852,8 @@ grouping_options: Groepeeropties
 # Asset type filter and group labels
 type: Type
 all: Alle
+# Group option for the linked files, which can be hosted anywhere: the host name of the file’s URL
+domain: Domein
 # Asset type labels
 image: Afbeelding
 video: Video
@@ -457,6 +872,9 @@ all_assets: Alle media
 global_assets: Globale media
 # Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
 linked_files: Gekoppelde bestanden
+# Badge and message shown on a linked file that couldn’t be loaded, e.g. because it has been deleted
+file_unavailable: Niet beschikbaar
+file_unavailable_description: Dit bestand kon niet worden geladen. Het is mogelijk verplaatst of verwijderd.
 
 # ==============================================================================
 # Entry and Collection Actions
@@ -492,12 +910,27 @@ creating_entries_nearing_quota: |
     *   one {{ Deze collectie nadert de limiet van {$quota} items. Je kunt nog maar {$remaining} item aanmaken. }}
     *   *   {{ Deze collectie nadert de limiet van {$quota} items. Je kunt nog maar {$remaining} items aanmaken. }}
 
+# Read-only restrictions set with the `readonly` option: advisory messages
+readonly_cms: Het CMS is in alleen-lezenmodus. Je kunt inhoud en media bekijken, maar geen wijzigingen aanbrengen.
+readonly_collection: Deze collectie is alleen-lezen. Je kunt de inhoud bekijken, maar geen wijzigingen aanbrengen.
+readonly_entry: Dit item is alleen-lezen. Je kunt het bekijken, maar geen wijzigingen aanbrengen.
+readonly_asset_folder: Deze map is alleen-lezen. Je kunt de media bekijken, maar geen wijzigingen aanbrengen.
+readonly_branch: Je hebt geen toestemming om naar de branch “{$branch}” te pushen. Je kunt deze inhoud bekijken, maar geen wijzigingen aanbrengen.
+readonly_role: Je hebt alleen leestoegang. Je kunt inhoud en media bekijken, maar geen wijzigingen aanbrengen.
+readonly_reference: Het item is alleen-lezen, dus de verwijzing kan niet worden verwijderd.
+# {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
+cannot_rename_referenced_entry: 'Dit item kan niet worden hernoemd, omdat de volgende alleen-lezen items er met de huidige naam naar verwijzen: {$entries}.'
+# {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
+cannot_move_referenced_asset: 'Dit mediabestand kan niet worden verplaatst of hernoemd, omdat de volgende alleen-lezen items het gebruiken: {$entries}.'
+
 # Navigation: back links and list labels
 back_to_collection: Terug naar de collectie
 collection_list: Lijst met collecties
 back_to_collection_list: Terug naar de lijst met collecties
 asset_folder_list: Lijst met mediamappen
 back_to_asset_folder_list: Terug naar de lijst met mediamappen
+# Back button shown in place of the one above while browsing a subfolder of an asset folder
+back_to_parent_folder: Terug naar de bovenliggende map
 
 # ==============================================================================
 # Search
@@ -556,6 +989,53 @@ no_entries_found: Geen items gevonden.
 # Upload dialog: title and button label
 upload_assets: Nieuwe mediabestanden uploaden
 
+# New Folder button and dialog in the Asset Library
+new_folder: Nieuwe map
+new_folder_name: Mapnaam
+new_folder_create: Aanmaken
+# {$folder} is the path of the folder the new one will be created in, starting with a slash
+new_folder_description: De nieuwe map wordt aangemaakt in “{$folder}”.
+# Validation errors for the new folder name
+new_folder_error:
+  empty: De mapnaam mag niet leeg zijn.
+  invalid: De mapnaam mag geen schuine strepen bevatten en niet met een punt beginnen.
+  # A name the CMS itself is usually served from, e.g. `admin` or `cms`
+  reserved: De bestanden in een map met deze naam zijn alleen-lezen, omdat het CMS zelf meestal vanuit deze map wordt geleverd.
+  duplicate: Hier bestaat al een map of bestand met deze naam.
+# Progress and error messages while the folder is being created
+creating_folder: Bezig met aanmaken van de map…
+creating_folder_failed: De map kon niet worden aangemaakt.
+
+# Menu on a folder in the Asset Library, and the Rename Folder and Delete Folder dialogs
+folder_options: Mapopties
+show_folder_options: Mapopties tonen
+rename_folder: Map hernoemen
+delete_folder: Map verwijderen
+# Rename Folder dialog body text
+# {$count} is the number of assets in the folder, which are moved along with it
+enter_new_name_for_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Voer hieronder een nieuwe naam in. }}
+    one {{ Voer hieronder een nieuwe naam in. Het mediabestand in de map wordt mee verplaatst en elk item dat het gebruikt, wordt bijgewerkt. }}
+    *   {{ Voer hieronder een nieuwe naam in. De {$count} mediabestanden in de map worden mee verplaatst en alle items die ze gebruiken, worden bijgewerkt. }}
+# Delete Folder confirmation
+# {$name} is the folder name and {$count} is the number of assets in the folder
+confirm_deleting_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Weet je zeker dat je de lege map “{$name}” wilt verwijderen? }}
+    one {{ Weet je zeker dat je de map “{$name}” en het mediabestand erin wilt verwijderen? }}
+    *   {{ Weet je zeker dat je de map “{$name}” en de {$count} mediabestanden erin wilt verwijderen? }}
+# Progress and error messages while the folder is being renamed or deleted
+renaming_folder: Bezig met hernoemen van de map…
+renaming_folder_failed: De map kon niet worden hernoemd.
+deleting_folder: Bezig met verwijderen van de map…
+deleting_folder_failed: De map kon niet worden verwijderd.
+# Asset Library and asset picker: notice shown when a cloud storage service holds more files than
+# are listed at once
+external_assets_truncated: Er staan te veel bestanden op de dienst om ze allemaal weer te geven, dus sommige worden weggelaten.
+
 # Edit options menu: button and item labels
 edit_options: Bewerkopties
 show_edit_options: Bewerkopties tonen
@@ -568,6 +1048,47 @@ edit_x: '{$name} bewerken'
 
 # Asset text editor: switch for line wrapping
 wrap_long_lines: Lange regels afbreken
+
+# Move assets: dialog for moving assets to another folder in the repository
+move: Verplaatsen
+move_asset: Mediabestand verplaatsen
+# Dialog title. {$name} is the asset name when a single asset is moved, and {$count} is the number of
+# assets being moved
+move_assets_title: |
+  .input {$count :integer}
+  .match $count
+    one {{ {$name} verplaatsen }}
+    *   {{ {$count} mediabestanden verplaatsen }}
+# Dialog body text. {$count} is the number of entries that currently use the assets
+select_asset_move_destination: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Selecteer de map waarnaar je wilt verplaatsen. }}
+    one {{ Selecteer de map waarnaar je wilt verplaatsen. Eén item dat de mediabestanden gebruikt, wordt ook bijgewerkt. }}
+    *   {{ Selecteer de map waarnaar je wilt verplaatsen. {$count} items die de mediabestanden gebruiken, worden ook bijgewerkt. }}
+# Accessible label of the folder tree in the Move dialog
+asset_move_destination: Doelmap
+# Shown when the assets being moved are all in the selected folder already
+assets_already_in_folder: |
+  .input {$count :integer}
+  .match $count
+    one {{ Het mediabestand staat al in deze map. }}
+    *   {{ De mediabestanden staan al in deze map. }}
+# Shown when files with the same names exist in the selected folder. {$names} is a comma-separated
+# list of file names
+asset_move_conflict: 'De volgende bestanden bestaan al in deze map: {$names}.'
+moving_assets: Bezig met verplaatsen van de mediabestanden…
+moving_assets_failed: De mediabestanden konden niet worden verplaatst.
+# Warning shown when files have been moved off a cloud storage service, but the originals couldn’t
+# be deleted from it
+asset_move_cleanup_failed: De bestanden zijn verplaatst, maar de originelen konden niet worden verwijderd van de opslagdienst.
+# Shown when files on a cloud storage service can’t be renamed or moved, because the entries using
+# them can’t be updated, e.g. for an Open Authoring contributor. {$count} is the number of files
+cannot_change_used_external_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Dit bestand kan niet worden hernoemd of verplaatst, omdat de items die het gebruiken niet kunnen worden bijgewerkt. }}
+    *   {{ Deze bestanden kunnen niet worden hernoemd of verplaatst, omdat de items die ze gebruiken niet kunnen worden bijgewerkt. }}
 
 # Rename asset: dialog and validation
 rename_asset: Mediabestand hernoemen
@@ -586,6 +1107,15 @@ enter_new_name_for_asset_error:
   empty: De bestandsnaam mag niet leeg zijn.
   character: De bestandsnaam mag geen speciale tekens bevatten.
   duplicate: Deze bestandsnaam is al in gebruik voor een ander mediabestand.
+  # A name starting with a dot hides the file, which the CMS wouldn’t list any more
+  leading_dot: De bestandsnaam mag niet met een punt beginnen.
+  # The name of a file next to the asset that isn’t an asset, like an entry file
+  file_duplicate: Hier bestaat al een ander bestand met deze naam.
+  # The name of a folder next to the file
+  folder_duplicate: Hier bestaat al een map met deze naam.
+# Shown while renaming a file whose name will be changed on saving, e.g. by the `slugify_filename`
+# media library option
+file_will_be_saved_as: Het bestand wordt opgeslagen als “{$name}”.
 # Confirmation dialog shown when the file extension is changed while renaming an asset
 change_file_extension: Bestandsextensie wijzigen
 # {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
@@ -599,6 +1129,11 @@ file_extension_change_warning: Het bestand wordt mogelijk niet correct weergegev
 replace_asset: Mediabestand vervangen
 # {$name} is the asset being replaced
 replace_x: '{$name} vervangen'
+# File/Image field: labels of the Replace and Remove buttons
+replace_file: Bestand vervangen
+replace_image: Afbeelding vervangen
+remove_file: Bestand verwijderen
+remove_image: Afbeelding verwijderen
 
 # File selection prompts: drop zones and file pickers
 # Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
@@ -688,6 +1223,29 @@ confirm_deleting_selected_assets: |
     one {{ Weet je zeker dat je het geselecteerde mediabestand wilt verwijderen? }}
     *   {{ Weet je zeker dat je de {$count} geselecteerde mediabestanden wilt verwijderen? }}
 confirm_deleting_all_assets: Weet je zeker dat je alle mediabestanden wilt verwijderen?
+# Note added to the confirmation when entries use the assets being deleted; the references are
+# removed in the same commit. {$count} is the number of entries using them
+deleting_referenced_assets_note: |
+  .input {$count :integer}
+  .match $count
+    one {{ De verwijzing ernaar in één item wordt ook verwijderd. }}
+    *   {{ De verwijzingen ernaar in {$count} items worden ook verwijderd. }}
+# Shown in place of the confirmation when removing the references would leave a field in an entry
+# invalid, e.g. a required Image field with nothing left, so the deletion is refused. The fields are
+# listed below the message, each with the validation error it would have. {$count} is the number of
+# assets being deleted
+cannot_delete_referenced_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Dit mediabestand kan niet worden verwijderd, omdat de volgende velden in de items die het gebruiken zonder dit bestand niet meer geldig zouden zijn. Werk die items eerst bij. }}
+    *   {{ Deze mediabestanden kunnen niet worden verwijderd, omdat de volgende velden in de items die ze gebruiken zonder deze bestanden niet meer geldig zouden zijn. Werk die items eerst bij. }}
+# Error shown in the asset deletion dialog when the entries using the assets couldn’t be looked up,
+# so the deletion can’t go ahead. {$count} is the number of assets being deleted
+checking_asset_references_failed: |
+  .input {$count :integer}
+  .match $count
+    one {{ Er kon niet worden gecontroleerd welke items dit mediabestand gebruiken. Sluit dit dialoogvenster en probeer het opnieuw. }}
+    *   {{ Er kon niet worden gecontroleerd welke items deze mediabestanden gebruiken. Sluit dit dialoogvenster en probeer het opnieuw. }}
 
 # Delete entries: dialog titles and confirmation messages
 # {$count} is the number of entries targeted by the action
@@ -720,6 +1278,23 @@ confirm_deleting_selected_entries_with_assets: |
     *   {{ Weet je zeker dat je de {$count} geselecteerde items en de bijbehorende mediabestanden wilt verwijderen? }}
 confirm_deleting_all_entries: Weet je zeker dat je alle items wilt verwijderen?
 confirm_deleting_all_entries_with_assets: Weet je zeker dat je alle items en de bijbehorende mediabestanden wilt verwijderen?
+# Note added to the confirmation when other entries reference the entries being deleted through
+# Relation fields; the references are removed in the same commit. {$count} is the number of
+# referencing entries
+deleting_referenced_entries_note: |
+  .input {$count :integer}
+  .match $count
+    one {{ De verwijzing ernaar in een ander item wordt ook verwijderd. }}
+    *   {{ De verwijzingen ernaar in {$count} andere items worden ook verwijderd. }}
+# Shown in place of the confirmation when removing the references would leave a Relation field in
+# another entry invalid, e.g. a required field with nothing selected, so the deletion is refused.
+# The fields are listed below the message, each with the validation error it would have. {$count}
+# is the number of entries being deleted
+cannot_delete_referenced_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Dit item kan niet worden verwijderd, omdat de volgende velden in andere items zonder dit item niet meer geldig zouden zijn. Werk die items eerst bij. }}
+    *   {{ Deze items kunnen niet worden verwijderd, omdat de volgende velden in andere items zonder deze items niet meer geldig zouden zijn. Werk die items eerst bij. }}
 
 # ==============================================================================
 # Entry Reordering
@@ -733,6 +1308,40 @@ cancel_reordering_entries: Wijzigen van de volgorde annuleren
 
 # Reorder error message
 saving_reorder_failed: De nieuwe volgorde van de items kon niet worden opgeslagen. Probeer het opnieuw.
+
+# ==============================================================================
+# Bulk Entry Editing
+# ==============================================================================
+# Strings for editing the fields of many entries at once in a table.
+
+# Bulk edit mode: toggle buttons
+bulk_edit_entries: Items bulksgewijs bewerken
+save_bulk_edits: Bulkwijzigingen opslaan
+cancel_bulk_edits: Bulkwijzigingen annuleren
+
+# Bulk edit table: column header of the entry titles
+bulk_edit_entry: Item
+
+# Bulk edit table: label of the table
+bulk_edit_table: Bulkeditor
+
+# Bulk edit table: label of a cell input; {$field} is the field label, {$entry} is the entry title
+bulk_edit_cell: '{$field} van {$entry}'
+
+# Bulk edit status: number of changed fields
+bulk_edit_count: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Geen wijzigingen }}
+    one {{ 1 wijziging }}
+    *   {{ {$count} wijzigingen }}
+
+# Bulk edit error messages
+bulk_edit_invalid: Sommige waarden zijn ongeldig. Corrigeer de gemarkeerde velden en probeer het opnieuw.
+saving_bulk_edits_failed: De wijzigingen konden niet worden opgeslagen. Probeer het opnieuw.
+
+# Bulk edit: confirmation shown when leaving the mode with unsaved changes
+discard_bulk_edits_confirm: De wijzigingen aan de items verwerpen?
 
 # ==============================================================================
 # File Upload and Processing
@@ -782,6 +1391,20 @@ warning_invalid_files: |
   .match $count
     one {{ Dit bestand kan niet worden geüpload omdat het beschadigd is of omdat de inhoud niet overeenkomt met de bestandsextensie. Dit gebeurt vaak wanneer een foto is hernoemd in plaats van geconverteerd, zoals een HEIC-afbeelding die als JPEG-bestand is opgeslagen. Converteer het bestand en probeer het opnieuw. }}
     *   {{ Deze bestanden kunnen niet worden geüpload omdat ze beschadigd zijn of omdat de inhoud niet overeenkomt met de bestandsextensies. Dit gebeurt vaak wanneer foto’s zijn hernoemd in plaats van geconverteerd, zoals HEIC-afbeeldingen die als JPEG-bestanden zijn opgeslagen. Converteer de bestanden en probeer het opnieuw. }}
+# {$count} is the number of files that are not of a type the field accepts, even once transformed
+# {$types} is the list of accepted file types, such as “.pdf or .txt”
+warning_unsupported_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Dit bestand kan niet worden geüpload, omdat het niet van een van de volgende typen is: {$types}. }}
+    *   {{ Deze bestanden kunnen niet worden geüpload, omdat ze niet van een van de volgende typen zijn: {$types}. }}
+# {$count} is the number of files that are not of an image type the field accepts
+# {$types} is the list of accepted image formats, such as “PNG or WebP”
+warning_unsupported_image_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Dit bestand kan niet worden geüpload, omdat alleen een afbeelding van de volgende typen wordt geaccepteerd: {$types}. }}
+    *   {{ Deze bestanden kunnen niet worden geüpload, omdat alleen afbeeldingen van de volgende typen worden geaccepteerd: {$types}. }}
 
 # File format validation when replacing an asset
 # Warning section for replacement files that are in a different format
@@ -817,6 +1440,8 @@ uploading_files_failed: Uploaden mislukt.
 # Errors shown when a file on a cloud storage service could not be deleted or renamed
 deleting_assets_failed: Verwijderen mislukt.
 renaming_asset_failed: Hernoemen mislukt.
+# Error shown when an edited text file in the Asset Library could not be saved
+saving_asset_failed: Opslaan mislukt.
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
@@ -854,6 +1479,8 @@ entry_validation_errors: |
   .match $count
     one {{ Eén veld bevat een fout. Corrigeer deze om het item op te slaan. }}
     *   {{ {$count} velden bevatten fouten. Corrigeer deze om het item op te slaan. }}
+# Button on the validation error toast that opens the Validation panel listing the errors
+show_errors: Fouten tonen
 
 # ==============================================================================
 # Success Notifications
@@ -930,6 +1557,19 @@ assets_deleted: |
   .match $count
     one {{ Mediabestand verwijderd. }}
     *   {{ {$count} mediabestanden verwijderd. }}
+folder_created: Map aangemaakt.
+# Folder info panel in the Asset Library sidebar
+folder_path: Mappad
+folder_contents: Inhoud
+# {$count} is the number of subfolders in the folder
+x_folders: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Geen mappen }}
+    one {{ {$count} map }}
+    *   {{ {$count} mappen }}
+folder_renamed: Map hernoemd.
+folder_deleted: Map verwijderd.
 
 # ==============================================================================
 # Content Editor
@@ -970,6 +1610,9 @@ edit_singleton_announcement: Je bewerkt nu het bestand “{$file}”.
 # Shown when CI skip is enabled/disabled
 save_and_publish: Opslaan en publiceren
 save_without_publishing: Opslaan zonder publiceren
+# Shown disabled in place of `save_and_publish` while entries created or edited from a Relation
+# field are in a collection whose review can’t be skipped with the `direct_publish` option
+save_and_publish_needs_review: Opslaan en publiceren (gerelateerde items moeten worden gereviewd)
 
 # Editor options menu
 show_editor_options: Editoropties tonen
@@ -999,6 +1642,9 @@ swap_panes: Panelen wisselen
 # {$locale} is the localized language name for the current content pane, e.g., English
 edit_x_locale: Inhoud in het {$locale} bewerken
 preview_x_locale: Voorbeeld van de inhoud in het {$locale}
+# The content of a monolingual entry, which has no locale to name
+edit_content: Inhoud bewerken
+preview_content: Voorbeeld van de inhoud
 
 # Preview iframe labels
 content_preview: Voorbeeld van de inhoud
@@ -1007,6 +1653,8 @@ content_preview: Voorbeeld van de inhoud
 # {$locale} is the localized language name for the content options menu, e.g., English
 show_content_options_x_locale: Inhoudsopties voor het {$locale} tonen
 content_options_x_locale: Inhoudsopties voor het {$locale}
+show_content_options: Inhoudsopties tonen
+content_options: Inhoudsopties
 
 # Field container labels
 # {$field} is the field’s display label
@@ -1045,8 +1693,9 @@ deploy_preview:
   view: Voorbeeld bekijken
   # Shown while the site is still being built, with or without a URL to open yet
   building: Het voorbeeld wordt nog gebouwd.
-  # Shown when the build failed, so no preview is available
-  failed: Het voorbeeld kon niet worden gebouwd.
+  # Shown when the build failed, so no preview is available. The failure may lie in the site’s own
+  # code rather than the entry, so the editor is told not to assume it’s theirs, and who to ask
+  build_failed: Het voorbeeld kon niet worden gebouwd. Dit wordt niet per se door jouw wijzigingen veroorzaakt. Neem contact op met de beheerder van je site als het probleem aanhoudt.
   # Shown briefly while the CI/CD provider is being queried
   checking: Controleren op een voorbeeld…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
@@ -1080,9 +1729,20 @@ translate_from: Vertalen uit…
 # {$locale} is the localized language name of the source content being translated, e.g., English
 translate_from_x: Vertalen uit het {$locale}
 
-# Revert changes
+# Revert changes, restore the default values or clear the fields. The field options menu offers
+# them for a field, the content options menu of an editor pane for the locale it shows, and the
+# editor options menu for the whole entry, the latter two asking for confirmation first
 revert_changes: Wijzigingen terugdraaien
 revert_all_changes: Alle wijzigingen terugdraaien
+restore_default: Standaardwaarde herstellen
+clear_all: Alles wissen
+confirm_reverting_changes: Weet je zeker dat je alle wijzigingen aan dit item wilt terugdraaien?
+# {$locale} is a locale name, e.g. French
+confirm_reverting_changes_x_locale: Weet je zeker dat je alle wijzigingen aan de inhoud in het {$locale} wilt terugdraaien?
+confirm_restoring_defaults: Weet je zeker dat je de standaardwaarden van alle velden in dit item wilt herstellen? Je wijzigingen gaan verloren.
+confirm_restoring_defaults_x_locale: Weet je zeker dat je de standaardwaarden van alle velden in de inhoud in het {$locale} wilt herstellen? Je wijzigingen gaan verloren.
+confirm_clearing_fields: Weet je zeker dat je alle velden in dit item wilt wissen? Je wijzigingen gaan verloren.
+confirm_clearing_fields_x_locale: Weet je zeker dat je alle velden in de inhoud in het {$locale} wilt wissen? Je wijzigingen gaan verloren.
 
 # Slug editing
 edit_slug: Slug bewerken
@@ -1090,6 +1750,8 @@ edit_slug_error:
   empty: De slug mag niet leeg zijn.
   invalid: De slug mag geen speciale tekens bevatten, waaronder schuine strepen en spaties.
   duplicate: Deze slug is al in gebruik voor een ander item.
+# {$slug} is the slug filled from the slug template, which a number is added to when another entry uses it
+slug_numbered: De slug “{$slug}” wordt al gebruikt voor een ander item, dus er wordt een nummer aan toegevoegd.
 
 # Entry path editing for nested entries
 # Heading for the parent folder picker shown when the `meta.path` option is enabled
@@ -1203,6 +1865,13 @@ validation:
     email: Voer een geldig e-mailadres in.
     url: Voer een geldige URL in.
 
+  # Value used for the same field in another entry of the collection
+  value_not_unique: Deze waarde wordt al gebruikt voor een ander item.
+  # Key of a keyed List field item used for another item of the same list
+  key_not_unique: Deze sleutel wordt al gebruikt voor een ander item.
+  # Key of a keyed List field item that is a whole number, which doesn’t keep its order in a map
+  key_numeric: De sleutel mag geen geheel getal zijn, omdat de items dan hun volgorde verliezen.
+
   # Custom field validation error
   invalid_value: Ongeldige waarde.
   unexpected_error: Er is een onverwachte fout opgetreden.
@@ -1224,6 +1893,12 @@ entry_sidebar:
     # Button in the panel header that validates the entry on demand
     validate: Valideren
 
+  # Slug panel: shows the entry slug and lets the user edit it
+  slug:
+    title: Slug
+    generated_on_save: De slug wordt bij het opslaan gegenereerd uit de inhoud van het item. Eventuele datums en tijden erin zijn die van het moment van opslaan.
+    unavailable: Dit item heeft geen slug.
+
   # History panel: shows entry commit history
   history:
     title: Geschiedenis
@@ -1235,11 +1910,55 @@ entry_sidebar:
     title: Backlinks
     no_entries: Er zijn geen items die naar dit item verwijzen.
 
+  # Tab label of a panel with a count, e.g. of comments. {$title} is the panel title
+  title_with_count: '{$title} ({$count})'
+
+# Status shown next to the Save button while an entry with many new files is being saved
+# {$done} and {$total} are the number of files prepared and to prepare, or the number of commits
+# made and the estimated number of commits in all
+save_progress:
+  preparing: 'Bestanden voorbereiden: {$done} van {$total}'
+  committing: 'Opslaan naar GitHub: {$done} van ongeveer {$total} commits'
+
 # Entry save error dialog
 saving_entry:
   error:
     title: Fout
     description: Er is een fout opgetreden bij het opslaan van het item. Probeer het later opnieuw.
+
+# Dialog shown when saving the entry would overwrite a change someone else has made in the
+# repository since the entry was opened in the editor
+save_conflict:
+  title: Item gewijzigd door iemand anders
+  # `{$name}` is the other person’s name, `{$date}` when they made the change
+  modified_by: '{$name} heeft dit item op {$date} gewijzigd, nadat jij het had geopend.'
+  # Shown instead of `modified_by` when the other person isn’t known
+  modified: Dit item is in de repository gewijzigd nadat je het had geopend.
+  deleted: Dit item is uit de repository verwijderd nadat je het had geopend.
+  # Follows `modified_by` or `modified`
+  overwrite_warning: Als je nu opslaat, gaan hun wijzigingen verloren.
+  # Follows `deleted`
+  recreate_warning: Als je nu opslaat, wordt het item opnieuw aangemaakt.
+  # Follows `modified_by`, `modified` or `deleted` for an entry stored in the same file as the other
+  # entries of the collection, which can’t be saved over the change
+  reload_warning: Omdat het item in hetzelfde bestand is opgeslagen als andere items, kan het niet over de wijziging heen worden opgeslagen. Annuleer het bewerken, open het item opnieuw vanuit de lijst en breng je wijzigingen aan.
+  # OK button label
+  save_anyway: Toch opslaan
+  # Error shown when the repository was updated between the check above and the commit itself
+  branch_moved: De repository is tijdens het opslaan door iemand anders bijgewerkt. Probeer het opnieuw.
+  # Error shown when saving would change an item in a file storing all the entries of a collection,
+  # which someone else has changed or moved since it was loaded
+  array_item_changed: Een item dat in hetzelfde bestand is opgeslagen, is door iemand anders gewijzigd. Probeer het opnieuw.
+  # {$path} is the file path
+  array_file_invalid: Het bestand {$path} kan niet worden bijgewerkt, omdat het geen geldige lijst met items bevat.
+
+# Notice shown in the entry editor when someone else has changed or deleted the entry in the
+# repository while the user has it open. The change itself is described with the `save_conflict`
+# strings above
+remote_change:
+  reload_entry: Item opnieuw laden
+  # Confirmation shown before reloading when the user has unsaved changes
+  confirm_reloading_entry: Weet je zeker dat je het item opnieuw wilt laden? Je niet-opgeslagen wijzigingen gaan verloren.
 
 # ==============================================================================
 # Asset Editor
@@ -1313,21 +2032,63 @@ map_lat_lng: Kaart met breedtegraad {$latitude}, lengtegraad {$longitude}
 remove_this_item: Dit item verwijderen
 move_up: Omhoog verplaatsen
 move_down: Omlaag verplaatsen
+# Menu of a list item or file with the extra reorder actions, shown in a list of 3 or more items
+reorder_options: Opties voor volgorde
+move_to_top: Naar boven verplaatsen
+move_to_bottom: Naar beneden verplaatsen
+# Opens a dialog asking for the position to move a list item to
+move_to: Verplaatsen naar…
+# Dialog asking for the new position of an item. {$count} is the number of items in the list
+move_to_description: Voer een positie in van 1 tot {$count}.
+move_to_position: Positie
 # aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
 # or moved with the arrow keys while the handle has focus
 reorder_item: Item verplaatsen
 # aria-label for the text input holding one item of a simple List field, which has no subfield to
 # take a label from
 list_item_value: Itemwaarde
+# aria-label for each item of a List field, giving its position in the list
+# {$position} is the 1-based position of the item, {$count} is the number of items
+list_item_position: Item {$position} van {$count}
+# Message shown in place of a removed List field item or Object field, next to a Restore button
+# that puts it back
+item_removed: Item verwijderd.
 
-# Add item button label
+# Add item button label, also used by the Relation field to create a new entry in the referenced
+# collection, with the collection’s singular label
 # Example: “Add Image”, “Add Author”
 # {$name} is the label of the item type that can be added
 add_x: '{$name} toevoegen'
 
 # List item context menu
+# aria-label for the button opening the menu, and for the menu itself
+list_item_options: Opties voor lijstitem
 add_item_above: Item hierboven toevoegen
 add_item_below: Item hieronder toevoegen
+paste_item_above: Item erboven plakken
+paste_item_below: Item eronder plakken
+paste_item_to_replace: Plakken ter vervanging
+
+# List item clipboard
+# Button in the list toolbar to paste a copied item, from any list in any entry, at the end of the
+# list, or at the start with the `add_to_top` option
+paste_item: Item plakken
+list_item_copied: Item gekopieerd.
+# ⋮ stands for the icon of the item menu button; keep it, along with the button’s aria-label
+no_list_item_to_paste: Er is geen gekopieerd item om te plakken. Om er een te kopiëren, open je het menu ⋮ (Opties voor lijstitem) van een item en kies je Kopiëren.
+list_item_not_compatible: Het gekopieerde item past niet in deze lijst.
+# {$count} is the number of the values left out, as the list doesn’t have the fields
+list_item_pasted_without_values: |
+  .input {$count :integer}
+  .match $count
+    one {{ Item geplakt. Een waarde die deze lijst niet accepteert, is weggelaten. }}
+    *   {{ Item geplakt. {$count} waarden die deze lijst niet accepteert, zijn weggelaten. }}
+# {$count} is the number of the files the pasted item references that couldn’t be found
+list_item_pasted_without_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Item geplakt, maar een bestand dat het gebruikt, kon niet worden gevonden. Controleer de bestandsvelden in het item. }}
+    *   {{ Item geplakt, maar {$count} bestanden die het gebruikt, konden niet worden gevonden. Controleer de bestandsvelden in het item. }}
 
 # Variable-type list selector
 select_list_type: Lijsttype selecteren
@@ -1346,12 +2107,45 @@ opacity: Dekking
 # Select field: empty option placeholder
 unselected_option: (Geen)
 
+# Relation field: creating or editing a referenced entry without leaving the editor
+relation_field:
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  save_together_hint: De nieuwe {$name} wordt samen met het item dat je bewerkt opgeslagen.
+  # Error shown when the entry couldn’t be prepared. {$name} is the singular label of the collection
+  add_failed: '{$name} kon niet worden toegevoegd. Bekijk de browserconsole voor details.'
+  # Title of the dialog to edit an entry selected in the field. {$name} is the singular label of the
+  # referenced collection
+  edit_entry_title: '{$name} bewerken'
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  edit_together_hint: Je wijzigingen aan {$name} worden samen met het item dat je bewerkt opgeslagen.
+  # Error shown when the changes couldn’t be prepared. {$name} is the singular label of the collection
+  edit_failed: De wijzigingen aan {$name} konden niet worden toegepast. Bekijk de browserconsole voor details.
+  # Error shown when the changes would move the entry to another file path, e.g. through a path
+  # template using a field. {$name} is the singular label of the collection
+  move_unsupported: Door deze wijzigingen zou {$name} naar een andere locatie worden verplaatst. Dat kan alleen door het item afzonderlijk te bewerken.
+  # Error shown when saving, if someone else has changed an entry edited from the field since. {$name}
+  # is the summary of that entry
+  edit_conflict: “{$name}” is door iemand anders gewijzigd sinds jij het hebt bewerkt. Open het opnieuw vanuit het veld om je wijzigingen te vergelijken met de nieuwste versie.
+  # Error shown when saving, if someone else has deleted an entry edited from the field since.
+  # {$name} is the summary of that entry
+  edit_deleted: “{$name}” is door iemand anders verwijderd sinds jij het hebt bewerkt. Verwijder het uit het veld om het item op te slaan.
+  # Accessible label of the menu listing the selected entries that can be edited
+  select_entry_to_edit: Selecteer een item om te bewerken
+  # Warning shown in the editor of an entry that has been edited from a Relation field of another
+  # entry, while the changes wait in that entry’s pull request. {$name} is the summary of that
+  # entry
+  edited_with_entry: Wijzigingen aan dit item wachten erop om samen met “{$name}” te worden gepubliceerd. Als je het nu opslaat, worden beide sets wijzigingen gecombineerd wanneer dat item wordt gepubliceerd. Dit kan mislukken als ze overlappen.
+  # Warning shown in the dialog when an entry edited from the field has been changed by someone else
+  # since. {$name} is the singular label of the collection
+  changed_since_edit: '{$name} is door iemand anders gewijzigd sinds jij het hebt bewerkt. Je wijzigingen worden getoond bovenop de nieuwste versie. Controleer ze voordat je bijwerkt.'
+
 # Select Assets dialog
 assets_dialog:
   # Dialog titles for different selection modes
   title:
     file: Bestand selecteren
     image: Afbeelding selecteren
+    folder: Map selecteren
 
   # Search input labels
   search_for_file: Zoeken naar bestanden
@@ -1359,6 +2153,18 @@ assets_dialog:
 
   # Locations panel aria-label
   locations: Locaties
+
+  # Folder selection mode for a File field with the `select_folder` option. {$path} is the public
+  # path of the folder to be selected, and {$count} is the number of folders selected
+  selected_folder: 'Geselecteerde map: {$path}'
+  selected_folders: |
+    .input {$count :integer}
+    .match $count
+      one {{ {$count} map geselecteerd }}
+      *   {{ {$count} mappen geselecteerd }}
+  no_subfolders: Deze map heeft geen submappen.
+  # Shown for a cloud storage service whose `prefix` option depends on fields of the entry
+  prefix_unresolved: Vul de velden in waarvan deze locatie afhangt om de bestanden ervan te bekijken en te uploaden.
 
   # Asset folder options
   folder:
@@ -1376,6 +2182,7 @@ assets_dialog:
 
   # Stock photo panels
   available_images: Beschikbare afbeeldingen
+  available_files: Beschikbare bestanden
 
   # URL entry option
   enter_url: URL invoeren
@@ -1398,6 +2205,9 @@ assets_dialog:
   photo_credit:
     title: Fotocredits
     description: 'Gebruik indien mogelijk de volgende creditvermelding:'
+    # {$field} is the label of the Markdown field the credit is added to
+    insert_to_field: Invoegen in {$field}
+    copy_as_markdown: Kopiëren als Markdown
 
   # Unsaved asset badge
   unsaved: Niet opgeslagen
@@ -1440,6 +2250,7 @@ editor_components:
   alt: Alt-tekst
   title: Titel
   link: Link
+  caption: Bijschrift
 
 # Key-Value field: column headers and validation
 key_value:
@@ -1504,6 +2315,15 @@ cloud_storage:
   uploadcare:
     auth_key_label: API secret key
 
+  azure_blob_storage:
+    auth_key_label: SAS-token
+
+  backblaze_b2:
+    auth_key_label: Application Key
+
+  bunny_storage:
+    auth_key_label: Wachtwoord van de Storage Zone
+
 # ==============================================================================
 # Configuration Validation
 # ==============================================================================
@@ -1557,16 +2377,42 @@ config:
     unsupported_backend_suggestion: Gebruik in plaats daarvan een van de <a>ondersteunde backends</a>.
     missing_repository: De repository is niet gedefinieerd.
     invalid_repository: De geconfigureerde repository is ongeldig. Deze moet de indeling “owner/repo” hebben.
+    # Don’t localize `api_root`
+    missing_api_root: De optie `api_root` is niet gedefinieerd. Deze is vereist voor de Forgejo-backend.
+    invalid_root_dir: De hoofdmap is ongeldig. Het moet een pad binnen de repository zijn, zonder “..”.
+    invalid_root_dir_branch: De hoofdmap kan niet worden gebruikt in de branchnamen van de publicatiemodi `editorial_workflow` en `preview`. Geen enkel deel van het pad mag met een punt beginnen, op “.lock” eindigen of een spatie of een speciaal teken zoals een dubbele punt of een asterisk bevatten.
+    path_outside_root_dir: Het pad “{$path}” leidt buiten de hoofdmap, waar het CMS geen bestanden kan weergeven.
     oauth_implicit_flow: De geconfigureerde authenticatiemethode (implicit flow) wordt niet ondersteund in Sveltia CMS. Gebruik in plaats daarvan een andere <a>authenticatiemethode</a>.
     github_pkce_unsupported: PKCE-autorisatie wordt nog niet ondersteund vanwege beperkingen van GitHub. Gebruik in plaats daarvan een andere <a>authenticatiemethode</a>.
+    additions_no_base_url: De optie `base_url` moet de URL van je Sveltia CMS Additions-service zijn.
     oauth_no_app_id: De OAuth-applicatie-ID is niet gedefinieerd.
     # Don’t localize `open_authoring`, `editorial_workflow` and `preview`
-    open_authoring_no_workflow: De optie `open_authoring` vereist de publicatiemodus `editorial_workflow`. Zie de <a>documentatie</a> voor details.
+    open_authoring_no_workflow: De optie `open_authoring` vereist de publicatiemodus `editorial_workflow` of `preview`. Zie de <a>documentatie</a> voor details.
     # Don’t localize `auth_methods`
     no_auth_methods: De optie `auth_methods` moet minstens één methode bevatten.
+    # Don’t localize `auth_scope`, `repo` and `public_repo`
+    auth_scope_no_repo: De optie `auth_scope` moet `repo` of `public_repo` bevatten.
     missing_media_folder: De mediamap is niet gedefinieerd.
     public_folder_relative_path: De geconfigureerde publieke map is ongeldig. Deze moet een absoluut pad zijn dat begint met “/”.
     public_folder_absolute_url: Een absolute URL voor de optie voor de publieke map wordt niet ondersteund in Sveltia CMS.
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    unsupported_folder_template_tag: De optie `{$option}` bevat de sjabloontag `{$tag}`, die daar niet wordt ondersteund. Alleen de slugsjabloontags, zoals `\{\{slug\}\}` en `\{\{year\}\}`, en de tags `\{\{dirname\}\}`, `\{\{filename\}\}`, `\{\{extension\}\}`, `\{\{media_folder\}\}` en `\{\{public_folder\}\}` kunnen worden gebruikt.
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    global_folder_template_tag: De optie `{$option}` bevat de sjabloontag `{$tag}`, die alleen kan worden gebruikt in de optie van een collectie, een collectiebestand of een veld, waar een item is om de tag mee in te vullen.
+    # {$replacement} is the configured replacement string; Don’t localize `sanitize_replacement`
+    invalid_sanitize_replacement: De optie `sanitize_replacement` is ingesteld op `{$replacement}`, maar bevat een teken dat niet in een slug kan worden gebruikt, dus het kan geen ander teken vervangen.
+    # {$option} is the option name (`site_url` or `display_url`) and {$url} is the configured value
+    invalid_url_option: De optie `{$option}` is ingesteld op `{$url}`, maar moet een absolute URL zijn die begint met `https://` of `http://`.
+    # Don’t localize `publish_mode`, `stages`, `draft`, `pending_review` and `pending_publish`
+    invalid_publish_mode_stages: De optie `stages` van `publish_mode` moet beginnen met `draft` en de fasen vermelden in de volgorde `draft`, `pending_review`, `pending_publish`, zonder herhalingen.
+    # Don’t localize `i18n` and `locales`
+    i18n_no_locales: De optie `i18n.locales` moet minstens één taal bevatten.
+    # {$locale} is the locale code from the configuration; Don’t localize `default_locale` and `locales`
+    i18n_invalid_default_locale: De optie `default_locale` is ingesteld op `{$locale}`, maar dit is niet een van de `locales`.
+    # {$locale} is the locale code from the configuration; Don’t localize `initial_locales` and `locales`
+    i18n_invalid_initial_locale: De optie `initial_locales` bevat `{$locale}`, maar dit is niet een van de `locales`.
+    # Don’t localize `i18n`
+    i18n_no_collections: 'De optie `i18n` is op het hoogste niveau geconfigureerd, maar geen van de collecties of singletons heeft de optie `i18n`, dus er kan geen inhoud worden vertaald. Voeg `i18n: true` toe aan de collecties en singletons die je wilt vertalen.'
     # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
     invalid_transformation_key: De optie `transformations` bevat een niet-ondersteunde sleutel `{$key}`. Dit moet `raster_image`, `svg` of een ondersteund rasterafbeeldingsformaat zijn.
     # {$key} is the transformation key; Don’t localize `quality`
@@ -1579,18 +2425,52 @@ config:
     invalid_asset_collection_name: De naam `{$name}` van de mediacollectie is ongeldig. Deze mag geen speciale tekens bevatten.
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: Namen van mediacollecties moeten uniek zijn, maar `{$name}` wordt meer dan eens gebruikt.
-    # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_no_options: Voor de collectie moet de optie `folder`, `files` of `divider` zijn gedefinieerd.
-    # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_multiple_options: De collectie kan de opties `folder`, `files` en `divider` niet samen hebben.
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_no_options: Voor de collectie moet de optie `folder`, `file`, `files` of `divider` zijn gedefinieerd.
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_multiple_options: De collectie kan niet meer dan één van de opties `folder`, `file`, `files` en `divider` hebben.
     # {$extension} is the file extension and {$format} is the configured content format
     file_format_mismatch: De extensie `{$extension}` komt niet overeen met het formaat `{$format}`.
+    # {$name} is the field name from the configuration and {$widget} is its field type
+    front_matter_body_field_not_text: Het veld `{$name}` wordt opgeslagen als de body onder de front matter, die alleen tekst kan bevatten, geen getal, booleaanse waarde, lijst of object zoals een `{$widget}`-veld. Gebruik een veldtype dat tekst bevat of hernoem het veld.
+    # {$file} is the file path from the configuration; Don’t localize `file` and `locale`. The curly
+    # brackets are escaped with backslashes for MessageFormat 2
+    invalid_collection_data_file: De optie `file` `{$file}` is ongeldig. Het moet het pad naar een JSON-bestand zijn, zonder de placeholder `\{\{locale\}\}`.
+    # {$prop} is the option name; Don’t localize `file`
+    unsupported_collection_data_file_option: De optie `{$prop}` wordt niet ondersteund in een collectie met de optie `file`.
+    # Don’t localize `file`, `publish_mode` and `simple`
+    collection_data_file_workflow: De redactionele workflow en de voorbeeldworkflow, inclusief Open Authoring, worden niet ondersteund in een collectie met de optie `file`. Stel de optie `publish_mode` van de collectie in op `simple`.
+    # {$prop} is the option name; Don’t localize `file` and `slug`. The curly brackets are escaped
+    # with backslashes for MessageFormat 2
+    collection_data_file_slug_tag: De optie `{$prop}` mag de tag `\{\{slug\}\}` niet bevatten in een collectie met de optie `file`, omdat de slug van een item de positie ervan is, die verandert wanneer de items opnieuw worden geordend of verwijderd. Gebruik in plaats daarvan een veld met een unieke waarde.
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
     invalid_slug_slash: De slugsjabloon `{$slug}` is ongeldig, omdat deze geen schuine strepen mag bevatten. Gebruik de optie `path` in plaats van `slug` om items in submappen te ordenen.
+    # {$name} is the field name from the configuration; Don’t localize `identifier_field`
+    invalid_identifier_field: De optie `identifier_field` verwijst naar `{$name}`, maar er is geen veld met die naam gedefinieerd in de collectie.
+    # {$name} is the field name from the configuration; Don’t localize `filter`
+    invalid_filter_field: De optie `filter` verwijst naar `{$name}`, maar er is geen veld met die naam gedefinieerd in de collectie.
+    # Don’t localize `filter`, `value` and `pattern`
+    invalid_filter_no_condition: De optie `filter` moet de optie `value` of `pattern` hebben om items mee te vergelijken.
+    # {$option} is an option name such as `slug` or `summary` and {$name} is the field name or template tag from the configuration
+    option_field_not_found: De optie `{$option}` verwijst naar `{$name}`, maar er is geen veld met die naam gedefinieerd.
+    # {$name} is the field name from the configuration and {$widget} is its field type; Don’t localize `thumbnail`
+    thumbnail_field_not_media: De optie `thumbnail` verwijst naar `{$name}`, maar dit moet een Image- of File-veld zijn, geen `{$widget}`-veld.
+    # Don’t localize `inline` or `multiple`
+    invalid_inline_component_fields: De modus `inline` vereist één Boolean-, Color-, DateTime-, Number-, Relation-, Select- of String-veld. Bij een Relation- of Select-veld mag de optie `multiple` niet zijn ingeschakeld.
+    # {$option} is an option name such as `pattern` or `filter` and {$pattern} is the configured pattern
+    invalid_regex: De optie `{$option}` bevat een ongeldige reguliere expressie `{$pattern}`, die wordt genegeerd.
     # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
     invalid_reorder_group: De optie `reorder` verwijst naar een weergavegroep met de naam `{$name}`, maar er is geen groep met die naam gedefinieerd in de optie `view_groups`.
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit` and `fields`
+    invalid_bulk_edit_field: De lijst `fields` van de optie `bulk_edit` verwijst naar een veld met de naam `{$name}`, maar er is geen veld op het hoogste niveau met die naam gedefinieerd in de collectie.
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit`, `fields` and `multiple`
+    unsupported_bulk_edit_field: Het veld `{$name}` in de lijst `fields` van de optie `bulk_edit` kan niet bulksgewijs worden bewerkt. Alleen een Boolean-, Color-, DateTime-, Number-, Relation-, Select- of String-veld dat niet alleen-lezen is, waarvoor de optie `multiple` niet is ingeschakeld en dat niet automatisch wordt ingesteld bij het opslaan, wordt ondersteund.
     # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
     invalid_sortable_field: De optie `sortable_fields` verwijst naar een veld met de naam `{$name}`, maar er is geen veld met die naam gedefinieerd in de collectie.
+    # Don’t localize `sortable_fields` and `default_sort`
+    multiple_sortable_field_defaults: Slechts één item in de optie `sortable_fields` mag de optie `default_sort` hebben.
+    # {$option} is `table_columns` or `summary_fields`, and {$name} is the field name from the configuration
+    invalid_table_column_field: De optie `{$option}` verwijst naar een veld met de naam `{$name}`, maar er is geen veld met die naam gedefinieerd in de collectie.
     # {$name} is the field name from the configuration; Don’t localize `view_groups`
     invalid_view_group_field: De optie `view_groups` verwijst naar een veld met de naam `{$name}`, maar er is geen veld met die naam gedefinieerd in de collectie.
     # {$name} is the field name from the configuration; Don’t localize `view_filters`
@@ -1602,9 +2482,15 @@ config:
     duplicate_view_group_name: Weergavegroepnamen moeten uniek zijn, maar `{$name}` wordt meer dan één keer gebruikt.
     # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
     missing_view_filter_name: Voor weergavefilter {$count} moet de optie `name` als niet-lege string zijn gedefinieerd.
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `pattern`, `eq` and `gte`
+    invalid_view_filter_no_condition: Weergavefilter {$count} moet de optie `pattern` of een vergelijkingsoptie zoals `eq` of `gte` hebben om items mee te vergelijken.
     # {$name} is the invalid or duplicate view filter name
     invalid_view_filter_name: De weergavefilternaam `{$name}` is ongeldig. Deze mag geen speciale tekens bevatten.
     duplicate_view_filter_name: Weergavefilternamen moeten uniek zijn, maar `{$name}` wordt meer dan één keer gebruikt.
+    # {$name} is the default view group name from the configuration; Don’t localize `default` and `view_groups`
+    invalid_view_group_default: De optie `default` van `view_groups` is ingesteld op `{$name}`, maar er is geen weergavegroep met die naam.
+    # {$name} is the default view filter name from the configuration; Don’t localize `default` and `view_filters`
+    invalid_view_filter_default: De optie `default` van `view_filters` is ingesteld op `{$name}`, maar er is geen weergavefilter met die naam.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: Voor collectie {$count} moet de optie `name` als niet-lege string zijn gedefinieerd.
     # {$name} is the invalid or duplicate collection name
@@ -1619,8 +2505,19 @@ config:
     collection_no_fields: Voor de collectie moet de optie `fields` met minstens één veld zijn gedefinieerd.
     # Don’t localize `fields`
     collection_file_no_fields: Voor het collectiebestand moet de optie `fields` met minstens één veld zijn gedefinieerd.
+    # Don’t localize `i18n`, `locale` and `folder`
+    collection_folder_i18n_required: Voor de collectie moet de optie `i18n` zijn gedefinieerd als de placeholder `locale` in het pad `folder` wordt gebruikt.
+    # {$folder} is the invalid folder path; Don’t localize `locale`, `folder` and the example path. The
+    # curly brackets in the example are escaped with backslashes for MessageFormat 2
+    invalid_collection_folder_locale: Het pad `folder` `{$folder}` is ongeldig. De placeholder `locale` mag maar één keer worden gebruikt, als volledige mapnaam, zoals `content/\{\{locale\}\}/posts`.
     # Don’t localize `i18n`, `locale` and `file`
     collection_file_i18n_required: Voor het collectiebestand moet de optie `i18n` zijn gedefinieerd als de placeholder `locale` in het pad `file` wordt gebruikt.
+    # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
+    collection_i18n_no_fields: 'De collectie heeft de optie `i18n`, maar geen van de velden heeft de optie `i18n`, dus er kan geen veld worden vertaald. Voeg `i18n: true` of `i18n: duplicate` toe aan de velden die je wilt vertalen.'
+    # Don’t localize `i18n` and `i18n: true`
+    collection_i18n_no_files: 'De collectie heeft de optie `i18n`, maar geen van de bestanden heeft de optie `i18n`, dus er kan geen bestand worden vertaald. Voeg `i18n: true` toe aan de bestanden die je wilt vertalen.'
+    # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
+    collection_file_i18n_no_fields: 'Het collectiebestand heeft de optie `i18n`, maar geen van de velden heeft de optie `i18n`, dus er kan geen veld worden vertaald. Voeg `i18n: true` of `i18n: duplicate` toe aan de velden die je wilt vertalen.'
     # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
     missing_field_name: Voor veld {$count} moet de optie `name` als niet-lege string zijn gedefinieerd.
     # {$name} is the invalid or duplicate field name
@@ -1632,6 +2529,8 @@ config:
     invalid_variable_type: De naam `{$name}` van het variabele type is ongeldig. Deze mag geen speciale tekens bevatten.
     duplicate_variable_type: Namen van variabele typen moeten uniek zijn, maar `{$name}` wordt meer dan eens gebruikt.
     date_field_type: 'Het verouderde veldtype Date wordt niet ondersteund in Sveltia CMS. Gebruik in plaats daarvan het veldtype DateTime met de optie `type: date`.'
+    # curly brackets in the placeholder are escaped with backslashes for MessageFormat 2
+    hidden_field_locale_without_i18n: De optie `default` van een Hidden-veld gebruikt de placeholder `\{\{locale\}\}`, maar i18n is niet ingeschakeld voor de collectie, dus de inhoud heeft geen taal om deze mee in te vullen.
     # {$timeZone} is the invalid IANA timezone identifier from the configuration
     invalid_timezone: 'Ongeldige tijdzone: {$timeZone}. Dit moet een geldige IANA-tijdzone-identifier zijn, zoals `Europe/Amsterdam` of `Asia/Tokyo`.'
     # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
@@ -1644,12 +2543,85 @@ config:
     invalid_list_variable_type: Het variabele type van het List-veld is ongeldig. De optie `widget` is ingesteld op `{$widget}`, maar moet `object` zijn.
     # Don’t localize `fields`, and `types`
     invalid_object_field: Het Object-veld kan de opties `fields` en `types` niet samen hebben.
+    # {$min} and {$max} are option names such as `min` and `max` or `minlength` and `maxlength`
+    invalid_range_options: De optie `{$min}` mag niet groter zijn dan de optie `{$max}`.
+    # {$step} is the configured value; Don’t localize `step`
+    invalid_step: De optie `step` is ingesteld op `{$step}`, maar deze moet groter zijn dan nul, of `-1` om stappen uit te schakelen.
+    # Don’t localize `options`
+    select_field_no_options: Het Select-veld moet minstens één item in de optie `options` hebben.
+    # {$value} is the option value from the configuration; Don’t localize `options`
+    select_field_duplicate_option: De `options` van het Select-veld moeten uniek zijn, maar `{$value}` wordt meer dan eens gebruikt.
+    # {$value} is the default value from the configuration; Don’t localize `default` and `options`
+    select_field_invalid_default: De optie `default` van het Select-veld is ingesteld op `{$value}`, maar dit is niet een van de `options`.
+    # Don’t localize `fields` and `types`
+    list_field_no_subfields: De optie `fields` of `types` van het List-veld moet minstens één item hebben. Laat de optie weg voor een lijst met gewone waarden.
+    # Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_object: De optie `default` van het List-veld bevat een object, maar elk item moet een gewone waarde zijn, omdat het veld geen `fields` of `types` heeft.
+    # {$value} is the default item from the configuration; Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_item: De optie `default` van het List-veld bevat `{$value}`, maar elk item moet een object zijn, omdat het veld `fields` of `types` heeft.
+    # {$key} is a property name of the default item from the configuration; Don’t localize `default`
+    list_field_invalid_default_key: De optie `default` van het List-veld bevat een item met de eigenschap `{$key}`, maar geen enkel subveld heeft die naam.
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    list_field_default_missing_type: De optie `default` van het List-veld bevat een item zonder de eigenschap `{$typeKey}`, die een van de `types` aanduidt.
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default item; Don’t localize `default` and `types`
+    list_field_invalid_default_type: De optie `default` van het List-veld bevat een item waarvan de eigenschap `{$typeKey}` `{$value}` is, maar dit is niet een van de `types`.
+    # Don’t localize `map_key_field`, `fields` and `types`
+    list_field_map_key_no_subfields: De optie `map_key_field` van het List-veld vereist de optie `fields` of `types`, omdat elke sleutel uit een subveld wordt gehaald.
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_not_found: De optie `map_key_field` van het List-veld verwijst naar `{$name}`, maar geen enkel subveld heeft die naam.
+    # {$name} is the subfield name, and {$type} is the variable type name; Don’t localize `map_key_field`
+    list_field_map_key_missing_in_type: De optie `map_key_field` van het List-veld verwijst naar `{$name}`, maar het type `{$type}` heeft geen subveld met die naam.
+    # {$name} is the subfield name, and {$widget} is its field type; Don’t localize `map_key_field`
+    list_field_map_key_invalid_type: De optie `map_key_field` van het List-veld verwijst naar `{$name}`, maar dit moet een String-, Relation- of Select-veld zijn, geen `{$widget}`-veld.
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `multiple`
+    list_field_map_key_multiple: De optie `map_key_field` van het List-veld verwijst naar `{$name}`, maar het subveld mag niet meerdere waarden bevatten, omdat elk item één sleutel nodig heeft. Verwijder de optie `multiple` ervan.
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_option_not_string: De optie `map_key_field` van het List-veld verwijst naar `{$name}`, maar de opties van het subveld moeten stringwaarden hebben, omdat elke sleutel als string wordt opgeslagen.
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `required`
+    list_field_map_key_not_required: De optie `map_key_field` van het List-veld verwijst naar `{$name}`, maar het subveld mag niet optioneel zijn, omdat elk item een sleutel nodig heeft. Verwijder de optie `required` ervan.
+    # {$name} is the subfield name; Don’t localize `map_key_field`, `i18n: false` and `i18n: duplicate`
+    list_field_map_key_not_localized: 'De optie `map_key_field` van het List-veld verwijst naar `{$name}`, maar het subveld mag geen `i18n: false` hebben, omdat de items in elke taal een sleutel nodig hebben. Gebruik `i18n: duplicate` of verwijder de optie.'
+    # Don’t localize `i18n`, `duplicate_if_empty`, `multiple` and `true`
+    duplicate_if_empty_multiple: 'De optie `i18n: duplicate_if_empty` wordt niet ondersteund voor een veld met de optie `multiple`, dus het veld werkt als een veld met `i18n: true`.'
+    # Don’t localize `default` and `multiple`
+    invalid_default_multiple: De optie `default` moet een array zijn, omdat de optie `multiple` `true` is.
+    invalid_default_single: De optie `default` moet één waarde zijn, geen array, omdat de optie `multiple` niet `true` is.
+    # {$key} is a property name of the default object from the configuration; Don’t localize `default`
+    object_field_invalid_default_key: De optie `default` van het Object-veld heeft de eigenschap `{$key}`, maar geen enkel subveld heeft die naam.
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    object_field_default_missing_type: De optie `default` van het Object-veld heeft niet de eigenschap `{$typeKey}`, die een van de `types` aanduidt.
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default object; Don’t localize `default` and `types`
+    object_field_invalid_default_type: De eigenschap `{$typeKey}` van de optie `default` van het Object-veld is `{$value}`, maar dit is niet een van de `types`.
+    # Don’t localize `default` and `output_code_only`
+    code_field_invalid_default_object: De optie `default` van het Code-veld moet een string zijn, omdat de optie `output_code_only` `true` is.
+    # {$key} is a property name of the default object, {$code} and {$lang} are the configured property names; Don’t localize `default` and `keys`
+    code_field_invalid_default_key: De optie `default` van het Code-veld heeft de eigenschap `{$key}`, maar de optie `keys` staat alleen `{$code}` en `{$lang}` toe.
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_invalid_expression: De optie `value` van het Compute-veld moet een geldige rekenkundige expressie zijn, zoals `\{\{fields.price\}\} * \{\{fields.quantity\}\}`, omdat de optie `value_type` `{$valueType}` is.
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_uuid_in_expression: De optie `value` van het Compute-veld kan geen UUID-tag zoals `\{\{uuid\}\}` gebruiken, omdat de optie `value_type` `{$valueType}` is, waardoor het een rekenkundige expressie is.
+    # {$value} is the default value and {$valueType} is the configured value type; Don’t localize `default` and `value_type`
+    number_field_default_not_integer: De optie `default` van het Number-veld is ingesteld op `{$value}`, maar dit moet een geheel getal zijn, omdat de optie `value_type` `{$valueType}` is.
+    number_field_default_not_number: De optie `default` van het Number-veld is ingesteld op `{$value}`, maar dit moet een getal zijn, omdat de optie `value_type` `{$valueType}` is.
+    # Don’t localize `fields` and `types`
+    object_field_no_subfields: De optie `fields` of `types` van het Object-veld moet minstens één item hebben.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: De collectie `{$collection}` waarnaar wordt verwezen is ongeldig of niet gedefinieerd.
     relation_field_invalid_collection_file: Het bestand `{$file}` waarnaar wordt verwezen is ongeldig of niet gedefinieerd.
     # Don’t localize `file`
     relation_field_missing_file_name: De optie `file` moet zijn gedefinieerd voor een relatie naar een bestandscollectie.
     relation_field_invalid_value_field: Het waardeveld `{$field}` waarnaar wordt verwezen is ongeldig of niet gedefinieerd.
+    # {$collection} is the referenced collection name; Don’t localize `file`, `value_field` and `slug`.
+    # The curly brackets are escaped with backslashes for MessageFormat 2
+    relation_field_array_file_slug: De relatie met de collectie `{$collection}` kan de waarde `\{\{slug\}\}` niet opslaan, omdat de slug van een item in een collectie met de optie `file` de positie ervan is, die verandert wanneer de items opnieuw worden geordend of verwijderd. Stel de optie `value_field` in plaats daarvan in op een veld met een unieke waarde.
+    # {$collection} is the referenced collection name; Don’t localize `file`
+    relation_field_array_file_workflow: Een collectie met de optie `file` kan geen relatie hebben met de collectie `{$collection}`, die de redactionele workflow of de voorbeeldworkflow gebruikt, omdat de verwijzingen naar een item dat daar wordt hernoemd of verwijderd, niet in het bestand kunnen worden bijgewerkt.
+    relation_field_invalid_display_field: Het weergaveveld `{$field}` waarnaar wordt verwezen is ongeldig of niet gedefinieerd.
+    relation_field_invalid_search_field: Het zoekveld `{$field}` waarnaar wordt verwezen is ongeldig of niet gedefinieerd.
+    relation_field_invalid_filter_field: Het filterveld `{$field}` waarnaar wordt verwezen is ongeldig of niet gedefinieerd.
+    relation_field_invalid_sort_field: Het sorteerveld `{$field}` waarnaar wordt verwezen is ongeldig of niet gedefinieerd.
+    # Don’t localize `sort_by` and `file`
+    relation_field_sort_by_file_ignored: De optie `sort_by` is niet van toepassing op een relatie met een bestand, waarvan de opties de volgorde van de lijstitems volgen. De optie wordt genegeerd.
     unexpected: Onverwachte fout
 
     # Schema validation errors, reported when the configuration doesn’t match the published JSON
@@ -1682,18 +2654,56 @@ config:
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: De OAuth-applicatie-ID is niet gedefinieerd. Gebruikers moeten een toegangstoken opgeven om in te loggen.
+    # Don’t localize `prefix`
+    site_library_prefix_template: De optie `prefix` van een mediabibliotheek bevat sjabloontags. Die worden alleen op veldniveau ondersteund, omdat er op het hoogste niveau geen item is om ze mee in te vullen.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: De optie `{$prop}` wordt niet ondersteund in Sveltia CMS. Deze wordt genegeerd.
+    # Don’t localize `stages`, `publish_mode`, `editorial_workflow` and {$type}, which is `preview` or `simple`
+    publish_mode_stages_ignored: De optie `stages` van `publish_mode` geldt alleen voor de publicatiemodus `editorial_workflow` en wordt daarom genegeerd bij `{$type}`.
+    # Don’t localize `pattern`, `m` and `s`
+    inline_component_multiline_pattern: Het `pattern` van deze inline component heeft de vlag `m` of `s` of komt overeen met regeleinden, maar een inline component wordt alleen binnen een alinea herkend.
+    # {$name} is a button or component name and {$option} is `buttons` or `editor_components`; Don’t localize them and `multiline: false`
+    single_line_block_item: 'Het item `{$name}` van de optie `{$option}` wordt genegeerd, omdat een veld met `multiline: false` alleen inline inhoud kan bevatten.'
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: Zowel `picker_utc` als de nieuwere tijdzone-opties (`input_timezone` of `output_utc`) zijn ingesteld. De nieuwe opties hebben voorrang. Overweeg om `picker_utc` uit je configuratie te verwijderen.
+    # Don’t localize `localize_format` and `format`
+    localize_format_without_format: De optie `localize_format` heeft geen effect, omdat het veld geen optie `format` heeft en de waarde ervan in de ISO 8601-indeling wordt opgeslagen.
+    # {$name} is a template tag like `fields.lines.*.price`; Don’t localize `value`, `*` and `sum()`
+    compute_field_wildcard_without_item: De optie `value` van het Compute-veld verwijst naar `{$name}`, maar het veld staat niet in een item van de lijst waarvoor `*` staat, dus de verwijzing levert niets op. Alleen een aggregatiefunctie zoals `sum()` kan elk item van een lijst gebruiken.
+    # {$name} is a template tag like `fields.lines.*.amount`; Don’t localize `value`
+    compute_field_self_reference: De optie `value` van het Compute-veld verwijst naar het veld zelf als `{$name}`, dus de waarde verandert telkens wanneer deze wordt berekend en wordt nooit stabiel.
+    # {$name} is a template tag like `fields.total`; Don’t localize `value`
+    compute_field_reference_cycle: De optie `value` van het Compute-veld verwijst naar `{$name}`, een ander Compute-veld dat direct of via andere velden terugverwijst naar dit veld, dus hun waarden worden nooit stabiel.
+    # Don’t localize `localize_format`, `true` and `de`
+    localize_format_without_i18n: De optie `localize_format` is `true`, maar i18n is niet ingeschakeld voor de collectie, dus de waarde wordt in het Engels geschreven. Stel de optie in plaats daarvan in op een taalcode zoals `de`.
+    # {$locale} is the locale code from the configuration; Don’t localize `localize_format`
+    localize_format_unsupported_locale: De optie `localize_format` is ingesteld op `{$locale}`, wat geen ondersteunde taal is, dus de waarde wordt in het Engels geschreven.
     # Don’t localize `preview_path`
     preview_path_no_date_field: De optie `preview_path` gebruikt datum- en tijdtags, maar de collectie heeft geen DateTime-veld om ze uit te lezen, dus de voorbeeldlink wordt niet getoond.
     # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
     preview_path_date_field_not_found: De optie `preview_path_date_field` verwijst naar een veld met de naam `{$name}`, maar er is geen DateTime-veld met die naam gedefinieerd, dus de voorbeeldlink wordt niet getoond.
     # {$name} is the template tag from the configuration; Don’t localize `preview_path`
     preview_path_field_not_found: De optie `preview_path` verwijst naar `{$name}`, maar er is geen veld met die naam gedefinieerd in de collectie, dus de voorbeeldlink wordt niet getoond.
+    # {$name} is the default identifier field name; Don’t localize `identifier_field` and `slug`
+    missing_identifier_field: De collectie heeft geen veld `{$name}` om nieuwe items een naam te geven, dus elk nieuw item krijgt een willekeurige slug. Voeg een veld `{$name}` toe of stel de optie `identifier_field` of `slug` in.
+    # Don’t localize `slug`, `i18n`, `multiple_files`, `multiple_folders` and `multiple_root_folders`
+    slug_i18n_ineffective: De optie `i18n` van `slug` heeft geen effect, omdat de collectie niet de i18n-structuur `multiple_files`, `multiple_folders` of `multiple_root_folders` gebruikt, waarin elke taal een eigen bestand heeft.
+    # Don’t localize `slug`, `template` and `auto_increment`
+    slug_template_ignored: De optie `template` van `slug` wordt genegeerd, omdat de optie `auto_increment` de slugs in plaats daarvan nummert.
+    # {$file} is the file path; Don’t localize `file`, `locale`, `i18n`, `false`,
+    # `omit_default_locale_from_file_path` and the example paths. The curly brackets in the examples
+    # are escaped with backslashes for MessageFormat 2
+    locale_not_omitted_from_file_path: De placeholder `locale` kan niet uit het pad `file` `{$file}` worden verwijderd, dus de standaardtaal blijft erin staan ondanks de i18n-optie `omit_default_locale_from_file_path`. Om de taal weg te laten, gebruik je de placeholder als volledige mapnaam, zoals `\{\{locale\}\}/about.md`, of tussen de bestandsnaam en de extensie, zoals `about.\{\{locale\}\}.md`. Om de taal te behouden, stel je de optie in op `false` in de optie `i18n` van het bestand.
+    # Don’t localize `i18n`
+    i18n_not_configured: De optie `i18n` is ingeschakeld, maar i18n is niet geconfigureerd op het hoogste niveau van de configuratie of in de collectie, dus de optie heeft geen effect.
+    # Don’t localize `public_folder` and `media_folder`
+    empty_public_folder: De optie `public_folder` is een lege string, dus het pad `media_folder` wordt in plaats daarvan gebruikt voor de mediapaden die in items worden opgeslagen. Verwijder de optie of stel deze in op het pad dat je wilt gebruiken, zoals `/images`.
     # {$option} is an option path from the configuration, such as `filter.Regulation`
     schema_unknown_option: De optie `{$option}` is niet gedefinieerd in het configuratieschema van Sveltia CMS. Deze wordt genegeerd. Controleer op een typefout of een syntaxisfout.
+    # Don’t localize `default_localized`, `default` and `i18n`
+    default_localized_without_i18n: De optie `default_localized` heeft geen effect, omdat i18n niet is ingeschakeld voor de collectie. Gebruik in plaats daarvan de optie `default`.
+    # {$locale} is a locale code from the configuration; Don’t localize `default_localized`
+    default_localized_unknown_locale: De optie `default_localized` heeft een waarde voor `{$locale}`, wat niet een van de talen van de collectie is, dus de waarde wordt nooit gebruikt.
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'Zie de compatibiliteitsnotities voor details: {$link}'
@@ -1726,6 +2736,11 @@ viewing_editorial_workflow: 'Je bekijkt nu het bord van de redactionele workflow
 # Same as above, for an Open Authoring contributor: their board has no Ready column, because only
 # a maintainer can publish
 viewing_open_authoring_workflow: 'Je bekijkt nu het bord van de redactionele workflow. Concepten: {$draft}. In review: {$review}. Verwijdering in behandeling: {$deletion}.'
+# Same as above, when the In Review stage is left out with the `stages` publish mode option
+viewing_editorial_workflow_without_review: 'Je bekijkt nu het bord van de redactionele workflow. Concepten: {$draft}. Klaar: {$ready}. Verwijdering in behandeling: {$deletion}.'
+# Same as above, when all the content uses Preview Workflow, which has no review stages, so the
+# page only lists the drafts
+viewing_preview_workflow: 'Je bekijkt nu de pagina Concepten. Concepten: {$draft}. Verwijdering in behandeling: {$deletion}.'
 
 # Workflow status names. `drafts` is the plural form used as a column heading,
 # while `draft` is the singular form used in the editor’s status button.
@@ -1737,6 +2752,10 @@ status:
   # A pending removal, which is a status of its own rather than a stage: it has no review to go
   # through, only the deletion itself to carry out or call off
   pending_deletion: Verwijdering in behandeling
+  # Merged changes the site hasn’t caught up with yet: it’s being rebuilt and deployed from the
+  # merge, so a published entry isn’t live and a deleted one is still up. Heading of the tray below
+  # the board that lists them until the site has caught up
+  deploying: Wordt gedeployed
 
 workflow:
   # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
@@ -1780,6 +2799,14 @@ workflow:
   status_updated: Status bijgewerkt.
   # Error notification when the status could not be changed
   status_change_failed: De status kon niet worden gewijzigd. Probeer het opnieuw.
+  # Workflow page: toolbar button that reads the pull requests again, to pick up the changes made
+  # by anyone else since the board was loaded, and the toast notifications shown while doing so and
+  # once done
+  refresh: Vernieuwen
+  refreshing: Bezig met vernieuwen…
+  refreshed: Het bord is bijgewerkt.
+  # Error notification when the board could not be refreshed
+  refresh_failed: Het bord kon niet worden vernieuwd. Probeer het opnieuw.
   # Error notification when the status can’t be changed because the entry is incomplete. Required
   # fields can be left empty while the entry is a draft, but not once it moves on from there
   status_change_blocked: Het item bevat fouten. Corrigeer deze voordat je de status wijzigt.
@@ -1790,6 +2817,10 @@ workflow:
   # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
   send_for_review: Ter review indienen
   confirm_sending_for_review: Je wijzigingen zijn opgeslagen als concept. Wil je het item ter review indienen, zodat iemand het kan bekijken en publiceren?
+  # Same as above, when the In Review stage is left out with the `stages` publish mode option, so
+  # the next step is to mark the entry as ready to be published
+  mark_as_ready: Markeren als klaar
+  confirm_marking_as_ready: Je wijzigingen zijn opgeslagen als concept. Wil je het item als klaar markeren, zodat het kan worden gepubliceerd?
   # Editor toolbar: button shown when the entry is ready to be published
   publish_entry: Item publiceren
   # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
@@ -1821,6 +2852,8 @@ workflow:
     .match $count
       one {{ Een ervan is nog niet gepubliceerd, dus je niet-gepubliceerde wijzigingen worden verworpen. Een eventueel gepubliceerde versie blijft gepubliceerd. }}
       *   {{ {$count} ervan zijn nog niet gepubliceerd, dus je niet-gepubliceerde wijzigingen worden verworpen. Eventueel gepubliceerde versies blijven gepubliceerd. }}
+  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
+  confirm_publishing_entry_after_build: Weet je zeker dat je dit item wilt publiceren? Je wijzigingen gaan live zodra je site opnieuw is gebouwd.
   # Workflow page: toast notifications shown while an entry is being published from a card, and
   # once publishing has completed
   publishing_entry: Item wordt gepubliceerd…
@@ -1832,10 +2865,55 @@ workflow:
   entry_deleted: Item verwijderd.
   # Error notification when publishing fails
   publishing_entry_failed: Het item kon niet worden gepubliceerd. Probeer het opnieuw.
+  # Error notification when an entry can’t be published from the CMS, because its request also
+  # changes files that aren’t part of the entry and that the CMS doesn’t show, goes somewhere other
+  # than the site’s branch, or is too large to check. Keep the wording free of Git jargon
+  publish_refused_other_changes: Dit item kan hier niet worden gepubliceerd, omdat het andere wijzigingen bevat die het CMS je niet kan tonen. Vraag een ontwikkelaar om het te controleren.
+  # Error notification when an entry can’t be published because its branch has been committed to
+  # since the entry was opened, so what would be published isn’t what was reviewed
+  publish_refused_entry_changed: Het item is gewijzigd sinds je het hebt geopend. Laad de pagina opnieuw om de nieuwste versie te controleren voordat je het publiceert.
+  review_on_x: Reviewen op {$service}
+  from_fork: Vanuit een fork
+  fork_entry_editable: Dit item komt uit een pull request van een bijdrager, geopend vanuit “{$fork}”. Je wijzigingen worden opgeslagen in diens branch. Review en merge de pull request op de Git-service.
+  fork_entry_locked: Dit item komt uit een pull request van een bijdrager, geopend vanuit “{$fork}”. De bijdrager staat beheerders niet toe deze te bewerken, dus het item kan hier alleen worden bekeken.
+  fork_not_editable: De bijdrager staat beheerders niet toe deze pull request te bewerken.
+  fork_entry_gone: De pull request van de bijdrager is niet meer open, dus de wijzigingen kunnen er niet in worden opgeslagen.
+  # Error shown in the save error dialog when an entry can’t be saved for review, because a request
+  # the CMS doesn’t show is already open from the branch the entry would be saved to. `{$number}` is
+  # the request number, e.g. `#12` on GitHub or `!12` on GitLab. Keep the wording free of Git jargon
+  branch_in_use: Er staat buiten het CMS al een ander verzoek ({$number}) open voor dit item. Vraag een ontwikkelaar om dit eerst te sluiten.
   # Workflow page: empty column message
   no_entries: Geen items.
   # Workflow page: aria-label for a draggable entry card
   drag_entry: Sleep om de status te wijzigen
+  # Workflow page: note on a card in the Deploying tray, marking an entry that’s being removed from
+  # the site rather than published to it
+  deploying_deletion: Verwijdering
+  # Workflow page: note on a card listing the new entries that were created from a Relation field
+  # of the entry and are published along with it, e.g. “Also adds Section: Getting Started”
+  companion_entries: Voegt ook {$entries} toe
+  # Workflow page: note on a card listing the existing entries that were edited from a Relation
+  # field of the entry and are published along with it, e.g. “Also changes Author: Ada Lovelace”
+  edited_companion_entries: Wijzigt ook {$entries}
+  # Workflow page: one of the entries listed by `companion_entries` or `edited_companion_entries`,
+  # named by its collection’s singular label and its title
+  companion_entry: '{$collection}: {$title}'
+
+# Dialog asking the user for a commit message every time changes are saved, when the site is
+# configured to. The message is recorded in the repository’s history along with the changes
+commit_message:
+  # Dialog title
+  title: Commitbericht
+  # Description when the user writes the whole message, which the text box is filled in with
+  description_replace: Beschrijf je wijzigingen. Het bericht wordt samen met de wijzigingen in de geschiedenis vastgelegd.
+  # Description when the text the user enters is added before or after a message the CMS writes
+  description_addition: Voeg een notitie toe aan het bericht dat samen met je wijzigingen in de geschiedenis wordt vastgelegd, zoals een issuenummer. Dit kan leeg blijven.
+  # Accessible name of the text box when the user writes the whole message
+  message: Commitbericht
+  # Accessible name of the text box when the text is added before or after the message
+  addition: Notitie
+  # Preview of the message as it will be recorded. {$message} is the message
+  preview: 'Bericht: {$message}'
 
 # Open Authoring: a contributor without write access to the configured repository works in a fork
 # of it, and their changes reach the site through a pull request a maintainer merges
@@ -1849,6 +2927,10 @@ open_authoring:
   fork_declined: Je hebt een fork van de repository in je account nodig om wijzigingen voor te stellen.
   # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
   fork_failed: Er kon geen fork van de repository “{$repo}” worden aangemaakt in je account.
+  # Error shown when the user’s fork doesn’t have the branch the CMS is configured with, so there’s
+  # nothing to start their changes from. {$fork} and {$repo} are repository identifiers in
+  # owner/repo format, {$branch} is the branch name
+  fork_branch_missing: Je fork “{$fork}” heeft geen branch “{$branch}”. Werk de fork bij vanuit de repository “{$repo}” en log daarna opnieuw in.
   # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
   # because the API rate limit is exhausted. {$repo} is the repository identifier
   permission_check_failed: Je toegang tot de repository “{$repo}” kon niet worden gecontroleerd. Probeer het zo meteen opnieuw.
@@ -1863,6 +2945,10 @@ open_authoring:
   private_repo_scope_required: Je login geeft geen toegang tot privérepository’s, dus de repository “{$repo}” kan niet worden gelezen. Vraag een beheerder om de authenticatie-instellingen van het CMS te controleren.
   # Error shown when a contributor tries to publish an entry, which only a maintainer can do
   publish_unsupported: Alleen een beheerder kan wijzigingen op deze site publiceren. Markeer je item in plaats daarvan als “In review”, dan kijkt iemand ernaar.
+  # Error shown when a contributor changes the status of an entry whose request a maintainer has
+  # published since the page was loaded, leaving nothing to review. The entry then leaves the
+  # Editorial Workflow board and the editor closes. Keep the wording free of Git jargon
+  entry_already_published: Een beheerder heeft dit item al gepubliceerd, dus er valt niets meer te reviewen.
   # Error shown when a change would go straight to the site instead of being reviewed, which a
   # contributor can’t do. It covers media library uploads and deletions, and entry reordering
   direct_commit_unsupported: Deze wijziging kan niet direct worden doorgevoerd. Alleen bewerkingen van items kunnen ter review worden voorgesteld.
@@ -1878,11 +2964,10 @@ open_authoring:
 # Settings page aria-label
 categories: Categorieën
 
-# Site Configuration Editor
-site_configuration_editor: Editor voor de siteconfiguratie
-
 # Preferences panels
 prefs:
+  account:
+    title: Account
   # API key management feedback messages
   changes:
     api_key_saved: API key opgeslagen.
@@ -1932,7 +3017,7 @@ prefs:
         select_service: Dienst selecteren
       api_keys:
         title: API keys voor vertaaldiensten
-        description: Beheer de API keys voor <a>vertaaldiensten</a>.
+        description: Beheer de API keys voor <a>vertaaldiensten</a>. API keys voor algemene AI-diensten kun je beheren in de AI-instellingen.
       # API key input label, e.g., “DeepL Key”
       # {$service} is the translation service name
       field_label: '{$service}-key'
@@ -1966,6 +3051,16 @@ prefs:
       field_label: '{$service} API key'
       no_services: Er zijn geen <a>cloudopslagdiensten</a> geconfigureerd.
 
+  # AI panel
+  ai:
+    title: AI
+    api_keys:
+      title: API keys voor AI-diensten
+      description: Beheer de API keys voor AI-diensten.
+    # API key input label, e.g., “OpenAI GPT API Key”
+    # {$service} is the AI service name
+    field_label: '{$service} API key'
+
   # Accessibility panel
   accessibility:
     title: Toegankelijkheid
@@ -1976,6 +3071,7 @@ prefs:
 
   # Data Management panel
   data:
+    title: Gegevensbeheer
     clear_data:
       title: Gegevens wissen
       # Clear File Cache button
@@ -1991,13 +3087,23 @@ prefs:
 
   # Developer panel
   developer:
+    title: Ontwikkelaar
     developer_mode:
       title: Ontwikkelaarsmodus
       description: Schakel functies voor ontwikkelaars in, waaronder gedetailleerde consolelogs en native contextmenu’s.
       switch_label: Ontwikkelaarsmodus inschakelen
+    local_git:
+      title: Git-commits
+      description: Commit je wijzigingen naar de huidige branch van je lokale repository wanneer je ze opslaat, zoals het CMS doet wanneer je met een externe repository werkt. Daarna kun je de commits controleren en pushen met je gebruikelijke Git-tools.
+      switch_label: Wijzigingen naar Git committen
+      checking: Bezig met controleren van de repository…
+      # {$branch} is the branch name, {$name} and {$email} are the commit author’s name and email address
+      ready: Wijzigingen worden gecommit naar de branch {$branch} als {$name} ({$email}).
+      # {$reason} is one of the `local_git_skip_reasons` strings
+      not_ready: Wijzigingen kunnen nu niet worden gecommit. {$reason}
     deploy_hook:
       title: Deploy hook
-      description: Voer een webhook-URL in die wordt aangeroepen wanneer je handmatig een deployment start via Wijzigingen publiceren. Dit kan leeg blijven als je GitHub Actions gebruikt.
+      description: Voer een webhook-URL in die wordt aangeroepen wanneer je handmatig een deployment start via Wijzigingen publiceren. Dit kan leeg blijven als je GitHub Actions of GitLab CI/CD gebruikt.
       # Hook URL input
       url:
         field_label: Hook-URL

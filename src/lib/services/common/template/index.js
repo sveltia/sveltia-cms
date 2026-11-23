@@ -7,6 +7,7 @@ import { replaceTemplateTags } from '$lib/services/common/template/tags';
 import { cmsConfig } from '$lib/services/config';
 import { getEntriesInCollectionFolder } from '$lib/services/contents/collection/entries';
 import { getIdentifierFieldName } from '$lib/services/contents/collection/identifier';
+import { getNameInFolder } from '$lib/services/contents/collection/nested';
 import { renameIfNeeded } from '$lib/services/utils/file';
 import { getPullRequestEntries } from '$lib/services/workflow';
 import {
@@ -17,7 +18,7 @@ import {
 
 /**
  * @import { ReplaceContext } from '$lib/services/common/template/replacers';
- * @import { FillTemplateOptions } from '$lib/types/private';
+ * @import { FillTemplateOptions, InternalLocaleCode } from '$lib/types/private';
  */
 
 /**
@@ -42,15 +43,9 @@ const getExistingSlugs = (collectionName, locale, dirPath) => {
       .filter(Boolean)
   );
 
-  if (dirPath === undefined) {
-    return slugs;
-  }
-
-  const prefix = dirPath ? `${dirPath}/` : '';
-
-  return slugs
-    .filter((slug) => slug.startsWith(prefix) && !slug.slice(prefix.length).includes('/'))
-    .map((slug) => slug.slice(prefix.length));
+  return dirPath === undefined
+    ? slugs
+    : slugs.flatMap((slug) => getNameInFolder(slug, dirPath) ?? []);
 };
 
 /**
@@ -67,12 +62,14 @@ const getExistingSlugs = (collectionName, locale, dirPath) => {
 export const fillTemplate = (template, options) => {
   const {
     collection,
+    collectionFile,
     content: valueMap,
     currentSlug,
     locale,
     dateTimeParts,
     isIndexFile = false,
     dirPath,
+    numberedSlugs,
   } = options;
 
   const { _type, name: collectionName } = collection;
@@ -94,7 +91,13 @@ export const fillTemplate = (template, options) => {
       basePath,
       fullPathRegEx,
     },
-    getFieldArgs: { collectionName, keyPath: '', valueMap, isIndexFile },
+    getFieldArgs: {
+      collectionName,
+      fileName: collectionFile?.name,
+      keyPath: '',
+      valueMap,
+      isIndexFile,
+    },
   };
 
   // Use a negative lookahead assertion to support nested template tags in transformations like
@@ -147,6 +150,7 @@ export const fillTemplate = (template, options) => {
    * @returns {string} Unique slug.
    */
   const rename = (str) => renameIfNeeded(str, existingSlugs, { hasExtension: false });
+  const filledSlug = slug;
   let uniqueSlug = rename(slug);
 
   // If the number pushes the slug over the cap, the slug in front of it gives way, so the number
@@ -156,6 +160,10 @@ export const fillTemplate = (template, options) => {
 
     slug = trimSlugEnd(truncateSlugBytes(slug, maxBytes - suffixBytes));
     uniqueSlug = rename(slug);
+  }
+
+  if (uniqueSlug !== filledSlug) {
+    numberedSlugs?.set(/** @type {InternalLocaleCode} */ (locale), filledSlug);
   }
 
   return uniqueSlug;

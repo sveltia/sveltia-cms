@@ -407,6 +407,62 @@ describe('groupEntries', () => {
     expect(result.find((g) => g.name === OTHER_GROUP_NAME)?.entries).toHaveLength(1);
   });
 
+  test('should put an entry with an empty multi-value field in the Other group', () => {
+    const entries = ['none', 'blank', 'tagged'].map((slug) => ({
+      id: slug,
+      slug,
+      subPath: slug,
+      locales: { en: { path: `${slug}.md`, slug, content: {} } },
+    }));
+
+    const values = { none: [], blank: [null, ''], tagged: ['', 'tech'] };
+
+    const collection = {
+      _type: 'entry',
+      _i18n: { defaultLocale: 'en', allLocales: ['en'] },
+      name: 'posts',
+      folder: 'content/posts',
+    };
+
+    // @ts-ignore - Mock parameter types
+    vi.mocked(getPropertyValue).mockImplementation(({ entry }) => values[entry.slug]);
+
+    // @ts-ignore - Mock data for testing
+    const result = groupEntries(entries, collection, { field: 'tags' });
+
+    // Rather than a group named with an empty string, or `,tech`
+    expect(result).toHaveLength(2);
+    expect(result).toContainEqual({ name: 'tech', entries: [entries[2]] });
+    expect(result).toContainEqual({ name: OTHER_GROUP_NAME, entries: [entries[0], entries[1]] });
+  });
+
+  test('should read the value from another locale when the entry lacks the default one', () => {
+    // A multi-file i18n entry with only `hello.fr.md`, which is listed in French
+    const entry = {
+      id: 'hello',
+      slug: 'hello',
+      subPath: 'hello',
+      locales: { fr: { path: 'hello.fr.md', slug: 'hello', content: { category: 'tech' } } },
+    };
+
+    const collection = {
+      _type: 'entry',
+      _i18n: { defaultLocale: 'en', allLocales: ['en', 'fr'] },
+      name: 'posts',
+      folder: 'content/posts',
+    };
+
+    // @ts-ignore - Mock parameter types
+    vi.mocked(getPropertyValue).mockImplementation(
+      ({ entry: _entry, locale, key }) => _entry.locales[locale]?.content[key],
+    );
+
+    // @ts-ignore - Mock data for testing
+    expect(groupEntries([entry], collection, { field: 'category' })).toEqual([
+      { name: 'tech', entries: [entry] },
+    ]);
+  });
+
   test('should handle regex patterns', async () => {
     const { getRegex } = await import('$lib/services/utils/regex');
 

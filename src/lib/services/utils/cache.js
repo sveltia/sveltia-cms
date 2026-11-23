@@ -189,3 +189,26 @@ export const memoizeOnSource = (getSource, build) => {
     return cache.value;
   };
 };
+
+/**
+ * Create a getter like {@link memoizeOnSource}’s for a value built from several sources, which is
+ * only built again once any of them has been replaced.
+ * @template {unknown[]} S, V
+ * @param {() => [...S]} getSources Function returning the current sources.
+ * @param {(...sources: S) => V} build Function building the value from the sources.
+ * @returns {() => V} Function returning the value for the current sources.
+ */
+export const memoizeOnSources = (getSources, build) => {
+  /** @type {{ sources: S, value: V } | undefined} */
+  let cache;
+
+  return () => {
+    const sources = /** @type {S} */ (getSources());
+
+    if (!cache || sources.some((source, index) => source !== cache?.sources[index])) {
+      cache = { sources, value: build(...sources) };
+    }
+
+    return cache.value;
+  };
+};

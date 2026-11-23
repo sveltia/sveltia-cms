@@ -16,9 +16,10 @@ export const serviceLabel = 'Mistral';
 export const apiLabel = 'Mistral AI API';
 export const developerURL = 'https://docs.mistral.ai/';
 export const apiKeyURL = 'https://console.mistral.ai/home?profile_dialog=api-keys';
-// Anchored, and a Google key (`AIza…`) excluded, so a key for another service entered while this
-// one is selected isn’t accepted and sent to the wrong API
-export const apiKeyPattern = /^(?!AIza)[a-zA-Z0-9]{32,}$/;
+// Either a legacy 32-character key or a newer `mstrl_`-prefixed one. Anchored, and a Google key
+// (`AIza…`) excluded, so a key for another service entered while this one is selected isn’t
+// accepted and sent to the wrong API
+export const apiKeyPattern = /^(?:(?!AIza)[a-zA-Z0-9]{32,}|mstrl_[a-zA-Z0-9_-]{32,})$/;
 
 /**
  * Send a message to the Mistral AI Chat Completions API and return the response text.

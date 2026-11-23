@@ -297,7 +297,7 @@ const stageAndCommit = async (repository, changes, options) => {
 
     await fs.writeFile(INDEX_PATH, bytes);
     index = { version: 2, entries, extensions: ['TREE'] };
-    setIndexCache({ checksum: getIndexChecksum(bytes), index, tree });
+    setIndexCache({ checksum: await getIndexChecksum(bytes), index, tree });
   }
 
   if (headTreeOid ? tree.oid === headTreeOid : !index.entries.length) {

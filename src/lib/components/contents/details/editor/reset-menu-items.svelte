@@ -24,14 +24,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    scope,
-    available,
-    separator = true,
-    onSelect,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { scope, available, separator = true, onSelect } = $props();
 </script>
 
 {#if separator}

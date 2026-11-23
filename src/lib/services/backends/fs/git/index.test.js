@@ -485,6 +485,40 @@ describe('saveAndCommitChanges()', () => {
     expect(git('rev-parse', 'HEAD')).toBe(head);
   });
 
+  test('notices changes the user stages when Git doesn’t write the index checksum', async () => {
+    // Git writes zeros instead of the checksum with this option, which `feature.manyFiles` sets
+    git('config', 'index.skipHash', 'true');
+    write('.gitignore', 'drafts/\n');
+    git('add', '.');
+    git('commit', '-m', 'Ignore drafts');
+    expect(
+      readFileSync(join(repoDir, '.git/index'))
+        .subarray(-20)
+        .every((byte) => !byte),
+    ).toBe(true);
+
+    // The index is read, but not written, as the file is ignored
+    await saveAndCommit([{ action: 'create', path: 'drafts/a.md', data: 'A\n' }]);
+
+    write('content/posts/hello.md', '# Staged\n');
+    git('add', 'content/posts/hello.md');
+
+    const head = git('rev-parse', 'HEAD');
+
+    await saveAndCommit([{ action: 'update', path: 'README.md', data: 'Second\n' }]);
+    expect(localGitNotice.current).toEqual({ reason: 'staged_changes', detail: undefined });
+    expect(git('rev-parse', 'HEAD')).toBe(head);
+    // The user’s change is still staged
+    expect(git('diff', '--cached', '--name-only')).toBe('content/posts/hello.md');
+
+    // Once the user has unstaged it, the next save is committed
+    git('reset', '-q');
+    await saveAndCommit([{ action: 'update', path: 'README.md', data: 'Third\n' }]);
+    expect(git('show', 'HEAD:README.md')).toBe('Third');
+    // The user’s change isn’t part of it
+    expect(git('status', '--porcelain')).toBe('M content/posts/hello.md');
+  });
+
   test('leaves the index alone when only an ignored file is saved', async () => {
     write('.gitignore', 'drafts/\n');
     git('add', '.');

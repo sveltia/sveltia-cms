@@ -21,13 +21,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    plan,
-    kind = 'entry',
-    count,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { plan, kind = 'entry', count } = $props();
 </script>
 
 {#if plan.blockers.length}

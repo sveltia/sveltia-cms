@@ -6,6 +6,7 @@ import {
 } from '$lib/services/contents/fields/list/items';
 
 vi.mock('$lib/services/config');
+vi.mock('$lib/services/user/account.svelte', () => ({ user: { account: {} } }));
 
 describe('getInitialListExpanderStates()', () => {
   /** @type {any} */
@@ -272,7 +273,7 @@ describe('createListItem()', () => {
     test('gives a UUID the same new value in every locale sharing the map', () => {
       /** @type {import('$lib/types/public').Field[]} */
       const fields = [{ name: 'id', widget: 'uuid' }];
-      const renewedUuids = new Map();
+      const renewedValues = new Map();
 
       // A duplicated UUID holds the same value in every locale, while a translatable one doesn’t
       const [en, fr, de] = [OLD_ID, OLD_ID, OTHER_ID].map((id) =>
@@ -281,7 +282,7 @@ describe('createListItem()', () => {
           subFields: fields,
           valueList: [{ id }],
           dupIndex: 0,
-          renewedUuids,
+          renewedValues,
         }),
       );
 
@@ -300,6 +301,43 @@ describe('createListItem()', () => {
 
       expect(next.id).toMatch(UUID_REGEX);
       expect(next.id).not.toBe(en.id);
+    });
+
+    test('gives a Hidden field its default value again, the same in every locale sharing the map', () => {
+      /** @type {import('$lib/types/public').Field[]} */
+      const fields = [
+        { name: 'key', widget: 'hidden', default: '{{uuid}}' },
+        { name: 'lang', widget: 'hidden', default: '{{locale}}', i18n: true },
+        { name: 'tags', widget: 'hidden', default: ['a'] },
+        { name: 'choices', widget: 'select', multiple: true, options: ['x', 'y'] },
+      ];
+
+      const renewedValues = new Map();
+
+      const [en, fr] = ['en', 'fr'].map((locale) =>
+        createListItem({
+          ...args,
+          subFields: fields,
+          valueList: [{ key: OLD_ID, lang: locale, tags: ['b'], choices: ['x'] }],
+          dupIndex: 0,
+          renewedValues,
+          locale,
+        }),
+      );
+
+      expect(en.key).toMatch(UUID_REGEX);
+      expect(en.key).not.toBe(OLD_ID);
+      // A value duplicated across the locales gets the same new one in each
+      expect(fr.key).toBe(en.key);
+      // A translatable one gets one per locale
+      expect(en.lang).toBe('en');
+      expect(fr.lang).toBe('fr');
+      expect(en.tags).toEqual(['a']);
+      // An object or array isn’t shared by the locales, whether it’s renewed or kept
+      expect(fr.tags).toEqual(['a']);
+      expect(fr.tags).not.toBe(en.tags);
+      expect(fr.choices).toEqual(['x']);
+      expect(fr.choices).not.toBe(en.choices);
     });
 
     test('resolves the type of a duplicated item of a list with variable types', () => {

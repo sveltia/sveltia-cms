@@ -15,7 +15,7 @@ import {
   isNotFoundError,
 } from '$lib/services/backends/fs/shared/handles';
 import { env } from '$lib/services/user/env.svelte';
-import { getBlob, getDirName, getGitHash } from '$lib/services/utils/file';
+import { foldPath, getBlob, getDirName, getGitHash } from '$lib/services/utils/file';
 
 /**
  * @import {
@@ -48,23 +48,46 @@ export const canMoveFile = () => 'move' in FileSystemFileHandle.prototype && !en
  * handles the case where the `createWritable` method is not supported by older versions of Safari.
  * @param {FileSystemFileHandle} fileHandle File handle to write to.
  * @param {FileSystemWriteChunkType} data Data to write to the file.
+ * @throws {Error} If the data couldn’t be written or the file couldn’t be closed.
  */
 export const writeFile = async (fileHandle, data) => {
   // The `createWritable` method is not supported by older versions of Safari
   const writer = await fileHandle.createWritable?.();
 
+  if (!writer) {
+    return;
+  }
+
   try {
     // Can throw if the file has just been moved/renamed without any change, and then the `data` is
     // no longer available
-    await writer?.write(data);
-  } finally {
+    await writer.write(data);
+  } catch (ex) {
+    // Release the file; closing a stream that has failed fails too, but the write error is the one
+    // that tells what went wrong
     try {
-      await writer?.close();
+      await writer.close();
     } catch {
       //
     }
+
+    throw ex;
   }
+
+  // The data is only committed to the file when the stream is closed: Chrome writes to a swap file
+  // and moves it into place then. If that fails, e.g. because another program has locked the file,
+  // the file hasn’t been written, which the caller has to know rather than treat it as saved
+  await writer.close();
 };
+
+/**
+ * Create a temporary file with a unique name in the given directory. Its name starts with
+ * `TEMP_FILE_PREFIX`, so it’s hidden, and a stale one is deleted when the files are scanned.
+ * @param {FileSystemDirectoryHandle} dirHandle Directory handle.
+ * @returns {Promise<FileSystemFileHandle>} Handle of the new, empty file.
+ */
+const createTempFile = (dirHandle) =>
+  dirHandle.getFileHandle(`${TEMP_FILE_PREFIX}${crypto.randomUUID()}`, { create: true });
 
 /**
  * Move a file from a previous path to a new path within the file system. A file or folder whose
@@ -92,12 +115,33 @@ export const moveFile = async ({ rootDirHandle, previousPath, path }) => {
     return fileHandle;
   }
 
-  const newFileHandle = await getFileHandle(rootDirHandle, path);
   const oldDirHandle = await getDirectoryHandle(rootDirHandle, oldDirname);
+  const newDirHandle = await getDirectoryHandle(rootDirHandle, newDirname);
+  let newFileHandle = await getFileHandle(rootDirHandle, path);
 
-  await writeFile(newFileHandle, await fileHandle.getFile());
-  // The name the file has on the disk
+  // On a case-insensitive file system, a file renamed only in case, e.g. `Photo.jpg` to
+  // `photo.jpg`, is still the same file under the new name, as is one renamed only in its Unicode
+  // normalization form where the file system or the name lookup ignores it. The browser doesn’t
+  // always tell, as it may compare the paths it has, so the paths are compared here too. Copying
+  // the file onto itself and deleting the old name would delete the file, so it’s copied to a
+  // temporary file first, which also gives it the new spelling
+  if (!(await newFileHandle.isSameEntry(fileHandle)) && foldPath(previousPath) !== foldPath(path)) {
+    await writeFile(newFileHandle, await fileHandle.getFile());
+    // The name the file has on the disk
+    await oldDirHandle.removeEntry(fileHandle.name);
+
+    return newFileHandle;
+  }
+
+  const tempFileHandle = await createTempFile(newDirHandle);
+
+  await writeFile(tempFileHandle, await fileHandle.getFile());
   await oldDirHandle.removeEntry(fileHandle.name);
+  newFileHandle = await getFileHandle(rootDirHandle, path);
+  // The temporary file is only removed once the file has been written under the new name, so the
+  // content isn’t lost if that fails
+  await writeFile(newFileHandle, await tempFileHandle.getFile());
+  await newDirHandle.removeEntry(tempFileHandle.name);
 
   return newFileHandle;
 };
@@ -154,9 +198,7 @@ export const saveFile = async ({ rootDirHandle, fileHandle, path, data }) => {
       const { dirname, basename } = getPathInfo(stripSlashes(path));
       const dirHandle = await getDirectoryHandle(rootDirHandle, dirname);
 
-      fileHandle = await dirHandle.getFileHandle(`${TEMP_FILE_PREFIX}${crypto.randomUUID()}`, {
-        create: true,
-      });
+      fileHandle = await createTempFile(dirHandle);
       pendingRename = { dirHandle, basename };
     } else {
       fileHandle = await getFileHandle(rootDirHandle, path);

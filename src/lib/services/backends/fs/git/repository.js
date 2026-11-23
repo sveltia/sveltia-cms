@@ -1,3 +1,5 @@
+import { getHash } from '@sveltia/utils/crypto';
+
 import { loadChunk } from '$lib/services/app/dependencies';
 import {
   DIR,
@@ -50,11 +52,21 @@ export const setIndexCache = (cache) => {
 };
 
 /**
- * Get the checksum an index file ends with: the SHA-1 hash of the rest of the file.
+ * Get the checksum an index file ends with: the SHA-1 hash of the rest of the file. Git writes
+ * zeros instead with the `index.skipHash` option, which `feature.manyFiles` also turns on, to save
+ * the time hashing a large index takes; every such index would then have the same checksum, and
+ * one cached under it would be taken for any other, so the hash is computed as Git would have.
  * @param {Uint8Array} bytes Content of the index file.
- * @returns {string} Checksum.
+ * @returns {Promise<string>} Checksum.
+ * @see https://git-scm.com/docs/git-config#Documentation/git-config.txt-indexskipHash
  */
-export const getIndexChecksum = (bytes) => toHex(bytes.subarray(-OID_SIZE));
+export const getIndexChecksum = async (bytes) => {
+  const checksum = bytes.subarray(-OID_SIZE);
+
+  return checksum.some((byte) => byte !== 0)
+    ? toHex(checksum)
+    : getHash(bytes.subarray(0, -OID_SIZE));
+};
 
 /**
  * Get the commit a branch points to.
@@ -106,7 +118,7 @@ const getIndexTree = async (index, checksum) => {
  */
 const readIndex = async (gitDirHandle) => {
   const buffer = await (await readFileIfExists(gitDirHandle, 'index'))?.arrayBuffer();
-  const checksum = buffer ? getIndexChecksum(new Uint8Array(buffer)) : '';
+  const checksum = buffer ? await getIndexChecksum(new Uint8Array(buffer)) : '';
 
   if (indexCache?.checksum === checksum) {
     return { index: indexCache.index, buffer, checksum };

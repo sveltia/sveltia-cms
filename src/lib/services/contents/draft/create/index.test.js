@@ -18,6 +18,7 @@ vi.mock('$lib/services/contents/draft', async (importOriginal) => ({
 
 vi.mock('$lib/services/contents/draft/backup', () => ({
   restoreBackupIfNeeded: vi.fn(),
+  cancelRestoreCheck: vi.fn(),
 }));
 
 vi.mock('$lib/services/contents/draft/create/proxy.svelte', () => ({
@@ -27,7 +28,7 @@ vi.mock('$lib/services/contents/draft/create/versioned-map.svelte', () => ({
   createValueMap: vi.fn((target) => target),
 }));
 
-vi.mock('$lib/services/contents/draft/create/uuid', () => ({
+vi.mock('$lib/services/contents/draft/create/unique-values', () => ({
   fillUuidValues: vi.fn(),
 }));
 
@@ -50,11 +51,14 @@ const { getIndexFile, isCollectionIndexFile } =
   await import('$lib/services/contents/collection/entries/index-file');
 
 const { revokeDraftFileURLs } = await import('$lib/services/contents/draft');
-const { restoreBackupIfNeeded } = await import('$lib/services/contents/draft/backup');
+
+const { cancelRestoreCheck, restoreBackupIfNeeded } =
+  await import('$lib/services/contents/draft/backup');
+
 const { createProxy } = await import('$lib/services/contents/draft/create/proxy.svelte');
 const { createValueMap } = await import('$lib/services/contents/draft/create/versioned-map.svelte');
 const { getDefaultValues } = await import('$lib/services/contents/draft/defaults');
-const { fillUuidValues } = await import('$lib/services/contents/draft/create/uuid');
+const { fillUuidValues } = await import('$lib/services/contents/draft/create/unique-values');
 const { getField } = await import('$lib/services/contents/entry/fields');
 const { cmsConfig } = await import('$lib/services/config');
 const { nestedFilterPath } = await import('$lib/services/contents/collection/nested');
@@ -78,7 +82,7 @@ describe('contents/draft/create/index', () => {
       folder: 'content/pages',
       fields: [],
       nested: {},
-      meta: metaPath ? { path: { widget: 'string' } } : undefined,
+      meta: metaPath ? { path: {} } : undefined,
     });
 
     beforeEach(() => {
@@ -1213,6 +1217,8 @@ describe('contents/draft/create/index', () => {
       createDraft({ entryDraft, collection, originalEntry });
 
       expect(restoreBackupIfNeeded).not.toHaveBeenCalled();
+      // The previous draft’s backup isn’t asked about either
+      expect(cancelRestoreCheck).toHaveBeenCalledOnce();
     });
 
     it('should handle extra values', () => {

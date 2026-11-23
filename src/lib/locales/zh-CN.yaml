@@ -11,6 +11,8 @@
 create: 新建
 select: 选择
 select_all: 全选
+# Accessible name of the checkbox that selects a single entry or asset in a list
+select_item: 选择 {$name}
 upload: 上传
 copy: 复制
 download: 下载
@@ -69,6 +71,10 @@ primary: 主要
 secondary: 次要
 collection: 集合
 folder: 文件夹
+# Label of the subfolder list in the asset picker
+folders: 文件夹
+# Menu in a breadcrumb holding the folders that don’t fit
+more_folders: 更多文件夹
 
 # ==============================================================================
 # Miscellaneous Labels
@@ -113,6 +119,7 @@ welcome_message: 欢迎使用 {$name}
 powered_by: 由 {$name} 提供
 
 # Shown during initial configuration and data loading
+unsupported_browser_error: 不支持您的浏览器。请将其更新到最新版本或使用其他浏览器。
 loading_cms_config: 加载 CMS 配置……
 loading_site_data: 加载站点数据……
 loading_site_data_error: 加载站点数据时出错。
@@ -125,6 +132,8 @@ sign_in_with_x: 使用 {$service} 登录
 # Access token dialog: alternative authentication method
 sign_in_using_access_token: 使用访问令牌登录
 sign_in_using_access_token_description: 在下方输入令牌，需要有仓库内容的读写权限。
+# Shown after the description above when Editorial Workflow is enabled, which opens and merges pull requests
+sign_in_using_access_token_workflow_note: 由于已启用编辑工作流，令牌还需要有拉取请求的读写权限。
 # Inline link text with embedded HTML anchor tag
 # {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
 sign_in_using_access_token_link: 可到 <a>{$service} 用户设置页面</a>生成令牌。
@@ -143,6 +152,11 @@ work_with_local_repo_description: 在弹出的对话框中，选择「{$repo}」
 work_with_local_repo_description_no_repo: 在弹出的对话框中，选择您的 Git 仓库的根目录。
 # Button label for demo/test repository
 work_with_test_repo: 使用测试仓库
+# Button label for the test repository when sample content is seeded, e.g. on a demo site
+start_demo: 开始演示
+# Shown below the disabled test repository option in a browser that can’t save files to its
+# storage, e.g. Safari before version 26
+test_repo_unsupported_browser: 您的浏览器无法保存测试仓库的文件。请将其更新到最新版本或使用其他浏览器。
 
 # Authentication errors
 # Error messages shown during sign-in failures
@@ -167,14 +181,28 @@ sign_in_error:
 backend_unsupported_version: '{$name} 后端需要 {$name} {$version} 或更高版本。'
 # {$repo} is the repository identifier, typically in owner/repo format
 repository_no_access: 您没有访问「{$repo}」仓库的权限。
+# {$repo} is the repository identifier, typically in owner/repo format
+repository_no_write_access: 您没有「{$repo}」仓库的写入权限。
 repository_not_found: 「{$repo}」仓库不存在。
 repository_empty: 「{$repo}」仓库没有分支。
 # {$repo} is the repository identifier, and {$branch} is the configured branch name
 branch_not_found: 「{$repo}」仓库没有「{$branch}」分支。
+# {$repo} is the repository identifier, and {$dir} is the configured root directory
+root_dir_not_found: 「{$repo}」仓库中不存在根目录「{$dir}」。
 
 # General errors
 # Fallback error dialog title for unexpected errors
 unexpected_error: 意外错误
+# Shown in place of the page when an unexpected error stops it from being displayed
+# {$message} is the error message
+page_crashed: 出现问题，无法显示此页面。{$message}
+# Shown in place of a field editor or preview when an unexpected error stops it from being displayed
+# {$message} is the error message
+field_crashed: 出现问题，无法显示此字段。{$message}
+# Button label for displaying a part of the page again after an unexpected error
+try_again: 重试
+# Button label for reloading the CMS after an unexpected error
+reload_cms: 重新加载 CMS
 
 # Entry file parsing errors
 # Toast notification when entry files fail to parse on initial load
@@ -202,6 +230,331 @@ sign_in: 登录
 sign_in_with_mobile: 手机扫码登录
 # Instructions shown in the mobile sign-in dialog for passwordless authentication
 sign_in_with_mobile_instruction: 使用手机或平板扫描下方二维码即可免密登录，设置会自动复制到设备。
+# Confirmation dialog shown when the CMS is opened with a sign-in link from the mobile sign-in
+# QR code. {$account} is the account name, {$service} is the Git service name, e.g. GitHub
+sign_in_with_link: 通过链接登录
+sign_in_with_link_confirmation: 此链接将以 {$account} 身份登录 {$service}，并复制创建该链接的设备上的设置。请仅在链接由您本人创建时继续。
+
+# Sign-in with Sveltia CMS Additions, which manages its own user accounts instead of the Git
+# service’s. Don’t localize “Sveltia CMS Additions”
+additions:
+  username: 用户名
+  password: 密码
+  sign_in: 登录
+  new_password_title: 设置新密码
+  new_password_description: 您使用临时密码登录。请设置新密码以继续。
+  new_password: 新密码
+  password_too_short: 密码太短。请至少使用 12 个字符。
+  change_password: 更改密码
+  # {$name} is the user’s username, {$role} their role, e.g. Editor
+  signed_in_as_x_with_role: 当前以 {$name}（{$role}）身份登录
+  link_github: 关联 GitHub 账户
+  link_github_error: 无法关联 GitHub 账户
+  current_password: 当前密码
+  # {$username} is the username filled in from a magic link emailed to the user
+  filled_from_link: 用户名和密码已通过链接填写。请仅在「{$username}」是您的用户名时登录。
+  change_password_description: 您将在此处保持登录状态，并在其他设备上退出登录。
+  password_changed: 您的密码已更改。
+  # The Account settings panel of a Sveltia CMS Additions user
+  account:
+    profile: 个人资料
+    profile_description: 您的名称会在 CMS 中向其他用户显示（例如条目锁定和评论中），也会出现在您的提交中。
+    username_description: 用户名无法更改。
+    email: 电子邮件
+    email_description: 它用于您的提交，以便 GitHub 将提交关联到您的账户。未设置时将使用占位地址。只有管理员可以更改。
+    change_name: 更改名称
+    name_changed: 您的名称已更改。
+    password: 密码
+    no_password: 您的账户仅通过 GitHub 登录，因此没有可更改的密码。管理员可以通过重置密码为您设置密码。
+  setup:
+    use_admin_secret: 使用管理员密钥
+    title: 设置 Sveltia CMS Additions
+    secret_description: 请输入在 Sveltia CMS Additions 服务设置中配置的管理员密钥。它仅在设置期间保存在此标签页中。
+    admin_secret: 管理员密钥
+    continue: 继续
+    back: 返回登录
+    admin_title: 管理员账户
+    admin_create_description: 创建第一个管理员账户。您将使用它登录并管理其他用户。
+    admin_reset_description: 管理员账户已存在。要重新获得访问权限，请在此重置某个管理员的密码，或创建另一个管理员。
+    admin_saved: 管理员账户已就绪。请使用您刚才输入的密码登录。
+    create_admin: 创建管理员
+    reset_password: 保存管理员
+    github_title: GitHub
+    # {$repo} is the repository, e.g. octocat/site
+    github_description: 为此站点创建 GitHub App，并将其安装到「{$repo}」仓库。GitHub 会请您确认，然后返回此处。
+    # {$repo} is the repository, {$app} is the name of the GitHub App
+    github_connected: 已通过「{$app}」GitHub App 连接到「{$repo}」仓库。
+    connect_github: 连接 GitHub
+    # {$step} is the number of the current step, {$total} the number of steps
+    step_x_of_y: 第 {$step} 步，共 {$total} 步
+    admin_exists: 管理员账户已存在。
+    reset_admin_password: 重置管理员密码
+    setup_complete: 设置已完成。请使用管理员账户登录以管理用户和设置。您可以随时使用管理员密钥返回此处。
+    manage_sites: 管理其他站点
+    back_to_setup: 返回
+    sites_title: 其他站点
+    sites_description: 此服务还可以为其他站点提供服务，每个站点都有各自的用户、设置和 GitHub App。请在站点的 CMS 配置中将「base_url」设置为其 URL，然后在那里使用管理员密钥设置该站点。
+    no_sites: 暂无其他站点。
+    site_id: 站点 ID
+    site_id_description: 1 到 32 个小写字母、数字和连字符，例如「acme」。它会出现在站点的 URL 中，且无法更改。
+    site_name_optional: 名称（可选）
+    add_site: 添加站点
+    # {$name} is the name of the site
+    site_added: 已添加「{$name}」。请在其 CMS 配置中将「base_url」设置为其 URL，然后在那里打开设置向导。
+    # {$name} is the name of the site
+    copy_site_url: 复制 {$name} 的 URL
+    delete_site: 删除站点
+    # {$name} is the name of the site
+    delete_site_x: 删除 {$name}
+    # {$name} is the name of the site, {$id} is its ID
+    delete_site_confirmation: 删除「{$name}」也会删除其用户、设置和评论。此操作无法撤销。GitHub App 会保留在 GitHub 上，您可以在那里删除它。请输入「{$id}」以确认。
+    site_id_to_confirm: 用于确认的站点 ID
+    data_key_locked_title: 管理员密钥已更改
+    data_key_locked_description: 管理员密钥已更改，因此无法读取已存储的设置。请输入之前的密钥以保留这些设置；如果密钥已丢失，请重新开始。
+    previous_secret: 之前的管理员密钥
+    unlock: 解锁
+    rekey: 重新开始
+    rekey_confirmation: 重新开始将删除 GitHub App 凭据和其他已存储的密钥，并让所有人退出登录。密码会保留。是否继续？
+    result:
+      ok: GitHub 已连接。现在可以登录了。
+      github_app_not_created: GitHub App 未创建。请使用管理员密钥重试。
+      github_app_not_installed: GitHub App 未安装。请使用管理员密钥重试。
+      github_wrong_account: GitHub App 安装到了不拥有该仓库的账户上。请将其安装到拥有该仓库的账户上，然后重试。
+      github_repository_not_included: GitHub App 安装时未授予该仓库的访问权限。请在 GitHub 上为其授予仓库访问权限，然后重试。
+      unexpected: 由于意外错误，连接 GitHub 失败。请重试。
+  locks:
+    # {$name} is the name of the person editing the entry, {$time} when they started
+    being_edited: '{$name} 自 {$time} 起正在编辑此条目，因此您只能查看。'
+    being_edited_by_you: 您正在另一个标签页中编辑此条目，因此在此处只能查看。
+    # {$name} is the name of the person who took over the entry
+    taken_over: '{$name} 已接管此条目，因此您现在只能查看。'
+    take_over: 接管
+    unavailable: 条目锁定不可用，其他人可能正在同时编辑此条目。
+    # {$name} is the name of the person editing the entry
+    being_edited_by_x: '{$name} 正在编辑'
+    # {$names} is a list of the other people who have the entry open in the editor
+    also_open_by_x: '{$names} 也打开了此条目'
+    # {$names} is a list of the people who have the entry open, besides anyone editing it
+    open_by_x: '{$names} 打开了此条目'
+  users:
+    title: 用户
+    add_user: 添加用户
+    edit_user: 编辑用户
+    add: 添加
+    name: 名称
+    username_description: 用户添加后，用户名将无法更改。
+    email_optional: 电子邮件（可选）
+    email_description: 它用于此用户的提交，以便 GitHub 将提交关联到其账户。未设置时将使用占位地址。
+    role: 角色
+    status: 状态
+    last_sign_in: 上次登录
+    sign_in_column: 登录方式
+    methods:
+      password: 密码
+      # {$login} is a GitHub username
+      github: GitHub（{$login}）
+    actions: 操作
+    you: （您）
+    never: 从未
+    roles:
+      admin: 管理员
+      editor: 编辑者
+      viewer: 查看者
+    statuses:
+      active: 活跃
+      temporary_password: 临时密码
+      waiting_for_sign_in: 等待首次登录
+      disabled: 已停用
+    # {$name} is the user’s name
+    show_options_for_x: 显示 {$name} 的选项
+    options: 用户选项
+    reset_password: 重置密码
+    sign_out_everywhere: 在所有设备上退出登录
+    enable: 启用用户
+    disable: 停用用户
+    delete: 删除用户
+    # {$name} is the user’s name
+    reset_password_confirmation: 要为 {$name} 设置新的临时密码吗？该用户将在所有设备上退出登录，并须在下次登录时设置新密码。
+    delete_confirmation: 要删除 {$name} 吗？此操作无法撤销。
+    temporary_password: 临时密码
+    # {$name} is the user’s name
+    temporary_password_description: 请将此用户名和临时密码提供给 {$name}。密码不会再次显示，该用户登录时将设置自己的密码。
+    copy_username: 复制用户名
+    copy_password: 复制密码
+    # {$name} is the user’s name
+    email_credentials: 通过电子邮件发送给 {$name}
+    # The emails the admin sends from their own email app, with the sign-in details: `new` to a user
+    # who has just been added, `reset` to one whose password has been reset. Each line is a string of
+    # its own, as line breaks aren’t kept in these files
+    credentials_email:
+      # {$name} is the user’s name
+      greeting: '{$name}，您好：'
+      # {$url} is a link to the CMS that fills in the username and the temporary password
+      sign_in_link: 登录链接：{$url}
+      # {$username} is the username
+      username: 用户名：{$username}
+      # {$password} is the temporary password
+      password: 临时密码：{$password}
+      new:
+        # {$app} is the name of the CMS
+        subject: 您的 {$app} 登录信息
+        # {$app} is the name of the CMS
+        message: 您现在可以登录 {$app} 了。请打开下方链接，它会自动填写您的用户名和临时密码，登录时请设置您自己的密码。
+      reset:
+        # {$app} is the name of the CMS
+        subject: 您的 {$app} 密码已重置
+        # {$app} is the name of the CMS
+        message: 您的 {$app} 密码已重置，您已在所有设备上退出登录。请打开下方链接，它会自动填写您的用户名和临时密码，登录时请设置新密码。
+    allowed_domains: 允许的域名
+    allowed_domains_description: 可以使用 Sveltia CMS Additions 的站点，每行一个主机名。通配符（*）可匹配任意子域名，例如 *.example.com。请尽可能列出确切的主机名。即使同一 Sveltia CMS Additions 实例还为其他站点提供服务，此列表也仅适用于此站点。
+    save_allowed_domains: 保存允许的域名
+    allowed_domains_saved: 允许的域名已保存。
+    sign_in_tab: 登录
+    # {$latest} is the newest version of Sveltia CMS Additions, {$current} the one in use
+    update_available: Sveltia CMS Additions {$latest} 已发布。您当前使用的是 {$current}。
+    release_notes: 版本发布说明
+    github_username_optional: GitHub 用户名（可选）
+    github_username_description: 设置 GitHub 用户名后，该用户将使用该 GitHub 账户登录，而不是使用密码。
+    # {$name} is the user’s name
+    github_required: '{$name} 只能通过 GitHub 登录，因此无法移除其 GitHub 用户名。请先重置其密码，为其提供可用于登录的密码。'
+    adopt: 接管账户
+    sign_in:
+      github: 允许通过 GitHub 登录
+      github_description: 用户通过自己的 GitHub 账户登录并获得自己的 GitHub 令牌，因此其更改将以本人身份提交。除非符合某条注册规则，否则需要管理员先使用其 GitHub 用户名添加该用户。
+      # Shown when signing in with GitHub is being turned off while {$count} users can only sign in
+      # with it
+      github_only_warning: |
+        .input {$count :integer}
+        .match $count
+          * {{ 有 {$count} 个用户只能通过 GitHub 登录，关闭此方式后将无法登录，直到您重置其密码。 }}
+      rules: 注册规则
+      rules_description: 安装了该应用的 GitHub 组织的成员无需事先添加即可登录。其账户将获得您选择的角色；如果成员离开该组织，账户将被停用，除非您已接管该账户。
+      org: GitHub 组织
+      add_rule: 添加规则
+      # {$org} is the name of a GitHub organization
+      remove_rule: 移除 {$org} 的规则
+      # For a rule whose organization hasn’t been entered yet
+      remove_empty_rule: 移除规则
+      save: 保存登录设置
+      saved: 登录设置已保存。
+    domains_tab: 域名
+    github_tab: GitHub
+    github:
+      app: GitHub App
+      repository: 仓库
+      not_installed: 未安装
+      statuses:
+        ok: 应用运行正常。
+        not_registered: 尚未设置 GitHub App。请在登录页面使用管理员密钥运行设置向导。
+        key_missing: 更换管理员密钥时，应用的私钥已丢失。请在 GitHub 上的应用设置中生成新的私钥，并在下方上传。
+        key_rejected: GitHub 不接受该应用的私钥，例如私钥已在 GitHub 上被删除。请在 GitHub 上的应用设置中生成新的私钥，并在下方上传。
+        not_installed: 该应用未安装到仓库。请从 GitHub 上的应用页面重新安装，或运行设置向导。
+        suspended: 该应用的安装已被暂停。请在 GitHub 上的安装设置中取消暂停。
+        unreachable: 无法连接 GitHub。请稍后重试。
+      check_again: 再次检查
+      # {$branch} is the name of the repository’s default branch
+      branch_protected: 规则集已保护「{$branch}」分支，防止强制推送和删除。
+      branch_bypassed: 规则集保护着「{$branch}」分支，但该应用可以绕过这些规则，因此编辑者仍可能强制推送到该分支或将其删除。请将该应用从这些规则集的绕过列表中移除。
+      branch_unprotected: 没有规则集保护「{$branch}」分支免受强制推送和删除，因此编辑者可能改写其历史记录或将其删除。请在仓库设置中添加一个同时阻止这两种操作的规则集，且不要将该应用加入其绕过列表。
+      repository_rules: 打开仓库规则
+      private_key: 私钥
+      private_key_description: 要更换私钥，请在 GitHub 上的应用设置中生成新的私钥，然后上传下载的 .pem 文件。之后请在那里删除旧私钥。
+      app_settings: 打开应用设置
+      upload_private_key: 上传私钥
+      replace_private_key: 更换私钥
+      private_key_summary: 此服务使用应用的私钥访问 GitHub 上的仓库。如果私钥可能已泄露，请更换。
+      private_key_replaced: 私钥已更换。
+      commit_author: 提交作者
+      commit_author_description: 选择在 CMS 中保存的更改以谁作为作者显示。GitHub 只会为该应用作为作者的提交签名，因此如果规则集要求签名提交，请选择该应用。其他用户将在一小时内应用此更改。
+      commit_author_user: 进行更改的用户
+      commit_author_bot: GitHub App，并将该用户作为共同作者
+      commit_author_saved: 提交作者已保存。
+  # Administration section for the API keys and the deploy hook an admin shares with everyone
+  credentials:
+    title: 凭据
+    description: 在此输入的 API 密钥和部署钩子将供所有登录用户使用，除非用户在「设置」中输入了自己的。任何登录 CMS 的人都可以读取它们，因此请仅输入您愿意与团队共享的密钥。
+    save: 保存凭据
+    saved: 凭据已保存。
+    # {$service} is the service name, e.g. DeepL
+    invalid_key: '{$service} 的 API 密钥似乎不正确。'
+  error:
+    unauthenticated: 您的会话已过期。请重新登录。
+    wrong_admin_secret: 管理员密钥不正确。
+    admin_secret_missing: Sveltia CMS Additions 服务的设置中未配置管理员密钥。
+    admin_secret_too_short: Sveltia CMS Additions 服务设置中配置的管理员密钥太短。请至少使用 32 个随机字符。
+    wrong_previous_secret: 之前的管理员密钥不正确。
+    not_an_admin: 此用户不是管理员。请选择其他用户名。
+    invalid_username: 用户名须为 3 到 30 个小写字母、数字、点、连字符或下划线。
+    last_admin: 必须至少有一名管理员。
+    cannot_disable_self: 您无法停用自己的账户。
+    cannot_delete_self: 您无法删除自己的账户。
+    username_taken: 其他用户已使用此用户名。
+    email_taken: 其他用户已使用此电子邮件地址。
+    invalid_name: 名称必须为 1 到 100 个字符。
+    invalid_email: 电子邮件地址无效。
+    invalid_domains: 其中一个允许的域名不是有效的主机名。
+    current_origin_removed: 允许的域名必须包含您当前正在使用的站点。
+    forbidden: 只有管理员才能执行此操作。
+    invalid_credentials: 用户名或密码不正确。
+    user_disabled: 此账户已停用。请联系管理员寻求帮助。
+    too_many_attempts: 尝试次数过多。请稍后重试。
+    wrong_password: 当前密码不正确。
+    same_password: 请设置与当前密码不同的新密码。
+    invalid_github_login: 这不是有效的 GitHub 用户名。
+    github_user_not_found: 不存在使用此名称的 GitHub 用户。
+    github_account_taken: 其他用户已使用此 GitHub 账户登录。
+    invalid_rules: 注册规则需要填写 GitHub 组织名称。
+    invalid_rule_role: 注册规则只能授予编辑者或查看者角色。
+    rule_org_not_installed: GitHub App 必须安装到注册规则所指定的组织。
+    not_invited: 您在此处没有账户。请联系管理员添加您。
+    method_disabled: 通过 GitHub 登录已关闭。
+    access_denied: 登录已取消。
+    github_app_not_set_up: Sveltia CMS Additions 尚未连接到 GitHub。请联系管理员完成设置。
+    invalid_tenant_id: 站点 ID 必须为 1 到 32 个小写字母、数字和连字符，且不能为「default」。
+    invalid_tenant_name: 站点名称不能超过 100 个字符。
+    tenant_exists: 已存在使用此 ID 的站点。
+    github_app_missing: 尚未设置 GitHub App。
+    invalid_private_key: 该文件不是有效的私钥。
+    private_key_mismatch: GitHub 不接受此私钥用于该应用。请确认它是在该应用的设置中生成的。
+    github_error: GitHub 返回了错误。请稍后重试。
+    data_key_locked: 在管理员完成更改管理员密钥之前，无法使用 Sveltia CMS Additions。
+    not_configured: Sveltia CMS Additions 配置不正确。请联系管理员寻求帮助。
+    origin_not_allowed: 此站点无权使用 Sveltia CMS Additions。请联系管理员将其添加到允许的域名中。
+    not_set_up: Sveltia CMS Additions 尚未连接到 GitHub。请联系管理员完成设置。
+    # A user whose password an admin has reset signs in another way, e.g. with GitHub
+    temporary_password: 您的密码已重置。请使用您的用户名和管理员提供的临时密码登录，然后设置新密码。
+    # {$url} is the URL of the service
+    incompatible: 此版本的 Sveltia CMS 无法与位于 {$url} 的 Sveltia CMS Additions 服务配合使用。
+    unreachable: 无法连接 Sveltia CMS Additions。请稍后重试。
+    insecure_connection: Sveltia CMS Additions 必须通过 HTTPS 提供服务。请检查 CMS 配置中的 `base_url`。
+    unexpected: 由于意外错误，向 Sveltia CMS Additions 发出的请求失败。请稍后重试。
+
+  # Conversation panel: comments on the entry, kept by Sveltia CMS Additions
+  conversation:
+    title: 讨论
+    refresh: 刷新讨论
+    empty: 暂无评论。
+    # Button above a long conversation, which is loaded from its latest comments
+    show_older: 显示较早的评论
+    # Label of the list of comments
+    timeline: 评论
+    deleted_user: 已删除的用户
+    you: 您
+    edited: 已编辑
+    comment_label: 评论
+    placeholder: 发表评论（Markdown）
+    visible_to_cms_users: 仅 CMS 用户可见
+    send: 评论
+    options: 评论选项
+    edit: 编辑
+    delete: 删除
+    save: 保存
+    delete_confirmation: 要删除此评论吗？此操作无法撤销。
+    send_failed: 无法发送评论。
+
+  # Placeholder of an API key or deploy hook field the user has left empty, while an admin of
+  # Sveltia CMS Additions has entered one for everyone
+  provided_by_admin: 由管理员提供
 
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
@@ -209,6 +562,15 @@ sign_in_with_mobile_instruction: 使用手机或平板扫描下方二维码即�
 signed_in_as_x: 当前以 {$name} 身份登录
 working_with_local_repo: 正在使用本地仓库
 working_with_test_repo: 正在使用测试仓库
+working_in_demo_mode: 演示模式
+
+# Demo welcome dialog: shown once after signing in to a demo site, where the test repository is
+# seeded with sample content and the changes are only stored in the browser
+demo_welcome:
+  title: 欢迎使用 Sveltia CMS 演示
+  description: 欢迎随意探索 CMS 并编辑示例内容。您的更改仅保存在此浏览器中，不会发布到网上，其他人也无法看到。
+  reset_hint: 要使用原始内容重新开始，请在「设置」>「数据管理」中选择「清除所有数据」。
+  button_label: 开始使用
 
 # Account menu: action items for sign-out and app installation
 sign_out: 退出登录
@@ -224,9 +586,14 @@ install_as_app: 安装为应用
 contents: 内容
 assets: 资源
 editorial_workflow: 编辑工作流
+# Name of the Editorial Workflow page when all the content uses Preview Workflow, which has no
+# review stages, so the page only lists the drafts
+drafts: 草稿
 cms_config: CMS 配置
 # Mobile menu page title (shown only on small screens)
 menu: 菜单
+# Mobile menu page section heading listing the custom pages registered by the site
+custom_pages: 页面
 
 # Mobile promo infobar: encouraging users to try the mobile version
 mobile_promo_title: Sveltia CMS 现已支持移动端！
@@ -237,10 +604,36 @@ mobile_promo_button: 立即体验
 new_language_available: Sveltia CMS 现已支持 {$locale}！
 change_language: 切换语言
 
+# Live reload infobar: shown when the CMS runs on a page that a framework’s development server (e.g.
+# Astro) reloads on every file change, instead of a static HTML file
+live_reload_warning: 您的开发服务器会在文件更改时重新加载此页面，这可能会中断保存并损坏您的文件。请改为通过静态 HTML 文件提供 CMS。<a>了解详情</a>
+
 # Toast notification shown while the translation for the selected language is being downloaded
 # {$locale} is the localized language name, e.g., “French”
 switching_language: 正在切换到{$locale}……
 locale_load_failed: 无法加载{$locale}翻译。请稍后重试。
+
+# Toast notification shown when changes saved with the local backend couldn’t be committed to Git
+# {$reason} is one of the `local_git_skip_reasons` strings below
+local_git_not_committed: 您的更改已保存，但未提交到 Git。{$reason}如果只想保存文件，请在「设置」>「开发者」中关闭 Git 提交。
+local_git_skip_reasons:
+  unsupported_repository: 您的仓库使用了 CMS 不支持的 Git 功能，例如关联工作树、SHA-256 对象名、reftable 格式、稀疏索引，或 feature.manyFiles 选项和 git add -N 所使用的版本 3 或 4 的索引。
+  missing_identity: 仓库的 Git 配置中未设置您的姓名和电子邮件地址，且 CMS 无法读取您的全局配置。请在仓库中使用 git config --local user.name "Your Name" 和 git config --local user.email "you@example.com" 进行设置。
+  locked: 另一个 Git 进程正在使用此仓库。如果没有正在运行的进程，请删除 .git/index.lock 文件。
+  # The operation in progress, with how to finish or cancel it
+  operation_in_progress:
+    merge: 合并正在进行中。请使用 git commit 完成，或使用 git merge --abort 取消。
+    rebase: 变基正在进行中。请使用 git rebase --continue 完成，或使用 git rebase --abort 取消。如果您已不再需要它，git rebase --quit 可在不更改文件的情况下放弃变基。
+    cherry_pick: 拣选正在进行中。请使用 git cherry-pick --continue 完成，或使用 git cherry-pick --abort 取消。
+    revert: 还原正在进行中。请使用 git revert --continue 完成，或使用 git revert --abort 取消。
+    am: 正在使用 git am 应用补丁。请使用 git am --continue 完成，或使用 git am --abort 取消。
+    conflict: 部分文件存在冲突。请先解决冲突并暂存结果。
+  detached_head: 当前未检出任何分支。
+  staged_changes: 您有其他已暂存待提交的更改。请先提交或取消暂存。
+  # {$path} is the file path
+  lfs: '{$path} 由 Git LFS 跟踪，CMS 无法提交该文件。'
+  # {$message} is the error message
+  error: 发生意外错误。{$message}
 
 # Site and page navigation
 # Toolbar button aria-label for visiting the live site
@@ -275,6 +668,10 @@ account: 账户
 live_site: 在线站点
 git_repository: Git 仓库
 settings: 设置
+
+# Page for the people who look after the CMS, apart from the personal settings: user management
+# and the CMS configuration
+administration: 管理
 
 # Help menu: button aria-labels and section headings
 show_help_menu: 显示帮助菜单
@@ -366,6 +763,10 @@ viewing_x_asset_folder: |
 # Cloud storage service view announcement
 # {$service} is the cloud storage service name, e.g. Uploadcare
 viewing_x_external_location: 您正在浏览 {$service} 上的资源。
+# Administration page announcements
+viewing_admin_section_list: 您正在浏览管理页面的分区列表。
+# {$section} is the section label, e.g. Users
+viewing_x_admin_section: 您正在浏览管理页面的「{$section}」分区。
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
@@ -384,6 +785,7 @@ x_of_x_selected: 已选 {$selected} / {$total} 个
 
 # View switcher: toggle between list and grid views
 switch_view: 切换视图
+table_view: 表格视图
 list_view: 列表视图
 grid_view: 网格视图
 switch_to_list_view: 切换到列表视图
@@ -397,6 +799,16 @@ switch_to_grid_view: 切换到网格视图
 # Sort menu: button labels and options
 sort: 排序
 sorting_options: 排序选项
+# Table view column labels for the entry metadata used as `{{…}}` template tags
+table_column_keys:
+  # The folder containing the entry file
+  dirname: 文件夹
+  # The entry file name without the extension
+  filename: 文件名
+  # The entry file extension
+  extension: 扩展名
+  # The enabled locales of the entry
+  locales: 语言
 # Sort key option labels
 sort_keys:
   # No sorting; entries appear in their natural repository order
@@ -436,6 +848,8 @@ grouping_options: 分组选项
 # Asset type filter and group labels
 type: 类型
 all: 全部
+# Group option for the linked files, which can be hosted anywhere: the host name of the file’s URL
+domain: 域名
 # Asset type labels
 image: 图片
 video: 视频
@@ -454,6 +868,9 @@ all_assets: 全部资源
 global_assets: 全局资源
 # Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
 linked_files: 链接的文件
+# Badge and message shown on a linked file that couldn’t be loaded, e.g. because it has been deleted
+file_unavailable: 不可用
+file_unavailable_description: 无法加载此文件。它可能已被移动或删除。
 
 # ==============================================================================
 # Entry and Collection Actions
@@ -473,12 +890,29 @@ entry_not_found: 未找到条目。
 # Entry creation restrictions: tooltip and advisory messages
 creating_entries_disabled_by_admin: 管理员禁止在此集合中创建新条目。
 # {$quota} is the collection’s maximum entry count
-creating_entries_disabled_by_quota: 您无法向此集合添加新条目，因已达到 {$quota} 个条目的上限。
+creating_entries_disabled_by_quota: |
+  .input {$quota :integer}
+  .match $quota
+    * {{ 您无法向此集合添加新条目，因已达到 {$quota} 个条目的上限。 }}
 # {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
 creating_entries_nearing_quota: |
+  .input {$quota :integer}
   .input {$remaining :integer}
-  .match $remaining
-    * {{ 此集合已接近 {$quota} 个条目的上限。您只能再创建 {$remaining} 个条目。 }}
+  .match $quota $remaining
+    * * {{ 此集合已接近 {$quota} 个条目的上限。您只能再创建 {$remaining} 个条目。 }}
+
+# Read-only restrictions set with the `readonly` option: advisory messages
+readonly_cms: CMS 处于只读模式。您可以查看内容和资源，但无法进行任何更改。
+readonly_collection: 此集合为只读。您可以查看其内容，但无法进行任何更改。
+readonly_entry: 此条目为只读。您可以查看，但无法进行任何更改。
+readonly_asset_folder: 此文件夹为只读。您可以查看其中的资源，但无法进行任何更改。
+readonly_branch: 您没有推送到「{$branch}」分支的权限。您可以查看此内容，但无法进行任何更改。
+readonly_role: 您只有查看权限。您可以查看内容和资源，但无法进行任何更改。
+readonly_reference: 该条目为只读，因此无法移除此引用。
+# {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
+cannot_rename_referenced_entry: 无法重命名此条目，因为以下只读条目通过当前名称引用了它：{$entries}。
+# {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
+cannot_move_referenced_asset: 无法移动或重命名此资源，因为以下只读条目正在使用它：{$entries}。
 
 # Navigation: back links and list labels
 back_to_collection: 返回集合
@@ -486,6 +920,8 @@ collection_list: 集合列表
 back_to_collection_list: 返回集合列表
 asset_folder_list: 资源文件夹列表
 back_to_asset_folder_list: 返回资源文件夹列表
+# Back button shown in place of the one above while browsing a subfolder of an asset folder
+back_to_parent_folder: 返回上级文件夹
 
 # ==============================================================================
 # Search
@@ -540,6 +976,51 @@ no_entries_found: 未找到条目。
 # Upload dialog: title and button label
 upload_assets: 上传新资源
 
+# New Folder button and dialog in the Asset Library
+new_folder: 新建文件夹
+new_folder_name: 文件夹名称
+new_folder_create: 创建
+# {$folder} is the path of the folder the new one will be created in, starting with a slash
+new_folder_description: 新文件夹将创建在「{$folder}」中。
+# Validation errors for the new folder name
+new_folder_error:
+  empty: 文件夹名称不能为空。
+  invalid: 文件夹名称不能包含斜杠或以点开头。
+  # A name the CMS itself is usually served from, e.g. `admin` or `cms`
+  reserved: 此名称的文件夹中的文件为只读，因为 CMS 本身通常从该文件夹提供服务。
+  duplicate: 此处已存在同名的文件夹或文件。
+# Progress and error messages while the folder is being created
+creating_folder: 正在创建文件夹……
+creating_folder_failed: 无法创建文件夹。
+
+# Menu on a folder in the Asset Library, and the Rename Folder and Delete Folder dialogs
+folder_options: 文件夹选项
+show_folder_options: 显示文件夹选项
+rename_folder: 重命名文件夹
+delete_folder: 删除文件夹
+# Rename Folder dialog body text
+# {$count} is the number of assets in the folder, which are moved along with it
+enter_new_name_for_folder: |
+  .input {$count :integer}
+  .match $count
+    0 {{ 请在下方输入新名称。 }}
+    * {{ 请在下方输入新名称。文件夹中的 {$count} 个资源将随之移动，使用这些资源的条目也将随之更新。 }}
+# Delete Folder confirmation
+# {$name} is the folder name and {$count} is the number of assets in the folder
+confirm_deleting_folder: |
+  .input {$count :integer}
+  .match $count
+    0 {{ 您确定要删除空文件夹「{$name}」吗？ }}
+    * {{ 您确定要删除「{$name}」文件夹及其中的 {$count} 个资源吗？ }}
+# Progress and error messages while the folder is being renamed or deleted
+renaming_folder: 正在重命名文件夹……
+renaming_folder_failed: 无法重命名文件夹。
+deleting_folder: 正在删除文件夹……
+deleting_folder_failed: 无法删除文件夹。
+# Asset Library and asset picker: notice shown when a cloud storage service holds more files than
+# are listed at once
+external_assets_truncated: 该服务上的文件过多，无法全部列出，因此部分文件未显示。
+
 # Edit options menu: button and item labels
 edit_options: 编辑选项
 show_edit_options: 显示编辑选项
@@ -552,6 +1033,45 @@ edit_x: 编辑 {$name}
 
 # Asset text editor: switch for line wrapping
 wrap_long_lines: 自动换行
+
+# Move assets: dialog for moving assets to another folder in the repository
+move: 移动
+move_asset: 移动资源
+# Dialog title. {$name} is the asset name when a single asset is moved, and {$count} is the number of
+# assets being moved
+move_assets_title: |
+  .input {$count :integer}
+  .match $count
+    1 {{ 移动 {$name} }}
+    * {{ 移动 {$count} 个资源 }}
+# Dialog body text. {$count} is the number of entries that currently use the assets
+select_asset_move_destination: |
+  .input {$count :integer}
+  .match $count
+    0 {{ 请选择要移动到的文件夹。 }}
+    * {{ 请选择要移动到的文件夹。使用这些资源的 {$count} 个条目也将随之更新。 }}
+# Accessible label of the folder tree in the Move dialog
+asset_move_destination: 目标文件夹
+# Shown when the assets being moved are all in the selected folder already
+assets_already_in_folder: |
+  .input {$count :integer}
+  .match $count
+    * {{ 资源已在此文件夹中。 }}
+# Shown when files with the same names exist in the selected folder. {$names} is a comma-separated
+# list of file names
+asset_move_conflict: 此文件夹中已存在以下文件：{$names}。
+moving_assets: 正在移动资源……
+moving_assets_failed: 无法移动资源。
+# Warning shown when files have been moved off a cloud storage service, but the originals couldn’t
+# be deleted from it
+asset_move_cleanup_failed: 文件已移动，但无法从存储服务中删除原始文件。
+# Shown when files on a cloud storage service can’t be renamed or moved, because the entries using
+# them can’t be updated, e.g. for an Open Authoring contributor. {$count} is the number of files
+cannot_change_used_external_files: |
+  .input {$count :integer}
+  .match $count
+    1 {{ 无法重命名或移动此文件，因为无法更新使用它的条目。 }}
+    * {{ 无法重命名或移动这些文件，因为无法更新使用它们的条目。 }}
 
 # Rename asset: dialog and validation
 rename_asset: 重命名资源
@@ -568,6 +1088,15 @@ enter_new_name_for_asset_error:
   empty: 文件名不能为空。
   character: 文件名不能包含特殊字符。
   duplicate: 该文件名已用于其他资源。
+  # A name starting with a dot hides the file, which the CMS wouldn’t list any more
+  leading_dot: 文件名不能以点开头。
+  # The name of a file next to the asset that isn’t an asset, like an entry file
+  file_duplicate: 此处已存在同名的其他文件。
+  # The name of a folder next to the file
+  folder_duplicate: 此处已存在同名的文件夹。
+# Shown while renaming a file whose name will be changed on saving, e.g. by the `slugify_filename`
+# media library option
+file_will_be_saved_as: 文件将保存为「{$name}」。
 # Confirmation dialog shown when the file extension is changed while renaming an asset
 change_file_extension: 更改文件扩展名
 # {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
@@ -581,6 +1110,11 @@ file_extension_change_warning: 如果扩展名与实际文件格式不符，文�
 replace_asset: 替换资源
 # {$name} is the asset being replaced
 replace_x: 替换 {$name}
+# File/Image field: labels of the Replace and Remove buttons
+replace_file: 替换文件
+replace_image: 替换图片
+remove_file: 移除文件
+remove_image: 移除图片
 
 # File selection prompts: drop zones and file pickers
 # Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
@@ -662,6 +1196,28 @@ confirm_deleting_selected_assets: |
   .match $count
     * {{ 您确定要删除选中的 {$count} 个资源吗？ }}
 confirm_deleting_all_assets: 您确定要删除所有资源吗？
+# Note added to the confirmation when entries use the assets being deleted; the references are
+# removed in the same commit. {$count} is the number of entries using them
+deleting_referenced_assets_note: |
+  .input {$count :integer}
+  .match $count
+    * {{ {$count} 个条目中对它的引用也将被移除。 }}
+# Shown in place of the confirmation when removing the references would leave a field in an entry
+# invalid, e.g. a required Image field with nothing left, so the deletion is refused. The fields are
+# listed below the message, each with the validation error it would have. {$count} is the number of
+# assets being deleted
+cannot_delete_referenced_assets: |
+  .input {$count :integer}
+  .match $count
+    1 {{ 无法删除此资源，因为使用它的条目中的以下字段在删除后将不再有效。请先更新这些条目。 }}
+    * {{ 无法删除这些资源，因为使用它们的条目中的以下字段在删除后将不再有效。请先更新这些条目。 }}
+# Error shown in the asset deletion dialog when the entries using the assets couldn’t be looked up,
+# so the deletion can’t go ahead. {$count} is the number of assets being deleted
+checking_asset_references_failed: |
+  .input {$count :integer}
+  .match $count
+    1 {{ 无法检查哪些条目使用了此资源。请关闭此对话框后重试。 }}
+    * {{ 无法检查哪些条目使用了这些资源。请关闭此对话框后重试。 }}
 
 # Delete entries: dialog titles and confirmation messages
 # {$count} is the number of entries targeted by the action
@@ -690,6 +1246,22 @@ confirm_deleting_selected_entries_with_assets: |
     * {{ 您确定要删除选中的 {$count} 个条目及其关联资源吗？ }}
 confirm_deleting_all_entries: 您确定要删除所有条目吗？
 confirm_deleting_all_entries_with_assets: 您确定要删除所有条目及其关联资源吗？
+# Note added to the confirmation when other entries reference the entries being deleted through
+# Relation fields; the references are removed in the same commit. {$count} is the number of
+# referencing entries
+deleting_referenced_entries_note: |
+  .input {$count :integer}
+  .match $count
+    * {{ 其他 {$count} 个条目中对它的引用也将被移除。 }}
+# Shown in place of the confirmation when removing the references would leave a Relation field in
+# another entry invalid, e.g. a required field with nothing selected, so the deletion is refused.
+# The fields are listed below the message, each with the validation error it would have. {$count}
+# is the number of entries being deleted
+cannot_delete_referenced_entries: |
+  .input {$count :integer}
+  .match $count
+    1 {{ 无法删除此条目，因为其他条目中的以下字段在删除后将不再有效。请先更新这些条目。 }}
+    * {{ 无法删除这些条目，因为其他条目中的以下字段在删除后将不再有效。请先更新这些条目。 }}
 
 # ==============================================================================
 # Entry Reordering
@@ -703,6 +1275,39 @@ cancel_reordering_entries: 取消排序
 
 # Reorder error message
 saving_reorder_failed: 保存新的条目顺序失败。请重试。
+
+# ==============================================================================
+# Bulk Entry Editing
+# ==============================================================================
+# Strings for editing the fields of many entries at once in a table.
+
+# Bulk edit mode: toggle buttons
+bulk_edit_entries: 批量编辑条目
+save_bulk_edits: 保存批量编辑
+cancel_bulk_edits: 取消批量编辑
+
+# Bulk edit table: column header of the entry titles
+bulk_edit_entry: 条目
+
+# Bulk edit table: label of the table
+bulk_edit_table: 批量编辑器
+
+# Bulk edit table: label of a cell input; {$field} is the field label, {$entry} is the entry title
+bulk_edit_cell: '{$entry}的{$field}'
+
+# Bulk edit status: number of changed fields
+bulk_edit_count: |
+  .input {$count :integer}
+  .match $count
+    0 {{ 无更改 }}
+    * {{ {$count} 处更改 }}
+
+# Bulk edit error messages
+bulk_edit_invalid: 部分值无效。请修正突出显示的字段后重试。
+saving_bulk_edits_failed: 保存更改失败。请重试。
+
+# Bulk edit: confirmation shown when leaving the mode with unsaved changes
+discard_bulk_edits_confirm: 要放弃对条目所做的更改吗？
 
 # ==============================================================================
 # File Upload and Processing
@@ -748,6 +1353,18 @@ warning_invalid_files: |
   .input {$count :integer}
   .match $count
     * {{ 这些文件无法上传，因为文件已损坏或内容与扩展名不符。这通常是因为照片被重命名而非转换，例如 HEIC 图片被直接保存为 JPEG 文件。请转换文件后重试。 }}
+# {$count} is the number of files that are not of a type the field accepts, even once transformed
+# {$types} is the list of accepted file types, such as “.pdf or .txt”
+warning_unsupported_files: |
+  .input {$count :integer}
+  .match $count
+    * {{ 这些文件无法上传，因为它们不属于以下类型：{$types}。 }}
+# {$count} is the number of files that are not of an image type the field accepts
+# {$types} is the list of accepted image formats, such as “PNG or WebP”
+warning_unsupported_image_files: |
+  .input {$count :integer}
+  .match $count
+    * {{ 这些文件无法上传，因为仅接受以下类型的图片：{$types}。 }}
 
 # File format validation when replacing an asset
 # Warning section for replacement files that are in a different format
@@ -780,6 +1397,8 @@ uploading_files_failed: 上传失败。
 # Errors shown when a file on a cloud storage service could not be deleted or renamed
 deleting_assets_failed: 删除失败。
 renaming_asset_failed: 重命名失败。
+# Error shown when an edited text file in the Asset Library could not be saved
+saving_asset_failed: 保存失败。
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
@@ -816,6 +1435,8 @@ entry_validation_errors: |
   .input {$count :integer}
   .match $count
     * {{ 有 {$count} 个字段存在错误。请更正后保存条目。 }}
+# Button on the validation error toast that opens the Validation panel listing the errors
+show_errors: 显示错误
 
 # ==============================================================================
 # Success Notifications
@@ -880,6 +1501,18 @@ assets_deleted: |
   .input {$count :integer}
   .match $count
     * {{ 资源已删除。 }}
+folder_created: 文件夹已创建。
+# Folder info panel in the Asset Library sidebar
+folder_path: 文件夹路径
+folder_contents: 内容
+# {$count} is the number of subfolders in the folder
+x_folders: |
+  .input {$count :integer}
+  .match $count
+    0 {{ 无文件夹 }}
+    * {{ {$count} 个文件夹 }}
+folder_renamed: 文件夹已重命名。
+folder_deleted: 文件夹已删除。
 
 # ==============================================================================
 # Content Editor
@@ -920,6 +1553,9 @@ edit_singleton_announcement: 您正在编辑「{$file}」文件。
 # Shown when CI skip is enabled/disabled
 save_and_publish: 保存并发布
 save_without_publishing: 保存但不发布
+# Shown disabled in place of `save_and_publish` while entries created or edited from a Relation
+# field are in a collection whose review can’t be skipped with the `direct_publish` option
+save_and_publish_needs_review: 保存并发布（相关条目需要审核）
 
 # Editor options menu
 show_editor_options: 显示编辑器选项
@@ -949,6 +1585,9 @@ swap_panes: 交换面板
 # {$locale} is the localized language name for the current content pane, e.g., English
 edit_x_locale: 编辑 {$locale} 内容
 preview_x_locale: 预览 {$locale} 内容
+# The content of a monolingual entry, which has no locale to name
+edit_content: 编辑内容
+preview_content: 预览内容
 
 # Preview iframe labels
 content_preview: 内容预览
@@ -957,6 +1596,8 @@ content_preview: 内容预览
 # {$locale} is the localized language name for the content options menu, e.g., English
 show_content_options_x_locale: 显示 {$locale} 内容选项
 content_options_x_locale: '{$locale} 内容选项'
+show_content_options: 显示内容选项
+content_options: 内容选项
 
 # Field container labels
 # {$field} is the field’s display label
@@ -995,8 +1636,9 @@ deploy_preview:
   view: 查看预览
   # Shown while the site is still being built, with or without a URL to open yet
   building: 预览仍在构建中。
-  # Shown when the build failed, so no preview is available
-  failed: 预览构建失败。
+  # Shown when the build failed, so no preview is available. The failure may lie in the site’s own
+  # code rather than the entry, so the editor is told not to assume it’s theirs, and who to ask
+  build_failed: 无法构建预览。这不一定是由您的更改导致的。如果问题仍然存在，请联系站点管理员。
   # Shown briefly while the CI/CD provider is being queried
   checking: 正在检查预览……
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
@@ -1029,9 +1671,20 @@ translate_from: 从其他语言翻译……
 # {$locale} is the localized language name of the source content being translated, e.g., English
 translate_from_x: 从 {$locale} 翻译
 
-# Revert changes
+# Revert changes, restore the default values or clear the fields. The field options menu offers
+# them for a field, the content options menu of an editor pane for the locale it shows, and the
+# editor options menu for the whole entry, the latter two asking for confirmation first
 revert_changes: 撤销更改
 revert_all_changes: 撤销所有更改
+restore_default: 恢复默认值
+clear_all: 全部清除
+confirm_reverting_changes: 您确定要撤销对此条目所做的所有更改吗？
+# {$locale} is a locale name, e.g. French
+confirm_reverting_changes_x_locale: 您确定要撤销对{$locale}内容所做的所有更改吗？
+confirm_restoring_defaults: 您确定要将此条目中所有字段恢复为默认值吗？您的更改将会丢失。
+confirm_restoring_defaults_x_locale: 您确定要将{$locale}内容中所有字段恢复为默认值吗？您的更改将会丢失。
+confirm_clearing_fields: 您确定要清除此条目中的所有字段吗？您的更改将会丢失。
+confirm_clearing_fields_x_locale: 您确定要清除{$locale}内容中的所有字段吗？您的更改将会丢失。
 
 # Slug editing
 edit_slug: 编辑别名
@@ -1039,6 +1692,8 @@ edit_slug_error:
   empty: 别名不能为空。
   invalid: 别名不能包含特殊字符（包括斜杠和空格）。
   duplicate: 此别名已用于其他条目。
+# {$slug} is the slug filled from the slug template, which a number is added to when another entry uses it
+slug_numbered: 别名「{$slug}」已用于其他条目，因此将在其后添加数字。
 
 # Entry path editing for nested entries
 # Heading for the parent folder picker shown when the `meta.path` option is enabled
@@ -1142,6 +1797,13 @@ validation:
     email: 请输入有效的电子邮件地址。
     url: 请输入有效的 URL。
 
+  # Value used for the same field in another entry of the collection
+  value_not_unique: 此值已用于其他条目。
+  # Key of a keyed List field item used for another item of the same list
+  key_not_unique: 此键已用于其他项目。
+  # Key of a keyed List field item that is a whole number, which doesn’t keep its order in a map
+  key_numeric: 键不能为整数，否则项目将失去其顺序。
+
   # Custom field validation error
   invalid_value: 无效的值。
   unexpected_error: 意外错误。
@@ -1163,6 +1825,12 @@ entry_sidebar:
     # Button in the panel header that validates the entry on demand
     validate: 验证
 
+  # Slug panel: shows the entry slug and lets the user edit it
+  slug:
+    title: 别名
+    generated_on_save: 别名将在保存时根据条目内容生成。其中的日期和时间将为保存时的日期和时间。
+    unavailable: 此条目没有别名。
+
   # History panel: shows entry commit history
   history:
     title: 历史
@@ -1174,11 +1842,55 @@ entry_sidebar:
     title: 反向链接
     no_entries: 没有条目引用此条目。
 
+  # Tab label of a panel with a count, e.g. of comments. {$title} is the panel title
+  title_with_count: '{$title}（{$count}）'
+
+# Status shown next to the Save button while an entry with many new files is being saved
+# {$done} and {$total} are the number of files prepared and to prepare, or the number of commits
+# made and the estimated number of commits in all
+save_progress:
+  preparing: 正在准备文件：{$done} / {$total}
+  committing: 正在保存到 GitHub：{$done} / 约 {$total} 次提交
+
 # Entry save error dialog
 saving_entry:
   error:
     title: 错误
     description: 保存条目时出错。请稍后重试。
+
+# Dialog shown when saving the entry would overwrite a change someone else has made in the
+# repository since the entry was opened in the editor
+save_conflict:
+  title: 条目已被他人更改
+  # `{$name}` is the other person’s name, `{$date}` when they made the change
+  modified_by: '{$name} 于 {$date} 更改了此条目，晚于您打开它的时间。'
+  # Shown instead of `modified_by` when the other person isn’t known
+  modified: 在您打开此条目后，它已在仓库中被更改。
+  deleted: 在您打开此条目后，它已从仓库中被删除。
+  # Follows `modified_by` or `modified`
+  overwrite_warning: 如果现在保存，对方的更改将会丢失。
+  # Follows `deleted`
+  recreate_warning: 如果现在保存，该条目将被重新创建。
+  # Follows `modified_by`, `modified` or `deleted` for an entry stored in the same file as the other
+  # entries of the collection, which can’t be saved over the change
+  reload_warning: 由于该条目与其他条目存储在同一文件中，无法覆盖这些更改进行保存。请取消编辑，然后从列表中重新打开该条目并进行编辑。
+  # OK button label
+  save_anyway: 仍然保存
+  # Error shown when the repository was updated between the check above and the commit itself
+  branch_moved: 保存期间仓库已被他人更新。请重试。
+  # Error shown when saving would change an item in a file storing all the entries of a collection,
+  # which someone else has changed or moved since it was loaded
+  array_item_changed: 存储在同一文件中的某个条目已被他人更改。请重试。
+  # {$path} is the file path
+  array_file_invalid: 无法更新 {$path} 文件，因为它不包含有效的条目列表。
+
+# Notice shown in the entry editor when someone else has changed or deleted the entry in the
+# repository while the user has it open. The change itself is described with the `save_conflict`
+# strings above
+remote_change:
+  reload_entry: 重新加载条目
+  # Confirmation shown before reloading when the user has unsaved changes
+  confirm_reloading_entry: 您确定要重新加载该条目吗？未保存的更改将会丢失。
 
 # ==============================================================================
 # Asset Editor
@@ -1249,21 +1961,61 @@ map_lat_lng: 显示纬度 {$latitude}、经度 {$longitude} 的地图
 remove_this_item: 移除此项
 move_up: 上移
 move_down: 下移
+# Menu of a list item or file with the extra reorder actions, shown in a list of 3 or more items
+reorder_options: 排序选项
+move_to_top: 移到顶部
+move_to_bottom: 移到底部
+# Opens a dialog asking for the position to move a list item to
+move_to: 移动到……
+# Dialog asking for the new position of an item. {$count} is the number of items in the list
+move_to_description: 请输入 1 到 {$count} 之间的位置。
+move_to_position: 位置
 # aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
 # or moved with the arrow keys while the handle has focus
 reorder_item: 重新排序项目
 # aria-label for the text input holding one item of a simple List field, which has no subfield to
 # take a label from
 list_item_value: 项目值
+# aria-label for each item of a List field, giving its position in the list
+# {$position} is the 1-based position of the item, {$count} is the number of items
+list_item_position: 第 {$position} 项，共 {$count} 项
+# Message shown in place of a removed List field item or Object field, next to a Restore button
+# that puts it back
+item_removed: 项目已移除。
 
-# Add item button label
+# Add item button label, also used by the Relation field to create a new entry in the referenced
+# collection, with the collection’s singular label
 # Example: “Add Image”, “Add Author”
 # {$name} is the label of the item type that can be added
 add_x: 添加 {$name}
 
 # List item context menu
+# aria-label for the button opening the menu, and for the menu itself
+list_item_options: 列表项选项
 add_item_above: 在上方添加项目
 add_item_below: 在下方添加项目
+paste_item_above: 粘贴到上方
+paste_item_below: 粘贴到下方
+paste_item_to_replace: 粘贴以替换
+
+# List item clipboard
+# Button in the list toolbar to paste a copied item, from any list in any entry, at the end of the
+# list, or at the start with the `add_to_top` option
+paste_item: 粘贴项目
+list_item_copied: 项目已复制。
+# ⋮ stands for the icon of the item menu button; keep it, along with the button’s aria-label
+no_list_item_to_paste: 没有可粘贴的已复制项目。要复制项目，请打开项目的 ⋮（列表项选项）菜单并选择「复制」。
+list_item_not_compatible: 复制的项目不适用于此列表。
+# {$count} is the number of the values left out, as the list doesn’t have the fields
+list_item_pasted_without_values: |
+  .input {$count :integer}
+  .match $count
+    * {{ 项目已粘贴。此列表不接受的 {$count} 个值已被忽略。 }}
+# {$count} is the number of the files the pasted item references that couldn’t be found
+list_item_pasted_without_files: |
+  .input {$count :integer}
+  .match $count
+    * {{ 项目已粘贴，但找不到其使用的 {$count} 个文件。请检查项目中的文件字段。 }}
 
 # Variable-type list selector
 select_list_type: 选择列表类型
@@ -1282,12 +2034,45 @@ opacity: 不透明度
 # Select field: empty option placeholder
 unselected_option: (无)
 
+# Relation field: creating or editing a referenced entry without leaving the editor
+relation_field:
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  save_together_hint: 新的{$name}将与您正在编辑的条目一起保存。
+  # Error shown when the entry couldn’t be prepared. {$name} is the singular label of the collection
+  add_failed: 无法添加{$name}。详情请查看浏览器控制台。
+  # Title of the dialog to edit an entry selected in the field. {$name} is the singular label of the
+  # referenced collection
+  edit_entry_title: 正在编辑{$name}
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  edit_together_hint: 您对此{$name}所做的更改将与您正在编辑的条目一起保存。
+  # Error shown when the changes couldn’t be prepared. {$name} is the singular label of the collection
+  edit_failed: 无法应用对{$name}所做的更改。详情请查看浏览器控制台。
+  # Error shown when the changes would move the entry to another file path, e.g. through a path
+  # template using a field. {$name} is the singular label of the collection
+  move_unsupported: 这些更改会将{$name}移动到其他位置，此操作只能通过单独编辑它来完成。
+  # Error shown when saving, if someone else has changed an entry edited from the field since. {$name}
+  # is the summary of that entry
+  edit_conflict: 在您编辑「{$name}」之后，它已被他人更改。请从字段中重新打开它，将您的更改与最新版本进行对比。
+  # Error shown when saving, if someone else has deleted an entry edited from the field since.
+  # {$name} is the summary of that entry
+  edit_deleted: 在您编辑「{$name}」之后，它已被他人删除。请将其从字段中移除以保存条目。
+  # Accessible label of the menu listing the selected entries that can be edited
+  select_entry_to_edit: 选择要编辑的条目
+  # Warning shown in the editor of an entry that has been edited from a Relation field of another
+  # entry, while the changes wait in that entry’s pull request. {$name} is the summary of that
+  # entry
+  edited_with_entry: 此条目的更改正等待与「{$name}」一起发布。如果现在保存，两组更改将在该条目发布时合并；如果两者有重叠，合并可能会失败。
+  # Warning shown in the dialog when an entry edited from the field has been changed by someone else
+  # since. {$name} is the singular label of the collection
+  changed_since_edit: 在您编辑此{$name}之后，它已被他人更改。您的更改显示在最新版本之上。请在更新前进行检查。
+
 # Select Assets dialog
 assets_dialog:
   # Dialog titles for different selection modes
   title:
     file: 选择文件
     image: 选择图片
+    folder: 选择文件夹
 
   # Search input labels
   search_for_file: 搜索文件
@@ -1295,6 +2080,17 @@ assets_dialog:
 
   # Locations panel aria-label
   locations: 位置
+
+  # Folder selection mode for a File field with the `select_folder` option. {$path} is the public
+  # path of the folder to be selected, and {$count} is the number of folders selected
+  selected_folder: 已选文件夹：{$path}
+  selected_folders: |
+    .input {$count :integer}
+    .match $count
+      * {{ 已选 {$count} 个文件夹 }}
+  no_subfolders: 此文件夹没有子文件夹。
+  # Shown for a cloud storage service whose `prefix` option depends on fields of the entry
+  prefix_unresolved: 请填写此位置所依赖的字段，以浏览和上传其中的文件。
 
   # Asset folder options
   folder:
@@ -1312,6 +2108,7 @@ assets_dialog:
 
   # Stock photo panels
   available_images: 可用的图片
+  available_files: 可用的文件
 
   # URL entry option
   enter_url: 输入 URL
@@ -1334,6 +2131,9 @@ assets_dialog:
   photo_credit:
     title: 图片来源
     description: 请尽可能使用以下署名：
+    # {$field} is the label of the Markdown field the credit is added to
+    insert_to_field: 插入到{$field}
+    copy_as_markdown: 复制为 Markdown
 
   # Unsaved asset badge
   unsaved: 未保存
@@ -1370,6 +2170,7 @@ editor_components:
   alt: 替代文本
   title: 标题
   link: 链接
+  caption: 说明文字
 
 # Key-Value field: column headers and validation
 key_value:
@@ -1434,6 +2235,15 @@ cloud_storage:
   uploadcare:
     auth_key_label: API 密钥
 
+  azure_blob_storage:
+    auth_key_label: SAS 令牌
+
+  backblaze_b2:
+    auth_key_label: 应用程序密钥
+
+  bunny_storage:
+    auth_key_label: 存储区域密码
+
 # ==============================================================================
 # Configuration Validation
 # ==============================================================================
@@ -1485,16 +2295,42 @@ config:
     unsupported_backend_suggestion: 请改用<a>支持的后端</a>。
     missing_repository: 未定义仓库。
     invalid_repository: 配置的仓库无效。格式必须为「owner/repo」。
+    # Don’t localize `api_root`
+    missing_api_root: 未定义 `api_root` 选项。Forgejo 后端需要此选项。
+    invalid_root_dir: 根目录无效。它必须是仓库内的路径，且不能包含「..」。
+    invalid_root_dir_branch: 根目录不能用于 `editorial_workflow` 和 `preview` 发布模式的分支名称。其路径的任何部分都不能以点开头、以「.lock」结尾，或包含空格或冒号、星号等特殊字符。
+    path_outside_root_dir: 路径「{$path}」指向根目录之外，CMS 无法在该位置列出文件。
     oauth_implicit_flow: Sveltia CMS 不支持配置的认证方法（隐式授权）。请改用其他<a>认证方法</a>。
     github_pkce_unsupported: 由于 GitHub 的限制，暂不支持 PKCE 授权。请改用其他<a>认证方法</a>。
+    additions_no_base_url: '`base_url` 选项必须是您的 Sveltia CMS Additions 服务的 URL。'
     oauth_no_app_id: 未定义 OAuth 应用程序 ID。
     # Don’t localize `open_authoring`, `editorial_workflow` and `preview`
-    open_authoring_no_workflow: '`open_authoring` 选项需要 `editorial_workflow` 发布模式。详情请参阅<a>文档</a>。'
+    open_authoring_no_workflow: '`open_authoring` 选项需要 `editorial_workflow` 或 `preview` 发布模式。详情请参阅<a>文档</a>。'
     # Don’t localize `auth_methods`
     no_auth_methods: '`auth_methods` 选项必须至少包含一种方法。'
+    # Don’t localize `auth_scope`, `repo` and `public_repo`
+    auth_scope_no_repo: '`auth_scope` 选项必须包含 `repo` 或 `public_repo`。'
     missing_media_folder: 未定义媒体文件夹。
     public_folder_relative_path: 配置的公共文件夹无效。必须是以「/」开头的绝对路径。
     public_folder_absolute_url: Sveltia CMS 不支持为公共文件夹选项设置绝对 URL。
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    unsupported_folder_template_tag: '`{$option}` 选项包含模板标签 `{$tag}`，但此处不支持该标签。只能使用别名模板标签（如 `\{\{slug\}\}` 和 `\{\{year\}\}`），以及 `\{\{dirname\}\}`、`\{\{filename\}\}`、`\{\{extension\}\}`、`\{\{media_folder\}\}` 和 `\{\{public_folder\}\}` 标签。'
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    global_folder_template_tag: '`{$option}` 选项包含模板标签 `{$tag}`，该标签只能用于集合、集合文件或字段的选项中，因为只有在那里才有可供填充的条目。'
+    # {$replacement} is the configured replacement string; Don’t localize `sanitize_replacement`
+    invalid_sanitize_replacement: '`sanitize_replacement` 选项设置为 `{$replacement}`，但其中包含不能用于别名的字符，因此无法用作替换字符。'
+    # {$option} is the option name (`site_url` or `display_url`) and {$url} is the configured value
+    invalid_url_option: '`{$option}` 选项设置为 `{$url}`，但它必须是以 `https://` 或 `http://` 开头的绝对 URL。'
+    # Don’t localize `publish_mode`, `stages`, `draft`, `pending_review` and `pending_publish`
+    invalid_publish_mode_stages: '`publish_mode` 的 `stages` 选项必须以 `draft` 开头，并按 `draft`、`pending_review`、`pending_publish` 的顺序列出各阶段，且不能重复。'
+    # Don’t localize `i18n` and `locales`
+    i18n_no_locales: '`i18n.locales` 选项必须至少列出一种语言。'
+    # {$locale} is the locale code from the configuration; Don’t localize `default_locale` and `locales`
+    i18n_invalid_default_locale: '`default_locale` 选项设置为 `{$locale}`，但它不在 `locales` 中。'
+    # {$locale} is the locale code from the configuration; Don’t localize `initial_locales` and `locales`
+    i18n_invalid_initial_locale: '`initial_locales` 选项包含 `{$locale}`，但它不在 `locales` 中。'
+    # Don’t localize `i18n`
+    i18n_no_collections: '已在顶层配置 `i18n` 选项，但没有任何集合或独立条目设置了 `i18n` 选项，因此无法翻译任何内容。请为需要翻译的集合和独立条目添加 `i18n: true`。'
     # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
     invalid_transformation_key: '`transformations` 选项包含不支持的键 `{$key}`。它必须是 `raster_image`、`svg` 或受支持的位图格式。'
     # {$key} is the transformation key; Don’t localize `quality`
@@ -1507,18 +2343,52 @@ config:
     invalid_asset_collection_name: 资源集合名称「{$name}」无效。不能包含特殊字符。
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: 资源集合名称必须唯一，但「{$name}」使用了多次。
-    # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_no_options: 集合必须定义 `folder`、`files` 或 `divider` 选项。
-    # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_multiple_options: 集合不能同时设置 `folder`、`files` 和 `divider` 选项。
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_no_options: 集合必须定义 `folder`、`file`、`files` 或 `divider` 选项。
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_multiple_options: 集合只能设置 `folder`、`file`、`files` 和 `divider` 选项中的一个。
     # {$extension} is the file extension and {$format} is the configured content format
     file_format_mismatch: '`{$extension}` 扩展名与 `{$format}` 格式不匹配。'
+    # {$name} is the field name from the configuration and {$widget} is its field type
+    front_matter_body_field_not_text: '`{$name}` 字段会作为正文保存在 front matter 下方，正文只能存放文本，不能像 `{$widget}` 字段那样存放数字、布尔值、列表或对象。请使用存放文本的字段类型，或重命名该字段。'
+    # {$file} is the file path from the configuration; Don’t localize `file` and `locale`. The curly
+    # brackets are escaped with backslashes for MessageFormat 2
+    invalid_collection_data_file: '`file` 选项 `{$file}` 无效。它必须是 JSON 文件的路径，且不能包含 `\{\{locale\}\}` 占位符。'
+    # {$prop} is the option name; Don’t localize `file`
+    unsupported_collection_data_file_option: 设置了 `file` 选项的集合不支持 `{$prop}` 选项。
+    # Don’t localize `file`, `publish_mode` and `simple`
+    collection_data_file_workflow: 设置了 `file` 选项的集合不支持编辑工作流和预览工作流（包括开放创作）。请将该集合的 `publish_mode` 选项设置为 `simple`。
+    # {$prop} is the option name; Don’t localize `file` and `slug`. The curly brackets are escaped
+    # with backslashes for MessageFormat 2
+    collection_data_file_slug_tag: 在设置了 `file` 选项的集合中，`{$prop}` 选项不能包含 `\{\{slug\}\}` 标签，因为条目的别名就是其位置，会在条目重新排序或删除时发生变化。请改用具有唯一值的字段。
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
     invalid_slug_slash: 别名模板「{$slug}」无效，因为它不能包含斜杠。要按子文件夹组织条目，请使用 `path` 选项而非 `slug`。
+    # {$name} is the field name from the configuration; Don’t localize `identifier_field`
+    invalid_identifier_field: '`identifier_field` 选项引用了 `{$name}`，但集合中未定义该字段。'
+    # {$name} is the field name from the configuration; Don’t localize `filter`
+    invalid_filter_field: '`filter` 选项引用了 `{$name}`，但集合中未定义该字段。'
+    # Don’t localize `filter`, `value` and `pattern`
+    invalid_filter_no_condition: '`filter` 选项必须设置 `value` 或 `pattern` 选项，用于匹配条目。'
+    # {$option} is an option name such as `slug` or `summary` and {$name} is the field name or template tag from the configuration
+    option_field_not_found: '`{$option}` 选项引用了 `{$name}`，但未定义该字段。'
+    # {$name} is the field name from the configuration and {$widget} is its field type; Don’t localize `thumbnail`
+    thumbnail_field_not_media: '`thumbnail` 选项引用了 `{$name}`，但它必须是 Image 或 File 字段，而不是 `{$widget}` 字段。'
+    # Don’t localize `inline` or `multiple`
+    invalid_inline_component_fields: '`inline` 模式需要单个 Boolean、Color、DateTime、Number、Relation、Select 或 String 字段。Relation 或 Select 字段不能启用 `multiple` 选项。'
+    # {$option} is an option name such as `pattern` or `filter` and {$pattern} is the configured pattern
+    invalid_regex: '`{$option}` 选项包含无效的正则表达式 `{$pattern}`，该表达式将被忽略。'
     # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
     invalid_reorder_group: '`reorder` 选项引用了名为 `{$name}` 的视图分组，但 `view_groups` 选项中未定义该分组。'
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit` and `fields`
+    invalid_bulk_edit_field: '`bulk_edit` 选项的 `fields` 列表引用了名为 `{$name}` 的字段，但集合中未定义该顶层字段。'
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit`, `fields` and `multiple`
+    unsupported_bulk_edit_field: '`bulk_edit` 选项的 `fields` 列表中的 `{$name}` 字段无法批量编辑。仅支持非只读、未启用 `multiple` 选项且不会在保存时自动设置的 Boolean、Color、DateTime、Number、Relation、Select 或 String 字段。'
     # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
     invalid_sortable_field: '`sortable_fields` 选项引用了名为 `{$name}` 的字段，但集合中未定义该字段。'
+    # Don’t localize `sortable_fields` and `default_sort`
+    multiple_sortable_field_defaults: '`sortable_fields` 选项中只能有一个项目设置 `default_sort` 选项。'
+    # {$option} is `table_columns` or `summary_fields`, and {$name} is the field name from the configuration
+    invalid_table_column_field: '`{$option}` 选项引用了名为 `{$name}` 的字段，但集合中未定义该字段。'
     # {$name} is the field name from the configuration; Don’t localize `view_groups`
     invalid_view_group_field: '`view_groups` 选项引用了名为 `{$name}` 的字段，但集合中未定义该字段。'
     # {$name} is the field name from the configuration; Don’t localize `view_filters`
@@ -1530,9 +2400,15 @@ config:
     duplicate_view_group_name: 视图分组名称必须唯一，但 `{$name}` 被多次使用。
     # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
     missing_view_filter_name: 视图筛选器 {$count} 必须将 `name` 选项定义为非空字符串。
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `pattern`, `eq` and `gte`
+    invalid_view_filter_no_condition: 视图筛选器 {$count} 必须设置 `pattern` 选项或 `eq`、`gte` 等比较选项，用于匹配条目。
     # {$name} is the invalid or duplicate view filter name
     invalid_view_filter_name: 视图筛选器名称 `{$name}` 无效。名称不能包含特殊字符。
     duplicate_view_filter_name: 视图筛选器名称必须唯一，但 `{$name}` 被多次使用。
+    # {$name} is the default view group name from the configuration; Don’t localize `default` and `view_groups`
+    invalid_view_group_default: '`view_groups` 的 `default` 选项设置为 `{$name}`，但没有该名称的视图分组。'
+    # {$name} is the default view filter name from the configuration; Don’t localize `default` and `view_filters`
+    invalid_view_filter_default: '`view_filters` 的 `default` 选项设置为 `{$name}`，但没有该名称的视图筛选器。'
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: 集合 {$count} 必须将 `name` 选项定义为非空字符串。
     # {$name} is the invalid or duplicate collection name
@@ -1547,8 +2423,19 @@ config:
     collection_no_fields: 集合必须将 `fields` 选项定义为至少包含一个字段。
     # Don’t localize `fields`
     collection_file_no_fields: 集合文件必须将 `fields` 选项定义为至少包含一个字段。
+    # Don’t localize `i18n`, `locale` and `folder`
+    collection_folder_i18n_required: 如果在 `folder` 路径中使用了 `locale` 占位符，则集合必须定义 `i18n` 选项。
+    # {$folder} is the invalid folder path; Don’t localize `locale`, `folder` and the example path. The
+    # curly brackets in the example are escaped with backslashes for MessageFormat 2
+    invalid_collection_folder_locale: '`folder` 路径 `{$folder}` 无效。`locale` 占位符只能作为完整的文件夹名称使用一次，例如 `content/\{\{locale\}\}/posts`。'
     # Don’t localize `i18n`, `locale` and `file`
     collection_file_i18n_required: 如果在 `file` 路径中使用了 `locale` 占位符，则集合文件必须定义 `i18n` 选项。
+    # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
+    collection_i18n_no_fields: '集合设置了 `i18n` 选项，但其所有字段都未设置 `i18n` 选项，因此无法翻译任何字段。请为需要翻译的字段添加 `i18n: true` 或 `i18n: duplicate`。'
+    # Don’t localize `i18n` and `i18n: true`
+    collection_i18n_no_files: '集合设置了 `i18n` 选项，但其所有文件都未设置 `i18n` 选项，因此无法翻译任何文件。请为需要翻译的文件添加 `i18n: true`。'
+    # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
+    collection_file_i18n_no_fields: '集合文件设置了 `i18n` 选项，但其所有字段都未设置 `i18n` 选项，因此无法翻译任何字段。请为需要翻译的字段添加 `i18n: true` 或 `i18n: duplicate`。'
     # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
     missing_field_name: 字段 {$count} 必须将 `name` 选项定义为非空字符串。
     # {$name} is the invalid or duplicate field name
@@ -1560,6 +2447,8 @@ config:
     invalid_variable_type: 变量类型名称「{$name}」无效。不能包含特殊字符。
     duplicate_variable_type: 变量类型名称必须唯一，但「{$name}」使用了多次。
     date_field_type: 'Sveltia CMS 不支持已弃用的 Date 字段类型。请改用带有 `type: date` 选项的 DateTime 字段类型。'
+    # curly brackets in the placeholder are escaped with backslashes for MessageFormat 2
+    hidden_field_locale_without_i18n: Hidden 字段的 `default` 选项使用了 `\{\{locale\}\}` 占位符，但该集合未启用国际化，因此内容没有可用于填充的语言。
     # {$timeZone} is the invalid IANA timezone identifier from the configuration
     invalid_timezone: 无效的时区：{$timeZone}。必须是有效的 IANA 时区标识符，如 `America/New_York` 或 `Asia/Tokyo`。
     # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
@@ -1572,12 +2461,85 @@ config:
     invalid_list_variable_type: List 字段的变量类型无效。`widget` 选项设置为 `{$widget}`，但必须是 `object`。
     # Don’t localize `fields`, and `types`
     invalid_object_field: Object 字段不能同时设置 `fields` 和 `types` 选项。
+    # {$min} and {$max} are option names such as `min` and `max` or `minlength` and `maxlength`
+    invalid_range_options: '`{$min}` 选项不能大于 `{$max}` 选项。'
+    # {$step} is the configured value; Don’t localize `step`
+    invalid_step: '`step` 选项设置为 `{$step}`，但它必须大于零，或设为 `-1` 以关闭步进。'
+    # Don’t localize `options`
+    select_field_no_options: Select 字段的 `options` 选项必须至少包含一个项目。
+    # {$value} is the option value from the configuration; Don’t localize `options`
+    select_field_duplicate_option: Select 字段的 `options` 必须唯一，但 `{$value}` 使用了多次。
+    # {$value} is the default value from the configuration; Don’t localize `default` and `options`
+    select_field_invalid_default: Select 字段的 `default` 选项设置为 `{$value}`，但它不在 `options` 中。
+    # Don’t localize `fields` and `types`
+    list_field_no_subfields: List 字段的 `fields` 或 `types` 选项必须至少包含一个项目。如需纯值列表，请省略该选项。
+    # Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_object: List 字段的 `default` 选项包含对象，但由于该字段没有 `fields` 或 `types`，每个项目都必须是纯值。
+    # {$value} is the default item from the configuration; Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_item: List 字段的 `default` 选项包含 `{$value}`，但由于该字段设置了 `fields` 或 `types`，每个项目都必须是对象。
+    # {$key} is a property name of the default item from the configuration; Don’t localize `default`
+    list_field_invalid_default_key: List 字段的 `default` 选项包含具有 `{$key}` 属性的项目，但没有该名称的子字段。
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    list_field_default_missing_type: List 字段的 `default` 选项包含缺少 `{$typeKey}` 属性的项目，该属性用于指定 `types` 中的某个类型。
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default item; Don’t localize `default` and `types`
+    list_field_invalid_default_type: List 字段的 `default` 选项包含 `{$typeKey}` 属性为 `{$value}` 的项目，但它不在 `types` 中。
+    # Don’t localize `map_key_field`, `fields` and `types`
+    list_field_map_key_no_subfields: List 字段的 `map_key_field` 选项需要 `fields` 或 `types` 选项，因为每个键都取自某个子字段。
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_not_found: List 字段的 `map_key_field` 选项引用了 `{$name}`，但没有该名称的子字段。
+    # {$name} is the subfield name, and {$type} is the variable type name; Don’t localize `map_key_field`
+    list_field_map_key_missing_in_type: List 字段的 `map_key_field` 选项引用了 `{$name}`，但 `{$type}` 类型中没有该名称的子字段。
+    # {$name} is the subfield name, and {$widget} is its field type; Don’t localize `map_key_field`
+    list_field_map_key_invalid_type: List 字段的 `map_key_field` 选项引用了 `{$name}`，但它必须是 String、Relation 或 Select 字段，而不是 `{$widget}` 字段。
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `multiple`
+    list_field_map_key_multiple: List 字段的 `map_key_field` 选项引用了 `{$name}`，但该子字段不能接受多个值，因为每个项目都需要单个键。请移除其 `multiple` 选项。
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_option_not_string: List 字段的 `map_key_field` 选项引用了 `{$name}`，但该子字段的选项必须为字符串值，因为每个键都以字符串形式存储。
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `required`
+    list_field_map_key_not_required: List 字段的 `map_key_field` 选项引用了 `{$name}`，但该子字段不能是可选的，因为每个项目都需要一个键。请移除其 `required` 选项。
+    # {$name} is the subfield name; Don’t localize `map_key_field`, `i18n: false` and `i18n: duplicate`
+    list_field_map_key_not_localized: 'List 字段的 `map_key_field` 选项引用了 `{$name}`，但该子字段不能设置 `i18n: false`，因为项目在每种语言中都需要一个键。请使用 `i18n: duplicate` 或移除该选项。'
+    # Don’t localize `i18n`, `duplicate_if_empty`, `multiple` and `true`
+    duplicate_if_empty_multiple: '设置了 `multiple` 选项的字段不支持 `i18n: duplicate_if_empty` 选项，因此该字段将按 `i18n: true` 的方式工作。'
+    # Don’t localize `default` and `multiple`
+    invalid_default_multiple: 由于 `multiple` 选项为 `true`，`default` 选项必须是数组。
+    invalid_default_single: 由于 `multiple` 选项不为 `true`，`default` 选项必须是单个值，而不能是数组。
+    # {$key} is a property name of the default object from the configuration; Don’t localize `default`
+    object_field_invalid_default_key: Object 字段的 `default` 选项具有 `{$key}` 属性，但没有该名称的子字段。
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    object_field_default_missing_type: Object 字段的 `default` 选项缺少 `{$typeKey}` 属性，该属性用于指定 `types` 中的某个类型。
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default object; Don’t localize `default` and `types`
+    object_field_invalid_default_type: Object 字段的 `default` 选项的 `{$typeKey}` 属性为 `{$value}`，但它不在 `types` 中。
+    # Don’t localize `default` and `output_code_only`
+    code_field_invalid_default_object: 由于 `output_code_only` 选项为 `true`，Code 字段的 `default` 选项必须是字符串。
+    # {$key} is a property name of the default object, {$code} and {$lang} are the configured property names; Don’t localize `default` and `keys`
+    code_field_invalid_default_key: Code 字段的 `default` 选项具有 `{$key}` 属性，但 `keys` 选项只允许 `{$code}` 和 `{$lang}`。
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_invalid_expression: 由于 `value_type` 选项为 `{$valueType}`，Compute 字段的 `value` 选项必须是有效的算术表达式，例如 `\{\{fields.price\}\} * \{\{fields.quantity\}\}`。
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_uuid_in_expression: 由于 `value_type` 选项为 `{$valueType}`，Compute 字段的 `value` 选项是算术表达式，因此不能使用 `\{\{uuid\}\}` 等 UUID 标签。
+    # {$value} is the default value and {$valueType} is the configured value type; Don’t localize `default` and `value_type`
+    number_field_default_not_integer: Number 字段的 `default` 选项设置为 `{$value}`，但由于 `value_type` 选项为 `{$valueType}`，它必须是整数。
+    number_field_default_not_number: Number 字段的 `default` 选项设置为 `{$value}`，但由于 `value_type` 选项为 `{$valueType}`，它必须是数字。
+    # Don’t localize `fields` and `types`
+    object_field_no_subfields: Object 字段的 `fields` 或 `types` 选项必须至少包含一个项目。
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: 引用的集合「{$collection}」无效或未定义。
     relation_field_invalid_collection_file: 引用的文件「{$file}」无效或未定义。
     # Don’t localize `file`
     relation_field_missing_file_name: 关联文件集合时必须定义 `file` 选项。
     relation_field_invalid_value_field: 引用的值字段「{$field}」无效或未定义。
+    # {$collection} is the referenced collection name; Don’t localize `file`, `value_field` and `slug`.
+    # The curly brackets are escaped with backslashes for MessageFormat 2
+    relation_field_array_file_slug: 与 `{$collection}` 集合的关联不能存储 `\{\{slug\}\}` 值，因为在设置了 `file` 选项的集合中，条目的别名就是其位置，会在条目重新排序或删除时发生变化。请将 `value_field` 选项改为设置成具有唯一值的字段。
+    # {$collection} is the referenced collection name; Don’t localize `file`
+    relation_field_array_file_workflow: 设置了 `file` 选项的集合不能关联使用编辑工作流或预览工作流的 `{$collection}` 集合，因为在该集合中重命名或删除条目时，文件中对该条目的引用无法更新。
+    relation_field_invalid_display_field: 引用的显示字段 `{$field}` 无效或未定义。
+    relation_field_invalid_search_field: 引用的搜索字段 `{$field}` 无效或未定义。
+    relation_field_invalid_filter_field: 引用的筛选字段 `{$field}` 无效或未定义。
+    relation_field_invalid_sort_field: 引用的排序字段 `{$field}` 无效或未定义。
+    # Don’t localize `sort_by` and `file`
+    relation_field_sort_by_file_ignored: '`sort_by` 选项不适用于与文件的关联，此类关联的选项按列表项的顺序排列。该选项将会被忽略。'
     unexpected: 意外错误
 
     # Schema validation errors, reported when the configuration doesn’t match the published JSON
@@ -1610,18 +2572,56 @@ config:
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: 未定义 OAuth 应用程序 ID。用户需要提供访问令牌才能登录。
+    # Don’t localize `prefix`
+    site_library_prefix_template: 媒体库的 `prefix` 选项包含模板标签，但模板标签仅在字段级别受支持，因为在顶层没有可供填充的条目。
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: Sveltia CMS 不支持 `{$prop}` 选项。该选项将会被忽略。
+    # Don’t localize `stages`, `publish_mode`, `editorial_workflow` and {$type}, which is `preview` or `simple`
+    publish_mode_stages_ignored: '`publish_mode` 的 `stages` 选项仅适用于 `editorial_workflow` 发布模式，因此在 `{$type}` 下会被忽略。'
+    # Don’t localize `pattern`, `m` and `s`
+    inline_component_multiline_pattern: 此行内组件的 `pattern` 带有 `m` 或 `s` 标志或会匹配换行符，但行内组件只会在段落内进行匹配。
+    # {$name} is a button or component name and {$option} is `buttons` or `editor_components`; Don’t localize them and `multiline: false`
+    single_line_block_item: '`{$option}` 选项中的 `{$name}` 项目将被忽略，因为设置了 `multiline: false` 的字段只能包含行内内容。'
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: 同时设置了 `picker_utc` 和较新的时区选项（`input_timezone` 或 `output_utc`）。新选项将优先生效。请考虑从配置中移除 `picker_utc`。
+    # Don’t localize `localize_format` and `format`
+    localize_format_without_format: '`localize_format` 选项无效，因为该字段没有 `format` 选项，其值以 ISO 8601 格式存储。'
+    # {$name} is a template tag like `fields.lines.*.price`; Don’t localize `value`, `*` and `sum()`
+    compute_field_wildcard_without_item: Compute 字段的 `value` 选项引用了 `{$name}`，但该字段不在 `*` 所代表的列表项中，因此解析结果为空。只有 `sum()` 等聚合函数才能使用列表中的所有项目。
+    # {$name} is a template tag like `fields.lines.*.amount`; Don’t localize `value`
+    compute_field_self_reference: Compute 字段的 `value` 选项以 `{$name}` 引用了字段自身，因此其值每次计算都会变化，永远无法稳定。
+    # {$name} is a template tag like `fields.total`; Don’t localize `value`
+    compute_field_reference_cycle: Compute 字段的 `value` 选项引用了 `{$name}`，而这是另一个直接或通过其他字段反向引用此字段的 Compute 字段，因此它们的值永远无法稳定。
+    # Don’t localize `localize_format`, `true` and `de`
+    localize_format_without_i18n: '`localize_format` 选项为 `true`，但该集合未启用国际化，因此值将以英语写入。请改为将该选项设置为语言代码，例如 `de`。'
+    # {$locale} is the locale code from the configuration; Don’t localize `localize_format`
+    localize_format_unsupported_locale: '`localize_format` 选项设置为 `{$locale}`，但这不是受支持的语言，因此值将以英语写入。'
     # Don’t localize `preview_path`
     preview_path_no_date_field: '`preview_path` 选项使用了日期和时间标签，但集合中没有可供读取的 DateTime 字段，因此不会显示预览链接。'
     # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
     preview_path_date_field_not_found: '`preview_path_date_field` 选项引用了名为 `{$name}` 的字段，但未定义该名称的 DateTime 字段，因此不会显示预览链接。'
     # {$name} is the template tag from the configuration; Don’t localize `preview_path`
     preview_path_field_not_found: '`preview_path` 选项引用了 `{$name}`，但集合中未定义该字段，因此不会显示预览链接。'
+    # {$name} is the default identifier field name; Don’t localize `identifier_field` and `slug`
+    missing_identifier_field: 该集合没有用于命名新条目的 `{$name}` 字段，因此每个新条目都会获得随机别名。请添加 `{$name}` 字段，或设置 `identifier_field` 或 `slug` 选项。
+    # Don’t localize `slug`, `i18n`, `multiple_files`, `multiple_folders` and `multiple_root_folders`
+    slug_i18n_ineffective: '`slug` 的 `i18n` 选项无效，因为该集合未使用每种语言各有独立文件的 `multiple_files`、`multiple_folders` 或 `multiple_root_folders` 国际化结构。'
+    # Don’t localize `slug`, `template` and `auto_increment`
+    slug_template_ignored: '`slug` 的 `template` 选项将被忽略，因为 `auto_increment` 选项会改为对别名进行编号。'
+    # {$file} is the file path; Don’t localize `file`, `locale`, `i18n`, `false`,
+    # `omit_default_locale_from_file_path` and the example paths. The curly brackets in the examples
+    # are escaped with backslashes for MessageFormat 2
+    locale_not_omitted_from_file_path: 无法从 `file` 路径 `{$file}` 中移除 `locale` 占位符，因此尽管设置了 `omit_default_locale_from_file_path` 国际化选项，路径中仍会保留默认语言。要省略语言，请将占位符用作完整的文件夹名称（例如 `\{\{locale\}\}/about.md`），或放在文件名与扩展名之间（例如 `about.\{\{locale\}\}.md`）。要保留语言，请在该文件的 `i18n` 选项中将此选项设置为 `false`。
+    # Don’t localize `i18n`
+    i18n_not_configured: 已启用 `i18n` 选项，但未在配置顶层或集合中配置国际化，因此该选项无效。
+    # Don’t localize `public_folder` and `media_folder`
+    empty_public_folder: '`public_folder` 选项为空字符串，因此条目中保存的资源路径将改用 `media_folder` 路径。请移除该选项，或将其设置为您要使用的路径，例如 `/images`。'
     # {$option} is an option path from the configuration, such as `filter.Regulation`
     schema_unknown_option: Sveltia CMS 配置架构中未定义 `{$option}` 选项。该选项将会被忽略。请检查是否有拼写或语法错误。
+    # Don’t localize `default_localized`, `default` and `i18n`
+    default_localized_without_i18n: '`default_localized` 选项无效，因为该集合未启用国际化。请改用 `default` 选项。'
+    # {$locale} is a locale code from the configuration; Don’t localize `default_localized`
+    default_localized_unknown_locale: '`default_localized` 选项包含 `{$locale}` 的值，但这不是该集合的语言之一，因此该值永远不会被使用。'
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 详见兼容性说明：{$link}
@@ -1654,6 +2654,11 @@ viewing_editorial_workflow: 您正在浏览编辑工作流看板。草稿：{$dr
 # Same as above, for an Open Authoring contributor: their board has no Ready column, because only
 # a maintainer can publish
 viewing_open_authoring_workflow: 您正在浏览编辑工作流看板。草稿：{$draft}。审核中：{$review}。待删除：{$deletion}。
+# Same as above, when the In Review stage is left out with the `stages` publish mode option
+viewing_editorial_workflow_without_review: 您正在浏览编辑工作流看板。草稿：{$draft}。就绪：{$ready}。待删除：{$deletion}。
+# Same as above, when all the content uses Preview Workflow, which has no review stages, so the
+# page only lists the drafts
+viewing_preview_workflow: 您正在浏览草稿页面。草稿：{$draft}。待删除：{$deletion}。
 
 # Workflow status names. `drafts` is the plural form used as a column heading,
 # while `draft` is the singular form used in the editor’s status button.
@@ -1665,6 +2670,10 @@ status:
   # A pending removal, which is a status of its own rather than a stage: it has no review to go
   # through, only the deletion itself to carry out or call off
   pending_deletion: 待删除
+  # Merged changes the site hasn’t caught up with yet: it’s being rebuilt and deployed from the
+  # merge, so a published entry isn’t live and a deleted one is still up. Heading of the tray below
+  # the board that lists them until the site has caught up
+  deploying: 部署中
 
 workflow:
   # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
@@ -1708,6 +2717,14 @@ workflow:
   status_updated: 状态已更新。
   # Error notification when the status could not be changed
   status_change_failed: 无法更改状态。请重试。
+  # Workflow page: toolbar button that reads the pull requests again, to pick up the changes made
+  # by anyone else since the board was loaded, and the toast notifications shown while doing so and
+  # once done
+  refresh: 刷新
+  refreshing: 正在刷新……
+  refreshed: 看板已是最新状态。
+  # Error notification when the board could not be refreshed
+  refresh_failed: 无法刷新看板。请重试。
   # Error notification when the status can’t be changed because the entry is incomplete. Required
   # fields can be left empty while the entry is a draft, but not once it moves on from there
   status_change_blocked: 条目存在错误。请先更正错误，再更改状态。
@@ -1718,6 +2735,10 @@ workflow:
   # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
   send_for_review: 提交审核
   confirm_sending_for_review: 您的更改已保存为草稿。是否将条目提交审核，以便他人查看并发布？
+  # Same as above, when the In Review stage is left out with the `stages` publish mode option, so
+  # the next step is to mark the entry as ready to be published
+  mark_as_ready: 标记为就绪
+  confirm_marking_as_ready: 您的更改已保存为草稿。是否将条目标记为就绪，以便发布？
   # Editor toolbar: button shown when the entry is ready to be published
   publish_entry: 发布条目
   # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
@@ -1747,6 +2768,8 @@ workflow:
     .input {$count :integer}
     .match $count
       * {{ 其中 {$count} 个条目尚未发布，因此您未发布的更改将被放弃。已发布的版本将保持发布状态。 }}
+  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
+  confirm_publishing_entry_after_build: 您确定要发布此条目吗？您的更改将在站点重新构建后上线。
   # Workflow page: toast notifications shown while an entry is being published from a card, and
   # once publishing has completed
   publishing_entry: 正在发布条目……
@@ -1758,10 +2781,55 @@ workflow:
   entry_deleted: 条目已删除。
   # Error notification when publishing fails
   publishing_entry_failed: 无法发布条目。请重试。
+  # Error notification when an entry can’t be published from the CMS, because its request also
+  # changes files that aren’t part of the entry and that the CMS doesn’t show, goes somewhere other
+  # than the site’s branch, or is too large to check. Keep the wording free of Git jargon
+  publish_refused_other_changes: 无法在此处发布此条目，因为它附带了 CMS 无法向您显示的其他更改。请联系开发人员进行审核。
+  # Error notification when an entry can’t be published because its branch has been committed to
+  # since the entry was opened, so what would be published isn’t what was reviewed
+  publish_refused_entry_changed: 自您打开此条目后，它已被更改。请重新加载页面，查看最新版本后再发布。
+  review_on_x: 在 {$service} 上审核
+  from_fork: 来自复刻
+  fork_entry_editable: 此条目来自贡献者从「{$fork}」提交的拉取请求。您的更改将保存到对方的分支。请在 Git 服务上审核并合并该拉取请求。
+  fork_entry_locked: 此条目来自贡献者从「{$fork}」提交的拉取请求。该贡献者不允许维护者编辑，因此在此处只能查看。
+  fork_not_editable: 该贡献者不允许维护者编辑此拉取请求。
+  fork_entry_gone: 该贡献者的拉取请求已不再打开，因此无法将更改保存到其中。
+  # Error shown in the save error dialog when an entry can’t be saved for review, because a request
+  # the CMS doesn’t show is already open from the branch the entry would be saved to. `{$number}` is
+  # the request number, e.g. `#12` on GitHub or `!12` on GitLab. Keep the wording free of Git jargon
+  branch_in_use: 此条目已在 CMS 之外有另一个打开的请求（{$number}）。请联系开发人员先将其关闭。
   # Workflow page: empty column message
   no_entries: 没有条目。
   # Workflow page: aria-label for a draggable entry card
   drag_entry: 拖动以更改状态
+  # Workflow page: note on a card in the Deploying tray, marking an entry that’s being removed from
+  # the site rather than published to it
+  deploying_deletion: 删除
+  # Workflow page: note on a card listing the new entries that were created from a Relation field
+  # of the entry and are published along with it, e.g. “Also adds Section: Getting Started”
+  companion_entries: 同时添加 {$entries}
+  # Workflow page: note on a card listing the existing entries that were edited from a Relation
+  # field of the entry and are published along with it, e.g. “Also changes Author: Ada Lovelace”
+  edited_companion_entries: 同时更改 {$entries}
+  # Workflow page: one of the entries listed by `companion_entries` or `edited_companion_entries`,
+  # named by its collection’s singular label and its title
+  companion_entry: '{$collection}：{$title}'
+
+# Dialog asking the user for a commit message every time changes are saved, when the site is
+# configured to. The message is recorded in the repository’s history along with the changes
+commit_message:
+  # Dialog title
+  title: 提交消息
+  # Description when the user writes the whole message, which the text box is filled in with
+  description_replace: 请描述您的更改。此消息将与更改一起记录在历史中。
+  # Description when the text the user enters is added before or after a message the CMS writes
+  description_addition: 为与更改一起记录在历史中的消息添加备注，例如议题编号。可以留空。
+  # Accessible name of the text box when the user writes the whole message
+  message: 提交消息
+  # Accessible name of the text box when the text is added before or after the message
+  addition: 备注
+  # Preview of the message as it will be recorded. {$message} is the message
+  preview: 消息：{$message}
 
 # Open Authoring: a contributor without write access to the configured repository works in a fork
 # of it, and their changes reach the site through a pull request a maintainer merges
@@ -1775,6 +2843,10 @@ open_authoring:
   fork_declined: 您需要在账户中拥有该仓库的复刻才能提出更改建议。
   # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
   fork_failed: 无法在您的账户中创建「{$repo}」仓库的复刻。
+  # Error shown when the user’s fork doesn’t have the branch the CMS is configured with, so there’s
+  # nothing to start their changes from. {$fork} and {$repo} are repository identifiers in
+  # owner/repo format, {$branch} is the branch name
+  fork_branch_missing: 您的复刻「{$fork}」中没有「{$branch}」分支。请从「{$repo}」仓库更新该复刻，然后重新登录。
   # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
   # because the API rate limit is exhausted. {$repo} is the repository identifier
   permission_check_failed: 无法检查您对「{$repo}」仓库的访问权限。请稍后重试。
@@ -1789,6 +2861,10 @@ open_authoring:
   private_repo_scope_required: 您的登录未包含私有仓库的访问权限，因此无法读取「{$repo}」仓库。请联系维护者检查 CMS 的身份验证设置。
   # Error shown when a contributor tries to publish an entry, which only a maintainer can do
   publish_unsupported: 只有维护者才能发布此站点的更改。请将您的条目标记为「审核中」，之后会有人进行查看。
+  # Error shown when a contributor changes the status of an entry whose request a maintainer has
+  # published since the page was loaded, leaving nothing to review. The entry then leaves the
+  # Editorial Workflow board and the editor closes. Keep the wording free of Git jargon
+  entry_already_published: 维护者已发布此条目，因此没有需要审核的内容了。
   # Error shown when a change would go straight to the site instead of being reviewed, which a
   # contributor can’t do. It covers media library uploads and deletions, and entry reordering
   direct_commit_unsupported: 此更改无法直接进行。只有对条目的编辑可以提交审核。
@@ -1804,11 +2880,10 @@ open_authoring:
 # Settings page aria-label
 categories: 分类
 
-# Site Configuration Editor
-site_configuration_editor: 站点配置编辑器
-
 # Preferences panels
 prefs:
+  account:
+    title: 账户
   # API key management feedback messages
   changes:
     api_key_saved: API 密钥已保存。
@@ -1858,7 +2933,7 @@ prefs:
         select_service: 选择服务
       api_keys:
         title: 翻译服务 API 密钥
-        description: 管理<a>翻译服务</a>的 API 密钥。
+        description: 管理<a>翻译服务</a>的 API 密钥。通用 AI 服务的 API 密钥可在 AI 设置中管理。
       # API key input label, e.g., “DeepL Key”
       # {$service} is the translation service name
       field_label: '{$service} 密钥'
@@ -1892,6 +2967,16 @@ prefs:
       field_label: '{$service} API 密钥'
       no_services: 未配置<a>云存储服务</a>。
 
+  # AI panel
+  ai:
+    title: AI
+    api_keys:
+      title: AI 服务 API 密钥
+      description: 管理 AI 服务的 API 密钥。
+    # API key input label, e.g., “OpenAI GPT API Key”
+    # {$service} is the AI service name
+    field_label: '{$service} API 密钥'
+
   # Accessibility panel
   accessibility:
     title: 无障碍
@@ -1902,6 +2987,7 @@ prefs:
 
   # Data Management panel
   data:
+    title: 数据管理
     clear_data:
       title: 清除数据
       # Clear File Cache button
@@ -1917,13 +3003,23 @@ prefs:
 
   # Developer panel
   developer:
+    title: 开发者
     developer_mode:
       title: 开发者模式
       description: 启用一些面向开发者的功能，包括详细的控制台日志和原生上下文菜单。
       switch_label: 启用开发者模式
+    local_git:
+      title: Git 提交
+      description: 每次保存更改时，都将其提交到本地仓库的当前分支，就像使用远程仓库时 CMS 所做的那样。之后您可以使用常用的 Git 工具审查并推送这些提交。
+      switch_label: 将更改提交到 Git
+      checking: 正在检查仓库……
+      # {$branch} is the branch name, {$name} and {$email} are the commit author’s name and email address
+      ready: 更改将以 {$name}（{$email}）的身份提交到 {$branch} 分支。
+      # {$reason} is one of the `local_git_skip_reasons` strings
+      not_ready: 目前无法提交更改。{$reason}
     deploy_hook:
       title: 部署钩子
-      description: 手动部署时（选择「发布更改」）会调用此 URL。使用 GitHub Actions 可留空。
+      description: 输入一个 Webhook URL，在您选择「发布更改」手动触发部署时调用。如果使用 GitHub Actions 或 GitLab CI/CD，可留空。
       # Hook URL input
       url:
         field_label: Hook URL

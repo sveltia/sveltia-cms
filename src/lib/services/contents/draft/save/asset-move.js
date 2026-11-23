@@ -1,7 +1,7 @@
+import { createAssetMoveChange } from '$lib/services/assets/data/move-change';
+import { getOwnedEntryFolderPath } from '$lib/services/assets/entry-folder';
 import { getAssetFolder } from '$lib/services/assets/folders';
-import { getAssetBlob } from '$lib/services/assets/info';
 import { allAssets } from '$lib/services/assets/state';
-import { getOwnedEntryFolderPath } from '$lib/services/contents/draft/save/assets';
 import { getEntryAssetVersion } from '$lib/services/workflow/assets';
 
 /**
@@ -38,6 +38,19 @@ export const getMovedFolders = ({ collection, originalEntry, savingEntry }) => {
 
   return movedFolders;
 };
+
+/**
+ * Get the path a file goes to when the folder holding it moves, along with the entry that owns the
+ * folder.
+ * @param {string} path File path.
+ * @param {string} oldFolderPath Path of the folder being moved.
+ * @param {string} newFolderPath Path the folder is moved to.
+ * @returns {string | undefined} New path, or `undefined` if the file isn’t in the folder.
+ */
+export const getPathInMovedFolder = (path, oldFolderPath, newFolderPath) =>
+  path.startsWith(`${oldFolderPath}/`)
+    ? `${newFolderPath}${path.slice(oldFolderPath.length)}`
+    : undefined;
 
 /**
  * Build the file changes that take an entry’s relative assets along when the entry itself is filed
@@ -98,35 +111,25 @@ export const buildEntryAssetMoveChanges = async ({
   await Promise.all(
     [...movedFolders].map(async ([oldFolderPath, newFolderPath]) =>
       Promise.all(
-        assets
-          .filter(({ path }) => path.startsWith(`${oldFolderPath}/`))
-          .map(async (asset) => {
-            const path = `${newFolderPath}${asset.path.slice(oldFolderPath.length)}`;
+        assets.map(async (asset) => {
+          const path = getPathInMovedFolder(asset.path, oldFolderPath, newFolderPath);
 
-            // The destination is already being written in this save, typically because the user
-            // replaced the file while moving the entry. Drop the stale copy rather than overwriting
-            // the new one with it
-            if (takenPaths.has(path)) {
-              moveChanges.push({ action: 'delete', path: asset.path, previousSha: asset.sha });
+          if (path === undefined) {
+            return;
+          }
 
-              return;
-            }
+          // The destination is already being written in this save, typically because the user
+          // replaced the file while moving the entry. Drop the stale copy rather than overwriting
+          // the new one with it
+          if (takenPaths.has(path)) {
+            moveChanges.push({ action: 'delete', path: asset.path, previousSha: asset.sha });
 
-            const blob = asset.file ?? (await getAssetBlob(asset));
+            return;
+          }
 
-            moveChanges.push({
-              action: 'move',
-              path,
-              previousPath: asset.path,
-              previousSha: asset.sha,
-              // Read the bytes up front. A blob backed by the file system points at the file about
-              // to be moved away, and reading it afterwards — to write the copy or to hash it —
-              // fails because there’s nothing at that path anymore
-              data: new File([await blob.arrayBuffer()], asset.name, { type: blob.type }),
-            });
-
-            savingAssets.push({ ...asset, path });
-          }),
+          moveChanges.push(await createAssetMoveChange(asset, path));
+          savingAssets.push({ ...asset, path });
+        }),
       ),
     ),
   );

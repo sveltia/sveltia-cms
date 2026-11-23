@@ -15,6 +15,7 @@ import { createConcurrencyLimiter } from '$lib/services/utils/scheduling';
 import { createRawState, createRootEffect } from '$lib/services/utils/state.svelte';
 
 /**
+ * @import { AssetNameContext } from '$lib/services/assets/name';
  * @import { ProcessedAssets } from '$lib/types/private';
  * @import { SharedMediaLibraryOptions } from '$lib/types/public';
  */
@@ -71,6 +72,9 @@ const isUsableImage = async (file, convertHEIC) => {
  * @param {string} [extraOptions.nameTemplate] The `filename_template` media library option to
  * rename the file with right away. A file added to an entry is named when the entry is saved
  * instead, as the template can refer to the entry content.
+ * @param {AssetNameContext} [extraOptions.nameContext] Entry values to fill the template with, for
+ * a file that goes to a cloud storage service from an entry: unlike a file saved with the entry,
+ * it’s uploaded, and has to be named, right away.
  * @returns {Promise<ProcessFileResult>} Result of processing the file. An invalid file is returned
  * as is, because there’s nothing to transform and it won’t be uploaded anyway.
  */
@@ -81,7 +85,7 @@ export const processFile = async (
     transformations,
     max_file_size: maxFileSize = Infinity,
   } = {},
-  { nameTemplate } = {},
+  { nameTemplate, nameContext } = {},
 ) => {
   // Check the original file object, whose hash is likely memoized already; a renamed copy would
   // have to be read again to be hashed
@@ -94,6 +98,7 @@ export const processFile = async (
       ? fillAssetNameTemplate({
           nameTemplate: createAssetNameTemplate(nameTemplate),
           originalName: name,
+          ...nameContext,
         })
       : name;
 

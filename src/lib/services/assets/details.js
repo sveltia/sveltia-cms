@@ -77,7 +77,7 @@ const getMediaMetadataOnce = (asset) => {
 };
 
 /**
- * Get the given asset’s extra info.
+ * Get the given asset’s extra info. The media metadata is left out if the file can’t be downloaded.
  * @param {Asset} asset Asset.
  * @returns {Promise<Omit<AssetDetails, 'usedEntries'>>} Details. `usedEntries` is not included
  * because it can be expensive to fetch; use `getAssetUsedEntries` to fetch when needed.
@@ -85,7 +85,14 @@ const getMediaMetadataOnce = (asset) => {
 export const getAssetDetails = async (asset) => {
   const { path } = asset;
   const { blobBaseURL } = backend.current?.repository ?? {};
-  const metaData = await getMediaMetadataOnce(asset);
+
+  const metaData = await getMediaMetadataOnce(asset).catch((/** @type {any} */ ex) => {
+    // The file couldn’t be downloaded, so the media info is left out, but not the URLs below
+    // eslint-disable-next-line no-console
+    console.error(ex);
+
+    return {};
+  });
 
   // The URLs are derived from the asset’s path and the current config rather than its content, so
   // they’re resolved per call instead of being cached with the metadata

@@ -7,8 +7,8 @@ import { checkForRemoteChanges } from '$lib/services/backends/refresh';
 import { cmsConfig } from '$lib/services/config';
 import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import {
+  allUnpublishedEntries,
   publishingBranches,
-  unpublishedEntries,
   unpublishedEntriesLoaded,
   unpublishedEntriesLoading,
   workflowEnabled,
@@ -128,7 +128,7 @@ export const startLoadingPullRequests = () => {
 
 /**
  * Retrieve the unpublished entries from the backend’s open pull requests and update the
- * {@link unpublishedEntries} store. Any error is logged and swallowed, because a failure here
+ * {@link allUnpublishedEntries} store. Any error is logged and swallowed, because a failure here
  * should not prevent the user from working with published content.
  * @param {Promise<WorkflowPullRequest[]> | undefined} [pullRequests] Pull requests being
  * retrieved, from {@link startLoadingPullRequests}. Requested here if omitted.
@@ -149,7 +149,7 @@ export const loadUnpublishedEntries = async (pullRequests = startLoadingPullRequ
     const { entries, assets } = await convertPullRequests(await pullRequests);
 
     if (!isStale()) {
-      unpublishedEntries.current = entries;
+      allUnpublishedEntries.current = entries;
       mergeWorkflowAssets(assets);
       recordLoad(head);
     }
@@ -296,8 +296,8 @@ const findUpToDateBranches = async (workflow, stored, fetched, openBranches) => 
 };
 
 /**
- * Read the open pull requests again and bring the {@link unpublishedEntries} store up to date with
- * them. See {@link reloadUnpublishedEntries}.
+ * Read the open pull requests again and bring the {@link allUnpublishedEntries} store up to date
+ * with them. See {@link reloadUnpublishedEntries}.
  * @param {NonNullable<BackendService['workflow']>} workflow Workflow service.
  * @returns {Promise<boolean>} Whether anything has changed.
  */
@@ -308,7 +308,7 @@ const reload = async (workflow) => {
   const head = repositoryHead.current;
   // The store as it stands before the request, to tell the changes made in this tab in the meantime
   // — a save, a status change, a publish — from the ones the request reports
-  const before = groupByBranch(unpublishedEntries.current);
+  const before = groupByBranch(allUnpublishedEntries.current);
   const pullRequests = await workflow.fetchPullRequests();
 
   if (isStale()) {
@@ -347,7 +347,7 @@ const reload = async (workflow) => {
     return false;
   }
 
-  const current = groupByBranch(unpublishedEntries.current);
+  const current = groupByBranch(allUnpublishedEntries.current);
   const publishing = new Set(publishingBranches.current);
   /** @type {Set<string>} */
   const changedBranches = new Set();
@@ -391,7 +391,7 @@ const reload = async (workflow) => {
     return false;
   }
 
-  unpublishedEntries.current = resolved;
+  allUnpublishedEntries.current = resolved;
 
   // The assets committed to a branch that has changed or gone are replaced with the ones it holds
   // now, if any, restoring the published versions they were shadowing
@@ -406,8 +406,8 @@ const reload = async (workflow) => {
 };
 
 /**
- * Read the backend’s open pull requests again and bring the {@link unpublishedEntries} store up to
- * date with them, so the Editorial Workflow board and the entry lists notice the pull requests
+ * Read the backend’s open pull requests again and bring the {@link allUnpublishedEntries} store up
+ * to date with them, so the Editorial Workflow board and the entry lists notice the pull requests
  * opened, updated, merged or closed by anyone else — a colleague, a bot, the Git service itself —
  * since they were loaded. Unlike {@link loadUnpublishedEntries}, the result is merged into the
  * store rather than replacing it: an unchanged entry stays the same object, a changed one keeps its

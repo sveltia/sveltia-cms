@@ -140,6 +140,24 @@ describe('getOrderValueGetter', () => {
     expect(getOrderValue(makeEntry('e', { order: Infinity }))).toBeUndefined();
   });
 
+  test('reads the value from another locale when the entry lacks the default one', () => {
+    const getOrderValue = getOrderValueGetter(
+      makeCollection({
+        _i18n: { allLocales: ['en', 'fr'], defaultLocale: 'en', structureMap: {} },
+      }),
+    );
+
+    // A multi-file i18n entry with only `a.fr.md`
+    const entry = {
+      id: 'a',
+      slug: 'a',
+      subPath: 'a',
+      locales: { fr: { slug: 'a', path: 'content/a.fr.md', content: { order: 4 } } },
+    };
+
+    expect(getOrderValue(entry)).toBe(4);
+  });
+
   test('returns `undefined` for every entry if the collection can’t be reordered', () => {
     const getOrderValue = getOrderValueGetter(makeCollection({ reorder: undefined }));
 

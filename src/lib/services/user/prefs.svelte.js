@@ -41,6 +41,13 @@ let storedLocaleApplied = false;
  * after the user has picked another one, so only the latest switch is applied once loaded.
  */
 let localeSwitchCount = 0;
+/**
+ * Language preference whose locale was last applied to the app, e.g. {@link AUTO_PREF_VALUE} or
+ * `ja`. A locale picked by the user that fails to load is reverted to it, so `auto` stays `auto`
+ * rather than becoming the locale it resolved to.
+ * @type {string | undefined}
+ */
+let appliedLocalePref;
 
 /**
  * Locale that best matches the browser’s language settings, used while the language preference is
@@ -147,10 +154,12 @@ $effect.root(() => {
 
       if (locale in dictionary) {
         appLocale.set(locale);
+        appliedLocalePref = localePref;
       } else if (switchedByUser && previousLocale) {
         // The strings couldn’t be loaded, so keep using the language the user already had instead
-        // of falling back to the default locale
-        prefs.locale = previousLocale;
+        // of falling back to the default locale. Restore the preference that brought it, or the
+        // locale itself if none has been applied yet, e.g. when the stored one failed to load too
+        prefs.locale = appliedLocalePref ?? previousLocale;
       }
     });
   });

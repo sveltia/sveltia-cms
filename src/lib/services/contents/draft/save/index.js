@@ -1,8 +1,9 @@
 import { _ } from '@sveltia/i18n';
 
 import { callEventHooks } from '$lib/services/api/events';
+import { getAdditions } from '$lib/services/app/additions';
 import { isCommitCancelled } from '$lib/services/backends/commit-prompt';
-import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
+import { isPublishingCommit } from '$lib/services/backends/git/shared/integration';
 import { checkForRemoteChanges } from '$lib/services/backends/refresh';
 import { saveChanges } from '$lib/services/backends/save';
 import { getReadonlyMessage, isDraftReadonly } from '$lib/services/config/readonly';
@@ -28,14 +29,19 @@ import {
 import { detectEntryConflict } from '$lib/services/contents/draft/save/conflict';
 import { assignSaveTimeValues } from '$lib/services/contents/draft/save/save-time';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
+import { updateComputedValues } from '$lib/services/contents/draft/update/compute';
 import { isRequiredEnforced } from '$lib/services/contents/draft/validate/required';
 import { validateAndRevealErrors } from '$lib/services/contents/draft/validate/reveal';
+import { getEntryKey } from '$lib/services/contents/entry/entry-key';
 import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
 import { buildCascadeChanges } from '$lib/services/contents/entry/relations/cascade/update';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { compareWithLatest } from '$lib/services/contents/fields/relation/quick-add';
-import { setLastCommitPublishHint } from '$lib/services/deployments';
-import { getUnpublishedEntryByDraft, isWorkflowDraft } from '$lib/services/workflow';
+import {
+  getUnpublishedEntryByDraft,
+  isOrphanedForkDraft,
+  isWorkflowDraft,
+} from '$lib/services/workflow';
 import { detectWorkflowConflict } from '$lib/services/workflow/conflict';
 import { saveWorkflowChanges } from '$lib/services/workflow/save';
 
@@ -55,7 +61,8 @@ import { saveWorkflowChanges } from '$lib/services/workflow/save';
  */
 
 /**
- * Update the application stores with deployment settings.
+ * Tell the user the entry has been saved, and whether it’s being published. What the commit is
+ * expected to do is recorded by {@link saveChanges}, which every commit to the branch goes through.
  * @param {object} args Arguments.
  * @param {boolean} args.useWorkflow Whether the changes went to a pull request rather than the
  * configured branch.
@@ -64,17 +71,13 @@ import { saveWorkflowChanges } from '$lib/services/workflow/save';
  * references to the saved entry up to date.
  */
 const updateStores = ({ useWorkflow, skipCI, count }) => {
-  // With Editorial Workflow, changes go to a pull request, so nothing is published yet
-  const published = !useWorkflow && skipCIConfigured.current && !(skipCI ?? skipCIEnabled.current);
-
   contentUpdatesToast.current = {
     ...UPDATE_TOAST_DEFAULT_STATE,
     saved: true,
-    published,
+    // With Editorial Workflow, changes go to a pull request, so nothing is published yet
+    published: !useWorkflow && isPublishingCommit({ skipCI }),
     count,
   };
-
-  setLastCommitPublishHint(published);
 };
 
 /**
@@ -217,8 +220,8 @@ const checkPendingEntryConflicts = async (draft, { remoteChecked }) => {
  * @param {boolean} args.publish Whether the entry is published along with the save, in which case
  * its required fields have to be filled in, even if it’s a workflow draft.
  * @returns {Promise<EntryConflict | undefined>} Conflict found, if any, which the save overwrites.
- * @throws {Error} When the entry is read-only, could not be validated, or would overwrite someone
- * else’s change.
+ * @throws {Error} When the entry is read-only, comes from a contributor’s pull request that is no
+ * longer open, could not be validated, or would overwrite someone else’s change.
  */
 const checkSavable = async ({ draft, useWorkflow, overwrite, publish }) => {
   // The editor offers no way to save a read-only entry, but make sure nothing is written anyway
@@ -228,6 +231,10 @@ const checkSavable = async ({ draft, useWorkflow, overwrite, publish }) => {
     throw new Error('saving_failed', {
       cause: new Error(getReadonlyMessage('entry', { collection, collectionFile })),
     });
+  }
+
+  if (isOrphanedForkDraft(draft)) {
+    throw new Error('saving_failed', { cause: new Error(_('workflow.fork_entry_gone')) });
   }
 
   // Wait for what was just typed to reach the draft first. Otherwise a save right after typing
@@ -408,6 +415,15 @@ const finishSave = async ({ draft, savingEntry, pendingEntries, useWorkflow, ski
       clearEntryHistoryCache(entry.id);
     }
   });
+
+  // Comments kept by Sveltia CMS Additions follow an entry whose slug or path has changed. It runs
+  // in the background, as the save is done
+  if (originalEntry && originalEntry.subPath !== savingEntry.subPath) {
+    getAdditions()?.moveEntryConversation(
+      getEntryKey(collectionName, originalEntry.subPath),
+      getEntryKey(collectionName, savingEntry.subPath),
+    );
+  }
 };
 
 /**
@@ -443,6 +459,10 @@ export const saveEntry = async ({
   // The entries added to the same collection from a Relation field have already taken the orders
   // and numbers after the highest ones, so the new entry comes after them
   assignSaveTimeValues(draft, getNewPendingEntriesByCollection(draft, draft.collectionName).length);
+  // The values are copied for the save right away, while the Compute fields are otherwise only
+  // resolved again by the editor later, so resolve them now: one can refer to a value assigned
+  // above, e.g. `INV-{{fields.number}}` with an auto-increment `number`
+  updateComputedValues(draft);
 
   const slugs = getSlugs({ draft });
   // Saving over a deletion writes the entry anew, as its files and the assets stored with it are

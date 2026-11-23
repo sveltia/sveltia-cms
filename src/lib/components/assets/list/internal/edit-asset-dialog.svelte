@@ -1,12 +1,13 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Alert, Dialog, Switch, TextArea, Toast } from '@sveltia/ui';
+  import { Dialog, Switch, TextArea } from '@sveltia/ui';
+  import { untrack } from 'svelte';
 
+  import { runAssetCommit } from '$lib/services/assets/data/commit';
   import { saveAssets } from '$lib/services/assets/data/create';
   import { getAssetBlob } from '$lib/services/assets/info';
   import { editingAsset } from '$lib/services/assets/state';
   import { showAssetOverlay } from '$lib/services/assets/view';
-  import { runCommit } from '$lib/services/backends/commit-prompt';
 
   /**
    * @import { Asset } from '$lib/types/private';
@@ -24,12 +25,18 @@
   let wrap = $state(false);
   /** Whether the edited text is being saved, during which the state is kept for a retry. */
   let saving = false;
-  let savingFailed = $state(false);
+  /**
+   * Whether the dialog was opened from the asset details overlay rather than from the asset list.
+   * The dialog closes along with that overlay.
+   */
+  let openedFromOverlay = false;
 
   /**
    * Initialize the state.
    */
   const initState = async () => {
+    // Called from an effect, which shouldn’t rerun when the overlay is opened or closed
+    openedFromOverlay = untrack(() => showAssetOverlay.current);
     blob = await getAssetBlob(/** @type {Asset} */ (asset));
     originalValue = await blob.text();
     currentValue = originalValue;
@@ -62,27 +69,24 @@
     const text = currentValue;
     const { type } = blob;
 
-    const { ok, cancelled } = await runCommit(() =>
-      saveAssets(
-        {
-          folder,
-          files: [new File([text], name, { type })],
-          originalAssets: [asset],
-        },
-        { commitType: 'uploadMedia' },
-      ),
+    const { ok } = await runAssetCommit(
+      () =>
+        saveAssets(
+          {
+            folder,
+            files: [new File([text], name, { type })],
+            originalAssets: [asset],
+          },
+          { commitType: 'uploadMedia' },
+        ),
+      { failure: 'saving_asset_failed' },
     );
 
     saving = false;
 
     if (!ok) {
-      // A cancellation at the commit message prompt isn’t a failure
-      if (!cancelled) {
-        savingFailed = true;
-      }
-
-      // The asset details overlay may have been closed in the meantime
-      if (showAssetOverlay.current) {
+      // The asset details overlay the dialog was opened from may have been closed in the meantime
+      if (!openedFromOverlay || showAssetOverlay.current) {
         open = true;
 
         return;
@@ -103,7 +107,7 @@
   });
 
   $effect(() => {
-    if (!showAssetOverlay.current) {
+    if (!showAssetOverlay.current && openedFromOverlay) {
       open = false;
     }
   });
@@ -127,16 +131,12 @@
   }}
 >
   <div role="none" class="wrapper" class:wrap>
-    <TextArea dir="auto" bind:value={currentValue} flex />
+    <TextArea dir="auto" bind:value={currentValue} flex aria-label={title} />
   </div>
   {#snippet footerExtra()}
     <Switch label={_('wrap_long_lines')} bind:checked={wrap} />
   {/snippet}
 </Dialog>
-
-<Toast bind:show={savingFailed}>
-  <Alert status="error">{_('saving_asset_failed')}</Alert>
-</Toast>
 
 <style>
   .wrapper {

@@ -153,6 +153,39 @@ describe('GroupMenu', () => {
     await expect.poll(() => currentView.current.collapsedGroups).toEqual({ '["year"]': ['2010'] });
   });
 
+  test('expands and collapses all the groups that start collapsed', async () => {
+    const currentView = createRawState(/** @type {any} */ ({ group: { field: 'category' } }));
+
+    await render(GroupMenu, {
+      currentView,
+      'aria-controls': 'entry-list',
+      groups: [{ label: 'Category', field: 'category', collapsed: true }],
+      groupNames: ['blog', 'news'],
+    });
+
+    const button = page.getByRole('button', { name: 'Group' });
+    const expandAll = page.getByRole('menuitem', { name: 'Expand All' });
+    const collapseAll = page.getByRole('menuitem', { name: 'Collapse All' });
+
+    await button.click();
+    // Every listed group is collapsed already
+    await expect.element(expandAll).toHaveAttribute('aria-disabled', 'false');
+    await expect.element(collapseAll).toHaveAttribute('aria-disabled', 'true');
+
+    await expandAll.click();
+    await expect
+      .poll(() => currentView.current.expandedGroups)
+      .toEqual({ '["category"]': ['blog', 'news'] });
+    expect(currentView.current.collapsedGroups).toBeUndefined();
+    await waitForMenuToClose();
+
+    await button.click();
+    await expect.element(expandAll).toHaveAttribute('aria-disabled', 'true');
+    await expect.element(collapseAll).toHaveAttribute('aria-disabled', 'false');
+    await collapseAll.click();
+    await expect.poll(() => currentView.current.expandedGroups).toBeUndefined();
+  });
+
   test('disables the expand and collapse actions without any captioned group', async () => {
     const currentView = createRawState(/** @type {any} */ ({}));
 

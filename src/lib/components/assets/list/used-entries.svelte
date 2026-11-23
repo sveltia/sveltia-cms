@@ -14,8 +14,8 @@
     getCollectionFileLabel,
     getCollectionFilesByEntry,
   } from '$lib/services/contents/collection/files';
+  import { getEntryEditorPath } from '$lib/services/contents/editor/route';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
-  import { encodePathSegments } from '$lib/services/utils/url';
 
   /**
    * @import { Entry } from '$lib/types/private';
@@ -28,11 +28,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    entries,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { entries } = $props();
 
   /**
    * Entries using the asset, each with the collections it’s listed in. A collection that filters
@@ -67,13 +63,13 @@
           {@const collectionLabel = getCollectionLabel(collection)}
           {#each getCollectionFilesByEntry(collection, entry) as file (file.name)}
             {@render usedEntryLink({
-              link: encodePathSegments(`/collections/${collection.name}/entries/${file.name}`),
+              link: getEntryEditorPath(collection.name, file.name),
               collectionLabel,
               entryLabel: getCollectionFileLabel(file),
             })}
           {:else}
             {@render usedEntryLink({
-              link: encodePathSegments(`/collections/${collection.name}/entries/${entry.subPath}`),
+              link: getEntryEditorPath(collection.name, entry.subPath),
               collectionLabel,
               entryLabel: getEntrySummary(collection, entry, { useTemplate: true }),
             })}

@@ -124,4 +124,19 @@ describe('ObjectPreview', () => {
     expect((await renderPreview(authorField, {})).children).toHaveLength(0);
     expect((await renderPreview(authorField, { 'author.name': '' })).children).toHaveLength(0);
   });
+
+  test('shows a number, even zero, but not an unchecked Boolean', async () => {
+    /** @type {ObjectField} */
+    const statsField = {
+      name: 'stats',
+      widget: 'object',
+      fields: [
+        { name: 'count', widget: 'number', value_type: 'int' },
+        { name: 'featured', widget: 'boolean' },
+      ],
+    };
+
+    expect((await renderPreview(statsField, { 'stats.count': 0 })).children).not.toHaveLength(0);
+    expect((await renderPreview(statsField, { 'stats.featured': false })).children).toHaveLength(0);
+  });
 });

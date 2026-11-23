@@ -3,7 +3,7 @@ import { createBaseCommitMessage } from '$lib/services/backends/git/shared/commi
 import { toRepoChanges } from '$lib/services/backends/root-dir';
 import { cmsConfig } from '$lib/services/config';
 import { prefs } from '$lib/services/user/prefs.svelte';
-import { createRawState } from '$lib/services/utils/state.svelte';
+import { createRawState, requestAnswer } from '$lib/services/utils/state.svelte';
 
 /**
  * @import {
@@ -93,35 +93,14 @@ export const getCommitMessagePromptMode = () => {
  * @param {string} args.defaultMessage Message made from the template.
  * @returns {Promise<string | null>} Text entered, or `null` if the user has cancelled.
  */
-const requestCommitMessage = async ({ mode, defaultMessage }) => {
-  // Saves are made one at a time, so a second request can’t normally be outstanding, but be
-  // defensive: leaving an earlier request unresolved would hang that save forever
-  commitMessageRequest.current?.respond(null);
-
-  return new Promise((resolve) => {
-    /** @type {CommitMessageRequest} */
-    const request = {
-      mode,
-      defaultMessage,
-      initialValue: mode === true ? defaultMessage : lastAddition,
-      /**
-       * Answer the request.
-       * @param {string | null} message Text entered, or `null` if the user has cancelled.
-       */
-      respond: (message) => {
-        // Only take down the dialog that belongs to this request, so answering a stale one can’t
-        // dismiss a newer one. Resolving an already settled promise does nothing
-        if (commitMessageRequest.current === request) {
-          commitMessageRequest.current = undefined;
-        }
-
-        resolve(message);
-      },
-    };
-
-    commitMessageRequest.current = request;
-  });
-};
+const requestCommitMessage = async ({ mode, defaultMessage }) =>
+  // Saves are made one at a time, so a second request can’t normally be outstanding, but an earlier
+  // one is answered just in case
+  requestAnswer(
+    commitMessageRequest,
+    { mode, defaultMessage, initialValue: mode === true ? defaultMessage : lastAddition },
+    null,
+  );
 
 /**
  * Ask the user for a commit message if the `prompt_commit_messages` backend option is set, and add

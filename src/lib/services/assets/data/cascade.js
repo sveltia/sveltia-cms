@@ -3,6 +3,7 @@ import {
   createMediaSourceResolver,
   getAssetReferences,
   getComparableAssetURL,
+  matchAssetURL,
 } from '$lib/services/assets/references';
 import { allAssets } from '$lib/services/assets/state';
 import { cmsConfig } from '$lib/services/config';
@@ -18,8 +19,10 @@ import { isFieldMultiple } from '$lib/services/contents/entry/fields';
 import { ITEM_INDEX_SUFFIX_REGEX } from '$lib/services/contents/entry/key-paths';
 import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getValueFormat } from '$lib/services/contents/fields/rich-text';
+import { LINKED_IMAGE_REGEX } from '$lib/services/contents/fields/rich-text/constants';
 import {
   MARKDOWN_MEDIA_REGEX,
+  parseMediaSource,
   rewriteMediaStartTag,
   updateMediaElementURLs,
 } from '$lib/services/contents/fields/rich-text/previews/media-sources';
@@ -45,6 +48,7 @@ import { parseHTMLFragment, serializeStartTag } from '$lib/services/utils/html';
  * RichTextValueFormat,
  * } from '$lib/types/public';
  * @import { AssetReferenceTarget } from '$lib/services/assets/references';
+ * @import { MediaSource } from '$lib/services/contents/fields/rich-text/previews/media-sources';
  */
 
 /**
@@ -175,8 +179,8 @@ const removeMediaElement = (element) => {
  * asset is removed from its element, e.g. a `srcset` candidate or a video `poster`, and an element
  * left with nothing to display goes, along with any wrapper left empty.
  * @param {string} value HTML.
- * @param {(src: string) => boolean} isStale Function checking whether a URL points at a deleted
- * asset.
+ * @param {(source: MediaSource) => boolean} isStale Function checking whether a URL, as parsed by
+ * `parseMediaSource()`, points at a deleted asset.
  * @returns {string} HTML without the media, or the original one if nothing is removed.
  */
 const removeHTMLMedia = (value, isStale) => {
@@ -185,7 +189,7 @@ const removeHTMLMedia = (value, isStale) => {
 
   const affected = new Set(
     elements.filter((element) =>
-      updateMediaElementURLs(element, (src) => (isStale(src) ? null : undefined)),
+      updateMediaElementURLs(element, (_src, source) => (isStale(source) ? null : undefined)),
     ),
   );
 
@@ -214,13 +218,40 @@ const removeHTMLMedia = (value, isStale) => {
 };
 
 /**
+ * Sticky version of `LINKED_IMAGE_REGEX`, to tell whether a Markdown image is the content of a
+ * link.
+ */
+const STICKY_LINKED_IMAGE_REGEX = new RegExp(LINKED_IMAGE_REGEX.source, 'y');
+
+/**
+ * Get the length of the linked image starting right before the given Markdown image, e.g.
+ * `[![a](a.png)](a.png)`, if the image is the content of a link.
+ * @param {string} value Markdown.
+ * @param {number} index Position of the image.
+ * @param {string} markup Image.
+ * @returns {number | undefined} Length of the linked image, if any.
+ */
+const getLinkedImageLength = (value, index, markup) => {
+  if (value[index - 1] !== '[') {
+    return undefined;
+  }
+
+  STICKY_LINKED_IMAGE_REGEX.lastIndex = index - 1;
+
+  const [linkedImage] = STICKY_LINKED_IMAGE_REGEX.exec(value) ?? [];
+
+  return linkedImage?.startsWith(`[${markup}](`) ? linkedImage.length : undefined;
+};
+
+/**
  * Remove the media pointing at the deleted assets from a Markdown string: a Markdown image is cut
- * out, and so is an image or a `<source>` written as raw HTML once it has nothing left to display.
+ * out, along with the link it’s the content of, if any, as the link has nothing left to display,
+ * and so is an image or a `<source>` written as raw HTML once it has nothing left to display.
  * The start tag of a video or audio written as raw HTML only loses its URLs pointing at the deleted
  * assets, as its content and end tag aren’t matched along with it.
  * @param {string} value Markdown.
- * @param {(src: string) => boolean} isStale Function checking whether a URL points at a deleted
- * asset.
+ * @param {(source: MediaSource) => boolean} isStale Function checking whether a URL, as parsed by
+ * `parseMediaSource()`, points at a deleted asset.
  * @returns {string} Markdown without the media.
  */
 const removeMarkdownMedia = (value, isStale) =>
@@ -229,7 +260,15 @@ const removeMarkdownMedia = (value, isStale) =>
     const { index, 0: markup, groups: { src = '', tag = undefined } = {} } = match;
 
     if (tag === undefined) {
-      return isStale(src) ? cutMarkup(text, index, markup.length) : text;
+      if (!isStale(parseMediaSource(src, 'markdown'))) {
+        return text;
+      }
+
+      const linkedImageLength = getLinkedImageLength(value, index, markup);
+
+      return linkedImageLength === undefined
+        ? cutMarkup(text, index, markup.length)
+        : cutMarkup(text, index - 1, linkedImageLength);
     }
 
     const element = rewriteMediaStartTag({
@@ -238,10 +277,11 @@ const removeMarkdownMedia = (value, isStale) =>
       index,
       /**
        * Remove a URL pointing at a deleted asset.
-       * @param {string} url URL.
+       * @param {string} _url URL.
+       * @param {MediaSource} source URL, as parsed by `parseMediaSource()`.
        * @returns {null | undefined} `null` to remove the URL, or `undefined` to leave it as is.
        */
-      callback: (url) => (isStale(url) ? null : undefined),
+      callback: (_url, source) => (isStale(source) ? null : undefined),
     });
 
     if (!element) {
@@ -302,11 +342,13 @@ export const removeEmbeddedMedia = ({
 
   /**
    * Check whether a media URL points at a deleted asset.
-   * @param {string} src URL.
+   * @param {MediaSource} source URL, as parsed by `parseMediaSource()`.
    * @returns {boolean} Result.
    */
-  const isStale = (src) => {
-    if (urls.has(src)) {
+  const isStale = (source) => {
+    // Matched the same way as the references are found, see `getAssetReferences()`, e.g. with a
+    // space encoded as `%20`, as the CMS writes it in a body, or with a fragment
+    if (matchAssetURL(source, (url) => urls.has(url))) {
       return true;
     }
 
@@ -315,7 +357,7 @@ export const removeEmbeddedMedia = ({
     }
 
     // Resolve the path the way the editor does to display it, without loading the asset
-    const path = resolve(src)?.asset?.path;
+    const path = resolve(source.url)?.asset?.path;
 
     return path !== undefined && paths.has(path);
   };

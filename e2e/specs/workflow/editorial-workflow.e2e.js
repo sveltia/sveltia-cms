@@ -1,7 +1,7 @@
 import { openEntryPullRequest, post, WORKFLOW_CONFIG } from '../../fixtures/configs/workflow.js';
 import { createPNG } from '../../fixtures/files.js';
 import { expect, test } from '../../fixtures/test.js';
-import { getEditor, getEntryRows, openEntry } from '../../fixtures/ui.js';
+import { getCard, getEditor, getEntryRows, openBoard, openEntry } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -528,22 +528,11 @@ test.describe('on the Editorial Workflow page', () => {
     });
   });
 
-  /**
-   * Get the card of an entry on the board.
-   * @param {Page} page Page.
-   * @param {string} title Entry title.
-   * @returns {Locator} Card.
-   */
-  const getCard = (page, title) =>
-    page
-      .getByRole('group', { name: 'Editorial Workflow' })
-      .getByRole('listitem')
-      .filter({ has: page.getByRole('button', { name: title }) });
-
   test('carries out a pending deletion', async ({ cms, github, page }) => {
     await cms.open();
-    await page.getByRole('radio', { name: 'Editorial Workflow' }).click();
-    await getCard(page, 'First Post').getByRole('button', { name: 'Delete Entry' }).click();
+    await getCard(await openBoard(page), 'First Post')
+      .getByRole('button', { name: 'Delete Entry' })
+      .click();
     await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
 
     await expect.poll(() => github.pullRequests[0].state).toBe('merged');
@@ -554,8 +543,9 @@ test.describe('on the Editorial Workflow page', () => {
 
   test('cancels a pending deletion', async ({ cms, github, page }) => {
     await cms.open();
-    await page.getByRole('radio', { name: 'Editorial Workflow' }).click();
-    await getCard(page, 'First Post').getByRole('button', { name: 'Cancel Deletion' }).click();
+    await getCard(await openBoard(page), 'First Post')
+      .getByRole('button', { name: 'Cancel Deletion' })
+      .click();
     await page
       .getByRole('alertdialog', { name: 'Cancel Deletion' })
       .getByRole('button', { name: 'Cancel Deletion' })
@@ -895,6 +885,84 @@ test.describe('with an image field', () => {
     await expect(
       page.getByRole('grid', { name: 'Assets' }).getByRole('row', { name: 'sunrise.png' }),
     ).toBeVisible();
+  });
+
+  test('takes a replaced image off the branch, so the entry can be published', async ({
+    cms,
+    github,
+    page,
+  }) => {
+    const firstImage = createPNG({ color: [255, 128, 0] });
+    const secondImage = createPNG({ color: [0, 128, 255] });
+    const editor = getEditor(page);
+
+    const coverInput = editor
+      .getByRole('group', { name: '“\u2068Cover\u2069” Field' })
+      .locator('input[type="file"]')
+      .first();
+
+    await cms.open();
+    await page.getByRole('button', { name: 'Create New Entry' }).first().click();
+    await editor.getByRole('textbox', { name: 'Title' }).fill('Second Post');
+    await editor.getByRole('textbox', { name: 'Body' }).fill('Coming soon.');
+    await coverInput.setInputFiles({
+      name: 'sunrise.png',
+      mimeType: 'image/png',
+      buffer: firstImage,
+    });
+    await expect(editor.getByRole('button', { name: 'Remove Image' })).toBeVisible();
+    await editor.getByRole('button', { name: 'Save' }).click();
+    await page
+      .getByRole('alertdialog', { name: 'Send for Review' })
+      .getByRole('button', { name: 'Later' })
+      .click();
+
+    await expect
+      .poll(() => github.readFile('content/posts/second-post.md', 'cms/posts/second-post'))
+      .toMatch(/cover: \/images\/sunrise\.png/);
+
+    // Replace the image in the same draft
+    await openEntry(page, 'Second Post');
+    await editor.getByRole('button', { name: 'Remove Image' }).click();
+    await coverInput.setInputFiles({
+      name: 'sunset.png',
+      mimeType: 'image/png',
+      buffer: secondImage,
+    });
+    await expect(editor.getByRole('button', { name: 'Remove Image' })).toBeVisible();
+    await editor.getByRole('button', { name: 'Save' }).click();
+    await page
+      .getByRole('alertdialog', { name: 'Send for Review' })
+      .getByRole('button', { name: 'Later' })
+      .click();
+
+    await expect
+      .poll(() => github.readFile('content/posts/second-post.md', 'cms/posts/second-post'))
+      .toMatch(/cover: \/images\/sunset\.png/);
+
+    const branchTree = github.getHead('cms/posts/second-post').tree;
+
+    expect(github.blobs.get(branchTree.get('static/images/sunset.png') ?? '')).toEqual(secondImage);
+    // The first upload, which nothing uses anymore, is gone from the branch
+    expect(branchTree.has('static/images/sunrise.png')).toBe(false);
+
+    const [pullRequest] = github.pullRequests;
+
+    await openEntry(page, 'Second Post');
+    await cms.chooseMenuItem(
+      page.getByRole('button', { name: /Status: .*Draft/ }),
+      page.getByRole('menuitemradio', { name: 'Ready' }),
+    );
+    await expect.poll(() => pullRequest.labels).toEqual(['sveltia-cms/pending_publish']);
+    await editor.getByRole('button', { name: 'Publish Entry' }).click();
+    await page
+      .getByRole('alertdialog', { name: 'Publish Entry' })
+      .getByRole('button', { name: 'Publish' })
+      .click();
+
+    await expect.poll(() => pullRequest.state).toBe('merged');
+    expect(github.head.tree.has('static/images/sunset.png')).toBe(true);
+    expect(github.head.tree.has('static/images/sunrise.png')).toBe(false);
   });
 });
 

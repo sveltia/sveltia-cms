@@ -4,7 +4,7 @@ import { getPathInfo } from '@sveltia/utils/file';
 
 import { fetchLastCommit } from '$lib/services/backends/git/gitlab/commits';
 import {
-  getWorkflowRepository,
+  getBranchRepository,
   initOpenAuthoring,
   isOpenAuthoringConfigured,
 } from '$lib/services/backends/git/gitlab/fork';
@@ -17,12 +17,15 @@ import {
 } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { mapConcurrently } from '$lib/services/backends/git/shared/concurrency';
+import { createCachedDirSHALookup } from '$lib/services/backends/git/shared/dir-sha';
 import { fetchRepositoryFiles } from '$lib/services/backends/git/shared/files';
 import { getManagedPaths } from '$lib/services/backends/git/shared/managed-paths';
 import { startSimulatedProgress } from '$lib/services/backends/git/shared/progress';
 import { toFileListItems } from '$lib/services/backends/git/shared/tree';
+import { listTrees } from '$lib/services/backends/git/shared/tree-cache';
 import { getRootDir, toRepoPath } from '$lib/services/backends/root-dir';
 import { splitIntoChunks } from '$lib/services/utils/array';
+import { assertResponseOK } from '$lib/services/utils/networking';
 
 /**
  * @import {
@@ -31,23 +34,7 @@ import { splitIntoChunks } from '$lib/services/utils/array';
  * BaseFileListItemProps,
  * RepositoryContentsMap,
  * } from '$lib/types/private';
- */
-
-/**
- * @typedef {object} FileListTree
- * @property {object} blobs Blobs information.
- * @property {{ type: string, path: string, sha: string }[]} blobs.nodes List of file blobs.
- * @property {object} blobs.pageInfo Pagination information.
- * @property {string} blobs.pageInfo.endCursor Cursor for the next page.
- * @property {boolean} blobs.pageInfo.hasNextPage Whether there are more pages to fetch.
- */
-
-/**
- * @typedef {object} FetchFileListResponse
- * @property {object} project Project information.
- * @property {object} project.repository Repository information.
- * @property {FileListTree | null} project.repository.tree Tree information, or `null` if there is
- * none.
+ * @import { TreeListing, TreeRoot } from '$lib/services/backends/git/shared/tree-cache';
  */
 
 /**
@@ -69,35 +56,6 @@ import { splitIntoChunks } from '$lib/services/utils/array';
  * text contents.
  */
 
-/**
- * Get the query to fetch a page of the file list.
- * @param {object} args Arguments.
- * @param {boolean} args.scoped Whether to list the files in a directory, given as the `$path`
- * variable, rather than the whole repository.
- * @returns {string} Query.
- */
-const getFetchFileListQuery = ({ scoped }) => `
-  query($fullPath: ID!, $branch: String!, $cursor: String!${scoped ? ', $path: String!' : ''}) {
-    project(fullPath: $fullPath) {
-      repository {
-        tree(ref: $branch, ${scoped ? 'path: $path, ' : ''}recursive: true) {
-          blobs(after: $cursor) {
-            nodes {
-              type
-              path
-              sha
-            }
-            pageInfo {
-              endCursor
-              hasNextPage
-            }
-          }
-        }
-      }
-    }
-  }
-`;
-
 const FETCH_SUBTREES_QUERY = `
   query($fullPath: ID!, $ref: String!, $path: String!, $cursor: String!) {
     project(fullPath: $fullPath) {
@@ -118,37 +76,6 @@ const FETCH_SUBTREES_QUERY = `
     }
   }
 `;
-
-/**
- * Find the tree SHA of a directory at the given commit, by listing the subdirectories of the
- * directory that holds it, a page at a time.
- * @param {string} ref Commit SHA or branch name.
- * @param {string} dirPath Directory path relative to the repository root.
- * @returns {Promise<string | undefined>} Tree SHA, or `undefined` if the directory doesn’t exist.
- * @see https://docs.gitlab.com/api/graphql/reference/#tree
- */
-export const fetchDirSHA = async (ref, dirPath) => {
-  const { dirname = '', basename } = getPathInfo(dirPath);
-  let cursor = '';
-
-  for (;;) {
-    const result = /** @type {any} */ (
-      await fetchGraphQL(FETCH_SUBTREES_QUERY, { ref, path: dirname, cursor })
-    );
-
-    const { nodes = [], pageInfo } = result.project?.repository?.tree?.trees ?? {};
-
-    const sha = /** @type {{ name: string, sha: string }[]} */ (nodes).find(
-      ({ name }) => name === basename,
-    )?.sha;
-
-    if (sha || !pageInfo?.hasNextPage) {
-      return sha;
-    }
-
-    cursor = pageInfo.endCursor;
-  }
-};
 
 /**
  * Number of blob batches requested at the same time on GitLab.com. Each batch is a heavy query, so
@@ -272,49 +199,179 @@ export const fetchBlobNodes = async (paths, query, variables = {}) => {
 };
 
 /**
- * Fetch the files in a directory and its subdirectories, a page at a time.
- * @param {object} args Arguments.
- * @param {string} [args.ref] Commit SHA or branch name. Default: the branch.
- * @param {string} [args.path] Directory path relative to the repository root. Default: the root.
- * @returns {Promise<{ type: string, path: string, sha: string }[]>} Blobs, with paths relative to
- * the repository root.
+ * Number of directories listed at the same time on GitLab.com.
  */
-const fetchTreeBlobs = async ({ ref, path }) => {
-  const query = getFetchFileListQuery({ scoped: !!path });
-  /** @type {{ type: string, path: string, sha: string }[]} */
-  const blobs = [];
-  let cursor = '';
+export const TREE_CONCURRENCY = 8;
 
-  // Since GitLab has a limit of 100 records per query, use pagination to fetch all the files
+/**
+ * Number of directories listed at the same time on a self-hosted instance, which typically runs on
+ * less powerful hardware.
+ */
+export const SELF_HOSTED_TREE_CONCURRENCY = 4;
+
+/**
+ * Get the parameters of the next page from the `Link` header of a paginated response: the token
+ * with keyset pagination, or the page number with offset pagination, which an instance that doesn’t
+ * support keyset pagination for the endpoint falls back to. Only these are taken rather than the
+ * whole URL, so the request goes to the API it’s meant for.
+ * @param {string | null} linkHeader `Link` header value.
+ * @returns {Record<string, string> | undefined} Parameters, or `undefined` if there is no next
+ * page.
+ * @see https://docs.gitlab.com/api/rest/#pagination
+ */
+export const getNextPageParams = (linkHeader) => {
+  const url = linkHeader
+    ?.split(',')
+    .find((link) => /;\s*rel="next"/.test(link))
+    ?.match(/<([^>]+)>/)?.[1];
+
+  const searchParams = url ? URL.parse(url)?.searchParams : undefined;
+  const pageToken = searchParams?.get('page_token');
+  const page = searchParams?.get('page');
+
+  if (pageToken) {
+    return { page_token: pageToken };
+  }
+
+  return page ? { page } : undefined;
+};
+
+/**
+ * List the direct children of a directory with the REST API, a page at a time. It’s much quicker
+ * than the recursive listing of the GraphQL API, and several directories can be listed at once.
+ * @param {string} path Directory path relative to the repository root, or an empty string for the
+ * root.
+ * @param {string} ref Commit SHA or branch name.
+ * @returns {Promise<TreeListing>} Subtrees and files. Both are empty if the directory doesn’t
+ * exist. A submodule is left out.
+ * @throws {Error} When a request fails.
+ * @see https://docs.gitlab.com/api/repositories/#list-repository-tree
+ */
+export const fetchTreeListing = async (path, ref) => {
+  /** @type {TreeListing} */
+  const listing = { trees: [], blobs: [] };
+  /** @type {Record<string, string> | undefined} */
+  let nextPage;
+
   for (;;) {
-    const result = /** @type {FetchFileListResponse} */ (
-      await fetchGraphQL(query, {
-        cursor,
-        // The `$branch` variable takes a commit SHA as well as a branch name
-        ...(ref && { branch: ref }),
-        ...(path && { path }),
+    const params = new URLSearchParams({
+      ...(path && { path }),
+      ref,
+      per_page: '100',
+      pagination: 'keyset',
+      ...nextPage,
+    });
+
+    const response = /** @type {Response} */ (
+      await fetchAPI(`/projects/${getProjectId()}/repository/tree?${params}`, {
+        responseType: 'raw',
       })
     );
 
-    // A directory that doesn’t exist comes back without blobs, while a missing tree is guarded
-    // against as well; either leaves the list empty, which the caller reports
-    const {
-      nodes,
-      pageInfo: { endCursor, hasNextPage },
-    } = result.project.repository.tree?.blobs ?? {
-      nodes: [],
-      pageInfo: { endCursor: '', hasNextPage: false },
-    };
+    // A directory that doesn’t exist, or the root of an empty repository, has no tree. A later page
+    // going missing is an error, as returning what was listed would cut the directory short
+    if (response.status === 404 && !nextPage) {
+      return listing;
+    }
 
-    blobs.push(...nodes);
-    cursor = endCursor;
+    await assertResponseOK(response, 'Failed to list the files');
 
-    if (!hasNextPage) {
-      break;
+    const entries = /** @type {{ type: string, name: string, id: string }[]} */ (
+      await response.json()
+    );
+
+    entries.forEach(({ type, name, id }) => {
+      if (type === 'tree') {
+        listing.trees.push([name, id]);
+      } else if (type === 'blob') {
+        listing.blobs.push([name, id]);
+      }
+    });
+
+    nextPage = getNextPageParams(response.headers.get('Link'));
+
+    if (!nextPage) {
+      return listing;
     }
   }
+};
 
-  return blobs;
+/**
+ * Look the tree SHA of a directory up, by listing the subdirectories of the directory that holds
+ * it, a page at a time. Only the subdirectories are listed, unlike the REST API, which lists the
+ * files as well, and the listing stops once the directory has been found.
+ * @param {string} ref Commit SHA or branch name.
+ * @param {string} dirPath Directory path relative to the repository root.
+ * @returns {Promise<string | undefined>} Tree SHA, or `undefined` if the directory doesn’t exist.
+ * @see https://docs.gitlab.com/api/graphql/reference/#tree
+ */
+const lookUpDirSHA = async (ref, dirPath) => {
+  const { dirname = '', basename } = getPathInfo(dirPath);
+  let cursor = '';
+
+  for (;;) {
+    const result = /** @type {any} */ (
+      await fetchGraphQL(FETCH_SUBTREES_QUERY, { ref, path: dirname, cursor })
+    );
+
+    const { nodes = [], pageInfo } = result.project?.repository?.tree?.trees ?? {};
+
+    const sha = /** @type {{ name: string, sha: string }[]} */ (nodes).find(
+      ({ name }) => name === basename,
+    )?.sha;
+
+    if (sha || !pageInfo?.hasNextPage) {
+      return sha;
+    }
+
+    cursor = pageInfo.endCursor;
+  }
+};
+
+// The check for remote changes and the file list look the root directory up at the same commit,
+// so the lookup is made once; `_resetDirLookup` forgets the lookups in tests
+export const { fetchDirSHA, resetDirLookups: _resetDirLookup } = createCachedDirSHALookup(
+  repository,
+  lookUpDirSHA,
+);
+
+/**
+ * List the files in the given directories and their subdirectories.
+ * @param {string[]} dirs Directory paths relative to the repository root. An empty string stands
+ * for the root.
+ * @param {string} [lastHash] Commit to list the files at. Default: the branch.
+ * @returns {Promise<{ type: string, path: string, sha: string }[]>} Blobs, with paths relative to
+ * the repository root.
+ */
+const fetchTreeBlobs = async (dirs, lastHash) => {
+  const ref = lastHash ?? /** @type {string} */ (repository.branch);
+
+  // The tree ID of a directory is found by listing the one holding it, while the repository root,
+  // which has none to look up, is always listed. A directory that doesn’t exist is left out
+  const roots = (
+    await mapConcurrently(
+      dirs,
+      /**
+       * Look the tree ID of a directory up.
+       * @param {string} path Directory path.
+       * @returns {Promise<TreeRoot>} Directory with its tree ID, if it exists.
+       */
+      async (path) => (path ? { path, sha: await fetchDirSHA(ref, path) } : { path }),
+    )
+  ).filter(({ path, sha }) => !path || sha);
+
+  return listTrees({
+    repository,
+    roots,
+    /**
+     * List a directory at the same commit as the rest.
+     * @param {string} path Directory path.
+     * @returns {Promise<TreeListing>} Listing.
+     */
+    fetchTreeListing: (path) => fetchTreeListing(path, ref),
+    cacheable: !!lastHash,
+    concurrency: repository.isSelfHosted ? SELF_HOSTED_TREE_CONCURRENCY : TREE_CONCURRENCY,
+  });
 };
 
 /**
@@ -337,16 +394,16 @@ export const FETCH_BLOB_IDS_QUERY = `
 
 /**
  * Fetch the repository’s file list, and return it in the canonical format. Only the folders and
- * files the CMS manages are listed, rather than the whole repository: GitLab lists a tree 100 files
- * at a time, one page after another, so listing a big repository takes hundreds of requests in a
- * row, while the folders can be listed at the same time. With the `root_dir` backend option, only
- * the files in that directory are listed; the paths are still relative to the repository root.
+ * files the CMS manages are listed, rather than the whole repository. GitLab lists a tree 100 files
+ * at a time, so the folders are walked a level at a time with {@link listTrees}, which lists the
+ * subfolders of a level at the same time and takes the ones that haven’t changed since the last
+ * load from the cache. With the `root_dir` backend option, only the files in that directory are
+ * listed; the paths are still relative to the repository root.
  * @param {string} [lastHash] The last commit’s SHA-1 hash. The tree is listed at that commit
  * rather than at the tip of the branch, which may have moved on since, so the file list matches the
  * commit the file cache is keyed on. Default: the branch.
  * @returns {Promise<BaseFileListItemProps[]>} File list.
- * @see https://docs.gitlab.com/api/graphql/reference/index.html#repositorytree
- * @see https://stackoverflow.com/questions/18952935/how-to-get-subfolders-and-files-using-gitlab-api
+ * @see https://github.com/sveltia/sveltia-cms/issues/1142
  */
 export const fetchFileList = async (lastHash) => {
   const rootDir = getRootDir();
@@ -356,7 +413,10 @@ export const fetchFileList = async (lastHash) => {
     const { dirs, files } = managedPaths;
 
     const [dirBlobs, fileBlobs] = await Promise.all([
-      mapConcurrently(dirs, (dir) => fetchTreeBlobs({ ref: lastHash, path: toRepoPath(dir) })),
+      fetchTreeBlobs(
+        dirs.map((dir) => toRepoPath(dir)),
+        lastHash,
+      ),
       // A file collection’s file is looked up by its path, which is quicker than listing its
       // folder; one that doesn’t exist is left out
       fetchBlobNodes(
@@ -367,7 +427,7 @@ export const fetchFileList = async (lastHash) => {
     ]);
 
     const blobs = [
-      ...dirBlobs.flat(),
+      ...dirBlobs,
       ...fileBlobs.map(({ path, oid }) => ({
         type: 'blob',
         path: /** @type {string} */ (path),
@@ -383,7 +443,7 @@ export const fetchFileList = async (lastHash) => {
   }
 
   // The `size` is not available from the GitLab API in bulk, so it’s left as `0`
-  return toFileListItems(await fetchTreeBlobs({ ref: lastHash, path: rootDir }));
+  return toFileListItems(await fetchTreeBlobs([rootDir], lastHash));
 };
 
 /**
@@ -446,11 +506,14 @@ const getRawFilePath = ({ projectId, path, ref, lfs = false }) =>
  * Read the full text of the blobs that GitLab has cut short. The GraphQL API caps the data of each
  * blob, so a text shorter in bytes than the blob is requested again with the raw file endpoint.
  * @param {Record<string, BlobItem>} blobs Blobs mapped by file path. Updated in place.
- * @param {string} ref Branch name or commit SHA the blobs were read at.
+ * @param {object} args Arguments.
+ * @param {string} args.ref Branch name or commit SHA the blobs were read at.
+ * @param {string} [args.projectId] ID of the project the blobs were read from, which is the
+ * contributor’s fork for a workflow branch with Open Authoring. Default: the configured project.
  * @see https://docs.gitlab.com/api/graphql/reference/#repositoryblob
  * @see https://docs.gitlab.com/api/repository_files/#get-raw-file-from-repository
  */
-const fetchTruncatedBlobs = async (blobs, ref) => {
+export const fetchTruncatedBlobs = async (blobs, { ref, projectId = getProjectId() }) => {
   const encoder = new TextEncoder();
 
   const truncated = Object.entries(blobs).filter(
@@ -464,7 +527,7 @@ const fetchTruncatedBlobs = async (blobs, ref) => {
 
   await mapConcurrently(truncated, async ([path, blob]) => {
     blob.rawTextBlob = /** @type {string} */ (
-      await fetchAPI(getRawFilePath({ projectId: getProjectId(), path, ref }), {
+      await fetchAPI(getRawFilePath({ projectId, path, ref }), {
         responseType: 'text',
       })
     );
@@ -491,7 +554,9 @@ export const fetchFileContents = async (fetchingFiles, lastHash) => {
   try {
     // The `$branch` variable takes a commit SHA as well as a branch name
     blobs = await fetchBlobs(textPaths, FETCH_BLOBS_QUERY, lastHash ? { branch: lastHash } : {});
-    await fetchTruncatedBlobs(blobs, lastHash ?? /** @type {string} */ (repository.branch));
+    await fetchTruncatedBlobs(blobs, {
+      ref: lastHash ?? /** @type {string} */ (repository.branch),
+    });
   } finally {
     // Also on failure, so the interval doesn’t keep running behind the error message
     stopProgress();
@@ -534,9 +599,11 @@ export const fetchBlob = async (asset) => {
   const { path, workflow } = asset;
   // An asset attached to an unpublished entry is committed to a workflow branch only, so it has to
   // be read from there; on the configured branch the path is missing or holds the published
-  // version. That branch lives in the contributor’s fork with Open Authoring, so it’s read there
-  const ref = workflow?.branch ?? branch;
-  const projectId = getProjectId(workflow ? getWorkflowRepository() : undefined);
+  // version. That branch lives in the contributor’s fork with Open Authoring, or when a maintainer
+  // reviews a contributor’s merge request, so it’s read there
+  const target = workflow ? getBranchRepository(workflow.branch) : undefined;
+  const ref = target?.branch ?? branch;
+  const projectId = getProjectId(target);
 
   return /** @type {Promise<Blob>} */ (
     fetchAPI(getRawFilePath({ projectId, path, ref, lfs: true }), { responseType: 'blob' })

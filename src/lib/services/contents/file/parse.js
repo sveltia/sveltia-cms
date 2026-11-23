@@ -13,12 +13,13 @@ import {
   FRONTMATTER_FORMATS,
   getFormatSyntax,
 } from '$lib/services/contents/file/constants';
-import { detectedFrontMatterFormats } from '$lib/services/contents/file/detected-formats';
 import {
   mayHaveUnsafeInteger,
   replaceBigInts,
   reviveUnsafeInteger,
 } from '$lib/services/contents/file/integers';
+import { rememberLeadingComment } from '$lib/services/contents/file/leading-comments';
+import { fileStates, updateFileState } from '$lib/services/contents/file/state';
 import { rememberTomlValueSources } from '$lib/services/contents/file/toml-sources';
 import {
   collectJSONFloatSources,
@@ -26,7 +27,6 @@ import {
   mayHaveWholeNumberFloat,
   rememberValueSources,
   reviveWholeNumberFloat,
-  valueSources,
 } from '$lib/services/contents/file/value-sources';
 import { getOrCreate } from '$lib/services/utils/cache';
 
@@ -184,18 +184,28 @@ const parseJSONFrontMatterHead = (head, path) => {
 };
 
 /**
+ * Wrap the given parser so it also remembers the comments at the top of a document read from a
+ * file.
+ * @param {(str: string, path?: string) => any} parser YAML or TOML parser.
+ * @returns {(str: string, path?: string) => any} Parser.
+ */
+const withLeadingComment = (parser) => (str, path) => {
+  const parsed = parser(str, path);
+
+  if (path !== undefined) {
+    rememberLeadingComment(path, str);
+  }
+
+  return parsed;
+};
+
+/**
  * Parser for each syntax, taking a document and the path of the file it’s read from.
  * @type {Record<FormatSyntax, (str: string, path?: string) => any>}
  */
 const PARSERS = {
-  /**
-   * Parse the given YAML document.
-   * @param {string} str Document.
-   * @param {string} [path] Path of the file the document is read from.
-   * @returns {any} Parsed object.
-   */
-  yaml: (str, path) => parseYAML(str, undefined, path),
-  toml: parseTOML,
+  yaml: withLeadingComment((str, path) => parseYAML(str, undefined, path)),
+  toml: withLeadingComment(parseTOML),
   json: parseJSON,
 };
 
@@ -275,6 +285,27 @@ const parseFrontMatterBlock = ({ collection, collectionFile, isIndexFile, format
   const { head = '', body } = groups;
   const syntax = FRONTMATTER_FORMATS.includes(format) ? getFormatSyntax(format) : undefined;
   let parsedHead = syntax ? FRONT_MATTER_PARSERS[syntax](head, path) : {};
+
+  // A Markdown file starting with blank lines or spaces before a delimiter line, e.g. a thematic
+  // break, could be saved without front matter by an earlier version, which only protected a body
+  // starting with the delimiter itself. What lies between that line and the next one is then text,
+  // which YAML reads as a string. A front matter block is a map, so such a file is read as having
+  // no front matter, as it was meant to
+  if (
+    text !== trimmedText &&
+    head.trim() &&
+    parsedHead !== null &&
+    parsedHead !== undefined &&
+    (typeof parsedHead !== 'object' || Array.isArray(parsedHead))
+  ) {
+    // Forget what parsing the text remembered about the file as its front matter, e.g. a heading
+    // taken as a comment, which would otherwise be written in a new front matter block on a save
+    if (path !== undefined) {
+      updateFileState(path, { leadingComment: undefined, valueSources: undefined });
+    }
+
+    return { content: { [bodyKey]: text }, hasFrontMatter: false };
+  }
 
   if (!parsedHead || typeof parsedHead !== 'object' || Array.isArray(parsedHead)) {
     parsedHead = {};
@@ -362,8 +393,7 @@ export const parseEntryFile = async ({ text = '', path, folder }) => {
   let { format } = resolved;
 
   // Forget what was read from an earlier version of the file
-  valueSources.delete(path);
-  detectedFrontMatterFormats.delete(path);
+  fileStates.delete(path);
 
   // Normalize line breaks. The leading whitespace is only dropped where it’s meaningless: the
   // content of a raw file, and the body of a file without front matter, keep theirs, e.g. an
@@ -402,7 +432,7 @@ export const parseEntryFile = async ({ text = '', path, folder }) => {
       // Remembered, so the file is saved back in the same format. A file without a front matter
       // block gets the default one, as a new file does
       if (isDetected && hasFrontMatter) {
-        detectedFrontMatterFormats.set(path, /** @type {FrontMatterFormat} */ (format));
+        updateFileState(path, { format: /** @type {FrontMatterFormat} */ (format) });
       }
 
       return content;

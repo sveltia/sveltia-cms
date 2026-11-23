@@ -22,13 +22,7 @@
    */
 
   /** @type {FieldPreviewProps & Props} */
-  let {
-    /* eslint-disable prefer-const */
-    locale,
-    fieldConfig,
-    currentValue,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { locale, fieldConfig, currentValue } = $props();
 
   const { name: fieldName } = $derived(fieldConfig);
   /** The value to be shown. Empty if there is no value or it’s whitespace only. */
@@ -62,12 +56,5 @@
   .title {
     font-size: var(--sui-font-size-xxx-large);
     font-weight: var(--sui-font-weight-bold);
-  }
-
-  /* Remove the padding to make the iframe full-width on small screens */
-  @media (width < 768px) {
-    :global([role='document'] section) > p:has(:global(iframe)) {
-      margin-inline: calc(var(--entry-preview-padding-inline) * -1);
-    }
   }
 </style>

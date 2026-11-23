@@ -1376,6 +1376,37 @@ describe('Collections Parser', () => {
     });
   });
 
+  describe('parseCollection yaml_quote option', () => {
+    /**
+     * Parse a collection with the given extra options.
+     * @param {Record<string, any>} options Collection options.
+     */
+    const parse = async (options) => {
+      const { parseCollection } = await import('.');
+
+      parseCollection(
+        {
+          cmsConfig: /** @type {any} */ ({}),
+          collection: /** @type {any} */ ({ name: 'posts', label: 'Posts', ...options }),
+        },
+        createCollectors(),
+      );
+    };
+
+    it.each([
+      ['an entry collection', { folder: 'posts', fields: [] }],
+      ['a file collection', { files: [] }],
+    ])('should warn about the deprecated option in %s', async (_label, options) => {
+      await parse({ ...options, yaml_quote: false });
+      expect(mockWarnDeprecation).toHaveBeenCalledWith('yaml_quote');
+    });
+
+    it('should not warn without the option', async () => {
+      await parse({ folder: 'posts', fields: [] });
+      expect(mockWarnDeprecation).not.toHaveBeenCalledWith('yaml_quote');
+    });
+  });
+
   describe('parseCollection i18n option', () => {
     it('should warn when a collection has the i18n option without site-level i18n', async () => {
       const { parseCollection } = await import('.');

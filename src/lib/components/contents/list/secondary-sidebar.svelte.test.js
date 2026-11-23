@@ -10,41 +10,9 @@ import { currentView } from '$lib/services/contents/collection/view/settings';
 import { env } from '$lib/services/user/env.svelte';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import { createMockAsset, initTestConfig, setAssets } from '$lib/test/config';
+import { createFileDropEvent } from '$lib/test/drop';
 
 import SecondarySidebar from './secondary-sidebar.svelte';
-
-/**
- * Build a drop event carrying the given files.
- * @param {File[]} files Files.
- * @returns {Event} Event.
- */
-const createDropEvent = (files) => {
-  const event = new Event('drop', { bubbles: true, cancelable: true });
-
-  Object.defineProperty(event, 'dataTransfer', {
-    value: {
-      dropEffect: '',
-      items: files.map((file) => ({
-        /**
-         * Get the entry.
-         * @returns {any} File entry.
-         */
-        webkitGetAsEntry: () => ({
-          name: file.name,
-          isFile: true,
-          /**
-           * Read the file.
-           * @param {(file: File) => void} callback Callback.
-           * @returns {void} Nothing.
-           */
-          file: (callback) => callback(file),
-        }),
-      })),
-    },
-  });
-
-  return event;
-};
 
 describe('SecondarySidebar', () => {
   beforeAll(async () => {
@@ -94,7 +62,7 @@ describe('SecondarySidebar', () => {
     const file = new File(['x'], 'c.png', { type: 'image/png' });
 
     /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
-      createDropEvent([file]),
+      createFileDropEvent([file]),
     );
     await expect.poll(() => uploadingAssets.current.files).toEqual([file]);
     expect(uploadingAssets.current.folder?.internalPath).toBe('static/posts');
@@ -114,7 +82,7 @@ describe('SecondarySidebar', () => {
       .toBeInTheDocument();
 
     /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
-      createDropEvent([new File(['x'], 'c.png', { type: 'image/png' })]),
+      createFileDropEvent([new File(['x'], 'c.png', { type: 'image/png' })]),
     );
     await sleep(100);
     expect(uploadingAssets.current.files).toEqual([]);

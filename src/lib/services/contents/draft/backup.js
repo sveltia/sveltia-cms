@@ -6,7 +6,11 @@ import { createDisplayBlobURL } from '$lib/services/assets/info';
 import { backend } from '$lib/services/backends';
 import { getBackupDatabaseName } from '$lib/services/backends/fs/test';
 import { cmsConfigVersion } from '$lib/services/config';
-import { isDraftReadonly } from '$lib/services/config/readonly';
+import {
+  isDraftConfigReadonly,
+  isDraftLockedByOthers,
+  isDraftReadonly,
+} from '$lib/services/config/readonly';
 import { getIndexFileName } from '$lib/services/contents/collection/entries/index-file';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import {
@@ -19,6 +23,7 @@ import { updateObject } from '$lib/services/contents/draft/update/list';
 import { hasChildKeys, indexContent } from '$lib/services/contents/entry/content-index';
 import { prefs } from '$lib/services/user/prefs.svelte';
 import { createDeepState, createRootEffect, getSnapshot } from '$lib/services/utils/state.svelte';
+import { isForkEntry } from '$lib/services/workflow/forks';
 
 /**
  * @import {
@@ -26,6 +31,7 @@ import { createDeepState, createRootEffect, getSnapshot } from '$lib/services/ut
  * EntryDraft,
  * EntryDraftBackup,
  * EntryDraftValues,
+ * UnpublishedEntry,
  * } from '$lib/types/private';
  */
 
@@ -42,6 +48,11 @@ let backupDB = undefined;
  * @type {string | undefined}
  */
 let backupDBName = undefined;
+/**
+ * Incremented as each draft is checked for a backup by {@link restoreBackupIfNeeded}, so only the
+ * latest check can ask about its backup, even if an earlier one is slower to look it up.
+ */
+let restoreCheckCount = 0;
 
 /**
  * Default for {@link backupToastState}.
@@ -104,16 +115,30 @@ export const getBackup = async (collectionName, slug = '') => {
  * `2023/hello` and `2024/hello` do, and a backup stored under the slug would be offered to,
  * restored to, or deleted with the other entry. The `subPath` is the same as the slug for the
  * common `{{slug}}` path, so the backups stored before the change are still found there.
- * @param {EntryDraft} draft Draft.
+ * @param {object} draft Draft, or the parts of it the key is made of.
+ * @param {EntryDraft['collection']} draft.collection Collection.
+ * @param {string} [draft.fileName] Collection file name, if the entry is a collection file.
+ * @param {boolean} [draft.isIndexFile] Whether the draft is for a new index file.
+ * @param {Entry} [draft.originalEntry] Entry being edited. `undefined` for a new entry.
  * @returns {string} The file name for a collection file, or the entry’s `subPath` for an existing
  * entry. The index file name, e.g. `_index`, for a new index file, which has fields of its own, so
  * its backup mustn’t be offered to a new entry or the other way round. An empty string for any
- * other new entry.
+ * other new entry. An entry from a contributor’s pull request has the pull request number appended,
+ * e.g. `hello?_pr=12`, as its backup holds the contributor’s changes and mustn’t be offered to the
+ * entry opened from anywhere else, nor be deleted with it.
  */
-export const getBackupSlug = ({ collection, fileName, isIndexFile, originalEntry }) =>
-  fileName ??
-  originalEntry?.subPath ??
-  (isIndexFile ? /** @type {string} */ (getIndexFileName(collection)) : '');
+export const getBackupSlug = ({ collection, fileName, isIndexFile, originalEntry }) => {
+  const slug =
+    fileName ??
+    originalEntry?.subPath ??
+    (isIndexFile ? /** @type {string} */ (getIndexFileName(collection)) : '');
+
+  const number = isForkEntry(originalEntry)
+    ? /** @type {UnpublishedEntry} */ (originalEntry).workflow.pullRequest.number
+    : undefined;
+
+  return number === undefined ? slug : `${slug}?_pr=${number}`;
+};
 
 /**
  * Get the backup of the given draft, if there is one. A backup made from another entry than the one
@@ -152,11 +177,19 @@ const isArrayItemDraft = ({ originalEntry }) => originalEntry?.arrayIndex !== un
 export const saveBackup = async (draft) => {
   // Skip if the user hasn’t manually interacted with the editor, so that only programmatic changes,
   // e.g. Lexical markdown reformatting, don’t trigger a backup
+  if (!(prefs.useDraftBackup ?? true) || !draft.interacted || isArrayItemDraft(draft)) {
+    return;
+  }
+
+  // Nothing is backed up, or deleted, while the draft is read-only, e.g. while the user is asked
+  // whether to restore a backup, which a click in the editor mustn’t delete. The exception is
+  // someone else taking over the entry, which makes the draft read-only, but the changes made until
+  // then are still backed up, so they aren’t lost. An unchanged draft of an entry someone else is
+  // editing keeps the backup of earlier changes until it can be edited again
   if (
-    !(prefs.useDraftBackup ?? true) ||
-    !draft.interacted ||
-    isDraftReadonly(draft) ||
-    isArrayItemDraft(draft)
+    isDraftLockedByOthers(draft)
+      ? !!draft.restorePending || isDraftConfigReadonly(draft) || !isDraftModified(draft)
+      : isDraftReadonly(draft)
   ) {
     return;
   }
@@ -371,11 +404,32 @@ export const restoreBackup = async ({ backup, draft }) => {
 };
 
 /**
+ * Drop the backup check of the draft open so far, which a new draft replaces or the closed editor
+ * leaves behind: close its restore dialog, if any, and keep a lookup still under way from opening
+ * one. The dialog doesn’t block the editor, so the draft it was opened for may have been replaced,
+ * e.g. when the user has reloaded the entry.
+ * @returns {number} Number identifying the new check, if any.
+ */
+export const cancelRestoreCheck = () => {
+  // Without an answer, which leaves the backup alone
+  if (restoreDialogState.current.show) {
+    restoreDialogState.current.show = false;
+    restoreDialogState.current.resolve?.();
+  }
+
+  restoreCheckCount += 1;
+
+  return restoreCheckCount;
+};
+
+/**
  * Check if a draft backup is available, and restore it if requested by the user.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft to restore the backup to.
  */
 export const restoreBackupIfNeeded = async ({ draft }) => {
+  const checkCount = cancelRestoreCheck();
+
   // A read-only entry can’t be changed, so leave any backup alone until it can be edited again
   if (!(prefs.useDraftBackup ?? true) || isDraftReadonly(draft) || isArrayItemDraft(draft)) {
     return;
@@ -385,28 +439,39 @@ export const restoreBackupIfNeeded = async ({ draft }) => {
   const slug = getBackupSlug(draft);
   const backup = await getDraftBackup(draft);
 
-  if (!backup) {
+  // Another draft has been opened in the meantime
+  if (!backup || checkCount !== restoreCheckCount) {
     return;
   }
 
   const { timestamp } = backup;
   const { promise, resolve } = Promise.withResolvers();
 
+  // The dialog doesn’t block the editor, so the user can look through the entry before deciding,
+  // but the draft can’t be changed until then
+  draft.restorePending = true;
   restoreDialogState.current = { show: true, timestamp, resolve };
 
-  // The promise will be resolved once the Restore or Discard button is clicked on the dialog
   /** @type {boolean | undefined} */
-  const doRestore = await promise;
+  let doRestore;
 
-  if (doRestore === undefined) {
-    return;
-  }
+  try {
+    // The promise will be resolved once the Restore or Discard button is clicked on the dialog
+    doRestore = await promise;
 
-  if (doRestore) {
-    await restoreBackup({ backup, draft });
-    draft.interacted = true;
-  } else {
-    await deleteBackup(collectionName, slug);
+    if (doRestore === undefined) {
+      return;
+    }
+
+    if (doRestore) {
+      await restoreBackup({ backup, draft });
+      draft.interacted = true;
+    } else {
+      await deleteBackup(collectionName, slug);
+    }
+  } finally {
+    // Even if the restore has failed, so the entry doesn’t stay locked
+    draft.restorePending = false;
   }
 
   backupToastState.current = { restored: doRestore, deleted: !doRestore, saved: false };

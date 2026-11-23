@@ -58,6 +58,10 @@ vi.mock('$lib/services/backends/git/services', () => ({
   },
 }));
 
+vi.mock('$lib/services/common/slug/transliterate', () => ({
+  loadTransliterator: vi.fn().mockResolvedValue(undefined),
+}));
+
 // Mock i18n
 vi.mock('@sveltia/i18n', async () =>
   (await import('$lib/test/i18n')).createI18nMock({ locale: 'en' }),
@@ -736,5 +740,35 @@ describe('config/init', () => {
 
       consoleSpy.mockRestore();
     });
+
+    it.each([
+      [true, 1],
+      [false, 0],
+    ])(
+      'loads the transliterator when `clean_accents` is %s: %i times',
+      async (cleanAccents, times) => {
+        const { initCmsConfig } = await import('./init');
+        const { loadTransliterator } = await import('$lib/services/common/slug/transliterate');
+
+        fetchcmsConfigMock.mockResolvedValue({
+          backend: { name: 'github', repo: 'owner/repo' },
+          media_folder: 'uploads',
+          slug: { clean_accents: cleanAccents },
+          collections: [
+            {
+              name: 'posts',
+              label: 'Posts',
+              folder: 'posts',
+              fields: [{ name: 'title', widget: 'string' }],
+            },
+          ],
+        });
+
+        await initCmsConfig();
+
+        expect(cmsConfig.current).toBeDefined();
+        expect(loadTransliterator).toHaveBeenCalledTimes(times);
+      },
+    );
   });
 });

@@ -1,7 +1,6 @@
 import { _ } from '@sveltia/i18n';
 
 import { getAssetFolder } from '$lib/services/assets/folders';
-import { findEntriesByAssets } from '$lib/services/assets/references';
 import { isInCmsFolder } from '$lib/services/assets/reserved';
 import { allAssets } from '$lib/services/assets/state';
 import { getErrorMessage } from '$lib/services/backends/git/shared/errors';
@@ -18,7 +17,7 @@ import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import { planCascadeDelete } from '$lib/services/contents/entry/relations/cascade/delete';
 import { collectRenameTargets } from '$lib/services/contents/entry/relations/cascade/update';
 import { getDeletionSelection, getEditedCompanionPaths } from '$lib/services/workflow';
-import { getEntryAssetVersion } from '$lib/services/workflow/assets';
+import { getEntryAssetVersion, getUsedAssetPaths } from '$lib/services/workflow/assets';
 
 /**
  * @import {
@@ -135,9 +134,9 @@ const getUpdatedEntry = (entry) => {
 /**
  * Get the entries whose references to the given entry the CMS rewrites along with it: those
  * referencing its published version when it’s renamed, or when it’s deleted. A selection of entries
- * is deleted with the same rewrite in each pull request, so the references to the other entries of
- * the collection awaiting deletion count as well. The entries are worked out from the published
- * ones, the way the CMS did when it committed the rewrite.
+ * is deleted with the same rewrite in each pull request, so the references to the other entries
+ * deleted with it count as well: see `getDeletionSelection()`. The entries are worked out from the
+ * published ones, the way the CMS did when it committed the rewrite.
  * @param {object} args Arguments.
  * @param {UnpublishedEntry} args.entry Unpublished entry being published.
  * @param {InternalCollection} args.collection Collection the entry belongs to.
@@ -257,32 +256,6 @@ const getMovedAssets = ({ entry, collection, updatedEntry }) => {
 };
 
 /**
- * Get those of the given asset paths that the given entry uses, in a media field or as a media URL
- * in a Markdown or RichText field, the way the editor resolves them to display the files. So do the
- * new entries created from a Relation field of the entry, which are committed along with it.
- * @param {UnpublishedEntry} entry Unpublished entry being published.
- * @param {string[]} paths Asset paths.
- * @returns {Set<string>} Paths used.
- */
-const getUsedAssetPaths = (entry, paths) => {
-  if (!paths.length) {
-    return new Set();
-  }
-
-  const results = findEntriesByAssets(
-    paths.map((path) => ({ asset: /** @type {Asset} */ ({ path }) })),
-    {
-      entries: [
-        entry,
-        ...(entry.workflow.companions ?? []).map(({ entry: companion }) => companion),
-      ],
-    },
-  );
-
-  return new Set(paths.filter((_path, index) => results[index].length));
-};
-
-/**
  * Find the changes in a pull request that the CMS doesn’t account for. The board shows an entry
  * and its assets, but publishing merges the whole pull request, so anything else on the branch —
  * code, workflows, configuration, another entry, a file in a media folder — would otherwise go
@@ -355,6 +328,7 @@ export const findUnexpectedChanges = async (entry, files) => {
     ? new Set()
     : getUsedAssetPaths(
         entry,
+        companions,
         pathChanges
           .filter(({ change, kind }) => change !== 'removed' && kind?.type === 'asset')
           .map(({ path }) => path),

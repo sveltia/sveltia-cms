@@ -214,6 +214,28 @@ describe('fillTemplate()', async () => {
     expect(getField).toHaveBeenCalledWith(expect.objectContaining({ keyPath: 'published' }));
   });
 
+  test('look up the field config in the given collection file', async () => {
+    await setupCmsConfig();
+
+    const { getField } = await import('$lib/services/contents/entry/fields');
+
+    vi.mocked(getField).mockClear();
+
+    fillTemplate("/events/{{fields.date | date('YYYY-MM')}}/", {
+      type: 'preview_path',
+      collection: /** @type {any} */ ({ name: 'pages', _type: 'file', _i18n: DEFAULT_I18N_CONFIG }),
+      collectionFile: /** @type {any} */ ({ name: 'event', _i18n: DEFAULT_I18N_CONFIG }),
+      content: { date: '2024-06-15' },
+      locale: '_default',
+      entryFilePath: 'content/event.md',
+    });
+
+    // Without the file name, a DateTime field’s custom `format` would be unknown
+    expect(getField).toHaveBeenCalledWith(
+      expect.objectContaining({ collectionName: 'pages', fileName: 'event', keyPath: 'date' }),
+    );
+  });
+
   test('apply filter', async () => {
     await setupCmsConfig();
 
@@ -529,6 +551,28 @@ describe('fillTemplate()', async () => {
     });
 
     expect(result).toEqual('my.post.md');
+  });
+
+  test('filename extraction from a collection file localized as multiple files', async () => {
+    await setupCmsConfig();
+
+    const multiFileI18n = {
+      ...DEFAULT_I18N_CONFIG,
+      allLocales: ['en', 'fr'],
+      structureMap: { ...DEFAULT_I18N_CONFIG.structureMap, i18nMultiFile: true },
+    };
+
+    const result = fillTemplate('/{{locale}}/{{filename}}/', {
+      type: 'preview_path',
+      // The collection itself isn’t localized as multiple files, but its file is
+      collection: /** @type {any} */ ({ name: 'pages', _type: 'file', _i18n: DEFAULT_I18N_CONFIG }),
+      collectionFile: /** @type {any} */ ({ name: 'about', _i18n: multiFileI18n }),
+      content: {},
+      locale: 'fr',
+      entryFilePath: 'content/pages/about.fr.md',
+    });
+
+    expect(result).toEqual('/fr/about/');
   });
 
   test('custom identifier field', async () => {
@@ -1327,6 +1371,42 @@ describe('fillTemplate()', async () => {
     expect(result).toMatch(/^[0-9a-f]{12}$/);
   });
 
+  test('records a filled slug another entry uses, which has a number added', async () => {
+    await setupCmsConfig();
+
+    const { renameIfNeeded } = await import('$lib/services/utils/file');
+    /** @type {Map<string, string>} */
+    const numberedSlugs = new Map();
+
+    vi.mocked(renameIfNeeded).mockImplementationOnce((slug) => `${slug}-1`);
+    expect(
+      fillTemplate('{{title}}', {
+        collection,
+        content: { title: 'New Post' },
+        locale: 'fr',
+        numberedSlugs,
+      }),
+    ).toBe('new-post-1');
+    expect([...numberedSlugs]).toEqual([['fr', 'new-post']]);
+
+    // A free slug isn’t recorded, and neither is one without a map to record it in
+    numberedSlugs.clear();
+    expect(
+      fillTemplate('{{title}}', {
+        collection,
+        content: { title: 'Other Post' },
+        locale: 'fr',
+        numberedSlugs,
+      }),
+    ).toBe('other-post');
+    expect(numberedSlugs.size).toBe(0);
+
+    vi.mocked(renameIfNeeded).mockImplementationOnce((slug) => `${slug}-1`);
+    expect(fillTemplate('{{title}}', { collection, content: { title: 'New Post' } })).toBe(
+      'new-post-1',
+    );
+  });
+
   test('getExistingSlugs filters and maps slugs correctly', async () => {
     await setupCmsConfig();
 
@@ -1807,7 +1887,7 @@ describe('fillTemplate() for a collection with nested entries', () => {
     _type: 'entry',
     _file: { basePath: 'content/pages' },
     nested: { depth: 100 },
-    meta: { path: { widget: 'string', index_file: '_index' } },
+    meta: { path: { index_file: '_index' } },
   };
 
   test('leaves the index file name out of the preview path', () => {

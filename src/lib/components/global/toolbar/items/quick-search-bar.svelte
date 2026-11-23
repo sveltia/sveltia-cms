@@ -12,11 +12,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    onclick = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { onclick = undefined } = $props();
 
   let inputValue = $state('');
 

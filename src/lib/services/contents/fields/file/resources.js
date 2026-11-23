@@ -5,6 +5,10 @@ import {
 import { processResource } from '$lib/services/contents/fields/file/process';
 import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
 import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
+import {
+  findPreferredLibraryName,
+  getUploadableServiceEntries,
+} from '$lib/services/integrations/media-libraries/options';
 
 /**
  * @import {
@@ -83,6 +87,56 @@ export const getMediaFieldAssetOptions = ({
     libraryConfig,
     cloudServiceEntries,
   };
+};
+
+/**
+ * @typedef {object} DroppedFileDestination
+ * @property {'repository' | 'cloud' | undefined} destination Where the files go: the first
+ * location marked with the `default` option that can take them, or else the repository, or else a
+ * cloud storage service that can upload them. `undefined` if no location can take the files.
+ * @property {boolean} ambiguous Whether the files could go to more than one location and none is
+ * marked with the `default` option, so the destination is only a fallback.
+ */
+
+/**
+ * Decide where files dropped or pasted into a field go, rather than picked in the Select Assets
+ * dialog. A cloud storage service without an upload function, like Cloudinary, can’t take them.
+ * @param {object} args Arguments.
+ * @param {boolean} args.repositoryAvailable Whether the default media library is enabled and has a
+ * folder to upload the files to.
+ * @param {[string, MediaLibraryService][]} args.cloudServiceEntries Cloud storage services enabled
+ * for the field.
+ * @param {string[]} [args.preferredLibraryNames] Names of the media libraries marked with the
+ * `default` option, in order of precedence. `default` stands for the repository.
+ * @returns {DroppedFileDestination} Destination.
+ */
+export const getDroppedFileDestination = ({
+  repositoryAvailable,
+  cloudServiceEntries,
+  preferredLibraryNames = [],
+}) => {
+  const uploadableEntries = getUploadableServiceEntries(cloudServiceEntries);
+
+  const preferredName = findPreferredLibraryName({
+    preferredLibraryNames,
+    repositoryAvailable,
+    cloudServiceEntries: uploadableEntries,
+  });
+
+  if (preferredName) {
+    return {
+      destination: preferredName === 'default' ? 'repository' : 'cloud',
+      ambiguous: false,
+    };
+  }
+
+  if (repositoryAvailable) {
+    return { destination: 'repository', ambiguous: uploadableEntries.length > 0 };
+  }
+
+  return uploadableEntries.length
+    ? { destination: 'cloud', ambiguous: uploadableEntries.length > 1 }
+    : { destination: undefined, ambiguous: false };
 };
 
 /**

@@ -8,8 +8,8 @@
   import { goto } from '$lib/services/app/navigation';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { isValidCollectionFile } from '$lib/services/contents/collection/predicates';
+  import { getEntryEditorPath } from '$lib/services/contents/editor/route';
   import { getCollectionFileSummary } from '$lib/services/contents/entry/summary';
-  import { encodePathSegments } from '$lib/services/utils/url';
   import { unpublishedEntries } from '$lib/services/workflow';
   import { getEntryStage } from '$lib/services/workflow/stages';
 
@@ -54,12 +54,9 @@
           )}
           <GridRow
             onclick={() => {
-              goto(
-                encodePathSegments(
-                  `/collections/${selectedCollection.current?.name}/entries/${name}`,
-                ),
-                { transitionType: 'forwards' },
-              );
+              goto(getEntryEditorPath(`${selectedCollection.current?.name}`, name), {
+                transitionType: 'forwards',
+              });
             }}
           >
             <GridCell class="title">

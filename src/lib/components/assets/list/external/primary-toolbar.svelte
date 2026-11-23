@@ -64,18 +64,11 @@
       <DeleteAssetsButton
         {assets}
         deleteAssets={deleteExternalAssets}
-        buttonDescription={_('delete_selected_assets', { values: { count: assets.length } })}
-        dialogDescription={_(
-          // Every asset listed in the view, as in a repository folder
-          assets.length > 1 && assets.length === listedExternalAssets.current.length
-            ? 'confirm_deleting_all_assets'
-            : 'confirm_deleting_selected_assets',
-          { values: { count: assets.length } },
-        )}
+        listedCount={listedExternalAssets.current.length}
       />
     {/if}
-    {#if service.rename || service.replace}
-      <EditOptionsButton {asset} />
+    {#if service.rename || service.replace || service.delete}
+      <EditOptionsButton {asset} {assets} />
     {/if}
   {/snippet}
   {#snippet fab()}

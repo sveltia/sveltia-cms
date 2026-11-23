@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { version } from '$lib/services/app';
 import { cmsConfigVersion } from '$lib/services/config';
-import { detectedFrontMatterFormats } from '$lib/services/contents/file/detected-formats';
 import { hasCustomParser } from '$lib/services/contents/file/parse';
 import {
   arrayFileItems,
@@ -26,7 +25,7 @@ import {
   transformRawContent,
   transformRoot,
 } from '$lib/services/contents/file/process';
-import { valueSources } from '$lib/services/contents/file/value-sources';
+import { fileStates, updateFileState } from '$lib/services/contents/file/state';
 
 /**
  * @import { BaseEntryListItem, Entry, InternalCollection } from '$lib/types/private';
@@ -391,8 +390,9 @@ describe('Test parseFileContent() with cached content', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    detectedFrontMatterFormats.clear();
-    valueSources.clear();
+    fileStates.clear();
+    fileStates.clear();
+    fileStates.clear();
     cmsConfigVersion.current = 'config-hash';
     parseEntryFile = (await import('$lib/services/contents/file/parse')).parseEntryFile;
     parseEntryFile.mockResolvedValue({ title: 'Parsed' });
@@ -416,7 +416,7 @@ describe('Test parseFileContent() with cached content', () => {
     expect(await parseFileContent(file, [], parsedFileMap)).toEqual({ title: 'Cached' });
     expect(parseEntryFile).not.toHaveBeenCalled();
     // The detected format is remembered, as when the file was parsed
-    expect(detectedFrontMatterFormats.get('posts/a.md')).toBe('toml-frontmatter');
+    expect(fileStates.get('posts/a.md')?.format).toBe('toml-frontmatter');
     // It’s cached already
     expect(parsedFileMap.size).toBe(0);
   });
@@ -427,13 +427,15 @@ describe('Test parseFileContent() with cached content', () => {
     });
 
     // Remembered for an earlier version of the file
-    detectedFrontMatterFormats.set('posts/a.md', 'toml-frontmatter');
-    valueSources.set('posts/a.md', { date: { value: '2024-01-01', source: '2024-01-01' } });
+    updateFileState('posts/a.md', { format: 'toml-frontmatter' });
+    updateFileState('posts/a.md', {
+      valueSources: { date: { value: '2024-01-01', source: '2024-01-01' } },
+    });
 
     expect(await parseFileContent(file, [])).toEqual({ title: 'Cached' });
     expect(parseEntryFile).not.toHaveBeenCalled();
-    expect(detectedFrontMatterFormats.has('posts/a.md')).toBe(false);
-    expect(valueSources.has('posts/a.md')).toBe(false);
+    expect(fileStates.get('posts/a.md')?.format).toBeUndefined();
+    expect(fileStates.get('posts/a.md')?.valueSources).toBeUndefined();
   });
 
   test('remembers the source text of the TOML dates cached with the content', async () => {
@@ -449,7 +451,7 @@ describe('Test parseFileContent() with cached content', () => {
 
     expect(await parseFileContent(file, [])).toEqual({ date: '12:30:00.000' });
     expect(parseEntryFile).not.toHaveBeenCalled();
-    expect(valueSources.get('posts/a.md')).toBe(sourceMap);
+    expect(fileStates.get('posts/a.md')?.valueSources).toBe(sourceMap);
   });
 
   test('parses the file again for another CMS version or configuration', async () => {
@@ -478,7 +480,7 @@ describe('Test parseFileContent() with cached content', () => {
     const parsedFileMap = new Map();
 
     parseEntryFile.mockImplementation(async () => {
-      detectedFrontMatterFormats.set('posts/a.md', 'yaml-frontmatter');
+      updateFileState('posts/a.md', { format: 'yaml-frontmatter' });
 
       return { title: 'Parsed', tags: ['a'] };
     });
@@ -500,7 +502,7 @@ describe('Test parseFileContent() with cached content', () => {
     const sourceMap = { price: { value: 10, source: '10.0' } };
 
     parseEntryFile.mockImplementation(async () => {
-      valueSources.set('posts/a.md', sourceMap);
+      updateFileState('posts/a.md', { valueSources: sourceMap });
 
       return { price: 10 };
     });
@@ -524,7 +526,7 @@ describe('Test parseFileContent() with cached content', () => {
       [],
     );
 
-    expect(valueSources.get('posts/a.md')).toEqual(sourceMap);
+    expect(fileStates.get('posts/a.md')?.valueSources).toEqual(sourceMap);
 
     // Cached content without them forgets what was remembered before
     await parseFileContent(
@@ -532,7 +534,39 @@ describe('Test parseFileContent() with cached content', () => {
       [],
     );
 
-    expect(valueSources.has('posts/a.md')).toBe(false);
+    expect(fileStates.get('posts/a.md')?.valueSources).toBeUndefined();
+  });
+
+  test('collects the comments at the top of the file and restores them from the cache', async () => {
+    const parsedFileMap = new Map();
+
+    parseEntryFile.mockImplementation(async () => {
+      updateFileState('posts/a.md', { leadingComment: '# Note' });
+
+      return { title: 'Parsed' };
+    });
+
+    await parseFileContent(createFile(), [], parsedFileMap);
+
+    expect(parsedFileMap.get('posts/a.md')).toEqual({
+      key: getParsedContentKey(),
+      content: { title: 'Parsed' },
+      leadingComment: '# Note',
+    });
+
+    fileStates.clear();
+
+    await parseFileContent(createFile({ parsed: parsedFileMap.get('posts/a.md') }), []);
+
+    expect(fileStates.get('posts/a.md')?.leadingComment).toBe('# Note');
+
+    // Cached content without them forgets what was remembered before
+    await parseFileContent(
+      createFile({ parsed: { key: getParsedContentKey(), content: { title: 'Parsed' } } }),
+      [],
+    );
+
+    expect(fileStates.get('posts/a.md')?.leadingComment).toBeUndefined();
   });
 
   test('collects nothing for content that can’t be copied, but still uses it', async () => {

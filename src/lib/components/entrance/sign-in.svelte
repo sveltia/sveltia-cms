@@ -1,20 +1,27 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { Button, ConfirmationDialog, Icon, PromptDialog, Spacer } from '@sveltia/ui';
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
 
   import { DOCS_BASE_URL } from '$lib/services/app';
-  import { allBackendServices } from '$lib/services/backends';
+  import { getAdditions } from '$lib/services/app/additions';
+  import { loadBackendService } from '$lib/services/backends';
   import { isDemoSite } from '$lib/services/backends/fs/seed';
   import { cancelAuthorization } from '$lib/services/backends/git/shared/auth';
   import { cmsConfig } from '$lib/services/config';
-  import { auth, signInAutomatically, signInManually } from '$lib/services/user/auth.svelte';
+  import {
+    auth,
+    magicLinkConfirmation,
+    signInAutomatically,
+    signInManually,
+  } from '$lib/services/user/auth.svelte';
   import { env } from '$lib/services/user/env.svelte';
   import { getSignInOptions } from '$lib/services/user/sign-in-options';
   import { makeLink } from '$lib/services/utils/string';
   import { isWorkflowConfigured } from '$lib/services/workflow/config';
 
   /**
+   * @import { BackendService } from '$lib/types/private';
    * @import { Backend, GitBackend } from '$lib/types/public';
    */
 
@@ -23,7 +30,12 @@
 
   const configuredBackend = $derived(/** @type {Backend} */ (cmsConfig.current?.backend));
   const backendName = $derived(/** @type {string} */ (configuredBackend.name));
-  const backend = $derived(allBackendServices[backendName]);
+  /**
+   * The configured backend service, once loaded: a Git backend other than GitHub is kept in a chunk
+   * of its own, which is only fetched for a site that uses it.
+   * @type {BackendService | undefined}
+   */
+  let backend = $state.raw();
   const isTestRepo = $derived(backendName === 'test-repo');
   const isDemo = $derived(isDemoSite(backendName));
   const testRepoUnsupported = $derived(isTestRepo && !env.isTestBackendSupported);
@@ -46,16 +58,46 @@
     getSignInOptions(configuredBackend, backend?.label),
   );
 
+  // Sveltia CMS Additions, whose chunk is loaded along with the backend if it’s enabled
+  const additions = $derived(getAdditions());
+
   /* v8 ignore start -- the name is only read while the dialog is open, when the account is set */
   /**
    * Account name to show when the user is asked whether to sign in with a magic link.
    */
   const magicLinkAccountName = $derived.by(() => {
-    const { login, name } = auth.magicLinkConfirmation?.account ?? {};
+    const { login, name } = magicLinkConfirmation.current?.account ?? {};
 
     return login || name || '';
   });
   /* v8 ignore stop */
+
+  $effect(() => {
+    const name = backendName;
+
+    // Don’t offer the previous backend while the configured one is being loaded
+    backend = undefined;
+
+    loadBackendService(name).then(
+      (service) => {
+        // The configuration may have changed while the service was being loaded
+        if (name === backendName) {
+          backend = service;
+        }
+      },
+      () => {
+        // The automatic sign-in loads the same service and reports the failure
+      },
+    );
+  });
+
+  $effect(() => {
+    // With Sveltia CMS Additions, once its chunk is loaded: read the outcome of connecting the
+    // service to GitHub, if the user is coming back from there, and the sign-in methods it offers
+    if (additions) {
+      untrack(() => additions.prepareSignIn());
+    }
+  });
 
   onMount(() => {
     // Skip automatic sign-in if there’s already an error (e.g. repository access denied), so the
@@ -78,6 +120,8 @@
       -->
       <Button variant="secondary" label={_('cancel')} onclick={cancelAuthorization.current} />
     {/if}
+  {:else if additions?.additionsSetup.open}
+    <additions.SetupWizard />
   {:else if backend}
     {#if showLocalBackendOption}
       <Button
@@ -109,6 +153,9 @@
         </div>
       {/if}
       <Spacer />
+    {/if}
+    {#if additions}
+      <additions.SignInForm {backendName} primary={!showLocalBackendOption} />
     {/if}
     {#if !oauthOptionHidden}
       <Button
@@ -176,16 +223,16 @@
 </PromptDialog>
 
 <ConfirmationDialog
-  open={!!auth.magicLinkConfirmation}
+  open={!!magicLinkConfirmation.current}
   title={_('sign_in_with_link')}
   okLabel={_('sign_in')}
   onOk={() => {
-    auth.magicLinkConfirmation?.resolve(true);
+    magicLinkConfirmation.current?.respond(true);
   }}
   onClose={() => {
     // Covers the Cancel button, the Escape key and any other way out. Signing in has already
     // settled the prompt, so this leaves it alone
-    auth.magicLinkConfirmation?.resolve(false);
+    magicLinkConfirmation.current?.respond(false);
   }}
 >
   {_('sign_in_with_link_confirmation', {
@@ -200,10 +247,9 @@
     align-items: center;
     gap: 12px;
 
-    :global {
-      .button {
-        width: 320px;
-      }
+    /* Only the buttons of the page itself, not the one that shows a password */
+    & > :global(.button) {
+      width: 320px;
     }
   }
 

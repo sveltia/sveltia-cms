@@ -29,24 +29,22 @@
    * @property {(assets: any[]) => Promise<CascadeDeletePlan>} [planDeletion] Function that works
    * out what the deletion means for the entries using the assets. Deleting is held off until it
    * has answered, and refused if it reports a field that would be left invalid.
-   * @property {string} [buttonDescription] The `aria-label` attribute on the button.
-   * @property {string} [dialogDescription] Description to be displayed on the dialog.
+   * @property {number} [listedCount] Number of the assets listed in the view, given when the button
+   * deletes the selected assets, which may be all of them, rather than the asset shown in the
+   * details overlay. The button and the dialog describe the deletion accordingly.
    * @property {(() => void) | undefined} [onDelete] Called once the assets have been deleted.
    * @property {boolean} [useButton] Whether to use the Button component.
    */
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     assets = [],
     disabled = false,
     deleteAssets,
     planDeletion = undefined,
-    buttonDescription = '',
-    dialogDescription = '',
+    listedCount = undefined,
     onDelete = undefined,
     useButton = true,
-    /* eslint-enable prefer-const */
   } = $props();
 
   let showDialog = $state(false);
@@ -60,7 +58,23 @@
   /** @type {HTMLButtonElement | undefined} */
   let button = $state();
 
-  const buttonDisabled = $derived(disabled || !assets.length);
+  const count = $derived(assets.length);
+  const buttonDescription = $derived(
+    listedCount === undefined
+      ? _('delete_assets', { values: { count: 1 } })
+      : _('delete_selected_assets', { values: { count } }),
+  );
+  const dialogDescription = $derived(
+    listedCount === undefined
+      ? _('confirm_deleting_this_asset')
+      : _(
+          count > 1 && count === listedCount
+            ? 'confirm_deleting_all_assets'
+            : 'confirm_deleting_selected_assets',
+          { values: { count } },
+        ),
+  );
+  const buttonDisabled = $derived(disabled || !count);
   const blocked = $derived(!!plan?.blockers.length);
 
   // Work out the plan whenever the dialog opens. The lookup is asynchronous, so the dialog starts
@@ -131,7 +145,7 @@
 
 <ConfirmationDialog
   bind:open={showDialog}
-  title={_('delete_assets', { values: { count: assets.length } })}
+  title={_('delete_assets', { values: { count } })}
   okLabel={_('delete')}
   okDisabled={!!planDeletion && (!plan || blocked)}
   onOk={async () => {
@@ -144,12 +158,12 @@
   error explains why -->
   {#if planFailed}
     <div role="alert">
-      {_('checking_asset_references_failed', { values: { count: assets.length } })}
+      {_('checking_asset_references_failed', { values: { count } })}
     </div>
   {:else if !blocked}
     {dialogDescription}
   {/if}
   {#if plan}
-    <CascadeDeleteNote {plan} kind="asset" count={assets.length} />
+    <CascadeDeleteNote {plan} kind="asset" {count} />
   {/if}
 </ConfirmationDialog>

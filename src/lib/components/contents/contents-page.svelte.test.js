@@ -11,7 +11,7 @@ import { showContentOverlay } from '$lib/services/contents/editor';
 import { entryEditorSettings } from '$lib/services/contents/editor/settings';
 import { searchMode, searchTerms } from '$lib/services/search';
 import { env } from '$lib/services/user/env.svelte';
-import { unpublishedEntries, unpublishedEntriesLoaded } from '$lib/services/workflow';
+import { allUnpublishedEntries, unpublishedEntriesLoaded } from '$lib/services/workflow';
 import { createMockEntry, initTestConfig, setEntries } from '$lib/test/config';
 import { waitForToastsToHide } from '$lib/test/toast';
 
@@ -26,6 +26,7 @@ vi.mock('$lib/services/contents/draft/backup', async () => {
 
   return {
     restoreDialogState: createDeepState({ show: false }),
+    cancelRestoreCheck: vi.fn(),
     backupToastState: createDeepState({ saved: false, restored: false, deleted: false }),
     cancelBackup: vi.fn(),
     deleteBackup: vi.fn(),
@@ -100,7 +101,7 @@ describe('ContentsPage', () => {
 
   test('shows the entry list toolbar for a collection holding only drafts', async () => {
     setEntries([]);
-    unpublishedEntries.current = [
+    allUnpublishedEntries.current = [
       /** @type {any} */ ({
         ...createMockEntry({ slug: 'draft', content: { _default: { title: 'Draft' } } }),
         workflow: {
@@ -120,7 +121,48 @@ describe('ContentsPage', () => {
       await expect.element(area.getByRole('row', { name: 'Draft' })).toBeVisible();
       await expect.element(area.getByRole('toolbar', { name: 'Entry List' })).toBeInTheDocument();
     } finally {
-      unpublishedEntries.current = [];
+      allUnpublishedEntries.current = [];
+    }
+  });
+
+  test('keeps the entry list toolbar while a filter hides every draft', async () => {
+    await initTestConfig({
+      collections: [
+        {
+          name: 'posts',
+          label: 'Posts',
+          folder: 'content/posts',
+          fields,
+          view_filters: [{ label: 'Hello', field: 'title', pattern: 'Hello' }],
+        },
+      ],
+    });
+    setEntries([]);
+    allUnpublishedEntries.current = [
+      /** @type {any} */ ({
+        ...createMockEntry({ slug: 'draft', content: { _default: { title: 'Draft' } } }),
+        workflow: {
+          status: 'draft',
+          collectionName: 'posts',
+          pullRequest: { number: 1, branch: 'cms/posts/draft' },
+        },
+      }),
+    ];
+    entryListSettings.current = {
+      posts: { type: 'list', filters: [{ field: 'title', pattern: 'Hello' }] },
+    };
+    window.location.hash = '#/collections/posts';
+
+    try {
+      await render(ContentsPage);
+
+      const area = page.getByRole('main', { name: '\u2068Posts\u2069 Collection' });
+
+      // The toolbar holding the filter stays, so the filter can be reset
+      await expect.element(area.getByRole('toolbar', { name: 'Entry List' })).toBeInTheDocument();
+      expect(area.getByRole('row', { name: 'Draft' }).elements()).toHaveLength(0);
+    } finally {
+      allUnpublishedEntries.current = [];
     }
   });
 
@@ -193,7 +235,7 @@ describe('ContentsPage', () => {
     });
     setEntries([createMockEntry({ slug: 'hello', content: { _default: { title: 'Hello' } } })]);
     backendName.current = 'github';
-    unpublishedEntries.current = [];
+    allUnpublishedEntries.current = [];
     unpublishedEntriesLoaded.current = false;
     window.location.hash = '#/collections/posts/entries/hello';
 

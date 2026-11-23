@@ -5,16 +5,16 @@ import {
   hasComparison,
   OTHER_GROUP_NAME,
 } from '$lib/services/common/view';
-import { selectedCollection } from '$lib/services/contents/collection';
 import { getReorderGroupName } from '$lib/services/contents/collection/entries/reorder/config';
 import {
-  matchesConditions,
-  prepareConditions,
-} from '$lib/services/contents/collection/view/conditions';
+  createEntryMatcher,
+  createViewOptionsState,
+} from '$lib/services/contents/collection/view/filter';
 import { parseViewOptions } from '$lib/services/contents/collection/view/options';
-import { getField } from '$lib/services/contents/entry/fields';
-import { getPropertyValue } from '$lib/services/contents/entry/values';
-import { createDerivedState } from '$lib/services/utils/state.svelte';
+import {
+  getListedEntryValue,
+  normalizeMultiValue,
+} from '$lib/services/contents/collection/view/values';
 
 /**
  * @import {
@@ -24,7 +24,7 @@ import { createDerivedState } from '$lib/services/utils/state.svelte';
  * InternalEntryCollection,
  * SortingConditions,
  * } from '$lib/types/private';
- * @import { DateTimeField, ViewGroup, ViewGroups } from '$lib/types/public';
+ * @import { ViewGroup, ViewGroups } from '$lib/types/public';
  */
 
 /**
@@ -88,12 +88,7 @@ const groupEntriesByComparison = (entries, collection, conditions, now) => {
 
   const { field } = conditions;
   const key = getConditionKey(conditions);
-  const fieldConfig = getField({ collectionName, keyPath: field });
-
-  const dateFieldConfig =
-    fieldConfig?.widget === 'datetime' ? /** @type {DateTimeField} */ (fieldConfig) : undefined;
-
-  const prepared = prepareConditions(conditions, { dateFieldConfig, now, locale });
+  const matches = createEntryMatcher({ collectionName, locale, conditions, now });
 
   // The conditions are what the view holds, so the label has to be looked up. It can be missing
   // from a group that has been removed from the configuration since the view was saved
@@ -108,13 +103,7 @@ const groupEntriesByComparison = (entries, collection, conditions, now) => {
   const others = [];
 
   entries.forEach((entry) => {
-    const args = { entry, locale, collectionName, key: field };
-    const rawValue = getPropertyValue({ ...args, resolveRef: false });
-    const refValue = getPropertyValue({ ...args });
-
-    (matchesConditions({ rawValue, refValue, conditions: prepared }) ? matched : others).push(
-      entry,
-    );
+    (matches(entry) ? matched : others).push(entry);
   });
 
   return [
@@ -167,7 +156,7 @@ export const groupEntries = (
   } = collection;
 
   const sortedGroups = buildGroupMap(entries, pattern, (entry) =>
-    getPropertyValue({ entry, locale, collectionName, key: field }),
+    normalizeMultiValue(getListedEntryValue({ entry, locale, collectionName, key: field })),
   ).map(([name, _entries]) => ({ name, entries: _entries }));
 
   // Keep the descending order if already sorted, especially on the date field
@@ -182,13 +171,4 @@ export const groupEntries = (
  * View groups for the selected entry collection.
  * @type {{ readonly current: ViewGroup[] }}
  */
-export const viewGroups = createDerivedState(() => {
-  const collection = selectedCollection.current;
-
-  // Disable grouping for file/singleton collection
-  if (collection?._type !== 'entry') {
-    return [];
-  }
-
-  return parseGroupConfig(collection.view_groups).options;
-});
+export const viewGroups = createViewOptionsState('groups');

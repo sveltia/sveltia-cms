@@ -15,6 +15,7 @@ import {
   fetchPullRequestFileList,
   fetchPullRequestHeadRef,
   isSameRepositoryPullRequest,
+  parseForkPullRequest,
   parsePullRequest,
   resolveChangeSHAs,
   updateDraftState,
@@ -23,6 +24,7 @@ import {
 } from '$lib/services/backends/git/gitea/pull-requests';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { cmsConfig } from '$lib/services/config';
+import { getEntryFoldersByPath } from '$lib/services/contents/folders';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 vi.mock('$lib/services/backends/git/gitea/files');
@@ -31,6 +33,7 @@ vi.mock('$lib/services/backends/git/gitea/repository', () => ({
 }));
 vi.mock('$lib/services/backends/git/shared/api');
 vi.mock('$lib/services/config', () => ({ cmsConfig: { current: undefined } }));
+vi.mock('$lib/services/contents/folders', () => ({ getEntryFoldersByPath: vi.fn(() => []) }));
 
 const REPO_PATH = '/repos/owner/repo';
 /**
@@ -126,7 +129,19 @@ describe('Gitea pull request service', () => {
         updatedDate: new Date('2026-01-02T00:00:00Z'),
         author: { name: 'Me', email: 'me@example.com', id: 7, login: 'me' },
         files: [],
+        description: '',
       });
+    });
+
+    test('keeps the description as it is', () => {
+      const body = 'Automatically generated\n\n<!-- sveltia-cms:deletion-group=group-1 -->';
+
+      expect(parsePullRequest(createItem({ body }))?.description).toBe(body);
+    });
+
+    test('gives a pull request without a description an empty one', () => {
+      // The API gives an empty description as `null`
+      expect(parsePullRequest(createItem({ body: null }))?.description).toBe('');
     });
 
     test('returns undefined without a CMS label', () => {
@@ -187,6 +202,81 @@ describe('Gitea pull request service', () => {
         id: undefined,
         login: 'bot',
       });
+    });
+  });
+
+  describe('parseForkPullRequest', () => {
+    /**
+     * Create a raw pull request a contributor opened from their fork.
+     * @param {object} [overrides] Properties to override.
+     * @returns {any} Pull request.
+     */
+    const createForkItem = (overrides = {}) =>
+      createItem({
+        number: 7,
+        title: 'Create Post “hello”',
+        draft: false,
+        allow_maintainer_edit: true,
+        labels: [],
+        body: '<!-- sveltia-cms:deletion-group=group-1 -->',
+        head: {
+          ref: 'cms/alice/website/posts/hello',
+          sha: 'abc123',
+          repo_id: 2,
+          repo: { full_name: 'alice/website', name: 'website', owner: { login: 'alice' } },
+        },
+        ...overrides,
+      });
+
+    test('qualifies the branch with the fork and leaves the description out', () => {
+      expect(parseForkPullRequest(createForkItem())).toMatchObject({
+        number: 7,
+        title: 'Create Post “hello”',
+        branch: 'alice/website:cms/alice/website/posts/hello',
+        headSHA: 'abc123',
+        status: 'pending_review',
+        description: '',
+        fork: { owner: 'alice', repo: 'website', editable: true },
+      });
+    });
+
+    test('tells whether maintainers can push to the branch', () => {
+      expect(
+        parseForkPullRequest(createForkItem({ allow_maintainer_edit: false }))?.fork?.editable,
+      ).toBe(false);
+    });
+
+    test('reads the stage from the draft state and the label names', () => {
+      /**
+       * Get the status of a pull request from a fork with the given properties.
+       * @param {object} overrides Properties to override.
+       * @returns {string | undefined} Status.
+       */
+      const status = (overrides) => parseForkPullRequest(createForkItem(overrides))?.status;
+
+      // The rule itself is tested with `toForkPullRequest`; this covers what the instance returns
+      expect(status({ draft: true })).toBe('draft');
+      expect(status({ labels: [{ name: 'sveltia-cms/pending_publish' }] })).toBe('pending_publish');
+      expect(status({ labels: undefined })).toBe('pending_review');
+    });
+
+    test.each([
+      ['from the configured repository', { head: createItem().head }],
+      ['to another branch', { base: { ref: 'develop', repo_id: 1 } }],
+      ['from a deleted fork', { head: { ref: 'cms/posts/hello', sha: 'abc123', repo_id: -1 } }],
+      ['without a head', { head: undefined }],
+      [
+        'from a branch the CMS didn’t name',
+        {
+          head: {
+            ref: 'fix-typo',
+            repo_id: 2,
+            repo: { name: 'website', owner: { login: 'alice' } },
+          },
+        },
+      ],
+    ])('ignores a pull request %s', (_label, overrides) => {
+      expect(parseForkPullRequest(createForkItem(overrides))).toBeUndefined();
     });
   });
 
@@ -387,8 +477,51 @@ describe('Gitea pull request service', () => {
 
       await fetchPullRequestFileContent(pullRequest, file);
 
-      expect(fetchRawFile).toHaveBeenCalledWith('content/posts/big.md', 'cms/posts/hello');
+      expect(fetchRawFile).toHaveBeenCalledWith('content/posts/big.md', 'cms/posts/hello', {
+        owner: 'owner',
+        repo: 'repo',
+      });
       expect(file.text).toBe('# Big');
+    });
+
+    test.each([
+      // `application/toml` isn’t counted as a text type
+      ['a TOML file', 'data/big.toml', false],
+      // A custom entry extension has no MIME type at all
+      ['an entry with a custom extension', 'content/posts/big.njk', true],
+    ])('reads %s from the raw endpoint when it’s oversized', async (_label, path, isEntry) => {
+      vi.mocked(getEntryFoldersByPath).mockReturnValue(isEntry ? [/** @type {any} */ ({})] : []);
+      vi.mocked(fetchAPI).mockResolvedValue({ sha: 'sha3', size: 20000000, content: null });
+      vi.mocked(fetchRawFile).mockResolvedValue('title = "Big"');
+
+      const file = /** @type {any} */ ({ path, sha: '', size: 0 });
+
+      await fetchPullRequestFileContent(pullRequest, file);
+
+      expect(fetchRawFile).toHaveBeenCalledWith(path, 'cms/posts/hello', {
+        owner: 'owner',
+        repo: 'repo',
+      });
+      expect(file.text).toBe('title = "Big"');
+    });
+
+    test('reads the files of a contributor’s pull request in their fork', async () => {
+      // The configured repository only has the head commit once the instance has caught its
+      // `refs/pull` reference up with a push
+      vi.mocked(fetchAPI).mockResolvedValueOnce({ sha: 'sha3', size: 20000000, content: null });
+      vi.mocked(fetchRawFile).mockResolvedValue('# Big');
+
+      const fork = { owner: 'alice', repo: 'website', editable: true };
+
+      await fetchPullRequestFileContent(
+        /** @type {any} */ ({ ...pullRequest, headSHA: 'head1', fork }),
+        /** @type {any} */ ({ path: 'content/posts/big.md' }),
+      );
+
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/repos/alice/website/contents/content/posts/big.md?ref=head1',
+      );
+      expect(fetchRawFile).toHaveBeenCalledWith('content/posts/big.md', 'head1', fork);
     });
 
     test('reads the files at the head commit, which a publish is pinned to', async () => {
@@ -419,7 +552,10 @@ describe('Gitea pull request service', () => {
         `${REPO_PATH}/contents/content/posts/hello.md?ref=head1`,
       );
       expect(fetchAPI).toHaveBeenCalledWith(`${REPO_PATH}/contents/content/posts/big.md?ref=head1`);
-      expect(fetchRawFile).toHaveBeenCalledWith('content/posts/big.md', 'head1');
+      expect(fetchRawFile).toHaveBeenCalledWith('content/posts/big.md', 'head1', {
+        owner: 'owner',
+        repo: 'repo',
+      });
     });
 
     test.each(['static/movie.mp4', 'static/archive.unknown'])(
@@ -481,6 +617,13 @@ describe('Gitea pull request service', () => {
   });
 
   describe('deleteBranch', () => {
+    test('refuses to delete a branch in a contributor’s fork', async () => {
+      await expect(deleteBranch('alice/website:cms/alice/website/posts/hello')).rejects.toThrow(
+        'A branch in a contributor’s fork cannot be deleted.',
+      );
+      expect(fetchAPI).not.toHaveBeenCalled();
+    });
+
     test('deletes the branch, keeping the slashes in its name', async () => {
       await deleteBranch('cms/posts/hello');
 
@@ -651,6 +794,7 @@ describe('Gitea pull request service', () => {
         branch: 'cms/posts/hello',
         title: 'Create Post “hello”',
         status: 'draft',
+        description: 'Description',
       });
 
       expect(fetchAPI).toHaveBeenNthCalledWith(1, `${REPO_PATH}/pulls`, {
@@ -659,7 +803,7 @@ describe('Gitea pull request service', () => {
           title: 'WIP: Create Post “hello”',
           head: 'cms/posts/hello',
           base: 'main',
-          body: expect.any(String),
+          body: 'Description',
         },
       });
 
@@ -680,6 +824,7 @@ describe('Gitea pull request service', () => {
         createdDate: new Date('2026-01-01T00:00:00Z'),
         updatedDate: new Date('2026-01-01T00:00:00Z'),
         files: [],
+        description: 'Description',
       });
     });
 
@@ -688,10 +833,54 @@ describe('Gitea pull request service', () => {
         branch: 'cms/posts/hello',
         title: 'Delete Post “hello”',
         status: 'pending_deletion',
+        description: 'Description',
       });
 
       expect(getRequestBody().title).toBe('Delete Post “hello”');
       expect(result.status).toBe('pending_deletion');
+    });
+
+    test('records the user who opened the pull request as its author', async () => {
+      vi.mocked(fetchAPI).mockImplementation(async (path) =>
+        path.endsWith('/labels')
+          ? [{ name: 'sveltia-cms/draft' }]
+          : {
+              id: 900,
+              number: 5,
+              user: { id: 7, login: 'alice', full_name: '', email: 'alice@example.com' },
+              created_at: '2026-01-01T00:00:00Z',
+              updated_at: '2026-01-01T00:00:00Z',
+            },
+      );
+
+      const result = await createPullRequest({
+        branch: 'cms/posts/hello',
+        title: 'Create Post “hello”',
+        status: 'draft',
+        description: 'Description',
+      });
+
+      // The same author a listed pull request has, so a later save recognizes it as the user’s own
+      expect(result.author).toEqual({
+        name: 'alice',
+        email: 'alice@example.com',
+        id: 7,
+        login: 'alice',
+      });
+    });
+
+    test('opens the pull request with the given description', async () => {
+      const description = 'Automatically generated\n\n<!-- sveltia-cms:deletion-group=group-1 -->';
+
+      const result = await createPullRequest({
+        branch: 'cms/posts/hello',
+        title: 'Delete Post “hello”',
+        status: 'pending_deletion',
+        description,
+      });
+
+      expect(getRequestBody().body).toBe(description);
+      expect(result.description).toBe(description);
     });
   });
 
@@ -704,6 +893,15 @@ describe('Gitea pull request service', () => {
 
       vi.mocked(fetchAPI).mockResolvedValue({});
       await expect(fetchBranchHead('cms/posts/hello')).resolves.toBeUndefined();
+    });
+
+    test('looks the branch of a pull request from a fork up in that fork', async () => {
+      vi.mocked(fetchAPI).mockResolvedValue({ commit: { id: 'abc' } });
+
+      await fetchBranchHead('alice/website:cms/alice/website/posts/hello');
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/repos/alice/website/branches/cms/alice/website/posts/hello',
+      );
     });
 
     test('looks in the fork with Open Authoring', async () => {
@@ -814,6 +1012,19 @@ describe('Gitea pull request service', () => {
       ]);
     });
 
+    test('reads the SHAs from the given repository', async () => {
+      vi.mocked(fetchAPI).mockResolvedValue({ sha: 'fork-sha' });
+
+      await resolveChangeSHAs(
+        /** @type {any} */ ([{ action: 'update', path: 'content/posts/hello.md' }]),
+        'abc123',
+        { owner: 'alice', repo: 'website' },
+      );
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/repos/alice/website/contents/content/posts/hello.md?ref=abc123',
+      );
+    });
+
     test('reads the SHA a rename moves the file from', async () => {
       vi.mocked(fetchAPI).mockResolvedValue({ sha: 'branch-sha' });
 
@@ -918,6 +1129,7 @@ describe('Gitea pull request service', () => {
         branch: 'cms/me/repo/posts/hello',
         title: 'Create Post “hello”',
         status: 'pending_review',
+        description: 'Description',
       });
 
       // The pull request is opened on the configured repository, from the fork’s branch
@@ -929,6 +1141,8 @@ describe('Gitea pull request service', () => {
           head: 'me:cms/me/repo/posts/hello',
           base: 'main',
           body: expect.any(String),
+          // The maintainers can edit the entry while reviewing it
+          allow_maintainer_edit: true,
         },
       });
 

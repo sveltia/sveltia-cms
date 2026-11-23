@@ -23,6 +23,20 @@ const formatPart = (str) => String(Math.abs(Number(str))).padStart(2, '0');
 const offsetFormatterCache = new Map();
 
 /**
+ * Get a formatter of the offset of a time zone, cached per time zone, as a DateTime field gets the
+ * offset each time it’s rendered.
+ * @param {string} timeZone IANA time zone identifier.
+ * @returns {Intl.DateTimeFormat} Formatter.
+ * @throws {RangeError} When the time zone is invalid.
+ */
+const getOffsetFormatter = (timeZone) =>
+  getOrCreate(
+    offsetFormatterCache,
+    timeZone,
+    () => new Intl.DateTimeFormat('en-US', { timeZone, timeZoneName: 'longOffset' }),
+  );
+
+/**
  * Find the configured IANA timezone whose offset matches the stored value’s explicit offset. This
  * is used to restore the most appropriate timezone when the field allows multiple choices.
  * @param {string | undefined} currentValue Stored value.
@@ -60,12 +74,7 @@ export const getTimeZoneForStoredValue = (currentValue, fieldConfig) => {
       : `${hours.startsWith('-') ? '-' : '+'}${formatPart(hours)}:${formatPart(minutes)}`;
 
   const offset =
-    getOrCreate(
-      offsetFormatterCache,
-      inputTimeZone,
-      () =>
-        new Intl.DateTimeFormat('en-US', { timeZone: inputTimeZone, timeZoneName: 'longOffset' }),
-    )
+    getOffsetFormatter(inputTimeZone)
       .formatToParts(date)
       .find((part) => part.type === 'timeZoneName')?.value ?? '';
 
@@ -113,7 +122,7 @@ export const getInitialTimeZone = (currentValue, fieldConfig) => {
 export const getTimeZoneLabel = (timeZone, date = new Date()) => {
   try {
     const offset =
-      new Intl.DateTimeFormat('en-US', { timeZone, timeZoneName: 'longOffset' })
+      getOffsetFormatter(timeZone)
         .formatToParts(date)
         .find((part) => part.type === 'timeZoneName')?.value ?? '';
 

@@ -2,6 +2,9 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import { sharedCredentials } from '$lib/services/additions/credentials.svelte';
+import { loadAdditions } from '$lib/services/app/additions';
+import { cmsConfig } from '$lib/services/config';
 import { prefs } from '$lib/services/user/prefs.svelte';
 
 import ApiKeyInput from './api-key-input.svelte';
@@ -41,6 +44,30 @@ const renderInput = async () => {
 describe('ApiKeyInput', () => {
   beforeEach(() => {
     prefs.apiKeys = {};
+    sharedCredentials.apiKeys = {};
+  });
+
+  test('says when an admin’s key is used, until the user enters their own', async () => {
+    // Credentials are only shared with Sveltia CMS Additions
+    cmsConfig.current = /** @type {any} */ ({
+      backend: { name: 'github', repo: 'me/site', auth_type: 'additions' },
+    });
+    sharedCredentials.apiKeys = { google: validKey };
+
+    try {
+      await loadAdditions();
+
+      const { input } = await renderInput();
+
+      await expect.element(input).toHaveValue('');
+      await expect.element(input).toHaveAttribute('placeholder', 'Provided by your administrator');
+
+      await input.fill(validKey);
+      await input.element().blur();
+      await expect.element(input).not.toHaveAttribute('placeholder');
+    } finally {
+      cmsConfig.current = undefined;
+    }
   });
 
   test('shows the saved key', async () => {
