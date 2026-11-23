@@ -454,10 +454,10 @@ additions:
         unreachable: Không thể kết nối với GitHub. Vui lòng thử lại sau.
       check_again: Kiểm tra lại
       # {$branch} is the name of the repository’s default branch
-      branch_protected: Nhánh “{$branch}” đang được bảo vệ, không thể bị force push hay xóa.
-      branch_bypassed: Nhánh “{$branch}” đang được bảo vệ, nhưng ứng dụng được phép bỏ qua chế độ bảo vệ này, nên biên tập viên vẫn có thể force push hoặc xóa nhánh. Hãy gỡ ứng dụng khỏi danh sách được bỏ qua trong cài đặt bảo vệ nhánh.
-      branch_unprotected: Nhánh “{$branch}” chưa được bảo vệ khỏi force push và xóa nhánh, nên biên tập viên có thể viết lại lịch sử hoặc xóa nhánh. Hãy bật bảo vệ nhánh trong cài đặt kho mã nguồn để chặn cả hai, và đừng đưa ứng dụng vào danh sách được bỏ qua.
-      repository_rules: Mở cài đặt bảo vệ nhánh
+      branch_protected: Bộ quy tắc đang bảo vệ nhánh “{$branch}” khỏi bị force push hoặc bị xóa.
+      branch_bypassed: Bộ quy tắc đang bảo vệ nhánh “{$branch}”, nhưng ứng dụng có thể bỏ qua chúng, nên biên tập viên vẫn có thể force push lên nhánh hoặc xóa nhánh. Hãy gỡ ứng dụng khỏi danh sách bỏ qua của các bộ quy tắc đó.
+      branch_unprotected: Không có bộ quy tắc nào bảo vệ nhánh “{$branch}” khỏi bị force push hoặc bị xóa, nên biên tập viên có thể viết lại lịch sử hoặc xóa nhánh. Hãy thêm một bộ quy tắc trong cài đặt kho mã nguồn để chặn cả hai, và đừng đưa ứng dụng vào danh sách bỏ qua của nó.
+      repository_rules: Mở bộ quy tắc của kho mã nguồn
       private_key: Khóa riêng tư
       private_key_description: Để thay thế khóa riêng tư, hãy tạo khóa mới trong phần cài đặt ứng dụng trên GitHub, rồi tải lên tệp .pem vừa tải về. Sau đó, hãy xóa khóa cũ trên GitHub.
       app_settings: Mở cài đặt ứng dụng
@@ -466,7 +466,7 @@ additions:
       private_key_summary: Dịch vụ dùng khóa riêng tư của ứng dụng để truy cập kho mã nguồn trên GitHub. Hãy thay thế khóa nếu có khả năng nó đã bị lộ.
       private_key_replaced: Đã thay thế khóa riêng tư.
       commit_author: Tác giả commit
-      commit_author_description: Chọn ai sẽ được ghi là tác giả của các thay đổi được lưu trong CMS. GitHub chỉ ký các commit do ứng dụng tạo, vì vậy hãy chọn ứng dụng nếu nhánh được bảo vệ yêu cầu commit có chữ ký. Thiết lập này sẽ áp dụng cho những người dùng khác trong vòng một giờ.
+      commit_author_description: Chọn ai sẽ được ghi là tác giả của các thay đổi được lưu trong CMS. GitHub chỉ ký các commit do ứng dụng tạo, vì vậy hãy chọn ứng dụng nếu một bộ quy tắc yêu cầu commit có chữ ký. Thiết lập này sẽ áp dụng cho những người dùng khác trong vòng một giờ.
       commit_author_user: Người thực hiện thay đổi
       commit_author_bot: GitHub App, ghi người thực hiện thay đổi là đồng tác giả
       commit_author_saved: Đã lưu tác giả commit.
@@ -2770,7 +2770,7 @@ workflow:
   # once done
   refresh: Làm mới
   refreshing: Đang làm mới…
-  refreshed: Bảng đã được cập nhật.
+  refreshed: Bảng đã là mới nhất.
   # Error notification when the board could not be refreshed
   refresh_failed: Không thể làm mới bảng. Vui lòng thử lại.
   # Error notification when the status can’t be changed because the entry is incomplete. Required
