@@ -4,7 +4,7 @@
 
 Designed for content editors and developers alike, Sveltia CMS delivers a great UX/DX, [powerful features](https://sveltiacms.app/en/features), and [first-class internationalization (i18n) support](https://sveltiacms.app/en/features/i18n) — all in a small, maintenance-free, single-page web application served from a CDN. Its generic-purpose approach makes it suitable for a wide range of projects, from personal blogs and portfolios to marketing sites and knowledge bases.
 
-As the [successor to Netlify/Decap CMS](https://sveltiacms.app/en/docs/successor-to-netlify-cms), we continue to deal with issues reported in their repository, of which 400 have now been solved in Sveltia CMS (875 including duplicates). It incorporates numerous enhancements while maintaining high compatibility with existing installations. A growing number of projects, including U.S. government agencies, are [switching from Netlify/Decap CMS](https://sveltiacms.app/en/docs/migration/netlify-decap-cms) to Sveltia CMS to enjoy its significantly improved performance, security, reliability, and experience.
+As the [successor to Netlify/Decap CMS](https://sveltiacms.app/en/docs/successor-to-netlify-cms), we continue to deal with issues reported in their repository, of which 405 have now been solved in Sveltia CMS (880 including duplicates). It incorporates numerous enhancements while maintaining high compatibility with existing installations. A growing number of projects, including U.S. government agencies, are [switching from Netlify/Decap CMS](https://sveltiacms.app/en/docs/migration/netlify-decap-cms) to Sveltia CMS to enjoy its significantly improved performance, security, reliability, and experience.
 
 Sveltia CMS is [framework-agnostic](https://sveltiacms.app/en/docs/frameworks). It’s an excellent option for those moving away from a traditional CMS and looking for a lightweight headless CMS that works well with Astro, Eleventy, or any other static site generator (SSG). It also works well with vanilla JavaScript and custom tooling.
 
@@ -14,7 +14,7 @@ Explore the largest [showcase](https://sveltiacms.app/en/showcase) of any Git-ba
 
 [![Sveltia CMS vs. Decap CMS](https://sveltiacms.app/images/highlights/sveltia-vs-decap.webp?20261112)](https://sveltiacms.app/en/compare/decap-cms)
 
-[![875 Netlify/Decap CMS issues solved in Sveltia CMS (including duplicates)](https://sveltiacms.app/images/highlights/decap-issues.webp?20261118)](https://sveltiacms.app/en/docs/successor-to-netlify-cms)
+[![880 Netlify/Decap CMS issues solved in Sveltia CMS (including duplicates)](https://sveltiacms.app/images/highlights/decap-issues.webp?20261121)](https://sveltiacms.app/en/docs/successor-to-netlify-cms)
 
 [![See it in action. Visit Sveltia CMS Showcase](https://sveltiacms.app/images/highlights/showcase.webp)](https://sveltiacms.app/en/showcase)
 
