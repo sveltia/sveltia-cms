@@ -2834,7 +2834,7 @@ workflow:
   # request instead of committing a deletion to the configured branch. Keep the wording free of
   # Git jargon, as editors are often non-technical.
   # Used when the entry has never been published, so nothing of it is left afterwards
-  confirm_deleting_unpublished_entry: این ورودی هنوز منتشر نشده است، بنابراین حذف آن باعث دور انداختن کامل آن می‌شود.
+  confirm_deleting_unpublished_entry: این ورودی هنوز منتشر نشده است، بنابراین حذف آن باعث از بین رفتن کامل آن می‌شود.
   # Used when the entry updates one that is already live, which stays untouched. The dialog is
   # titled “Discard Changes”, so the wording is about discarding, not deleting
   confirm_discarding_entry_changes: این ورودی دارای تغییرات منتشرنشده است. از بین بردن آن‌ها نسخه منتشرشده را بازیابی خواهد کرد. خود ورودی حذف نخواهد شد.
@@ -2843,15 +2843,15 @@ workflow:
   deleting_unpublished_note_all: |
     .input {$count :integer}
     .match $count
-      one {{ هنوز منتشر نشده است، بنابراین تغییرات منتشرنشده شما دور انداخته خواهند شد. هر نسخه منتشرشده‌ای منتشرشده باقی خواهد ماند. }}
-      *   {{ هنوز منتشر نشده‌اند، بنابراین تغییرات منتشرنشده شما دور انداخته خواهند شد. هر نسخه منتشرشده‌ای منتشرشده باقی خواهد ماند. }}
+      one {{ هنوز منتشر نشده است، بنابراین تغییرات منتشرنشده شما از بین خواهند رفت. هر نسخه منتشرشده‌ای منتشرشده باقی خواهد ماند. }}
+      *   {{ هنوز منتشر نشده‌اند، بنابراین تغییرات منتشرنشده شما از بین خواهند رف. هر نسخه منتشرشده‌ای منتشرشده باقی خواهد ماند. }}
   # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
   # the number of selected entries that are unpublished.
   deleting_unpublished_note_some: |
     .input {$count :integer}
     .match $count
-      one {{ یکی از آن‌ها هنوز منتشر نشده است، بنابراین تغییرات منتشرنشده شما دور انداخته خواهند شد. هر نسخه منتشرشده‌ای منتشرشده باقی خواهد ماند. }}
-      *   {{ {$count} مورد از آن‌ها هنوز منتشر نشده‌اند، بنابراین تغییرات منتشرنشده شما دور انداخته خواهند شد. هر نسخه منتشرشده‌ای منتشرشده باقی خواهند ماند. }}
+      one {{ یکی از آن‌ها هنوز منتشر نشده است، بنابراین تغییرات منتشرنشده شما از بین خواهند رفت. هر نسخه منتشرشده‌ای منتشرشده باقی خواهد ماند. }}
+      *   {{ {$count} مورد از آن‌ها هنوز منتشر نشده‌اند، بنابراین تغییرات منتشرنشده شما از بین خواهند رفت. هر نسخه منتشرشده‌ای منتشرشده باقی خواهند ماند. }}
   # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
   confirm_publishing_entry_after_build: آیا مطمئن هستید که می‌خواهید این ورودی را منتشر کنید؟ تغییرات شما پس از بازسازی سایت آنلاین خواهند شد.
   # Workflow page: toast notifications shown while an entry is being published from a card, and
@@ -2861,7 +2861,7 @@ workflow:
   # Workflow page: toast notifications shown while an entry is being deleted from a card, and once
   # the deletion has completed
   deleting_entry: در حال حذف ورودی…
-  discarding_changes: در حال دور انداختن تغییرات…
+  discarding_changes: در حال از بین بردن تغییرات…
   entry_deleted: ورودی حذف شد.
   # Error notification when publishing fails
   publishing_entry_failed: انتشار ورودی امکان‌پذیر نبود. لطفاً دوباره تلاش کنید.
