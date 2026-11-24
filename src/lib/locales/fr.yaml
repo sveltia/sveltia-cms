@@ -13,7 +13,7 @@ select: Sélectionner
 select_all: Tout sélectionner
 # Accessible name of the checkbox that selects a single entry or asset in a list
 select_item: Sélectionner {$name}
-upload: Téléverser
+upload: Importer
 copy: Copier
 download: Télécharger
 duplicate: Dupliquer
@@ -294,7 +294,7 @@ additions:
     manage_sites: Gérer les autres sites
     back_to_setup: Retour
     sites_title: Autres sites
-    sites_description: Ce service peut également servir d’autres sites, chacun avec ses propres utilisateurs, paramètres et GitHub App. Définissez « base_url » sur l’URL du service dans la configuration CMS d’un site, puis configurez le site depuis celui-ci avec le secret d’administration.
+    sites_description: Ce service peut également servir d’autres sites, chacun avec ses propres utilisateurs, paramètres et GitHub App. Dans la configuration CMS d’un site, définissez « base_url » sur l’URL de ce site, puis configurez-le depuis celui-ci avec le secret d’administration.
     no_sites: Il n’y a pas encore d’autres sites.
     site_id: Identifiant du site
     site_id_description: De 1 à 32 lettres minuscules, chiffres et traits d’union, par exemple « acme ». Il apparaît dans l’URL du site et ne peut pas être modifié.
@@ -448,8 +448,8 @@ additions:
       statuses:
         ok: L’application fonctionne.
         not_registered: Aucune GitHub App n’est encore configurée. Lancez l’assistant de configuration depuis la page de connexion avec le secret d’administration.
-        key_missing: La clé privée de l’application a été perdue lors du remplacement du secret d’administration. Générez une nouvelle clé privée dans les paramètres de l’application sur GitHub et téléversez-la ci-dessous.
-        key_rejected: GitHub n’accepte pas la clé privée de l’application, par exemple parce qu’elle y a été supprimée. Générez une nouvelle clé privée dans les paramètres de l’application sur GitHub et téléversez-la ci-dessous.
+        key_missing: La clé privée de l’application a été perdue lors du remplacement du secret d’administration. Générez une nouvelle clé privée dans les paramètres de l’application sur GitHub et importez-la ci-dessous.
+        key_rejected: GitHub n’accepte pas la clé privée de l’application, par exemple parce qu’elle y a été supprimée. Générez une nouvelle clé privée dans les paramètres de l’application sur GitHub et importez-la ci-dessous.
         not_installed: L’application n’est pas installée sur le dépôt. Réinstallez-la depuis la page de l’application sur GitHub, ou lancez l’assistant de configuration.
         suspended: L’installation de l’application est suspendue. Réactivez-la dans les paramètres d’installation sur GitHub.
         unreachable: Impossible de joindre GitHub. Veuillez réessayer plus tard.
@@ -460,16 +460,16 @@ additions:
       branch_unprotected: Aucun ensemble de règles ne protège la branche « {$branch} » contre les force push et la suppression, les éditeurs pourraient donc réécrire son historique ou la supprimer. Ajoutez dans les paramètres du dépôt un ensemble de règles qui bloque les deux, sans l’application dans sa liste de contournement.
       repository_rules: Ouvrir les règles du dépôt
       private_key: Clé privée
-      private_key_description: Pour remplacer la clé privée, générez-en une nouvelle dans les paramètres de l’application sur GitHub, puis téléversez le fichier .pem téléchargé. Supprimez ensuite l’ancienne clé sur GitHub.
+      private_key_description: Pour remplacer la clé privée, générez-en une nouvelle dans les paramètres de l’application sur GitHub, puis importez le fichier .pem téléchargé. Supprimez ensuite l’ancienne clé sur GitHub.
       app_settings: Ouvrir les paramètres de l’application
-      upload_private_key: Téléverser la clé privée
+      upload_private_key: Importer la clé privée
       replace_private_key: Remplacer la clé privée
       private_key_summary: Le service utilise la clé privée de l’application pour accéder au dépôt sur GitHub. Remplacez-la si elle a pu être exposée.
       private_key_replaced: La clé privée a été remplacée.
       commit_author: Auteur des commits
       commit_author_description: Choisissez qui apparaît comme auteur des modifications enregistrées dans le CMS. GitHub ne signe que les commits dont l’application est l’auteur ; choisissez donc l’application si un ensemble de règles exige des commits signés. Les autres utilisateurs reçoivent ce changement dans l’heure.
       commit_author_user: La personne qui a effectué la modification
-      commit_author_bot: La GitHub App, avec la personne comme co-auteur
+      commit_author_bot: La GitHub App, avec la personne comme coauteur
       commit_author_saved: L’auteur des commits a été enregistré.
   # Administration section for the API keys and the deploy hook an admin shares with everyone
   credentials:
@@ -987,7 +987,7 @@ no_entries_found: Aucune entrée trouvée.
 # Strings for uploading, editing, and managing assets (images, documents, etc.).
 
 # Upload dialog: title and button label
-upload_assets: Téléverser de nouvelles ressources
+upload_assets: Importer de nouvelles ressources
 
 # New Folder button and dialog in the Asset Library
 new_folder: Nouveau dossier
@@ -1357,7 +1357,7 @@ processing_files: |
     *   {{ Traitement des fichiers en cours. Cela peut prendre un moment. }}
 
 # Uploading section aria-label
-uploading_files: Téléversement des fichiers
+uploading_files: Importation des fichiers
 
 # Replace file confirmation
 # Dialog body when replacing an existing file
@@ -1379,8 +1379,8 @@ oversized_files: Fichiers trop volumineux
 warning_oversized_files: |
   .input {$count :integer}
   .match $count
-    one {{ Ce fichier ne peut pas être téléversé, car il dépasse la taille maximale de {$size}. Veuillez réduire sa taille ou sélectionner un autre fichier. }}
-    *   {{ Ces fichiers ne peuvent pas être téléversés, car ils dépassent la taille maximale de {$size}. Veuillez réduire leur taille ou sélectionner d’autres fichiers. }}
+    one {{ Ce fichier ne peut pas être importé, car il dépasse la taille maximale de {$size}. Veuillez réduire sa taille ou sélectionner un autre fichier. }}
+    *   {{ Ces fichiers ne peuvent pas être importés, car ils dépassent la taille maximale de {$size}. Veuillez réduire leur taille ou sélectionner d’autres fichiers. }}
 
 # File integrity validation
 # Warning section for files that cannot be decoded
@@ -1389,22 +1389,22 @@ invalid_files: Fichiers non valides
 warning_invalid_files: |
   .input {$count :integer}
   .match $count
-    one {{ Ce fichier ne peut pas être téléversé, car il est endommagé ou son contenu ne correspond pas à son extension. Cela se produit souvent lorsqu’une photo est renommée au lieu d’être convertie, par exemple une image HEIC enregistrée en tant que fichier JPEG. Veuillez convertir le fichier et réessayer. }}
-    *   {{ Ces fichiers ne peuvent pas être téléversés, car ils sont endommagés ou leur contenu ne correspond pas à leur extension. Cela se produit souvent lorsque des photos sont renommées au lieu d’être converties, par exemple des images HEIC enregistrées en tant que fichiers JPEG. Veuillez convertir les fichiers et réessayer. }}
+    one {{ Ce fichier ne peut pas être importé, car il est endommagé ou son contenu ne correspond pas à son extension. Cela se produit souvent lorsqu’une photo est renommée au lieu d’être convertie, par exemple une image HEIC enregistrée en tant que fichier JPEG. Veuillez convertir le fichier et réessayer. }}
+    *   {{ Ces fichiers ne peuvent pas être importés, car ils sont endommagés ou leur contenu ne correspond pas à leur extension. Cela se produit souvent lorsque des photos sont renommées au lieu d’être converties, par exemple des images HEIC enregistrées en tant que fichiers JPEG. Veuillez convertir les fichiers et réessayer. }}
 # {$count} is the number of files that are not of a type the field accepts, even once transformed
 # {$types} is the list of accepted file types, such as “.pdf or .txt”
 warning_unsupported_files: |
   .input {$count :integer}
   .match $count
-    one {{ Ce fichier ne peut pas être téléversé, car il n’est pas de l’un des types suivants : {$types}. }}
-    *   {{ Ces fichiers ne peuvent pas être téléversés, car ils ne sont pas de l’un des types suivants : {$types}. }}
+    one {{ Ce fichier ne peut pas être importé, car il n’est pas de l’un des types suivants : {$types}. }}
+    *   {{ Ces fichiers ne peuvent pas être importés, car ils ne sont pas de l’un des types suivants : {$types}. }}
 # {$count} is the number of files that are not of an image type the field accepts
 # {$types} is the list of accepted image formats, such as “PNG or WebP”
 warning_unsupported_image_files: |
   .input {$count :integer}
   .match $count
-    one {{ Ce fichier ne peut pas être téléversé, car seule une image des types suivants est acceptée : {$types}. }}
-    *   {{ Ces fichiers ne peuvent pas être téléversés, car seules des images des types suivants sont acceptées : {$types}. }}
+    one {{ Ce fichier ne peut pas être importé, car seule une image des types suivants est acceptée : {$types}. }}
+    *   {{ Ces fichiers ne peuvent pas être importés, car seules des images des types suivants sont acceptées : {$types}. }}
 
 # File format validation when replacing an asset
 # Warning section for replacement files that are in a different format
@@ -1435,8 +1435,8 @@ file_name_conflict_resolution: Résolution des conflits de noms de fichiers
 keep_both: Conserver les deux
 
 # Upload progress and error messages
-uploading_files_progress: Téléversement…
-uploading_files_failed: Échec du téléversement.
+uploading_files_progress: Importation…
+uploading_files_failed: Échec de l’importation.
 # Errors shown when a file on a cloud storage service could not be deleted or renamed
 deleting_assets_failed: Échec de la suppression.
 renaming_asset_failed: Échec du renommage.
@@ -2034,8 +2034,8 @@ move_up: Déplacer vers le haut
 move_down: Déplacer vers le bas
 # Menu of a list item or file with the extra reorder actions, shown in a list of 3 or more items
 reorder_options: Options de réorganisation
-move_to_top: Déplacer en haut
-move_to_bottom: Déplacer en bas
+move_to_top: Déplacer tout en haut
+move_to_bottom: Déplacer tout en bas
 # Opens a dialog asking for the position to move a list item to
 move_to: Déplacer vers…
 # Dialog asking for the new position of an item. {$count} is the number of items in the list
@@ -2164,7 +2164,7 @@ assets_dialog:
       *   {{ {$count} dossiers sélectionnés }}
   no_subfolders: Ce dossier ne contient aucun sous-dossier.
   # Shown for a cloud storage service whose `prefix` option depends on fields of the entry
-  prefix_unresolved: Remplissez les champs dont dépend cet emplacement pour parcourir et téléverser ses fichiers.
+  prefix_unresolved: Remplissez les champs dont dépend cet emplacement pour parcourir et importer ses fichiers.
 
   # Asset folder options
   folder:
@@ -2199,7 +2199,7 @@ assets_dialog:
 
   # Warning dialog shown when files are rejected for more than one reason
   rejected_files:
-    title: Impossible de téléverser les fichiers
+    title: Impossible d’importer les fichiers
 
   # Photo credit dialog (stock photos)
   photo_credit:
@@ -2375,6 +2375,7 @@ config:
     unsupported_deprecated_backend: Le backend {$name}, obsolète, n’est <a>pas pris en charge</a> dans Sveltia CMS.
     unsupported_custom_backend: Les backends personnalisés ne sont <a>pas pris en charge</a> dans Sveltia CMS.
     unsupported_backend_suggestion: Utilisez plutôt l’un des <a>backends pris en charge</a>.
+    git_gateway_alternative: Si vous avez besoin de gérer des utilisateurs, utilisez <a>Sveltia CMS Additions</a> avec GitHub.
     missing_repository: Le dépôt n’est pas défini.
     invalid_repository: Le dépôt configuré n’est pas valide. Il doit être au format « owner/repo ».
     # Don’t localize `api_root`
@@ -2819,7 +2820,7 @@ workflow:
   confirm_sending_for_review: Vos modifications ont été enregistrées en tant que brouillon. Envoyer l’entrée en révision pour que quelqu’un puisse la relire et la publier ?
   # Same as above, when the In Review stage is left out with the `stages` publish mode option, so
   # the next step is to mark the entry as ready to be published
-  mark_as_ready: Marquer comme prête
+  mark_as_ready: Marquer comme prêt
   confirm_marking_as_ready: Vos modifications ont été enregistrées en tant que brouillon. Marquer l’entrée comme prête pour qu’elle puisse être publiée ?
   # Editor toolbar: button shown when the entry is ready to be published
   publish_entry: Publier l’entrée
