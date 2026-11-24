@@ -2349,7 +2349,7 @@ config:
 
   # Configuration error messages
   error:
-    no_secure_context: Sveltia CMS només funciona amb URLs HTTPS o de localhost.
+    no_secure_context: Sveltia CMS només funciona amb URL HTTPS o de localhost.
     # {$count} is the number of insecure configuration file URLs
     insecure_urls: |
       .input {$count :integer}
