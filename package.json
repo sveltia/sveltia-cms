@@ -109,7 +109,7 @@
     "eslint": "^9.39.5",
     "eslint-config-airbnb-extended": "^3.3.0",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-jsdoc": "^65.5.2",
+    "eslint-plugin-jsdoc": "^65.5.3",
     "eslint-plugin-package-json": "^1.14.0",
     "eslint-plugin-svelte": "^3.24.1",
     "eslint-plugin-unused-imports": "^4.4.1",
