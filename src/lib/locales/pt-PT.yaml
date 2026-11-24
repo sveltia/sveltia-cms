@@ -355,7 +355,7 @@ additions:
       # {$login} is a GitHub username
       github: GitHub ({$login})
     actions: Ações
-    you: (você)
+    you: (eu)
     never: Nunca
     roles:
       admin: Administrador
@@ -451,7 +451,7 @@ additions:
         key_missing: A chave privada da aplicação perdeu-se quando o segredo de administrador foi substituído. Gere uma nova chave privada nas definições da aplicação no GitHub e carregue-a abaixo.
         key_rejected: O GitHub não aceita a chave privada da aplicação, por exemplo porque foi eliminada lá. Gere uma nova chave privada nas definições da aplicação no GitHub e carregue-a abaixo.
         not_installed: A aplicação não está instalada no repositório. Instale-a novamente a partir da página da aplicação no GitHub ou execute o assistente de configuração.
-        suspended: A instalação da aplicação está suspensa. Retome-a nas definições da instalação no GitHub.
+        suspended: A instalação da aplicação está suspensa. Reative-a nas definições da instalação no GitHub.
         unreachable: Não foi possível contactar o GitHub. Tente novamente mais tarde.
       check_again: Verificar novamente
       # {$branch} is the name of the repository’s default branch
@@ -541,7 +541,7 @@ additions:
     # Label of the list of comments
     timeline: Comentários
     deleted_user: Utilizador eliminado
-    you: Você
+    you: Eu
     edited: editado
     comment_label: Comentário
     placeholder: Deixe um comentário (Markdown)
@@ -1931,7 +1931,7 @@ saving_entry:
 save_conflict:
   title: Entrada alterada por outra pessoa
   # `{$name}` is the other person’s name, `{$date}` when they made the change
-  modified_by: '{$name} alterou esta entrada em {$date}, depois de a ter aberto.'
+  modified_by: Esta entrada foi alterada por {$name} em {$date}, depois de a ter aberto.
   # Shown instead of `modified_by` when the other person isn’t known
   modified: Esta entrada foi alterada no repositório depois de a ter aberto.
   deleted: Esta entrada foi eliminada do repositório depois de a ter aberto.
@@ -2375,6 +2375,7 @@ config:
     unsupported_deprecated_backend: O backend descontinuado {$name} <a>não é suportado</a> no Sveltia CMS.
     unsupported_custom_backend: Os backends personalizados <a>não são suportados</a> no Sveltia CMS.
     unsupported_backend_suggestion: Utilize antes um dos <a>backends suportados</a>.
+    git_gateway_alternative: Se precisar de gestão de utilizadores, utilize o <a>Sveltia CMS Additions</a> com o GitHub.
     missing_repository: O repositório não está definido.
     invalid_repository: O repositório configurado é inválido. Tem de estar no formato «owner/repo».
     # Don’t localize `api_root`
@@ -2875,7 +2876,7 @@ workflow:
   review_on_x: Rever no {$service}
   from_fork: De um fork
   fork_entry_editable: Esta entrada provém de um pull request de um colaborador aberto a partir de «{$fork}». As suas alterações são guardadas no ramo dessa pessoa. Reveja e faça merge do pull request no serviço Git.
-  fork_entry_locked: Esta entrada provém de um pull request de um colaborador aberto a partir de «{$fork}». O colaborador não permite que os responsáveis o editem, pelo que só pode ser visto aqui.
+  fork_entry_locked: Esta entrada provém de um pull request de um colaborador aberto a partir de «{$fork}». O colaborador não permite que os responsáveis o editem, pelo que a entrada só pode ser vista aqui.
   fork_not_editable: O colaborador não permite que os responsáveis editem este pull request.
   fork_entry_gone: O pull request do colaborador já não está aberto, pelo que não é possível guardar as alterações nele.
   # Error shown in the save error dialog when an entry can’t be saved for review, because a request
