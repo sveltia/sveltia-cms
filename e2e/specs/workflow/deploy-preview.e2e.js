@@ -5,6 +5,7 @@ import { getEditor, getOpenedURL } from '../../fixtures/ui.js';
 /**
  * @import { Locator, Page } from '@playwright/test';
  * @import { MockGitHub } from '../../fixtures/github.js';
+ * @import { CMS } from '../../fixtures/test.js';
  */
 
 /**
@@ -193,11 +194,16 @@ test('opens the deploy preview from the card on the Editorial Workflow page', as
   );
 });
 
-test('opens the deploy preview or the live site from the entry list without opening the entry', async ({
-  cms,
-  github,
-  page,
-}) => {
+/**
+ * Open the entry list with a published post and an unpublished one, and check the link at the end
+ * of each row: the unpublished post opens on its deploy preview and the published one on the live
+ * site, both without opening the entry.
+ * @param {object} args Arguments.
+ * @param {CMS} args.cms CMS.
+ * @param {MockGitHub} args.github GitHub mock.
+ * @param {Page} args.page Page.
+ */
+const checkEntryListLinks = async ({ cms, github, page }) => {
   github.commit({ 'content/posts/first-post.md': post('First Post', 'Hello.') });
   github.reportBuild(openSecondPostPullRequest(github), {
     deployments: [
@@ -229,6 +235,35 @@ test('opens the deploy preview or the live site from the entry list without open
     ),
   ).toBe('https://www.example.com/posts/first-post');
   await expect(getEditor(page)).toHaveCount(0);
+};
+
+test('opens the deploy preview or the live site from the entry list without opening the entry', async ({
+  cms,
+  github,
+  page,
+}) => {
+  await checkEntryListLinks({ cms, github, page });
+});
+
+test.describe('in the table view', () => {
+  test.use({
+    config: {
+      ...CONFIG,
+      collections: [{ ...CONFIG.collections[0], table_columns: ['title'] }],
+    },
+  });
+
+  test('opens the deploy preview or the live site from the entry table', async ({
+    cms,
+    github,
+    page,
+  }) => {
+    // The table view is the default once columns are configured, on a large enough screen
+    await checkEntryListLinks({ cms, github, page });
+    await expect(
+      page.getByRole('grid', { name: 'Entries' }).getByRole('columnheader', { name: /Title/ }),
+    ).toBeVisible();
+  });
 });
 
 test.describe('with `show_preview_links: false`', () => {
