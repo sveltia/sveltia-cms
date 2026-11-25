@@ -25,7 +25,7 @@ We provide comprehensive documentation to help you get started and make the most
 - [Introduction](https://sveltiacms.app/docs/intro): Product highlights, use cases, project goals
 - [Getting Started](https://sveltiacms.app/docs/start): Step-by-step setup instructions
 - [Migration Guides](https://sveltiacms.app/docs/migration): Instructions for migrating from other CMSs
-- [Working with AI](https://sveltiacms.app/docs/working-with-ai): Official MCP server, Agent Skill and `llms.txt`
+- [Working with AI](https://sveltiacms.app/docs/working-with-ai): MCP server, Agent Skill and `llms.txt`
 - [Roadmap](https://sveltiacms.app/docs/roadmap): Upcoming features and improvements
 
 ## Showcase
@@ -52,6 +52,6 @@ Stay connected and get support through our community channels:
 
 Highlights from our latest [announcements](https://github.com/sveltia/sveltia-cms/discussions/categories/announcements):
 
+- [Introducing Sveltia CMS Additions](https://github.com/sveltia/sveltia-cms/discussions/1180)
 - [Sveltia CMS is now feature complete — It’s time to switch from Decap CMS!](https://github.com/sveltia/sveltia-cms/discussions/957)
-- [Sveltia CMS Community Insights, June 2026](https://github.com/sveltia/sveltia-cms/discussions/809)
 - [Sveltia CMS Now Accepts Donations – Support Open Source Development!](https://github.com/sveltia/sveltia-cms/discussions/762)
