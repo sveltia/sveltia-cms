@@ -77,6 +77,7 @@ describe('loadUsers', () => {
       signInMethods: { github: false },
       signUpRules: [],
       update: undefined,
+      updateChecked: false,
       loaded: true,
     });
   });

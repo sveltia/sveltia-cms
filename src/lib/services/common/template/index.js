@@ -8,8 +8,9 @@ import { cmsConfig } from '$lib/services/config';
 import { getEntriesInCollectionFolder } from '$lib/services/contents/collection/entries';
 import { getIdentifierFieldName } from '$lib/services/contents/collection/identifier';
 import { getNameInFolder } from '$lib/services/contents/collection/nested';
-import { renameIfNeeded } from '$lib/services/utils/file';
-import { getPullRequestEntries } from '$lib/services/workflow';
+import { getOrCreate } from '$lib/services/utils/cache';
+import { foldFileName, renameIfNeeded } from '$lib/services/utils/file';
+import { getPullRequestEntries, unpublishedEntries } from '$lib/services/workflow';
 import {
   getMaxSlugBytes,
   getSlugByteLength,
@@ -18,8 +19,25 @@ import {
 
 /**
  * @import { ReplaceContext } from '$lib/services/common/template/replacers';
- * @import { FillTemplateOptions, InternalLocaleCode } from '$lib/types/private';
+ * @import {
+ * Entry,
+ * FillTemplateOptions,
+ * InternalLocaleCode,
+ * UnpublishedEntry,
+ * } from '$lib/types/private';
  */
+
+/**
+ * Existing slugs of each collection, by locale and folder, along with the lists they were read
+ * from. A slug is filled on every keystroke while a new entry’s slug is previewed, for each locale,
+ * so the slugs of the whole collection folder are only gathered again once either list is replaced.
+ * @type {Map<string, {
+ * folderEntries: Entry[],
+ * pullRequestEntries: UnpublishedEntry[],
+ * slugs: Map<string, { names: string[], foldedNames: Set<string> }>,
+ * }>}
+ */
+const existingSlugCache = new Map();
 
 /**
  * Creates existing slugs list for uniqueness validation. With Editorial Workflow, the entries that
@@ -34,18 +52,31 @@ import {
  * with the path editor of a collection with nested entries. The slug of an entry there is its sub
  * path, e.g. `docs/intro`, so only the entries directly in the folder are taken into account, by
  * their file names.
- * @returns {string[]} List of existing slugs.
+ * @returns {{ names: string[], foldedNames: Set<string> }} List of existing slugs, and the same
+ * folded with `foldFileName()` for a quick lookup.
  */
 const getExistingSlugs = (collectionName, locale, dirPath) => {
-  const slugs = /** @type {string[]} */ (
-    [...getEntriesInCollectionFolder(collectionName), ...getPullRequestEntries(collectionName)]
-      .map((e) => (locale ? e.locales[locale]?.slug : e.slug))
-      .filter(Boolean)
-  );
+  const folderEntries = getEntriesInCollectionFolder(collectionName);
+  const pullRequestEntries = unpublishedEntries.current;
+  let cache = existingSlugCache.get(collectionName);
 
-  return dirPath === undefined
-    ? slugs
-    : slugs.flatMap((slug) => getNameInFolder(slug, dirPath) ?? []);
+  if (cache?.folderEntries !== folderEntries || cache.pullRequestEntries !== pullRequestEntries) {
+    cache = { folderEntries, pullRequestEntries, slugs: new Map() };
+    existingSlugCache.set(collectionName, cache);
+  }
+
+  return getOrCreate(cache.slugs, JSON.stringify([locale ?? null, dirPath ?? null]), () => {
+    const slugs = /** @type {string[]} */ (
+      [...folderEntries, ...getPullRequestEntries(collectionName)]
+        .map((e) => (locale ? e.locales[locale]?.slug : e.slug))
+        .filter(Boolean)
+    );
+
+    const names =
+      dirPath === undefined ? slugs : slugs.flatMap((slug) => getNameInFolder(slug, dirPath) ?? []);
+
+    return { names, foldedNames: new Set(names.map(foldFileName)) };
+  });
 };
 
 /**
@@ -142,14 +173,14 @@ export const fillTemplate = (template, options) => {
     slug = trimSlugEnd(slug);
   }
 
-  const existingSlugs = getExistingSlugs(collectionName, locale, dirPath);
+  const { names: existingSlugs, foldedNames } = getExistingSlugs(collectionName, locale, dirPath);
   /**
    * Make the given slug unique. A dot in a slug is part of the name rather than a file extension,
    * so a number goes at the end.
    * @param {string} str Slug.
    * @returns {string} Unique slug.
    */
-  const rename = (str) => renameIfNeeded(str, existingSlugs, { hasExtension: false });
+  const rename = (str) => renameIfNeeded(str, existingSlugs, { hasExtension: false, foldedNames });
   const filledSlug = slug;
   let uniqueSlug = rename(slug);
 

@@ -1,7 +1,7 @@
 import { locale as appLocale } from '@sveltia/i18n';
 import { getDateTimeParts } from '@sveltia/utils/datetime';
 import { sanitize } from 'isomorphic-dompurify';
-import { parseInline } from 'marked';
+import { marked, parseInline } from 'marked';
 import { parseEntities } from 'parse-entities';
 
 import { processNestedTemplates } from '$lib/services/common/template/nested';
@@ -208,6 +208,36 @@ const LT_PLACEHOLDER = '\uE000';
  * sanitized away, and an unclosed one would take the rest of the summary with it.
  */
 const NON_FORMATTING_TAG_REGEX = /<(?!\/?(?:strong|em|code)(?:\s[^>]*)?>)/g;
+/**
+ * Match a character that can make a summary anything but plain text: Markdown syntax, an HTML tag
+ * or character reference, a backslash escape or a line break, which a trailing double space turns
+ * into `<br>`. An autolink is left out, as a link is stripped back to its text either way.
+ */
+const MARKUP_CHAR_REGEX = /[\n\r<>&*_`~\\[\]!]/;
+
+/**
+ * Check whether the given summary is plain text, which parsing and sanitizing would only trim. Not
+ * if a site has extended the Marked instance shared through `window.marked`, as an extension can
+ * turn anything into markup, e.g. `:smile:` into an emoji.
+ * @param {string} str Summary.
+ * @returns {boolean} Result.
+ */
+const isPlainSummary = (str) => {
+  if (MARKUP_CHAR_REGEX.test(str)) {
+    return false;
+  }
+
+  const { extensions, hooks, walkTokens, tokenizer, renderer } = marked.defaults;
+
+  return (
+    !extensions &&
+    !hooks &&
+    !walkTokens &&
+    !tokenizer &&
+    // The preview’s own renderers only change block elements, which a summary doesn’t have
+    !(renderer && (Object.hasOwn(renderer, 'text') || Object.hasOwn(renderer, 'link')))
+  );
+};
 
 /**
  * Parse the given entry summary as Markdown and sanitize HTML with a few exceptions if the Markdown
@@ -221,6 +251,12 @@ const NON_FORMATTING_TAG_REGEX = /<(?!\/?(?:strong|em|code)(?:\s[^>]*)?>)/g;
  * @returns {string} Parsed string.
  */
 export const sanitizeEntrySummary = (str, { allowMarkdown = false } = {}) => {
+  // Skip the parser and the sanitizer for most summaries, which are a few words of plain text: a
+  // long entry list would otherwise spend tens of milliseconds on them
+  if (isPlainSummary(str)) {
+    return str.trim();
+  }
+
   str = /** @type {string} */ (parseInline(str.replace(NON_FORMATTING_TAG_REGEX, LT_PLACEHOLDER)));
 
   if (allowMarkdown) {

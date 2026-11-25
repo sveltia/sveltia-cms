@@ -9,6 +9,7 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { Button, Icon, MenuItem } from '@sveltia/ui';
+  import { untrack } from 'svelte';
 
   import {
     getPreviewLinkControl,
@@ -76,7 +77,7 @@
     trackDeployState = true,
   } = $props();
 
-  // `pageLiveness.current` is deliberately left out of this derivation. The effect below watches
+  // `pageLiveness` is deliberately left out of this derivation. The effect below watches
   // `url` and writes that state, so reading it here would feed the check’s own result back into the
   // URL it checks. The liveness is folded into `control` alone, which the effect doesn’t read
   // @see https://github.com/sveltia/sveltia-cms/issues/943
@@ -93,7 +94,14 @@
   const url = $derived(link?.url);
   /* v8 ignore start -- only read while there’s a link, when nothing falls back */
   const control = $derived(
-    link ? getPreviewLinkControl(link, url ? pageLiveness.current[url] : undefined) : undefined,
+    link
+      ? getPreviewLinkControl(
+          link,
+          // A published list row doesn’t follow its page, so it doesn’t read the store either:
+          // `get()` of a URL never checked would re-run this whenever any other page is checked
+          url && trackDeployState ? pageLiveness.get(url) : undefined,
+        )
+      : undefined,
   );
   const awaitingPreview = $derived(link?.awaitingPreview ?? false);
   const disabled = $derived(control?.disabled ?? true);
@@ -120,7 +128,9 @@
     const buildFinished = link?.state === 'ready';
 
     if (canPing && pageURL) {
-      pingURL(pageURL, { recheckPending: buildFinished });
+      // The check reads the store to tell whether to check again, which isn’t for this effect to
+      // follow: it would re-run on every result the check writes
+      untrack(() => pingURL(pageURL, { recheckPending: buildFinished }));
     }
 
     return undefined;

@@ -328,6 +328,17 @@ describe('GitHub files service', () => {
 
       expect(result).toContain('ref(qualifiedName: $branch)');
       expect(result).toContain('history(first: 1, path: "image.png")');
+      expect(result).not.toContain('messageBody');
+    });
+
+    test('requests the commit body with Sveltia CMS Additions', () => {
+      vi.mocked(isAdditionsEnabled).mockReturnValueOnce(true);
+
+      const result = getFileMetadataFragment(
+        /** @type {any} */ ({ type: 'asset', path: 'image.png', sha: 'sha1' }),
+      );
+
+      expect(result).toContain('messageBody');
     });
   });
 

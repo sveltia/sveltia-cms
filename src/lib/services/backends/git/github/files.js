@@ -172,7 +172,10 @@ export const getFileContentsFragment = ({ type, sha }) =>
     : `object(oid: ${JSON.stringify(sha)}) { ... on Blob { text isTruncated } }`;
 
 /**
- * Get the GraphQL field selection for fetching the last commit of the given file.
+ * Get the GraphQL field selection for fetching the last commit of the given file. The commit body
+ * is only requested with Sveltia CMS Additions, whose GitHub App credits the user in a trailer:
+ * many files can share the same last commit, e.g. a squash merge, whose body would otherwise come
+ * back once per file on a cold start.
  * @param {BaseFileListItem} file File.
  * @returns {string} Field selection.
  */
@@ -191,7 +194,7 @@ export const getFileMetadataFragment = ({ path }) => `
               }
             }
             committedDate
-            messageBody
+            ${isAdditionsEnabled() ? 'messageBody' : ''}
           }
         }
       }

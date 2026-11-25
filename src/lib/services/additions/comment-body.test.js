@@ -1,7 +1,14 @@
+import { sanitize } from 'isomorphic-dompurify';
 import { marked } from 'marked';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 
 import { renderCommentBody } from '$lib/services/additions/comment-body';
+
+vi.mock('isomorphic-dompurify', async (importOriginal) => {
+  const original = /** @type {typeof import('isomorphic-dompurify')} */ (await importOriginal());
+
+  return { ...original, sanitize: vi.fn(original.sanitize) };
+});
 
 describe('renderCommentBody', () => {
   test('renders GitHub-flavoured Markdown, with line breaks kept', () => {
@@ -68,5 +75,29 @@ describe('renderCommentBody', () => {
     });
 
     expect(renderCommentBody('**bold**')).toBe('<p><strong>bold</strong></p>\n');
+  });
+
+  test('renders the same Markdown once, keeping the most recently used results', () => {
+    const first = renderCommentBody('Cached **once**');
+
+    vi.mocked(sanitize).mockClear();
+    expect(renderCommentBody('Cached **once**')).toBe(first);
+    expect(sanitize).not.toHaveBeenCalled();
+
+    // Fill the cache, using the first one along the way so it stays
+    [...Array(250).keys()].forEach((index) => {
+      renderCommentBody(`Comment ${index}`);
+
+      if (index % 50 === 0) {
+        renderCommentBody('Cached **once**');
+      }
+    });
+    vi.mocked(sanitize).mockClear();
+    renderCommentBody('Cached **once**');
+    expect(sanitize).not.toHaveBeenCalled();
+
+    // The least recently used one has been dropped
+    renderCommentBody('Comment 0');
+    expect(sanitize).toHaveBeenCalledOnce();
   });
 });

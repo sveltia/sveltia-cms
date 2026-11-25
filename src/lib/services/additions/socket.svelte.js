@@ -7,6 +7,11 @@ import { createGeneration } from '$lib/services/utils/generation';
  * Delays before each reconnection attempt. The last one repeats.
  */
 export const RECONNECT_DELAYS = [1000, 2000, 5000, 10_000, 30_000];
+/**
+ * How long a connection has to stay open before the backoff starts again from the shortest delay,
+ * so a service that drops every connection right after it opens isn’t asked for one every second.
+ */
+export const STABLE_CONNECTION_TIME = 30_000;
 
 /**
  * State of the WebSocket connection to Sveltia CMS Additions, which shares entry locks, presence,
@@ -25,6 +30,8 @@ let socket;
 let reconnectAttempts = 0;
 /** @type {ReturnType<typeof setTimeout> | undefined} */
 let reconnectTimer;
+/** @type {ReturnType<typeof setTimeout> | undefined} */
+let stableTimer;
 /** Whether a connection is being opened, while its ticket is requested. */
 let connecting = false;
 /** Bumped on every disconnection, so a connection opened in the meantime is dropped. */
@@ -65,7 +72,10 @@ export const sendSocketMessage = (message) => {
 const handleMessage = (message) => {
   if (message.type === 'snapshot') {
     socketState.status = 'connected';
-    reconnectAttempts = 0;
+    clearTimeout(stableTimer);
+    stableTimer = setTimeout(() => {
+      reconnectAttempts = 0;
+    }, STABLE_CONNECTION_TIME);
   }
 
   socketListeners.get(message.type)?.(message);
@@ -110,10 +120,20 @@ export const connectSocket = async () => {
     ws = new WebSocket(
       `${getAdditionsURL().replace(/^http/, 'ws')}/v1/socket?ticket=${encodeURIComponent(ticket)}`,
     );
-  } catch {
+  } catch (/** @type {any} */ ex) {
     if (isCurrent()) {
-      // eslint-disable-next-line no-use-before-define
-      scheduleReconnect();
+      // The session is no longer valid, or the user isn’t allowed to connect: trying again won’t
+      // change that, unless the session has been replaced meanwhile, e.g. by a password change
+      const refused = [401, 403].includes(ex.cause?.status);
+      // The user is still signed in, as the connection is current
+      const { refreshToken } = /** @type {{ refreshToken?: string }} */ (user.account);
+
+      if (refused && refreshToken === sessionToken) {
+        socketState.status = 'unavailable';
+      } else {
+        // eslint-disable-next-line no-use-before-define
+        scheduleReconnect();
+      }
     }
 
     return;
@@ -127,6 +147,12 @@ export const connectSocket = async () => {
   socket = ws;
 
   ws.addEventListener('message', ({ data }) => {
+    // A message still arriving on a socket closed on purpose, e.g. when signing out, would bring
+    // back what has been forgotten since
+    if (socket !== ws) {
+      return;
+    }
+
     try {
       handleMessage(JSON.parse(data));
     } catch {
@@ -141,6 +167,8 @@ export const connectSocket = async () => {
     }
 
     socket = undefined;
+    // The connection didn’t stay open long enough to start the backoff over
+    clearTimeout(stableTimer);
     // eslint-disable-next-line no-use-before-define
     scheduleReconnect();
   });
@@ -167,6 +195,7 @@ export const disconnectSocket = () => {
   const ws = socket;
 
   clearTimeout(reconnectTimer);
+  clearTimeout(stableTimer);
   generation.bump();
   // A connection still being opened is dropped, so the next one doesn’t wait for it
   connecting = false;

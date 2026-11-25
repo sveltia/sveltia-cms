@@ -1,6 +1,8 @@
 import { sanitize } from 'isomorphic-dompurify';
 import { Marked } from 'marked';
 
+import { getOrCreateBounded } from '$lib/services/utils/cache';
+
 /**
  * Elements a comment can have: what GitHub-flavoured Markdown produces, short of raw HTML.
  */
@@ -44,6 +46,16 @@ const ALLOWED_ATTR = ['alt', 'checked', 'disabled', 'href', 'src', 'start', 'tit
  * makes `parse()` return a `Promise`.
  */
 const markdownParser = new Marked({ gfm: true, breaks: true, async: false });
+/**
+ * Maximum number of rendered comments to keep in {@link renderedBodies}.
+ */
+const MAX_CACHED_BODIES = 200;
+/**
+ * Rendered comments by Markdown, the least recently used evicted first, so a conversation loaded
+ * again, e.g. whenever another user changes a comment on it, doesn’t render every comment again.
+ * @type {Map<string, string>}
+ */
+const renderedBodies = new Map();
 
 /**
  * Render a comment’s Markdown as HTML that’s safe to show: anything that could run script, style
@@ -52,7 +64,7 @@ const markdownParser = new Marked({ gfm: true, breaks: true, async: false });
  * @param {string} markdown Markdown.
  * @returns {string} HTML.
  */
-export const renderCommentBody = (markdown) => {
+const renderBody = (markdown) => {
   const html = /** @type {string} */ (markdownParser.parse(markdown));
 
   const body = /** @type {HTMLElement} */ (
@@ -100,3 +112,12 @@ export const renderCommentBody = (markdown) => {
 
   return body.innerHTML;
 };
+
+/**
+ * Render a comment’s Markdown as HTML that’s safe to show, reusing the result for the same
+ * Markdown; see {@link renderBody}.
+ * @param {string} markdown Markdown.
+ * @returns {string} HTML.
+ */
+export const renderCommentBody = (markdown) =>
+  getOrCreateBounded(renderedBodies, markdown, () => renderBody(markdown), MAX_CACHED_BODIES);

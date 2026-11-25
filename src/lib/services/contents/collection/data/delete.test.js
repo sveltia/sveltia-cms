@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { getAdditions } from '$lib/services/app/additions';
+
 import { deleteEntries, updateStores } from './delete';
 
 // Mock dependencies
@@ -230,6 +232,52 @@ describe('Test deleteEntries()', () => {
         collection: { name: 'posts' },
       },
     });
+  });
+
+  test('deletes the comments of many entries a few at a time', async () => {
+    /** @type {(() => void)[]} */
+    const resolvers = [];
+
+    const mockEntries = Array.from({ length: 25 }, (_, index) => ({
+      id: String(index),
+      slug: `post-${index}`,
+      subPath: `post-${index}`,
+      locales: { en: { path: `/content/posts/post-${index}.md` } },
+    }));
+
+    const { selectedCollection } = await import('$lib/services/contents/collection');
+
+    additions.deleteEntryComments.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolvers.push(() => resolve(undefined));
+        }),
+    );
+    selectedCollection.current = /** @type {any} */ ({ name: 'posts' });
+
+    await deleteEntries(/** @type {any} */ (mockEntries));
+
+    expect(additions.deleteEntryComments).toHaveBeenCalledTimes(10);
+    expect(additions.deleteEntryComments).toHaveBeenCalledWith('posts/post-0');
+
+    // Another one is sent once one of them is done
+    resolvers[0]();
+    await vi.waitFor(() => expect(additions.deleteEntryComments).toHaveBeenCalledTimes(11));
+
+    additions.deleteEntryComments.mockReset();
+  });
+
+  test('leaves the comments alone without Sveltia CMS Additions', async () => {
+    const { selectedCollection } = await import('$lib/services/contents/collection');
+
+    vi.mocked(getAdditions).mockReturnValueOnce(undefined);
+    selectedCollection.current = /** @type {any} */ ({ name: 'posts' });
+
+    await deleteEntries(
+      /** @type {any} */ ([{ id: '1', slug: 'post-1', subPath: 'post-1', locales: {} }]),
+    );
+
+    expect(additions.deleteEntryComments).not.toHaveBeenCalled();
   });
 
   test('targets the item of an entry stored in an array file', async () => {

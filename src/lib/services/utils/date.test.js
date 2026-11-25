@@ -1,10 +1,11 @@
-import { afterEach, beforeEach, describe, expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
   DATE_FORMAT_OPTIONS,
   DATE_REGEX,
   DATE_TIME_FORMAT_OPTIONS,
   formatDate,
+  formatMonthDay,
   formatRecentDateTime,
   TIME_FORMAT_OPTIONS,
   TIME_SUFFIX_REGEX,
@@ -198,6 +199,36 @@ describe('formatRecentDateTime()', () => {
       ).toBe('Nov 7, 2025, 10:30 AM');
     });
 
+    test('reuses a formatter for each locale and shape', () => {
+      /**
+       * Format a time on 7 November 2026.
+       * @param {string} iso Timestamp.
+       * @returns {string} Result.
+       */
+      const format = (iso) =>
+        formatRecentDateTime({
+          timestamp: new Date(iso),
+          locale: 'en-US',
+          now: new Date('2026-11-07T18:00:00Z'),
+        });
+
+      expect(format('2026-11-07T09:05:00Z')).toBe('9:05 AM');
+      expect(format('2026-03-01T09:05:00Z')).toBe('Mar 1, 9:05 AM');
+      expect(format('2024-03-01T09:05:00Z')).toBe('Mar 1, 2024, 9:05 AM');
+      expect(
+        formatRecentDateTime({
+          timestamp: new Date('2026-11-07T09:05:00Z'),
+          now: new Date('2026-11-07T18:00:00Z'),
+        }),
+      ).toMatch(/9:05/);
+    });
+
+    test('reports an invalid date like `toLocaleString()`', () => {
+      expect(formatRecentDateTime({ timestamp: new Date(Number.NaN), locale: 'en-US' })).toBe(
+        'Invalid Date',
+      );
+    });
+
     test('compares with the current time by default', () => {
       const timestamp = new Date();
 
@@ -207,14 +238,21 @@ describe('formatRecentDateTime()', () => {
   });
 
   describe('in another time zone', () => {
-    beforeEach(() => {
+    /** @type {typeof formatRecentDateTime} */
+    let formatInZone;
+
+    beforeEach(async () => {
       process.env.TZ = 'Asia/Tokyo';
+      // A fresh module, as a cached formatter keeps the time zone it was created in, which doesn’t
+      // change during a session
+      vi.resetModules();
+      ({ formatRecentDateTime: formatInZone } = await import('./date'));
     });
 
     test('compares the dates in the user’s time zone, which the time is shown in', () => {
       // 23:30 the previous evening in Tokyo, while it’s the same day in UTC
       expect(
-        formatRecentDateTime({
+        formatInZone({
           timestamp: new Date('2026-11-06T14:30:00Z'),
           locale: 'en-US',
           now: new Date('2026-11-06T23:00:00Z'),
@@ -222,7 +260,7 @@ describe('formatRecentDateTime()', () => {
       ).toBe('Nov 6, 11:30 PM');
       // 08:30 the same morning in Tokyo, while it was the previous day in UTC
       expect(
-        formatRecentDateTime({
+        formatInZone({
           timestamp: new Date('2026-11-06T23:30:00Z'),
           locale: 'en-US',
           now: new Date('2026-11-07T01:00:00Z'),
@@ -230,12 +268,24 @@ describe('formatRecentDateTime()', () => {
       ).toBe('8:30 AM');
       // New Year’s Eve in Tokyo, while it’s already New Year’s Day in UTC
       expect(
-        formatRecentDateTime({
+        formatInZone({
           timestamp: new Date('2025-12-31T14:30:00Z'),
           locale: 'en-US',
           now: new Date('2026-01-01T03:00:00Z'),
         }),
       ).toBe('Dec 31, 2025, 11:30 PM');
     });
+  });
+});
+
+describe('formatMonthDay()', () => {
+  test('formats the month and day', () => {
+    expect(formatMonthDay(new Date(2026, 10, 25), 'en-US')).toBe('Nov 25');
+    expect(formatMonthDay(new Date(2026, 0, 2), 'en-US')).toBe('Jan 2');
+    expect(formatMonthDay(new Date(2026, 0, 2))).toMatch(/2/);
+  });
+
+  test('reports an invalid date like `toLocaleDateString()`', () => {
+    expect(formatMonthDay(new Date(Number.NaN), 'en-US')).toBe('Invalid Date');
   });
 });

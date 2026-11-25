@@ -165,7 +165,7 @@ describe('GitHub users and sign-in settings', () => {
 describe('updates', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
-    additionsUsers.update = undefined;
+    Object.assign(additionsUsers, { update: undefined, updateChecked: false });
   });
 
   test('reports a newer release, looked up on UNPKG like the CMS’s own', async () => {
@@ -182,36 +182,67 @@ describe('updates', () => {
     expect(fetch).toHaveBeenCalledWith('https://unpkg.com/@sveltia/cms-additions/package.json');
     expect(additionsUsers.update).toEqual({ current: '0.1.0', latest: '0.2.0' });
 
+    // It’s checked once until the user signs out
+    vi.mocked(fetch).mockClear();
+    vi.mocked(getServiceInfo).mockClear();
+    await checkForUpdate();
+    expect(getServiceInfo).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
+    expect(additionsUsers.update).toEqual({ current: '0.1.0', latest: '0.2.0' });
+
+    additionsUsers.updateChecked = false;
     vi.stubGlobal(
       'fetch',
       vi.fn(async () => Response.json({ version: '0.1.0' })),
     );
     await checkForUpdate();
-    expect(additionsUsers.update).toBeUndefined();
+    expect(additionsUsers).toMatchObject({ update: undefined, updateChecked: true });
 
+    // UNPKG can’t tell, so it’s checked again the next time
+    additionsUsers.updateChecked = false;
     vi.stubGlobal(
       'fetch',
       vi.fn(async () => Response.json({ error: 'Not found' })),
     );
     await checkForUpdate();
-    expect(additionsUsers.update).toBeUndefined();
+    expect(additionsUsers).toMatchObject({ update: undefined, updateChecked: false });
 
     vi.stubGlobal(
       'fetch',
       vi.fn(async () => Promise.reject(new Error('Offline'))),
     );
     await checkForUpdate();
-    expect(additionsUsers.update).toBeUndefined();
+    expect(additionsUsers).toMatchObject({ update: undefined, updateChecked: false });
+  });
+
+  test('checks once while a check is in flight, and drops it once signed out', async () => {
+    const info = Promise.withResolvers();
+
+    vi.mocked(getServiceInfo).mockReturnValueOnce(/** @type {any} */ (info.promise));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => Response.json({ version: '0.2.0' })),
+    );
+
+    const checking = checkForUpdate();
+
+    await checkForUpdate();
+    expect(getServiceInfo).toHaveBeenCalledOnce();
+
+    // Signing out forgets the check
+    additionsUsers.updateChecked = false;
+    info.resolve({ package: '@sveltia/cms-additions', version: '0.1.0' });
+    await checking;
+    expect(additionsUsers).toMatchObject({ update: undefined, updateChecked: false });
   });
 
   test('reports nothing for a service that doesn’t give its package name', async () => {
-    additionsUsers.update = { current: '0.1.0', latest: '0.2.0' };
     vi.mocked(getServiceInfo).mockResolvedValue(/** @type {any} */ ({ version: '0.1.0' }));
     vi.stubGlobal('fetch', vi.fn());
 
     await checkForUpdate();
 
-    expect(additionsUsers.update).toBeUndefined();
+    expect(additionsUsers).toMatchObject({ update: undefined, updateChecked: true });
     expect(fetch).not.toHaveBeenCalled();
   });
 

@@ -14,6 +14,7 @@ import {
   isAcceptedFile,
   keepsFileFormat,
 } from '$lib/services/integrations/media-libraries/default';
+import { getOrCreate, memoizeOnSource } from '$lib/services/utils/cache';
 import { createPath, getDirName, getGitHash } from '$lib/services/utils/file';
 import { LINK_SANITIZE_OPTIONS } from '$lib/services/utils/string';
 
@@ -129,10 +130,19 @@ export const convertFileItemToAsset = async ({
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft containing the resource.
  * @param {string} [args.targetFolderPath] Target folder path.
+ * @param {string} [args.sha] Git object ID to limit the assets to. Only the files with that content
+ * are named and converted, which is much cheaper when looking for the same file.
  * @returns {Promise<Asset[]>} Assets.
  */
-export const getUnsavedAssets = async ({ draft, targetFolderPath }) => {
-  const items = Object.entries(draft.files);
+export const getUnsavedAssets = async ({ draft, targetFolderPath, sha }) => {
+  let items = Object.entries(draft.files);
+
+  if (sha !== undefined) {
+    // The Git hash is memoized per file, so the files already in the draft aren’t read again
+    const hashes = await Promise.all(items.map(([, { file }]) => getGitHash(file)));
+
+    items = items.filter((_item, index) => hashes[index] === sha);
+  }
 
   // The slug is only needed to fill a file name template, and generating it can be costly
   const defaultLocaleSlug = items.some(([, { nameTemplate }]) => nameTemplate)
@@ -190,18 +200,37 @@ const getEntryAssetBasePath = (draft, folder, locale) => {
 };
 
 /**
- * Get the saved assets relevant to the current entry draft and folder. For entry-relative folders,
- * the result is filtered to only include assets within the folder the entry’s relative assets are
- * saved to, preventing false duplicate detection across entries that share the same folder config
- * template.
+ * Get the saved assets by their Git object ID, in the order of {@link allAssets}. The index is only
+ * built again once the asset list has been replaced.
+ */
+const getSavedAssetsBySha = memoizeOnSource(
+  () => allAssets.current,
+  (assets) => {
+    /** @type {Map<string, Asset[]>} */
+    const map = new Map();
+
+    assets.forEach((asset) => {
+      getOrCreate(map, asset.sha, () => /** @type {Asset[]} */ ([])).push(asset);
+    });
+
+    return map;
+  },
+);
+
+/**
+ * Get the saved assets with the given content that are relevant to the current entry draft and
+ * folder. For entry-relative folders, the result is filtered to only include assets within the
+ * folder the entry’s relative assets are saved to, preventing false duplicate detection across
+ * entries that share the same folder config template.
  * @param {EntryDraft} draft Entry draft.
  * @param {AssetFolderInfo | undefined} folder Asset folder associated with the field.
+ * @param {string} sha Git object ID of the assets.
  * @param {InternalLocaleCode} [locale] Locale being edited, whose entry file the assets are stored
  * beside. Default: the default locale.
  * @returns {Asset[]} Filtered saved assets.
  */
-const getSavedAssetsForEntry = (draft, folder, locale) => {
-  const savedAssets = allAssets.current;
+const getSavedAssetsForEntry = (draft, folder, sha, locale) => {
+  const savedAssets = getSavedAssetsBySha().get(sha) ?? [];
 
   if (!folder?.entryRelative) {
     return savedAssets;
@@ -378,14 +407,17 @@ const resolveFileResource = async ({ draft, resource, libraryConfig, accept, loc
    * @param {File} _file File.
    * @returns {Promise<Asset | undefined>} Asset.
    */
-  const findExistingAsset = async (_file) =>
-    findSameAsset({
+  const findExistingAsset = async (_file) => {
+    const sha = await getGitHash(_file);
+
+    // Only the assets with the same content can match, so the rest aren’t listed at all
+    return findSameAsset({
       draft,
       assets: [
-        ...getSavedAssetsForEntry(draft, folder, locale),
-        ...(await getUnsavedAssets({ draft })),
+        ...getSavedAssetsForEntry(draft, folder, sha, locale),
+        ...(await getUnsavedAssets({ draft, sha })),
       ],
-      sha: await getGitHash(_file),
+      sha,
       name: _file.name,
       folder,
       subfolderPath,
@@ -393,6 +425,7 @@ const resolveFileResource = async ({ draft, resource, libraryConfig, accept, loc
       locale,
       slugificationEnabled: libraryConfig?.slugify_filename,
     });
+  };
 
   // Check if the selected file has already been uploaded or is pending upload, otherwise
   // duplicate files lead to an `each_key_duplicate` error in Svelte. A file identical to an

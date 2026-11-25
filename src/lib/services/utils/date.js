@@ -31,6 +31,18 @@ export const DATE_TIME_FORMAT_OPTIONS = { ...DATE_FORMAT_OPTIONS, ...TIME_FORMAT
  * @type {Map<string, Intl.DateTimeFormat>}
  */
 const dateTimeFormatterCache = new Map();
+/**
+ * Formatters used by {@link formatRecentDateTime}, keyed by locale and by which parts of the date
+ * are shown: the time alone, the date without the year, or the full date. A history list formats
+ * many timestamps with the same few formatters.
+ * @type {Map<string, Intl.DateTimeFormat>}
+ */
+const recentDateTimeFormatterCache = new Map();
+/**
+ * Formatters used by {@link formatMonthDay}, keyed by locale.
+ * @type {Map<string, Intl.DateTimeFormat>}
+ */
+const monthDayFormatterCache = new Map();
 
 /**
  * Format the date to a localized string.
@@ -67,11 +79,38 @@ export const formatRecentDateTime = ({ timestamp, locale, now = new Date() }) =>
   const sameDay =
     sameYear && now.getMonth() === timestamp.getMonth() && now.getDate() === timestamp.getDate();
 
-  return timestamp.toLocaleString(locale, {
-    year: sameYear ? undefined : 'numeric',
-    month: sameDay ? undefined : 'short',
-    day: sameDay ? undefined : 'numeric',
-    hour: 'numeric',
-    minute: 'numeric',
-  });
+  // Same as what `toLocaleString()` gives, where `format()` would throw
+  if (Number.isNaN(timestamp.getTime())) {
+    return 'Invalid Date';
+  }
+
+  const shape = sameDay ? 'time' : sameYear ? 'date' : 'year';
+
+  return getOrCreate(
+    recentDateTimeFormatterCache,
+    `${locale ?? ''}|${shape}`,
+    () =>
+      new Intl.DateTimeFormat(locale, {
+        year: shape === 'year' ? 'numeric' : undefined,
+        month: shape === 'time' ? undefined : 'short',
+        day: shape === 'time' ? undefined : 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+      }),
+  ).format(timestamp);
 };
+
+/**
+ * Format the month and day of the given date briefly, e.g. `Nov 25`.
+ * @param {Date} date Date.
+ * @param {LocaleCode} [locale] Locale.
+ * @returns {string} Formatted date.
+ */
+export const formatMonthDay = (date, locale) =>
+  Number.isNaN(date.getTime())
+    ? 'Invalid Date'
+    : getOrCreate(
+        monthDayFormatterCache,
+        locale ?? '',
+        () => new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }),
+      ).format(date);

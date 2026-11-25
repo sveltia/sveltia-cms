@@ -43,7 +43,7 @@ const getConflictingFiles = async (files, listedAssets) =>
           return file;
         }
 
-        return listedAssets.some((a) => foldFileName(a.name) === name && a.sha === sha)
+        return listedAssets.some((a) => a.sha === sha && foldFileName(a.name) === name)
           ? undefined
           : file;
       }),

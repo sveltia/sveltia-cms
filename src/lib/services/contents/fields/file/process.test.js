@@ -551,6 +551,40 @@ describe('Test processResource()', () => {
     expect(Object.keys(draft.files)).toHaveLength(0);
   });
 
+  test('should look up the assets again once the asset list is replaced', async () => {
+    // @ts-ignore - Simplified draft for testing
+    const draft = { files: {} };
+    const folder = { name: 'uploads' };
+    // @ts-ignore - Simplified config for testing
+    const libraryConfig = {};
+
+    /**
+     * Process a new file in the folder.
+     * @returns {Promise<any>} Result.
+     */
+    const process = () =>
+      processResource({
+        // @ts-ignore - Simplified types for testing
+        draft,
+        // @ts-ignore - Simplified types for testing
+        resource: { file: new File(['content'], 'test.jpg', { type: 'image/jpeg' }), folder },
+        libraryConfig,
+      });
+
+    getGitHashMock.mockResolvedValue('git-hash');
+    equalMock.mockReturnValue(true);
+    getAssetPublicURLMock.mockImplementation((/** @type {any} */ asset) => `/${asset.path}`);
+    allAssets.current = /** @type {any} */ ([
+      { sha: 'other-hash', folder, path: 'uploads/other.jpg' },
+      { sha: 'git-hash', folder, path: 'uploads/first.jpg' },
+    ]);
+    expect((await process()).value).toBe('/uploads/first.jpg');
+    allAssets.current = /** @type {any} */ ([
+      { sha: 'git-hash', folder, path: 'uploads/second.jpg' },
+    ]);
+    expect((await process()).value).toBe('/uploads/second.jpg');
+  });
+
   test('should use an existing asset in another folder with the same path', async () => {
     // https://github.com/sveltia/sveltia-cms/issues/1182 — two collections with the same
     // `media_folder`, and the asset assigned to the folder of the other collection
@@ -2017,6 +2051,37 @@ describe('Test getUnsavedAssets()', () => {
     // The files themselves keep their names until the entry is saved
     expect(result[0].file).toBe(mockFile1);
     expect(getSlugs).toHaveBeenCalledOnce();
+  });
+
+  test('should only list the files with the given content', async () => {
+    const { getUnsavedAssets } = await import('./process');
+    const { getSlugs } = await import('$lib/services/contents/draft/slugs');
+    const mockFile1 = new File(['content1'], 'test1.jpg', { type: 'image/jpeg' });
+    const mockFile2 = new File(['content2'], 'test2.jpg', { type: 'image/jpeg' });
+
+    getGitHashMock.mockImplementation(async (/** @type {File} */ file) =>
+      file === mockFile1 ? 'hash1' : 'hash2',
+    );
+
+    /** @type {any} */
+    const draft = {
+      files: {
+        'blob:url-1': {
+          file: mockFile1,
+          folder: undefined,
+          nameTemplate: { template: '{{slug}}-{{filename}}', randomValues: new Map() },
+        },
+        'blob:url-2': { file: mockFile2, folder: undefined },
+      },
+    };
+
+    const result = await getUnsavedAssets({ draft, sha: 'hash2' });
+
+    expect(result.map(({ blobURL, sha }) => ({ blobURL, sha }))).toEqual([
+      { blobURL: 'blob:url-2', sha: 'hash2' },
+    ]);
+    // The other file, which has a file name template, isn’t named
+    expect(getSlugs).not.toHaveBeenCalled();
   });
 
   test('should handle empty draft files', async () => {

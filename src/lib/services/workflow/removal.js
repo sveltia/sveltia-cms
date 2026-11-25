@@ -57,6 +57,13 @@ export const discardWorkflowEntry = async (entry) => {
   await workflow.discard(pullRequest);
   clearUnpublishedEntry(pullRequest, removeWorkflowAssets);
 
+  const additions = getAdditions();
+
+  // The rest only tidies up the comments kept by Sveltia CMS Additions
+  if (!additions) {
+    return;
+  }
+
   const { collectionName, fileName } = entry.workflow;
   // A collection file is keyed by its name, as in the editor, while its `subPath` is the file path
   const key = getEntryKey(collectionName, fileName ?? entry.subPath);
@@ -71,10 +78,10 @@ export const discardWorkflowEntry = async (entry) => {
 
   if (!publishedEntry) {
     // A draft that was never published takes its comments along
-    getAdditions()?.deleteEntryComments(key);
+    additions.deleteEntryComments(key);
   } else if (publishedEntry.subPath !== entry.subPath) {
     // The comments moved with the rename when the draft was saved; give them back
-    getAdditions()?.moveEntryConversation(key, getEntryKey(collectionName, publishedEntry.subPath));
+    additions.moveEntryConversation(key, getEntryKey(collectionName, publishedEntry.subPath));
   }
 };
 

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { callEventHooks } from '$lib/services/api/events';
+import { getAdditions } from '$lib/services/app/additions';
 import { getAssetBlob } from '$lib/services/assets/info';
 import { allAssets } from '$lib/services/assets/state';
 import { backend } from '$lib/services/backends';
@@ -1097,6 +1098,19 @@ describe('workflow/removal', () => {
       await discardWorkflowEntry(entry);
 
       expect(additions.moveEntryConversation).toHaveBeenCalledWith('posts/hello', 'posts/hi');
+      expect(additions.deleteEntryComments).not.toHaveBeenCalled();
+    });
+
+    test('skips the published entry lookup without Sveltia CMS Additions', async () => {
+      const entry = createEntry('cms/posts/hello');
+
+      vi.mocked(getAdditions).mockReturnValueOnce(undefined);
+      vi.mocked(getEntriesByCollection).mockClear();
+      upsertUnpublishedEntry(entry);
+      await discardWorkflowEntry(entry);
+
+      expect(workflowService.discard).toHaveBeenCalledWith(entry.workflow.pullRequest);
+      expect(getEntriesByCollection).not.toHaveBeenCalled();
       expect(additions.deleteEntryComments).not.toHaveBeenCalled();
     });
   });

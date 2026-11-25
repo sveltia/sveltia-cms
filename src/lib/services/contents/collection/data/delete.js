@@ -1,5 +1,6 @@
 import { getAdditions } from '$lib/services/app/additions';
 import { allAssets } from '$lib/services/assets/state';
+import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { saveChanges } from '$lib/services/backends/save';
 import { allEntries } from '$lib/services/contents';
 import { selectedCollection } from '$lib/services/contents/collection';
@@ -128,10 +129,13 @@ export const deleteEntries = async (entries, assets = []) => {
 
   updateStores({ ids, assetPaths });
 
-  // Comments kept by Sveltia CMS Additions go with their entry, in the background
-  if (collection) {
-    entries.forEach(({ subPath }) => {
-      getAdditions()?.deleteEntryComments(getEntryKey(collection.name, subPath));
-    });
+  const additions = getAdditions();
+
+  // Comments kept by Sveltia CMS Additions go with their entry, in the background. Only a few
+  // requests are sent at a time, as each entry needs one when the comment counts are unknown
+  if (collection && additions) {
+    runConcurrently(entries, ({ subPath }) =>
+      additions.deleteEntryComments(getEntryKey(collection.name, subPath)),
+    );
   }
 };

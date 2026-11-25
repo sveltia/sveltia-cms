@@ -21,6 +21,7 @@ import {
   GLOBAL_MEDIA_TAG_REGEX,
   MEDIA_TAG_REGEX,
 } from '$lib/services/contents/fields/rich-text/previews/media-urls';
+import { getOrCreate } from '$lib/services/utils/cache';
 import { decodeURIComponentSafely } from '$lib/services/utils/url';
 
 /**
@@ -320,43 +321,64 @@ const getNewURL = (matcher, indexes, source) => {
 };
 
 /**
+ * Media URLs found in the field values of each entry, keyed by the value map, then by key path. The
+ * URLs don’t depend on the targets, so a value is only parsed once however many assets are looked
+ * up, e.g. as the user goes from asset to asset in the details panel. The value is kept along with
+ * the URLs, because a value map is modified in place when a reference is replaced.
+ * @type {WeakMap<FlattenedEntryContent, Map<FieldKeyPath, { value: string, sources: string[] }>>}
+ */
+const mediaSourceCache = new WeakMap();
+
+/**
+ * Get the media URLs in the given value, read as a Markdown body, which finds the media tags of
+ * HTML as well, and also as HTML if a tag is missed, e.g. with `<` in an attribute value. The
+ * format of a body isn’t known until its field is, which is a costly lookup, so both are taken.
+ * @param {string} value Field value.
+ * @returns {string[]} URLs.
+ */
+const getCandidateMediaSources = (value) => {
+  if (!value.includes('![') && !MEDIA_TAG_REGEX.test(value)) {
+    return [];
+  }
+
+  const sources = getRichTextMediaSources(value, 'markdown');
+  let tagCount = 0;
+
+  for (const { groups } of value.matchAll(MARKDOWN_MEDIA_REGEX)) {
+    if (groups?.tag) {
+      tagCount += 1;
+    }
+  }
+
+  return (value.match(GLOBAL_MEDIA_TAG_REGEX)?.length ?? 0) > tagCount
+    ? [...new Set([...sources, ...getRichTextMediaSources(value, 'html')])]
+    : sources;
+};
+
+/**
  * Check if the given value may refer to any of the targets, from its text alone. A value refers to
  * a target either as a whole, in a media field, or as a media URL in a Markdown or HTML body, so a
- * value that’s neither can be skipped before the costly field lookup. The format of a body isn’t
- * known until the field is, so it’s read as Markdown, which finds the media tags of HTML as well,
- * and only parsed as HTML if a tag is missed, e.g. with `<` in an attribute value.
+ * value that’s neither can be skipped before the costly field lookup.
  * @param {AssetReferenceMatcher} matcher Matcher, which must not need to resolve values.
+ * @param {FlattenedEntryContent} content Value map holding the value.
+ * @param {FieldKeyPath} keyPath Key path of the value.
  * @param {string} value Field value.
  * @returns {boolean} Result.
  */
-const mayReferToTargets = (matcher, value) => {
+const mayReferToTargets = (matcher, content, keyPath, value) => {
   if (getURLTargets(matcher, value)) {
     return true;
   }
 
-  if (!value.includes('![') && !MEDIA_TAG_REGEX.test(value)) {
-    return false;
+  const cache = getOrCreate(mediaSourceCache, content, () => new Map());
+  let cached = cache.get(keyPath);
+
+  if (cached?.value !== value) {
+    cached = { value, sources: getCandidateMediaSources(value) };
+    cache.set(keyPath, cached);
   }
 
-  /**
-   * Check if any of the given media URLs refers to a target.
-   * @param {string[]} sources URLs.
-   * @returns {boolean} Result.
-   */
-  const hasTarget = (sources) => sources.some((src) => !!getURLTargets(matcher, src));
-
-  if (hasTarget(getRichTextMediaSources(value, 'markdown'))) {
-    return true;
-  }
-
-  const tagCount = [...value.matchAll(MARKDOWN_MEDIA_REGEX)].filter(
-    ({ groups }) => groups?.tag,
-  ).length;
-
-  return (
-    (value.match(GLOBAL_MEDIA_TAG_REGEX)?.length ?? 0) > tagCount &&
-    hasTarget(getRichTextMediaSources(value, 'html'))
-  );
+  return cached.sources.some((/** @type {string} */ src) => !!getURLTargets(matcher, src));
 };
 
 /**
@@ -508,7 +530,7 @@ const findAssetReferences = (targets, { entries, every = false, onMatch }) => {
         if (typeof value !== 'string' || !value) continue;
         // Pre-filter: skip values that can’t possibly refer to the targets, avoiding the expensive
         // getField() call for the vast majority of fields.
-        if (!matcher.resolves && !mayReferToTargets(matcher, value)) continue;
+        if (!matcher.resolves && !mayReferToTargets(matcher, content, keyPath, value)) continue;
 
         // Resolved only once a value passes the pre-filter, as most entries have none that does
         collections ??= getAssociatedCollections(entry).map((collection) => {

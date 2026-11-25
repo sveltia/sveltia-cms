@@ -103,6 +103,34 @@ describe('loadConversation', () => {
     await loadConversation(KEY);
     expect(conversations.entries[KEY]).toMatchObject({ error: '', comments: [] });
   });
+
+  test('keeps the items of the comments that haven’t changed', async () => {
+    const date = '2026-10-13T00:00:00Z';
+
+    vi.mocked(fetchComments).mockResolvedValue({
+      items: [createItem('c1', date), createItem('c2', date)],
+      hasMore: false,
+    });
+    await loadConversation(KEY);
+
+    const [first, second] = conversations.entries[KEY].comments;
+
+    vi.mocked(fetchComments).mockResolvedValue({
+      items: [
+        createItem('c1', date),
+        { ...createItem('c2', date), body: 'Edited' },
+        createItem('c3', date),
+      ],
+      hasMore: false,
+    });
+    await loadConversation(KEY);
+
+    const { comments } = conversations.entries[KEY];
+
+    expect(comments[0]).toBe(first);
+    expect(comments[1]).not.toBe(second);
+    expect(comments.map(({ body }) => body)).toEqual(['c1', 'Edited', 'c3']);
+  });
 });
 
 describe('loadConversation with earlier keys', () => {

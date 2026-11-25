@@ -102,6 +102,24 @@ const getState = (key) => {
 };
 
 /**
+ * Keep the items already shown for the comments that haven’t changed, so a conversation loaded
+ * again, e.g. whenever another user changes one of its comments, doesn’t render them all again.
+ * @param {ConversationItem[]} shown Items shown.
+ * @param {ConversationItem[]} items Items loaded.
+ * @returns {ConversationItem[]} Loaded items, with each unchanged one replaced by the one shown.
+ */
+const reuseItems = (shown, items) => {
+  const shownById = new Map(shown.map((item) => [item.id, item]));
+
+  return items.map((item) => {
+    const shownItem = shownById.get(item.id);
+
+    // Compare every field, as the author’s name or the permissions can change without an edit
+    return shownItem && JSON.stringify(shownItem) === JSON.stringify(item) ? shownItem : item;
+  });
+};
+
+/**
  * Load the comments on an entry. On failure, those loaded before stay.
  * @param {string} key Entry key.
  * @param {string[]} [aliasKeys] Keys the entry’s comments are still kept under from before it was
@@ -146,7 +164,13 @@ export const loadConversation = async (key, aliasKeys = []) => {
     return;
   }
 
-  Object.assign(getState(key), {
+  const state = getState(key);
+
+  if (result.comments) {
+    result.comments = reuseItems(state.comments, result.comments);
+  }
+
+  Object.assign(state, {
     // Missing a change made here since the load started
     ...(sequence.changes === changes ? result : {}),
     loading: false,

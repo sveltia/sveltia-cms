@@ -827,6 +827,34 @@ describe('getEntriesByAssets()', () => {
     expect(getField).toHaveBeenCalledTimes(4);
   });
 
+  test('reads the media URLs of a body once for every lookup, until the body changes', async () => {
+    await setup();
+
+    const matchAll = vi.spyOn(String.prototype, 'matchAll');
+    const content = { body: 'Hi ![one](/uploads/1.jpg)' };
+    const a = createEntry('a', content);
+
+    await expect(
+      getEntriesByAssets([{ url: '/uploads/1.jpg' }], { entries: [a] }),
+    ).resolves.toEqual([[a]]);
+    await expect(
+      getEntriesByAssets([{ url: '/uploads/2.jpg' }], { entries: [a] }),
+    ).resolves.toEqual([[]]);
+
+    // The body is only parsed for the first lookup
+    expect(matchAll).toHaveBeenCalledTimes(1);
+
+    // A value replaced in place, e.g. by a rename, is parsed again
+    content.body = 'Hi ![two](/uploads/2.jpg)';
+
+    await expect(
+      getEntriesByAssets([{ url: '/uploads/2.jpg' }], { entries: [a] }),
+    ).resolves.toEqual([[a]]);
+    expect(matchAll).toHaveBeenCalledTimes(2);
+
+    matchAll.mockRestore();
+  });
+
   test('lists each entry using any of the targets once', async () => {
     await setup();
 

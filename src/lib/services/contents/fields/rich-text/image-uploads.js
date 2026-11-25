@@ -4,6 +4,8 @@ import {
   processResources,
 } from '$lib/services/contents/fields/file/resources';
 import { getPreferredLibraryNames } from '$lib/services/integrations/media-libraries/options';
+import { getGitHash } from '$lib/services/utils/file';
+import { createConcurrencyLimiter } from '$lib/services/utils/scheduling';
 
 /**
  * @import {
@@ -88,9 +90,16 @@ export const sortDroppedImages = ({ images, srcFieldConfig, assetOptions }) => {
 };
 
 /**
+ * Maximum number of dropped or pasted files processed at the same time. Processing can decode and
+ * encode an image, which is heavy on memory, so only a few run at once.
+ */
+const MAX_CONCURRENT_FILES = 4;
+
+/**
  * Insert the images dropped or pasted into the rich text editor that go in right away, in order. A
  * file is saved to the repository along with the entry first, and a remote image is linked by its
- * URL. Nothing more is inserted once the editor shows other content.
+ * URL. The files are processed a few at a time, while the images are inserted in their original
+ * order. Nothing more is processed or inserted once the editor shows other content.
  * @param {ImageInsertionArgs & { images: ImageEntry[] }} args Arguments.
  * @returns {Promise<boolean>} Whether every image has been handled, `false` if the editor has
  * moved on to other content in the meantime.
@@ -104,24 +113,53 @@ export const insertInlineImages = async ({
   isCurrent,
   insertImage,
 }) => {
+  const limit = createConcurrencyLimiter(MAX_CONCURRENT_FILES);
+
+  // A file checks whether the same file is already pending, which an identical file in the same
+  // batch can’t be until its own processing is done, so such a file shares the result of the first
+  // one instead, as in `processUniqueFiles()`. A file that can’t be read is processed on its own,
+  // which reports it as invalid. The Git hash is memoized per file, so it’s not computed again
+  const hashes = await Promise.all(
+    images.map(({ file }) => (file ? getGitHash(file).catch(() => undefined) : undefined)),
+  );
+
+  /** @type {Promise<string | undefined>[]} */
+  const values = [];
+
+  images.forEach(({ file, src }, index) => {
+    const hash = hashes[index];
+    const firstIndex = hash === undefined ? index : hashes.indexOf(hash);
+
+    if (!file) {
+      values.push(Promise.resolve(src));
+    } else if (firstIndex !== index) {
+      values.push(values[firstIndex]);
+    } else {
+      values.push(
+        limit(async () =>
+          // Don’t cache a file for a draft the editor no longer shows
+          isCurrent()
+            ? (await processResource({ draft, resource: { file, folder }, libraryConfig, locale }))
+                .value
+            : undefined,
+        ),
+      );
+    }
+  });
+
+  // The results are awaited in order below, so a failure after an earlier one isn’t reported as
+  // an unhandled rejection
+  values.forEach((value) => {
+    value.catch(() => {});
+  });
+
   // eslint-disable-next-line no-restricted-syntax
-  for (const { file, src: externalSrc, alt = '' } of images) {
-    let src = externalSrc;
+  for (const [index, { file, alt = '' }] of images.entries()) {
+    // eslint-disable-next-line no-await-in-loop
+    const src = await values[index];
 
-    if (file) {
-      // eslint-disable-next-line no-await-in-loop
-      const { value } = await processResource({
-        draft,
-        resource: { file, folder },
-        libraryConfig,
-        locale,
-      });
-
-      if (!isCurrent()) {
-        return false;
-      }
-
-      src = value;
+    if (file && !isCurrent()) {
+      return false;
     }
 
     if (src) {

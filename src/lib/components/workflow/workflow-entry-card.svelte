@@ -19,6 +19,7 @@
   import { getCollectionFile } from '$lib/services/contents/collection/files';
   import { getUnpublishedEntryEditorPath } from '$lib/services/contents/editor/route';
   import { deployments, productionSHA } from '$lib/services/deployments';
+  import { formatMonthDay } from '$lib/services/utils/date';
   import { checkPublishedVersion, getPublishAction } from '$lib/services/workflow';
   import { getCompanionNotes, getUnpublishedEntryLabel } from '$lib/services/workflow/board';
   import { getWorkflowStages } from '$lib/services/workflow/stages';
@@ -155,10 +156,7 @@ a merged or read-only one, or one with no other stage to move to -->
         <span role="none" class="author"><bdi>{pullRequest.author.name}</bdi></span>
       {/if}
       <span role="none" class="date">
-        {pullRequest.updatedDate.toLocaleDateString(appLocale.current, {
-          month: 'short',
-          day: 'numeric',
-        })}
+        {formatMonthDay(pullRequest.updatedDate, appLocale.current)}
       </span>
       {#if pullRequest.fork}
         <span role="none" class="note">{_('workflow.from_fork')}</span>

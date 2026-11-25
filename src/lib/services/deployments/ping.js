@@ -1,16 +1,19 @@
+import { SvelteMap } from 'svelte/reactivity';
+
 import { PING_TTL } from '$lib/services/deployments/constants';
 import { sendRequest } from '$lib/services/utils/networking';
-import { createRawState } from '$lib/services/utils/state.svelte';
 
 /**
  * @import { PageLiveness } from '$lib/types/private';
  */
 
 /**
- * Liveness of preview pages, keyed by the full URL.
- * @type {{ current: Record<string, PageLiveness> }}
+ * Liveness of preview pages, keyed by the full URL. A reactive map, so a component reading one page
+ * only re-renders when that page’s result changes, not when any other page is checked: every row of
+ * a long entry list can read it.
+ * @type {SvelteMap<string, PageLiveness>}
  */
-export const pageLiveness = createRawState({});
+export const pageLiveness = new SvelteMap();
 
 /**
  * How many pages to remember. A result is only useful for {@link PING_TTL}, so the cap is about
@@ -48,11 +51,10 @@ const prune = () => {
     }
   });
 
-  dropped.forEach((url) => cache.delete(url));
-
-  pageLiveness.current = Object.fromEntries(
-    Object.entries(pageLiveness.current).filter(([url]) => !dropped.has(url)),
-  );
+  dropped.forEach((url) => {
+    cache.delete(url);
+    pageLiveness.delete(url);
+  });
 };
 
 /**
@@ -100,7 +102,7 @@ const request = async (url) => {
  */
 export const pingURL = async (url, { recheckPending = false } = {}) => {
   const cached = cache.get(url);
-  const recheck = recheckPending && pageLiveness.current[url] === 'pending';
+  const recheck = recheckPending && pageLiveness.get(url) === 'pending';
 
   if (cached && !recheck && Date.now() - cached.time < PING_TTL) {
     return cached.promise;
@@ -128,10 +130,9 @@ export const pingURL = async (url, { recheckPending = false } = {}) => {
 
   // Skip an update that changes nothing, so a component checking the URL from an effect that reads
   // the state doesn’t loop
-  pageLiveness.current =
-    pageLiveness.current[url] === result
-      ? pageLiveness.current
-      : { ...pageLiveness.current, [url]: result };
+  if (pageLiveness.get(url) !== result) {
+    pageLiveness.set(url, result);
+  }
 
   return result;
 };
@@ -142,5 +143,5 @@ export const pingURL = async (url, { recheckPending = false } = {}) => {
  */
 export const resetPageLiveness = () => {
   cache.clear();
-  pageLiveness.current = {};
+  pageLiveness.clear();
 };

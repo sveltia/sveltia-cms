@@ -56,7 +56,7 @@ describe('PreviewLinkButton', () => {
     deployments.current = {};
     productionSHA.current = '';
     deployPollTimedOut.current = false;
-    pageLiveness.current = {};
+    pageLiveness.clear();
   });
 
   test('links to the entry on the live site', async () => {
@@ -173,7 +173,7 @@ describe('PreviewLinkButton', () => {
     // so a URL that hasn’t been checked in the other tests is used
     await renderButton({ entry: createMockEntry({ slug: 'world' }) });
     await expect
-      .poll(() => pageLiveness.current)
+      .poll(() => Object.fromEntries(pageLiveness))
       .toEqual({
         'https://example.com/posts/world': 'unknown',
       });

@@ -31,6 +31,7 @@ vi.mock('$lib/services/workflow', () => {
   const unpublishedEntriesByCollection = vi.fn(() => []);
 
   return {
+    unpublishedEntries: { current: [] },
     getCompanionEntries: companionEntries,
     getUnpublishedEntriesByCollection: unpublishedEntriesByCollection,
     // Mirror the real helper so the tests can drive it through the two it combines
@@ -1592,18 +1593,59 @@ describe('fillTemplate()', async () => {
     expect(
       fillTemplate('{{title}}', { collection, content: { title: 'Intro' }, dirPath: 'docs' }),
     ).toBe('intro-1');
-    expect(renameIfNeeded).toHaveBeenLastCalledWith('intro', ['intro'], { hasExtension: false });
+    expect(renameIfNeeded).toHaveBeenLastCalledWith('intro', ['intro'], {
+      hasExtension: false,
+      foldedNames: new Set(['intro']),
+    });
     expect(
       fillTemplate('{{title}}', { collection, content: { title: 'Intro' }, dirPath: '' }),
     ).toBe('intro-1');
-    expect(renameIfNeeded).toHaveBeenLastCalledWith('intro', ['intro'], { hasExtension: false });
+    expect(renameIfNeeded).toHaveBeenLastCalledWith('intro', ['intro'], {
+      hasExtension: false,
+      foldedNames: new Set(['intro']),
+    });
     expect(
       fillTemplate('{{title}}', { collection, content: { title: 'Intro' }, dirPath: 'blog' }),
     ).toBe('intro');
-    expect(renameIfNeeded).toHaveBeenLastCalledWith('intro', [], { hasExtension: false });
+    expect(renameIfNeeded).toHaveBeenLastCalledWith('intro', [], {
+      hasExtension: false,
+      foldedNames: new Set(),
+    });
 
     vi.mocked(getEntriesInCollectionFolder).mockReturnValue([]);
     vi.mocked(renameIfNeeded).mockImplementation((slug) => slug);
+  });
+
+  test('getExistingSlugs gathers the slugs again only once the entries are replaced', async () => {
+    await setupCmsConfig();
+
+    const { getEntriesInCollectionFolder } =
+      await import('$lib/services/contents/collection/entries');
+
+    const { getPullRequestEntries, unpublishedEntries } = await import('$lib/services/workflow');
+    const { renameIfNeeded } = await import('$lib/services/utils/file');
+    /** @type {any[]} */
+    const entries = [{ slug: 'Intro', locales: {} }];
+
+    vi.mocked(getEntriesInCollectionFolder).mockReturnValue(entries);
+    vi.mocked(getPullRequestEntries).mockClear();
+
+    fillTemplate('{{title}}', { collection, content: { title: 'Intro' } });
+    fillTemplate('{{title}}', { collection, content: { title: 'Intro 2' } });
+
+    // The same entries, so the slugs are only gathered once and folded for the lookup
+    expect(getPullRequestEntries).toHaveBeenCalledTimes(1);
+    expect(renameIfNeeded).toHaveBeenLastCalledWith('intro-2', ['Intro'], {
+      hasExtension: false,
+      foldedNames: new Set(['intro']),
+    });
+
+    // A new list of unpublished entries makes them gathered again
+    /** @type {any} */ (unpublishedEntries).current = [];
+    fillTemplate('{{title}}', { collection, content: { title: 'Intro' } });
+    expect(getPullRequestEntries).toHaveBeenCalledTimes(2);
+
+    vi.mocked(getEntriesInCollectionFolder).mockReturnValue([]);
   });
 
   test('processTransformations with nested template tag generates correct default value', async () => {

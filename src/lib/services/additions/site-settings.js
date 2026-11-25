@@ -101,18 +101,36 @@ export const RELEASES_URL = 'https://github.com/sveltia/sveltia-cms-additions/re
 /**
  * Check whether a newer release of the service is out, so admins know to update it. The latest
  * version is looked up the way the CMS looks up its own, on UNPKG. Nothing is reported if the
- * service or UNPKG can’t be reached.
+ * service or UNPKG can’t be reached, and the check is then done again the next time. Otherwise
+ * it’s done once until the user signs out, which forgets the result.
  * @returns {Promise<void>}
  */
 export const checkForUpdate = async () => {
+  if (additionsUsers.updateChecked) {
+    return;
+  }
+
+  additionsUsers.updateChecked = true;
+
+  /** @type {{ current: string, latest: string } | undefined} */
+  let update;
+  let checked = false;
+
   try {
     const { package: packageName, version: current } = await getServiceInfo();
     // Without a name, the lookup would fall back to the CMS’s own package
     const latest = packageName ? await getLatestVersion({ packageName }) : undefined;
 
-    additionsUsers.update =
-      latest && compareVersions(latest, current) > 0 ? { current, latest } : undefined;
+    update = latest && compareVersions(latest, current) > 0 ? { current, latest } : undefined;
+    checked = !packageName || !!latest;
   } catch {
-    additionsUsers.update = undefined;
+    //
   }
+
+  // The user has signed out meanwhile, which has forgotten the check
+  if (!additionsUsers.updateChecked) {
+    return;
+  }
+
+  Object.assign(additionsUsers, { update, updateChecked: checked });
 };

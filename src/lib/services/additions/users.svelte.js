@@ -62,6 +62,8 @@ import { createGeneration } from '$lib/services/utils/generation';
  * @property {SignUpRule[]} signUpRules Sign-up rules.
  * @property {{ current: string, latest: string } | undefined} update Newer release of the service,
  * if there is one.
+ * @property {boolean} updateChecked Whether the check for a newer release has been done, or is
+ * being done, so it’s done once a session rather than whenever the Administration page opens.
  * @property {boolean} loaded Whether the settings have been loaded, which are edited from a copy of
  * them.
  * @property {AdditionsGitHubStatus | undefined} github GitHub settings and their state.
@@ -78,6 +80,7 @@ const getInitialState = () => ({
   signInMethods: { github: false },
   signUpRules: [],
   update: undefined,
+  updateChecked: false,
   loaded: false,
   github: undefined,
 });

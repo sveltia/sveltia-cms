@@ -33,7 +33,7 @@ describe('Preview page liveness', () => {
       { responseType: 'raw' },
     );
 
-    expect(pageLiveness.current[`${origin}/posts/hello`]).toBe('ready');
+    expect(pageLiveness.get(`${origin}/posts/hello`)).toBe('ready');
   });
 
   test('reports a missing page as still building', async () => {
@@ -93,7 +93,7 @@ describe('Preview page liveness', () => {
 
     vi.mocked(sendRequest).mockResolvedValueOnce(/** @type {any} */ ({ ok: true, status: 200 }));
     await expect(pingURL(`${origin}/a`, { recheckPending: true })).resolves.toBe('ready');
-    expect(pageLiveness.current[`${origin}/a`]).toBe('ready');
+    expect(pageLiveness.get(`${origin}/a`)).toBe('ready');
 
     // A page found live isn’t checked again within the cache window
     await pingURL(`${origin}/a`, { recheckPending: true });
@@ -105,13 +105,14 @@ describe('Preview page liveness', () => {
 
     await pingURL(`${origin}/a`);
 
-    const before = pageLiveness.current;
+    const set = vi.spyOn(pageLiveness, 'set');
 
     vi.setSystemTime(new Date('2026-08-17T00:01:00Z'));
     await pingURL(`${origin}/a`);
 
-    // The same object identity, so a component effect reading the store doesn’t re-run
-    expect(pageLiveness.current).toBe(before);
+    // Not written again, so a component effect reading the store doesn’t re-run
+    expect(set).not.toHaveBeenCalled();
+    set.mockRestore();
   });
 
   test('stops remembering pages once the cap is passed', async () => {
@@ -126,7 +127,7 @@ describe('Preview page liveness', () => {
       await pingURL(url);
     }
 
-    const remembered = pageLiveness.current;
+    const remembered = Object.fromEntries(pageLiveness);
 
     expect(Object.keys(remembered).length).toBeLessThanOrEqual(100);
     // The most recent page is still there
@@ -156,7 +157,7 @@ describe('Preview page liveness', () => {
     await expect(pingURL(urls[0], { recheckPending: true })).resolves.toBe('ready');
     await pingURL(urls[100]);
 
-    const remembered = pageLiveness.current;
+    const remembered = Object.fromEntries(pageLiveness);
 
     // The longest-standing page goes rather than the one just checked
     expect(remembered[urls[0]]).toBe('ready');
@@ -184,7 +185,7 @@ describe('Preview page liveness', () => {
       await pingURL(url);
     }
 
-    const remembered = pageLiveness.current;
+    const remembered = Object.fromEntries(pageLiveness);
 
     // The stale ones were the first to go, so every recent page survives
     recent.forEach((url) => expect(remembered[url]).toBe('ready'));
@@ -197,7 +198,7 @@ describe('Preview page liveness', () => {
     await pingURL(`${origin}/a`);
     resetPageLiveness();
 
-    expect(pageLiveness.current).toEqual({});
+    expect(pageLiveness.size).toBe(0);
 
     await pingURL(`${origin}/a`);
 

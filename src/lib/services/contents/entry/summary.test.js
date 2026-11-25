@@ -1,4 +1,5 @@
-import { afterAll, beforeAll, describe, expect, test } from 'vitest';
+import { marked } from 'marked';
+import { afterAll, afterEach, beforeAll, describe, expect, test } from 'vitest';
 
 import { allEntries, allEntryFolders } from '$lib/services/contents';
 import {
@@ -538,6 +539,110 @@ describe('Test getEntrySummary()', () => {
 });
 
 describe('Test sanitizeEntrySummary()', () => {
+  test.each([true, false])(
+    'returns plain text as is, trimmed (allowMarkdown=%s)',
+    (allowMarkdown) => {
+      expect(sanitizeEntrySummary('  It’s "Hello", www.example.com  ', { allowMarkdown })).toBe(
+        'It’s "Hello", www.example.com',
+      );
+    },
+  );
+
+  describe('with an extended Marked instance', () => {
+    /**
+     * Turn the given text into upper case.
+     * @param {string} text Text.
+     * @returns {string} Result.
+     */
+    const upper = (text) => text.toUpperCase();
+    /**
+     * Find the start of a `:smile:` shortcode.
+     * @param {string} src Source.
+     * @returns {number} Index.
+     */
+    const start = (src) => src.indexOf(':smile:');
+
+    /**
+     * Tokenize a `:smile:` shortcode.
+     * @param {string} src Source.
+     * @returns {any} Token.
+     */
+    const tokenizer = (src) =>
+      src.startsWith(':smile:') ? { type: 'smile', raw: ':smile:' } : undefined;
+
+    /**
+     * Render a `:smile:` shortcode.
+     * @returns {string} Emoji.
+     */
+    const renderer = () => '😄';
+
+    /**
+     * Upper-case a text token.
+     * @param {any} token Token.
+     */
+    const walkTokens = (token) => {
+      if (token.type === 'text') {
+        token.text = upper(token.text);
+      }
+    };
+
+    /**
+     * Tokenize inline text in upper case.
+     * @param {string} src Source.
+     * @returns {any} Token.
+     */
+    const inlineText = (src) => ({ type: 'text', raw: src, text: upper(src) });
+    /**
+     * Render a text token in upper case.
+     * @param {any} token Token.
+     * @returns {string} Result.
+     */
+    const text = (token) => upper(token.text);
+    /**
+     * Add an exclamation mark to the output.
+     * @param {string} html HTML.
+     * @returns {string} Result.
+     */
+    const postprocess = (html) => `${html}!`;
+    /**
+     * Render a link or a paragraph as a fixed text.
+     * @returns {string} Result.
+     */
+    const renderLink = () => 'a link';
+
+    afterEach(() => {
+      marked.setOptions(marked.getDefaults());
+    });
+
+    test.each([
+      [
+        'an extension',
+        { extensions: [{ name: 'smile', level: 'inline', start, tokenizer, renderer }] },
+        'Hi 😄',
+      ],
+      ['a hook', { hooks: { postprocess } }, 'Hi :smile:!'],
+      ['a token walker', { walkTokens }, 'HI :SMILE:'],
+      ['a tokenizer', { tokenizer: { inlineText } }, 'HI :SMILE:'],
+      ['a text renderer', { renderer: { text } }, 'HI :SMILE:'],
+    ])('parses plain text with %s', (_name, options, expected) => {
+      marked.use(/** @type {any} */ (options));
+
+      expect(sanitizeEntrySummary('Hi :smile:')).toBe(expected);
+    });
+
+    test('parses plain text with a link renderer', () => {
+      marked.use({ renderer: { link: renderLink } });
+
+      expect(sanitizeEntrySummary('See www.example.com')).toBe('See a link');
+    });
+
+    test('takes plain text as is with block renderers only', () => {
+      marked.use({ renderer: { paragraph: renderLink } });
+
+      expect(sanitizeEntrySummary(' Hi ')).toBe('Hi');
+    });
+  });
+
   test('should parse Markdown and sanitize HTML with allowMarkdown=true', () => {
     const input = 'This is **bold** and _italic_ and `code` and <script>alert("xss")</script>';
     const result = sanitizeEntrySummary(input, { allowMarkdown: true });

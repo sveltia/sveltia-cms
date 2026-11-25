@@ -23,6 +23,7 @@ import {
   onSocketMessage,
   RECONNECT_DELAYS,
   socketState,
+  STABLE_CONNECTION_TIME,
   startSocket,
 } from '$lib/services/additions/socket.svelte';
 import { user } from '$lib/services/user/account.svelte';
@@ -294,6 +295,88 @@ describe('connectSocket', () => {
 
     await vi.advanceTimersByTimeAsync(total + /** @type {number} */ (RECONNECT_DELAYS.at(-1)));
     expect(fetchAdditions).toHaveBeenCalledTimes(RECONNECT_DELAYS.length + 2);
+  });
+
+  test.each([401, 403])(
+    'stops trying once the service refuses the ticket with %i',
+    async (status) => {
+      vi.useFakeTimers();
+      vi.mocked(fetchAdditions).mockRejectedValue(new Error('Refused', { cause: { status } }));
+
+      await connectSocket();
+      expect(socketState.status).toBe('unavailable');
+      await vi.runAllTimersAsync();
+      expect(fetchAdditions).toHaveBeenCalledOnce();
+      expect(FakeWebSocket.instances).toHaveLength(0);
+    },
+  );
+
+  test('tries again when the session has been replaced while the ticket was refused', async () => {
+    vi.useFakeTimers();
+
+    const { account } = user;
+
+    vi.mocked(fetchAdditions).mockImplementationOnce(async () => {
+      // A new session, e.g. after a password change, while the old one is refused
+      user.account = /** @type {any} */ ({ ...account, refreshToken: 'new-session' });
+
+      throw new Error('Refused', { cause: { status: 401 } });
+    });
+
+    await connectSocket();
+    await vi.advanceTimersByTimeAsync(RECONNECT_DELAYS[0]);
+    expect(fetchAdditions).toHaveBeenCalledTimes(2);
+    expect(fetchAdditions).toHaveBeenLastCalledWith(
+      '/v1/socket/ticket',
+      expect.objectContaining({ token: 'new-session' }),
+    );
+
+    user.account = account;
+  });
+
+  test('starts the backoff over only once a connection has stayed open', async () => {
+    vi.useFakeTimers();
+
+    /**
+     * Get the socket opened last, and answer it with a snapshot.
+     * @returns {FakeWebSocket} Socket.
+     */
+    const answerLatest = () => {
+      const ws = /** @type {FakeWebSocket} */ (FakeWebSocket.instances.at(-1));
+
+      ws.receive({ type: 'snapshot', connection: 'c1', user_id: 'u1', locks: [] });
+
+      return ws;
+    };
+
+    (await connectWithSnapshot()).close();
+    await vi.advanceTimersByTimeAsync(RECONNECT_DELAYS[0]);
+    expect(FakeWebSocket.instances).toHaveLength(2);
+
+    // Dropped right after the snapshot, so the next delay is longer
+    answerLatest().close();
+    await vi.advanceTimersByTimeAsync(RECONNECT_DELAYS[0]);
+    expect(FakeWebSocket.instances).toHaveLength(2);
+    await vi.advanceTimersByTimeAsync(RECONNECT_DELAYS[1] - RECONNECT_DELAYS[0]);
+    expect(FakeWebSocket.instances).toHaveLength(3);
+
+    // Dropped after staying open for a while, so the shortest delay applies again
+    const ws = answerLatest();
+
+    await vi.advanceTimersByTimeAsync(STABLE_CONNECTION_TIME);
+    ws.close();
+    await vi.advanceTimersByTimeAsync(RECONNECT_DELAYS[0]);
+    expect(FakeWebSocket.instances).toHaveLength(4);
+  });
+
+  test('ignores a message arriving on a socket closed at sign-out', async () => {
+    const ws = await connectWithSnapshot();
+
+    signOut();
+    ws.receive({ type: 'snapshot', connection: 'c1', user_id: 'u1', locks: [BOB_LOCK] });
+    expect(entryLocks.locks).toEqual({});
+    expect(socketState.status).toBe('disconnected');
+    stopLocks = startLocks();
   });
 });
 
