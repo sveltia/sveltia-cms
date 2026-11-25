@@ -6,13 +6,6 @@ import { warnDeprecation, warnedOnceMap, warningMessages } from './deprecations'
 describe('Test warnedOnceMap', () => {
   test('should have all deprecation keys set to false initially', () => {
     expect(warnedOnceMap).toEqual({
-      slug_length: false,
-      slug_editor_tag: false,
-      yaml_quote: false,
-      save_all_locales: false,
-      automatic_deployments: false,
-      multiple_folders_i18n_root: false,
-      omit_default_locale_from_filename: false,
       logo_url: false,
       flat_metadata_keys: false,
     });
@@ -28,11 +21,7 @@ describe('Test warnedOnceMap', () => {
 
 describe('Test warningMessages', () => {
   test('should contain all deprecation warning messages', () => {
-    expect(warningMessages).toHaveProperty('slug_length');
-    expect(warningMessages).toHaveProperty('yaml_quote');
-    expect(warningMessages).toHaveProperty('save_all_locales');
-    expect(warningMessages).toHaveProperty('automatic_deployments');
-    expect(warningMessages).toHaveProperty('multiple_folders_i18n_root');
+    expect(Object.keys(warningMessages)).toEqual(['logo_url', 'flat_metadata_keys']);
   });
 
   test('should have string messages', () => {
@@ -40,53 +29,6 @@ describe('Test warningMessages', () => {
       expect(typeof message).toBe('string');
       expect(message.length).toBeGreaterThan(0);
     });
-  });
-
-  test('should contain useful information in slug_length message', () => {
-    expect(warningMessages.slug_length).toContain('slug_length');
-    expect(warningMessages.slug_length).toContain('deprecated');
-    expect(warningMessages.slug_length).toContain('slug.maxlength');
-    expect(warningMessages.slug_length).toMatch(/\/slugs#global-slug-options$/);
-  });
-
-  test('should contain useful information in slug_editor_tag message', () => {
-    expect(warningMessages.slug_editor_tag).toContain('{{fields._slug}}');
-    expect(warningMessages.slug_editor_tag).toContain('deprecated');
-    expect(warningMessages.slug_editor_tag).toContain('editable: true');
-    expect(warningMessages.slug_editor_tag).toContain('i18n: true');
-  });
-
-  test('should contain useful information in yaml_quote message', () => {
-    expect(warningMessages.yaml_quote).toContain('yaml_quote');
-    expect(warningMessages.yaml_quote).toContain('deprecated');
-    expect(warningMessages.yaml_quote).toContain('output.yaml.quote');
-  });
-
-  test('should contain useful information in save_all_locales message', () => {
-    expect(warningMessages.save_all_locales).toContain('save_all_locales');
-    expect(warningMessages.save_all_locales).toContain('initial_locales');
-  });
-
-  test('should contain useful information in automatic_deployments message', () => {
-    expect(warningMessages.automatic_deployments).toContain('automatic_deployments');
-    expect(warningMessages.automatic_deployments).toContain('skip_ci');
-  });
-
-  test('should contain useful information in multiple_folders_i18n_root message', () => {
-    expect(warningMessages.multiple_folders_i18n_root).toContain('multiple_folders_i18n_root');
-    expect(warningMessages.multiple_folders_i18n_root).toContain('deprecated');
-    expect(warningMessages.multiple_folders_i18n_root).toContain('multiple_root_folders');
-  });
-
-  test('should contain useful information in omit_default_locale_from_filename message', () => {
-    expect(warningMessages.omit_default_locale_from_filename).toContain(
-      'omit_default_locale_from_filename',
-    );
-    expect(warningMessages.omit_default_locale_from_filename).toContain('deprecated');
-    expect(warningMessages.omit_default_locale_from_filename).toContain(
-      'omit_default_locale_from_file_path',
-    );
-    expect(warningMessages.omit_default_locale_from_filename).toMatch(/\/i18n\/options$/);
   });
 
   test('should contain useful information in flat_metadata_keys message', () => {
@@ -99,7 +41,7 @@ describe('Test warningMessages', () => {
     expect(warningMessages.logo_url).toContain('logo_url');
     expect(warningMessages.logo_url).toContain('deprecated');
     expect(warningMessages.logo_url).toContain('logo.src');
-    // It isn’t scheduled for removal in 1.0
+    // It isn’t scheduled for removal in 5.0
     expect(warningMessages.logo_url).toContain('a future version');
   });
 });
@@ -122,7 +64,7 @@ describe('Test warnDeprecation()', () => {
   });
 
   test('should not warn during VITEST environment', () => {
-    warnDeprecation('yaml_quote');
+    warnDeprecation('flat_metadata_keys');
 
     // In VITEST environment, warnDeprecation should return early
     expect(consoleWarnSpy).not.toHaveBeenCalled();
@@ -130,26 +72,20 @@ describe('Test warnDeprecation()', () => {
 
   test('should reset warnedOnceMap between tests', () => {
     // This test verifies that beforeEach properly resets the map
-    expect(warnedOnceMap.slug_length).toBe(false);
-    expect(warnedOnceMap.yaml_quote).toBe(false);
-    expect(warnedOnceMap.save_all_locales).toBe(false);
-    expect(warnedOnceMap.automatic_deployments).toBe(false);
-    expect(warnedOnceMap.multiple_folders_i18n_root).toBe(false);
+    expect(warnedOnceMap.logo_url).toBe(false);
+    expect(warnedOnceMap.flat_metadata_keys).toBe(false);
   });
 
   test('should handle different keys without errors', () => {
     // Even though warnings won't be displayed in tests, the function should not throw
-    expect(() => warnDeprecation('slug_length')).not.toThrow();
-    expect(() => warnDeprecation('yaml_quote')).not.toThrow();
-    expect(() => warnDeprecation('save_all_locales')).not.toThrow();
-    expect(() => warnDeprecation('automatic_deployments')).not.toThrow();
-    expect(() => warnDeprecation('multiple_folders_i18n_root')).not.toThrow();
+    expect(() => warnDeprecation('logo_url')).not.toThrow();
+    expect(() => warnDeprecation('flat_metadata_keys')).not.toThrow();
   });
 
   test('should handle custom message parameter without errors', () => {
     const customMessage = 'This is a custom deprecation warning';
 
-    expect(() => warnDeprecation('save_all_locales', customMessage)).not.toThrow();
+    expect(() => warnDeprecation('logo_url', customMessage)).not.toThrow();
   });
 
   test('should work with valid deprecation keys', () => {
@@ -179,30 +115,30 @@ describe('Test warnDeprecation() outside VITEST environment', () => {
   });
 
   test('should call console.warn with default message on first call', () => {
-    warnDeprecation('yaml_quote');
+    warnDeprecation('flat_metadata_keys');
     expect(consoleWarnSpy).toHaveBeenCalledOnce();
-    expect(consoleWarnSpy).toHaveBeenCalledWith(warningMessages.yaml_quote);
+    expect(consoleWarnSpy).toHaveBeenCalledWith(warningMessages.flat_metadata_keys);
   });
 
   test('should call console.warn with custom message when provided', () => {
     const customMessage = 'Custom deprecation message';
 
-    warnDeprecation('slug_length', customMessage);
+    warnDeprecation('logo_url', customMessage);
     expect(consoleWarnSpy).toHaveBeenCalledOnce();
     expect(consoleWarnSpy).toHaveBeenCalledWith(customMessage);
   });
 
   test('should only warn once per key', () => {
-    warnDeprecation('slug_length');
-    warnDeprecation('slug_length');
-    warnDeprecation('slug_length');
+    warnDeprecation('logo_url');
+    warnDeprecation('logo_url');
+    warnDeprecation('logo_url');
     expect(consoleWarnSpy).toHaveBeenCalledOnce();
-    expect(warnedOnceMap.slug_length).toBe(true);
+    expect(warnedOnceMap.logo_url).toBe(true);
   });
 
   test('should warn independently for different keys', () => {
-    warnDeprecation('slug_length');
-    warnDeprecation('yaml_quote');
+    warnDeprecation('logo_url');
+    warnDeprecation('flat_metadata_keys');
     expect(consoleWarnSpy).toHaveBeenCalledTimes(2);
   });
 });

@@ -188,6 +188,35 @@ describe('config/schema/errors', () => {
       ]);
     });
 
+    test('leaves out an option removed in Sveltia CMS 5.0', () => {
+      expect(
+        collect([
+          {
+            instancePath: '/collections/0',
+            keyword: 'additionalProperties',
+            params: { additionalProperty: 'yaml_quote' },
+          },
+          {
+            instancePath: '/backend',
+            keyword: 'additionalProperties',
+            params: { additionalProperty: 'automatic_deployments' },
+          },
+        ]),
+      ).toEqual({ errors: [], warnings: [] });
+    });
+
+    test('keeps a removed option found where the parser doesn’t report it', () => {
+      expect(
+        collect([
+          {
+            instancePath: '',
+            keyword: 'additionalProperties',
+            params: { additionalProperty: 'automatic_deployments' },
+          },
+        ]).warnings,
+      ).toEqual(['config.warning.schema_unknown_option option=automatic_deployments']);
+    });
+
     test('keeps an unknown option when the object has another problem deeper inside', () => {
       const { errors, warnings } = collect([
         {
@@ -340,6 +369,45 @@ describe('config/schema/errors', () => {
           'config.error.schema_invalid_type option=create ' +
           'type=config.error.schema_value_type.boolean',
       ]);
+    });
+
+    describe('removed i18n structure', () => {
+      /**
+       * Collect the error messages the given errors produce for a configuration with the given
+       * i18n structure.
+       * @param {string} structure Value of the `structure` option.
+       * @returns {string[]} Messages.
+       */
+      const reportStructure = (structure) => {
+        /** @type {any} */
+        const collectors = { errors: new Set(), warnings: new Set() };
+
+        reportSchemaErrors({
+          config: /** @type {any} */ ({ ...config, i18n: { structure, locales: ['en'] } }),
+          errors: /** @type {any} */ ([
+            { instancePath: '/i18n', keyword: 'anyOf', params: {} },
+            {
+              instancePath: '/i18n/structure',
+              keyword: 'enum',
+              params: { allowedValues: ['single_file', 'multiple_files'] },
+            },
+          ]),
+          collectors,
+        });
+
+        return [...collectors.errors];
+      };
+
+      test('leaves out the removed structure, without reporting the object holding it', () => {
+        expect(reportStructure('multiple_folders_i18n_root')).toEqual([]);
+      });
+
+      test('still reports any other invalid structure', () => {
+        const messages = reportStructure('bogus');
+
+        expect(messages).toHaveLength(1);
+        expect(messages[0]).toContain('structure');
+      });
     });
 
     test('keeps locations that share a prefix but not a path', () => {

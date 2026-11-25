@@ -97,7 +97,7 @@ describe('Test resolveAssetFolderPaths()', () => {
   /** @type {InternalI18nOptions} */
   const i18nMultiRootFolder = {
     ...i18nBaseConfig,
-    structure: 'multiple_folders_i18n_root',
+    structure: 'multiple_root_folders',
     structureMap: {
       i18nSingleFile: false,
       i18nSingleFileDefaultRoot: false,

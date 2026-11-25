@@ -70,7 +70,6 @@ describe('git/shared/commits', () => {
     mockCmsConfig.backend = {
       commit_messages: {},
       skip_ci: false,
-      automatic_deployments: undefined,
     };
     mockUser.login = 'test-user';
     mockUser.name = 'Test User';
@@ -360,26 +359,10 @@ describe('git/shared/commits', () => {
       expect(message).toBe('Removed: static/images/photo.jpg');
     });
 
-    it('should handle automatic_deployments config option', () => {
-      mockCmsConfig.backend = {
-        commit_messages: {},
-        skip_ci: undefined,
-        automatic_deployments: false,
-      };
-
-      const message = createCommitMessage(mockChanges, {
-        commitType: 'update',
-        collection: mockCollection,
-      });
-
-      expect(message).toBe('[skip ci] Update Blog Post “my-post”');
-    });
-
     it('should use skipCI parameter to override config', () => {
       mockCmsConfig.backend = {
         commit_messages: {},
         skip_ci: false,
-        automatic_deployments: true,
       };
 
       const message = createCommitMessage(mockChanges, {
@@ -459,28 +442,12 @@ describe('git/shared/commits', () => {
       mockCmsConfig.backend = {
         commit_messages: {},
         skip_ci: true,
-        automatic_deployments: false,
       };
 
       const message = createCommitMessage(mockChanges, {
         commitType: 'update',
         collection: mockCollection,
         skipCI: false,
-      });
-
-      expect(message).toBe('Update Blog Post “my-post”');
-    });
-
-    it('should not apply [skip ci] when automatic_deployments is true and skip_ci is undefined', () => {
-      mockCmsConfig.backend = {
-        commit_messages: {},
-        skip_ci: undefined,
-        automatic_deployments: true,
-      };
-
-      const message = createCommitMessage(mockChanges, {
-        commitType: 'update',
-        collection: mockCollection,
       });
 
       expect(message).toBe('Update Blog Post “my-post”');
@@ -513,37 +480,6 @@ describe('git/shared/commits', () => {
       });
 
       expect(message).toBe('Delete Blog Post “my-post”');
-    });
-
-    it('should not add skip ci when skipCI is explicitly false', () => {
-      mockCmsConfig.backend = {
-        commit_messages: {},
-        skip_ci: true,
-        automatic_deployments: false,
-      };
-
-      const message = createCommitMessage(mockChanges, {
-        commitType: 'update',
-        collection: mockCollection,
-        skipCI: false,
-      });
-
-      expect(message).toBe('Update Blog Post “my-post”');
-    });
-
-    it('should not add skip ci when autoDeploy is true', () => {
-      mockCmsConfig.backend = {
-        commit_messages: {},
-        skip_ci: false,
-        automatic_deployments: true,
-      };
-
-      const message = createCommitMessage(mockChanges, {
-        commitType: 'update',
-        collection: mockCollection,
-      });
-
-      expect(message).toBe('Update Blog Post “my-post”');
     });
 
     it('should handle null collection gracefully', () => {
@@ -585,21 +521,6 @@ describe('git/shared/commits', () => {
       });
 
       expect(message).toBe('Custom message');
-    });
-
-    it('should add [skip ci] when autoDeploy is false and skipCIEnabled is undefined', () => {
-      mockCmsConfig.backend = {
-        commit_messages: {},
-        skip_ci: undefined,
-        automatic_deployments: false,
-      };
-
-      const message = createCommitMessage(mockChanges, {
-        commitType: 'create',
-        collection: mockCollection,
-      });
-
-      expect(message).toBe('[skip ci] Create Blog Post “my-post”');
     });
 
     it('should replace {{author-login}} placeholder in create message', () => {
@@ -868,8 +789,6 @@ describe('git/shared/commits', () => {
 
       mockCmsConfig.backend.skip_ci = true;
       expect(isDeployingCommit({ commitType: 'uploadMedia' })).toBe(false);
-
-      mockCmsConfig.backend = { automatic_deployments: false };
       expect(isDeployingCommit({ commitType: 'create' })).toBe(false);
     });
 

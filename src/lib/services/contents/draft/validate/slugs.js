@@ -243,10 +243,7 @@ export const validateSlugs = (draft) => {
   /** @type {Record<InternalLocaleCode, string[]> | undefined} */
   let takenSlugs;
   // The options are only used for an entry collection, where the slug can be edited
-  const { editorRequired, editorValueIsSlug, pattern } = getSlugOptions(collection);
-  // An existing entry’s slug is edited as a whole. A new entry’s value can be only a part of the
-  // slug, in which case it can’t be told whether the slug is taken
-  const isWholeSlug = !isNew || editorValueIsSlug;
+  const { editorRequired, pattern } = getSlugOptions(collection);
   const allowSpaces = slugCanHaveSpaces();
   // A slug editor that has never been shown, e.g. in a closed sidebar panel, hasn’t set its slug
   // yet, and the slug must still be given
@@ -264,8 +261,7 @@ export const validateSlugs = (draft) => {
           pattern,
           allowSpaces,
           // Only look for other entries when the slug could collide with one
-          takenSlugs:
-            isWholeSlug && slug?.trim() ? (takenSlugs ??= getTakenSlugs(draft))[locale] : [],
+          takenSlugs: slug?.trim() ? (takenSlugs ??= getTakenSlugs(draft))[locale] : [],
           locale,
         })
       : undefined;

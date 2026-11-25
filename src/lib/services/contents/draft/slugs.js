@@ -13,7 +13,7 @@ import {
   getLocalizingKeyPaths,
   getSlugOptions,
   hasLocalizedSlugs,
-  LEGACY_SLUG_EDITOR_TAG,
+  SLUG_EDITOR_TAG,
 } from '$lib/services/contents/collection/slug';
 import { extractDateTime } from '$lib/services/contents/entry';
 import { getOrCreate } from '$lib/services/utils/cache';
@@ -228,7 +228,7 @@ export const getSlugTemplate = ({ draft, locale, templateOnly = false }) => {
   const { template, editorRequired } = getSlugOptions(collection);
 
   if (!templateOnly && !editorRequired && hasTypedSlug({ draft, locale })) {
-    return LEGACY_SLUG_EDITOR_TAG;
+    return SLUG_EDITOR_TAG;
   }
 
   return template;

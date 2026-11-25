@@ -22,16 +22,10 @@ import { usesSingleFileStructure } from '$lib/services/contents/i18n/config';
  */
 
 /**
- * Legacy template tag that shows the slug editor for the default locale.
- * @todo Remove the support prior to the 1.0 release.
+ * Internal template tag that fills the slug with the value typed in the slug editor. It can’t be
+ * used in a configuration: the `{{fields._slug}}` tag written there is reported as removed.
  */
-export const LEGACY_SLUG_EDITOR_TAG = '{{fields._slug}}';
-
-/**
- * Legacy template tag that shows the slug editor for all locales.
- * @todo Remove the support prior to the 1.0 release.
- */
-export const LEGACY_LOCALIZED_SLUG_EDITOR_TAG = '{{fields._slug | localize}}';
+export const SLUG_EDITOR_TAG = '{{fields._slug}}';
 
 /**
  * Get the slug template configured for an entry collection, either as the `slug` option itself or
@@ -52,15 +46,6 @@ export const getConfiguredSlugTemplate = ({ slug }) => {
 };
 
 /**
- * Check whether the given slug template contains one of the legacy slug editor tags.
- * @param {string | undefined} template Slug template.
- * @returns {boolean} Result.
- */
-export const hasLegacySlugEditorTag = (template) =>
-  !!template?.includes(LEGACY_SLUG_EDITOR_TAG) ||
-  !!template?.includes(LEGACY_LOCALIZED_SLUG_EDITOR_TAG);
-
-/**
  * Get the stages at which the slug can be edited.
  * @param {CollectionSlugOptions['editable']} editable The `editable` option. Default: `true`.
  * @returns {SlugEditableStage[]} Stages.
@@ -76,8 +61,7 @@ const getEditableStages = (editable = true) => {
 
 /**
  * Get the normalized slug options of an entry collection. The `slug` option can be a template
- * string, which may contain the legacy slug editor tags, or an object with the template and the
- * slug editor options.
+ * string, or an object with the template and the slug editor options.
  * @param {Collection | InternalCollection} collection Collection. Only an entry collection has
  * slug options; for another collection, the defaults are returned.
  * @returns {InternalSlugOptions} Normalized options.
@@ -102,7 +86,6 @@ export const getSlugOptions = (collection) => {
     return {
       template: '',
       editorRequired: false,
-      editorValueIsSlug: true,
       editable: { create: stages.includes('create'), update },
       localized: options.i18n === true,
       autoIncrement: true,
@@ -111,37 +94,19 @@ export const getSlugOptions = (collection) => {
     };
   }
 
-  const legacyLocalized = !!configuredTemplate?.includes(LEGACY_LOCALIZED_SLUG_EDITOR_TAG);
-  const legacy = hasLegacySlugEditorTag(configuredTemplate);
-  const create = legacy || stages.includes('create');
-  const localized = legacyLocalized || options.i18n === true;
+  const create = stages.includes('create');
 
   // The slug comes from the slug editor alone when it’s explicitly made editable on creation
   // without a template. Otherwise, the slug editor, which is shown by default, is prefilled with
   // the slug the template fills, which defaults to the identifier field
-  const editorOnly =
-    configuredTemplate === undefined && options.editable !== undefined && stages.includes('create');
-
-  const template =
-    configuredTemplate ??
-    (editorOnly
-      ? localized
-        ? LEGACY_LOCALIZED_SLUG_EDITOR_TAG
-        : LEGACY_SLUG_EDITOR_TAG
-      : `{{${identifierField}}}`);
-
-  const editorRequired = hasLegacySlugEditorTag(template);
+  const editorRequired =
+    configuredTemplate === undefined && options.editable !== undefined && create;
 
   return {
-    template,
+    template: configuredTemplate ?? (editorRequired ? SLUG_EDITOR_TAG : `{{${identifierField}}}`),
     editorRequired,
-    // A legacy template can put the slug editor’s value among other tags, e.g.
-    // `{{year}}-{{fields._slug}}`
-    editorValueIsSlug:
-      !editorRequired ||
-      [LEGACY_SLUG_EDITOR_TAG, LEGACY_LOCALIZED_SLUG_EDITOR_TAG].includes(template),
     editable: { create, update },
-    localized,
+    localized: options.i18n === true,
     autoIncrement: false,
     hint: options.hint,
     pattern: options.pattern,

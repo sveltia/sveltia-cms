@@ -26,7 +26,7 @@ import {
  */
 export const DEFAULT_I18N_CONFIG = {
   i18nEnabled: false,
-  saveAllLocales: true,
+  canToggleLocales: false,
   allLocales: [DEFAULT_LOCALE_KEY],
   initialLocales: [DEFAULT_LOCALE_KEY],
   defaultLocale: DEFAULT_LOCALE_KEY,
@@ -96,10 +96,7 @@ export const createStructureMap = (i18nEnabled, structure) => ({
   i18nSingleFileDefaultRoot: i18nEnabled && structure === I18N_STRUCTURES.SINGLE_FILE_DEFAULT_ROOT,
   i18nMultiFile: i18nEnabled && structure === I18N_STRUCTURES.MULTIPLE_FILES,
   i18nMultiFolder: i18nEnabled && structure === I18N_STRUCTURES.MULTIPLE_FOLDERS,
-  i18nMultiRootFolder:
-    i18nEnabled &&
-    (structure === I18N_STRUCTURES.MULTIPLE_FOLDERS_I18N_ROOT || // deprecated
-      structure === I18N_STRUCTURES.MULTIPLE_ROOT_FOLDERS), // new name
+  i18nMultiRootFolder: i18nEnabled && structure === I18N_STRUCTURES.MULTIPLE_ROOT_FOLDERS,
 });
 
 /**
@@ -204,10 +201,8 @@ export const normalizeI18nConfig = (collection, file) => {
     locales = [],
     default_locale: specifiedDefaultLocale,
     initial_locales: initialLocalesConfig,
-    save_all_locales: saveAllLocalesConfig = true,
     canonical_slug: canonicalSlugConfig = { key: undefined, value: undefined },
-    omit_default_locale_from_filename: omitDefaultLocaleLegacy,
-    omit_default_locale_from_file_path: omitDefaultLocale = omitDefaultLocaleLegacy ?? false,
+    omit_default_locale_from_file_path: omitDefaultLocale = false,
     omit_default_locale_from_preview_path: omitDefaultLocaleFromPreviewPath = false,
   } = config ?? {};
 
@@ -222,11 +217,8 @@ export const normalizeI18nConfig = (collection, file) => {
   const { folder, file: dataFile } = /** @type {{ folder?: string, file?: string }} */ (collection);
   const structure = determineStructure(defaultStructure, file, folder, dataFile);
   const structureMap = createStructureMap(i18nEnabled, structure);
-
-  const saveAllLocales = i18nEnabled
-    ? saveAllLocalesConfig === true && initialLocalesConfig === undefined
-    : true;
-
+  // Without the `initial_locales` option, every locale is saved and can’t be disabled
+  const canToggleLocales = i18nEnabled && initialLocalesConfig !== undefined;
   const initialLocales = determineInitialLocales(initialLocalesConfig, allLocales, defaultLocale);
 
   const omitDefaultLocaleFromFilePath = determineOmitDefaultLocale(
@@ -237,7 +229,7 @@ export const normalizeI18nConfig = (collection, file) => {
 
   return {
     i18nEnabled,
-    saveAllLocales,
+    canToggleLocales,
     allLocales,
     defaultLocale,
     initialLocales,

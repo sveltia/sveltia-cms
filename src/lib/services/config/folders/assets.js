@@ -5,7 +5,7 @@ import { hasTemplateTags } from '$lib/services/common/template/tags';
 import { isConfigReadonly } from '$lib/services/config/readonly';
 import { getValidCollections } from '$lib/services/contents/collection';
 import { getValidCollectionFiles } from '$lib/services/contents/collection/predicates';
-import { LOCALE_ROOT_FOLDER_STRUCTURES } from '$lib/services/contents/i18n/config/constants';
+import { I18N_STRUCTURES } from '$lib/services/contents/i18n/config/constants';
 import { mergeI18nConfigs } from '$lib/services/contents/i18n/config/merge';
 import { hasLocalePlaceholder } from '$lib/services/contents/i18n/placeholder';
 import { normalizeFolderPath, stripLeadingDotSlash } from '$lib/services/utils/file';
@@ -509,7 +509,9 @@ export const getLocaleFolderNameMap = (config, validCollections) =>
         ('folder' in collection &&
           typeof collection.folder === 'string' &&
           hasLocalePlaceholder(collection.folder)) ||
-        (!!i18n?.structure && LOCALE_ROOT_FOLDER_STRUCTURES.includes(i18n.structure));
+        // This structure stores each locale’s copy of the whole site below a folder named after
+        // it, so a locale name comes in front of the collection’s own folder
+        i18n?.structure === I18N_STRUCTURES.MULTIPLE_ROOT_FOLDERS;
 
       return [collection.name, hasLocaleFolder ? (i18n?.locales ?? []) : []];
     }),

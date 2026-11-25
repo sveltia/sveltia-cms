@@ -2536,6 +2536,14 @@ config:
     invalid_timezone: 'Invalid timezone: {$timeZone}. Must be a valid IANA timezone identifier like `America/New_York` or `Asia/Tokyo`.'
     # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
     unsupported_deprecated_option: The deprecated `{$prop}` option is not supported in Sveltia CMS. Use the `{$newProp}` option instead.
+    # Options removed in Sveltia CMS 5.0. Don’t localize the option names, their values or the template tags
+    removed_automatic_deployments: 'The `automatic_deployments` backend option was removed in Sveltia CMS 5.0. Use the `skip_ci` option instead. `automatic_deployments: false` is equivalent to `skip_ci: true`, and `automatic_deployments: true` is equivalent to `skip_ci: false`.'
+    removed_save_all_locales: 'The `save_all_locales` i18n option was removed in Sveltia CMS 5.0. Use the `initial_locales` option instead. `save_all_locales: false` is equivalent to `initial_locales: all`.'
+    removed_omit_default_locale_from_filename: The `omit_default_locale_from_filename` i18n option was removed in Sveltia CMS 5.0. Use the `omit_default_locale_from_file_path` option instead.
+    removed_multiple_folders_i18n_root: The `multiple_folders_i18n_root` i18n structure was removed in Sveltia CMS 5.0. Use the `multiple_root_folders` structure instead, which has the same file structure.
+    removed_slug_editor_tag: 'The `\{\{fields._slug\}\}` and `\{\{fields._slug | localize\}\}` slug template tags were removed in Sveltia CMS 5.0. Use the `editable` and `i18n` slug options instead. `slug: ''\{\{fields._slug\}\}''` is equivalent to `slug: \{ editable: true \}`, and `slug: ''\{\{fields._slug | localize\}\}''` is equivalent to `slug: \{ editable: true, i18n: true \}`.'
+    removed_slug_length: The `slug_length` collection option was removed in Sveltia CMS 5.0. Use the `maxlength` option in the global `slug` options instead.
+    removed_yaml_quote: 'The `yaml_quote` collection option was removed in Sveltia CMS 5.0. Use the `quote` option in the global `output.yaml` options instead. `yaml_quote: true` is equivalent to `quote: double`.'
     # Don’t localize `allow_multiple`, `multiple`, and `false`
     allow_multiple: The `allow_multiple` option is not supported in Sveltia CMS. Use the `multiple` option instead, which defaults to `false`.
     # Don’t localize `field`, `fields`, and `types`
@@ -2708,6 +2716,8 @@ config:
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'See the compatibility notes for details: {$link}'
+  # Migration guide link appended to the messages about options removed in Sveltia CMS 5.0
+  migration_link: 'See the migration guide for details: {$link}'
 
   # Console tip shown after config load
   schema_tip: For a better developer experience, you can validate your configuration file against the JSON schema of Sveltia CMS. See {$link} for details.

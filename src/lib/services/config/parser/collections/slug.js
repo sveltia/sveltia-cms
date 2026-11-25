@@ -1,12 +1,9 @@
 import { isObject } from '@sveltia/utils/object';
 
 import { splitTemplateTags } from '$lib/services/common/template/tags';
-import { warnDeprecation } from '$lib/services/config/deprecations';
+import { hasRemovedSlugEditorTag } from '$lib/services/config/parser/removed';
 import { addMessage, checkRegex } from '$lib/services/config/parser/utils/validator';
-import {
-  getConfiguredSlugTemplate,
-  hasLegacySlugEditorTag,
-} from '$lib/services/contents/collection/slug';
+import { getConfiguredSlugTemplate } from '$lib/services/contents/collection/slug';
 import { I18N_STRUCTURES } from '$lib/services/contents/i18n/config/constants';
 import { mergeI18nConfigs } from '$lib/services/contents/i18n/config/merge';
 import { hasLocalePlaceholder } from '$lib/services/contents/i18n/placeholder';
@@ -41,9 +38,13 @@ export const checkSlugOptions = ({ collection, context, collectors }) => {
   const { slug, folder } = collection;
   const template = getConfiguredSlugTemplate(collection);
 
-  // @todo Remove the legacy tags prior to the 1.0 release.
-  if (hasLegacySlugEditorTag(template)) {
-    warnDeprecation('slug_editor_tag');
+  if (hasRemovedSlugEditorTag(template)) {
+    addMessage({
+      strKey: 'removed_slug_editor_tag',
+      extraStrKey: 'migration_link',
+      context,
+      collectors,
+    });
   }
 
   // Validate slug template: should not contain slashes to avoid confusion with `path` option. Only

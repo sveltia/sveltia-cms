@@ -10,7 +10,7 @@ import {
 } from '$lib/services/backends/git/gitea/constants';
 import { gitBackendServices } from '$lib/services/backends/git/services';
 import { normalizeRootDir } from '$lib/services/backends/root-dir';
-import { warnDeprecation } from '$lib/services/config/deprecations';
+import { REMOVED_BACKEND_OPTIONS } from '$lib/services/config/parser/removed';
 import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
 import { isHttpURL, makeLink } from '$lib/services/utils/string';
 import {
@@ -276,11 +276,6 @@ const checkGitBackendConfig = (cmsConfig, backend, collectors) => {
     }
   });
 
-  // @todo Remove the option prior to the 1.0 release.
-  if (backend.automatic_deployments !== undefined) {
-    warnDeprecation('automatic_deployments');
-  }
-
   checkUnsupportedOptions({
     UNSUPPORTED_OPTIONS,
     config: backend,
@@ -320,6 +315,13 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
   }
 
   checkRootDir(cmsConfig, backend.root_dir, errors);
+
+  checkUnsupportedOptions({
+    UNSUPPORTED_OPTIONS: REMOVED_BACKEND_OPTIONS,
+    config: backend,
+    context: { cmsConfig },
+    collectors,
+  });
 
   if (name in gitBackendServices) {
     checkGitBackendConfig(cmsConfig, /** @type {GitBackend} */ (backend), collectors);

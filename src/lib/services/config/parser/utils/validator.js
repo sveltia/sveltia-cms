@@ -18,6 +18,15 @@ import { makeLink } from '$lib/services/utils/string';
 const INVALID_FIELD_NAME_DOC_URL = `${DOCS_BASE_URL}/troubleshooting#using-proper-naming-conventions`;
 
 /**
+ * Links filled into the extra messages that can be appended to a message.
+ * @type {Record<string, string>}
+ */
+const EXTRA_MESSAGE_LINKS = {
+  compatibility_link: COMPATIBILITY_URL,
+  migration_link: `${DOCS_BASE_URL}/migration/earlier-versions`,
+};
+
+/**
  * Add an error or warning message to the error collector with context information.
  * @param {object} args Arguments.
  * @param {'error' | 'warning'} [args.type] The type of the message.
@@ -81,17 +90,18 @@ export const addMessage = ({
     message = makeLink(message, INVALID_FIELD_NAME_DOC_URL);
   }
 
+  // The link is written as a Markdown autolink, so the bidi isolate around the interpolated value
+  // isn’t taken as part of the URL when the message is rendered
   const extraMessage = extraStrKey
-    ? _(`config.${extraStrKey}`, {
-        values: { link: extraStrKey === 'compatibility_link' ? COMPATIBILITY_URL : undefined },
-      })
+    ? _(`config.${extraStrKey}`, { values: { link: `<${EXTRA_MESSAGE_LINKS[extraStrKey]}>` } })
     : '';
 
   collector.add(`${locatorStr}${message}${extraMessage ? ` ${extraMessage}` : ''}`);
 };
 
 /**
- * Check for unsupported deprecated options in a configuration and add messages if found.
+ * Check for unsupported options, including the ones removed in Sveltia CMS 5.0, in a
+ * configuration and add messages if found.
  * @param {object} args Arguments.
  * @param {UnsupportedOption[]} args.UNSUPPORTED_OPTIONS Array of unsupported option mappings.
  * @param {Record<string, any>} args.config Configuration to check. Usually a field config.
@@ -100,16 +110,17 @@ export const addMessage = ({
  */
 export const checkUnsupportedOptions = ({ UNSUPPORTED_OPTIONS, config, context, collectors }) => {
   UNSUPPORTED_OPTIONS.forEach(
-    ({ type = 'error', prop, newProp, value, strKey = 'unsupported_deprecated_option' }) => {
-      if (prop in config && (value === undefined || config[prop] === value)) {
-        addMessage({
-          type,
-          strKey,
-          values: { prop, newProp },
-          extraStrKey: 'compatibility_link',
-          context,
-          collectors,
-        });
+    ({
+      type = 'error',
+      prop,
+      newProp,
+      value,
+      strKey = 'unsupported_deprecated_option',
+      extraStrKey = 'compatibility_link',
+    }) => {
+      // An option set to `undefined`, which only the JS API can do, is as good as none
+      if (config[prop] !== undefined && (value === undefined || config[prop] === value)) {
+        addMessage({ type, strKey, values: { prop, newProp }, extraStrKey, context, collectors });
       }
     },
   );

@@ -25,13 +25,6 @@ const STRUCTURES = [
     path: '{locale}/content/stories/{slug}.md',
   },
   {
-    title: 'multiple_folders_i18n_root, the deprecated name of multiple_root_folders',
-    name: 'legacy',
-    label: 'Legacy',
-    i18n: { structure: 'multiple_folders_i18n_root' },
-    path: '{locale}/content/legacy/{slug}.md',
-  },
-  {
     title: 'multiple_root_folders, with the default locale at the collection folder',
     name: 'docs',
     label: 'Docs',

@@ -114,7 +114,7 @@ test.describe('with automatic deployments off', () => {
   test.use({
     config: {
       ...GITHUB_CONFIG,
-      backend: { ...GITHUB_CONFIG.backend, automatic_deployments: false },
+      backend: { ...GITHUB_CONFIG.backend, skip_ci: true },
     },
   });
 
@@ -208,7 +208,7 @@ test.describe('with automatic deployments on', () => {
   test.use({
     config: {
       ...GITHUB_CONFIG,
-      backend: { ...GITHUB_CONFIG.backend, automatic_deployments: true },
+      backend: { ...GITHUB_CONFIG.backend, skip_ci: false },
     },
   });
 

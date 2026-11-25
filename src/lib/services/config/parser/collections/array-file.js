@@ -19,7 +19,6 @@ const UNSUPPORTED_OPTIONS = [
   'extension',
   'path',
   'slug',
-  'slug_length',
   'nested',
   'meta',
   'index_file',

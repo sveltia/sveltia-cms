@@ -1,13 +1,7 @@
 import { readFile } from 'fs/promises';
 
 import { expect, test } from '../../fixtures/test.js';
-import {
-  getEditor,
-  getEntryList,
-  getEntryRows,
-  openCollection,
-  saveEntry,
-} from '../../fixtures/ui.js';
+import { getEditor, getEntryList, getEntryRows, saveEntry } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -16,7 +10,7 @@ import {
 
 /**
  * A blog with the given global `slug` options, and optionally more collection options, e.g. a
- * `slug` template or the deprecated `slug_length`.
+ * `slug` template.
  * @param {Record<string, any>} [slug] Global slug options.
  * @param {Record<string, any>} [collection] More collection options.
  * @returns {Record<string, any>} Config.
@@ -328,40 +322,6 @@ test.describe('`maxlength`', () => {
     await createPost(page, 'The quick brown fox jumps over the lazy dog');
     await createPost(page, 'The quick brown fox jumps over the lazy cat');
     await expectPosts(cms, ['the-quick-brown-fox-1.md', 'the-quick-brown-fox.md']);
-  });
-});
-
-test.describe('collection `slug_length`', () => {
-  test.use({
-    config: {
-      ...makeConfig({ maxlength: 20 }),
-      collections: [
-        makeConfig(undefined, { slug_length: 9 }).collections[0],
-        {
-          ...makeConfig().collections[0],
-          name: 'notes',
-          label: 'Notes',
-          label_singular: 'Note',
-          folder: 'content/notes',
-        },
-      ],
-    },
-  });
-
-  test('takes precedence over the global `maxlength`', async ({ cms, page }) => {
-    await cms.start();
-    await createPost(page, 'The quick brown fox jumps over the lazy dog');
-    await expectPosts(cms, ['the-quick.md']);
-
-    // The other collection uses the global option
-    await openCollection(page, 'Notes');
-    await createPost(page, 'The quick brown fox jumps over the lazy dog');
-    await expect
-      .poll(async () =>
-        Object.keys(await cms.readRepo()).filter((p) => p.startsWith('content/notes/')),
-      )
-      .toEqual(['content/notes/the-quick-brown-fox.md']);
-    await reopenPost(page, 'The quick brown fox jumps over the lazy dog');
   });
 });
 

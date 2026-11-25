@@ -27,7 +27,7 @@ const fields = [{ name: 'title', widget: 'string' }];
 
 const i18n = {
   i18nEnabled: true,
-  saveAllLocales: false,
+  canToggleLocales: true,
   allLocales: ['en', 'fr'],
   initialLocales: ['en', 'fr'],
   defaultLocale: 'en',
@@ -88,7 +88,7 @@ describe('PaneHeader', () => {
         structure: /** @type {const} */ ('multiple_folders'),
         locales: ['en', 'fr'],
         default_locale: 'en',
-        save_all_locales: false,
+        initial_locales: 'all',
       },
       collections: [
         {

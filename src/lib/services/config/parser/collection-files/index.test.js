@@ -40,6 +40,7 @@ const mockCheckName = vi.fn();
 vi.mock('$lib/services/config/parser/utils/validator', () => ({
   addMessage: mockAddMessage,
   checkName: mockCheckName,
+  checkUnsupportedOptions: vi.fn(),
 }));
 
 describe('Collection Files Parser', () => {
@@ -579,13 +580,13 @@ describe('Collection Files Parser', () => {
         );
       });
 
-      it('should add a warning when the deprecated alias enables the option', async () => {
+      it('should ignore the removed `omit_default_locale_from_filename` alias', async () => {
         await parse({
           file: 'i18n/{{locale}}.yaml',
           siteI18n: { locales: ['en', 'fr'], omit_default_locale_from_filename: true },
         });
 
-        expect(mockAddMessage).toHaveBeenCalledWith(
+        expect(mockAddMessage).not.toHaveBeenCalledWith(
           expect.objectContaining({ strKey: 'locale_not_omitted_from_file_path' }),
         );
       });

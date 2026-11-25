@@ -9,7 +9,6 @@ describe('I18N_STRUCTURES constant', () => {
       SINGLE_FILE_DEFAULT_ROOT: 'single_file_default_root',
       MULTIPLE_FILES: 'multiple_files',
       MULTIPLE_FOLDERS: 'multiple_folders',
-      MULTIPLE_FOLDERS_I18N_ROOT: 'multiple_folders_i18n_root',
       MULTIPLE_ROOT_FOLDERS: 'multiple_root_folders',
     });
   });

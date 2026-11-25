@@ -214,16 +214,19 @@ describe('draft/slugs', () => {
       ).toBe('{{title}}');
     });
 
-    it('should keep a template that takes the slug from the slug editor', () => {
+    it('should take the slug from the slug editor when it’s required', () => {
+      const collection = { _type: 'entry', slug: { editable: true } };
+
+      expect(getSlugTemplate({ draft: createDraft({ collection }), locale: 'en' })).toBe(
+        '{{fields._slug}}',
+      );
       expect(
         getSlugTemplate({
-          draft: createDraft({
-            collection: { _type: 'entry', slug: '{{year}}-{{fields._slug}}' },
-            currentSlugs: { en: 'my-slug' },
-          }),
+          draft: createDraft({ collection, currentSlugs: { en: 'my-slug' } }),
           locale: 'en',
+          templateOnly: true,
         }),
-      ).toBe('{{year}}-{{fields._slug}}');
+      ).toBe('{{fields._slug}}');
     });
 
     it('should return the default template without the slug option', () => {
@@ -1404,7 +1407,7 @@ describe('draft/slugs', () => {
         fr: 'mon-article',
       });
       expect(fillTemplate).toHaveBeenLastCalledWith(
-        '{{fields._slug | localize}}',
+        '{{fields._slug}}',
         expect.objectContaining({ locale: 'fr' }),
       );
     });

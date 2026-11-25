@@ -13,11 +13,10 @@ import { forkedRepository } from '$lib/services/workflow/open-authoring';
 const WORKFLOW_BRANCH_PREFIX = 'cms';
 /**
  * Maximum length of a newly generated entry slug in UTF-8 bytes, unless the `slug.maxlength` option
- * (or the legacy `slug_length` collection option) is set. It’s the default of Decap CMS 3.17,
- * which leaves 55 bytes of the common 255-byte file name limit (`NAME_MAX`) for the rest of the
- * file name: a locale suffix like `.zh-Hant` (`multiple_files` i18n structure), an extension like
- * `.markdown` and a prefix from a `path` template like `2026-10-26-` fit in there with plenty of
- * room.
+ * is set. It’s the default of Decap CMS 3.17, which leaves 55 bytes of the common 255-byte file
+ * name limit (`NAME_MAX`) for the rest of the file name: a locale suffix like `.zh-Hant`
+ * (`multiple_files` i18n structure), an extension like `.markdown` and a prefix from a `path`
+ * template like `2026-10-26-` fit in there with plenty of room.
  * @see https://github.com/decaporg/decap-cms/pull/7983
  */
 const MAX_SLUG_BYTES = 200;

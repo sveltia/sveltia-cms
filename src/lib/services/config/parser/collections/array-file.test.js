@@ -70,25 +70,19 @@ describe('checkArrayFileOptions', () => {
     });
   });
 
-  test.each([
-    'extension',
-    'path',
-    'slug',
-    'slug_length',
-    'nested',
-    'meta',
-    'index_file',
-    'reorder',
-  ])('rejects an unsupported option: %s', (prop) => {
-    const context = check({ [prop]: undefined });
+  test.each(['extension', 'path', 'slug', 'nested', 'meta', 'index_file', 'reorder'])(
+    'rejects an unsupported option: %s',
+    (prop) => {
+      const context = check({ [prop]: undefined });
 
-    expect(addMessage).toHaveBeenCalledExactlyOnceWith({
-      strKey: 'unsupported_collection_data_file_option',
-      values: { prop },
-      context,
-      collectors,
-    });
-  });
+      expect(addMessage).toHaveBeenCalledExactlyOnceWith({
+        strKey: 'unsupported_collection_data_file_option',
+        values: { prop },
+        context,
+        collectors,
+      });
+    },
+  );
 
   test('rejects Editorial Workflow enabled at the site level', () => {
     const context = check({}, { publish_mode: 'editorial_workflow' });

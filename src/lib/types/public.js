@@ -1644,7 +1644,7 @@
 /**
  * Internationalization (i18n) file structure type.
  * @typedef {'single_file' | 'single_file_default_root' | 'multiple_files' | 'multiple_folders' |
- * 'multiple_folders_i18n_root' | 'multiple_root_folders'} I18nFileStructure
+ * 'multiple_root_folders'} I18nFileStructure
  * @see https://decapcms.org/docs/i18n/
  * @see https://sveltiacms.app/docs/i18n
  * @see https://github.com/decaporg/decap-cms/pull/7400
@@ -1660,8 +1660,7 @@
  * the `{{locale}}` placeholder in the `folder` option, like `content/{{locale}}/posts`, which is
  * useful when the locale folders sit between the site’s content folder and the collection folders.
  * File/singleton collection must define the structure using `{{locale}}` in the `file` option.
- * `multiple_folders_i18n_root` has been deprecated in favor of `multiple_root_folders`. See the
- * [documentation](https://sveltiacms.app/docs/i18n/structures) for details.
+ * See the [documentation](https://sveltiacms.app/docs/i18n/structures) for details.
  * @property {LocaleCode[]} [locales] List of all available locales. **Required for the global i18n
  * options**.
  * @property {LocaleCode} [default_locale] Default locale. Default: first locale in the `locales`
@@ -1671,20 +1670,11 @@
  * non-default locales through the UI. See the
  * [documentation](https://sveltiacms.app/docs/i18n/options#disabling-non-default-locale-content)
  * for details.
- * @property {boolean} [save_all_locales] Whether to save collection entries in all the locales.
- * Default: `true`.
- * DEPRECATED: Use the `initial_locales` option instead, which provides more flexibility.
- * `save_all_locales: false` is equivalent to `initial_locales: 'all'`. See the documentation
- * https://sveltiacms.app/docs/i18n/options#disabling-non-default-locale-content for details.
  * @property {{ key?: string, value?: string }} [canonical_slug] Property name and value template
  * used to add a canonical slug to entry files, which helps Sveltia CMS and some frameworks to link
  * localized files when entry slugs are localized. The default property name is `translationKey`
  * used in Hugo’s multilingual support, and the default value is the default locale’s slug. See the
  * [documentation](https://sveltiacms.app/docs/i18n/slugs#localizing-entry-slugs) for details.
- * @property {boolean} [omit_default_locale_from_filename] Whether to exclude the default locale
- * from entry filenames. Default: `false`. It’s an alias of the `omit_default_locale_from_file_path`
- * option, which is used instead if both are defined.
- * DEPRECATED: Use the `omit_default_locale_from_file_path` option instead.
  * @property {boolean} [omit_default_locale_from_file_path] Whether to exclude the default locale
  * from entry file paths. Default: `false`. This option applies to entry collections with the
  * `multiple_files`, `multiple_folders` or `multiple_root_folders` structure, or with the
@@ -2104,11 +2094,6 @@
  * date and time tags in `preview_path`. Default: the first DateTime field. For a file collection,
  * define it on each file instead.
  * @property {EditorOptions} [editor] Editor view options.
- * @property {boolean} [yaml_quote] Whether to double-quote all the strings values if the YAML
- * format is used for file output. Default: `false`. DEPRECATED: Use the global YAML format options.
- * `yaml_quote: true` is equivalent to `output.yaml.quote: double`. See the documentation
- * https://sveltiacms.app/docs/data-output#controlling-data-output for details.
- * @see https://github.com/decaporg/decap-cms/issues/1571
  * @see https://decapcms.org/docs/configuration-options/#collections
  * @see https://sveltiacms.app/docs/collections/entries
  * @see https://sveltiacms.app/docs/collections/files
@@ -2179,12 +2164,8 @@
  * The template cannot contain slashes; to organize entries in subfolders, use the `path` option
  * instead. It’s possible to [localize the
  * slug](https://sveltiacms.app/docs/i18n/slugs#localizing-entry-slugs) or [use a random
- * ID](https://sveltiacms.app/docs/collections/entries/slugs#slug-template-tags). The
- * `{{fields._slug}}` and `{{fields._slug | localize}}` tags, which show a slug editor in new entry
- * drafts, are deprecated; use the object form with the `editable` and `i18n` options instead.
- * @property {number} [slug_length] The maximum number of characters allowed for an entry slug.
- * Default: `Infinity`.
- * DEPRECATED: Use the global `slug.maxlength` option instead.
+ * ID](https://sveltiacms.app/docs/collections/entries/slugs#slug-template-tags). To show a slug
+ * editor in new entry drafts, use the object form with the `editable` and `i18n` options.
  * @property {string} [summary] Entry summary template displayed in the entry list, e.g.
  * `{{title}} ({{date | date('YYYY-MM-DD')}})`. Default: the value of the `identifier_field`,
  * `title`, `name` or `label` field, or the first heading in the `body` field.
@@ -2354,12 +2335,6 @@
  * hostname](https://developer.mozilla.org/en-US/docs/Web/API/Location/hostname) (or
  * `cms.netlify.com` on `localhost`).
  * @property {CommitMessages} [commit_messages] Custom commit messages.
- * @property {boolean} [automatic_deployments] Whether to enable or disable automatic deployments
- * with any connected CI/CD provider. Default: `undefined`.
- * DEPRECATED: Use the new `skip_ci` option instead, which is more intuitive.
- * `automatic_deployments: false` is equivalent to `skip_ci: true`, and `automatic_deployments:
- * true` is equivalent to `skip_ci: false`. See the documentation
- * https://sveltiacms.app/docs/deployments#disabling-automatic-deployments for details.
  * @property {boolean} [skip_ci] Whether to enable or disable automatic deployments with any
  * connected CI/CD provider, such as GitHub Actions or Cloudflare Pages. If `true`, the `[skip ci]`
  * prefix will be added to commit messages, except for deletions. Setting it to either `true` or

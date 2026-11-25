@@ -1,10 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { warnDeprecation } from '$lib/services/config/deprecations';
 import { checkI18nOverrides, parseI18nConfig } from '$lib/services/config/parser/i18n';
-import { addMessage } from '$lib/services/config/parser/utils/validator';
+import { REMOVED_I18N_OPTIONS } from '$lib/services/config/parser/removed';
+import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
 
-vi.mock('$lib/services/config/deprecations');
 vi.mock('$lib/services/config/parser/utils/validator');
 
 /** @type {any} */
@@ -414,89 +413,76 @@ describe('checkI18nOverrides targets', () => {
   });
 });
 
-describe('deprecated i18n options', () => {
+describe('removed i18n options', () => {
   beforeEach(() => {
     vi.resetAllMocks();
   });
 
-  const deprecatedOptions = {
+  const removedOptions = {
     save_all_locales: false,
     omit_default_locale_from_filename: true,
     structure: 'multiple_folders_i18n_root',
   };
 
-  const allKeys = [
-    ['save_all_locales'],
-    ['omit_default_locale_from_filename'],
-    ['multiple_folders_i18n_root'],
-  ];
+  /**
+   * Get the i18n options checked for removed options so far, with the context of each.
+   * @returns {{ config: any, context: any }[]} Checked options.
+   */
+  const getChecked = () =>
+    vi
+      .mocked(checkUnsupportedOptions)
+      .mock.calls.map(([args]) => args)
+      .filter(({ UNSUPPORTED_OPTIONS }) => UNSUPPORTED_OPTIONS === REMOVED_I18N_OPTIONS)
+      .map(({ config, context }) => ({ config, context }));
 
-  test('warns about each option at the site level, even if no collection enables i18n', () => {
-    parseI18nConfig(
-      /** @type {any} */ ({
-        i18n: { locales: ['en', 'fr'], ...deprecatedOptions },
-        collections: [{ name: 'posts', folder: 'posts', fields: [] }],
-      }),
+  test('checks the site-level options, even if no collection enables i18n', () => {
+    /** @type {any} */
+    const cmsConfig = {
+      i18n: { locales: ['en', 'fr'], ...removedOptions },
+      collections: [{ name: 'posts', folder: 'posts', fields: [] }],
+    };
+
+    parseI18nConfig(cmsConfig, collectors);
+
+    expect(checkUnsupportedOptions).toHaveBeenCalledWith({
+      UNSUPPORTED_OPTIONS: REMOVED_I18N_OPTIONS,
+      config: cmsConfig.i18n,
+      context: { cmsConfig },
       collectors,
-    );
-
-    expect(vi.mocked(warnDeprecation).mock.calls).toEqual(allKeys);
+    });
   });
 
-  test('warns about a value of `false` or `true` alike', () => {
-    parseI18nConfig(
-      /** @type {any} */ ({
-        i18n: { save_all_locales: true, omit_default_locale_from_filename: false },
-      }),
-      collectors,
-    );
+  test('checks the collection-level options, even without a site configuration', () => {
+    /** @type {any} */
+    const context = { cmsConfig: {}, collection: { name: 'posts', i18n: removedOptions } };
 
-    expect(vi.mocked(warnDeprecation).mock.calls).toEqual(allKeys.slice(0, 2));
+    checkI18nOverrides(context, collectors);
+
+    expect(getChecked()).toEqual([{ config: removedOptions, context }]);
   });
 
-  test('warns about each option at the collection level, even without a site configuration', () => {
-    checkI18nOverrides(
-      /** @type {any} */ ({
-        cmsConfig: {},
-        collection: { name: 'posts', i18n: deprecatedOptions },
-      }),
-      collectors,
-    );
+  test('checks the file-level options of a file collection', () => {
+    /** @type {any} */
+    const context = {
+      cmsConfig: { i18n: { locales: ['en', 'fr'] } },
+      collection: { name: 'pages', i18n: true, files: [] },
+      collectionFile: { name: 'home', file: 'home.yml', i18n: removedOptions },
+    };
 
-    expect(vi.mocked(warnDeprecation).mock.calls).toEqual(allKeys);
+    checkI18nOverrides(context, collectors);
+
+    expect(getChecked()).toEqual([{ config: removedOptions, context }]);
   });
 
-  test('warns about each option at the file level of a file collection', () => {
+  test('doesn’t check an `i18n` option that’s only a boolean', () => {
     checkI18nOverrides(
       /** @type {any} */ ({
         cmsConfig: { i18n: { locales: ['en', 'fr'] } },
-        collection: { name: 'pages', i18n: true, files: [] },
-        collectionFile: { name: 'home', file: 'home.yml', i18n: deprecatedOptions },
+        collection: { name: 'posts', i18n: true },
       }),
       collectors,
     );
 
-    expect(vi.mocked(warnDeprecation).mock.calls).toEqual(allKeys);
-  });
-
-  test('stays quiet about the current options', () => {
-    const i18n = {
-      locales: ['en', 'fr'],
-      initial_locales: 'all',
-      omit_default_locale_from_file_path: true,
-      structure: 'multiple_root_folders',
-    };
-
-    parseI18nConfig(/** @type {any} */ ({ i18n }), collectors);
-    checkI18nOverrides(
-      /** @type {any} */ ({ cmsConfig: { i18n }, collection: { name: 'posts', i18n } }),
-      collectors,
-    );
-    checkI18nOverrides(
-      /** @type {any} */ ({ cmsConfig: { i18n }, collection: { name: 'posts', i18n: true } }),
-      collectors,
-    );
-
-    expect(warnDeprecation).not.toHaveBeenCalled();
+    expect(getChecked()).toEqual([]);
   });
 });

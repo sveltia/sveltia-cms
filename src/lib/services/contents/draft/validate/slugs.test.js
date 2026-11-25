@@ -82,7 +82,7 @@ describe('draft/validate/slugs', () => {
     vi.mocked(getSharedEntryFileName).mockReturnValue(undefined);
 
     mockEntryDraft = {
-      collection: { _type: 'entry', slug: '{{fields._slug}}' },
+      collection: { _type: 'entry', slug: { editable: true } },
       collectionName: 'posts',
       isNew: true,
       defaultLocale: 'en',
@@ -603,15 +603,6 @@ describe('draft/validate/slugs', () => {
 
       expect(validateSlugs().valid).toBe(true);
       expect(getEntriesInCollectionFolder).not.toHaveBeenCalled();
-    });
-
-    it('should not report a duplicate when the value is only part of the slug', () => {
-      vi.mocked(getEntriesInCollectionFolder).mockReturnValue([createEntry('1', { en: 'de' })]);
-      mockEntryDraft.collection = { _type: 'entry', slug: '{{year}}-{{fields._slug}}' };
-      mockEntryDraft.currentSlugs = { en: 'de' };
-      mockEntryDraft.slugEditor = { en: true };
-
-      expect(validateSlugs().valid).toBe(true);
     });
   });
 

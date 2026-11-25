@@ -1028,7 +1028,7 @@ describe('Test getFileConfig()', () => {
     allLocales: ['en', 'fr'],
     initialLocales: ['en', 'fr'],
     defaultLocale: 'en',
-    structure: 'multiple_folders_i18n_root',
+    structure: 'multiple_root_folders',
     structureMap: {
       i18nSingleFile: false,
       i18nSingleFileDefaultRoot: false,
@@ -1057,7 +1057,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?)\.md$/,
       fullPath: undefined,
       fmDelimiters: undefined,
-      yamlQuote: false,
     });
 
     expect(
@@ -1076,7 +1075,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?\/index)\.md$/,
       fullPath: undefined,
       fmDelimiters: undefined,
-      yamlQuote: false,
     });
 
     expect(
@@ -1096,7 +1094,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?\/index)\.md$/,
       fullPath: undefined,
       fmDelimiters: ['---', '---'],
-      yamlQuote: false,
     });
 
     expect(
@@ -1104,7 +1101,6 @@ describe('Test getFileConfig()', () => {
         rawCollection: {
           ...rawFolderCollection,
           extension: 'yml',
-          yaml_quote: true,
         },
         _i18n: i18nDisabled,
       }),
@@ -1116,7 +1112,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?)\.yml$/,
       fullPath: undefined,
       fmDelimiters: undefined,
-      yamlQuote: true,
     });
 
     expect(
@@ -1135,7 +1130,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?)\.json$/,
       fullPath: undefined,
       fmDelimiters: undefined,
-      yamlQuote: false,
     });
   });
 
@@ -1155,7 +1149,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?)\.md$/,
       fullPath: undefined,
       fmDelimiters: undefined,
-      yamlQuote: false,
     });
 
     expect(
@@ -1174,7 +1167,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?\/index)\.md$/,
       fullPath: undefined,
       fmDelimiters: undefined,
-      yamlQuote: false,
     });
 
     expect(
@@ -1194,7 +1186,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?\/index)\.md$/,
       fullPath: undefined,
       fmDelimiters: ['---', '---'],
-      yamlQuote: false,
     });
 
     expect(
@@ -1202,7 +1193,6 @@ describe('Test getFileConfig()', () => {
         rawCollection: {
           ...rawFolderCollection,
           extension: 'yml',
-          yaml_quote: true,
         },
         _i18n: i18nSingleFile,
       }),
@@ -1214,7 +1204,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?)\.yml$/,
       fullPath: undefined,
       fmDelimiters: undefined,
-      yamlQuote: true,
     });
 
     expect(
@@ -1233,7 +1222,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?)\.json$/,
       fullPath: undefined,
       fmDelimiters: undefined,
-      yamlQuote: false,
     });
   });
 
@@ -1253,7 +1241,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?)\.(?<locale>en|fr)\.md$/,
       fullPath: undefined,
       fmDelimiters: undefined,
-      yamlQuote: false,
     });
 
     expect(
@@ -1272,7 +1259,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?\/index)\.(?<locale>en|fr)\.md$/,
       fullPath: undefined,
       fmDelimiters: undefined,
-      yamlQuote: false,
     });
 
     expect(
@@ -1292,7 +1278,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?\/index)\.(?<locale>en|fr)\.md$/,
       fullPath: undefined,
       fmDelimiters: ['---', '---'],
-      yamlQuote: false,
     });
 
     expect(
@@ -1300,7 +1285,6 @@ describe('Test getFileConfig()', () => {
         rawCollection: {
           ...rawFolderCollection,
           extension: 'yml',
-          yaml_quote: true,
         },
         _i18n: i18nMultiFile,
       }),
@@ -1312,7 +1296,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?)\.(?<locale>en|fr)\.yml$/,
       fullPath: undefined,
       fmDelimiters: undefined,
-      yamlQuote: true,
     });
 
     expect(
@@ -1331,7 +1314,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?)\.(?<locale>en|fr)\.json$/,
       fullPath: undefined,
       fmDelimiters: undefined,
-      yamlQuote: false,
     });
   });
 
@@ -1351,7 +1333,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: /^content\/posts\/(?<locale>en|fr)\/(?<subPath>[^/]+?)\.md$/,
       fullPath: undefined,
       fmDelimiters: undefined,
-      yamlQuote: false,
     });
 
     expect(
@@ -1370,7 +1351,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: /^content\/posts\/(?<locale>en|fr)\/(?<subPath>[^/]+?\/index)\.md$/,
       fullPath: undefined,
       fmDelimiters: undefined,
-      yamlQuote: false,
     });
 
     expect(
@@ -1390,7 +1370,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: /^content\/posts\/(?<locale>en|fr)\/(?<subPath>[^/]+?\/index)\.md$/,
       fullPath: undefined,
       fmDelimiters: ['---', '---'],
-      yamlQuote: false,
     });
 
     expect(
@@ -1398,7 +1377,6 @@ describe('Test getFileConfig()', () => {
         rawCollection: {
           ...rawFolderCollection,
           extension: 'yml',
-          yaml_quote: true,
         },
         _i18n: i18nMultiFolder,
       }),
@@ -1410,7 +1388,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: /^content\/posts\/(?<locale>en|fr)\/(?<subPath>[^/]+?)\.yml$/,
       fullPath: undefined,
       fmDelimiters: undefined,
-      yamlQuote: true,
     });
 
     expect(
@@ -1429,7 +1406,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: /^content\/posts\/(?<locale>en|fr)\/(?<subPath>[^/]+?)\.json$/,
       fullPath: undefined,
       fmDelimiters: undefined,
-      yamlQuote: false,
     });
   });
 
@@ -1449,7 +1425,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: /^(?<locale>en|fr)\/content\/posts\/(?<subPath>[^/]+?)\.md$/,
       fullPath: undefined,
       fmDelimiters: undefined,
-      yamlQuote: false,
     });
 
     expect(
@@ -1468,7 +1443,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: /^(?<locale>en|fr)\/content\/posts\/(?<subPath>[^/]+?\/index)\.md$/,
       fullPath: undefined,
       fmDelimiters: undefined,
-      yamlQuote: false,
     });
 
     expect(
@@ -1488,7 +1462,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: /^(?<locale>en|fr)\/content\/posts\/(?<subPath>[^/]+?\/index)\.md$/,
       fullPath: undefined,
       fmDelimiters: ['---', '---'],
-      yamlQuote: false,
     });
 
     expect(
@@ -1496,7 +1469,6 @@ describe('Test getFileConfig()', () => {
         rawCollection: {
           ...rawFolderCollection,
           extension: 'yml',
-          yaml_quote: true,
         },
         _i18n: i18nMultiRootFolder,
       }),
@@ -1508,7 +1480,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: /^(?<locale>en|fr)\/content\/posts\/(?<subPath>[^/]+?)\.yml$/,
       fullPath: undefined,
       fmDelimiters: undefined,
-      yamlQuote: true,
     });
 
     expect(
@@ -1527,7 +1498,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: /^(?<locale>en|fr)\/content\/posts\/(?<subPath>[^/]+?)\.json$/,
       fullPath: undefined,
       fmDelimiters: undefined,
-      yamlQuote: false,
     });
   });
 
@@ -1540,7 +1510,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: undefined,
       fullPath: 'data/members.json',
       fmDelimiters: undefined,
-      yamlQuote: false,
       arrayFile: true,
     };
 
@@ -1590,7 +1559,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: undefined,
       fullPath: 'data/members.md',
       fmDelimiters: undefined,
-      yamlQuote: false,
     });
 
     expect(
@@ -1612,7 +1580,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: undefined,
       fullPath: 'data/members.yml',
       fmDelimiters: ['---', '---'],
-      yamlQuote: false,
     });
 
     expect(
@@ -1620,7 +1587,6 @@ describe('Test getFileConfig()', () => {
         rawCollection: {
           ...rawFileCollection,
           extension: 'yml',
-          yaml_quote: true,
         },
         file: {
           ...rawFileCollectionYamlFile,
@@ -1635,7 +1601,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: undefined,
       fullPath: 'data/members.yml',
       fmDelimiters: undefined,
-      yamlQuote: true,
     });
 
     expect(
@@ -1657,7 +1622,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: undefined,
       fullPath: 'data/members.json',
       fmDelimiters: undefined,
-      yamlQuote: false,
     });
   });
 
@@ -1680,7 +1644,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: undefined,
       fullPath: 'data/members.md',
       fmDelimiters: undefined,
-      yamlQuote: false,
     });
 
     expect(
@@ -1702,7 +1665,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: undefined,
       fullPath: 'data/members.yml',
       fmDelimiters: ['---', '---'],
-      yamlQuote: false,
     });
 
     expect(
@@ -1710,7 +1672,6 @@ describe('Test getFileConfig()', () => {
         rawCollection: {
           ...rawFileCollection,
           extension: 'yml',
-          yaml_quote: true,
         },
         file: {
           ...rawFileCollectionYamlFile,
@@ -1725,7 +1686,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: undefined,
       fullPath: 'data/members.yml',
       fmDelimiters: undefined,
-      yamlQuote: true,
     });
 
     expect(
@@ -1747,7 +1707,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: undefined,
       fullPath: 'data/members.json',
       fmDelimiters: undefined,
-      yamlQuote: false,
     });
   });
 
@@ -1771,7 +1730,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: undefined,
       fullPath: 'data/members.en.md',
       fmDelimiters: undefined,
-      yamlQuote: false,
     });
 
     expect(
@@ -1794,7 +1752,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: undefined,
       fullPath: 'data/members.en.yml',
       fmDelimiters: ['---', '---'],
-      yamlQuote: false,
     });
 
     expect(
@@ -1802,7 +1759,6 @@ describe('Test getFileConfig()', () => {
         rawCollection: {
           ...rawFileCollection,
           extension: 'yml',
-          yaml_quote: true,
         },
         file: {
           ...rawFileCollectionYamlFile,
@@ -1818,7 +1774,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: undefined,
       fullPath: 'data/members.en.yml',
       fmDelimiters: undefined,
-      yamlQuote: true,
     });
 
     expect(
@@ -1841,7 +1796,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: undefined,
       fullPath: 'data/members.en.json',
       fmDelimiters: undefined,
-      yamlQuote: false,
     });
   });
 
@@ -1865,7 +1819,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: undefined,
       fullPath: 'data/en/members.md',
       fmDelimiters: undefined,
-      yamlQuote: false,
     });
 
     expect(
@@ -1888,7 +1841,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: undefined,
       fullPath: 'data/en/members.yml',
       fmDelimiters: ['---', '---'],
-      yamlQuote: false,
     });
 
     expect(
@@ -1896,7 +1848,6 @@ describe('Test getFileConfig()', () => {
         rawCollection: {
           ...rawFileCollection,
           extension: 'yml',
-          yaml_quote: true,
         },
         file: {
           ...rawFileCollectionYamlFile,
@@ -1912,7 +1863,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: undefined,
       fullPath: 'data/en/members.yml',
       fmDelimiters: undefined,
-      yamlQuote: true,
     });
 
     expect(
@@ -1935,7 +1885,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: undefined,
       fullPath: 'data/en/members.json',
       fmDelimiters: undefined,
-      yamlQuote: false,
     });
   });
 
@@ -1959,7 +1908,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: undefined,
       fullPath: 'data/members.md',
       fmDelimiters: ['---', '---'],
-      yamlQuote: false,
     });
 
     expect(
@@ -1982,7 +1930,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: undefined,
       fullPath: 'data/members.md',
       fmDelimiters: ['+++', '+++'],
-      yamlQuote: false,
     });
 
     expect(
@@ -2005,7 +1952,6 @@ describe('Test getFileConfig()', () => {
       fullPathRegEx: undefined,
       fullPath: 'data/members.json',
       fmDelimiters: undefined,
-      yamlQuote: false,
     });
   });
 
@@ -2049,7 +1995,6 @@ describe('Test getFileConfig()', () => {
       fullPath: undefined,
       fmDelimiters: undefined,
       bodyField: undefined,
-      yamlQuote: false,
     });
 
     // The index file shares the path matcher and the rest, but not the extension and format

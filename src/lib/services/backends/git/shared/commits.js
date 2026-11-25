@@ -152,19 +152,17 @@ const applyUserMessage = (message, userMessage, mode) => {
 /**
  * Check whether a commit is expected to start a deployment, which is when its message goes without
  * the skip-CI marker added by {@link createCommitMessage}. The commit’s own `skipCI` option takes
- * precedence over the `skip_ci` and `automatic_deployments` backend options. To avoid unexpected
- * data retention, deletions are always deployed.
+ * precedence over the `skip_ci` backend option. To avoid unexpected data retention, deletions are
+ * always deployed.
  * @param {Partial<CommitOptions>} options Commit options.
  * @returns {boolean} Result.
  */
 export const isDeployingCommit = ({ commitType, skipCI }) => {
-  // Read the options rather than `skipCIEnabled`, whose module imports the backends using this one
-  const { skip_ci: skipCIEnabled, automatic_deployments: autoDeploy } = getBackendOptions();
+  // Read the option rather than `skipCIEnabled`, whose module imports the backends using this one
+  const { skip_ci: skipCIEnabled } = getBackendOptions();
 
   return (
-    commitType === 'delete' ||
-    commitType === 'deleteMedia' ||
-    !(skipCI ?? (skipCIEnabled === true || autoDeploy === false))
+    commitType === 'delete' || commitType === 'deleteMedia' || !(skipCI ?? skipCIEnabled === true)
   );
 };
 

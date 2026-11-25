@@ -1,11 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { warnDeprecation } from '$lib/services/config/deprecations';
 import { checkSlugOptions } from '$lib/services/config/parser/collections/slug';
 import { addMessage, checkRegex } from '$lib/services/config/parser/utils/validator';
 
 vi.mock('$lib/services/config/parser/utils/validator');
-vi.mock('$lib/services/config/deprecations');
 
 /** @type {any} */
 const collectors = { errors: new Set(), warnings: new Set() };
@@ -40,22 +38,34 @@ describe('checkSlugOptions', () => {
     check();
     expect(addMessage).not.toHaveBeenCalled();
     expect(checkRegex).not.toHaveBeenCalled();
-    expect(warnDeprecation).not.toHaveBeenCalled();
   });
 
-  describe('legacy slug editor tags', () => {
-    test('warns about the deprecated tags', () => {
-      check({ slug: '{{fields._slug}}' });
-      check({ slug: '{{fields._slug | localize}}' });
-      check({ slug: { template: '{{fields._slug}}' } });
-      expect(warnDeprecation).toHaveBeenCalledTimes(3);
-      expect(warnDeprecation).toHaveBeenCalledWith('slug_editor_tag');
+  describe('removed slug editor tags', () => {
+    test.each([
+      '{{fields._slug}}',
+      '{{fields._slug | localize}}',
+      '{{_slug}}',
+      '{{_slug | upper}}',
+      'post-{{fields._slug | localize | lower}}',
+      { template: '{{fields._slug}}' },
+    ])('reports the removed tag in %o', (slug) => {
+      const context = check({ slug });
+
+      expect(addMessage).toHaveBeenCalledWith({
+        strKey: 'removed_slug_editor_tag',
+        extraStrKey: 'migration_link',
+        context,
+        collectors,
+      });
     });
 
     test('says nothing about other templates', () => {
       check({ slug: '{{title}}' });
+      check({ slug: '{{fields.slug}}' });
       check({ slug: { editable: true } });
-      expect(warnDeprecation).not.toHaveBeenCalled();
+      expect(addMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({ strKey: 'removed_slug_editor_tag' }),
+      );
     });
   });
 

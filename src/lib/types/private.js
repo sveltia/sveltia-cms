@@ -966,8 +966,6 @@
  * defined with the `file` option, as an array of objects.
  * @property {[string, string]} [fmDelimiters] Front matter delimiters.
  * @property {BodyFieldOptions} [bodyField] Body field options for front matter formats.
- * @property {boolean} [yamlQuote] YAML quote configuration. DEPRECATED in favor of the global YAML
- * format options.
  * @property {FileConfig} [indexFile] Configuration for the collection’s special index file, when
  * it has an `extension` or `format` of its own. It shares everything else with the entries,
  * including `fullPathRegEx`, which matches both. Entry collection only.
@@ -1088,8 +1086,9 @@
  * Internal i18n configuration of a collection or collection file.
  * @typedef {object} InternalI18nOptions
  * @property {boolean} i18nEnabled Whether i18n is enabled for the collection or collection file.
- * @property {boolean} [saveAllLocales] Whether to save the entries in all the locales. If `false`,
- * editors will be able to disable the output of non-default locales through the UI.
+ * @property {boolean} [canToggleLocales] Whether editors can enable and disable the non-default
+ * locales of an entry through the UI, which is the case when the `initial_locales` option is set.
+ * Otherwise, the entries are saved in all the locales.
  * @property {InternalLocaleCode[]} allLocales List of all available locales, or `['_default']` if
  * i18n is not enabled.
  * @property {InternalLocaleCode[]} initialLocales Locales to be enabled when creating a new entry
@@ -1134,14 +1133,11 @@
  * string or an object.
  * @typedef {object} InternalSlugOptions
  * @property {string} template Slug template to fill for a new entry. It’s the configured template,
- * the legacy `{{fields._slug}}` tag when the slug is only given with the slug editor, or the
+ * the internal `{{fields._slug}}` tag when the slug is only given with the slug editor, or the
  * identifier field tag by default. An empty string when the slug is numbered automatically.
  * @property {boolean} editorRequired Whether the template takes the slug from the slug editor, in
  * which case the slug editor must be filled in. Otherwise, a filled-in slug editor takes over from
  * the template.
- * @property {boolean} editorValueIsSlug Whether the slug editor’s value is the whole slug. It’s
- * only a part of it with a legacy template that puts the value among other tags, e.g.
- * `{{year}}-{{fields._slug}}`.
  * @property {{ create: boolean, update: boolean }} editable Whether the slug can be edited when an
  * entry is created, and once it has been saved.
  * @property {boolean} localized Whether each locale has a slug editor of its own, and every field
@@ -2560,6 +2556,8 @@
  * @property {any} [value] Unsupported property value.
  * @property {string} [strKey] The i18n string key for the message. Default:
  * `unsupported_deprecated_option`.
+ * @property {string} [extraStrKey] The i18n string key of the extra message with a link appended to
+ * the message. Default: `compatibility_link`.
  */
 
 /**

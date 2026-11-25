@@ -338,49 +338,13 @@ image:
     );
   });
 
-  test('legacyQuote parameter', () => {
-    expect(formatYAML(object, {}, { quote: true })).toBe(
-      `
-title: "My Post"
-published: true
-options:
-  - 1
-  - 2
-  - 3
-image:
-  alt: "flower"
-  src: "flower.jpg"
-`.trim(),
-    );
-  });
-
-  test('legacyQuote false with single quote (line 53)', () => {
-    // Test when legacyQuote is false (default) but quote is 'single'
-    // This exercises the branch at line 53 with legacyQuote false
-    expect(formatYAML(object, { quote: 'single' }, {})).toBe(
-      `
-title: 'My Post'
-published: true
-options:
-  - 1
-  - 2
-  - 3
-image:
-  alt: 'flower'
-  src: 'flower.jpg'
-`.trim(),
-    );
-  });
-
-  test('uses empty legacyOptions when not provided (line 53)', () => {
-    // Mock get to return undefined for output.yaml to test the ?? {} fallback on line 52
+  test('uses empty options when cmsConfig.output.yaml is undefined', () => {
+    // Mock get to return undefined for output.yaml to test the ?? {} fallback
     cmsConfig.current = /** @type {any} */ ({ output: { yaml: undefined } });
 
     const result = formatYAML(object);
 
     // When options is {}, all defaults apply
-    // legacyOptions defaults to {}
-    // This tests the ?? {} operator on line 52
     expect(result).toBe(
       `
 title: My Post
@@ -510,13 +474,12 @@ describe('Test formatYAML() with strings a YAML 1.1 parser misreads', () => {
     expect(formatYAML({ no: 'yes', title: 'Hi' }, { quote: 'double' })).toBe(
       '"no": "yes"\ntitle: "Hi"',
     );
-    expect(formatYAML({ no: 'yes' }, {}, { quote: true })).toBe('"no": "yes"');
   });
 });
 
 describe('Test formatYAML() with comments', () => {
   test('writes a comment before a top-level key, including the first one', () => {
-    expect(formatYAML({ title: 'Hello', draft: false }, {}, {}, { title: 'Title' })).toBe(
+    expect(formatYAML({ title: 'Hello', draft: false }, {}, { title: 'Title' })).toBe(
       '# Title\ntitle: Hello\ndraft: false',
     );
   });
@@ -525,7 +488,6 @@ describe('Test formatYAML() with comments', () => {
     expect(
       formatYAML(
         { image: { src: 'a.jpg', alt: 'A' } },
-        {},
         {},
         {
           image: 'Image',
@@ -537,7 +499,7 @@ describe('Test formatYAML() with comments', () => {
 
   test('splits a comment on an escaped or a real line break', () => {
     // Netlify/Decap CMS documents `comment: 'line 1\nline 2'`, where YAML keeps the `\n` as is
-    expect(formatYAML({ a: 'a' }, {}, {}, { a: 'line 1\\nline 2\nline 3' })).toBe(
+    expect(formatYAML({ a: 'a' }, {}, { a: 'line 1\\nline 2\nline 3' })).toBe(
       '# line 1\n# line 2\n# line 3\na: a',
     );
   });
@@ -546,7 +508,6 @@ describe('Test formatYAML() with comments', () => {
     expect(
       formatYAML(
         { links: [{ url: 'https://example.com' }] },
-        {},
         {},
         {
           links: 'Links',
@@ -557,18 +518,18 @@ describe('Test formatYAML() with comments', () => {
   });
 
   test('ignores a comment for a key that is not there', () => {
-    expect(formatYAML({ title: 'Hello' }, {}, {}, { body: 'Body' })).toBe('title: Hello');
+    expect(formatYAML({ title: 'Hello' }, {}, { body: 'Body' })).toBe('title: Hello');
   });
 
   test('ignores a key named after an `Object.prototype` member without a comment', () => {
     // `Object.prototype.toString` was taken for the comment, and `comment.split` threw
-    expect(formatYAML({ toString: 'a', o: { constructor: 'b' } }, {}, {}, {})).toBe(
+    expect(formatYAML({ toString: 'a', o: { constructor: 'b' } }, {}, {})).toBe(
       'toString: a\no:\n  constructor: b',
     );
   });
 
   test('ignores the comments when the document is not a map', () => {
-    expect(formatYAML(/** @type {any} */ (['a', 'b']), {}, {}, { 0: 'First' })).toBe('- a\n- b');
+    expect(formatYAML(/** @type {any} */ (['a', 'b']), {}, { 0: 'First' })).toBe('- a\n- b');
   });
 });
 
@@ -634,26 +595,6 @@ tags:
   - test
   - vitest
 +++
-
-This is the body content of the post.
-`,
-    );
-  });
-
-  test('YAML frontmatter with yamlQuote option', () => {
-    const content = { ...baseContent };
-    /** @type {import('$lib/types/private').FileConfig} */
-    const _file = { format: 'frontmatter', extension: '.md', yamlQuote: true };
-    const result = formatFrontMatter({ content, _file });
-
-    expect(result).toBe(
-      `---
-title: "My Post"
-published: true
-tags:
-  - "test"
-  - "vitest"
----
 
 This is the body content of the post.
 `,
@@ -897,7 +838,6 @@ describe('Test formatEntryFile()', () => {
     const _file = /** @type {FileConfig} */ ({
       format: /** @type {any} */ ('yaml'),
       extension: 'yml',
-      yamlQuote: false,
     });
 
     const result = await formatEntryFile({ content, _file });
@@ -909,7 +849,7 @@ describe('Test formatEntryFile()', () => {
     expect(result.endsWith('\n')).toBe(true);
   });
 
-  test('formats YAML content with quote option', async () => {
+  test('formats YAML content with the quote output option', async () => {
     const content = {
       title: 'Test Post',
       published: true,
@@ -918,10 +858,13 @@ describe('Test formatEntryFile()', () => {
     const _file = /** @type {FileConfig} */ ({
       format: /** @type {any} */ ('yaml'),
       extension: 'yml',
-      yamlQuote: true,
     });
 
+    cmsConfig.current = /** @type {any} */ ({ output: { yaml: { quote: 'double' } } });
+
     const result = await formatEntryFile({ content, _file });
+
+    cmsConfig.current = undefined;
 
     expect(result).toContain('title: "Test Post"');
     expect(result).toContain('published: true');
@@ -937,7 +880,6 @@ describe('Test formatEntryFile()', () => {
     const _file = /** @type {FileConfig} */ ({
       format: /** @type {any} */ ('toml'),
       extension: 'toml',
-      yamlQuote: false,
     });
 
     const result = await formatEntryFile({ content, _file });
@@ -958,7 +900,6 @@ describe('Test formatEntryFile()', () => {
     const _file = /** @type {FileConfig} */ ({
       format: /** @type {any} */ ('json'),
       extension: 'json',
-      yamlQuote: false,
     });
 
     const result = await formatEntryFile({ content, _file });
@@ -976,7 +917,6 @@ describe('Test formatEntryFile()', () => {
     const _file = /** @type {FileConfig} */ ({
       format: /** @type {any} */ ('yml'),
       extension: 'yml',
-      yamlQuote: false,
     });
 
     const result = await formatEntryFile({ content, _file });
@@ -995,7 +935,6 @@ describe('Test formatEntryFile()', () => {
       format: /** @type {any} */ ('frontmatter'),
       extension: 'md',
       fmDelimiters: ['---', '---'],
-      yamlQuote: false,
     });
 
     const result = await formatEntryFile({ content, _file });
@@ -1016,7 +955,6 @@ describe('Test formatEntryFile()', () => {
       format: /** @type {any} */ ('yaml-frontmatter'),
       extension: 'md',
       fmDelimiters: ['---', '---'],
-      yamlQuote: false,
     });
 
     const result = await formatEntryFile({ content, _file });
@@ -1036,7 +974,6 @@ describe('Test formatEntryFile()', () => {
       format: /** @type {any} */ ('toml-frontmatter'),
       extension: 'md',
       fmDelimiters: ['+++', '+++'],
-      yamlQuote: false,
     });
 
     const result = await formatEntryFile({ content, _file });
@@ -1056,7 +993,6 @@ describe('Test formatEntryFile()', () => {
       format: /** @type {any} */ ('json-frontmatter'),
       extension: 'md',
       fmDelimiters: ['{', '}'],
-      yamlQuote: false,
     });
 
     const result = await formatEntryFile({ content, _file });
@@ -1080,7 +1016,6 @@ describe('Test formatEntryFile()', () => {
     const _file = /** @type {FileConfig} */ ({
       format: /** @type {any} */ ('customFormat'),
       extension: 'custom',
-      yamlQuote: false,
     });
 
     const result = await formatEntryFile({ content, _file });
@@ -1101,7 +1036,6 @@ describe('Test formatEntryFile()', () => {
     const _file = /** @type {FileConfig} */ ({
       format: /** @type {any} */ ('json'),
       extension: 'json',
-      yamlQuote: false,
     });
 
     const promise = formatEntryFile({ content: circularRef, _file });
@@ -1130,7 +1064,6 @@ describe('Test formatEntryFile()', () => {
     const _file = /** @type {FileConfig} */ ({
       format: /** @type {any} */ ('unknown-format'),
       extension: 'txt',
-      yamlQuote: false,
     });
 
     await expect(formatEntryFile({ content, _file })).rejects.toThrow(
@@ -1201,7 +1134,6 @@ describe('Test formatEntryFile()', () => {
       format: /** @type {any} */ ('frontmatter'),
       extension: 'md',
       fmDelimiters: ['---', '---'],
-      yamlQuote: false,
     });
 
     const result = await formatEntryFile({ content, _file });
@@ -1222,7 +1154,6 @@ describe('Test formatEntryFile()', () => {
       format: /** @type {any} */ ('frontmatter'),
       extension: 'md',
       fmDelimiters: ['---', '---'],
-      yamlQuote: false,
     });
 
     await formatEntryFile({ content, _file });
@@ -1240,7 +1171,6 @@ describe('Test formatEntryFile()', () => {
     const _file = /** @type {FileConfig} */ ({
       format: /** @type {any} */ ('raw'),
       extension: 'txt',
-      yamlQuote: false,
     });
 
     const result = await formatEntryFile({ content, _file });
@@ -1256,7 +1186,6 @@ describe('Test formatEntryFile()', () => {
     const _file = /** @type {FileConfig} */ ({
       format: /** @type {any} */ ('raw'),
       extension: 'txt',
-      yamlQuote: false,
     });
 
     const result = await formatEntryFile({ content, _file });
@@ -1272,7 +1201,6 @@ describe('Test formatEntryFile()', () => {
     const _file = /** @type {FileConfig} */ ({
       format: /** @type {any} */ ('raw'),
       extension: 'txt',
-      yamlQuote: false,
     });
 
     const result = await formatEntryFile({ content, _file });
@@ -1289,7 +1217,6 @@ describe('Test formatEntryFile()', () => {
     const _file = /** @type {FileConfig} */ ({
       format: 'frontmatter',
       extension: 'md',
-      yamlQuote: false,
       bodyField: { key: 'body', inline: true },
     });
 
@@ -1314,7 +1241,6 @@ body: This should stay in frontmatter.
     const _file = /** @type {FileConfig} */ ({
       format: 'frontmatter',
       extension: 'md',
-      yamlQuote: false,
       bodyField: { key: 'content', inline: false },
     });
 
@@ -1340,7 +1266,6 @@ This should be separate content.
     const _file = /** @type {FileConfig} */ ({
       format: 'frontmatter',
       extension: 'md',
-      yamlQuote: false,
       bodyField: { key: 'description', inline: true },
     });
 

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { REMOVED_COLLECTION_OPTIONS } from '$lib/services/config/parser/removed';
 import { createCollectors } from '$lib/test/config-parser';
 
 // Mock @sveltia/i18n
@@ -47,12 +48,6 @@ const mockParseCollectionFiles = vi.fn();
 
 vi.mock('$lib/services/config/parser/collection-files', () => ({
   parseCollectionFiles: mockParseCollectionFiles,
-}));
-
-const mockWarnDeprecation = vi.fn();
-
-vi.mock('$lib/services/config/deprecations', () => ({
-  warnDeprecation: mockWarnDeprecation,
 }));
 
 describe('Collections Parser', () => {
@@ -471,26 +466,6 @@ describe('Collections Parser', () => {
           strKey: 'collection_no_fields',
         }),
       );
-    });
-
-    it('should handle deprecated slug_length option', async () => {
-      const { parseEntryCollection } = await import('.');
-      const collectors = createCollectors();
-
-      /** @type {any} */
-      const context = {
-        cmsConfig: {},
-        collection: {
-          name: 'posts',
-          folder: 'content/posts',
-          fields: [],
-          slug_length: 200,
-        },
-      };
-
-      parseEntryCollection(context, collectors);
-
-      expect(mockWarnDeprecation).toHaveBeenCalledWith('slug_length');
     });
 
     it('should validate slug without slashes', async () => {
@@ -1376,34 +1351,34 @@ describe('Collections Parser', () => {
     });
   });
 
-  describe('parseCollection yaml_quote option', () => {
+  describe('parseCollection removed options', () => {
     /**
      * Parse a collection with the given extra options.
      * @param {Record<string, any>} options Collection options.
+     * @returns {Promise<{ collection: any, collectors: any }>} Parsed collection and collectors.
      */
     const parse = async (options) => {
       const { parseCollection } = await import('.');
+      const collection = /** @type {any} */ ({ name: 'posts', label: 'Posts', ...options });
+      const collectors = createCollectors();
 
-      parseCollection(
-        {
-          cmsConfig: /** @type {any} */ ({}),
-          collection: /** @type {any} */ ({ name: 'posts', label: 'Posts', ...options }),
-        },
-        createCollectors(),
-      );
+      parseCollection({ cmsConfig: /** @type {any} */ ({}), collection }, collectors);
+
+      return { collection, collectors };
     };
 
     it.each([
       ['an entry collection', { folder: 'posts', fields: [] }],
       ['a file collection', { files: [] }],
-    ])('should warn about the deprecated option in %s', async (_label, options) => {
-      await parse({ ...options, yaml_quote: false });
-      expect(mockWarnDeprecation).toHaveBeenCalledWith('yaml_quote');
-    });
+    ])('should check the removed options in %s', async (_label, options) => {
+      const { collection, collectors } = await parse(options);
 
-    it('should not warn without the option', async () => {
-      await parse({ folder: 'posts', fields: [] });
-      expect(mockWarnDeprecation).not.toHaveBeenCalledWith('yaml_quote');
+      expect(mockCheckUnsupportedOptions).toHaveBeenCalledWith({
+        UNSUPPORTED_OPTIONS: REMOVED_COLLECTION_OPTIONS,
+        config: collection,
+        context: { cmsConfig: {}, collection },
+        collectors,
+      });
     });
   });
 

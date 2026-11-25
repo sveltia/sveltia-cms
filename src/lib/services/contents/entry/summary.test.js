@@ -23,7 +23,6 @@ describe('Test getEntrySummary()', () => {
     name: 'pages-tags',
     folder: 'content/tags',
     fields: [],
-    slug_length: 50,
     _type: 'entry',
     _file: {
       extension: 'md',
@@ -32,7 +31,7 @@ describe('Test getEntrySummary()', () => {
     },
     _i18n: {
       i18nEnabled: true,
-      saveAllLocales: true,
+      canToggleLocales: false,
       allLocales: ['en', 'de'],
       initialLocales: ['en', 'de'],
       defaultLocale: 'de',
@@ -721,7 +720,6 @@ describe('Test sanitizeEntrySummary()', () => {
       name: 'test-pages',
       folder: 'content/pages',
       fields: [{ name: 'description' }],
-      slug_length: 50,
       identifier_field: 'title',
       _type: 'entry',
       _file: {
@@ -731,7 +729,7 @@ describe('Test sanitizeEntrySummary()', () => {
       },
       _i18n: {
         i18nEnabled: false,
-        saveAllLocales: false,
+        canToggleLocales: true,
         allLocales: ['en'],
         initialLocales: ['en'],
         defaultLocale: 'en',
@@ -1773,12 +1771,11 @@ describe('Additional comprehensive tests for edge cases', () => {
       name: 'test',
       folder: 'test',
       fields: [],
-      slug_length: 50,
       _type: 'entry',
       _file: { extension: 'md', format: 'yaml-frontmatter', basePath: 'test' },
       _i18n: {
         i18nEnabled: false,
-        saveAllLocales: false,
+        canToggleLocales: true,
         allLocales: ['en'],
         initialLocales: ['en'],
         defaultLocale: 'en',
@@ -2016,12 +2013,11 @@ describe('Additional comprehensive tests for edge cases', () => {
       name: 'test',
       folder: 'test',
       fields: [],
-      slug_length: 50,
       _type: 'entry',
       _file: { extension: 'md', format: 'yaml-frontmatter', basePath: 'test' },
       _i18n: {
         i18nEnabled: false,
-        saveAllLocales: false,
+        canToggleLocales: true,
         allLocales: ['en'],
         initialLocales: ['en'],
         defaultLocale: 'en',

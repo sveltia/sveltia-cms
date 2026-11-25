@@ -261,9 +261,6 @@ test.describe('more output options', () => {
         collection('posts'),
         collection('data', { extension: 'json' }),
         collection('jsonfm', { format: 'json-frontmatter' }),
-        // The deprecated option takes precedence over the global quote type
-        collection('legacy', { extension: 'yml', yaml_quote: true }),
-        collection('legacyfm', { yaml_quote: true }),
       ],
     },
   });
@@ -315,26 +312,5 @@ test.describe('more output options', () => {
     await expect
       .poll(async () => (await cms.readRepo())['content/jsonfm/night-sky.md'])
       .toBe('{\n    "title": "Night Sky",\n    "tags": [\n        "stars"\n    ]\n}\n\nLook up.\n');
-  });
-
-  test('double-quotes YAML strings with the deprecated collection `yaml_quote`', async ({
-    cms,
-    page,
-  }) => {
-    let editor = await createEntry(page, 'legacy');
-
-    await editor.getByRole('button', { name: 'Save' }).click();
-
-    // The other YAML options still apply
-    await expect
-      .poll(async () => (await cms.readRepo())['content/legacy/night-sky.yml'])
-      .toBe('title: "Night Sky"\ntags:\n- "stars"\nbody: "Look up."\n');
-
-    editor = await createEntry(page, 'legacyfm');
-    await editor.getByRole('button', { name: 'Save' }).click();
-
-    await expect
-      .poll(async () => (await cms.readRepo())['content/legacyfm/night-sky.md'])
-      .toBe('---\ntitle: "Night Sky"\ntags:\n- "stars"\n---\n\nLook up.\n');
   });
 });

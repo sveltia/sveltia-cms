@@ -12,9 +12,6 @@ import { fillTemplate } from '.';
  */
 
 vi.mock('$lib/services/config');
-vi.mock('$lib/services/config/deprecations', () => ({
-  warnDeprecation: vi.fn(),
-}));
 vi.mock('$lib/services/contents/collection/entries', () => ({
   getEntriesInCollectionFolder: vi.fn(() => []),
 }));
@@ -58,7 +55,6 @@ describe('fillTemplate()', async () => {
     name: 'posts',
     folder: 'content/posts',
     fields: [],
-    slug_length: 50,
     _type: 'entry',
     _file: {
       extension: 'md',
@@ -85,6 +81,7 @@ describe('fillTemplate()', async () => {
           encoding: 'unicode',
           clean_accents: false,
           sanitize_replacement: '-',
+          maxlength: 50,
         },
       },
     };
@@ -594,98 +591,12 @@ describe('fillTemplate()', async () => {
     ).toEqual('summary');
   });
 
-  test('slug length truncation', async () => {
-    await setupCmsConfig();
-
-    const longContent = {
-      title:
-        'This is a very long title that should be truncated when the slug length limit is applied',
-    };
-
-    const shortLengthCollection = {
-      ...collection,
-      slug_length: 20,
-    };
-
-    const result = fillTemplate('{{title}}', {
-      collection: shortLengthCollection,
-      content: longContent,
-    });
-
-    expect(result.length).toBeLessThanOrEqual(20);
-    expect(result).not.toMatch(/-$/);
-  });
-
   test('slug length with no truncation', async () => {
     await setupCmsConfig();
 
     const content = { title: 'Short Title' };
 
-    const noLengthCollection = {
-      ...collection,
-      slug_length: undefined,
-    };
-
-    expect(
-      fillTemplate('{{title}}', {
-        collection: noLengthCollection,
-        content,
-      }),
-    ).toEqual('short-title');
-  });
-
-  test('legacy slug_length option triggers deprecation warning', async () => {
-    await setupCmsConfig();
-
-    vi.clearAllMocks();
-
-    const longContent = {
-      title:
-        'This is a very long title that should be truncated when the slug length limit is applied',
-    };
-
-    const legacyCollection = {
-      ...collection,
-      slug_length: 25,
-    };
-
-    fillTemplate('{{title}}', {
-      collection: legacyCollection,
-      content: longContent,
-    });
-
-    const result = fillTemplate('{{title}}', {
-      collection: legacyCollection,
-      content: longContent,
-    });
-
-    expect(result.length).toBeLessThanOrEqual(25);
-  });
-
-  test('slug max length from config when legacy option not defined', async () => {
-    await setupCmsConfig();
-
-    const { warnDeprecation } = await import('$lib/services/config/deprecations');
-
-    vi.clearAllMocks();
-
-    const longContent = {
-      title:
-        'This is a very long title that should be truncated when the slug length limit is applied',
-    };
-
-    const collectionWithoutLegacy = {
-      ...collection,
-      slug_length: undefined,
-    };
-
-    const result = fillTemplate('{{title}}', {
-      collection: collectionWithoutLegacy,
-      content: longContent,
-    });
-
-    expect(warnDeprecation).not.toHaveBeenCalled();
-    expect(result).toBeDefined();
+    expect(fillTemplate('{{title}}', { collection, content })).toEqual('short-title');
   });
 
   test('slug max length from new maxlength config option', async () => {
@@ -711,15 +622,7 @@ describe('fillTemplate()', async () => {
         'This is a very long title that should be truncated when the slug length limit is applied',
     };
 
-    const collectionWithoutLegacy = {
-      ...collection,
-      slug_length: undefined,
-    };
-
-    const result = fillTemplate('{{title}}', {
-      collection: collectionWithoutLegacy,
-      content: longContent,
-    });
+    const result = fillTemplate('{{title}}', { collection, content: longContent });
 
     expect(result.length).toBeLessThanOrEqual(30);
     expect(result).not.toMatch(/-$/);
@@ -745,21 +648,21 @@ describe('fillTemplate()', async () => {
 
     expect(
       fillTemplate('{{title}}', {
-        collection: { ...collection, slug_length: undefined },
+        collection,
         content: { title: 'Hello World' },
       }),
     ).toBe('hello');
   });
 
-  test('remove a trailing hyphen after truncation without the slug options', async () => {
+  test('remove a trailing hyphen after truncation with the default replacement', async () => {
     // @ts-ignore
     (await import('$lib/services/config')).cmsConfig = {
-      current: { backend: { name: 'github' }, collections: [collection] },
+      current: { backend: { name: 'github' }, collections: [collection], slug: { maxlength: 6 } },
     };
 
     expect(
       fillTemplate('{{title}}', {
-        collection: { ...collection, slug_length: 6 },
+        collection,
         content: { title: 'Hello World' },
       }),
     ).toBe('hello');
@@ -777,7 +680,7 @@ describe('fillTemplate()', async () => {
 
     expect(
       fillTemplate('{{title}}-{{title}}', {
-        collection: { ...collection, slug_length: undefined },
+        collection,
         content: { title: 'Hello' },
       }),
     ).toBe('hello-');
@@ -795,7 +698,7 @@ describe('fillTemplate()', async () => {
 
     expect(
       fillTemplate('{{title}}', {
-        collection: { ...collection, slug_length: undefined },
+        collection,
         content: { title: '--Hello World--' },
       }),
     ).toBe('-hello-world-');
@@ -813,16 +716,13 @@ describe('fillTemplate()', async () => {
 
     expect(
       fillTemplate('{{title}}', {
-        collection: { ...collection, slug_length: undefined },
+        collection,
         content: { title: 'Hello World' },
       }),
     ).toBe('hello-');
   });
 
   describe('default slug byte cap', () => {
-    /** @type {InternalEntryCollection} */
-    const uncappedCollection = { ...collection, slug_length: undefined };
-
     /**
      * Set the `slug` options.
      * @param {Record<string, any>} [slug] Options.
@@ -842,7 +742,7 @@ describe('fillTemplate()', async () => {
      */
     const fill = (title, overrides = {}) =>
       fillTemplate('{{title}}', {
-        collection: { ...uncappedCollection, ...overrides },
+        collection: { ...collection, ...overrides },
         content: { title },
       });
 
@@ -871,16 +771,10 @@ describe('fillTemplate()', async () => {
 
     test('removes dots at the end of the template', async () => {
       await setSlugOptions();
-      expect(
-        fillTemplate('{{title}}.', { collection: uncappedCollection, content: { title: 'Hi' } }),
-      ).toBe('hi');
-      expect(
-        fillTemplate('{{title}}-.', { collection: uncappedCollection, content: { title: 'Hi' } }),
-      ).toBe('hi');
+      expect(fillTemplate('{{title}}.', { collection, content: { title: 'Hi' } })).toBe('hi');
+      expect(fillTemplate('{{title}}-.', { collection, content: { title: 'Hi' } })).toBe('hi');
       // A replacement not followed by a dot is left alone
-      expect(
-        fillTemplate('{{title}}-', { collection: uncappedCollection, content: { title: 'Hi' } }),
-      ).toBe('hi-');
+      expect(fillTemplate('{{title}}-', { collection, content: { title: 'Hi' } })).toBe('hi-');
       expect(fill('Hello world.')).toBe('hello-world');
     });
 
@@ -899,11 +793,6 @@ describe('fillTemplate()', async () => {
       await setSlugOptions({ maxlength: 300 });
       expect(fill('word '.repeat(60))).toBe(`${'word-'.repeat(59)}word`);
       expect(fill('日'.repeat(100))).toBe('日'.repeat(100));
-    });
-
-    test('lets the legacy `slug_length` option win', async () => {
-      await setSlugOptions();
-      expect(fill('日'.repeat(100), { slug_length: 250 })).toBe('日'.repeat(100));
     });
 
     test('removes dots left at the end by a cut with `maxlength`', async () => {
@@ -955,51 +844,12 @@ describe('fillTemplate()', async () => {
       await setSlugOptions();
       expect(
         fillTemplate('{{slug}}/index', {
-          collection: uncappedCollection,
+          collection,
           content: {},
           currentSlug: 'a'.repeat(300),
         }),
       ).toBe(`${'a'.repeat(300)}/index`);
     });
-  });
-
-  test('legacy slug_length overrides config maxlength option', async () => {
-    // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = {
-      current: {
-        backend: { name: 'github' },
-        media_folder: 'static/images/uploads',
-        collections: [collection],
-        _siteURL: '',
-        _baseURL: '',
-        slug: {
-          encoding: 'unicode',
-          clean_accents: false,
-          sanitize_replacement: '-',
-          maxlength: 50,
-        },
-      },
-    };
-
-    vi.clearAllMocks();
-
-    const longContent = {
-      title:
-        'This is a very long title that should be truncated when the slug length limit is applied',
-    };
-
-    const legacyCollection = {
-      ...collection,
-      slug_length: 20,
-    };
-
-    const result = fillTemplate('{{title}}', {
-      collection: legacyCollection,
-      content: longContent,
-    });
-
-    expect(result.length).toBeLessThanOrEqual(20);
-    expect(result).not.toMatch(/-$/);
   });
 
   test('current slug handling', async () => {
@@ -1041,7 +891,7 @@ describe('fillTemplate()', async () => {
     const content = { title: 'Some Title' };
 
     const result = fillTemplate('{{slug}}/+page', {
-      collection: { ...collection, slug_length: undefined },
+      collection,
       content,
       currentSlug: longSlug,
     });

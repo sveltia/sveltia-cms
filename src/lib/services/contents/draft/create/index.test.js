@@ -164,7 +164,7 @@ describe('contents/draft/create/index', () => {
     it('should share the slug in a single file, where the slug can’t be localized', () => {
       const collection = {
         _type: 'entry',
-        slug: '{{fields._slug | localize}}',
+        slug: { editable: true, i18n: true },
         _i18n: { ...baseI18n, structureMap: { i18nSingleFile: true } },
       };
 
@@ -180,32 +180,6 @@ describe('contents/draft/create/index', () => {
       expect(getSlugEditorProp({ collection, originalSlugs: {}, isIndexFile: true })).toEqual({
         en: false,
         ja: false,
-      });
-    });
-
-    it('should return true for default locale and readonly for others with {{fields._slug}} and empty originalSlugs', () => {
-      const collection = {
-        _type: 'entry',
-        slug: '{{fields._slug}}',
-        _i18n: baseI18n,
-      };
-
-      expect(getSlugEditorProp({ collection, originalSlugs: {} })).toEqual({
-        en: true,
-        ja: 'readonly',
-      });
-    });
-
-    it('should return all true with {{fields._slug | localize}} and empty originalSlugs', () => {
-      const collection = {
-        _type: 'entry',
-        slug: '{{fields._slug | localize}}',
-        _i18n: baseI18n,
-      };
-
-      expect(getSlugEditorProp({ collection, originalSlugs: {} })).toEqual({
-        en: true,
-        ja: true,
       });
     });
 
@@ -246,7 +220,7 @@ describe('contents/draft/create/index', () => {
     it('should return false for locales whose slug is already set', () => {
       const collection = {
         _type: 'entry',
-        slug: '{{fields._slug}}',
+        slug: { editable: true },
         _i18n: baseI18n,
       };
 
@@ -256,10 +230,10 @@ describe('contents/draft/create/index', () => {
       ).toEqual({ en: false, ja: false });
     });
 
-    it('should return true for locales without a slug and false for those with one when using localized tag', () => {
+    it('should return true for locales without a slug and false for those with one when localized', () => {
       const collection = {
         _type: 'entry',
-        slug: '{{fields._slug | localize}}',
+        slug: { editable: true, i18n: true },
         _i18n: baseI18n,
       };
 
@@ -273,7 +247,7 @@ describe('contents/draft/create/index', () => {
     it('should use collectionFile i18n when provided', () => {
       const collection = {
         _type: 'entry',
-        slug: '{{fields._slug}}',
+        slug: { editable: true },
         _i18n: {
           i18nEnabled: true,
           structureMap: {},
@@ -300,7 +274,7 @@ describe('contents/draft/create/index', () => {
     it('should return false for all locales when originalSlugs has a locale-agnostic slug', () => {
       const collection = {
         _type: 'entry',
-        slug: '{{fields._slug}}',
+        slug: { editable: true },
         _i18n: baseI18n,
       };
 
@@ -310,10 +284,10 @@ describe('contents/draft/create/index', () => {
       });
     });
 
-    it('should return false for all locales when originalSlugs has a locale-agnostic slug with localized tag', () => {
+    it('should return false for all locales when originalSlugs has a locale-agnostic localized slug', () => {
       const collection = {
         _type: 'entry',
-        slug: '{{fields._slug | localize}}',
+        slug: { editable: true, i18n: true },
         _i18n: baseI18n,
       };
 
@@ -903,13 +877,13 @@ describe('contents/draft/create/index', () => {
       });
     });
 
-    it('should set slugEditor for entry collection with {{fields._slug}} template', () => {
+    it('should set slugEditor for entry collection with an editable slug', () => {
       const collection = {
         name: 'posts',
         _type: 'entry',
         fields: [],
         identifier_field: 'title',
-        slug: '{{fields._slug}}',
+        slug: { editable: true },
         _i18n: {
           i18nEnabled: true,
           structureMap: {},
@@ -930,13 +904,13 @@ describe('contents/draft/create/index', () => {
       );
     });
 
-    it('should set slugEditor for localized slug template', () => {
+    it('should set slugEditor for an editable localized slug', () => {
       const collection = {
         name: 'posts',
         _type: 'entry',
         fields: [],
         identifier_field: 'title',
-        slug: '{{fields._slug | localize}}',
+        slug: { editable: true, i18n: true },
         _i18n: {
           i18nEnabled: true,
           structureMap: {},
@@ -962,7 +936,7 @@ describe('contents/draft/create/index', () => {
         name: 'posts',
         _type: 'entry',
         fields: [],
-        slug: '{{fields._slug}}',
+        slug: { editable: true },
         _i18n: {
           i18nEnabled: true,
           structureMap: {},
@@ -996,7 +970,7 @@ describe('contents/draft/create/index', () => {
         name: 'posts',
         _type: 'entry',
         fields: [],
-        slug: '{{fields._slug}}',
+        slug: { editable: true },
         _i18n: {
           i18nEnabled: true,
           structureMap: {},
@@ -1031,7 +1005,7 @@ describe('contents/draft/create/index', () => {
         name: 'posts',
         _type: 'entry',
         fields: [],
-        slug: '{{fields._slug | localize}}',
+        slug: { editable: true, i18n: true },
         _i18n: {
           i18nEnabled: true,
           structureMap: {},

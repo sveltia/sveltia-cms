@@ -51,7 +51,7 @@ describe('Test getAssociatedCollections()', () => {
       },
       _i18n: {
         i18nEnabled: false,
-        saveAllLocales: false,
+        canToggleLocales: true,
         allLocales: ['en'],
         initialLocales: ['en'],
         defaultLocale: 'en',

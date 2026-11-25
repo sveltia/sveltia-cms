@@ -7,10 +7,7 @@ import { parseFields } from '$lib/services/config/parser/fields';
 import { checkI18nOverrides } from '$lib/services/config/parser/i18n';
 import { checkFolderTemplateTags } from '$lib/services/config/parser/media';
 import { addMessage, checkName } from '$lib/services/config/parser/utils/validator';
-import {
-  getOmitDefaultLocaleOption,
-  mergeI18nConfigs,
-} from '$lib/services/contents/i18n/config/merge';
+import { mergeI18nConfigs } from '$lib/services/contents/i18n/config/merge';
 import {
   canOmitLocalePlaceholder,
   hasLocalePlaceholder,
@@ -62,12 +59,12 @@ export const parseCollectionFile = (context, collectors) => {
 
   if (hasLocalePlaceholder(file) && !canOmitLocalePlaceholder(file)) {
     // The `omit_default_locale_from_file_path` option can be set at the site, collection or file
-    // level, as can its deprecated alias. With the placeholder anywhere it can’t be removed without
+    // level. With the placeholder anywhere it can’t be removed without
     // breaking the rest of the path, like `i18n/{{locale}}.yaml`, the option can’t apply, and the
     // default locale is kept in the path instead, which is worth a warning
     const config = mergeI18nConfigs({ cmsConfig, collection, file: collectionFile });
 
-    if (config?.locales?.length && getOmitDefaultLocaleOption(config)) {
+    if (config?.locales?.length && config.omit_default_locale_from_file_path) {
       addMessage({
         type: 'warning',
         strKey: 'locale_not_omitted_from_file_path',

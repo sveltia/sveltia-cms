@@ -355,7 +355,6 @@ export const getFileConfig = ({ rawCollection, file, _i18n }) => {
     format: _format,
     frontmatter_delimiter: _delimiter,
     body_field: bodyField,
-    yaml_quote: yamlQuote,
   } = rawCollection;
 
   const _isEntryCollection = isEntryCollection(rawCollection);
@@ -409,7 +408,6 @@ export const getFileConfig = ({ rawCollection, file, _i18n }) => {
       : undefined,
     fmDelimiters: getFrontMatterDelimiters({ format, delimiter }),
     bodyField: file?.body_field ?? bodyField,
-    yamlQuote: !!yamlQuote,
   };
 
   if (arrayFile) {

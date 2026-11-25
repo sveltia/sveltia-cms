@@ -10,7 +10,8 @@ import { getConfiguredSlugTemplate } from '$lib/services/contents/collection/slu
 /**
  * Template tags a slug or path template can use that don’t refer to a field: the date and time of
  * creation, a random ID, and the slug of the entry itself, which `{{slug}}` derives from the
- * identifier field and the legacy `{{fields._slug}}` reads from the slug editor.
+ * identifier field. The `{{fields._slug}}` tag, which read the slug editor before Sveltia CMS 5.0,
+ * is reported as removed on its own in a slug template, so it’s not reported as an unknown field.
  * @type {string[]}
  */
 const SLUG_SPECIAL_TAGS = [

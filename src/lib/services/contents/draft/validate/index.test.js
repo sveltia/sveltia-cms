@@ -43,7 +43,7 @@ describe('draft/validate', () => {
       collection: {
         name: 'posts',
         _type: 'entry',
-        slug: '{{fields._slug}}',
+        slug: { editable: true },
         _i18n: {
           i18nEnabled: true,
           defaultLocale: 'en',

@@ -182,28 +182,18 @@ export const isAmbiguousYAMLString = (value) =>
  * Format the given object as a YAML document using a library.
  * @param {Record<string, any>} obj Object to be formatted.
  * @param {YamlFormatOptions} [options] Options.
- * @param {object} [legacyOptions] Deprecated collection-level options.
- * @param {boolean} [legacyOptions.quote] Quote option.
  * @param {Record<FieldKeyPath, string>} [comments] Comments to add before the keys, keyed by field
  * key path.
  * @returns {string} Formatted document.
  * @see https://eemeli.org/yaml/#tostring-options
- * @todo Remove `legacyOptions` prior to the 1.0 release.
  */
-export const formatYAML = (
-  obj,
-  options = cmsConfig.current?.output?.yaml ?? {},
-  legacyOptions = {},
-  comments = {},
-) => {
+export const formatYAML = (obj, options = cmsConfig.current?.output?.yaml ?? {}, comments = {}) => {
   const {
     indent_size: indent = 2,
     indent_sequences: indentSeq = true,
     quote = 'none',
     block_quote: blockQuote = true,
   } = options;
-
-  const { quote: legacyQuote = false } = legacyOptions;
 
   /** @type {ToStringOptions} */
   const toStringOptions = {
@@ -213,12 +203,8 @@ export const formatYAML = (
     lineWidth: 0,
     defaultKeyType: 'PLAIN',
     defaultStringType:
-      legacyQuote || quote === 'double'
-        ? 'QUOTE_DOUBLE'
-        : quote === 'single'
-          ? 'QUOTE_SINGLE'
-          : 'PLAIN',
-    singleQuote: !(legacyQuote || quote === 'double'),
+      quote === 'double' ? 'QUOTE_DOUBLE' : quote === 'single' ? 'QUOTE_SINGLE' : 'PLAIN',
+    singleQuote: quote !== 'double',
   };
 
   // Write a value that hasn’t changed since it was read, e.g. a float that is a whole number, as it
@@ -254,20 +240,18 @@ export const formatYAML = (
 };
 
 /**
- * Formatter for each syntax, taking the content, the file configuration and the comments to add.
- * @type {Record<FormatSyntax, (content: RawEntryContent, _file: FileConfig,
+ * Formatter for each syntax, taking the content and the comments to add.
+ * @type {Record<FormatSyntax, (content: RawEntryContent,
  * comments?: Record<FieldKeyPath, string>) => string>}
  */
 const FORMATTERS = {
   /**
    * Format the given content as YAML, with the comments.
    * @param {RawEntryContent} content Content.
-   * @param {FileConfig} _file File configuration.
    * @param {Record<FieldKeyPath, string>} [comments] Comments.
    * @returns {string} Formatted document.
    */
-  yaml: (content, { yamlQuote = false }, comments) =>
-    formatYAML(content, undefined, { quote: yamlQuote }, comments),
+  yaml: (content, comments) => formatYAML(content, undefined, comments),
   /**
    * Format the given content as TOML.
    * @param {RawEntryContent} content Content.
@@ -288,15 +272,14 @@ const FORMATTERS = {
  * @param {object} args Arguments.
  * @param {FormatSyntax} args.syntax Syntax.
  * @param {RawEntryContent} args.content Content.
- * @param {FileConfig} args._file File configuration.
  * @param {Record<FieldKeyPath, string>} [args.comments] Comments to add before the keys, keyed by
  * field key path. YAML only.
  * @param {string} [args.leadingComment] Comments at the top of the file being overwritten, or of
  * its front matter.
  * @returns {string} Formatted document.
  */
-const formatSyntax = ({ syntax, content, _file, comments, leadingComment }) => {
-  const str = FORMATTERS[syntax](content, _file, comments);
+const formatSyntax = ({ syntax, content, comments, leadingComment }) => {
+  const str = FORMATTERS[syntax](content, comments);
 
   return syntax === 'json' ? str : prependLeadingComment(str, leadingComment);
 };
@@ -369,7 +352,7 @@ export const formatFrontMatter = ({ content, _file, comments, leadingComment }) 
     throw new Error(`Unsupported front matter format: ${format}`);
   }
 
-  let head = formatSyntax({ syntax, content, _file, comments, leadingComment });
+  let head = formatSyntax({ syntax, content, comments, leadingComment });
 
   // Like Netlify/Decap CMS, strip the outer braces of the object when they double as the
   // delimiters, so the front matter block is the object itself rather than one wrapped in another
@@ -420,7 +403,7 @@ const formatWithBuiltInFormatter = ({ content, _file, comments, state = {} }) =>
     // A built-in format other than `raw` has a syntax
     const syntax = /** @type {FormatSyntax} */ (getFormatSyntax(format));
 
-    return `${formatSyntax({ syntax, content, _file, comments, leadingComment })}\n`;
+    return `${formatSyntax({ syntax, content, comments, leadingComment })}\n`;
   } catch (/** @type {any} */ ex) {
     throw new Error(`The entry could not be formatted due to ${ex.name}: ${ex.message}`, {
       cause: ex,

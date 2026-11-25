@@ -3,7 +3,6 @@
 import { _ } from '@sveltia/i18n';
 import { isObject } from '@sveltia/utils/object';
 
-import { warnDeprecation } from '$lib/services/config/deprecations';
 import { parseCollectionFiles } from '$lib/services/config/parser/collection-files';
 import { checkArrayFileOptions } from '$lib/services/config/parser/collections/array-file';
 import { checkBulkEditFields } from '$lib/services/config/parser/collections/bulk-edit';
@@ -21,6 +20,7 @@ import { parseFields } from '$lib/services/config/parser/fields';
 import { checkI18nOverrides } from '$lib/services/config/parser/i18n';
 import { checkFolderTemplateTags } from '$lib/services/config/parser/media';
 import { parsePublishMode } from '$lib/services/config/parser/publish-mode';
+import { REMOVED_COLLECTION_OPTIONS } from '$lib/services/config/parser/removed';
 import {
   addMessage,
   checkName,
@@ -79,7 +79,6 @@ export const parseEntryCollection = (context, collectors) => {
     preview_path_date_field,
     reorder,
     bulk_edit: bulkEdit,
-    slug_length: legacySlugLength,
     view_groups,
   } = collection;
 
@@ -90,11 +89,6 @@ export const parseEntryCollection = (context, collectors) => {
       context,
       collectors,
     });
-  }
-
-  // @todo Remove the legacy option prior to the 1.0 release.
-  if (legacySlugLength !== undefined) {
-    warnDeprecation('slug_length');
   }
 
   checkUnsupportedOptions({ UNSUPPORTED_OPTIONS, config: collection, context, collectors });
@@ -281,10 +275,14 @@ export const parseCollection = ({ cmsConfig, collection }, collectors) => {
     return;
   }
 
-  // @todo Remove the option prior to the 1.0 release.
-  if (/** @type {Collection} */ (collection).yaml_quote !== undefined) {
-    warnDeprecation('yaml_quote');
-  }
+  // `slug_length` only applied to an entry collection, but a removed option is worth reporting
+  // wherever it’s found
+  checkUnsupportedOptions({
+    UNSUPPORTED_OPTIONS: REMOVED_COLLECTION_OPTIONS,
+    config: collection,
+    context: { cmsConfig, collection: /** @type {Collection} */ (collection) },
+    collectors,
+  });
 
   // Validate the `i18n` option against the site-level configuration it builds on. A divider has
   // been ruled out above

@@ -4,10 +4,8 @@ import { describe, expect, it } from 'vitest';
 import {
   getConfiguredSlugTemplate,
   getSlugOptions,
-  hasLegacySlugEditorTag,
   hasLocalizedSlugs,
-  LEGACY_LOCALIZED_SLUG_EDITOR_TAG,
-  LEGACY_SLUG_EDITOR_TAG,
+  SLUG_EDITOR_TAG,
 } from './slug';
 
 describe('contents/collection/slug', () => {
@@ -28,25 +26,11 @@ describe('contents/collection/slug', () => {
     });
   });
 
-  describe('hasLegacySlugEditorTag', () => {
-    it('should detect the legacy tags', () => {
-      expect(hasLegacySlugEditorTag(LEGACY_SLUG_EDITOR_TAG)).toBe(true);
-      expect(hasLegacySlugEditorTag(LEGACY_LOCALIZED_SLUG_EDITOR_TAG)).toBe(true);
-      expect(hasLegacySlugEditorTag('{{year}}-{{fields._slug}}')).toBe(true);
-    });
-
-    it('should return false for other templates', () => {
-      expect(hasLegacySlugEditorTag('{{title}}')).toBe(false);
-      expect(hasLegacySlugEditorTag(undefined)).toBe(false);
-    });
-  });
-
   describe('getSlugOptions', () => {
     it('should return the defaults without the slug option', () => {
       expect(getSlugOptions({})).toEqual({
         template: '{{title}}',
         editorRequired: false,
-        editorValueIsSlug: true,
         editable: { create: true, update: true },
         localized: false,
         autoIncrement: false,
@@ -59,7 +43,7 @@ describe('contents/collection/slug', () => {
       expect(
         getSlugOptions({
           slug: {
-            template: '{{fields._slug}}',
+            template: '{{title}}',
             auto_increment: true,
             editable: true,
             i18n: true,
@@ -70,7 +54,6 @@ describe('contents/collection/slug', () => {
       ).toEqual({
         template: '',
         editorRequired: false,
-        editorValueIsSlug: true,
         editable: { create: true, update: true },
         localized: true,
         autoIncrement: true,
@@ -144,49 +127,15 @@ describe('contents/collection/slug', () => {
       });
     });
 
-    it('should support the legacy slug editor tag', () => {
-      expect(getSlugOptions({ slug: '{{fields._slug}}' })).toMatchObject({
-        template: '{{fields._slug}}',
-        editorRequired: true,
-        editable: { create: true, update: true },
-        localized: false,
-      });
-    });
-
-    it('should support the legacy localized slug editor tag', () => {
-      expect(getSlugOptions({ slug: '{{fields._slug | localize}}' })).toMatchObject({
-        template: '{{fields._slug | localize}}',
-        editorRequired: true,
-        editable: { create: true, update: true },
-        localized: true,
-      });
-    });
-
-    it('should tell whether the slug editor’s value is the whole slug', () => {
-      expect(getSlugOptions({ slug: '{{fields._slug}}' }).editorValueIsSlug).toBe(true);
-      expect(getSlugOptions({ slug: '{{fields._slug | localize}}' }).editorValueIsSlug).toBe(true);
-      expect(getSlugOptions({ slug: { editable: true } }).editorValueIsSlug).toBe(true);
-      expect(
-        getSlugOptions({ slug: { template: '{{title}}', editable: true } }).editorValueIsSlug,
-      ).toBe(true);
-      expect(getSlugOptions({ slug: '{{year}}-{{fields._slug}}' }).editorValueIsSlug).toBe(false);
-    });
-
-    it('should support the legacy tags in the template property', () => {
-      expect(
-        getSlugOptions({ slug: { template: '{{fields._slug}}', editable: false } }),
-      ).toMatchObject({ editorRequired: true, editable: { create: true, update: false } });
-    });
-
     it('should take the slug from the slug editor alone when editable without a template', () => {
       expect(getSlugOptions({ slug: { editable: true } })).toMatchObject({
-        template: '{{fields._slug}}',
+        template: SLUG_EDITOR_TAG,
         editorRequired: true,
         editable: { create: true, update: true },
         localized: false,
       });
       expect(getSlugOptions({ slug: { editable: ['create'], i18n: true } })).toMatchObject({
-        template: '{{fields._slug | localize}}',
+        template: SLUG_EDITOR_TAG,
         editorRequired: true,
         editable: { create: true, update: false },
         localized: true,

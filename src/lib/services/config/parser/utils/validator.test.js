@@ -26,8 +26,8 @@ const mockI18nStrings = {
   'config.error_locator.component': 'Component: {component}',
   'config.error_locator.field': 'Field: {field}',
   'config.custom_extra': 'Custom extra message',
-  'config.compatibility_link':
-    'See the compatibility notes for details: https://sveltiacms.app/docs/migration/netlify-decap-cms#compatibility',
+  'config.compatibility_link': 'See the compatibility notes for details: {link}',
+  'config.migration_link': 'See the migration guide for details: {link}',
 };
 
 vi.mock('@sveltia/i18n', async () =>
@@ -396,6 +396,25 @@ describe('messages', () => {
 
       expect(message).toContain('Test error message');
       expect(message).toContain('See the compatibility notes');
+    });
+
+    it.each([
+      [
+        'compatibility_link',
+        /^Test error message See the compatibility notes for details: \S*<https:\/\/\S+#compatibility>\S*$/,
+      ],
+      [
+        'migration_link',
+        /^Test error message See the migration guide for details: \S*<https:\/\/\S+\/migration\/earlier-versions>\S*$/,
+      ],
+      // The link is a Markdown autolink, so the bidi isolate around it isn’t taken as part of
+      // the URL
+    ])('should fill the link into the %s extra message', (extraStrKey, expected) => {
+      const collectors = createCollectors();
+
+      addMessage({ strKey: 'test_error', extraStrKey, collectors });
+
+      expect(Array.from(collectors.errors)[0]).toMatch(expected);
     });
 
     it('should not append extra string when extraStrKey is not provided', () => {

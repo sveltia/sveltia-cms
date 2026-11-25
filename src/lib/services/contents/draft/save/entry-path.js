@@ -64,8 +64,7 @@ export const buildPathByStructure = ({
       return omitLocale
         ? `${basePath}/${path}.${extension}`
         : `${basePath}/${locale}/${path}.${extension}`;
-    case 'multiple_folders_i18n_root': // deprecated
-    case 'multiple_root_folders': // new name
+    case 'multiple_root_folders':
       return omitLocale
         ? `${basePath}/${path}.${extension}`
         : `${locale}/${basePath}/${path}.${extension}`;

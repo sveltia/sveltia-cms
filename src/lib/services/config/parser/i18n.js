@@ -1,9 +1,8 @@
 import { isObject } from '@sveltia/utils/object';
 
-import { warnDeprecation } from '$lib/services/config/deprecations';
+import { REMOVED_I18N_OPTIONS } from '$lib/services/config/parser/removed';
 import { getSubFields } from '$lib/services/config/parser/utils/fields';
-import { addMessage } from '$lib/services/config/parser/utils/validator';
-import { I18N_STRUCTURES } from '$lib/services/contents/i18n/config/constants';
+import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
 import { mergeI18nConfigs } from '$lib/services/contents/i18n/config/merge';
 import { isFieldLocalized } from '$lib/services/contents/i18n/fields';
 
@@ -28,25 +27,22 @@ import { isFieldLocalized } from '$lib/services/contents/i18n/fields';
 const LOCALE_OPTIONS = ['locales', 'default_locale', 'initial_locales'];
 
 /**
- * Warn about the deprecated options in an i18n configuration. This looks at the options as written
- * at each level rather than the normalized configuration, which only exists for the collections and
- * files that enable i18n, and whose structure is replaced based on the collection type and the
- * `{{locale}}` placeholder. Either would hide an option that’s about to stop working.
+ * Report the options removed in Sveltia CMS 5.0 that an i18n configuration still has. This looks at
+ * the options as written at each level rather than the normalized configuration, which only exists
+ * for the collections and files that enable i18n, and whose structure is replaced based on the
+ * collection type and the `{{locale}}` placeholder. Either would hide an option that no longer
+ * works.
  * @param {I18nOptions} config I18n options as defined at the site, collection or file level.
- * @todo Remove the options prior to the 1.0 release.
+ * @param {ConfigParserContext} context Context.
+ * @param {ConfigParserCollectors} collectors Collectors.
  */
-const warnDeprecatedOptions = (config) => {
-  if (config.save_all_locales !== undefined) {
-    warnDeprecation('save_all_locales');
-  }
-
-  if (config.omit_default_locale_from_filename !== undefined) {
-    warnDeprecation('omit_default_locale_from_filename');
-  }
-
-  if (config.structure === I18N_STRUCTURES.MULTIPLE_FOLDERS_I18N_ROOT) {
-    warnDeprecation('multiple_folders_i18n_root');
-  }
+const checkRemovedI18nOptions = (config, context, collectors) => {
+  checkUnsupportedOptions({
+    UNSUPPORTED_OPTIONS: REMOVED_I18N_OPTIONS,
+    config,
+    context,
+    collectors,
+  });
 };
 
 /**
@@ -125,7 +121,7 @@ export const parseI18nConfig = (cmsConfig, collectors) => {
     return;
   }
 
-  warnDeprecatedOptions(/** @type {I18nOptions} */ (i18n));
+  checkRemovedI18nOptions(/** @type {I18nOptions} */ (i18n), { cmsConfig }, collectors);
   checkLocales(/** @type {I18nOptions} */ (i18n), { cmsConfig }, collectors);
 
   // The site-level configuration only takes effect in the collections and singletons that enable
@@ -216,7 +212,7 @@ export const checkI18nOverrides = (context, collectors) => {
   }
 
   if (isObject(option)) {
-    warnDeprecatedOptions(option);
+    checkRemovedI18nOptions(option, context, collectors);
   }
 
   const merged = mergeI18nConfigs({

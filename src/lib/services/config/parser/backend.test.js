@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { REMOVED_BACKEND_OPTIONS } from '$lib/services/config/parser/removed';
 import { createCollectors } from '$lib/test/config-parser';
 
 // Mock @sveltia/i18n
@@ -37,12 +38,6 @@ const mockIsObject = vi.fn();
 
 vi.mock('@sveltia/utils/object', () => ({
   isObject: mockIsObject,
-}));
-
-const mockWarnDeprecation = vi.fn();
-
-vi.mock('$lib/services/config/deprecations', () => ({
-  warnDeprecation: mockWarnDeprecation,
 }));
 
 vi.mock('$lib/services/backends', () => ({
@@ -232,7 +227,10 @@ describe('parseBackendConfig', () => {
       parseBackendConfig(config, collectors);
 
       expect(collectors.errors.size).toBe(0);
-      expect(mockCheckUnsupportedOptions).not.toHaveBeenCalled();
+      // Only the removed options are checked for a backend other than Git
+      expect(mockCheckUnsupportedOptions).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({ UNSUPPORTED_OPTIONS: REMOVED_BACKEND_OPTIONS }),
+      );
     });
   });
 
@@ -970,41 +968,28 @@ describe('parseBackendConfig', () => {
     });
   });
 
-  describe('deprecated options', () => {
-    it('should warn when automatic_deployments is present', async () => {
-      const { parseBackendConfig } = await import('./backend.js');
-      const collectors = createCollectors();
+  describe('removed options', () => {
+    it.each(['github', 'test-repo'])(
+      'should check the options removed from the %s backend',
+      async (name) => {
+        const { parseBackendConfig } = await import('./backend.js');
+        const collectors = createCollectors();
 
-      /** @type {any} */
-      const config = {
-        backend: {
-          name: 'github',
-          repo: 'owner/repo',
-          automatic_deployments: true,
-        },
-      };
+        /** @type {any} */
+        const config = {
+          backend: { name, repo: 'owner/repo', automatic_deployments: false },
+        };
 
-      parseBackendConfig(config, collectors);
+        parseBackendConfig(config, collectors);
 
-      expect(mockWarnDeprecation).toHaveBeenCalledWith('automatic_deployments');
-    });
-
-    it('should not warn when automatic_deployments is undefined', async () => {
-      const { parseBackendConfig } = await import('./backend.js');
-      const collectors = createCollectors();
-
-      /** @type {any} */
-      const config = {
-        backend: {
-          name: 'github',
-          repo: 'owner/repo',
-        },
-      };
-
-      parseBackendConfig(config, collectors);
-
-      expect(mockWarnDeprecation).not.toHaveBeenCalled();
-    });
+        expect(mockCheckUnsupportedOptions).toHaveBeenCalledWith({
+          UNSUPPORTED_OPTIONS: REMOVED_BACKEND_OPTIONS,
+          config: config.backend,
+          context: { cmsConfig: config },
+          collectors,
+        });
+      },
+    );
   });
 
   describe('unsupported options', () => {
@@ -1044,7 +1029,10 @@ describe('parseBackendConfig', () => {
 
       parseBackendConfig(config, collectors);
 
-      expect(mockCheckUnsupportedOptions).not.toHaveBeenCalled();
+      // Only the removed options are checked
+      expect(mockCheckUnsupportedOptions).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({ UNSUPPORTED_OPTIONS: REMOVED_BACKEND_OPTIONS }),
+      );
     });
   });
   describe('open authoring', () => {

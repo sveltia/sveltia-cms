@@ -65,7 +65,7 @@ describe('git/shared/integration', () => {
       expect(skipCIConfigured.current).toBe(false);
     });
 
-    it('should return false when neither skip_ci nor automatic_deployments is set', async () => {
+    it('should return false when skip_ci is not set', async () => {
       const { skipCIConfigured } = await import('./integration');
 
       cmsConfig.current = { backend: { name: 'github', repo: 'test/repo' } };
@@ -90,44 +90,6 @@ describe('git/shared/integration', () => {
 
       cmsConfig.current = {
         backend: { name: 'github', repo: 'test/repo', skip_ci: false },
-      };
-      backend.current = { isGit: true };
-
-      expect(skipCIConfigured.current).toBe(true);
-    });
-
-    it('should return true when automatic_deployments is explicitly set to true', async () => {
-      const { skipCIConfigured } = await import('./integration');
-
-      cmsConfig.current = {
-        backend: { name: 'github', repo: 'test/repo', automatic_deployments: true },
-      };
-      backend.current = { isGit: true };
-
-      expect(skipCIConfigured.current).toBe(true);
-    });
-
-    it('should return true when automatic_deployments is explicitly set to false', async () => {
-      const { skipCIConfigured } = await import('./integration');
-
-      cmsConfig.current = {
-        backend: { name: 'github', repo: 'test/repo', automatic_deployments: false },
-      };
-      backend.current = { isGit: true };
-
-      expect(skipCIConfigured.current).toBe(true);
-    });
-
-    it('should return true when both skip_ci and automatic_deployments are set', async () => {
-      const { skipCIConfigured } = await import('./integration');
-
-      cmsConfig.current = {
-        backend: {
-          name: 'github',
-          repo: 'test/repo',
-          skip_ci: true,
-          automatic_deployments: false,
-        },
       };
       backend.current = { isGit: true };
 
@@ -163,7 +125,7 @@ describe('git/shared/integration', () => {
       expect(skipCIEnabled.current).toBe(false);
     });
 
-    it('should return false when neither skip_ci nor automatic_deployments is set', async () => {
+    it('should return false when skip_ci is not set', async () => {
       const { skipCIEnabled } = await import('./integration');
 
       cmsConfig.current = { backend: { name: 'github', repo: 'test/repo' } };
@@ -194,60 +156,6 @@ describe('git/shared/integration', () => {
       expect(skipCIEnabled.current).toBe(false);
     });
 
-    it('should return true when automatic_deployments is false', async () => {
-      const { skipCIEnabled } = await import('./integration');
-
-      cmsConfig.current = {
-        backend: { name: 'github', repo: 'test/repo', automatic_deployments: false },
-      };
-      backend.current = { isGit: true };
-
-      expect(skipCIEnabled.current).toBe(true);
-    });
-
-    it('should return false when automatic_deployments is true', async () => {
-      const { skipCIEnabled } = await import('./integration');
-
-      cmsConfig.current = {
-        backend: { name: 'github', repo: 'test/repo', automatic_deployments: true },
-      };
-      backend.current = { isGit: true };
-
-      expect(skipCIEnabled.current).toBe(false);
-    });
-
-    it('should return true when skip_ci is true and automatic_deployments is true', async () => {
-      const { skipCIEnabled } = await import('./integration');
-
-      cmsConfig.current = {
-        backend: {
-          name: 'github',
-          repo: 'test/repo',
-          skip_ci: true,
-          automatic_deployments: true,
-        },
-      };
-      backend.current = { isGit: true };
-
-      expect(skipCIEnabled.current).toBe(true);
-    });
-
-    it('should return true when skip_ci is true and automatic_deployments is false', async () => {
-      const { skipCIEnabled } = await import('./integration');
-
-      cmsConfig.current = {
-        backend: {
-          name: 'github',
-          repo: 'test/repo',
-          skip_ci: true,
-          automatic_deployments: false,
-        },
-      };
-      backend.current = { isGit: true };
-
-      expect(skipCIEnabled.current).toBe(true);
-    });
-
     it('should update when dependencies change', async () => {
       const { skipCIEnabled } = await import('./integration');
 
@@ -267,12 +175,6 @@ describe('git/shared/integration', () => {
         backend: { name: 'github', repo: 'test/repo', skip_ci: false },
       };
       expect(skipCIEnabled.current).toBe(false);
-
-      // Disable automatic_deployments (should enable skip CI)
-      cmsConfig.current = {
-        backend: { name: 'github', repo: 'test/repo', automatic_deployments: false },
-      };
-      expect(skipCIEnabled.current).toBe(true);
     });
   });
 

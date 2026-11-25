@@ -1,8 +1,12 @@
 import { _, locale as appLocale } from '@sveltia/i18n';
 import { isObject } from '@sveltia/utils/object';
 
+import {
+  isReportedRemovedOption,
+  REMOVED_I18N_STRUCTURE,
+} from '$lib/services/config/parser/removed';
 import { addMessage } from '$lib/services/config/parser/utils/validator';
-import { decodeSegment } from '$lib/services/config/schema/pointer';
+import { decodeSegment, resolvePointer } from '$lib/services/config/schema/pointer';
 import { getListFormatter } from '$lib/services/contents/i18n';
 import { isNumeric } from '$lib/services/utils/number';
 
@@ -174,6 +178,9 @@ const describeError = ({ keyword, params }, option) => {
  * written for another CMS, or for a newer version of Sveltia CMS, carries options that are simply
  * ignored. It’s reported on its own, before the rest, so that it survives the grouping below: the
  * object holding it may well have another, unrelated problem deeper inside.
+ *
+ * An option or i18n structure removed in Sveltia CMS 5.0 is left out where the configuration
+ * parser reports it with an error of its own that names the replacement.
  * @param {object} args Arguments.
  * @param {CmsConfig} args.config Raw CMS configuration.
  * @param {SchemaValidationError[]} args.errors Validation errors.
@@ -181,7 +188,11 @@ const describeError = ({ keyword, params }, option) => {
  */
 export const reportSchemaErrors = ({ config, errors, collectors }) => {
   errors
-    .filter(({ keyword }) => keyword === 'additionalProperties')
+    .filter(
+      ({ keyword, instancePath, params }) =>
+        keyword === 'additionalProperties' &&
+        !isReportedRemovedOption(params.additionalProperty, instancePath),
+    )
     .forEach(({ instancePath, params }) => {
       const { context, option } = locateError(config, instancePath);
 
@@ -205,6 +216,11 @@ export const reportSchemaErrors = ({ config, errors, collectors }) => {
   const innermost = paths.filter((path) => !paths.some((other) => other.startsWith(`${path}/`)));
 
   innermost.forEach((path) => {
+    // Still counted above, so the object holding the removed structure isn’t reported instead
+    if (path.endsWith('/structure') && resolvePointer(config, path) === REMOVED_I18N_STRUCTURE) {
+      return;
+    }
+
     const group = relevant.filter(({ instancePath }) => instancePath === path);
     const { context, option } = locateError(config, path);
     const hasAlternatives = group.some(({ keyword }) => keyword === 'anyOf');

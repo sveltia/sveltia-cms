@@ -99,13 +99,8 @@ export const fillTemplate = (template, options) => {
 
   const { _type, name: collectionName } = collection;
   const identifierField = getIdentifierFieldName(_type === 'entry' ? collection : undefined);
-
-  const { slug_length: legacySlugLength = undefined, _file: { basePath, fullPathRegEx } = {} } =
-    _type === 'entry' ? collection : {};
-
-  const slugOptions = cmsConfig.current?.slug;
-  // @todo Remove the legacy option prior to the 1.0 release.
-  const maxlength = legacySlugLength ?? slugOptions?.maxlength;
+  const { _file: { basePath, fullPathRegEx } = {} } = _type === 'entry' ? collection : {};
+  const maxlength = cmsConfig.current?.slug?.maxlength;
 
   /** @type {ReplaceContext} */
   const context = {

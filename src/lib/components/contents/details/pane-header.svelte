@@ -57,7 +57,7 @@
   const originalEntry = $derived(entryDraft.current?.originalEntry);
   /* v8 ignore start -- the header is only rendered for a pane while the draft is there */
   const originalValues = $derived(entryDraft.current?.originalValues ?? {});
-  const { i18nEnabled, saveAllLocales, allLocales, defaultLocale } = $derived(
+  const { i18nEnabled, canToggleLocales, allLocales, defaultLocale } = $derived(
     getDraftI18nConfig(entryDraft.current),
   );
   const isLocaleEnabled = $derived(
@@ -188,7 +188,7 @@
                   available={{ revert: !!canRevert, ...resetMenu.availability }}
                   onSelect={resetMenu.select}
                 />
-                {#if !saveAllLocales && thisPane.current?.locale}
+                {#if canToggleLocales && thisPane.current?.locale}
                   <Divider />
                   <MenuItem
                     label={_(
