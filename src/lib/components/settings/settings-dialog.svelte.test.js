@@ -26,8 +26,8 @@ describe('SettingsDialog', () => {
       'photo_library Media',
       'auto_awesome AI',
       'accessibility_new Accessibility',
-      'code_xml Developer',
       'database Data Management',
+      'code_xml Developer',
     ]);
     // Nor is its panel rendered
     expect(dialog.getByRole('tabpanel', { includeHidden: true }).elements()).toHaveLength(8);

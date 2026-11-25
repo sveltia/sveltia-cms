@@ -31,8 +31,8 @@ describe('SettingsPage', () => {
       'photo_library Media',
       'auto_awesome AI',
       'accessibility_new Accessibility',
-      'code_xml Developer',
       'database Data Management',
+      'code_xml Developer',
     ]);
 
     await menu.getByRole('menuitem', { name: 'Contents' }).click();

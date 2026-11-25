@@ -39,7 +39,7 @@ export const panels = createDerivedState(() => {
     { key: 'media', icon: 'photo_library', component: MediaPanel },
     { key: 'ai', icon: 'auto_awesome', component: AiPanel },
     { key: 'accessibility', icon: 'accessibility_new', component: AccessibilityPanel },
-    { key: 'developer', icon: 'code_xml', component: DeveloperPanel },
     { key: 'data', icon: 'database', component: DataPanel },
+    { key: 'developer', icon: 'code_xml', component: DeveloperPanel },
   ];
 });
