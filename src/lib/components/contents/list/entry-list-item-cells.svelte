@@ -7,6 +7,7 @@
   import { _, locale as appLocale } from '@sveltia/i18n';
   import { Checkbox, GridCell, Icon, TruncatedText } from '@sveltia/ui';
 
+  import ListPreviewLink from '$lib/components/contents/list/list-preview-link.svelte';
   import EntryThumbnail from '$lib/components/contents/shared/entry-thumbnail.svelte';
   import StatusBadge from '$lib/components/workflow/status-badge.svelte';
   import { getAdditions } from '$lib/services/app/additions';
@@ -41,6 +42,9 @@
    * @property {(selected: boolean) => void} [onSelect] Selection change handler.
    * @property {EntryTableColumn[]} [columns] Columns of the table view, which take the place of the
    * title. Only used when `viewType` is `table`.
+   * @property {boolean} [showPreviewLink] Whether to render a button opening the deploy preview of
+   * an unpublished entry before its status. Defaults to `false`; the read-only list row passes
+   * `true`, while the reorder row, which is dragged around, leaves it off.
    */
 
   /** @type {Props} */
@@ -51,10 +55,13 @@
     showCheckbox = false,
     onSelect = undefined,
     columns = [],
+    showPreviewLink = false,
   } = $props();
 
+  // The entry as an unpublished one, which only it is when it has Editorial Workflow information
+  const unpublishedEntry = $derived(/** @type {UnpublishedEntry} */ (entry));
   // Editorial Workflow information, only present on an unpublished entry
-  const workflow = $derived(/** @type {UnpublishedEntry} */ (entry).workflow);
+  const workflow = $derived(unpublishedEntry.workflow);
   // Sveltia CMS Additions, which tells who else is editing or viewing the entry
   const additions = $derived(getAdditions());
   /* v8 ignore start -- the app locale is always set once the UI strings are loaded */
@@ -122,12 +129,17 @@
   {@render title()}
 {/if}
 <GridCell class="status">
-  {#if additions}
-    <additions.EntryActivity collectionName={collection.name} subPath={entry.subPath} />
-  {/if}
-  {#if workflow}
-    <StatusBadge status={getEntryStage(/** @type {UnpublishedEntry} */ (entry), collection)} />
-  {/if}
+  <div role="none" class="status-items">
+    {#if additions}
+      <additions.EntryActivity collectionName={collection.name} subPath={entry.subPath} />
+    {/if}
+    {#if workflow}
+      {#if showPreviewLink}
+        <ListPreviewLink {collection} entry={unpublishedEntry} />
+      {/if}
+      <StatusBadge status={getEntryStage(unpublishedEntry, collection)} />
+    {/if}
+  </div>
 </GridCell>
 
 <style>

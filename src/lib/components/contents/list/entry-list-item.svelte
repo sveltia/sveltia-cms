@@ -84,6 +84,7 @@
     {viewType}
     {columns}
     showCheckbox={!openAuthoring.current}
+    showPreviewLink
     onSelect={updateSelection}
   />
 </GridRow>

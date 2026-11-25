@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
@@ -7,6 +7,9 @@ import { allUnpublishedEntries } from '$lib/services/workflow';
 import { createMockEntry, initTestConfig, setEntries } from '$lib/test/config';
 
 import FileList from './file-list.svelte';
+
+// An unpublished file’s deploy preview link holds the deploy state lookup, which isn’t tested here
+vi.mock('$lib/services/deployments/poll', () => ({ retainDeployPolling: vi.fn(() => vi.fn()) }));
 
 describe('FileList', () => {
   beforeAll(async () => {
@@ -87,7 +90,16 @@ describe('FileList', () => {
   test('shows the workflow status of an unpublished file', async () => {
     selectedCollection.current = getCollection('settings');
     allUnpublishedEntries.current = /** @type {any} */ ([
-      { id: 'x', workflow: { collectionName: 'settings', fileName: 'general', status: 'draft' } },
+      createMockEntry({
+        slug: 'general',
+        entry: {
+          workflow: /** @type {any} */ ({
+            collectionName: 'settings',
+            fileName: 'general',
+            status: 'draft',
+          }),
+        },
+      }),
     ]);
 
     await render(FileList, {});

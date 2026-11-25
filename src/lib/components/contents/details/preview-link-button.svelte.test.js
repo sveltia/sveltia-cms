@@ -80,6 +80,13 @@ describe('PreviewLinkButton', () => {
     await expect.element(page.getByRole('menuitem', { name: 'View on Live Site' })).toBeEnabled();
   });
 
+  test('can be kept out of the Tab order', async () => {
+    await renderButton({ iconic: true, tabindex: -1 });
+    await expect
+      .element(page.getByRole('button', { name: 'View on Live Site' }))
+      .toHaveAttribute('tabindex', '-1');
+  });
+
   test('links to the deploy preview of an unpublished entry', async () => {
     deployments.current = {
       abc: { state: 'ready', url: 'https://preview.example.com', checkedTime: 0 },

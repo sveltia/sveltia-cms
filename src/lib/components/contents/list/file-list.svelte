@@ -4,9 +4,11 @@
 
   import ListContainer from '$lib/components/common/list-container.svelte';
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
+  import ListPreviewLink from '$lib/components/contents/list/list-preview-link.svelte';
   import StatusBadge from '$lib/components/workflow/status-badge.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { selectedCollection } from '$lib/services/contents/collection';
+  import { getCollectionFile } from '$lib/services/contents/collection/files';
   import { isValidCollectionFile } from '$lib/services/contents/collection/predicates';
   import { getEntryEditorPath } from '$lib/services/contents/editor/route';
   import { getCollectionFileSummary } from '$lib/services/contents/entry/summary';
@@ -15,7 +17,11 @@
 
   /**
    * @import { CollectionFile } from '$lib/types/public';
-   * @import { InternalFileCollection, WorkflowStatus } from '$lib/types/private';
+   * @import {
+   * InternalFileCollection,
+   * UnpublishedEntry,
+   * WorkflowStatus,
+   * } from '$lib/types/private';
    */
 
   const files = $derived(
@@ -25,18 +31,19 @@
   );
 
   /**
-   * Editorial Workflow stage of each file that has an open pull request, keyed by file name. A
-   * file collection needs no Unpublished/Published sections like an entry collection, because every
-   * file is published from the start and can only be updated, never added or removed.
-   * @type {Record<string, WorkflowStatus>}
+   * Unpublished entry and Editorial Workflow stage of each file that has an open pull request,
+   * keyed by file name. A file collection needs no Unpublished/Published sections like an entry
+   * collection, because every file is published from the start and can only be updated, never
+   * added or removed.
+   * @type {Record<string, { entry: UnpublishedEntry, status: WorkflowStatus }>}
    */
-  const statuses = $derived(
+  const unpublishedFiles = $derived(
     Object.fromEntries(
       unpublishedEntries.current
         .filter(({ workflow }) => workflow.collectionName === selectedCollection.current?.name)
         .map((entry) => [
           entry.workflow.fileName,
-          getEntryStage(entry, selectedCollection.current),
+          { entry, status: getEntryStage(entry, selectedCollection.current) },
         ]),
     ),
   );
@@ -74,9 +81,19 @@
               </div>
             </GridCell>
             <GridCell class="status">
-              {#if statuses[name]}
-                <StatusBadge status={statuses[name]} />
-              {/if}
+              <div role="none" class="status-items">
+                {#if unpublishedFiles[name]}
+                  {@const collection = /** @type {InternalFileCollection} */ (
+                    selectedCollection.current
+                  )}
+                  <ListPreviewLink
+                    {collection}
+                    entry={unpublishedFiles[name].entry}
+                    collectionFile={getCollectionFile(collection, name)}
+                  />
+                  <StatusBadge status={unpublishedFiles[name].status} />
+                {/if}
+              </div>
             </GridCell>
           </GridRow>
         {/snippet}

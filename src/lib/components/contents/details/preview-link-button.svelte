@@ -44,6 +44,9 @@
    * @property {boolean} [iconic] Whether to show the icon alone, for a narrow screen where the
    * label wouldn’t fit alongside the other actions. The label becomes the accessible name. Not
    * used when the control is rendered as a menu item.
+   * @property {number} [tabindex] `tabindex` of the button, e.g. `-1` to keep it out of the Tab
+   * order inside a grid row, whose arrow keys move from row to row. Not used when the control is
+   * rendered as a menu item.
    */
 
   /** @type {Props} */
@@ -57,6 +60,7 @@
     variant = 'ghost',
     size = 'medium',
     iconic = false,
+    tabindex = undefined,
   } = $props();
 
   // `pageLiveness.current` is deliberately left out of this derivation. The effect below watches
@@ -136,6 +140,7 @@
       {variant}
       {size}
       {iconic}
+      {tabindex}
       label={iconic ? undefined : label}
       aria-label={iconic ? label : undefined}
       {disabled}

@@ -193,6 +193,36 @@ test('opens the deploy preview from the card on the Editorial Workflow page', as
   );
 });
 
+test('opens the deploy preview from the entry list without opening the entry', async ({
+  cms,
+  github,
+  page,
+}) => {
+  github.commit({ 'content/posts/first-post.md': post('First Post', 'Hello.') });
+  github.reportBuild(openSecondPostPullRequest(github), {
+    deployments: [
+      {
+        environment: 'Preview',
+        state: 'SUCCESS',
+        environmentUrl: 'https://pr-1.preview.example.com',
+      },
+    ],
+  });
+
+  await cms.open();
+
+  const row = page.getByRole('row', { name: /Second Post/ });
+
+  expect(await getOpenedURL(page, row.getByRole('button', { name: 'View Preview' }))).toBe(
+    'https://pr-1.preview.example.com/posts/second-post',
+  );
+  // The click stays with the button rather than going on to the row
+  await expect(row).toBeVisible();
+  await expect(getEditor(page)).toHaveCount(0);
+  // A published entry has no status, so no button either
+  await expect(page.getByRole('row', { name: /First Post/ }).getByRole('button')).toHaveCount(0);
+});
+
 test.describe('with `show_preview_links: false`', () => {
   test.use({ config: { ...CONFIG, show_preview_links: false } });
 
