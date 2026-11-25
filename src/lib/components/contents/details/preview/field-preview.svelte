@@ -4,7 +4,11 @@
   import { customFieldTypeRegistry } from '$lib/services/api/registries';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
-  import { highlightEditorField } from '$lib/services/contents/editor/fields';
+  import {
+    highlightEditorField,
+    isTextSelected,
+    rememberSelection,
+  } from '$lib/services/contents/editor/fields';
   import { getFieldLocaleAccess } from '$lib/services/contents/editor/locale';
   import { getCurrentValue, isFieldMultiple } from '$lib/services/contents/entry/fields';
   import { getFieldLabel } from '$lib/services/contents/i18n/options';
@@ -62,9 +66,14 @@
         highlightEditorField({ locale, keyPath });
       }
     }}
+    onmousedowncapture={rememberSelection}
     onclick={(event) => {
       event.stopPropagation();
-      highlightEditorField({ locale, keyPath });
+
+      // Leave the text the user has just selected alone
+      if (!isTextSelected(event)) {
+        highlightEditorField({ locale, keyPath });
+      }
     }}
   >
     {#if showLabel}

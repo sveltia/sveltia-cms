@@ -292,6 +292,53 @@ describe('FieldPreview', () => {
     expect(highlightEditorField).toHaveBeenCalledOnce();
   });
 
+  test('leaves selected text alone instead of highlighting the editor field', async () => {
+    const container = await renderPreview({
+      fieldConfig: { name: 'title', widget: 'string' },
+      values: { title: 'Hello world' },
+    });
+
+    const section = /** @type {HTMLElement} */ (container.querySelector('section'));
+    const label = /** @type {HTMLElement} */ (section.querySelector('h4'));
+    const text = /** @type {Text} */ (page.getByText('Hello world').element().firstChild);
+    const selection = /** @type {Selection} */ (window.getSelection());
+
+    /**
+     * Press the mouse button on an element and release it, selecting text in between if a range
+     * is given, as the browser does.
+     * @param {HTMLElement} element Element.
+     * @param {[number, number]} [range] Start and end offsets of the text to select.
+     */
+    const click = (element, range) => {
+      element.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, view: window }));
+
+      if (range) {
+        selection.setBaseAndExtent(text, range[0], text, range[1]);
+      }
+
+      element.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1, view: window }));
+    };
+
+    try {
+      // A drag to select text
+      click(section, [0, 5]);
+
+      expect(highlightEditorField).not.toHaveBeenCalled();
+      expect(selection.toString()).toBe('Hello');
+
+      // A click on the non-selectable label or the space around the text keeps the selection, but
+      // still highlights the field
+      click(label);
+      click(section);
+
+      expect(highlightEditorField).toHaveBeenCalledTimes(2);
+      expect(highlightEditorField).toHaveBeenCalledWith({ locale: 'en', keyPath: 'title' });
+      expect(selection.toString()).toBe('Hello');
+    } finally {
+      selection.removeAllRanges();
+    }
+  });
+
   test('renders a custom field type with its own preview', async () => {
     const preview = vi.fn(({ value }) => `Custom: ${value}`);
 

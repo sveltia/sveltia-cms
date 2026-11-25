@@ -13,6 +13,8 @@ import {
   highlightEditorField,
   highlightPreviewTemplateField,
   isExpanded,
+  isTextSelected,
+  rememberSelection,
   revealEditorField,
 } from './fields.js';
 
@@ -400,6 +402,101 @@ describe('revealEditorField', () => {
   });
 });
 
+/**
+ * Create a range-like object.
+ * @param {number} startOffset Start offset.
+ * @param {number} endOffset End offset.
+ * @param {object} [startContainer] Start container.
+ * @param {object} [endContainer] End container.
+ * @returns {any} Range-like object.
+ */
+const createRange = (
+  startOffset,
+  endOffset,
+  startContainer = {},
+  endContainer = startContainer,
+) => {
+  /** @type {any} */
+  const range = { startContainer, startOffset, endContainer, endOffset };
+
+  range.cloneRange = vi.fn(() => ({ ...range }));
+
+  return range;
+};
+
+/**
+ * Create a view-like object for an event, whose selection is the `range` property: a collapsed one
+ * if it’s `null`.
+ * @param {any} [range] Selected range.
+ * @returns {any} View-like object.
+ */
+const createView = (range = null) => {
+  /** @type {any} */
+  const view = {
+    range,
+    getSelection: vi.fn(() => ({
+      isCollapsed: !view.range,
+      getRangeAt: vi.fn(() => view.range),
+    })),
+  };
+
+  return view;
+};
+
+describe('isTextSelected', () => {
+  it('returns `true` when text is selected and the mouse button hasn’t been pressed', () => {
+    const view = createView(createRange(0, 5));
+
+    expect(isTextSelected(/** @type {any} */ ({ view, detail: 1 }))).toBe(true);
+  });
+
+  it('returns `true` when the selection has changed since the mouse button was pressed', () => {
+    const node = {};
+    const otherNode = {};
+
+    [
+      [createRange(0, 5, node), null],
+      [createRange(0, 5, node), createRange(0, 5, otherNode, node)],
+      [createRange(0, 5, node), createRange(1, 5, node)],
+      [createRange(0, 5, node), createRange(0, 5, node, otherNode)],
+      [createRange(0, 5, node), createRange(0, 7, node)],
+    ].forEach(([range, previousRange]) => {
+      const view = createView(previousRange);
+
+      rememberSelection(/** @type {any} */ ({ view }));
+      view.range = range;
+
+      expect(isTextSelected(/** @type {any} */ ({ view, detail: 1 }))).toBe(true);
+    });
+  });
+
+  it('returns `false` when the selection is unchanged, collapsed or unavailable', () => {
+    const node = {};
+    const view = createView(createRange(0, 5, node));
+
+    // A click on a non-selectable element leaves the selection alone
+    rememberSelection(/** @type {any} */ ({ view }));
+    view.range = createRange(0, 5, node);
+
+    /** @type {any[]} */
+    const events = [
+      { view, detail: 1 },
+      { view: createView(), detail: 1 },
+      { view: { getSelection: vi.fn(() => null) }, detail: 1 },
+      { view: null, detail: 1 },
+      // A click made with the keyboard
+      { view: createView(createRange(0, 5)), detail: 0 },
+    ];
+
+    events.forEach((event) => {
+      expect(isTextSelected(event)).toBe(false);
+    });
+
+    // Nothing to remember without a view
+    expect(() => rememberSelection(/** @type {any} */ ({ view: null }))).not.toThrow();
+  });
+});
+
 describe('highlightPreviewTemplateField', () => {
   /**
    * Create an element-like target.
@@ -485,6 +582,19 @@ describe('highlightPreviewTemplateField', () => {
     });
 
     expect(window.postMessage).not.toHaveBeenCalled();
+  });
+
+  it('does nothing when the click ends a text selection', () => {
+    const view = createView(createRange(0, 5));
+
+    run({ type: 'click', detail: 1, target: createElementLike('title'), view });
+
+    expect(window.postMessage).not.toHaveBeenCalled();
+
+    // Pressing Enter still works with a selection
+    run({ type: 'keydown', key: 'Enter', target: createElementLike('title'), view });
+
+    expect(getHighlightedKeyPaths()).toEqual(['title']);
   });
 
   it('highlights the field when Enter is pressed on the marked element', () => {

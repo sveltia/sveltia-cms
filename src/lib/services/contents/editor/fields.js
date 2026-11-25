@@ -377,12 +377,74 @@ export const revealEditorField = async ({ draft, locale, keyPath, isOutdated = (
 };
 
 /**
+ * Text range selected in each window when the mouse button was last pressed, or `null` if none.
+ * @type {WeakMap<Window, Range | null>}
+ */
+const rangesAtMouseDown = new WeakMap();
+
+/**
+ * Get the text range selected in a window.
+ * @param {Window} view Window.
+ * @returns {Range | null} Range, or `null` if no text is selected.
+ */
+const getSelectedRange = (view) => {
+  const selection = view.getSelection();
+
+  // A non-collapsed selection always has a range
+  return selection?.isCollapsed === false ? selection.getRangeAt(0) : null;
+};
+
+/**
+ * Remember the text selected when the mouse button is pressed on the Preview Pane, so
+ * {@link isTextSelected} can tell if the click that follows changed it. The browser updates the
+ * selection after every listener has run; listen to the event in the capture phase anyway, so an
+ * element in the preview can’t stop it from getting here.
+ * @param {MouseEvent} event `mousedown` event.
+ */
+export const rememberSelection = ({ view }) => {
+  if (view) {
+    rangesAtMouseDown.set(view, getSelectedRange(view)?.cloneRange() ?? null);
+  }
+};
+
+/**
+ * Check if a click on the Preview Pane selected text, in which case it shouldn’t highlight the
+ * Edit Pane field: moving the focus there would clear the selection the user has just made. A
+ * plain click on selectable text collapses any existing selection on `mousedown`, so it still
+ * highlights the field, while one on a non-selectable element, like a field label or the space
+ * around a field, leaves the selection alone. Only a selection that has changed since
+ * {@link rememberSelection} was last called is therefore taken into account. A click made with the
+ * keyboard can’t select text, so it also highlights the field.
+ * @param {MouseEvent} event `click` event.
+ * @returns {boolean} Whether the click selected text.
+ */
+export const isTextSelected = ({ view, detail }) => {
+  // A click from the keyboard, with a `detail` of `0`, can’t select text
+  const range = view && detail ? getSelectedRange(view) : null;
+
+  if (!range) {
+    return false;
+  }
+
+  const previousRange = rangesAtMouseDown.get(/** @type {Window} */ (view));
+
+  return !(
+    previousRange &&
+    previousRange.startContainer === range.startContainer &&
+    previousRange.startOffset === range.startOffset &&
+    previousRange.endContainer === range.endContainer &&
+    previousRange.endOffset === range.endOffset
+  );
+};
+
+/**
  * Highlight the Edit Pane field that corresponds to an element in a custom preview template, just
  * like clicking a field in the default preview does. The template marks the element with the
  * `data-key-path` attribute, which Scroll Synchronization also uses. A click on the element or
  * anything inside it highlights the field of the innermost marked element, while the Enter key
  * does so only when the marked element itself has the focus, so it doesn’t get in the way of a
- * focused link or form control. The template can opt out by calling `preventDefault()`.
+ * focused link or form control. A click that selects text is ignored. The template can
+ * opt out by calling `preventDefault()`.
  * @param {object} args Arguments.
  * @param {MouseEvent | KeyboardEvent} args.event `click` or `keydown` event on the preview frame’s
  * document.
@@ -394,7 +456,9 @@ export const highlightPreviewTemplateField = ({ event, locale }) => {
 
   if (
     event.defaultPrevented ||
-    (isKeyDown && /** @type {KeyboardEvent} */ (event).key !== 'Enter')
+    (isKeyDown
+      ? /** @type {KeyboardEvent} */ (event).key !== 'Enter'
+      : isTextSelected(/** @type {MouseEvent} */ (event)))
   ) {
     return;
   }

@@ -248,9 +248,18 @@ describe('EntryPreviewIframe', () => {
 
       const doc = /** @type {Document} */ (getDocument(container));
       const heading = /** @type {HTMLElement} */ (doc.querySelector('h2'));
+      const intro = /** @type {HTMLElement} */ (doc.querySelector('.intro'));
+      const frameWindow = /** @type {Window} */ (doc.defaultView);
+      const selection = /** @type {Selection} */ (frameWindow.getSelection());
+
+      // A drag to select text in the frame isn’t taken as a click on the element
+      intro.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, view: frameWindow }));
+      selection.selectAllChildren(intro);
+      intro.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1, view: frameWindow }));
+      selection.removeAllRanges();
 
       /** @type {HTMLElement} */ (doc.querySelector('.heading')).click();
-      /** @type {HTMLElement} */ (doc.querySelector('.intro')).click();
+      intro.click();
       // The component prevents the default action of the link, so it’s not highlighted
       /** @type {HTMLElement} */ (doc.querySelector('.link')).click();
       heading.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));

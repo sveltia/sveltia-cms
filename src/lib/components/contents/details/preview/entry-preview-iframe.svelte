@@ -16,7 +16,10 @@
     createEntryDraftMountContext,
     getEntryDraftContext,
   } from '$lib/services/contents/draft/state.svelte';
-  import { highlightPreviewTemplateField } from '$lib/services/contents/editor/fields';
+  import {
+    highlightPreviewTemplateField,
+    rememberSelection,
+  } from '$lib/services/contents/editor/fields';
   import { buildPreviewFrameHTML } from '$lib/services/contents/editor/preview-frame';
   import { getCanonicalLocale, getDirection } from '$lib/services/contents/i18n';
 
@@ -148,6 +151,8 @@
       highlightPreviewTemplateField({ event, locale });
     };
 
+    // In the capture phase, so the template can’t stop the event from getting here
+    contentDocument.addEventListener('mousedown', rememberSelection, true);
     contentDocument.addEventListener('click', listener);
     contentDocument.addEventListener('keydown', listener);
 
