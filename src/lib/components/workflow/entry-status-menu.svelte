@@ -95,7 +95,11 @@
 </script>
 
 {#if stages.length === 1}
-  <StatusBadge {status} />
+  <!-- Unlike the menu button, the badge has no padding of its own, so it needs some room to stand
+  apart from the buttons on either side -->
+  <span role="none" class="badge">
+    <StatusBadge {status} />
+  </span>
 {:else}
   <MenuButton
     variant="ghost"
@@ -133,3 +137,11 @@
 <Toast bind:show={showValidationToast}>
   <Alert status="error">{_('workflow.status_change_blocked')}</Alert>
 </Toast>
+
+<style>
+  .badge {
+    display: inline-flex;
+    flex: none;
+    margin-inline: 8px;
+  }
+</style>
