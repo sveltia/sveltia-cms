@@ -65,9 +65,10 @@ export const getErrorMessage = (code) =>
 
 /**
  * Send a request to the Sveltia CMS Additions API. An error carries the status and error code in
- * its `cause`, with a localized message the sign-in page shows. The request goes through
- * `sendRequest()`, which refuses to send the token over an insecure connection and sends a request
- * without side effects again after a transient error, while the API’s own error body is read here.
+ * its `cause`, with a localized message the sign-in page shows, or `unreachable: true` if the
+ * request couldn’t be sent at all. The request goes through `sendRequest()`, which refuses to send
+ * the token over an insecure connection and sends a request without side effects again after a
+ * transient error, while the API’s own error body is read here.
  * @param {string} path Path, e.g. `/v1/auth/session`.
  * @param {object} [options] Options.
  * @param {string} [options.method] HTTP method.
@@ -105,6 +106,7 @@ export const fetchAdditions = async (path, { method = 'GET', body, token } = {})
     throw new Error('Sveltia CMS Additions could not be reached', {
       cause: {
         message: _(`additions.error.${insecure ? 'insecure_connection' : 'unreachable'}`),
+        unreachable: true,
         error: ex,
       },
     });

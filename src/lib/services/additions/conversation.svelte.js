@@ -21,6 +21,8 @@ import { createGeneration } from '$lib/services/utils/generation';
  * @property {boolean} loading Whether it’s being loaded.
  * @property {boolean} loaded Whether it has been loaded at least once.
  * @property {string} error Why it couldn’t be loaded, if it couldn’t.
+ * @property {boolean} unreachable Whether the last load failed because the service couldn’t be
+ * reached, in which case a comment couldn’t be sent either.
  * @property {ConversationItem[]} comments Comments, oldest first.
  * @property {boolean} hasMore Whether there are older comments than those loaded.
  * @property {string} [oldestId] ID of the oldest comment loaded under the entry’s own key, which
@@ -94,6 +96,7 @@ const getState = (key) => {
     loading: false,
     loaded: false,
     error: '',
+    unreachable: false,
     comments: [],
     hasMore: false,
   };
@@ -154,9 +157,10 @@ export const loadConversation = async (key, aliasKeys = []) => {
         : items,
       hasMore,
       error: '',
+      unreachable: false,
     };
   } catch (/** @type {any} */ ex) {
-    result = { error: getRequestErrorMessage(ex) };
+    result = { error: getRequestErrorMessage(ex), unreachable: !!ex?.cause?.unreachable };
   }
 
   // A newer load is on its way, or the user has signed out

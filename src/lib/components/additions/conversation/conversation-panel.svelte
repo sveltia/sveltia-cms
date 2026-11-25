@@ -81,7 +81,8 @@
       {/if}
       {#if !state?.loaded}
         <div class="empty">{_('loading')}</div>
-      {:else if !state.comments.length}
+      {:else if !state.comments.length && !state.error}
+        <!-- Unless the comments couldn’t be loaded, in which case there may well be some -->
         <div class="empty">{_('additions.conversation.empty')}</div>
       {/if}
       {#if entryKey && state?.hasMore}
@@ -102,7 +103,8 @@
         {/each}
       {/if}
     </div>
-    {#if entryKey}
+    <!-- A comment couldn’t be sent either while the service can’t be reached -->
+    {#if entryKey && !state?.unreachable}
       <ConversationComposer {entryKey} />
     {/if}
   </div>

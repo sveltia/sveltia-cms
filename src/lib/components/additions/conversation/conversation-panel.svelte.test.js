@@ -67,6 +67,7 @@ const renderPanel = async (state = {}) => {
       loading: false,
       loaded: true,
       error: '',
+      unreachable: false,
       comments: [],
       hasMore: false,
       ...state,
@@ -277,6 +278,18 @@ describe('ConversationPanel', () => {
     await renderPanel({ error: 'Not allowed' });
 
     await expect.element(page.getByRole('alert')).toHaveTextContent('Not allowed');
+    // There may well be comments that couldn’t be loaded
+    expect(page.getByText('No comments yet.').elements()).toHaveLength(0);
+    // A comment could still be sent
+    await expect.element(page.getByRole('textbox', { name: 'Comment' })).toBeVisible();
+  });
+
+  test('hides the composer while the service can’t be reached', async () => {
+    await renderPanel({ error: 'Not reached', unreachable: true });
+
+    await expect.element(page.getByRole('alert')).toHaveTextContent('Not reached');
+    expect(page.getByText('No comments yet.').elements()).toHaveLength(0);
+    expect(page.getByRole('textbox', { name: 'Comment' }).elements()).toHaveLength(0);
   });
 
   test('waits for an entry that can have a conversation', async () => {

@@ -84,6 +84,7 @@ describe('loadConversation', () => {
       loading: false,
       loaded: true,
       error: '',
+      unreachable: false,
       hasMore: true,
     });
 
@@ -91,17 +92,32 @@ describe('loadConversation', () => {
       new Error('Forbidden', { cause: { message: 'Not allowed' } }),
     );
     await loadConversation(KEY);
-    expect(conversations.entries[KEY]).toMatchObject({ error: 'Not allowed', loading: false });
+    expect(conversations.entries[KEY]).toMatchObject({
+      error: 'Not allowed',
+      unreachable: false,
+      loading: false,
+    });
     expect(conversations.entries[KEY].comments).toHaveLength(1);
 
     vi.mocked(fetchComments).mockRejectedValue(new Error('Network'));
     await loadConversation(KEY);
     expect(conversations.entries[KEY].error).toBe('additions.error.unexpected');
 
+    vi.mocked(fetchComments).mockRejectedValue(
+      new Error('Unreachable', { cause: { message: 'Not reached', unreachable: true } }),
+    );
+    await loadConversation(KEY);
+    expect(conversations.entries[KEY]).toMatchObject({ error: 'Not reached', unreachable: true });
+    expect(conversations.entries[KEY].comments).toHaveLength(1);
+
     // A later success clears the error
     vi.mocked(fetchComments).mockResolvedValue({ items: [], hasMore: false });
     await loadConversation(KEY);
-    expect(conversations.entries[KEY]).toMatchObject({ error: '', comments: [] });
+    expect(conversations.entries[KEY]).toMatchObject({
+      error: '',
+      unreachable: false,
+      comments: [],
+    });
   });
 
   test('keeps the items of the comments that haven’t changed', async () => {

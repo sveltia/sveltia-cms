@@ -116,7 +116,10 @@ describe('fetchAdditions', () => {
 
     const error = await fetchAdditions('/version').catch((ex) => ex);
 
-    expect(error.cause.message).toBe('additions.error.unreachable');
+    expect(error.cause).toMatchObject({
+      message: 'additions.error.unreachable',
+      unreachable: true,
+    });
   });
 });
 
