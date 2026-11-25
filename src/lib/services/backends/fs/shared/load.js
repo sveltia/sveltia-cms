@@ -3,7 +3,6 @@ import { readAsText } from '@sveltia/utils/file';
 import { getAssetKind } from '$lib/services/assets/kinds';
 import { allAssets } from '$lib/services/assets/state';
 import { getAllFiles } from '$lib/services/backends/fs/shared/scan';
-import { mapConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { deferRejection } from '$lib/services/backends/git/shared/defer';
 import { createFileList, describeFileList } from '$lib/services/backends/process';
@@ -12,6 +11,7 @@ import { prepareEntries } from '$lib/services/contents/file/process';
 import { readCacheEntries, updateCacheEntries } from '$lib/services/utils/database';
 import { getGitHash } from '$lib/services/utils/file';
 import { createDebugLogger } from '$lib/services/utils/logging';
+import { mapConcurrently } from '$lib/services/utils/scheduling';
 
 /**
  * @import { IndexedDB } from '@sveltia/utils/storage';

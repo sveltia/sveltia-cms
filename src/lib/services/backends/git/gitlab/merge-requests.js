@@ -12,7 +12,6 @@ import {
   repository,
 } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
-import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { toForkPullRequest } from '$lib/services/backends/git/shared/fork';
 import {
   createDraftTitleCodec,
@@ -20,6 +19,7 @@ import {
 } from '$lib/services/backends/git/shared/pull-requests';
 import { deleteRemoteBranch } from '$lib/services/backends/git/shared/workflow';
 import { splitIntoChunks } from '$lib/services/utils/array';
+import { runConcurrently } from '$lib/services/utils/scheduling';
 import {
   getAllStatusLabels,
   getStatusFromLabels,

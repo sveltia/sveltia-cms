@@ -24,8 +24,8 @@ import {
 import { buildTree, serializeTree, writeChangedTrees } from '$lib/services/backends/fs/git/tree';
 import { hasOtherSpellings, pickEntryName } from '$lib/services/backends/fs/shared/handles';
 import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
-import { mapConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { textEncoder } from '$lib/services/utils/bytes';
+import { mapConcurrently } from '$lib/services/utils/scheduling';
 
 /**
  * @import {

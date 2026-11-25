@@ -1,11 +1,11 @@
 import equal from 'fast-deep-equal';
 
 import { backend } from '$lib/services/backends';
-import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { createStaleCheck, repositoryHead } from '$lib/services/backends/git/shared/head';
 import { checkForRemoteChanges } from '$lib/services/backends/refresh';
 import { cmsConfig } from '$lib/services/config';
 import { getEntryPaths } from '$lib/services/contents/entry/paths';
+import { runConcurrently } from '$lib/services/utils/scheduling';
 import {
   allUnpublishedEntries,
   publishingBranches,

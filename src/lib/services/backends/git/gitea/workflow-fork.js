@@ -12,7 +12,6 @@ import {
 } from '$lib/services/backends/git/gitea/pull-requests';
 import { repository } from '$lib/services/backends/git/gitea/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
-import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { pruneForkBranches, updateForkStatusWith } from '$lib/services/backends/git/shared/fork';
 import {
   getPullRequestPath,
@@ -21,6 +20,7 @@ import {
 } from '$lib/services/backends/git/shared/repository';
 import { applyForkPullRequestStatus } from '$lib/services/backends/git/shared/workflow';
 import { user } from '$lib/services/user/account.svelte';
+import { runConcurrently } from '$lib/services/utils/scheduling';
 import { encodePathSegments } from '$lib/services/utils/url';
 import { getBranchListPrefix } from '$lib/services/workflow/branch';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';

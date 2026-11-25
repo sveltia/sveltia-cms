@@ -2,6 +2,8 @@
 import { _ as translate } from '@sveltia/i18n';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { MAX_CONCURRENT_REQUESTS } from '$lib/services/utils/scheduling';
+
 import {
   assertBranchNotMoved,
   createBaseCommitMessage,
@@ -14,7 +16,6 @@ import {
   isDeployingCommit,
   signOffCommitMessage,
 } from './commits';
-import { MAX_CONCURRENT_REQUESTS } from './concurrency';
 
 const mockCmsConfig = vi.hoisted(() => ({
   backend: {

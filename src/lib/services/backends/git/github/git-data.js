@@ -1,8 +1,8 @@
 import { sleep } from '@sveltia/utils/misc';
 
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
-import { mapConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { getGitHash } from '$lib/services/utils/file';
+import { mapConcurrently } from '$lib/services/utils/scheduling';
 import { encodePathSegments } from '$lib/services/utils/url';
 
 /**

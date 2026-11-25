@@ -25,7 +25,6 @@ import {
   updateForkStatus,
 } from '$lib/services/backends/git/gitea/workflow-fork';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
-import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { checkPublishAllowed } from '$lib/services/backends/git/shared/fork';
 import {
   getPullRequestPath,
@@ -46,6 +45,7 @@ import {
   updateLabelledStatus,
   updatePullRequestDescription,
 } from '$lib/services/backends/git/shared/workflow';
+import { runConcurrently } from '$lib/services/utils/scheduling';
 import { encodePathSegments } from '$lib/services/utils/url';
 import { getAllStatusLabels } from '$lib/services/workflow/labels';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';

@@ -1,11 +1,11 @@
 /* eslint-disable no-await-in-loop */
 
-import { mapConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import {
   getRepositoryDatabase,
   readCacheEntries,
   updateCacheEntries,
 } from '$lib/services/utils/database';
+import { mapConcurrently } from '$lib/services/utils/scheduling';
 
 /**
  * The direct children of a Git tree, each as a `[name, sha]` pair. Names rather than paths are

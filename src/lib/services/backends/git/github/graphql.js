@@ -1,6 +1,6 @@
 import { fetchGraphQL } from '$lib/services/backends/git/shared/api';
-import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { splitIntoChunks } from '$lib/services/utils/array';
+import { runConcurrently } from '$lib/services/utils/scheduling';
 
 /**
  * Build a query that asks for one aliased field of the repository per item. GraphQL aliases can’t

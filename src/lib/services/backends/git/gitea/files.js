@@ -19,7 +19,6 @@ import {
 } from '$lib/services/backends/git/gitea/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { fetchAPIOrUndefined } from '$lib/services/backends/git/shared/api-optional';
-import { mapConcurrently, runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { createCachedDirSHALookup } from '$lib/services/backends/git/shared/dir-sha';
 import { fetchRepositoryFiles } from '$lib/services/backends/git/shared/files';
 import { getRepositoryPath } from '$lib/services/backends/git/shared/repository';
@@ -27,6 +26,7 @@ import { toFileListItems } from '$lib/services/backends/git/shared/tree';
 import { getRootDir } from '$lib/services/backends/root-dir';
 import { dataLoadedProgress } from '$lib/services/contents';
 import { splitIntoSizedChunks } from '$lib/services/utils/array';
+import { mapConcurrently, runConcurrently } from '$lib/services/utils/scheduling';
 import { encodePathSegments } from '$lib/services/utils/url';
 
 /**

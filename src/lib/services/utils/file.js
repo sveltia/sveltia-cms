@@ -348,6 +348,41 @@ export const getGitHash = (input) => {
 };
 
 /**
+ * Start a task for each of the given files, once per content. The task for a file typically checks
+ * whether the same file is already pending, which a file with the same content in the same batch
+ * can’t be until its own task is done, so such a file shares the result of the first one instead.
+ * A file that can’t be read gets a task of its own, which can report it.
+ * @template T
+ * @param {File[]} files Files.
+ * @param {(file: File) => Promise<T>} task Task.
+ * @returns {Promise<Promise<T>[]>} Results, in the order of the files, each settling on its own, so
+ * a caller can handle them one by one.
+ */
+export const startUniqueFileTasks = async (files, task) => {
+  const hashes = await Promise.all(files.map((file) => getGitHash(file).catch(() => undefined)));
+  /** @type {Promise<T>[]} */
+  const results = [];
+
+  hashes.forEach((hash, index) => {
+    const firstIndex = hash === undefined ? index : hashes.indexOf(hash);
+
+    results.push(firstIndex === index ? task(files[index]) : results[firstIndex]);
+  });
+
+  return results;
+};
+
+/**
+ * Run a task for each of the given files, once per content, as {@link startUniqueFileTasks} does.
+ * @template T
+ * @param {File[]} files Files.
+ * @param {(file: File) => Promise<T>} task Task.
+ * @returns {Promise<T[]>} Results, in the order of the files.
+ */
+export const processUniqueFiles = async (files, task) =>
+  Promise.all(await startUniqueFileTasks(files, task));
+
+/**
  * Read a blob into a new file of the given name, with its bytes read up front. A blob backed by the
  * file system, like an asset in a local repository, points at a file that may be moved or deleted
  * before the new file is read, e.g. to be written elsewhere or hashed, and can’t be read then.

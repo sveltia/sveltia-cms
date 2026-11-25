@@ -16,7 +16,6 @@ import {
   repository,
 } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
-import { mapConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { createCachedDirSHALookup } from '$lib/services/backends/git/shared/dir-sha';
 import { fetchRepositoryFiles } from '$lib/services/backends/git/shared/files';
 import { getManagedPaths } from '$lib/services/backends/git/shared/managed-paths';
@@ -26,6 +25,7 @@ import { listTrees } from '$lib/services/backends/git/shared/tree-cache';
 import { getRootDir, toRepoPath } from '$lib/services/backends/root-dir';
 import { splitIntoChunks } from '$lib/services/utils/array';
 import { assertResponseOK } from '$lib/services/utils/networking';
+import { mapConcurrently } from '$lib/services/utils/scheduling';
 
 /**
  * @import {

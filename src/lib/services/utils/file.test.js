@@ -14,12 +14,14 @@ import {
   getGitHash,
   isEquivalentFileExtension,
   normalizeFolderPath,
+  processUniqueFiles,
   readBlobAsFile,
   renameIfNeeded,
   renameReservedFileName,
   resolvePath,
   sanitizeFileName,
   sanitizePath,
+  startUniqueFileTasks,
   stripLeadingDotSlash,
   stripPathPrefix,
 } from '$lib/services/utils/file';
@@ -808,5 +810,43 @@ describe('readBlobAsFile()', () => {
     expect(file.name).toBe('a.png');
     expect(file.type).toBe('image/png');
     expect(await file.text()).toBe('png');
+  });
+});
+
+describe('startUniqueFileTasks() and processUniqueFiles()', () => {
+  test('run the task once per content', async () => {
+    const files = [
+      new File(['a'], 'a.png'),
+      new File(['b'], 'b.png'),
+      new File(['a'], 'a-copy.png'),
+    ];
+
+    const task = vi.fn(async (/** @type {File} */ file) => file.name);
+
+    // The copy shares the result of the first file with the same content
+    expect(await processUniqueFiles(files, task)).toEqual(['a.png', 'b.png', 'a.png']);
+    expect(task.mock.calls).toEqual([[files[0]], [files[1]]]);
+
+    const results = await startUniqueFileTasks(files, task);
+
+    expect(results[2]).toBe(results[0]);
+  });
+
+  test('give each file that can’t be read a task of its own', async () => {
+    const files = [new File(['x'], 'a.png'), new File(['x'], 'b.png')];
+    /**
+     * Fail to read a file, like Chrome once it’s gone.
+     * @returns {Promise<never>} Rejection.
+     */
+    const failToRead = () => Promise.reject(new Error('NotReadableError'));
+
+    files.forEach((file) => {
+      file.arrayBuffer = failToRead;
+    });
+
+    const task = vi.fn(async (/** @type {File} */ file) => file.name);
+
+    expect(await processUniqueFiles(files, task)).toEqual(['a.png', 'b.png']);
+    expect(task).toHaveBeenCalledTimes(2);
   });
 });

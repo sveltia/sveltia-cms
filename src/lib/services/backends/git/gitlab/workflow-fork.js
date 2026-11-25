@@ -15,10 +15,10 @@ import {
 } from '$lib/services/backends/git/gitlab/merge-requests';
 import { getProjectId, repository } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
-import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { pruneForkBranches, updateForkStatusWith } from '$lib/services/backends/git/shared/fork';
 import { user } from '$lib/services/user/account.svelte';
+import { runConcurrently } from '$lib/services/utils/scheduling';
 import { getBranchListPrefix } from '$lib/services/workflow/branch';
 
 /**

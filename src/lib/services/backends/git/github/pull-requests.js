@@ -7,7 +7,6 @@ import {
 import { fetchAliasedBatch } from '$lib/services/backends/git/github/graphql';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
-import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import {
   parseRestFiles,
   parseRestPullRequest,
@@ -18,6 +17,7 @@ import {
   getRepositoryPath,
 } from '$lib/services/backends/git/shared/repository';
 import { deleteRemoteBranch } from '$lib/services/backends/git/shared/workflow';
+import { runConcurrently } from '$lib/services/utils/scheduling';
 import { encodePathSegments } from '$lib/services/utils/url';
 import { getStatusLabel, replaceStatusLabel } from '$lib/services/workflow/labels';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';

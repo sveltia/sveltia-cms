@@ -9,14 +9,12 @@ import {
   insertSelectedImages,
   sortDroppedImages,
 } from '$lib/services/contents/fields/rich-text/image-uploads';
-import { getGitHash } from '$lib/services/utils/file';
 
 vi.mock('$lib/services/contents/fields/file/process', () => ({ processResource: vi.fn() }));
 vi.mock('$lib/services/contents/fields/file/resources', async (importOriginal) => ({
   .../** @type {object} */ (await importOriginal()),
   processResources: vi.fn(),
 }));
-vi.mock('$lib/services/utils/file', { spy: true });
 
 /**
  * @import { MediaFieldAssetOptions } from '$lib/services/contents/fields/file/resources';
@@ -218,21 +216,6 @@ describe('image insertion', () => {
         ['blob:a', 'A'],
         ['blob:a', 'B'],
       ]);
-    });
-
-    test('processes each file that can’t be read on its own', async () => {
-      const copy = new File(['x'], 'copy.png', { type: 'image/png' });
-
-      vi.mocked(getGitHash)
-        .mockRejectedValueOnce(new Error('NotReadableError'))
-        .mockRejectedValueOnce(new Error('NotReadableError'));
-      vi.mocked(processResource).mockResolvedValue(/** @type {any} */ ({ value: undefined }));
-
-      expect(await insertInlineImages({ ...getArgs(), images: [{ file }, { file: copy }] })).toBe(
-        true,
-      );
-      expect(processResource).toHaveBeenCalledTimes(2);
-      expect(insertImage).not.toHaveBeenCalled();
     });
 
     test('doesn’t process the files left once the editor shows other content', async () => {

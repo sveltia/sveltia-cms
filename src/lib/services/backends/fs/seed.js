@@ -2,7 +2,7 @@
 
 import { getFileHandle } from '$lib/services/backends/fs/shared/handles';
 import { writeFile } from '$lib/services/backends/fs/shared/save';
-import { mapConcurrently } from '$lib/services/backends/git/shared/concurrency';
+import { mapConcurrently } from '$lib/services/utils/scheduling';
 
 /**
  * Selector of the `<link>` element pointing to the seed manifest, a JSON file listing the files to

@@ -1,6 +1,5 @@
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { fetchAPIOrUndefined } from '$lib/services/backends/git/shared/api-optional';
-import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { pollUntil } from '$lib/services/backends/git/shared/poll';
 import { PULL_REQUEST_DESCRIPTION } from '$lib/services/backends/git/shared/pull-requests';
@@ -11,6 +10,7 @@ import {
 } from '$lib/services/backends/git/shared/repository';
 import { cmsConfig } from '$lib/services/config';
 import { user } from '$lib/services/user/account.svelte';
+import { runConcurrently } from '$lib/services/utils/scheduling';
 import { parseBranchName } from '$lib/services/workflow/branch';
 import {
   getForkBranchName,

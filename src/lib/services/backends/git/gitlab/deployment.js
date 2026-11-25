@@ -4,13 +4,13 @@ import {
   repository,
 } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
-import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import {
   addCandidates,
   collectSafely,
   fetchRestBranchHeadSHA,
   resolveDeployments,
 } from '$lib/services/backends/git/shared/deployment';
+import { runConcurrently } from '$lib/services/utils/scheduling';
 
 /**
  * @import { DeployState, DeployStatus, DeployTarget } from '$lib/types/private';

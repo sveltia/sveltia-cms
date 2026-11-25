@@ -24,7 +24,6 @@ import {
   updateForkStatus,
 } from '$lib/services/backends/git/github/workflow-fork';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
-import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { checkPublishAllowed, toForkPullRequest } from '$lib/services/backends/git/shared/fork';
 import {
@@ -46,6 +45,7 @@ import {
   updatePullRequestDescription,
 } from '$lib/services/backends/git/shared/workflow';
 import { readNumberedPages } from '$lib/services/utils/paging';
+import { runConcurrently } from '$lib/services/utils/scheduling';
 import { encodePathSegments } from '$lib/services/utils/url';
 import { getAllStatusLabels, getStatusFromLabels } from '$lib/services/workflow/labels';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';

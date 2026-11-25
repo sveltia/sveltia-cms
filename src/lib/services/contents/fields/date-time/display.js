@@ -10,6 +10,7 @@ import { getOrCreate } from '$lib/services/utils/cache';
 import {
   DATE_FORMAT_OPTIONS,
   DATE_REGEX,
+  getDateTimeFormatter,
   TIME_FORMAT_OPTIONS,
   TIME_SUFFIX_REGEX,
 } from '$lib/services/utils/date';
@@ -38,18 +39,18 @@ dayjs.extend(dayjsUTC);
 dayjs.extend(dayjsTimeZone);
 
 /**
- * Cache of the formatters used by {@link getDateTimeFieldDisplayValue}, keyed by locale, the parts
- * shown and time zone. `Date.prototype.toLocaleString()` and the like create a new formatter on
- * each call when options are given, which is an order of magnitude slower than reusing one, and a
- * display value is resolved for every referenced entry when the options of a Relation field are
- * built. The keys come from the site configuration, so the cache stays small.
- * @type {Map<string, Intl.DateTimeFormat>}
+ * Options for {@link getDisplayFormatter}, keyed by the parts shown and the time zone, so the same
+ * object is passed for the same options, which the formatters are cached by. The keys come from the
+ * site configuration, so the cache stays small.
+ * @type {Map<string, Intl.DateTimeFormatOptions>}
  */
-const displayFormatterCache = new Map();
+const displayOptionsCache = new Map();
 
 /**
  * Get a cached formatter for {@link getDateTimeFieldDisplayValue}. The options are the same as the
- * ones the `Date` locale methods would be given, so the output is identical.
+ * ones the `Date` locale methods would be given, so the output is identical. A display value is
+ * resolved for every referenced entry when the options of a Relation field are built, so creating
+ * a formatter for each would be slow.
  * @param {object} args Arguments.
  * @param {string | undefined} args.locale Canonical locale.
  * @param {'date' | 'time' | 'datetime'} args.parts Parts to be shown.
@@ -57,22 +58,14 @@ const displayFormatterCache = new Map();
  * @returns {Intl.DateTimeFormat} Formatter.
  */
 const getDisplayFormatter = ({ locale, parts, timeZone }) =>
-  getOrCreate(displayFormatterCache, [locale, parts, timeZone].join('|'), () => {
-    if (parts === 'time') {
-      return new Intl.DateTimeFormat(locale, { ...TIME_FORMAT_OPTIONS, timeZone });
-    }
-
-    if (parts === 'date') {
-      return new Intl.DateTimeFormat(locale, { ...DATE_FORMAT_OPTIONS, timeZone });
-    }
-
-    return new Intl.DateTimeFormat(locale, {
-      ...DATE_FORMAT_OPTIONS,
-      ...TIME_FORMAT_OPTIONS,
+  getDateTimeFormatter(
+    locale,
+    getOrCreate(displayOptionsCache, `${parts}|${timeZone ?? ''}`, () => ({
+      ...(parts === 'time' ? undefined : DATE_FORMAT_OPTIONS),
+      ...(parts === 'date' ? undefined : TIME_FORMAT_OPTIONS),
       timeZone,
-      timeZoneName: undefined,
-    });
-  });
+    })),
+  );
 
 /**
  * Match a UTC offset written in a value, like `+09:00` or `-0800`.

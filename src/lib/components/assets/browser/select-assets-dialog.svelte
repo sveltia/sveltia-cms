@@ -29,7 +29,6 @@
     getPickedFolderPublicPaths,
     getStockAssetProviderEntries,
     isFolderOffered,
-    processUniqueFiles,
     sortServicesByName,
   } from '$lib/services/assets/browser/select-assets-dialog.svelte';
   import { fillLibraryPrefix } from '$lib/services/assets/external/prefix';
@@ -54,7 +53,7 @@
   import { normalize } from '$lib/services/search/util';
   import { getApiKey } from '$lib/services/user/api-keys';
   import { env } from '$lib/services/user/env.svelte';
-  import { createPath, getDirName, getGitHash } from '$lib/services/utils/file';
+  import { createPath, getDirName, getGitHash, processUniqueFiles } from '$lib/services/utils/file';
   import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
 
   /**

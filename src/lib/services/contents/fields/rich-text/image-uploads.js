@@ -4,7 +4,7 @@ import {
   processResources,
 } from '$lib/services/contents/fields/file/resources';
 import { getPreferredLibraryNames } from '$lib/services/integrations/media-libraries/options';
-import { getGitHash } from '$lib/services/utils/file';
+import { startUniqueFileTasks } from '$lib/services/utils/file';
 import { createConcurrencyLimiter } from '$lib/services/utils/scheduling';
 
 /**
@@ -114,38 +114,22 @@ export const insertInlineImages = async ({
   insertImage,
 }) => {
   const limit = createConcurrencyLimiter(MAX_CONCURRENT_FILES);
+  const files = images.flatMap(({ file }) => file ?? []);
 
-  // A file checks whether the same file is already pending, which an identical file in the same
-  // batch can’t be until its own processing is done, so such a file shares the result of the first
-  // one instead, as in `processUniqueFiles()`. A file that can’t be read is processed on its own,
-  // which reports it as invalid. The Git hash is memoized per file, so it’s not computed again
-  const hashes = await Promise.all(
-    images.map(({ file }) => (file ? getGitHash(file).catch(() => undefined) : undefined)),
+  // Identical files dropped together share one result. A file isn’t processed once the editor shows
+  // other content, so it’s not cached for a draft that isn’t shown any more
+  const fileValues = await startUniqueFileTasks(files, (file) =>
+    limit(async () =>
+      isCurrent()
+        ? (await processResource({ draft, resource: { file, folder }, libraryConfig, locale }))
+            .value
+        : undefined,
+    ),
   );
 
-  /** @type {Promise<string | undefined>[]} */
-  const values = [];
-
-  images.forEach(({ file, src }, index) => {
-    const hash = hashes[index];
-    const firstIndex = hash === undefined ? index : hashes.indexOf(hash);
-
-    if (!file) {
-      values.push(Promise.resolve(src));
-    } else if (firstIndex !== index) {
-      values.push(values[firstIndex]);
-    } else {
-      values.push(
-        limit(async () =>
-          // Don’t cache a file for a draft the editor no longer shows
-          isCurrent()
-            ? (await processResource({ draft, resource: { file, folder }, libraryConfig, locale }))
-                .value
-            : undefined,
-        ),
-      );
-    }
-  });
+  const values = images.map(({ file, src }) =>
+    file ? fileValues[files.indexOf(file)] : Promise.resolve(src),
+  );
 
   // The results are awaited in order below, so a failure after an earlier one isn’t reported as
   // an unhandled rejection

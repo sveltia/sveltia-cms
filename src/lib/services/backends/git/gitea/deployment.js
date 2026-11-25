@@ -1,6 +1,5 @@
 import { repository } from '$lib/services/backends/git/gitea/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
-import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import {
   addCandidates,
   collectSafely,
@@ -8,6 +7,7 @@ import {
   resolveDeployments,
 } from '$lib/services/backends/git/shared/deployment';
 import { getRepositoryPath, getRestBranchPath } from '$lib/services/backends/git/shared/repository';
+import { runConcurrently } from '$lib/services/utils/scheduling';
 
 /**
  * @import { DeployState, DeployStatus, DeployTarget } from '$lib/types/private';

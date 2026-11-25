@@ -26,23 +26,40 @@ export const TIME_FORMAT_OPTIONS = { hour: 'numeric', minute: 'numeric', hour12:
 export const DATE_TIME_FORMAT_OPTIONS = { ...DATE_FORMAT_OPTIONS, ...TIME_FORMAT_OPTIONS };
 
 /**
- * Formatters used by {@link formatDate}, keyed by locale. Creating a formatter is far slower than
- * using one, and a list of dates, such as the commit history, formats many with the same locale.
- * @type {Map<string, Intl.DateTimeFormat>}
+ * Formatters by options object, then by locale. Creating a formatter is an order of magnitude
+ * slower than using one, which `Date.prototype.toLocaleString()` and the like do on every call, and
+ * a list of dates, such as the commit history, formats many with the same few. The options are
+ * looked up by identity, which is far cheaper than serializing them on every call.
+ * @type {WeakMap<Intl.DateTimeFormatOptions, Map<string, Intl.DateTimeFormat>>}
  */
-const dateTimeFormatterCache = new Map();
+const formatterCache = new WeakMap();
+
 /**
- * Formatters used by {@link formatRecentDateTime}, keyed by locale and by which parts of the date
- * are shown: the time alone, the date without the year, or the full date. A history list formats
- * many timestamps with the same few formatters.
- * @type {Map<string, Intl.DateTimeFormat>}
+ * Get a cached formatter for the given locale and options.
+ * @param {string | null | undefined} locale Locale. Default: the user’s.
+ * @param {Intl.DateTimeFormatOptions} options Options. Pass the same object for the same options,
+ * e.g. a constant, as they’re cached by identity.
+ * @returns {Intl.DateTimeFormat} Formatter.
  */
-const recentDateTimeFormatterCache = new Map();
+export const getDateTimeFormatter = (locale, options) =>
+  getOrCreate(
+    getOrCreate(formatterCache, options, () => new Map()),
+    locale ?? '',
+    () => new Intl.DateTimeFormat(locale ?? undefined, options),
+  );
+
 /**
- * Formatters used by {@link formatMonthDay}, keyed by locale.
- * @type {Map<string, Intl.DateTimeFormat>}
+ * Format the date with a cached formatter. An invalid date gives what `toLocaleString()` gives,
+ * where `format()` would throw.
+ * @param {Date} date Date.
+ * @param {string | null | undefined} locale Locale. Default: the user’s.
+ * @param {Intl.DateTimeFormatOptions} options Options.
+ * @returns {string} Formatted date.
  */
-const monthDayFormatterCache = new Map();
+const formatWith = (date, locale, options) =>
+  Number.isNaN(date.getTime())
+    ? 'Invalid Date'
+    : getDateTimeFormatter(locale, options).format(date);
 
 /**
  * Format the date to a localized string.
@@ -50,18 +67,28 @@ const monthDayFormatterCache = new Map();
  * @param {LocaleCode | null} [locale] Optional locale to use for formatting.
  * @returns {string} Formatted date string.
  */
-export const formatDate = (date, locale) => {
-  // Same as what `toLocaleString()` gives, where `format()` would throw
-  if (Number.isNaN(date.getTime())) {
-    return 'Invalid Date';
-  }
+export const formatDate = (date, locale) => formatWith(date, locale, DATE_TIME_FORMAT_OPTIONS);
 
-  return getOrCreate(
-    dateTimeFormatterCache,
-    locale ?? '',
-    () => new Intl.DateTimeFormat(locale ?? undefined, DATE_TIME_FORMAT_OPTIONS),
-  ).format(date);
-};
+/**
+ * Options for {@link formatRecentDateTime}: the time alone for today.
+ * @type {Intl.DateTimeFormatOptions}
+ */
+const RECENT_TIME_OPTIONS = { hour: 'numeric', minute: 'numeric' };
+/**
+ * Options for {@link formatRecentDateTime}: the date without the year for another day this year.
+ * @type {Intl.DateTimeFormatOptions}
+ */
+const RECENT_DATE_OPTIONS = { month: 'short', day: 'numeric', ...RECENT_TIME_OPTIONS };
+/**
+ * Options for {@link formatRecentDateTime}: the full date for another year.
+ * @type {Intl.DateTimeFormatOptions}
+ */
+const RECENT_YEAR_OPTIONS = { year: 'numeric', ...RECENT_DATE_OPTIONS };
+/**
+ * Options for {@link formatMonthDay}.
+ * @type {Intl.DateTimeFormatOptions}
+ */
+const MONTH_DAY_OPTIONS = { month: 'short', day: 'numeric' };
 
 /**
  * Format a recent date and time briefly, e.g. when a draft backup was made or someone started
@@ -79,25 +106,11 @@ export const formatRecentDateTime = ({ timestamp, locale, now = new Date() }) =>
   const sameDay =
     sameYear && now.getMonth() === timestamp.getMonth() && now.getDate() === timestamp.getDate();
 
-  // Same as what `toLocaleString()` gives, where `format()` would throw
-  if (Number.isNaN(timestamp.getTime())) {
-    return 'Invalid Date';
-  }
-
-  const shape = sameDay ? 'time' : sameYear ? 'date' : 'year';
-
-  return getOrCreate(
-    recentDateTimeFormatterCache,
-    `${locale ?? ''}|${shape}`,
-    () =>
-      new Intl.DateTimeFormat(locale, {
-        year: shape === 'year' ? 'numeric' : undefined,
-        month: shape === 'time' ? undefined : 'short',
-        day: shape === 'time' ? undefined : 'numeric',
-        hour: 'numeric',
-        minute: 'numeric',
-      }),
-  ).format(timestamp);
+  return formatWith(
+    timestamp,
+    locale,
+    sameDay ? RECENT_TIME_OPTIONS : sameYear ? RECENT_DATE_OPTIONS : RECENT_YEAR_OPTIONS,
+  );
 };
 
 /**
@@ -106,11 +119,4 @@ export const formatRecentDateTime = ({ timestamp, locale, now = new Date() }) =>
  * @param {LocaleCode} [locale] Locale.
  * @returns {string} Formatted date.
  */
-export const formatMonthDay = (date, locale) =>
-  Number.isNaN(date.getTime())
-    ? 'Invalid Date'
-    : getOrCreate(
-        monthDayFormatterCache,
-        locale ?? '',
-        () => new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }),
-      ).format(date);
+export const formatMonthDay = (date, locale) => formatWith(date, locale, MONTH_DAY_OPTIONS);

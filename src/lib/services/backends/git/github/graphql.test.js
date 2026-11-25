@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { buildAliasedQuery, fetchAliasedBatch } from '$lib/services/backends/git/github/graphql';
 import { fetchGraphQL } from '$lib/services/backends/git/shared/api';
-import { MAX_CONCURRENT_REQUESTS } from '$lib/services/backends/git/shared/concurrency';
+import { MAX_CONCURRENT_REQUESTS } from '$lib/services/utils/scheduling';
 
 vi.mock('$lib/services/backends/git/shared/api');
 

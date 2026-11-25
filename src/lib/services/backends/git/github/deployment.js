@@ -1,7 +1,6 @@
 import { fetchAliasedBatch } from '$lib/services/backends/git/github/graphql';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
-import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import {
   addCandidates,
   collectSafely,
@@ -10,6 +9,7 @@ import {
 } from '$lib/services/backends/git/shared/deployment';
 import { getRepositoryPath } from '$lib/services/backends/git/shared/repository';
 import { splitIntoChunks } from '$lib/services/utils/array';
+import { runConcurrently } from '$lib/services/utils/scheduling';
 
 /**
  * @import { DeployState, DeployStatus, DeployTarget } from '$lib/types/private';

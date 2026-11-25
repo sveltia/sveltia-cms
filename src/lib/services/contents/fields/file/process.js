@@ -6,15 +6,14 @@ import { getEntryAssetFolderPath } from '$lib/services/assets/entry-folder';
 import { formatFileName, isSameFileName } from '$lib/services/assets/file-name';
 import { createDisplayBlobURL, getAssetPublicURL } from '$lib/services/assets/info';
 import { getAssetKind } from '$lib/services/assets/kinds';
+import { getAssetsBySha } from '$lib/services/assets/lookup';
 import { createAssetNameTemplate, getPendingFileName } from '$lib/services/assets/name';
 import { processFile } from '$lib/services/assets/process';
-import { allAssets } from '$lib/services/assets/state';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
 import {
   isAcceptedFile,
   keepsFileFormat,
 } from '$lib/services/integrations/media-libraries/default';
-import { getOrCreate, memoizeOnSource } from '$lib/services/utils/cache';
 import { createPath, getDirName, getGitHash } from '$lib/services/utils/file';
 import { LINK_SANITIZE_OPTIONS } from '$lib/services/utils/string';
 
@@ -200,24 +199,6 @@ const getEntryAssetBasePath = (draft, folder, locale) => {
 };
 
 /**
- * Get the saved assets by their Git object ID, in the order of {@link allAssets}. The index is only
- * built again once the asset list has been replaced.
- */
-const getSavedAssetsBySha = memoizeOnSource(
-  () => allAssets.current,
-  (assets) => {
-    /** @type {Map<string, Asset[]>} */
-    const map = new Map();
-
-    assets.forEach((asset) => {
-      getOrCreate(map, asset.sha, () => /** @type {Asset[]} */ ([])).push(asset);
-    });
-
-    return map;
-  },
-);
-
-/**
  * Get the saved assets with the given content that are relevant to the current entry draft and
  * folder. For entry-relative folders, the result is filtered to only include assets within the
  * folder the entry’s relative assets are saved to, preventing false duplicate detection across
@@ -230,7 +211,7 @@ const getSavedAssetsBySha = memoizeOnSource(
  * @returns {Asset[]} Filtered saved assets.
  */
 const getSavedAssetsForEntry = (draft, folder, sha, locale) => {
-  const savedAssets = getSavedAssetsBySha().get(sha) ?? [];
+  const savedAssets = getAssetsBySha().get(sha) ?? [];
 
   if (!folder?.entryRelative) {
     return savedAssets;

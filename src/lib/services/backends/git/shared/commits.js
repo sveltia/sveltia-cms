@@ -1,8 +1,8 @@
-import { mapConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { cmsConfig } from '$lib/services/config';
 import { getCollectionLabel } from '$lib/services/contents/collection';
 import { user } from '$lib/services/user/account.svelte';
+import { mapConcurrently } from '$lib/services/utils/scheduling';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
 /**

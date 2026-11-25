@@ -8,7 +8,7 @@ import { cmsConfig } from '$lib/services/config';
 import { getEntriesInCollectionFolder } from '$lib/services/contents/collection/entries';
 import { getIdentifierFieldName } from '$lib/services/contents/collection/identifier';
 import { getNameInFolder } from '$lib/services/contents/collection/nested';
-import { getOrCreate } from '$lib/services/utils/cache';
+import { getOrCreate, memoizeOnSources } from '$lib/services/utils/cache';
 import { foldFileName, renameIfNeeded } from '$lib/services/utils/file';
 import { getPullRequestEntries, unpublishedEntries } from '$lib/services/workflow';
 import {
@@ -19,21 +19,15 @@ import {
 
 /**
  * @import { ReplaceContext } from '$lib/services/common/template/replacers';
- * @import {
- * Entry,
- * FillTemplateOptions,
- * InternalLocaleCode,
- * UnpublishedEntry,
- * } from '$lib/types/private';
+ * @import { Entry, FillTemplateOptions, InternalLocaleCode } from '$lib/types/private';
  */
 
 /**
- * Existing slugs of each collection, by locale and folder, along with the lists they were read
- * from. A slug is filled on every keystroke while a new entry’s slug is previewed, for each locale,
- * so the slugs of the whole collection folder are only gathered again once either list is replaced.
- * @type {Map<string, {
+ * Existing slugs of each collection, by locale and folder. A slug is filled on every keystroke
+ * while a new entry’s slug is previewed, for each locale, so the slugs of the whole collection
+ * folder are only gathered again once the entries in it or the unpublished entries are replaced.
+ * @type {Map<string, () => {
  * folderEntries: Entry[],
- * pullRequestEntries: UnpublishedEntry[],
  * slugs: Map<string, { names: string[], foldedNames: Set<string> }>,
  * }>}
  */
@@ -56,16 +50,16 @@ const existingSlugCache = new Map();
  * folded with `foldFileName()` for a quick lookup.
  */
 const getExistingSlugs = (collectionName, locale, dirPath) => {
-  const folderEntries = getEntriesInCollectionFolder(collectionName);
-  const pullRequestEntries = unpublishedEntries.current;
-  let cache = existingSlugCache.get(collectionName);
+  const getCache = getOrCreate(existingSlugCache, collectionName, () =>
+    memoizeOnSources(
+      () => [getEntriesInCollectionFolder(collectionName), unpublishedEntries.current],
+      (folderEntries, _pullRequestEntries) => ({ folderEntries, slugs: new Map() }),
+    ),
+  );
 
-  if (cache?.folderEntries !== folderEntries || cache.pullRequestEntries !== pullRequestEntries) {
-    cache = { folderEntries, pullRequestEntries, slugs: new Map() };
-    existingSlugCache.set(collectionName, cache);
-  }
+  const { folderEntries, slugs: cache } = getCache();
 
-  return getOrCreate(cache.slugs, JSON.stringify([locale ?? null, dirPath ?? null]), () => {
+  return getOrCreate(cache, JSON.stringify([locale ?? null, dirPath ?? null]), () => {
     const slugs = /** @type {string[]} */ (
       [...folderEntries, ...getPullRequestEntries(collectionName)]
         .map((e) => (locale ? e.locales[locale]?.slug : e.slug))

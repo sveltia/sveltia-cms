@@ -1,6 +1,6 @@
 import { getExternalAssetDetails } from '$lib/services/assets/external/details';
 import { isMediaKind } from '$lib/services/assets/kinds';
-import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
+import { runConcurrently } from '$lib/services/utils/scheduling';
 import { createRawState } from '$lib/services/utils/state.svelte';
 
 /**

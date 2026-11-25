@@ -4,7 +4,6 @@ import { generateUUID } from '@sveltia/utils/crypto';
 import { getAdditions } from '$lib/services/app/additions';
 import { promptCommitMessage } from '$lib/services/backends/commit-prompt';
 import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
-import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { toFileListItem } from '$lib/services/backends/git/shared/tree';
 import { createFileList } from '$lib/services/backends/process';
@@ -17,6 +16,7 @@ import {
   buildCascadeDeleteChanges,
   planCascadeDeleteOrThrow,
 } from '$lib/services/contents/entry/relations/cascade/delete';
+import { runConcurrently } from '$lib/services/utils/scheduling';
 import { getEditedCompanionPaths } from '$lib/services/workflow';
 import { removeWorkflowAssets } from '$lib/services/workflow/assets';
 import { isForkEntry } from '$lib/services/workflow/forks';

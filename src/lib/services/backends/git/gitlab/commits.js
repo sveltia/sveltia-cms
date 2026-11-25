@@ -16,11 +16,11 @@ import {
   MAX_FILE_COMMITS,
   signOffCommitMessage,
 } from '$lib/services/backends/git/shared/commits';
-import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { checkDirectCommitAllowed } from '$lib/services/backends/git/shared/fork';
 import { repositoryHead } from '$lib/services/backends/git/shared/head';
 import { getOrCreateAsync } from '$lib/services/utils/cache';
 import { getGitHash } from '$lib/services/utils/file';
+import { runConcurrently } from '$lib/services/utils/scheduling';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 /**

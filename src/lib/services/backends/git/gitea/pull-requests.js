@@ -7,7 +7,6 @@ import { getBranchRepository, getWorkflowRepository } from '$lib/services/backen
 import { repository } from '$lib/services/backends/git/gitea/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { fetchAPIOrUndefined } from '$lib/services/backends/git/shared/api-optional';
-import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { toForkPullRequest } from '$lib/services/backends/git/shared/fork';
 import { pollUntil, SETTLE_POLL } from '$lib/services/backends/git/shared/poll';
 import {
@@ -24,6 +23,7 @@ import {
 import { deleteRemoteBranch } from '$lib/services/backends/git/shared/workflow';
 import { getEntryFoldersByPath } from '$lib/services/contents/folders';
 import mime from '$lib/services/utils/mime';
+import { runConcurrently } from '$lib/services/utils/scheduling';
 import { encodePathSegments } from '$lib/services/utils/url';
 import {
   getStatusFromLabels,

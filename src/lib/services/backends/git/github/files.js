@@ -13,7 +13,6 @@ import {
   repository,
 } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
-import { mapConcurrently, runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { fetchRepositoryFiles } from '$lib/services/backends/git/shared/files';
 import { startSimulatedProgress } from '$lib/services/backends/git/shared/progress';
@@ -21,6 +20,7 @@ import { getRepositoryPath } from '$lib/services/backends/git/shared/repository'
 import { toFileListItems } from '$lib/services/backends/git/shared/tree';
 import { getRootDir } from '$lib/services/backends/root-dir';
 import { getBotCoAuthor } from '$lib/services/utils/commit-author';
+import { mapConcurrently, runConcurrently } from '$lib/services/utils/scheduling';
 import { encodePathSegments } from '$lib/services/utils/url';
 
 /**

@@ -48,7 +48,8 @@ vi.mock('$lib/services/contents/i18n', () => ({
   getCanonicalLocale: vi.fn((locale) => locale),
 }));
 
-vi.mock('$lib/services/utils/date', () => ({
+vi.mock('$lib/services/utils/date', async (importOriginal) => ({
+  .../** @type {object} */ (await importOriginal()),
   DATE_FORMAT_OPTIONS: { year: 'numeric', month: '2-digit', day: '2-digit' },
   DATE_REGEX: /^\d{4}-\d{2}-\d{2}$/,
   TIME_FORMAT_OPTIONS: { hour: '2-digit', minute: '2-digit' },

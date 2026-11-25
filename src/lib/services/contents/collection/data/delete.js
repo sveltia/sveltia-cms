@@ -1,6 +1,5 @@
 import { getAdditions } from '$lib/services/app/additions';
 import { allAssets } from '$lib/services/assets/state';
-import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { saveChanges } from '$lib/services/backends/save';
 import { allEntries } from '$lib/services/contents';
 import { selectedCollection } from '$lib/services/contents/collection';
@@ -17,6 +16,7 @@ import {
   buildCascadeDeleteChanges,
   planCascadeDeleteOrThrow,
 } from '$lib/services/contents/entry/relations/cascade/delete';
+import { runConcurrently } from '$lib/services/utils/scheduling';
 
 /**
  * @import { Asset, Entry, FileChange, InternalEntryCollection } from '$lib/types/private';

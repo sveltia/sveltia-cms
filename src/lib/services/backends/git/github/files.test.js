@@ -27,9 +27,9 @@ import {
   repository,
 } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
-import { MAX_CONCURRENT_REQUESTS } from '$lib/services/backends/git/shared/concurrency';
 import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
 import { startSimulatedProgress } from '$lib/services/backends/git/shared/progress';
+import { MAX_CONCURRENT_REQUESTS } from '$lib/services/utils/scheduling';
 import { forkedRepository, openAuthoringInitialized } from '$lib/services/workflow/open-authoring';
 
 // Mock dependencies
