@@ -1,12 +1,12 @@
 <!--
   @component
   Thumbnail of an entry, as shown in the entry list, the search results and the Editorial Workflow
-  page. Nothing is rendered for an entry without one. The thumbnail is loaded right away if it’s in
-  view, or once it has scrolled into view and stayed there for a moment, so the rows a long list is
-  scrolled past don’t queue up thumbnails ahead of the ones the user stops at. Its object URL is
-  released
-  when the entry changes or the thumbnail is removed, so a long list doesn’t keep every thumbnail it
-  has ever shown in memory.
+  page. Nothing is rendered for an entry without one, except on a tile, which keeps the space for
+  it, so the tiles line up whether or not they have a thumbnail. The thumbnail is loaded right away
+  if it’s in view, or once it has scrolled into view and stayed there for a moment, so the rows a
+  long list is scrolled past don’t queue up thumbnails ahead of the ones the user stops at. Its
+  object URL is released when the entry changes or the thumbnail is removed, so a long list doesn’t
+  keep every thumbnail it has ever shown in memory.
 -->
 <script>
   import Image from '$lib/components/assets/shared/image.svelte';
@@ -76,4 +76,12 @@
 {#if src}
   <!-- The thumbnail is only loaded once it’s about to be seen, so it’s shown right away -->
   <Image {src} {variant} cover loading="eager" />
+{:else if variant === 'tile'}
+  <div role="none" class="placeholder"></div>
 {/if}
+
+<style>
+  .placeholder {
+    aspect-ratio: 1 / 1;
+  }
+</style>

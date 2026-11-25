@@ -80,6 +80,12 @@ describe('PreviewLinkButton', () => {
     await expect.element(page.getByRole('menuitem', { name: 'View on Live Site' })).toBeEnabled();
   });
 
+  test('links to the default locale without a locale given', async () => {
+    await renderButton({ locale: undefined });
+    await page.getByRole('button', { name: 'View on Live Site' }).click();
+    expect(openNewTab).toHaveBeenCalledWith('https://example.com/posts/hello');
+  });
+
   test('can be kept out of the Tab order', async () => {
     await renderButton({ iconic: true, tabindex: -1 });
     await expect

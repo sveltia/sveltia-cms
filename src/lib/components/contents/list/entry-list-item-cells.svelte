@@ -7,10 +7,8 @@
   import { _, locale as appLocale } from '@sveltia/i18n';
   import { Checkbox, GridCell, Icon, TruncatedText } from '@sveltia/ui';
 
-  import ListPreviewLink from '$lib/components/contents/list/list-preview-link.svelte';
+  import EntryStatusCell from '$lib/components/contents/list/entry-status-cell.svelte';
   import EntryThumbnail from '$lib/components/contents/shared/entry-thumbnail.svelte';
-  import StatusBadge from '$lib/components/workflow/status-badge.svelte';
-  import { getAdditions } from '$lib/services/app/additions';
   import { selectedEntryIdSet } from '$lib/services/contents/collection/entries';
   import {
     getIndexFile,
@@ -20,7 +18,6 @@
   import { SUMMARY_COLUMN_KEY } from '$lib/services/contents/collection/view/table-keys';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { env } from '$lib/services/user/env.svelte';
-  import { getEntryStage } from '$lib/services/workflow/stages';
 
   /**
    * @import {
@@ -58,12 +55,12 @@
     showPreviewLink = false,
   } = $props();
 
-  // The entry as an unpublished one, which only it is when it has Editorial Workflow information
-  const unpublishedEntry = $derived(/** @type {UnpublishedEntry} */ (entry));
-  // Editorial Workflow information, only present on an unpublished entry
-  const workflow = $derived(unpublishedEntry.workflow);
-  // Sveltia CMS Additions, which tells who else is editing or viewing the entry
-  const additions = $derived(getAdditions());
+  // The entry, if it’s an unpublished one: only that has Editorial Workflow information
+  const unpublishedEntry = $derived(
+    /** @type {UnpublishedEntry} */ (entry).workflow
+      ? /** @type {UnpublishedEntry} */ (entry)
+      : undefined,
+  );
   /* v8 ignore start -- the app locale is always set once the UI strings are loaded */
   // Plain-text summary naming the selection checkbox, so a screen reader hears which entry it
   // selects rather than an unlabelled checkbox. `appLocale.current` is a key, because the summary
@@ -128,19 +125,7 @@
 {:else}
   {@render title()}
 {/if}
-<GridCell class="status">
-  <div role="none" class="status-items">
-    {#if additions}
-      <additions.EntryActivity collectionName={collection.name} subPath={entry.subPath} />
-    {/if}
-    {#if workflow}
-      {#if showPreviewLink}
-        <ListPreviewLink {collection} entry={unpublishedEntry} />
-      {/if}
-      <StatusBadge status={getEntryStage(unpublishedEntry, collection)} />
-    {/if}
-  </div>
-</GridCell>
+<EntryStatusCell {collection} subPath={entry.subPath} {unpublishedEntry} {showPreviewLink} />
 
 <style>
   .label {

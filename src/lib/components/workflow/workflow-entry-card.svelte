@@ -67,8 +67,6 @@
   const movable = $derived(
     !deletion && !deploying && !readonly && getWorkflowStages(collection).length > 1,
   );
-  // The card has no locale of its own, so the link points at the entry’s default one
-  const defaultLocale = $derived((collectionFile ?? collection)?._i18n?.defaultLocale);
   // A merged change goes out with the production build, which is a different commit from the pull
   // request’s, and a later one if another change has been merged since
   const deploySHA = $derived(deploying ? productionSHA.current : pullRequest.headSHA);
@@ -171,11 +169,10 @@ a merged or read-only one, or one with no other stage to move to -->
       <DeployStatusBadge state={deployState} />
     </div>
     <div role="none" class="actions">
-      {#if collection && defaultLocale && !gone}
+      {#if collection && !gone}
         <!-- A merged change is on the live site, or on its way there, rather than on a preview -->
         <PreviewLinkButton
           {entry}
-          locale={defaultLocale}
           {collection}
           {collectionFile}
           pullRequest={deploying ? undefined : pullRequest}

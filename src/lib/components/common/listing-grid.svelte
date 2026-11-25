@@ -66,20 +66,6 @@
     padding: 0 16px 16px;
     height: 100%;
     overflow-y: auto;
-
-    /*
-     * Lay out what the status cell holds — the Additions lock and viewer icons, the deploy preview
-     * button and the Editorial Workflow status badge — in one row with even spacing, rather than
-     * the spaces between them, whose width depends on the font. It stays inline, so the cell’s
-     * `text-align` still places it
-     */
-
-    :global(.status > .status-items) {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      vertical-align: middle;
-    }
   }
 
   .grid-view {
@@ -122,14 +108,6 @@
 
         .grid-cell {
           display: block;
-
-          /* Keep the space for a thumbnail that isn’t there, or hasn’t loaded yet, so the tiles
-          line up and the checkbox doesn’t cover the title. The cell always holds the thumbnail’s
-          hidden anchor, so it’s never `:empty` */
-
-          &.image:not(:has(> :not([hidden]))) {
-            aspect-ratio: 1 / 1;
-          }
         }
 
         .checkbox {

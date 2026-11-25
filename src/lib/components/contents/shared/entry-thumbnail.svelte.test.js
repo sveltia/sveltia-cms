@@ -101,5 +101,16 @@ describe('EntryThumbnail', () => {
     const { container } = await render(EntryThumbnail, { collection, entry, variant: 'icon' });
 
     expect(container.querySelector('.preview')).toBeNull();
+    expect(container.querySelector('.placeholder')).toBeNull();
+  });
+
+  test('keeps the space for a missing thumbnail on a tile, so the tiles line up', async () => {
+    mockLoadEntryThumbnail.mockImplementation(() => () => {});
+
+    const { container } = await render(EntryThumbnail, { collection, entry, variant: 'tile' });
+    const placeholder = /** @type {HTMLElement} */ (container.querySelector('.placeholder'));
+
+    container.style.width = '200px';
+    expect(placeholder.getBoundingClientRect().height).toBe(200);
   });
 });

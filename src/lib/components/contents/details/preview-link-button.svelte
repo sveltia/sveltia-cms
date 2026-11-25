@@ -30,7 +30,9 @@
   /**
    * @typedef {object} Props
    * @property {Entry} entry Entry to be previewed.
-   * @property {InternalLocaleCode} locale Locale of the entry to be previewed.
+   * @property {InternalLocaleCode} [locale] Locale of the entry to be previewed. Defaults to the
+   * default locale of the collection file or collection, for a list or card that has no locale of
+   * its own.
    * @property {InternalCollection} collection Collection that the entry belongs to.
    * @property {InternalCollectionFile} [collectionFile] Collection file. File/singleton collection
    * only.
@@ -52,7 +54,7 @@
   /** @type {Props} */
   let {
     entry,
-    locale,
+    locale = undefined,
     collection,
     collectionFile,
     pullRequest,
@@ -67,10 +69,11 @@
   // `url` and writes that state, so reading it here would feed the check’s own result back into the
   // URL it checks. The liveness is folded into `state` alone, which the effect doesn’t read
   // @see https://github.com/sveltia/sveltia-cms/issues/943
+  const _locale = $derived(locale ?? (collectionFile ?? collection)._i18n.defaultLocale);
   const link = $derived(
     getEntryPreviewLink({
       entry,
-      locale,
+      locale: _locale,
       collection,
       collectionFile,
       pullRequest,

@@ -35,6 +35,7 @@
   import { sortKeys } from '$lib/services/contents/collection/view/sort-keys';
   import { getTableColumns } from '$lib/services/contents/collection/view/table';
   import { getEntryLocaleFile } from '$lib/services/contents/entry/paths';
+  import { retainDeployPolling } from '$lib/services/deployments/poll';
   import { env } from '$lib/services/user/env.svelte';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
@@ -78,6 +79,17 @@
    * @returns {Promise<void> | undefined} Promise, or `undefined` to render right away.
    */
   const deferRows = () => (untrack(() => viewType) === 'table' ? undefined : sleep());
+
+  // Unpublished entries are listed with a link to their deploy preview, except while the list is
+  // being reordered or bulk edited
+  const showsPreviewLinks = $derived(
+    !!listedUnpublishedEntries.current.length && !reordering.current && !bulkEditing.current,
+  );
+
+  // Keep the deploy state of the unpublished entries up to date while their links are shown, so
+  // they turn from a spinner into a link once the build finishes. One hold covers every row; the
+  // release function is returned synchronously, or the hold would leak
+  $effect(() => (showsPreviewLinks ? retainDeployPolling() : undefined));
 </script>
 
 {#snippet group(

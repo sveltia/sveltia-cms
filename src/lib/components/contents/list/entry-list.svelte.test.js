@@ -1,5 +1,5 @@
 import { flushSync } from 'svelte';
-import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
@@ -7,12 +7,19 @@ import { OTHER_GROUP_NAME } from '$lib/services/common/view';
 import { getCollection, selectedCollection } from '$lib/services/contents/collection';
 import { setBulkEditMode, setReorderMode } from '$lib/services/contents/collection/view';
 import { currentView, entryListSettings } from '$lib/services/contents/collection/view/settings';
+import { retainDeployPolling } from '$lib/services/deployments/poll';
 import { env } from '$lib/services/user/env.svelte';
 import { allUnpublishedEntries } from '$lib/services/workflow';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import { createMockEntry, initTestConfig, setEntries, TEST_IMAGE_URL } from '$lib/test/config';
 
 import EntryList from './entry-list.svelte';
+
+const { mockReleaseDeployPolling } = vi.hoisted(() => ({ mockReleaseDeployPolling: vi.fn() }));
+
+vi.mock('$lib/services/deployments/poll', () => ({
+  retainDeployPolling: vi.fn(() => mockReleaseDeployPolling),
+}));
 
 /**
  * Configuration of the collection the tests list the entries of.
@@ -383,8 +390,7 @@ describe('EntryList', () => {
     ];
     selectCollection();
 
-    await render(EntryList, {});
-
+    const { unmount } = await render(EntryList, {});
     const grid = page.getByRole('grid', { name: 'Entries' });
 
     await expect.element(grid).toHaveAttribute('aria-rowcount', '2');
@@ -411,6 +417,20 @@ describe('EntryList', () => {
     await expect
       .poll(() => grid.element().querySelector('.image img')?.getAttribute('src'))
       .toBe(TEST_IMAGE_URL);
+
+    // The deploy state is kept up to date while the unpublished entry’s preview link is shown,
+    // with a single hold for the whole list
+    expect(retainDeployPolling).toHaveBeenCalledOnce();
+    expect(mockReleaseDeployPolling).not.toHaveBeenCalled();
+
+    // Bulk editing takes the links away, and leaving it brings them back
+    setBulkEditMode(true);
+    await expect.poll(() => mockReleaseDeployPolling.mock.calls.length).toBe(1);
+    setBulkEditMode(false);
+    await expect.poll(() => vi.mocked(retainDeployPolling).mock.calls.length).toBe(2);
+
+    unmount();
+    expect(mockReleaseDeployPolling).toHaveBeenCalledTimes(2);
   });
 
   test('shows the reorder list while reordering', async () => {

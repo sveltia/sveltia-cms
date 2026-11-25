@@ -4,64 +4,59 @@
 
   import ListContainer from '$lib/components/common/list-container.svelte';
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
-  import ListPreviewLink from '$lib/components/contents/list/list-preview-link.svelte';
-  import StatusBadge from '$lib/components/workflow/status-badge.svelte';
+  import EntryStatusCell from '$lib/components/contents/list/entry-status-cell.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { getCollectionFile } from '$lib/services/contents/collection/files';
   import { isValidCollectionFile } from '$lib/services/contents/collection/predicates';
   import { getEntryEditorPath } from '$lib/services/contents/editor/route';
   import { getCollectionFileSummary } from '$lib/services/contents/entry/summary';
+  import { retainDeployPolling } from '$lib/services/deployments/poll';
   import { unpublishedEntries } from '$lib/services/workflow';
-  import { getEntryStage } from '$lib/services/workflow/stages';
 
   /**
    * @import { CollectionFile } from '$lib/types/public';
-   * @import {
-   * InternalFileCollection,
-   * UnpublishedEntry,
-   * WorkflowStatus,
-   * } from '$lib/types/private';
+   * @import { InternalFileCollection, UnpublishedEntry } from '$lib/types/private';
    */
 
-  const files = $derived(
-    /** @type {InternalFileCollection} */ (selectedCollection.current)?.files.filter(
-      isValidCollectionFile,
-    ) ?? [],
+  // The list is only shown for a file collection
+  const collection = $derived(
+    /** @type {InternalFileCollection | undefined} */ (selectedCollection.current),
   );
+  const files = $derived(collection?.files.filter(isValidCollectionFile) ?? []);
 
   /**
-   * Unpublished entry and Editorial Workflow stage of each file that has an open pull request,
-   * keyed by file name. A file collection needs no Unpublished/Published sections like an entry
-   * collection, because every file is published from the start and can only be updated, never
-   * added or removed.
-   * @type {Record<string, { entry: UnpublishedEntry, status: WorkflowStatus }>}
+   * Unpublished entry of each file that has an open pull request, keyed by file name. A file
+   * collection needs no Unpublished/Published sections like an entry collection, because every
+   * file is published from the start and can only be updated, never added or removed.
+   * @type {Record<string, UnpublishedEntry>}
    */
   const unpublishedFiles = $derived(
     Object.fromEntries(
       unpublishedEntries.current
-        .filter(({ workflow }) => workflow.collectionName === selectedCollection.current?.name)
-        .map((entry) => [
-          entry.workflow.fileName,
-          { entry, status: getEntryStage(entry, selectedCollection.current) },
-        ]),
+        .filter(({ workflow }) => workflow.collectionName === collection?.name)
+        .map((entry) => [entry.workflow.fileName, entry]),
     ),
   );
+
+  const hasUnpublishedFiles = $derived(Object.keys(unpublishedFiles).length > 0);
+
+  // Keep the deploy state of the unpublished files up to date while they’re listed, so their
+  // preview links turn from a spinner into a link once the build finishes. One hold covers every
+  // row; the release function is returned synchronously, or the hold would leak
+  $effect(() => (hasUnpublishedFiles ? retainDeployPolling() : undefined));
 </script>
 
 <ListContainer aria-label={_('file_list')}>
-  {#if files?.length}
+  {#if files.length && collection}
     <ListingGrid viewType="list" aria-label={_('files')} aria-rowcount={files.length}>
       <InfiniteScroll items={files} itemKey="name">
         {#snippet renderItem(/** @type {CollectionFile} */ { name, label, icon })}
           <!-- HTML, as the summary can contain Markdown, like an entry collection’s -->
-          {@const summary = getCollectionFileSummary(
-            /** @type {InternalFileCollection} */ (selectedCollection.current),
-            name,
-          )}
+          {@const summary = getCollectionFileSummary(collection, name)}
           <GridRow
             onclick={() => {
-              goto(getEntryEditorPath(`${selectedCollection.current?.name}`, name), {
+              goto(getEntryEditorPath(collection.name, name), {
                 transitionType: 'forwards',
               });
             }}
@@ -80,21 +75,13 @@
                 </TruncatedText>
               </div>
             </GridCell>
-            <GridCell class="status">
-              <div role="none" class="status-items">
-                {#if unpublishedFiles[name]}
-                  {@const collection = /** @type {InternalFileCollection} */ (
-                    selectedCollection.current
-                  )}
-                  <ListPreviewLink
-                    {collection}
-                    entry={unpublishedFiles[name].entry}
-                    collectionFile={getCollectionFile(collection, name)}
-                  />
-                  <StatusBadge status={unpublishedFiles[name].status} />
-                {/if}
-              </div>
-            </GridCell>
+            <EntryStatusCell
+              {collection}
+              subPath={name}
+              unpublishedEntry={unpublishedFiles[name]}
+              collectionFile={getCollectionFile(collection, name)}
+              showPreviewLink
+            />
           </GridRow>
         {/snippet}
       </InfiniteScroll>

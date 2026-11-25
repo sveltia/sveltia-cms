@@ -2,14 +2,21 @@ import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import { entryLocks, getLockKey } from '$lib/services/additions/locks.svelte';
+import { loadAdditions } from '$lib/services/app/additions';
+import { cmsConfig } from '$lib/services/config';
 import { getCollection, selectedCollection } from '$lib/services/contents/collection';
+import { retainDeployPolling } from '$lib/services/deployments/poll';
 import { allUnpublishedEntries } from '$lib/services/workflow';
 import { createMockEntry, initTestConfig, setEntries } from '$lib/test/config';
 
 import FileList from './file-list.svelte';
 
-// An unpublished file’s deploy preview link holds the deploy state lookup, which isn’t tested here
-vi.mock('$lib/services/deployments/poll', () => ({ retainDeployPolling: vi.fn(() => vi.fn()) }));
+const { mockReleaseDeployPolling } = vi.hoisted(() => ({ mockReleaseDeployPolling: vi.fn() }));
+
+vi.mock('$lib/services/deployments/poll', () => ({
+  retainDeployPolling: vi.fn(() => mockReleaseDeployPolling),
+}));
 
 describe('FileList', () => {
   beforeAll(async () => {
@@ -102,11 +109,50 @@ describe('FileList', () => {
       }),
     ]);
 
-    await render(FileList, {});
+    const { unmount } = await render(FileList, {});
 
     await expect
       .element(page.getByRole('row', { name: /General/ }))
       .toHaveTextContent('settings General Draft');
+
+    // The deploy state is kept up to date while an unpublished file is listed, with a single hold
+    // for the whole list
+    expect(retainDeployPolling).toHaveBeenCalledOnce();
+    unmount();
+    expect(mockReleaseDeployPolling).toHaveBeenCalledOnce();
+  });
+
+  test('shows that someone else is editing a file, like an entry', async () => {
+    selectedCollection.current = getCollection('settings');
+
+    const key = getLockKey('settings', 'general');
+    const config = cmsConfig.current;
+
+    Object.assign(entryLocks, {
+      connection: 'mine',
+      locks: { [key]: { key, user_id: 'u2', name: 'Bob', since: '', connection: 'theirs' } },
+      presence: {},
+    });
+
+    try {
+      cmsConfig.current = /** @type {any} */ ({
+        ...config,
+        backend: { name: 'github', repo: 'me/site', auth_type: 'additions' },
+      });
+      await loadAdditions();
+      await render(FileList, {});
+
+      await expect
+        .element(
+          page
+            .getByRole('row', { name: /General/ })
+            .getByRole('img', { name: 'Being edited by \u2068Bob\u2069' }),
+        )
+        .toBeVisible();
+    } finally {
+      cmsConfig.current = config;
+      Object.assign(entryLocks, { connection: '', locks: {}, presence: {} });
+    }
   });
 
   test('shows the summary of a file with the `summary` option, formatted with its fields', async () => {
