@@ -2,7 +2,7 @@
   @component
   Implement the preview for a DateTime field.
   @see https://decapcms.org/docs/widgets/#Datetime
-  @see https://sveltiacms.app/en/docs/fields/datetime
+  @see https://sveltiacms.app/docs/fields/datetime
 -->
 <script>
   import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';

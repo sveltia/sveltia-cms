@@ -3,7 +3,7 @@
   Render a custom field preview registered via `CMS.registerFieldType()`, or the summary component
   of a custom field type for a collapsed List field item, which receives the same props.
   @see https://decapcms.org/docs/custom-widgets/
-  @see https://sveltiacms.app/en/docs/api/field-types
+  @see https://sveltiacms.app/docs/api/field-types
 -->
 <script>
   import { createElement } from 'react';

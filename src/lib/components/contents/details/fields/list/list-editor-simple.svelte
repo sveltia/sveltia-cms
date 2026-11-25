@@ -8,7 +8,7 @@
   trimmed, blank-free projection of the rows. There is always at least one row, so an empty list
   still offers somewhere to type.
   @see https://decapcms.org/docs/widgets/#List
-  @see https://sveltiacms.app/en/docs/fields/list
+  @see https://sveltiacms.app/docs/fields/list
 -->
 <script>
   import { _ } from '@sveltia/i18n';

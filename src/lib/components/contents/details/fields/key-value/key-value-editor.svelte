@@ -5,7 +5,7 @@
   Like a simple List field, the editor always offers a row to type into: a field without pairs shows
   one blank row, which isn’t stored until its key is filled in.
   @see https://staticjscms.netlify.app/docs/widget-keyvalue
-  @see https://sveltiacms.app/en/docs/fields/keyvalue
+  @see https://sveltiacms.app/docs/fields/keyvalue
 -->
 <script>
   import { _ } from '@sveltia/i18n';

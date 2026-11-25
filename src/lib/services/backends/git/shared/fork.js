@@ -272,7 +272,7 @@ export const pollForFork = async ({ repoPath, checkFork, attemptsLeft = FORK_POL
  * has completed, for what depends on it.
  * @param {() => Promise<void>} setUp Backend’s set-up, which records a fork if the user needs one.
  * @throws {Error} When the fork could not be set up.
- * @see https://sveltiacms.app/en/docs/workflows/open
+ * @see https://sveltiacms.app/docs/workflows/open
  */
 export const runOpenAuthoringSetUp = async (setUp) => {
   forkedRepository.current = undefined;
@@ -305,7 +305,7 @@ export const runOpenAuthoringSetUp = async (setUp) => {
  * whether the configured repository can be forked, given the access read earlier.
  * @param {() => Promise<RepositoryPath>} args.createFork Function to create a fork.
  * @throws {Error} When the fork could not be set up.
- * @see https://sveltiacms.app/en/docs/workflows/open
+ * @see https://sveltiacms.app/docs/workflows/open
  */
 export const setUpForkFor = async (args) => {
   const { repository, fetchAccess, fetchFork, prepareFork, fetchForkingAllowed } = args;

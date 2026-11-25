@@ -28,7 +28,7 @@ import { isNonEmptyString } from '$lib/services/utils/string';
  * `toFile` is given but not a function.
  * @throws {Error} If neither `fromFile` nor `toFile` is provided.
  * @see https://decapcms.org/docs/custom-formatters/
- * @see https://sveltiacms.app/en/docs/api/file-formats
+ * @see https://sveltiacms.app/docs/api/file-formats
  */
 const registerCustomFormat = (name, extension, { fromFile, toFile } = {}) => {
   assertOption(isNonEmptyString(name), 'registerCustomFormat', 'name', 'a non-empty string');

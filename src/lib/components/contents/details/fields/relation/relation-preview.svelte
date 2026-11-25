@@ -2,7 +2,7 @@
   @component
   Implement the preview for a Relation field.
   @see https://decapcms.org/docs/widgets/#Relation
-  @see https://sveltiacms.app/en/docs/fields/relation
+  @see https://sveltiacms.app/docs/fields/relation
 -->
 <script>
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';

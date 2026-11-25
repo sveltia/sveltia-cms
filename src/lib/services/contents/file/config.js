@@ -43,7 +43,7 @@ import { isNonEmptyString } from '$lib/services/utils/string';
  * @param {FileFormat} [args.format] Developer-defined file format.
  * @returns {FileExtension} Determined extension.
  * @see https://decapcms.org/docs/configuration-options/#extension-and-format
- * @see https://sveltiacms.app/en/docs/collections/entries/formats
+ * @see https://sveltiacms.app/docs/collections/entries/formats
  */
 export const detectFileExtension = ({ extension, format }) => {
   const customExtension = format ? customFileFormatRegistry.get(format)?.extension : undefined;
@@ -70,7 +70,7 @@ export const detectFileExtension = ({ extension, format }) => {
  * @param {FileFormat} [args.format] Developer-defined file format.
  * @returns {FileFormat} Determined format.
  * @see https://decapcms.org/docs/configuration-options/#extension-and-format
- * @see https://sveltiacms.app/en/docs/collections/entries/formats
+ * @see https://sveltiacms.app/docs/collections/entries/formats
  */
 export const detectFileFormat = ({ extension, format }) => {
   if (format) {
@@ -104,7 +104,7 @@ export const detectFileFormat = ({ extension, format }) => {
  * @returns {string} File path matcher pattern.
  * @see https://decapcms.org/docs/collection-folder/#folder-collections-path
  * @see https://decapcms.org/docs/collection-nested/
- * @see https://sveltiacms.app/en/docs/collections/entries/slugs#file-paths
+ * @see https://sveltiacms.app/docs/collections/entries/slugs#file-paths
  */
 const getFilePathMatcher = ({
   subPath,
@@ -286,7 +286,7 @@ export const getEntryPathRegEx = ({
  * @returns {[string, string] | undefined} Start and end delimiters. If `undefined`, the parser
  * automatically detects the delimiters, while the formatter uses the YAML delimiters.
  * @see https://decapcms.org/docs/configuration-options/#frontmatter_delimiter
- * @see https://sveltiacms.app/en/docs/collections/entries/formats#front-matter-delimiter
+ * @see https://sveltiacms.app/docs/collections/entries/formats#front-matter-delimiter
  */
 export const getFrontMatterDelimiters = ({ format, delimiter }) => {
   if (isNonEmptyString(delimiter)) {

@@ -102,7 +102,7 @@ const validateBlockDefinition = (definition) => {
  * `toInline` as a function, `fromInline`, `onInsert` and `onEdit` must be functions if given, and
  * `trigger` must be a non-empty string if given.
  * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
- * @see https://sveltiacms.app/en/docs/api/editor-components
+ * @see https://sveltiacms.app/docs/api/editor-components
  */
 const registerEditorComponent = (definition) => {
   assertOption(isObject(definition), 'registerEditorComponent', 'definition', 'an object');

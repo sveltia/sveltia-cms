@@ -2,7 +2,7 @@
   @component
   Implement the editor for a String field, and, with `multiline`, for a Text field.
   @see https://decapcms.org/docs/widgets/#String
-  @see https://sveltiacms.app/en/docs/fields/string
+  @see https://sveltiacms.app/docs/fields/string
 -->
 <script>
   import { TextArea, TextInput } from '@sveltia/ui';

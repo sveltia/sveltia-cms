@@ -2,7 +2,7 @@
   @component
   Implement the preview for a Code field.
   @see https://decapcms.org/docs/widgets/#Code
-  @see https://sveltiacms.app/en/docs/fields/code
+  @see https://sveltiacms.app/docs/fields/code
 -->
 <script>
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';

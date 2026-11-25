@@ -3,8 +3,8 @@
   Implement the editor for the File and Image field types.
   @see https://decapcms.org/docs/widgets/#File
   @see https://decapcms.org/docs/widgets/#Image
-  @see https://sveltiacms.app/en/docs/fields/file
-  @see https://sveltiacms.app/en/docs/fields/image
+  @see https://sveltiacms.app/docs/fields/file
+  @see https://sveltiacms.app/docs/fields/image
 -->
 <script>
   import { sleep } from '@sveltia/utils/misc';

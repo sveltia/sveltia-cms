@@ -28,7 +28,7 @@ export const WORKFLOW_STAGES = ['draft', 'pending_review', 'pending_publish'];
  * the configured repository, so there’s no point in marking an entry ready to be published: the
  * last thing they can do is hand it over for review.
  * @type {WorkflowStatus[]}
- * @see https://sveltiacms.app/en/docs/workflows/open
+ * @see https://sveltiacms.app/docs/workflows/open
  */
 export const OPEN_AUTHORING_STAGES = ['draft', 'pending_review'];
 

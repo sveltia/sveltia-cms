@@ -10,7 +10,7 @@
     "decap-cms",
     "svelte"
   ],
-  "homepage": "https://sveltiacms.app/en/",
+  "homepage": "https://sveltiacms.app/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sveltia/sveltia-cms.git"

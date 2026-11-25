@@ -158,7 +158,7 @@ export const openPopup = ({ authURL }) => {
  * @throws {Error} When authentication failed or the popup window is closed before the auth process
  * is complete.
  * @see https://decapcms.org/docs/backends-overview/
- * @see https://sveltiacms.app/en/docs/backends
+ * @see https://sveltiacms.app/docs/backends
  */
 export const authorize = async ({ backendName, authURL, popup, state }) => {
   const authPopup = popup ?? openPopup({ authURL });

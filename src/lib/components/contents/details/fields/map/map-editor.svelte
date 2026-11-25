@@ -2,7 +2,7 @@
   @component
   Implement the editor for a Map field.
   @see https://decapcms.org/docs/widgets/#Map
-  @see https://sveltiacms.app/en/docs/fields/map
+  @see https://sveltiacms.app/docs/fields/map
   @see https://leafletjs.com/
   @see https://github.com/JamesLMilner/terra-draw
 -->

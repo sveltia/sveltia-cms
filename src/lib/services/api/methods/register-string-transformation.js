@@ -27,7 +27,7 @@ import {
  * function.
  * @throws {Error} If `name` is the name of a built-in transformation.
  * @see https://github.com/decaporg/decap-cms/issues/3677
- * @see https://sveltiacms.app/en/docs/api/string-transformations
+ * @see https://sveltiacms.app/docs/api/string-transformations
  */
 const registerStringTransformation = (name, transform) => {
   assertOption(

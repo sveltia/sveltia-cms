@@ -1,8 +1,8 @@
 <!--
   @component Implement iframe for custom preview styles and React preview templates.
   @see https://decapcms.org/docs/customization/
-  @see https://sveltiacms.app/en/docs/api/preview-styles
-  @see https://sveltiacms.app/en/docs/api/preview-templates
+  @see https://sveltiacms.app/docs/api/preview-styles
+  @see https://sveltiacms.app/docs/api/preview-templates
 -->
 <script>
   import { _ } from '@sveltia/i18n';

@@ -29,7 +29,7 @@ let initialized = false;
  * @throws {TypeError} If `config` is neither an object nor `undefined`. As this is an async
  * function, the error is thrown as a rejection of the returned Promise.
  * @see https://decapcms.org/docs/manual-initialization/
- * @see https://sveltiacms.app/en/docs/api/initialization
+ * @see https://sveltiacms.app/docs/api/initialization
  */
 const init = async ({ config } = {}) => {
   assertOption(config === undefined || isObject(config), 'init', 'config', 'an object');
@@ -44,7 +44,7 @@ const init = async ({ config } = {}) => {
     // A custom mount element (`<div id="nc-root">`) could appear after the CMS `<script>`, so just
     // wait until the page content is loaded.
     // @see https://decapcms.org/docs/custom-mounting/
-    // @see https://sveltiacms.app/en/docs/customization#custom-mount-element
+    // @see https://sveltiacms.app/docs/customization#custom-mount-element
     await new Promise((resolve) => {
       window.addEventListener('DOMContentLoaded', () => resolve(undefined), { once: true });
     });

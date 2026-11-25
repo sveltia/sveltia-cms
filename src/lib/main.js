@@ -22,8 +22,8 @@ window.initCMS = init;
 // `html` is the HTM tagged template bound to that React, for components without a build step
 // @see https://decapcms.org/docs/custom-widgets/
 // @see https://decapcms.org/docs/customization/
-// @see https://sveltiacms.app/en/docs/api/field-types
-// @see https://sveltiacms.app/en/docs/api/preview-templates
+// @see https://sveltiacms.app/docs/api/field-types
+// @see https://sveltiacms.app/docs/api/preview-templates
 window.createClass = createClass;
 window.createElement = createElement;
 window.h = createElement;
@@ -49,7 +49,7 @@ if (sharedModulesKey) {
 // `marked.use()` also affects the built-in preview.
 // @see https://marked.js.org/
 // @see https://github.com/cure53/DOMPurify
-// @see https://sveltiacms.app/en/docs/api/editor-components
+// @see https://sveltiacms.app/docs/api/editor-components
 window.marked = marked;
 window.DOMPurify = DOMPurify;
 

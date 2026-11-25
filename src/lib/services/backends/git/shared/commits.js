@@ -13,7 +13,7 @@ import { openAuthoring } from '$lib/services/workflow/open-authoring';
 /**
  * Default commit message templates.
  * @see https://decapcms.org/docs/configuration-options/#commit-message-templates
- * @see https://sveltiacms.app/en/docs/backends#commit-messages
+ * @see https://sveltiacms.app/docs/backends#commit-messages
  */
 const DEFAULT_COMMIT_MESSAGES = {
   create: 'Create {{collection}} “{{slug}}”',

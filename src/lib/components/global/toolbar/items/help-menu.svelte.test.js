@@ -39,7 +39,7 @@ describe('HelpMenu', () => {
       expect(items.elements()).toHaveLength(10);
 
       const links = [
-        ['Documentation', 'https://sveltiacms.app/en/docs'],
+        ['Documentation', 'https://sveltiacms.app/docs'],
         [
           'Announcements',
           'https://github.com/sveltia/sveltia-cms/discussions/categories/announcements',

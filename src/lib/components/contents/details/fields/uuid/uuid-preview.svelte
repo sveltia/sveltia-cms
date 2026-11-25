@@ -2,7 +2,7 @@
   @component
   Implement the preview for a UUID field.
   @see https://staticjscms.netlify.app/docs/widget-uuid
-  @see https://sveltiacms.app/en/docs/fields/uuid
+  @see https://sveltiacms.app/docs/fields/uuid
 -->
 <script>
   /**

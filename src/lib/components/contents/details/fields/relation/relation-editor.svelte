@@ -2,7 +2,7 @@
   @component
   Implement the editor for a Relation field.
   @see https://decapcms.org/docs/widgets/#Relation
-  @see https://sveltiacms.app/en/docs/fields/relation
+  @see https://sveltiacms.app/docs/fields/relation
 -->
 <script>
   import { _, locale as appLocale } from '@sveltia/i18n';

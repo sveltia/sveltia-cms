@@ -2,7 +2,7 @@
   @component
   Render a custom field control registered via `CMS.registerFieldType()`.
   @see https://decapcms.org/docs/custom-widgets/
-  @see https://sveltiacms.app/en/docs/api/field-types
+  @see https://sveltiacms.app/docs/api/field-types
 -->
 <script module>
   import { TextInput } from '@sveltia/ui';

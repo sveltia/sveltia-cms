@@ -431,7 +431,7 @@ describe('SignIn', () => {
       .element(page.getByRole('alert').getByRole('link'))
       .toHaveAttribute(
         'href',
-        'https://sveltiacms.app/en/docs/workflows/local#enabling-file-system-access-api-in-brave',
+        'https://sveltiacms.app/docs/workflows/local#enabling-file-system-access-api-in-brave',
       );
   });
 

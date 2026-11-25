@@ -191,7 +191,7 @@ export const getKeptSubPath = ({ draft, slug, fullPathRegEx }) =>
  * @param {string} args.slug Entry slug.
  * @returns {string} Complete path, including the folder, slug, extension and possibly locale.
  * @see https://decapcms.org/docs/i18n/
- * @see https://sveltiacms.app/en/docs/i18n
+ * @see https://sveltiacms.app/docs/i18n
  */
 export const createEntryPath = ({ draft, locale, slug }) => {
   const { collection, collectionFile, originalEntry, currentValues, isIndexFile } = draft;
@@ -235,7 +235,7 @@ export const createEntryPath = ({ draft, locale, slug }) => {
    * Support entry collection’s subpath.
    * @see https://decapcms.org/docs/collection-folder/#folder-collections-path
    * @see https://decapcms.org/docs/collection-nested/
-   * @see https://sveltiacms.app/en/docs/collections/entries/slugs#file-paths
+   * @see https://sveltiacms.app/docs/collections/entries/slugs#file-paths
    */
   let path = isIndexFile
     ? /** @type {string} */ (getIndexFile(entryCollection)?.name)

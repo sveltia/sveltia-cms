@@ -2,7 +2,7 @@
   @component
   Render a custom page registered via `CMS.registerCustomPage()`: a React component, or a web page
   embedded in an iframe.
-  @see https://sveltiacms.app/en/docs/api/custom-pages
+  @see https://sveltiacms.app/docs/api/custom-pages
 -->
 <script>
   import { _ } from '@sveltia/i18n';

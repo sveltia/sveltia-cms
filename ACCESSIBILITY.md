@@ -10,9 +10,9 @@ Our priorities are the tasks people come to the CMS for: signing in; finding, cr
 
 ## What’s Available Today
 
-More details are available in the [accessibility section](https://sveltiacms.app/en/docs/ui#accessibility) of the documentation.
+More details are available in the [accessibility section](https://sveltiacms.app/docs/ui#accessibility) of the documentation.
 
-- **Keyboard:** The UI can be navigated with the Tab, Space, Enter and arrow keys, and common actions have [keyboard shortcuts](https://sveltiacms.app/en/docs/ui#keyboard-shortcuts). Features that use drag-and-drop, such as reordering list items, have a keyboard alternative. Our [UI component library](https://github.com/sveltia/sveltia-ui) is built with keyboard use in mind.
+- **Keyboard:** The UI can be navigated with the Tab, Space, Enter and arrow keys, and common actions have [keyboard shortcuts](https://sveltiacms.app/docs/ui#keyboard-shortcuts). Features that use drag-and-drop, such as reordering list items, have a keyboard alternative. Our [UI component library](https://github.com/sveltia/sveltia-ui) is built with keyboard use in mind.
 - **Screen readers:** The UI uses [WAI-ARIA](https://w3c.github.io/aria/) roles and labels, and page changes are announced when you navigate.
 - **Rich text editor:** The editor is built with [Lexical](https://lexical.dev/), which follows accessibility best practices and includes support for Dragon NaturallySpeaking.
 - **Visual design:** We aim for sufficient contrast between text and background colours. Links are underlined by default; you can turn this off in the Accessibility panel of the Settings dialog.
@@ -21,7 +21,7 @@ More details are available in the [accessibility section](https://sveltiacms.app
 
 ## Supported Environments
 
-- **Browsers:** The CMS supports the modern browsers listed under [Supported Browsers](https://sveltiacms.app/en/docs/ui#supported-browsers) in the documentation. We recommend the latest version.
+- **Browsers:** The CMS supports the modern browsers listed under [Supported Browsers](https://sveltiacms.app/docs/ui#supported-browsers) in the documentation. We recommend the latest version.
 - **Assistive technology:** We have NVDA and VoiceOver in mind when building the UI. If you use something else and run into a problem, please report it all the same.
 - **Versions:** We only maintain the latest version of Sveltia CMS, so accessibility fixes aren’t backported. See our [security policy](SECURITY.md#supported-versions) for details.
 

@@ -103,7 +103,7 @@ export const getCollectionFilesByEntry = (collection, entry) => {
  * @param {string} fileName Collection file name.
  * @returns {Entry | undefined} File.
  * @see https://decapcms.org/docs/collection-file/
- * @see https://sveltiacms.app/en/docs/collections/files
+ * @see https://sveltiacms.app/docs/collections/files
  */
 export const getCollectionFileEntry = (collectionName, fileName) => {
   // Pre-find the valid file paths from `allEntryFolders` to avoid calling

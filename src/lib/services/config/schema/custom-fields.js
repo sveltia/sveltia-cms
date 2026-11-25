@@ -60,7 +60,7 @@ const getCustomFieldSchemas = () => {
  * @returns {Record<string, any>} Extended schema, or the original one if no field type has been
  * registered with a schema.
  * @see https://decapcms.org/docs/custom-widgets/#registerwidget
- * @see https://sveltiacms.app/en/docs/api/field-types
+ * @see https://sveltiacms.app/docs/api/field-types
  */
 export const applyCustomFieldSchemas = (schema) => {
   const customField = schema.definitions?.CustomField;

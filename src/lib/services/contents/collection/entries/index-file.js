@@ -56,7 +56,7 @@ export const getIndexFileName = (collection) => {
  * enabled for the collection, otherwise `undefined`.
  * @see https://gohugo.io/content-management/organization/#index-pages-_indexmd
  * @see https://github.com/decaporg/decap-cms/issues/7381
- * @see https://sveltiacms.app/en/docs/collections/entries/listings#managing-hugo-s-special-index-file
+ * @see https://sveltiacms.app/docs/collections/entries/listings#managing-hugo-s-special-index-file
  */
 export const getIndexFile = (collection) => {
   const cached = indexFileCacheMap.get(collection);

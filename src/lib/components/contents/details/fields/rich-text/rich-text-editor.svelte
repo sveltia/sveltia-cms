@@ -2,7 +2,7 @@
   @component
   Implement the editor for a Markdown/RichText field.
   @see https://decapcms.org/docs/widgets/#Markdown
-  @see https://sveltiacms.app/en/docs/fields/richtext
+  @see https://sveltiacms.app/docs/fields/richtext
 -->
 <script>
   import { _ } from '@sveltia/i18n';

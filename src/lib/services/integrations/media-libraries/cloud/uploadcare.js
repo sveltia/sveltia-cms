@@ -106,7 +106,7 @@ const getFileKind = ({ mime_type: mimeType, original_filename: fileName }) => {
  * @param {MediaField} [options.fieldConfig] Field configuration for custom handling.
  * @returns {ExternalAsset[]} Assets.
  * @see https://decapcms.org/docs/uploadcare/#integration-settings
- * @see https://sveltiacms.app/en/docs/media/uploadcare
+ * @see https://sveltiacms.app/docs/media/uploadcare
  */
 export const parseResults = (results, { fieldConfig } = {}) => {
   const libOptions = resolveLibraryOptions('uploadcare', fieldConfig);

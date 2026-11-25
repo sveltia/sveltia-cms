@@ -2,7 +2,7 @@
   @component
   Implement the preview for a Markdown/RichText field.
   @see https://decapcms.org/docs/widgets/#Markdown
-  @see https://sveltiacms.app/en/docs/fields/richtext
+  @see https://sveltiacms.app/docs/fields/richtext
 -->
 <script module>
   import { addMarkedExtensions } from '$lib/services/contents/fields/rich-text/previews/marked';

@@ -315,7 +315,7 @@ export const createFork = async () => {
  * created from the configured project’s branch rather than from the fork’s copy of it, so the merge
  * request only contains the entry being edited either way.
  * @throws {Error} When the fork could not be set up.
- * @see https://sveltiacms.app/en/docs/workflows/open
+ * @see https://sveltiacms.app/docs/workflows/open
  */
 const setUpOpenAuthoring = async () => {
   let allowForking = false;

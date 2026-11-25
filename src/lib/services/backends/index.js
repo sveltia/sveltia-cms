@@ -25,7 +25,7 @@ const fileSystemBackendServices = {
  * @param {string} name Backend name.
  * @returns {BackendService | undefined} Service.
  * @see https://decapcms.org/docs/backends-overview/
- * @see https://sveltiacms.app/en/docs/backends
+ * @see https://sveltiacms.app/docs/backends
  */
 const getBackendService = (name) => fileSystemBackendServices[name] ?? gitBackendServices[name];
 
@@ -33,7 +33,7 @@ const getBackendService = (name) => fileSystemBackendServices[name] ?? gitBacken
  * List of backend services that are implemented in Netlify/Decap CMS but are not supported in
  * Sveltia CMS for performance and/or deprecation reasons.
  * @type {Record<string, { label: string, deprecated?: boolean }>}
- * @see https://sveltiacms.app/en/docs/migration/netlify-decap-cms#compatibility
+ * @see https://sveltiacms.app/docs/migration/netlify-decap-cms#compatibility
  */
 export const unsupportedBackends = {
   azure: { label: 'Azure DevOps' },

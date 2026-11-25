@@ -526,7 +526,7 @@ export const getAllAssetFolders = (config, fieldMediaFolders = []) => {
    * Collection-level and file-level asset folders.
    * @type {AssetFolderInfo[]}
    * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
-   * @see https://sveltiacms.app/en/docs/media/internal
+   * @see https://sveltiacms.app/docs/media/internal
    */
   const assetFolders = [];
   const { collections, singletons, asset_collections: assetCollections } = config;

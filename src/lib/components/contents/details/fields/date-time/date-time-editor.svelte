@@ -2,7 +2,7 @@
   @component
   Implement the editor for a DateTime field.
   @see https://decapcms.org/docs/widgets/#Datetime
-  @see https://sveltiacms.app/en/docs/fields/datetime
+  @see https://sveltiacms.app/docs/fields/datetime
 -->
 <script>
   import { _ } from '@sveltia/i18n';

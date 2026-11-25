@@ -34,7 +34,7 @@ import {
  * @returns {{ options: ViewGroup[], default?: GroupingConditions }} Parsed view groups.
  * @see https://decapcms.org/docs/configuration-options/#view_groups
  * @see https://staticjscms.netlify.app/docs/collection-overview#view-groups
- * @see https://sveltiacms.app/en/docs/collections/entries/views#grouping
+ * @see https://sveltiacms.app/docs/collections/entries/views#grouping
  */
 export const parseGroupConfig = (filters) =>
   /** @type {{ options: ViewGroup[], default?: GroupingConditions }} */
@@ -48,7 +48,7 @@ export const parseGroupConfig = (filters) =>
  * @param {InternalCollection | undefined} collection Collection.
  * @returns {GroupingConditions | undefined} Conditions, or `undefined` if reorder grouping is not
  * configured or the named group is not defined in `view_groups`.
- * @see https://sveltiacms.app/en/docs/collections/entries/views#grouping
+ * @see https://sveltiacms.app/docs/collections/entries/views#grouping
  */
 export const getReorderGroupingConditions = (collection) => {
   // Grouping is only available for entry collections
@@ -126,7 +126,7 @@ const groupEntriesByComparison = (entries, collection, conditions, now) => {
  * a name, displayed with `getGroupLabel()`, and an entry list. When ungrouped, there will still be
  * one group object named `*`.
  * @see https://decapcms.org/docs/configuration-options/#view_groups
- * @see https://sveltiacms.app/en/docs/collections/entries/views#grouping
+ * @see https://sveltiacms.app/docs/collections/entries/views#grouping
  */
 export const groupEntries = (
   entries,

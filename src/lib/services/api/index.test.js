@@ -81,7 +81,7 @@ describe('CMS Proxy - unsupported functions', () => {
     // The function name is the second argument
     expect(lastCall[1]).toBe('getBackend');
     // Verify COMPATIBILITY_URL is included as the third argument
-    expect(lastCall[2]).toContain('https://sveltiacms.app/en/docs/migration');
+    expect(lastCall[2]).toContain('https://sveltiacms.app/docs/migration');
     consoleSpy.mockRestore();
   });
 

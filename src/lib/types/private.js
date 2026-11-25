@@ -459,7 +459,7 @@
  * corresponding pull request, prefixed with the `cms_label_prefix` backend option value.
  * @typedef {'draft' | 'pending_review' | 'pending_publish' | 'pending_deletion'} WorkflowStatus
  * @see https://decapcms.org/docs/editorial-workflows/
- * @see https://sveltiacms.app/en/docs/workflows/editorial#statuses
+ * @see https://sveltiacms.app/docs/workflows/editorial#statuses
  */
 
 /**
@@ -1041,7 +1041,7 @@
  * deleted from the folder then. Only set when `true`.
  * @property {boolean} [isAssetCollection] Whether the asset folder is for an asset collection.
  * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
- * @see https://sveltiacms.app/en/docs/media/internal#configuring-folder-paths
+ * @see https://sveltiacms.app/docs/media/internal#configuring-folder-paths
  */
 
 /**
@@ -2024,7 +2024,7 @@
  * @property {string} [key] Target field name.
  * @property {SortOrder} [order] Sort order.
  * @see https://decapcms.org/docs/configuration-options/#sortable_fields
- * @see https://sveltiacms.app/en/docs/collections/entries/views#sorting
+ * @see https://sveltiacms.app/docs/collections/entries/views#sorting
  */
 
 /**
@@ -2035,7 +2035,7 @@
  * @property {string | RegExp | boolean} [pattern] Regular expression matching pattern or exact
  * value. Required unless a comparison operator is defined.
  * @see https://decapcms.org/docs/configuration-options/#view_filters
- * @see https://sveltiacms.app/en/docs/collections/entries/views#filtering
+ * @see https://sveltiacms.app/docs/collections/entries/views#filtering
  */
 
 /**
@@ -2051,7 +2051,7 @@
  * @property {string | RegExp | boolean} [pattern] Regular expression matching pattern or exact
  * value.
  * @see https://decapcms.org/docs/configuration-options/#view_groups
- * @see https://sveltiacms.app/en/docs/collections/entries/views#grouping
+ * @see https://sveltiacms.app/docs/collections/entries/views#grouping
  */
 
 /**
@@ -2293,7 +2293,7 @@
  * default value for a sub-field, injected to avoid a circular dependency between field-type
  * defaults and the centralized `populateDefaultValue` dispatcher.
  * @see https://decapcms.org/docs/dynamic-default-values/
- * @see https://sveltiacms.app/en/docs/ui/content-editor#dynamic-default-values
+ * @see https://sveltiacms.app/docs/ui/content-editor#dynamic-default-values
  */
 
 /**

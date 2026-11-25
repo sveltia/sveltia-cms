@@ -24,7 +24,7 @@ import { assertOption } from '$lib/services/api/validate';
  * preview receives an `Unmount` event.
  * @throws {TypeError} If `target` is not an element, `value` is not a string, or `fieldConfig` is
  * given but not an object.
- * @see https://sveltiacms.app/en/docs/api/editor-components
+ * @see https://sveltiacms.app/docs/api/editor-components
  */
 const renderRichText = (target, value, { fieldConfig } = {}) => {
   assertOption(target instanceof Element, 'renderRichText', 'target', 'an element');

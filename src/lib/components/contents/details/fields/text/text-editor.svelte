@@ -2,7 +2,7 @@
   @component
   Implement the editor for a Text field: the String field editor with a text area.
   @see https://decapcms.org/docs/widgets/#Text
-  @see https://sveltiacms.app/en/docs/fields/text
+  @see https://sveltiacms.app/docs/fields/text
 -->
 <script>
   import StringEditor from '$lib/components/contents/details/fields/string/string-editor.svelte';

@@ -24,4 +24,4 @@ export const REPOSITORY_URL = 'https://github.com/sveltia/sveltia-cms';
 /**
  * Base URL for the Sveltia CMS documentation.
  */
-export const DOCS_BASE_URL = 'https://sveltiacms.app/en/docs';
+export const DOCS_BASE_URL = 'https://sveltiacms.app/docs';

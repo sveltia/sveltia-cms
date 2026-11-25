@@ -613,7 +613,7 @@ const formatEntrySummary = (
  * template is formatted with its fields if defined.
  * @returns {string} Formatted entry summary.
  * @see https://decapcms.org/docs/configuration-options/#summary
- * @see https://sveltiacms.app/en/docs/collections/entries/listings#summaries
+ * @see https://sveltiacms.app/docs/collections/entries/listings#summaries
  */
 export const getEntrySummary = (collection, entry, options = {}) => {
   const {

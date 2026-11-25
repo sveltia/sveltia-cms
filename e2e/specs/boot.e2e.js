@@ -80,7 +80,7 @@ test.describe('with the Git Gateway backend', () => {
   test.use({ config: { ...BASE_CONFIG, backend: { name: 'git-gateway' } } });
 
   test('suggests the supported backends and Sveltia CMS Additions', async ({ cms, page }) => {
-    const docs = 'https://sveltiacms.app/en/docs';
+    const docs = 'https://sveltiacms.app/docs';
 
     await cms.open();
 

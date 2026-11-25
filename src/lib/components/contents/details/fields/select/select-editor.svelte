@@ -2,7 +2,7 @@
   @component
   Implement the editor for a Select field.
   @see https://decapcms.org/docs/widgets/#Select
-  @see https://sveltiacms.app/en/docs/fields/select
+  @see https://sveltiacms.app/docs/fields/select
 -->
 <script>
   import { isObject } from '@sveltia/utils/object';

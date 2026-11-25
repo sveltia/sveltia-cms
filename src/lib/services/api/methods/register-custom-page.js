@@ -27,7 +27,7 @@ import { isNonEmptyString } from '$lib/services/utils/string';
  * non-empty string, neither or both of `component` and `url` are given, `component` is not a React
  * component, `url` is not a valid `http` or `https` URL or file path, or `newTab` is given but not
  * a boolean or along with `component`.
- * @see https://sveltiacms.app/en/docs/api/custom-pages
+ * @see https://sveltiacms.app/docs/api/custom-pages
  */
 const registerCustomPage = (definition) => {
   assertOption(isObject(definition), 'registerCustomPage', 'definition', 'an object');

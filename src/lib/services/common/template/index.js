@@ -56,8 +56,8 @@ const getExistingSlugs = (collectionName, locale, dirPath) => {
  * @see https://decapcms.org/docs/configuration-options/#slug-type
  * @see https://decapcms.org/docs/configuration-options/#slug
  * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
- * @see https://sveltiacms.app/en/docs/collections/entries/slugs#entry-slugs
- * @see https://sveltiacms.app/en/docs/media/internal#using-placeholders
+ * @see https://sveltiacms.app/docs/collections/entries/slugs#entry-slugs
+ * @see https://sveltiacms.app/docs/media/internal#using-placeholders
  */
 export const fillTemplate = (template, options) => {
   const {

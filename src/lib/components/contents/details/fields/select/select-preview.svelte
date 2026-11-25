@@ -2,7 +2,7 @@
   @component
   Implement the preview for a Select field.
   @see https://decapcms.org/docs/widgets/#Select
-  @see https://sveltiacms.app/en/docs/fields/select
+  @see https://sveltiacms.app/docs/fields/select
 -->
 <script>
   import { getPreviewLabels } from '$lib/services/contents/fields/select/helpers';

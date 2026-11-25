@@ -2,7 +2,7 @@
   @component
   Implement the editor for a Code field.
   @see https://decapcms.org/docs/widgets/#Code
-  @see https://sveltiacms.app/en/docs/fields/code
+  @see https://sveltiacms.app/docs/fields/code
 -->
 <script>
   import { CodeEditor } from '@sveltia/ui';

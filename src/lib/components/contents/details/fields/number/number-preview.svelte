@@ -2,7 +2,7 @@
   @component
   Implement the preview for a Number field.
   @see https://decapcms.org/docs/widgets/#Number
-  @see https://sveltiacms.app/en/docs/fields/number
+  @see https://sveltiacms.app/docs/fields/number
 -->
 <script>
   import { getNumberFormatter } from '$lib/services/contents/fields/number/helpers';

@@ -3,7 +3,7 @@
   Implement the editor for a List field with subfield(s).
   @see https://decapcms.org/docs/widgets/#List
   @see https://decapcms.org/docs/variable-type-widgets/
-  @see https://sveltiacms.app/en/docs/fields/list
+  @see https://sveltiacms.app/docs/fields/list
 -->
 <script>
   import { _ } from '@sveltia/i18n';

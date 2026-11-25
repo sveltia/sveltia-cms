@@ -2,7 +2,7 @@
   @component
   Implement the editor for an Object field.
   @see https://decapcms.org/docs/widgets/#Object
-  @see https://sveltiacms.app/en/docs/fields/object
+  @see https://sveltiacms.app/docs/fields/object
 -->
 <script>
   import { _ } from '@sveltia/i18n';

@@ -27,7 +27,7 @@ const mockI18nStrings = {
   'config.error_locator.field': 'Field: {field}',
   'config.custom_extra': 'Custom extra message',
   'config.compatibility_link':
-    'See the compatibility notes for details: https://sveltiacms.app/en/docs/migration/netlify-decap-cms#compatibility',
+    'See the compatibility notes for details: https://sveltiacms.app/docs/migration/netlify-decap-cms#compatibility',
 };
 
 vi.mock('@sveltia/i18n', async () =>

@@ -223,7 +223,7 @@ export const getCollectionByName = async (name, slug) => {
  * @returns {Omit<CustomPreviewTemplateProps, 'document' | 'window'>} Props for the React component
  * without `document` and `window`.
  * @see https://decapcms.org/docs/customization/#registerpreviewtemplate
- * @see https://sveltiacms.app/en/docs/api/preview-templates
+ * @see https://sveltiacms.app/docs/api/preview-templates
  */
 export const preparePreviewTemplateProps = ({ entryDraft, draft, locale }) => {
   const { entryMap, valueMap, getFieldArgs, fieldsMetaData, getAsset } = buildPreviewData({

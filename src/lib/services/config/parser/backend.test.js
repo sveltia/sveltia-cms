@@ -197,7 +197,7 @@ describe('parseBackendConfig', () => {
       expect(error).toContain('Deprecated backend: Git Gateway');
       expect(error).toContain('Please check the supported backends');
       expect(error).toContain(
-        '<a href="https://sveltiacms.app/en/docs/additions" target="_blank" ' +
+        '<a href="https://sveltiacms.app/docs/additions" target="_blank" ' +
           'rel="noopener noreferrer">Sveltia CMS Additions</a>',
       );
     });
@@ -518,7 +518,7 @@ describe('parseBackendConfig', () => {
       }
 
       expect([...collectors.errors][0]).toContain(
-        'href="https://sveltiacms.app/en/docs/backends/gitea-forgejo#authentication"',
+        'href="https://sveltiacms.app/docs/backends/gitea-forgejo#authentication"',
       );
     });
   });
@@ -755,7 +755,7 @@ describe('parseBackendConfig', () => {
       const [error] = [...collectors.errors];
 
       expect(error).toContain(
-        'href="https://sveltiacms.app/en/docs/backends/gitea-forgejo#authentication"',
+        'href="https://sveltiacms.app/docs/backends/gitea-forgejo#authentication"',
       );
     });
 

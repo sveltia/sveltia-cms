@@ -55,7 +55,7 @@ const DATE_PART_REGEX = /T\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?Z$/;
 /**
  * Names of the built-in string transformations, which can’t be used for a custom transformation.
  * `localize` is not a transformation but a flag in a slug template, e.g. `{{title | localize}}`.
- * @see https://sveltiacms.app/en/docs/string-transformations
+ * @see https://sveltiacms.app/docs/string-transformations
  */
 export const BUILTIN_STRING_TRANSFORMATIONS = Object.freeze([
   'date',
@@ -405,7 +405,7 @@ export const applyCustomTransformation = ({ method, transform, value, customArgs
  * custom transformations.
  * @returns {string} Transformed value.
  * @see https://decapcms.org/docs/summary-strings/
- * @see https://sveltiacms.app/en/docs/string-transformations
+ * @see https://sveltiacms.app/docs/string-transformations
  */
 export const applyTransformation = ({ fieldConfig, value, transformation, locale }) => {
   const { method, args, customArgs } = transformation;

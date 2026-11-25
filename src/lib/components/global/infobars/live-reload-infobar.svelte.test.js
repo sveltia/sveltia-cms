@@ -27,7 +27,7 @@ describe('LiveReloadInfobar', () => {
     await expect.element(alert).toMatchTextContent(/Your development server reloads this page/);
     await expect
       .element(alert.getByRole('link', { name: 'Learn more' }))
-      .toHaveAttribute('href', 'https://sveltiacms.app/en/docs/workflows/local#troubleshooting');
+      .toHaveAttribute('href', 'https://sveltiacms.app/docs/workflows/local#troubleshooting');
 
     await page.getByRole('button', { name: 'Dismiss' }).click();
     await expect.poll(() => container.querySelector('.infobar')).toBeNull();

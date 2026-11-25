@@ -14,7 +14,7 @@ describe('I18nPanel', () => {
     await expect.element(page.getByRole('combobox', { name: 'Select Service' })).toBeVisible();
     expect(container.querySelector('a')).toHaveAttribute(
       'href',
-      'https://sveltiacms.app/en/docs/integrations/translations',
+      'https://sveltiacms.app/docs/integrations/translations',
     );
     expect([...container.querySelectorAll('h4')].map((h4) => h4.textContent)).toEqual(
       Object.values(machineTranslationServices).map(({ serviceLabel }) => serviceLabel),

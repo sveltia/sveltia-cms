@@ -139,7 +139,7 @@ const replaceBlobURLs = async ({
   // is stored once, in the default locale’s folder, rather than in each locale’s folder with the
   // `multiple_folders` or `multiple_root_folders` i18n structure. Every locale refers to it by the
   // same path. A file in a translatable field still goes to the folder of its own locale
-  // @see https://sveltiacms.app/en/docs/media/internal#multilingual-entries
+  // @see https://sveltiacms.app/docs/media/internal#multilingual-entries
   const isMirrored =
     locale !== defaultLocale &&
     !!field &&

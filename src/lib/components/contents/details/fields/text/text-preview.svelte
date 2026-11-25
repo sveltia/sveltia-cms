@@ -2,7 +2,7 @@
   @component
   Implement the preview for a Text field.
   @see https://decapcms.org/docs/widgets/#Text
-  @see https://sveltiacms.app/en/docs/fields/text
+  @see https://sveltiacms.app/docs/fields/text
 -->
 <script>
   import { getCanonicalLocale, getDirection } from '$lib/services/contents/i18n';

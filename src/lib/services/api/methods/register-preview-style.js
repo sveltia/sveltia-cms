@@ -18,7 +18,7 @@ import { isNonEmptyString } from '$lib/services/utils/string';
  * a valid URL or file path when `raw` is `false`, `collection` or `file` is given but not a
  * non-empty string, or `file` is given without `collection`.
  * @see https://decapcms.org/docs/customization/#registerpreviewstyle
- * @see https://sveltiacms.app/en/docs/api/preview-styles
+ * @see https://sveltiacms.app/docs/api/preview-styles
  */
 const registerPreviewStyle = (style, { raw = false, collection, file } = {}) => {
   assertOption(isNonEmptyString(style), 'registerPreviewStyle', 'style', 'a non-empty string');

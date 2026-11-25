@@ -66,7 +66,7 @@ export const showUploadAssetsConfirmDialog = createDerivedState(
  * @param {AssetFolderInfo} folder Folder info.
  * @returns {string} Human-readable label.
  * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
- * @see https://sveltiacms.app/en/docs/media/internal
+ * @see https://sveltiacms.app/docs/media/internal
  */
 export const getFolderLabelByCollection = ({ label, collectionName, fileName, internalPath }) => {
   if (label) {

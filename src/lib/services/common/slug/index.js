@@ -109,7 +109,7 @@ export const getSlugTimeZone = () =>
  * @param {number} [options.maxLength] Maximum length of the slug.
  * @returns {string} Slug.
  * @see https://decapcms.org/docs/configuration-options/#slug-type
- * @see https://sveltiacms.app/en/docs/collections/entries/slugs#global-slug-options
+ * @see https://sveltiacms.app/docs/collections/entries/slugs#global-slug-options
  */
 export const slugify = (
   string,

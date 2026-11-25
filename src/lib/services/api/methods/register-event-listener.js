@@ -17,7 +17,7 @@ import { eventHookRegistry } from '$lib/services/api/registries';
  * is not a function.
  * @throws {RangeError} If the event listener name is not a supported event type.
  * @see https://decapcms.org/docs/registering-events/
- * @see https://sveltiacms.app/en/docs/api/events
+ * @see https://sveltiacms.app/docs/api/events
  */
 const registerEventListener = (eventListener) => {
   if (!isObject(eventListener)) {

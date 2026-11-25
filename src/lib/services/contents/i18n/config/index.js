@@ -190,7 +190,7 @@ export const determineOmitDefaultLocale = (omitDefaultLocale, structureMap, file
  * @param {CollectionFile} [file] Developer-defined collection file.
  * @returns {InternalI18nOptions} Config.
  * @see https://decapcms.org/docs/i18n/
- * @see https://sveltiacms.app/en/docs/i18n
+ * @see https://sveltiacms.app/docs/i18n
  */
 export const normalizeI18nConfig = (collection, file) => {
   const config = mergeI18nConfigs({

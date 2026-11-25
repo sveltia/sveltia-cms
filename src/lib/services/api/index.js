@@ -20,7 +20,7 @@ import { renderRichText } from './methods/render-rich-text';
  * types and editor component previews. Hooks such as `useState` only work when taken from this
  * instance, not from another copy of React, e.g. the `react` package installed by the user.
  * @type {typeof import('react')}
- * @see https://sveltiacms.app/en/docs/api#writing-react-components
+ * @see https://sveltiacms.app/docs/api#writing-react-components
  */
 const React = BundledReact;
 

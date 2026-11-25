@@ -61,7 +61,7 @@ const slugRegexCache = new Map();
  * @returns {string} Slug.
  * @see https://decapcms.org/docs/configuration-options/#slug
  * @see https://decapcms.org/docs/collection-folder/#folder-collections-path
- * @see https://sveltiacms.app/en/docs/collections/entries
+ * @see https://sveltiacms.app/docs/collections/entries
  */
 export const getSlug = ({ subPath, subPathTemplate }) => {
   if (subPathTemplate?.includes('{{slug}}')) {

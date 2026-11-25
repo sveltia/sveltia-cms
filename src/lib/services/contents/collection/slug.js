@@ -190,7 +190,7 @@ export const getLocalizingKeyPaths = (collection) => {
  * `{{title | localize}}`.
  * @param {InternalCollection} collection Collection.
  * @returns {boolean} Result.
- * @see https://sveltiacms.app/en/docs/i18n/slugs#localizing-entry-slugs
+ * @see https://sveltiacms.app/docs/i18n/slugs#localizing-entry-slugs
  */
 export const hasLocalizedSlugs = (collection) => {
   const {

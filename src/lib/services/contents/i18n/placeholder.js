@@ -12,7 +12,7 @@ import { getOrCreate } from '$lib/services/utils/cache';
  * name goes, which the fixed i18n structures can’t always express: Hugo’s translation by content
  * directory, for example, keeps the locale folders below `content` but above the sections, as in
  * `content/{{locale}}/posts`.
- * @see https://sveltiacms.app/en/docs/i18n/structures
+ * @see https://sveltiacms.app/docs/i18n/structures
  * @see https://github.com/sveltia/sveltia-cms/issues/780
  */
 export const LOCALE_PLACEHOLDER = '{{locale}}';

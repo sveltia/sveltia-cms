@@ -2,7 +2,7 @@
   @component
   Implement the editor for a Boolean field.
   @see https://decapcms.org/docs/widgets/#Boolean
-  @see https://sveltiacms.app/en/docs/fields/boolean
+  @see https://sveltiacms.app/docs/fields/boolean
 -->
 <script>
   import { Switch } from '@sveltia/ui';

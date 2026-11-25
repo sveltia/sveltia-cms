@@ -273,7 +273,7 @@ export const checkForkBranch = async ({ owner, repo }) => {
  * Open Authoring is turned off, because a contributor without write access is expected here rather
  * than turned away.
  * @throws {Error} When the fork could not be set up.
- * @see https://sveltiacms.app/en/docs/workflows/open
+ * @see https://sveltiacms.app/docs/workflows/open
  */
 const setUpOpenAuthoring = async () => {
   await setUpForkFor({

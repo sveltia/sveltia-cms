@@ -2,7 +2,7 @@
   @component
   Implement the preview for a KeyValue field compatible with Static CMS.
   @see https://staticjscms.netlify.app/docs/widget-keyvalue
-  @see https://sveltiacms.app/en/docs/fields/keyvalue
+  @see https://sveltiacms.app/docs/fields/keyvalue
 -->
 <script>
   import { _ } from '@sveltia/i18n';

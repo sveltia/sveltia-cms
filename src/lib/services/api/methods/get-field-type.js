@@ -18,7 +18,7 @@ import { isNonEmptyString } from '$lib/services/utils/string';
  * @returns {FieldTypeDefinition | undefined} Field type definition, or `undefined` if the field
  * type is not registered or cannot be reused.
  * @throws {TypeError} If `name` is not a non-empty string.
- * @see https://sveltiacms.app/en/docs/api/field-types
+ * @see https://sveltiacms.app/docs/api/field-types
  */
 const getFieldType = (name) => {
   assertOption(isNonEmptyString(name), 'getFieldType', 'name', 'a non-empty string');

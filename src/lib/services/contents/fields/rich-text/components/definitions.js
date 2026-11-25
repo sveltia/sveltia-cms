@@ -355,7 +355,7 @@ const getEnglishImageLabel = (key) => IMAGE_COMPONENT_LABELS[key];
  * Built-in image component definition. The labels are localized in `getBuiltInComponentDefs()`.
  * @type {EditorComponentDefinition}
  * @see https://decapcms.org/docs/widgets/#Markdown
- * @see https://sveltiacms.app/en/docs/fields/richtext
+ * @see https://sveltiacms.app/docs/fields/richtext
  */
 export const IMAGE_COMPONENT = createImageComponentDef({
   linked: false,

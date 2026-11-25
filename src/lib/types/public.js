@@ -75,7 +75,7 @@
 
 /**
  * Raster image transformation options. See the
- * [documentation](https://sveltiacms.app/en/docs/media#image-optimization) for details.
+ * [documentation](https://sveltiacms.app/docs/media#image-optimization) for details.
  * @typedef {object} RasterImageTransformationOptions
  * @property {RasterImageConversionFormat} [format] New format. Default: `webp`. If the browser
  * can’t encode WebP, the image may be saved as PNG instead, with the file extension changed
@@ -147,7 +147,7 @@
  * @property {FileTransformations} [transformations] File transformation option map. The key is an
  * original format like `png` or `jpeg`. It can also be `raster_image` that matches any supported
  * raster image format. See the
- * [documentation](https://sveltiacms.app/en/docs/media#image-optimization) for details.
+ * [documentation](https://sveltiacms.app/docs/media#image-optimization) for details.
  */
 
 /**
@@ -159,8 +159,8 @@
  * which takes precedence over this option.
  * @see https://decapcms.org/docs/widgets/#File
  * @see https://decapcms.org/docs/widgets/#Image
- * @see https://sveltiacms.app/en/docs/fields/file
- * @see https://sveltiacms.app/en/docs/fields/image
+ * @see https://sveltiacms.app/docs/fields/file
+ * @see https://sveltiacms.app/docs/fields/image
  */
 
 /**
@@ -175,7 +175,7 @@
  */
 
 /**
- * Options for the [Cloudinary media storage](https://sveltiacms.app/en/docs/media/cloudinary).
+ * Options for the [Cloudinary media storage](https://sveltiacms.app/docs/media/cloudinary).
  * @typedef {object} CloudinaryMediaLibrary
  * @property {boolean} [output_filename_only] Whether to output a file name instead of a full URL.
  * Default: `false`.
@@ -191,7 +191,7 @@
  */
 
 /**
- * Settings for the [Uploadcare media storage](https://sveltiacms.app/en/docs/media/uploadcare).
+ * Settings for the [Uploadcare media storage](https://sveltiacms.app/docs/media/uploadcare).
  * @typedef {object} UploadcareMediaLibrarySettings
  * @property {boolean} [autoFilename] Whether to append a file name to an output URL. Default:
  * `false`.
@@ -201,7 +201,7 @@
  */
 
 /**
- * Options for the [Uploadcare media storage](https://sveltiacms.app/en/docs/media/uploadcare).
+ * Options for the [Uploadcare media storage](https://sveltiacms.app/docs/media/uploadcare).
  * @typedef {object} UploadcareMediaLibrary
  * @property {Record<string, any>} [config] Options to be passed to Uploadcare, such as `multiple`.
  * The `publicKey` option is required. A field-level `config` is merged over the site-level one, so
@@ -318,7 +318,7 @@
  */
 
 /**
- * Supported [media storage](https://sveltiacms.app/en/docs/media).
+ * Supported [media storage](https://sveltiacms.app/docs/media).
  * @typedef {DefaultMediaLibrary | CloudMediaLibrary | StockMediaLibrary} MediaLibrary
  */
 
@@ -445,7 +445,7 @@
 
 /**
  * Unified media storage option that supports multiple storage providers. See the
- * [documentation](https://sveltiacms.app/en/docs/media#configuration) for details.
+ * [documentation](https://sveltiacms.app/docs/media#configuration) for details.
  * @typedef {CommonMediaLibraries & GlobalCloudMediaLibraries} MediaLibraries
  */
 
@@ -472,7 +472,7 @@
  * @property {Record<LocaleCode, string>} [label_localized] Labels for specific locales, keyed by
  * locale code, taking precedence over `label`. The editor shows the label for the locale being
  * edited; elsewhere, the label for the UI locale is used. See the
- * [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for details.
+ * [documentation](https://sveltiacms.app/docs/i18n/options#localized-field-options) for details.
  * @property {string} [comment] Comment to be written before the field in a YAML file or YAML front
  * matter, for developers reading the file. It’s not displayed in the editor UI; use `hint` for
  * that. A line break can be given as `\n`. The comment on a subfield of an Object field is written
@@ -497,7 +497,7 @@
  * rich text editor component, whose values are stored in each locale’s text, it works like
  * `translate`. `translate` and `none` are aliases of `true` and `false`, respectively. This option
  * only works when i18n is set up with the global and collection-level `i18n` option. See the
- * [documentation](https://sveltiacms.app/en/docs/i18n/options#field-level-configuration) for
+ * [documentation](https://sveltiacms.app/docs/i18n/options#field-level-configuration) for
  * details.
  */
 
@@ -515,7 +515,7 @@
  * and kept in sync with the default locale, while the values can be edited in each locale.
  * `translate` and `none` are aliases of `true` and `false`, respectively. This option only works
  * when i18n is set up with the global and collection-level `i18n` option. See the
- * [documentation](https://sveltiacms.app/en/docs/i18n/options#field-level-configuration) for
+ * [documentation](https://sveltiacms.app/docs/i18n/options#field-level-configuration) for
  * details.
  */
 
@@ -535,7 +535,7 @@
  * accepts multiple values. `translate` and `none` are aliases of `true` and `false`, respectively.
  * This option only works when i18n is set up with the global and collection-level `i18n` option.
  * See the
- * [documentation](https://sveltiacms.app/en/docs/i18n/options#field-level-configuration) for
+ * [documentation](https://sveltiacms.app/docs/i18n/options#field-level-configuration) for
  * details.
  */
 
@@ -559,7 +559,7 @@
  * displayed while the field is read-only.
  * @property {Record<LocaleCode, string>} [hint_localized] Help messages for specific locales, keyed
  * by locale code, taking precedence over `hint`. See the
- * [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for details.
+ * [documentation](https://sveltiacms.app/docs/i18n/options#localized-field-options) for details.
  * @property {boolean} [preview] Whether to show the preview of the field. Default: `true`.
  * @property {boolean | LocaleCode[]} [required] Whether to make data input on the field required.
  * Default: `true`. This option also affects data output if the `omit_empty_optional_fields` global
@@ -570,7 +570,7 @@
  * not be editable by users.
  * @see https://decapcms.org/docs/configuration-options/#fields
  * @see https://decapcms.org/docs/widgets/
- * @see https://sveltiacms.app/en/docs/fields
+ * @see https://sveltiacms.app/docs/fields
  */
 
 /**
@@ -589,7 +589,7 @@
  * @property {Record<LocaleCode, string | string[]>} [default_localized] Default values for specific
  * locales, keyed by locale code. A value given for a locale takes precedence over `default` in that
  * locale. See the
- * [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for details.
+ * [documentation](https://sveltiacms.app/docs/i18n/options#localized-field-options) for details.
  * @property {boolean} [multiple] Whether to allow multiple file selection for the field. Default:
  * `false`, unless the `multiple` option is enabled in a media library’s `config`.
  * @property {number} [min] Minimum number of files that can be selected. Ignored unless the
@@ -618,8 +618,8 @@
  * configuration.
  * @see https://decapcms.org/docs/widgets/#File
  * @see https://decapcms.org/docs/widgets/#Image
- * @see https://sveltiacms.app/en/docs/fields/file
- * @see https://sveltiacms.app/en/docs/fields/image
+ * @see https://sveltiacms.app/docs/fields/file
+ * @see https://sveltiacms.app/docs/fields/image
  */
 
 /**
@@ -673,7 +673,7 @@
  * @property {Field[]} [fields] Set of subfields. This option can be omitted; in that case, only the
  * `type` property will be saved.
  * @see https://decapcms.org/docs/variable-type-widgets/
- * @see https://sveltiacms.app/en/docs/fields/list#variable-type
+ * @see https://sveltiacms.app/docs/fields/list#variable-type
  */
 
 /**
@@ -683,7 +683,7 @@
  * @property {string} [typeKey] Property name to store the type name in nested objects. Default:
  * `type`.
  * @see https://decapcms.org/docs/variable-type-widgets/
- * @see https://sveltiacms.app/en/docs/fields/list#variable-type
+ * @see https://sveltiacms.app/docs/fields/list#variable-type
  */
 
 /**
@@ -726,10 +726,10 @@
  * @property {boolean} [default] Default value. Accepts `true` or `false`. Default: `false`.
  * @property {Record<LocaleCode, boolean>} [default_localized] Default values for specific locales,
  * keyed by locale code. A value given for a locale takes precedence over `default` in that locale.
- * See the [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for
+ * See the [documentation](https://sveltiacms.app/docs/i18n/options#localized-field-options) for
  * details.
  * @see https://decapcms.org/docs/widgets/#Boolean
- * @see https://sveltiacms.app/en/docs/fields/boolean
+ * @see https://sveltiacms.app/docs/fields/boolean
  */
 
 /**
@@ -748,7 +748,7 @@
  * @property {Record<LocaleCode, string | Record<string, string>>} [default_localized] Default
  * values for specific locales, keyed by locale code. A value given for a locale takes precedence
  * over `default` in that locale. See the
- * [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for details.
+ * [documentation](https://sveltiacms.app/docs/i18n/options#localized-field-options) for details.
  * @property {string} [default_language] Default language to be selected, like `js`. See the [Shiki
  * documentation](https://shiki.style/languages) for a list of supported languages. Default: empty
  * string, which is plaintext.
@@ -759,7 +759,7 @@
  * @property {{ code: string, lang: string }} [keys] Output property names. It has no effect if
  * `output_code_only` is `true`. Default: `{ code: 'code', lang: 'lang' }`.
  * @see https://decapcms.org/docs/widgets/#Code
- * @see https://sveltiacms.app/en/docs/fields/code
+ * @see https://sveltiacms.app/docs/fields/code
  */
 
 /**
@@ -776,13 +776,13 @@
  * or eight-value (`#RRGGBBAA`) syntax.
  * @property {Record<LocaleCode, string>} [default_localized] Default values for specific locales,
  * keyed by locale code. A value given for a locale takes precedence over `default` in that locale.
- * See the [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for
+ * See the [documentation](https://sveltiacms.app/docs/i18n/options#localized-field-options) for
  * details.
  * @property {boolean} [allowInput] Whether to show a textbox that allows users to manually edit the
  * value. Default: `false`.
  * @property {boolean} [enableAlpha] Whether to edit/save the alpha channel value. Default: `false`.
  * @see https://decapcms.org/docs/widgets/#color
- * @see https://sveltiacms.app/en/docs/fields/color
+ * @see https://sveltiacms.app/docs/fields/color
  */
 
 /**
@@ -836,7 +836,7 @@
  * or `{{now}}` to populate the current date/time. Default: empty string.
  * @property {Record<LocaleCode, string>} [default_localized] Default values for specific locales,
  * keyed by locale code. A value given for a locale takes precedence over `default` in that locale.
- * See the [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for
+ * See the [documentation](https://sveltiacms.app/docs/i18n/options#localized-field-options) for
  * details.
  * @property {DateTimeInputType} [type] The
  * [`type`](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/input#input_types)
@@ -907,7 +907,7 @@
  * while an entry is being created. The time is shared by all locales. The option is ignored in a
  * rich text editor component. Default: `false`.
  * @see https://decapcms.org/docs/widgets/#Datetime
- * @see https://sveltiacms.app/en/docs/fields/datetime
+ * @see https://sveltiacms.app/docs/fields/datetime
  */
 
 /**
@@ -931,7 +931,7 @@
  * folder with a fixed path can be browsed, so entry-relative folders and folders with template tags
  * are not available, nor are external media storage providers. Default: `false`.
  * @see https://decapcms.org/docs/widgets/#File
- * @see https://sveltiacms.app/en/docs/fields/file
+ * @see https://sveltiacms.app/docs/fields/file
  */
 
 /**
@@ -950,10 +950,10 @@
  * `{{author-name}}` tags, which are filled when a new entry draft is created.
  * @property {Record<LocaleCode, any>} [default_localized] Default values for specific locales,
  * keyed by locale code. A value given for a locale takes precedence over `default` in that locale.
- * See the [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for
+ * See the [documentation](https://sveltiacms.app/docs/i18n/options#localized-field-options) for
  * details.
  * @see https://decapcms.org/docs/widgets/#Hidden
- * @see https://sveltiacms.app/en/docs/fields/hidden
+ * @see https://sveltiacms.app/docs/fields/hidden
  */
 
 /**
@@ -966,7 +966,7 @@
  * @typedef {object} ImageFieldProps
  * @property {'image'} widget Field type.
  * @see https://decapcms.org/docs/widgets/#Image
- * @see https://sveltiacms.app/en/docs/fields/image
+ * @see https://sveltiacms.app/docs/fields/image
  */
 
 /**
@@ -983,7 +983,7 @@
  * @property {Record<LocaleCode, Record<string, string>>} [default_localized] Default values for
  * specific locales, keyed by locale code. A value given for a locale takes precedence over
  * `default` in that locale. See the
- * [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for details.
+ * [documentation](https://sveltiacms.app/docs/i18n/options#localized-field-options) for details.
  * @property {string} [key_label] Label for the key column. Default: Key or its localized version.
  * @property {string} [value_label] Label for the value column. Default: Value or its localized
  * version.
@@ -991,15 +991,15 @@
  * field value.
  * @property {Record<LocaleCode, string>} [label_singular_localized] Singular labels for specific
  * locales, keyed by locale code, taking precedence over `label_singular`. See the
- * [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for details.
+ * [documentation](https://sveltiacms.app/docs/i18n/options#localized-field-options) for details.
  * @property {boolean} [root] Whether to save the field value at the top-level of the data file
  * without the field name. It only works if the field is the only field in the collection or file.
  * If the `single_file` i18n structure is enabled, the key-value pairs will still be saved under
  * locale keys. Default: `false`. See the
- * [documentation](https://sveltiacms.app/en/docs/fields/keyvalue#top-level-key-value-pairs) for
+ * [documentation](https://sveltiacms.app/docs/fields/keyvalue#top-level-key-value-pairs) for
  * details.
  * @see https://staticjscms.netlify.app/docs/widget-keyvalue
- * @see https://sveltiacms.app/en/docs/fields/keyvalue
+ * @see https://sveltiacms.app/docs/fields/keyvalue
  */
 
 /**
@@ -1015,18 +1015,18 @@
  * @property {any[]} [default] Default value. The format depends on how the field is configured,
  * with or without `field`, `fields` or `types`: strings for a simple list, values of the subfield
  * for a list with `field`, e.g. numbers for a Number subfield, or objects for a list with `fields`
- * or `types`. See the [documentation](https://sveltiacms.app/en/docs/fields/list) for details.
+ * or `types`. See the [documentation](https://sveltiacms.app/docs/fields/list) for details.
  * @property {Record<LocaleCode, any[]>} [default_localized] Default values for specific locales,
  * keyed by locale code. A value given for a locale takes precedence over `default` in that locale.
  * See the
- * [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for details.
+ * [documentation](https://sveltiacms.app/docs/i18n/options#localized-field-options) for details.
  * @property {string} [label_singular] Label to be displayed on the Add button. Default: `label`
  * field value.
  * @property {Record<LocaleCode, string>} [label_singular_localized] Singular labels for specific
  * locales, keyed by locale code, taking precedence over `label_singular`. See the
- * [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for details.
+ * [documentation](https://sveltiacms.app/docs/i18n/options#localized-field-options) for details.
  * @see https://decapcms.org/docs/widgets/#List
- * @see https://sveltiacms.app/en/docs/fields/list
+ * @see https://sveltiacms.app/docs/fields/list
  */
 
 /**
@@ -1047,7 +1047,7 @@
  * without the field name. It only works if the field is the only field in the collection or file,
  * and the file format is not TOML. If the `single_file` i18n structure is enabled, the lists will
  * still be saved under locale keys. Default: `false`. See the
- * [documentation](https://sveltiacms.app/en/docs/fields/list#top-level-list) for details.
+ * [documentation](https://sveltiacms.app/docs/fields/list#top-level-list) for details.
  */
 
 /**
@@ -1083,7 +1083,7 @@
  * and the file format is not TOML, unless the `map_key_field` option stores the list as a map. If
  * the `single_file` i18n structure is enabled, the lists will still be saved under locale keys.
  * Default: `false`. See the
- * [documentation](https://sveltiacms.app/en/docs/fields/list#top-level-list) for details.
+ * [documentation](https://sveltiacms.app/docs/fields/list#top-level-list) for details.
  */
 
 /**
@@ -1119,7 +1119,7 @@
  * value must be unique within the list, and can’t be a whole number such as `1` or `2024`, as such
  * keys don’t keep their order. The items are kept in the order of the map. An existing array is
  * still loaded, and saved as a map. Default: none. See the
- * [documentation](https://sveltiacms.app/en/docs/fields/list#keyed-list) for details.
+ * [documentation](https://sveltiacms.app/docs/fields/list#keyed-list) for details.
  * @see https://github.com/sveltia/sveltia-cms/issues/1077
  * @see https://github.com/sveltia/sveltia-cms/issues/1082
  */
@@ -1158,7 +1158,7 @@
  * properties.
  * @property {Record<LocaleCode, string>} [default_localized] Default values for specific locales,
  * keyed by locale code. A value given for a locale takes precedence over `default` in that locale.
- * See the [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for
+ * See the [documentation](https://sveltiacms.app/docs/i18n/options#localized-field-options) for
  * details.
  * @property {number} [decimals] Precision of coordinates to be saved. Default: `7`.
  * @property {'Point' | 'LineString' | 'Polygon'} [type] Geometry type. Default: `Point`.
@@ -1166,7 +1166,7 @@
  * Default: `[0, 0]`.
  * @property {number} [zoom] Default zoom level. Default: `2`.
  * @see https://decapcms.org/docs/widgets/#Map
- * @see https://sveltiacms.app/en/docs/fields/map
+ * @see https://sveltiacms.app/docs/fields/map
  */
 
 /**
@@ -1184,7 +1184,7 @@
  * 'heading-two' | 'heading-three' | 'heading-four' | 'heading-five' | 'heading-six' | 'quote' |
  * 'bulleted-list' | 'numbered-list' | 'task-list' | 'align'} RichTextEditorButtonName
  * @see https://decapcms.org/docs/widgets/#Markdown
- * @see https://sveltiacms.app/en/docs/fields/richtext
+ * @see https://sveltiacms.app/docs/fields/richtext
  */
 
 /**
@@ -1192,20 +1192,20 @@
  * not enabled by default; add them to the `editor_components` option to enable them.
  * @typedef {'code-block' | 'image' | 'table' | 'hr'} RichTextEditorComponentName
  * @see https://decapcms.org/docs/widgets/#Markdown
- * @see https://sveltiacms.app/en/docs/fields/richtext
+ * @see https://sveltiacms.app/docs/fields/richtext
  */
 
 /**
  * Supported mode name for the rich text editor.
  * @typedef {'rich_text' | 'raw'} RichTextEditorMode
  * @see https://decapcms.org/docs/widgets/#Markdown
- * @see https://sveltiacms.app/en/docs/fields/richtext
+ * @see https://sveltiacms.app/docs/fields/richtext
  */
 
 /**
  * Value format of a RichText field.
  * @typedef {'markdown' | 'html'} RichTextValueFormat
- * @see https://sveltiacms.app/en/docs/fields/richtext
+ * @see https://sveltiacms.app/docs/fields/richtext
  */
 
 /**
@@ -1214,7 +1214,7 @@
  * @property {string} [default] Default value.
  * @property {Record<LocaleCode, string>} [default_localized] Default values for specific locales,
  * keyed by locale code. A value given for a locale takes precedence over `default` in that locale.
- * See the [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for
+ * See the [documentation](https://sveltiacms.app/docs/i18n/options#localized-field-options) for
  * details.
  * @property {boolean} [minimal] Whether to make the editor compact: it starts with the height of a
  * single line and stops growing at 240 pixels, making the content scrollable. Default: `false`.
@@ -1264,7 +1264,7 @@
  * create headings. Note that standard keyboard shortcuts like `Ctrl+B` for bold and `Ctrl+I` for
  * italic are always enabled regardless of this option.
  * @see https://decapcms.org/docs/widgets/#Markdown
- * @see https://sveltiacms.app/en/docs/fields/richtext
+ * @see https://sveltiacms.app/docs/fields/richtext
  */
 
 /**
@@ -1277,7 +1277,7 @@
  * and `hr` components. HTML with an element the rich text mode cannot handle, like `<video>`
  * without a component for it, can only be edited in the raw mode. Attributes the editor doesn’t
  * use, like `class`, are dropped once the content is changed in the rich text mode.
- * @see https://sveltiacms.app/en/docs/fields/richtext
+ * @see https://sveltiacms.app/docs/fields/richtext
  */
 
 /**
@@ -1323,7 +1323,7 @@
  * @property {Record<LocaleCode, number | string>} [default_localized] Default values for specific
  * locales, keyed by locale code. A value given for a locale takes precedence over `default` in that
  * locale. See the
- * [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for details.
+ * [documentation](https://sveltiacms.app/docs/i18n/options#localized-field-options) for details.
  * @property {'int' | 'float' | 'int/string' | 'float/string'} [value_type] Type of the value. `int`
  * makes the input accept only an integer value and saves it as a number. `float` makes the input
  * accept only a floating-point value and saves it as a number. `int/string` and `float/string` make
@@ -1345,7 +1345,7 @@
  * or a rich text editor component. Default: `false`.
  * @see https://github.com/decaporg/decap-cms/issues/2367
  * @see https://decapcms.org/docs/widgets/#Number
- * @see https://sveltiacms.app/en/docs/fields/number
+ * @see https://sveltiacms.app/docs/fields/number
  */
 
 /**
@@ -1362,7 +1362,7 @@
  * @property {Record<LocaleCode, Record<string, any>>} [default_localized] Default values for
  * specific locales, keyed by locale code. A value given for a locale takes precedence over
  * `default` in that locale. See the
- * [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for details.
+ * [documentation](https://sveltiacms.app/docs/i18n/options#localized-field-options) for details.
  * @property {boolean | 'auto'} [collapsed] Whether to collapse the object by default. Default:
  * `false`. If set to `auto`, the UI is collapsed if the object has any filled subfields and
  * expanded if all the subfields are empty.
@@ -1371,7 +1371,7 @@
  * will be displayed along with the summary label when the object is collapsed. The subfield must be
  * an Image or File field. Default: none.
  * @see https://decapcms.org/docs/widgets/#Object
- * @see https://sveltiacms.app/en/docs/fields/object
+ * @see https://sveltiacms.app/docs/fields/object
  */
 
 /**
@@ -1431,7 +1431,7 @@
  * @property {Record<LocaleCode, any | any[]>} [default_localized] Default values for specific
  * locales, keyed by locale code. A value given for a locale takes precedence over `default` in that
  * locale. See the
- * [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for details.
+ * [documentation](https://sveltiacms.app/docs/i18n/options#localized-field-options) for details.
  * @property {string} collection Referenced collection name. Use `_singletons` for the singleton
  * collection.
  * @property {string} [file] Referenced file identifier for a file/singleton collection. Required if
@@ -1452,7 +1452,7 @@
  * referenced file, and the alphabetical order of the labels otherwise. Not applicable to a
  * referenced file.
  * @see https://decapcms.org/docs/widgets/#Relation
- * @see https://sveltiacms.app/en/docs/fields/relation
+ * @see https://sveltiacms.app/docs/fields/relation
  */
 
 /**
@@ -1484,12 +1484,12 @@
  * @property {Record<LocaleCode, SelectFieldValue | SelectFieldOption | (SelectFieldValue |
  * SelectFieldOption)[]>} [default_localized] Default values for specific locales, keyed by locale
  * code. A value given for a locale takes precedence over `default` in that locale. See the
- * [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for details.
+ * [documentation](https://sveltiacms.app/docs/i18n/options#localized-field-options) for details.
  * @property {SelectFieldValue[] | SelectFieldOption[]} options Options to choose from, given as a
  * list of values, or a list of objects with the `label` and `value` properties. The list cannot be
  * empty or contain duplicate values.
  * @see https://decapcms.org/docs/widgets/#Select
- * @see https://sveltiacms.app/en/docs/fields/select
+ * @see https://sveltiacms.app/docs/fields/select
  */
 
 /**
@@ -1505,7 +1505,7 @@
  * @property {string} [default] Default value.
  * @property {Record<LocaleCode, string>} [default_localized] Default values for specific locales,
  * keyed by locale code. A value given for a locale takes precedence over `default` in that locale.
- * See the [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for
+ * See the [documentation](https://sveltiacms.app/docs/i18n/options#localized-field-options) for
  * details.
  * @property {'text' | 'url' | 'email'} [type] Data type. It’s useful when the input value needs a
  * validation. Default: `text`.
@@ -1517,7 +1517,7 @@
  * input. Default: `true` if the type is `text`. When enabled, typing `:` followed by a few letters
  * will show a list of matching emojis that can be selected to insert into the text.
  * @see https://decapcms.org/docs/widgets/#String
- * @see https://sveltiacms.app/en/docs/fields/string
+ * @see https://sveltiacms.app/docs/fields/string
  */
 
 /**
@@ -1533,13 +1533,13 @@
  * @property {string} [default] Default value.
  * @property {Record<LocaleCode, string>} [default_localized] Default values for specific locales,
  * keyed by locale code. A value given for a locale takes precedence over `default` in that locale.
- * See the [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for
+ * See the [documentation](https://sveltiacms.app/docs/i18n/options#localized-field-options) for
  * details.
  * @property {boolean} [use_emoji_autocomplete] Whether to enable emoji autocomplete in the text
  * area. Default: `true`. When enabled, typing `:` followed by a few letters will show a list of
  * matching emojis that can be selected to insert into the text.
  * @see https://decapcms.org/docs/widgets/#Text
- * @see https://sveltiacms.app/en/docs/fields/text
+ * @see https://sveltiacms.app/docs/fields/text
  */
 
 /**
@@ -1555,7 +1555,7 @@
  * @property {string} [default] Default value.
  * @property {Record<LocaleCode, string>} [default_localized] Default values for specific locales,
  * keyed by locale code. A value given for a locale takes precedence over `default` in that locale.
- * See the [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for
+ * See the [documentation](https://sveltiacms.app/docs/i18n/options#localized-field-options) for
  * details.
  * @property {string} [prefix] A string to be prepended to the value. Default: empty string.
  * @property {boolean} [use_b32_encoding] Whether to encode the value with Base32, which makes a
@@ -1564,7 +1564,7 @@
  * `readonly` common field option, which also defaults to `true` for the UUID field type, takes
  * precedence if both are set.
  * @see https://decapcms.org/docs/widgets/uuid/
- * @see https://sveltiacms.app/en/docs/fields/uuid
+ * @see https://sveltiacms.app/docs/fields/uuid
  */
 
 /**
@@ -1583,7 +1583,7 @@
  * Entry field using a built-in field type.
  * @typedef {VisibleField | HiddenField} StandardField
  * @see https://decapcms.org/docs/widgets/
- * @see https://sveltiacms.app/en/docs/fields
+ * @see https://sveltiacms.app/docs/fields
  */
 
 /**
@@ -1619,7 +1619,7 @@
  * 'keyvalue' | 'list' | 'map' | 'markdown' | 'number' | 'object' | 'relation' | 'richtext' |
  * 'select' | 'string' | 'text' | 'uuid'} BuiltInFieldType
  * @see https://decapcms.org/docs/widgets/
- * @see https://sveltiacms.app/en/docs/fields
+ * @see https://sveltiacms.app/docs/fields
  */
 
 /**
@@ -1627,7 +1627,7 @@
  * @typedef {object} CustomFieldProps
  * @property {string} widget Field type. It can’t be empty or the name of a built-in field type.
  * @see https://decapcms.org/docs/custom-widgets/
- * @see https://sveltiacms.app/en/docs/api/field-types
+ * @see https://sveltiacms.app/docs/api/field-types
  */
 
 /**
@@ -1646,14 +1646,14 @@
  * @typedef {'single_file' | 'single_file_default_root' | 'multiple_files' | 'multiple_folders' |
  * 'multiple_folders_i18n_root' | 'multiple_root_folders'} I18nFileStructure
  * @see https://decapcms.org/docs/i18n/
- * @see https://sveltiacms.app/en/docs/i18n
+ * @see https://sveltiacms.app/docs/i18n
  * @see https://github.com/decaporg/decap-cms/pull/7400
  * @see https://github.com/sveltia/sveltia-cms/issues/730
  */
 
 /**
  * Global, collection-level or collection file-level i18n options. See the
- * [documentation](https://sveltiacms.app/en/docs/i18n) for details.
+ * [documentation](https://sveltiacms.app/docs/i18n) for details.
  * @typedef {object} I18nOptions
  * @property {I18nFileStructure} [structure] File structure for entry collections. Default:
  * `single_file`. An entry collection can instead say where the locale folder goes with
@@ -1661,7 +1661,7 @@
  * useful when the locale folders sit between the site’s content folder and the collection folders.
  * File/singleton collection must define the structure using `{{locale}}` in the `file` option.
  * `multiple_folders_i18n_root` has been deprecated in favor of `multiple_root_folders`. See the
- * [documentation](https://sveltiacms.app/en/docs/i18n/structures) for details.
+ * [documentation](https://sveltiacms.app/docs/i18n/structures) for details.
  * @property {LocaleCode[]} [locales] List of all available locales. **Required for the global i18n
  * options**.
  * @property {LocaleCode} [default_locale] Default locale. Default: first locale in the `locales`
@@ -1669,18 +1669,18 @@
  * @property {LocaleCode[] | 'all' | 'default'} [initial_locales] Locales to be enabled when
  * creating a new entry draft. If this option is used, users will be able to disable the output of
  * non-default locales through the UI. See the
- * [documentation](https://sveltiacms.app/en/docs/i18n/options#disabling-non-default-locale-content)
+ * [documentation](https://sveltiacms.app/docs/i18n/options#disabling-non-default-locale-content)
  * for details.
  * @property {boolean} [save_all_locales] Whether to save collection entries in all the locales.
  * Default: `true`.
  * DEPRECATED: Use the `initial_locales` option instead, which provides more flexibility.
  * `save_all_locales: false` is equivalent to `initial_locales: 'all'`. See the documentation
- * https://sveltiacms.app/en/docs/i18n/options#disabling-non-default-locale-content for details.
+ * https://sveltiacms.app/docs/i18n/options#disabling-non-default-locale-content for details.
  * @property {{ key?: string, value?: string }} [canonical_slug] Property name and value template
  * used to add a canonical slug to entry files, which helps Sveltia CMS and some frameworks to link
  * localized files when entry slugs are localized. The default property name is `translationKey`
  * used in Hugo’s multilingual support, and the default value is the default locale’s slug. See the
- * [documentation](https://sveltiacms.app/en/docs/i18n/slugs#localizing-entry-slugs) for details.
+ * [documentation](https://sveltiacms.app/docs/i18n/slugs#localizing-entry-slugs) for details.
  * @property {boolean} [omit_default_locale_from_filename] Whether to exclude the default locale
  * from entry filenames. Default: `false`. It’s an alias of the `omit_default_locale_from_file_path`
  * option, which is used instead if both are defined.
@@ -1703,7 +1703,7 @@
  * option, e.g. `/{{locale}}/posts/{{slug}}` becomes `/posts/{{slug}}` and `/{{locale}}` becomes
  * `/`; anywhere else, the locale is kept.
  * @see https://decapcms.org/docs/i18n/
- * @see https://sveltiacms.app/en/docs/i18n
+ * @see https://sveltiacms.app/docs/i18n
  * @see https://github.com/decaporg/decap-cms/issues/6932
  */
 
@@ -1725,7 +1725,7 @@
  * @property {string} [icon] Name of a [Material Symbols
  * icon](https://fontsource.org/fonts/material-symbols-outlined/glyphs) to be displayed in the
  * collection file list and other places. See the
- * [documentation](https://sveltiacms.app/en/docs/collections#icons) for details.
+ * [documentation](https://sveltiacms.app/docs/collections#icons) for details.
  * @property {string} [summary] Summary template displayed in the file list of a file collection in
  * place of the label, e.g. `Home Page ({{locales}})`. It can use the file’s fields and the same
  * special tags and transformations as an entry collection’s `summary` option; `{{title}}` falls
@@ -1748,7 +1748,7 @@
  * @property {string} [preview_path] Preview URL path template, appended to the site URL or the
  * deploy preview URL to link to the entry. Without it, a published entry has no link, while an
  * unpublished Editorial Workflow entry links to the root of its deploy preview. See the
- * [documentation](https://sveltiacms.app/en/docs/workflows/deploy-previews) for details.
+ * [documentation](https://sveltiacms.app/docs/workflows/deploy-previews) for details.
  * @property {string} [preview_path_date_field] Name of a top-level DateTime field used to fill the
  * date and time tags in `preview_path`. Default: the first DateTime field.
  * @property {EditorOptions} [editor] Editor view options.
@@ -1757,7 +1757,7 @@
  * It’s also read-only if the collection-level or global `readonly` option is `true`.
  * @see https://decapcms.org/docs/collection-file/
  * @see https://decapcms.org/docs/deploy-preview-links/
- * @see https://sveltiacms.app/en/docs/collections/files
+ * @see https://sveltiacms.app/docs/collections/files
  */
 
 /**
@@ -1765,14 +1765,14 @@
  * @typedef {'yml' | 'yaml' | 'toml' | 'json' | 'md' | 'markdown' | 'html' | 'txt' | string}
  * FileExtension
  * @see https://decapcms.org/docs/configuration-options/#extension-and-format
- * @see https://sveltiacms.app/en/docs/collections/entries/formats
+ * @see https://sveltiacms.app/docs/collections/entries/formats
  */
 
 /**
  * Supported Markdown front matter format.
  * @typedef {'yaml-frontmatter' | 'toml-frontmatter' | 'json-frontmatter'} FrontMatterFormat
  * @see https://decapcms.org/docs/configuration-options/#extension-and-format
- * @see https://sveltiacms.app/en/docs/collections/entries/formats
+ * @see https://sveltiacms.app/docs/collections/entries/formats
  */
 
 /**
@@ -1780,7 +1780,7 @@
  * @typedef {'yml' | 'yaml' | 'toml' | 'json' | 'frontmatter' | FrontMatterFormat | 'raw' | string}
  * FileFormat
  * @see https://decapcms.org/docs/configuration-options/#extension-and-format
- * @see https://sveltiacms.app/en/docs/collections/entries/formats
+ * @see https://sveltiacms.app/docs/collections/entries/formats
  */
 
 /**
@@ -1791,7 +1791,7 @@
  * Multiple values can be defined with an array. This option or `pattern` is required.
  * @property {string | RegExp} [pattern] Regular expression matching pattern.
  * @see https://decapcms.org/docs/collection-folder/#filtered-folder-collections
- * @see https://sveltiacms.app/en/docs/collections/entries/listings#filtering-entries
+ * @see https://sveltiacms.app/docs/collections/entries/listings#filtering-entries
  * @see https://github.com/decaporg/decap-cms/issues/7347
  */
 
@@ -1821,7 +1821,7 @@
  * @typedef {object} SortableFields
  * @property {FieldKeyPath[]} fields A list of sortable field names.
  * @property {SortableFieldsDefaultOptions} [default] Default sort settings. See the
- * [documentation](https://sveltiacms.app/en/docs/collections/entries/views#sorting) for details.
+ * [documentation](https://sveltiacms.app/docs/collections/entries/views#sorting) for details.
  * @see https://staticjscms.netlify.app/docs/collection-overview#sortable-fields
  */
 
@@ -1834,7 +1834,7 @@
  * group is applied, so a filter like “Upcoming events” keeps working without a change to the
  * configuration.
  * @typedef {string | number | boolean} ViewComparisonValue
- * @see https://sveltiacms.app/en/docs/collections/entries/views#filtering
+ * @see https://sveltiacms.app/docs/collections/entries/views#filtering
  */
 
 /**
@@ -1862,7 +1862,7 @@
  * configuration after the entry was created, or if it’s `null`, an empty string, an empty list, or
  * an Object field whose subfields are all empty. This works in every configuration format,
  * including TOML, which has no `null`.
- * @see https://sveltiacms.app/en/docs/collections/entries/views#filtering
+ * @see https://sveltiacms.app/docs/collections/entries/views#filtering
  * @see https://github.com/sveltia/sveltia-cms/issues/1004
  */
 
@@ -1876,7 +1876,7 @@
  * @property {string | RegExp | boolean} [pattern] Regular expression matching pattern or exact
  * value. Required unless one of the comparison options is defined.
  * @see https://decapcms.org/docs/configuration-options/#view_filters
- * @see https://sveltiacms.app/en/docs/collections/entries/views#filtering
+ * @see https://sveltiacms.app/docs/collections/entries/views#filtering
  */
 
 /**
@@ -1890,7 +1890,7 @@
  * @property {ViewFilter[]} filters A list of view filters.
  * @property {string} [default] Default filter name.
  * @see https://staticjscms.netlify.app/docs/collection-overview#view-filters
- * @see https://sveltiacms.app/en/docs/collections/entries/views#filtering
+ * @see https://sveltiacms.app/docs/collections/entries/views#filtering
  */
 
 /**
@@ -1909,7 +1909,7 @@
  * set to `true`, every group, including one that appears later, starts collapsed unless the user
  * has expanded it. The user’s own choice to expand or collapse a group is remembered.
  * @see https://decapcms.org/docs/configuration-options/#view_groups
- * @see https://sveltiacms.app/en/docs/collections/entries/views#grouping
+ * @see https://sveltiacms.app/docs/collections/entries/views#grouping
  */
 
 /**
@@ -1923,7 +1923,7 @@
  * @property {ViewGroup[]} groups A list of view groups.
  * @property {string} [default] Default group name.
  * @see https://staticjscms.netlify.app/docs/collection-overview#view-groups
- * @see https://sveltiacms.app/en/docs/collections/entries/views#grouping
+ * @see https://sveltiacms.app/docs/collections/entries/views#grouping
  */
 
 /**
@@ -1935,7 +1935,7 @@
  * `categories`. Entries are grouped by it in reorder mode and can only be reordered within their
  * own group, with the order field numbered group by group. Default: no grouping, so the entry list
  * becomes a single flat sequence while reordering.
- * @see https://sveltiacms.app/en/docs/collections/entries/operations#reordering-entries
+ * @see https://sveltiacms.app/docs/collections/entries/operations#reordering-entries
  */
 
 /**
@@ -1947,7 +1947,7 @@
  * same tags and transformations, e.g. `{{locales}}` or `{{dirname}}/{{filename}}.{{extension}}`.
  * @property {string} [label] Column header. Default: the field’s `label` option, or a localized
  * label for a special key.
- * @see https://sveltiacms.app/en/docs/collections/entries/views#table-view
+ * @see https://sveltiacms.app/docs/collections/entries/views#table-view
  */
 
 /**
@@ -1957,7 +1957,7 @@
  * editor, in that order. Only a Boolean, Color, DateTime, Number, Relation, Select or String field
  * can be edited in bulk, as long as it isn’t read-only, doesn’t have the `multiple` option enabled
  * and isn’t set automatically on save. Default: every such field, in the configured order.
- * @see https://sveltiacms.app/en/docs/collections/entries/operations#bulk-editing-entries
+ * @see https://sveltiacms.app/docs/collections/entries/operations#bulk-editing-entries
  */
 
 /**
@@ -1968,7 +1968,7 @@
  * another locale’s editor next to the first pane. If `false`, the editor has a single pane, where
  * the preview, if enabled, takes turns with the editor. Default: `true`.
  * @see https://decapcms.org/docs/configuration-options/#editor
- * @see https://sveltiacms.app/en/docs/ui/content-editor#disabling-previews
+ * @see https://sveltiacms.app/docs/ui/content-editor#disabling-previews
  */
 
 /**
@@ -1982,7 +1982,7 @@
  * @property {boolean} [subfolders] Whether each entry is stored as an index file in its own
  * subfolder. If `false`, entries are regular files placed directly in the folders. Default: `true`.
  * @see https://decapcms.org/docs/collection-nested/
- * @see https://sveltiacms.app/en/docs/collections/entries/nested#nested-entry-options
+ * @see https://sveltiacms.app/docs/collections/entries/nested#nested-entry-options
  */
 
 /**
@@ -1991,7 +1991,7 @@
  * @property {string} [index_file] File name, without an extension, shared by every entry in the
  * collection, e.g. `_index`. If omitted, each entry keeps its own file name.
  * @see https://decapcms.org/docs/collection-nested/
- * @see https://sveltiacms.app/en/docs/collections/entries/nested#choosing-a-parent-folder
+ * @see https://sveltiacms.app/docs/collections/entries/nested#choosing-a-parent-folder
  */
 
 /**
@@ -1999,12 +1999,12 @@
  * @typedef {object} CollectionMetaData
  * @property {CollectionMetaDataPath} [path] Entry path options.
  * @see https://decapcms.org/docs/collection-nested/
- * @see https://sveltiacms.app/en/docs/collections/entries/nested#choosing-a-parent-folder
+ * @see https://sveltiacms.app/docs/collections/entries/nested#choosing-a-parent-folder
  */
 
 /**
  * Index file inclusion options. See the
- * [documentation](https://sveltiacms.app/en/docs/collections/entries/listings#managing-hugo-s-special-index-file)
+ * [documentation](https://sveltiacms.app/docs/collections/entries/listings#managing-hugo-s-special-index-file)
  * for details.
  * @typedef {object} CollectionIndexFile
  * @property {string} [name] Index file name without a locale or file extension. Default: `_index`,
@@ -2033,7 +2033,7 @@
 
 /**
  * A divider in the collection list and singleton list. See the
- * [documentation](https://sveltiacms.app/en/docs/collections#dividers) for details.
+ * [documentation](https://sveltiacms.app/docs/collections#dividers) for details.
  * @typedef {object} CollectionDivider
  * @property {string} [name] Unique identifier for the divider. Can be omitted. This property is
  * included here because in the previous version of Sveltia CMS, a divider was defined as a
@@ -2072,7 +2072,7 @@
  * If this option is omitted, the global `media_folder` option value is used, except for an entry
  * collection with the `path` option, where the entry’s own folder is used.
  * See the
- * [documentation](https://sveltiacms.app/en/docs/media/internal#collection-level-configuration) for
+ * [documentation](https://sveltiacms.app/docs/media/internal#collection-level-configuration) for
  * details.
  * @property {string} [public_folder] Public media folder path for the collection. This overrides
  * the global `public_folder` option. Default: `media_folder` option value.
@@ -2099,7 +2099,7 @@
  * deploy preview URL to link to the entry. Without it, a published entry has no link, while an
  * unpublished Editorial Workflow entry links to the root of its deploy preview. For a file
  * collection, define it on each file instead. See the
- * [documentation](https://sveltiacms.app/en/docs/workflows/deploy-previews) for details.
+ * [documentation](https://sveltiacms.app/docs/workflows/deploy-previews) for details.
  * @property {string} [preview_path_date_field] Name of a top-level DateTime field used to fill the
  * date and time tags in `preview_path`. Default: the first DateTime field. For a file collection,
  * define it on each file instead.
@@ -2107,11 +2107,11 @@
  * @property {boolean} [yaml_quote] Whether to double-quote all the strings values if the YAML
  * format is used for file output. Default: `false`. DEPRECATED: Use the global YAML format options.
  * `yaml_quote: true` is equivalent to `output.yaml.quote: double`. See the documentation
- * https://sveltiacms.app/en/docs/data-output#controlling-data-output for details.
+ * https://sveltiacms.app/docs/data-output#controlling-data-output for details.
  * @see https://github.com/decaporg/decap-cms/issues/1571
  * @see https://decapcms.org/docs/configuration-options/#collections
- * @see https://sveltiacms.app/en/docs/collections/entries
- * @see https://sveltiacms.app/en/docs/collections/files
+ * @see https://sveltiacms.app/docs/collections/entries
+ * @see https://sveltiacms.app/docs/collections/files
  */
 
 /**
@@ -2123,7 +2123,7 @@
  * The placeholder takes precedence over the `structure` i18n option: the collection then has one
  * folder per locale wherever the placeholder is, and the `omit_default_locale_from_file_path`
  * option leaves the default locale’s folder out. See the
- * [documentation](https://sveltiacms.app/en/docs/i18n/structures) for details. Either this or the
+ * [documentation](https://sveltiacms.app/docs/i18n/structures) for details. Either this or the
  * `file` option is required.
  * @property {string} [file] Path to a JSON file, relative to the project root, that stores all the
  * entries of the collection as an array of objects, instead of one file per entry in a `folder`.
@@ -2178,8 +2178,8 @@
  * template and the options to let users edit the slug. Default: `identifier_field` option value.
  * The template cannot contain slashes; to organize entries in subfolders, use the `path` option
  * instead. It’s possible to [localize the
- * slug](https://sveltiacms.app/en/docs/i18n/slugs#localizing-entry-slugs) or [use a random
- * ID](https://sveltiacms.app/en/docs/collections/entries/slugs#slug-template-tags). The
+ * slug](https://sveltiacms.app/docs/i18n/slugs#localizing-entry-slugs) or [use a random
+ * ID](https://sveltiacms.app/docs/collections/entries/slugs#slug-template-tags). The
  * `{{fields._slug}}` and `{{fields._slug | localize}}` tags, which show a slug editor in new entry
  * drafts, are deprecated; use the object form with the `editable` and `i18n` options instead.
  * @property {number} [slug_length] The maximum number of characters allowed for an entry slug.
@@ -2193,7 +2193,7 @@
  * in place of `title`, as long as the fields exist. For a Git backend, `commit_author` and
  * `commit_date` are also available, and added to the list if `author` and `date` are not included.
  * Each list item can be a field name or a {@link SortableField} object. See the
- * [documentation](https://sveltiacms.app/en/docs/collections/entries/views#sorting) for details.
+ * [documentation](https://sveltiacms.app/docs/collections/entries/views#sorting) for details.
  * @property {ViewFilter[] | ViewFilters} [view_filters] View filters to be used in the entry list.
  * @property {ViewGroup[] | ViewGroups} [view_groups] View groups to be used in the entry list.
  * @property {NestedEntryOptions} [nested] Options for a collection with nested entries, which shows
@@ -2202,7 +2202,7 @@
  * enables the entry path editor. It has no effect without the `nested` option.
  * @property {CollectionIndexFile | boolean} [index_file] Index file inclusion options. If `true`,
  * the default index file name is `_index`, which is used for Hugo’s special index file. See the
- * [documentation](https://sveltiacms.app/en/docs/collections/entries/listings#managing-hugo-s-special-index-file)
+ * [documentation](https://sveltiacms.app/docs/collections/entries/listings#managing-hugo-s-special-index-file)
  * for details.
  * @property {boolean | FieldKeyPath | FieldKeyPath[]} [thumbnail] Whether to show entry thumbnails
  * in the entry list. Default: `true` (auto-detect image/file fields). Set to `false` to disable, or
@@ -2231,7 +2231,7 @@
  * which case the property is left to the editor to manage.
  * @see https://www.11ty.dev/docs/permalinks/
  * @see https://decapcms.org/docs/collection-folder/
- * @see https://sveltiacms.app/en/docs/collections/entries
+ * @see https://sveltiacms.app/docs/collections/entries
  */
 
 /**
@@ -2281,7 +2281,7 @@
  * @typedef {object} FileCollectionProps
  * @property {CollectionFile[]} files A set of files.
  * @see https://decapcms.org/docs/collection-file/
- * @see https://sveltiacms.app/en/docs/collections/files
+ * @see https://sveltiacms.app/docs/collections/files
  */
 
 /**
@@ -2328,7 +2328,7 @@
  * @property {string} [deleteMedia] Message to be used when existing files are deleted.
  * @property {string} [openAuthoring] Message to be used when committed via a forked repository.
  * @see https://decapcms.org/docs/configuration-options/#commit-message-templates
- * @see https://sveltiacms.app/en/docs/backends#commit-messages
+ * @see https://sveltiacms.app/docs/backends#commit-messages
  */
 
 /**
@@ -2348,7 +2348,7 @@
  * a monorepo don’t share them; with Editorial Workflow, no part of the path can start with a dot,
  * end with `.lock` or contain a space or a character Git doesn’t allow in a branch name, such as
  * `:` or `*`. Default: the repository root. See the
- * [documentation](https://sveltiacms.app/en/docs/backends#monorepos) for details.
+ * [documentation](https://sveltiacms.app/docs/backends#monorepos) for details.
  * @property {string} [site_domain] Site domain used for OAuth, which will be included in the
  * `site_id` param to be sent to the API endpoint. Default: [current
  * hostname](https://developer.mozilla.org/en-US/docs/Web/API/Location/hostname) (or
@@ -2359,13 +2359,13 @@
  * DEPRECATED: Use the new `skip_ci` option instead, which is more intuitive.
  * `automatic_deployments: false` is equivalent to `skip_ci: true`, and `automatic_deployments:
  * true` is equivalent to `skip_ci: false`. See the documentation
- * https://sveltiacms.app/en/docs/deployments#disabling-automatic-deployments for details.
+ * https://sveltiacms.app/docs/deployments#disabling-automatic-deployments for details.
  * @property {boolean} [skip_ci] Whether to enable or disable automatic deployments with any
  * connected CI/CD provider, such as GitHub Actions or Cloudflare Pages. If `true`, the `[skip ci]`
  * prefix will be added to commit messages, except for deletions. Setting it to either `true` or
  * `false` also lets users trigger a deployment manually and toggle the prefix for each save.
  * Default: `undefined`. See the
- * [documentation](https://sveltiacms.app/en/docs/deployments#disabling-automatic-deployments) for
+ * [documentation](https://sveltiacms.app/docs/deployments#disabling-automatic-deployments) for
  * details.
  * @property {boolean | 'prefix' | 'suffix'} [prompt_commit_messages] Whether to ask the user for a
  * commit message every time changes are committed. If `true`, the user can replace the message
@@ -2373,7 +2373,7 @@
  * `suffix`, the text the user enters, e.g. an issue number, is added before or after that message,
  * with a space in between. The message made from the template is used as is if the text box is
  * left empty. Default: `false`. See the
- * [documentation](https://sveltiacms.app/en/docs/backends#commit-messages) for details.
+ * [documentation](https://sveltiacms.app/docs/backends#commit-messages) for details.
  * @property {boolean} [signoff_commits] Whether to add a `Signed-off-by: Name <email>` trailer
  * to every commit the CMS makes, with the name and email of the signed-in user, as required by
  * projects that enforce the [Developer Certificate of Origin](https://developercertificate.org/).
@@ -2388,7 +2388,7 @@
  * Default: `false`. If set to `true`, credentials such as cookies will be included in API requests.
  * This is only necessary when using cookie-based authentication with a self-hosted Git backend.
  * @see https://decapcms.org/docs/backends-overview/
- * @see https://sveltiacms.app/en/docs/backends
+ * @see https://sveltiacms.app/docs/backends
  */
 
 /**
@@ -2424,11 +2424,11 @@
  * @property {string} [preview_context] Name of the commit status context or deployment environment
  * that carries the deploy preview URL, matched as a case-insensitive substring. Default: any
  * context or environment that looks like a deploy preview. See the
- * [documentation](https://sveltiacms.app/en/docs/workflows/deploy-previews) for details.
+ * [documentation](https://sveltiacms.app/docs/workflows/deploy-previews) for details.
  * @property {boolean} [open_authoring] Whether to enable Open Authoring, which lets a contributor
  * without write access to the repository propose changes from a fork. It requires the
  * `editorial_workflow` publish mode. Default: `false`. See the
- * [documentation](https://sveltiacms.app/en/docs/workflows/open) for details.
+ * [documentation](https://sveltiacms.app/docs/workflows/open) for details.
  * @property {'repo' | 'public_repo' | ('repo' | 'public_repo' | 'workflow')[]} [auth_scope] OAuth
  * scope to request when signing in, or a list of scopes, which must include `repo` or
  * `public_repo`. Default: `repo`. With Open Authoring on a public repository, `public_repo` is
@@ -2436,13 +2436,13 @@
  * Adding `workflow` lets the CMS keep a contributor’s fork in sync when your GitHub Actions
  * workflow files change, at the cost of letting the token change workflows in every repository
  * the contributor can push to. See the
- * [documentation](https://sveltiacms.app/en/docs/workflows/open#authentication-scope) for details.
+ * [documentation](https://sveltiacms.app/docs/workflows/open#authentication-scope) for details.
  * @see https://decapcms.org/docs/github-backend/
  * @see https://decapcms.org/docs/editorial-workflows/
  * @see https://decapcms.org/docs/open-authoring/
- * @see https://sveltiacms.app/en/docs/backends/github
- * @see https://sveltiacms.app/en/docs/workflows/editorial
- * @see https://sveltiacms.app/en/docs/workflows/open
+ * @see https://sveltiacms.app/docs/backends/github
+ * @see https://sveltiacms.app/docs/workflows/editorial
+ * @see https://sveltiacms.app/docs/workflows/open
  */
 
 /**
@@ -2482,16 +2482,16 @@
  * @property {string} [preview_context] Name of the commit status context or deployment environment
  * that carries the deploy preview URL, matched as a case-insensitive substring. Default: any
  * context or environment that looks like a deploy preview. See the
- * [documentation](https://sveltiacms.app/en/docs/workflows/deploy-previews) for details.
+ * [documentation](https://sveltiacms.app/docs/workflows/deploy-previews) for details.
  * @property {boolean} [open_authoring] Whether to enable Open Authoring, which lets a contributor
  * without write access to the project propose changes from a fork. It requires the
  * `editorial_workflow` publish mode. Default: `false`. See the
- * [documentation](https://sveltiacms.app/en/docs/workflows/open) for details.
+ * [documentation](https://sveltiacms.app/docs/workflows/open) for details.
  * @see https://decapcms.org/docs/gitlab-backend/
  * @see https://decapcms.org/docs/editorial-workflows/
- * @see https://sveltiacms.app/en/docs/backends/gitlab
- * @see https://sveltiacms.app/en/docs/workflows/editorial
- * @see https://sveltiacms.app/en/docs/workflows/open
+ * @see https://sveltiacms.app/docs/backends/gitlab
+ * @see https://sveltiacms.app/docs/workflows/editorial
+ * @see https://sveltiacms.app/docs/workflows/open
  */
 
 /**
@@ -2511,7 +2511,7 @@
  * self-hosted instance or Codeberg.
  * Default: `https://gitea.com`.
  * @see https://decapcms.org/docs/gitea-backend/
- * @see https://sveltiacms.app/en/docs/backends/gitea-forgejo
+ * @see https://sveltiacms.app/docs/backends/gitea-forgejo
  */
 
 /**
@@ -2531,15 +2531,15 @@
  * @property {string} [preview_context] Name of the commit status context that carries the deploy
  * preview URL, matched as a case-insensitive substring. Default: any context that looks like a
  * deploy preview. See the
- * [documentation](https://sveltiacms.app/en/docs/workflows/deploy-previews) for details.
+ * [documentation](https://sveltiacms.app/docs/workflows/deploy-previews) for details.
  * @property {boolean} [open_authoring] Whether to enable Open Authoring, which lets a contributor
  * without write access to the repository propose changes from a fork. It requires the
  * `editorial_workflow` publish mode. Default: `false`. See the
- * [documentation](https://sveltiacms.app/en/docs/workflows/open) for details.
+ * [documentation](https://sveltiacms.app/docs/workflows/open) for details.
  * @see https://decapcms.org/docs/gitea-backend/
- * @see https://sveltiacms.app/en/docs/backends/gitea-forgejo
- * @see https://sveltiacms.app/en/docs/workflows/editorial
- * @see https://sveltiacms.app/en/docs/workflows/open
+ * @see https://sveltiacms.app/docs/backends/gitea-forgejo
+ * @see https://sveltiacms.app/docs/workflows/editorial
+ * @see https://sveltiacms.app/docs/workflows/open
  */
 
 /**
@@ -2557,7 +2557,7 @@
  * the subpath if it’s served under one. Default: `api_root` without the `/api/v1` path, e.g.
  * `https://codeberg.org`.
  * @see https://decapcms.org/docs/gitea-backend/#forgejo-backend
- * @see https://sveltiacms.app/en/docs/backends/gitea-forgejo
+ * @see https://sveltiacms.app/docs/backends/gitea-forgejo
  */
 
 /**
@@ -2579,9 +2579,9 @@
  * as the directory of a site in a monorepo, e.g. `apps/blog`. Every path in the configuration,
  * like a collection’s `folder` or the `media_folder`, is then relative to this directory, and files
  * outside it are not shown. Default: the repository root. See the
- * [documentation](https://sveltiacms.app/en/docs/backends#monorepos) for details.
+ * [documentation](https://sveltiacms.app/docs/backends#monorepos) for details.
  * @see https://decapcms.org/docs/test-backend/
- * @see https://sveltiacms.app/en/docs/backends/test
+ * @see https://sveltiacms.app/docs/backends/test
  */
 
 /**
@@ -2621,7 +2621,7 @@
  * CMS. Use `local` to generate slugs based on the local time of the user’s browser, which is more
  * intuitive in most cases.
  * @see https://decapcms.org/docs/configuration-options/#slug-type
- * @see https://sveltiacms.app/en/docs/collections/entries/slugs#global-slug-options
+ * @see https://sveltiacms.app/docs/collections/entries/slugs#global-slug-options
  */
 
 /**
@@ -2630,7 +2630,7 @@
  * @property {'space' | 'tab'} [indent_style] Indent style. Default: `space`.
  * @property {number} [indent_size] Number of spaces or tabs per indent level. Default: `2` for
  * spaces, `1` for tabs.
- * @see https://sveltiacms.app/en/docs/data-output#controlling-data-output
+ * @see https://sveltiacms.app/docs/data-output#controlling-data-output
  */
 
 /**
@@ -2645,13 +2645,13 @@
  * block scalar (`>`), and `false` uses a quoted string instead of a block scalar. The block
  * chomping indicator (`-` or `+`) depends on the trailing line breaks of the value. Default:
  * `true`.
- * @see https://sveltiacms.app/en/docs/data-output#controlling-data-output
+ * @see https://sveltiacms.app/docs/data-output#controlling-data-output
  * @see https://eemeli.org/yaml/#tostring-options
  */
 
 /**
  * Data output options. See the
- * [documentation](https://sveltiacms.app/en/docs/data-output#controlling-data-output) for details.
+ * [documentation](https://sveltiacms.app/docs/data-output#controlling-data-output) for details.
  * @typedef {object} OutputOptions
  * @property {boolean} [omit_empty_optional_fields] Whether to prevent fields with `required: false`
  * and an empty value from being included in entry data output. Default: `false`.
@@ -2662,7 +2662,7 @@
  * path, and web-specific encoding should be done in the front-end code.
  * @property {JsonFormatOptions} [json] JSON format options.
  * @property {YamlFormatOptions} [yaml] YAML format options.
- * @see https://sveltiacms.app/en/docs/data-output#controlling-data-output
+ * @see https://sveltiacms.app/docs/data-output#controlling-data-output
  */
 
 /**
@@ -2679,7 +2679,7 @@
  * without any review stages. `editorial_workflow` saves each change to a pull request that moves
  * through review stages before it can be published.
  * @typedef {'simple' | 'preview' | 'editorial_workflow'} PublishModeType
- * @see https://sveltiacms.app/en/docs/workflows
+ * @see https://sveltiacms.app/docs/workflows
  */
 
 /**
@@ -2705,14 +2705,14 @@
  * with its required fields left empty. The fields have to be filled in before the entry moves on
  * or is published. Default: `true`. It only applies to the `editorial_workflow` and `preview`
  * publish modes.
- * @see https://sveltiacms.app/en/docs/workflows
+ * @see https://sveltiacms.app/docs/workflows
  */
 
 /**
  * CMS configuration.
  * @typedef {object} CmsConfig
  * @property {boolean} [load_config_file] Whether to load YAML/JSON CMS configuration file(s) when
- * [manually initializing the CMS](https://sveltiacms.app/en/docs/api/initialization). This works
+ * [manually initializing the CMS](https://sveltiacms.app/docs/api/initialization). This works
  * only in the `CMS.init()` method’s `config` option. Default: `true`.
  * @property {Backend} backend Backend options.
  * @property {'' | PublishModeType | PublishModeOptions} [publish_mode] Publish mode, or an object
@@ -2720,7 +2720,7 @@
  * `simple`. It can be overridden for each collection with the collection-level `publish_mode`
  * option. Note that Editorial Workflow and Preview Workflow are currently supported with the
  * GitHub, GitLab and Gitea/Forgejo backends only. See the
- * [documentation](https://sveltiacms.app/en/docs/workflows) for details.
+ * [documentation](https://sveltiacms.app/docs/workflows) for details.
  * @property {string} [media_folder] Global internal media folder path, relative to the project’s
  * root directory. Required unless a cloud media storage is configured.
  * @property {string} [public_folder] Global public media folder path, relative to the project’s
@@ -2731,7 +2731,7 @@
  * that allows only one library. Use `media_libraries` instead to support multiple storage
  * providers. If both options define the same library, `media_libraries` takes precedence.
  * @property {MediaLibraries} [media_libraries] Unified media storage option that supports multiple
- * libraries. See the [documentation](https://sveltiacms.app/en/docs/media#configuration) for
+ * libraries. See the [documentation](https://sveltiacms.app/docs/media#configuration) for
  * details.
  * @property {string} [app_title] Custom title for the CMS, which will be displayed on the login
  * page and the browser’s tab. Default: `Sveltia CMS`.
@@ -2742,7 +2742,7 @@
  * displayed on the entrance page and the browser’s tab (favicon). A square image works best.
  * Default: Sveltia logo.
  * DEPRECATED: This option is superseded by the new `logo.src` option. See the documentation
- * https://sveltiacms.app/en/docs/customization#custom-logo for details.
+ * https://sveltiacms.app/docs/customization#custom-logo for details.
  * @property {LogoOptions} [logo] Site logo options.
  * @property {string} [logout_redirect_url] URL to redirect users to after logging out. Default:
  * none, so users stay on the CMS sign-in page.
@@ -2757,12 +2757,12 @@
  * @property {(CollectionFile | CollectionDivider)[]} [singletons] Set of singleton files, such as
  * the CMS configuration file or the homepage file. They are not part of any collection and can be
  * accessed directly through the collection list. The list can also contain dividers. See the
- * [documentation](https://sveltiacms.app/en/docs/collections/singletons) for details.
+ * [documentation](https://sveltiacms.app/docs/collections/singletons) for details.
  * @property {AssetCollection[]} [asset_collections] Set of asset collections.
  * @property {I18nOptions} [i18n] Global i18n options.
  * @property {EditorOptions} [editor] Editor view options.
  * @property {OutputOptions} [output] Data output options. See the
- * [documentation](https://sveltiacms.app/en/docs/data-output#controlling-data-output) for details.
+ * [documentation](https://sveltiacms.app/docs/data-output#controlling-data-output) for details.
  * @property {FieldDefaults} [field_defaults] Default options for fields.
  * @property {boolean} [readonly] Whether to make the whole CMS read-only, e.g. while the site is
  * under maintenance. Default: `false`. All the collections, files and asset folders can be viewed
@@ -2770,7 +2770,7 @@
  * can also be made read-only individually with their own `readonly` option.
  * @see https://decapcms.org/docs/configuration-options/
  * @see https://decapcms.org/docs/i18n/
- * @see https://sveltiacms.app/en/docs/i18n
+ * @see https://sveltiacms.app/docs/i18n
  */
 
 /**
@@ -2778,7 +2778,7 @@
  * breaks normalized to `\n`, and returns the entry content as an object.
  * @typedef {(text: string) => any | Promise<any>} FileParser
  * @see https://decapcms.org/docs/custom-formatters/
- * @see https://sveltiacms.app/en/docs/api/file-formats
+ * @see https://sveltiacms.app/docs/api/file-formats
  */
 
 /**
@@ -2796,7 +2796,7 @@
  * returns the file content. The output is trimmed and a trailing line break is added.
  * @typedef {(value: any, context: FileFormatterContext) => string | Promise<string>} FileFormatter
  * @see https://decapcms.org/docs/custom-formatters/
- * @see https://sveltiacms.app/en/docs/api/file-formats
+ * @see https://sveltiacms.app/docs/api/file-formats
  */
 
 /**
@@ -2819,7 +2819,7 @@
  * in a Compute field’s `value` template. The function must be synchronous; a return value other
  * than a string is converted to one, with `null` and `undefined` resulting in an empty string.
  * @typedef {(value: any, context: StringTransformerContext) => unknown} StringTransformer
- * @see https://sveltiacms.app/en/docs/api/string-transformations
+ * @see https://sveltiacms.app/docs/api/string-transformations
  */
 
 /**
@@ -2912,7 +2912,7 @@
  * Markdown field is passed verbatim, including any nested component syntax; use
  * `CMS.renderRichText()` to render it within an `HTMLElement` preview.
  * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
- * @see https://sveltiacms.app/en/docs/api/editor-components
+ * @see https://sveltiacms.app/docs/api/editor-components
  */
 
 /**
@@ -2977,7 +2977,7 @@
  * data of the component. Return `null` or `undefined` to leave the component unchanged. Without
  * this function, the component can’t be edited in the rich text mode, only removed.
  * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
- * @see https://sveltiacms.app/en/docs/api/editor-components
+ * @see https://sveltiacms.app/docs/api/editor-components
  */
 
 /**
@@ -2995,7 +2995,7 @@
  * `widget` to be applied to the preview, such as `editor_components` and `sanitize_preview`.
  * Options not given here fall back to the `field_defaults.richtext` option, except for
  * `sanitize_preview`: the output is sanitized unless it’s explicitly set to `false` here.
- * @see https://sveltiacms.app/en/docs/api/editor-components
+ * @see https://sveltiacms.app/docs/api/editor-components
  */
 
 /**
@@ -3006,7 +3006,7 @@
  * @typedef {'prePublish' | 'postPublish' | 'preUnpublish' | 'postUnpublish' | 'preSave' |
  * 'postSave'} AppEventType
  * @see https://decapcms.org/docs/registering-events/
- * @see https://sveltiacms.app/en/docs/api/events
+ * @see https://sveltiacms.app/docs/api/events
  */
 
 /**
@@ -3068,7 +3068,7 @@
  * before it’s saved; only `data` and `i18n.*.data` are applied. For other events, the return value
  * is ignored.
  * @see https://decapcms.org/docs/registering-events/
- * @see https://sveltiacms.app/en/docs/api/events
+ * @see https://sveltiacms.app/docs/api/events
  */
 
 /**
@@ -3149,7 +3149,7 @@
  * @property {Window} window The preview iframe’s Window object, allowing access to the preview
  * window context. React components should use this instead of the global `window`.
  * @see https://decapcms.org/docs/customization/#registerpreviewtemplate
- * @see https://sveltiacms.app/en/docs/api/preview-templates
+ * @see https://sveltiacms.app/docs/api/preview-templates
  */
 
 /**
@@ -3259,7 +3259,7 @@
  * function component can expose the method by passing this prop to the `useImperativeHandle` hook.
  * A class component, or one wrapped with `forwardRef()`, receives the ref the usual way instead.
  * @see https://decapcms.org/docs/custom-widgets/#registerwidget
- * @see https://sveltiacms.app/en/docs/api/field-types
+ * @see https://sveltiacms.app/docs/api/field-types
  */
 
 /**
@@ -3280,7 +3280,7 @@
  * A thrown error also makes the field invalid, with the error message shown to the user.
  * @typedef {ComponentType<CustomFieldControlProps>} CustomFieldControl
  * @see https://decapcms.org/docs/custom-widgets/#advanced-field-validation
- * @see https://sveltiacms.app/en/docs/api/field-types#custom-validation
+ * @see https://sveltiacms.app/docs/api/field-types#custom-validation
  */
 
 /**
@@ -3295,7 +3295,7 @@
  * a List item, or `['tags', 'tag']` for the subfield `tag` of a List field with a single `field`.
  * For relation fields, contains referenced entry data. It’s an empty Map if there is no metadata.
  * @see https://decapcms.org/docs/custom-widgets/#registerwidget
- * @see https://sveltiacms.app/en/docs/api/field-types
+ * @see https://sveltiacms.app/docs/api/field-types
  */
 
 /**
@@ -3323,7 +3323,7 @@
  * available as `CMS.React` or the `React` export of the npm package, not from another copy of
  * React.
  * @typedef {ComponentType<CustomFieldPreviewProps>} CustomFieldSummary
- * @see https://sveltiacms.app/en/docs/api/field-types
+ * @see https://sveltiacms.app/docs/api/field-types
  */
 
 /**
@@ -3335,7 +3335,7 @@
  * @property {Record<string, any>} properties Map of the field type’s option names to their JSON
  * Schema definitions.
  * @see https://decapcms.org/docs/custom-widgets/#registerwidget
- * @see https://sveltiacms.app/en/docs/api/field-types
+ * @see https://sveltiacms.app/docs/api/field-types
  */
 
 /**
@@ -3358,7 +3358,7 @@
  * a summary component.
  * @property {CustomFieldSchema} [schema] Field schema, if the field type has been registered with
  * one. Built-in field types don’t provide a schema.
- * @see https://sveltiacms.app/en/docs/api/field-types
+ * @see https://sveltiacms.app/docs/api/field-types
  */
 
 /**
@@ -3377,7 +3377,7 @@
  * @property {CustomFieldSchema} [schema] JSON schema to validate the field type’s options in the
  * CMS configuration.
  * @see https://decapcms.org/docs/custom-widgets/
- * @see https://sveltiacms.app/en/docs/api/field-types
+ * @see https://sveltiacms.app/docs/api/field-types
  */
 
 /**
@@ -3390,7 +3390,7 @@
  * @property {string} [icon] Name of a [Material Symbols
  * icon](https://fontsource.org/fonts/material-symbols-outlined/glyphs) to be displayed on the
  * page’s button. Default: `extension`.
- * @see https://sveltiacms.app/en/docs/api/custom-pages
+ * @see https://sveltiacms.app/docs/api/custom-pages
  */
 
 /**
@@ -3408,7 +3408,7 @@
 /**
  * Custom page rendered with a React component.
  * @typedef {CustomPageBaseDefinition & CustomComponentPageOptions} CustomComponentPageDefinition
- * @see https://sveltiacms.app/en/docs/api/custom-pages
+ * @see https://sveltiacms.app/docs/api/custom-pages
  */
 
 /**
@@ -3428,14 +3428,14 @@
  * page embedded from the same origin as the CMS has full access to it, including the signed-in
  * user’s access token, so only embed a page you trust.
  * @typedef {CustomPageBaseDefinition & CustomURLPageOptions} CustomURLPageDefinition
- * @see https://sveltiacms.app/en/docs/api/custom-pages
+ * @see https://sveltiacms.app/docs/api/custom-pages
  */
 
 /**
  * Custom page definition for the `CMS.registerCustomPage()` API. Either `component` or `url` has to
  * be given.
  * @typedef {CustomComponentPageDefinition | CustomURLPageDefinition} CustomPageDefinition
- * @see https://sveltiacms.app/en/docs/api/custom-pages
+ * @see https://sveltiacms.app/docs/api/custom-pages
  */
 
 export {};

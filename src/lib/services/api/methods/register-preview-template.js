@@ -18,7 +18,7 @@ import { isNonEmptyString } from '$lib/services/utils/string';
  * @param {CustomPreviewTemplate} component React component.
  * @throws {TypeError} If `name` is not a non-empty string or `component` is not a React component.
  * @see https://decapcms.org/docs/customization/#registerpreviewtemplate
- * @see https://sveltiacms.app/en/docs/api/preview-templates
+ * @see https://sveltiacms.app/docs/api/preview-templates
  */
 const registerPreviewTemplate = (name, component) => {
   assertOption(isNonEmptyString(name), 'registerPreviewTemplate', 'name', 'a non-empty string');

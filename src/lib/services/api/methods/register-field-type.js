@@ -38,7 +38,7 @@ import { isNonEmptyString } from '$lib/services/utils/string';
  * component, or the schema is given but not an object.
  * @throws {Error} If `name` is the name of a built-in field type.
  * @see https://decapcms.org/docs/custom-widgets/
- * @see https://sveltiacms.app/en/docs/api/field-types
+ * @see https://sveltiacms.app/docs/api/field-types
  */
 const registerFieldType = (name, control, preview, schema) => {
   const isDefinition = isObject(name);
