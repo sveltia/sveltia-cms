@@ -109,6 +109,8 @@
   const { columns, pendingDeletions } = $derived(
     groupEntriesByStatus(boardStages.current, allUnpublishedEntries.current, getStageOfEntry),
   );
+  // With a single column, as with Preview Workflow, the page title names it already
+  const singleColumn = $derived(columns.length === 1);
   const deploying = $derived(deployingEntries.current);
 
   // Keep the deploy state fresh while the board is open, so a preview link turns live as soon as
@@ -301,15 +303,23 @@
           <div
             role="none"
             class="board"
-            class:single={columns.length === 1}
+            class:single={singleColumn}
             style:--column-count={columns.length}
           >
             <div role="none" class="columns">
               {#each columns as { status, entries } (status)}
-                <Group class="column" aria-labelledby="{status}-column-title">
-                  <header role="none">
-                    <h3 role="none" id="{status}-column-title">{_(COLUMN_LABELS[status])}</h3>
-                  </header>
+                <!-- A single column is named by the page title already, so its own heading would
+                only repeat it -->
+                <Group
+                  class="column"
+                  aria-label={singleColumn ? _(COLUMN_LABELS[status]) : undefined}
+                  aria-labelledby={singleColumn ? undefined : `${status}-column-title`}
+                >
+                  {#if !singleColumn}
+                    <header role="none">
+                      <h3 role="none" id="{status}-column-title">{_(COLUMN_LABELS[status])}</h3>
+                    </header>
+                  {/if}
                   <div
                     role="list"
                     class="entries"

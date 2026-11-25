@@ -146,6 +146,10 @@ describe('WorkflowPage', () => {
     expect(getCards('In Review')).toEqual(['review-1']);
     expect(getCards('Ready')).toEqual(['ready-1']);
     expect(getCards('Pending Deletion')).toEqual(['gone-1']);
+    // Each column is named by its own heading
+    await expect
+      .element(board.getByRole('group', { name: 'In Review' }))
+      .toHaveAttribute('aria-labelledby', 'pending_review-column-title');
     expect(announcedPageStatus.current).toBe(
       'You’re now viewing the Editorial Workflow board. Drafts: 2. In Review: 1. Ready: 1. Pending Deletion: 1.',
     );
@@ -661,6 +665,10 @@ describe('WorkflowPage', () => {
       .toHaveAttribute('aria-label', 'Drafts');
     await expect.poll(() => container.querySelectorAll('.column').length).toBe(1);
     expect(container.querySelector('.board.single')).not.toBeNull();
+    // The column has no heading of its own to repeat the page title, but keeps its name
+    expect(container.querySelector('.column header')).toBeNull();
+    expect(container.querySelector('.column')?.getAttribute('aria-label')).toBe('Drafts');
+    expect(container.querySelector('.column')?.hasAttribute('aria-labelledby')).toBe(false);
     expect(
       page.getByRole('list', { name: 'Drafts' }).getByRole('listitem').elements(),
     ).toHaveLength(4);
