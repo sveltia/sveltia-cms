@@ -1756,7 +1756,7 @@ deploy_preview:
   # Shown briefly while the CI/CD provider is being queried
   checking: מחפש תצוגה מקדימה…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
-  check_again: בדיקה שוב
+  check_again: חיפוש תצוגה מקדימה
   # Button label while the CMS is waiting for the provider to build a preview of this entry. The
   # control is disabled meanwhile, because the live site holds the published version, or nothing at
   # all when the entry is new
