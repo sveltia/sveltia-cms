@@ -61,13 +61,6 @@ export const getSidebarPanels = (draft) => {
 
   return [
     {
-      key: 'slug',
-      icon: 'anchor',
-      // Available if the entry has a slug of its own, which the panel shows, and lets the user edit
-      // if allowed
-      disabled: !hasEntrySlug(draft),
-    },
-    {
       key: 'validation',
       icon: 'check_circle',
       disabled: false,
@@ -89,6 +82,14 @@ export const getSidebarPanels = (draft) => {
           },
         ]
       : []),
+    // The Slug and Backlinks panels can stay disabled for a whole collection, so they come last
+    {
+      key: 'slug',
+      icon: 'label',
+      // Available if the entry has a slug of its own, which the panel shows, and lets the user edit
+      // if allowed
+      disabled: !hasEntrySlug(draft),
+    },
     {
       key: 'backlinks',
       icon: 'article_shortcut',

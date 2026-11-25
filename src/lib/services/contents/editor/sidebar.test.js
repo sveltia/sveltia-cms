@@ -53,9 +53,9 @@ describe('getSidebarPanels()', () => {
 
   test('lists the panels in order', () => {
     expect(getSidebarPanels(undefined)).toEqual([
-      { key: 'slug', icon: 'anchor', disabled: true },
       { key: 'validation', icon: 'check_circle', disabled: false },
       { key: 'history', icon: 'history', disabled: true },
+      { key: 'slug', icon: 'label', disabled: true },
       { key: 'backlinks', icon: 'article_shortcut', disabled: true },
     ]);
     expect(getReferencingRelationFields).not.toHaveBeenCalled();
@@ -72,6 +72,14 @@ describe('getSidebarPanels()', () => {
         disabled: true,
         badge: 3,
       });
+      // Listed after History
+      expect(getSidebarPanels(undefined).map(({ key }) => key)).toEqual([
+        'validation',
+        'history',
+        'conversation',
+        'slug',
+        'backlinks',
+      ]);
       expect(
         getDisabledKeys({ collectionName: 'posts', originalEntry: { subPath: 'hello' } }),
       ).not.toContain('conversation');

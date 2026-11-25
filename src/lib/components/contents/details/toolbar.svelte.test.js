@@ -1885,9 +1885,9 @@ describe('Toolbar', () => {
           .map((el) => el.textContent?.trim()),
       ).toEqual([
         'View on Live Site',
-        'Slug',
         'Validation',
         'History',
+        'Slug',
         'Backlinks',
         'Duplicate',
         'Discard',

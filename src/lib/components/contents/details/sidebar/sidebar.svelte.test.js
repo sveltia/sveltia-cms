@@ -88,7 +88,7 @@ describe('Sidebar', () => {
         .getByRole('radio')
         .elements()
         .map((el) => el.getAttribute('aria-label')),
-    ).toEqual(['Slug', 'Validation', 'History', 'Backlinks']);
+    ).toEqual(['Validation', 'History', 'Slug', 'Backlinks']);
     // No panel is open by default
     expect(page.getByRole('group', { name: 'Validation' }).elements()).toHaveLength(0);
 
