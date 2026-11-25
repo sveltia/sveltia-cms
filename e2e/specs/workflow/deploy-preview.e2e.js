@@ -193,7 +193,7 @@ test('opens the deploy preview from the card on the Editorial Workflow page', as
   );
 });
 
-test('opens the deploy preview from the entry list without opening the entry', async ({
+test('opens the deploy preview or the live site from the entry list without opening the entry', async ({
   cms,
   github,
   page,
@@ -219,8 +219,16 @@ test('opens the deploy preview from the entry list without opening the entry', a
   // The click stays with the button rather than going on to the row
   await expect(row).toBeVisible();
   await expect(getEditor(page)).toHaveCount(0);
-  // A published entry has no status, so no button either
-  await expect(page.getByRole('row', { name: /First Post/ }).getByRole('button')).toHaveCount(0);
+  // A published entry links to the live site instead, like the entry editor
+  expect(
+    await getOpenedURL(
+      page,
+      page
+        .getByRole('row', { name: /First Post/ })
+        .getByRole('button', { name: 'View on Live Site' }),
+    ),
+  ).toBe('https://www.example.com/posts/first-post');
+  await expect(getEditor(page)).toHaveCount(0);
 });
 
 test.describe('with `show_preview_links: false`', () => {

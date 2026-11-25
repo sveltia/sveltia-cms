@@ -135,6 +135,9 @@ describe('EntryList', () => {
       .poll(() => grid.element().querySelector('.image .preview')?.classList.contains('icon'))
       .toBe(true);
 
+    // Published entries alone don’t ask the backend for the deploy state
+    expect(retainDeployPolling).not.toHaveBeenCalled();
+
     await grid.getByRole('row', { name: 'World' }).click();
     await expect.poll(() => window.location.hash).toBe('#/collections/posts/entries/world');
   });

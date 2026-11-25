@@ -7,7 +7,10 @@
   import EntryStatusCell from '$lib/components/contents/list/entry-status-cell.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { selectedCollection } from '$lib/services/contents/collection';
-  import { getCollectionFile } from '$lib/services/contents/collection/files';
+  import {
+    getCollectionFile,
+    getCollectionFileEntry,
+  } from '$lib/services/contents/collection/files';
   import { isValidCollectionFile } from '$lib/services/contents/collection/predicates';
   import { getEntryEditorPath } from '$lib/services/contents/editor/route';
   import { getCollectionFileSummary } from '$lib/services/contents/entry/summary';
@@ -78,7 +81,7 @@
             <EntryStatusCell
               {collection}
               subPath={name}
-              unpublishedEntry={unpublishedFiles[name]}
+              entry={unpublishedFiles[name] ?? getCollectionFileEntry(collection.name, name)}
               collectionFile={getCollectionFile(collection, name)}
               showPreviewLink
             />

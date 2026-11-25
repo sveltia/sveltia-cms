@@ -24,7 +24,6 @@
    * Entry,
    * EntryTableColumn,
    * InternalEntryCollection,
-   * UnpublishedEntry,
    * ViewType,
    * } from '$lib/types/private';
    */
@@ -39,9 +38,9 @@
    * @property {(selected: boolean) => void} [onSelect] Selection change handler.
    * @property {EntryTableColumn[]} [columns] Columns of the table view, which take the place of the
    * title. Only used when `viewType` is `table`.
-   * @property {boolean} [showPreviewLink] Whether to render a button opening the deploy preview of
-   * an unpublished entry before its status. Defaults to `false`; the read-only list row passes
-   * `true`, while the reorder row, which is dragged around, leaves it off.
+   * @property {boolean} [showPreviewLink] Whether to render a button opening the entry on the live
+   * site or its deploy preview after its status. Defaults to `false`; the read-only list row
+   * passes `true`, while the reorder row, which is dragged around, leaves it off.
    */
 
   /** @type {Props} */
@@ -55,12 +54,6 @@
     showPreviewLink = false,
   } = $props();
 
-  // The entry, if it’s an unpublished one: only that has Editorial Workflow information
-  const unpublishedEntry = $derived(
-    /** @type {UnpublishedEntry} */ (entry).workflow
-      ? /** @type {UnpublishedEntry} */ (entry)
-      : undefined,
-  );
   /* v8 ignore start -- the app locale is always set once the UI strings are loaded */
   // Plain-text summary naming the selection checkbox, so a screen reader hears which entry it
   // selects rather than an unlabelled checkbox. `appLocale.current` is a key, because the summary
@@ -125,7 +118,7 @@
 {:else}
   {@render title()}
 {/if}
-<EntryStatusCell {collection} subPath={entry.subPath} {unpublishedEntry} {showPreviewLink} />
+<EntryStatusCell {collection} subPath={entry.subPath} {entry} {showPreviewLink} />
 
 <style>
   .label {

@@ -1,8 +1,9 @@
 import { getUnpublishedEntryByDraft, isWorkflowDraft } from '$lib/services/workflow';
+import { isUnpublishedEntry } from '$lib/services/workflow/predicates';
 import { getCollectionPublishModeOptions, getEntryStage } from '$lib/services/workflow/stages';
 
 /**
- * @import { EntryDraft, UnpublishedEntry, WorkflowStatus } from '$lib/types/private';
+ * @import { EntryDraft, WorkflowStatus } from '$lib/types/private';
  */
 
 /**
@@ -13,11 +14,9 @@ import { getCollectionPublishModeOptions, getEntryStage } from '$lib/services/wo
  * @returns {WorkflowStatus} Stage. An entry that has no pull request yet starts as a draft.
  */
 const getWorkflowStage = (draft) => {
-  const entry =
-    getUnpublishedEntryByDraft(draft) ??
-    /** @type {UnpublishedEntry | undefined} */ (draft.originalEntry);
+  const entry = getUnpublishedEntryByDraft(draft) ?? draft.originalEntry;
 
-  return entry?.workflow ? getEntryStage(entry, draft.collection) : 'draft';
+  return isUnpublishedEntry(entry) ? getEntryStage(entry, draft.collection) : 'draft';
 };
 
 /**

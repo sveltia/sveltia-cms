@@ -17,6 +17,7 @@ import {
 } from '$lib/services/workflow/config';
 import { isForkEntry } from '$lib/services/workflow/forks';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
+import { isUnpublishedEntry } from '$lib/services/workflow/predicates';
 import { getCollectionPublishModeOptions, isLastStage } from '$lib/services/workflow/stages';
 
 /**
@@ -652,4 +653,4 @@ export const checkPublishedVersion = (entry) => {
  * @returns {boolean} Result.
  */
 export const isDiscardableDraft = (entry) =>
-  !!entry && 'workflow' in entry && !checkPublishedVersion(/** @type {UnpublishedEntry} */ (entry));
+  isUnpublishedEntry(entry) && !checkPublishedVersion(entry);

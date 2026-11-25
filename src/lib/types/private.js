@@ -377,6 +377,16 @@
  */
 
 /**
+ * What a preview link control shows for a resolved {@link EntryPreviewLink}.
+ * @typedef {object} PreviewLinkControl
+ * @property {boolean} disabled Whether the control is disabled, because the link leads nowhere
+ * worth opening yet.
+ * @property {string} labelKey Key of the localized label, which says where the link goes.
+ * @property {string} [descriptionKey] Key of the localized sentence describing a build that isn’t
+ * finished or has failed, if any.
+ */
+
+/**
  * Options for the `signIn` function on {@link BackendService}.
  * @typedef {object} SignInOptions
  * @property {boolean} auto Whether the sign-in process is automatic.

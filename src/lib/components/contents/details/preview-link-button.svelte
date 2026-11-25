@@ -10,15 +10,15 @@
   import { _ } from '@sveltia/i18n';
   import { Button, Icon, MenuItem } from '@sveltia/ui';
 
-  import { deployments, deployPollTimedOut, productionSHA } from '$lib/services/deployments';
-  import { DEPLOY_STATE_MESSAGES } from '$lib/services/deployments/constants';
-  import { getEntryPreviewLink, refineState } from '$lib/services/deployments/link';
+  import {
+    getPreviewLinkControl,
+    resolveEntryPreviewLink,
+  } from '$lib/services/deployments/control';
   import { pageLiveness, pingURL } from '$lib/services/deployments/ping';
   import { openNewTab } from '$lib/services/utils/window';
 
   /**
    * @import {
-   * DeployState,
    * Entry,
    * InternalCollection,
    * InternalCollectionFile,
@@ -46,9 +46,18 @@
    * @property {boolean} [iconic] Whether to show the icon alone, for a narrow screen where the
    * label wouldn’t fit alongside the other actions. The label becomes the accessible name. Not
    * used when the control is rendered as a menu item.
+   * @property {boolean} [showTooltip] Whether to show the label as a tooltip on an icon-only
+   * button, where nothing else says what it does. Not used when the control is rendered as a menu
+   * item.
    * @property {number} [tabindex] `tabindex` of the button, e.g. `-1` to keep it out of the Tab
    * order inside a grid row, whose arrow keys move from row to row. Not used when the control is
    * rendered as a menu item.
+   * @property {boolean} [trackDeployState] Whether to follow the deploy state of a published entry
+   * and check that its page is live, as the entry editor does. Defaults to `true`. A list of
+   * entries turns it off for its published rows: every answer of the deploy state lookup would
+   * otherwise update every row, and opening the list would send the site a request for each one.
+   * The live site holds those pages, so their links are offered either way. An unpublished entry’s
+   * deploy preview is always followed.
    */
 
   /** @type {Props} */
@@ -63,51 +72,34 @@
     size = 'medium',
     iconic = false,
     tabindex = undefined,
+    showTooltip = false,
+    trackDeployState = true,
   } = $props();
 
   // `pageLiveness.current` is deliberately left out of this derivation. The effect below watches
   // `url` and writes that state, so reading it here would feed the check’s own result back into the
-  // URL it checks. The liveness is folded into `state` alone, which the effect doesn’t read
+  // URL it checks. The liveness is folded into `control` alone, which the effect doesn’t read
   // @see https://github.com/sveltia/sveltia-cms/issues/943
-  const _locale = $derived(locale ?? (collectionFile ?? collection)._i18n.defaultLocale);
   const link = $derived(
-    getEntryPreviewLink({
+    resolveEntryPreviewLink({
       entry,
-      locale: _locale,
+      locale: locale ?? (collectionFile ?? collection)._i18n.defaultLocale,
       collection,
       collectionFile,
       pullRequest,
-      deployments: deployments.current,
-      productionSHA: productionSHA.current,
-      pollTimedOut: deployPollTimedOut.current,
+      trackDeployState,
     }),
   );
   const url = $derived(link?.url);
-  /* v8 ignore start -- only read while there’s a link, which always has a URL */
-  const state = $derived(
-    link ? refineState(link.state, url ? pageLiveness.current[url] : undefined) : undefined,
+  /* v8 ignore start -- only read while there’s a link, when nothing falls back */
+  const control = $derived(
+    link ? getPreviewLinkControl(link, url ? pageLiveness.current[url] : undefined) : undefined,
   );
-  const isDeployPreview = $derived(link?.isDeployPreview ?? false);
-  const pingable = $derived(link?.pingable ?? false);
-  // The URL leads to the published version, or nowhere when the entry is new, so the control waits
-  // rather than sending anyone there
   const awaitingPreview = $derived(link?.awaitingPreview ?? false);
+  const disabled = $derived(control?.disabled ?? true);
+  const label = $derived(control ? _(control.labelKey) : '');
   /* v8 ignore stop */
-  // A failed build’s URL is its log rather than a preview, so there’s nothing worth opening. A
-  // link to the live site is always worth offering, whatever the build did
-  const disabled = $derived(awaitingPreview || !url || (isDeployPreview && state === 'error'));
-  const label = $derived(
-    awaitingPreview
-      ? _('deploy_preview.awaiting')
-      : isDeployPreview
-        ? _('deploy_preview.view')
-        : _('view_on_live_site'),
-  );
-  // The label says where the link goes, not what the build is doing, so anything other than a
-  // finished build needs the reason spelled out. The cast is safe: `state` is only missing without
-  // a link, when nothing is rendered
-  const descriptionKey = $derived(DEPLOY_STATE_MESSAGES[/** @type {DeployState} */ (state)]);
-  const description = $derived(descriptionKey ? _(descriptionKey) : undefined);
+  const description = $derived(control?.descriptionKey ? _(control.descriptionKey) : undefined);
 
   /**
    * Open the resolved preview page in a new browser tab.
@@ -123,7 +115,7 @@
     // None of these reads the liveness store this effect writes, so the check can’t retrigger
     // itself however the URL is composed. The build state reported by the provider is read, so a
     // page found missing while it was building is checked again once the build has finished
-    const canPing = pingable;
+    const canPing = trackDeployState && !!link?.pingable;
     const pageURL = url;
     const buildFinished = link?.state === 'ready';
 
@@ -146,6 +138,7 @@
       {tabindex}
       label={iconic ? undefined : label}
       aria-label={iconic ? label : undefined}
+      tooltip={iconic && showTooltip ? label : undefined}
       {disabled}
       aria-description={description}
       onclick={open}

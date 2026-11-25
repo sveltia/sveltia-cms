@@ -26,16 +26,15 @@ const pullRequest = /** @type {any} */ ({ number: 1, headSHA: 'abc' });
 /**
  * Render the button.
  * @param {Record<string, any>} [props] Props to override.
- * @returns {Promise<void>}
+ * @returns {ReturnType<typeof render>} Render result.
  */
-const renderButton = async (props = {}) => {
-  await render(PreviewLinkButton, {
+const renderButton = (props = {}) =>
+  render(PreviewLinkButton, {
     entry,
     locale: '_default',
     collection: /** @type {any} */ (getCollection('posts')),
     ...props,
   });
-};
 
 describe('PreviewLinkButton', () => {
   beforeAll(async () => {
@@ -84,6 +83,23 @@ describe('PreviewLinkButton', () => {
     await renderButton({ locale: undefined });
     await page.getByRole('button', { name: 'View on Live Site' }).click();
     expect(openNewTab).toHaveBeenCalledWith('https://example.com/posts/hello');
+  });
+
+  test('can leave out the check of whether the page is live', async () => {
+    await renderButton({ trackDeployState: false });
+    await expect.element(page.getByRole('button', { name: 'View on Live Site' })).toBeEnabled();
+    expect(pingURL).not.toHaveBeenCalled();
+  });
+
+  test('can show its label as a tooltip on an icon-only button', async () => {
+    const { container } = await renderButton({ iconic: true });
+
+    // None unless asked for
+    expect(container.querySelector('[role="tooltip"]')).toBeNull();
+
+    await renderButton({ iconic: true, showTooltip: true });
+    await page.getByRole('button', { name: 'View on Live Site' }).last().hover();
+    await expect.element(page.getByRole('tooltip')).toHaveTextContent('View on Live Site');
   });
 
   test('can be kept out of the Tab order', async () => {

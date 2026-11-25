@@ -5,6 +5,7 @@ import {
   stripLocaleFolderPath,
 } from '$lib/services/contents/i18n/placeholder';
 import { getDirName, stripPathPrefix } from '$lib/services/utils/file';
+import { isUnpublishedEntry } from '$lib/services/workflow/predicates';
 
 /**
  * @import {
@@ -59,7 +60,7 @@ export const getEntryLocaleFile = (entry, { locale, defaultLocale } = {}) =>
 export const getEntryPaths = (entry, { includePrevious = false } = {}) => [
   ...new Set([
     ...Object.values(entry.locales).map(({ path }) => path),
-    ...((includePrevious && /** @type {UnpublishedEntry} */ (entry).workflow?.previousPaths) || []),
+    ...((includePrevious && isUnpublishedEntry(entry) && entry.workflow.previousPaths) || []),
   ]),
 ];
 
