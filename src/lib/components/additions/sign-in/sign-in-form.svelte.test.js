@@ -126,6 +126,70 @@ describe('SignInForm', () => {
     expect(signInManually).not.toHaveBeenCalled();
   });
 
+  test('signs in with a username and password filled in by the browser', async () => {
+    await renderForm();
+
+    const signInButton = page.getByRole('button', { name: 'Sign In', exact: true });
+
+    const usernameInput = /** @type {HTMLInputElement} */ (
+      page.getByRole('textbox', { name: 'Username' }).element()
+    );
+
+    const passwordInput = /** @type {HTMLInputElement} */ (
+      page.getByLabelText('Password').element()
+    );
+
+    /**
+     * Fill in a field as Chrome does, which the page can’t read until the user interacts with it:
+     * the `:-webkit-autofill` animation starts, but the value isn’t announced.
+     * @param {HTMLInputElement} input Field.
+     * @param {string} value Value.
+     * @param {string} [animationName] Animation the browser starts.
+     */
+    const autofill = (input, value, animationName = 'cms-autofill') => {
+      input.value = value;
+      input.dispatchEvent(new AnimationEvent('animationstart', { animationName, bubbles: true }));
+    };
+
+    autofill(passwordInput, 'secret');
+    await expect.element(signInButton).toHaveAttribute('aria-disabled', 'true');
+    // Other animations are ignored
+    autofill(usernameInput, 'editor', 'fade');
+    await expect.element(signInButton).toHaveAttribute('aria-disabled', 'true');
+    autofill(usernameInput, 'editor');
+    await expect.element(signInButton).not.toHaveAttribute('aria-disabled', 'true');
+    // Edited by the user, which makes the value known
+    await page.getByLabelText('Password').fill('');
+    await expect.element(signInButton).toHaveAttribute('aria-disabled', 'true');
+    autofill(passwordInput, 'secret');
+    await signInButton.click();
+
+    await vi.waitFor(() =>
+      expect(signInManually).toHaveBeenCalledWith('github', undefined, {
+        username: 'editor',
+        password: 'secret',
+      }),
+    );
+  });
+
+  test('does nothing when the fields filled in by the browser turn out empty', async () => {
+    await renderForm();
+
+    [page.getByRole('textbox', { name: 'Username' }), page.getByLabelText('Password')].forEach(
+      (locator) => {
+        locator
+          .element()
+          .dispatchEvent(
+            new AnimationEvent('animationstart', { animationName: 'cms-autofill', bubbles: true }),
+          );
+      },
+    );
+
+    await page.getByRole('button', { name: 'Sign In', exact: true }).click();
+
+    expect(signInManually).not.toHaveBeenCalled();
+  });
+
   test('asks for a new password after signing in with a temporary one', async () => {
     vi.mocked(signInWithNewPassword).mockResolvedValue(true);
     additionsAuth.passwordChange = PASSWORD_CHANGE;

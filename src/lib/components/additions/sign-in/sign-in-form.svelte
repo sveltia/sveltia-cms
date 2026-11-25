@@ -49,6 +49,12 @@
 
   let newPassword = $state('');
   let changingPassword = $state(false);
+  /**
+   * Fields the browser has filled in, e.g. from its password manager. Chrome doesn’t let the page
+   * read their values until the user interacts with it, so they look empty until then.
+   * @type {{ username: boolean, password: boolean }}
+   */
+  const autofilled = $state({ username: false, password: false });
 
   // Kept only for a sign-in with the password, which replaces the form while it’s in progress. A
   // sign-in done otherwise, e.g. with GitHub, leaves nothing for whoever signs in next
@@ -57,6 +63,38 @@
   }
 
   const trimmedUsername = $derived(form.username.trim());
+  const canSignIn = $derived(
+    (!!trimmedUsername || autofilled.username) && (!!form.password || autofilled.password),
+  );
+
+  /**
+   * Get the name of a field of the form, which only has the username and password.
+   * @param {EventTarget | null} target Event target.
+   * @returns {'username' | 'password'} Name.
+   */
+  const getFieldName = (target) =>
+    /** @type {'username' | 'password'} */ (/** @type {HTMLInputElement} */ (target).name);
+
+  /**
+   * Note a field the browser has filled in, which starts an animation in the styles below.
+   * @param {AnimationEvent} event `animationstart` event.
+   */
+  const onAnimationStart = ({ target, animationName }) => {
+    if (animationName === 'cms-autofill') {
+      autofilled[getFieldName(target)] = true;
+    }
+  };
+
+  /**
+   * Forget that a field was filled in by the browser once the user edits it, which makes its value
+   * known. The browser may also fire the event when filling it in, which leaves it marked.
+   * @param {Event} event `input` event.
+   */
+  const onInput = ({ target }) => {
+    autofilled[getFieldName(target)] = /** @type {HTMLInputElement} */ (target).matches(
+      ':-webkit-autofill',
+    );
+  };
 
   // Fill in the username and temporary password from a magic link emailed to the user, whenever
   // the link is read, then forget them
@@ -77,6 +115,17 @@
    */
   const signInWithPassword = async (event) => {
     event.preventDefault();
+
+    // Read the fields, as values filled in by the browser may not have reached the form state yet
+    const data = new FormData(/** @type {HTMLFormElement} */ (event.currentTarget));
+
+    form.username = /** @type {string} */ (data.get('username'));
+    form.password = /** @type {string} */ (data.get('password'));
+
+    if (!trimmedUsername || !form.password) {
+      return;
+    }
+
     passwordSignInPending = true;
 
     try {
@@ -136,9 +185,15 @@
     />
   </form>
 {:else}
-  <form class="additions" onsubmit={signInWithPassword}>
+  <form
+    class="additions"
+    onsubmit={signInWithPassword}
+    onanimationstart={onAnimationStart}
+    oninput={onInput}
+  >
     <TextInput
       bind:value={form.username}
+      name="username"
       ariaLabel={_('additions.username')}
       showLabelAbove
       autocomplete="username"
@@ -147,6 +202,7 @@
     />
     <PasswordInput
       bind:value={form.password}
+      name="password"
       ariaLabel={_('additions.password')}
       showLabelAbove
       autocomplete="current-password"
@@ -164,7 +220,7 @@
       type="submit"
       variant={primary ? 'primary' : 'secondary'}
       label={_('additions.sign_in')}
-      disabled={!trimmedUsername || !form.password}
+      disabled={!canSignIn}
     />
     {#if additionsSetup.result}
       <div
@@ -211,9 +267,20 @@
       width: 100%;
     }
 
+    /* Tells the page a field was filled in, as Chrome hides the value until the user interacts */
+    :global(input:-webkit-autofill) {
+      animation: cms-autofill 1ms;
+    }
+
     .note {
       color: var(--sui-secondary-foreground-color);
       font-size: var(--sui-font-size-small);
+    }
+  }
+
+  @keyframes -global-cms-autofill {
+    from {
+      opacity: 1;
     }
   }
 </style>
