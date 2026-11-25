@@ -469,7 +469,7 @@ additions:
         not_installed: האפליקציה אינה מותקנת במאגר. התקינו אותה מחדש מעמוד האפליקציה ב-GitHub, או הפעילו את אשף ההגדרה.
         suspended: ההתקנה של האפליקציה מושעית. בטלו את ההשעיה בהגדרות ההתקנה ב-GitHub.
         unreachable: לא ניתן היה להתחבר ל-GitHub. נסו שוב מאוחר יותר.
-      check_again: בדיקה שוב
+      check_again: בדיקה חוזרת
       # {$branch} is the name of the repository’s default branch
       branch_protected: ערכות כללים מגנות על הענף „{$branch}” מפני force push ומחיקה.
       branch_bypassed: ערכות כללים מגנות על הענף „{$branch}”, אבל האפליקציה יכולה לעקוף אותן, כך שעורכים עדיין יוכלו לבצע בו force push או למחוק אותו. הסירו את האפליקציה מרשימות העקיפה של ערכות הכללים האלה.
@@ -502,7 +502,7 @@ additions:
     admin_secret_too_short: סוד הניהול שהוגדר בהגדרות של שירות Sveltia CMS Additions קצר מדי. השתמשו ב-32 תווים אקראיים לפחות.
     wrong_previous_secret: סוד הניהול הקודם שגוי.
     not_an_admin: המשתמש הזה אינו מנהל. בחרו שם משתמש אחר.
-    invalid_username: שם משתמש מכיל 3 עד 30 אותיות לטיניות קטנות, ספרות, נקודות, מקפים או קווים תחתונים.
+    invalid_username: שם המשתמש חייב להכיל 3 עד 30 אותיות לטיניות קטנות, ספרות, נקודות, מקפים או קווים תחתונים.
     last_admin: חייב להיות מנהל אחד לפחות.
     cannot_disable_self: לא ניתן להשבית את החשבון שלכם.
     cannot_delete_self: לא ניתן למחוק את החשבון שלכם.
