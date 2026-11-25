@@ -131,6 +131,7 @@ words:
   - ondragovercapture
   - ondropcapture
   - onkeydowncapture
+  - onmousedowncapture
   - onpastecapture
   - onwheelcapture
   - openjpeg
