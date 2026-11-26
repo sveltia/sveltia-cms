@@ -52,6 +52,6 @@ Stay connected and get support through our community channels:
 
 Highlights from our latest [announcements](https://github.com/sveltia/sveltia-cms/discussions/categories/announcements):
 
+- [Sveltia CMS is now out of beta!](https://github.com/sveltia/sveltia-cms/discussions/1194)
 - [Introducing Sveltia CMS Additions](https://github.com/sveltia/sveltia-cms/discussions/1180)
-- [Sveltia CMS is now feature complete — It’s time to switch from Decap CMS!](https://github.com/sveltia/sveltia-cms/discussions/957)
 - [Sveltia CMS Now Accepts Donations – Support Open Source Development!](https://github.com/sveltia/sveltia-cms/discussions/762)
