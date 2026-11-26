@@ -1,6 +1,6 @@
 {
   "name": "@sveltia/cms",
-  "version": "0.273.1",
+  "version": "5.0.0",
   "description": "A modern, lightweight, Git-based headless CMS. The successor to Netlify CMS and Decap CMS.",
   "keywords": [
     "cms",
