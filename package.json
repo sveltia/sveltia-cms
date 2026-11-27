@@ -109,7 +109,7 @@
     "eslint": "^9.39.5",
     "eslint-config-airbnb-extended": "^3.3.0",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-jsdoc": "^65.5.5",
+    "eslint-plugin-jsdoc": "^65.5.6",
     "eslint-plugin-package-json": "^1.14.0",
     "eslint-plugin-svelte": "^3.24.1",
     "eslint-plugin-unused-imports": "^4.4.1",
@@ -129,7 +129,7 @@
     "svelte-check": "^4.7.8",
     "ts-json-schema-generator": "^2.10.0",
     "typescript": "^6.0.3",
-    "vite": "^8.3.8",
+    "vite": "^8.4.0",
     "vitest": "^5.1.2",
     "vitest-browser-svelte": "^3.1.0"
   },
