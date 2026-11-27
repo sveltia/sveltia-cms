@@ -47,7 +47,7 @@ vi.mock('$lib/services/contents/draft/save/assets', async (importOriginal) => ({
 }));
 
 const { getAssetFolder } = await import('$lib/services/assets/folders');
-const { allAssetFolders } = await import('$lib/services/assets/folders');
+const { allAssetFolders, globalAssetFolder } = await import('$lib/services/assets/folders');
 const { getHash } = await import('@sveltia/utils/crypto');
 const { getPathInfo, isValidFileType } = await import('@sveltia/utils/file');
 const { fillInternalPathTemplate } = await import('$lib/services/assets/entry-relative');
@@ -282,7 +282,7 @@ describe('contents/fields/file/helpers', () => {
         expect(result.entry.folder).toEqual(mockFileFolder);
       });
 
-      it('should enable entry folder when fileAssetFolder exists and has template tags', () => {
+      it('should enable entry folder with template tags when there is no global folder', () => {
         const mockFileFolder = {
           collectionName: 'posts',
           fileName: 'post-1.md',
@@ -307,6 +307,54 @@ describe('contents/fields/file/helpers', () => {
 
         expect(result.entry.enabled).toBe(true);
         expect(result.entry.folder).toEqual(mockFileFolder);
+      });
+
+      describe('with a global folder', () => {
+        const templateFolder = createMockAssetFolder({
+          collectionName: 'posts',
+          internalPath: 'static/uploads/{{year}}/{{month}}',
+          publicPath: '/uploads/{{year}}/{{month}}',
+          hasTemplateTags: true,
+        });
+
+        beforeEach(() => {
+          vi.mocked(getAssetFolder).mockImplementation((args) =>
+            !('typedKeyPath' in args) && !args.fileName ? templateFolder : undefined,
+          );
+        });
+
+        afterEach(() => {
+          /** @type {any} */ (globalAssetFolder).current = undefined;
+        });
+
+        it('should not enable entry folder with template tags below the global folder', () => {
+          /** @type {any} */ (globalAssetFolder).current = createMockAssetFolder({
+            internalPath: 'static/uploads',
+          });
+
+          const result = getAssetLibraryFolderMap({ collectionName: 'posts' });
+
+          expect(result.entry.enabled).toBe(false);
+          expect(result.global.enabled).toBe(true);
+          // The folder is still where new files go
+          expect(getDefaultAssetFolder(result)).toBe(templateFolder);
+        });
+
+        it('should not enable entry folder with template tags when the global folder is the root', () => {
+          /** @type {any} */ (globalAssetFolder).current = createMockAssetFolder({
+            internalPath: '',
+          });
+
+          expect(getAssetLibraryFolderMap({ collectionName: 'posts' }).entry.enabled).toBe(false);
+        });
+
+        it('should enable entry folder with template tags outside the global folder', () => {
+          /** @type {any} */ (globalAssetFolder).current = createMockAssetFolder({
+            internalPath: 'static/images',
+          });
+
+          expect(getAssetLibraryFolderMap({ collectionName: 'posts' }).entry.enabled).toBe(true);
+        });
       });
 
       it('should use collectionAssetFolder as entry folder when fileAssetFolder is undefined', () => {
@@ -728,6 +776,48 @@ describe('contents/fields/file/helpers', () => {
       });
 
       expect(result).toBe(enabledFolder);
+    });
+
+    it('should prefer an entry folder with template tags to the global folder', () => {
+      const templateFolder = /** @type {import('$lib/types/private').AssetFolderInfo} */ (
+        createMockAssetFolder({
+          collectionName: 'posts',
+          internalPath: 'assets/uploads/{{year}}/{{month}}',
+          publicPath: '/uploads/{{year}}/{{month}}',
+          hasTemplateTags: true,
+        })
+      );
+
+      const globalFolder = /** @type {import('$lib/types/private').AssetFolderInfo} */ (
+        createMockAssetFolder({ internalPath: 'assets/uploads', publicPath: '/uploads' })
+      );
+
+      const result = getDefaultAssetFolder({
+        field: { folder: undefined, enabled: false },
+        entry: { folder: templateFolder, enabled: false },
+        file: { folder: undefined, enabled: false },
+        collection: { folder: templateFolder, enabled: false },
+        global: { folder: globalFolder, enabled: true },
+      });
+
+      expect(result).toBe(templateFolder);
+    });
+
+    it('should prefer an enabled field folder to an entry folder with template tags', () => {
+      const fieldFolder = /** @type {import('$lib/types/private').AssetFolderInfo} */ (
+        createMockAssetFolder({ internalPath: 'assets/banners', publicPath: '/banners' })
+      );
+
+      const templateFolder = /** @type {import('$lib/types/private').AssetFolderInfo} */ (
+        createMockAssetFolder({ internalPath: 'assets/{{year}}', hasTemplateTags: true })
+      );
+
+      const result = getDefaultAssetFolder({
+        field: { folder: fieldFolder, enabled: true },
+        entry: { folder: templateFolder, enabled: false },
+      });
+
+      expect(result).toBe(fieldFolder);
     });
 
     it('should return undefined when no folders are enabled', () => {
@@ -1285,6 +1375,56 @@ describe('contents/fields/file/helpers', () => {
           folderPath: '',
         }),
       ).toBe(true);
+    });
+
+    describe('with an asset filed under a folder with template tags', () => {
+      const globalFolder = createMockAssetFolder({
+        internalPath: 'static/uploads',
+        publicPath: '/uploads',
+      });
+
+      const templateFolder = createMockAssetFolder({
+        collectionName: 'posts',
+        internalPath: 'static/uploads/{{year}}/{{month}}',
+        publicPath: '/uploads/{{year}}/{{month}}',
+        hasTemplateTags: true,
+      });
+
+      const datedAsset = {
+        ...asset,
+        path: 'static/uploads/2025/03/photo.jpg',
+        folder: templateFolder,
+      };
+
+      it('should list it in a folder it is stored below', () => {
+        expect(
+          isAssetInSelectedFolder({
+            asset: datedAsset,
+            folder: globalFolder,
+            folderPath: 'static/uploads',
+          }),
+        ).toBe(true);
+      });
+
+      it('should not list it in a folder it is not stored below', () => {
+        expect(
+          isAssetInSelectedFolder({
+            asset: datedAsset,
+            folder: { ...globalFolder, internalPath: 'static/images' },
+            folderPath: 'static/images',
+          }),
+        ).toBe(false);
+      });
+
+      it('should not list it in another folder with template tags', () => {
+        expect(
+          isAssetInSelectedFolder({
+            asset: datedAsset,
+            folder: { ...templateFolder, internalPath: 'static/{{slug}}' },
+            folderPath: 'static/uploads',
+          }),
+        ).toBe(false);
+      });
     });
 
     describe('returns false for mismatching folder info', () => {

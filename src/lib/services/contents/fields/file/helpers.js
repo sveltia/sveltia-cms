@@ -37,7 +37,36 @@ import { parseForkBranchName } from '$lib/services/workflow/forks';
 const EMPTY_PATH_SEGMENT_REGEX = /(?<=.)\/(?=\/|$)/g;
 
 /**
- * Get the default library folder map for a File/Image field.
+ * Check if a given path is in the target folder or its subfolders.
+ * @param {object} args Arguments.
+ * @param {string} args.path Path to check.
+ * @param {string | undefined} args.folderPath Target folder path.
+ * @returns {boolean} `true` if the path is in the target folder.
+ */
+const isInTargetFolder = ({ path, folderPath }) =>
+  folderPath !== undefined &&
+  // An empty path is the repository root, which holds every other path
+  (folderPath === '' ||
+    path === folderPath ||
+    // Handle the case where the target folder is a template with an unresolved placeholder
+    `${path}/-` === folderPath ||
+    path.startsWith(`${folderPath}/`));
+
+/**
+ * Check if a folder is stored below another folder, so the latter lists its assets.
+ * @param {AssetFolderInfo} folder Folder.
+ * @param {AssetFolderInfo | undefined} parentFolder Possible parent folder.
+ * @returns {boolean} Result.
+ */
+const isBelowFolder = ({ internalPath = '' }, parentFolder) =>
+  isInTargetFolder({ path: internalPath, folderPath: parentFolder?.internalPath });
+
+/**
+ * Get the default library folder map for a File/Image field. Entry Assets is offered for an
+ * entry-relative folder, which holds the assets of the entry alone. A folder with template tags,
+ * like `{{media_folder}}/{{year}}/{{month}}`, resolves to a folder shared with other entries, which
+ * is usually empty for a new entry, so its assets are browsed in Global Assets instead if it’s
+ * stored below the global folder; new files still go there, see {@link getDefaultAssetFolder}.
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
  * @param {string} [args.fileName] File name.
@@ -76,7 +105,9 @@ export const getAssetLibraryFolderMap = ({
     entry: {
       folder: entryAssetFolder,
       enabled:
-        !!entryAssetFolder && (entryAssetFolder.entryRelative || entryAssetFolder.hasTemplateTags),
+        !!entryAssetFolder &&
+        (entryAssetFolder.entryRelative ||
+          (entryAssetFolder.hasTemplateTags && !isBelowFolder(entryAssetFolder, globalFolder))),
     },
     file: {
       folder: fileAssetFolder,
@@ -107,14 +138,24 @@ export const getAssetLibraryFolderMap = ({
 };
 
 /**
- * Get the default asset library folder for a File/Image field.
+ * Get the default asset library folder for a File/Image field, which a file added to the field is
+ * uploaded to. It’s the first folder enabled in the map, except that a collection or file folder
+ * with template tags, like `{{media_folder}}/{{year}}/{{month}}`, comes before Global Assets: it
+ * isn’t offered in the asset browser, but it’s still where the new files go.
  * @param {AssetLibraryFolderMap} folderMap Asset library folder map.
  * @returns {AssetFolderInfo | undefined} Default asset library folder, or `undefined` if no folder
  * is enabled, which happens when no internal `media_folder` is configured and only an external
  * media library like Cloudinary is used.
  */
-export const getDefaultAssetFolder = (folderMap) =>
-  Object.values(folderMap).find(({ enabled }) => enabled)?.folder;
+export const getDefaultAssetFolder = (folderMap) => {
+  const { field, entry } = folderMap;
+
+  if (!field?.enabled && entry?.folder?.hasTemplateTags) {
+    return entry.folder;
+  }
+
+  return Object.values(folderMap).find(({ enabled }) => enabled)?.folder;
+};
 
 /**
  * Get the folder the field editor puts a newly picked file in, i.e. The default asset library
@@ -274,22 +315,6 @@ export const getFileDisplayPath = ({ draft, value, unsavedFileName }) => {
 };
 
 /**
- * Check if a given path is in the target folder or its subfolders.
- * @param {object} args Arguments.
- * @param {string} args.path Path to check.
- * @param {string | undefined} args.folderPath Target folder path.
- * @returns {boolean} `true` if the path is in the target folder.
- */
-const isInTargetFolder = ({ path, folderPath }) =>
-  folderPath !== undefined &&
-  // An empty path is the repository root, which holds every other path
-  (folderPath === '' ||
-    path === folderPath ||
-    // Handle the case where the target folder is a template with an unresolved placeholder
-    `${path}/-` === folderPath ||
-    path.startsWith(`${folderPath}/`));
-
-/**
  * Check if an asset is in the selected folder.
  * @param {object} args Arguments.
  * @param {Asset} args.asset Asset to check.
@@ -304,8 +329,12 @@ export const isAssetInSelectedFolder = ({ asset, folder, folderPath }) => {
 
   if (!folder.entryRelative) {
     return (
-      asset.folder?.internalPath === folder.internalPath &&
       !asset.folder?.entryRelative &&
+      (asset.folder?.internalPath === folder.internalPath ||
+        // An asset filed under a folder with template tags, like `{{media_folder}}/{{year}}`,
+        // which isn’t offered in the asset browser, is listed by the folder it’s stored below,
+        // e.g. Global Assets
+        (!!asset.folder?.hasTemplateTags && !folder.hasTemplateTags)) &&
       isInTargetFolder({ path: asset.path, folderPath })
     );
   }
