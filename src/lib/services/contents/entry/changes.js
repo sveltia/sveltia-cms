@@ -1,3 +1,4 @@
+import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getArrayItemTarget } from '$lib/services/contents/draft/save/changes';
 import { buildEntryFileChanges } from '$lib/services/contents/draft/save/file-changes';
 import { getEntryLocaleFile } from '$lib/services/contents/entry/paths';
@@ -19,10 +20,12 @@ import { resolveFileConfig } from '$lib/services/contents/file/config';
 
 /**
  * Build a synthetic draft object suitable for {@link formatEntryData} and the field validator.
- * Bulk operations that re-save existing entries — reordering, cascading relation updates — don’t
- * go through the entry editor, so there’s no real draft to serialize with; only the few properties
- * read by the serializer and the validator are needed. The shape is identical for every entry in a
- * given collection, so callers working on a batch should build it once and pass it down to avoid
+ * Bulk operations that re-save existing entries — reordering, cascading relation updates, and
+ * rewriting the references to assets being moved, renamed or deleted — don’t go through the entry
+ * editor, so there’s no real draft to serialize with; only the few properties read by the
+ * serializer and the validator are needed. The fields are those of the index file, if it has its
+ * own, or else of the collection file or the collection. The shape is identical for every entry in
+ * a given collection, so callers working on a batch should build it once and pass it down to avoid
  * per-entry allocations.
  * @param {object} args Arguments.
  * @param {InternalCollection} args.collection Collection the entries belong to.
@@ -36,7 +39,11 @@ export const createSyntheticDraft = ({ collection, collectionFile, isIndexFile =
   collectionName: collection.name,
   collectionFile,
   fileName: collectionFile?.name,
-  fields: collectionFile?.fields ?? /** @type {InternalEntryCollection} */ (collection).fields,
+  // The index file can have fields of its own, which decide the order of its keys, as in the editor
+  fields:
+    (isIndexFile ? getIndexFile(collection)?.fields : undefined) ??
+    collectionFile?.fields ??
+    /** @type {InternalEntryCollection} */ (collection).fields,
   isIndexFile,
 });
 

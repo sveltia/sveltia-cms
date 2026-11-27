@@ -2445,8 +2445,9 @@
  */
 
 /**
- * An entry that references another entry through a Relation field, with its references already
- * updated or removed, along with where it lives so its file(s) can be written back.
+ * An entry that references another entry through a Relation field, or an asset, with its
+ * references already updated or removed, along with where it lives so its file(s) can be written
+ * back.
  * @typedef {object} CascadeTarget
  * @property {Entry} entry Updated entry.
  * @property {InternalCollection} collection Collection the entry belongs to.

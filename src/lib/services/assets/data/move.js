@@ -10,9 +10,7 @@ import { getEntriesByAssets } from '$lib/services/assets/references';
 import { assertOutsideCmsFolders } from '$lib/services/assets/reserved';
 import { saveChanges } from '$lib/services/backends/save';
 import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/data';
-import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
-import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
-import { getSlugs } from '$lib/services/contents/draft/slugs';
+import { buildTargetChanges } from '$lib/services/contents/entry/cascade';
 import { getEntryCollectionContexts } from '$lib/services/contents/entry/contexts';
 import { getReadonlyEntryLabel, isEntryReadonly } from '$lib/services/contents/entry/readonly';
 import { getOrCreate } from '$lib/services/utils/cache';
@@ -23,111 +21,32 @@ import { encodeFilePath, getBaseName } from '$lib/services/utils/file';
  * Asset,
  * AssetFolderInfo,
  * Entry,
- * EntryDraft,
  * FileChange,
- * InternalEntryCollection,
  * MovingAsset,
  * } from '$lib/types/private';
- * @import { CollectionIndexFile } from '$lib/types/public';
  * @import { AssetReferenceTarget } from '$lib/services/assets/references';
  */
 
 /**
- * Get base properties for the entry draft.
- * @param {object} args Arguments.
- * @param {Entry} args.entry Entry to get base properties for.
- * @returns {Partial<EntryDraft>} Base properties for the entry draft.
+ * Collect the changes to write back the entries whose references have been rewritten, the way the
+ * other changes made outside the entry editor, like an asset deletion, are written. Each entry
+ * keeps its ID, so the saved copy replaces the original in the entry list, and its file paths, so
+ * nothing but the references changes. An entry belonging to several collections, as when they
+ * share a folder, is written once, under the first of them.
+ * @param {Entry[]} entries Copies of the entries, with the references rewritten.
+ * @returns {Promise<{ changes: FileChange[], savingEntries: Entry[] }>} Changes to the entries’
+ * files, and the entries to be saved. Both are empty when there is no entry.
+ * @see https://github.com/sveltia/sveltia-cms/issues/1200
  */
-export const getDraftBaseProps = ({ entry }) => {
-  const { locales } = entry;
-  const localeEntries = Object.entries(locales);
-  const originalLocales = Object.fromEntries(localeEntries.map(([locale]) => [locale, true]));
-
-  const originalSlugs = Object.fromEntries(
-    localeEntries.map(([locale, { slug }]) => [locale, slug]),
-  );
-
-  const originalValues = Object.fromEntries(
-    localeEntries.map(([locale, { content }]) => [locale, content]),
-  );
-
-  return {
-    id: entry.id,
-    createdAt: Date.now(),
-    isNew: false,
-    canPreview: true,
-    originalEntry: entry,
-    originalLocales,
-    currentLocales: structuredClone(originalLocales),
-    originalSlugs,
-    currentSlugs: structuredClone(originalSlugs),
-    originalValues,
-    currentValues: structuredClone(originalValues),
-    files: {},
-    validities: {},
-    validationMessages: {},
-    expanderStates: {},
-  };
-};
-
-/**
- * Add saving entry data to the stack.
- * @param {object} args Arguments.
- * @param {Partial<EntryDraft>} args.draftProps Entry draft properties.
- * @param {CollectionIndexFile} [args.indexFile] Index file of the collection.
- * @param {Entry[]} args.savingEntries Entries to be saved. This will be modified.
- * @param {FileChange[]} args.changes File changes to be saved. This will be modified.
- */
-export const addSavingEntryData = async ({ draftProps, indexFile, savingEntries, changes }) => {
-  const { collection, collectionFile } = draftProps;
-
-  const { fields: regularFields = [] } =
-    collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
-
-  const draft = /** @type {EntryDraft} */ ({
-    ...draftProps,
-    fields: indexFile?.fields ?? regularFields,
+export const collectEntryChanges = async (entries) =>
+  buildTargetChanges({
+    targets: entries.flatMap((entry) =>
+      getEntryCollectionContexts(entry)
+        .take(1)
+        .map(({ collection, collectionFile }) => ({ entry, collection, collectionFile }))
+        .toArray(),
+    ),
   });
-
-  const { savingEntry, changes: _changes } = await createSavingEntryData({
-    draft,
-    slugs: getSlugs({ draft }),
-  });
-
-  savingEntries.push(savingEntry);
-  changes.push(..._changes);
-};
-
-/**
- * Collect changes for the given entry.
- * @param {object} args Arguments.
- * @param {Entry} args.entry Entry to collect changes for.
- * @param {Entry[]} args.savingEntries Entries to be saved. This will be modified.
- * @param {FileChange[]} args.changes File changes to be saved. This will be modified.
- */
-export const collectEntryChanges = async ({ entry, savingEntries, changes }) => {
-  const draftBaseProps = getDraftBaseProps({ entry });
-
-  await Promise.all(
-    getEntryCollectionContexts(entry).map(({ collection, collectionFile, isIndexFile }) => {
-      /** @type {Partial<EntryDraft>} */
-      const draftProps = {
-        ...draftBaseProps,
-        collection,
-        collectionName: collection.name,
-        isIndexFile,
-        ...(collectionFile ? { collectionFile, fileName: collectionFile.name } : {}),
-      };
-
-      return addSavingEntryData({
-        draftProps,
-        indexFile: isIndexFile ? getIndexFile(collection) : undefined,
-        savingEntries,
-        changes,
-      });
-    }),
-  );
-};
 
 /**
  * Get the new URL of a moved asset that has no public path, as in an entry-relative folder, by
@@ -341,19 +260,10 @@ export const collectEntryChangesFromAssets = async ({
 export const collectReferenceChanges = async ({ plan, getNewURL }) => {
   /** @type {Map<string, Entry>} */
   const updatingEntryMap = new Map();
-  /** @type {Entry[]} */
-  const savingEntries = [];
-  /** @type {FileChange[]} */
-  const changes = [];
 
   await rewriteEntryReferences({ plan, getNewURL, updatingEntryMap });
-  await Promise.all(
-    [...updatingEntryMap.values()].map((entry) =>
-      collectEntryChanges({ entry, savingEntries, changes }),
-    ),
-  );
 
-  return { savingEntries, changes };
+  return collectEntryChanges([...updatingEntryMap.values()]);
 };
 
 /**
@@ -438,8 +348,6 @@ export const moveAssets = async (
   const _globalAssetFolder = globalAssetFolder.current;
   /** @type {FileChange[]} */
   const changes = [];
-  /** @type {Entry[]} */
-  const savingEntries = [];
   /** @type {Asset[]} */
   const savingAssets = [];
   /** @type {Map<string, Entry>} */
@@ -456,14 +364,12 @@ export const moveAssets = async (
 
   await collectEntryChangesFromAssets({ _globalAssetFolder, movingAssets, updatingEntryMap });
 
-  await Promise.all(
-    [...updatingEntryMap.values()].map((entry) =>
-      collectEntryChanges({ entry, savingEntries, changes }),
-    ),
-  );
+  const { changes: entryChanges, savingEntries } = await collectEntryChanges([
+    ...updatingEntryMap.values(),
+  ]);
 
   await saveChanges({
-    changes: [...changes, ...extraChanges],
+    changes: [...changes, ...entryChanges, ...extraChanges],
     savingEntries,
     savingAssets,
     options: { commitType: 'uploadMedia' },

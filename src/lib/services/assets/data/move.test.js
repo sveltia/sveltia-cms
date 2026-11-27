@@ -4,11 +4,9 @@ import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { cmsConfig } from '$lib/services/config';
 
 import {
-  addSavingEntryData,
   collectEntryChanges,
   collectEntryChangesFromAssets,
   collectReferenceChanges,
-  getDraftBaseProps,
   moveAssets,
   planReferenceRewrite,
   saveReferenceChanges,
@@ -99,12 +97,21 @@ vi.mock('$lib/services/contents/collection/entries/index-file', () => ({
   isCollectionIndexFile: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/draft/save/changes', () => ({
-  createSavingEntryData: vi.fn(),
+const { fakeBuildTargetChanges } = vi.hoisted(() => ({
+  /**
+   * Stand-in for `buildTargetChanges`, which writes back each target entry as it is, with one
+   * change per entry.
+   * @param {{ targets: any[] }} args Arguments.
+   * @returns {Promise<{ changes: any[], savingEntries: any[] }>} Changes and entries.
+   */
+  fakeBuildTargetChanges: async ({ targets }) => ({
+    changes: targets.map(({ entry }) => ({ action: 'update', path: `${entry.id}.md` })),
+    savingEntries: targets.map(({ entry }) => entry),
+  }),
 }));
 
-vi.mock('$lib/services/contents/draft/slugs', () => ({
-  getSlugs: vi.fn(),
+vi.mock('$lib/services/contents/entry/cascade', () => ({
+  buildTargetChanges: vi.fn(fakeBuildTargetChanges),
 }));
 
 vi.mock('$lib/services/contents/entry/collections', () => ({
@@ -121,435 +128,57 @@ vi.mock('@sveltia/utils/file', () => ({
 }));
 
 describe('assets/data/move', () => {
-  describe('getDraftBaseProps', () => {
-    it('should return draft properties with original entry', () => {
-      const entry = {
-        id: 'test-post-id',
-        slug: 'test-post',
-        collectionName: 'blog',
-        fileName: 'post.md',
-        subPath: '',
-        locales: {
-          en: {
-            path: '/content/blog/test-post.md',
-            sha: 'abc123',
-            slug: 'test-post',
-            content: { title: 'Test Post' },
-          },
-        },
-      };
-
-      const result = getDraftBaseProps({ entry });
-
-      // The saved entry replaces the original in the list by its ID
-      expect(result.id).toBe('test-post-id');
-      expect(result.originalEntry).toBe(entry);
-      expect(result.isNew).toBe(false);
-      expect(result.originalLocales).toEqual({ en: true });
-      expect(result.currentLocales).toEqual({ en: true });
-      expect(result.originalSlugs).toEqual({ en: 'test-post' });
-      expect(result.currentSlugs).toEqual({ en: 'test-post' });
-      expect(result.originalValues).toEqual({ en: { title: 'Test Post' } });
-      expect(result.currentValues).toEqual({ en: { title: 'Test Post' } });
-      expect(typeof result.createdAt).toBe('number');
-      expect(result.files).toEqual({});
-      expect(result.validities).toEqual({});
-      expect(result.expanderStates).toEqual({});
-    });
-
-    it('should handle entry without locales', () => {
-      const entry = {
-        id: 'test-post-id',
-        slug: 'test-post',
-        collectionName: 'blog',
-        fileName: 'post.md',
-        subPath: '',
-        locales: {},
-      };
-
-      const result = getDraftBaseProps({ entry });
-
-      expect(result.originalEntry).toBe(entry);
-      expect(result.originalLocales).toEqual({});
-      expect(result.currentLocales).toEqual({});
-      expect(result.originalSlugs).toEqual({});
-      expect(result.currentSlugs).toEqual({});
-    });
-
-    it('should handle entry with multiple locales', () => {
-      const entry = {
-        id: 'test-post-id',
-        slug: 'test-post',
-        collectionName: 'blog',
-        fileName: 'post.md',
-        subPath: '',
-        locales: {
-          en: {
-            path: '/content/blog/en/test-post.md',
-            sha: 'abc123',
-            slug: 'test-post-en',
-            content: { title: 'Test Post EN' },
-          },
-          es: {
-            path: '/content/blog/es/test-post.md',
-            sha: 'def456',
-            slug: 'test-post-es',
-            content: { title: 'Test Post ES' },
-          },
-        },
-      };
-
-      const result = getDraftBaseProps({ entry });
-
-      expect(result.originalLocales).toEqual({ en: true, es: true });
-      expect(result.originalSlugs).toEqual({ en: 'test-post-en', es: 'test-post-es' });
-      expect(result.originalValues).toEqual({
-        en: { title: 'Test Post EN' },
-        es: { title: 'Test Post ES' },
-      });
-    });
-  });
-
-  describe('addSavingEntryData', () => {
-    beforeEach(() => {
-      vi.clearAllMocks();
-    });
-
-    it('should add saving entry data with regular fields', async () => {
-      const mockSavingEntry = /** @type {import('$lib/types/private').Entry} */ ({
-        id: 'test-entry',
-        slug: 'test-slug',
-        subPath: 'test.md',
-        locales: {
-          en: {
-            path: 'content/test.md',
-            sha: 'abc123',
-            slug: 'test-slug',
-            content: { title: 'Test' },
-          },
-        },
-      });
-
-      const mockChanges = /** @type {import('$lib/types/private').FileChange[]} */ ([
-        { action: 'create', path: 'test.md', data: 'content', sha: undefined },
-      ]);
-
-      const { createSavingEntryData } = await import('$lib/services/contents/draft/save/changes');
-      const { getSlugs } = await import('$lib/services/contents/draft/slugs');
-
-      vi.mocked(createSavingEntryData).mockResolvedValue({
-        savingEntry: mockSavingEntry,
-        changes: mockChanges,
-      });
-      vi.mocked(getSlugs).mockReturnValue({ default: 'test-slug' });
-
-      const draftProps = {
-        collection: {
-          fields: [{ name: 'title', widget: 'string' }],
-        },
-        collectionFile: undefined,
-      };
-
-      /** @type {import('$lib/types/private').Entry[]} */
-      const savingEntries = [];
-      /** @type {import('$lib/types/private').FileChange[]} */
-      const changes = [];
-
-      await addSavingEntryData({
-        draftProps,
-        indexFile: undefined,
-        savingEntries,
-        changes,
-      });
-
-      expect(savingEntries).toContain(mockSavingEntry);
-      expect(changes).toEqual(mockChanges);
-      expect(createSavingEntryData).toHaveBeenCalledWith({
-        draft: expect.objectContaining({
-          ...draftProps,
-          fields: draftProps.collection.fields,
-        }),
-        slugs: { default: 'test-slug' },
-      });
-    });
-
-    it('should use index file fields when available', async () => {
-      const { createSavingEntryData } = await import('$lib/services/contents/draft/save/changes');
-      const { getSlugs } = await import('$lib/services/contents/draft/slugs');
-
-      vi.mocked(createSavingEntryData).mockResolvedValue({
-        savingEntry: /** @type {import('$lib/types/private').Entry} */ ({
-          id: 'test',
-          slug: 'test',
-          subPath: 'test.md',
-          locales: {},
-        }),
-        changes: [],
-      });
-      vi.mocked(getSlugs).mockReturnValue({});
-
-      const draftProps = {
-        collection: {
-          fields: [{ name: 'title', widget: 'string' }],
-        },
-        collectionFile: {
-          fields: [{ name: 'description', widget: 'text' }],
-        },
-      };
-
-      const indexFile = {
-        fields: [{ name: 'custom', widget: 'string' }],
-      };
-
-      /** @type {import('$lib/types/private').Entry[]} */
-      const savingEntries = [];
-      /** @type {import('$lib/types/private').FileChange[]} */
-      const changes = [];
-
-      await addSavingEntryData({
-        draftProps,
-        indexFile,
-        savingEntries,
-        changes,
-      });
-
-      expect(createSavingEntryData).toHaveBeenCalledWith({
-        draft: expect.objectContaining({
-          fields: indexFile.fields,
-        }),
-        slugs: {},
-      });
-    });
-
-    it('should use regularFields when indexFile exists but has no fields', async () => {
-      const { createSavingEntryData } = await import('$lib/services/contents/draft/save/changes');
-      const { getSlugs } = await import('$lib/services/contents/draft/slugs');
-
-      vi.mocked(createSavingEntryData).mockResolvedValue({
-        savingEntry: /** @type {import('$lib/types/private').Entry} */ ({
-          id: 'test',
-          slug: 'test',
-          subPath: 'test.md',
-          locales: {},
-        }),
-        changes: [],
-      });
-      vi.mocked(getSlugs).mockReturnValue({});
-
-      const regularFields = [{ name: 'title', widget: 'string' }];
-
-      const draftProps = {
-        collection: {
-          fields: regularFields,
-        },
-        collectionFile: undefined,
-      };
-
-      const indexFile = {
-        fields: undefined,
-      };
-
-      /** @type {import('$lib/types/private').Entry[]} */
-      const savingEntries = [];
-      /** @type {import('$lib/types/private').FileChange[]} */
-      const changes = [];
-
-      await addSavingEntryData({
-        draftProps,
-        indexFile,
-        savingEntries,
-        changes,
-      });
-
-      // Should use regularFields when indexFile.fields is undefined
-      expect(createSavingEntryData).toHaveBeenCalledWith({
-        draft: expect.objectContaining({
-          fields: regularFields,
-        }),
-        slugs: {},
-      });
-    });
-
-    it('should use collectionFile fields when collectionFile has no fields property', async () => {
-      const { createSavingEntryData } = await import('$lib/services/contents/draft/save/changes');
-      const { getSlugs } = await import('$lib/services/contents/draft/slugs');
-
-      vi.mocked(createSavingEntryData).mockResolvedValue({
-        savingEntry: /** @type {import('$lib/types/private').Entry} */ ({
-          id: 'test',
-          slug: 'test',
-          subPath: 'test.md',
-          locales: {},
-        }),
-        changes: [],
-      });
-      vi.mocked(getSlugs).mockReturnValue({});
-
-      const collectionFileData = {
-        name: 'config',
-      };
-
-      const draftProps = {
-        collection: {
-          fields: [{ name: 'fallback', widget: 'string' }],
-        },
-        collectionFile: collectionFileData,
-      };
-
-      /** @type {import('$lib/types/private').Entry[]} */
-      const savingEntries = [];
-      /** @type {import('$lib/types/private').FileChange[]} */
-      const changes = [];
-
-      await addSavingEntryData({
-        draftProps,
-        indexFile: undefined,
-        savingEntries,
-        changes,
-      });
-
-      // Should use collectionFile which has no fields property, defaulting to []
-      expect(createSavingEntryData).toHaveBeenCalledWith({
-        draft: expect.objectContaining({
-          fields: [],
-        }),
-        slugs: {},
-      });
-    });
-  });
-
   describe('collectEntryChanges', () => {
     beforeEach(() => {
       vi.clearAllMocks();
     });
 
-    it('should collect changes for associated collections', async () => {
+    it('writes each entry back once, under the first collection it belongs to', async () => {
+      const { buildTargetChanges } = await import('$lib/services/contents/entry/cascade');
       const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
       const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
+      const entry = { id: 'evening', locales: { en: { path: 'content/notes/evening.md' } } };
+      const notes = { name: 'notes' };
+      const journal = { name: 'journal' };
 
-      const { isCollectionIndexFile, getIndexFile } =
-        await import('$lib/services/contents/collection/entries/index-file');
-
-      const mockEntry = {
-        id: 'test-entry',
-        locales: {
-          en: { path: 'content/test.md', content: {} },
-        },
-      };
-
-      const mockCollection = {
-        name: 'posts',
-        editor: { preview: true },
-      };
-
-      vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
+      // Two collections share the folder the entry is in
+      vi.mocked(getAssociatedCollections).mockReturnValue([notes, journal]);
       vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
-      vi.mocked(isCollectionIndexFile).mockReturnValue(false);
-      vi.mocked(getIndexFile).mockReturnValue(undefined);
 
-      const savingEntries = [];
-      const changes = [];
-      const _cmsConfig = { editor: { preview: true } };
-
-      // Test that the function completes without error
-      await expect(
-        collectEntryChanges({
-          _cmsConfig,
-          entry: mockEntry,
-          savingEntries,
-          changes,
-        }),
-      ).resolves.not.toThrow();
-
-      expect(getAssociatedCollections).toHaveBeenCalledWith(mockEntry);
+      // What the shared path returns is passed on as it is
+      await expect(collectEntryChanges([entry])).resolves.toEqual({
+        changes: [{ action: 'update', path: 'evening.md' }],
+        savingEntries: [entry],
+      });
+      expect(buildTargetChanges).toHaveBeenCalledExactlyOnceWith({
+        targets: [{ entry, collection: notes, collectionFile: undefined }],
+      });
     });
 
-    it('should handle collection files', async () => {
+    it('writes an entry of a file collection back under its collection file', async () => {
+      const { buildTargetChanges } = await import('$lib/services/contents/entry/cascade');
       const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
       const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
+      const entry = { id: 'general', locales: { en: { path: 'data/general.yml' } } };
+      const settings = { name: 'settings' };
+      const general = { name: 'general' };
 
-      const { isCollectionIndexFile } =
-        await import('$lib/services/contents/collection/entries/index-file');
+      vi.mocked(getAssociatedCollections).mockReturnValue([settings]);
+      vi.mocked(getCollectionFilesByEntry).mockReturnValue([general, { name: 'copy' }]);
 
-      const mockEntry = {
-        id: 'test-entry',
-        locales: {
-          en: { path: 'content/test.md', content: {} },
-        },
-      };
+      await collectEntryChanges([entry]);
 
-      const mockCollection = {
-        name: 'settings',
-      };
-
-      const mockCollectionFile = {
-        name: 'general',
-        fields: [],
-      };
-
-      vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
-      vi.mocked(getCollectionFilesByEntry).mockReturnValue([mockCollectionFile]);
-      vi.mocked(isCollectionIndexFile).mockReturnValue(false);
-
-      const savingEntries = [];
-      const changes = [];
-      const _cmsConfig = {};
-
-      // Test that the function completes without error
-      await expect(
-        collectEntryChanges({
-          _cmsConfig,
-          entry: mockEntry,
-          savingEntries,
-          changes,
-        }),
-      ).resolves.not.toThrow();
-
-      expect(getAssociatedCollections).toHaveBeenCalledWith(mockEntry);
-      expect(getCollectionFilesByEntry).toHaveBeenCalledWith(mockCollection, mockEntry);
+      expect(getCollectionFilesByEntry).toHaveBeenCalledWith(settings, entry);
+      expect(buildTargetChanges).toHaveBeenCalledExactlyOnceWith({
+        targets: [{ entry, collection: settings, collectionFile: general }],
+      });
     });
 
-    it('should call getIndexFile when entry is an index file (line 111 true branch)', async () => {
-      const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
-      const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
+    it('collects nothing for no entries', async () => {
+      const { buildTargetChanges } = await import('$lib/services/contents/entry/cascade');
 
-      const { isCollectionIndexFile, getIndexFile } =
-        await import('$lib/services/contents/collection/entries/index-file');
-
-      const mockEntry = {
-        id: 'index-entry',
-        locales: {
-          en: { path: 'content/blog/_index.md', content: {} },
-        },
-      };
-
-      const mockCollection = {
-        name: 'blog',
-        editor: { preview: true },
-      };
-
-      const mockIndexFile = { name: '_index', format: 'yaml-frontmatter' };
-
-      vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
-      vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
-      // isIndexFile = true → indexFile = getIndexFile(collection) branch is taken
-      vi.mocked(isCollectionIndexFile).mockReturnValue(true);
-      vi.mocked(getIndexFile).mockReturnValue(mockIndexFile);
-
-      const savingEntries = [];
-      const changes = [];
-      const _cmsConfig = {};
-
-      await expect(
-        collectEntryChanges({
-          _cmsConfig,
-          entry: mockEntry,
-          savingEntries,
-          changes,
-        }),
-      ).resolves.not.toThrow();
-
-      expect(getIndexFile).toHaveBeenCalledWith(mockCollection);
+      await expect(collectEntryChanges([])).resolves.toEqual({ changes: [], savingEntries: [] });
+      expect(buildTargetChanges).toHaveBeenCalledExactlyOnceWith({ targets: [] });
     });
   });
 
@@ -1020,15 +649,15 @@ describe('assets/data/move', () => {
       const { getEntriesByAssets } = await import('$lib/services/assets/references');
       const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
       const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
-      const { createSavingEntryData } = await import('$lib/services/contents/draft/save/changes');
+      const { buildTargetChanges } = await import('$lib/services/contents/entry/cascade');
       const entry = { id: 'evening', locales: { en: { slug: 'evening', content: {} } } };
       const change = { action: 'update', path: 'content/posts/evening.md', data: '' };
 
       vi.mocked(getEntriesByAssets).mockResolvedValueOnce([]);
       vi.mocked(getAssociatedCollections).mockReturnValue([{ name: 'posts', fields: [] }]);
       vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
-      vi.mocked(createSavingEntryData).mockResolvedValue({
-        savingEntry: { id: 'evening' },
+      vi.mocked(buildTargetChanges).mockResolvedValueOnce({
+        savingEntries: [{ id: 'evening' }],
         changes: [change],
       });
 
@@ -1071,7 +700,7 @@ describe('assets/data/move', () => {
       const { getEntriesByAssets } = await import('$lib/services/assets/references');
       const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
       const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
-      const { createSavingEntryData } = await import('$lib/services/contents/draft/save/changes');
+      const { buildTargetChanges } = await import('$lib/services/contents/entry/cascade');
       const entry = { id: 'evening', locales: { en: { slug: 'evening', content: {} } } };
       const entryChange = { action: 'update', path: 'content/posts/evening.md', data: '' };
       const fileChange = { action: 'delete', path: 'static/a.png' };
@@ -1080,8 +709,8 @@ describe('assets/data/move', () => {
       vi.mocked(getEntriesByAssets).mockResolvedValueOnce([]);
       vi.mocked(getAssociatedCollections).mockReturnValue([{ name: 'posts', fields: [] }]);
       vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
-      vi.mocked(createSavingEntryData).mockResolvedValue({
-        savingEntry: { id: 'evening' },
+      vi.mocked(buildTargetChanges).mockResolvedValueOnce({
+        savingEntries: [{ id: 'evening' }],
         changes: [entryChange],
       });
 
@@ -1281,9 +910,13 @@ describe('assets/data/move', () => {
   });
 
   describe('moveAssets', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       // The implementations the tests above gave the mocks must not leak into these
       vi.resetAllMocks();
+
+      const { buildTargetChanges } = await import('$lib/services/contents/entry/cascade');
+
+      vi.mocked(buildTargetChanges).mockImplementation(fakeBuildTargetChanges);
     });
 
     it('refuses to move a file into or out of a folder the CMS is served from', async () => {

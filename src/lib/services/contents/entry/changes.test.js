@@ -60,6 +60,28 @@ describe('createSyntheticDraft()', () => {
   });
 });
 
+describe('createSyntheticDraft() with an index file', () => {
+  test('uses the fields of the index file', () => {
+    const collection = {
+      name: 'blog',
+      fields: [{ name: 'title' }],
+      index_file: { fields: [{ name: 'banner' }] },
+    };
+
+    expect(createSyntheticDraft({ collection, isIndexFile: true }).fields).toEqual([
+      { name: 'banner' },
+    ]);
+    // Only the index file has them
+    expect(createSyntheticDraft({ collection }).fields).toBe(collection.fields);
+  });
+
+  test('falls back to the collection fields for an index file without its own', () => {
+    const collection = { name: 'blog', fields: [{ name: 'title' }], index_file: true };
+
+    expect(createSyntheticDraft({ collection, isIndexFile: true }).fields).toBe(collection.fields);
+  });
+});
+
 describe('buildEntryUpdateChanges()', () => {
   test('produces one change for a single-file entry', async () => {
     const collection = {

@@ -25,8 +25,6 @@ import RenameDialog from './rename-dialog.svelte';
 vi.mock('$lib/services/assets/data/move', async (importOriginal) => ({
   // The message is worked out by the real function, with the mocked read-only checks below
   getMoveBlockedMessage: /** @type {any} */ (await importOriginal()).getMoveBlockedMessage,
-  getDraftBaseProps: vi.fn(),
-  addSavingEntryData: vi.fn(),
   collectEntryChanges: vi.fn(),
   collectEntryChangesFromAssets: vi.fn(),
   updateStores: vi.fn(),

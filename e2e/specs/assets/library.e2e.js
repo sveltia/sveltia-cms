@@ -445,6 +445,54 @@ test('renames an asset two entries use, and lists each entry once', async ({ cms
   await expect(getEntryRows(page)).toHaveCount(2);
 });
 
+test.describe('with two collections sharing a folder', () => {
+  test.use({
+    config: {
+      ...MEDIA_CONFIG,
+      collections: [
+        ...MEDIA_CONFIG.collections,
+        {
+          name: 'journal',
+          label: 'Journal',
+          folder: 'content/notes',
+          fields: [
+            { name: 'title', label: 'Title' },
+            { name: 'cover', label: 'Cover', widget: 'image', required: false },
+          ],
+        },
+      ],
+    },
+  });
+
+  test('renames an asset, and writes the entry both collections list once', async ({
+    cms,
+    page,
+  }) => {
+    await openFolder(page, /Global Assets/);
+    await page.getByRole('row', { name: 'sunset.png' }).click();
+    await cms.chooseMenuItem(
+      page.getByRole('button', { name: 'Show Edit Options' }),
+      page.getByRole('menuitem', { name: 'Rename Asset' }),
+    );
+
+    const dialog = page.getByRole('dialog', { name: /Rename.*sunset\.png/ });
+
+    await dialog.getByRole('textbox').fill('dusk.png');
+    await dialog.getByRole('button', { name: 'Rename' }).click();
+    await expect.poll(() => listedAssets(page)).toContain('dusk.png');
+    expect((await cms.readRepo())['content/notes/evening.md']).toBe(
+      '---\ntitle: Evening\ncover: /uploads/dusk.png\n---\n',
+    );
+
+    // The entry is saved once, under the first collection, so neither lists it twice
+    await page.getByRole('radio', { name: 'Contents' }).click();
+    await openCollection(page, 'Notes');
+    await expect(getEntryRows(page)).toHaveCount(1);
+    await openCollection(page, 'Journal');
+    await expect(getEntryRows(page)).toHaveCount(1);
+  });
+});
+
 test('replaces an asset with another file', async ({ cms, page }) => {
   const newForest = createPNG({ color: [0, 200, 0] });
 
