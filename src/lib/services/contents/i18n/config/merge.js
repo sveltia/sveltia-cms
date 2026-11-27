@@ -1,5 +1,7 @@
 import { isObject } from '@sveltia/utils/object';
 
+import { isSingletonCollection } from '$lib/services/contents/collection/predicates';
+
 /**
  * @import { InternalSingletonCollection } from '$lib/types/private';
  * @import {
@@ -30,11 +32,12 @@ export const mergeI18nConfigs = ({ cmsConfig, collection, file }) => {
   }
 
   const config = structuredClone(/** @type {I18nOptions} */ (siteConfig));
-  const { name, i18n: collectionI18n } = /** @type {Collection} */ (collection);
+  const _collection = /** @type {Collection} */ (collection);
+  const { i18n: collectionI18n } = _collection;
 
   // Check if the collection has its own i18n configuration. The singleton collection doesn’t have
   // its own i18n configuration, so it will inherit the global one if defined.
-  if (!collectionI18n && name !== '_singletons') {
+  if (!collectionI18n && !isSingletonCollection(_collection)) {
     return undefined;
   }
 

@@ -9,6 +9,7 @@
   import { createAssetDropTarget } from '$lib/services/assets/drag';
   import { assetsLocked, selectedAssetFolder } from '$lib/services/assets/folders';
   import { isCmsFolderPath } from '$lib/services/assets/reserved';
+  import { getAssetLibraryPath } from '$lib/services/assets/route';
   import { focusedAsset } from '$lib/services/assets/state';
   import {
     deletingSubfolder,
@@ -16,7 +17,6 @@
     renamingSubfolder,
   } from '$lib/services/assets/subfolders';
   import { env } from '$lib/services/user/env.svelte';
-  import { encodePathSegments } from '$lib/services/utils/url';
 
   /**
    * @import { AssetSubfolder, ViewType } from '$lib/types/private';
@@ -37,7 +37,7 @@
    * from the sidebar, so the page can tell it from another folder sharing its path.
    */
   const open = () => {
-    goto(encodePathSegments(`/assets/${subfolder.path}`), {
+    goto(getAssetLibraryPath(subfolder.path), {
       transitionType: 'forwards',
       state: { folder: selectedAssetFolder.current },
     });

@@ -15,10 +15,21 @@ vi.mock('$lib/services/contents/collection', () => ({
   getValidCollections: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/collection/predicates', () => ({
-  getValidCollectionFiles: vi.fn(),
-  isValidCollectionFile: vi.fn(),
-}));
+vi.mock('$lib/services/contents/collection/predicates', () => {
+  const getValidCollectionFiles = vi.fn();
+
+  return {
+    getValidCollectionFiles,
+    /**
+     * Delegate to the mock above, as the real function does.
+     * @param {unknown} singletons Value of the `singletons` option.
+     * @returns {any[]} Files.
+     */
+    getValidSingletonFiles: (singletons) =>
+      Array.isArray(singletons) ? getValidCollectionFiles(singletons) : [],
+    isValidCollectionFile: vi.fn(),
+  };
+});
 
 vi.mock('$lib/services/contents/i18n', () => ({
   getLocalePath: vi.fn((args) => args.path.replace('{{locale}}', args.locale)),

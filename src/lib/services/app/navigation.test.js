@@ -6,7 +6,6 @@ import { showContentOverlay } from '$lib/services/contents/editor';
 import { encodePathSegments } from '$lib/services/utils/url';
 
 import {
-  getEntryEditorBackPath,
   goBack,
   goto,
   hasOverlay,
@@ -1091,29 +1090,69 @@ describe('navigation', () => {
       );
     });
 
-    it('should use history.back() when history state has from property', () => {
-      // Mock history with state
+    it('should use history.back() when the previous page in the history state matches', () => {
+      const back = vi.fn();
+
       Object.defineProperty(window, 'history', {
         value: {
           pushState: vi.fn(),
           replaceState: vi.fn(),
-          back: vi.fn(),
+          back,
           state: { from: 'https://example.com/#/collections' },
         },
         writable: true,
         configurable: true,
       });
 
-      const mockStartViewTransition = vi.fn();
+      goBack('/collections');
+      /** @type {any} */ (document.startViewTransition).mock.calls[0][0].update();
 
-      document.startViewTransition = mockStartViewTransition;
+      expect(back).toHaveBeenCalled();
+      expect(window.history.pushState).not.toHaveBeenCalled();
+    });
 
-      goBack('/default');
+    it('should go back to a previous page in the history state that `returnTo` accepts', () => {
+      const back = vi.fn();
 
-      expect(mockStartViewTransition).toHaveBeenCalledWith({
-        types: ['backwards'],
-        update: expect.any(Function),
+      Object.defineProperty(window, 'history', {
+        value: {
+          pushState: vi.fn(),
+          replaceState: vi.fn(),
+          back,
+          state: { from: 'https://example.com/#/search/hello' },
+        },
+        writable: true,
+        configurable: true,
       });
+
+      goBack('/collections/posts', { returnTo: vi.fn((path) => path === '/search/hello') });
+      /** @type {any} */ (document.startViewTransition).mock.calls[0][0].update();
+
+      expect(back).toHaveBeenCalled();
+    });
+
+    it('should navigate to the fallback path when the previous page in the history state differs', () => {
+      const back = vi.fn();
+
+      Object.defineProperty(window, 'history', {
+        value: {
+          pushState: vi.fn(),
+          replaceState: vi.fn(),
+          back,
+          state: { from: 'https://example.com/#/collections/posts/entries/hello' },
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      goBack('/collections/posts');
+
+      expect(back).not.toHaveBeenCalled();
+      expect(window.history.pushState).toHaveBeenCalledWith(
+        { from: 'https://example.com/#/collections' },
+        '',
+        'https://example.com/#/collections/posts',
+      );
     });
 
     it('should navigate to fallback path when no history state', async () => {
@@ -1674,7 +1713,7 @@ describe('navigation', () => {
 
       document.startViewTransition = vi.fn().mockReturnValue(mockTransition);
 
-      goBack('/default');
+      goBack('/collections');
 
       const callArgs = /** @type {any} */ (document.startViewTransition).mock.calls[0]?.[0];
 
@@ -1685,27 +1724,6 @@ describe('navigation', () => {
       expect(mockHistoryBack).toHaveBeenCalled();
 
       await mockTransition.finished;
-    });
-  });
-
-  describe('getEntryEditorBackPath', () => {
-    it('returns the collections list for a singleton file', () => {
-      expect(getEntryEditorBackPath({ collectionName: '_singletons', dirPath: 'a' })).toBe(
-        '/collections',
-      );
-    });
-
-    it('returns the collection entries list', () => {
-      expect(getEntryEditorBackPath({ collectionName: 'posts' })).toBe('/collections/posts');
-      expect(getEntryEditorBackPath({ collectionName: 'posts', dirPath: '' })).toBe(
-        '/collections/posts',
-      );
-    });
-
-    it('returns the folder being browsed in a collection with nested entries, encoded', () => {
-      expect(
-        getEntryEditorBackPath({ collectionName: 'docs', dirPath: 'guides/getting started' }),
-      ).toBe('/collections/docs/filter/guides/getting%20started');
     });
   });
 });

@@ -1,6 +1,7 @@
 import { _ } from '@sveltia/i18n';
 
 import { getRootDir } from '$lib/services/backends/root-dir';
+import { SINGLETONS_COLLECTION_NAME } from '$lib/services/contents/collection/constants';
 
 /**
  * @import {
@@ -42,7 +43,7 @@ const countLevelsUp = (path) => {
  */
 const getEntryDepth = (config, { collectionName, fileName }) => {
   // A file is where it’s configured to be
-  if (fileName || collectionName === '_singletons') {
+  if (fileName || collectionName === SINGLETONS_COLLECTION_NAME) {
     return 0;
   }
 

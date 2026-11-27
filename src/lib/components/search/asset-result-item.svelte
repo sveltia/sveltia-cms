@@ -4,8 +4,8 @@
 
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import { goto } from '$lib/services/app/navigation';
+  import { getAssetLibraryPath } from '$lib/services/assets/route';
   import { getFolderLabelByCollection } from '$lib/services/assets/view';
-  import { encodePathSegments } from '$lib/services/utils/url';
 
   /**
    * @import { Asset } from '$lib/types/private';
@@ -24,7 +24,7 @@
 
 <GridRow
   onclick={() => {
-    goto(encodePathSegments(`/assets/${path}`), { transitionType: 'forwards' });
+    goto(getAssetLibraryPath(path), { transitionType: 'forwards' });
   }}
 >
   <GridCell class="image">

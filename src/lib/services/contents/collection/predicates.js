@@ -1,3 +1,5 @@
+import { SINGLETONS_COLLECTION_NAME } from '$lib/services/contents/collection/constants';
+
 /**
  * @import {
  * CollectionType,
@@ -40,7 +42,7 @@ export const isFileCollection = (collection) =>
  * @returns {collection is FileCollection} Whether the collection is a singleton collection.
  */
 export const isSingletonCollection = (collection) =>
-  isFileCollection(collection) && collection.name === '_singletons';
+  isFileCollection(collection) && collection.name === SINGLETONS_COLLECTION_NAME;
 
 /**
  * Check if the given collection is an entry collection storing all the entries in one file, defined
@@ -104,3 +106,12 @@ export const isValidCollectionFile = (file) =>
  */
 export const getValidCollectionFiles = (files) =>
   /** @type {CollectionFile[]} */ (files.filter((file) => isValidCollectionFile(file)));
+
+/**
+ * Get a list of valid singleton files from the `singletons` root option, which may be missing or
+ * not an array in a config that hasn’t passed validation.
+ * @param {unknown} singletons Value of the `singletons` option.
+ * @returns {CollectionFile[]} List of valid singleton files.
+ */
+export const getValidSingletonFiles = (singletons) =>
+  Array.isArray(singletons) ? getValidCollectionFiles(singletons) : [];

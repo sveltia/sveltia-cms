@@ -6,7 +6,7 @@ import {
   getCollectionLabel,
   getFirstCollection,
   getSingletonCollection,
-  getValidCollections,
+  hasSingletonList,
   selectedCollection,
 } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
@@ -19,10 +19,12 @@ import {
   isNestedFolder,
   nestedFilterPath,
 } from '$lib/services/contents/collection/nested';
+import { isSingletonCollection } from '$lib/services/contents/collection/predicates';
 import { listedEntries } from '$lib/services/contents/collection/view';
 import { createDraft } from '$lib/services/contents/draft/create';
 import { refreshOpenedDraft } from '$lib/services/contents/draft/reload';
 import { showContentOverlay } from '$lib/services/contents/editor';
+import { getCollectionPath, parseContentsPath } from '$lib/services/contents/editor/route';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { isSearchRoute } from '$lib/services/search/navigation';
 import { env } from '$lib/services/user/env.svelte';
@@ -36,6 +38,7 @@ import {
 
 /**
  * @import { EntryDraftState } from '$lib/services/contents/draft/state.svelte';
+ * @import { ContentsRoute } from '$lib/services/contents/editor/route';
  * @import {
  * InternalCollection,
  * InternalCollectionFile,
@@ -66,17 +69,11 @@ import {
  * @property {InternalCollection} collection Collection named in the route.
  * @property {string} collectionName Name of the selected collection.
  * @property {string} collectionLabel Label of the selected collection.
- * @property {string | undefined} routeType Route type: `new`, `entries` or `filter`.
- * @property {string | undefined} subPath Path following the collection name or route type.
+ * @property {ContentsRoute['view']} view What the route shows.
+ * @property {string | undefined} subPath Path following the route type.
  * @property {number} [pullRequestNumber] Number of the pull request from a contributor’s fork the
  * entry is to be opened from, given in the URL params, e.g. `?_pr=12`.
  */
-
-/**
- * Regular expression matching the routes of the Content Library page.
- */
-export const CONTENTS_ROUTE_REGEX =
-  /^\/collections(?:\/(?<_collectionName>[^/]+)(?:\/(?<routeType>new|entries|filter))?(?:\/(?<subPath>.+?))?)?$/;
 
 /**
  * Hide the content editor and show the Not Found view with the given message.
@@ -152,7 +149,7 @@ const resolveCollectionIndexRoute = (state) => {
   // Redirect to the selected, first or singleton collection
   const collection = selectedCollection.current || getFirstCollection() || getSingletonCollection();
 
-  goto(`/collections/${collection?.name}`, { replaceState: true });
+  goto(getCollectionPath(collection?.name), { replaceState: true });
 
   return state;
 };
@@ -184,11 +181,11 @@ const resolveListingRoute = ({
   collection,
   collectionName,
   collectionLabel,
-  routeType,
+  view,
   subPath,
 }) => {
   if (
-    routeType === 'filter' &&
+    view === 'folder' &&
     !isNestedFolder({
       collection,
       // A folder that only exists in a pull request is listed in the sidebar tree, so it has to
@@ -217,7 +214,7 @@ const resolveListingRoute = ({
   // A folder of nested entries is browsed at `/collections/{name}/filter/{path}`, while the
   // collection route itself always shows the root folder. The editor routes leave the folder
   // alone, so closing the editor returns the user to where they were.
-  nestedFilterPath.current = routeType === 'filter' ? (subPath ?? '') : '';
+  nestedFilterPath.current = view === 'folder' ? (subPath ?? '') : '';
   showContentOverlay.current = false;
   announcedPageStatus.current = _('viewing_x_collection', {
     values: { collection: collectionLabel, count: listedEntries.current.length },
@@ -239,16 +236,17 @@ const resolveFileRoute = ({
   collection,
   collectionName,
   collectionLabel,
-  routeType,
-  subPath,
+  view,
+  subPath: _subPath,
   pullRequestNumber,
   fileMap,
 }) => {
-  if (routeType !== 'entries' || !subPath) {
+  if (view !== 'entry') {
     // A file collection has no `new` route, and `entries` needs a file name
     return clearEditor(state, entryDraft, 'file_not_found');
   }
 
+  const subPath = /** @type {string} */ (_subPath);
   // The file name comes from the URL, so it may be the name of an `Object.prototype` member
   const collectionFile = Object.hasOwn(fileMap, subPath) ? fileMap[subPath] : undefined;
 
@@ -303,12 +301,12 @@ const resolveEntryRoute = ({
   collection,
   collectionName,
   collectionLabel,
-  routeType,
-  subPath,
+  view,
+  subPath: _subPath,
   pullRequestNumber,
   params,
 }) => {
-  if (routeType === 'new' && !subPath) {
+  if (view === 'new') {
     // Decap CMS passes the folder for a new entry in a collection with nested entries as `?path=`
     const initialPath = getMetaPathConfig(collection) ? params.path : undefined;
 
@@ -339,7 +337,9 @@ const resolveEntryRoute = ({
     return state;
   }
 
-  if (routeType === 'entries' && subPath) {
+  if (view === 'entry') {
+    const subPath = /** @type {string} */ (_subPath);
+
     const { unpublishedEntry, missing } = findRouteUnpublishedEntry({
       collectionName,
       subPath,
@@ -389,7 +389,7 @@ const resolveEntryRoute = ({
  */
 export const resolveContentsRoute = ({ entryDraft }) => {
   const { path, params } = parseLocation();
-  const match = path.match(CONTENTS_ROUTE_REGEX);
+  const route = parseContentsPath(path);
 
   /** @type {ContentsRouteState} */
   const state = {
@@ -406,26 +406,30 @@ export const resolveContentsRoute = ({ entryDraft }) => {
 
   delete params._pr;
 
-  // `/collections/_singletons` should not be used unless there is only the singleton collection
-  if (selectedCollection.current?.name === '_singletons' && getValidCollections().length) {
+  // `/collections/_singletons` should not be used unless there is no visible collection to show
+  if (
+    selectedCollection.current &&
+    isSingletonCollection(selectedCollection.current) &&
+    !hasSingletonList()
+  ) {
     selectedCollection.current = undefined;
   }
 
-  if (!match?.groups) {
+  if (!route) {
     showContentOverlay.current = false;
 
     // Check if it’s the search page, which has a different URL pattern (`#/search/{query}`)
     return { ...state, isSearchPage: isSearchRoute(path) }; // Different page
   }
 
-  const { _collectionName, routeType, subPath } = match.groups;
+  const { view, collectionName: routeCollectionName, routeType, subPath } = route;
 
-  if (!_collectionName) {
+  if (view === 'index') {
     return resolveCollectionIndexRoute(state);
   }
 
   /** @type {InternalCollection | undefined} */
-  const collection = getCollection(_collectionName);
+  const collection = getCollection(/** @type {string} */ (routeCollectionName));
 
   selectRouteCollection(collection);
 
@@ -439,7 +443,7 @@ export const resolveContentsRoute = ({ entryDraft }) => {
   const _fileMap =
     '_fileMap' in selectedCollection.current ? selectedCollection.current._fileMap : undefined;
 
-  if (!routeType && subPath) {
+  if (view === 'invalid' && !routeType) {
     // A collection route takes no path of its own, so anything between the collection name and
     // an `entries`/`new`/`filter` segment is a dead link, e.g. `#/collections/pages/foo/ever`
     return showNotFound(state, 'page_not_found');
@@ -452,12 +456,12 @@ export const resolveContentsRoute = ({ entryDraft }) => {
     collection,
     collectionName,
     collectionLabel,
-    routeType,
+    view,
     subPath,
     pullRequestNumber,
   };
 
-  if (!routeType || routeType === 'filter') {
+  if (view === 'list' || view === 'folder') {
     return resolveListingRoute(args);
   }
 
@@ -465,7 +469,7 @@ export const resolveContentsRoute = ({ entryDraft }) => {
 
   // An entry opened with a deep link can’t be resolved until the drafts are in either. Show a
   // loading state in the meantime
-  if (routeType === 'entries' && subPath && !workflowDataReady.current) {
+  if (view === 'entry' && !workflowDataReady.current) {
     announcedPageStatus.current = _('loading_entries', { values: { count: 1 } });
 
     return { ...state, awaitingDrafts: true };

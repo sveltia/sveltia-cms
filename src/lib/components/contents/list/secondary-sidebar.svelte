@@ -7,11 +7,11 @@
   import { goto } from '$lib/services/app/navigation';
   import { isAssetInFolder } from '$lib/services/assets';
   import { assetsLocked, canCreateAsset, getAssetFolder } from '$lib/services/assets/folders';
+  import { getAssetLibraryPath } from '$lib/services/assets/route';
   import { allAssets, uploadingAssets } from '$lib/services/assets/state';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { currentView } from '$lib/services/contents/collection/view/settings';
   import { env } from '$lib/services/user/env.svelte';
-  import { encodePathSegments } from '$lib/services/utils/url';
 
   /**
    * @import { AssetFolderInfo } from '$lib/types/private';
@@ -44,7 +44,7 @@
       <AssetsPanel
         {assets}
         onSelect={({ asset }) => {
-          goto(encodePathSegments(`/assets/${asset.path}`), { transitionType: 'forwards' });
+          goto(getAssetLibraryPath(asset.path), { transitionType: 'forwards' });
         }}
       />
     </DropZone>

@@ -11,6 +11,7 @@
   import { nestedFilterPath } from '$lib/services/contents/collection/nested';
   import { getAllEntries } from '$lib/services/contents/collection/nested/i18n';
   import { getNestedTree } from '$lib/services/contents/collection/nested/tree';
+  import { getCollectionPath } from '$lib/services/contents/editor/route';
   import { env } from '$lib/services/user/env.svelte';
 
   /**
@@ -82,7 +83,7 @@
   bind:expanded
   items={treeNodes.length ? folderItems : undefined}
   onSelect={() => {
-    goto(`/collections/${name}`, { transitionType: 'forwards' });
+    goto(getCollectionPath(name), { transitionType: 'forwards' });
   }}
 >
   {#snippet startIcon()}

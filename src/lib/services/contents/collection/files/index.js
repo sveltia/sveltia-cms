@@ -3,7 +3,8 @@ import { stripSlashes } from '@sveltia/utils/string';
 import { cmsConfig } from '$lib/services/config';
 import { allEntryFolders, findEntryByPaths } from '$lib/services/contents';
 import { getCollection, getValidCollections } from '$lib/services/contents/collection';
-import { getValidCollectionFiles } from '$lib/services/contents/collection/predicates';
+import { SINGLETONS_COLLECTION_NAME } from '$lib/services/contents/collection/constants';
+import { getValidSingletonFiles } from '$lib/services/contents/collection/predicates';
 import { getLocalePath } from '$lib/services/contents/i18n';
 
 /**
@@ -132,12 +133,8 @@ export const getCollectionFileIndex = (collectionName, fileName) => {
   if (collectionName && fileName) {
     const { collections, singletons } = /** @type {InternalCmsConfig} */ (cmsConfig.current);
 
-    if (collectionName === '_singletons') {
-      if (Array.isArray(singletons)) {
-        return getValidCollectionFiles(singletons).findIndex((file) => file.name === fileName);
-      }
-
-      return -1;
+    if (collectionName === SINGLETONS_COLLECTION_NAME) {
+      return getValidSingletonFiles(singletons).findIndex((file) => file.name === fileName);
     }
 
     const collection = getValidCollections({ collections }).find(

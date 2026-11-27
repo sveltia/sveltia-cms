@@ -10,6 +10,7 @@ import {
   isNonFieldSortKey,
 } from '$lib/services/config/parser/utils/fields';
 import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
+import { SINGLETONS_COLLECTION_NAME } from '$lib/services/contents/collection/constants';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { getPublishMode, isWorkflowMode } from '$lib/services/workflow/config';
 
@@ -268,7 +269,7 @@ export const parseRelationFieldConfig = (args) => {
   checkMultipleDefault({ defaultValue, multiple, context, collectors });
 
   const collection =
-    collectionName === '_singletons'
+    collectionName === SINGLETONS_COLLECTION_NAME
       ? /** @type {InternalSingletonCollection} */ ({
           name: collectionName,
           files: cmsConfig?.singletons,

@@ -2,7 +2,7 @@ import { _, locale as appLocale } from '@sveltia/i18n';
 import { sleep } from '@sveltia/utils/misc';
 import equal from 'fast-deep-equal';
 
-import { announcedPageStatus, goto, parseLocation } from '$lib/services/app/navigation';
+import { announcedPageStatus, goBack, goto, parseLocation } from '$lib/services/app/navigation';
 import {
   enabledCloudServices,
   EXTERNAL_LOCATION_PATH_PREFIX,
@@ -14,15 +14,24 @@ import {
 } from '$lib/services/assets/external';
 import { linkedFilesService } from '$lib/services/assets/external/linked';
 import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
+import {
+  ALL_ASSETS_FOLDER_PATH,
+  getAssetLibraryPath,
+  parseAssetsPath,
+} from '$lib/services/assets/route';
 import { allAssets, overlaidAsset } from '$lib/services/assets/state';
-import { resolveAssetFolderPath, selectedSubfolderPath } from '$lib/services/assets/subfolders';
+import {
+  browsedDirPath,
+  resolveAssetFolderPath,
+  selectedSubfolderPath,
+} from '$lib/services/assets/subfolders';
 import {
   getFolderLabelByCollection,
   listedAssets,
   showAssetOverlay,
 } from '$lib/services/assets/view';
 import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
-import { isSearchRoute } from '$lib/services/search/navigation';
+import { isSearchResultsPath, isSearchRoute } from '$lib/services/search/navigation';
 import { env } from '$lib/services/user/env.svelte';
 import { createPath, getBaseName } from '$lib/services/utils/file';
 import { encodePathSegments } from '$lib/services/utils/url';
@@ -41,12 +50,6 @@ import { encodePathSegments } from '$lib/services/utils/url';
  * @property {boolean} notFound Whether the page shows the Not Found view, because the route
  * doesn’t address an asset folder or a cloud storage service.
  */
-
-/**
- * Regular expression matching the routes of the Asset Library page.
- */
-export const ASSETS_ROUTE_REGEX =
-  /^\/assets(?:\/(?<folderPath>.+?)(?:\/(?<fileName>[^/]+\.[A-Za-z0-9]+))?)?$/;
 
 /**
  * Check if the given path is a known asset folder: a configured folder, or a subfolder holding an
@@ -87,6 +90,27 @@ export const getSelectedAssetFolderLabel = () =>
 export const getAssetFolderHistoryState = () => ({ folder: selectedAssetFolder.current });
 
 /**
+ * Get the path the details overlay of a repository asset goes back to: the subfolder the asset was
+ * opened from if the folder is browsed by subfolder, or the selected asset folder, which is All
+ * Assets unless another one is selected.
+ * @returns {string} Path, e.g. `/assets/static/images/2024`.
+ */
+export const getAssetDetailsBackPath = () =>
+  getAssetLibraryPath(browsedDirPath.current ?? selectedAssetFolder.current?.internalPath);
+
+/**
+ * Close the details overlay of a repository asset by going back to the previous page if it’s the
+ * folder given by {@link getAssetDetailsBackPath}, or the search results the asset was opened from,
+ * or by going to that folder otherwise. The selected folder is kept in the history state.
+ */
+export const goBackFromAssetDetails = () => {
+  goBack(getAssetDetailsBackPath(), {
+    returnTo: isSearchResultsPath,
+    state: getAssetFolderHistoryState(),
+  });
+};
+
+/**
  * Update the URL silently once an asset has been renamed or moved, if it’s the asset shown in the
  * details view, so a reload or a copied link finds it at its new path. The folder the asset was
  * opened from, e.g. All Assets, is kept.
@@ -95,7 +119,7 @@ export const getAssetFolderHistoryState = () => ({ folder: selectedAssetFolder.c
  */
 export const replaceShownAssetPath = async (oldPath, newPath) => {
   if (parseLocation().path === `/assets/${oldPath}`) {
-    await goto(encodePathSegments(`/assets/${newPath}`), {
+    await goto(getAssetLibraryPath(newPath), {
       replaceState: true,
       notifyChange: false,
       state: getAssetFolderHistoryState(),
@@ -127,7 +151,7 @@ export const showAssetDetails = (
   { path },
   { transitionType = 'forwards', replaceState = false } = {},
 ) => {
-  goto(encodePathSegments(`/assets/${path}`), {
+  goto(getAssetLibraryPath(path), {
     transitionType,
     replaceState,
     state: getAssetFolderHistoryState(),
@@ -204,12 +228,12 @@ const resolveIndexRoute = (state) => {
     // Select All Assets right away, because the redirect below takes effect asynchronously in a
     // view transition, and the folder info panel would be rendered with no folder until then
     selectedAssetFolder.current = /** @type {{ folder: AssetFolderInfo }} */ (
-      resolveAssetFolderPath('-/all')
+      resolveAssetFolderPath(ALL_ASSETS_FOLDER_PATH)
     ).folder;
     selectedSubfolderPath.current = '';
     // Redirect to All Assets, replacing the index route in the history, so the browser’s Back
     // button doesn’t come back here only to be redirected again
-    goto('/assets/-/all', { replaceState: true });
+    goto(getAssetLibraryPath(), { replaceState: true });
   } else {
     // No asset folder is configured, so redirect to the first external location, or to the files
     // linked from entries if there is none either
@@ -254,7 +278,7 @@ const announceAssetFolder = async (currentCount) => {
  */
 export const resolveAssetsRoute = () => {
   const { path } = parseLocation();
-  const match = path.match(ASSETS_ROUTE_REGEX);
+  const route = parseAssetsPath(path);
   /** @type {AssetsRouteState} */
   const state = { isIndexPage: false, isSearchPage: false, notFound: false };
 
@@ -262,15 +286,14 @@ export const resolveAssetsRoute = () => {
 
   const currentCount = navigationCount;
 
-  if (!match?.groups) {
+  if (!route) {
     showAssetOverlay.current = false;
 
     // Check if it’s the search page, which has a different URL pattern (`#/search/{query}`)
     return { ...state, isSearchPage: isSearchRoute(path) }; // Different page
   }
 
-  /** @type {{ folderPath?: string, fileName?: string }} */
-  let { folderPath, fileName } = match.groups;
+  let { folderPath, fileName } = route;
 
   if (
     folderPath?.startsWith(EXTERNAL_LOCATION_PATH_PREFIX) &&

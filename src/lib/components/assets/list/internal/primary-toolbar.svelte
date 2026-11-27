@@ -20,6 +20,7 @@
   import { getAssetBlob } from '$lib/services/assets/info';
   import { canPreviewAsset } from '$lib/services/assets/kinds';
   import { getAssetFolderHistoryState } from '$lib/services/assets/navigation';
+  import { getAssetLibraryPath } from '$lib/services/assets/route';
   import { focusedAsset, selectedOrFocusedAssets } from '$lib/services/assets/state';
   import { browsingCmsFolder, selectedSubfolderPath } from '$lib/services/assets/subfolders';
   import { getFolderLabelByCollection, listedAssets } from '$lib/services/assets/view';
@@ -27,7 +28,6 @@
   import { getReadonlyMessage, isViewer } from '$lib/services/config/readonly';
   import { env } from '$lib/services/user/env.svelte';
   import { createPath } from '$lib/services/utils/file';
-  import { encodePathSegments } from '$lib/services/utils/url';
 
   const folder = $derived(selectedAssetFolder.current);
   // `appLocale.current` is a key, because `getFolderLabelByCollection` can return a localized label
@@ -62,8 +62,8 @@
    * as the back button on small screens does.
    */
   const browseAncestor = (depth, back) => {
-    const path = encodePathSegments(
-      `/assets/${createPath([folder?.internalPath, ...subfolderNames.slice(0, depth)])}`,
+    const path = getAssetLibraryPath(
+      createPath([folder?.internalPath, ...subfolderNames.slice(0, depth)]),
     );
 
     const options = { transitionType: /** @type {const} */ ('backwards'), state: { folder } };
@@ -88,7 +88,7 @@
 <PrimaryToolbar rootLabel={folderLabel} {subfolderNames} onBrowse={browseAncestor}>
   {#snippet actions()}
     <PreviewAssetButton
-      path={asset ? encodePathSegments(`/assets/${asset.path}`) : undefined}
+      path={asset ? getAssetLibraryPath(asset.path) : undefined}
       disabled={!asset || !canPreviewAsset(asset)}
       state={getAssetFolderHistoryState()}
     />

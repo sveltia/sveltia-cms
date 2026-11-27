@@ -10,8 +10,11 @@
   import { appNumberFormatter } from '$lib/services/app/i18n';
   import { goto } from '$lib/services/app/navigation';
   import { cmsConfig } from '$lib/services/config';
-  import { selectedCollection } from '$lib/services/contents/collection';
+  import { hasSingletonList, selectedCollection } from '$lib/services/contents/collection';
+  import { SINGLETONS_COLLECTION_NAME } from '$lib/services/contents/collection/constants';
   import { hasNestedEntries } from '$lib/services/contents/collection/nested';
+  import { isSingletonCollection } from '$lib/services/contents/collection/predicates';
+  import { getCollectionPath } from '$lib/services/contents/editor/route';
   import { env } from '$lib/services/user/env.svelte';
 
   /**
@@ -25,6 +28,12 @@
   // @ts-ignore Dividers can be included in the collection list
   const collections = $derived(cmsConfig.current?.collections?.filter(({ hide }) => !hide) ?? []);
   const singletons = $derived(cmsConfig.current?.singletons ?? []);
+  // The singletons get an entry list of their own, like a file collection, only when there is no
+  // visible collection to show instead; a small screen lists every collection and file
+  const singletonListShown = $derived(!env.isSmallScreen && hasSingletonList());
+  const singletonListSelected = $derived(
+    !!selectedCollection.current && isSingletonCollection(selectedCollection.current),
+  );
   // Only a collection with nested entries has a folder tree, and with it a chevron in front of its
   // icon. Without one, nothing in the list can expand, so the space kept for the chevrons is
   // dropped.
@@ -68,7 +77,7 @@
       </OptionGroup>
     {/if}
     {#if singletons.length}
-      {#if env.isSmallScreen || collections.length}
+      {#if !singletonListShown}
         <!-- Use the user-friendly “Files” label instead of “Singletons” -->
         <OptionGroup label={_('files')}>
           {#each singletons as file, index (file.name ?? index)}
@@ -87,9 +96,9 @@
         <OptionGroup label={_('collections')}>
           <TreeItem
             label={_('files')}
-            selected={selectedCollection.current?.name === '_singletons'}
+            selected={singletonListSelected}
             onSelect={() => {
-              goto('/collections/_singletons', { transitionType: 'forwards' });
+              goto(getCollectionPath(SINGLETONS_COLLECTION_NAME), { transitionType: 'forwards' });
             }}
           >
             {#snippet startIcon()}

@@ -1,6 +1,6 @@
 import { goBack, goto, parseLocation } from '$lib/services/app/navigation';
-import { searchMode, searchTerms } from '$lib/services/search';
-import { isSearchResultsPath } from '$lib/services/search/navigation';
+import { searchTerms } from '$lib/services/search';
+import { getSearchedLibraryPath, isSearchResultsPath } from '$lib/services/search/navigation';
 
 /**
  * Path of the page the current search has started from, e.g. an asset folder or a collection, to
@@ -32,7 +32,7 @@ export const updateSearchTerms = (terms) => {
     goto(`/search/${encodeURIComponent(terms)}`, { replaceState: searching });
   } else if (hadTerms && searching) {
     // Without a known origin, go to the library being searched
-    goBack(originPath ?? (searchMode.current === 'assets' ? '/assets' : '/collections'));
+    goBack(originPath ?? getSearchedLibraryPath());
     originPath = undefined;
   }
 };

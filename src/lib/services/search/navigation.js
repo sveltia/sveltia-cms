@@ -35,3 +35,12 @@ export const isSearchRoute = (path) => {
 
   return true;
 };
+
+/**
+ * Get the path of the library being searched: the Asset Library or the Content Library. The search
+ * results page goes back there with the Back button on small screens, or when the search terms are
+ * cleared and the page the search started from isn’t known.
+ * @returns {string} Path, `/assets` or `/collections`.
+ */
+export const getSearchedLibraryPath = () =>
+  searchMode.current === 'assets' ? '/assets' : '/collections';

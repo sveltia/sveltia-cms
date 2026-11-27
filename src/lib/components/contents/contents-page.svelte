@@ -20,7 +20,8 @@
   import { showBackupToastIfNeeded } from '$lib/services/contents/draft/backup';
   import { EntryDraftState } from '$lib/services/contents/draft/state.svelte';
   import { showContentOverlay } from '$lib/services/contents/editor';
-  import { CONTENTS_ROUTE_REGEX, resolveContentsRoute } from '$lib/services/contents/navigation';
+  import { CONTENTS_ROUTE_REGEX } from '$lib/services/contents/editor/route';
+  import { resolveContentsRoute } from '$lib/services/contents/navigation';
   import { env } from '$lib/services/user/env.svelte';
   import { watch } from '$lib/services/utils/state.svelte';
   import { workflowDataReady } from '$lib/services/workflow';

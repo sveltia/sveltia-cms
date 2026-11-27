@@ -4,7 +4,7 @@ import { _, locale as appLocale } from '@sveltia/i18n';
 import { sleep } from '@sveltia/utils/misc';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { announcedPageStatus, goto, parseLocation } from '$lib/services/app/navigation';
+import { announcedPageStatus, goBack, goto, parseLocation } from '$lib/services/app/navigation';
 import {
   enabledCloudServices,
   getCloudService,
@@ -16,24 +16,29 @@ import {
 import { linkedFilesService } from '$lib/services/assets/external/linked';
 import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
 import {
-  ASSETS_ROUTE_REGEX,
   discardAssetsNavigation,
+  getAssetDetailsBackPath,
   getAssetFolderHistoryState,
   getSelectedAssetFolderLabel,
+  goBackFromAssetDetails,
   leaveMovedAsset,
   replaceShownAssetPath,
   resolveAssetsRoute,
   showAssetDetails,
 } from '$lib/services/assets/navigation';
 import { allAssets, overlaidAsset } from '$lib/services/assets/state';
-import { resolveAssetFolderPath, selectedSubfolderPath } from '$lib/services/assets/subfolders';
+import {
+  browsedDirPath,
+  resolveAssetFolderPath,
+  selectedSubfolderPath,
+} from '$lib/services/assets/subfolders';
 import {
   getFolderLabelByCollection,
   listedAssets,
   showAssetOverlay,
 } from '$lib/services/assets/view';
 import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
-import { isSearchRoute } from '$lib/services/search/navigation';
+import { isSearchResultsPath, isSearchRoute } from '$lib/services/search/navigation';
 import { env } from '$lib/services/user/env.svelte';
 import { encodePathSegments } from '$lib/services/utils/url';
 
@@ -48,6 +53,7 @@ vi.mock('@sveltia/utils/misc', () => ({ sleep: vi.fn() }));
 
 vi.mock('$lib/services/app/navigation', () => ({
   announcedPageStatus: { current: '' },
+  goBack: vi.fn(),
   goto: vi.fn(),
   parseLocation: vi.fn(),
 }));
@@ -77,6 +83,7 @@ vi.mock('$lib/services/assets/folders', () => ({
 }));
 
 vi.mock('$lib/services/assets/subfolders', () => ({
+  browsedDirPath: { current: undefined },
   resolveAssetFolderPath: vi.fn(),
   selectedSubfolderPath: { current: '' },
 }));
@@ -88,7 +95,10 @@ vi.mock('$lib/services/assets/view', () => ({
 }));
 
 vi.mock('$lib/services/backends/git/shared/config', () => ({ gitConfigFiles: { current: [] } }));
-vi.mock('$lib/services/search/navigation', () => ({ isSearchRoute: vi.fn() }));
+vi.mock('$lib/services/search/navigation', () => ({
+  isSearchResultsPath: vi.fn(),
+  isSearchRoute: vi.fn(),
+}));
 vi.mock('$lib/services/user/env.svelte', () => ({ env: { isSmallScreen: false } }));
 vi.mock('$lib/services/utils/url', async (importOriginal) => ({
   .../** @type {object} */ (await importOriginal()),
@@ -148,24 +158,6 @@ beforeEach(async () => {
   showAssetOverlay.current = false;
   env.isSmallScreen = false;
   window.history.replaceState(null, '');
-});
-
-describe('ASSETS_ROUTE_REGEX', () => {
-  test('matches the Asset Library routes', () => {
-    expect('/assets'.match(ASSETS_ROUTE_REGEX)?.groups).toEqual({
-      folderPath: undefined,
-      fileName: undefined,
-    });
-    expect('/assets/static/uploads'.match(ASSETS_ROUTE_REGEX)?.groups).toEqual({
-      folderPath: 'static/uploads',
-      fileName: undefined,
-    });
-    expect('/assets/static/uploads/a.png'.match(ASSETS_ROUTE_REGEX)?.groups).toEqual({
-      folderPath: 'static/uploads',
-      fileName: 'a.png',
-    });
-    expect('/collections/posts'.match(ASSETS_ROUTE_REGEX)).toBeNull();
-  });
 });
 
 describe('getSelectedAssetFolderLabel()', () => {
@@ -243,6 +235,43 @@ describe('getAssetFolderHistoryState()', () => {
     expect(getAssetFolderHistoryState()).toEqual({ folder: allFolder });
     selectedAssetFolder.current = undefined;
     expect(getAssetFolderHistoryState()).toEqual({ folder: undefined });
+  });
+});
+
+describe('getAssetDetailsBackPath()', () => {
+  test('gives the subfolder being browsed, the selected folder, or All Assets', () => {
+    try {
+      /** @type {any} */ (browsedDirPath).current = 'static/images/2024';
+      selectedAssetFolder.current = /** @type {any} */ ({ internalPath: 'static/images' });
+      expect(getAssetDetailsBackPath()).toBe('encoded:/assets/static/images/2024');
+
+      /** @type {any} */ (browsedDirPath).current = undefined;
+      expect(getAssetDetailsBackPath()).toBe('encoded:/assets/static/images');
+
+      selectedAssetFolder.current = undefined;
+      expect(getAssetDetailsBackPath()).toBe('encoded:/assets/-/all');
+    } finally {
+      /** @type {any} */ (browsedDirPath).current = undefined;
+      selectedAssetFolder.current = undefined;
+    }
+  });
+});
+
+describe('goBackFromAssetDetails()', () => {
+  test('goes back to the folder or the search results, keeping the selected folder', () => {
+    const folder = /** @type {any} */ ({ internalPath: 'static/images' });
+
+    try {
+      selectedAssetFolder.current = folder;
+      goBackFromAssetDetails();
+
+      expect(goBack).toHaveBeenCalledWith('encoded:/assets/static/images', {
+        returnTo: isSearchResultsPath,
+        state: { folder },
+      });
+    } finally {
+      selectedAssetFolder.current = undefined;
+    }
   });
 });
 
@@ -378,7 +407,7 @@ describe('resolveAssetsRoute()', () => {
       expect(resolveAssetFolderPath).toHaveBeenCalledWith('-/all');
       expect(selectedAssetFolder.current).toBe(allFolder);
       expect(selectedSubfolderPath.current).toBe('');
-      expect(goto).toHaveBeenCalledWith('/assets/-/all', { replaceState: true });
+      expect(goto).toHaveBeenCalledWith('encoded:/assets/-/all', { replaceState: true });
     });
 
     test('redirects to the first external location without a folder', () => {

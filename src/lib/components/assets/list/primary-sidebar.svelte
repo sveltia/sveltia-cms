@@ -17,12 +17,12 @@
   } from '$lib/services/assets/external';
   import { linkedAssets, linkedFilesService } from '$lib/services/assets/external/linked';
   import { getAssetFolderKey, selectedAssetFolder } from '$lib/services/assets/folders';
+  import { getAssetLibraryPath } from '$lib/services/assets/route';
   import { allAssets } from '$lib/services/assets/state';
   import { selectedSubfolderPath } from '$lib/services/assets/subfolders';
   import { getFolderLabelByCollection } from '$lib/services/assets/view';
   import { getAssetFolderIcon, getListedAssetFolders } from '$lib/services/assets/view/folder-list';
   import { env } from '$lib/services/user/env.svelte';
-  import { encodePathSegments } from '$lib/services/utils/url';
 
   /**
    * @import { AssetFolderInfo } from '$lib/types/private';
@@ -86,7 +86,7 @@
               selected={env.isSmallScreen || isSearchPage ? false : selected}
               label={getFolderLabel(folder)}
               onSelect={() => {
-                goto(encodePathSegments(`/assets/${internalPath ?? '-/all'}`), {
+                goto(getAssetLibraryPath(internalPath), {
                   transitionType: 'forwards',
                   // An internal path can be shared by multiple collections, files and fields. Pass
                   // the folder info as history state so we can distinguish these different asset
@@ -98,7 +98,7 @@
                 // Selecting the folder already selected doesn’t fire `onSelect` again, but a click
                 // on it while one of its subfolders is browsed should still lead back to its root
                 if (selected && selectedSubfolderPath.current) {
-                  goto(encodePathSegments(`/assets/${internalPath}`), {
+                  goto(getAssetLibraryPath(internalPath), {
                     transitionType: 'backwards',
                     state: { folder },
                   });

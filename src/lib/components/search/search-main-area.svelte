@@ -8,6 +8,7 @@
   import SearchResults from '$lib/components/search/search-results.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { searchMode, searchTerms } from '$lib/services/search';
+  import { getSearchedLibraryPath } from '$lib/services/search/navigation';
   import { env } from '$lib/services/user/env.svelte';
 </script>
 
@@ -23,7 +24,7 @@
           )}
           onclick={() => {
             searchTerms.current = '';
-            goto(searchMode.current === 'assets' ? '/assets' : '/collections', {
+            goto(getSearchedLibraryPath(), {
               transitionType: 'backwards',
             });
           }}

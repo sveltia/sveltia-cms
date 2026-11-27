@@ -27,11 +27,11 @@
   import { loadExternalAssets } from '$lib/services/assets/external/data';
   import { LINKED_FILES_SERVICE_ID, linkedAssets } from '$lib/services/assets/external/linked';
   import {
-    ASSETS_ROUTE_REGEX,
     discardAssetsNavigation,
     getSelectedAssetFolderLabel,
     resolveAssetsRoute,
   } from '$lib/services/assets/navigation';
+  import { ASSETS_ROUTE_REGEX } from '$lib/services/assets/route';
   import { focusedAsset, selectedAssets } from '$lib/services/assets/state';
   import {
     assetGroups,

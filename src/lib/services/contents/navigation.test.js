@@ -9,7 +9,7 @@ import {
   getCollectionLabel,
   getFirstCollection,
   getSingletonCollection,
-  getValidCollections,
+  hasSingletonList,
   selectedCollection,
 } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
@@ -26,7 +26,7 @@ import { createDraft } from '$lib/services/contents/draft/create';
 import { refreshOpenedDraft } from '$lib/services/contents/draft/reload';
 import { showContentOverlay } from '$lib/services/contents/editor';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
-import { CONTENTS_ROUTE_REGEX, resolveContentsRoute } from '$lib/services/contents/navigation';
+import { resolveContentsRoute } from '$lib/services/contents/navigation';
 import { isSearchRoute } from '$lib/services/search/navigation';
 import { env } from '$lib/services/user/env.svelte';
 import {
@@ -50,7 +50,7 @@ vi.mock('$lib/services/contents/collection', () => ({
   getCollectionLabel: vi.fn(),
   getFirstCollection: vi.fn(),
   getSingletonCollection: vi.fn(),
-  getValidCollections: vi.fn(),
+  hasSingletonList: vi.fn(),
   selectedCollection: { current: undefined },
 }));
 
@@ -145,31 +145,11 @@ beforeEach(() => {
   vi.mocked(getCollection).mockImplementation(
     (name) => ({ posts, pages, secret: hidden, settings })[name],
   );
-  vi.mocked(getValidCollections).mockReturnValue([]);
+  vi.mocked(hasSingletonList).mockReturnValue(true);
   vi.mocked(isNestedFolder).mockReturnValue(true);
   vi.mocked(getEntriesByCollection).mockReturnValue([]);
   vi.mocked(isSearchRoute).mockReturnValue(false);
   window.history.replaceState(null, '');
-});
-
-describe('CONTENTS_ROUTE_REGEX', () => {
-  test('parses the routes', () => {
-    expect('/collections'.match(CONTENTS_ROUTE_REGEX)?.groups).toEqual({
-      _collectionName: undefined,
-      routeType: undefined,
-      subPath: undefined,
-    });
-    expect('/collections/posts/entries/hello-world'.match(CONTENTS_ROUTE_REGEX)?.groups).toEqual({
-      _collectionName: 'posts',
-      routeType: 'entries',
-      subPath: 'hello-world',
-    });
-    expect('/collections/posts/filter/2026/09'.match(CONTENTS_ROUTE_REGEX)?.groups).toMatchObject({
-      routeType: 'filter',
-      subPath: '2026/09',
-    });
-    expect('/assets'.match(CONTENTS_ROUTE_REGEX)).toBeNull();
-  });
 });
 
 describe('resolveContentsRoute()', () => {
@@ -183,13 +163,24 @@ describe('resolveContentsRoute()', () => {
   });
 
   test('drops the singletons pseudo-collection when there are real ones', () => {
-    selectedCollection.current = /** @type {any} */ ({ name: '_singletons' });
-    vi.mocked(getValidCollections).mockReturnValue([posts]);
+    selectedCollection.current = /** @type {any} */ ({ name: '_singletons', files: [] });
+    vi.mocked(hasSingletonList).mockReturnValue(false);
     visit('/assets');
 
     resolve();
 
     expect(selectedCollection.current).toBeUndefined();
+  });
+
+  test('keeps the singletons pseudo-collection when it’s all there is to list', () => {
+    const singletons = /** @type {any} */ ({ name: '_singletons', files: [] });
+
+    selectedCollection.current = singletons;
+    visit('/assets');
+
+    resolve();
+
+    expect(selectedCollection.current).toBe(singletons);
   });
 
   test('passes a different page through, closing the editor', () => {

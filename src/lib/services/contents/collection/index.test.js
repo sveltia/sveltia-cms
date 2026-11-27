@@ -11,6 +11,7 @@ import {
   getSingletonCollection,
   getThumbnailFieldNames,
   getValidCollections,
+  hasSingletonList,
   parseEntryCollection,
   parseFileCollection,
 } from '$lib/services/contents/collection';
@@ -181,6 +182,25 @@ describe('getFirstCollection()', () => {
     const firstCollection = getFirstCollection();
 
     expect(firstCollection).toBeUndefined();
+  });
+});
+
+describe('hasSingletonList()', () => {
+  test('tells whether the singletons are listed on their own, without a visible collection', () => {
+    const fields = [{ name: 'title', widget: 'string' }];
+
+    cmsConfig.current = /** @type {any} */ ({
+      collections: [{ name: 'posts', folder: 'content/posts', fields }],
+    });
+    expect(hasSingletonList()).toBe(false);
+
+    cmsConfig.current = /** @type {any} */ ({
+      collections: [{ name: 'posts', folder: 'content/posts', hide: true, fields }],
+    });
+    expect(hasSingletonList()).toBe(true);
+
+    cmsConfig.current = /** @type {any} */ ({ collections: [] });
+    expect(hasSingletonList()).toBe(true);
   });
 });
 

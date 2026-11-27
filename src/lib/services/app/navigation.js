@@ -6,7 +6,7 @@ import { cmsConfig } from '$lib/services/config';
 import { showContentOverlay } from '$lib/services/contents/editor';
 import { getEntryEditorPath } from '$lib/services/contents/editor/route';
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
-import { decodeURIComponentSafely, encodePathSegments } from '$lib/services/utils/url';
+import { decodeURIComponentSafely } from '$lib/services/utils/url';
 import { openNewTab } from '$lib/services/utils/window';
 
 /**
@@ -460,63 +460,50 @@ export const resolveRoute = (path, pageNames) => {
 };
 
 /**
+ * Get the path of the previous page in the session history, if it’s a page of the app. The
+ * Navigation API is used if available, which is more reliable than `window.history`; otherwise the
+ * `from` URL that {@link goto} keeps in the history state is read.
+ * @returns {string | undefined} Decoded path, e.g. `/collections/posts`.
+ */
+const getPreviousPagePath = () => {
+  if (window.navigation?.currentEntry) {
+    const { index } = window.navigation.currentEntry;
+    const { sameDocument, url } = window.navigation.entries()[index - 1] ?? {};
+
+    return sameDocument && url ? parseLocation(url).path : undefined;
+  }
+
+  const from = window.history.state?.from;
+
+  return from ? parseLocation(from).path : undefined;
+};
+
+/**
  * Go back to the previous page if possible, or navigate to the given fallback URL.
- * @param {string} path Fallback URL path. With the Navigation API, the previous page is only
- * returned to when it’s at this path, or when `returnTo` accepts its path.
+ * @param {string} path Fallback URL path. The previous page is only returned to when it’s at this
+ * path, or when `returnTo` accepts its path.
  * @param {GoToMethodOptions & { returnTo?: (path: string) => boolean }} [options] Options to be
  * passed to {@link goto}, and `returnTo` to tell which other previous pages to return to, e.g. the
  * search results an entry was opened from.
  */
 export const goBack = (path, { returnTo, ...options } = {}) => {
   const transitionType = 'backwards';
+  const previousPath = getPreviousPagePath();
 
-  // Use the Navigation API if available, which is more reliable than `window.history`
-  if (window.navigation?.currentEntry) {
-    const { index } = window.navigation.currentEntry;
-    const { sameDocument, url } = window.navigation.entries()[index - 1] ?? {};
-    const previousPath = url ? parseLocation(url).path : undefined;
-
-    if (
-      sameDocument &&
-      previousPath !== undefined &&
-      (previousPath === decodeURIComponentSafely(path) || returnTo?.(previousPath))
-    ) {
-      startViewTransition(transitionType, () => {
-        window.navigation.back();
-      });
-    } else {
-      goto(path, { ...options, transitionType });
-    }
-
-    return;
-  }
-
-  if (window.history.state?.from) {
+  if (
+    previousPath !== undefined &&
+    (previousPath === decodeURIComponentSafely(path) || returnTo?.(previousPath))
+  ) {
     startViewTransition(transitionType, () => {
-      window.history.back();
+      if (window.navigation?.currentEntry) {
+        window.navigation.back();
+      } else {
+        window.history.back();
+      }
     });
   } else {
     goto(path, { ...options, transitionType });
   }
-};
-
-/**
- * Get the path the entry editor goes back to: the collections list for a singleton file, or the
- * collection entries list otherwise — the folder being browsed for a collection with nested
- * entries, so the user lands where they opened the entry from.
- * @param {object} args Arguments.
- * @param {string | undefined} args.collectionName Name of the entry’s collection.
- * @param {string} [args.dirPath] Folder being browsed in a collection with nested entries, if any.
- * @returns {string} Route path.
- */
-export const getEntryEditorBackPath = ({ collectionName, dirPath = '' }) => {
-  if (collectionName === '_singletons') {
-    return '/collections';
-  }
-
-  return dirPath
-    ? encodePathSegments(`/collections/${collectionName}/filter/${dirPath}`)
-    : `/collections/${collectionName}`;
 };
 
 /**

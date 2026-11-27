@@ -1,13 +1,13 @@
 import { clearSaveProgress, startPreparing } from '$lib/services/backends/commit-progress';
 import { isCommitCancelled } from '$lib/services/backends/commit-prompt';
-import { getFirstCollection } from '$lib/services/contents/collection';
+import { hasSingletonList } from '$lib/services/contents/collection';
 import { isSingletonCollection } from '$lib/services/contents/collection/predicates';
 import { duplicateDraft } from '$lib/services/contents/draft/create/duplicate';
 import { saveEntry } from '$lib/services/contents/draft/save';
 import { validateDraft } from '$lib/services/contents/draft/validate';
 import { countInvalidFields } from '$lib/services/contents/draft/validate/reveal';
 import { awaitPendingFieldUpdates } from '$lib/services/contents/editor/pending';
-import { getEntryEditorPath } from '$lib/services/contents/editor/route';
+import { getEntryEditorPath, getNewEntryPath } from '$lib/services/contents/editor/route';
 import { getSaveFailure } from '$lib/services/contents/editor/toolbar';
 import { env } from '$lib/services/user/env.svelte';
 import { publishWorkflowEntry, updateWorkflowStatus } from '$lib/services/workflow/save';
@@ -162,9 +162,7 @@ export const saveEntryDraftFlow = async ({
     // stays open: closing it would only go back to wherever it was opened from, or without such a
     // page, to the first collection, which has nothing to do with it. A small screen shows the
     // collection list instead, which lists the singletons too
-    const hasList =
-      !isSingletonCollection(collection) || env.isSmallScreen || !getFirstCollection();
-
+    const hasList = !isSingletonCollection(collection) || env.isSmallScreen || hasSingletonList();
     // The entry itself is saved, so a failed status change leaves the editor open rather than
     // navigating away from something the user may want to retry from the status menu. When the
     // editor stays open, the draft is reset: the next save compares the draft’s original entry with
@@ -214,5 +212,5 @@ export const saveEntryDraftFlow = async ({
 export const duplicateEntryDraft = async (entryDraft) => {
   const { collectionName } = /** @type {EntryDraft} */ (entryDraft.current);
 
-  return (await duplicateDraft(entryDraft)) ? `/collections/${collectionName}/new` : undefined;
+  return (await duplicateDraft(entryDraft)) ? getNewEntryPath(collectionName) : undefined;
 };

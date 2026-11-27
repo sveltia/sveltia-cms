@@ -9,7 +9,7 @@
   import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
   import { getMetaPathConfig, nestedFilterPath } from '$lib/services/contents/collection/nested';
   import { collectionState } from '$lib/services/contents/collection/view';
-  import { encodeFilePath } from '$lib/services/utils/file';
+  import { getNewEntryPath } from '$lib/services/contents/editor/route';
 
   /**
    * @typedef {object} Props
@@ -43,15 +43,12 @@
    */
   const openEditor = (index = false) => {
     // Start a new entry in the folder the user is browsing, which the path editor picks up
-    const path =
-      !index &&
-      selectedCollection.current &&
-      getMetaPathConfig(selectedCollection.current) &&
-      nestedFilterPath.current
-        ? `?path=${encodeFilePath(nestedFilterPath.current)}`
-        : '';
+    const dirPath =
+      !index && selectedCollection.current && getMetaPathConfig(selectedCollection.current)
+        ? nestedFilterPath.current
+        : undefined;
 
-    goto(`/collections/${collectionName}/new${path}`, {
+    goto(getNewEntryPath(collectionName, { dirPath }), {
       state: { index },
       transitionType: 'forwards',
     });

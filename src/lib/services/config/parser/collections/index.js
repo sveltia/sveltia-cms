@@ -26,6 +26,7 @@ import {
   checkName,
   checkUnsupportedOptions,
 } from '$lib/services/config/parser/utils/validator';
+import { SINGLETONS_COLLECTION_NAME } from '$lib/services/contents/collection/constants';
 import { getReorderGroupName } from '$lib/services/contents/collection/entries/reorder/config';
 import { parseViewOptions } from '$lib/services/contents/collection/view/options';
 import { mergeI18nConfigs } from '$lib/services/contents/i18n/config/merge';
@@ -352,7 +353,7 @@ export const parseCollections = (cmsConfig, collectors) => {
   if (Array.isArray(singletons)) {
     /** @type {InternalSingletonCollection} */
     const collection = {
-      name: '_singletons',
+      name: SINGLETONS_COLLECTION_NAME,
       label: _('singletons'),
       label_singular: _('singleton'),
       files: singletons,

@@ -4,6 +4,7 @@ import { describe, expect, test } from 'vitest';
 
 import {
   getValidCollectionFiles,
+  getValidSingletonFiles,
   isArrayFileCollection,
   isEntryCollection,
   isFileCollection,
@@ -284,6 +285,18 @@ describe('isValidCollectionFile()', () => {
 
     // Cast to any to test the type validation
     expect(isValidCollectionFile(/** @type {any} */ (invalidFile))).toBe(false);
+  });
+});
+
+describe('getValidSingletonFiles()', () => {
+  test('filters out dividers and invalid files, or gives none without a list', () => {
+    const settings = { name: 'settings', file: 'data/settings.json', fields: [] };
+
+    expect(
+      getValidSingletonFiles([settings, { divider: true }, { name: 'about', fields: [] }]),
+    ).toEqual([settings]);
+    expect(getValidSingletonFiles(undefined)).toEqual([]);
+    expect(getValidSingletonFiles({ settings })).toEqual([]);
   });
 });
 

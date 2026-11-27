@@ -2,6 +2,7 @@ import { compare } from '@sveltia/utils/string';
 
 import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
 import { isCmsFolderName, isCmsFolderPath } from '$lib/services/assets/reserved';
+import { ALL_ASSETS_FOLDER_PATH } from '$lib/services/assets/route';
 import { allAssets } from '$lib/services/assets/state';
 import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { slugify, validateNewFolderName } from '$lib/services/common/slug';
@@ -109,7 +110,7 @@ export const resolveAssetFolderPath = (folderPath, knownFolder = undefined) => {
   const folders = allAssetFolders.current;
 
   const exactMatch = folders.find(({ internalPath, collectionName }) =>
-    folderPath === '-/all'
+    folderPath === ALL_ASSETS_FOLDER_PATH
       ? internalPath === undefined && collectionName === undefined
       : internalPath === folderPath,
   );

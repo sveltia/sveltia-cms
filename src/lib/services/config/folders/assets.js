@@ -4,6 +4,7 @@ import { compare, stripSlashes } from '@sveltia/utils/string';
 import { hasTemplateTags } from '$lib/services/common/template/tags';
 import { isConfigReadonly } from '$lib/services/config/readonly';
 import { getValidCollections } from '$lib/services/contents/collection';
+import { SINGLETONS_COLLECTION_NAME } from '$lib/services/contents/collection/constants';
 import { getValidCollectionFiles } from '$lib/services/contents/collection/predicates';
 import { I18N_STRUCTURES } from '$lib/services/contents/i18n/config/constants';
 import { mergeI18nConfigs } from '$lib/services/contents/i18n/config/merge';
@@ -288,7 +289,7 @@ export const handleFieldMediaFolders = (
 
     const isValidCollection =
       !!collection &&
-      (collection.name === '_singletons' ||
+      (collection.name === SINGLETONS_COLLECTION_NAME ||
         validCollections.some((c) => c.name === collection.name));
 
     if (!isValidCollection && !componentName) {
@@ -373,7 +374,7 @@ const isAssetFolderReadonly = ({ config, folder, validCollections }) => {
   const collection = validCollections.find(({ name }) => name === collectionName);
 
   const files =
-    collectionName === '_singletons'
+    collectionName === SINGLETONS_COLLECTION_NAME
       ? config.singletons
       : collection && 'files' in collection
         ? collection.files
@@ -481,7 +482,11 @@ export const collectCollectionAssetFolders = (
 
   if (singletons?.length) {
     // Singleton collection is always at the end
-    iterateFiles(folders, { collectionName: '_singletons', files: singletons, globalFolders });
+    iterateFiles(folders, {
+      collectionName: SINGLETONS_COLLECTION_NAME,
+      files: singletons,
+      globalFolders,
+    });
   }
 };
 

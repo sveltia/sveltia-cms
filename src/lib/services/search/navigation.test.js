@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { parseLocation } from '$lib/services/app/navigation';
 import { searchMode, searchTerms } from '$lib/services/search';
 
-import { isSearchResultsPath, isSearchRoute } from './navigation';
+import { getSearchedLibraryPath, isSearchResultsPath, isSearchRoute } from './navigation';
 
 describe('isSearchRoute', () => {
   beforeEach(() => {
@@ -231,5 +231,18 @@ describe('isSearchResultsPath', () => {
 
     expect(searchTerms.current).toBe('');
     expect(searchMode.current).toBeNull();
+  });
+});
+
+describe('getSearchedLibraryPath', () => {
+  it('should give the library being searched', () => {
+    searchMode.current = 'assets';
+    expect(getSearchedLibraryPath()).toBe('/assets');
+
+    searchMode.current = 'contents';
+    expect(getSearchedLibraryPath()).toBe('/collections');
+
+    searchMode.current = null;
+    expect(getSearchedLibraryPath()).toBe('/collections');
   });
 });

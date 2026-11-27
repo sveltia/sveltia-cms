@@ -5,10 +5,7 @@ import { getCollection } from '$lib/services/contents/collection';
 import { hasNestedEntries, nestedFilterPath } from '$lib/services/contents/collection/nested';
 import { goBackFromEntryEditor } from '$lib/services/contents/editor/back';
 
-vi.mock('$lib/services/app/navigation', async (importOriginal) => ({
-  .../** @type {object} */ (await importOriginal()),
-  goBack: vi.fn(),
-}));
+vi.mock('$lib/services/app/navigation', () => ({ goBack: vi.fn() }));
 vi.mock('$lib/services/contents/collection', () => ({ getCollection: vi.fn() }));
 vi.mock('$lib/services/contents/collection/nested', () => ({
   hasNestedEntries: vi.fn(),

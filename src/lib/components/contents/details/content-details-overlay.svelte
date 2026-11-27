@@ -57,6 +57,7 @@
     afterPendingFieldUpdates,
     awaitPendingFieldUpdates,
   } from '$lib/services/contents/editor/pending';
+  import { getCollectionPath } from '$lib/services/contents/editor/route';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
   import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
   import { env } from '$lib/services/user/env.svelte';
@@ -559,7 +560,7 @@
               // the URL pointed at
               const targetCollection = collectionName ?? selectedCollection.current?.name;
 
-              goto(targetCollection ? `/collections/${targetCollection}` : '/collections', {
+              goto(targetCollection ? getCollectionPath(targetCollection) : '/collections', {
                 replaceState: true,
                 transitionType: 'backwards',
               });

@@ -10,16 +10,15 @@
   import EditOptionsButton from '$lib/components/assets/list/internal/edit-options-button.svelte';
   import InfoPanel from '$lib/components/assets/list/internal/info-panel.svelte';
   import NotFound from '$lib/components/global/not-found.svelte';
-  import { goBack } from '$lib/services/app/navigation';
-  import { selectedAssetFolder } from '$lib/services/assets/folders';
   import { getAssetBlob, preloadAssets } from '$lib/services/assets/info';
   import { canPreviewAsset } from '$lib/services/assets/kinds';
-  import { getAssetFolderHistoryState, showAssetDetails } from '$lib/services/assets/navigation';
+  import {
+    getAssetDetailsBackPath,
+    goBackFromAssetDetails,
+    showAssetDetails,
+  } from '$lib/services/assets/navigation';
   import { overlaidAsset } from '$lib/services/assets/state';
-  import { browsedDirPath } from '$lib/services/assets/subfolders';
   import { assetGroups, getAdjacentAssets } from '$lib/services/assets/view';
-  import { isSearchResultsPath } from '$lib/services/search/navigation';
-  import { encodePathSegments } from '$lib/services/utils/url';
 
   /**
    * @import { ViewTransitionType } from '$lib/services/app/navigation';
@@ -45,12 +44,8 @@
   const blobURL = $derived(asset?.blobURL);
   const name = $derived(asset?.name ?? '');
   const assets = $derived(asset ? [asset] : []);
-  // Back to the subfolder the asset was opened from, if the folder is browsed by subfolder
-  const backPath = $derived(
-    encodePathSegments(
-      `/assets/${browsedDirPath.current ?? selectedAssetFolder.current?.internalPath ?? '-/all'}`,
-    ),
-  );
+  // The folder or subfolder the asset was opened from
+  const backPath = $derived(getAssetDetailsBackPath());
   /** The assets right before and after the shown one in the list the overlay was opened from. */
   const { previous, next } = $derived(
     getAdjacentAssets(assetGroups.current, (a) => a.path === asset?.path, canPreviewAsset),
@@ -110,7 +105,7 @@
   title={name}
   contentKey={asset?.sha}
   onBack={() => {
-    goBack(backPath, { returnTo: isSearchResultsPath, state: getAssetFolderHistoryState() });
+    goBackFromAssetDetails();
   }}
   onPrevious={previous ? () => showAsset(previous, 'previous') : undefined}
   onNext={next ? () => showAsset(next, 'next') : undefined}
@@ -121,7 +116,7 @@
     <DeleteAssetsButton
       {assets}
       onDelete={() => {
-        goBack(backPath, { returnTo: isSearchResultsPath, state: getAssetFolderHistoryState() });
+        goBackFromAssetDetails();
       }}
       {useButton}
     />

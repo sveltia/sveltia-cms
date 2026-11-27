@@ -17,9 +17,9 @@
   } from '$lib/services/assets/external';
   import { linkedAssets, linkedFilesService } from '$lib/services/assets/external/linked';
   import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
+  import { getAssetLibraryPath } from '$lib/services/assets/route';
   import { searchMode } from '$lib/services/search';
   import { env } from '$lib/services/user/env.svelte';
-  import { encodePathSegments } from '$lib/services/utils/url';
   import { workflowEnabled } from '$lib/services/workflow';
   import { workflowPageLabelKey } from '$lib/services/workflow/stages';
 
@@ -38,7 +38,7 @@
     }
 
     if (allAssetFolders.current.length) {
-      return encodePathSegments(`/assets/${selectedAssetFolder.current?.internalPath ?? '-/all'}`);
+      return getAssetLibraryPath(selectedAssetFolder.current?.internalPath);
     }
 
     return getCloudServicePath(enabledCloudServices.current[0] ?? linkedFilesService);

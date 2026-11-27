@@ -2,8 +2,9 @@ import { _ } from '@sveltia/i18n';
 import { stripSlashes } from '@sveltia/utils/string';
 
 import { cmsConfig } from '$lib/services/config';
+import { SINGLETONS_COLLECTION_NAME } from '$lib/services/contents/collection/constants';
 import {
-  getValidCollectionFiles,
+  getValidSingletonFiles,
   isEntryCollection,
   isFileCollection,
   isSingletonCollection,
@@ -73,6 +74,13 @@ export const getValidCollections = ({
  * @returns {Collection | undefined} Found collection.
  */
 export const getFirstCollection = () => getValidCollections({ visible: true })[0];
+
+/**
+ * Check whether the singletons have an entry list of their own, at `/collections/_singletons`. The
+ * collection list redirects there only when there is no visible entry or file collection to show.
+ * @returns {boolean} Result.
+ */
+export const hasSingletonList = () => !getFirstCollection();
 
 /**
  * Get a list of field key paths, or file path templates starting with a slash, to be used to find
@@ -158,13 +166,7 @@ export const parseFileCollection = (rawCollection, _i18n, files) => ({
  * are defined.
  */
 export const getSingletonCollection = () => {
-  const singletons = cmsConfig.current?.singletons;
-
-  if (!Array.isArray(singletons)) {
-    return undefined;
-  }
-
-  const files = getValidCollectionFiles(singletons) //
+  const files = getValidSingletonFiles(cmsConfig.current?.singletons) //
     .map((file) => ({ ...file, file: stripSlashes(file.file) }));
 
   if (!files.length) {
@@ -172,7 +174,7 @@ export const getSingletonCollection = () => {
   }
 
   /** @type {Collection} */
-  const rawCollection = { name: '_singletons', files };
+  const rawCollection = { name: SINGLETONS_COLLECTION_NAME, files };
   const _i18n = normalizeI18nConfig(rawCollection);
 
   return parseFileCollection(rawCollection, _i18n, files);
@@ -191,7 +193,7 @@ export const getCollection = (name) => {
     return cache;
   }
 
-  if (name === '_singletons') {
+  if (name === SINGLETONS_COLLECTION_NAME) {
     const collection = getSingletonCollection();
 
     collectionCacheMap.set(name, collection);
@@ -283,7 +285,7 @@ export const getCollectionIndex = (collectionName) => {
   }
 
   // Singleton collection is always at the end
-  if (collectionName === '_singletons') {
+  if (collectionName === SINGLETONS_COLLECTION_NAME) {
     return 9999999;
   }
 

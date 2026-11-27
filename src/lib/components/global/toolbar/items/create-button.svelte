@@ -9,6 +9,7 @@
   import { isReadonly } from '$lib/services/config/readonly';
   import { getValidCollections } from '$lib/services/contents/collection';
   import { countQuotaEntries } from '$lib/services/contents/collection/entries/count';
+  import { getNewEntryPath } from '$lib/services/contents/editor/route';
 
   /**
    * @import { EntryCollection } from '$lib/types/public';
@@ -69,7 +70,7 @@
             {label}
             {disabled}
             onclick={() => {
-              goto(`/collections/${name}/new`, { transitionType: 'forwards' });
+              goto(getNewEntryPath(name), { transitionType: 'forwards' });
             }}
           />
         {/each}

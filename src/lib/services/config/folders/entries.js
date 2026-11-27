@@ -1,8 +1,9 @@
 import { compare, stripSlashes } from '@sveltia/utils/string';
 
 import { getValidCollections } from '$lib/services/contents/collection';
+import { SINGLETONS_COLLECTION_NAME } from '$lib/services/contents/collection/constants';
 import {
-  getValidCollectionFiles,
+  getValidSingletonFiles,
   isValidCollectionFile,
 } from '$lib/services/contents/collection/predicates';
 import { getLocalePath } from '$lib/services/contents/i18n';
@@ -146,13 +147,13 @@ export const getFileCollectionFolders = ({ collections }) =>
  * @returns {EntryFolderInfo[]} Entry folders.
  */
 export const getSingletonCollectionFolders = ({ singletons }) => {
-  const files = Array.isArray(singletons) ? getValidCollectionFiles(singletons) : [];
+  const files = getValidSingletonFiles(singletons);
 
   if (!files.length) {
     return [];
   }
 
-  const singletonCollection = { name: '_singletons', files };
+  const singletonCollection = { name: SINGLETONS_COLLECTION_NAME, files };
 
   return files
     .map((file) => getCollectionFileFolder(singletonCollection, file))
