@@ -2,7 +2,9 @@ import { describe, expect, test } from 'vitest';
 
 import {
   getEntryEditorPath,
+  getEntryEditorReturnTo,
   getUnpublishedEntryEditorPath,
+  isEntryEditorPath,
 } from '$lib/services/contents/editor/route';
 
 describe('getEntryEditorPath()', () => {
@@ -61,5 +63,44 @@ describe('getUnpublishedEntryEditorPath()', () => {
         }),
       ),
     ).toBe('/collections/posts/entries/2024/hello?_pr=7');
+  });
+});
+
+describe('isEntryEditorPath()', () => {
+  test('tells the editor of an existing or new entry from other pages', () => {
+    expect(isEntryEditorPath('/collections/posts/entries/2024/hello')).toBe(true);
+    expect(isEntryEditorPath('/collections/_singletons/entries/team')).toBe(true);
+    expect(isEntryEditorPath('/collections/posts/new')).toBe(true);
+    expect(isEntryEditorPath('/collections/posts')).toBe(false);
+    expect(isEntryEditorPath('/collections/posts/entries')).toBe(false);
+    expect(isEntryEditorPath('/collections/posts/filter/new')).toBe(false);
+    expect(isEntryEditorPath('/collections/newsletters')).toBe(false);
+    expect(isEntryEditorPath('/assets')).toBe(false);
+  });
+});
+
+describe('getEntryEditorReturnTo()', () => {
+  test('returns an entry to the search results it was opened from', () => {
+    const returnTo = getEntryEditorReturnTo('posts');
+
+    expect(returnTo('/search/hello')).toBe(true);
+    expect(returnTo('/collections/pages')).toBe(false);
+    expect(returnTo('/workflow')).toBe(false);
+  });
+
+  test('returns a singleton to any page other than an editor', () => {
+    const returnTo = getEntryEditorReturnTo('_singletons');
+
+    expect(returnTo('/search/hello')).toBe(true);
+    expect(returnTo('/collections/pages')).toBe(true);
+    expect(returnTo('/collections/docs/filter/guides')).toBe(true);
+    expect(returnTo('/assets/images')).toBe(true);
+    expect(returnTo('/workflow')).toBe(true);
+    expect(returnTo('/collections/posts/entries/hello')).toBe(false);
+    expect(returnTo('/collections/posts/new')).toBe(false);
+  });
+
+  test('returns an entry of an unknown collection to the search results only', () => {
+    expect(getEntryEditorReturnTo(undefined)('/collections/pages')).toBe(false);
   });
 });

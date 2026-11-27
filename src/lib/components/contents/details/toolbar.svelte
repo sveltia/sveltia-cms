@@ -46,6 +46,7 @@
   } from '$lib/services/contents/editor';
   import { fieldUpdatePending } from '$lib/services/contents/editor/pending';
   import { createResetMenuState } from '$lib/services/contents/editor/reset-menu.svelte';
+  import { getEntryEditorReturnTo } from '$lib/services/contents/editor/route';
   import { duplicateEntryDraft, saveEntryDraftFlow } from '$lib/services/contents/editor/save';
   import {
     getSidebarPanelLabel,
@@ -60,7 +61,6 @@
   import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
   import { deployPollTimedOut } from '$lib/services/deployments';
   import { recheckDeployments, retainDeployPolling } from '$lib/services/deployments/poll';
-  import { isSearchResultsPath } from '$lib/services/search/navigation';
   import { env } from '$lib/services/user/env.svelte';
   import { prefs } from '$lib/services/user/prefs.svelte';
   import {
@@ -262,14 +262,14 @@
   $effect(() => retainDeployPolling());
 
   /**
-   * Go back to the previous page: the search results if the entry was opened from them, or the
-   * path given by `getEntryEditorBackPath()` otherwise.
+   * Go back to the previous page if `getEntryEditorReturnTo()` accepts it, e.g. the search results
+   * the entry was opened from, or the path given by `getEntryEditorBackPath()` otherwise.
    */
   const _goBack = () => {
     const dirPath = collection && hasNestedEntries(collection) ? nestedFilterPath.current : '';
 
     goBack(getEntryEditorBackPath({ collectionName, dirPath }), {
-      returnTo: isSearchResultsPath,
+      returnTo: getEntryEditorReturnTo(collectionName),
     });
   };
 

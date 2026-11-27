@@ -1,3 +1,4 @@
+import { isSearchResultsPath } from '$lib/services/search/navigation';
 import { encodePathSegments } from '$lib/services/utils/url';
 
 /**
@@ -39,3 +40,23 @@ export const getUnpublishedEntryEditorPath = (entry) => {
     pullRequestNumber: pullRequest.fork ? pullRequest.number : undefined,
   });
 };
+
+/**
+ * Check whether the given URL path is the Content Editor of an existing or new entry.
+ * @param {string} path URL path, e.g. `/collections/posts/entries/hello`.
+ * @returns {boolean} Result.
+ */
+export const isEntryEditorPath = (path) => /^\/collections\/[^/]+\/(?:entries\/.|new$)/.test(path);
+
+/**
+ * Get a function that tells which previous pages the Content Editor returns to when it’s closed,
+ * other than the path given by `getEntryEditorBackPath()`: the search results the entry was opened
+ * from, and for a singleton, any page other than an editor. A singleton is opened from the sidebar
+ * of whatever collection is shown, or from a link elsewhere, and has no entry list of its own
+ * unless singletons are all there is, so the fallback path would land on the first collection.
+ * Another editor is left out, as going back to the entry a duplicate was made from would be wrong.
+ * @param {string | undefined} collectionName Name of the entry’s collection.
+ * @returns {(path: string) => boolean} Function that takes the previous page’s path.
+ */
+export const getEntryEditorReturnTo = (collectionName) => (path) =>
+  isSearchResultsPath(path) || (collectionName === '_singletons' && !isEntryEditorPath(path));

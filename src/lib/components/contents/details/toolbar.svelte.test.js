@@ -832,7 +832,7 @@ describe('Toolbar', () => {
     );
   });
 
-  test('goes back to the collection list for a singleton', async () => {
+  test('goes back from a singleton to the page it was opened from, or the collection list', async () => {
     await initTestConfig({
       collections: [postsCollection],
       singletons: [{ name: 'about', label: 'About', file: 'content/about.md', fields }],
@@ -841,9 +841,17 @@ describe('Toolbar', () => {
     const collection = /** @type {any} */ (getCollection('_singletons'));
     const collectionFile = collection?._fileMap?.about;
 
+    // Opened from the sidebar of a collection other than the first
+    window.history.pushState(null, '', '#/collections/pages');
+    window.history.pushState(null, '', '#/collections/_singletons/entries/about');
     await renderToolbar({ collection, collectionFile });
     await page.getByRole('button', { name: 'Cancel Editing' }).click();
+    await expect.poll(() => window.location.hash).toBe('#/collections/pages');
 
+    // Another editor isn’t gone back to
+    window.history.pushState(null, '', '#/collections/posts/entries/hello');
+    window.history.pushState(null, '', '#/collections/_singletons/entries/about');
+    await page.getByRole('button', { name: 'Cancel Editing' }).click();
     await expect.poll(() => window.location.hash).toBe('#/collections');
   });
 

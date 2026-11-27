@@ -78,6 +78,25 @@ test('edits the singleton’s fields of different types', async ({ cms, page }) 
     });
 });
 
+test('goes back from a singleton to the collection it was opened from', async ({ page }) => {
+  // Pages isn’t the first collection, which the singleton list’s path would redirect to
+  await page.getByRole('treeitem', { name: 'Pages' }).click();
+  await expect(page).toHaveURL(/#\/collections\/pages$/);
+  await page.getByRole('treeitem', { name: 'Site Settings' }).click();
+
+  const editor = getEditor(page);
+
+  await expect(editor.getByRole('textbox', { name: 'Site Name' })).toHaveValue('Night Sky');
+  await editor.getByRole('button', { name: 'Cancel Editing' }).click();
+
+  await expect(editor).toBeHidden();
+  await expect(page).toHaveURL(/#\/collections\/pages$/);
+  await expect(page.getByRole('grid', { name: 'Files' }).getByRole('row')).toHaveText([
+    /About Page/,
+    /Contact Page/,
+  ]);
+});
+
 test.describe('with a `summary` for each file', () => {
   test.use({
     config: {

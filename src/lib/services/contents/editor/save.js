@@ -158,9 +158,10 @@ export const saveEntryDraftFlow = async ({
       ? getEntryEditorPath(collection.name, collectionFile?.name ?? savedEntry.subPath)
       : undefined;
 
-    // A singleton has no entry list of its own unless singletons are all there is: closing its
-    // editor would land on the first collection, which has nothing to do with it. A small screen
-    // shows the collection list instead, which lists the singletons too
+    // A singleton has no entry list of its own unless singletons are all there is, so its editor
+    // stays open: closing it would only go back to wherever it was opened from, or without such a
+    // page, to the first collection, which has nothing to do with it. A small screen shows the
+    // collection list instead, which lists the singletons too
     const hasList =
       !isSingletonCollection(collection) || env.isSmallScreen || !getFirstCollection();
 
