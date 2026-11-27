@@ -22,7 +22,8 @@ vi.mock('$lib/services/user/account.svelte', () => ({ user: mockUser }));
 
 /**
  * Build a `repository` payload with one aliased commit per entry.
- * @param {Record<string, any>[]} commits Commit objects, in alias order.
+ * @param {(Record<string, any> | null)[]} commits Commit objects, in alias order, `null` for a
+ * commit the API couldn’t return.
  * @returns {Record<string, any>} GraphQL response.
  */
 const createCommitResponse = (commits) => ({

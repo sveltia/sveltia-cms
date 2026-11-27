@@ -355,7 +355,7 @@ const collectSources = async (shas, sources, candidateMap, state) => {
 
     // An error in a field that can’t be null nulls its parent instead, up to the commit itself,
     // which would take the commit’s other sources with it
-    if (!grouped || errors.some(({ index }) => !results[index])) {
+    if (!grouped || errors.some((/** @type {any} */ { index }) => !results[index])) {
       throw ex;
     }
 
