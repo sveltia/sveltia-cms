@@ -1,7 +1,7 @@
 import { MEDIA_CONFIG, MEDIA_FILES, MEDIA_IMAGES } from '../../fixtures/configs/media.js';
 import { createPNG } from '../../fixtures/files.js';
 import { expect, test } from '../../fixtures/test.js';
-import { listedAssets, openFolder } from '../../fixtures/ui.js';
+import { getEntryRows, listedAssets, openCollection, openFolder } from '../../fixtures/ui.js';
 
 /**
  * @import { Page } from '@playwright/test';
@@ -68,6 +68,11 @@ test('moves an asset to another folder and updates the entry using it', async ({
 
   await openFolder(page, /Projects/);
   await expect.poll(() => listedAssets(page)).toEqual(['bridge.png', 'guide.txt', 'sunset.png']);
+
+  // The updated entry replaces the original in the list rather than being listed next to it
+  await page.getByRole('radio', { name: 'Contents' }).click();
+  await openCollection(page, 'Notes');
+  await expect(getEntryRows(page)).toHaveCount(1);
 });
 
 test('moves an asset out of an entry’s folder, turning the relative path absolute', async ({

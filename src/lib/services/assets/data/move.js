@@ -52,6 +52,7 @@ export const getDraftBaseProps = ({ entry }) => {
   );
 
   return {
+    id: entry.id,
     createdAt: Date.now(),
     isNew: false,
     canPreview: true,

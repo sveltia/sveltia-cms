@@ -4,7 +4,7 @@ import { MockS3 } from '../../fixtures/cloud/s3.js';
 import { MockUploadcare } from '../../fixtures/cloud/uploadcare.js';
 import { createPNG } from '../../fixtures/files.js';
 import { expect, test } from '../../fixtures/test.js';
-import { getEditor } from '../../fixtures/ui.js';
+import { getEditor, getEntryRows, openCollection } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -250,6 +250,10 @@ test.describe('Amazon S3', () => {
       await expect
         .poll(async () => (await cms.readRepo())['content/posts/hike.md'])
         .toBe(`---\ntitle: Hike\ncover: ${S3_URL}/uploads/trips/route.png\n---\n`);
+
+      await page.getByRole('radio', { name: 'Contents' }).click();
+      await openCollection(page, 'Posts');
+      await expect(getEntryRows(page)).toHaveCount(1);
     });
 
     test('renames a folder and updates the entry using a file in it', async ({ cms, page }) => {
@@ -271,6 +275,10 @@ test.describe('Amazon S3', () => {
       await expect
         .poll(async () => (await cms.readRepo())['content/posts/hike.md'])
         .toBe(`---\ntitle: Hike\ncover: ${S3_URL}/uploads/travel/map.png\n---\n`);
+
+      await page.getByRole('radio', { name: 'Contents' }).click();
+      await openCollection(page, 'Posts');
+      await expect(getEntryRows(page)).toHaveCount(1);
     });
 
     test('creates a folder', async ({ page }) => {

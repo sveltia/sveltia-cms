@@ -141,6 +141,8 @@ describe('assets/data/move', () => {
 
       const result = getDraftBaseProps({ entry });
 
+      // The saved entry replaces the original in the list by its ID
+      expect(result.id).toBe('test-post-id');
       expect(result.originalEntry).toBe(entry);
       expect(result.isNew).toBe(false);
       expect(result.originalLocales).toEqual({ en: true });

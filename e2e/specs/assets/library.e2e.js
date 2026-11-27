@@ -3,7 +3,13 @@ import { readFile } from 'fs/promises';
 import { MEDIA_CONFIG, MEDIA_FILES, MEDIA_IMAGES } from '../../fixtures/configs/media.js';
 import { createPNG } from '../../fixtures/files.js';
 import { expect, test } from '../../fixtures/test.js';
-import { getEditor, listedAssets, openFolder } from '../../fixtures/ui.js';
+import {
+  getEditor,
+  getEntryRows,
+  listedAssets,
+  openCollection,
+  openFolder,
+} from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -387,6 +393,56 @@ test('renames an asset and updates the entry using it', async ({ cms, page }) =>
   expect((await cms.readRepo())['content/notes/evening.md']).toBe(
     '---\ntitle: Evening\ncover: /uploads/dusk.png\n---\n',
   );
+
+  // The updated entry replaces the original in the list rather than being listed next to it
+  await page.getByRole('radio', { name: 'Contents' }).click();
+  await openCollection(page, 'Notes');
+  await expect(getEntryRows(page)).toHaveCount(1);
+  await getEntryRows(page).first().click();
+  await expect(getEditor(page)).toContainText('dusk.png');
+});
+
+test('renames an asset two entries use, and lists each entry once', async ({ cms, page }) => {
+  /** @type {string[]} */
+  const errors = [];
+
+  // Svelte reports a duplicate key in a keyed `each` block through `console.error`
+  page.on('console', (message) => {
+    if (message.type() === 'error') {
+      errors.push(message.text());
+    }
+  });
+
+  await cms.seed({
+    'content/notes/dawn.md': '---\ntitle: Dawn\ncover: /uploads/sunset.png\n---\n',
+  });
+  await page.reload();
+  await page.getByRole('radio', { name: 'Assets' }).click();
+  await openFolder(page, /Global Assets/);
+  await page.getByRole('row', { name: 'sunset.png' }).click();
+  await cms.chooseMenuItem(
+    page.getByRole('button', { name: 'Show Edit Options' }),
+    page.getByRole('menuitem', { name: 'Rename Asset' }),
+  );
+
+  const dialog = page.getByRole('dialog', { name: /Rename.*sunset\.png/ });
+
+  await dialog.getByRole('textbox').fill('dusk.png');
+  await dialog.getByRole('button', { name: 'Rename' }).click();
+  await expect.poll(() => listedAssets(page)).toContain('dusk.png');
+
+  // The asset’s info lists the entries using it, keyed by their IDs
+  await page.getByRole('row', { name: 'dusk.png' }).click();
+
+  const info = page.getByRole('group', { name: 'Asset Info' });
+
+  await expect(info.getByRole('link', { name: 'Notes › Dawn' })).toBeVisible();
+  await expect(info.getByRole('link', { name: 'Notes › Evening' })).toBeVisible();
+  expect(errors.filter((error) => error.includes('each_key_duplicate'))).toEqual([]);
+
+  await page.getByRole('radio', { name: 'Contents' }).click();
+  await openCollection(page, 'Notes');
+  await expect(getEntryRows(page)).toHaveCount(2);
 });
 
 test('replaces an asset with another file', async ({ cms, page }) => {
