@@ -310,6 +310,35 @@ describe('sendRequest', () => {
     );
   });
 
+  test('should pass on the partial data and errors of a GraphQL response', async () => {
+    const errors = [{ type: 'FORBIDDEN', path: ['repository', 'commit_0', 'checkSuites'] }];
+    const data = { repository: { commit_0: { status: null } } };
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.resolve({ data, errors }),
+    });
+
+    await expect(sendRequest('https://api.example.com/graphql')).rejects.toMatchObject({
+      cause: { status: 200, errors, data },
+    });
+  });
+
+  test('should not add GraphQL fields to the cause of a failed HTTP response', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 403,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.resolve({ errors: [{ message: 'Forbidden' }] }),
+    });
+
+    const error = await sendRequest('https://api.example.com/graphql').catch((ex) => ex);
+
+    expect(error.cause).toEqual({ status: 403, message: 'Forbidden' });
+  });
+
   test('should handle 401 unauthorized with token refresh', async () => {
     const mockRefreshFunction = vi.fn().mockResolvedValue({ token: 'new-token' });
     const mockErrorResponse = { error: 'Unauthorized' };

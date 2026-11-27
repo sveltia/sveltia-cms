@@ -335,8 +335,13 @@ export const sendRequest = async (
     throw new Error('Server responded with an error', { cause: { status } });
   }
 
+  // A GraphQL response can carry partial data along with the errors, e.g. when a token can read a
+  // commit but not its check suites, so both are passed on for a caller that can use what arrived
+  const graphQLResult =
+    ok && Array.isArray(result.errors) ? { errors: result.errors, data: result.data } : {};
+
   throw new Error('Server responded with an error', {
-    cause: { status, message: getErrorMessage(result) },
+    cause: { status, message: getErrorMessage(result), ...graphQLResult },
   });
 };
 

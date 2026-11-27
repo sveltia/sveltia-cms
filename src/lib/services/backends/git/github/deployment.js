@@ -8,6 +8,7 @@ import {
   resolveDeployments,
 } from '$lib/services/backends/git/shared/deployment';
 import { getRepositoryPath } from '$lib/services/backends/git/shared/repository';
+import { user } from '$lib/services/user/account.svelte';
 import { splitIntoChunks } from '$lib/services/utils/array';
 import { runConcurrently } from '$lib/services/utils/scheduling';
 
@@ -143,7 +144,8 @@ const fetchCommits = (shas, selection) =>
 /**
  * What to ask for on each commit, and how to read the answer. Keeping the two side by side lets the
  * three be asked for together in one request, or separately when that isn’t possible.
- * @type {Record<string, { selection: string, parse: (commit: any, sha: string,
+ * `field` is the commit field the selection starts with, which an error’s `path` names.
+ * @type {Record<string, { field: string, selection: string, parse: (commit: any, sha: string,
  * candidateMap: Record<string, DeployCandidate[]>) => void }>}
  */
 const SOURCES = {
@@ -152,6 +154,7 @@ const SOURCES = {
    * @see https://docs.github.com/en/graphql/reference/objects#status
    */
   status: {
+    field: 'status',
     selection: 'status { contexts { context state targetUrl description } }',
     /**
      * Read the commit statuses from one commit node.
@@ -181,6 +184,7 @@ const SOURCES = {
    * @see https://docs.github.com/en/graphql/reference/objects#deployment
    */
   deployments: {
+    field: 'deployments',
     selection: `deployments(
       last: ${MAX_ITEMS.deployments}
       orderBy: { field: CREATED_AT, direction: ASC }
@@ -223,6 +227,7 @@ const SOURCES = {
    * @see https://github.com/decaporg/decap-cms/issues/5161
    */
   checks: {
+    field: 'checkSuites',
     selection: `checkSuites(last: ${MAX_ITEMS.checkSuites}) {
       nodes {
         checkRuns(last: ${MAX_ITEMS.checkRuns}) {
@@ -267,81 +272,180 @@ const SOURCES = {
 };
 
 /**
- * Whether the three sources have to be asked for one at a time. GitHub answers a query touching an
- * unavailable field with partial data *and* an `errors` array, which the shared request helper
- * treats as a failure — so one missing field would cost all three. That’s rare, and permanent for a
- * given repository and token, so it’s discovered once and remembered rather than assumed every
- * time. A transient failure latches this too, which only costs extra requests.
+ * What has been learned about the current token, which is kept per token, as another token signed
+ * in later may well be allowed more.
+ *
+ * `askSeparately` says whether the sources have to be asked for one at a time. GitHub answers a
+ * query touching a field the token can’t read with partial data and an `errors` array, which
+ * {@link collectTogether} uses, but a field the server doesn’t know at all, as on an older GitHub
+ * Enterprise Server, fails the whole query with no data. That’s rare, and permanent for a given
+ * server, so it’s discovered once and remembered rather than assumed every time. A transient
+ * failure latches this too, which only costs extra requests.
+ *
+ * `forbiddenSources` lists the sources the token isn’t allowed to read, which are left out of later
+ * queries. A fine-grained personal access token can’t be granted the Checks permission at all, so
+ * check suites are always forbidden to one, and asking again would only bring the same error back.
+ * @type {{ token?: string, askSeparately: boolean, forbiddenSources: Set<string> }}
  */
-let askSeparately = false;
+let tokenState = { token: undefined, askSeparately: false, forbiddenSources: new Set() };
 
 /**
- * Ask for all three sources in a single request.
- * @param {string[]} shas Commit SHAs.
- * @param {Record<string, DeployCandidate[]>} candidateMap Map to populate, keyed by commit SHA.
+ * Get what has been learned about the current token, starting afresh when another one is in use.
+ * @returns {typeof tokenState} State.
  */
-const collectTogether = async (shas, candidateMap) => {
-  const selection = Object.values(SOURCES)
-    .map(({ selection: part }) => part)
-    .join('\n');
+const getTokenState = () => {
+  const token = user.account?.token;
 
-  const commits = await fetchCommits(shas, selection);
+  if (tokenState.token !== token) {
+    tokenState = { token, askSeparately: false, forbiddenSources: new Set() };
+  }
+
+  return tokenState;
+};
+
+/**
+ * Get the sources still worth asking for with the given token.
+ * @param {typeof tokenState} state Token state.
+ * @returns {[string, (typeof SOURCES)[string]][]} Source keys and definitions.
+ */
+const getAvailableSources = (state) =>
+  Object.entries(SOURCES).filter(([key]) => !state.forbiddenSources.has(key));
+
+/**
+ * Find the source each GraphQL error belongs to, from the commit field its `path` names, e.g.
+ * `["repository", "commit_0", "checkSuites", "nodes", 0]`.
+ * @param {any[]} errors Errors from the response.
+ * @param {[string, (typeof SOURCES)[string]][]} sources Sources asked for.
+ * @returns {Map<string, any[]> | undefined} Errors keyed by source, or `undefined` if any error
+ * can’t be pinned to one, in which case the rest of the data can’t be trusted either.
+ */
+const groupErrorsBySource = (errors, sources) => {
+  const keys = errors.map((error) => {
+    const field = Array.isArray(error?.path) ? error.path[2] : undefined;
+
+    return sources.find(([, { field: name }]) => name === field)?.[0];
+  });
+
+  return keys.every((key) => !!key)
+    ? Map.groupBy(errors, (_error, index) => /** @type {string} */ (keys[index]))
+    : undefined;
+};
+
+/**
+ * Ask for the given sources on each commit, keeping a partial answer. A source the token is
+ * forbidden to read is left out from then on.
+ * @param {string[]} shas Commit SHAs. The caller keeps the list to {@link MAX_ITEMS.commits}.
+ * @param {[string, (typeof SOURCES)[string]][]} sources Sources to ask for.
+ * @param {Record<string, DeployCandidate[]>} candidateMap Map to populate, keyed by commit SHA.
+ * @param {typeof tokenState} state State of the token the request is sent with, which is still the
+ * one to update if another token has been signed in by the time the answer comes back.
+ * @throws {Error} When the request fails in a way that leaves no usable data.
+ */
+const collectSources = async (shas, sources, candidateMap, state) => {
+  const selection = sources.map(([, { selection: part }]) => part).join('\n');
+  /** @type {any[]} */
+  let commits;
+
+  try {
+    commits = await fetchCommits(shas, selection);
+  } catch (ex) {
+    const { errors, data } = /** @type {any} */ (ex)?.cause ?? {};
+    const repo = data?.repository;
+
+    const grouped =
+      Array.isArray(errors) && repo ? groupErrorsBySource(errors, sources) : undefined;
+
+    // An error in a field that can’t be null nulls its parent instead, up to the commit itself,
+    // which would take the commit’s other sources with it
+    if (!grouped || errors.some(({ path }) => !repo[path[1]])) {
+      throw ex;
+    }
+
+    grouped.forEach((items, key) => {
+      if (items.every((error) => error?.type === 'FORBIDDEN')) {
+        state.forbiddenSources.add(key);
+      }
+
+      // eslint-disable-next-line no-console
+      console.warn(`Failed to fetch the deployment info from ${key}.`, items);
+    });
+
+    // The commits fit in one request, so `fetchAliasedBatch` aliased each by its position. A node
+    // that couldn’t be read comes back as `null`, which the parsers skip, so whatever did arrive is
+    // still used — the other check suites of a commit, say, when only one is forbidden
+    commits = shas.map((_sha, index) => repo[`commit_${index}`]);
+  }
 
   shas.forEach((sha, index) => {
-    Object.values(SOURCES).forEach(({ parse }) => parse(commits[index], sha, candidateMap));
+    sources.forEach(([, { parse }]) => parse(commits[index], sha, candidateMap));
   });
+};
+
+/**
+ * Ask for all the available sources in a single request.
+ * @param {string[]} shas Commit SHAs.
+ * @param {Record<string, DeployCandidate[]>} candidateMap Map to populate, keyed by commit SHA.
+ * @param {typeof tokenState} state Token state.
+ * @throws {Error} When the request fails in a way that leaves no usable data.
+ */
+const collectTogether = async (shas, candidateMap, state) => {
+  const sources = getAvailableSources(state);
+
+  if (sources.length) {
+    await collectSources(shas, sources, candidateMap, state);
+  }
 };
 
 /**
  * Ask for each source in its own request, so an unavailable field only costs its own source.
  * @param {string[]} shas Commit SHAs.
  * @param {Record<string, DeployCandidate[]>} candidateMap Map to populate, keyed by commit SHA.
+ * @param {typeof tokenState} state Token state.
  */
-const collectOneByOne = async (shas, candidateMap) => {
+const collectOneByOne = async (shas, candidateMap, state) => {
   await Promise.all(
     // A missing or restricted field shouldn’t take the other sources down with it
-    Object.values(SOURCES).map(({ selection, parse }) =>
-      collectSafely(async () => {
-        const commits = await fetchCommits(shas, selection);
-
-        shas.forEach((sha, index) => parse(commits[index], sha, candidateMap));
-      }),
+    getAvailableSources(state).map((source) =>
+      collectSafely(() => collectSources(shas, [source], candidateMap, state)),
     ),
   );
 };
 
 /**
- * Collect deploy candidates for the given commits from all three sources. They’re asked for in one
- * request per chunk, dropping to one request each only if that fails.
+ * Collect deploy candidates for the given commits from the sources the token can read. They’re
+ * asked for in one request per chunk, dropping to one request each only if that fails without any
+ * usable data.
  * @param {string[]} shas Commit SHAs.
  * @param {Record<string, DeployCandidate[]>} candidateMap Candidates keyed by commit SHA.
  */
 const collectCandidates = async (shas, candidateMap) => {
+  const state = getTokenState();
+
   // Chunked here rather than in `fetchAliasedBatch`, so a failure only sends its own chunk down the
   // one-request-per-source path
   await runConcurrently(splitIntoChunks(shas, MAX_ITEMS.commits), async (chunk) => {
-    if (!askSeparately) {
+    if (!state.askSeparately) {
       try {
-        await collectTogether(chunk, candidateMap);
+        await collectTogether(chunk, candidateMap, state);
 
         return;
       } catch (ex) {
         // eslint-disable-next-line no-console
         console.warn('Falling back to a request per deployment source.', ex);
-        askSeparately = true;
+        state.askSeparately = true;
       }
     }
 
-    await collectOneByOne(chunk, candidateMap);
+    await collectOneByOne(chunk, candidateMap, state);
   });
 };
 
 /**
- * Fetch the deployment status and URL for the given commits. All three sources are asked for in one
- * request, dropping to one request each only if that fails — which happens when a field is
- * unavailable, on GitHub Enterprise Server or with a token lacking deployment scope, because the
- * API answers with partial data and an error together and the shared request helper rejects the
- * whole response. A repository that needs the split pays for discovering it once.
+ * Fetch the deployment status and URL for the given commits. All the sources are asked for in one
+ * request. A source the token can’t read only costs itself, as the rest of the partial answer is
+ * kept; the request is split into one per source only if it fails outright, which happens when a
+ * field is unknown to the server, as on an older GitHub Enterprise Server. A repository that needs
+ * the split pays for discovering it once.
  * @param {DeployTarget[]} targets Commits to look up.
  * @returns {Promise<Record<string, DeployStatus>>} Deployments keyed by commit SHA.
  */
