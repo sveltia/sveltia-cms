@@ -334,7 +334,8 @@ const groupErrorsBySource = (errors, sources) => {
 /**
  * Ask for the given sources on each commit, keeping a partial answer. A source the token is
  * forbidden to read is left out from then on.
- * @param {string[]} shas Commit SHAs. The caller keeps the list to {@link MAX_ITEMS.commits}.
+ * @param {string[]} shas Commit SHAs. The caller keeps the list to {@link MAX_ITEMS.commits}, so
+ * it’s asked for in one request and a partial answer covers every commit.
  * @param {[string, (typeof SOURCES)[string]][]} sources Sources to ask for.
  * @param {Record<string, DeployCandidate[]>} candidateMap Map to populate, keyed by commit SHA.
  * @param {typeof tokenState} state State of the token the request is sent with, which is still the
@@ -349,15 +350,12 @@ const collectSources = async (shas, sources, candidateMap, state) => {
   try {
     commits = await fetchCommits(shas, selection);
   } catch (ex) {
-    const { errors, data } = /** @type {any} */ (ex)?.cause ?? {};
-    const repo = data?.repository;
-
-    const grouped =
-      Array.isArray(errors) && repo ? groupErrorsBySource(errors, sources) : undefined;
+    const { errors, results } = /** @type {any} */ (ex)?.cause ?? {};
+    const grouped = Array.isArray(results) ? groupErrorsBySource(errors, sources) : undefined;
 
     // An error in a field that can’t be null nulls its parent instead, up to the commit itself,
     // which would take the commit’s other sources with it
-    if (!grouped || errors.some(({ path }) => !repo[path[1]])) {
+    if (!grouped || errors.some(({ index }) => !results[index])) {
       throw ex;
     }
 
@@ -370,10 +368,9 @@ const collectSources = async (shas, sources, candidateMap, state) => {
       console.warn(`Failed to fetch the deployment info from ${key}.`, items);
     });
 
-    // The commits fit in one request, so `fetchAliasedBatch` aliased each by its position. A node
-    // that couldn’t be read comes back as `null`, which the parsers skip, so whatever did arrive is
-    // still used — the other check suites of a commit, say, when only one is forbidden
-    commits = shas.map((_sha, index) => repo[`commit_${index}`]);
+    // A node that couldn’t be read comes back as `null`, which the parsers skip, so whatever did
+    // arrive is still used — the other check suites of a commit, say, when only one is forbidden
+    commits = results;
   }
 
   shas.forEach((sha, index) => {

@@ -609,7 +609,7 @@ describe('GitHub deployment service', () => {
         // No request per source is needed
         expect(request).toHaveBeenCalledTimes(1);
         expect(warn).toHaveBeenCalledWith('Failed to fetch the deployment info from checks.', [
-          forbiddenChecks,
+          { ...forbiddenChecks, index: 0 },
         ]);
 
         warn.mockRestore();

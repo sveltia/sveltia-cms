@@ -192,5 +192,70 @@ describe('GitHub GraphQL helpers', () => {
         }),
       ).rejects.toThrow('Bad credentials');
     });
+
+    describe('when the API answers with partial data', () => {
+      /**
+       * Build the error `fetchGraphQL` throws for a response with partial data.
+       * @param {Record<string, any>} data Partial data.
+       * @param {any[]} errors GraphQL errors.
+       * @returns {Error} Error.
+       */
+      const createPartialError = (data, errors) =>
+        new Error('Server responded with an error', {
+          cause: { status: 200, message: 'Forbidden', errors, data },
+        });
+
+      test('passes on the results in item order and the item each error is about', async () => {
+        const errors = [
+          { type: 'FORBIDDEN', path: ['repository', 'item_1', 'checkSuites', 'nodes', 0] },
+          { type: 'FORBIDDEN', path: ['repository', 'other_1'] },
+          { type: 'FORBIDDEN', path: ['repository', 'item_x'] },
+          { type: 'FORBIDDEN', path: ['repository'] },
+          { type: 'FORBIDDEN', path: ['repository', 1] },
+          null,
+        ];
+
+        const original = createPartialError(
+          { repository: { item_0: { value: 0 }, item_1: { checkSuites: { nodes: [null] } } } },
+          errors,
+        );
+
+        vi.mocked(fetchGraphQL).mockRejectedValue(original);
+
+        const error = await fetchAliasedBatch({
+          items: ['a', 'b'],
+          alias: 'item',
+          getFragment,
+          chunkSize: 2,
+        }).catch((ex) => ex);
+
+        expect(error).toBe(original);
+        expect(error.cause).toEqual(
+          expect.objectContaining({
+            status: 200,
+            results: [{ value: 0 }, { checkSuites: { nodes: [null] } }],
+          }),
+        );
+
+        expect(error.cause.errors.map((/** @type {any} */ e) => e.index)).toEqual([
+          1,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+        ]);
+      });
+
+      test('rethrows the error as is without any data', async () => {
+        const original = createPartialError({ repository: null }, [{ type: 'FORBIDDEN' }]);
+
+        vi.mocked(fetchGraphQL).mockRejectedValue(original);
+
+        await expect(
+          fetchAliasedBatch({ items: ['a'], alias: 'item', getFragment, chunkSize: 1 }),
+        ).rejects.toBe(original);
+      });
+    });
   });
 });

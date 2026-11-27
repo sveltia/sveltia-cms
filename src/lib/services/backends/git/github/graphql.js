@@ -32,6 +32,22 @@ export const buildAliasedQuery = (parts, alias, { useBranch = false } = {}) => {
 };
 
 /**
+ * Get the index of the item an alias such as `content_3` stands for.
+ * @param {unknown} name Alias, the second segment of a GraphQL error’s `path`.
+ * @param {string} alias Alias prefix.
+ * @returns {number | undefined} Index, or `undefined` if the name isn’t one of the aliases.
+ */
+const getAliasIndex = (name, alias) => {
+  const prefix = `${alias}_`;
+
+  return typeof name === 'string' &&
+    name.startsWith(prefix) &&
+    /^\d+$/.test(name.slice(prefix.length))
+    ? Number(name.slice(prefix.length))
+    : undefined;
+};
+
+/**
  * Ask the GraphQL API for one aliased field of the repository per item, a chunk of items per
  * request, with a limited number of requests in flight at once. A big query takes longer to answer
  * and is more likely to time out or to exceed the API’s query cost limits, so a long list is split.
@@ -65,20 +81,52 @@ export const fetchAliasedBatch = async ({
     .map((item, index) => ({ index, fragment: getFragment(item) }))
     .filter(({ fragment }) => !!fragment);
 
+  /**
+   * Store the answer for each item of a chunk.
+   * @param {{ index: number }[]} chunk Items in the chunk.
+   * @param {{ repository?: Record<string, any> | null } | undefined} data Response data.
+   */
+  const storeResults = (chunk, data) => {
+    chunk.forEach(({ index }) => {
+      results[index] = data?.repository?.[`${alias}_${index}`];
+    });
+  };
+
   await runConcurrently(splitIntoChunks(parts, chunkSize), async (chunk) => {
-    const data = /** @type {{ repository?: Record<string, any> | null }} */ (
+    /** @type {{ repository?: Record<string, any> | null }} */
+    let data;
+
+    try {
       // Copy the variables, as `fetchGraphQL` adds the common ones to the given object
-      await fetchGraphQL(
+      data = await fetchGraphQL(
         buildAliasedQuery(/** @type {{ index: number, fragment: string }[]} */ (chunk), alias, {
           useBranch,
         }),
         { ...variables },
-      )
-    );
+      );
+    } catch (ex) {
+      const { cause } = /** @type {{ cause?: any }} */ (ex);
 
-    chunk.forEach(({ index }) => {
-      results[index] = data?.repository?.[`${alias}_${index}`];
-    });
+      if (!Array.isArray(cause?.errors) || !cause.data?.repository) {
+        throw ex;
+      }
+
+      storeResults(chunk, cause.data);
+
+      // Added to the original error, which keeps its stack
+      Object.assign(cause, {
+        // A copy, as the other chunks still in flight go on filling the list
+        results: [...results],
+        errors: cause.errors.map((/** @type {any} */ error) => ({
+          ...error,
+          index: getAliasIndex(error?.path?.[1], alias),
+        })),
+      });
+
+      throw ex;
+    }
+
+    storeResults(chunk, data);
   });
 
   return results;
