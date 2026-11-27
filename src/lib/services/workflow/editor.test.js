@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { goBack } from '$lib/services/app/navigation';
 import {
   contentUpdatesToast,
   UPDATE_TOAST_DEFAULT_STATE,
 } from '$lib/services/contents/collection/data';
+import { goBackFromEntryEditor } from '$lib/services/contents/editor/back';
 import {
   closeWorkflowEntryEditor,
   handleEntryAlreadyPublished,
@@ -12,7 +12,7 @@ import {
 } from '$lib/services/workflow/editor';
 import { ENTRY_ALREADY_PUBLISHED } from '$lib/services/workflow/open-authoring';
 
-vi.mock('$lib/services/app/navigation', () => ({ goBack: vi.fn() }));
+vi.mock('$lib/services/contents/editor/back', () => ({ goBackFromEntryEditor: vi.fn() }));
 vi.mock('$lib/services/workflow/verify', () => ({
   getWorkflowErrorMessage: vi.fn((ex, fallback) => `${fallback}: ${ex.message}`),
 }));
@@ -40,7 +40,7 @@ describe('workflow/editor', () => {
       closeWorkflowEntryEditor({ entryDraft, branch: BRANCH, collectionName: 'posts' });
 
       expect(entryDraft.current).toBeNull();
-      expect(goBack).toHaveBeenCalledWith('/collections/posts');
+      expect(goBackFromEntryEditor).toHaveBeenCalledWith('posts');
     });
 
     test('leaves another entry’s draft alone', () => {
@@ -50,7 +50,7 @@ describe('workflow/editor', () => {
       closeWorkflowEntryEditor({ entryDraft, branch: BRANCH, collectionName: 'posts' });
 
       expect(entryDraft.current).toBe(draft);
-      expect(goBack).not.toHaveBeenCalled();
+      expect(goBackFromEntryEditor).not.toHaveBeenCalled();
     });
 
     test('does nothing once the editor has closed', () => {
@@ -58,7 +58,7 @@ describe('workflow/editor', () => {
 
       closeWorkflowEntryEditor({ entryDraft, branch: BRANCH, collectionName: 'posts' });
 
-      expect(goBack).not.toHaveBeenCalled();
+      expect(goBackFromEntryEditor).not.toHaveBeenCalled();
     });
   });
 
@@ -75,7 +75,7 @@ describe('workflow/editor', () => {
       ).toBe(true);
 
       expect(entryDraft.current).toBeNull();
-      expect(goBack).toHaveBeenCalledWith('/collections/posts');
+      expect(goBackFromEntryEditor).toHaveBeenCalledWith('posts');
       expect(contentUpdatesToast.current).toEqual({
         ...UPDATE_TOAST_DEFAULT_STATE,
         alreadyPublished: true,
@@ -95,7 +95,7 @@ describe('workflow/editor', () => {
       ).toBe(true);
 
       expect(entryDraft.current).toBe(draft);
-      expect(goBack).not.toHaveBeenCalled();
+      expect(goBackFromEntryEditor).not.toHaveBeenCalled();
       expect(contentUpdatesToast.current.alreadyPublished).toBe(true);
     });
 
@@ -111,7 +111,7 @@ describe('workflow/editor', () => {
       ).toBe(false);
 
       expect(entryDraft.current).not.toBeNull();
-      expect(goBack).not.toHaveBeenCalled();
+      expect(goBackFromEntryEditor).not.toHaveBeenCalled();
       expect(contentUpdatesToast.current.alreadyPublished).toBe(false);
     });
   });
@@ -151,7 +151,7 @@ describe('workflow/editor', () => {
       ).resolves.toEqual({ blocked: false, errorMessage: undefined });
       expect(action).toHaveBeenCalledOnce();
       expect(entryDraft.current).not.toBeNull();
-      expect(goBack).not.toHaveBeenCalled();
+      expect(goBackFromEntryEditor).not.toHaveBeenCalled();
     });
 
     test('calls the action synchronously', () => {
@@ -185,7 +185,7 @@ describe('workflow/editor', () => {
       });
 
       expect(entryDraft.current).toBeNull();
-      expect(goBack).toHaveBeenCalledWith('/collections/posts');
+      expect(goBackFromEntryEditor).toHaveBeenCalledWith('posts');
     });
 
     test('logs a failure and returns its message, leaving the editor open', async () => {
@@ -211,7 +211,7 @@ describe('workflow/editor', () => {
         });
         expect(error).toHaveBeenCalledWith(ex);
         expect(entryDraft.current).not.toBeNull();
-        expect(goBack).not.toHaveBeenCalled();
+        expect(goBackFromEntryEditor).not.toHaveBeenCalled();
       } finally {
         error.mockRestore();
       }
@@ -257,7 +257,7 @@ describe('workflow/editor', () => {
         ).resolves.toEqual({ blocked: false, errorMessage: undefined });
         expect(error).not.toHaveBeenCalled();
         expect(entryDraft.current).toBeNull();
-        expect(goBack).toHaveBeenCalledWith('/collections/posts');
+        expect(goBackFromEntryEditor).toHaveBeenCalledWith('posts');
         expect(contentUpdatesToast.current.alreadyPublished).toBe(true);
       } finally {
         error.mockRestore();

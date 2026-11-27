@@ -212,6 +212,38 @@ test.describe('with a singleton', () => {
       expect(new URL(page.url()).hash).toBe('#/collections/_singletons/entries/team');
     });
   });
+
+  test('goes back to where the singleton was opened from once it’s published', async ({
+    cms,
+    github,
+    page,
+  }) => {
+    await cms.open();
+    await expect(page).toHaveURL(/#\/collections\/posts$/);
+    await page.getByRole('treeitem', { name: 'Team' }).click();
+
+    const editor = getEditor(page);
+
+    await editor.getByRole('textbox', { name: 'Title' }).fill('Our Team');
+    await editor.getByRole('button', { name: 'Save' }).click();
+    await page
+      .getByRole('alertdialog', { name: 'Send for Review' })
+      .getByRole('button', { name: 'Send for Review' })
+      .click();
+    await expect(editor.getByRole('button', { name: 'Save', exact: true })).toBeDisabled();
+    await cms.changeStatus(/Status: .*In Review/, 'Ready');
+    await editor.getByRole('button', { name: 'Publish Entry' }).click();
+    await page
+      .getByRole('alertdialog', { name: 'Publish Entry' })
+      .getByRole('button', { name: 'Publish' })
+      .click();
+
+    await expect.poll(() => github.pullRequests[0]?.state).toBe('merged');
+    // Not the list of singletons, which the sidebar doesn’t offer while there are collections
+    await expect(editor).toBeHidden();
+    await expect(page).toHaveURL(/#\/collections\/posts$/);
+    expect(github.readFile('content/team.yml')).toBe('title: Our Team\n');
+  });
 });
 
 test('approves a colleague’s pull request while it’s marked as ready', async ({

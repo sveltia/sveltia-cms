@@ -27,13 +27,12 @@
   import EntryStatusMenu from '$lib/components/workflow/entry-status-menu.svelte';
   import PublishEntryButton from '$lib/components/workflow/publish-entry-button.svelte';
   import { getAdditions } from '$lib/services/app/additions';
-  import { getEntryEditorBackPath, goBack, goto, overlayTitle } from '$lib/services/app/navigation';
+  import { goto, overlayTitle } from '$lib/services/app/navigation';
   import { saveProgress } from '$lib/services/backends/commit-progress';
   import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
   import { isDraftReadonly } from '$lib/services/config/readonly';
   import { getCollectionLabel } from '$lib/services/contents/collection';
   import { getCollectionFileLabel } from '$lib/services/contents/collection/files';
-  import { hasNestedEntries, nestedFilterPath } from '$lib/services/contents/collection/nested';
   import { collectionState } from '$lib/services/contents/collection/view';
   import { createDraft } from '$lib/services/contents/draft/create';
   import { getReferencedPendingEntrySet } from '$lib/services/contents/draft/pending-entries';
@@ -44,9 +43,9 @@
     copyFromLocaleToast,
     listItemClipboardToast,
   } from '$lib/services/contents/editor';
+  import { goBackFromEntryEditor } from '$lib/services/contents/editor/back';
   import { fieldUpdatePending } from '$lib/services/contents/editor/pending';
   import { createResetMenuState } from '$lib/services/contents/editor/reset-menu.svelte';
-  import { getEntryEditorReturnTo } from '$lib/services/contents/editor/route';
   import { duplicateEntryDraft, saveEntryDraftFlow } from '$lib/services/contents/editor/save';
   import {
     getSidebarPanelLabel,
@@ -262,18 +261,6 @@
   $effect(() => retainDeployPolling());
 
   /**
-   * Go back to the previous page if `getEntryEditorReturnTo()` accepts it, e.g. the search results
-   * the entry was opened from, or the path given by `getEntryEditorBackPath()` otherwise.
-   */
-  const _goBack = () => {
-    const dirPath = collection && hasNestedEntries(collection) ? nestedFilterPath.current : '';
-
-    goBack(getEntryEditorBackPath({ collectionName, dirPath }), {
-      returnTo: getEntryEditorReturnTo(collectionName),
-    });
-  };
-
-  /**
    * Ask whether the entry just saved should be moved to the given stage, e.g. handed over for
    * review, and wait for the answer.
    * @param {WorkflowStatus} stage Next stage.
@@ -340,7 +327,7 @@
         }
 
         if (outcome.next === 'close') {
-          _goBack();
+          goBackFromEntryEditor(collectionName);
           entryDraft.current = null;
         } else if (outcome.next === 'reset') {
           createDraft({
@@ -389,7 +376,7 @@
     aria-label={_('cancel_editing')}
     useShortcut={prefs.closeWithEscape && !activeInlineEditors.current}
     onclick={() => {
-      _goBack();
+      goBackFromEntryEditor(collectionName);
     }}
   />
   {#if env.isSmallScreen}
@@ -674,7 +661,7 @@
   {useWorkflow}
   {pendingDeletion}
   onDone={() => {
-    _goBack();
+    goBackFromEntryEditor(collectionName);
   }}
   onClose={() => {
     menuButton?.focus();

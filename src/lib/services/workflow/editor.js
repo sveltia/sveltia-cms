@@ -1,8 +1,8 @@
-import { goBack } from '$lib/services/app/navigation';
 import {
   contentUpdatesToast,
   UPDATE_TOAST_DEFAULT_STATE,
 } from '$lib/services/contents/collection/data';
+import { goBackFromEntryEditor } from '$lib/services/contents/editor/back';
 import { isEntryAlreadyPublished } from '$lib/services/workflow/open-authoring';
 import { getWorkflowErrorMessage } from '$lib/services/workflow/verify';
 
@@ -13,10 +13,10 @@ import { getWorkflowErrorMessage } from '$lib/services/workflow/verify';
 
 /**
  * Close the editor on an unpublished entry that has just left the board, because it has been
- * published, and go back to its collection. The editor can have moved on by then: a merge can take
- * minutes when the Git service waits for a pipeline, and the draft state is shared by the whole
- * page, so the draft open now may be another entry’s, with unsaved changes. Only the given entry’s
- * draft is closed.
+ * published, and go back to where it was opened from, as the editor’s Back button does. The editor
+ * can have moved on by then: a merge can take minutes when the Git service waits for a pipeline,
+ * and the draft state is shared by the whole page, so the draft open now may be another entry’s,
+ * with unsaved changes. Only the given entry’s draft is closed.
  * @param {object} args Arguments.
  * @param {EntryDraftState} args.entryDraft Draft state of the editor.
  * @param {string} args.branch Workflow branch of the entry, read before it left the board.
@@ -29,7 +29,7 @@ export const closeWorkflowEntryEditor = ({ entryDraft, branch, collectionName })
 
   if (originalEntry?.workflow?.pullRequest.branch === branch) {
     entryDraft.current = null;
-    goBack(`/collections/${collectionName}`);
+    goBackFromEntryEditor(collectionName);
   }
 };
 
