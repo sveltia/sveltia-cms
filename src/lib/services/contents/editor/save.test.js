@@ -7,6 +7,7 @@ import { saveEntry } from '$lib/services/contents/draft/save';
 import { validateDraft } from '$lib/services/contents/draft/validate';
 import { awaitPendingFieldUpdates } from '$lib/services/contents/editor/pending';
 import { duplicateEntryDraft, saveEntryDraftFlow } from '$lib/services/contents/editor/save';
+import { env } from '$lib/services/user/env.svelte';
 import { publishWorkflowEntry, updateWorkflowStatus } from '$lib/services/workflow/save';
 
 vi.mock('$lib/services/contents/draft/create/duplicate', () => ({ duplicateDraft: vi.fn() }));
@@ -114,6 +115,33 @@ describe('saveEntryDraftFlow()', () => {
     expect(
       await saveEntryDraftFlow({ ...getArgs(createState()), closeOnSave: vi.fn(() => false) }),
     ).toMatchObject({ type: 'saved', next: 'reset' });
+  });
+
+  test('keeps a singleton open unless singletons are all there is', async () => {
+    const singletons = { name: '_singletons', files: [{ name: 'team' }] };
+    const args = getArgs(createState({ collection: singletons, collectionName: '_singletons' }));
+
+    vi.mocked(saveEntry).mockResolvedValue(/** @type {any} */ ({}));
+
+    try {
+      // Closing the editor would land on the posts, which have nothing to do with the singleton
+      cmsConfig.current = /** @type {any} */ ({
+        collections: [{ name: 'posts', folder: 'content/posts', fields: [] }],
+      });
+      expect(await saveEntryDraftFlow(args)).toMatchObject({ type: 'saved', next: 'reset' });
+
+      // A small screen goes back to the collection list, which lists the singletons
+      env.isSmallScreen = true;
+      expect(await saveEntryDraftFlow(args)).toMatchObject({ type: 'saved', next: 'close' });
+      env.isSmallScreen = false;
+
+      // Closing it goes back to the singleton list
+      cmsConfig.current = /** @type {any} */ ({ collections: [] });
+      expect(await saveEntryDraftFlow(args)).toMatchObject({ type: 'saved', next: 'close' });
+    } finally {
+      cmsConfig.current = undefined;
+      env.isSmallScreen = false;
+    }
   });
 
   test('gives the path of a new entry', async () => {

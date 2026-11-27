@@ -1,5 +1,7 @@
 import { clearSaveProgress, startPreparing } from '$lib/services/backends/commit-progress';
 import { isCommitCancelled } from '$lib/services/backends/commit-prompt';
+import { getFirstCollection } from '$lib/services/contents/collection';
+import { isSingletonCollection } from '$lib/services/contents/collection/predicates';
 import { duplicateDraft } from '$lib/services/contents/draft/create/duplicate';
 import { saveEntry } from '$lib/services/contents/draft/save';
 import { validateDraft } from '$lib/services/contents/draft/validate';
@@ -7,6 +9,7 @@ import { countInvalidFields } from '$lib/services/contents/draft/validate/reveal
 import { awaitPendingFieldUpdates } from '$lib/services/contents/editor/pending';
 import { getEntryEditorPath } from '$lib/services/contents/editor/route';
 import { getSaveFailure } from '$lib/services/contents/editor/toolbar';
+import { env } from '$lib/services/user/env.svelte';
 import { publishWorkflowEntry, updateWorkflowStatus } from '$lib/services/workflow/save';
 import { getEntryStage, getNextStage } from '$lib/services/workflow/stages';
 import { getWorkflowErrorMessage } from '$lib/services/workflow/verify';
@@ -28,7 +31,8 @@ import { getWorkflowErrorMessage } from '$lib/services/workflow/verify';
  * - `saved`: the entry was saved. `statusError` is the message to show when it couldn’t be moved
  * to the next stage, or published after being saved to its pull request. `path` is the URL to
  * replace the `new` route with, for a new entry. `next` says whether to close the editor or reset
- * the draft; neither is done when another draft is now open.
+ * the draft; neither is done when another draft is now open. A singleton is reset rather than
+ * closed when closing it would land on an unrelated collection.
  * - `invalid`: the draft has invalid fields, `errorCount` of them.
  * - `conflict`: someone else has changed the entry since it was opened; the user decides.
  * - `error`: the save failed, with the backend’s message if there is one.
@@ -154,12 +158,18 @@ export const saveEntryDraftFlow = async ({
       ? getEntryEditorPath(collection.name, collectionFile?.name ?? savedEntry.subPath)
       : undefined;
 
+    // A singleton has no entry list of its own unless singletons are all there is: closing its
+    // editor would land on the first collection, which has nothing to do with it. A small screen
+    // shows the collection list instead, which lists the singletons too
+    const hasList =
+      !isSingletonCollection(collection) || env.isSmallScreen || !getFirstCollection();
+
     // The entry itself is saved, so a failed status change leaves the editor open rather than
-    // navigating away from something the user may want to retry from the status menu. Otherwise
-    // the draft is reset: the next save compares the draft’s original entry with the branch, so
-    // leaving the pre-save one in place would report the save that just landed as someone else’s
-    // change to the entry
-    const next = closeOnSave() && statusError === undefined ? 'close' : 'reset';
+    // navigating away from something the user may want to retry from the status menu. When the
+    // editor stays open, the draft is reset: the next save compares the draft’s original entry with
+    // the branch, so leaving the pre-save one in place would report the save that just landed as
+    // someone else’s change to the entry
+    const next = closeOnSave() && hasList && statusError === undefined ? 'close' : 'reset';
 
     return { type: 'saved', savedEntry, statusError, path, next };
   } catch (/** @type {any} */ ex) {

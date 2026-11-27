@@ -162,6 +162,58 @@ test('moves an entry through the review stages', async ({ cms, github, page }) =
     .toEqual({ labels: ['sveltia-cms/draft'], draft: true });
 });
 
+test.describe('with a singleton', () => {
+  test.use({
+    config: {
+      ...WORKFLOW_CONFIG,
+      singletons: [
+        {
+          name: 'team',
+          label: 'Team',
+          file: 'content/team.yml',
+          fields: [{ name: 'title', label: 'Title', widget: 'string' }],
+        },
+      ],
+    },
+  });
+
+  test.beforeEach(async ({ github }) => {
+    github.commit({ 'content/team.yml': 'title: Team\n' });
+  });
+
+  ['Send for Review', 'Later'].forEach((button) => {
+    test(`keeps the singleton open after saving it and choosing ${button}`, async ({
+      cms,
+      github,
+      page,
+    }) => {
+      await cms.open();
+      await page.getByRole('treeitem', { name: 'Team' }).click();
+
+      const editor = getEditor(page);
+
+      await editor.getByRole('textbox', { name: 'Title' }).fill('Our Team');
+      await editor.getByRole('button', { name: 'Save' }).click();
+      await page
+        .getByRole('alertdialog', { name: 'Send for Review' })
+        .getByRole('button', { name: button })
+        .click();
+
+      const label = button === 'Later' ? 'sveltia-cms/draft' : 'sveltia-cms/pending_review';
+
+      await expect.poll(() => github.pullRequests).toMatchObject([{ labels: [label] }]);
+      // Closing the editor would land on the posts, which have nothing to do with the singleton.
+      // The button reads Saving… until the save is done, then has nothing more to save
+      await expect(editor.getByRole('button', { name: 'Save', exact: true })).toBeDisabled();
+      await expect(
+        editor.getByRole('button', { name: button === 'Later' ? /Draft/ : /In Review/ }),
+      ).toBeVisible();
+      await expect(editor.getByRole('textbox', { name: 'Title' })).toHaveValue('Our Team');
+      expect(new URL(page.url()).hash).toBe('#/collections/_singletons/entries/team');
+    });
+  });
+});
+
 test('approves a colleague’s pull request while it’s marked as ready', async ({
   cms,
   github,
