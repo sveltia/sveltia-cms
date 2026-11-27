@@ -8,7 +8,10 @@
   import { _ } from '@sveltia/i18n';
   import { Icon, Listbox, Option, OptionGroup, Select } from '@sveltia/ui';
 
-  import { isFolderOffered } from '$lib/services/assets/browser/select-assets-dialog.svelte';
+  import {
+    getDefaultLibraryName,
+    isFolderOffered,
+  } from '$lib/services/assets/browser/select-assets-dialog.svelte';
   import {
     activated as cloudinaryActivated,
     dialogOpen as cloudinaryDialogOpen,
@@ -82,7 +85,7 @@
       {#each Object.entries(assetLibraryFolderMap) as [id, entry] (id)}
         {#if isFolderOffered(entry, selectFolder)}
           {@render locationOption({
-            name: `default-${id}`,
+            name: getDefaultLibraryName(id),
             label: entry.folder?.label || _(`assets_dialog.folder.${id}`),
             icon: 'folder',
           })}

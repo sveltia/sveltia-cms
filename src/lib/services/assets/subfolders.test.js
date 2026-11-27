@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   browsedDirPath,
   browsingCmsFolder,
-  canBrowseSubfolders,
   formatSubfolderName,
   getAssetsInDir,
   getFolderBreadcrumbItems,
@@ -78,23 +77,6 @@ describe('assets/subfolders', () => {
     _gitConfigFiles.current = [];
     _config.slugify_filename = false;
     selectedSubfolderPath.current = '';
-  });
-
-  describe('canBrowseSubfolders', () => {
-    it('should allow a plain folder when folder support is enabled', () => {
-      expect(canBrowseSubfolders(createFolder())).toBe(true);
-      expect(canBrowseSubfolders(createFolder({ internalPath: '' }))).toBe(true);
-    });
-
-    it('should not allow the All Assets folder', () => {
-      expect(canBrowseSubfolders(undefined)).toBe(false);
-      expect(canBrowseSubfolders(createFolder({ internalPath: undefined }))).toBe(false);
-    });
-
-    it('should not allow an entry-relative folder or one with template tags', () => {
-      expect(canBrowseSubfolders(createFolder({ entryRelative: true }))).toBe(false);
-      expect(canBrowseSubfolders(createFolder({ hasTemplateTags: true }))).toBe(false);
-    });
   });
 
   describe('getRelativePath', () => {

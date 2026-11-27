@@ -1,6 +1,7 @@
 import { getAssetKey } from '$lib/services/assets';
+import { hasFixedPath } from '$lib/services/assets/fixed-path';
 import { getFolderPublicPath } from '$lib/services/assets/info';
-import { canBrowseSubfolders, getRelativePath } from '$lib/services/assets/subfolders';
+import { getRelativePath } from '$lib/services/assets/subfolders';
 import { findPreferredLibraryName } from '$lib/services/integrations/media-libraries/options';
 import {
   allStockAssetProviders,
@@ -35,6 +36,32 @@ export const sortServicesByName = (a, b) => {
 };
 
 /**
+ * Prefix of the name of a default library (repository) folder in the Select Assets dialog, followed
+ * by the folder’s key in the asset library folder map, e.g. `default-collection`.
+ */
+const DEFAULT_LIBRARY_NAME_PREFIX = 'default-';
+
+/**
+ * Get the name of a default library (repository) folder in the Select Assets dialog.
+ * @param {string} key Key of the folder in the asset library folder map, e.g. `collection` or
+ * `assets:icons`.
+ * @returns {string} Library name, e.g. `default-collection`.
+ */
+export const getDefaultLibraryName = (key) => `${DEFAULT_LIBRARY_NAME_PREFIX}${key}`;
+
+/**
+ * Get the key of a default library (repository) folder in the asset library folder map from its
+ * name in the Select Assets dialog.
+ * @param {string} name Library name, e.g. `default-collection`.
+ * @returns {string | undefined} Key, e.g. `collection`, or `undefined` if the library isn’t a
+ * repository folder, but a cloud storage service or a stock photo provider.
+ */
+export const getDefaultLibraryFolderKey = (name) =>
+  name.startsWith(DEFAULT_LIBRARY_NAME_PREFIX)
+    ? name.slice(DEFAULT_LIBRARY_NAME_PREFIX.length)
+    : undefined;
+
+/**
  * Check if a repository folder is offered in the Select Assets dialog. Folder selection takes a
  * folder that can be browsed by subfolder.
  * @param {{ folder: AssetFolderInfo | undefined, enabled: boolean }} entry Folder map entry.
@@ -42,7 +69,7 @@ export const sortServicesByName = (a, b) => {
  * @returns {boolean} Result.
  */
 export const isFolderOffered = ({ folder, enabled }, selectFolder) =>
-  enabled && (!selectFolder || canBrowseSubfolders(folder));
+  enabled && (!selectFolder || hasFixedPath(folder));
 
 /**
  * Get the name of the first repository folder offered in the dialog, which is selected when the
@@ -67,7 +94,7 @@ export const getFirstDefaultLibraryName = ({
     isFolderOffered(entry, selectFolder),
   )?.[0];
 
-  return id ? `default-${id}` : undefined;
+  return id ? getDefaultLibraryName(id) : undefined;
 };
 
 /**

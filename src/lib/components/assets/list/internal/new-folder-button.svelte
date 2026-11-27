@@ -5,8 +5,9 @@
 -->
 <script>
   import NewFolderButton from '$lib/components/assets/list/new-folder-button.svelte';
+  import { hasFixedPath } from '$lib/services/assets/fixed-path';
   import { assetsLocked, canCreateAsset, selectedAssetFolder } from '$lib/services/assets/folders';
-  import { browsingCmsFolder, canBrowseSubfolders } from '$lib/services/assets/subfolders';
+  import { browsingCmsFolder } from '$lib/services/assets/subfolders';
   import { showNewSubfolderDialog } from '$lib/services/assets/view';
 
   const folder = $derived(selectedAssetFolder.current);
@@ -18,7 +19,7 @@
   );
 </script>
 
-{#if canBrowseSubfolders(folder)}
+{#if hasFixedPath(folder)}
   <NewFolderButton
     {disabled}
     onclick={() => {

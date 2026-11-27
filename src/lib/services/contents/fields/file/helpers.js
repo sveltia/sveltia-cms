@@ -4,6 +4,7 @@ import { isAssetInFolder } from '$lib/services/assets';
 import { getExistingEntryAssetFolderPath } from '$lib/services/assets/entry-folder';
 import { fillInternalPathTemplate } from '$lib/services/assets/entry-relative';
 import { formatFileName } from '$lib/services/assets/file-name';
+import { hasFixedPath } from '$lib/services/assets/fixed-path';
 import { allAssetFolders, getAssetFolder, globalAssetFolder } from '$lib/services/assets/folders';
 import { getPendingFileName } from '$lib/services/assets/name';
 import { allAssets } from '$lib/services/assets/state';
@@ -111,15 +112,11 @@ export const getAssetLibraryFolderMap = ({
     },
     file: {
       folder: fileAssetFolder,
-      enabled:
-        !!fileAssetFolder && !fileAssetFolder.entryRelative && !fileAssetFolder.hasTemplateTags,
+      enabled: hasFixedPath(fileAssetFolder),
     },
     collection: {
       folder: collectionAssetFolder,
-      enabled:
-        !!collectionAssetFolder &&
-        !collectionAssetFolder.entryRelative &&
-        !collectionAssetFolder.hasTemplateTags,
+      enabled: hasFixedPath(collectionAssetFolder),
     },
     global: {
       folder: globalFolder,

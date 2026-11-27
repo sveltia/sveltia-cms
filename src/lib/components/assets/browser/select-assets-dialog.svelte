@@ -22,6 +22,7 @@
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
   import { getPendingUploadAction } from '$lib/services/assets/browser/pending-uploads';
   import {
+    getDefaultLibraryFolderKey,
     getDroppedResources,
     getInitialLibraryName,
     getInsertedResources,
@@ -32,15 +33,11 @@
     sortServicesByName,
   } from '$lib/services/assets/browser/select-assets-dialog.svelte';
   import { fillLibraryPrefix } from '$lib/services/assets/external/prefix';
+  import { hasFixedPath } from '$lib/services/assets/fixed-path';
   import { assetsLocked } from '$lib/services/assets/folders';
   import { revokeBlobURLIfNeeded } from '$lib/services/assets/info';
   import { isCmsFolderPath } from '$lib/services/assets/reserved';
-  import {
-    canBrowseSubfolders,
-    getRelativePath,
-    getSubfolders,
-    getTakenNames,
-  } from '$lib/services/assets/subfolders';
+  import { getRelativePath, getSubfolders, getTakenNames } from '$lib/services/assets/subfolders';
   import { selectAssetsView, showContentOverlay } from '$lib/services/contents/editor';
   import { checkDuplicates } from '$lib/services/contents/fields/file/duplicates.svelte';
   import { findSameUnsavedAsset } from '$lib/services/contents/fields/file/helpers';
@@ -60,7 +57,6 @@
    * @import {
    * Asset,
    * AssetLibraryFolderMap,
-   * AssetLibraryFolderMapKey,
    * AssetSubfolder,
    * EntryDraft,
    * InternalLocaleCode,
@@ -194,17 +190,12 @@
       preferredLibraryNames,
     }),
   );
-  const isDefaultLibrary = $derived(libraryName.startsWith('default-'));
-  const selectedFolder = $derived.by(() => {
-    if (!isDefaultLibrary) {
-      return undefined;
-    }
-
-    const key = /** @type {AssetLibraryFolderMapKey} */ (libraryName.replace('default-', ''));
-    const { folder } = assetLibraryFolderMap[key];
-
-    return folder;
-  });
+  /** Key of the selected repository folder in the folder map, if one is selected. */
+  const selectedFolderKey = $derived(getDefaultLibraryFolderKey(libraryName));
+  const isDefaultLibrary = $derived(selectedFolderKey !== undefined);
+  const selectedFolder = $derived(
+    selectedFolderKey === undefined ? undefined : assetLibraryFolderMap[selectedFolderKey].folder,
+  );
   // Existing files are limited to the accepted types, while the files dropped or picked here are
   // only checked once inserted and processed, as a transformation can change their format
   const assetListing = createFolderAssetListing(
@@ -229,7 +220,7 @@
    * through the whole folder instead, listing the matches with their paths.
    */
   const browsingSubfolders = $derived(
-    canBrowseSubfolders(selectedFolder) && targetFolderPath !== undefined && !searchTerms,
+    hasFixedPath(selectedFolder) && targetFolderPath !== undefined && !searchTerms,
   );
   /** Path of the directory being browsed, which is where uploaded files go. */
   const browsedPath = $derived(createPath([targetFolderPath, subfolderPath]));
@@ -269,7 +260,7 @@
   );
   /** Label of the selected folder, at the start of the breadcrumb. */
   const selectedFolderLabel = $derived(
-    selectedFolder?.label || _(`assets_dialog.folder.${libraryName.replace('default-', '')}`),
+    selectedFolder?.label || _(`assets_dialog.folder.${selectedFolderKey}`),
   );
   const isEnabledMediaService = $derived(
     enabledStockAssetProviderEntries.some(

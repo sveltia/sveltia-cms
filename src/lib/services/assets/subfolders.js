@@ -1,5 +1,6 @@
 import { compare } from '@sveltia/utils/string';
 
+import { hasFixedPath } from '$lib/services/assets/fixed-path';
 import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
 import { isCmsFolderName, isCmsFolderPath } from '$lib/services/assets/reserved';
 import { ALL_ASSETS_FOLDER_PATH } from '$lib/services/assets/route';
@@ -54,17 +55,6 @@ export const renamingSubfolder = createRawState();
 export const deletingSubfolder = createRawState();
 
 /**
- * Check if the given asset folder can be browsed by subfolder, which takes a folder whose files all
- * sit below one fixed path: an entry-relative folder is scattered across the entry folders, and a
- * folder with template tags is only resolved per entry, so neither has a single tree to walk. The
- * All Assets folder has no path at all. The assets of such a folder are all listed at once.
- * @param {AssetFolderInfo | undefined} folder Asset folder.
- * @returns {folder is AssetFolderInfo} Result.
- */
-export const canBrowseSubfolders = (folder) =>
-  !!folder && folder.internalPath !== undefined && !folder.entryRelative && !folder.hasTemplateTags;
-
-/**
  * Get the path of a file or directory relative to a base directory.
  * @param {string} path Path, e.g. `static/images/2024/photo.jpg`.
  * @param {string} basePath Base directory path, e.g. `static/images`. An empty string for the
@@ -88,7 +78,7 @@ export const getRelativePath = (path, basePath) => {
  * folder can’t be browsed by subfolder.
  */
 export const getSubfolderPath = (folder, folderPath) =>
-  canBrowseSubfolders(folder)
+  hasFixedPath(folder)
     ? // `internalPath` is always a string for a folder that can be browsed
       getRelativePath(folderPath, /** @type {string} */ (folder.internalPath))
     : '';
@@ -124,7 +114,7 @@ export const resolveAssetFolderPath = (folderPath, knownFolder = undefined) => {
   const parentFolder = folders
     .filter(
       (folder) =>
-        canBrowseSubfolders(folder) &&
+        hasFixedPath(folder) &&
         (folder.internalPath === '' || folderPath.startsWith(`${folder.internalPath}/`)),
     )
     .sort(
@@ -147,7 +137,7 @@ export const resolveAssetFolderPath = (folderPath, knownFolder = undefined) => {
 export const browsedDirPath = createDerivedState(() => {
   const folder = selectedAssetFolder.current;
 
-  return canBrowseSubfolders(folder)
+  return hasFixedPath(folder)
     ? createPath([folder.internalPath, selectedSubfolderPath.current])
     : undefined;
 });

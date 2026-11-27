@@ -5,6 +5,8 @@ import { getStockAssetMediaLibraryOptions } from '$lib/services/integrations/med
 import { createMockAssetFolder } from '$lib/test/factories';
 
 import {
+  getDefaultLibraryFolderKey,
+  getDefaultLibraryName,
   getDroppedResources,
   getFirstDefaultLibraryName,
   getInitialLibraryName,
@@ -63,6 +65,25 @@ describe('sortServicesByName()', () => {
     ]);
 
     expect(entries.sort(sortServicesByName).map(([id]) => id)).toEqual(['c', 'a', 'b']);
+  });
+});
+
+describe('getDefaultLibraryName()', () => {
+  test('prefixes the folder key', () => {
+    expect(getDefaultLibraryName('collection')).toBe('default-collection');
+    expect(getDefaultLibraryName('assets:icons')).toBe('default-assets:icons');
+  });
+});
+
+describe('getDefaultLibraryFolderKey()', () => {
+  test('returns the folder key of a repository location', () => {
+    expect(getDefaultLibraryFolderKey('default-collection')).toBe('collection');
+    expect(getDefaultLibraryFolderKey('default-assets:icons')).toBe('assets:icons');
+  });
+
+  test('returns undefined for another location', () => {
+    expect(getDefaultLibraryFolderKey('unsplash')).toBeUndefined();
+    expect(getDefaultLibraryFolderKey('')).toBeUndefined();
   });
 });
 
